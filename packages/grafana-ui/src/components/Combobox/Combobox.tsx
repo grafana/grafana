@@ -1,4 +1,5 @@
-import { css } from '@emotion/css';
+import { cx } from '@emotion/css';
+import { autoUpdate, flip, useFloating } from '@floating-ui/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
 import { useMemo, useRef, useState } from 'react';
@@ -6,6 +7,8 @@ import { useMemo, useRef, useState } from 'react';
 import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { Input, Props as InputProps } from '../Input/Input';
+
+import { getComboboxStyles } from './getComboboxStyles';
 
 export type Value = string | number;
 export type Option = {
@@ -16,7 +19,7 @@ export type Option = {
 
 interface ComboboxProps
   extends Omit<InputProps, 'width' | 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange'> {
-  onChange: (val: Option) => void;
+  onChange: (val: Option | null) => void;
   value: Value;
   options: Option[];
 }
@@ -42,20 +45,21 @@ function estimateSize() {
 }
 
 export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxProps) => {
+  const MIN_WIDTH = 400;
   const [items, setItems] = useState(options);
   const selectedItem = useMemo(() => options.find((option) => option.value === value) || null, [options, value]);
-  const listRef = useRef(null);
-
-  const styles = useStyles2(getStyles);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const floatingRef = useRef(null);
+  const styles = useStyles2(getComboboxStyles);
 
   const rowVirtualizer = useVirtualizer({
     count: items.length,
-    getScrollElement: () => listRef.current,
+    getScrollElement: () => floatingRef.current,
     estimateSize,
     overscan: 2,
   });
 
-  const { getInputProps, getMenuProps, getItemProps, isOpen } = useCombobox({
+  const { getInputProps, getMenuProps, getItemProps, isOpen, highlightedIndex } = useCombobox({
     items,
     itemToString,
     selectedItem,
@@ -70,12 +74,48 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
       }
     },
   });
+
+  // the order of middleware is important!
+  const middleware = [
+    flip({
+      // see https://floating-ui.com/docs/flip#combining-with-shift
+      crossAxis: false,
+      boundary: document.body,
+      fallbackPlacements: ['top'],
+    }),
+  ];
+  const elements = { reference: inputRef.current, floating: floatingRef.current };
+  const { floatingStyles } = useFloating({
+    open: isOpen,
+    placement: 'bottom',
+    middleware,
+    elements,
+    whileElementsMounted: autoUpdate,
+  });
+
+  const hasMinHeight = isOpen && rowVirtualizer.getTotalSize() >= MIN_WIDTH;
+
   return (
     <div>
-      <Input suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />} {...restProps} {...getInputProps()} />
-      <div className={styles.dropdown} {...getMenuProps({ ref: listRef })}>
+      <Input
+        suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
+        {...restProps}
+        {...getInputProps({
+          ref: inputRef,
+          /*  Empty onCall to avoid TS error
+           *  See issue here: https://github.com/downshift-js/downshift/issues/718
+           *  Downshift repo: https://github.com/downshift-js/downshift/tree/master
+           */
+          onChange: () => {},
+        })}
+      />
+      <div
+        className={cx(styles.menu, hasMinHeight && styles.menuHeight)}
+        style={{ ...floatingStyles, width: elements.reference?.getBoundingClientRect().width }}
+        {...getMenuProps({ ref: floatingRef })}
+      >
         {isOpen && (
-          <ul style={{ height: rowVirtualizer.getTotalSize() }}>
+          <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               return (
                 <li
@@ -83,13 +123,21 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
                   {...getItemProps({ item: items[virtualRow.index], index: virtualRow.index })}
                   data-index={virtualRow.index}
                   ref={rowVirtualizer.measureElement}
-                  className={styles.menuItem}
+                  className={cx(
+                    styles.option,
+                    selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected,
+                    highlightedIndex === virtualRow.index && styles.optionFocused
+                  )}
                   style={{
                     transform: `translateY(${virtualRow.start}px)`,
                   }}
                 >
-                  <span>{items[virtualRow.index].label}</span>
-                  {items[virtualRow.index].description && <span>{items[virtualRow.index].description}</span>}
+                  <div className={styles.optionBody}>
+                    <span>{items[virtualRow.index].label}</span>
+                    {items[virtualRow.index].description && (
+                      <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
+                    )}
+                  </div>
                 </li>
               );
             })}
@@ -99,24 +147,3 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
     </div>
   );
 };
-
-const getStyles = () => ({
-  dropdown: css({
-    position: 'absolute',
-    height: 400,
-    width: 600,
-    overflowY: 'scroll',
-    contain: 'strict',
-  }),
-  menuItem: css({
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    '&:first-child': {
-      fontWeight: 'bold',
-    },
-  }),
-});
