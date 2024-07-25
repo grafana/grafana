@@ -138,6 +138,7 @@ jobs:
         run: >
           gh pr create \
             $( [ "x${{ inputs.latest }}" == "xtrue" ] && printf %s '-l "release/latest"') \
+            -l "no-changelog" \
             --dry-run=${{ inputs.dry_run }} \
             -B "${{ inputs.target }}" \
             --title "Release: ${{ inputs.version }}" \
@@ -151,6 +152,7 @@ jobs:
           gh pr create \
             $( [ "x${{ inputs.latest }}" == "xtrue" ] && printf %s '-l "release/latest"') \
             -l "product-approved" \
+            -l "no-changelog" \
             --dry-run=${{ inputs.dry_run }} \
             -B "${{ inputs.target }}" \
             --title "Release: ${{ inputs.version }}" \
