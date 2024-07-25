@@ -544,7 +544,7 @@ func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialec
 		resourceVersion: new(resourceVersion),
 	})
 	if errors.Is(err, sql.ErrNoRows) {
-		return 0, fmt.Errorf("now row for the provided resource version")
+		return 1, nil
 	} else if err != nil {
 		return 0, fmt.Errorf("get resource version: %w", err)
 	}
