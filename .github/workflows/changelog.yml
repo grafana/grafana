@@ -20,10 +20,8 @@ on:
         type: boolean
     secrets:
       GRAFANA_DELIVERY_BOT_APP_ID:
-        type: string
         required: true
       GRAFANA_DELIVERY_BOT_APP_PEM:
-        type: string
         required: true
 
   workflow_dispatch:
