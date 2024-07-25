@@ -15,14 +15,14 @@ weight: 20
 
 You can use Explore to query and visualize traces from tracing data sources. Supported data sources include:
 
-- [Tempo]({{< relref "../datasources/tempo/" >}}) (supported ingestion formats: OpenTelemetry, Jaeger, and Zipkin)
-- [Jaeger]({{< relref "../datasources/jaeger/" >}})
-- [Zipkin]({{< relref "../datasources/zipkin/" >}})
+- [Tempo](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/)
+- [Jaeger](/docs/grafana/<GRAFANA_VERSION>/datasources/jaeger/)
+- [Zipkin](/docs/grafana/<GRAFANA_VERSION>/datasources/zipkin/)
 - [X-Ray](https://grafana.com/grafana/plugins/grafana-x-ray-datasource)
-- [Azure Monitor Application Insights]({{< relref "../datasources/azure-monitor/" >}})
+- [Azure Monitor](/docs/grafana/latest/datasources/azure-monitor/)
 - [ClickHouse](https://github.com/grafana/clickhouse-datasource)
-- [New Relic](https://grafana.com/grafana/plugins/grafana-newrelic-datasource)
-- [Infinity](https://grafana.com/grafana/plugins/yesoreyeram-infinity-datasource)
+- [New Relic](/docs/plugins/grafana-newrelic-datasource/latest/)
+- [Infinity](/docs/plugins/yesoreyeram-infinity-datasource/latest/)
 
 If you are getting started working with traces in Tempo refer to the following documents:
 
@@ -38,16 +38,9 @@ You can query and search tracing data using a data source's query editor. Note t
 
 For information on how to use the query editor to create queries for tracing data sources, refer to the documentation for each individual data source.
 
-<!-- - [Tempo query editor]({{< relref "../datasources/tempo/query-editor" >}})
-- [Jaeger query editor]({{< relref "../datasources/jaeger/#query-the-data-source" >}})
-- [Zipkin query editor]({{< relref "../datasources/zipkin/#query-the-data-source" >}})
-- [Azure Monitor Application Insights query editor]({{< relref "../datasources/azure-monitor/query-editor/#query-application-insights-traces" >}})
-- [ClickHouse query editor](https://clickhouse.com/docs/en/integrations/grafana/query-builder#traces)
-- [New Relic](https://grafana.com/docs/plugins/grafana-newrelic-datasource/<GRAFANA_VERSION>/#query-the-data-source) -->
-
 ## Trace view
 
-The following sections provide information on Grafana's Trace View.
+Grafana's trace view provides an overview of a a request as it traverses services in your architecture or distributed system. The following sections provide detail on various elements of the trace view.
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view.png" class="docs-image--no-shadow" max-width= "900px" caption="Trace view" >}}
 
@@ -68,6 +61,19 @@ When zoomed in, hovering over the minimap displays the **Reset selectio** button
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-minimap.png" class="docs-image--no-shadow" max-width= "900px" caption="Trace view minimap example" >}}
 
+### Timeline
+
+Timeline shows list of spans within the trace. Each span row consists of the following components:
+
+- **Expand children -** Expands or collapses all the children spans of the selected span.
+- **Service name -** Name of the service logged the span.
+- **Operation name -** Name of the operation that this span represents.
+- **Span duration bar -** Visual representation of the operation duration within the trace.
+
+Clicking anywhere on the span row shows span details.
+
+{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-timeline.png" class="docs-image--no-shadow" max-width= "900px"  caption="Trace view timeline" >}}
+
 ### Span details
 
 Traces are composed of one or more spans. A span is a unit of work within a trace that has a start time relative to the beginning of the trace, a duration and an operation name for the unit of work. It usually has a reference to a parent span (unless it’s the first span, the root span, in a trace). It frequently includes key/value attributes that are relevant to the span itself, for example the HTTP method used in the request, as well as other metadata such as the service name, sub-span events, or links to other spans.
@@ -76,6 +82,13 @@ You can expand any span in a trace and view the details, including the span and 
 
 For more information about spans and traces, refer to [Introduction to tracing](https://grafana.com/docs/tempo/latest/introduction/) in the Tempo documentation.
 
+Span details include:
+
+- **Span attributes** - Key/value pairs that provides context for spans. For example, if the span deals with calling another service via HTTP, an attribute could include the HTTP URL (maybe as the span attribute key `http.url`) and the HTTP status code returned (as the span attribute `http.status_code`). 
+
+- **Resource attributes** - Key/value pairs that describe the context of how the span was collected. 
+
+Refer to [Span and resource attributes](/docs/tempo/<TEMPO_VERSION>/operations/best-practices/#span-and-resource-attributes) for more detail.
 <!-- - Operation name.
 - Span metadata.
 - Tags: Any tags associated with this span.
@@ -103,19 +116,6 @@ Refer to [Span filters](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/span-f
 
 Watch the following video to learn more about filtering trace spans in Grafana:
 {{< youtube id="VP2XV3IIc80" >}}
-
-### Timeline
-
-Timeline shows list of spans within the trace. Each span row consists of the following components:
-
-- **Expand children -** Expands or collapses all the children spans of the selected span.
-- **Service name -** Name of the service logged the span.
-- **Operation name -** Name of the operation that this span represents.
-- **Span duration bar -** Visual representation of the operation duration within the trace.
-
-Clicking anywhere on the span row shows span details.
-
-{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-timeline.png" class="docs-image--no-shadow" max-width= "900px"  caption="Trace view timeline" >}}
 
 ### Trace to logs
 
