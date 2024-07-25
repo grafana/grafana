@@ -248,7 +248,7 @@ export const Page = () => {
   );
 };
 
-function maybeGetTraceID(err: unknown): string | undefined {
+function maybeGetTraceID(err: unknown) {
   const data = isFetchError<unknown>(err) ? err.data : undefined;
 
   if (typeof data === 'object' && data && 'traceID' in data && typeof data.traceID === 'string') {
