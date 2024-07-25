@@ -6,12 +6,19 @@ import { Page as CloudPage } from './cloud/Page';
 import { Page as OnPremPage } from './onprem/Page';
 
 export default function MigrateToCloud() {
+  const feedbackURL = config.cloudMigrationFeedbackURL;
   return (
     <Page navId="migrate-to-cloud">
       <Alert
         title={'Migrate to Grafana Cloud is in public preview'}
         severity={'info'}
-        onRemove={() => {}}
+        onRemove={
+          feedbackURL
+            ? () => {
+                window.location.href = feedbackURL;
+              }
+            : undefined
+        }
         buttonContent={'Give feedback'}
       >
         Help us to improve Grafana Cloud by providing feedback and reporting issues.
