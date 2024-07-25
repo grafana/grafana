@@ -17,7 +17,7 @@ interface DataLinksInlineEditorProps {
   onChange: (links: DataLink[]) => void;
   getSuggestions: () => VariableSuggestion[];
   data: DataFrame[];
-  oneClickEnabled?: boolean;
+  showOneClick?: boolean;
 }
 
 export const DataLinksInlineEditor = ({
@@ -25,13 +25,12 @@ export const DataLinksInlineEditor = ({
   onChange,
   getSuggestions,
   data,
-  oneClickEnabled = false,
+  showOneClick = false,
 }: DataLinksInlineEditorProps) => {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isNew, setIsNew] = useState(false);
 
   const [linksSafe, setLinksSafe] = useState<DataLink[]>([]);
-  links?.sort((a, b) => (a.sortIndex ?? 0) - (b.sortIndex ?? 0));
 
   useEffect(() => {
     setLinksSafe(links ?? []);
@@ -81,24 +80,20 @@ export const DataLinksInlineEditor = ({
       return;
     }
 
-    const copy = [...linksSafe];
-    const link = copy[result.source.index];
-    link.sortIndex = result.destination.index;
+    const update = cloneDeep(linksSafe);
+    const link = update[result.source.index];
 
-    const swapLink = copy[result.destination.index];
-    swapLink.sortIndex = result.source.index;
+    update.splice(result.source.index, 1);
+    update.splice(result.destination.index, 0, link);
 
-    copy.splice(result.source.index, 1);
-    copy.splice(result.destination.index, 0, link);
-
-    setLinksSafe(copy);
-    onChange(linksSafe);
+    setLinksSafe(update);
+    onChange(update);
   };
 
-  const renderFirstLink = (linkJSX: ReactNode) => {
-    if (oneClickEnabled) {
+  const renderFirstLink = (linkJSX: ReactNode, key: string) => {
+    if (showOneClick) {
       return (
-        <div className={styles.oneClickOverlay}>
+        <div className={styles.oneClickOverlay} key={key}>
           <span className={styles.oneClickSpan}>One-click</span>
           {linkJSX}
         </div>
@@ -130,7 +125,7 @@ export const DataLinksInlineEditor = ({
                 );
 
                 if (idx === 0) {
-                  return renderFirstLink(linkJSX);
+                  return renderFirstLink(linkJSX, key);
                 }
 
                 return linkJSX;

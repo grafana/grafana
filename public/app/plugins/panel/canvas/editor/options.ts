@@ -1,6 +1,6 @@
 import { capitalize } from 'lodash';
 
-import { FieldType, standardEditorsRegistry } from '@grafana/data';
+import { FieldType } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { ConnectionDirection } from 'app/features/canvas/element';
 import { SVGElements } from 'app/features/canvas/runtime/element';
@@ -209,23 +209,13 @@ export const optionBuilder: OptionSuppliers = {
   },
 
   addDataLinks: (builder, context) => {
-    const category = ['Data links'];
-    builder
-      .addCustomEditor({
-        category,
-        id: 'enableOneClick',
-        path: 'oneClickLinks',
-        name: 'One-click',
-        description: 'When enabled, the top link in the list below works with a single click',
-        editor: standardEditorsRegistry.get('boolean').editor,
-      })
-      .addCustomEditor({
-        category,
-        id: 'dataLinks',
-        path: 'links',
-        name: '',
-        editor: DataLinksEditor,
-        settings: context.options,
-      });
+    builder.addCustomEditor({
+      category: ['Data links'],
+      id: 'dataLinks',
+      path: 'links',
+      name: 'Links',
+      editor: DataLinksEditor,
+      settings: context.options,
+    });
   },
 };

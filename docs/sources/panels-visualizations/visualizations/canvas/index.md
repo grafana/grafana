@@ -190,12 +190,12 @@ You can configure a canvas data link to open with a single click on the element.
 1. Click the element to which you want to add the data link.
 1. In either the inline editor or panel editor, expand the **Selected element** editor.
 1. Scroll down to the **Data links** section and expand it.
-1. Toggle the **One-click** switch in the element's data links section.
+1. In the **One-click** section, choose **Link**.
 1. Disable inline editing.
 
 The first data link in the list will be configured as your one-click data link. If you want to change the one-click data link, simply drag the desired data link to the top of the list.
 
-{{< video-embed src="/media/docs/grafana/panels-visualizations/canvas-one-click-data-link.mp4" >}}
+{{< video-embed src="/media/docs/grafana/panels-visualizations/canvas-one-click-datalink-.mp4" >}}
 
 ## Panel options
 
