@@ -62,6 +62,7 @@ jobs:
       - name: "Checkout Grafana repo"
         uses: "actions/checkout@v4"
         with:
+          ref: main
           sparse-checkout: |
             .github/workflows
             CHANGELOG.md
