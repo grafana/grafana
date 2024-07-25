@@ -210,7 +210,7 @@ The following list contains role-based access control actions used by Grafana On
 The following list contains role-based access control actions used by Grafana Adaptive Metrics.
 
 | Action                                             | Applicable scope | Description                                          |
-|----------------------------------------------------|------------------|------------------------------------------------------|
+| -------------------------------------------------- | ---------------- | ---------------------------------------------------- |
 | grafana-adaptive-metrics-app.plugin:access         | n/a              | Access the Adaptive Metrics plugin in Grafana Cloud. |
 | grafana-adaptive-metrics-app.config:read           | n/a              | Read the Adaptive Metrics app configuration.         |
 | grafana-adaptive-metrics-app.config:write          | n/a              | Update the Adaptive Metrics app configuration.       |
