@@ -77,7 +77,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
   public getUrlState() {
     return {
-      scopes: this.state.isVisible ? getScopeNamesFromSelectedScopes(this.state.scopes) : undefined,
+      scopes: this.state.isVisible ? getScopeNamesFromSelectedScopes(this.state.scopes) : [],
     };
   }
 
@@ -372,12 +372,14 @@ export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<Scopes
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
+      borderLeft: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
       flexDirection: 'row',
-      padding: theme.spacing(0, 0, 0, 1),
+      paddingLeft: theme.spacing(2),
     }),
     dashboards: css({
       color: theme.colors.text.secondary,
+      marginRight: theme.spacing(2),
 
       '&:hover': css({
         color: theme.colors.text.primary,

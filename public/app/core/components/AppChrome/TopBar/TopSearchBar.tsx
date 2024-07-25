@@ -43,8 +43,8 @@ export const TopSearchBar = memo(function TopSearchBar() {
         <a className={styles.logo} href={homeUrl} title="Go to home">
           <Branding.MenuLogo className={styles.img} />
         </a>
-        <ScopesFilters />
         <OrganizationSwitcher />
+        <ScopesFilters />
       </TopSearchBarSection>
 
       <TopSearchBarSection>

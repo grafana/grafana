@@ -128,8 +128,8 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     scopePath: css({
       color: theme.colors.text.primary,
-      fontSize: theme.typography.pxToRem(14),
-      margin: theme.spacing(1, 0),
+      fontSize: theme.typography.pxToRem(12),
+      margin: theme.spacing(0, 0),
     }),
   };
 };
