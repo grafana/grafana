@@ -69,7 +69,7 @@ export interface MetricSelectSceneState extends SceneObjectState {
   metricNamesLoading?: boolean;
   metricNamesError?: string;
   metricNamesWarning?: string;
-  sortBy: SortByScene;
+  sortByScene: SortByScene;
 }
 
 const ROW_PREVIEW_HEIGHT = '175px';
@@ -99,7 +99,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
           autoRows: ROW_PREVIEW_HEIGHT,
           isLazy: true,
         }),
-      sortBy: new SortByScene({ target: 'fields' }),
+      sortByScene: new SortByScene({ target: 'fields' }),
       ...state,
     });
 
@@ -462,7 +462,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       metricNamesWarning,
       rootGroup,
       metricPrefix,
-      sortBy,
+      sortByScene,
     } = model.useState();
     const { children } = body.useState();
     const trail = getTrailFor(model);
@@ -531,7 +531,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
               ]}
             />
           </Field>
-          <sortBy.Component model={sortBy} />
+          <sortByScene.Component model={sortByScene} />
           <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} />
         </div>
         {metricNamesError && (
