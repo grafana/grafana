@@ -3040,7 +3040,7 @@ steps:
   - rpm --import https://rpm.grafana.com/gpg.key
   - 'echo "Step 4: Configuring Grafana repository..."'
   - |-
-    echo '[grafana]
+    echo -e '[grafana]
     name=grafana
     baseurl=https://rpm.grafana.com
     repo_gpgcheck=0
@@ -3218,7 +3218,7 @@ steps:
   - rpm --import https://rpm.grafana.com/gpg.key
   - 'echo "Step 4: Configuring Grafana repository..."'
   - |-
-    echo '[grafana]
+    echo -e '[grafana]
     name=grafana
     baseurl=https://rpm.grafana.com
     repo_gpgcheck=0
@@ -5244,6 +5244,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 5502a82fb63c39f070f10bd9c80475600cb0de98bd9fdf866436aada118e9bd3
+hmac: b8e339ef911101b6508b4ebfe0acd98491475bc6b8699ad3fba5399d01f8e272
 
 ...
