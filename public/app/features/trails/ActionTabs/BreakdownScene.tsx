@@ -35,7 +35,7 @@ import { getColorByIndex, getTrailFor } from '../utils';
 
 import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
 import { ByFrameRepeater } from './ByFrameRepeater';
-import { LayoutSwitcher } from './LayoutSwitcher';
+import { BreakdownLayoutChange, LayoutSwitcher } from './LayoutSwitcher';
 import { breakdownPanelOptions } from './panelConfigs';
 import { getLabelOptions } from './utils';
 import { BreakdownAxisChangeEvent, yAxisSyncBehavior } from './yAxisSyncBehavior';
@@ -97,12 +97,7 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
       this.clearBreakdownPanelAxisValues();
     });
 
-    metricScene.subscribeToState(({ layout }, old) => {
-      if (layout !== old.layout) {
-        // Change in layout will set up a different set of panel objects that haven't received the current yaxis range
-        this.clearBreakdownPanelAxisValues();
-      }
-    });
+    this._subs.add(this.subscribeToEvent(BreakdownLayoutChange, () => this.clearBreakdownPanelAxisValues));
 
     this.updateBody(variable);
   }
@@ -154,6 +149,7 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
   }, 1000);
 
   private clearBreakdownPanelAxisValues() {
+    console.log('I am triggered because layout has changed');
     this.breakdownPanelMaxValue = undefined;
     this.breakdownPanelMinValue = undefined;
   }
@@ -322,6 +318,7 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
       { value: 'grid', label: 'Grid' },
       { value: 'rows', label: 'Rows' },
     ],
+    active: 'grid',
     layouts: [
       new SceneCSSGridLayout({
         templateColumns: GRID_TEMPLATE_COLUMNS,
@@ -382,6 +379,7 @@ function buildNormalLayout(queryDef: AutoQueryDef) {
       { value: 'grid', label: 'Grid' },
       { value: 'rows', label: 'Rows' },
     ],
+    active: 'grid',
     layouts: [
       new SceneFlexLayout({
         direction: 'column',

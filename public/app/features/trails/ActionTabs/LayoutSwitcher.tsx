@@ -1,53 +1,83 @@
-import { SelectableValue } from '@grafana/data';
-import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { BusEventBase, SelectableValue } from '@grafana/data';
+import {
+  SceneComponentProps,
+  SceneObject,
+  SceneObjectBase,
+  SceneObjectState,
+  SceneObjectUrlSyncConfig,
+  SceneObjectUrlValues,
+  SceneObjectWithUrlSync,
+} from '@grafana/scenes';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
-import { MetricScene } from '../MetricScene';
 import { reportExploreMetrics } from '../interactions';
-import { TRAIL_BREAKDOWN_VIEW_KEY } from '../shared';
+import { MakeOptional, TRAIL_BREAKDOWN_VIEW_KEY } from '../shared';
 
-import { LayoutType } from './types';
+import { isLayoutType, LayoutType } from './types';
+
+export class BreakdownLayoutChange extends BusEventBase {
+  constructor(public layout: LayoutType) {
+    super();
+  }
+
+  public static type = 'breakdown-layout-change';
+}
 
 export interface LayoutSwitcherState extends SceneObjectState {
+  active: LayoutType;
   layouts: SceneObject[];
   options: Array<SelectableValue<LayoutType>>;
 }
 
-export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> {
-  private getMetricScene() {
-    return sceneGraph.getAncestor(this, MetricScene);
+export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> implements SceneObjectWithUrlSync {
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['layout'] });
+
+  public constructor(state: MakeOptional<LayoutSwitcherState, 'active'>) {
+    const layout = localStorage.getItem(TRAIL_BREAKDOWN_VIEW_KEY);
+    super({
+      active: isLayoutType(layout) ? layout : 'grid',
+      ...state,
+    });
+  }
+
+  getUrlState() {
+    return { layout: this.state.active };
+  }
+
+  updateFromUrl(values: SceneObjectUrlValues) {
+    if (typeof values.layout === 'string') {
+      const newLayout = values.layout as LayoutType;
+      if (this.state.active !== newLayout) {
+        this.setState({ active: newLayout });
+      }
+    }
   }
 
   public Selector({ model }: { model: LayoutSwitcher }) {
-    const { options } = model.useState();
-    const activeLayout = model.useActiveLayout();
+    const { active, options } = model.useState();
 
     return (
       <Field label="View">
-        <RadioButtonGroup options={options} value={activeLayout} onChange={model.onLayoutChange} />
+        <RadioButtonGroup options={options} value={active} onChange={model.onLayoutChange} />
       </Field>
     );
   }
 
-  private useActiveLayout() {
-    const { options } = this.useState();
-    const { layout } = this.getMetricScene().useState();
+  public onLayoutChange = (active: LayoutType) => {
+    if (this.state.active === active) {
+      return;
+    }
 
-    const activeLayout = options.map((option) => option.value).includes(layout) ? layout : options[0].value;
-    return activeLayout;
-  }
-
-  public onLayoutChange = (layout: LayoutType) => {
-    reportExploreMetrics('breakdown_layout_changed', { layout });
-    localStorage.setItem(TRAIL_BREAKDOWN_VIEW_KEY, layout);
-    this.getMetricScene().setState({ layout });
+    reportExploreMetrics('breakdown_layout_changed', { layout: active });
+    localStorage.setItem(TRAIL_BREAKDOWN_VIEW_KEY, active);
+    this.setState({ active });
+    this.publishEvent(new BreakdownLayoutChange(active));
   };
 
   public static Component = ({ model }: SceneComponentProps<LayoutSwitcher>) => {
-    const { layouts, options } = model.useState();
-    const activeLayout = model.useActiveLayout();
+    const { layouts, options, active } = model.useState();
 
-    const index = options.findIndex((o) => o.value === activeLayout);
+    const index = options.findIndex((o) => o.value === active);
     if (index === -1) {
       return null;
     }
