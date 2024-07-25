@@ -89,7 +89,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-squad-backend
 )
 
-require dagger.io/dagger v0.12.3
+require dagger.io/dagger v0.11.9
 
 require (
 	github.com/99designs/gqlgen v0.17.49 // indirect
