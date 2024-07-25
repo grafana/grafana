@@ -61,7 +61,7 @@ require (
 	github.com/golang/snappy v0.0.4 // @grafana/alerting-squad-backend
 	github.com/google/go-cmp v0.6.0 // @grafana/backend-platform
 	github.com/google/uuid v1.4.0 // @grafana/backend-platform
-	github.com/google/wire v0.5.0 // @grafana/backend-platform
+	github.com/google/wire v0.6.0 // @grafana/backend-platform
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20231101090315-bf12694896a8 // @grafana/alerting-squad-backend
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
@@ -113,9 +113,9 @@ require (
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // @grafana/alerting-squad-backend
 	golang.org/x/net v0.25.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.15.0 // @grafana/grafana-authnz-team
-	golang.org/x/sync v0.4.0 // @grafana/alerting-squad-backend
+	golang.org/x/sync v0.6.0 // @grafana/alerting-squad-backend
 	golang.org/x/time v0.3.0 // @grafana/backend-platform
-	golang.org/x/tools v0.13.0 // @grafana/grafana-as-code
+	golang.org/x/tools v0.17.0 // @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.12.0 // @grafana/observability-metrics
 	google.golang.org/api v0.148.0 // @grafana/backend-platform
 	google.golang.org/grpc v1.59.0 // @grafana/plugins-platform-backend
@@ -269,7 +269,7 @@ require (
 	github.com/weaveworks/common v0.0.0-20230511094633-334485600903 // @grafana/alerting-squad-backend
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // @grafana/grafana-as-code
 	go.opentelemetry.io/contrib/samplers/jaegerremote v0.15.1 // @grafana/backend-platform
-	golang.org/x/mod v0.12.0 // @grafana/backend-platform
+	golang.org/x/mod v0.14.0 // @grafana/backend-platform
 	gopkg.in/square/go-jose.v2 v2.6.0 // @grafana/grafana-authnz-team
 	k8s.io/utils v0.0.0-20230406110748-d93618cff8a2 // @grafana/partner-datasources
 )
