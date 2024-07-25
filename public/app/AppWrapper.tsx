@@ -1,8 +1,8 @@
 import { Action, KBarProvider } from 'kbar';
 import { Component, ComponentType } from 'react';
 import { Provider } from 'react-redux';
-import { Router, Redirect, Switch, RouteComponentProps } from 'react-router-dom';
-import { CompatRouter, CompatRoute } from 'react-router-dom-v5-compat';
+import { Redirect, RouteComponentProps, Router, Switch } from 'react-router-dom';
+import { CompatRoute, CompatRouter } from 'react-router-dom-v5-compat';
 
 import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
 import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, PortalContainer, Stack } from '@grafana/ui';
@@ -107,6 +107,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                   <CompatRouter>
                     <ModalsContextProvider>
                       <GlobalStyles />
+                      <PortalContainer />
                       <div className="grafana-app">
                         <AppChrome>
                           <AngularRoot />
@@ -124,7 +125,6 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                       </div>
                       <LiveConnectionWarning />
                       <ModalRoot />
-                      <PortalContainer />
                     </ModalsContextProvider>
                   </CompatRouter>
                 </Router>
