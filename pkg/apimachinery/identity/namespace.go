@@ -38,14 +38,14 @@ func ParseType(str string) (IdentityType, error) {
 	case string(TypeAccessPolicy):
 		return TypeAccessPolicy, nil
 	default:
-		return "", ErrInvalidTypedID.Errorf("got invalid namespace %s", str)
+		return "", ErrInvalidTypedID.Errorf("got invalid identity type %s", str)
 	}
 }
 
-// IsIdentityType returns true if namespace matches any expected namespace
-func IsIdentityType(kind IdentityType, expected ...IdentityType) bool {
+// IsIdentityType returns true if type matches any expected identity type
+func IsIdentityType(typ IdentityType, expected ...IdentityType) bool {
 	for _, e := range expected {
-		if kind == e {
+		if typ == e {
 			return true
 		}
 	}
@@ -56,53 +56,53 @@ func IsIdentityType(kind IdentityType, expected ...IdentityType) bool {
 var AnonymousTypedID = NewTypedID(TypeAnonymous, 0)
 
 func ParseTypedID(str string) (TypedID, error) {
-	var namespaceID TypedID
+	var typeID TypedID
 
 	parts := strings.Split(str, ":")
 	if len(parts) != 2 {
-		return namespaceID, ErrInvalidTypedID.Errorf("expected namespace id to have 2 parts")
+		return typeID, ErrInvalidTypedID.Errorf("expected typed id to have 2 parts")
 	}
 
-	namespace, err := ParseType(parts[0])
+	t, err := ParseType(parts[0])
 	if err != nil {
-		return namespaceID, err
+		return typeID, err
 	}
 
-	namespaceID.id = parts[1]
-	namespaceID.namespace = namespace
+	typeID.id = parts[1]
+	typeID.t = t
 
-	return namespaceID, nil
+	return typeID, nil
 }
 
 // MustParseTypedID parses namespace id, it will panic if it fails to do so.
 // Suitable to use in tests or when we can guarantee that we pass a correct format.
 func MustParseTypedID(str string) TypedID {
-	namespaceID, err := ParseTypedID(str)
+	typeID, err := ParseTypedID(str)
 	if err != nil {
 		panic(err)
 	}
-	return namespaceID
+	return typeID
 }
 
-func NewTypedID(namespace IdentityType, id int64) TypedID {
+func NewTypedID(t IdentityType, id int64) TypedID {
 	return TypedID{
-		id:        strconv.FormatInt(id, 10),
-		namespace: namespace,
+		id: strconv.FormatInt(id, 10),
+		t:  t,
 	}
 }
 
 // NewTypedIDString creates a new TypedID with a string id
-func NewTypedIDString(namespace IdentityType, id string) TypedID {
+func NewTypedIDString(t IdentityType, id string) TypedID {
 	return TypedID{
-		id:        id,
-		namespace: namespace,
+		id: id,
+		t:  t,
 	}
 }
 
 // FIXME: use this instead of encoded string through the codebase
 type TypedID struct {
-	id        string
-	namespace IdentityType
+	id string
+	t  IdentityType
 }
 
 func (ni TypedID) ID() string {
@@ -124,13 +124,13 @@ func (ni TypedID) ParseInt() (int64, error) {
 }
 
 func (ni TypedID) Type() IdentityType {
-	return ni.namespace
+	return ni.t
 }
 
 func (ni TypedID) IsType(expected ...IdentityType) bool {
-	return IsIdentityType(ni.namespace, expected...)
+	return IsIdentityType(ni.t, expected...)
 }
 
 func (ni TypedID) String() string {
-	return fmt.Sprintf("%s:%s", ni.namespace, ni.id)
+	return fmt.Sprintf("%s:%s", ni.t, ni.id)
 }

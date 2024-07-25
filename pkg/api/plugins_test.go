@@ -87,7 +87,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			hs.Cfg = setting.NewCfg()
 			hs.Cfg.PluginAdminEnabled = tc.pluginAdminEnabled
 			hs.Cfg.PluginAdminExternalManageEnabled = tc.pluginAdminExternalManageEnabled
-			hs.Cfg.RBACSingleOrganization = tc.singleOrganization
+			hs.Cfg.RBAC.SingleOrganization = tc.singleOrganization
 
 			hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
 			hs.accesscontrolService = &actest.FakeService{}
@@ -109,6 +109,8 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			hs.authnService = &authntest.FakeService{
 				ExpectedIdentity: expectedIdentity,
 			}
+
+			hs.log = log.NewNopLogger()
 		})
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
@@ -741,7 +743,7 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 			require.NoError(t, err)
 
 			hs.Cfg = setting.NewCfg()
-			hs.Cfg.RBACSingleOrganization = tt.singleOrg
+			hs.Cfg.RBAC.SingleOrganization = tt.singleOrg
 			hs.pluginStore = &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{tt.plugin},
 			}

@@ -11,8 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
+	"github.com/grafana/grafana/pkg/services/cloudmigration/gmsclient"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -22,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	secretsfakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
@@ -436,12 +439,14 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 			featuremgmt.FlagDashboardRestore),
 		sqlStore,
 		dsService,
+		secretskv.NewFakeSQLSecretsKVStore(t),
 		secretsService,
 		rr,
 		prometheus.DefaultRegisterer,
 		tracer,
 		dashboardService,
 		mockFolder,
+		kvstore.ProvideService(sqlStore),
 	)
 	require.NoError(t, err)
 
@@ -453,6 +458,7 @@ type gmsClientMock struct {
 	startSnapshotCalled   int
 	getStatusCalled       int
 	createUploadUrlCalled int
+	reportEventCalled     int
 
 	getSnapshotResponse *cloudmigration.GetSnapshotStatusResponse
 }
@@ -479,4 +485,8 @@ func (m *gmsClientMock) GetSnapshotStatus(_ context.Context, _ cloudmigration.Cl
 func (m *gmsClientMock) CreatePresignedUploadUrl(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) (string, error) {
 	m.createUploadUrlCalled++
 	return "http://localhost:3000", nil
+}
+
+func (m *gmsClientMock) ReportEvent(context.Context, cloudmigration.CloudMigrationSession, gmsclient.EventRequestDTO) {
+	m.reportEventCalled++
 }

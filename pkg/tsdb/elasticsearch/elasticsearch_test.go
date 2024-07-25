@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 

@@ -15,13 +15,13 @@ var (
 type noopService struct{}
 
 // Init implements ResourceServer.
-func (n *noopService) Init() error {
+func (n *noopService) Init(context.Context) error {
 	return nil
 }
 
 // Stop implements ResourceServer.
-func (n *noopService) Stop() {
-	// nothing
+func (n *noopService) Stop(context.Context) error {
+	return nil
 }
 
 // IsHealthy implements ResourceServer.

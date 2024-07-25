@@ -29,11 +29,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ plugins.RoleRegistry = &Service{}
+var _ pluginaccesscontrol.RoleRegistry = &Service{}
 
 const (
 	cacheTTL = 60 * time.Second
@@ -117,7 +118,7 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
-	if !s.cfg.RBACPermissionCache || !user.HasUniqueId() {
+	if !s.cfg.RBAC.PermissionCache || !user.HasUniqueId() {
 		return s.getUserPermissions(ctx, user, options)
 	}
 
