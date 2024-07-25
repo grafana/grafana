@@ -20,6 +20,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -33,11 +34,16 @@ type IdentityAPIBuilder struct {
 }
 
 func RegisterAPIService(
+	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	svcTeam team.Service,
 	svcUser user.Service,
 
 ) *IdentityAPIBuilder {
+	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+		return nil // skip registration unless opting into experimental apis
+	}
+
 	builder := &IdentityAPIBuilder{
 		svcTeam: svcTeam,
 		svcUser: svcUser,

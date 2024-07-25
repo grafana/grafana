@@ -59,8 +59,9 @@ func (s *legacyServiceAccountStorage) List(ctx context.Context, options *interna
 		return nil, err
 	}
 	query := &user.ListUsersCommand{
-		OrgID: ns.OrgID,
-		Limit: options.Limit,
+		OrgID:            ns.OrgID,
+		Limit:            options.Limit,
+		IsServiceAccount: true,
 	}
 	if options.Continue != "" {
 		query.ContinueID, err = strconv.ParseInt(options.Continue, 10, 64)
