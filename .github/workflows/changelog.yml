@@ -3,6 +3,7 @@ on:
   workflow_call:
     inputs:
       version:
+        type: string
         required: true
         description: 'Target release version (semver, git tag, branch or commit)'
       target:
@@ -12,14 +13,15 @@ on:
       dry_run:
         required: false
         default: false
-        type: bool
+        type: boolean
       latest:
         required: false
         default: false
-        type: bool
+        type: boolean
   workflow_dispatch:
     inputs:
       version:
+        type: string
         required: true
         description: 'Target release version (semver, git tag, branch or commit)'
       target:
@@ -29,13 +31,14 @@ on:
       dry_run:
         required: false
         default: false
-        type: bool
+        type: boolean
       latest:
         required: false
         default: false
-        type: bool
+        type: boolean
 
 permissions:
+  contents: write
   pull-requests: write
 
 jobs:
@@ -44,12 +47,6 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: "Generate token"
-        id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-        with:
-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: "Checkout Grafana repo"
         uses: "actions/checkout@v4"
         with:
@@ -69,7 +66,7 @@ jobs:
         id: changelog
         uses: ./.github/workflows/actions/changelog
         with:
-          github_token: ${{ steps.generate_token.outputs.token }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           target: v${{ inputs.version }}
           output_file: changelog_items.md
       - name: "Patch CHANGELOG.md"
