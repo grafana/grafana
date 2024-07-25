@@ -126,7 +126,7 @@ jobs:
 
       - name: Git push
         if: ${{ inputs.dry_run }} != true
-        run: git push
+        run: git push --set-upstream origin release/${{ github.run_id }}/${{ inputs.version }}
 
       - name: Create PR without backports
         if: "${{ inputs.backport == '' }}"
