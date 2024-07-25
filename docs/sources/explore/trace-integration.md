@@ -26,9 +26,10 @@ You can use Explore to query and visualize traces from tracing data sources. Sup
 
 If you are getting started working with traces in Tempo refer to the following documents:
 
+- [Get started with Grafana Tempo](docs/<TEMPO_VERSION>/latest/getting-started/)
 - [Trace structure](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/trace-structure/#trace-structure)
-- [How TraceQL works](/docs/tempo/latest/traceql/architecture/)
-- [Best practices for tracing](/docs/grafana/latest/datasources/tempo/tracing-best-practices/)  
+- [How TraceQL works](/docs/tempo/<TEMPO_VERSION>/traceql/architecture/)
+- [Best practices for tracing](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/tracing-best-practices/)  
 
 Learn more about how to use traces to troubleshoot issues by reading [Use traces to find solutions](https://grafana.com/docs/tempo/<TEMPO_VERSION>/introduction/solutions-with-traces/).
 
@@ -40,7 +41,7 @@ For information on how to use the query editor to create queries for tracing dat
 
 ## Trace view
 
-Grafana's trace view provides an overview of a a request as it traverses services in your architecture or distributed system. The following sections provide detail on various elements of the trace view.
+Grafana's trace view provides an overview of a request as it travels through your system. The following sections provide detail on various elements of the trace view.
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view.png" class="docs-image--no-shadow" max-width= "900px" caption="Trace view" >}}
 
