@@ -77,7 +77,6 @@ jobs:
 
       - name: Create branch
         run: git checkout -b "release/${{ github.run_id }}/${{ inputs.version }}"
-
       - name: Generate changelog
         id: changelog
         uses: ./.grafana-main/.github/workflows/actions/changelog
@@ -85,7 +84,8 @@ jobs:
           github_token: ${{ steps.generate_token.outputs.token }}
           target: v${{ inputs.version }}
           output_file: changelog_items.md
-
+      - name: Remove `main` checkout of grafana
+        run: rm -rf .grafana-main
       - name: Patch CHANGELOG.md
         run: |
           # Prepare CHANGELOG.md content with version delimiters
