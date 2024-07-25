@@ -84,8 +84,6 @@ jobs:
           github_token: ${{ steps.generate_token.outputs.token }}
           target: v${{ inputs.version }}
           output_file: changelog_items.md
-      - name: Remove `main` checkout of grafana
-        run: rm -rf .grafana-main
       - name: Patch CHANGELOG.md
         run: |
           # Prepare CHANGELOG.md content with version delimiters
@@ -126,6 +124,8 @@ jobs:
         with:
           version: 'patch'
 
+      - name: Remove `main` checkout of grafana
+        run: rm -rf .grafana-main
       - name: Add package.json changes
         run: |
           git add .
