@@ -26,7 +26,7 @@ var TeamResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 )
 
 var ServiceAccountResourceInfo = common.NewResourceInfo(GROUP, VERSION,
-	"serviceaccountlist", "serviceaccount", "ServiceAccount",
+	"serviceaccounts", "serviceaccount", "ServiceAccount",
 	func() runtime.Object { return &ServiceAccount{} },
 	func() runtime.Object { return &ServiceAccountList{} },
 )
