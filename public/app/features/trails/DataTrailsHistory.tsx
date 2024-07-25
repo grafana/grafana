@@ -75,8 +75,6 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
       // We always want to ensure in initial 'start' step
       this.addTrailStep(trail, 'start');
 
-      console.log('_onActivate');
-
       if (trail.state.metric) {
         // But if our current trail has a metric, we want to remove it and the topScene,
         // so that the "start" step always displays a metric select screen.
