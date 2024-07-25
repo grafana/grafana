@@ -1,3 +1,18 @@
+<!-- 11.1.1 START -->
+
+# 11.1.1 (2024-07-25)
+
+### Bug fixes
+
+- **Alerting:** Skip fetching alerts for unsaved dashboards [#90074](https://github.com/grafana/grafana/pull/90074), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Skip loading alert rules for dashboards when disabled [#89905](https://github.com/grafana/grafana/pull/89905), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Support `utf8_strict_mode: false` in Mimir [#90148](https://github.com/grafana/grafana/pull/90148), [@gillesdemey](https://github.com/gillesdemey)
+- **Scenes:** Fixes issue with panel repeat height calculation [#90232](https://github.com/grafana/grafana/pull/90232), [@kaydelaney](https://github.com/kaydelaney)
+- **Table Panel:** Fix Image hover without datalinks [#89922](https://github.com/grafana/grafana/pull/89922), [@codeincarnate](https://github.com/codeincarnate)
+- **Tempo:** Fix grpc streaming support over pdc-agent [#90055](https://github.com/grafana/grafana/pull/90055), [@taylor-s-dean](https://github.com/taylor-s-dean)
+- **RBAC**: Allow plugins to use scoped actions [#90946](https://github.com/grafana/grafana/pull/90946), [@gamab](https://github.com/gamab)
+
+<!-- 11.1.1 END -->
 <!-- 11.1.0 START -->
 
 # 11.1.0 (2024-06-21)
