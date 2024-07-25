@@ -18,7 +18,7 @@ export default function MigrateToCloud() {
         onRemove={
           feedbackURL
             ? () => {
-                window.open(feedbackURL, '_blank');
+                window.location.href = feedbackURL;
               }
             : undefined
         }
