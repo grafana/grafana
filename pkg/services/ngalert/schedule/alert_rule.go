@@ -251,6 +251,8 @@ func (a *alertRule) Run() error {
 				logger.Debug("Evaluation channel has been closed. Exiting")
 				return nil
 			}
+			f := ctx.Fingerprint()
+			logger = logger.New("version", ctx.rule.Version, "fingerprint", f, "now", ctx.scheduledAt)
 
 			func() {
 				orgID := fmt.Sprint(a.key.OrgID)
@@ -265,11 +267,11 @@ func (a *alertRule) Run() error {
 
 				for attempt := int64(1); attempt <= a.maxAttempts; attempt++ {
 					isPaused := ctx.rule.IsPaused
-					f := ctx.Fingerprint()
+
 					// Do not clean up state if the eval loop has just started.
 					var needReset bool
 					if currentFingerprint != 0 && currentFingerprint != f {
-						logger.Debug("Got a new version of alert rule. Clear up the state", "fingerprint", f)
+						logger.Debug("Got a new version of alert rule. Clear up the state", "current_fingerprint", currentFingerprint, "fingerprint", f)
 						needReset = true
 					}
 					// We need to reset state if the loop has started and the alert is already paused. It can happen,
@@ -307,9 +309,9 @@ func (a *alertRule) Run() error {
 						logger.Error("Skip evaluation and updating the state because the context has been cancelled", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt)
 						return
 					}
-
+					logger.Debug("Start evaluating rule", "attempt", attempt)
 					retry := attempt < a.maxAttempts
-					err := a.evaluate(tracingCtx, f, attempt, ctx, span, retry)
+					err := a.evaluate(tracingCtx, ctx, span, retry, logger)
 					// This is extremely confusing - when we exhaust all retry attempts, or we have no retryable errors
 					// we return nil - so technically, this is meaningless to know whether the evaluation has errors or not.
 					span.End()
@@ -317,10 +319,10 @@ func (a *alertRule) Run() error {
 						return
 					}
 
-					logger.Error("Failed to evaluate rule", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt, "error", err)
+					logger.Error("Failed to evaluate rule", "attempt", attempt, "error", err)
 					select {
 					case <-tracingCtx.Done():
-						logger.Error("Context has been cancelled while backing off", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt)
+						logger.Error("Context has been cancelled while backing off", "attempt", attempt)
 						return
 					case <-time.After(retryDelay):
 						continue
@@ -345,7 +347,7 @@ func (a *alertRule) Run() error {
 	}
 }
 
-func (a *alertRule) evaluate(ctx context.Context, f fingerprint, attempt int64, e *Evaluation, span trace.Span, retry bool) error {
+func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span, retry bool, logger log.Logger) error {
 	orgID := fmt.Sprint(a.key.OrgID)
 	evalAttemptTotal := a.metrics.EvalAttemptTotal.WithLabelValues(orgID)
 	evalAttemptFailures := a.metrics.EvalAttemptFailures.WithLabelValues(orgID)
@@ -353,7 +355,6 @@ func (a *alertRule) evaluate(ctx context.Context, f fingerprint, attempt int64, 
 	processDuration := a.metrics.ProcessDuration.WithLabelValues(orgID)
 	sendDuration := a.metrics.SendDuration.WithLabelValues(orgID)
 
-	logger := a.logger.FromContext(ctx).New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "now", e.scheduledAt)
 	start := a.clock.Now()
 
 	evalCtx := eval.NewContextWithPreviousResults(ctx, SchedulerUserFor(e.rule.OrgID), a.newLoadedMetricsReader(e.rule))
