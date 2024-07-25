@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 
 	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
+	identityapi "github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -154,5 +156,15 @@ func (b *IdentityAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 }
 
 func (b *IdentityAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return nil // default authorizer is fine
+	return authorizer.AuthorizerFunc(
+		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
+			user, err := identityapi.GetRequester(ctx)
+			if err != nil {
+				return authorizer.DecisionDeny, "no identity found", err
+			}
+			if user.GetIsGrafanaAdmin() {
+				return authorizer.DecisionAllow, "", nil
+			}
+			return authorizer.DecisionDeny, "only grafana admins have access for now", nil
+		})
 }
