@@ -792,6 +792,9 @@
       "split-widen": "Widen pane"
     }
   },
+  "explore-metrics": {
+    "viewBy": "View by"
+  },
   "export": {
     "json": {
       "cancel-button": "Cancel",
@@ -1066,6 +1069,11 @@
       "body": "Grafana Cloud has a generous free plan and a 14 day unlimited usage trial. After your trial expires, you'll be billed based on usage over the free plan limits.",
       "link-title": "Grafana Cloud pricing",
       "title": "How much does it cost?"
+    },
+    "public-preview": {
+      "button-text": "Give feedback",
+      "message": "Help us improve this feature by providing feedback and reporting any issues.",
+      "title": "Migrate to Grafana Cloud is in public preview"
     },
     "resource-status": {
       "error-details-button": "Details",

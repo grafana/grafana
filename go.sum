@@ -2303,8 +2303,8 @@ github.com/gorilla/websocket v1.4.1/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWmnc=
 github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/grafana/alerting v0.0.0-20240712142914-5558735b4462 h1:MWpvVoPcSej4YfxSIuAllr9vg0UgVEG5CQifD5fK+ps=
-github.com/grafana/alerting v0.0.0-20240712142914-5558735b4462/go.mod h1:DLj8frbtCaITljC2jc0L85JQViPF3mPfOSiYhm1osso=
+github.com/grafana/alerting v0.0.0-20240723124849-f2ab7c7b8f7d h1:d2NZeTs+zBPVMd8uOOV5+6lyfs0BCDKxtiNxIMjnPNA=
+github.com/grafana/alerting v0.0.0-20240723124849-f2ab7c7b8f7d/go.mod h1:DLj8frbtCaITljC2jc0L85JQViPF3mPfOSiYhm1osso=
 github.com/grafana/authlib v0.0.0-20240711083030-f139ff397f7b h1:gSVS/MIIP3C9ZbGaboOCtzDm3D5roR4m6NDkxyAMjyI=
 github.com/grafana/authlib v0.0.0-20240711083030-f139ff397f7b/go.mod h1:+MjD5sxxgLOIvw0ox18wJmjBzz8tOECo7quiiZAmgJY=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=

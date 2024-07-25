@@ -163,12 +163,17 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		return nil, err
 	}
 
+	// remove user access if empty. Happens if grafana-auth-app is not injected
+	if sec := treeRoot.FindById(navtree.NavIDCfgAccess); sec != nil && (sec.Children == nil || len(sec.Children) == 0) {
+		treeRoot.RemoveSectionByID(navtree.NavIDCfgAccess)
+	}
+
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPinNavItems) {
 		bookmarks := s.buildBookmarksNavLinks(prefs, treeRoot)
 
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:           "Bookmarks",
-			Id:             "bookmarks",
+			Id:             navtree.NavIDBookmarks,
 			Icon:           "bookmark",
 			SortWeight:     navtree.WeightBookmarks,
 			Children:       bookmarks,
@@ -292,7 +297,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*navtree.NavLink, error) {
 	starredItemsChildNavs := []*navtree.NavLink{}
 
-	userID, _ := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	userID, _ := identity.UserIdentifier(c.SignedInUser.GetTypedID())
 	query := star.GetUserStarsQuery{
 		UserID: userID,
 	}
@@ -355,6 +360,7 @@ func (s *ServiceImpl) buildBookmarksNavLinks(prefs *pref.Preference, treeRoot *n
 					PluginID:       item.PluginID,
 					IsCreateAction: item.IsCreateAction,
 					Keywords:       item.Keywords,
+					ParentItem:     &navtree.NavLink{Id: navtree.NavIDBookmarks},
 				})
 			}
 		}

@@ -22,7 +22,7 @@
     "@testing-library/user-event": "14.5.2",
     "@types/jest": "29.5.12",
     "@types/lodash": "4.17.7",
-    "@types/node": "20.14.11",
+    "@types/node": "20.14.12",
     "@types/react": "18.3.3",
     "@types/testing-library__jest-dom": "5.14.9",
     "ts-node": "10.9.2",
@@ -37,5 +37,5 @@
     "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
     "dev": "webpack -w -c ./webpack.config.ts --env development"
   },
-  "packageManager": "yarn@4.2.2"
+  "packageManager": "yarn@4.3.1"
 }
