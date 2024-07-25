@@ -120,16 +120,16 @@ func (b *IdentityAPIBuilder) GetAPIGroupInfo(
 				{Name: "Created At", Type: "date"},
 			},
 			func(obj any) ([]interface{}, error) {
-				m, ok := obj.(*identity.User)
-				if !ok {
-					return nil, fmt.Errorf("expected playlist")
+				u, ok := obj.(*identity.User)
+				if ok {
+					return []interface{}{
+						u.Name,
+						u.Spec.Login,
+						u.Spec.Email,
+						u.CreationTimestamp.UTC().Format(time.RFC3339),
+					}, nil
 				}
-				return []interface{}{
-					m.Name,
-					m.Spec.Login,
-					m.Spec.Email,
-					m.CreationTimestamp.UTC().Format(time.RFC3339),
-				}, nil
+				return nil, fmt.Errorf("expected user")
 			},
 		),
 	}
@@ -137,9 +137,29 @@ func (b *IdentityAPIBuilder) GetAPIGroupInfo(
 
 	sa := identity.ServiceAccountResourceInfo
 	saStore := &legacyServiceAccountStorage{
-		service:        b.svcUser,
-		resourceInfo:   sa,
-		tableConverter: userStore.tableConverter,
+		service:      b.svcUser,
+		resourceInfo: sa,
+		tableConverter: gapiutil.NewTableConverter(
+			user.GroupResource(),
+			[]metav1.TableColumnDefinition{
+				{Name: "Name", Type: "string", Format: "name"},
+				{Name: "Account", Type: "string", Format: "string", Description: "The service account email"},
+				{Name: "Email", Type: "string", Format: "string", Description: "The user email"},
+				{Name: "Created At", Type: "date"},
+			},
+			func(obj any) ([]interface{}, error) {
+				u, ok := obj.(*identity.ServiceAccount)
+				if ok {
+					return []interface{}{
+						u.Name,
+						u.Spec.Name,
+						u.Spec.Email,
+						u.CreationTimestamp.UTC().Format(time.RFC3339),
+					}, nil
+				}
+				return nil, fmt.Errorf("expected user")
+			},
+		),
 	}
 	storage[sa.StoragePath()] = saStore
 

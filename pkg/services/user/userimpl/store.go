@@ -587,6 +587,7 @@ func (ss *sqlStore) List(ctx context.Context, query *user.ListUsersCommand) (*us
 	result := &user.ListUserResult{
 		Users: make([]*user.User, 0),
 	}
+	max := ""
 	err := ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
 		sess := dbSess.Table("user")
 		sess.Where("id >= ? AND is_service_account = ?", query.ContinueID, query.IsServiceAccount)
@@ -596,9 +597,15 @@ func (ss *sqlStore) List(ctx context.Context, query *user.ListUsersCommand) (*us
 		}
 
 		// Set the revision version
-		_, err = dbSess.Table("user").Select("MAX(id)").Get(&result.MaxID)
+		_, err = dbSess.Table("user").Select("MAX(updated)").Get(&max)
 		return err
 	})
+	if max != "" {
+		t, err := time.Parse(time.DateTime, max)
+		if err == nil {
+			result.RV = t.UnixMilli()
+		}
+	}
 	if len(result.Users) > limit {
 		result.ContinueID = result.Users[limit].ID
 		result.Users = result.Users[:limit]

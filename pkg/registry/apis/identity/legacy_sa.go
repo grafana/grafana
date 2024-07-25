@@ -80,8 +80,8 @@ func (s *legacyServiceAccountStorage) List(ctx context.Context, options *interna
 	if found.ContinueID > 0 {
 		list.ListMeta.Continue = strconv.FormatInt(found.ContinueID, 10)
 	}
-	if found.MaxID > 0 {
-		list.ListMeta.ResourceVersion = strconv.FormatInt(found.MaxID, 10)
+	if found.RV > 0 {
+		list.ListMeta.ResourceVersion = strconv.FormatInt(found.RV, 10)
 	}
 	return list, err
 }

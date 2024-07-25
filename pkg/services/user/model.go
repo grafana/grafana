@@ -108,7 +108,7 @@ type ListUsersCommand struct {
 type ListUserResult struct {
 	Users      []*User
 	ContinueID int64
-	MaxID      int64
+	RV         int64
 }
 
 type SearchUsersQuery struct {
