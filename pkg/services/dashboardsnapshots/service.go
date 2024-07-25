@@ -58,7 +58,7 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg dashboardsnapshot.S
 		cmd.DashboardCreateCommand.Name = "Unnamed snapshot"
 	}
 
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetTypedID())
 	if err != nil {
 		c.JsonApiErr(http.StatusInternalServerError,
 			"Failed to create external snapshot", err)

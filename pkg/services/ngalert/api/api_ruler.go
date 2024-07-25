@@ -76,7 +76,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 		return toNamespaceErrorResponse(err)
 	}
 
-	userNamespace, id := c.SignedInUser.GetNamespacedID()
+	userNamespace, id := c.SignedInUser.GetTypedID()
 	var loggerCtx = []any{
 		"userId",
 		id,
@@ -283,7 +283,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 	for groupKey, rules := range configs {
 		folder, ok := namespaceMap[groupKey.NamespaceUID]
 		if !ok {
-			userNamespace, id := c.SignedInUser.GetNamespacedID()
+			userNamespace, id := c.SignedInUser.GetTypedID()
 			srv.log.Error("Namespace not visible to the user", "user", id, "userNamespace", userNamespace, "namespace", groupKey.NamespaceUID)
 			continue
 		}
@@ -359,7 +359,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 	var finalChanges *store.GroupDelta
 	var dbConfig *ngmodels.AlertConfiguration
 	err := srv.xactManager.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
-		userNamespace, id := c.SignedInUser.GetNamespacedID()
+		userNamespace, id := c.SignedInUser.GetTypedID()
 		logger := srv.log.New("namespace_uid", groupKey.NamespaceUID, "group",
 			groupKey.RuleGroup, "org_id", groupKey.OrgID, "user_id", id, "userNamespace", userNamespace)
 		groupChanges, err := store.CalculateChanges(tranCtx, srv.store, groupKey, rules)
@@ -454,7 +454,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 		}
 
 		if len(finalChanges.New) > 0 {
-			userID, _ := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+			userID, _ := identity.UserIdentifier(c.SignedInUser.GetTypedID())
 			limitReached, err := srv.QuotaService.CheckQuotaReached(tranCtx, ngmodels.QuotaTargetSrv, &quota.ScopeParameters{
 				OrgID:  c.SignedInUser.GetOrgID(),
 				UserID: userID,

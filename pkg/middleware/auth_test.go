@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -62,7 +63,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedIn should return 200 for anonymous user",
 			path:           "/api/secure",
 			authMiddleware: ReqSignedIn,
-			identity:       &authn.Identity{ID: authn.AnonymousNamespaceID},
+			identity:       &authn.Identity{ID: identity.AnonymousTypedID},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
 		},
@@ -70,7 +71,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedIn should return redirect anonymous user with forceLogin query string",
 			path:           "/secure?forceLogin=true",
 			authMiddleware: ReqSignedIn,
-			identity:       &authn.Identity{ID: authn.AnonymousNamespaceID},
+			identity:       &authn.Identity{ID: identity.AnonymousTypedID},
 			expecedReached: false,
 			expectedCode:   http.StatusFound,
 		},
@@ -78,7 +79,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedIn should return redirect anonymous user when orgId in query string is different from currently used",
 			path:           "/secure?orgId=2",
 			authMiddleware: ReqSignedIn,
-			identity:       &authn.Identity{ID: authn.AnonymousNamespaceID, OrgID: 1},
+			identity:       &authn.Identity{ID: identity.AnonymousTypedID, OrgID: 1},
 			expecedReached: false,
 			expectedCode:   http.StatusFound,
 		},
@@ -86,7 +87,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedInNoAnonymous should return 401 for anonymous user",
 			path:           "/api/secure",
 			authMiddleware: ReqSignedInNoAnonymous,
-			identity:       &authn.Identity{ID: authn.AnonymousNamespaceID},
+			identity:       &authn.Identity{ID: identity.AnonymousTypedID},
 			expecedReached: false,
 			expectedCode:   http.StatusUnauthorized,
 		},
@@ -94,7 +95,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedInNoAnonymous should return 200 for authenticated user",
 			path:           "/api/secure",
 			authMiddleware: ReqSignedInNoAnonymous,
-			identity:       &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
+			identity:       &authn.Identity{ID: identity.MustParseTypedID("user:1")},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
 		},
@@ -102,7 +103,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "snapshot public mode disabled should return 200 for authenticated user",
 			path:           "/api/secure",
 			authMiddleware: SnapshotPublicModeOrSignedIn(&setting.Cfg{SnapshotPublicMode: false}),
-			identity:       &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
+			identity:       &authn.Identity{ID: identity.MustParseTypedID("user:1")},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
 		},

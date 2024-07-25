@@ -333,9 +333,9 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 
 func getUserID(v sql.NullString) string {
 	if v.String == "" {
-		return identity.NewNamespaceIDString(identity.NamespaceProvisioning, "").String()
+		return identity.NewTypedIDString(identity.TypeProvisioning, "").String()
 	}
-	return identity.NewNamespaceIDString(identity.NamespaceUser, v.String).String()
+	return identity.NewTypedIDString(identity.TypeUser, v.String).String()
 }
 
 // DeleteDashboard implements DashboardAccess.

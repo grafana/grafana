@@ -49,9 +49,9 @@ func (tapi *TeamAPI) createTeam(c *contextmodel.ReqContext) response.Response {
 	// if the request is authenticated using API tokens
 	// the SignedInUser is an empty struct therefore
 	// an additional check whether it is an actual user is required
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
+	namespace, identifier := c.SignedInUser.GetTypedID()
 	switch namespace {
-	case identity.NamespaceUser:
+	case identity.TypeUser:
 		userID, err := strconv.ParseInt(identifier, 10, 64)
 		if err != nil {
 			c.Logger.Error("Could not add creator to team because user id is not a number", "error", err)

@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -216,9 +217,9 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 	}
 
 	// Login is only supported for users
-	if !id.ID.IsNamespace(authn.NamespaceUser) {
+	if !id.ID.IsType(identity.TypeUser) {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()
-		return nil, authn.ErrUnsupportedIdentity.Errorf("expected identity of type user but got: %s", id.ID.Namespace())
+		return nil, authn.ErrUnsupportedIdentity.Errorf("expected identity of type user but got: %s", id.ID.Type())
 	}
 
 	userID, err := id.ID.ParseInt()
@@ -271,7 +272,7 @@ func (s *Service) RegisterPreLogoutHook(hook authn.PreLogoutHookFn, priority uin
 	s.preLogoutHooks.insert(hook, priority)
 }
 
-func (s *Service) Logout(ctx context.Context, user authn.Requester, sessionToken *auth.UserToken) (*authn.Redirect, error) {
+func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionToken *auth.UserToken) (*authn.Redirect, error) {
 	ctx, span := s.tracer.Start(ctx, "authn.Logout")
 	defer span.End()
 
@@ -280,7 +281,7 @@ func (s *Service) Logout(ctx context.Context, user authn.Requester, sessionToken
 		redirect.URL = s.cfg.SignoutRedirectUrl
 	}
 
-	if !user.GetID().IsNamespace(authn.NamespaceUser) {
+	if !user.GetID().IsType(identity.TypeUser) {
 		return redirect, nil
 	}
 
@@ -327,7 +328,7 @@ Default:
 	return redirect, nil
 }
 
-func (s *Service) ResolveIdentity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
+func (s *Service) ResolveIdentity(ctx context.Context, orgID int64, namespaceID identity.TypedID) (*authn.Identity, error) {
 	ctx, span := s.tracer.Start(ctx, "authn.ResolveIdentity")
 	defer span.End()
 
@@ -352,7 +353,7 @@ func (s *Service) RegisterClient(c authn.Client) {
 	}
 
 	if rc, ok := c.(authn.IdentityResolverClient); ok {
-		s.idenityResolverClients[rc.Namespace()] = rc
+		s.idenityResolverClients[rc.IdentityType().String()] = rc
 	}
 }
 
@@ -375,11 +376,11 @@ func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) er
 	return s.runPostAuthHooks(ctx, identity, r)
 }
 
-func (s *Service) resolveIdenity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
+func (s *Service) resolveIdenity(ctx context.Context, orgID int64, namespaceID identity.TypedID) (*authn.Identity, error) {
 	ctx, span := s.tracer.Start(ctx, "authn.resolveIdentity")
 	defer span.End()
 
-	if namespaceID.IsNamespace(authn.NamespaceUser) {
+	if namespaceID.IsType(identity.TypeUser) {
 		return &authn.Identity{
 			OrgID: orgID,
 			ID:    namespaceID,
@@ -390,7 +391,7 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, namespaceID a
 			}}, nil
 	}
 
-	if namespaceID.IsNamespace(authn.NamespaceServiceAccount) {
+	if namespaceID.IsType(identity.TypeServiceAccount) {
 		return &authn.Identity{
 			ID:    namespaceID,
 			OrgID: orgID,
@@ -401,9 +402,9 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, namespaceID a
 			}}, nil
 	}
 
-	resolver, ok := s.idenityResolverClients[namespaceID.Namespace().String()]
+	resolver, ok := s.idenityResolverClients[string(namespaceID.Type())]
 	if !ok {
-		return nil, authn.ErrUnsupportedIdentity.Errorf("no resolver for : %s", namespaceID.Namespace())
+		return nil, authn.ErrUnsupportedIdentity.Errorf("no resolver for : %s", namespaceID.Type())
 	}
 	return resolver.ResolveIdentity(ctx, orgID, namespaceID)
 }

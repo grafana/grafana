@@ -109,10 +109,10 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		req.FolderUid = folder.UID
 	}
 
-	namespace, identifier := req.User.GetNamespacedID()
+	namespace, identifier := req.User.GetTypedID()
 	userID := int64(0)
 
-	if namespace == identity.NamespaceUser || namespace == identity.NamespaceServiceAccount {
+	if namespace == identity.TypeUser || namespace == identity.TypeServiceAccount {
 		userID, _ = identity.IntIdentifier(namespace, identifier)
 	}
 
