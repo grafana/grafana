@@ -2,6 +2,7 @@ package gmsclient
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 
@@ -51,16 +52,34 @@ func (c *memoryClientImpl) MigrateData(
 	return &result, nil
 }
 
-func (c *memoryClientImpl) StartSnapshot(context.Context, cloudmigration.CloudMigrationSession) (*cloudmigration.StartSnapshotResponse, error) {
+func (c *memoryClientImpl) StartSnapshot(_ context.Context, sess cloudmigration.CloudMigrationSession) (*cloudmigration.StartSnapshotResponse, error) {
 	publicKey, _, err := box.GenerateKey(cryptoRand.Reader)
 	if err != nil {
 		return nil, fmt.Errorf("nacl: generating public and private key: %w", err)
 	}
+
+	snapshotUid := uuid.NewString()
+
+	metadataBuffer, err := json.Marshal(struct {
+		SnapshotID string `json:"snapshotID"`
+		StackID    string `json:"stackID"`
+		Slug       string `json:"slug"`
+	}{
+		SnapshotID: snapshotUid,
+		StackID:    fmt.Sprintf("%d", sess.StackID),
+		Slug:       sess.Slug,
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("marshalling metadata: %w", err)
+	}
+
 	c.snapshot = &cloudmigration.StartSnapshotResponse{
 		EncryptionKey:        publicKey[:],
-		SnapshotID:           uuid.NewString(),
+		SnapshotID:           snapshotUid,
 		MaxItemsPerPartition: 10,
 		Algo:                 "nacl",
+		Metadata:             metadataBuffer,
 	}
 
 	return c.snapshot, nil
