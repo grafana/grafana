@@ -55,7 +55,6 @@ func (rs *ReplStore) nextRepl() *SQLStore {
 	// then increment the index for the next call
 	atomic.AddUint64(&rs.next, 1)
 
-	rs.log.Debug("Using ReadReplica")
 	return selected
 }
 
@@ -92,7 +91,7 @@ func ProvideServiceWithReadReplica(primary *SQLStore, cfg *setting.Cfg,
 	for i, replCfg := range replCfgs {
 		// If the database_instrument_queries feature is enabled, wrap the driver with hooks.
 		if cfg.DatabaseInstrumentQueries {
-			replCfg.Type = WrapDatabaseReplDriverWithHooks(replCfg.Type, i, tracer)
+			replCfg.Type = WrapDatabaseReplDriverWithHooks(replCfg.Type, uint(i), tracer)
 		}
 
 		s, err := newReadOnlySQLStore(cfg, replCfg, features, bus, tracer)
