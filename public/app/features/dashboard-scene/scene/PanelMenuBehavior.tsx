@@ -32,6 +32,7 @@ import { DashboardScene } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
+import { SharePanelEmbedTab } from '../sharing/SharePanelEmbedTab';
 
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
@@ -91,6 +92,19 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
           const drawer = new ShareDrawer({
             title: t('share-panel.drawer.share-link-title', 'Link settings'),
             body: new SharePanelInternally({ panelRef: panel.getRef() }),
+          });
+
+          dashboard.showModal(drawer);
+        },
+      });
+      subMenu.push({
+        text: t('share-panel.menu.share-embed-title', 'Embed'),
+        iconClassName: 'arrow',
+        shortcut: 'p e',
+        onClick: () => {
+          const drawer = new ShareDrawer({
+            title: t('share-panel.menu.share-embed-title', 'Embed'),
+            body: new SharePanelEmbedTab({ panelRef: panel.getRef() }),
           });
 
           dashboard.showModal(drawer);

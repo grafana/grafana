@@ -14,6 +14,7 @@ import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
+import { SharePanelEmbedTab } from '../sharing/SharePanelEmbedTab';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
@@ -55,6 +56,17 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
         const drawer = new ShareDrawer({
           title: t('share-panel.drawer.share-link-title', 'Link settings'),
           body: new SharePanelInternally({ panelRef: vizPanel.getRef() }),
+        });
+
+        scene.showModal(drawer);
+      }),
+    });
+    keybindings.addBinding({
+      key: 'p e',
+      onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+        const drawer = new ShareDrawer({
+          title: t('share-panel.menu.share-embed-title', 'Embed'),
+          body: new SharePanelEmbedTab({ panelRef: vizPanel.getRef() }),
         });
 
         scene.showModal(drawer);
