@@ -29,7 +29,7 @@ If you are getting started working with traces in Tempo refer to the following d
 - [Get started with Grafana Tempo](docs/<TEMPO_VERSION>/latest/getting-started/)
 - [Trace structure](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/trace-structure/#trace-structure)
 - [How TraceQL works](/docs/tempo/<TEMPO_VERSION>/traceql/architecture/)
-- [Best practices for tracing](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/tracing-best-practices/)  
+- [Best practices for tracing](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/tracing-best-practices/)
 
 Learn more about how to use traces to troubleshoot issues by reading [Use traces to find solutions](https://grafana.com/docs/tempo/<TEMPO_VERSION>/introduction/solutions-with-traces/).
 
@@ -85,11 +85,12 @@ For more information about spans and traces, refer to [Introduction to tracing](
 
 Span details include:
 
-- **Span attributes** - Key/value pairs that provides context for spans. For example, if the span deals with calling another service via HTTP, an attribute could include the HTTP URL (maybe as the span attribute key `http.url`) and the HTTP status code returned (as the span attribute `http.status_code`). 
+- **Span attributes** - Key/value pairs that provides context for spans. For example, if the span deals with calling another service via HTTP, an attribute could include the HTTP URL (maybe as the span attribute key `http.url`) and the HTTP status code returned (as the span attribute `http.status_code`).
 
-- **Resource attributes** - Key/value pairs that describe the context of how the span was collected. 
+- **Resource attributes** - Key/value pairs that describe the context of how the span was collected.
 
 Refer to [Span and resource attributes](/docs/tempo/<TEMPO_VERSION>/operations/best-practices/#span-and-resource-attributes) for more detail.
+
 <!-- - Operation name.
 - Span metadata.
 - Tags: Any tags associated with this span.
@@ -128,13 +129,13 @@ Click the document icon to open a split view in Explore with the configured data
 
 ### Trace to metrics
 
-You can navigate from a span in a trace view directly to metrics relevant for that span. This feature is available for the Tempo, Jaeger, and Zipkin data sources.  
+You can navigate from a span in a trace view directly to metrics relevant for that span. This feature is available for the Tempo, Jaeger, and Zipkin data sources.
 
 Refer to each individual data source's documentation for configuration instructions. For Tempo refer to [Metrics from traces](/docs/tempo/<TEMPO_VERSION>t/getting-started/metrics-from-traces/#metrics-from-traces).
 
 ### Trace to profiles
 
-Using Trace to profiles, you can use Grafana’s ability to correlate different signals by adding the functionality to link between traces and profiles.   
+Using Trace to profiles, you can use Grafana’s ability to correlate different signals by adding the functionality to link between traces and profiles.
 
 For Tempo refer to [Trace to profiles](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source#trace-to-profiles) for configuration instructions.
 
@@ -147,7 +148,7 @@ You can also expand the node graph for a displayed trace. If the data source sup
 Refer to [Node graph](/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/node-graph/) for additional information.
 
 {{< admonition type="note" >}}
-The node graph requires data to be returned from the data source in a specific format to display correctly. Refer to [Data API](/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/node-graph/#data-api), [Nodes data frame structure](/docs/grafana/latest/panels-visualizations/visualizations/node-graph/#nodes-data-frame-structure) and [Node graph data requirements](/docs/grafana/latest/panels-visualizations/visualizations/node-graph/#data-requirements) for additional information and configuration instructions. 
+The node graph requires data to be returned from the data source in a specific format to display correctly. Refer to [Data API](/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/node-graph/#data-api), [Nodes data frame structure](/docs/grafana/latest/panels-visualizations/visualizations/node-graph/#nodes-data-frame-structure) and [Node graph data requirements](/docs/grafana/latest/panels-visualizations/visualizations/node-graph/#data-requirements) for additional information and configuration instructions.
 {{< /admonition >}}
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-node-graph.png" class="docs-image--no-shadow" max-width= "900px"  caption="Node graph" >}}
@@ -157,8 +158,8 @@ The node graph requires data to be returned from the data source in a specific f
 A service graph visualizes span metrics, including rates, error rates, and durations (RED), along with service relationships. Once the requirements are configured, this pre-configured view is immediately available.
 
 For additional information refer to the following documentation:
- - [Service Graph and Service Graph view](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/service-graph/)
- - [Service graph view](/docs/tempo/<TEMPO_VERSION>/metrics-generator/service-graph-view/) in Tempo documentation
+
+- [Service Graph and Service Graph view](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/service-graph/)
+- [Service graph view](/docs/tempo/<TEMPO_VERSION>/metrics-generator/service-graph-view/) in Tempo documentation
 
 {{< figure src="/static/img/docs/grafana-cloud/apm-overview.png" class="docs-image--no-shadow" max-width= "900px" caption="Service graph view" >}}
-
