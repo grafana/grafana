@@ -324,7 +324,6 @@ export function buildAllLayout(
       { value: 'grid', label: 'Grid' },
       { value: 'rows', label: 'Rows' },
     ],
-    activeBreakdownLayout: 'grid',
     onBreakdownLayoutChange,
     breakdownLayouts: [
       new SceneCSSGridLayout({
@@ -386,7 +385,6 @@ function buildNormalLayout(queryDef: AutoQueryDef, onBreakdownLayoutChange: Brea
       { value: 'grid', label: 'Grid' },
       { value: 'rows', label: 'Rows' },
     ],
-    activeBreakdownLayout: 'grid',
     onBreakdownLayoutChange,
     breakdownLayouts: [
       new SceneFlexLayout({
