@@ -133,12 +133,14 @@ func newReadOnlySQLStore(cfg *setting.Cfg, dbCfg *DatabaseConfig, features featu
 
 	// When there are multiple read replicas, we append an index to the driver name (ex: mysqlWithHooks11).
 	// Remove the index from the end of the driver name to get the original driver name that xorm and other libraries recognize.
-	reg := regexp.MustCompile("[0-9]+") // any number of digits
-	driverName := reg.ReplaceAllString(s.engine.DriverName(), "")
+	driverName := digitsRegexp.ReplaceAllString(s.engine.DriverName(), "")
 
 	s.dialect = migrator.NewDialect(driverName)
 	return s, nil
 }
+
+// digitsRegexp is used to remove the index from the end of the driver name.
+var digitsRegexp = regexp.MustCompile("[0-9]+")
 
 // initReadOnlyEngine initializes ss.engine for read-only operations. The database must be a fully-populated read replica.
 func (ss *SQLStore) initReadOnlyEngine(engine *xorm.Engine) error {
