@@ -3,6 +3,7 @@ on:
   workflow_call:
     inputs:
       version:
+        type: string
         required: true
         description: 'Target release version (semver, git tag, branch or commit)'
       target:
@@ -20,6 +21,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
+        type: string
         required: true
         description: 'Target release version (semver, git tag, branch or commit)'
       target:

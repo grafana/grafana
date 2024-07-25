@@ -23,11 +23,11 @@ on:
       dry_run:
         required: false
         default: false
-        type: bool
+        type: boolean
       latest:
         required: false
         default: false
-        type: bool
+        type: boolean
 
 permissions:
   contents: write
