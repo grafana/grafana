@@ -37,15 +37,10 @@ type userDisplayDTO struct {
 
 // Static function to parse a requester into a userDisplayDTO
 func newUserDisplayDTOFromRequester(requester identity.Requester) *userDisplayDTO {
-	uid := ""
-	if requester.GetUID().IsType(identity.TypeUser, identity.TypeServiceAccount) {
-		uid = requester.GetUID().ID()
-	}
-
 	userID, _ := requester.GetID().UserID()
 	return &userDisplayDTO{
 		ID:    userID,
-		UID:   uid,
+		UID:   requester.GetTypedUID().ID(),
 		Login: requester.GetLogin(),
 		Name:  requester.GetDisplayName(),
 	}

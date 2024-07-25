@@ -42,12 +42,15 @@ func User(ctx context.Context) (*user.SignedInUser, error) {
 	requester, _ := identity.GetRequester(ctx)
 	if requester != nil {
 		id := requester.GetID()
-		userId, _ := id.UserID()
+		userId, err := id.UserID()
+		if err != nil {
+			return nil, err
+		}
 		orgId := requester.GetOrgID()
 		return &user.SignedInUser{
-			NamespacedID:    id,
+			Type:            id.Type(),
 			UserID:          userId,
-			UserUID:         requester.GetUID().ID(),
+			UserUID:         requester.GetTypedUID().ID(),
 			OrgID:           orgId,
 			OrgName:         requester.GetOrgName(),
 			OrgRole:         requester.GetOrgRole(),

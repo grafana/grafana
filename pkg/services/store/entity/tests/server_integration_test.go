@@ -121,7 +121,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 	testCtx := createTestContext(t)
 	ctx := appcontext.WithUser(testCtx.ctx, testCtx.user)
 
-	fakeUser := testCtx.user.GetUID().String()
+	fakeUser := testCtx.user.GetUID()
 	firstVersion := int64(0)
 	group := "test.grafana.app"
 	resource := "jsonobjs"

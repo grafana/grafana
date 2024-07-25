@@ -30,6 +30,21 @@ type StaticRequester struct {
 	CacheKey    string
 }
 
+// GetExtra implements Requester.
+func (u *StaticRequester) GetExtra() map[string][]string {
+	return map[string][]string{}
+}
+
+// GetGroups implements Requester.
+func (u *StaticRequester) GetGroups() []string {
+	return []string{}
+}
+
+// GetName implements Requester.
+func (u *StaticRequester) GetName() string {
+	return u.DisplayName
+}
+
 func (u *StaticRequester) HasRole(role RoleType) bool {
 	if u.IsGrafanaAdmin {
 		return true
@@ -109,8 +124,13 @@ func (u *StaticRequester) GetID() TypedID {
 	return NewTypedIDString(u.Type, fmt.Sprintf("%d", u.UserID))
 }
 
+// GetUID returns a string identifier
+func (u *StaticRequester) GetUID() string {
+	return u.GetTypedUID().String()
+}
+
 // GetUID returns namespaced uid for the entity
-func (u *StaticRequester) GetUID() TypedID {
+func (u *StaticRequester) GetTypedUID() TypedID {
 	return NewTypedIDString(u.Type, u.UserUID)
 }
 

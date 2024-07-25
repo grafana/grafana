@@ -26,7 +26,7 @@ func TestBasicEncodeDecode(t *testing.T) {
 	after, err := auth.decodeMetadata(context.Background(), md)
 	require.NoError(t, err)
 	require.Equal(t, before.GetID(), after.GetID())
-	require.Equal(t, before.GetUID(), after.GetUID())
+	require.Equal(t, before.GetTypedUID(), after.GetTypedUID())
 	require.Equal(t, before.GetLogin(), after.GetLogin())
 	require.Equal(t, before.GetOrgID(), after.GetOrgID())
 	require.Equal(t, before.GetOrgName(), after.GetOrgName())

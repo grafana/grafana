@@ -72,6 +72,21 @@ type Identity struct {
 	IDToken string
 }
 
+// GetExtra implements identity.Requester.
+func (i *Identity) GetExtra() map[string][]string {
+	return map[string][]string{}
+}
+
+// GetGroups implements identity.Requester.
+func (i *Identity) GetGroups() []string {
+	return []string{} // teams?
+}
+
+// GetName implements identity.Requester.
+func (i *Identity) GetName() string {
+	return i.Name
+}
+
 func (i *Identity) GetID() identity.TypedID {
 	return i.ID
 }
@@ -80,7 +95,11 @@ func (i *Identity) GetTypedID() (namespace identity.IdentityType, identifier str
 	return i.ID.Type(), i.ID.ID()
 }
 
-func (i *Identity) GetUID() identity.TypedID {
+func (i *Identity) GetUID() string {
+	return i.UID.String()
+}
+
+func (i *Identity) GetTypedUID() identity.TypedID {
 	return i.UID
 }
 
@@ -227,7 +246,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Teams:           i.Teams,
 		Permissions:     i.Permissions,
 		IDToken:         i.IDToken,
-		NamespacedID:    i.ID,
+		Type:            i.ID.Type(),
 	}
 
 	if i.ID.IsType(identity.TypeAPIKey) {

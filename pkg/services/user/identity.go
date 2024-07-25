@@ -42,8 +42,23 @@ type SignedInUser struct {
 	Permissions map[int64]map[string][]string `json:"-"`
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
-	IDToken      string `json:"-" xorm:"-"`
-	NamespacedID identity.TypedID
+	IDToken string `json:"-" xorm:"-"`
+	Type    identity.IdentityType
+}
+
+// GetName implements identity.Requester.
+func (u *SignedInUser) GetName() string {
+	return u.Name
+}
+
+// GetExtra implements Requester.
+func (u *SignedInUser) GetExtra() map[string][]string {
+	return map[string][]string{}
+}
+
+// GetGroups implements Requester.
+func (u *SignedInUser) GetGroups() []string {
+	return []string{} // ?? or team ids?
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
@@ -194,11 +209,15 @@ func (u *SignedInUser) GetTypedID() (identity.IdentityType, string) {
 		return identity.TypeRenderService, "0"
 	}
 
-	return u.NamespacedID.Type(), u.NamespacedID.ID()
+	return u.Type, strconv.FormatInt(u.UserID, 10)
+}
+
+func (u *SignedInUser) GetUID() string {
+	return u.GetTypedUID().String()
 }
 
 // GetUID returns namespaced uid for the entity
-func (u *SignedInUser) GetUID() identity.TypedID {
+func (u *SignedInUser) GetTypedUID() identity.TypedID {
 	switch {
 	case u.ApiKeyID != 0:
 		return identity.NewTypedIDString(identity.TypeAPIKey, strconv.FormatInt(u.ApiKeyID, 10))

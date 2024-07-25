@@ -21,6 +21,6 @@ func TestRequesterFromContext(t *testing.T) {
 		ctx := identity.WithRequester(context.Background(), expected)
 		actual, err := identity.GetRequester(ctx)
 		require.NoError(t, err)
-		require.Equal(t, expected.GetUID(), actual.GetUID())
+		require.Equal(t, expected.GetTypedUID(), actual.GetTypedUID())
 	})
 }
