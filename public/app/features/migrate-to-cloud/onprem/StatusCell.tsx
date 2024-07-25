@@ -7,10 +7,11 @@ export function StatusCell(props: CellProps<MigrateDataResponseItemDto>) {
   const { status, error } = props.row.original;
 
   // Keep these here to preserve the translations
-  // t('migrate-to-cloud.resource-status.not-migrated', 'Not yet uploaded')
   // t('migrate-to-cloud.resource-status.migrating', 'Uploading...')
 
-  if (status === 'OK') {
+  if (status === 'PENDING') {
+    return <Text color="secondary">{t('migrate-to-cloud.resource-status.not-migrated', 'Not yet uploaded')}</Text>;
+  } else if (status === 'OK') {
     return <Text color="success">{t('migrate-to-cloud.resource-status.migrated', 'Uploaded to cloud')}</Text>;
   } else if (status === 'ERROR') {
     return (
