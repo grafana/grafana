@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { debounce, isEqual } from 'lodash';
 import { SyntheticEvent, useReducer } from 'react';
 
-import { GrafanaTheme2, RawTimeRange, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, PanelData, RawTimeRange, SelectableValue } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -34,6 +34,7 @@ import { StatusWrapper } from '../StatusWrapper';
 import { Node, Parser } from '../groop/parser';
 import { getMetricDescription } from '../helpers/MetricDatasourceHelper';
 import { reportExploreMetrics } from '../interactions';
+import { sortSeries } from '../services/sorting/sorting';
 import {
   getVariablesWithMetricConstant,
   MetricSelectedEvent,
@@ -81,6 +82,8 @@ const viewByTooltip =
   'View by the metric prefix. A metric prefix is a single word at the beginning of the metric name, relevant to the domain the metric belongs to.';
 
 export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> implements SceneObjectWithUrlSync {
+  private sortBy: string;
+  private direction: string;
   private previewCache: Record<string, MetricPanel> = {};
   private ignoreNextUpdate = false;
   private _debounceRefreshMetricNames = debounce(() => this._refreshMetricNames(), 1000);
@@ -101,6 +104,9 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       sortByScene: new SortByScene({ target: 'fields' }),
       ...state,
     });
+
+    this.sortBy = 'changepoint';
+    this.direction = 'desc';
 
     this.addActivationHandler(this._onActivate.bind(this));
   }
@@ -257,6 +263,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     // if (this.state.body instanceof LayoutSwitcher && this.state.body.state.layouts[1] instanceof ByFrameRepeater) {
     //   this.state.body.state.layouts[1].sort(event.sortBy, event.direction);
     // }
+    this.sort(sortBy, direction);
     reportExploreMetrics('sorting_changed', {
       from: 'metric_list',
       sortBy,
@@ -408,6 +415,20 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     }
 
     return previewPanelLayoutItems;
+  }
+
+  private sort = (sortBy: string, direction: string) => {
+    const data = sceneGraph.getData(this);
+    this.sortBy = sortBy;
+    this.direction = direction;
+    if (data.state.data) {
+      this.performRepeat(data.state.data);
+    }
+  };
+
+  private performRepeat(data: PanelData) {
+    const sortedSeries = sortSeries(data.series, this.sortBy, this.direction);
+    console.log(sortedSeries);
   }
 
   public updateMetricPanel = (metric: string, isLoaded?: boolean, isEmpty?: boolean) => {

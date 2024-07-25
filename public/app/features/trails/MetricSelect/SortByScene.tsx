@@ -1,15 +1,22 @@
-import { BusEventBase, DataFrame, FieldReducerInfo, ReducerID, SelectableValue, fieldReducers } from '@grafana/data';
+import { css } from '@emotion/css';
+
+import { BusEventBase, DataFrame, FieldReducerInfo, fieldReducers, ReducerID, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data/';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { InlineField, Select } from '@grafana/ui';
+import { Select } from '@grafana/ui';
+import { Field, IconButton, useStyles2 } from '@grafana/ui/';
+import { Trans } from 'app/core/internationalization';
 
 import { getLabelValueFromDataFrame } from '../services/levels';
-
 
 export interface SortBySceneState extends SceneObjectState {
   target: 'fields' | 'labels';
   sortBy: string;
   direction: string;
 }
+
+const sortByTooltip =
+  'Calculate a derived quantity from the values in your time series and sort by this criteria. Defaults to standard deviation.';
 
 export class SortCriteriaChanged extends BusEventBase {
   constructor(
@@ -19,6 +26,7 @@ export class SortCriteriaChanged extends BusEventBase {
   ) {
     super();
   }
+
   public static type = 'sort-criteria-changed';
 }
 
@@ -90,11 +98,12 @@ export class SortByScene extends SceneObjectBase<SortBySceneState> {
 
   public static Component = ({ model }: SceneComponentProps<SortByScene>) => {
     const { sortBy, direction } = model.useState();
+    const styles = useStyles2(getStyles);
     const group = model.sortingOptions.find((group) => group.options.find((option) => option.value === sortBy));
     const value = group?.options.find((option) => option.value === sortBy);
     return (
       <>
-        <InlineField>
+        <Field label="Sort direction" className={styles.sortDirection}>
           <Select
             onChange={model.onDirectionChange}
             aria-label="Sort direction"
@@ -110,12 +119,16 @@ export class SortByScene extends SceneObjectBase<SortBySceneState> {
                 value: 'desc',
               },
             ]}
-          ></Select>
-        </InlineField>
-        <InlineField
-          label="Sort by"
-          htmlFor="sort-by-criteria"
-          tooltip="Calculate a derived quantity from the values in your time series and sort by this criteria. Defaults to standard deviation."
+          />
+        </Field>
+        <Field
+          label={
+            <div className={styles.displayOptionTooltip}>
+              <Trans i18nKey="explore-metrics.sortBy">Sort by</Trans>
+              <IconButton name={'info-circle'} size="sm" variant={'secondary'} tooltip={sortByTooltip} />
+            </div>
+          }
+          className={styles.displayOption}
         >
           <Select
             value={value}
@@ -126,9 +139,28 @@ export class SortByScene extends SceneObjectBase<SortBySceneState> {
             onChange={model.onCriteriaChange}
             inputId="sort-by-criteria"
           />
-        </InlineField>
+        </Field>
       </>
     );
+  };
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    sortDirection: css({
+      flexGrow: 0,
+      marginBottom: 0,
+      minWidth: '100px',
+    }),
+    displayOption: css({
+      flexGrow: 0,
+      marginBottom: 0,
+      minWidth: '184px',
+    }),
+    displayOptionTooltip: css({
+      display: 'flex',
+      gap: theme.spacing(1),
+    }),
   };
 }
 
