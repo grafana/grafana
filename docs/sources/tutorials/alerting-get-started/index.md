@@ -96,20 +96,33 @@ To demonstrate the observation of data using the Grafana stack, download the fil
 
    The first time you run `docker compose up -d`, Docker downloads all the necessary resources for the tutorial. This might take a few minutes, depending on your internet connection.
 
-   
-   **NOTE:** If you already have Grafana, Loki, or Prometheus running on your system, you might see errors, because the Docker image is trying to use ports that your local installations are already using. If this is the case, stop the services, then run the command again.
+   <!-- INTERACTIVE ignore START -->
 
-<!-- INTERACTIVE ignore START -->
-{{< admonition type="tip" >}}
-Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting](https://killercoda.com/grafana-labs/course/).
+   {{< admonition type="note" >}}
+   If you already have Grafana, Loki, or Prometheus running on your system, you might see errors, because the Docker image is trying to use ports that your local installations are already using. If this is the case, stop the services, then run the command again.
+   {{< /admonition >}}
 
-It's a fully configured environment with all the dependencies already installed.
+   <!-- INTERACTIVE ignore END -->
 
-![Interactive](https://raw.githubusercontent.com/grafana/killercoda/prod/assets/full-stack-ile.png)
+   {{< docs/ignore >}}
 
-Provide feedback, report bugs, and raise issues in the [Grafana Killercoda repository](https://github.com/grafana/killercoda).
-{{< /admonition >}}
-<!-- INTERACTIVE ignore END -->
+   NOTE:
+
+   If you already have Grafana, Loki, or Prometheus running on your system, you might see errors, because the Docker image is trying to use ports that your local installations are already using. If this is the case, stop the services, then run the command again.
+
+   {{< /docs/ignore >}}
+
+   <!-- INTERACTIVE ignore START -->
+   {{< admonition type="tip" >}}
+   Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting](https://killercoda.com/grafana-labs/course/).
+
+   It's a fully configured environment with all the dependencies already installed.
+
+   ![Interactive](/media/docs/grafana/full-stack-ile.png)
+
+   Provide feedback, report bugs, and raise issues in the [Grafana Killercoda repository](https://github.com/grafana/killercoda).
+   {{< /admonition >}}
+   <!-- INTERACTIVE ignore END -->
 
 <!-- INTERACTIVE page step1.md END -->
 <!-- INTERACTIVE page step2.md START -->
@@ -122,11 +135,10 @@ In this step, we'll set up a new [contact point](https://grafana.com/docs/grafan
 
 1. In your browser, **sign in** to your Grafana Cloud account.
 
-   **NOTE:**
-   **OSS and Killercoda users**: To log in, navigate to [http://localhost:3000](http://localhost:3000), where Grafana is running locally.
+   OSS users: To log in, navigate to [http://localhost:3000](http://localhost:3000), where Grafana is running.
 
 1. In another tab, go to [Webhook.site](https://webhook.site/).
-1. **Copy Your unique URL**.
+1. Copy Your unique URL.
 
 Your webhook endpoint is now waiting for the first request.
 
@@ -155,11 +167,9 @@ We have created a dummy Webhook endpoint and created a new Alerting contact poin
 
 Next, we'll establish an [alert rule](http://grafana.com/docs/grafana/next/alerting/fundamentals/alert-rule-evaluation/) within Grafana Alerting to notify us whenever alert rules are triggered and resolved.
 
-In Grafana, **navigate to Alerting** > **Alert rules**. Click on **New alert rule**.
+1. In Grafana, **navigate to Alerting** > **Alert rules**. Click on **New alert rule**.
 
-### Enter alert rule name
-
-Make it short and descriptive as this will appear in your alert notification. For instance, **database-metrics**
+1. Enter alert rule name for your alert rule. Make it short and descriptive as this will appear in your alert notification. For instance, **database-metrics**
 
 ### Define query and alert condition
 
