@@ -48,6 +48,10 @@ export function PlacementEditor({ item }: Props) {
   const { options } = element;
   const { placement, constraint: layout } = options;
 
+  if (placement) {
+    placement.rotation = placement?.rotation ?? 0;
+  }
+
   const reselectElementAfterChange = () => {
     setTimeout(() => {
       settings.scene.select({ targets: [element.div!] });
@@ -121,7 +125,7 @@ export function PlacementEditor({ item }: Props) {
         <>
           {places.map((p) => {
             const v = placement![p];
-            if (v == null && p !== 'rotation') {
+            if (v == null) {
               return null;
             }
 
@@ -132,7 +136,7 @@ export function PlacementEditor({ item }: Props) {
             return (
               <InlineFieldRow key={p}>
                 <InlineField label={p} labelWidth={8} grow={true}>
-                  <NumberInput min={min} max={max} value={v ?? min} onChange={(v) => onPositionChange(v, p)} />
+                  <NumberInput min={min} max={max} value={v} onChange={(v) => onPositionChange(v, p)} />
                 </InlineField>
               </InlineFieldRow>
             );
