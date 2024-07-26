@@ -222,11 +222,15 @@ export interface PostableGrafanaRuleDefinition {
   uid?: string;
   title: string;
   condition: string;
-  no_data_state: GrafanaAlertStateDecision;
-  exec_err_state: GrafanaAlertStateDecision;
+  no_data_state?: GrafanaAlertStateDecision;
+  exec_err_state?: GrafanaAlertStateDecision;
   data: AlertQuery[];
   is_paused?: boolean;
   notification_settings?: GrafanaNotificationSettings;
+  record?: {
+    metric: string;
+    from: string;
+  };
 }
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   id?: string;
@@ -238,7 +242,7 @@ export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
 
 export interface RulerGrafanaRuleDTO<T = GrafanaRuleDefinition> {
   grafana_alert: T;
-  for: string;
+  for?: string;
   annotations: Annotations;
   labels: Labels;
 }

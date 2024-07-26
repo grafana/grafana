@@ -142,6 +142,42 @@ export const mockRulerGrafanaRule = (
     ...partial,
   };
 };
+export const mockRulerGrafanaRecordingRule = (
+  partial: Partial<RulerGrafanaRuleDTO> = {},
+  partialDef: Partial<GrafanaRuleDefinition> = {}
+): RulerGrafanaRuleDTO => {
+  return {
+    grafana_alert: {
+      uid: '123',
+      title: 'myalert',
+      namespace_uid: '123',
+      rule_group: 'my-group',
+      condition: 'A',
+      record: {
+        metric: 'myalert',
+        from: 'A',
+      },
+      data: [
+        {
+          datasourceUid: '123',
+          refId: 'A',
+          queryType: 'huh',
+          model: {
+            refId: '',
+          },
+        },
+      ],
+      ...partialDef,
+    },
+    annotations: {
+      message: 'alert with severity "{{.warning}}}"',
+    },
+    labels: {
+      severity: 'warning',
+    },
+    ...partial,
+  };
+};
 
 export const mockRulerAlertingRule = (partial: Partial<RulerAlertingRuleDTO> = {}): RulerAlertingRuleDTO => ({
   alert: 'alert1',

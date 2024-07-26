@@ -112,6 +112,12 @@
       "used-by_one": "Used by {{ count }} notification policy",
       "used-by_other": "Used by {{ count }} notification policies"
     },
+    "grafana-rules": {
+      "export-rules": "Export rules",
+      "loading": "Loading...",
+      "new-recording-rule": "New recording rule",
+      "title": "Grafana"
+    },
     "policies": {
       "metadata": {
         "timingOptions": {
@@ -143,6 +149,12 @@
       "update": {
         "success": "Successfully updated rule group"
       }
+    },
+    "rule-state": {
+      "creating": "Creating",
+      "deleting": "Deleting",
+      "paused": "Paused",
+      "recording-rule": "Recording rule"
     },
     "rules": {
       "delete-rule": {

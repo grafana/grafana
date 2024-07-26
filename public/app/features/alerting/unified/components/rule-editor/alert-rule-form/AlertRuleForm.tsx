@@ -14,8 +14,10 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import {
   getRuleGroupLocationFromRuleWithLocation,
+  isGrafanaManagedRuleByType,
   isGrafanaRulerRule,
   isGrafanaRulerRulePaused,
+  isRecordingRuleByType,
 } from 'app/features/alerting/unified/utils/rules';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
@@ -23,8 +25,8 @@ import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   LogMessages,
   logInfo,
-  trackAlertRuleFormError,
   trackAlertRuleFormCancelled,
+  trackAlertRuleFormError,
   trackAlertRuleFormSaved,
 } from '../../../Analytics';
 import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
@@ -33,8 +35,8 @@ import { saveRuleFormAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { initialAsyncRequestState } from '../../../utils/redux';
 import {
-  MANUAL_ROUTING_KEY,
   DEFAULT_GROUP_EVALUATION_INTERVAL,
+  MANUAL_ROUTING_KEY,
   formValuesFromExistingRule,
   getDefaultFormValues,
   getDefaultQueries,
@@ -42,7 +44,7 @@ import {
   normalizeDefaultAnnotations,
 } from '../../../utils/rule-form';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
-import { AlertRuleNameInput } from '../AlertRuleNameInput';
+import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
 import { CloudEvaluationBehavior } from '../CloudEvaluationBehavior';
 import { GrafanaEvaluationBehavior } from '../GrafanaEvaluationBehavior';
@@ -106,7 +108,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const type = watch('type');
   const dataSourceName = watch('dataSourceName');
 
-  const showDataSourceDependantStep = Boolean(type && (type === RuleFormType.grafana || !!dataSourceName));
+  const showDataSourceDependantStep = Boolean(type && (isGrafanaManagedRuleByType(type) || !!dataSourceName));
 
   const submitState = useUnifiedAlertingSelector((state) => state.ruleForm.saveRule) || initialAsyncRequestState;
   useCleanup((state) => (state.unifiedAlerting.ruleForm.saveRule = initialAsyncRequestState));
@@ -233,6 +235,9 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   );
 
   const isPaused = existing && isGrafanaRulerRule(existing.rule) && isGrafanaRulerRulePaused(existing.rule);
+  if (!type) {
+    return null;
+  }
   return (
     <FormProvider {...formAPI}>
       <AppChromeUpdate actions={actionButtons} />
@@ -242,14 +247,14 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <Stack direction="column" gap={3}>
               {/* Step 1 */}
-              <AlertRuleNameInput />
+              <AlertRuleNameAndMetric />
               {/* Step 2 */}
               <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
               {/* Step 3-4-5 */}
               {showDataSourceDependantStep && (
                 <>
                   {/* Step 3 */}
-                  {type === RuleFormType.grafana && (
+                  {isGrafanaManagedRuleByType(type) && (
                     <GrafanaEvaluationBehavior
                       evaluateEvery={evaluateEvery}
                       setEvaluateEvery={setEvaluateEvery}
@@ -266,7 +271,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
                   {/* Notifications step*/}
                   <NotificationsStep alertUid={uidFromParams} />
                   {/* Annotations only for cloud and Grafana */}
-                  {type !== RuleFormType.cloudRecording && <AnnotationsStep />}
+                  {!isRecordingRuleByType(type) && <AnnotationsStep />}
                 </>
               )}
             </Stack>
@@ -285,7 +290,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         />
       ) : null}
       {showEditYaml ? (
-        type === RuleFormType.grafana ? (
+        isGrafanaManagedRuleByType(type) ? (
           <GrafanaRuleExporter alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
         ) : (
           <RuleInspector onClose={() => setShowEditYaml(false)} />
