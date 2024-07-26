@@ -350,8 +350,7 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest) (*r
 		ResourceVersion: 0,
 	}
 
-	// This transaction is ReadCommitted to ensure we call SELECT .. FOR UPDATE
-	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
 
 		out.ResourceVersion, err = fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
@@ -542,6 +541,7 @@ func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialec
 		SQLTemplate:     sqltemplate.New(d),
 		Group:           group,
 		Resource:        resource,
+		ReadOnly:        true,
 		resourceVersion: new(resourceVersion),
 	})
 	if errors.Is(err, sql.ErrNoRows) {
