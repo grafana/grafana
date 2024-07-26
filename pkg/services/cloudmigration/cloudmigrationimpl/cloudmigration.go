@@ -11,9 +11,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
@@ -26,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -55,6 +58,7 @@ type Service struct {
 	dashboardService dashboards.DashboardService
 	folderService    folder.Service
 	secretsService   secrets.Service
+	kvStore          *kvstore.NamespacedKVStore
 
 	api     *api.CloudMigrationAPI
 	tracer  tracing.Tracer
@@ -79,19 +83,21 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	db db.DB,
 	dsService datasources.DataSourceService,
+	secretsStore secretskv.SecretsKVStore,
 	secretsService secrets.Service,
 	routeRegister routing.RouteRegister,
 	prom prometheus.Registerer,
 	tracer tracing.Tracer,
 	dashboardService dashboards.DashboardService,
 	folderService folder.Service,
+	kvStore kvstore.KVStore,
 ) (cloudmigration.Service, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
 		return &NoopServiceImpl{}, nil
 	}
 
 	s := &Service{
-		store:            &sqlStore{db: db, secretsService: secretsService},
+		store:            &sqlStore{db: db, secretsStore: secretsStore, secretsService: secretsService},
 		log:              log.New(LogPrefix),
 		cfg:              cfg,
 		features:         features,
@@ -101,6 +107,7 @@ func ProvideService(
 		secretsService:   secretsService,
 		dashboardService: dashboardService,
 		folderService:    folderService,
+		kvStore:          kvstore.WithNamespace(kvStore, 0, "cloudmigration"),
 	}
 	s.api = api.RegisterApi(routeRegister, s, tracer)
 
@@ -379,6 +386,8 @@ func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMig
 		return nil, fmt.Errorf("error creating migration: %w", err)
 	}
 
+	s.report(ctx, cm, gmsclient.EventConnect, 0, nil)
+
 	return &cloudmigration.CloudMigrationSessionResponse{
 		UID:     cm.UID,
 		Slug:    token.Instance.Slug,
@@ -460,6 +469,9 @@ func (s *Service) DeleteSession(ctx context.Context, uid string) (*cloudmigratio
 	if err != nil {
 		return c, fmt.Errorf("deleting migration from db: %w", err)
 	}
+
+	s.report(ctx, c, gmsclient.EventDisconnect, 0, nil)
+
 	return c, nil
 }
 
@@ -511,7 +523,11 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 		ctx, cancelFunc := context.WithCancel(context.Background())
 		s.cancelFunc = cancelFunc
 
-		if err := s.buildSnapshot(ctx, signedInUser, initResp.MaxItemsPerPartition, snapshot); err != nil {
+		s.report(ctx, session, gmsclient.EventStartBuildingSnapshot, 0, nil)
+
+		start := time.Now()
+		err := s.buildSnapshot(ctx, signedInUser, initResp.MaxItemsPerPartition, initResp.Metadata, snapshot)
+		if err != nil {
 			s.log.Error("building snapshot", "err", err.Error())
 			// Update status to error with retries
 			if err := s.updateSnapshotWithRetries(context.Background(), cloudmigration.UpdateSnapshotCmd{
@@ -521,6 +537,8 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 				s.log.Error("critical failure during snapshot creation - please report any error logs")
 			}
 		}
+
+		s.report(ctx, session, gmsclient.EventDoneBuildingSnapshot, time.Since(start), err)
 	}()
 
 	return &snapshot, nil
@@ -637,7 +655,11 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 		ctx, cancelFunc := context.WithCancel(context.Background())
 		s.cancelFunc = cancelFunc
 
-		if err := s.uploadSnapshot(ctx, session, snapshot, uploadUrl); err != nil {
+		s.report(ctx, session, gmsclient.EventStartUploadingSnapshot, 0, nil)
+
+		start := time.Now()
+		err := s.uploadSnapshot(ctx, session, snapshot, uploadUrl)
+		if err != nil {
 			s.log.Error("uploading snapshot", "err", err.Error())
 			// Update status to error with retries
 			if err := s.updateSnapshotWithRetries(context.Background(), cloudmigration.UpdateSnapshotCmd{
@@ -647,6 +669,8 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 				s.log.Error("critical failure during snapshot upload - please report any error logs")
 			}
 		}
+
+		s.report(ctx, session, gmsclient.EventDoneUploadingSnapshot, time.Since(start), err)
 	}()
 
 	return nil
@@ -677,4 +701,53 @@ func (s *Service) CancelSnapshot(ctx context.Context, sessionUid string, snapsho
 	s.log.Info("canceled snapshot", "sessionUid", sessionUid, "snapshotUid", snapshotUid)
 
 	return nil
+}
+
+func (s *Service) report(
+	ctx context.Context,
+	sess *cloudmigration.CloudMigrationSession,
+	t gmsclient.LocalEventType,
+	d time.Duration,
+	evtErr error,
+) {
+	id, err := s.getLocalEventId(ctx)
+	if err != nil {
+		s.log.Error("failed to report event", "type", t, "error", err.Error())
+		return
+	}
+
+	e := gmsclient.EventRequestDTO{
+		Event:   t,
+		LocalID: id,
+	}
+
+	if d != 0 {
+		e.DurationIfFinished = d
+	}
+	if evtErr != nil {
+		e.Error = evtErr.Error()
+	}
+
+	s.gmsClient.ReportEvent(ctx, *sess, e)
+}
+
+func (s *Service) getLocalEventId(ctx context.Context) (string, error) {
+	anonId, ok, err := s.kvStore.Get(ctx, "anonymous_id")
+	if err != nil {
+		return "", fmt.Errorf("failed to get usage stats id: %w", err)
+	}
+
+	if ok {
+		return anonId, nil
+	}
+
+	anonId = uuid.NewString()
+
+	err = s.kvStore.Set(ctx, "anonymous_id", anonId)
+	if err != nil {
+		s.log.Error("Failed to store usage stats id", "error", err)
+		return "", fmt.Errorf("failed to store usage stats id: %w", err)
+	}
+
+	return anonId, nil
 }

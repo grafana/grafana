@@ -11,16 +11,16 @@ import (
 )
 
 type TemplateService struct {
-	configStore     *alertmanagerConfigStoreImpl
+	configStore     alertmanagerConfigStore
 	provenanceStore ProvisioningStore
 	xact            TransactionManager
 	log             log.Logger
 	validator       validation.ProvenanceStatusTransitionValidator
 }
 
-func NewTemplateService(config AMConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger) *TemplateService {
+func NewTemplateService(config alertmanagerConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger) *TemplateService {
 	return &TemplateService{
-		configStore:     &alertmanagerConfigStoreImpl{store: config},
+		configStore:     config,
 		provenanceStore: prov,
 		xact:            xact,
 		validator:       validation.ValidateProvenanceRelaxed,
@@ -34,8 +34,8 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]defi
 		return nil, err
 	}
 
-	templates := make([]definitions.NotificationTemplate, 0, len(revision.cfg.TemplateFiles))
-	for name, tmpl := range revision.cfg.TemplateFiles {
+	templates := make([]definitions.NotificationTemplate, 0, len(revision.Config.TemplateFiles))
+	for name, tmpl := range revision.Config.TemplateFiles {
 		tmpl := definitions.NotificationTemplate{
 			Name:     name,
 			Template: tmpl,
@@ -64,11 +64,11 @@ func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl def
 		return definitions.NotificationTemplate{}, err
 	}
 
-	if revision.cfg.TemplateFiles == nil {
-		revision.cfg.TemplateFiles = map[string]string{}
+	if revision.Config.TemplateFiles == nil {
+		revision.Config.TemplateFiles = map[string]string{}
 	}
 
-	_, ok := revision.cfg.TemplateFiles[tmpl.Name]
+	_, ok := revision.Config.TemplateFiles[tmpl.Name]
 	if ok {
 		// check that provenance is not changed in an invalid way
 		storedProvenance, err := t.provenanceStore.GetProvenance(ctx, &tmpl, orgID)
@@ -80,7 +80,7 @@ func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl def
 		}
 	}
 
-	revision.cfg.TemplateFiles[tmpl.Name] = tmpl.Template
+	revision.Config.TemplateFiles[tmpl.Name] = tmpl.Template
 
 	err = t.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := t.configStore.Save(ctx, revision, orgID); err != nil {
@@ -101,11 +101,11 @@ func (t *TemplateService) DeleteTemplate(ctx context.Context, orgID int64, name 
 		return err
 	}
 
-	if revision.cfg.TemplateFiles == nil {
+	if revision.Config.TemplateFiles == nil {
 		return nil
 	}
 
-	_, ok := revision.cfg.TemplateFiles[name]
+	_, ok := revision.Config.TemplateFiles[name]
 	if !ok {
 		return nil
 	}
@@ -119,7 +119,7 @@ func (t *TemplateService) DeleteTemplate(ctx context.Context, orgID int64, name 
 		return err
 	}
 
-	delete(revision.cfg.TemplateFiles, name)
+	delete(revision.Config.TemplateFiles, name)
 
 	return t.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := t.configStore.Save(ctx, revision, orgID); err != nil {

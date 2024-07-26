@@ -1,8 +1,9 @@
 name: Generate changelog
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       version:
+        type: string
         required: true
         description: 'Target release version (semver, git tag, branch or commit)'
       target:
@@ -12,13 +13,38 @@ on:
       dry_run:
         required: false
         default: false
-        type: bool
+        type: boolean
       latest:
         required: false
         default: false
-        type: bool
+        type: boolean
+    secrets:
+      GRAFANA_DELIVERY_BOT_APP_ID:
+        required: true
+      GRAFANA_DELIVERY_BOT_APP_PEM:
+        required: true
+
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        required: true
+        description: 'Target release version (semver, git tag, branch or commit)'
+      target:
+        required: true
+        type: string
+        description: 'The base branch that these changes are being merged into'
+      dry_run:
+        required: false
+        default: false
+        type: boolean
+      latest:
+        required: false
+        default: false
+        type: boolean
 
 permissions:
+  contents: write
   pull-requests: write
 
 jobs:
@@ -36,6 +62,7 @@ jobs:
       - name: "Checkout Grafana repo"
         uses: "actions/checkout@v4"
         with:
+          ref: main
           sparse-checkout: |
             .github/workflows
             CHANGELOG.md
@@ -47,7 +74,7 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local --add --bool push.autoSetupRemote true
       - name: "Create branch"
-        run: git checkout -b "release/${{ github.run_id }}/${{ inputs.version }}"
+        run: git checkout -b "changelog/${{ github.run_id }}/${{ inputs.version }}"
       - name: "Generate changelog"
         id: changelog
         uses: ./.github/workflows/actions/changelog
@@ -84,19 +111,20 @@ jobs:
           fi
 
           git diff CHANGELOG.md
+          git add CHANGELOG.md
       - name: "Commit changelog changes"
-        run: git commit --allow-empty -m "Update changelog placeholder" CHANGELOG.md
+        run: git commit --allow-empty -m "Update changelog" CHANGELOG.md
       - name: "git push"
         if: ${{ inputs.dry_run }} != true
         run: git push
       - name: "Create changelog PR"
-        if: "${{ inputs.backport == '' }}"
         run: >
           gh pr create \
-            $( [ "x${{ inputs.latest }}" == "xtrue" ] && printf %s '-l "release/latest"') \
             --dry-run=${{ inputs.dry_run }} \
+            --label "no-backport" \
+            --label "no-changelog" \
             -B "${{ inputs.target }}" \
-            --title "Release: ${{ inputs.version }}" \
+            --title "Release: update changelog for ${{ inputs.version }}" \
             --body "Changelog changes for release ${{ inputs.version }}"
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
