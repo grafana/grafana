@@ -12,7 +12,6 @@ interface Props {
   placeholder?: string;
   tooltip?: PopoverContent;
   interactive?: boolean;
-  newFormStylingEnabled?: boolean;
 }
 
 export const VariableTextField = ({ interactive, label, onBlur, placeholder, value, tooltip }: Props) => {

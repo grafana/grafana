@@ -245,7 +245,7 @@
     "@floating-ui/react": "0.26.20",
     "@formatjs/intl-durationformat": "^0.2.4",
     "@glideapps/glide-data-grid": "^6.0.0",
-    "@grafana/aws-sdk": "0.3.3",
+    "@grafana/aws-sdk": "0.4.1",
     "@grafana/azure-sdk": "0.0.3",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
