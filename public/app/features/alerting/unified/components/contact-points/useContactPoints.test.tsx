@@ -2,7 +2,9 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { getWrapper } from 'test/test-utils';
 
+import { disablePlugin } from 'app/features/alerting/unified/mocks/server/configure';
 import { setOnCallIntegrations } from 'app/features/alerting/unified/mocks/server/handlers/plugins/configure-plugins';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { AccessControlAction } from 'app/types';
 
 import { setupMswServer } from '../../mockApi';
@@ -30,13 +32,7 @@ describe('useContactPoints', () => {
   });
 
   it('should return contact points with status', async () => {
-    setOnCallIntegrations([
-      {
-        display_name: 'grafana-integration',
-        value: 'ABC123',
-        integration_url: 'https://oncall-endpoint.example.com',
-      },
-    ]);
+    disablePlugin(SupportedPlugin.OnCall);
 
     const { result } = renderHook(() => useContactPointsWithStatus(), {
       wrapper,
