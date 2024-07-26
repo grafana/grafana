@@ -1,6 +1,16 @@
 @use 'sass:color';
 @use 'sass:map';
 
+// Gradient Bar Colors for buttons and alerts
+@mixin gradientBar($primaryColor, $secondaryColor, $text-color: #fff, $textShadow: 0 -1px 0 rgba(0, 0, 0, 0.25)) {
+  background-color: color.mix($primaryColor, $secondaryColor, 60%);
+  background-image: linear-gradient(to bottom, $primaryColor, $secondaryColor); // Standard, IE10
+  background-repeat: repeat-x;
+  color: $text-color;
+  text-shadow: $textShadow;
+  border-color: $primaryColor;
+}
+
 @mixin hover {
   @if $enable-hover-media-query {
     // See Media Queries Level 4: http://drafts.csswg.org/mediaqueries/#hover
@@ -58,7 +68,7 @@
   font-size: $font-size;
   //box-shadow: inset 0 (-$padding-y/3) rgba(0,0,0,0.15);
 
-  @include border-radius($border-radius);
+  border-radius: $border-radius;
 }
 
 @mixin button-outline-variant($color) {
@@ -133,7 +143,7 @@
   &.active {
     &:focus,
     &.focus {
-      @include no-focus();
+      outline: none;
     }
   }
 
@@ -155,7 +165,7 @@
   &:disabled {
     cursor: $cursor-disabled;
     opacity: 0.65;
-    @include box-shadow(none);
+    box-shadow: none;
     pointer-events: none;
   }
 
@@ -249,7 +259,7 @@
 
 .btn-outline-disabled {
   @include button-outline-variant($gray-1);
-  @include box-shadow(none);
+  box-shadow: none;
   cursor: default;
 
   &:hover,

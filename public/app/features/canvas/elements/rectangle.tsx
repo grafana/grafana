@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, OneClickMode } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
-import { getDataLinks } from 'app/plugins/panel/canvas/utils';
 
 import {
   CanvasElementItem,
@@ -73,6 +72,8 @@ export const rectangleItem: CanvasElementItem<TextConfig, TextData> = {
         fixed: defaultBgColor,
       },
     },
+    oneClickMode: options?.oneClickMode ?? OneClickMode.Off,
+    links: options?.links ?? [],
   }),
 
   // Called when data changes
@@ -90,8 +91,6 @@ export const rectangleItem: CanvasElementItem<TextConfig, TextData> = {
     if (textConfig?.color) {
       data.color = dimensionContext.getColor(textConfig.color).value();
     }
-
-    data.links = getDataLinks(dimensionContext, elementOptions, data.text);
 
     return data;
   },

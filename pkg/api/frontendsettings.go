@@ -223,10 +223,12 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		PublicDashboardAccessToken:          c.PublicDashboardAccessToken,
 		PublicDashboardsEnabled:             hs.Cfg.PublicDashboardsEnabled,
 		CloudMigrationIsTarget:              isCloudMigrationTarget,
+		CloudMigrationFeedbackURL:           hs.Cfg.CloudMigration.FeedbackURL,
 		SharedWithMeFolderUID:               folder.SharedWithMeFolderUID,
 		RootFolderUID:                       accesscontrol.GeneralFolderUID,
 		LocalFileSystemAvailable:            hs.Cfg.LocalFileSystemAvailable,
 		ReportingStaticContext:              hs.Cfg.ReportingStaticContext,
+		ExploreDefaultTimeOffset:            hs.Cfg.ExploreDefaultTimeOffset,
 
 		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
 			HideVersion:   hideVersion,
@@ -276,6 +278,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			WorkloadIdentityEnabled:                hs.Cfg.Azure.WorkloadIdentityEnabled,
 			UserIdentityEnabled:                    hs.Cfg.Azure.UserIdentityEnabled,
 			UserIdentityFallbackCredentialsEnabled: hs.Cfg.Azure.UserIdentityFallbackCredentialsEnabled,
+			AzureEntraPasswordCredentialsEnabled:   hs.Cfg.Azure.AzureEntraPasswordCredentialsEnabled,
 		},
 
 		Caching: dtos.FrontendSettingsCachingDTO{

@@ -8,6 +8,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -32,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -679,27 +679,42 @@ func (hs *HTTPServer) healthzHandler(ctx *web.Context) {
 	}
 }
 
+// swagger:model healthResponse
+type healthResponse struct {
+	Database         string `json:"database"`
+	Version          string `json:"version,omitempty"`
+	Commit           string `json:"commit,omitempty"`
+	EnterpriseCommit string `json:"enterpriseCommit,omitempty"`
+}
+
+// swagger:route GET /health health getHealth
+//
 // apiHealthHandler will return ok if Grafana's web server is running and it
 // can access the database. If the database cannot be accessed it will return
 // http status code 503.
+//
+// Responses:
+// 200: healthResponse
+// 503: internalServerError
 func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 	notHeadOrGet := ctx.Req.Method != http.MethodGet && ctx.Req.Method != http.MethodHead
 	if notHeadOrGet || ctx.Req.URL.Path != "/api/health" {
 		return
 	}
 
-	data := simplejson.New()
-	data.Set("database", "ok")
+	data := healthResponse{
+		Database: "ok",
+	}
 	if !hs.Cfg.AnonymousHideVersion {
-		data.Set("version", hs.Cfg.BuildVersion)
-		data.Set("commit", hs.Cfg.BuildCommit)
+		data.Version = hs.Cfg.BuildVersion
+		data.Commit = hs.Cfg.BuildCommit
 		if hs.Cfg.EnterpriseBuildCommit != "NA" && hs.Cfg.EnterpriseBuildCommit != "" {
-			data.Set("enterpriseCommit", hs.Cfg.EnterpriseBuildCommit)
+			data.EnterpriseCommit = hs.Cfg.EnterpriseBuildCommit
 		}
 	}
 
 	if !hs.databaseHealthy(ctx.Req.Context()) {
-		data.Set("database", "failing")
+		data.Database = "failing"
 		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		ctx.Resp.WriteHeader(http.StatusServiceUnavailable)
 	} else {
@@ -707,7 +722,7 @@ func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 		ctx.Resp.WriteHeader(http.StatusOK)
 	}
 
-	dataBytes, err := data.EncodePretty()
+	dataBytes, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		hs.log.Error("Failed to encode data", "err", err)
 		return

@@ -1,17 +1,13 @@
-import { findByRole, findByText, findByTitle, getByTestId, queryByText, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { setupServer } from 'msw/node';
 import { FormProvider, useForm } from 'react-hook-form';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { findByRole, findByText, findByTitle, getByTestId, queryByText, render } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import 'core-js/stable/structured-clone';
-import { setBackendSrv } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardSearchItemType } from '../../../../search/types';
-import { mockDashboardApi } from '../../mockApi';
-import { mockDashboardDto, mockDashboardSearchItem, mockStore } from '../../mocks';
+import { mockDashboardApi, setupMswServer } from '../../mockApi';
+import { mockDashboardDto, mockDashboardSearchItem } from '../../mocks';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation } from '../../utils/constants';
 import { getDefaultFormValues } from '../../utils/rule-form';
@@ -40,31 +36,15 @@ const ui = {
   },
 } as const;
 
-const server = setupServer();
-
-beforeAll(() => {
-  setBackendSrv(backendSrv);
-  server.listen({ onUnhandledRequest: 'error' });
-});
-
-beforeEach(() => {
-  server.resetHandlers();
-});
-
-afterAll(() => {
-  server.close();
-});
+const server = setupMswServer();
 
 function FormWrapper({ formValues }: { formValues?: Partial<RuleFormValues> }) {
-  const store = mockStore(() => null);
   const formApi = useForm<RuleFormValues>({ defaultValues: { ...getDefaultFormValues(), ...formValues } });
 
   return (
-    <TestProvider store={store}>
-      <FormProvider {...formApi}>
-        <AnnotationsStep />
-      </FormProvider>
-    </TestProvider>
+    <FormProvider {...formApi}>
+      <AnnotationsStep />
+    </FormProvider>
   );
 }
 

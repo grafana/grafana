@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"maps"
 	"sort"
 	"strconv"
 	"strings"
@@ -367,13 +368,21 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 }
 
 func (alertRule *AlertRule) GetEvalCondition() Condition {
+	meta := map[string]string{
+		"Name":    alertRule.Title,
+		"Uid":     alertRule.UID,
+		"Type":    string(alertRule.Type()),
+		"Version": strconv.FormatInt(alertRule.Version, 10),
+	}
 	if alertRule.Type() == RuleTypeRecording {
 		return Condition{
+			Metadata:  meta,
 			Condition: alertRule.Record.From,
 			Data:      alertRule.Data,
 		}
 	}
 	return Condition{
+		Metadata:  meta,
 		Condition: alertRule.Condition,
 		Data:      alertRule.Data,
 	}
@@ -670,7 +679,8 @@ type ListAlertRulesQuery struct {
 	DashboardUID string
 	PanelID      int64
 
-	ReceiverName string
+	ReceiverName     string
+	TimeIntervalName string
 }
 
 // CountAlertRulesQuery is the query for counting alert rules
@@ -712,12 +722,33 @@ type UpdateRule struct {
 // Condition contains backend expressions and queries and the RefID
 // of the query or expression that will be evaluated.
 type Condition struct {
+	// Additional information provided to the evaluation to include to the request as headers in format `X-Rule-{Key}`
+	Metadata map[string]string
 	// Condition is the RefID of the query or expression from
 	// the Data property to get the results for.
 	Condition string `json:"condition"`
 
 	// Data is an array of data source queries and/or server side expressions.
 	Data []AlertQuery `json:"data"`
+}
+
+func (c Condition) withMetadata(key, value string) Condition {
+	meta := make(map[string]string, len(c.Metadata)+1)
+	maps.Copy(meta, c.Metadata)
+	meta[key] = value
+	return Condition{
+		Metadata:  meta,
+		Condition: c.Condition,
+		Data:      c.Data,
+	}
+}
+
+func (c Condition) WithFolder(folderTitle string) Condition {
+	return c.withMetadata("Folder", folderTitle)
+}
+
+func (c Condition) WithSource(source string) Condition {
+	return c.withMetadata("Source", source)
 }
 
 // IsValid checks the condition's validity.

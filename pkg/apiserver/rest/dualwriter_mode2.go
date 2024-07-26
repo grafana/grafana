@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -9,6 +10,7 @@ import (
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 
@@ -27,7 +29,7 @@ const mode2Str = "2"
 // NewDualWriterMode2 returns a new DualWriter in mode 2.
 // Mode 2 represents writing to LegacyStorage and Storage and reading from LegacyStorage.
 func newDualWriterMode2(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics) *DualWriterMode2 {
-	return &DualWriterMode2{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode2"), dualWriterMetrics: dwm}
+	return &DualWriterMode2{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode2").WithValues("mode", mode2Str), dualWriterMetrics: dwm}
 }
 
 // Mode returns the mode of the dual writer.
@@ -330,6 +332,11 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		log.WithValues("name", name).Info("object from legacy and storage are not equal")
 	}
 	return res, created, err
+}
+
+func (d *DualWriterMode2) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
+	d.Log.Error(errors.New("Watch not implemented in mode 2"), "Watch not implemented in mode 2")
+	return nil, nil
 }
 
 func (d *DualWriterMode2) Destroy() {

@@ -132,6 +132,9 @@ export const DataLinkInput = memo(
 
       switch (event.key) {
         case 'Backspace':
+          if (stateRef.current.linkUrl.focusText.getText().length === 1) {
+            next();
+          }
         case 'Escape':
           setShowingSuggestions(false);
           return setSuggestionsIndex(0);
