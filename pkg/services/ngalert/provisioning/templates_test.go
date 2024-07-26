@@ -428,6 +428,10 @@ func TestTemplateService(t *testing.T) {
 
 		t.Run("errors if provenance is not right", func(t *testing.T) {
 			sut := createTemplateServiceSut()
+			sut.configStore.store.(*MockAMConfigStore).EXPECT().
+				GetsConfig(models.AlertConfiguration{
+					AlertmanagerConfiguration: configWithTemplates,
+				})
 			sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 
 			expectedErr := errors.New("test")
