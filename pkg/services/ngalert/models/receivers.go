@@ -1,5 +1,9 @@
 package models
 
+import (
+	"github.com/grafana/alerting/notify"
+)
+
 // GetReceiverQuery represents a query for a single receiver.
 type GetReceiverQuery struct {
 	OrgID   int64
@@ -14,4 +18,11 @@ type GetReceiversQuery struct {
 	Limit   int
 	Offset  int
 	Decrypt bool
+}
+
+// Receiver is the domain model representation of a receiver / contact point.
+type Receiver struct {
+	Name         string
+	Integrations []*notify.GrafanaIntegrationConfig
+	Provenance   Provenance
 }

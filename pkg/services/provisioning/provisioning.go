@@ -273,7 +273,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 	)
 	configStore := legacy_storage.NewAlertmanagerConfigStore(&st)
 	receiverSvc := notifier.NewReceiverService(
-		ps.ac,
+		alertingauthz.NewReceiverAccess(ps.ac, true),
 		configStore,
 		st,
 		ps.secretService,
