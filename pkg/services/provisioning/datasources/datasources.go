@@ -225,7 +225,7 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 	} else {
 		// when provisioning correlations without config we default to type="query"
 		createCommand.Config = correlations.CorrelationConfig{
-			Type: correlations.ConfigTypeQuery,
+			Type: correlations.CorrelationConfigType("query"),
 		}
 	}
 	if err := createCommand.Validate(); err != nil {

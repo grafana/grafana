@@ -26,7 +26,10 @@ export interface RemoveCorrelationResponse {
   message: string;
 }
 
-type CorrelationConfigType = 'query';
+export enum CorrelationConfigType {
+  'query',
+  'external',
+}
 
 export interface CorrelationConfig {
   field: string;

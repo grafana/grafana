@@ -4,7 +4,7 @@ import { DataLinkTransformationConfig } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { CreateCorrelationParams } from 'app/features/correlations/types';
+import { CorrelationConfigType, CreateCorrelationParams } from 'app/features/correlations/types';
 import { CorrelationData } from 'app/features/correlations/useCorrelations';
 import { getCorrelationsBySourceUIDs, createCorrelation, generateDefaultLabel } from 'app/features/correlations/utils';
 import { store } from 'app/store/store';
@@ -84,7 +84,7 @@ export function saveCurrentCorrelation(
         config: {
           field: targetPane.correlationEditorHelperData.resultField,
           target: targetPane.queries[0],
-          type: 'query',
+          type: CorrelationConfigType.query,
           transformations: transformations,
         },
       };
