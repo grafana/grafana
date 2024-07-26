@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { Icon, IconButton, Link, useTheme2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 export interface Props {
   children: React.ReactNode;
@@ -56,7 +57,11 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, id,
           className={'pin-icon'}
           iconType={isPinned ? 'solid' : 'default'}
           onClick={() => onPin(id)}
-          aria-label={isPinned ? 'Remove from Bookmarks' : 'Add to Bookmarks'}
+          aria-label={
+            isPinned
+              ? t('navigation.item.remove-bookmark', 'Remove from Bookmarks')
+              : t('navigation.item.add-bookmark', 'Add to Bookmarks')
+          }
         />
       )}
     </div>
