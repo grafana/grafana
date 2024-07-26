@@ -49,8 +49,9 @@ export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
     getShapshotList: {
       providesTags: ['cloud-migration-snapshot'],
     },
-    createSnapshot: {
-      invalidatesTags: ['cloud-migration-snapshot'],
+    createSnapshot(endpoint) {
+      suppressErrorsOnQuery(endpoint);
+      endpoint.invalidatesTags = ['cloud-migration-snapshot'];
     },
     uploadSnapshot: {
       invalidatesTags: ['cloud-migration-snapshot'],

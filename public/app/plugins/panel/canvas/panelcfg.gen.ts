@@ -102,7 +102,6 @@ export interface CanvasElementOptions {
   connections?: Array<CanvasConnection>;
   constraint?: Constraint;
   name: string;
-  oneClickLinks?: boolean;
   placement?: Placement;
   type: string;
 }
