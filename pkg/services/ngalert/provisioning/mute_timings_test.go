@@ -63,12 +63,17 @@ func TestGetMuteTimings(t *testing.T) {
 		require.Equal(t, "Test1", result[0].Name)
 		require.EqualValues(t, provenances["Test1"], result[0].Provenance)
 		require.NotEmpty(t, result[0].Version)
+		require.Equal(t, getIntervalUID(result[0].MuteTimeInterval), result[0].UID)
+
 		require.Equal(t, "Test2", result[1].Name)
 		require.EqualValues(t, provenances["Test2"], result[1].Provenance)
 		require.NotEmpty(t, result[1].Version)
+		require.Equal(t, getIntervalUID(result[1].MuteTimeInterval), result[1].UID)
+
 		require.Equal(t, "Test3", result[2].Name)
 		require.EqualValues(t, "", result[2].Provenance)
 		require.NotEmpty(t, result[2].Version)
+		require.Equal(t, getIntervalUID(result[2].MuteTimeInterval), result[2].UID)
 
 		require.Len(t, store.Calls, 1)
 		require.Equal(t, "Get", store.Calls[0].Method)
@@ -147,6 +152,7 @@ func TestGetMuteTiming(t *testing.T) {
 
 		require.Equal(t, "Test1", result.Name)
 		require.EqualValues(t, models.ProvenanceAPI, result.Provenance)
+		require.Equal(t, getIntervalUID(result.MuteTimeInterval), result.UID)
 		require.NotEmpty(t, result.Version)
 
 		require.Len(t, store.Calls, 1)
@@ -154,6 +160,14 @@ func TestGetMuteTiming(t *testing.T) {
 		require.Equal(t, orgID, store.Calls[0].Args[1])
 
 		prov.AssertCalled(t, "GetProvenance", mock.Anything, &result, orgID)
+
+		t.Run("and by UID", func(t *testing.T) {
+			result2, err := sut.GetMuteTiming(context.Background(), result.UID, orgID)
+
+			require.NoError(t, err)
+
+			require.Equal(t, result, result2)
+		})
 	})
 
 	t.Run("service returns ErrTimeIntervalNotFound if no mute timings", func(t *testing.T) {
@@ -294,6 +308,7 @@ func TestCreateMuteTimings(t *testing.T) {
 
 		require.EqualValues(t, expected, result.MuteTimeInterval)
 		require.EqualValues(t, expectedProvenance, result.Provenance)
+		require.Equal(t, getIntervalUID(expected), result.UID)
 		require.NotEmpty(t, result.Version)
 
 		require.Len(t, store.Calls, 2)
@@ -402,6 +417,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 	}
 	expectedProvenance := models.ProvenanceAPI
 	expectedVersion := calculateMuteTimeIntervalFingerprint(expected)
+	expectedUID := getIntervalUID(expected)
 	timing := definitions.MuteTimeInterval{
 		MuteTimeInterval: expected,
 		Version:          originalVersion,
@@ -423,7 +439,51 @@ func TestUpdateMuteTimings(t *testing.T) {
 	})
 
 	t.Run("rejects mute timings if provenance is not right", func(t *testing.T) {
-		sut, _, prov := createMuteTimingSvcSut()
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
+			return &cfgRevision{cfg: initialConfig()}, nil
+		}
+		expectedErr := errors.New("test")
+		sut.validator = func(from, to models.Provenance) error {
+			return expectedErr
+		}
+		timing := definitions.MuteTimeInterval{
+			MuteTimeInterval: expected,
+			Provenance:       definitions.Provenance(models.ProvenanceFile),
+		}
+
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(expectedProvenance, nil)
+
+		_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
+
+		require.ErrorIs(t, err, expectedErr)
+	})
+
+	t.Run("rejects if mute timing is renamed", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
+			return &cfgRevision{cfg: initialConfig()}, nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(expectedProvenance, nil)
+
+		interval := expected
+		interval.Name = "another-time-interval"
+		timing := definitions.MuteTimeInterval{
+			UID:              expectedUID,
+			MuteTimeInterval: interval,
+			Version:          originalVersion,
+			Provenance:       definitions.Provenance(expectedProvenance),
+		}
+
+		_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
+		require.ErrorIs(t, err, ErrTimeIntervalInvalid)
+	})
+
+	t.Run("rejects mute timings if provenance is not right", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
+			return &cfgRevision{cfg: initialConfig()}, nil
+		}
 		expectedErr := errors.New("test")
 		sut.validator = func(from, to models.Provenance) error {
 			return expectedErr
@@ -477,6 +537,39 @@ func TestUpdateMuteTimings(t *testing.T) {
 		require.Truef(t, ErrTimeIntervalNotFound.Is(err), "expected ErrTimeIntervalNotFound but got %s", err)
 	})
 
+	t.Run("returns ErrMuteTimingsNotFound if mute timing does not exist", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
+			return &cfgRevision{cfg: initialConfig()}, nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(expectedProvenance, nil)
+
+		t.Run("when UID is specified", func(t *testing.T) {
+			timing := definitions.MuteTimeInterval{
+				UID:              "not-found",
+				MuteTimeInterval: expected,
+				Provenance:       definitions.Provenance(expectedProvenance),
+			}
+
+			_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
+
+			require.ErrorIs(t, err, ErrTimeIntervalNotFound)
+		})
+
+		t.Run("when only Name is specified", func(t *testing.T) {
+			timing := definitions.MuteTimeInterval{
+				MuteTimeInterval: config.MuteTimeInterval{
+					Name: "not-found",
+				},
+				Provenance: definitions.Provenance(expectedProvenance),
+			}
+
+			_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
+
+			require.ErrorIs(t, err, ErrTimeIntervalNotFound)
+		})
+	})
+
 	t.Run("saves mute timing and provenance in a transaction if optimistic concurrency passes", func(t *testing.T) {
 		sut, store, prov := createMuteTimingSvcSut()
 		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
@@ -499,6 +592,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 		require.EqualValues(t, expected, result.MuteTimeInterval)
 		require.EqualValues(t, expectedProvenance, result.Provenance)
 		require.EqualValues(t, expectedVersion, result.Version)
+		require.Equal(t, getIntervalUID(result.MuteTimeInterval), result.UID)
 
 		require.Len(t, store.Calls, 2)
 		require.Equal(t, "Get", store.Calls[0].Method)
@@ -760,6 +854,43 @@ func TestDeleteMuteTimings(t *testing.T) {
 
 			prov.AssertCalled(t, "DeleteProvenance", mock.Anything, &definitions.MuteTimeInterval{MuteTimeInterval: timingToDelete}, orgID)
 		})
+	})
+
+	t.Run("deletes mute timing and provenance by UID", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
+			return &cfgRevision{cfg: initialConfig()}, nil
+		}
+		store.SaveFn = func(ctx context.Context, revision *cfgRevision) error {
+			assertInTransaction(t, ctx)
+			return nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
+		prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
+			func(ctx context.Context, _ models.Provisionable, _ int64) error {
+				assertInTransaction(t, ctx)
+				return nil
+			})
+
+		uid := getIntervalUID(timingToDelete)
+
+		err := sut.DeleteMuteTiming(context.Background(), uid, orgID, "", correctVersion)
+		require.NoError(t, err)
+
+		require.Len(t, store.Calls, 2)
+		require.Equal(t, "Get", store.Calls[0].Method)
+		require.Equal(t, orgID, store.Calls[0].Args[1])
+
+		require.Equal(t, "Save", store.Calls[1].Method)
+		require.Equal(t, orgID, store.Calls[1].Args[2])
+		revision := store.Calls[1].Args[1].(*cfgRevision)
+
+		expectedMuteTimings := slices.DeleteFunc(initialConfig().AlertmanagerConfig.MuteTimeIntervals, func(interval config.MuteTimeInterval) bool {
+			return interval.Name == timingToDelete.Name
+		})
+		require.EqualValues(t, expectedMuteTimings, revision.cfg.AlertmanagerConfig.MuteTimeIntervals)
+
+		prov.AssertCalled(t, "DeleteProvenance", mock.Anything, &definitions.MuteTimeInterval{MuteTimeInterval: timingToDelete}, orgID)
 	})
 
 	t.Run("propagates errors", func(t *testing.T) {

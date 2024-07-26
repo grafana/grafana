@@ -2,8 +2,6 @@ package timeinterval
 
 import (
 	"encoding/json"
-	"fmt"
-	"hash/fnv"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -13,12 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
-
-func getIntervalUID(t definitions.MuteTimeInterval) string {
-	sum := fnv.New64()
-	_, _ = sum.Write([]byte(t.Name))
-	return fmt.Sprintf("%016x", sum.Sum64())
-}
 
 func convertToK8sResources(orgID int64, intervals []definitions.MuteTimeInterval, namespacer request.NamespaceMapper, selector fields.Selector) (*model.TimeIntervalList, error) {
 	data, err := json.Marshal(intervals)
@@ -59,12 +51,11 @@ func convertToK8sResource(orgID int64, interval definitions.MuteTimeInterval, na
 }
 
 func buildTimeInterval(orgID int64, interval definitions.MuteTimeInterval, spec model.TimeIntervalSpec, namespacer request.NamespaceMapper) model.TimeInterval {
-	uid := getIntervalUID(interval) // TODO replace to stable UID when we switch to normal storage
 	i := model.TimeInterval{
 		TypeMeta: resourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
-			UID:             types.UID(uid), // TODO This is needed to make PATCH work
-			Name:            uid,            // TODO replace to stable UID when we switch to normal storage
+			UID:             types.UID(interval.UID), // TODO This is needed to make PATCH work
+			Name:            interval.UID,            // TODO replace to stable UID when we switch to normal storage
 			Namespace:       namespacer(orgID),
 			ResourceVersion: interval.Version,
 		},
@@ -85,6 +76,7 @@ func convertToDomainModel(interval *model.TimeInterval) (definitions.MuteTimeInt
 		return definitions.MuteTimeInterval{}, err
 	}
 	result.Version = interval.ResourceVersion
+	result.UID = interval.ObjectMeta.Name
 	err = result.Validate()
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
