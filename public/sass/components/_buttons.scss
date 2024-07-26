@@ -1,5 +1,120 @@
 @use 'sass:color';
 @use 'sass:map';
+
+// Gradient Bar Colors for buttons and alerts
+@mixin gradientBar($primaryColor, $secondaryColor, $text-color: #fff, $textShadow: 0 -1px 0 rgba(0, 0, 0, 0.25)) {
+  background-color: color.mix($primaryColor, $secondaryColor, 60%);
+  background-image: linear-gradient(to bottom, $primaryColor, $secondaryColor); // Standard, IE10
+  background-repeat: repeat-x;
+  color: $text-color;
+  text-shadow: $textShadow;
+  border-color: $primaryColor;
+}
+
+@mixin hover {
+  @if $enable-hover-media-query {
+    // See Media Queries Level 4: http://drafts.csswg.org/mediaqueries/#hover
+    // Currently shimmed by https://github.com/twbs/mq4-hover-shim
+    @media (hover: hover) {
+      &:hover {
+        @content;
+      }
+    }
+  } @else {
+    &:hover {
+      @content;
+    }
+  }
+}
+
+@mixin hover-focus {
+  @if $enable-hover-media-query {
+    &:focus {
+      @content;
+    }
+    @include hover {
+      @content;
+    }
+  } @else {
+    &:focus,
+    &:hover {
+      @content;
+    }
+  }
+}
+
+// Button backgrounds
+// ------------------
+@mixin buttonBackground($startColor, $endColor, $text-color: #fff, $textShadow: 0px 1px 0 rgba(0, 0, 0, 0.1)) {
+  // gradientBar will set the background to a pleasing blend of these, to support IE<=9
+  @include gradientBar($startColor, $endColor, $text-color, $textShadow);
+
+  // in these cases the gradient won't cover the background, so we override
+  &:hover,
+  &:focus,
+  &:active,
+  &.active,
+  &.disabled,
+  &[disabled] {
+    color: $text-color;
+    background-image: none;
+    background-color: $startColor;
+  }
+}
+
+// Button sizes
+@mixin button-size($padding-y, $padding-x, $font-size, $border-radius) {
+  padding: $padding-y $padding-x;
+  font-size: $font-size;
+  //box-shadow: inset 0 (-$padding-y/3) rgba(0,0,0,0.15);
+
+  border-radius: $border-radius;
+}
+
+@mixin button-outline-variant($color) {
+  color: $white;
+  background-image: none;
+  background-color: transparent;
+  border: 1px solid $white;
+
+  @include hover {
+    color: $white;
+    background-color: $color;
+  }
+
+  &:focus,
+  &.focus {
+    color: $white;
+    background-color: $color;
+  }
+
+  &:active,
+  &.active,
+  .open > &.dropdown-toggle {
+    color: $white;
+    background-color: $color;
+
+    &:hover,
+    &:focus,
+    &.focus {
+      color: $white;
+      background-color: color.adjust($color, $lightness: -17%);
+      border-color: color.adjust($color, $lightness: -25%);
+    }
+  }
+
+  &.disabled,
+  &:disabled {
+    &:focus,
+    &.focus {
+      border-color: color.adjust($color, $lightness: 20%);
+    }
+    @include hover {
+      border-color: color.adjust($color, $lightness: 20%);
+    }
+  }
+}
+
 //
 // Buttons
 // --------------------------------------------------
@@ -28,7 +143,7 @@
   &.active {
     &:focus,
     &.focus {
-      @include no-focus();
+      outline: none;
     }
   }
 
@@ -50,7 +165,7 @@
   &:disabled {
     cursor: $cursor-disabled;
     opacity: 0.65;
-    @include box-shadow(none);
+    box-shadow: none;
     pointer-events: none;
   }
 
@@ -144,7 +259,7 @@
 
 .btn-outline-disabled {
   @include button-outline-variant($gray-1);
-  @include box-shadow(none);
+  box-shadow: none;
   cursor: default;
 
   &:hover,

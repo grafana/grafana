@@ -47,7 +47,7 @@ const Details = ({ rule }: DetailsProps) => {
   }, [rule.rulerRule]);
 
   const annotations: Annotations | undefined = !isRecordingRulerRule(rule.rulerRule)
-    ? rule.annotations ?? []
+    ? (rule.annotations ?? [])
     : undefined;
 
   const hasEvaluationDuration = Number.isFinite(evaluationDuration);
@@ -140,7 +140,7 @@ interface AnnotationValueProps {
   value: string;
 }
 
-function AnnotationValue({ value }: AnnotationValueProps) {
+export function AnnotationValue({ value }: AnnotationValueProps) {
   const needsExternalLink = value && value.startsWith('http');
   const tokenizeValue = <Tokenize input={value} delimiter={['{{', '}}']} />;
 

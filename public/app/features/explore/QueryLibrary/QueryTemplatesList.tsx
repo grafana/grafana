@@ -45,6 +45,7 @@ export function QueryTemplatesList() {
       createdAtTimestamp: queryTemplate?.createdAtTimestamp || 0,
       query: queryTemplate.targets[0],
       description: queryTemplate.title,
+      user: queryTemplate.user,
     };
   });
 

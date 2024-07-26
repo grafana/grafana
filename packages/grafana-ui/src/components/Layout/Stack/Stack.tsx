@@ -69,7 +69,7 @@ const getStyles = (
         flexDirection: val,
       })),
       getResponsiveStyle(theme, wrap, (val) => ({
-        flexWrap: val,
+        flexWrap: typeof val === 'boolean' ? (val ? 'wrap' : 'nowrap') : val,
       })),
       getResponsiveStyle(theme, alignItems, (val) => ({
         alignItems: val,

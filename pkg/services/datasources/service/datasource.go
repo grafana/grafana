@@ -280,20 +280,24 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			return err
 		}
 
-		// This belongs in Data source permissions, and we probably want
-		// to do this with a hook in the store and rollback on fail.
-		// We can't use events, because there's no way to communicate
-		// failure, and we want "not being able to set default perms"
-		// to fail the creation.
-		permissions := []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: "Viewer", Permission: "Query"},
-			{BuiltinRole: "Editor", Permission: "Query"},
+		if s.cfg.RBAC.PermissionsOnCreation("datasource") {
+			// This belongs in Data source permissions, and we probably want
+			// to do this with a hook in the store and rollback on fail.
+			// We can't use events, because there's no way to communicate
+			// failure, and we want "not being able to set default perms"
+			// to fail the creation.
+			permissions := []accesscontrol.SetResourcePermissionCommand{
+				{BuiltinRole: "Viewer", Permission: "Query"},
+				{BuiltinRole: "Editor", Permission: "Query"},
+			}
+			if cmd.UserID != 0 {
+				permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Admin"})
+			}
+			_, err = s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...)
+			return err
 		}
-		if cmd.UserID != 0 {
-			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Admin"})
-		}
-		_, err = s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...)
-		return err
+
+		return nil
 	})
 }
 
@@ -322,10 +326,7 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend
 	}
 
 	// When the APIVersion is set, the client must also implement AdmissionHandler
-	if p.APIVersion == "" {
-		if settings.APIVersion != "" {
-			return nil, fmt.Errorf("invalid request apiVersion (datasource does not have one configured)")
-		}
+	if settings.APIVersion == "" {
 		return settings, nil // NOOP
 	}
 
@@ -367,7 +368,7 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend
 		if err != nil {
 			if errors.Is(err, plugins.ErrMethodNotImplemented) {
 				return nil, errutil.Internal("plugin.unimplemented").
-					Errorf("plugin (%s) with apiVersion=%s must implement ValidateAdmission", p.ID, p.APIVersion)
+					Errorf("plugin (%s) with apiVersion=%s must implement ValidateAdmission", p.ID, settings.APIVersion)
 			}
 			return nil, err
 		}
@@ -388,7 +389,7 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
 			return nil, errutil.Internal("plugin.unimplemented").
-				Errorf("plugin (%s) with apiVersion=%s must implement MutateAdmission", p.ID, p.APIVersion)
+				Errorf("plugin (%s) with apiVersion=%s must implement MutateAdmission", p.ID, settings.APIVersion)
 		}
 		return nil, err
 	}

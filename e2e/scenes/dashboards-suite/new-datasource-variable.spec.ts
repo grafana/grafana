@@ -3,7 +3,8 @@ import { e2e } from '../utils';
 const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
 const DASHBOARD_NAME = 'Test variable output';
 
-describe('Variables - Datasource', () => {
+// Skipping due to flakiness/race conditions with same old arch test  e2e/dashboards-suite/new-datasource-variable.spec.ts
+describe.skip('Variables - Datasource', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

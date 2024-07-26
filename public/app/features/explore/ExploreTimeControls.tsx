@@ -1,8 +1,9 @@
 import { Component } from 'react';
 
 import { TimeRange, RawTimeRange, dateTimeForTimeZone, dateMath } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
+import { getWeekStart } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 
@@ -85,7 +86,7 @@ export class ExploreTimeControls extends Component<Props> {
       onZoom: this.onZoom,
       hideText,
     };
-
+    const weekStart = getWeekStart(config.bootData.user.weekStart);
     return (
       <TimePickerWithHistory
         isOnCanvas
@@ -96,6 +97,7 @@ export class ExploreTimeControls extends Component<Props> {
         onChange={this.onChangeTimePicker}
         onChangeTimeZone={onChangeTimeZone}
         onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
+        weekStart={weekStart}
       />
     );
   }

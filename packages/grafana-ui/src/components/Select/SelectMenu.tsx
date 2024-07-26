@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import { max } from 'lodash';
-import { RefCallback, useEffect, useMemo, useRef } from 'react';
+import { RefCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import * as React from 'react';
 import { MenuListProps } from 'react-select';
 import { FixedSizeList as List } from 'react-window';
@@ -52,6 +52,7 @@ const VIRTUAL_LIST_WIDTH_EXTRA = 36;
 export const VirtualizedSelectMenu = ({
   children,
   maxHeight,
+  innerRef: scrollRef,
   options,
   focusedOption,
 }: MenuListProps<SelectableValue>) => {
@@ -71,7 +72,7 @@ export const VirtualizedSelectMenu = ({
   const focusedIndex = flattenedOptions.findIndex(
     (option: SelectableValue<unknown>) => option.value === focusedOption?.value
   );
-  useEffect(() => {
+  useLayoutEffect(() => {
     listRef.current?.scrollToItem(focusedIndex);
   }, [focusedIndex]);
 
@@ -81,13 +82,25 @@ export const VirtualizedSelectMenu = ({
 
   // flatten the children to account for any categories
   // these will have array children that are the individual options
-  const flattenedChildren = children.flatMap((child) => {
+  const flattenedChildren = children.flatMap((child, index) => {
     if (hasArrayChildren(child)) {
       // need to remove the children from the category else they end up in the DOM twice
       const childWithoutChildren = React.cloneElement(child, {
         children: null,
       });
-      return [childWithoutChildren, ...child.props.children];
+      return [
+        childWithoutChildren,
+        ...child.props.children.slice(0, -1),
+        // add a bottom divider to the last item in the category
+        React.cloneElement(child.props.children.at(-1), {
+          innerProps: {
+            style: {
+              borderBottom: `1px solid ${theme.colors.border.weak}`,
+              height: VIRTUAL_LIST_ITEM_HEIGHT,
+            },
+          },
+        }),
+      ];
     }
     return [child];
   });
@@ -99,6 +112,7 @@ export const VirtualizedSelectMenu = ({
 
   return (
     <List
+      outerRef={scrollRef}
       ref={listRef}
       className={styles.menu}
       height={heightEstimate}

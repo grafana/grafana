@@ -14,6 +14,7 @@ import {
   sceneGraph,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
+  CancelActivationHandler,
 } from '@grafana/scenes';
 import { Box, Stack, useStyles2 } from '@grafana/ui';
 
@@ -73,6 +74,20 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
       timePicker: state.timePicker ?? new SceneTimePicker({}),
       refreshPicker: state.refreshPicker ?? new SceneRefreshPicker({}),
       ...state,
+    });
+
+    this.addActivationHandler(() => {
+      let refreshPickerDeactivation: CancelActivationHandler | undefined;
+
+      if (this.state.hideTimeControls) {
+        refreshPickerDeactivation = this.state.refreshPicker.activate();
+      }
+
+      return () => {
+        if (refreshPickerDeactivation) {
+          refreshPickerDeactivation();
+        }
+      };
     });
   }
 
@@ -143,8 +158,7 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       flexDirection: 'row',
       flexWrap: 'nowrap',
-      position: 'sticky',
-      top: 0,
+      position: 'relative',
       background: theme.colors.background.canvas,
       zIndex: theme.zIndex.activePanel,
       width: '100%',
@@ -152,6 +166,10 @@ function getStyles(theme: GrafanaTheme2) {
       [theme.breakpoints.down('sm')]: {
         flexDirection: 'column-reverse',
         alignItems: 'stretch',
+      },
+      [theme.breakpoints.up('sm')]: {
+        position: 'sticky',
+        top: 0,
       },
     }),
     embedded: css({

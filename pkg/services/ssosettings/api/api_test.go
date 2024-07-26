@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -550,7 +552,7 @@ func TestSSOSettingsAPI_List(t *testing.T) {
 
 func getPermissionsForActionAndScope(action, scope string) map[int64]map[string][]string {
 	return map[int64]map[string][]string{
-		1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{{
+		1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{{
 			Action: action, Scope: scope,
 		}}),
 	}
@@ -563,7 +565,7 @@ func setupTests(t *testing.T, service ssosettings.Service) *webtest.Server {
 	api := &Api{
 		Log:                logger,
 		RouteRegister:      routing.NewRouteRegister(),
-		AccessControl:      acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		AccessControl:      acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
 		SSOSettingsService: service,
 	}
 

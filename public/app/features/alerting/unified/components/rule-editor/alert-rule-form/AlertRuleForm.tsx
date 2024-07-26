@@ -27,7 +27,7 @@ import {
   trackAlertRuleFormCancelled,
   trackAlertRuleFormSaved,
 } from '../../../Analytics';
-import { useDeleteRuleFromGroup } from '../../../hooks/useProduceNewRuleGroup';
+import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { saveRuleFormAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
@@ -64,7 +64,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const [queryParams] = useQueryParams();
   const [showEditYaml, setShowEditYaml] = useState(false);
   const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
-  const [deleteRuleFromGroup, _deleteRuleState] = useDeleteRuleFromGroup();
+  const [_deleteRuleState, deleteRuleFromGroup] = useDeleteRuleFromGroup();
 
   const routeParams = useParams<{ type: string; id: string }>();
   const ruleType = translateRouteParamToRuleType(routeParams.type);
@@ -160,7 +160,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     if (existing) {
       const ruleGroupIdentifier = getRuleGroupLocationFromRuleWithLocation(existing);
 
-      await deleteRuleFromGroup(ruleGroupIdentifier, existing.rule);
+      await deleteRuleFromGroup.execute(ruleGroupIdentifier, existing.rule);
       locationService.replace(returnTo);
     }
   };

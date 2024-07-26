@@ -2,10 +2,10 @@ import { ComponentType } from 'react';
 
 import {
   NumberFieldConfigSettings,
-  SliderFieldConfigSettings,
   SelectFieldConfigSettings,
+  SliderFieldConfigSettings,
   StringFieldConfigSettings,
-} from '../field';
+} from '../field/overrides/processors';
 import { RegistryItem, Registry } from '../utils/Registry';
 
 import { OptionEditorConfig } from './options';

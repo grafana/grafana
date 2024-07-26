@@ -19,10 +19,11 @@ import (
 	"github.com/openfga/openfga/pkg/typesystem"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/store"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/store/migration"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+
+	zassets "github.com/grafana/grafana/pkg/services/authz/zanzana/store/assets"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/store/migration"
 )
 
 func TestMain(m *testing.M) {
@@ -287,7 +288,7 @@ func sqliteIntegrationTest(tb testing.TB) *sql.DB {
 	db, cfg := db.InitTestDBWithCfg(tb)
 
 	m := migrator.NewMigrator(db.GetEngine(), cfg)
-	err := migration.RunWithMigrator(m, cfg, store.EmbedMigrations, store.SQLiteMigrationDir)
+	err := migration.RunWithMigrator(m, cfg, zassets.EmbedMigrations, zassets.SQLiteMigrationDir)
 	require.NoError(tb, err)
 
 	return db.GetEngine().DB().DB

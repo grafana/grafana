@@ -60,11 +60,5 @@ describe.skip('Keyboard shortcuts', () => {
     e2e.components.RefreshPicker.runButtonV2().should('have.text', 'Run query');
     expectedRange = `Time range selected: 2024-06-05 10:04:00 to 2024-06-05 10:05:00`; // 1 min back
     e2e.components.TimePicker.openButton().should('have.attr', 'aria-label', expectedRange);
-
-    cy.log('Trying one shift-right');
-    cy.get('body').type('t{rightarrow}');
-    e2e.components.RefreshPicker.runButtonV2().should('have.text', 'Run query');
-    expectedRange = `Time range selected: 2024-06-05 10:05:00 to 2024-06-05 10:06:00`; // 1 min forward
-    e2e.components.TimePicker.openButton().should('have.attr', 'aria-label', expectedRange);
   });
 });

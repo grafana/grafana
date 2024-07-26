@@ -4,28 +4,33 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"math"
 	"testing"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestAnnotationHistorian(t *testing.T) {
@@ -46,6 +51,31 @@ func TestAnnotationHistorian(t *testing.T) {
 		for i := 0; i < 5; i++ {
 			require.Equal(t, frame.Fields[i].Len(), 1)
 		}
+	})
+
+	t.Run("alert annotations are authorized", func(t *testing.T) {
+		anns := createTestAnnotationBackendSut(t)
+		ac := &acfakes.FakeRuleService{}
+		expectedErr := errors.New("test-error")
+		ac.AuthorizeAccessInFolderFunc = func(ctx context.Context, requester identity.Requester, namespaced models.Namespaced) error {
+			return expectedErr
+		}
+		anns.ac = ac
+
+		items := []annotations.Item{createAnnotation()}
+		require.NoError(t, anns.store.Save(context.Background(), nil, items, 1, log.NewNopLogger()))
+
+		q := models.HistoryQuery{
+			RuleUID:      "my-rule",
+			OrgID:        1,
+			SignedInUser: &user.SignedInUser{Name: "test-user", OrgID: 1},
+		}
+		_, err := anns.Query(context.Background(), q)
+
+		require.ErrorIs(t, err, expectedErr)
+		assert.Len(t, ac.Calls, 1)
+		assert.Equal(t, "AuthorizeAccessInFolder", ac.Calls[0].MethodName)
+		assert.Equal(t, q.SignedInUser, ac.Calls[0].Arguments[1])
 	})
 
 	t.Run("annotation queries send expected item query", func(t *testing.T) {
@@ -132,7 +162,8 @@ func createTestAnnotationSutWithStore(t *testing.T, annotations AnnotationStore)
 		models.RuleGen.With(models.RuleMuts.WithOrgID(1), withUID("my-rule")).GenerateRef(),
 	}
 	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
-	return NewAnnotationBackend(annotationBackendLogger, annotations, rules, met)
+	ac := &acfakes.FakeRuleService{}
+	return NewAnnotationBackend(annotationBackendLogger, annotations, rules, met, ac)
 }
 
 func createTestAnnotationBackendSutWithMetrics(t *testing.T, met *metrics.Historian) *AnnotationBackend {
@@ -146,7 +177,8 @@ func createTestAnnotationBackendSutWithMetrics(t *testing.T, met *metrics.Histor
 	dbs.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil)
 	store := NewAnnotationStore(fakeAnnoRepo, dbs, met)
 	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
-	return NewAnnotationBackend(annotationBackendLogger, store, rules, met)
+	ac := &acfakes.FakeRuleService{}
+	return NewAnnotationBackend(annotationBackendLogger, store, rules, met, ac)
 }
 
 func createFailingAnnotationSut(t *testing.T, met *metrics.Historian) *AnnotationBackend {
@@ -159,7 +191,8 @@ func createFailingAnnotationSut(t *testing.T, met *metrics.Historian) *Annotatio
 	dbs.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil)
 	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
 	store := NewAnnotationStore(fakeAnnoRepo, dbs, met)
-	return NewAnnotationBackend(annotationBackendLogger, store, rules, met)
+	ac := &acfakes.FakeRuleService{}
+	return NewAnnotationBackend(annotationBackendLogger, store, rules, met, ac)
 }
 
 func createAnnotation() annotations.Item {

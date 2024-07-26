@@ -259,9 +259,11 @@ func getRoleFromSearch(role string) (org.RoleType, bool) {
 	return org.RoleType(cases.Title(language.Und).String(role)), false
 }
 
-func validateInfo(info *social.OAuthInfo, requester identity.Requester) error {
+func validateInfo(info *social.OAuthInfo, oldInfo *social.OAuthInfo, requester identity.Requester) error {
 	return validation.Validate(info, requester,
 		validation.RequiredValidator(info.ClientId, "Client Id"),
-		validation.AllowAssignGrafanaAdminValidator,
-		validation.SkipOrgRoleSyncAllowAssignGrafanaAdminValidator)
+		validation.AllowAssignGrafanaAdminValidator(info, oldInfo, requester),
+		validation.SkipOrgRoleSyncAllowAssignGrafanaAdminValidator,
+		validation.OrgAttributePathValidator(info, oldInfo, requester),
+		validation.OrgMappingValidator(info, oldInfo, requester))
 }

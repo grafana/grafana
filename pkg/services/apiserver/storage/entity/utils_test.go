@@ -86,7 +86,7 @@ func TestResourceToEntity(t *testing.T) {
 					},
 				},
 			},
-			expectedKey:          "/playlist.grafana.app/playlists/namespaces/default/test-name",
+			expectedKey:          "/group/playlist.grafana.app/resource/playlists/namespace/default/name/test-name",
 			expectedGroupVersion: "v0alpha1",
 			expectedName:         "test-name",
 			expectedNamespace:    "default",
@@ -157,7 +157,7 @@ func TestEntityToResource(t *testing.T) {
 	}{
 		{
 			entity: &entityStore.Entity{
-				Key:             "/playlist.grafana.app/playlists/namespaces/default/test-uid",
+				Key:             "/group/playlist.grafana.app/resource/playlists/namespaces/default/name/test-uid",
 				GroupVersion:    "v0alpha1",
 				Name:            "test-uid",
 				Title:           "A playlist",

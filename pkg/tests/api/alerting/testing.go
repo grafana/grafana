@@ -240,6 +240,17 @@ type apiClient struct {
 	url string
 }
 
+type LegacyApiClient struct {
+	apiClient
+}
+
+func NewAlertingLegacyAPIClient(host, user, pass string) LegacyApiClient {
+	cli := newAlertingApiClient(host, user, pass)
+	return LegacyApiClient{
+		apiClient: cli,
+	}
+}
+
 func newAlertingApiClient(host, user, pass string) apiClient {
 	if len(user) == 0 && len(pass) == 0 {
 		return apiClient{url: fmt.Sprintf("http://%s", host)}

@@ -379,7 +379,7 @@ function getWrapperStyles(theme: GrafanaTheme2, size: 'sm' | 'md' | 'lg') {
 
     [theme.breakpoints.down('md')]: {
       width: `calc(100% - ${theme.spacing(2)}) !important`,
-      minWidth: 0,
+      minWidth: '0 !important',
     },
   });
 }

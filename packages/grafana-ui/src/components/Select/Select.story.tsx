@@ -31,6 +31,7 @@ const manyGroupedOptions = [
       return { label: person, value: person };
     }),
   },
+  { label: 'Bar', value: '3' },
 ];
 
 const meta: Meta = {
@@ -250,6 +251,7 @@ export const MultiSelectWithOptionGroups: StoryFn = (args) => {
               { label: 'Eagle', value: '13' },
             ],
           },
+          { label: 'Bar', value: '3' },
         ]}
         value={value}
         onChange={(v) => {

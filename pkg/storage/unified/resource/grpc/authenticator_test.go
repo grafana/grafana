@@ -11,19 +11,19 @@ import (
 
 func TestBasicEncodeDecode(t *testing.T) {
 	before := &identity.StaticRequester{
-		UserID:    123,
-		UserUID:   "abc",
-		Login:     "test",
-		Namespace: identity.NamespaceUser,
-		OrgID:     456,
-		OrgName:   "org",
-		OrgRole:   identity.RoleAdmin,
+		UserID:  123,
+		UserUID: "abc",
+		Login:   "test",
+		Type:    identity.TypeUser,
+		OrgID:   456,
+		OrgName: "org",
+		OrgRole: identity.RoleAdmin,
 	}
 
 	auth := &Authenticator{}
 
 	md := encodeIdentityInMetadata(before)
-	after, err := auth.DecodeMetadata(context.Background(), md)
+	after, err := auth.decodeMetadata(context.Background(), md)
 	require.NoError(t, err)
 	require.Equal(t, before.GetID(), after.GetID())
 	require.Equal(t, before.GetUID(), after.GetUID())

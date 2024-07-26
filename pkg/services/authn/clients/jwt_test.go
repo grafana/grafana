@@ -155,7 +155,6 @@ func TestAuthenticateJWT(t *testing.T) {
 			id, err := jwtClient.Authenticate(context.Background(), &authn.Request{
 				OrgID:       1,
 				HTTPRequest: validHTTPReq,
-				Resp:        nil,
 			})
 			require.NoError(t, err)
 
@@ -267,7 +266,6 @@ func TestJWTClaimConfig(t *testing.T) {
 			_, err := jwtClient.Authenticate(context.Background(), &authn.Request{
 				OrgID:       1,
 				HTTPRequest: httpReq,
-				Resp:        nil,
 			})
 			if tc.valid {
 				require.NoError(t, err)
@@ -384,7 +382,6 @@ func TestJWTTest(t *testing.T) {
 			got := jwtClient.Test(context.Background(), &authn.Request{
 				OrgID:       1,
 				HTTPRequest: httpReq,
-				Resp:        nil,
 			})
 
 			require.Equal(t, tc.want, got)
@@ -432,7 +429,6 @@ func TestJWTStripParam(t *testing.T) {
 	_, err := jwtClient.Authenticate(context.Background(), &authn.Request{
 		OrgID:       1,
 		HTTPRequest: httpReq,
-		Resp:        nil,
 	})
 	require.NoError(t, err)
 	// auth_token should be removed from the query string
@@ -489,7 +485,6 @@ func TestJWTSubClaimsConfig(t *testing.T) {
 	identity, err := jwtClient.Authenticate(context.Background(), &authn.Request{
 		OrgID:       1,
 		HTTPRequest: httpReq,
-		Resp:        nil,
 	})
 	require.NoError(t, err)
 	require.Equal(t, "mainemail+extraemail02@gmail.com", identity.Email)

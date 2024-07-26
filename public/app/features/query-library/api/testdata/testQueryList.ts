@@ -16,6 +16,7 @@ export const getTestQueryList = () => ({
         uid: '65327fce-c545-489d-ada5-16f909453d12',
         resourceVersion: '1783293341664808960',
         creationTimestamp: '2024-04-25T20:32:58Z',
+        annotations: { 'grafana.app/createdBy': 'user:1:admin' },
       },
       spec: {
         title: 'Elastic Query Template',
@@ -62,6 +63,7 @@ export const getTestQueryList = () => ({
         uid: '3e71de65-efa7-40e3-8f23-124212cca455',
         resourceVersion: '1783214217151647744',
         creationTimestamp: '2024-04-25T11:05:55Z',
+        annotations: { 'grafana.app/createdBy': 'user:1:admin' },
       },
       spec: {
         title: 'Loki Query Template',

@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/folder"
+	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
@@ -67,8 +68,9 @@ func TestConfigureHistorianBackend(t *testing.T) {
 			Enabled: true,
 			Backend: "invalid-backend",
 		}
+		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer)
+		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
 
 		require.ErrorContains(t, err, "unrecognized")
 	})
@@ -82,8 +84,9 @@ func TestConfigureHistorianBackend(t *testing.T) {
 			Backend:      "multiple",
 			MultiPrimary: "invalid-backend",
 		}
+		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer)
+		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
 
 		require.ErrorContains(t, err, "multi-backend target")
 		require.ErrorContains(t, err, "unrecognized")
@@ -99,8 +102,9 @@ func TestConfigureHistorianBackend(t *testing.T) {
 			MultiPrimary:     "annotations",
 			MultiSecondaries: []string{"annotations", "invalid-backend"},
 		}
+		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer)
+		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
 
 		require.ErrorContains(t, err, "multi-backend target")
 		require.ErrorContains(t, err, "unrecognized")
@@ -117,8 +121,9 @@ func TestConfigureHistorianBackend(t *testing.T) {
 			LokiReadURL:  "http://gone.invalid",
 			LokiWriteURL: "http://gone.invalid",
 		}
+		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer)
+		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -133,8 +138,9 @@ func TestConfigureHistorianBackend(t *testing.T) {
 			Enabled: true,
 			Backend: "annotations",
 		}
+		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer)
+		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -155,8 +161,9 @@ grafana_alerting_state_history_info{backend="annotations"} 1
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: false,
 		}
+		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer)
+		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)

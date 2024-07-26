@@ -16,7 +16,7 @@ import { getDashboardSceneFor } from '../utils/utils';
 
 import { SceneShareTabState } from './types';
 
-interface ShareExportTabState extends SceneShareTabState {
+export interface ShareExportTabState extends SceneShareTabState {
   isSharingExternally?: boolean;
   isViewingJSON?: boolean;
 }
@@ -55,7 +55,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> {
     return;
   }
 
-  public async getExportableDashboardJson() {
+  public getExportableDashboardJson = async () => {
     const { isSharingExternally } = this.state;
     const saveModel = transformSceneToSaveModel(getDashboardSceneFor(this));
 
@@ -70,9 +70,9 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> {
       : saveModel;
 
     return exportable;
-  }
+  };
 
-  public async onSaveAsFile() {
+  public onSaveAsFile = async () => {
     const dashboardJson = await this.getExportableDashboardJson();
     const dashboardJsonPretty = JSON.stringify(dashboardJson, null, 2);
     const { isSharingExternally } = this.state;
@@ -90,7 +90,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> {
     DashboardInteractions.exportDownloadJsonClicked({
       externally: isSharingExternally,
     });
-  }
+  };
 }
 
 function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) {

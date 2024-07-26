@@ -7,11 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-
-	"golang.org/x/exp/slices"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -236,8 +234,8 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 
 func resolveUserID(user identity.Requester, log log.Logger) (int64, error) {
 	userID := int64(0)
-	namespaceID, identifier := user.GetNamespacedID()
-	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+	namespaceID, identifier := user.GetTypedID()
+	if namespaceID != identity.TypeUser && namespaceID != identity.TypeServiceAccount {
 		log.Debug("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", identifier)
 	} else {
 		var err error
@@ -490,18 +488,27 @@ func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, que
 }
 
 func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *dashboards.SaveDashboardDTO, dash *dashboards.Dashboard, provisioned bool) {
+	resource := "dashboard"
+	if dash.IsFolder {
+		resource = "folder"
+	}
+
+	if !dr.cfg.RBAC.PermissionsOnCreation(resource) {
+		return
+	}
+
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 	// nolint:staticcheck
 	inFolder := dash.FolderID > 0
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
 	if !provisioned {
-		namespaceID, userIDstr := dto.User.GetNamespacedID()
+		namespaceID, userIDstr := dto.User.GetTypedID()
 		userID, err := identity.IntIdentifier(namespaceID, userIDstr)
 
 		if err != nil {
 			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "namespaceID", namespaceID, "userID", userID, "error", err)
-		} else if namespaceID == identity.NamespaceUser && userID > 0 {
+		} else if namespaceID == identity.TypeUser && userID > 0 {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 				UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 			})
@@ -526,16 +533,20 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 }
 
 func (dr *DashboardServiceImpl) setDefaultFolderPermissions(ctx context.Context, cmd *folder.CreateFolderCommand, f *folder.Folder, provisioned bool) {
+	if !dr.cfg.RBAC.PermissionsOnCreation("folder") {
+		return
+	}
+
 	inFolder := f.ParentUID != ""
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
 	if !provisioned {
-		namespaceID, userIDstr := cmd.SignedInUser.GetNamespacedID()
+		namespaceID, userIDstr := cmd.SignedInUser.GetTypedID()
 		userID, err := identity.IntIdentifier(namespaceID, userIDstr)
 
 		if err != nil {
 			dr.log.Error("Could not make user admin", "folder", cmd.Title, "namespaceID", namespaceID, "userID", userID, "error", err)
-		} else if namespaceID == identity.NamespaceUser && userID > 0 {
+		} else if namespaceID == identity.TypeUser && userID > 0 {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 				UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 			})
@@ -700,16 +711,9 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 	hitList := make([]*model.Hit, 0)
 	hits := make(map[int64]*model.Hit)
 
-	requesterIsSvcAccount := query.SignedInUser.GetID().Namespace() == identity.NamespaceServiceAccount
-
 	for _, item := range res {
 		hit, exists := hits[item.ID]
 		if !exists {
-			// Don't list k6 items for users, we don't want users to interact with k6 folders directly through folder UI
-			if (item.UID == accesscontrol.K6FolderUID || item.FolderUID == accesscontrol.K6FolderUID) && !requesterIsSvcAccount {
-				continue
-			}
-
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 			hit = &model.Hit{
 				ID:          item.ID,

@@ -309,7 +309,7 @@ func (a *accessControlFolderGuardian) CanCreate(folderID int64, isFolder bool) (
 
 func (a *accessControlDashboardGuardian) evaluate(evaluator accesscontrol.Evaluator) (bool, error) {
 	ok, err := a.ac.Evaluate(a.ctx, a.user, evaluator)
-	namespaceID, userID := a.user.GetNamespacedID()
+	namespaceID, userID := a.user.GetTypedID()
 	if err != nil {
 		id := 0
 		if a.dashboard != nil {
@@ -331,7 +331,7 @@ func (a *accessControlDashboardGuardian) evaluate(evaluator accesscontrol.Evalua
 
 func (a *accessControlFolderGuardian) evaluate(evaluator accesscontrol.Evaluator) (bool, error) {
 	ok, err := a.ac.Evaluate(a.ctx, a.user, evaluator)
-	namespaceID, userID := a.user.GetNamespacedID()
+	namespaceID, userID := a.user.GetTypedID()
 	if err != nil {
 		uid := ""
 		orgID := 0
