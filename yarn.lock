@@ -3010,22 +3010,22 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/async-query-data@npm:0.1.4":
-  version: 0.1.4
-  resolution: "@grafana/async-query-data@npm:0.1.4"
+"@grafana/async-query-data@npm:0.2.0":
+  version: 0.2.0
+  resolution: "@grafana/async-query-data@npm:0.2.0"
   dependencies:
     tslib: "npm:^2.4.1"
-  checksum: 10/634dfe91c6bbc9742bf296062ead0414055b5e003da5ac776896d2ee22c8674476dd84c77637cc01a618906ab68531dfa9a45f971b0ffa78400943fe61378ab7
+  checksum: 10/8ca53cff8b9dd058e5701316d9839b99882d901964472f8a8e4e8be2c3a884f19d42c052403c4994ef22894c2f56a71f08758181a415ff89408e7c6ba143602f
   languageName: node
   linkType: hard
 
-"@grafana/aws-sdk@npm:0.3.3":
-  version: 0.3.3
-  resolution: "@grafana/aws-sdk@npm:0.3.3"
+"@grafana/aws-sdk@npm:0.4.1":
+  version: 0.4.1
+  resolution: "@grafana/aws-sdk@npm:0.4.1"
   dependencies:
-    "@grafana/async-query-data": "npm:0.1.4"
-    "@grafana/experimental": "npm:1.7.0"
-  checksum: 10/794de025e6c852ed77bd2bcc76f2b9bbe75af73e92c5d092824b4f053df23f1d4085a5710fe3851a158087283722f2b4b73a73c4b7a46c27fa879899d243bea9
+    "@grafana/async-query-data": "npm:0.2.0"
+    "@grafana/experimental": "npm:1.7.12"
+  checksum: 10/a8d4c6c979f62931982326e996f797002af291f52642e9e4eff8416908e73a4c285863f7766dd1bc1141123aad8874eb4777077e7c689cd852a758c503f00c22
   languageName: node
   linkType: hard
 
@@ -3152,25 +3152,6 @@ __metadata:
     tslib: "npm:2.6.3"
   languageName: unknown
   linkType: soft
-
-"@grafana/experimental@npm:1.7.0":
-  version: 1.7.0
-  resolution: "@grafana/experimental@npm:1.7.0"
-  dependencies:
-    "@types/uuid": "npm:^8.3.3"
-    uuid: "npm:^8.3.2"
-  peerDependencies:
-    "@emotion/css": 11.1.3
-    "@grafana/data": ^10.0.0
-    "@grafana/runtime": ^10.0.0
-    "@grafana/ui": ^10.0.0
-    react: 17.0.2
-    react-dom: 17.0.2
-    react-select: ^5.2.1
-    rxjs: 7.8.0
-  checksum: 10/1d30e266d3b2b26f66ff8981ebd0f9804574349079e205b70690cff6f5e742a26096dc90fa90e8faa44cf4bc91a2650cae7994b5eb396663f8b7e73beaccda9b
-  languageName: node
-  linkType: hard
 
 "@grafana/experimental@npm:1.7.12":
   version: 1.7.12
@@ -17091,7 +17072,7 @@ __metadata:
     "@floating-ui/react": "npm:0.26.20"
     "@formatjs/intl-durationformat": "npm:^0.2.4"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
-    "@grafana/aws-sdk": "npm:0.3.3"
+    "@grafana/aws-sdk": "npm:0.4.1"
     "@grafana/azure-sdk": "npm:0.0.3"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
