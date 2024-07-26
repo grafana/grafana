@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
@@ -33,7 +33,7 @@ func TestSignedInUser(t *testing.T) {
 			UserUID: uuid.New().String(),
 			Teams:   []int64{1, 2},
 		}
-		ctx := appcontext.WithUser(context.Background(), u)
+		ctx := identity.WithRequester(context.Background(), u)
 		req, err := http.NewRequest("GET", "http://localhost:3000/apis", nil)
 		require.NoError(t, err)
 		req = req.WithContext(ctx)
@@ -58,7 +58,7 @@ func TestSignedInUser(t *testing.T) {
 			Teams:   []int64{1, 2},
 			IDToken: "test-id-token",
 		}
-		ctx := appcontext.WithUser(context.Background(), u)
+		ctx := identity.WithRequester(context.Background(), u)
 		req, err := http.NewRequest("GET", "http://localhost:3000/apis", nil)
 		require.NoError(t, err)
 		req = req.WithContext(ctx)

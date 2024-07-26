@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
@@ -119,7 +119,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 	}
 
 	testCtx := createTestContext(t)
-	ctx := appcontext.WithUser(testCtx.ctx, testCtx.user)
+	ctx := identity.WithRequester(testCtx.ctx, testCtx.user)
 
 	fakeUser := testCtx.user.GetUID().String()
 	firstVersion := int64(0)
