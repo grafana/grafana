@@ -2,9 +2,9 @@
 
 # 11.1.3 (2024-07-26)
 
+### Bug fixes
 
-
-
+- **RBAC**: Allow plugins to use scoped actions [#90946](https://github.com/grafana/grafana/pull/90946), [@gamab](https://github.com/gamab)
 
 <!-- 11.1.3 END -->
 <!-- 11.1.2 START -->
