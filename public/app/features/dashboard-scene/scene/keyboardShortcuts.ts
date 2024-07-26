@@ -5,8 +5,8 @@ import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 
-import { ShareSnapshot } from '../sharing/ShareButton/share-snapshot/ShareSnapshot';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
+import { ShareSnapshot } from '../sharing/ShareButton/share-snapshot/ShareSnapshot';
 import { ShareModal } from '../sharing/ShareModal';
 import { SharePanelInternally } from '../sharing/panel-share/SharePanelInternally';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
