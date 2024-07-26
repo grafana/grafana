@@ -71,11 +71,11 @@ To access the History view, complete the following steps.
 
 1. Filter by labels either by entering a label or clicking a label of an instance in the list of events.
 1. Filter by current state and previous state by selecting a state from the drop-down or by clicking the states from the list of events.
-Zoom in by dragging on the chart or use the time picker.
+   Zoom in by dragging on the chart or use the time picker.
 
    {{% admonition type="note" %}}
-If you exceed the 5000 alerts limit, you may see data missing from the chart. To see complete results, narrow the time frame.
-{{% /admonition %}}
+   If you exceed the 5000 alerts limit, you may see data missing from the chart. To see complete results, narrow the time frame.
+   {{% /admonition %}}
 
 1. Under the chart, there is a list of events. Each event represents a state change on an alert instance. Expand a row to see the number of transitions for the alert instance, a state graph, and the value in the transition.
 1. Click the alert rule name to jump to the History tab in the Alert Rule view.
