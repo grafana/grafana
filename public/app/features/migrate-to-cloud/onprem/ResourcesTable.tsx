@@ -9,7 +9,7 @@ import { TypeCell } from './TypeCell';
 export interface ResourcesTableProps {
   resources: MigrateDataResponseItemDto[];
   page: number;
-  numberOfPages?: number;
+  numberOfPages: number;
   onChangePage: (page: number) => void;
 }
 
