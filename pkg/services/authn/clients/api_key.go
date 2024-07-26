@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -134,13 +135,13 @@ func (s *APIKey) Priority() uint {
 	return 30
 }
 
-func (s *APIKey) Namespace() string {
-	return authn.NamespaceAPIKey.String()
+func (s *APIKey) IdentityType() identity.IdentityType {
+	return identity.TypeAPIKey
 }
 
-func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
-	if !namespaceID.IsNamespace(authn.NamespaceAPIKey) {
-		return nil, authn.ErrInvalidNamespaceID.Errorf("got unspected namespace: %s", namespaceID.Namespace())
+func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, namespaceID identity.TypedID) (*authn.Identity, error) {
+	if !namespaceID.IsType(identity.TypeAPIKey) {
+		return nil, identity.ErrInvalidTypedID.Errorf("got unspected namespace: %s", namespaceID.Type())
 	}
 
 	apiKeyID, err := namespaceID.ParseInt()
@@ -160,7 +161,7 @@ func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, namespaceID a
 	}
 
 	if key.ServiceAccountId != nil && *key.ServiceAccountId >= 1 {
-		return nil, authn.ErrInvalidNamespaceID.Errorf("api key belongs to service account")
+		return nil, identity.ErrInvalidTypedID.Errorf("api key belongs to service account")
 	}
 
 	return newAPIKeyIdentity(key), nil
@@ -187,18 +188,18 @@ func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Re
 	return nil
 }
 
-func (s *APIKey) getAPIKeyID(ctx context.Context, identity *authn.Identity, r *authn.Request) (apiKeyID int64, exists bool) {
-	id, err := identity.ID.ParseInt()
+func (s *APIKey) getAPIKeyID(ctx context.Context, id *authn.Identity, r *authn.Request) (apiKeyID int64, exists bool) {
+	internalId, err := id.ID.ParseInt()
 	if err != nil {
 		s.log.Warn("Failed to parse ID from identifier", "err", err)
 		return -1, false
 	}
 
-	if identity.ID.IsNamespace(authn.NamespaceAPIKey) {
-		return id, true
+	if id.ID.IsType(identity.TypeAPIKey) {
+		return internalId, true
 	}
 
-	if identity.ID.IsNamespace(authn.NamespaceServiceAccount) {
+	if id.ID.IsType(identity.TypeServiceAccount) {
 		// When the identity is service account, the ID in from the namespace is the service account ID.
 		// We need to fetch the API key in this scenario, as we could use it to uniquely identify a service account token.
 		apiKey, err := s.getAPIKey(ctx, getTokenFromRequest(r))
@@ -255,7 +256,7 @@ func validateApiKey(orgID int64, key *apikey.APIKey) error {
 
 func newAPIKeyIdentity(key *apikey.APIKey) *authn.Identity {
 	return &authn.Identity{
-		ID:              authn.NewNamespaceID(authn.NamespaceAPIKey, key.ID),
+		ID:              identity.NewTypedID(identity.TypeAPIKey, key.ID),
 		OrgID:           key.OrgID,
 		OrgRoles:        map[int64]org.RoleType{key.OrgID: key.Role},
 		ClientParams:    authn.ClientParams{SyncPermissions: true},
@@ -265,7 +266,7 @@ func newAPIKeyIdentity(key *apikey.APIKey) *authn.Identity {
 
 func newServiceAccountIdentity(key *apikey.APIKey) *authn.Identity {
 	return &authn.Identity{
-		ID:              authn.NewNamespaceID(authn.NamespaceServiceAccount, *key.ServiceAccountId),
+		ID:              identity.NewTypedID(identity.TypeServiceAccount, *key.ServiceAccountId),
 		OrgID:           key.OrgID,
 		AuthenticatedBy: login.APIKeyAuthModule,
 		ClientParams:    authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},

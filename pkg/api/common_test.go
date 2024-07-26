@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -189,7 +190,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	return contexthandler.ProvideService(
 		cfg,
 		tracing.InitializeTracerForTest(),
-		&authntest.FakeService{ExpectedIdentity: &authn.Identity{ID: authn.AnonymousNamespaceID, SessionToken: &usertoken.UserToken{}}},
+		&authntest.FakeService{ExpectedIdentity: &authn.Identity{ID: identity.AnonymousTypedID, SessionToken: &usertoken.UserToken{}}},
 	)
 }
 
