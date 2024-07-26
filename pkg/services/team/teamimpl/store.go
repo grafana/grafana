@@ -20,6 +20,7 @@ type store interface {
 	Create(name, email string, orgID int64) (team.Team, error)
 	Update(ctx context.Context, cmd *team.UpdateTeamCommand) error
 	Delete(ctx context.Context, cmd *team.DeleteTeamCommand) error
+	ListTeams(ctx context.Context, query *team.ListTeamsCommand) ([]*team.Team, error)
 	Search(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error)
 	GetByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error)
 	GetByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error)
@@ -265,6 +266,21 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		return team.SearchTeamQueryResult{}, err
 	}
 	return queryResult, nil
+}
+
+func (ss *xormStore) ListTeams(ctx context.Context, query *team.ListTeamsCommand) ([]*team.Team, error) {
+	results := make([]*team.Team, 0)
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		q := sess.Table("team")
+		q.Where("team.org_id=?", query.OrgID)
+		if query.UID != "" {
+			q.Where("team.uid=?", query.UID)
+		}
+		q.Limit(query.Limit, query.Start)
+
+		return q.Find(&results)
+	})
+	return results, err
 }
 
 func (ss *xormStore) GetByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {

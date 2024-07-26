@@ -20,8 +20,10 @@ import (
 type store interface {
 	Insert(context.Context, *user.User) (int64, error)
 	GetByID(context.Context, int64) (*user.User, error)
+	GetByUID(ctx context.Context, orgId int64, uid string) (*user.User, error)
 	GetByLogin(context.Context, *user.GetUserByLoginQuery) (*user.User, error)
 	GetByEmail(context.Context, *user.GetUserByEmailQuery) (*user.User, error)
+	List(context.Context, *user.ListUsersCommand) (*user.ListUserResult, error)
 	Delete(context.Context, int64) error
 	LoginConflict(ctx context.Context, login, email string) error
 	Update(context.Context, *user.UpdateUserCommand) error
@@ -95,6 +97,24 @@ func (ss *sqlStore) GetByID(ctx context.Context, userID int64) (*user.User, erro
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		has, err := sess.ID(&userID).
 			Where(ss.notServiceAccountFilter()).
+			Get(&usr)
+
+		if err != nil {
+			return err
+		} else if !has {
+			return user.ErrUserNotFound
+		}
+		return nil
+	})
+	return &usr, err
+}
+
+func (ss *sqlStore) GetByUID(ctx context.Context, orgId int64, uid string) (*user.User, error) {
+	var usr user.User
+
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		has, err := sess.Table("user").
+			Where("org_id = ? AND uid = ?", orgId, uid).
 			Get(&usr)
 
 		if err != nil {
@@ -506,7 +526,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 			sess.Limit(query.Limit, offset)
 		}
 
-		sess.Cols("u.id", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module")
+		sess.Cols("u.id", "u.uid", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module")
 
 		if len(query.SortOpts) > 0 {
 			for i := range query.SortOpts {
@@ -557,6 +577,40 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		return err
 	})
 	return &result, err
+}
+
+func (ss *sqlStore) List(ctx context.Context, query *user.ListUsersCommand) (*user.ListUserResult, error) {
+	limit := int(query.Limit)
+	if limit <= 0 {
+		limit = 25
+	}
+	result := &user.ListUserResult{
+		Users: make([]*user.User, 0),
+	}
+	max := ""
+	err := ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
+		sess := dbSess.Table("user")
+		sess.Where("id >= ? AND is_service_account = ?", query.ContinueID, query.IsServiceAccount)
+		err := sess.OrderBy("id asc").Limit(limit + 1).Find(&result.Users)
+		if err != nil {
+			return err
+		}
+
+		// Set the revision version
+		_, err = dbSess.Table("user").Select("MAX(updated)").Get(&max)
+		return err
+	})
+	if max != "" {
+		t, err := time.Parse(time.DateTime, max)
+		if err == nil {
+			result.RV = t.UnixMilli()
+		}
+	}
+	if len(result.Users) > limit {
+		result.ContinueID = result.Users[limit].ID
+		result.Users = result.Users[:limit]
+	}
+	return result, err
 }
 
 func setOptional[T any](v *T, add func(v T)) {

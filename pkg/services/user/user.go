@@ -13,8 +13,10 @@ type Service interface {
 	CreateServiceAccount(context.Context, *CreateUserCommand) (*User, error)
 	Delete(context.Context, *DeleteUserCommand) error
 	GetByID(context.Context, *GetUserByIDQuery) (*User, error)
+	GetByUID(context.Context, *GetUserByUIDQuery) (*User, error)
 	GetByLogin(context.Context, *GetUserByLoginQuery) (*User, error)
 	GetByEmail(context.Context, *GetUserByEmailQuery) (*User, error)
+	List(context.Context, *ListUsersCommand) (*ListUserResult, error)
 	Update(context.Context, *UpdateUserCommand) error
 	UpdateLastSeenAt(context.Context, *UpdateUserLastSeenAtCommand) error
 	GetSignedInUser(context.Context, *GetSignedInUserQuery) (*SignedInUser, error)

@@ -36,6 +36,10 @@ func (s *FakeService) SearchTeams(ctx context.Context, query *team.SearchTeamsQu
 	return team.SearchTeamQueryResult{}, s.ExpectedError
 }
 
+func (s *FakeService) ListTeams(ctx context.Context, query *team.ListTeamsCommand) ([]*team.Team, error) {
+	return nil, s.ExpectedError
+}
+
 func (s *FakeService) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
 	return s.ExpectedTeamDTO, s.ExpectedError
 }
