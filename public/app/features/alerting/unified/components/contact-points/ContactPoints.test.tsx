@@ -90,7 +90,6 @@ describe('contact points', () => {
     it('should show / hide loading states, have all actions enabled', async () => {
       renderWithProvider(<ContactPointsPageContents />);
 
-      expect(await screen.findByText('Loading...')).toBeInTheDocument();
       await waitForElementToBeRemoved(screen.queryByText('Loading...'));
       expect(screen.queryByTestId(selectors.components.Alert.alertV2('error'))).not.toBeInTheDocument();
 
@@ -128,9 +127,7 @@ describe('contact points', () => {
       renderWithProvider(<ContactPointsPageContents />);
 
       // wait for loading to be done
-      await waitFor(async () => {
-        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
-      });
+      await waitForElementToBeRemoved(screen.queryByText('Loading...'));
 
       // should disable create contact point
       expect(screen.getByRole('link', { name: 'add contact point' })).toHaveAttribute('aria-disabled', 'true');
