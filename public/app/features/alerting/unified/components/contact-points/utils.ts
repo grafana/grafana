@@ -37,8 +37,8 @@ export function getReceiverDescription(receiver: ReceiverConfigWithMetadata): Re
   const { settings } = receiver;
   switch (receiver.type) {
     case 'email': {
-      const hasEmailAddresses = 'addresses' in settings; // when dealing with alertmanager email_configs we don't normalize the settings
-      return hasEmailAddresses ? summarizeEmailAddresses(settings.addresses) : undefined;
+      const addresses = settings.addresses || settings.to; // when dealing with alertmanager email_configs we don't normalize the settings
+      return addresses ? summarizeEmailAddresses(addresses) : undefined;
     }
     case 'slack': {
       const recipient = settings.recipient || settings.channel;
