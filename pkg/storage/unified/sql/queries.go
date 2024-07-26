@@ -189,6 +189,7 @@ func (r *resourceVersion) Results() (*resourceVersion, error) {
 type sqlResourceVersionRequest struct {
 	*sqltemplate.SQLTemplate
 	Group, Resource string
+	ReadOnly        bool
 	*resourceVersion
 }
 
