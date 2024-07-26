@@ -36,17 +36,14 @@ func (d *DualWriterMode4) Mode() DualWriterMode {
 // Create overrides the behavior of the generic DualWriter and writes only to Storage.
 func (d *DualWriterMode4) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	var method = "create"
-	log := d.Log.WithValues("method", method)
+	var kind = obj.GetObjectKind().GroupVersionKind().Kind
+	log := d.Log.WithValues("method", method, "kind", kind)
 	ctx = klog.NewContext(ctx, log)
 
 	startStorage := time.Now()
 	res, err := d.Storage.Create(ctx, obj, createValidation, options)
 	if err != nil {
 		log.Error(err, "unable to create object in storage")
-	}
-	var kind string
-	if res != nil {
-		kind = res.GetObjectKind().GroupVersionKind().Kind
 	}
 	d.recordStorageDuration(err != nil, mode4Str, kind, method, startStorage)
 	return res, err

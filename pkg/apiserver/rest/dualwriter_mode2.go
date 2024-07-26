@@ -40,15 +40,12 @@ func (d *DualWriterMode2) Mode() DualWriterMode {
 // Create overrides the behavior of the generic DualWriter and writes to LegacyStorage and Storage.
 func (d *DualWriterMode2) Create(ctx context.Context, original runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	var method = "create"
-	log := d.Log.WithValues("method", method)
+	var kind = original.GetObjectKind().GroupVersionKind().Kind
+	log := d.Log.WithValues("method", method, "kind", kind)
 	ctx = klog.NewContext(ctx, log)
-	var kind string
 
 	startLegacy := time.Now()
 	created, err := d.Legacy.Create(ctx, original, createValidation, options)
-	if created != nil {
-		kind = created.GetObjectKind().GroupVersionKind().Kind
-	}
 	if err != nil {
 		log.Error(err, "unable to create object in legacy storage")
 		d.recordLegacyDuration(true, mode2Str, kind, method, startLegacy)
