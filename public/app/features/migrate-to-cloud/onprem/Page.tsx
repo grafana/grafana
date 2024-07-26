@@ -1,7 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { isFetchError } from '@grafana/runtime';
 import { Alert, Box, Stack, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
@@ -15,6 +14,7 @@ import {
   useGetSnapshotQuery,
   useUploadSnapshotMutation,
 } from '../api';
+import { AlertWithTraceID } from '../shared/AlertWithTraceID';
 
 import { DisconnectModal } from './DisconnectModal';
 import { EmptyState } from './EmptyState/EmptyState';
@@ -57,7 +57,7 @@ const SHOULD_POLL_STATUSES: Array<SnapshotDto['status']> = [
   'PROCESSING',
 ];
 
-const SNAPSHOT_REBUILD_STATUSES: Array<SnapshotDto['status']> = ['FINISHED', 'ERROR', 'UNKNOWN'];
+const SNAPSHOT_REBUILD_STATUSES: Array<SnapshotDto['status']> = ['PENDING_PROCESSING', 'FINISHED', 'ERROR', 'UNKNOWN'];
 
 const SNAPSHOT_BUILDING_STATUSES: Array<SnapshotDto['status']> = ['INITIALIZING', 'CREATING'];
 
@@ -166,7 +166,8 @@ export const Page = () => {
         {/* TODO: show errors from all mutation's in a... modal? */}
 
         {createSnapshotResult.isError && (
-          <Alert
+          <AlertWithTraceID
+            error={createSnapshotResult.error}
             severity="error"
             title={t('migrate-to-cloud.summary.run-migration-error-title', 'Error creating snapshot')}
           >
@@ -175,13 +176,7 @@ export const Page = () => {
                 See the Grafana server logs for more details
               </Trans>
             </Text>
-
-            {maybeGetTraceID(createSnapshotResult.error) && (
-              // Deliberately don't want to translate 'Trace ID'
-              // eslint-disable-next-line @grafana/no-untranslated-strings
-              <Text element="p">Trace ID: {maybeGetTraceID(createSnapshotResult.error)}</Text>
-            )}
-          </Alert>
+          </AlertWithTraceID>
         )}
 
         {disconnectResult.isError && (
@@ -247,13 +242,3 @@ export const Page = () => {
     </>
   );
 };
-
-function maybeGetTraceID(err: unknown) {
-  const data = isFetchError<unknown>(err) ? err.data : undefined;
-
-  if (typeof data === 'object' && data && 'traceID' in data && typeof data.traceID === 'string') {
-    return data.traceID;
-  }
-
-  return undefined;
-}

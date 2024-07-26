@@ -1087,6 +1087,13 @@
       "message": "Help us improve this feature by providing feedback and reporting any issues.",
       "title": "Migrate to Grafana Cloud is in public preview"
     },
+    "resource-error": {
+      "dismiss-button": "OK",
+      "resource-summary": "{{refId}} ({{typeName}})",
+      "specific-error": "The specific error was:",
+      "title": "Unable to migrate this resource",
+      "unknown-error": "An unknown error occurred."
+    },
     "resource-status": {
       "error-details-button": "Details",
       "failed": "Error",

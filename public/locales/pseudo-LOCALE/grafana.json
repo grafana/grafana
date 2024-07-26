@@ -1087,6 +1087,13 @@
       "message": "Ħęľp ūş įmpřővę ŧĥįş ƒęäŧūřę þy přővįđįŉģ ƒęęđþäčĸ äŉđ řępőřŧįŉģ äŉy įşşūęş.",
       "title": "Mįģřäŧę ŧő Ğřäƒäŉä Cľőūđ įş įŉ pūþľįč přęvįęŵ"
     },
+    "resource-error": {
+      "dismiss-button": "ØĶ",
+      "resource-summary": "{{refId}} ({{typeName}})",
+      "specific-error": "Ŧĥę şpęčįƒįč ęřřőř ŵäş:",
+      "title": "Ůŉäþľę ŧő mįģřäŧę ŧĥįş řęşőūřčę",
+      "unknown-error": "Åŉ ūŉĸŉőŵŉ ęřřőř őččūřřęđ."
+    },
     "resource-status": {
       "error-details-button": "Đęŧäįľş",
       "failed": "Ēřřőř",
