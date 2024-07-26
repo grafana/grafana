@@ -7,10 +7,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -99,7 +99,8 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 	}
 
 	if api.cfg.RBAC.PermissionsOnCreation("service-account") {
-		if c.SignedInUser.GetID().IsNamespace(authn.NamespaceUser) {
+		t, _ := c.SignedInUser.GetTypedID()
+		if t == identity.TypeUser {
 			userID, err := c.SignedInUser.GetID().ParseInt()
 			if err != nil {
 				return response.Error(http.StatusInternalServerError, "Failed to parse user id", err)

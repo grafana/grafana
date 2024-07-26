@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"net/http"
 
-	authnClients "github.com/grafana/grafana/pkg/services/authn/clients"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+
+	authnClients "github.com/grafana/grafana/pkg/services/authn/clients"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -153,12 +154,12 @@ func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) w
 			return
 		}
 
-		namespace, id := ident.GetNamespacedID()
-		if !identity.IsNamespace(
+		namespace, id := ident.GetTypedID()
+		if !identity.IsIdentityType(
 			namespace,
-			identity.NamespaceUser,
-			identity.NamespaceServiceAccount,
-			identity.NamespaceAPIKey,
+			identity.TypeUser,
+			identity.TypeServiceAccount,
+			identity.TypeAPIKey,
 		) || id == "0" {
 			return
 		}

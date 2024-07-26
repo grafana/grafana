@@ -52,7 +52,7 @@ import { discoverFeatures } from '../api/buildInfo';
 import { fetchNotifiers } from '../api/grafana';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import { FetchRulerRulesFilter, deleteRulerRulesGroup, fetchRulerRules, setRulerRuleGroup } from '../api/ruler';
-import { RuleFormType, RuleFormValues } from '../types/rule-form';
+import { RuleFormValues } from '../types/rule-form';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import {
   GRAFANA_RULES_SOURCE_NAME,
@@ -64,7 +64,13 @@ import { makeAMLink } from '../utils/misc';
 import { AsyncRequestMapSlice, withAppEvents, withSerializedError } from '../utils/redux';
 import * as ruleId from '../utils/rule-id';
 import { getRulerClient } from '../utils/rulerClient';
-import { getAlertInfo, isGrafanaRulerRule, isRulerNotSupportedResponse } from '../utils/rules';
+import {
+  getAlertInfo,
+  isDataSourceManagedRuleByType,
+  isGrafanaManagedRuleByType,
+  isGrafanaRulerRule,
+  isRulerNotSupportedResponse,
+} from '../utils/rules';
 import { safeParsePrometheusDuration } from '../utils/time';
 
 function getDataSourceConfig(getState: () => unknown, rulesSourceName: string) {
@@ -357,13 +363,16 @@ export const saveRuleFormAction = createAsyncThunk(
       withSerializedError(
         (async () => {
           const { type } = values;
+          if (!type) {
+            return;
+          }
 
           // TODO getRulerConfig should be smart enough to provide proper rulerClient implementation
           // For the dataSourceName specified
           // in case of system (cortex/loki)
           let identifier: RuleIdentifier;
 
-          if (type === RuleFormType.cloudAlerting || type === RuleFormType.cloudRecording) {
+          if (isDataSourceManagedRuleByType(type)) {
             if (!values.dataSourceName) {
               throw new Error('The Data source has not been defined.');
             }
@@ -372,8 +381,8 @@ export const saveRuleFormAction = createAsyncThunk(
             const rulerClient = getRulerClient(rulerConfig);
             identifier = await rulerClient.saveLotexRule(values, evaluateEvery, existing);
             await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName: values.dataSourceName }));
-            // in case of grafana managed
-          } else if (type === RuleFormType.grafana) {
+            // in case of grafana managed rules or grafana-managed recording rules
+          } else if (isGrafanaManagedRuleByType(type)) {
             const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, GRAFANA_RULES_SOURCE_NAME);
             const rulerClient = getRulerClient(rulerConfig);
             identifier = await rulerClient.saveGrafanaRule(values, evaluateEvery, existing);
@@ -656,10 +665,10 @@ export const testReceiversAction = createAsyncThunk(
 export const rulesInSameGroupHaveInvalidFor = (rules: RulerRuleDTO[], everyDuration: string) => {
   return rules.filter((rule: RulerRuleDTO) => {
     const { forDuration } = getAlertInfo(rule, everyDuration);
-    const forNumber = safeParsePrometheusDuration(forDuration);
+    const forNumber = forDuration ? safeParsePrometheusDuration(forDuration) : null;
     const everyNumber = safeParsePrometheusDuration(everyDuration);
 
-    return forNumber !== 0 && forNumber < everyNumber;
+    return forNumber ? forNumber !== 0 && forNumber < everyNumber : false;
   });
 };
 
