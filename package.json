@@ -404,7 +404,7 @@
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
   },
   "resolutions": {
-    "underscore": "1.13.6",
+    "underscore": "1.13.7",
     "@types/slate": "0.47.11",
     "ngtemplate-loader/loader-utils": "^2.0.0",
     "semver@~7.0.0": "7.5.4",
