@@ -84,8 +84,6 @@ def release_pr_step(depends_on = []):
             # If the submitter has set a target branch, then use that, otherwise use the default
             "-f target=$${TARGET:-$default_target} " +
             "-f latest=$${LATEST} " +
-            # If the submitter has set a backport branch, then use that, otherwise use the default
-            "-f backport=$${BACKPORT:-$default_backport} " +
             "--repo=grafana/grafana release-pr.yml",
         ],
     }

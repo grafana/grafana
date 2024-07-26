@@ -3036,8 +3036,7 @@ steps:
   - v_target=`echo $${TAG} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/v\1.\2.x/'`
   - curl -L $${GH_CLI_URL} | tar -xz --strip-components=1 -C /usr
   - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${TARGET:-$default_target}
-    -f latest=$${LATEST} -f backport=$${BACKPORT:-$default_backport} --repo=grafana/grafana
-    release-pr.yml
+    -f latest=$${LATEST} --repo=grafana/grafana release-pr.yml
   depends_on: []
   environment:
     GH_CLI_URL: https://github.com/cli/cli/releases/download/v2.50.0/gh_2.50.0_linux_amd64.tar.gz
@@ -3119,8 +3118,7 @@ steps:
   - v_target=`echo $${TAG} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/v\1.\2.x/'`
   - curl -L $${GH_CLI_URL} | tar -xz --strip-components=1 -C /usr
   - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${TARGET:-$default_target}
-    -f latest=$${LATEST} -f backport=$${BACKPORT:-$default_backport} --repo=grafana/grafana
-    release-pr.yml
+    -f latest=$${LATEST} --repo=grafana/grafana release-pr.yml
   depends_on:
   - publish-artifacts
   - publish-static-assets
@@ -5510,6 +5508,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 0b2893b492cb4985510b412a493b4abf61c13e8814bac9dbaa0d45d1d4bd41b0
+hmac: 0f344990f254486957614181bd1996081858888a16476237f370368d2c70f046
 
 ...
