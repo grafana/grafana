@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -11,7 +10,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 )
 
 type NotificationSrv struct {
@@ -50,13 +48,7 @@ func (srv *NotificationSrv) RouteGetReceiver(c *contextmodel.ReqContext, name st
 
 	receiver, err := srv.receiverService.GetReceiver(c.Req.Context(), q, c.SignedInUser)
 	if err != nil {
-		if errors.Is(err, notifier.ErrNotFound) {
-			return ErrResp(http.StatusNotFound, err, "receiver not found")
-		}
-		if errors.Is(err, notifier.ErrPermissionDenied) {
-			return ErrResp(http.StatusForbidden, err, "permission denied")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "failed to get receiver")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get receiver", err)
 	}
 
 	return response.JSON(http.StatusOK, receiver)
@@ -73,10 +65,7 @@ func (srv *NotificationSrv) RouteGetReceivers(c *contextmodel.ReqContext) respon
 
 	receivers, err := srv.receiverService.GetReceivers(c.Req.Context(), q, c.SignedInUser)
 	if err != nil {
-		if errors.Is(err, notifier.ErrPermissionDenied) {
-			return ErrResp(http.StatusForbidden, err, "permission denied")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "failed to get receiver groups")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get receiver groups", err)
 	}
 
 	return response.JSON(http.StatusOK, receivers)

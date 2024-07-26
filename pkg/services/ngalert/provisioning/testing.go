@@ -70,25 +70,6 @@ func (n *NopTransactionManager) InTransaction(ctx context.Context, work func(ctx
 	return work(context.WithValue(ctx, NopTransactionManager{}, struct{}{}))
 }
 
-func (m *MockAMConfigStore_Expecter) GetsConfig(ac models.AlertConfiguration) *MockAMConfigStore_Expecter {
-	m.GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(&ac, nil)
-	return m
-}
-
-func (m *MockAMConfigStore_Expecter) SaveSucceeds() *MockAMConfigStore_Expecter {
-	m.UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(nil)
-	return m
-}
-
-func (m *MockAMConfigStore_Expecter) SaveSucceedsIntercept(intercepted *models.SaveAlertmanagerConfigurationCmd) *MockAMConfigStore_Expecter {
-	m.UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
-		Return(nil).
-		Run(func(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) {
-			*intercepted = *cmd
-		})
-	return m
-}
-
 func (m *MockProvisioningStore_Expecter) GetReturns(p models.Provenance) *MockProvisioningStore_Expecter {
 	m.GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(p, nil)
 	m.GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
@@ -109,39 +90,6 @@ func (m *MockQuotaChecker_Expecter) LimitOK() *MockQuotaChecker_Expecter {
 func (m *MockQuotaChecker_Expecter) LimitExceeded() *MockQuotaChecker_Expecter {
 	m.CheckQuotaReached(mock.Anything, mock.Anything, mock.Anything).Return(true, nil)
 	return m
-}
-
-type methodCall struct {
-	Method string
-	Args   []interface{}
-}
-
-type alertmanagerConfigStoreFake struct {
-	Calls  []methodCall
-	GetFn  func(ctx context.Context, orgID int64) (*cfgRevision, error)
-	SaveFn func(ctx context.Context, revision *cfgRevision) error
-}
-
-func (a *alertmanagerConfigStoreFake) Get(ctx context.Context, orgID int64) (*cfgRevision, error) {
-	a.Calls = append(a.Calls, methodCall{
-		Method: "Get",
-		Args:   []interface{}{ctx, orgID},
-	})
-	if a.GetFn != nil {
-		return a.GetFn(ctx, orgID)
-	}
-	return nil, nil
-}
-
-func (a *alertmanagerConfigStoreFake) Save(ctx context.Context, revision *cfgRevision, orgID int64) error {
-	a.Calls = append(a.Calls, methodCall{
-		Method: "Save",
-		Args:   []interface{}{ctx, revision, orgID},
-	})
-	if a.SaveFn != nil {
-		return a.SaveFn(ctx, revision)
-	}
-	return nil
 }
 
 type NotificationSettingsValidatorProviderFake struct {

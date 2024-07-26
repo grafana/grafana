@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
@@ -408,13 +409,21 @@ func (ng *AlertNG) init() error {
 	ng.stateManager = stateManager
 	ng.schedule = scheduler
 
-	receiverService := notifier.NewReceiverService(ng.accesscontrol, ng.store, ng.store, ng.SecretsService, ng.store, ng.Log)
+	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store)
+	receiverService := notifier.NewReceiverService(
+		ng.accesscontrol,
+		configStore,
+		ng.store,
+		ng.SecretsService,
+		ng.store,
+		ng.Log,
+	)
 
 	// Provisioning
-	policyService := provisioning.NewNotificationPolicyService(ng.store, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
-	contactPointService := provisioning.NewContactPointService(ng.store, ng.SecretsService, ng.store, ng.store, receiverService, ng.Log, ng.store)
-	templateService := provisioning.NewTemplateService(ng.store, ng.store, ng.store, ng.Log)
-	muteTimingService := provisioning.NewMuteTimingService(ng.store, ng.store, ng.store, ng.Log, ng.store)
+	policyService := provisioning.NewNotificationPolicyService(configStore, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
+	contactPointService := provisioning.NewContactPointService(configStore, ng.SecretsService, ng.store, ng.store, receiverService, ng.Log, ng.store)
+	templateService := provisioning.NewTemplateService(configStore, ng.store, ng.store, ng.Log)
+	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.store, ng.store, ng.Log, ng.store)
 	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.folderService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()),

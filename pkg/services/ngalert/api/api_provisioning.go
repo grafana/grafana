@@ -138,11 +138,9 @@ func (srv *ProvisioningSrv) RouteGetContactPoints(c *contextmodel.ReqContext) re
 	}
 	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q, c.SignedInUser)
 	if err != nil {
-		if errors.Is(err, provisioning.ErrPermissionDenied) {
-			return ErrResp(http.StatusForbidden, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
+
 	return response.JSON(http.StatusOK, cps)
 }
 
@@ -154,10 +152,7 @@ func (srv *ProvisioningSrv) RouteGetContactPointsExport(c *contextmodel.ReqConte
 	}
 	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q, c.SignedInUser)
 	if err != nil {
-		if errors.Is(err, provisioning.ErrPermissionDenied) {
-			return ErrResp(http.StatusForbidden, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 
 	e, err := AlertingFileExportFromEmbeddedContactPoints(c.SignedInUser.GetOrgID(), cps)

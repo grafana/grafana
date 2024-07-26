@@ -7,30 +7,27 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type NotificationPolicyService struct {
-	configStore     *alertmanagerConfigStoreImpl
+	configStore     alertmanagerConfigStore
 	provenanceStore ProvisioningStore
 	xact            TransactionManager
 	log             log.Logger
 	settings        setting.UnifiedAlertingSettings
 }
 
-func NewNotificationPolicyService(am AMConfigStore, prov ProvisioningStore,
+func NewNotificationPolicyService(am alertmanagerConfigStore, prov ProvisioningStore,
 	xact TransactionManager, settings setting.UnifiedAlertingSettings, log log.Logger) *NotificationPolicyService {
 	return &NotificationPolicyService{
-		configStore:     &alertmanagerConfigStoreImpl{store: am},
+		configStore:     am,
 		provenanceStore: prov,
 		xact:            xact,
 		log:             log,
 		settings:        settings,
 	}
-}
-
-func (nps *NotificationPolicyService) GetAMConfigStore() AMConfigStore {
-	return nps.configStore.store
 }
 
 func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
@@ -39,16 +36,16 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 		return definitions.Route{}, err
 	}
 
-	if rev.cfg.AlertmanagerConfig.Config.Route == nil {
+	if rev.Config.AlertmanagerConfig.Config.Route == nil {
 		return definitions.Route{}, fmt.Errorf("no route present in current alertmanager config")
 	}
 
-	provenance, err := nps.provenanceStore.GetProvenance(ctx, rev.cfg.AlertmanagerConfig.Route, orgID)
+	provenance, err := nps.provenanceStore.GetProvenance(ctx, rev.Config.AlertmanagerConfig.Route, orgID)
 	if err != nil {
 		return definitions.Route{}, err
 	}
 
-	result := *rev.cfg.AlertmanagerConfig.Route
+	result := *rev.Config.AlertmanagerConfig.Route
 	result.Provenance = definitions.Provenance(provenance)
 
 	return result, nil
@@ -65,7 +62,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		return err
 	}
 
-	receivers, err := nps.receiversToMap(revision.cfg.AlertmanagerConfig.Receivers)
+	receivers, err := nps.receiversToMap(revision.Config.AlertmanagerConfig.Receivers)
 	if err != nil {
 		return err
 	}
@@ -77,7 +74,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	}
 
 	muteTimes := map[string]struct{}{}
-	for _, mt := range revision.cfg.AlertmanagerConfig.MuteTimeIntervals {
+	for _, mt := range revision.Config.AlertmanagerConfig.MuteTimeIntervals {
 		muteTimes[mt.Name] = struct{}{}
 	}
 	err = tree.ValidateMuteTimes(muteTimes)
@@ -85,7 +82,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
-	revision.cfg.AlertmanagerConfig.Config.Route = &tree
+	revision.Config.AlertmanagerConfig.Config.Route = &tree
 
 	return nps.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
@@ -96,7 +93,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 }
 
 func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
-	defaultCfg, err := deserializeAlertmanagerConfig([]byte(nps.settings.DefaultConfiguration))
+	defaultCfg, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(nps.settings.DefaultConfiguration))
 	if err != nil {
 		nps.log.Error("Failed to parse default alertmanager config: %w", err)
 		return definitions.Route{}, fmt.Errorf("failed to parse default alertmanager config: %w", err)
@@ -107,8 +104,8 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 	if err != nil {
 		return definitions.Route{}, err
 	}
-	revision.cfg.AlertmanagerConfig.Config.Route = route
-	err = nps.ensureDefaultReceiverExists(revision.cfg, defaultCfg)
+	revision.Config.AlertmanagerConfig.Config.Route = route
+	err = nps.ensureDefaultReceiverExists(revision.Config, defaultCfg)
 	if err != nil {
 		return definitions.Route{}, err
 	}

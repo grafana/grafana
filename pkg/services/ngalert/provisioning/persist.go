@@ -2,20 +2,15 @@ package provisioning
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/quota"
 )
 
-// AMStore is a store of Alertmanager configurations.
-//
-//go:generate mockery --name AMConfigStore --structname MockAMConfigStore --inpackage --filename persist_mock.go --with-expecter
-type AMConfigStore interface {
-	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
-	UpdateAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error
+type alertmanagerConfigStore interface {
+	Get(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error)
+	Save(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64) error
 }
 
 // ProvisioningStore is a store of provisioning data for arbitrary objects.
@@ -49,13 +44,4 @@ type RuleStore interface {
 //go:generate mockery --name QuotaChecker --structname MockQuotaChecker --inpackage --filename quota_checker_mock.go --with-expecter
 type QuotaChecker interface {
 	CheckQuotaReached(ctx context.Context, target quota.TargetSrv, scopeParams *quota.ScopeParameters) (bool, error)
-}
-
-// PersistConfig validates to config before eventually persisting it if no error occurs
-func PersistConfig(ctx context.Context, store AMConfigStore, cmd *models.SaveAlertmanagerConfigurationCmd) error {
-	cfg := &definitions.PostableUserConfig{}
-	if err := json.Unmarshal([]byte(cmd.AlertmanagerConfiguration), cfg); err != nil {
-		return fmt.Errorf("change would result in an invalid configuration state: %w", err)
-	}
-	return store.UpdateAlertmanagerConfiguration(ctx, cmd)
 }

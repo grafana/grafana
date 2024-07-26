@@ -3,52 +3,45 @@ package notifier
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"hash/fnv"
-	"slices"
+
+	"github.com/grafana/alerting/definition"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
 var (
-	// ErrPermissionDenied is returned when the user does not have permission to perform the requested action.
-	ErrPermissionDenied = errors.New("permission denied") // TODO: convert to errutil
-	// ErrNotFound is returned when the requested resource does not exist.
-	ErrNotFound = errors.New("not found") // TODO: convert to errutil
-)
-
-var (
-	ErrReceiverInUse   = errutil.Conflict("alerting.notifications.receiver.used", errutil.WithPublicMessage("Receiver is used by one or many notification policies"))
-	ErrVersionConflict = errutil.Conflict("alerting.notifications.receiver.conflict")
+	ErrReceiverNotFound = errutil.NotFound("alerting.notifications.receiver.notFound")
+	ErrReceiverInUse    = errutil.Conflict("alerting.notifications.receiver.used").MustTemplate("Receiver is used by notification policies or alert rules")
 )
 
 // ReceiverService is the service for managing alertmanager receivers.
 type ReceiverService struct {
 	ac                accesscontrol.AccessControl
 	provisioningStore provisoningStore
-	cfgStore          configStore
+	cfgStore          alertmanagerConfigStore
 	encryptionService secrets.Service
 	xact              transactionManager
 	log               log.Logger
 	validator         validation.ProvenanceStatusTransitionValidator
 }
 
-type configStore interface {
-	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
-	UpdateAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error
+type alertmanagerConfigStore interface {
+	Get(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error)
+	Save(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64) error
 }
 
 type provisoningStore interface {
 	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]models.Provenance, error)
+	SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
 	DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error
 }
 
@@ -58,7 +51,7 @@ type transactionManager interface {
 
 func NewReceiverService(
 	ac accesscontrol.AccessControl,
-	cfgStore configStore,
+	cfgStore alertmanagerConfigStore,
 	provisioningStore provisoningStore,
 	encryptionService secrets.Service,
 	xact transactionManager,
@@ -82,7 +75,7 @@ func (rs *ReceiverService) shouldDecrypt(ctx context.Context, user identity.Requ
 	}
 
 	if reqDecrypt && !decryptAccess {
-		return false, ErrPermissionDenied
+		return false, ac.NewAuthorizationErrorWithPermissions("read any decrypted receiver", nil) // TODO: Replace with authz service.
 	}
 
 	return decryptAccess && reqDecrypt, nil
@@ -117,60 +110,51 @@ func (rs *ReceiverService) hasList(ctx context.Context, user identity.Requester)
 // The receiver's secure settings are decrypted if requested and the user has access to do so.
 func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiverQuery, user identity.Requester) (definitions.GettableApiReceiver, error) {
 	if q.Decrypt && user == nil {
-		return definitions.GettableApiReceiver{}, ErrPermissionDenied
+		return definitions.GettableApiReceiver{}, ac.NewAuthorizationErrorWithPermissions("read any decrypted receiver", nil) // TODO: Replace with authz service.
 	}
 
-	baseCfg, err := rs.cfgStore.GetLatestAlertmanagerConfiguration(ctx, q.OrgID)
+	revision, err := rs.cfgStore.Get(ctx, q.OrgID)
+	if err != nil {
+		return definitions.GettableApiReceiver{}, err
+	}
+	postable := revision.GetReceiver(legacy_storage.NameToUid(q.Name))
+	if postable == nil {
+		return definitions.GettableApiReceiver{}, ErrReceiverNotFound.Errorf("")
+	}
+
+	decrypt, err := rs.shouldDecrypt(ctx, user, q.Decrypt)
+	if err != nil {
+		return definitions.GettableApiReceiver{}, err
+	}
+	decryptFn := rs.decryptOrRedact(ctx, decrypt, q.Name, "")
+
+	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
 	if err != nil {
 		return definitions.GettableApiReceiver{}, err
 	}
 
-	cfg := definitions.PostableUserConfig{}
-	err = json.Unmarshal([]byte(baseCfg.AlertmanagerConfiguration), &cfg)
-	if err != nil {
-		return definitions.GettableApiReceiver{}, err
-	}
-
-	provenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
-	if err != nil {
-		return definitions.GettableApiReceiver{}, err
-	}
-
-	receivers := cfg.AlertmanagerConfig.Receivers
-	for _, r := range receivers {
-		if r.Name == q.Name {
-			decrypt, err := rs.shouldDecrypt(ctx, user, q.Decrypt)
-			if err != nil {
-				return definitions.GettableApiReceiver{}, err
-			}
-			decryptFn := rs.decryptOrRedact(ctx, decrypt, q.Name, "")
-
-			return PostableToGettableApiReceiver(r, provenances, decryptFn, false)
-		}
-	}
-
-	return definitions.GettableApiReceiver{}, ErrNotFound
+	return PostableToGettableApiReceiver(postable, storedProvenances, decryptFn, false)
 }
 
 // GetReceivers returns a list of receivers a user has access to.
 // Receivers can be filtered by name, and secure settings are decrypted if requested and the user has access to do so.
 func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceiversQuery, user identity.Requester) ([]definitions.GettableApiReceiver, error) {
 	if q.Decrypt && user == nil {
-		return nil, ErrPermissionDenied
+		return nil, ac.NewAuthorizationErrorWithPermissions("read any decrypted receiver", nil) // TODO: Replace with authz service.
 	}
 
-	baseCfg, err := rs.cfgStore.GetLatestAlertmanagerConfiguration(ctx, q.OrgID)
+	uids := make([]string, 0, len(q.Names))
+	for _, name := range q.Names {
+		uids = append(uids, legacy_storage.NameToUid(name))
+	}
+
+	revision, err := rs.cfgStore.Get(ctx, q.OrgID)
 	if err != nil {
 		return nil, err
 	}
+	postables := revision.GetReceivers(uids)
 
-	cfg := definitions.PostableUserConfig{}
-	err = json.Unmarshal([]byte(baseCfg.AlertmanagerConfiguration), &cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	provenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
+	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
 	if err != nil {
 		return nil, err
 	}
@@ -188,15 +172,12 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	// User doesn't have any permissions on the receivers.
 	// This is mostly a safeguard as it should not be possible with current API endpoints + middleware authentication.
 	if !listAccess && !readRedactedAccess {
-		return nil, ErrPermissionDenied
+		return nil, ac.NewAuthorizationErrorWithPermissions("read any receiver", nil) // TODO: Replace with authz service.
 	}
 
 	var output []definitions.GettableApiReceiver
-	for i := q.Offset; i < len(cfg.AlertmanagerConfig.Receivers); i++ {
-		r := cfg.AlertmanagerConfig.Receivers[i]
-		if len(q.Names) > 0 && !slices.Contains(q.Names, r.Name) {
-			continue
-		}
+	for i := q.Offset; i < len(postables); i++ {
+		r := postables[i]
 
 		decrypt, err := rs.shouldDecrypt(ctx, user, q.Decrypt)
 		if err != nil {
@@ -210,7 +191,7 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 		// - Doesn't have ReadRedacted (or ReadDecrypted permission since it's a subset).
 		listOnly := !readRedactedAccess
 
-		res, err := PostableToGettableApiReceiver(r, provenances, decryptFn, listOnly)
+		res, err := PostableToGettableApiReceiver(r, storedProvenances, decryptFn, listOnly)
 		if err != nil {
 			return nil, err
 		}
@@ -229,25 +210,18 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 // UID field currently does not exist, we assume the uid is a particular hashed value of the receiver name.
 func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, orgID int64, callerProvenance definitions.Provenance, version string) error {
 	//TODO: Check delete permissions.
-	baseCfg, err := rs.cfgStore.GetLatestAlertmanagerConfiguration(ctx, orgID)
+	revision, err := rs.cfgStore.Get(ctx, orgID)
 	if err != nil {
 		return err
 	}
-
-	cfg := definitions.PostableUserConfig{}
-	err = json.Unmarshal([]byte(baseCfg.AlertmanagerConfiguration), &cfg)
-	if err != nil {
-		return err
-	}
-
-	idx, recv := getReceiverByUID(cfg, uid)
-	if recv == nil {
-		return ErrNotFound // TODO: nil?
+	postable := revision.GetReceiver(uid)
+	if postable == nil {
+		return ErrReceiverNotFound.Errorf("")
 	}
 
 	// TODO: Implement + check optimistic concurrency.
 
-	storedProvenance, err := rs.getContactPointProvenance(ctx, recv, orgID)
+	storedProvenance, err := rs.getContactPointProvenance(ctx, postable, orgID)
 	if err != nil {
 		return err
 	}
@@ -256,39 +230,24 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, orgID
 		return err
 	}
 
-	if isReceiverInUse(recv.Name, []*definitions.Route{cfg.AlertmanagerConfig.Route}) {
-		return ErrReceiverInUse.Errorf("")
+	usedByRoutes := revision.ReceiverNameUsedByRoutes(postable.GetName())
+	usedByRules, err := rs.UsedByRules(ctx, orgID, uid)
+	if err != nil {
+		return err
 	}
 
-	// Remove the receiver from the configuration.
-	cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers[:idx], cfg.AlertmanagerConfig.Receivers[idx+1:]...)
+	if usedByRoutes || len(usedByRules) > 0 {
+		return makeReceiverInUseErr(usedByRoutes, usedByRules)
+	}
+
+	revision.DeleteReceiver(uid)
 
 	return rs.xact.InTransaction(ctx, func(ctx context.Context) error {
-		serialized, err := json.Marshal(cfg)
+		err = rs.cfgStore.Save(ctx, revision, orgID)
 		if err != nil {
 			return err
 		}
-		cmd := models.SaveAlertmanagerConfigurationCmd{
-			AlertmanagerConfiguration: string(serialized),
-			ConfigurationVersion:      baseCfg.ConfigurationVersion,
-			FetchedConfigurationHash:  baseCfg.ConfigurationHash,
-			Default:                   false,
-			OrgID:                     orgID,
-		}
-
-		err = rs.cfgStore.UpdateAlertmanagerConfiguration(ctx, &cmd)
-		if err != nil {
-			return err
-		}
-
-		// Remove provenance for all integrations in the receiver.
-		for _, integration := range recv.GrafanaManagedReceivers {
-			target := definitions.EmbeddedContactPoint{UID: integration.UID}
-			if err := rs.provisioningStore.DeleteProvenance(ctx, &target, orgID); err != nil {
-				return err
-			}
-		}
-		return nil
+		return rs.deleteProvenances(ctx, orgID, postable.GrafanaManagedReceivers)
 	})
 }
 
@@ -300,6 +259,22 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r definitions.Get
 func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r definitions.GettableApiReceiver, orgID int64) (definitions.GettableApiReceiver, error) {
 	// TODO: Stub
 	panic("not implemented")
+}
+
+func (rs *ReceiverService) UsedByRules(ctx context.Context, orgID int64, uid string) ([]models.AlertRuleKey, error) {
+	//TODO: Implement
+	return []models.AlertRuleKey{}, nil
+}
+
+func (rs *ReceiverService) deleteProvenances(ctx context.Context, orgID int64, integrations []*definition.PostableGrafanaReceiver) error {
+	// Delete provenance for all integrations.
+	for _, integration := range integrations {
+		target := definitions.EmbeddedContactPoint{UID: integration.UID}
+		if err := rs.provisioningStore.DeleteProvenance(ctx, &target, orgID); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (rs *ReceiverService) decryptOrRedact(ctx context.Context, decrypt bool, name, fallback string) func(value string) string {
@@ -345,37 +320,21 @@ func (rs *ReceiverService) getContactPointProvenance(ctx context.Context, r *def
 	return models.ProvenanceNone, nil
 }
 
-// getReceiverByUID returns the index and receiver with the given UID.
-func getReceiverByUID(cfg definitions.PostableUserConfig, uid string) (int, *definitions.PostableApiReceiver) {
-	for i, r := range cfg.AlertmanagerConfig.Receivers {
-		if getUID(r) == uid {
-			return i, r
-		}
+func makeReceiverInUseErr(usedByRoutes bool, rules []models.AlertRuleKey) error {
+	uids := make([]string, 0, len(rules))
+	for _, key := range rules {
+		uids = append(uids, key.UID)
 	}
-	return 0, nil
-}
+	data := make(map[string]any, 2)
+	if len(uids) > 0 {
+		data["UsedByRules"] = uids
+	}
+	if usedByRoutes {
+		data["UsedByRoutes"] = true
+	}
 
-// getUID returns the UID of a PostableApiReceiver.
-// Currently, the UID is a hash of the receiver name.
-func getUID(t *definitions.PostableApiReceiver) string { // TODO replace to stable UID when we switch to normal storage
-	sum := fnv.New64()
-	_, _ = sum.Write([]byte(t.Name))
-	return fmt.Sprintf("%016x", sum.Sum64())
-}
-
-// TODO: Check if the contact point is used directly in an alert rule.
-// isReceiverInUse checks if a receiver is used in a route or any of its sub-routes.
-func isReceiverInUse(name string, routes []*definitions.Route) bool {
-	if len(routes) == 0 {
-		return false
-	}
-	for _, route := range routes {
-		if route.Receiver == name {
-			return true
-		}
-		if isReceiverInUse(name, route.Routes) {
-			return true
-		}
-	}
-	return false
+	return ErrReceiverInUse.Build(errutil.TemplateData{
+		Public: data,
+		Error:  nil,
+	})
 }
