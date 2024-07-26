@@ -2850,12 +2850,9 @@ steps:
 - commands:
   - apk add perl
   - v_target=`echo $${TAG} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/v\1.\2.x/'`
-  - default_target=`if [[ -n $$LATEST ]]; then echo 'main'; else echo $$v_target;
-    fi`
-  - backport=`if [[ -n $$LATEST ]]; then echo $$v_target; fi`
   - curl -L $${GH_CLI_URL} | tar -xz --strip-components=1 -C /usr
-  - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${TARGET:-$default_target}
-    -f backport=$${BACKPORT:-$default_backport} --repo=grafana/grafana release-pr.yml
+  - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${v_target}
+    -f latest=$${LATEST} --repo=grafana/grafana release-pr.yml
   depends_on: []
   environment:
     GH_CLI_URL: https://github.com/cli/cli/releases/download/v2.50.0/gh_2.50.0_linux_amd64.tar.gz
@@ -2935,12 +2932,9 @@ steps:
 - commands:
   - apk add perl
   - v_target=`echo $${TAG} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/v\1.\2.x/'`
-  - default_target=`if [[ -n $$LATEST ]]; then echo 'main'; else echo $$v_target;
-    fi`
-  - backport=`if [[ -n $$LATEST ]]; then echo $$v_target; fi`
   - curl -L $${GH_CLI_URL} | tar -xz --strip-components=1 -C /usr
-  - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${TARGET:-$default_target}
-    -f backport=$${BACKPORT:-$default_backport} --repo=grafana/grafana release-pr.yml
+  - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${v_target}
+    -f latest=$${LATEST} --repo=grafana/grafana release-pr.yml
   depends_on:
   - publish-artifacts
   - publish-static-assets
@@ -5329,6 +5323,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 542c04f476c1edd5f3006b10f3b129ab0dcc3cef1688976b474f53c7686812da
+hmac: 6c0157f3d43b40ac3ab109f747de11bb6d65eb2b38f985d7caf1434ae2f96245
 
 ...
