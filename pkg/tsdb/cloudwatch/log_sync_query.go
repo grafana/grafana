@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -54,8 +55,9 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 		}
 
 		getQueryResultsOutput, err := e.syncQuery(ctx, logsClient, q, logsQuery, instance.Settings.LogsTimeout.Duration)
-		if sourceErr, ok := err.(errorsource.Error); ok {
-			resp.Responses[refId] = errorsource.Response(sourceErr)
+		var sourceError errorsource.Error
+		if errors.As(err, &sourceError) {
+			resp.Responses[refId] = errorsource.Response(sourceError)
 			continue
 		}
 		if err != nil {
