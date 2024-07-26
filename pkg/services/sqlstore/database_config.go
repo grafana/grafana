@@ -249,7 +249,7 @@ func validateReplicaConfigs(primary *DatabaseConfig, cfgs []*DatabaseConfig) err
 	seen[primary.ConnectionString] = struct{}{}
 	for _, cfg := range cfgs {
 		if _, ok := seen[cfg.ConnectionString]; ok {
-			result = errors.Join(result, fmt.Errorf("found duplicate connection string: %s", cfg.ConnectionString))
+			result = errors.Join(result, errors.New("duplicate connection string"))
 		} else {
 			seen[cfg.ConnectionString] = struct{}{}
 		}
