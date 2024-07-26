@@ -96,7 +96,6 @@ export const ConfigEditor = (props: Props) => {
       )}
       <ConnectionConfig
         {...props}
-        newFormStylingEnabled={true}
         loadRegions={
           datasource &&
           (async () => {
@@ -147,7 +146,6 @@ export const ConfigEditor = (props: Props) => {
         >
           {datasource ? (
             <LogGroupsFieldWrapper
-              newFormStylingEnabled={true}
               region={defaultRegion ?? ''}
               datasource={datasource}
               onBeforeOpen={() => {
