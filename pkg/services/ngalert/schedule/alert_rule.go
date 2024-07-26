@@ -1,7 +1,7 @@
 package schedule
 
 import (
-	context "context"
+	"context"
 	"errors"
 	"fmt"
 	"net/url"
@@ -431,7 +431,7 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 		state.GetRuleExtraLabels(logger, e.rule, e.folderTitle, !a.disableGrafanaFolder),
 		func(ctx context.Context, statesToSend state.StateTransitions) {
 			start := a.clock.Now()
-			alerts := a.send(ctx, statesToSend)
+			alerts := a.send(ctx, logger, statesToSend)
 			span.AddEvent("results sent", trace.WithAttributes(
 				attribute.Int64("alerts_sent", int64(len(alerts.PostableAlerts))),
 			))
@@ -444,13 +444,14 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 }
 
 // send sends alerts for the given state transitions.
-func (a *alertRule) send(ctx context.Context, states state.StateTransitions) definitions.PostableAlerts {
+func (a *alertRule) send(ctx context.Context, logger log.Logger, states state.StateTransitions) definitions.PostableAlerts {
 	alerts := definitions.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(states))}
 	for _, alertState := range states {
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *state.StateToPostableAlert(alertState, a.appURL))
 	}
 
 	if len(alerts.PostableAlerts) > 0 {
+		logger.Debug("Sending transitions to notifier", "transitions", len(alerts.PostableAlerts))
 		a.sender.Send(ctx, a.key, alerts)
 	}
 	return alerts
