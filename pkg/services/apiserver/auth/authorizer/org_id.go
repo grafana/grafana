@@ -56,7 +56,8 @@ func (auth orgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attribut
 	}
 
 	// Check if the user has access to the specified org
-	userId, err := signedInUser.GetID().UserID()
+	// nolint:staticcheck
+	userId, err := signedInUser.GetInternalID()
 	if err != nil {
 		return authorizer.DecisionDeny, "unable to get userId", err
 	}

@@ -72,6 +72,21 @@ type Identity struct {
 	IDToken string
 }
 
+// GetRawIdentifier implements Requester.
+func (i *Identity) GetRawIdentifier() string {
+	return i.UID.ID()
+}
+
+// GetInternalID implements Requester.
+func (i *Identity) GetInternalID() (int64, error) {
+	return i.ID.UserID()
+}
+
+// GetIdentityType implements Requester.
+func (i *Identity) GetIdentityType() identity.IdentityType {
+	return i.UID.Type()
+}
+
 // GetExtra implements identity.Requester.
 func (i *Identity) GetExtra() map[string][]string {
 	return map[string][]string{}
@@ -97,10 +112,6 @@ func (i *Identity) GetTypedID() (namespace identity.IdentityType, identifier str
 
 func (i *Identity) GetUID() string {
 	return i.UID.String()
-}
-
-func (i *Identity) GetTypedUID() identity.TypedID {
-	return i.UID
 }
 
 func (i *Identity) GetAuthID() string {
@@ -246,7 +257,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Teams:           i.Teams,
 		Permissions:     i.Permissions,
 		IDToken:         i.IDToken,
-		Type:            i.ID.Type(),
+		FallbackType:    i.ID.Type(),
 	}
 
 	if i.ID.IsType(identity.TypeAPIKey) {

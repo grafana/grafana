@@ -78,9 +78,9 @@ func TestPluginProxy(t *testing.T) {
 			secretsService,
 			&contextmodel.ReqContext{
 				SignedInUser: &user.SignedInUser{
-					Login:  "test_user",
-					Type:   identity.TypeUser,
-					UserID: 1,
+					Login:        "test_user",
+					FallbackType: identity.TypeUser,
+					UserID:       1,
 				},
 				Context: &web.Context{
 					Req: httpReq,

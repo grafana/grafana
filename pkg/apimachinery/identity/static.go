@@ -30,6 +30,26 @@ type StaticRequester struct {
 	CacheKey    string
 }
 
+// GetRawIdentifier implements Requester.
+func (u *StaticRequester) GetUID() string {
+	return fmt.Sprintf("%s:%s", u.Type, u.UserUID)
+}
+
+// GetRawIdentifier implements Requester.
+func (u *StaticRequester) GetRawIdentifier() string {
+	return u.UserUID
+}
+
+// GetInternalID implements Requester.
+func (u *StaticRequester) GetInternalID() (int64, error) {
+	return u.UserID, nil
+}
+
+// GetIdentityType implements Requester.
+func (u *StaticRequester) GetIdentityType() IdentityType {
+	return u.Type
+}
+
 // GetExtra implements Requester.
 func (u *StaticRequester) GetExtra() map[string][]string {
 	return map[string][]string{}
@@ -122,16 +142,6 @@ func (u *StaticRequester) HasUniqueId() bool {
 // GetID returns namespaced id for the entity
 func (u *StaticRequester) GetID() TypedID {
 	return NewTypedIDString(u.Type, fmt.Sprintf("%d", u.UserID))
-}
-
-// GetUID returns a string identifier
-func (u *StaticRequester) GetUID() string {
-	return u.GetTypedUID().String()
-}
-
-// GetUID returns namespaced uid for the entity
-func (u *StaticRequester) GetTypedUID() TypedID {
-	return NewTypedIDString(u.Type, u.UserUID)
 }
 
 // GetTypedID returns the namespace and ID of the active entity

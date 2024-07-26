@@ -37,10 +37,11 @@ type userDisplayDTO struct {
 
 // Static function to parse a requester into a userDisplayDTO
 func newUserDisplayDTOFromRequester(requester identity.Requester) *userDisplayDTO {
-	userID, _ := requester.GetID().UserID()
+	// nolint:staticcheck
+	userID, _ := requester.GetInternalID()
 	return &userDisplayDTO{
 		ID:    userID,
-		UID:   requester.GetTypedUID().ID(),
+		UID:   requester.GetRawIdentifier(),
 		Login: requester.GetLogin(),
 		Name:  requester.GetDisplayName(),
 	}

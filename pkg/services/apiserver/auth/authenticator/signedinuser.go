@@ -23,7 +23,7 @@ func signedInUserAuthenticator(req *http.Request) (*authenticator.Response, bool
 
 	userInfo := &k8suser.DefaultInfo{
 		Name:   signedInUser.GetLogin(),
-		UID:    signedInUser.GetTypedUID().ID(),
+		UID:    signedInUser.GetRawIdentifier(),
 		Groups: []string{},
 		// In order to faithfully round-trip through an impersonation flow, Extra keys MUST be lowercase.
 		// see: https://pkg.go.dev/k8s.io/apiserver@v0.27.1/pkg/authentication/user#Info

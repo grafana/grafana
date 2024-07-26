@@ -158,6 +158,6 @@ func encodeIdentityInMetadata(user identity.Requester) metadata.MD {
 
 		// TODO, Remove after this is deployed to unified storage
 		"grafana-userid", user.GetID().ID(),
-		"grafana-useruid", user.GetTypedUID().ID(),
+		"grafana-useruid", user.GetRawIdentifier(),
 	)
 }

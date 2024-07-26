@@ -48,9 +48,9 @@ func User(ctx context.Context) (*user.SignedInUser, error) {
 		}
 		orgId := requester.GetOrgID()
 		return &user.SignedInUser{
-			Type:            id.Type(),
+			FallbackType:    id.Type(),
 			UserID:          userId,
-			UserUID:         requester.GetTypedUID().ID(),
+			UserUID:         requester.GetRawIdentifier(),
 			OrgID:           orgId,
 			OrgName:         requester.GetOrgName(),
 			OrgRole:         requester.GetOrgRole(),
