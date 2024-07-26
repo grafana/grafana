@@ -2,7 +2,6 @@ package provisioning
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -61,7 +60,7 @@ func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) (
 	for _, interval := range rev.Config.AlertmanagerConfig.MuteTimeIntervals {
 		version := calculateMuteTimeIntervalFingerprint(interval)
 		def := definitions.MuteTimeInterval{
-			UID:              getIntervalUID(interval),
+			UID:              legacy_storage.NameToUid(interval.Name),
 			MuteTimeInterval: interval,
 			Version:          version,
 		}
@@ -82,7 +81,7 @@ func (svc *MuteTimingService) GetMuteTiming(ctx context.Context, nameOrUID strin
 
 	mt, idx := getMuteTimingByName(rev, nameOrUID)
 	if idx == -1 {
-		name, err := uidToName(nameOrUID)
+		name, err := legacy_storage.UidToName(nameOrUID)
 		if err == nil {
 			mt, idx = getMuteTimingByName(rev, name)
 		}
@@ -92,7 +91,7 @@ func (svc *MuteTimingService) GetMuteTiming(ctx context.Context, nameOrUID strin
 	}
 
 	result := definitions.MuteTimeInterval{
-		UID:              getIntervalUID(mt),
+		UID:              legacy_storage.NameToUid(mt.Name),
 		MuteTimeInterval: mt,
 		Version:          calculateMuteTimeIntervalFingerprint(mt),
 	}
@@ -132,7 +131,7 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, err
 	}
 	return definitions.MuteTimeInterval{
-		UID:              getIntervalUID(mt.MuteTimeInterval),
+		UID:              legacy_storage.NameToUid(mt.Name),
 		MuteTimeInterval: mt.MuteTimeInterval,
 		Version:          calculateMuteTimeIntervalFingerprint(mt.MuteTimeInterval),
 		Provenance:       mt.Provenance,
@@ -153,7 +152,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 	var old config.MuteTimeInterval
 	var idx = -1
 	if mt.UID != "" {
-		name, err := uidToName(mt.UID)
+		name, err := legacy_storage.UidToName(mt.UID)
 		if err == nil {
 			old, idx = getMuteTimingByName(revision, name)
 		}
@@ -198,7 +197,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, err
 	}
 	return definitions.MuteTimeInterval{
-		UID:              getIntervalUID(mt.MuteTimeInterval),
+		UID:              legacy_storage.NameToUid(mt.Name),
 		MuteTimeInterval: mt.MuteTimeInterval,
 		Version:          calculateMuteTimeIntervalFingerprint(mt.MuteTimeInterval),
 		Provenance:       mt.Provenance,
@@ -214,7 +213,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 
 	existing, idx := getMuteTimingByName(revision, nameOrUID)
 	if idx == -1 {
-		name, err := uidToName(nameOrUID)
+		name, err := legacy_storage.UidToName(nameOrUID)
 		if err == nil {
 			existing, idx = getMuteTimingByName(revision, name)
 		}
@@ -355,16 +354,4 @@ func (svc *MuteTimingService) checkOptimisticConcurrency(current config.MuteTime
 		return ErrVersionConflict.Errorf("provided version %s of time interval %s does not match current version %s", desiredVersion, current.Name, currentVersion)
 	}
 	return nil
-}
-
-func getIntervalUID(t config.MuteTimeInterval) string {
-	return base64.RawURLEncoding.EncodeToString([]byte(t.Name))
-}
-
-func uidToName(uid string) (string, error) {
-	data, err := base64.RawURLEncoding.DecodeString(uid)
-	if err != nil {
-		return uid, err
-	}
-	return string(data), nil
 }

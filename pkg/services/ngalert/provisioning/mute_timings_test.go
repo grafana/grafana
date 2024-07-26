@@ -64,17 +64,17 @@ func TestGetMuteTimings(t *testing.T) {
 		require.Equal(t, "Test1", result[0].Name)
 		require.EqualValues(t, provenances["Test1"], result[0].Provenance)
 		require.NotEmpty(t, result[0].Version)
-		require.Equal(t, getIntervalUID(result[0].MuteTimeInterval), result[0].UID)
+		require.Equal(t, legacy_storage.NameToUid(result[0].Name), result[0].UID)
 
 		require.Equal(t, "Test2", result[1].Name)
 		require.EqualValues(t, provenances["Test2"], result[1].Provenance)
 		require.NotEmpty(t, result[1].Version)
-		require.Equal(t, getIntervalUID(result[1].MuteTimeInterval), result[1].UID)
+		require.Equal(t, legacy_storage.NameToUid(result[1].Name), result[1].UID)
 
 		require.Equal(t, "Test3", result[2].Name)
 		require.EqualValues(t, "", result[2].Provenance)
 		require.NotEmpty(t, result[2].Version)
-		require.Equal(t, getIntervalUID(result[2].MuteTimeInterval), result[2].UID)
+		require.Equal(t, legacy_storage.NameToUid(result[2].Name), result[2].UID)
 
 		require.Len(t, store.Calls, 1)
 		require.Equal(t, "Get", store.Calls[0].Method)
@@ -153,7 +153,7 @@ func TestGetMuteTiming(t *testing.T) {
 
 		require.Equal(t, "Test1", result.Name)
 		require.EqualValues(t, models.ProvenanceAPI, result.Provenance)
-		require.Equal(t, getIntervalUID(result.MuteTimeInterval), result.UID)
+		require.Equal(t, legacy_storage.NameToUid(result.Name), result.UID)
 		require.NotEmpty(t, result.Version)
 
 		require.Len(t, store.Calls, 1)
@@ -309,7 +309,7 @@ func TestCreateMuteTimings(t *testing.T) {
 
 		require.EqualValues(t, expected, result.MuteTimeInterval)
 		require.EqualValues(t, expectedProvenance, result.Provenance)
-		require.Equal(t, getIntervalUID(expected), result.UID)
+		require.Equal(t, legacy_storage.NameToUid(expected.Name), result.UID)
 		require.NotEmpty(t, result.Version)
 
 		require.Len(t, store.Calls, 2)
@@ -418,7 +418,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 	}
 	expectedProvenance := models.ProvenanceAPI
 	expectedVersion := calculateMuteTimeIntervalFingerprint(expected)
-	expectedUID := getIntervalUID(expected)
+	expectedUID := legacy_storage.NameToUid(expected.Name)
 	timing := definitions.MuteTimeInterval{
 		MuteTimeInterval: expected,
 		Version:          originalVersion,
@@ -593,7 +593,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 		require.EqualValues(t, expected, result.MuteTimeInterval)
 		require.EqualValues(t, expectedProvenance, result.Provenance)
 		require.EqualValues(t, expectedVersion, result.Version)
-		require.Equal(t, getIntervalUID(result.MuteTimeInterval), result.UID)
+		require.Equal(t, legacy_storage.NameToUid(result.Name), result.UID)
 
 		require.Len(t, store.Calls, 2)
 		require.Equal(t, "Get", store.Calls[0].Method)
@@ -873,7 +873,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 				return nil
 			})
 
-		uid := getIntervalUID(timingToDelete)
+		uid := legacy_storage.NameToUid(timingToDelete.Name)
 
 		err := sut.DeleteMuteTiming(context.Background(), uid, orgID, "", correctVersion)
 		require.NoError(t, err)

@@ -117,7 +117,7 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 	if err != nil {
 		return definitions.GettableApiReceiver{}, err
 	}
-	postable := revision.GetReceiver(legacy_storage.GetUID(q.Name))
+	postable := revision.GetReceiver(legacy_storage.NameToUid(q.Name))
 	if postable == nil {
 		return definitions.GettableApiReceiver{}, ErrReceiverNotFound.Errorf("")
 	}
@@ -145,7 +145,7 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 
 	uids := make([]string, 0, len(q.Names))
 	for _, name := range q.Names {
-		uids = append(uids, legacy_storage.GetUID(name))
+		uids = append(uids, legacy_storage.NameToUid(name))
 	}
 
 	revision, err := rs.cfgStore.Get(ctx, q.OrgID)

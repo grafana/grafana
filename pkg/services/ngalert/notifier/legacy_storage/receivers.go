@@ -9,7 +9,7 @@ import (
 func (rev *ConfigRevision) DeleteReceiver(uid string) {
 	// Remove the receiver from the configuration.
 	rev.Config.AlertmanagerConfig.Receivers = slices.DeleteFunc(rev.Config.AlertmanagerConfig.Receivers, func(r *definitions.PostableApiReceiver) bool {
-		return GetUID(r.GetName()) == uid
+		return NameToUid(r.GetName()) == uid
 	})
 }
 
@@ -19,7 +19,7 @@ func (rev *ConfigRevision) ReceiverNameUsedByRoutes(name string) bool {
 
 func (rev *ConfigRevision) GetReceiver(uid string) *definitions.PostableApiReceiver {
 	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
-		if GetUID(r.GetName()) == uid {
+		if NameToUid(r.GetName()) == uid {
 			return r
 		}
 	}
@@ -29,7 +29,7 @@ func (rev *ConfigRevision) GetReceiver(uid string) *definitions.PostableApiRecei
 func (rev *ConfigRevision) GetReceivers(uids []string) []*definitions.PostableApiReceiver {
 	receivers := make([]*definitions.PostableApiReceiver, 0, len(uids))
 	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
-		if len(uids) == 0 || slices.Contains(uids, GetUID(r.GetName())) {
+		if len(uids) == 0 || slices.Contains(uids, NameToUid(r.GetName())) {
 			receivers = append(receivers, r)
 		}
 	}
