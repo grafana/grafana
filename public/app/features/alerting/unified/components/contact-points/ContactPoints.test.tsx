@@ -90,11 +90,9 @@ describe('contact points', () => {
     it('should show / hide loading states, have all actions enabled', async () => {
       renderWithProvider(<ContactPointsPageContents />);
 
-      await waitFor(async () => {
-        expect(screen.getByText('Loading...')).toBeInTheDocument();
-        await waitForElementToBeRemoved(screen.getByText('Loading...'));
-        expect(screen.queryByTestId(selectors.components.Alert.alertV2('error'))).not.toBeInTheDocument();
-      });
+      expect(await screen.findByText('Loading...')).toBeInTheDocument();
+      await waitForElementToBeRemoved(screen.queryByText('Loading...'));
+      expect(screen.queryByTestId(selectors.components.Alert.alertV2('error'))).not.toBeInTheDocument();
 
       expect(screen.getByText('grafana-default-email')).toBeInTheDocument();
       expect(screen.getAllByTestId('contact-point')).toHaveLength(5);
@@ -252,8 +250,8 @@ describe('contact points', () => {
       await userEvent.type(searchInput, 'slack');
       expect(searchInput).toHaveValue('slack');
 
+      expect(await screen.findByText('Slack with multiple channels')).toBeInTheDocument();
       await waitFor(() => {
-        expect(screen.getByText('Slack with multiple channels')).toBeInTheDocument();
         expect(screen.getAllByTestId('contact-point')).toHaveLength(1);
       });
 
@@ -286,11 +284,8 @@ describe('contact points', () => {
     it('should show / hide loading states, have the right actions enabled', async () => {
       renderWithProvider(<ContactPointsPageContents />, undefined, { alertmanagerSourceName: MIMIR_DATASOURCE_UID });
 
-      await waitFor(async () => {
-        expect(screen.getByText('Loading...')).toBeInTheDocument();
-        await waitForElementToBeRemoved(screen.getByText('Loading...'));
-        expect(screen.queryByTestId(selectors.components.Alert.alertV2('error'))).not.toBeInTheDocument();
-      });
+      await waitForElementToBeRemoved(screen.queryByText('Loading...'));
+      expect(screen.queryByTestId(selectors.components.Alert.alertV2('error'))).not.toBeInTheDocument();
 
       expect(screen.getByText('mixed')).toBeInTheDocument();
       expect(screen.getByText('some webhook')).toBeInTheDocument();
@@ -344,11 +339,8 @@ describe('contact points', () => {
         alertmanagerSourceName: VANILLA_ALERTMANAGER_DATASOURCE_UID,
       });
 
-      await waitFor(async () => {
-        expect(screen.getByText('Loading...')).toBeInTheDocument();
-        await waitForElementToBeRemoved(screen.getByText('Loading...'));
-        expect(screen.queryByTestId(selectors.components.Alert.alertV2('error'))).not.toBeInTheDocument();
-      });
+      await waitForElementToBeRemoved(screen.queryByText('Loading...'));
+      expect(screen.queryByTestId(selectors.components.Alert.alertV2('error'))).not.toBeInTheDocument();
 
       expect(screen.queryByRole('link', { name: 'add contact point' })).not.toBeInTheDocument();
 
