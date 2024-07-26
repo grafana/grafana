@@ -101,32 +101,34 @@ export function MigrationSummary(props: MigrationSummaryProps) {
         </MigrationInfo>
       </Stack>
 
-      {showBuildSnapshot && (
-        <Button disabled={isBusy} onClick={onBuildSnapshot} icon={buildSnapshotIsLoading ? 'spinner' : undefined}>
-          <Trans i18nKey="migrate-to-cloud.summary.start-migration">Build snapshot</Trans>
-        </Button>
-      )}
+      <Stack gap={2}>
+        {showBuildSnapshot && (
+          <Button disabled={isBusy} onClick={onBuildSnapshot} icon={buildSnapshotIsLoading ? 'spinner' : undefined}>
+            <Trans i18nKey="migrate-to-cloud.summary.start-migration">Build snapshot</Trans>
+          </Button>
+        )}
 
-      {showRebuildSnapshot && (
-        <Button
-          disabled={isBusy}
-          onClick={onBuildSnapshot}
-          icon={buildSnapshotIsLoading ? 'spinner' : undefined}
-          variant="secondary"
-        >
-          <Trans i18nKey="migrate-to-cloud.summary.rebuild-snapshot">Rebuild snapshot</Trans>
-        </Button>
-      )}
+        {showRebuildSnapshot && (
+          <Button
+            disabled={isBusy}
+            onClick={onBuildSnapshot}
+            icon={buildSnapshotIsLoading ? 'spinner' : undefined}
+            variant="secondary"
+          >
+            <Trans i18nKey="migrate-to-cloud.summary.rebuild-snapshot">Rebuild snapshot</Trans>
+          </Button>
+        )}
 
-      {showUploadSnapshot && (
-        <Button
-          disabled={isBusy || uploadSnapshotIsLoading}
-          onClick={onUploadSnapshot}
-          icon={uploadSnapshotIsLoading ? 'spinner' : undefined}
-        >
-          <Trans i18nKey="migrate-to-cloud.summary.upload-migration">Upload snapshot</Trans>
-        </Button>
-      )}
+        {showUploadSnapshot && (
+          <Button
+            disabled={isBusy || uploadSnapshotIsLoading}
+            onClick={onUploadSnapshot}
+            icon={uploadSnapshotIsLoading ? 'spinner' : undefined}
+          >
+            <Trans i18nKey="migrate-to-cloud.summary.upload-migration">Upload snapshot</Trans>
+          </Button>
+        )}
+      </Stack>
     </Box>
   );
 }
