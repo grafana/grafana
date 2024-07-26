@@ -58,12 +58,12 @@ const SHOULD_POLL_STATUSES: Array<SnapshotDto['status']> = [
 ];
 
 const SNAPSHOT_REBUILD_STATUSES: Array<SnapshotDto['status']> = ['FINISHED', 'ERROR', 'UNKNOWN'];
-
 const SNAPSHOT_BUILDING_STATUSES: Array<SnapshotDto['status']> = ['INITIALIZING', 'CREATING'];
-
 const SNAPSHOT_UPLOADING_STATUSES: Array<SnapshotDto['status']> = ['UPLOADING', 'PENDING_PROCESSING', 'PROCESSING'];
 
 const STATUS_POLL_INTERVAL = 5 * 1000;
+
+const PAGE_SIZE = 50;
 
 function useGetLatestSnapshot(sessionUid?: string, page = 1) {
   const [shouldPoll, setShouldPoll] = useState(false);
@@ -73,7 +73,7 @@ function useGetLatestSnapshot(sessionUid?: string, page = 1) {
 
   const getSnapshotQueryArgs =
     sessionUid && lastItem?.uid
-      ? { uid: sessionUid, snapshotUid: lastItem.uid, resultLimit: 100, resultPage: page }
+      ? { uid: sessionUid, snapshotUid: lastItem.uid, resultLimit: PAGE_SIZE, resultPage: page }
       : skipToken;
 
   const snapshotResult = useGetSnapshotQuery(getSnapshotQueryArgs, {
@@ -240,7 +240,7 @@ export const Page = () => {
           <ResourcesTable
             resources={snapshot.data.results}
             onChangePage={setPage}
-            numberOfPages={snapshot?.data?.stats?.total || 0}
+            numberOfPages={Math.ceil((snapshot?.data?.stats?.total || 0) / PAGE_SIZE)}
             page={page}
           />
         )}
