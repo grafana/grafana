@@ -16,6 +16,7 @@ import {
 
 import { getMultiVariableValues } from '../utils/utils';
 
+import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 interface RowRepeaterBehaviorState extends SceneObjectState {
@@ -43,6 +44,48 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
   private _activationHandler() {
     this.performRepeat();
+
+    const layout = this._getLayout();
+    const originalRow = this._getRow();
+    const filterKey = originalRow.state.key + '-clone-';
+
+    const sub = layout.subscribeToState(() => {
+      const repeatedRows = layout.state.children.filter(
+        (child) => child instanceof SceneGridRow && child.state.key?.includes(filterKey)
+      );
+
+      // go through cloned rows, search for panels that are not clones
+      for (const row of repeatedRows) {
+        if (!(row instanceof SceneGridRow)) {
+          continue;
+        }
+
+        // if no differences in row children compared to original, then no new panel added to clone
+        if (row.state.children.length === originalRow.state.children.length) {
+          continue;
+        }
+
+        //if there are differences, find the new panel, move it to the original and perform repeat
+        const gridItem = row.state.children.find((gridItem) => !gridItem.state.key?.includes('clone'));
+        if (gridItem) {
+          const newGridItem = gridItem.clone();
+          row.setState({ children: row.state.children.filter((item) => item !== gridItem) });
+
+          // if we are moving a panel from the origin row to a clone row, we just return
+          // this means we are modifying the origin row, retriggering the repeat and losing that panel
+          if (originalRow.state.children.find((item) => item.state.key === newGridItem.state.key)) {
+            return;
+          }
+
+          originalRow.setState({ children: [...originalRow.state.children, newGridItem] });
+          this.performRepeat(true);
+        }
+      }
+    });
+
+    return () => {
+      sub.unsubscribe();
+    };
   }
 
   private _getRow(): SceneGridRow {
@@ -63,7 +106,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     return layout;
   }
 
-  public performRepeat() {
+  public performRepeat(force = false) {
     this.isWaitingForVariables = this._variableDependency.hasDependencyInLoadingState();
 
     if (this.isWaitingForVariables) {
@@ -92,7 +135,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     const { values, texts } = getMultiVariableValues(variable);
 
     // Do nothing if values are the same
-    if (isEqual(this._prevRepeatValues, values)) {
+    if (isEqual(this._prevRepeatValues, values) && !force) {
       return;
     }
 
@@ -127,6 +170,13 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
         //Make sure all the child scene objects have unique keys
         if (index > 0) {
           ensureUniqueKeys(itemClone, localValue);
+
+          //disallow clones to be dragged around or out of the row
+          if (itemClone instanceof DashboardGridItem) {
+            itemClone.setState({
+              isDraggable: false,
+            });
+          }
         }
 
         children.push(itemClone);
