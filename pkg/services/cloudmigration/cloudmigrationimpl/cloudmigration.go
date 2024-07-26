@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -82,6 +83,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	db db.DB,
 	dsService datasources.DataSourceService,
+	secretsStore secretskv.SecretsKVStore,
 	secretsService secrets.Service,
 	routeRegister routing.RouteRegister,
 	prom prometheus.Registerer,
@@ -95,7 +97,7 @@ func ProvideService(
 	}
 
 	s := &Service{
-		store:            &sqlStore{db: db, secretsService: secretsService},
+		store:            &sqlStore{db: db, secretsStore: secretsStore, secretsService: secretsService},
 		log:              log.New(LogPrefix),
 		cfg:              cfg,
 		features:         features,
