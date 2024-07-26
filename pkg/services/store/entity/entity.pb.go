@@ -2076,7 +2076,7 @@ func (x *EntityExternalReference) GetType() string {
 	return ""
 }
 
-func (x *EntityExternalReference) GetRawIdentifier() string {
+func (x *EntityExternalReference) GetIdentifier() string {
 	if x != nil {
 		return x.Identifier
 	}
