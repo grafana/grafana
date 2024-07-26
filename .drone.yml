@@ -2603,12 +2603,9 @@ steps:
 - commands:
   - apk add perl
   - v_target=`echo $${TAG} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/v\1.\2.x/'`
-  - default_target=`if [[ -n $$LATEST ]]; then echo 'main'; else echo $$v_target;
-    fi`
-  - backport=`if [[ -n $$LATEST ]]; then echo $$v_target; fi`
   - curl -L $${GH_CLI_URL} | tar -xz --strip-components=1 -C /usr
-  - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${TARGET:-$default_target}
-    -f backport=$${BACKPORT:-$default_backport} --repo=grafana/grafana release-pr.yml
+  - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${v_target}
+    -f latest=$${LATEST} --repo=grafana/grafana release-pr.yml
   depends_on: []
   environment:
     GH_CLI_URL: https://github.com/cli/cli/releases/download/v2.50.0/gh_2.50.0_linux_amd64.tar.gz
@@ -2688,12 +2685,9 @@ steps:
 - commands:
   - apk add perl
   - v_target=`echo $${TAG} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/v\1.\2.x/'`
-  - default_target=`if [[ -n $$LATEST ]]; then echo 'main'; else echo $$v_target;
-    fi`
-  - backport=`if [[ -n $$LATEST ]]; then echo $$v_target; fi`
   - curl -L $${GH_CLI_URL} | tar -xz --strip-components=1 -C /usr
-  - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${TARGET:-$default_target}
-    -f backport=$${BACKPORT:-$default_backport} --repo=grafana/grafana release-pr.yml
+  - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${v_target}
+    -f latest=$${LATEST} --repo=grafana/grafana release-pr.yml
   depends_on:
   - publish-artifacts
   - publish-static-assets
@@ -4962,6 +4956,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 4995a66fcf70e150cbcac6c7ae67a32b887aa2ddb95a69b392a3076e10f2c4fc
+hmac: 22d080b14b6bedda051e832c067e697e550596b169473e763ebc7a2f6f9585cc
 
 ...
