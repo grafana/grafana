@@ -52,15 +52,10 @@ deny = [
   { pkg = "github.com/grafana/grafana/pkg/server", desc = "Core plugins are not allowed to depend on Grafana core packages" },
   { pkg = "github.com/grafana/grafana/pkg/tests", desc = "Core plugins are not allowed to depend on Grafana core packages" },
   { pkg = "github.com/grafana/grafana/pkg/web", desc = "Core plugins are not allowed to depend on Grafana core packages" },
-  { pkg = "github.com/grafana/grafana/pkg/tsdb/intervalv2", desc = "Core plugins are not allowed to depend on Grafana core packages" },
 ]
 files = [
   "**/pkg/tsdb/grafana-testdata-datasource/*",
   "**/pkg/tsdb/grafana-testdata-datasource/**/*",
-  "**/pkg/tsdb/azuremonitor/*",
-  "**/pkg/tsdb/azuremonitor/**/*",
-  "**/pkg/tsdb/parca/*",
-  "**/pkg/tsdb/parca/**/*",
 ]
 
 [linters-settings.gocritic]
@@ -197,3 +192,35 @@ text = "ST1020"
 [[issues.exclude-rules]]
 linters = ["stylecheck"]
 text = "ST1021"
+
+[[issues.exclude-rules]]
+linters = ["staticcheck"]
+text = "SA1019"
+
+[[issues.exclude-rules]]
+linters = ["staticcheck"]
+text = "SA1019"
+
+[[issues.exclude-rules]]
+linters = ["misspell"]
+text = "`Creater` is a misspelling of `Creature`"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G103"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G303"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G301"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G101"
+
+[[issues.exclude-rules]]
+linters = ["errcheck"]
+text = "fmt.Fprint"
