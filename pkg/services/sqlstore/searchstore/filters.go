@@ -102,14 +102,18 @@ func (f FolderUIDFilter) Where() (string, []any) {
 
 	if includeGeneral {
 		if q == "" {
-			q = "dashboard.folder_id = ? "
 			if f.NestedFoldersEnabled {
 				q = "dashboard.folder_uid IS NULL "
+			} else {
+				q = "dashboard.folder_id = ? "
+				params = append(params, 0)
 			}
 		} else {
-			q = "(" + q + " OR dashboard.folder_id = ?)"
 			if f.NestedFoldersEnabled {
 				q = "(" + q + " OR dashboard.folder_uid IS NULL)"
+			} else {
+				q = "(" + q + " OR dashboard.folder_id = ?)"
+				params = append(params, 0)
 			}
 		}
 	}
