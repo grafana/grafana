@@ -43,7 +43,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'reports':
       return t('nav.reporting.title', 'Reporting');
     case 'dashboards/public':
-      return t('nav.public.title', 'Public dashboards');
+      return t('nav.public.title', 'Shared dashboards');
     case 'dashboards/recently-deleted':
       return t('nav.recently-deleted.title', 'Recently deleted');
     case 'dashboards/new':
@@ -210,6 +210,8 @@ export function getNavSubTitle(navId: string | undefined) {
         'nav.snapshots.subtitle',
         'Interactive, publically available, point-in-time representations of dashboards'
       );
+    case 'dashboards/public':
+      return t('nav.public.subtitle', "Manage your organization's externally shared dashboards");
     case 'dashboards/library-panels':
       return t('nav.library-panels.subtitle', 'Reusable panels that can be added to multiple dashboards');
     case 'dashboards/recently-deleted':

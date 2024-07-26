@@ -1391,7 +1391,8 @@
       "title": "Profiles"
     },
     "public": {
-      "title": "Public dashboards"
+      "subtitle": "Manage your organization's externally shared dashboards",
+      "title": "Shared dashboards"
     },
     "recently-deleted": {
       "subtitle": "Any items listed here for more than 30 days will be automatically deleted.",
@@ -1628,9 +1629,8 @@
       "welcome-title": "Welcome to public dashboards!"
     },
     "delete-modal": {
-      "revoke-nonorphaned-body-text": "Are you sure you want to revoke this URL? The dashboard will no longer be public.",
-      "revoke-orphaned-body-text": "Orphaned public dashboard will no longer be public.",
-      "revoke-title": "Revoke public URL"
+      "revoke-body-text": "Are you sure you want to revoke this access? The dashboard can no longer be shared.",
+      "revoke-title": "Revoke access"
     },
     "email-sharing": {
       "accept-button": "Accept",
@@ -1723,21 +1723,17 @@
   },
   "public-dashboard-list": {
     "button": {
-      "config-button-tooltip": "Configure public dashboard",
-      "revoke-button-text": "Revoke public URL",
-      "revoke-button-tooltip": "Revoke public dashboard URL",
-      "view-button-tooltip": "View public dashboard"
-    },
-    "dashboard-title": {
-      "orphaned-title": "<0>Orphaned public dashboard</0>",
-      "orphaned-tooltip": "The linked dashboard has already been deleted"
+      "config-button-tooltip": "Configure shared dashboard",
+      "revoke-button-text": "Revoke access",
+      "revoke-button-tooltip": "Revoke access",
+      "view-button-tooltip": "View shared dashboard"
     },
     "empty-state": {
       "message": "You haven't created any public dashboards yet",
       "more-info": "Create a public dashboard from any existing dashboard through the <1>Share</1> modal. <4>Learn more</4>"
     },
     "toggle": {
-      "pause-sharing-toggle-text": "Pause sharing"
+      "pause-sharing-toggle-text": "Pause access"
     }
   },
   "public-dashboard-users-access-list": {

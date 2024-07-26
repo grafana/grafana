@@ -41,17 +41,13 @@ export const DeletePublicDashboardButton = ({
   return (
     <ModalsController>
       {({ showModal, hideModal }) => {
-        const translatedRevocationButtonText = t(
-          'public-dashboard-list.button.revoke-button-text',
-          'Revoke public URL'
-        );
+        const translatedRevocationButtonText = t('public-dashboard-list.button.revoke-button-text', 'Revoke access');
         return (
           <Button
             aria-label={translatedRevocationButtonText}
             title={translatedRevocationButtonText}
             onClick={() =>
               showModal(DeletePublicDashboardModal, {
-                dashboardTitle: publicDashboard.title,
                 onConfirm: () => onDeletePublicDashboardClick(publicDashboard, hideModal),
                 onDismiss: () => {
                   onDismiss ? onDismiss() : hideModal();

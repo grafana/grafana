@@ -1391,7 +1391,8 @@
       "title": "Přőƒįľęş"
     },
     "public": {
-      "title": "Pūþľįč đäşĥþőäřđş"
+      "subtitle": "Mäŉäģę yőūř őřģäŉįžäŧįőŉ'ş ęχŧęřŉäľľy şĥäřęđ đäşĥþőäřđş",
+      "title": "Ŝĥäřęđ đäşĥþőäřđş"
     },
     "recently-deleted": {
       "subtitle": "Åŉy įŧęmş ľįşŧęđ ĥęřę ƒőř mőřę ŧĥäŉ 30 đäyş ŵįľľ þę äūŧőmäŧįčäľľy đęľęŧęđ.",
@@ -1628,9 +1629,8 @@
       "welcome-title": "Ŵęľčőmę ŧő pūþľįč đäşĥþőäřđş!"
     },
     "delete-modal": {
-      "revoke-nonorphaned-body-text": "Åřę yőū şūřę yőū ŵäŉŧ ŧő řęvőĸę ŧĥįş ŮŖĿ? Ŧĥę đäşĥþőäřđ ŵįľľ ŉő ľőŉģęř þę pūþľįč.",
-      "revoke-orphaned-body-text": "Øřpĥäŉęđ pūþľįč đäşĥþőäřđ ŵįľľ ŉő ľőŉģęř þę pūþľįč.",
-      "revoke-title": "Ŗęvőĸę pūþľįč ŮŖĿ"
+      "revoke-body-text": "Åřę yőū şūřę yőū ŵäŉŧ ŧő řęvőĸę ŧĥįş äččęşş? Ŧĥę đäşĥþőäřđ čäŉ ŉő ľőŉģęř þę şĥäřęđ.",
+      "revoke-title": "Ŗęvőĸę äččęşş"
     },
     "email-sharing": {
       "accept-button": "Åččępŧ",
@@ -1723,21 +1723,17 @@
   },
   "public-dashboard-list": {
     "button": {
-      "config-button-tooltip": "Cőŉƒįģūřę pūþľįč đäşĥþőäřđ",
-      "revoke-button-text": "Ŗęvőĸę pūþľįč ŮŖĿ",
-      "revoke-button-tooltip": "Ŗęvőĸę pūþľįč đäşĥþőäřđ ŮŖĿ",
-      "view-button-tooltip": "Vįęŵ pūþľįč đäşĥþőäřđ"
-    },
-    "dashboard-title": {
-      "orphaned-title": "<0>Øřpĥäŉęđ pūþľįč đäşĥþőäřđ</0>",
-      "orphaned-tooltip": "Ŧĥę ľįŉĸęđ đäşĥþőäřđ ĥäş äľřęäđy þęęŉ đęľęŧęđ"
+      "config-button-tooltip": "Cőŉƒįģūřę şĥäřęđ đäşĥþőäřđ",
+      "revoke-button-text": "Ŗęvőĸę äččęşş",
+      "revoke-button-tooltip": "Ŗęvőĸę äččęşş",
+      "view-button-tooltip": "Vįęŵ şĥäřęđ đäşĥþőäřđ"
     },
     "empty-state": {
       "message": "Ÿőū ĥävęŉ'ŧ čřęäŧęđ äŉy pūþľįč đäşĥþőäřđş yęŧ",
       "more-info": "Cřęäŧę ä pūþľįč đäşĥþőäřđ ƒřőm äŉy ęχįşŧįŉģ đäşĥþőäřđ ŧĥřőūģĥ ŧĥę <1>Ŝĥäřę</1> mőđäľ. <4>Ŀęäřŉ mőřę</4>"
     },
     "toggle": {
-      "pause-sharing-toggle-text": "Päūşę şĥäřįŉģ"
+      "pause-sharing-toggle-text": "Päūşę äččęşş"
     }
   },
   "public-dashboard-users-access-list": {
