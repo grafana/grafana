@@ -2,7 +2,9 @@ package provisioning
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"slices"
@@ -57,7 +59,11 @@ func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) (
 	result := make([]definitions.MuteTimeInterval, 0, len(rev.cfg.AlertmanagerConfig.MuteTimeIntervals))
 	for _, interval := range rev.cfg.AlertmanagerConfig.MuteTimeIntervals {
 		version := calculateMuteTimeIntervalFingerprint(interval)
-		def := definitions.MuteTimeInterval{MuteTimeInterval: interval, Version: version}
+		def := definitions.MuteTimeInterval{
+			UID:              getIntervalUID(interval),
+			MuteTimeInterval: interval,
+			Version:          version,
+		}
 		if prov, ok := provenances[def.ResourceID()]; ok {
 			def.Provenance = definitions.Provenance(prov)
 		}
@@ -67,18 +73,25 @@ func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) (
 }
 
 // GetMuteTiming returns a mute timing by name
-func (svc *MuteTimingService) GetMuteTiming(ctx context.Context, name string, orgID int64) (definitions.MuteTimeInterval, error) {
+func (svc *MuteTimingService) GetMuteTiming(ctx context.Context, nameOrUID string, orgID int64) (definitions.MuteTimeInterval, error) {
 	rev, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
 
-	mt, idx := getMuteTiming(rev, name)
+	mt, idx := getMuteTimingByName(rev, nameOrUID)
+	if idx == -1 {
+		name, err := uidToName(nameOrUID)
+		if err == nil {
+			mt, idx = getMuteTimingByName(rev, name)
+		}
+	}
 	if idx == -1 {
 		return definitions.MuteTimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
 	}
 
 	result := definitions.MuteTimeInterval{
+		UID:              getIntervalUID(mt),
 		MuteTimeInterval: mt,
 		Version:          calculateMuteTimeIntervalFingerprint(mt),
 	}
@@ -102,7 +115,7 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, err
 	}
 
-	_, idx := getMuteTiming(revision, mt.Name)
+	_, idx := getMuteTimingByName(revision, mt.Name)
 	if idx != -1 {
 		return definitions.MuteTimeInterval{}, ErrTimeIntervalExists.Errorf("")
 	}
@@ -118,6 +131,7 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, err
 	}
 	return definitions.MuteTimeInterval{
+		UID:              getIntervalUID(mt.MuteTimeInterval),
 		MuteTimeInterval: mt.MuteTimeInterval,
 		Version:          calculateMuteTimeIntervalFingerprint(mt.MuteTimeInterval),
 		Provenance:       mt.Provenance,
@@ -130,8 +144,33 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, MakeErrTimeIntervalInvalid(err)
 	}
 
+	revision, err := svc.configStore.Get(ctx, orgID)
+	if err != nil {
+		return definitions.MuteTimeInterval{}, err
+	}
+
+	var old config.MuteTimeInterval
+	var idx = -1
+	if mt.UID != "" {
+		name, err := uidToName(mt.UID)
+		if err == nil {
+			old, idx = getMuteTimingByName(revision, name)
+		}
+	} else {
+		old, idx = getMuteTimingByName(revision, mt.Name)
+	}
+	if idx == -1 {
+		return definitions.MuteTimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
+	}
+
+	// check optimistic concurrency
+	err = svc.checkOptimisticConcurrency(old, models.Provenance(mt.Provenance), mt.Version, "update")
+	if err != nil {
+		return definitions.MuteTimeInterval{}, err
+	}
+
 	// check that provenance is not changed in an invalid way
-	storedProvenance, err := svc.provenanceStore.GetProvenance(ctx, &mt, orgID)
+	storedProvenance, err := svc.provenanceStore.GetProvenance(ctx, &definitions.MuteTimeInterval{MuteTimeInterval: old}, orgID)
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
@@ -139,23 +178,10 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, err
 	}
 
-	revision, err := svc.configStore.Get(ctx, orgID)
-	if err != nil {
-		return definitions.MuteTimeInterval{}, err
-	}
-
-	if revision.cfg.AlertmanagerConfig.MuteTimeIntervals == nil {
-		return definitions.MuteTimeInterval{}, nil
-	}
-
-	old, idx := getMuteTiming(revision, mt.Name)
-	if idx == -1 {
-		return definitions.MuteTimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
-	}
-
-	err = svc.checkOptimisticConcurrency(old, models.Provenance(mt.Provenance), mt.Version, "update")
-	if err != nil {
-		return definitions.MuteTimeInterval{}, err
+	// if the name of the time interval changed
+	if old.Name != mt.Name {
+		// TODO implement support for renaming.
+		return definitions.MuteTimeInterval{}, MakeErrTimeIntervalInvalid(errors.New("name change is not allowed"))
 	}
 
 	revision.cfg.AlertmanagerConfig.MuteTimeIntervals[idx] = mt.MuteTimeInterval
@@ -171,6 +197,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, err
 	}
 	return definitions.MuteTimeInterval{
+		UID:              getIntervalUID(mt.MuteTimeInterval),
 		MuteTimeInterval: mt.MuteTimeInterval,
 		Version:          calculateMuteTimeIntervalFingerprint(mt.MuteTimeInterval),
 		Provenance:       mt.Provenance,
@@ -178,15 +205,21 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 }
 
 // DeleteMuteTiming deletes the mute timing with the given name in the given org. If the mute timing does not exist, no error is returned.
-func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string, orgID int64, provenance definitions.Provenance, version string) error {
+func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID string, orgID int64, provenance definitions.Provenance, version string) error {
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
 	}
 
-	existing, idx := getMuteTiming(revision, name)
+	existing, idx := getMuteTimingByName(revision, nameOrUID)
 	if idx == -1 {
-		svc.log.FromContext(ctx).Debug("Time interval was not found. Skip deleting", "name", name)
+		name, err := uidToName(nameOrUID)
+		if err == nil {
+			existing, idx = getMuteTimingByName(revision, name)
+		}
+	}
+	if idx == -1 {
+		svc.log.FromContext(ctx).Debug("Time interval was not found. Skip deleting", "name", nameOrUID)
 		return nil
 	}
 
@@ -200,7 +233,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 		return err
 	}
 
-	if isMuteTimeInUseInRoutes(name, revision.cfg.AlertmanagerConfig.Route) {
+	if isMuteTimeInUseInRoutes(existing.Name, revision.cfg.AlertmanagerConfig.Route) {
 		ns, _ := svc.ruleNotificationsStore.ListNotificationSettings(ctx, models.ListNotificationSettingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
 		// ignore error here because it's not important
 		return MakeErrTimeIntervalInUse(true, maps.Keys(ns))
@@ -243,7 +276,7 @@ func isMuteTimeInUseInRoutes(name string, route *definitions.Route) bool {
 	return false
 }
 
-func getMuteTiming(rev *cfgRevision, name string) (config.MuteTimeInterval, int) {
+func getMuteTimingByName(rev *cfgRevision, name string) (config.MuteTimeInterval, int) {
 	idx := slices.IndexFunc(rev.cfg.AlertmanagerConfig.MuteTimeIntervals, func(interval config.MuteTimeInterval) bool {
 		return interval.Name == name
 	})
@@ -321,4 +354,16 @@ func (svc *MuteTimingService) checkOptimisticConcurrency(current config.MuteTime
 		return ErrVersionConflict.Errorf("provided version %s of time interval %s does not match current version %s", desiredVersion, current.Name, currentVersion)
 	}
 	return nil
+}
+
+func getIntervalUID(t config.MuteTimeInterval) string {
+	return base64.RawURLEncoding.EncodeToString([]byte(t.Name))
+}
+
+func uidToName(uid string) (string, error) {
+	data, err := base64.RawURLEncoding.DecodeString(uid)
+	if err != nil {
+		return uid, err
+	}
+	return string(data), nil
 }
