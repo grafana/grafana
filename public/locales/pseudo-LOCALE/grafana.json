@@ -1972,10 +1972,12 @@
   },
   "share-panel": {
     "drawer": {
+      "share-link-title": "Ŀįŉĸ şęŧŧįŉģş",
       "share-snapshot-title": "Ŝĥäřę şŉäpşĥőŧ"
     },
     "menu": {
-      "share-snapshot-title": "Ŝŉäpşĥőŧ"
+      "share-link-title": "Ŝĥäřę ľįŉĸ",
+      "share-snapshot-title": "Ŝĥäřę şŉäpşĥőŧ"
     }
   },
   "share-playlist": {

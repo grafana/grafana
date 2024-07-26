@@ -1972,10 +1972,12 @@
   },
   "share-panel": {
     "drawer": {
+      "share-link-title": "Link settings",
       "share-snapshot-title": "Share snapshot"
     },
     "menu": {
-      "share-snapshot-title": "Snapshot"
+      "share-link-title": "Share link",
+      "share-snapshot-title": "Share snapshot"
     }
   },
   "share-playlist": {

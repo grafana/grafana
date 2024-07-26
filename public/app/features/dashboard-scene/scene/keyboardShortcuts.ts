@@ -54,7 +54,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       key: 'p u',
       onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
         const drawer = new ShareDrawer({
-          title: 'Link settings',
+          title: t('share-panel.drawer.share-link-title', 'Link settings'),
           body: new SharePanelInternally({ panelRef: vizPanel.getRef() }),
         });
 
