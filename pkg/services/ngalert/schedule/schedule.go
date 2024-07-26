@@ -358,7 +358,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 				return
 			}
 			if dropped != nil {
-				sch.log.Warn("Tick dropped because alert rule evaluation is too slow", append(key.LogContext(), "time", tick)...)
+				sch.log.Warn("Tick dropped because alert rule evaluation is too slow", append(key.LogContext(), "time", tick, "droppedTick", dropped.scheduledAt)...)
 				orgID := fmt.Sprint(key.OrgID)
 				sch.metrics.EvaluationMissed.WithLabelValues(orgID, item.rule.Title).Inc()
 			}
