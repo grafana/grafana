@@ -203,3 +203,35 @@ text = "ST1020"
 [[issues.exclude-rules]]
 linters = ["stylecheck"]
 text = "ST1021"
+
+[[issues.exclude-rules]]
+linters = ["staticcheck"]
+text = "SA1019"
+
+[[issues.exclude-rules]]
+linters = ["staticcheck"]
+text = "SA1019"
+
+[[issues.exclude-rules]]
+linters = ["misspell"]
+text = "`Creater` is a misspelling of `Creature`"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G103"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G303"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G301"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G101"
+
+[[issues.exclude-rules]]
+linters = ["errcheck"]
+text = "fmt.Fprint"
