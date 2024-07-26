@@ -9,7 +9,10 @@ import { SSOProviderDTO, SSOSettingsField } from './types';
 import { isSelectableValue } from './utils/guards';
 
 interface FieldRendererProps
-  extends Pick<UseFormReturn<SSOProviderDTO>, 'register' | 'control' | 'watch' | 'setValue' | 'unregister'> {
+  extends Pick<
+    UseFormReturn<SSOProviderDTO>,
+    'register' | 'control' | 'watch' | 'setValue' | 'unregister' | 'getValues'
+  > {
   field: SSOSettingsField;
   errors: UseFormReturn['formState']['errors'];
   secretConfigured: boolean;
@@ -22,6 +25,7 @@ export const FieldRenderer = ({
   errors,
   watch,
   setValue,
+  getValues,
   control,
   unregister,
   secretConfigured,
@@ -71,7 +75,13 @@ export const FieldRenderer = ({
     case 'text':
       return (
         <Field key={name} {...fieldProps}>
-          <Input {...register(name, fieldData.validation)} type={fieldData.type} id={name} autoComplete={'off'} />
+          <Input
+            {...register(name, fieldData.validation)}
+            type={fieldData.type}
+            id={name}
+            autoComplete={'off'}
+            addonAfter={fieldData.addon ? fieldData.addon(getValues, setValue) : null}
+          />
         </Field>
       );
     case 'secret':

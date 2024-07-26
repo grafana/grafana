@@ -1,8 +1,10 @@
 import { validate as uuidValidate } from 'uuid';
 
-import { config } from '@grafana/runtime';
-import { TextLink } from '@grafana/ui';
+import { AppEvents } from '@grafana/data';
+import { config, getAppEvents } from '@grafana/runtime';
+import { Button, TextLink } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { t, Trans } from 'app/core/internationalization';
 
 import { FieldData, SSOProvider, SSOSettingsField } from './types';
 import { isSelectableValue } from './utils/guards';
@@ -17,6 +19,8 @@ type Section = Record<
     fields: SSOSettingsField[];
   }>
 >;
+
+const appEvents = getAppEvents();
 
 export const sectionFields: Section = {
   azuread: [
@@ -62,6 +66,7 @@ export const sectionFields: Section = {
       name: 'General settings',
       id: 'general',
       fields: [
+        'openIdMetadataUrl',
         'name',
         'clientId',
         'clientSecret',
@@ -619,6 +624,79 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       description:
         'If enabled, Grafana will match the Hosted Domain retrieved from the Google ID Token against the Allowed Domains list specified by the user.',
       type: 'checkbox',
+    },
+    openIdMetadataUrl: {
+      label: t('oauth.form.open-id-url-label', 'OpenID Connect metadata URL'),
+      description: t(
+        'oauth.form.open-id-url-description',
+        'This is the .well-known/openid-configuration endpoint for your IdP.'
+      ),
+      type: 'text',
+      addon: (getValues, setValue) => (
+        <Button
+          type="button"
+          variant="secondary"
+          icon="sync"
+          onClick={() => {
+            const url = getValues('openIdMetadataUrl');
+
+            if (url === undefined || typeof url !== 'string') {
+              console.log('Invalid value for openIdMetadataUrl field');
+              return;
+            }
+
+            if (url === '') {
+              appEvents.publish({
+                type: AppEvents.alertWarning.name,
+                payload: [t('oauth.form.open-id-url-empty', 'The URL is empty')],
+              });
+              return;
+            }
+
+            if (!isUrlValid(url)) {
+              appEvents.publish({
+                type: AppEvents.alertWarning.name,
+                payload: [t('oauth.form.open-id-url-invalid', 'Not a valid URL')],
+              });
+              return;
+            }
+
+            fetch(url)
+              .then((res) => res.json())
+              .then((res) => {
+                if (!res['token_endpoint'] || !res['authorization_endpoint']) {
+                  appEvents.publish({
+                    type: AppEvents.alertWarning.name,
+                    payload: [t('oauth.form.open-id-url-invalid-content', 'Invalid content')],
+                  });
+                  return;
+                }
+
+                setValue('tokenUrl', res['token_endpoint']);
+                setValue('authUrl', res['authorization_endpoint']);
+                if (res['userinfo_endpoint']) {
+                  setValue('apiUrl', res['userinfo_endpoint']);
+                }
+
+                appEvents.publish({
+                  type: AppEvents.alertSuccess.name,
+                  payload: [
+                    t('oauth.form.open-id-url-success', 'OpenID Connect Metadata URL has been successfully fetched.'),
+                  ],
+                });
+              })
+              .catch((err) => {
+                console.log(err);
+                appEvents.publish({
+                  type: AppEvents.alertWarning.name,
+                  payload: [t('oauth.form.open-id-url-fetch-error', 'Failed to fetch URL or invalid content')],
+                });
+              });
+          }}
+        >
+          <Trans i18nKey={'oauth.form.open-id-url-update-button'}>Update</Trans>
+        </Button>
+      ),
     },
   };
 }
