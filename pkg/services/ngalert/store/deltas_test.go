@@ -555,6 +555,47 @@ func TestCalculateRuleUpdate(t *testing.T) {
 		require.Contains(t, delta.AffectedGroups, targetGroupKey)
 		assert.Equal(t, models.RulesGroup(targetGroup), delta.AffectedGroups[targetGroupKey])
 	})
+
+	t.Run("when an alert rule query is updated", func(t *testing.T) {
+		cp := models.CopyRule(rule)
+		cp.Record = nil
+		cp.Data = []models.AlertQuery{{RefID: "something else"}}
+
+		delta, err := CalculateRuleUpdate(context.Background(), fakeStore, &models.AlertRuleWithOptionals{
+			AlertRule: *cp,
+			HasPause:  false,
+		})
+		require.NoError(t, err)
+
+		assert.Equal(t, rule.GetGroupKey(), delta.GroupKey)
+		assert.Empty(t, delta.New)
+		assert.Empty(t, delta.Delete)
+		assert.Len(t, delta.Update, 1)
+		assert.Equal(t, cp, delta.Update[0].New)
+		assert.Equal(t, rule, delta.Update[0].Existing)
+		require.Contains(t, delta.AffectedGroups, delta.GroupKey)
+	})
+
+	t.Run("when a recording rule query is updated", func(t *testing.T) {
+		base := gen.With(models.RuleGen.WithAllRecordingRules()).GenerateRef()
+		fakeStore.Rules[base.OrgID] = []*models.AlertRule{base}
+		cp := models.CopyRule(base)
+		cp.Data = []models.AlertQuery{{RefID: "something else"}}
+
+		delta, err := CalculateRuleUpdate(context.Background(), fakeStore, &models.AlertRuleWithOptionals{
+			AlertRule: *cp,
+			HasPause:  false,
+		})
+		require.NoError(t, err)
+
+		assert.Equal(t, base.GetGroupKey(), delta.GroupKey)
+		assert.Empty(t, delta.New)
+		assert.Empty(t, delta.Delete)
+		assert.Len(t, delta.Update, 1)
+		assert.Equal(t, cp, delta.Update[0].New)
+		assert.Equal(t, base, delta.Update[0].Existing)
+		require.Contains(t, delta.AffectedGroups, delta.GroupKey)
+	})
 }
 
 func TestCalculateRuleCreate(t *testing.T) {
