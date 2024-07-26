@@ -40,12 +40,15 @@ func (d *DualWriterMode2) Mode() DualWriterMode {
 // Create overrides the behavior of the generic DualWriter and writes to LegacyStorage and Storage.
 func (d *DualWriterMode2) Create(ctx context.Context, original runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	var method = "create"
-	var kind = options.GetObjectKind().GroupVersionKind().Kind
-	log := d.Log.WithValues("kind", kind, "method", method)
+	log := d.Log.WithValues("method", method)
 	ctx = klog.NewContext(ctx, log)
+	var kind string
 
 	startLegacy := time.Now()
 	created, err := d.Legacy.Create(ctx, original, createValidation, options)
+	if created != nil {
+		kind = created.GetObjectKind().GroupVersionKind().Kind
+	}
 	if err != nil {
 		log.Error(err, "unable to create object in legacy storage")
 		d.recordLegacyDuration(true, mode2Str, kind, method, startLegacy)
@@ -77,12 +80,16 @@ func (d *DualWriterMode2) Create(ctx context.Context, original runtime.Object, c
 // It retrieves an object from Storage if possible, and if not it falls back to LegacyStorage.
 func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	var method = "get"
-	var kind = options.GetObjectKind().GroupVersionKind().Kind
-	log := d.Log.WithValues("name", name, "resourceVersion", options.ResourceVersion, "kind", kind, "method", method)
+	log := d.Log.WithValues("name", name, "resourceVersion", options.ResourceVersion, "method", method)
 	ctx = klog.NewContext(ctx, log)
 
 	startStorage := time.Now()
 	objStorage, err := d.Storage.Get(ctx, name, options)
+	var kind string
+	if objStorage != nil {
+		kind = objStorage.GetObjectKind().GroupVersionKind().Kind
+	}
+
 	d.recordStorageDuration(err != nil, mode2Str, kind, method, startStorage)
 	if err != nil {
 		// if it errors because it's not found, we try to fetch it from the legacy storage
@@ -119,12 +126,15 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 // It returns Storage entries if possible and falls back to LegacyStorage entries if not.
 func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	var method = "list"
-	var kind = options.GetObjectKind().GroupVersionKind().Kind
-	log := d.Log.WithValues("resourceVersion", options.ResourceVersion, "kind", kind, "method", method)
+	log := d.Log.WithValues("resourceVersion", options.ResourceVersion, "method", method)
 	ctx = klog.NewContext(ctx, log)
 
 	startLegacy := time.Now()
 	ll, err := d.Legacy.List(ctx, options)
+	var kind string
+	if ll != nil {
+		kind = ll.GetObjectKind().GroupVersionKind().Kind
+	}
 	if err != nil {
 		log.Error(err, "unable to list objects from legacy storage")
 		d.recordLegacyDuration(true, mode2Str, kind, method, startLegacy)
@@ -195,12 +205,15 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 // DeleteCollection overrides the behavior of the generic DualWriter and deletes from both LegacyStorage and Storage.
 func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
 	var method = "delete-collection"
-	var kind = options.GetObjectKind().GroupVersionKind().Kind
-	log := d.Log.WithValues("kind", kind, "resourceVersion", listOptions.ResourceVersion, "method", method)
+	log := d.Log.WithValues("resourceVersion", listOptions.ResourceVersion, "method", method)
 	ctx = klog.NewContext(ctx, log)
 
+	var kind string
 	startLegacy := time.Now()
 	deleted, err := d.Legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	if deleted != nil {
+		kind = deleted.GetObjectKind().GroupVersionKind().Kind
+	}
 	if err != nil {
 		log.WithValues("deleted", deleted).Error(err, "failed to delete collection successfully from legacy storage")
 		d.recordLegacyDuration(true, mode2Str, kind, method, startLegacy)
@@ -243,12 +256,16 @@ func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation
 
 func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	var method = "delete"
-	var kind = options.GetObjectKind().GroupVersionKind().Kind
-	log := d.Log.WithValues("name", name, "kind", kind, "method", method)
+	log := d.Log.WithValues("name", name, "method", method)
 	ctx = klog.NewContext(ctx, log)
+	var kind string
 
 	startLegacy := time.Now()
 	deletedLS, async, err := d.Legacy.Delete(ctx, name, deleteValidation, options)
+
+	if deletedLS != nil {
+		kind = deletedLS.GetObjectKind().GroupVersionKind().Kind
+	}
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			log.WithValues("objectList", deletedLS).Error(err, "could not delete from legacy store")
@@ -281,12 +298,15 @@ func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidat
 // Update overrides the generic behavior of the Storage and writes first to the legacy storage and then to storage.
 func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	var method = "update"
-	var kind = options.GetObjectKind().GroupVersionKind().Kind
-	log := d.Log.WithValues("name", name, "kind", kind, "method", method)
+	log := d.Log.WithValues("name", name, "method", method)
 	ctx = klog.NewContext(ctx, log)
+	var kind string
 
 	// get foundObj and (updated) object so they can be stored in legacy store
 	foundObj, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
+	if foundObj != nil {
+		kind = foundObj.GetObjectKind().GroupVersionKind().Kind
+	}
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			log.WithValues("object", foundObj).Error(err, "could not get object to update")
@@ -297,6 +317,9 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 
 	// obj can be populated in case it's found or empty in case it's not found
 	updated, err := objInfo.UpdatedObject(ctx, foundObj)
+	if updated != nil {
+		kind = updated.GetObjectKind().GroupVersionKind().Kind
+	}
 	if err != nil {
 		log.WithValues("object", updated).Error(err, "could not update or create object")
 		return nil, false, err
