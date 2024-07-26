@@ -85,7 +85,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
     if (config.featureToggles.newDashboardSharingComponent) {
       const subMenu: PanelMenuItem[] = [];
       subMenu.push({
-        text: t('share-panel.menu.share-link-title', 'Link'),
+        text: t('share-panel.menu.share-link-title', 'Share link'),
         iconClassName: 'link',
         shortcut: 'p u',
         onClick: () => {
@@ -98,12 +98,12 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         },
       });
       subMenu.push({
-        text: t('share-panel.menu.share-embed-title', 'Embed'),
+        text: t('share-panel.menu.share-embed-title', 'Share embed'),
         iconClassName: 'arrow',
         shortcut: 'p e',
         onClick: () => {
           const drawer = new ShareDrawer({
-            title: t('share-panel.menu.share-embed-title', 'Embed'),
+            title: t('share-panel.drawer.share-embed-title', 'Embed'),
             body: new SharePanelEmbedTab({ panelRef: panel.getRef() }),
           });
 

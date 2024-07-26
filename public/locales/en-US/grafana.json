@@ -1994,11 +1994,12 @@
   },
   "share-panel": {
     "drawer": {
+      "share-embed-title": "Embed",
       "share-link-title": "Link settings"
     },
     "menu": {
-      "share-embed-title": "Embed",
-      "share-link-title": "Link"
+      "share-embed-title": "Share embed",
+      "share-link-title": "Share link"
     }
   },
   "share-playlist": {

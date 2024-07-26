@@ -1994,11 +1994,12 @@
   },
   "share-panel": {
     "drawer": {
+      "share-embed-title": "Ēmþęđ",
       "share-link-title": "Ŀįŉĸ şęŧŧįŉģş"
     },
     "menu": {
-      "share-embed-title": "Ēmþęđ",
-      "share-link-title": "Ŀįŉĸ"
+      "share-embed-title": "Ŝĥäřę ęmþęđ",
+      "share-link-title": "Ŝĥäřę ľįŉĸ"
     }
   },
   "share-playlist": {
