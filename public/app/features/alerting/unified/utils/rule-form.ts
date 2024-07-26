@@ -47,7 +47,13 @@ import { getRulesAccess } from './access-control';
 import { Annotation, defaultAnnotations } from './constants';
 import { getDefaultOrFirstCompatibleDataSource, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
-import { isAlertingRulerRule, isGrafanaRecordingRule, isGrafanaRulerRule, isRecordingRulerRule } from './rules';
+import {
+  isAlertingRulerRule,
+  isGrafanaAlertingRuleByType,
+  isGrafanaRecordingRule,
+  isGrafanaRulerRule,
+  isRecordingRulerRule,
+} from './rules';
 import { formatPrometheusDuration, parseInterval, safeParsePrometheusDuration } from './time';
 
 export type PromOrLokiQuery = PromQuery | LokiQuery;
@@ -212,20 +218,24 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
       manualRouting,
       contactPoints
     );
-    if (type === RuleFormType.grafana) {
+    if (isGrafanaAlertingRuleByType(type)) {
       return {
         grafana_alert: {
           title: name,
           condition,
-          no_data_state: noDataState,
-          exec_err_state: execErrState,
           data: queries.map(fixBothInstantAndRangeQuery),
           is_paused: Boolean(isPaused),
+
+          // Alerting rule specific
+          no_data_state: noDataState,
+          exec_err_state: execErrState,
           notification_settings: notificationSettings,
         },
-        for: evaluateFor,
         annotations: arrayToRecord(values.annotations || []),
         labels: arrayToRecord(values.labels || []),
+
+        // Alerting rule specific
+        for: evaluateFor,
       };
     } else {
       return {
@@ -233,12 +243,13 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
           title: name,
           condition,
           data: queries.map(fixBothInstantAndRangeQuery),
+          is_paused: Boolean(isPaused),
+
+          // Recording rule specific
           record: {
             metric: metric ?? name,
             from: condition,
           },
-          is_paused: Boolean(isPaused),
-          notification_settings: undefined,
         },
         annotations: arrayToRecord(values.annotations || []),
         labels: arrayToRecord(values.labels || []),
