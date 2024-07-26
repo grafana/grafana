@@ -434,6 +434,7 @@ export type LegendPlacement = ('bottom' | 'right');
  * Note: "hidden" needs to remain as an option for plugins compatibility
  */
 export enum LegendDisplayMode {
+  Color = 'color',
   Hidden = 'hidden',
   List = 'list',
   Table = 'table',

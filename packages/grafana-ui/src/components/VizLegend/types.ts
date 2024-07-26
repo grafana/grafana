@@ -36,6 +36,7 @@ export interface VizLegendTableProps<T> extends VizLegendBaseProps<T> {
 
 export interface LegendProps<T = any> extends VizLegendBaseProps<T>, VizLegendTableProps<T> {
   displayMode: LegendDisplayMode;
+  colorPalette?: string[]; // IHOR: this property is used in Heatmap only
 }
 
 export interface VizLegendItem<T = any> {
@@ -52,3 +53,14 @@ export interface VizLegendItem<T = any> {
   data?: T;
   lineStyle?: LineStyle;
 }
+
+export type ColorLegendProps = {
+  colorPalette?: string[];
+  min?: number;
+  max?: number;
+
+  // Show a value as string -- when not defined, the raw values will not be shown
+  display?: (v: number) => string;
+  hoverValue?: number;
+  useStopsPercentage?: boolean;
+};

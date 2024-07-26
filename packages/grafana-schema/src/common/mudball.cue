@@ -134,7 +134,7 @@ LegendPlacement: "bottom" | "right" @cuetsy(kind="type")
 
 // TODO docs
 // Note: "hidden" needs to remain as an option for plugins compatibility
-LegendDisplayMode: "list" | "table" | "hidden" @cuetsy(kind="enum")
+LegendDisplayMode: "list" | "table" | "hidden" | "color" @cuetsy(kind="enum")
 
 // TODO docs
 SingleStatBaseOptions: {

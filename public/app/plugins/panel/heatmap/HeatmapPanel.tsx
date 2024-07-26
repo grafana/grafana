@@ -3,7 +3,7 @@ import { useMemo, useRef, useState } from 'react';
 
 import { DashboardCursorSync, PanelProps, TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { ScaleDistributionConfig } from '@grafana/schema';
+import { LegendDisplayMode, ScaleDistributionConfig } from '@grafana/schema';
 import {
   ScaleDistribution,
   TooltipPlugin2,
@@ -13,10 +13,12 @@ import {
   useStyles2,
   useTheme2,
   VizLayout,
+  VizLegend2,
   EventBusPlugin,
 } from '@grafana/ui';
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
+import { config } from 'app/core/config';
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
@@ -128,6 +130,8 @@ export const HeatmapPanel = ({
   }, [options, timeZone, data.structureRev, cursorSync]);
 
   const renderLegend = () => {
+    const { legend } = options;
+
     if (!info.heatmap || !options.legend.show) {
       return null;
     }
@@ -144,19 +148,38 @@ export const HeatmapPanel = ({
     //   hoverValue = countField.values[hover.dataIdx];
     // }
 
-    return (
-      <VizLayout.Legend placement="bottom" maxHeight="20%">
-        <div className={styles.colorScaleWrapper}>
-          <ColorScale
-            hoverValue={hoverValue}
-            colorPalette={palette}
-            min={dataRef.current.heatmapColors?.minValue!}
-            max={dataRef.current.heatmapColors?.maxValue!}
-            display={info.display}
-          />
-        </div>
-      </VizLayout.Legend>
-    );
+    if (config.featureToggles.newVizLegend) {
+      return (
+        <VizLegend2
+          data={data.series}
+          {...legend}
+          displayMode={LegendDisplayMode.Color}
+          placement={'bottom'}
+          calcs={[]}
+          showLegend={true}
+          // ColorLegendProps
+          hoverValue={hoverValue}
+          colorPalette={palette}
+          min={dataRef.current.heatmapColors?.minValue!}
+          max={dataRef.current.heatmapColors?.maxValue!}
+          display={info.display}
+        />
+      );
+    } else {
+      return (
+        <VizLayout.Legend placement="bottom" maxHeight="20%">
+          <div className={styles.colorScaleWrapper}>
+            <ColorScale
+              hoverValue={hoverValue}
+              colorPalette={palette}
+              min={dataRef.current.heatmapColors?.minValue!}
+              max={dataRef.current.heatmapColors?.maxValue!}
+              display={info.display}
+            />
+          </div>
+        </VizLayout.Legend>
+      );
+    }
   };
 
   if (info.warning || !info.heatmap) {

@@ -6,9 +6,10 @@ import { LegendDisplayMode } from '@grafana/schema';
 
 import { SeriesVisibilityChangeMode, usePanelContext } from '../PanelChrome';
 
+import { VizLegendColor } from './VizLegendColor';
 import { VizLegendList } from './VizLegendList';
 import { VizLegendTable } from './VizLegendTable';
-import { LegendProps, SeriesVisibilityChangeBehavior, VizLegendItem } from './types';
+import { LegendProps, SeriesVisibilityChangeBehavior, VizLegendItem, ColorLegendProps } from './types';
 import { mapMouseEventToMode } from './utils';
 
 /**
@@ -27,7 +28,12 @@ export function VizLegend<T>({
   itemRenderer,
   readonly,
   isSortable,
-}: LegendProps<T>) {
+  hoverValue,
+  colorPalette,
+  min,
+  max,
+  display,
+}: LegendProps<T> & ColorLegendProps) {
   // JEV: ADDITION: add other callbacks to panel context? override/config callbacks?
   const { eventBus, onToggleSeriesVisibility, onToggleLegendSort } = usePanelContext();
 
@@ -118,6 +124,16 @@ export function VizLegend<T>({
           onLabelClick={onLegendLabelClick}
           itemRenderer={itemRenderer}
           readonly={readonly}
+        />
+      );
+    case LegendDisplayMode.Color:
+      return (
+        <VizLegendColor
+          hoverValue={hoverValue}
+          colorPalette={colorPalette ?? []}
+          min={min ?? 0}
+          max={max ?? 0}
+          display={display}
         />
       );
     default:
