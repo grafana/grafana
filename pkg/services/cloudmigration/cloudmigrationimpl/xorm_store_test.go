@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
@@ -274,6 +275,7 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 	s := &sqlStore{
 		db:             testDB,
 		secretsService: fakeSecrets.FakeSecretsService{},
+		secretsStore:   secretskv.NewFakeSQLSecretsKVStore(t),
 	}
 	ctx := context.Background()
 

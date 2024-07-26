@@ -178,13 +178,11 @@ function AnnotationsSettingsEditView({
   onBackToList,
   onDelete,
 }: AnnotationsSettingsEditViewProps) {
-  const parentTab = pageNav.children!.find((p) => p.active)!;
-  parentTab.parentItem = pageNav;
   const { name, query } = annotationLayer.useState();
 
   const editAnnotationPageNav = {
     text: name,
-    parentItem: parentTab,
+    parentItem: pageNav,
   };
 
   return (

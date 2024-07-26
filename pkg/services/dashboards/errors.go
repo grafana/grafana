@@ -3,6 +3,7 @@ package dashboards
 import (
 	"errors"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -129,6 +130,8 @@ var (
 	ErrFolderInvalidUID        = errors.New("invalid uid for folder provided")
 	ErrFolderSameNameExists    = errors.New("a folder with the same name already exists in the current location")
 	ErrFolderAccessDenied      = errors.New("access denied to folder")
+	ErrMoveAccessDenied        = errutil.Forbidden("folders.forbiddenMove", errutil.WithPublicMessage("Access denied to the destination folder"))
+	ErrFolderAccessEscalation  = errutil.Forbidden("folders.accessEscalation", errutil.WithPublicMessage("Cannot move a folder to a folder where you have higher permissions"))
 )
 
 // DashboardErr represents a dashboard error.

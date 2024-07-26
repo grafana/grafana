@@ -34,18 +34,20 @@ type Provider interface {
 }
 
 type gPRCServerService struct {
-	cfg     *setting.Cfg
-	logger  log.Logger
-	server  *grpc.Server
-	address string
-	enabled bool
+	cfg         *setting.Cfg
+	logger      log.Logger
+	server      *grpc.Server
+	address     string
+	enabled     bool
+	startedChan chan struct{}
 }
 
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, tracer tracing.Tracer, registerer prometheus.Registerer) (Provider, error) {
 	s := &gPRCServerService{
-		cfg:     cfg,
-		logger:  log.New("grpc-server"),
-		enabled: features.IsEnabledGlobally(featuremgmt.FlagGrpcServer),
+		cfg:         cfg,
+		logger:      log.New("grpc-server"),
+		enabled:     features.IsEnabledGlobally(featuremgmt.FlagGrpcServer),
+		startedChan: make(chan struct{}),
 	}
 
 	// Register the metric here instead of an init() function so that we do
@@ -110,6 +112,7 @@ func (s *gPRCServerService) Run(ctx context.Context) error {
 	}
 
 	s.address = listener.Addr().String()
+	close(s.startedChan)
 
 	serveErr := make(chan error, 1)
 	go func() {
@@ -141,5 +144,6 @@ func (s *gPRCServerService) GetServer() *grpc.Server {
 }
 
 func (s *gPRCServerService) GetAddress() string {
+	<-s.startedChan
 	return s.address
 }
