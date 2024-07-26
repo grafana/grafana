@@ -43,15 +43,7 @@ func (r Receiver) GetName() string {
 // GetUID returns the UID of the Receiver.
 // Currently, the UID is a hash of the receiver name.
 func (r Receiver) GetUID() string {
-	return GetUIDFromNamed(r)
-}
-
-type Named interface {
-	GetName() string
-}
-
-func GetUIDFromNamed(t Named) string {
-	return GetUID(t.GetName())
+	return GetUID(r.GetName())
 }
 
 func GetUID(name string) string {

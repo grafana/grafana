@@ -80,7 +80,7 @@ func (rs *ReceiverStore) DeleteReceiver(ctx context.Context, orgID int64, uid st
 
 	// Remove the receiver from the configuration.
 	revision.Config.AlertmanagerConfig.Receivers = slices.DeleteFunc(revision.Config.AlertmanagerConfig.Receivers, func(r *definitions.PostableApiReceiver) bool {
-		return models.GetUIDFromNamed(r) == uid
+		return models.GetUID(r.GetName()) == uid
 	})
 
 	return rs.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -122,7 +122,7 @@ func (rs *ReceiverStore) getReceiversFromConfig(ctx context.Context, orgID int64
 
 	receivers := make([]*models.Receiver, 0, len(uids))
 	for _, r := range cfg.AlertmanagerConfig.Receivers {
-		if len(uids) == 0 || slices.Contains(uids, models.GetUIDFromNamed(r)) {
+		if len(uids) == 0 || slices.Contains(uids, models.GetUID(r.GetName())) {
 			provenance, err := getContactPointProvenance(storedProvenances, r)
 			if err != nil {
 				return nil, err
