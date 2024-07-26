@@ -65,7 +65,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
           continue;
         }
 
-        //if there are differences, find the new panel, move it to the original and perform repeat
+        //if there are differences, find the new panel, move it to the original and perform re peat
         const gridItem = row.state.children.find((gridItem) => !gridItem.state.key?.includes('clone'));
         if (gridItem) {
           const newGridItem = gridItem.clone();
