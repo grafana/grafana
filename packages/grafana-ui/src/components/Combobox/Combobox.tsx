@@ -67,17 +67,22 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
       selectedItem,
       scrollIntoView: () => {},
       onInputValueChange: ({ inputValue }) => {
-        if (inputValue === '' || inputValue === selectedItem?.label) {
+        console.log(inputValue);
+        setItems(options.filter(itemFilter(inputValue)));
+      },
+      onIsOpenChange: ({ isOpen, selectedItem }) => {
+        // Basically onBlur handler
+        if (isOpen) {
           setItems(options);
           return;
         }
-        setItems(options.filter(itemFilter(inputValue)));
+        console.log(selectedItem);
+        selectedItem ? setInputValue(selectedItem.label) : setInputValue('');
       },
       onSelectedItemChange: ({ selectedItem }) => {
         console.log(selectedItem);
-        console.log(options);
+        selectedItem ? setInputValue(selectedItem.label) : setInputValue('');
         onChange(selectedItem);
-        setItems(options);
       },
       onHighlightedIndexChange: ({ highlightedIndex, type }) => {
         if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
@@ -134,7 +139,6 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
            */
           onChange: () => {},
         })}
-        onBlur={() => (selectedItem ? setInputValue(selectedItem.label) : setInputValue(''))}
       />
       <div
         className={cx(styles.menu, hasMinHeight && styles.menuHeight)}
