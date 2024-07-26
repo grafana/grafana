@@ -953,6 +953,10 @@
       "short-url-label": "Ŝĥőřŧęŉ ľįŉĸ",
       "time-range-description": "Cĥäŉģę ŧĥę čūřřęŉŧ řęľäŧįvę ŧįmę řäŉģę ŧő äŉ äþşőľūŧę ŧįmę řäŉģę",
       "time-range-label": "Ŀőčĸ ŧįmę řäŉģę"
+    },
+    "share-panel": {
+      "config-description": "Cřęäŧę ä pęřşőŉäľįžęđ, đįřęčŧ ľįŉĸ ŧő şĥäřę yőūř päŉęľ ŵįŧĥįŉ yőūř őřģäŉįžäŧįőŉ, ŵįŧĥ ŧĥę ƒőľľőŵįŉģ čūşŧőmįžäŧįőŉ şęŧŧįŉģş:",
+      "render-image": "Ŗęŉđęř įmäģę"
     }
   },
   "login": {
@@ -2007,6 +2011,14 @@
     },
     "view-json": {
       "copy-button": "Cőpy ŧő Cľįpþőäřđ"
+    }
+  },
+  "share-panel": {
+    "drawer": {
+      "share-link-title": "Ŀįŉĸ şęŧŧįŉģş"
+    },
+    "menu": {
+      "share-link-title": "Ŝĥäřę ľįŉĸ"
     }
   },
   "share-playlist": {
