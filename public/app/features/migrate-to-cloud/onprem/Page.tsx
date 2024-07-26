@@ -65,7 +65,7 @@ const SNAPSHOT_UPLOADING_STATUSES: Array<SnapshotDto['status']> = ['UPLOADING', 
 
 const STATUS_POLL_INTERVAL = 5 * 1000;
 
-function useGetLatestSnapshot(sessionUid?: string, page = 0) {
+function useGetLatestSnapshot(sessionUid?: string, page = 1) {
   const [shouldPoll, setShouldPoll] = useState(false);
 
   const listResult = useGetShapshotListQuery(sessionUid ? { uid: sessionUid } : skipToken);
@@ -102,7 +102,7 @@ function useGetLatestSnapshot(sessionUid?: string, page = 0) {
 export const Page = () => {
   const [disconnectModalOpen, setDisconnectModalOpen] = useState(false);
   const session = useGetLatestSession();
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const snapshot = useGetLatestSnapshot(session.data?.uid, page);
   const [performCreateSnapshot, createSnapshotResult] = useCreateSnapshotMutation();
   const [performUploadSnapshot, uploadSnapshotResult] = useUploadSnapshotMutation();

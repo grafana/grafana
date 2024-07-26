@@ -19,12 +19,12 @@ const columns = [
   { id: 'status', header: 'Status', cell: StatusCell },
 ];
 
-export function ResourcesTable({ resources, numberOfPages = 0, onChangePage, page = 0 }: ResourcesTableProps) {
+export function ResourcesTable({ resources, numberOfPages = 0, onChangePage, page = 1 }: ResourcesTableProps) {
   return (
     <>
       <InteractiveTable columns={columns} data={resources} getRowId={(r) => r.refId} />
       <Stack justifyContent={'flex-end'}>
-        <Pagination numberOfPages={numberOfPages} currentPage={page + 1} onNavigate={onChangePage} />
+        <Pagination numberOfPages={numberOfPages} currentPage={page} onNavigate={onChangePage} />
       </Stack>
     </>
   );
