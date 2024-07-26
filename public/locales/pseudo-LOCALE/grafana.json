@@ -112,6 +112,12 @@
       "used-by_one": "Ůşęđ þy {{ count }} ŉőŧįƒįčäŧįőŉ pőľįčy",
       "used-by_other": "Ůşęđ þy {{ count }} ŉőŧįƒįčäŧįőŉ pőľįčįęş"
     },
+    "grafana-rules": {
+      "export-rules": "Ēχpőřŧ řūľęş",
+      "loading": "Ŀőäđįŉģ...",
+      "new-recording-rule": "Ńęŵ řęčőřđįŉģ řūľę",
+      "title": "Ğřäƒäŉä"
+    },
     "policies": {
       "metadata": {
         "timingOptions": {
@@ -143,6 +149,12 @@
       "update": {
         "success": "Ŝūččęşşƒūľľy ūpđäŧęđ řūľę ģřőūp"
       }
+    },
+    "rule-state": {
+      "creating": "Cřęäŧįŉģ",
+      "deleting": "Đęľęŧįŉģ",
+      "paused": "Päūşęđ",
+      "recording-rule": "Ŗęčőřđįŉģ řūľę"
     },
     "rules": {
       "delete-rule": {

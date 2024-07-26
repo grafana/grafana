@@ -3,7 +3,7 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Text, Stack, useStyles2, ClipboardButton, TextLink } from '@grafana/ui';
+import { ClipboardButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { Annotations } from 'app/types/unified-alerting-dto';
 
@@ -98,18 +98,21 @@ const Details = ({ rule }: DetailsProps) => {
         </MetaText>
 
         {/* nodata and execution error state mapping */}
-        {isGrafanaRulerRule(rule.rulerRule) && (
-          <>
-            <MetaText direction="column">
-              Alert state if no data or all values are null
-              <Text color="primary">{rule.rulerRule.grafana_alert.no_data_state}</Text>
-            </MetaText>
-            <MetaText direction="column">
-              Alert state if execution error or timeout
-              <Text color="primary">{rule.rulerRule.grafana_alert.exec_err_state}</Text>
-            </MetaText>
-          </>
-        )}
+        {isGrafanaRulerRule(rule.rulerRule) &&
+          // grafana recording rules don't have these fields
+          rule.rulerRule.grafana_alert.no_data_state &&
+          rule.rulerRule.grafana_alert.exec_err_state && (
+            <>
+              <MetaText direction="column">
+                Alert state if no data or all values are null
+                <Text color="primary">{rule.rulerRule.grafana_alert.no_data_state}</Text>
+              </MetaText>
+              <MetaText direction="column">
+                Alert state if execution error or timeout
+                <Text color="primary">{rule.rulerRule.grafana_alert.exec_err_state}</Text>
+              </MetaText>
+            </>
+          )}
       </div>
 
       {/* annotations go here */}

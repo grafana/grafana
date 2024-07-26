@@ -1318,7 +1318,7 @@ def verify_linux_RPM_packages_step(depends_on = []):
             'echo "Step 3: Adding Grafana GPG key..."',
             "rpm --import https://rpm.grafana.com/gpg.key",
             'echo "Step 4: Configuring Grafana repository..."',
-            "echo '" + repo_config + "' > /etc/yum.repos.d/grafana.repo",
+            "echo -e '" + repo_config + "' > /etc/yum.repos.d/grafana.repo",
             'echo "Step 5: Checking RPM repository..."',
             "dnf list available grafana-${TAG}",
             "if [ $? -eq 0 ]; then",
