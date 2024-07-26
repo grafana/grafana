@@ -1077,7 +1077,7 @@
     },
     "resource-error": {
       "dismiss-button": "ØĶ",
-      "resource-summary": "{řęşőūřčę.řęƒĨđ} ({přęŧŧyŦypęŃämę(řęşőūřčę.ŧypę)})",
+      "resource-summary": "{{refId}} ({{typeName}})",
       "specific-error": "Ŧĥę şpęčįƒįč ęřřőř ŵäş:",
       "title": "Ůŉäþľę ŧő mįģřäŧę ŧĥįş řęşőūřčę",
       "unknown-error": "Åŉ ūŉĸŉőŵŉ ęřřőř őččūřřęđ."

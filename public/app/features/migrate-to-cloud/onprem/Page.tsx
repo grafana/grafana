@@ -1,7 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { isFetchError } from '@grafana/runtime';
 import { Alert, Box, Stack, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 

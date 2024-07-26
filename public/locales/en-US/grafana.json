@@ -1077,7 +1077,7 @@
     },
     "resource-error": {
       "dismiss-button": "OK",
-      "resource-summary": "{resource.refId} ({prettyTypeName(resource.type)})",
+      "resource-summary": "{{refId}} ({{typeName}})",
       "specific-error": "The specific error was:",
       "title": "Unable to migrate this resource",
       "unknown-error": "An unknown error occurred."

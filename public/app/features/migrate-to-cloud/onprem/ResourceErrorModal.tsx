@@ -12,6 +12,9 @@ interface ResourceErrorModalProps {
 export function ResourceErrorModal(props: ResourceErrorModalProps) {
   const { resource, onClose } = props;
 
+  const refId = resource?.refId;
+  const typeName = resource && prettyTypeName(resource.type);
+
   return (
     <Modal
       title={t('migrate-to-cloud.resource-error.title', 'Unable to migrate this resource')}
@@ -22,7 +25,7 @@ export function ResourceErrorModal(props: ResourceErrorModalProps) {
         <Stack direction="column" gap={2} alignItems="flex-start">
           <Text element="p" weight="bold">
             <Trans i18nKey="migrate-to-cloud.resource-error.resource-summary">
-              {resource.refId} ({prettyTypeName(resource.type)})
+              {{ refId }} ({{ typeName }})
             </Trans>
           </Text>
 
