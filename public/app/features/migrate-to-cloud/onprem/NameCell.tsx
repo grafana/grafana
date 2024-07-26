@@ -1,5 +1,3 @@
-/* eslint @grafana/no-untranslated-strings: "error" */
-
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
