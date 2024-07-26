@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -326,37 +325,6 @@ func TestContactPointServiceDecryptRedact(t *testing.T) {
 	})
 }
 
-func TestContactPointInUse(t *testing.T) {
-	result := isContactPointInUse("test", []*definitions.Route{
-		{
-			Receiver: "not-test",
-			Routes: []*definitions.Route{
-				{
-					Receiver: "not-test",
-				},
-				{
-					Receiver: "test",
-				},
-			},
-		},
-	})
-	require.True(t, result)
-	result = isContactPointInUse("test", []*definitions.Route{
-		{
-			Receiver: "not-test",
-			Routes: []*definitions.Route{
-				{
-					Receiver: "not-test",
-				},
-				{
-					Receiver: "not-test",
-				},
-			},
-		},
-	})
-	require.False(t, result)
-}
-
 func createContactPointServiceSut(t *testing.T, secretService secrets.Service) *ContactPointService {
 	// Encrypt secure settings.
 	cfg := createEncryptedConfig(t, secretService)
@@ -371,13 +339,10 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 
 	receiverService := notifier.NewReceiverService(
 		acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
-		legacy_storage.NewReceiverStore(
-			configStore,
-			provisioningStore,
-			xact,
-			validation.ValidateProvenanceRelaxed,
-		),
+		legacy_storage.NewAlertmanagerConfigStore(configStore),
+		provisioningStore,
 		secretService,
+		xact,
 		log.NewNopLogger(),
 	)
 

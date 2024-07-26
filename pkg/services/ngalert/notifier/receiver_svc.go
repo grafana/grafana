@@ -4,40 +4,67 @@ import (
 	"context"
 	"encoding/base64"
 
+	"github.com/grafana/alerting/definition"
+
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/secrets"
+)
+
+var (
+	ErrReceiverNotFound = errutil.NotFound("alerting.notifications.receiver.notFound")
+	ErrReceiverInUse    = errutil.Conflict("alerting.notifications.receiver.used").MustTemplate("Receiver is used by notification policies or alert rules")
 )
 
 // ReceiverService is the service for managing alertmanager receivers.
 type ReceiverService struct {
 	ac                accesscontrol.AccessControl
-	receiverStore     receiverStore
+	provisioningStore provisoningStore
+	cfgStore          alertmanagerConfigStore
 	encryptionService secrets.Service
+	xact              transactionManager
 	log               log.Logger
+	validator         validation.ProvenanceStatusTransitionValidator
 }
 
-type receiverStore interface {
-	GetReceiver(ctx context.Context, orgID int64, uid string) (*models.Receiver, error)
-	GetReceivers(ctx context.Context, orgID int64, uids ...string) ([]*models.Receiver, error)
-	DeleteReceiver(ctx context.Context, orgID int64, uid string, callerProvenance models.Provenance, version string) error
+type alertmanagerConfigStore interface {
+	Get(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error)
+	Save(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64) error
+}
+
+type provisoningStore interface {
+	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]models.Provenance, error)
+	SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
+	DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error
+}
+
+type transactionManager interface {
+	InTransaction(ctx context.Context, work func(ctx context.Context) error) error
 }
 
 func NewReceiverService(
 	ac accesscontrol.AccessControl,
-	receiverStore receiverStore,
+	cfgStore alertmanagerConfigStore,
+	provisioningStore provisoningStore,
 	encryptionService secrets.Service,
+	xact transactionManager,
 	log log.Logger,
 ) *ReceiverService {
 	return &ReceiverService{
 		ac:                ac,
+		provisioningStore: provisioningStore,
+		cfgStore:          cfgStore,
 		encryptionService: encryptionService,
+		xact:              xact,
 		log:               log,
-		receiverStore:     receiverStore,
+		validator:         validation.ValidateProvenanceRelaxed,
 	}
 }
 
@@ -86,9 +113,13 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 		return definitions.GettableApiReceiver{}, ac.NewAuthorizationErrorWithPermissions("read any decrypted receiver", nil) // TODO: Replace with authz service.
 	}
 
-	rcv, err := rs.receiverStore.GetReceiver(ctx, q.OrgID, models.GetUID(q.Name))
+	revision, err := rs.cfgStore.Get(ctx, q.OrgID)
 	if err != nil {
 		return definitions.GettableApiReceiver{}, err
+	}
+	postable := revision.GetReceiver(legacy_storage.GetUID(q.Name))
+	if postable == nil {
+		return definitions.GettableApiReceiver{}, ErrReceiverNotFound.Errorf("")
 	}
 
 	decrypt, err := rs.shouldDecrypt(ctx, user, q.Decrypt)
@@ -97,7 +128,12 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 	}
 	decryptFn := rs.decryptOrRedact(ctx, decrypt, q.Name, "")
 
-	return ReceiverToGettable(rcv, decryptFn, false)
+	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
+	if err != nil {
+		return definitions.GettableApiReceiver{}, err
+	}
+
+	return PostableToGettableApiReceiver(postable, storedProvenances, decryptFn, false)
 }
 
 // GetReceivers returns a list of receivers a user has access to.
@@ -109,10 +145,16 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 
 	uids := make([]string, 0, len(q.Names))
 	for _, name := range q.Names {
-		uids = append(uids, models.GetUID(name))
+		uids = append(uids, legacy_storage.GetUID(name))
 	}
 
-	receivers, err := rs.receiverStore.GetReceivers(ctx, q.OrgID, uids...)
+	revision, err := rs.cfgStore.Get(ctx, q.OrgID)
+	if err != nil {
+		return nil, err
+	}
+	postables := revision.GetReceivers(uids)
+
+	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
 	if err != nil {
 		return nil, err
 	}
@@ -134,8 +176,8 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	}
 
 	var output []definitions.GettableApiReceiver
-	for i := q.Offset; i < len(receivers); i++ {
-		r := receivers[i]
+	for i := q.Offset; i < len(postables); i++ {
+		r := postables[i]
 
 		decrypt, err := rs.shouldDecrypt(ctx, user, q.Decrypt)
 		if err != nil {
@@ -149,7 +191,7 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 		// - Doesn't have ReadRedacted (or ReadDecrypted permission since it's a subset).
 		listOnly := !readRedactedAccess
 
-		res, err := ReceiverToGettable(r, decryptFn, listOnly)
+		res, err := PostableToGettableApiReceiver(r, storedProvenances, decryptFn, listOnly)
 		if err != nil {
 			return nil, err
 		}
@@ -168,7 +210,45 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 // UID field currently does not exist, we assume the uid is a particular hashed value of the receiver name.
 func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, orgID int64, callerProvenance definitions.Provenance, version string) error {
 	//TODO: Check delete permissions.
-	return rs.receiverStore.DeleteReceiver(ctx, orgID, uid, models.Provenance(callerProvenance), version)
+	revision, err := rs.cfgStore.Get(ctx, orgID)
+	if err != nil {
+		return err
+	}
+	postable := revision.GetReceiver(uid)
+	if postable == nil {
+		return ErrReceiverNotFound.Errorf("")
+	}
+
+	// TODO: Implement + check optimistic concurrency.
+
+	storedProvenance, err := rs.getContactPointProvenance(ctx, postable, orgID)
+	if err != nil {
+		return err
+	}
+
+	if err := rs.validator(storedProvenance, models.Provenance(callerProvenance)); err != nil {
+		return err
+	}
+
+	usedByRoutes := revision.ReceiverNameUsedByRoutes(postable.GetName())
+	usedByRules, err := rs.UsedByRules(ctx, orgID, uid)
+	if err != nil {
+		return err
+	}
+
+	if usedByRoutes || len(usedByRules) > 0 {
+		return makeReceiverInUseErr(usedByRoutes, usedByRules)
+	}
+
+	revision.DeleteReceiver(uid)
+
+	return rs.xact.InTransaction(ctx, func(ctx context.Context) error {
+		err = rs.cfgStore.Save(ctx, revision, orgID)
+		if err != nil {
+			return err
+		}
+		return rs.deleteProvenances(ctx, orgID, postable.GrafanaManagedReceivers)
+	})
 }
 
 func (rs *ReceiverService) CreateReceiver(ctx context.Context, r definitions.GettableApiReceiver, orgID int64) (definitions.GettableApiReceiver, error) {
@@ -179,6 +259,22 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r definitions.Get
 func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r definitions.GettableApiReceiver, orgID int64) (definitions.GettableApiReceiver, error) {
 	// TODO: Stub
 	panic("not implemented")
+}
+
+func (rs *ReceiverService) UsedByRules(ctx context.Context, orgID int64, uid string) ([]models.AlertRuleKey, error) {
+	//TODO: Implement
+	return []models.AlertRuleKey{}, nil
+}
+
+func (rs *ReceiverService) deleteProvenances(ctx context.Context, orgID int64, integrations []*definition.PostableGrafanaReceiver) error {
+	// Delete provenance for all integrations.
+	for _, integration := range integrations {
+		target := definitions.EmbeddedContactPoint{UID: integration.UID}
+		if err := rs.provisioningStore.DeleteProvenance(ctx, &target, orgID); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (rs *ReceiverService) decryptOrRedact(ctx context.Context, decrypt bool, name, fallback string) func(value string) string {
@@ -199,4 +295,46 @@ func (rs *ReceiverService) decryptOrRedact(ctx context.Context, decrypt bool, na
 		}
 		return string(decrypted)
 	}
+}
+
+// getContactPointProvenance determines the provenance of a definitions.PostableApiReceiver based on the provenance of its integrations.
+func (rs *ReceiverService) getContactPointProvenance(ctx context.Context, r *definitions.PostableApiReceiver, orgID int64) (models.Provenance, error) {
+	if len(r.GrafanaManagedReceivers) == 0 {
+		return models.ProvenanceNone, nil
+	}
+
+	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, orgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
+	if err != nil {
+		return "", err
+	}
+
+	// Current provisioning works on the integration level, so we need some way to determine the provenance of the
+	// entire receiver. All integrations in a receiver should have the same provenance, but we don't want to rely on
+	// this assumption in case the first provenance is None and a later one is not. To this end, we return the first
+	// non-zero provenance we find.
+	for _, contactPoint := range r.GrafanaManagedReceivers {
+		if p, exists := storedProvenances[contactPoint.UID]; exists && p != models.ProvenanceNone {
+			return p, nil
+		}
+	}
+	return models.ProvenanceNone, nil
+}
+
+func makeReceiverInUseErr(usedByRoutes bool, rules []models.AlertRuleKey) error {
+	uids := make([]string, 0, len(rules))
+	for _, key := range rules {
+		uids = append(uids, key.UID)
+	}
+	data := make(map[string]any, 2)
+	if len(uids) > 0 {
+		data["UsedByRules"] = uids
+	}
+	if usedByRoutes {
+		data["UsedByRoutes"] = true
+	}
+
+	return ErrReceiverInUse.Build(errutil.TemplateData{
+		Public: data,
+		Error:  nil,
+	})
 }

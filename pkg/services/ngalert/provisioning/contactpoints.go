@@ -336,7 +336,7 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 			}
 		}
 	}
-	if fullRemoval && isContactPointInUse(name, []*apimodels.Route{revision.Config.AlertmanagerConfig.Route}) {
+	if fullRemoval && revision.ReceiverNameUsedByRoutes(name) {
 		return ErrContactPointReferenced.Errorf("")
 	}
 
@@ -364,21 +364,6 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 		}
 		return ecp.provenanceStore.DeleteProvenance(ctx, target, orgID)
 	})
-}
-
-func isContactPointInUse(name string, routes []*apimodels.Route) bool {
-	if len(routes) == 0 {
-		return false
-	}
-	for _, route := range routes {
-		if route.Receiver == name {
-			return true
-		}
-		if isContactPointInUse(name, route.Routes) {
-			return true
-		}
-	}
-	return false
 }
 
 // decryptValueOrRedacted returns a function that decodes a string from Base64 and then decrypts using secrets.Service.

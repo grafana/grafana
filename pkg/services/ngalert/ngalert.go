@@ -37,7 +37,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
@@ -413,13 +412,10 @@ func (ng *AlertNG) init() error {
 	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store)
 	receiverService := notifier.NewReceiverService(
 		ng.accesscontrol,
-		legacy_storage.NewReceiverStore(
-			ng.store,
-			ng.store,
-			ng.store,
-			validation.ValidateProvenanceRelaxed,
-		),
+		configStore,
+		ng.store,
 		ng.SecretsService,
+		ng.store,
 		ng.Log,
 	)
 

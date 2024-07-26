@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -51,7 +50,7 @@ func TestReceiverService_GetReceiver(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
 
 		_, err := sut.GetReceiver(context.Background(), singleQ(1, "nonexistent"), redactedUser)
-		require.ErrorIs(t, err, legacy_storage.ErrReceiverNotFound.Errorf(""))
+		require.ErrorIs(t, err, ErrReceiverNotFound.Errorf(""))
 	})
 }
 
@@ -191,8 +190,10 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secrets.Service) *Receive
 
 	return NewReceiverService(
 		acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
-		legacy_storage.NewReceiverStore(store, provisioningStore, xact, validation.ValidateProvenanceRelaxed),
+		legacy_storage.NewAlertmanagerConfigStore(store),
+		provisioningStore,
 		encryptSvc,
+		xact,
 		log.NewNopLogger(),
 	)
 }

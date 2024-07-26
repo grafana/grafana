@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
@@ -82,7 +81,7 @@ func TestRouteGetReceiver(t *testing.T) {
 
 	t.Run("should pass along not found response", func(t *testing.T) {
 		fakeReceiverSvc.GetReceiverFn = func(ctx context.Context, q models.GetReceiverQuery, u identity.Requester) (definitions.GettableApiReceiver, error) {
-			return definitions.GettableApiReceiver{}, legacy_storage.ErrReceiverNotFound.Errorf("")
+			return definitions.GettableApiReceiver{}, notifier.ErrReceiverNotFound.Errorf("")
 		}
 		handler := NewNotificationsApi(newNotificationSrv(fakeReceiverSvc))
 		rc := testReqCtx("GET")
@@ -399,13 +398,10 @@ func createNotificationSrvSutFromEnv(t *testing.T, env *testEnvironment) Notific
 
 	receiverSvc := notifier.NewReceiverService(
 		env.ac,
-		legacy_storage.NewReceiverStore(
-			env.configs,
-			env.prov,
-			env.xact,
-			validation.ValidateProvenanceRelaxed,
-		),
+		legacy_storage.NewAlertmanagerConfigStore(env.configs),
+		env.prov,
 		env.secrets,
+		env.xact,
 		env.log,
 	)
 	return NotificationSrv{
