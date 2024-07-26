@@ -26,15 +26,19 @@ export interface RemoveCorrelationResponse {
   message: string;
 }
 
-export enum CorrelationConfigType {
-  'query',
-  'external',
-}
+export const CORR_CONFIG_TYPES = {
+  query: { value: 'query', label: 'Query', description: 'Open a query' },
+  external: { value: 'external', label: 'External', description: 'Open an external URL' },
+};
+
+const corrTypeArray = Object.values(CORR_CONFIG_TYPES).map((ct) => ct.value);
+
+export type CorrelationConfigType = (typeof corrTypeArray)[number];
 
 export interface CorrelationConfig {
   field: string;
   target: object; // this contains anything that would go in the query editor, so any extension off DataQuery a datasource would have, and needs to be generic
-  type: CorrelationConfigType;
+  type: CorrelationConfigType; //I give up
   transformations?: DataLinkTransformationConfig[];
 }
 
