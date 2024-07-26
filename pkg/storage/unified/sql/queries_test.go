@@ -268,6 +268,7 @@ func TestQueries(t *testing.T) {
 				Data: &sqlResourceVersionRequest{
 					SQLTemplate:     new(sqltemplate.SQLTemplate),
 					resourceVersion: new(resourceVersion),
+					ReadOnly:        false,
 				},
 				Expected: expected{
 					"resource_version_get_mysql.sql": dialects{

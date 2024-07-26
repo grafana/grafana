@@ -541,6 +541,7 @@ func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialec
 		SQLTemplate:     sqltemplate.New(d),
 		Group:           group,
 		Resource:        resource,
+		ReadOnly:        true,
 		resourceVersion: new(resourceVersion),
 	})
 	if errors.Is(err, sql.ErrNoRows) {
