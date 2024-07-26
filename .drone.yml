@@ -3035,7 +3035,7 @@ steps:
   - apk add perl
   - v_target=`echo $${TAG} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/v\1.\2.x/'`
   - curl -L $${GH_CLI_URL} | tar -xz --strip-components=1 -C /usr
-  - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${TARGET:-$default_target}
+  - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${v_target}
     -f latest=$${LATEST} --repo=grafana/grafana release-pr.yml
   depends_on: []
   environment:
@@ -3117,7 +3117,7 @@ steps:
   - apk add perl
   - v_target=`echo $${TAG} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/v\1.\2.x/'`
   - curl -L $${GH_CLI_URL} | tar -xz --strip-components=1 -C /usr
-  - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${TARGET:-$default_target}
+  - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${v_target}
     -f latest=$${LATEST} --repo=grafana/grafana release-pr.yml
   depends_on:
   - publish-artifacts
@@ -5508,6 +5508,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 0f344990f254486957614181bd1996081858888a16476237f370368d2c70f046
+hmac: f82713cb6d029eded29632a21a394d16f0778462a6cd7de647422f34cd1fae39
 
 ...

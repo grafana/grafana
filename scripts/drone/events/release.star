@@ -82,7 +82,7 @@ def release_pr_step(depends_on = []):
             "-f dry_run=$${DRY_RUN} " +
             "-f version=$${TAG} " +
             # If the submitter has set a target branch, then use that, otherwise use the default
-            "-f target=$${TARGET:-$default_target} " +
+            "-f target=$${v_target} " +
             "-f latest=$${LATEST} " +
             "--repo=grafana/grafana release-pr.yml",
         ],
