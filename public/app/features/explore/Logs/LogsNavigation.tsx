@@ -190,7 +190,7 @@ function LogsNavigation({
   }, [scrollToTopLogs]);
 
   return (
-    <div className={styles.navContainer}>
+    <div className={`${styles.navContainer} ${infiniteScrollWithOldersLogsButton ? styles.navContainerOldestFirst : ''}`}>
       {!config.featureToggles.logsInfiniteScrolling && (
         <>
           {oldestLogsFirst ? olderLogsButton : newerLogsButton}
@@ -262,5 +262,8 @@ const getStyles = (theme: GrafanaTheme2, oldestLogsFirst: boolean) => {
       align-items: center;
       margin-top: ${theme.spacing(1)};
     `,
+    navContainerOldestFirst: css({
+      justifyContent: 'space-between',
+    })
   };
 };
