@@ -236,7 +236,10 @@
 .btn-inverse {
   @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
   //background: $card-background;
-  box-shadow: $card-shadow;
+  /* stylelint-disable-next-line */
+  & {
+    box-shadow: $card-shadow;
+  }
   //border: 1px solid $tight-form-func-highlight-bg;
 }
 
@@ -259,8 +262,11 @@
 
 .btn-outline-disabled {
   @include button-outline-variant($gray-1);
-  box-shadow: none;
-  cursor: default;
+  /* stylelint-disable-next-line */
+  & {
+    box-shadow: none;
+    cursor: default;
+  }
 
   &:hover,
   &:active,
