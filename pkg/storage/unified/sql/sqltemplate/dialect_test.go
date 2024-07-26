@@ -178,7 +178,7 @@ func TestName_Name(t *testing.T) {
 
 	const v = "some dialect name"
 	n := name(v)
-	if n.Name() != v {
-		t.Fatalf("unexpected dialect name %q", n.Name())
+	if n.DialectName() != v {
+		t.Fatalf("unexpected dialect name %q", n.DialectName())
 	}
 }

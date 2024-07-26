@@ -21,9 +21,7 @@ export default (server: SetupServer) => {
         },
         { status: 404 }
       )
-    ),
-    // this endpoint will respond if the OnCall plugin is installed
-    http.get('/api/plugins/grafana-oncall-app/settings', () => HttpResponse.json({}, { status: 404 }))
+    )
   );
 
   return server;

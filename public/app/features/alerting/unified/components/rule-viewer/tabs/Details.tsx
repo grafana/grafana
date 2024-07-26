@@ -47,7 +47,7 @@ const Details = ({ rule }: DetailsProps) => {
   }, [rule.rulerRule]);
 
   const annotations: Annotations | undefined = !isRecordingRulerRule(rule.rulerRule)
-    ? rule.annotations ?? []
+    ? (rule.annotations ?? [])
     : undefined;
 
   const hasEvaluationDuration = Number.isFinite(evaluationDuration);

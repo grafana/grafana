@@ -168,7 +168,7 @@ export const TransformationOperationRow = ({
         <TransformationEditor
           debugMode={showDebug}
           index={index}
-          data={topic === DataTopic.Annotations ? data.annotations ?? [] : data.series}
+          data={topic === DataTopic.Annotations ? (data.annotations ?? []) : data.series}
           configs={configs}
           uiConfig={uiConfig}
           onChange={onChange}
