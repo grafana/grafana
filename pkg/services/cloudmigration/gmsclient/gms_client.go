@@ -249,6 +249,52 @@ func (c *gmsClientImpl) CreatePresignedUploadUrl(ctx context.Context, session cl
 	return result.UploadUrl, nil
 }
 
+func (c *gmsClientImpl) ReportEvent(ctx context.Context, session cloudmigration.CloudMigrationSession, event EventRequestDTO) {
+	if event.LocalID == "" || event.Event == "" {
+		return
+	}
+
+	path := fmt.Sprintf("%s/api/v1/snapshots/events", c.buildBasePath(session.ClusterSlug))
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(event); err != nil {
+		c.log.Error("encoding event", "err", err.Error())
+		return
+	}
+	// Send the request to gms with the associated auth token
+	req, err := http.NewRequest(http.MethodPost, path, &buf)
+	if err != nil {
+		c.log.Error("error creating http request to report event", "err", err.Error())
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", session.StackID, session.AuthToken))
+
+	client := &http.Client{
+		Timeout: c.cfg.CloudMigration.GMSReportEventTimeout,
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		c.log.Error("error sending http request for report event", "err", err.Error())
+		return
+	} else if resp.StatusCode >= 400 {
+		c.log.Error("received error response for report event", "type", event.Event, "statusCode", resp.StatusCode)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			c.log.Error("reading request body", "err", err.Error())
+			return
+		}
+		c.log.Error("http request error", "body", string(body))
+		return
+	}
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			c.log.Error("closing request body", "err", err.Error())
+		}
+	}()
+}
+
 func (c *gmsClientImpl) buildBasePath(clusterSlug string) string {
 	domain := c.cfg.CloudMigration.GMSDomain
 	if strings.HasPrefix(domain, "http://localhost") {

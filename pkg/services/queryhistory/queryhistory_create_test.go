@@ -12,7 +12,7 @@ func TestIntegrationCreateQueryInQueryHistory(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	testScenario(t, "When users tries to create query in query history it should succeed",
+	testScenario(t, "When users tries to create query in query history it should succeed", false,
 		func(t *testing.T, sc scenarioContext) {
 			command := CreateQueryInQueryHistoryCommand{
 				DatasourceUID: "NCzh67i",

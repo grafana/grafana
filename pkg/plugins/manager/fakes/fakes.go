@@ -391,6 +391,18 @@ func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ str
 	return f.ExpectedErr
 }
 
+type FakeActionSetRegistry struct {
+	ExpectedErr error
+}
+
+func NewFakeActionSetRegistry() *FakeActionSetRegistry {
+	return &FakeActionSetRegistry{}
+}
+
+func (f *FakeActionSetRegistry) RegisterActionSets(_ context.Context, _ string, _ []plugins.ActionSet) error {
+	return f.ExpectedErr
+}
+
 type FakePluginFiles struct {
 	OpenFunc   func(name string) (fs.File, error)
 	RemoveFunc func() error

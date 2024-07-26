@@ -1,10 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { useLocation } from 'react-router-dom';
+import { useMedia } from 'react-use';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps } from '@grafana/scenes';
-import { CustomScrollbar, useStyles2 } from '@grafana/ui';
+import { CustomScrollbar, useStyles2, useTheme2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -75,15 +76,14 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
               <controls.Component model={controls} />
             </div>
           )}
-          <CustomScrollbar
+          <PanelsContainer
             // This id is used by the image renderer to scroll through the dashboard
-            divId="page-scrollbar"
-            autoHeightMin={'100%'}
-            className={styles.scrollbarContainer}
+            id="page-scrollbar"
+            className={styles.panelsContainer}
             testId={selectors.pages.Dashboard.DashNav.scrollContainer}
           >
             <div className={cx(styles.canvasContent)}>{body}</div>
-          </CustomScrollbar>
+          </PanelsContainer>
         </div>
       )}
       {overlay && <overlay.Component model={overlay} />}
@@ -100,6 +100,10 @@ function getStyles(theme: GrafanaTheme2) {
       gridTemplateColumns: `1fr`,
       gridTemplateRows: '1fr',
       height: '100%',
+      [theme.breakpoints.down('sm')]: {
+        display: 'flex',
+        flexDirection: 'column',
+      },
     }),
     pageContainerWithControls: css({
       gridTemplateAreas: `
@@ -119,7 +123,7 @@ function getStyles(theme: GrafanaTheme2) {
         "scopes controls"
         "scopes panels"`,
     }),
-    scrollbarContainer: css({
+    panelsContainer: css({
       gridArea: 'panels',
     }),
     controlsWrapper: css({
@@ -156,3 +160,34 @@ function getStyles(theme: GrafanaTheme2) {
     }),
   };
 }
+
+interface PanelsContainerProps {
+  id: string;
+  children: React.ReactNode;
+  className?: string;
+  testId?: string;
+}
+/**
+ * Removes the scrollbar on mobile and uses a custom scrollbar on desktop
+ */
+const PanelsContainer = ({ id, children, className, testId }: PanelsContainerProps) => {
+  const theme = useTheme2();
+  const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
+  const styles = useStyles2(() => ({
+    nonScrollable: css({
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+  }));
+
+  return isMobile ? (
+    <div id={id} className={cx(className, styles.nonScrollable)} data-testid={testId}>
+      {children}
+    </div>
+  ) : (
+    <CustomScrollbar divId={id} autoHeightMin={'100%'} className={className} testId={testId}>
+      {children}
+    </CustomScrollbar>
+  );
+};

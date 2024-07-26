@@ -25,16 +25,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
-	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ plugins.RoleRegistry = &Service{}
+var _ pluginaccesscontrol.RoleRegistry = &Service{}
 
 const (
 	cacheTTL = 60 * time.Second
@@ -118,7 +118,7 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
-	if !s.cfg.RBACPermissionCache || !user.HasUniqueId() {
+	if !s.cfg.RBAC.PermissionCache || !user.HasUniqueId() {
 		return s.getUserPermissions(ctx, user, options)
 	}
 
@@ -140,7 +140,7 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 		permissions = append(permissions, SharedWithMeFolderPermission)
 	}
 
-	userID, err := identity.UserIdentifier(user.GetNamespacedID())
+	userID, err := identity.UserIdentifier(user.GetTypedID())
 	if err != nil {
 		return nil, err
 	}
@@ -208,10 +208,10 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 	ctx, span := s.tracer.Start(ctx, "authz.getUserDirectPermissions")
 	defer span.End()
 
-	namespace, identifier := user.GetNamespacedID()
+	namespace, identifier := user.GetTypedID()
 
 	var userID int64
-	if namespace == authn.NamespaceUser || namespace == authn.NamespaceServiceAccount {
+	if namespace == identity.TypeUser || namespace == identity.TypeServiceAccount {
 		var err error
 		userID, err = strconv.ParseInt(identifier, 10, 64)
 		if err != nil {
@@ -482,7 +482,7 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 
 	// Limit roles to available in OSS
 	options.RolePrefixes = OSSRolesPrefixes
-	if options.NamespacedID != "" {
+	if options.TypedID.Type() != "" {
 		userID, err := options.ComputeUserID()
 		if err != nil {
 			s.log.Error("Failed to resolve user ID", "error", err)
@@ -597,7 +597,7 @@ func (s *Service) SearchUserPermissions(ctx context.Context, orgID int64, search
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
-	if searchOptions.NamespacedID == "" {
+	if searchOptions.TypedID.Type() == "" {
 		return nil, fmt.Errorf("expected namespaced ID to be specified")
 	}
 

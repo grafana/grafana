@@ -83,7 +83,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/d-solo/:uid/:slug?',
-      pageClass: 'dashboard-solo',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
       component: SafeDynamicImport(() =>
@@ -95,7 +94,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     // This route handles embedding of snapshot/scripted dashboard panels
     {
       path: '/dashboard-solo/:type/:slug',
-      pageClass: 'dashboard-solo',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
       component: SafeDynamicImport(
@@ -513,6 +511,10 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
       ),
+    },
+    {
+      path: '/bookmarks',
+      component: () => <NavLandingPage navId="bookmarks" />,
     },
     ...getPluginCatalogRoutes(),
     ...getSupportBundleRoutes(),
