@@ -1,15 +1,15 @@
 import {
+  getTimeZone,
   InterpolateFunction,
   LinkModel,
   PanelMenuItem,
   PanelPlugin,
   PluginExtensionPanelContext,
   PluginExtensionPoints,
-  getTimeZone,
   urlUtil,
 } from '@grafana/data';
 import { config, getPluginLinkExtensions, locationService } from '@grafana/runtime';
-import { LocalValueVariable, SceneGridRow, VizPanel, VizPanelMenu, sceneGraph } from '@grafana/scenes';
+import { LocalValueVariable, sceneGraph, SceneGridRow, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { DataQuery, OptionsWithLegend } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
@@ -21,7 +21,9 @@ import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { addDataTrailPanelAction } from 'app/features/trails/Integrations/dashboardIntegration';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
+import { SharePanelInternally } from '../sharing/panel-share/SharePanelInternally';
 import { DashboardInteractions } from '../utils/interactions';
 import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
@@ -79,15 +81,42 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       });
     }
 
-    items.push({
-      text: t('panel.header-menu.share', `Share`),
-      iconClassName: 'share-alt',
-      onClick: () => {
-        DashboardInteractions.panelMenuItemClicked('share');
-        dashboard.showModal(new ShareModal({ panelRef: panel.getRef() }));
-      },
-      shortcut: 'p s',
-    });
+    if (config.featureToggles.newDashboardSharingComponent) {
+      const subMenu: PanelMenuItem[] = [];
+      subMenu.push({
+        text: t('share-panel.menu.share-link-title', 'Share link'),
+        iconClassName: 'link',
+        shortcut: 'p u',
+        onClick: () => {
+          const drawer = new ShareDrawer({
+            title: t('share-panel.drawer.share-link-title', 'Link settings'),
+            body: new SharePanelInternally({ panelRef: panel.getRef() }),
+          });
+
+          dashboard.showModal(drawer);
+        },
+      });
+
+      items.push({
+        type: 'submenu',
+        text: t('panel.header-menu.share', 'Share'),
+        iconClassName: 'share-alt',
+        subMenu,
+        onClick: (e) => {
+          e.preventDefault();
+        },
+      });
+    } else {
+      items.push({
+        text: t('panel.header-menu.share', 'Share'),
+        iconClassName: 'share-alt',
+        onClick: () => {
+          DashboardInteractions.panelMenuItemClicked('share');
+          dashboard.showModal(new ShareModal({ panelRef: panel.getRef() }));
+        },
+        shortcut: 'p s',
+      });
+    }
 
     if (dashboard.state.isEditing && !isRepeat && !isEditingPanel) {
       moreSubMenu.push({
