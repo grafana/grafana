@@ -123,5 +123,8 @@ func (s *legacyServiceAccountStorage) Get(ctx context.Context, name string, opti
 	if found == nil || err != nil {
 		return nil, s.resourceInfo.NewNotFound(name)
 	}
+	if !found.IsServiceAccount {
+		return nil, s.resourceInfo.NewNotFound(name) // looking up the wrong type
+	}
 	return toUserItem(found, ns.Value), nil
 }

@@ -123,5 +123,8 @@ func (s *legacyUserStorage) Get(ctx context.Context, name string, options *metav
 	if found == nil || err != nil {
 		return nil, s.resourceInfo.NewNotFound(name)
 	}
+	if found.IsServiceAccount {
+		return nil, s.resourceInfo.NewNotFound(name) // looking up the wrong type
+	}
 	return toUserItem(found, ns.Value), nil
 }
