@@ -227,8 +227,7 @@ func (a *alertRule) Stop(reason error) {
 
 func (a *alertRule) Run() error {
 	grafanaCtx := a.ctx
-	logger := a.logger
-	logger.Debug("Alert rule routine started")
+	a.logger.Debug("Alert rule routine started")
 
 	var currentFingerprint fingerprint
 	defer a.stopApplied()
@@ -237,22 +236,22 @@ func (a *alertRule) Run() error {
 		// used by external services (API) to notify that rule is updated.
 		case ctx := <-a.updateCh:
 			if currentFingerprint == ctx.Fingerprint {
-				logger.Info("Rule's fingerprint has not changed. Skip resetting the state", "currentFingerprint", currentFingerprint)
+				a.logger.Info("Rule's fingerprint has not changed. Skip resetting the state", "currentFingerprint", currentFingerprint)
 				continue
 			}
 
-			logger.Info("Clearing the state of the rule because it was updated", "isPaused", ctx.IsPaused, "fingerprint", ctx.Fingerprint)
+			a.logger.Info("Clearing the state of the rule because it was updated", "isPaused", ctx.IsPaused, "fingerprint", ctx.Fingerprint)
 			// clear the state. So the next evaluation will start from the scratch.
 			a.resetState(grafanaCtx, ctx.IsPaused)
 			currentFingerprint = ctx.Fingerprint
 		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-a.evalCh:
 			if !ok {
-				logger.Debug("Evaluation channel has been closed. Exiting")
+				a.logger.Debug("Evaluation channel has been closed. Exiting")
 				return nil
 			}
 			f := ctx.Fingerprint()
-			logger = logger.New("version", ctx.rule.Version, "fingerprint", f, "now", ctx.scheduledAt)
+			logger := a.logger.New("version", ctx.rule.Version, "fingerprint", f, "now", ctx.scheduledAt)
 
 			func() {
 				orgID := fmt.Sprint(a.key.OrgID)
@@ -341,7 +340,7 @@ func (a *alertRule) Run() error {
 				states := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key), a.key, ngmodels.StateReasonRuleDeleted)
 				a.expireAndSend(grafanaCtx, states)
 			}
-			logger.Debug("Stopping alert rule routine")
+			a.logger.Debug("Stopping alert rule routine")
 			return nil
 		}
 	}
