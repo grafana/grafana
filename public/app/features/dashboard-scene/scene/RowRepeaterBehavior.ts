@@ -12,11 +12,13 @@ import {
   SceneVariableSet,
   VariableDependencyConfig,
   VariableValueSingle,
+  VizPanelMenu,
 } from '@grafana/scenes';
 
 import { getMultiVariableValues } from '../utils/utils';
 
 import { DashboardGridItem } from './DashboardGridItem';
+import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 interface RowRepeaterBehaviorState extends SceneObjectState {
@@ -167,7 +169,8 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
         const itemKey = index > 0 ? `${source.state.key}-clone-${localValue}` : source.state.key;
         const itemClone = source.clone({ key: itemKey, y: itemY });
 
-        //Make sure all the child scene objects have unique keys
+        // Make sure all the child scene objects have unique keys
+        // and add proper menu to the repeated panel
         if (index > 0) {
           ensureUniqueKeys(itemClone, localValue);
 
@@ -175,6 +178,12 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
           if (itemClone instanceof DashboardGridItem) {
             itemClone.setState({
               isDraggable: false,
+            });
+
+            itemClone.state.body.setState({
+              menu: new VizPanelMenu({
+                $behaviors: [repeatPanelMenuBehavior],
+              }),
             });
           }
         }

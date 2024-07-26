@@ -160,8 +160,11 @@ export default class SQLGenerator {
     const startsWithNumber = /^\d/;
 
     const interpolated = this.templateSrv.replace(label, {}, 'raw');
-    if (specialCharacters.test(interpolated) || startsWithNumber.test(interpolated)) {
-      return `"${label}"`;
+    if (interpolated !== 'AWS.AccountId') {
+      // AWS.AccountId should never be in quotes
+      if (specialCharacters.test(interpolated) || startsWithNumber.test(interpolated)) {
+        return `"${label}"`;
+      }
     }
 
     return label;

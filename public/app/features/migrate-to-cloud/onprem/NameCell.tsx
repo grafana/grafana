@@ -7,10 +7,13 @@ import { config } from '@grafana/runtime';
 import { CellProps, Stack, Text, Icon, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
 import { Trans } from 'app/core/internationalization';
+import { useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 
-import { useGetDashboardByUidQuery, MigrateDataResponseItemDto } from '../api';
+import { useGetDashboardByUidQuery } from '../api';
 
-export function NameCell(props: CellProps<MigrateDataResponseItemDto>) {
+import { ResourceTableItem } from './types';
+
+export function NameCell(props: CellProps<ResourceTableItem>) {
   const data = props.row.original;
 
   return (
@@ -18,10 +21,21 @@ export function NameCell(props: CellProps<MigrateDataResponseItemDto>) {
       <ResourceIcon resource={data} />
 
       <Stack direction="column" gap={0}>
-        {data.type === 'DATASOURCE' ? <DatasourceInfo data={data} /> : <DashboardInfo data={data} />}
+        <ResourceInfo data={data} />
       </Stack>
     </Stack>
   );
+}
+
+function ResourceInfo({ data }: { data: ResourceTableItem }) {
+  switch (data.type) {
+    case 'DASHBOARD':
+      return <DashboardInfo data={data} />;
+    case 'DATASOURCE':
+      return <DatasourceInfo data={data} />;
+    case 'FOLDER':
+      return <FolderInfo data={data} />;
+  }
 }
 
 function getDashboardTitle(dashboardData: object) {
@@ -32,7 +46,7 @@ function getDashboardTitle(dashboardData: object) {
   return undefined;
 }
 
-function DatasourceInfo({ data }: { data: MigrateDataResponseItemDto }) {
+function DatasourceInfo({ data }: { data: ResourceTableItem }) {
   const datasourceUID = data.refId;
   const datasource = useDatasource(datasourceUID);
 
@@ -59,7 +73,7 @@ function DatasourceInfo({ data }: { data: MigrateDataResponseItemDto }) {
   );
 }
 
-function DashboardInfo({ data }: { data: MigrateDataResponseItemDto }) {
+function DashboardInfo({ data }: { data: ResourceTableItem }) {
   const dashboardUID = data.refId;
   // TODO: really, the API should return this directly
   const { data: dashboardData, isError } = useGetDashboardByUidQuery({
@@ -92,6 +106,32 @@ function DashboardInfo({ data }: { data: MigrateDataResponseItemDto }) {
   );
 }
 
+function FolderInfo({ data }: { data: ResourceTableItem }) {
+  const { data: folderData, isLoading, isError } = useGetFolderQuery(data.refId);
+
+  if (isLoading || !folderData) {
+    return <InfoSkeleton />;
+  }
+
+  if (isError) {
+    return (
+      <>
+        <Text italic>Unable to load dashboard</Text>
+        <Text color="secondary">Dashboard {data.refId}</Text>
+      </>
+    );
+  }
+
+  const parentFolderName = folderData.parents?.[folderData.parents.length - 1]?.title;
+
+  return (
+    <>
+      <span>{folderData.title}</span>
+      <Text color="secondary">{parentFolderName ?? 'Dashboards'}</Text>
+    </>
+  );
+}
+
 function InfoSkeleton() {
   return (
     <>
@@ -101,15 +141,15 @@ function InfoSkeleton() {
   );
 }
 
-function ResourceIcon({ resource }: { resource: MigrateDataResponseItemDto }) {
+function ResourceIcon({ resource }: { resource: ResourceTableItem }) {
   const styles = useStyles2(getIconStyles);
   const datasource = useDatasource(resource.type === 'DATASOURCE' ? resource.refId : undefined);
 
   if (resource.type === 'DASHBOARD') {
     return <Icon size="xl" name="dashboard" />;
-  }
-
-  if (resource.type === 'DATASOURCE' && datasource?.meta?.info?.logos?.small) {
+  } else if (resource.type === 'FOLDER') {
+    return <Icon size="xl" name="folder" />;
+  } else if (resource.type === 'DATASOURCE' && datasource?.meta?.info?.logos?.small) {
     return <img className={styles.icon} src={datasource.meta.info.logos.small} alt="" />;
   } else if (resource.type === 'DATASOURCE') {
     return <Icon size="xl" name="database" />;
