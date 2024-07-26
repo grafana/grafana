@@ -252,6 +252,7 @@ func (a *alertRule) Run() error {
 			}
 			f := ctx.Fingerprint()
 			logger := a.logger.New("version", ctx.rule.Version, "fingerprint", f, "now", ctx.scheduledAt)
+			logger.Debug("Processing tick")
 
 			func() {
 				orgID := fmt.Sprint(a.key.OrgID)
@@ -308,13 +309,13 @@ func (a *alertRule) Run() error {
 						logger.Error("Skip evaluation and updating the state because the context has been cancelled", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt)
 						return
 					}
-					logger.Debug("Start evaluating rule", "attempt", attempt)
 					retry := attempt < a.maxAttempts
 					err := a.evaluate(tracingCtx, ctx, span, retry, logger)
 					// This is extremely confusing - when we exhaust all retry attempts, or we have no retryable errors
 					// we return nil - so technically, this is meaningless to know whether the evaluation has errors or not.
 					span.End()
 					if err == nil {
+						logger.Debug("Tick processed", "attempt", attempt, "duration", a.clock.Now().Sub(evalStart))
 						return
 					}
 
