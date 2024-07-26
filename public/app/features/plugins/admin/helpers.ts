@@ -81,6 +81,7 @@ export function mergeLocalsAndRemotes({
         }
 
         catalogPlugin.isUninstallingFromInstance = Boolean(localCounterpart) && !instancesMap.has(remotePlugin.slug);
+        catalogPlugin.isProvisioned = provisionedSet.has(remotePlugin.slug);
       }
 
       catalogPlugins.push(catalogPlugin);

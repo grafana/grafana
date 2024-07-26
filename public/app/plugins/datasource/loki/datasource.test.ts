@@ -1362,13 +1362,14 @@ describe('LokiDatasource', () => {
       expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsVolume, options)).toBeDefined();
     });
 
-    it('does not create provider if there is only an instant logs query', () => {
+    it('does create provider if there is only an instant logs query', () => {
+      // we changed logic to automatically run logs queries as range queries, thus there's a provider now
       const options: DataQueryRequest<LokiQuery> = {
         ...baseRequestOptions,
         targets: [{ expr: '{label="value"', refId: 'A', queryType: LokiQueryType.Instant }],
       };
 
-      expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsVolume, options)).not.toBeDefined();
+      expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsVolume, options)).toBeDefined();
     });
   });
 
@@ -1454,7 +1455,8 @@ describe('LokiDatasource', () => {
         });
       });
 
-      it('does not return logs volume query for instant log query', () => {
+      it('does return logs volume query for instant log query', () => {
+        // we changed logic to automatically run logs queries as range queries, thus there's a volume query now
         expect(
           ds.getSupplementaryQuery(
             { type: SupplementaryQueryType.LogsVolume },
@@ -1464,7 +1466,13 @@ describe('LokiDatasource', () => {
               refId: 'A',
             }
           )
-        ).toEqual(undefined);
+        ).toEqual({
+          expr: 'sum by (level) (count_over_time({label="value"} | drop __error__[$__auto]))',
+          legendFormat: '{{ level }}',
+          queryType: 'range',
+          refId: 'log-volume-A',
+          supportingQueryType: 'logsVolume',
+        });
       });
 
       it('does not return logs volume query for metric query', () => {
@@ -1867,7 +1875,7 @@ describe('applyTemplateVariables', () => {
         { expr: 'rate({job="grafana"}[$__interval]) + rate({job="grafana"}[$__interval_ms])', refId: 'A' },
         scopedVars
       );
-      expect(templateSrvMock.replace).toHaveBeenCalledTimes(2);
+      expect(templateSrvMock.replace).toHaveBeenCalledTimes(3);
       // Interpolated legend
       expect(templateSrvMock.replace).toHaveBeenCalledWith(
         undefined,
@@ -1902,7 +1910,7 @@ describe('applyTemplateVariables', () => {
         },
         scopedVars
       );
-      expect(templateSrvMock.replace).toHaveBeenCalledTimes(2);
+      expect(templateSrvMock.replace).toHaveBeenCalledTimes(3);
       // Interpolated legend
       expect(templateSrvMock.replace).toHaveBeenCalledWith(
         undefined,
@@ -1921,6 +1929,52 @@ describe('applyTemplateVariables', () => {
           __range_s: { text: '60', value: '60' },
         }),
         expect.any(Function)
+      );
+    });
+
+    it('should replace step', () => {
+      const templateSrvMock = {
+        getAdhocFilters: jest.fn().mockImplementation((query: string) => query),
+        replace: jest.fn((a: string | undefined, ...rest: unknown[]) => a?.replace('$testVariable', 'foo')),
+      } as unknown as TemplateSrv;
+
+      const ds = createLokiDatasource(templateSrvMock);
+      ds.addAdHocFilters = jest.fn().mockImplementation((query: string) => query);
+      const replacedQuery = ds.applyTemplateVariables(
+        {
+          expr: 'rate({job="grafana"}[$__range]) + rate({job="grafana"}[$__range_ms]) + rate({job="grafana"}[$__range_s])',
+          refId: 'A',
+          step: '$testVariable',
+        },
+        scopedVars
+      );
+      expect(replacedQuery).toEqual(
+        expect.objectContaining({
+          step: 'foo',
+        })
+      );
+    });
+
+    it('should replace legendFormat', () => {
+      const templateSrvMock = {
+        getAdhocFilters: jest.fn().mockImplementation((query: string) => query),
+        replace: jest.fn((a: string | undefined, ...rest: unknown[]) => a?.replace('$testVariable', 'foo')),
+      } as unknown as TemplateSrv;
+
+      const ds = createLokiDatasource(templateSrvMock);
+      ds.addAdHocFilters = jest.fn().mockImplementation((query: string) => query);
+      const replacedQuery = ds.applyTemplateVariables(
+        {
+          expr: 'rate({job="grafana"}[$__range]) + rate({job="grafana"}[$__range_ms]) + rate({job="grafana"}[$__range_s])',
+          refId: 'A',
+          legendFormat: '$testVariable',
+        },
+        scopedVars
+      );
+      expect(replacedQuery).toEqual(
+        expect.objectContaining({
+          legendFormat: 'foo',
+        })
       );
     });
   });

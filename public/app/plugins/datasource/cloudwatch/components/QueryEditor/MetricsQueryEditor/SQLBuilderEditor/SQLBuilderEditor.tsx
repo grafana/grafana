@@ -26,7 +26,7 @@ export const SQLBuilderEditor = ({ query, datasource, onChange }: React.PropsWit
   const onQueryChange = useCallback(
     (query: CloudWatchMetricsQuery) => {
       const sqlGenerator = new SQLGenerator();
-      const sqlString = sqlGenerator.expressionToSqlQuery(query.sql ?? {});
+      const sqlString = sqlGenerator.expressionToSqlQuery(query.sql ?? {}, query.accountId);
       const fullQuery = {
         ...query,
         sqlExpression: sqlString,
@@ -40,7 +40,7 @@ export const SQLBuilderEditor = ({ query, datasource, onChange }: React.PropsWit
   const [sqlPreview, setSQLPreview] = useState<string | undefined>();
   useEffect(() => {
     const sqlGenerator = new SQLGenerator();
-    const sqlString = sqlGenerator.expressionToSqlQuery(query.sql ?? {});
+    const sqlString = sqlGenerator.expressionToSqlQuery(query.sql ?? {}, query.accountId);
     if (sqlPreview !== sqlString) {
       setSQLPreview(sqlString);
     }

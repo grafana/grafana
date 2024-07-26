@@ -112,6 +112,12 @@
       "used-by_one": "Used by {{ count }} notification policy",
       "used-by_other": "Used by {{ count }} notification policies"
     },
+    "grafana-rules": {
+      "export-rules": "Export rules",
+      "loading": "Loading...",
+      "new-recording-rule": "New recording rule",
+      "title": "Grafana"
+    },
     "policies": {
       "metadata": {
         "timingOptions": {
@@ -143,6 +149,12 @@
       "update": {
         "success": "Successfully updated rule group"
       }
+    },
+    "rule-state": {
+      "creating": "Creating",
+      "deleting": "Deleting",
+      "paused": "Paused",
+      "recording-rule": "Recording rule"
     },
     "rules": {
       "delete-rule": {
@@ -1080,6 +1092,18 @@
       "link-title": "Grafana Cloud pricing",
       "title": "How much does it cost?"
     },
+    "public-preview": {
+      "button-text": "Give feedback",
+      "message": "Help us improve this feature by providing feedback and reporting any issues.",
+      "title": "Migrate to Grafana Cloud is in public preview"
+    },
+    "resource-error": {
+      "dismiss-button": "OK",
+      "resource-summary": "{{refId}} ({{typeName}})",
+      "specific-error": "The specific error was:",
+      "title": "Unable to migrate this resource",
+      "unknown-error": "An unknown error occurred."
+    },
     "resource-status": {
       "error-details-button": "Details",
       "failed": "Error",
@@ -1104,8 +1128,10 @@
       "disconnect-error-description": "See the Grafana server logs for more details",
       "disconnect-error-title": "There was an error disconnecting",
       "errored-resource-count": "Errors",
+      "page-loading": "Loading...",
+      "rebuild-snapshot": "Rebuild snapshot",
       "run-migration-error-description": "See the Grafana server logs for more details",
-      "run-migration-error-title": "There was an error migrating your resources",
+      "run-migration-error-title": "Error creating snapshot",
       "snapshot-date": "Snapshot timestamp",
       "snapshot-not-created": "Not yet created",
       "start-migration": "Build snapshot",
