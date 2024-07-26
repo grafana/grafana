@@ -65,13 +65,16 @@ const SNAPSHOT_UPLOADING_STATUSES: Array<SnapshotDto['status']> = ['UPLOADING', 
 
 const STATUS_POLL_INTERVAL = 5 * 1000;
 
-function useGetLatestSnapshot(sessionUid?: string) {
+function useGetLatestSnapshot(sessionUid?: string, page = 0) {
   const [shouldPoll, setShouldPoll] = useState(false);
 
   const listResult = useGetShapshotListQuery(sessionUid ? { uid: sessionUid } : skipToken);
   const lastItem = listResult.data?.snapshots?.at(0);
 
-  const getSnapshotQueryArgs = sessionUid && lastItem?.uid ? { uid: sessionUid, snapshotUid: lastItem.uid } : skipToken;
+  const getSnapshotQueryArgs =
+    sessionUid && lastItem?.uid
+      ? { uid: sessionUid, snapshotUid: lastItem.uid, resultLimit: 100, resultPage: page }
+      : skipToken;
 
   const snapshotResult = useGetSnapshotQuery(getSnapshotQueryArgs, {
     pollingInterval: shouldPoll ? STATUS_POLL_INTERVAL : 0,
@@ -99,7 +102,8 @@ function useGetLatestSnapshot(sessionUid?: string) {
 export const Page = () => {
   const [disconnectModalOpen, setDisconnectModalOpen] = useState(false);
   const session = useGetLatestSession();
-  const snapshot = useGetLatestSnapshot(session.data?.uid);
+  const [page, setPage] = useState(0);
+  const snapshot = useGetLatestSnapshot(session.data?.uid, page);
   const [performCreateSnapshot, createSnapshotResult] = useCreateSnapshotMutation();
   const [performUploadSnapshot, uploadSnapshotResult] = useUploadSnapshotMutation();
   const [performCancelSnapshot, cancelSnapshotResult] = useCancelSnapshotMutation();
@@ -233,7 +237,12 @@ export const Page = () => {
         )}
 
         {snapshot.data?.results && snapshot.data.results.length > 0 && (
-          <ResourcesTable resources={snapshot.data.results} />
+          <ResourcesTable
+            resources={snapshot.data.results}
+            onChangePage={setPage}
+            numberOfPages={snapshot?.data?.stats?.total || 0}
+            page={page}
+          />
         )}
       </Stack>
 
