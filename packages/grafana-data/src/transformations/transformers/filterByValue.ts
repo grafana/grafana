@@ -77,17 +77,6 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
                 },
               },
             };
-          } else if (filter.config.id === ValueMatcherID.regex) {
-            // Due to colliding syntaxes, interpolating regex filters may cause issues.
-            let value = filter.config.options.value;
-            if (typeof filter.config.options.value === 'string') {
-              value = ctx.interpolate(value);
-            }
-
-            return {
-              ...filter,
-              config: { ...filter.config, options: { ...filter.config.options, value } },
-            };
           } else if (filter.config.options.value) {
             let value = filter.config.options.value;
             if (typeof filter.config.options.value === 'string') {
