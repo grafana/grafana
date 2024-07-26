@@ -22,13 +22,16 @@ Use the Grafana Alerting - Microsoft Teams integration to receive notifications 
 
 ## Before you begin
 
-To set up Microsoft Teams for integration with Grafana Alerting, you need to create a new Workflow that accepts a webhook requests. This allows Grafana to send alert notifications to Microsoft Teams channels.
+To set up Microsoft Teams for integration with Grafana Alerting, create a new workflow that accepts Webhook requests. This allows Grafana to send alert notifications to Microsoft Teams channels.
 
-### Create a new Workflow in Microsoft Teams
+### Create a workflow in Microsoft Teams
 
-1. To create a new workflow, follow the steps in [Create flows in Microsoft Teams](https://learn.microsoft.com/en-us/power-automate/teams/teams-app-create) documentation. 
-2. Consider using the template "Post to a channel when a webhook request is received" from the Microsoft template library. 
-3. After creating the workflow in Teams, copy the provided URL for use in the next steps.
+1. To create a new workflow, follow the steps in [Create flows in Microsoft Teams](https://learn.microsoft.com/en-us/power-automate/teams/teams-app-create).
+1. Microsoft provides a template library. You can use the template **Post to a channel when a webhook request is received**.
+1. At the end of workflow creation wizard, copy the URL that is provided.
+
+**Note**
+If you chose a private channel for the target of the workflow, you need to edit workflow before using it. Expand the step "Send each adaptive card", and then expand action "Post your own adaptive card as the Flow bot to a channel". Change "Post as" to User, and save the workflow.
 
 ## Procedure
 
@@ -55,3 +58,7 @@ To add this contact point to your alert, complete the following steps.
 1. Under Notifications click **Select contact point**.
 1. From the drop-down menu, select the previously created contact point.
 1. **Click Save rule and exit**.
+
+## Troubleshooting
+
+- If Grafana reports that notification was sent successfully but it was not delivered to the channel, check the workflow's run history. You can find it in the workflow details page.
