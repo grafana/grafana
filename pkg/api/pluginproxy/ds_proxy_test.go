@@ -585,8 +585,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			t,
 			&contextmodel.ReqContext{
 				SignedInUser: &user.SignedInUser{
-					Login:        "test_user",
-					NamespacedID: identity.MustParseTypedID("user:1"),
+					Login:  "test_user",
+					Type:   identity.TypeUser,
+					UserID: 1,
 				},
 			},
 			&setting.Cfg{SendUserHeader: true},
