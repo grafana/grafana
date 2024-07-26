@@ -309,7 +309,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		}
 
 		if isReadyToRun {
-			logger.Debug("Rule is ready to run on the current tick", "tick", tickNum, "frequency", itemFrequency, "offset", offset)
+			logger.Debug("Rule is ready to run on the current tick", "tick", tick, "frequency", itemFrequency, "offset", offset)
 			readyToRun = append(readyToRun, readyToRunItem{ruleRoutine: ruleRoutine, Evaluation: Evaluation{
 				scheduledAt: tick,
 				rule:        item,
