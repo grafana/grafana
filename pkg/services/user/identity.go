@@ -94,12 +94,23 @@ func (u *SignedInUser) GetName() string {
 
 // GetExtra implements Requester.
 func (u *SignedInUser) GetExtra() map[string][]string {
-	return map[string][]string{}
+	extra := map[string][]string{}
+	if u.IDToken != "" {
+		extra["id-token"] = []string{u.IDToken}
+	}
+	if u.OrgRole.IsValid() {
+		extra["user-instance-role"] = []string{string(u.GetOrgRole())}
+	}
+	return extra
 }
 
 // GetGroups implements Requester.
 func (u *SignedInUser) GetGroups() []string {
-	return []string{} // ?? or team ids?
+	groups := []string{}
+	for _, t := range u.Teams {
+		groups = append(groups, strconv.FormatInt(t, 10))
+	}
+	return groups
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
