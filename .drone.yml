@@ -2854,7 +2854,7 @@ trigger:
   - slow
   ref:
     include:
-    - refs/tags/*
+    - refs/tags/rrc*
 type: docker
 volumes:
 - host:
@@ -2918,7 +2918,7 @@ trigger:
   - slow
   ref:
     include:
-    - refs/tags/*
+    - refs/tags/rrc*
 type: docker
 volumes:
 - host:
@@ -2997,7 +2997,7 @@ trigger:
   - slow
   ref:
     include:
-    - refs/tags/*
+    - refs/tags/rrc*
 type: docker
 volumes:
 - host:
@@ -3055,7 +3055,7 @@ trigger:
   - slow
   ref:
     include:
-    - refs/tags/*
+    - refs/tags/rrc*
 type: docker
 volumes:
 - host:
@@ -3287,7 +3287,7 @@ trigger:
   - slow
   ref:
     include:
-    - refs/tags/*
+    - refs/tags/rrc*
 type: docker
 volumes:
 - host:
@@ -3341,7 +3341,7 @@ trigger:
   - slow
   ref:
     include:
-    - refs/tags/*
+    - refs/tags/rrc*
 type: docker
 volumes:
 - host:
@@ -6051,6 +6051,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: f82713cb6d029eded29632a21a394d16f0778462a6cd7de647422f34cd1fae39
+hmac: 9abbec7da57a95a1be56c254db4c1e473bcdd5c9564cca6909d99c70d15dbc1d
 
 ...
