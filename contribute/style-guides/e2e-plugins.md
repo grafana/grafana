@@ -10,7 +10,7 @@ Playwright end-to-end tests for plugins should be added to the [`e2e/plugin-e2e`
 
 1. Add a new directory with the same name as your plugin at [`https://github.com/grafana/grafana/tree/main/e2e/plugin-e2e`](https://github.com/grafana/grafana/tree/main/e2e/plugin-e2e). This is where your plugin tests are kept.
 
-1. In the [Playwright configuration file](https://github.com/grafana/grafana/blob/main/playwright.config.ts), add a new project item. Make sure the `name` and the `testDir` subdirectory matches the name of the directory that contains your plugin tests.
+1. In the [Playwright configuration file](https://github.com/grafana/grafana/blob/main/playwright.config.ts), add a new project item. Make sure the `name` and the `testDir` subdirectory match the name of the directory that contains your plugin tests.
 
 1. Add `'authenticate'` to the list of dependencies and specifying `'playwright/.auth/admin.json'` as a storage state to ensure that all tests in your project start already authenticated as an admin user. 
 
