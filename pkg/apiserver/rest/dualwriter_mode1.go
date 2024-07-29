@@ -149,10 +149,6 @@ func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidat
 
 	startLegacy := time.Now()
 	res, async, err := d.Legacy.Delete(ctx, name, deleteValidation, options)
-	var kind string
-	if res != nil {
-		kind = res.GetObjectKind().GroupVersionKind().Kind
-	}
 	if err != nil {
 		log.Error(err, "unable to delete object in legacy storage")
 		d.recordLegacyDuration(true, mode1Str, d.kind, method, startLegacy)
@@ -185,12 +181,8 @@ func (d *DualWriterMode1) DeleteCollection(ctx context.Context, deleteValidation
 	log := d.Log.WithValues("resourceVersion", listOptions.ResourceVersion, "method", method)
 	ctx = klog.NewContext(ctx, log)
 
-	var kind string
 	startLegacy := time.Now()
 	res, err := d.Legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
-	if res != nil {
-		kind = res.GetObjectKind().GroupVersionKind().Kind
-	}
 	if err != nil {
 		log.Error(err, "unable to delete collection in legacy storage")
 		d.recordLegacyDuration(true, mode1Str, d.kind, method, startLegacy)
@@ -221,13 +213,9 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 	var method = "update"
 	log := d.Log.WithValues("name", name, "method", method, "name", name)
 	ctx = klog.NewContext(ctx, log)
-	var kind string
 
 	startLegacy := time.Now()
 	res, async, err := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-	if res != nil {
-		kind = res.GetObjectKind().GroupVersionKind().Kind
-	}
 	if err != nil {
 		log.Error(err, "unable to update in legacy storage")
 		d.recordLegacyDuration(true, mode1Str, d.kind, method, startLegacy)

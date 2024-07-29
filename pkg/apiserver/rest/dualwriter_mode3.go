@@ -97,12 +97,8 @@ func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidat
 	log := d.Log.WithValues("name", name, "method", method)
 	ctx = klog.NewContext(ctx, d.Log)
 
-	var kind string
 	startStorage := time.Now()
 	res, async, err := d.Storage.Delete(ctx, name, deleteValidation, options)
-	if res != nil {
-		kind = res.GetObjectKind().GroupVersionKind().Kind
-	}
 	if err != nil {
 		log.Error(err, "unable to delete object in storage")
 		d.recordStorageDuration(true, mode3Str, d.kind, method, startStorage)
@@ -126,13 +122,9 @@ func (d *DualWriterMode3) Update(ctx context.Context, name string, objInfo rest.
 	var method = "update"
 	log := d.Log.WithValues("name", name, "method", method)
 	ctx = klog.NewContext(ctx, log)
-	var kind string
 
 	startStorage := time.Now()
 	res, async, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-	if res != nil {
-		kind = res.GetObjectKind().GroupVersionKind().Kind
-	}
 	if err != nil {
 		log.Error(err, "unable to update in storage")
 		d.recordLegacyDuration(true, mode3Str, d.kind, method, startStorage)
@@ -157,13 +149,9 @@ func (d *DualWriterMode3) DeleteCollection(ctx context.Context, deleteValidation
 	var method = "delete-collection"
 	log := d.Log.WithValues("resourceVersion", listOptions.ResourceVersion, "method", method)
 	ctx = klog.NewContext(ctx, log)
-	var kind string
 
 	startStorage := time.Now()
 	res, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
-	if res != nil {
-		kind = res.GetObjectKind().GroupVersionKind().Kind
-	}
 	if err != nil {
 		log.Error(err, "unable to delete collection in storage")
 		d.recordStorageDuration(true, mode3Str, d.kind, method, startStorage)

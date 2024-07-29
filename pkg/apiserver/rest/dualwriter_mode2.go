@@ -123,10 +123,6 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 
 	startLegacy := time.Now()
 	ll, err := d.Legacy.List(ctx, options)
-	var kind string
-	if ll != nil {
-		kind = ll.GetObjectKind().GroupVersionKind().Kind
-	}
 	if err != nil {
 		log.Error(err, "unable to list objects from legacy storage")
 		d.recordLegacyDuration(true, mode2Str, d.kind, method, startLegacy)
@@ -200,12 +196,8 @@ func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation
 	log := d.Log.WithValues("resourceVersion", listOptions.ResourceVersion, "method", method)
 	ctx = klog.NewContext(ctx, log)
 
-	var kind string
 	startLegacy := time.Now()
 	deleted, err := d.Legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
-	if deleted != nil {
-		kind = deleted.GetObjectKind().GroupVersionKind().Kind
-	}
 	if err != nil {
 		log.WithValues("deleted", deleted).Error(err, "failed to delete collection successfully from legacy storage")
 		d.recordLegacyDuration(true, mode2Str, d.kind, method, startLegacy)
@@ -250,14 +242,10 @@ func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidat
 	var method = "delete"
 	log := d.Log.WithValues("name", name, "method", method)
 	ctx = klog.NewContext(ctx, log)
-	var kind string
 
 	startLegacy := time.Now()
 	deletedLS, async, err := d.Legacy.Delete(ctx, name, deleteValidation, options)
 
-	if deletedLS != nil {
-		kind = deletedLS.GetObjectKind().GroupVersionKind().Kind
-	}
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			log.WithValues("objectList", deletedLS).Error(err, "could not delete from legacy store")
@@ -292,13 +280,9 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	var method = "update"
 	log := d.Log.WithValues("name", name, "method", method)
 	ctx = klog.NewContext(ctx, log)
-	var kind string
 
 	// get foundObj and (updated) object so they can be stored in legacy store
 	foundObj, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
-	if foundObj != nil {
-		kind = foundObj.GetObjectKind().GroupVersionKind().Kind
-	}
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			log.WithValues("object", foundObj).Error(err, "could not get object to update")
@@ -309,9 +293,6 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 
 	// obj can be populated in case it's found or empty in case it's not found
 	updated, err := objInfo.UpdatedObject(ctx, foundObj)
-	if updated != nil {
-		kind = updated.GetObjectKind().GroupVersionKind().Kind
-	}
 	if err != nil {
 		log.WithValues("object", updated).Error(err, "could not update or create object")
 		return nil, false, err
