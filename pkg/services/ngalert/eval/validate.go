@@ -10,32 +10,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
-type ConditionValidator interface {
-	// Validate validates that the condition is correct. Returns nil if the condition is correct. Otherwise, error that describes the failure
-	Validate(ctx EvaluationContext, condition models.Condition) error
-}
-
-type noopQueryValidator struct{}
-
-func (n *noopQueryValidator) Validate(ctx EvaluationContext, condition models.Condition) error {
-	return nil
-}
-
-type queryValidator struct {
+type ConditionValidator struct {
 	dataSourceCache   datasources.CacheService
 	pluginsStore      pluginstore.Store
 	expressionService expressionBuilder
 }
 
-func NewConditionValidator(datasourceCache datasources.CacheService, expressionService *expr.Service, pluginsStore pluginstore.Store) *queryValidator {
-	return &queryValidator{
+func NewConditionValidator(datasourceCache datasources.CacheService, expressionService *expr.Service, pluginsStore pluginstore.Store) *ConditionValidator {
+	return &ConditionValidator{
 		dataSourceCache:   datasourceCache,
 		expressionService: expressionService,
 		pluginsStore:      pluginsStore,
 	}
 }
 
-func (e *queryValidator) Validate(ctx EvaluationContext, condition models.Condition) error {
+func (e *ConditionValidator) Validate(ctx EvaluationContext, condition models.Condition) error {
 	req, err := getExprRequest(ctx, condition, e.dataSourceCache, ctx.AlertingResultsReader)
 	if err != nil {
 		return err

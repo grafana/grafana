@@ -72,7 +72,7 @@ type API struct {
 	AlertRules           *provisioning.AlertRuleService
 	AlertsRouter         *sender.AlertsRouter
 	EvaluatorFactory     eval.EvaluatorFactory
-	ConditionValidator   eval.ConditionValidator
+	ConditionValidator   *eval.ConditionValidator
 	FeatureManager       featuremgmt.FeatureToggles
 	Historian            Historian
 	Tracer               tracing.Tracer
