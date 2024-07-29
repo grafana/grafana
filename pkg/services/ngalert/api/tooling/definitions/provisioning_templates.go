@@ -13,7 +13,7 @@ package definitions
 //
 //     Responses:
 //       200: NotificationTemplate
-//       404: GenericPublicError
+//       404: PublicError
 
 // swagger:route PUT /v1/provisioning/templates/{name} provisioning stable RoutePutTemplate
 //
@@ -24,8 +24,8 @@ package definitions
 //
 //     Responses:
 //       202: NotificationTemplate
-//       400: GenericPublicError
-//       409: GenericPublicError
+//       400: PublicError
+//       409: PublicError
 
 // swagger:route DELETE /v1/provisioning/templates/{name} provisioning stable RouteDeleteTemplate
 //
@@ -33,7 +33,7 @@ package definitions
 //
 //     Responses:
 //       204: description: The template was deleted successfully.
-//       409: GenericPublicError
+//       409: PublicError
 
 // swagger:parameters RouteGetTemplate RoutePutTemplate RouteDeleteTemplate
 type RouteGetTemplateParam struct {
