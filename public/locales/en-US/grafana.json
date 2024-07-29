@@ -118,7 +118,7 @@
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
       },
       "used-by_one": "Used by {{ count }} notification policy",
-      "used-by_other": "Used by {{ count }} notification policy"
+      "used-by_other": "Used by {{ count }} notification policies"
     },
     "grafana-rules": {
       "export-rules": "Export rules",
@@ -229,15 +229,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rule",
+      "alertRule_other": "{{count}} alert rules",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboard",
+      "dashboard_other": "{{count}} dashboards",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folder",
+      "folder_other": "{{count}} folders",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panel",
+      "libraryPanel_other": "{{count}} library panels",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} item"
+      "total_other": "{{count}} items"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Collapse folder {{title}}",
@@ -1828,14 +1828,14 @@
       "confirm-text": "Delete",
       "delete-button": "Delete",
       "delete-loading": "Deleting...",
-      "text_one": "This action will delete {{numberOfDashboards}} dashboards.",
+      "text_one": "This action will delete {{numberOfDashboards}} dashboard.",
       "text_other": "This action will delete {{numberOfDashboards}} dashboards.",
       "title": "Permanently Delete Dashboards"
     },
     "restore-modal": {
       "restore-button": "Restore",
       "restore-loading": "Restoring...",
-      "text_one": "This action will restore {{numberOfDashboards}} dashboards.",
+      "text_one": "This action will restore {{numberOfDashboards}} dashboard.",
       "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
       "title": "Restore Dashboards"
     }
