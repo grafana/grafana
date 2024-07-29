@@ -51,14 +51,14 @@ func (m *dualWriterMetrics) init(reg prometheus.Registerer) {
 	}
 }
 
-func (m *dualWriterMetrics) recordLegacyDuration(isError bool, mode string, name string, method string, startFrom time.Time) {
+func (m *dualWriterMetrics) recordLegacyDuration(isError bool, mode string, kind string, method string, startFrom time.Time) {
 	duration := time.Since(startFrom).Seconds()
-	m.legacy.WithLabelValues(strconv.FormatBool(isError), mode, name, method).Observe(duration)
+	m.legacy.WithLabelValues(strconv.FormatBool(isError), mode, kind, method).Observe(duration)
 }
 
-func (m *dualWriterMetrics) recordStorageDuration(isError bool, mode string, name string, method string, startFrom time.Time) {
+func (m *dualWriterMetrics) recordStorageDuration(isError bool, mode string, kind string, method string, startFrom time.Time) {
 	duration := time.Since(startFrom).Seconds()
-	m.storage.WithLabelValues(strconv.FormatBool(isError), mode, name, method).Observe(duration)
+	m.storage.WithLabelValues(strconv.FormatBool(isError), mode, kind, method).Observe(duration)
 }
 
 func (m *dualWriterMetrics) recordOutcome(mode string, name string, areEqual bool, method string) {
