@@ -89,6 +89,8 @@ func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl def
 		if err != nil {
 			return definitions.NotificationTemplate{}, err
 		}
+	} else if tmpl.ResourceVersion != "" { // if version is set then it's an update operation. Fail because resource does not exist anymore
+		return definitions.NotificationTemplate{}, ErrTemplateNotFound
 	}
 
 	revision.Config.TemplateFiles[tmpl.Name] = tmpl.Template
