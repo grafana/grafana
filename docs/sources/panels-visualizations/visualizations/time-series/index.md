@@ -161,8 +161,6 @@ To define hard limits of the y-axis, set standard min/max options. For more info
 
 ### Graph styles options
 
-<!--review this section for consistency of language with others and between table and longer paras -->
-
 The options under the **Graph styles** section let you control the general appearance of the graph, excluding [color](#standard-options).
 
 | Option                                      | Description                                                                                                                                                                                                                           |
