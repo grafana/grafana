@@ -953,6 +953,10 @@
       "short-url-label": "Shorten link",
       "time-range-description": "Change the current relative time range to an absolute time range",
       "time-range-label": "Lock time range"
+    },
+    "share-panel": {
+      "config-description": "Create a personalized, direct link to share your panel within your organization, with the following customization settings:",
+      "render-image": "Render image"
     }
   },
   "login": {
@@ -1086,6 +1090,13 @@
       "button-text": "Give feedback",
       "message": "Help us improve this feature by providing feedback and reporting any issues.",
       "title": "Migrate to Grafana Cloud is in public preview"
+    },
+    "resource-error": {
+      "dismiss-button": "OK",
+      "resource-summary": "{{refId}} ({{typeName}})",
+      "specific-error": "The specific error was:",
+      "title": "Unable to migrate this resource",
+      "unknown-error": "An unknown error occurred."
     },
     "resource-status": {
       "error-details-button": "Details",
@@ -1460,6 +1471,10 @@
     }
   },
   "navigation": {
+    "item": {
+      "add-bookmark": "Add to Bookmarks",
+      "remove-bookmark": "Remove from Bookmarks"
+    },
     "kiosk": {
       "tv-alert": "Press ESC to exit kiosk mode"
     },
@@ -2000,6 +2015,14 @@
     },
     "view-json": {
       "copy-button": "Copy to Clipboard"
+    }
+  },
+  "share-panel": {
+    "drawer": {
+      "share-link-title": "Link settings"
+    },
+    "menu": {
+      "share-link-title": "Share link"
     }
   },
   "share-playlist": {

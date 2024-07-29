@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	alertingauthz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -270,13 +271,21 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		notifier.NewCachedNotificationSettingsValidationService(&st),
 		alertingauthz.NewRuleService(ps.ac),
 	)
-	receiverSvc := notifier.NewReceiverService(ps.ac, &st, st, ps.secretService, ps.SQLStore, ps.log)
-	contactPointService := provisioning.NewContactPointService(&st, ps.secretService,
+	configStore := legacy_storage.NewAlertmanagerConfigStore(&st)
+	receiverSvc := notifier.NewReceiverService(
+		ps.ac,
+		configStore,
+		st,
+		ps.secretService,
+		ps.SQLStore,
+		ps.log,
+	)
+	contactPointService := provisioning.NewContactPointService(configStore, ps.secretService,
 		st, ps.SQLStore, receiverSvc, ps.log, &st)
-	notificationPolicyService := provisioning.NewNotificationPolicyService(&st,
+	notificationPolicyService := provisioning.NewNotificationPolicyService(configStore,
 		st, ps.SQLStore, ps.Cfg.UnifiedAlerting, ps.log)
-	mutetimingsService := provisioning.NewMuteTimingService(&st, st, &st, ps.log, &st)
-	templateService := provisioning.NewTemplateService(&st, st, &st, ps.log)
+	mutetimingsService := provisioning.NewMuteTimingService(configStore, st, &st, ps.log, &st)
+	templateService := provisioning.NewTemplateService(configStore, st, &st, ps.log)
 	cfg := prov_alerting.ProvisionerConfig{
 		Path:                       alertingPath,
 		RuleService:                *ruleService,
