@@ -1147,14 +1147,18 @@
     {
       "metadata": {
         "name": "formatString",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-10-13T18:17:12Z"
+        "resourceVersion": "1722290290367",
+        "creationTimestamp": "2023-10-13T18:17:12Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-07-29 21:58:10.367328 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable format string transformer",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {

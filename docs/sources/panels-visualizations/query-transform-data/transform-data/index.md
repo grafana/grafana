@@ -563,8 +563,6 @@ Use this transformation to customize the output of a string field. This transfor
 
 This transformation provides a convenient way to standardize and tailor the presentation of string data for better visualization and analysis.
 
-> **Note:** This transformation is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the `formatString` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
-
 ### Format time
 
 Use this transformation to customize the output of a time field. Output can be formatted using [Moment.js format strings](https://momentjs.com/docs/#/displaying/). For example, if you want to display only the year of a time field, the format string 'YYYY' can be used to show the calendar year (for example, 1999 or 2012).
