@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"time"
 
 	snapshot "github.com/grafana/grafana-cloud-migration-snapshot/src"
@@ -61,6 +62,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		})
 	}
 
+	folders = sortFolders(folders)
 	for _, f := range folders {
 		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 			Type:  cloudmigration.FolderDataType,
@@ -114,6 +116,7 @@ func (s *Service) getDataSourceCommands(ctx context.Context) ([]datasources.AddD
 	return result, err
 }
 
+// getDashboardAndFolderCommands returns the json payloads required by the dashboard and folder creation APIs
 func (s *Service) getDashboardAndFolderCommands(ctx context.Context, signedInUser *user.SignedInUser) ([]dashboards.Dashboard, []folder.CreateFolderCommand, error) {
 	dashs, err := s.dashboardService.GetAllDashboards(ctx)
 	if err != nil {
@@ -368,4 +371,44 @@ func (s *Service) updateSnapshotWithRetries(ctx context.Context, cmd cloudmigrat
 		return fmt.Errorf("failed to update snapshot status: %w", err)
 	}
 	return nil
+}
+
+// sortFolders implements a sort such that parent folders always come before their children
+// Implementation inspired by ChatGPT, OpenAI's language model.
+func sortFolders(input []folder.CreateFolderCommand) []folder.CreateFolderCommand {
+	// Map from UID to the corresponding folder for quick lookup
+	folderMap := make(map[string]folder.CreateFolderCommand)
+	for _, folder := range input {
+		folderMap[folder.UID] = folder
+	}
+	// Dynamic map of folderUID to depth
+	depthMap := make(map[string]int)
+
+	// Function to get the depth of a folder based on its parent hierarchy
+	var getDepth func(uid string) int
+	getDepth = func(uid string) int {
+		if uid == "" {
+			return 0
+		}
+		if d, ok := depthMap[uid]; ok {
+			return d
+		}
+		folder, exists := folderMap[uid]
+		if !exists || folder.ParentUID == "" {
+			return 1
+		}
+		return 1 + getDepth(folder.ParentUID)
+	}
+
+	// Calculate the depth of each folder
+	for _, folder := range input {
+		depthMap[folder.UID] = getDepth(folder.UID)
+	}
+
+	// Sort folders by their depth, ensuring a stable sort
+	sort.SliceStable(input, func(i, j int) bool {
+		return depthMap[input[i].UID] < depthMap[input[j].UID]
+	})
+
+	return input
 }

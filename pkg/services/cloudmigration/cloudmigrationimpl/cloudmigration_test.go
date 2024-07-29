@@ -384,6 +384,29 @@ func Test_DeletedDashboardsNotMigrated(t *testing.T) {
 	assert.Equal(t, 1, dashCount)
 }
 
+// Implementation inspired by ChatGPT, OpenAI's language model.
+func Test_SortFolders(t *testing.T) {
+	folders := []folder.CreateFolderCommand{
+		{UID: "a", ParentUID: "", Title: "Root"},
+		{UID: "b", ParentUID: "a", Title: "Child of Root"},
+		{UID: "c", ParentUID: "b", Title: "Child of b"},
+		{UID: "d", ParentUID: "a", Title: "Another Child of Root"},
+		{UID: "e", ParentUID: "", Title: "Another Root"},
+	}
+
+	expected := []folder.CreateFolderCommand{
+		{UID: "a", ParentUID: "", Title: "Root"},
+		{UID: "e", ParentUID: "", Title: "Another Root"},
+		{UID: "b", ParentUID: "a", Title: "Child of Root"},
+		{UID: "d", ParentUID: "a", Title: "Another Child of Root"},
+		{UID: "c", ParentUID: "b", Title: "Child of b"},
+	}
+
+	sortedFolders := sortFolders(folders)
+
+	require.Equal(t, expected, sortedFolders)
+}
+
 func ctxWithSignedInUser() context.Context {
 	c := &contextmodel.ReqContext{
 		SignedInUser: &user.SignedInUser{OrgID: 1},
