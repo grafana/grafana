@@ -133,10 +133,32 @@ describe('add rule', () => {
     const action = addRuleAction({ rule: ruleToAdd });
     const output = ruleGroupReducer(initialGroup, action);
 
+    expect(output).toHaveProperty('name', 'group-1');
+    expect(output).toHaveProperty('interval', '5m');
+
     expect(output.rules).toHaveLength(3);
     expect(output.rules[0]).toBe(rule1);
     expect(output.rules[1]).toBe(rule2);
     expect(output.rules[2]).toBe(ruleToAdd);
+  });
+
+  it('should allow adding the rule to a new group with custom name and interval', () => {
+    const ruleToAdd = mockGrafanaRulerRule({ uid: '1' });
+
+    const initialGroup: PostableRulerRuleGroupDTO = {
+      name: 'default',
+      interval: '1m',
+      rules: [],
+    };
+
+    const action = addRuleAction({ rule: ruleToAdd, groupName: 'new group', interval: '10m' });
+    const output = ruleGroupReducer(initialGroup, action);
+
+    expect(output).toHaveProperty('name', 'new group');
+    expect(output).toHaveProperty('interval', '10m');
+
+    expect(output.rules).toHaveLength(1);
+    expect(output.rules[0]).toBe(ruleToAdd);
   });
 });
 
