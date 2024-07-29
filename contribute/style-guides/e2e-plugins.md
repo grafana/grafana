@@ -26,7 +26,7 @@ Playwright end-to-end tests for plugins should be added to the [`e2e/plugin-e2e`
     },
    ```
 
-    > **Note:** If you want to use a different role for and perhaps test RBAC for some of your tests, refer to the plugin-e2e [documentation](https://grafana.com/developers/plugin-tools/e2e-test-a-plugin/use-authentication).
+    > **Note:** If you want to use a different role or test RBAC for some of your tests, refer to the plugin-e2e [documentation](https://grafana.com/developers/plugin-tools/e2e-test-a-plugin/use-authentication).
 
 1. Update the [`CODEOWNERS`](https://github.com/grafana/grafana/blob/main/.github/CODEOWNERS/#L315) file so that your team is specified as the owner of the tests in the directory you previously added in step 1.
 
@@ -34,7 +34,7 @@ Playwright end-to-end tests for plugins should be added to the [`e2e/plugin-e2e`
 
 The `yarn e2e:playwright` command runs all Playwright tests. Optionally, you can provide the `--project mysql` argument to run tests in a specific project.
 
-The `yarn e2e:playwright` script assumes that you have Grafana running on `localhost:3000`. You may change the host by supplying environment variables. For example:
+The `yarn e2e:playwright` script assumes that you have Grafana running on `localhost:3000`. You can change the host by supplying environment variables. For example:
 
 - `HOST=127.0.0.1 PORT=3001 yarn e2e:playwright`
 
