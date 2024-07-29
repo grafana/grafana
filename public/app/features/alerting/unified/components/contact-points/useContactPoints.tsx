@@ -74,7 +74,15 @@ export const useGetContactPoints = () => {
     const isLoading = onCallResponse.isLoading || alertNotifiers.isLoading || contactPointsListResponse.isLoading;
 
     if (isLoading || !contactPointsListResponse.data) {
-      return { ...contactPointsListResponse, isLoading: true, contactPoints: [] };
+      return {
+        ...contactPointsListResponse,
+        // If we're inside this block, it means that at least one of the endpoints we care about is still loading,
+        // but the contactPointsListResponse may have in fact finished.
+        // If we were to use _that_ loading state, it might be inaccurate elsewhere when consuming this hook,
+        // so we explicitly say "yes, this is definitely still loading"
+        isLoading: true,
+        contactPoints: [],
+      };
     }
 
     const enhanced = enhanceContactPointsWithMetadata(
