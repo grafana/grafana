@@ -81,9 +81,7 @@ The following video guides you through the creation steps and common customizati
 
 ## Supported data formats
 
-Time series visualizations require time series data: a sequence of measurements, ordered in time, where every row in the table represents one individual measurement at a specific time. Learn more about [time series data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/).
-
-<!--should we add the clause "formatted as a table" in the first sentence before we start talking about a table at the end of the sentence -->
+Time series visualizations require time series data: a sequence of measurements, ordered in time, and formatted as a table, where every row in the table represents one individual measurement at a specific time. Learn more about [time series data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/).
 
 ## Alert rules
 
@@ -107,8 +105,6 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 {{< figure src="/static/img/docs/time-series-panel/fill-below-to-7-4.png" max-width="600px" alt="Fill below to example" >}}
 
 {{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
-
-<!-- update shared filed above to add actual steps for adding this override -->
 
 ## Configuration options
 
@@ -171,10 +167,10 @@ The options under the **Graph styles** section let you control the general appea
 
 | Option                                      | Description                                                                                                                                                                                                                           |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Style](#style)                             | Choose how to display your time series data.                                                                                                                                                                                          |
+| [Style](#style)                             | Choose whether to display your time series data as lines, bars, or points.                                                                                                                                                            |
 | [Line interpolation](#line-interpolation)   | Choose how the graph interpolates the series line.                                                                                                                                                                                    |
-| [Line width](#line-width)                   | Move the slider to control the thickness for series lines or the outline for bars.                                                                                                                                                    |
-| [Fill opacity](#fill-opacity)               | Set the series area fill color.                                                                                                                                                                                                       |
+| [Line width](#line-width)                   | Set the thickness of the series lines or the outline for bars using the **Line width** slider.                                                                                                                                        |
+| [Fill opacity](#fill-opacity)               | Set the series area fill color using the **Fill opacity** slider.                                                                                                                                                                     |
 | [Gradient mode](#gradient-mode)             | Gradient mode specifies the gradient fill, which is based on the series color.                                                                                                                                                        |
 | [Line style](#line-style)                   | Choose the style of the line.                                                                                                                                                                                                         |
 | [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph.                                                                                                                                                              |
@@ -187,17 +183,13 @@ The options under the **Graph styles** section let you control the general appea
 
 #### Style
 
-Use this option to define how to display your time series data. You can use overrides to combine multiple styles in the same graph.
-
-- Lines
-- Bars
-- Points
+Choose whether to display your time series data as lines, bars, or points. You can use overrides to combine multiple styles in the same graph. Choose from the following:
 
 ![Style modes](/static/img/docs/time-series-panel/style-modes-v9.png)
 
 #### Line interpolation
 
-This option controls how the graph interpolates the series line.
+Choose how the graph interpolates the series line:
 
 - **Linear** - Points are joined by straight lines.
 - **Smooth** - Points are joined by curved lines that smooths transitions between points.
@@ -206,11 +198,11 @@ This option controls how the graph interpolates the series line.
 
 #### Line width
 
-Line width is a slider that controls the thickness for series lines or the outline for bars.
+Set the thickness of the series lines or the outline for bars using the **Line width** slider.
 
 #### Fill opacity
 
-Use opacity to specify the series area fill color.
+Set the series area fill color using the **Fill opacity** slider.
 
 ![Fill opacity examples](/static/img/docs/time-series-panel/fill-opacity.png)
 
