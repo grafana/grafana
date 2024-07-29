@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	grafanarequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/org"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
 var _ authorizer.Authorizer = &orgIDAuthorizer{}

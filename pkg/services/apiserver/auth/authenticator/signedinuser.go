@@ -2,10 +2,10 @@ package authenticator
 
 import (
 	"net/http"
-	"k8s.io/apiserver/pkg/authentication/authenticator"
 
-	"k8s.io/klog/v2"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"k8s.io/apiserver/pkg/authentication/authenticator"
+	"k8s.io/klog/v2"
 )
 
 var _ authenticator.RequestFunc = signedInUserAuthenticator
