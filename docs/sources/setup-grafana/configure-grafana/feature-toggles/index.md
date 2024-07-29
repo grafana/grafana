@@ -101,6 +101,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `newPDFRendering`                      | New implementation for the dashboard-to-PDF rendering                                                                                                                                        |
 | `ssoSettingsSAML`                      | Use the new SSO Settings API to configure the SAML connector                                                                                                                                 |
 | `openSearchBackendFlowEnabled`         | Enables the backend query flow for Open Search datasource plugin                                                                                                                             |
+| `cloudwatchMetricInsightsCrossAccount` | Enables cross account observability for Cloudwatch Metric Insights query builder                                                                                                             |
 
 ## Experimental feature toggles
 
@@ -189,7 +190,6 @@ Experimental features might be changed or removed without prior notice.
 | `databaseReadReplica`                       | Use a read replica for some database queries.                                                                                                                                                                                                                                     |
 | `alertingApiServer`                         | Register Alerting APIs with the K8s API server                                                                                                                                                                                                                                    |
 | `dashboardRestoreUI`                        | Enables the frontend to be able to restore a recently deleted dashboard                                                                                                                                                                                                           |
-| `cloudwatchMetricInsightsCrossAccount`      | Enables cross account observability for Cloudwatch Metric Insights                                                                                                                                                                                                                |
 
 ## Development feature toggles
 
