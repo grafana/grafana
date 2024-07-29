@@ -212,6 +212,16 @@ func (s *Service) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*u
 	return s.store.GetByID(ctx, query.ID)
 }
 
+func (s *Service) GetByUID(ctx context.Context, query *user.GetUserByUIDQuery) (*user.User, error) {
+	ctx, span := s.tracer.Start(ctx, "user.GetByUID", trace.WithAttributes(
+		attribute.Int64("orgID", query.OrgID),
+		attribute.String("userUID", query.UID),
+	))
+	defer span.End()
+
+	return s.store.GetByUID(ctx, query.OrgID, query.UID)
+}
+
 func (s *Service) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
 	ctx, span := s.tracer.Start(ctx, "user.GetByLogin")
 	defer span.End()
@@ -366,6 +376,15 @@ func (s *Service) getSignedInUser(ctx context.Context, query *user.GetSignedInUs
 	}
 
 	return usr, err
+}
+
+func (s *Service) List(ctx context.Context, query *user.ListUsersCommand) (*user.ListUserResult, error) {
+	ctx, span := s.tracer.Start(ctx, "user.List", trace.WithAttributes(
+		attribute.Int64("orgID", query.OrgID),
+	))
+	defer span.End()
+
+	return s.store.List(ctx, query)
 }
 
 func (s *Service) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {

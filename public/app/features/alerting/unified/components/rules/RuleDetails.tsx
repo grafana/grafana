@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
-import { useStyles2, Tooltip } from '@grafana/ui';
+import { Tooltip, useStyles2 } from '@grafana/ui';
 import { Time } from 'app/features/explore/Time';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { useCleanAnnotations } from '../../utils/annotations';
-import { isRecordingRulerRule } from '../../utils/rules';
+import { isGrafanaRecordingRule, isRecordingRulerRule } from '../../utils/rules';
 import { isNullDate } from '../../utils/time';
 import { AlertLabels } from '../AlertLabels';
 import { DetailsField } from '../DetailsField';
@@ -68,6 +68,7 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
   let every = rule.group.interval;
   let lastEvaluation = rule.promRule?.lastEvaluation;
   let lastEvaluationDuration = rule.promRule?.evaluationTime;
+  const metric = isGrafanaRecordingRule(rule.rulerRule) ? rule.rulerRule?.grafana_alert.record?.metric : undefined;
 
   // recording rules don't have a for duration
   if (!isRecordingRulerRule(rule.rulerRule)) {
@@ -76,6 +77,11 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
 
   return (
     <>
+      {metric && (
+        <DetailsField label="Metric" horizontal={true}>
+          {metric}
+        </DetailsField>
+      )}
       {every && (
         <DetailsField label="Evaluate" horizontal={true}>
           Every {every}
