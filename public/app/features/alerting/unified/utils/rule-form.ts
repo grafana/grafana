@@ -223,8 +223,8 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
 
   const notificationSettings = getNotificationSettingsForDTO(manualRouting, contactPoints);
 
-  const annotations = cleanKeyValuePairs(values.annotations);
-  const labels = cleanKeyValuePairs(values.labels);
+  const annotations = arrayToRecord(cleanKeyValuePairs(values.annotations));
+  const labels = arrayToRecord(cleanKeyValuePairs(values.labels));
 
   const wantsAlertingRule = isGrafanaAlertingRuleByType(type);
   const wantsRecordingRule = isGrafanaRecordingRuleByType(type!);
@@ -242,8 +242,8 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         exec_err_state: execErrState,
         notification_settings: notificationSettings,
       },
-      annotations: arrayToRecord(annotations),
-      labels: arrayToRecord(labels),
+      annotations,
+      labels,
 
       // Alerting rule specific
       for: evaluateFor,
@@ -262,8 +262,8 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
           from: condition,
         },
       },
-      annotations: arrayToRecord(annotations),
-      labels: arrayToRecord(labels),
+      annotations,
+      labels,
     };
   }
 
