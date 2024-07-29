@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { InteractiveTable } from '@grafana/ui';
+import { InteractiveTable, Pagination, Stack } from '@grafana/ui';
 
 import { MigrateDataResponseItemDto } from '../api';
 
@@ -10,8 +10,11 @@ import { StatusCell } from './StatusCell';
 import { TypeCell } from './TypeCell';
 import { ResourceTableItem } from './types';
 
-interface ResourcesTableProps {
+export interface ResourcesTableProps {
   resources: MigrateDataResponseItemDto[];
+  page: number;
+  numberOfPages: number;
+  onChangePage: (page: number) => void;
 }
 
 const columns = [
@@ -20,7 +23,7 @@ const columns = [
   { id: 'status', header: 'Status', cell: StatusCell },
 ];
 
-export function ResourcesTable({ resources }: ResourcesTableProps) {
+export function ResourcesTable({ resources, numberOfPages = 0, onChangePage, page = 1 }: ResourcesTableProps) {
   const [erroredResource, setErroredResource] = useState<ResourceTableItem | undefined>();
 
   const handleShowErrorModal = useCallback((resource: ResourceTableItem) => {
@@ -33,7 +36,10 @@ export function ResourcesTable({ resources }: ResourcesTableProps) {
 
   return (
     <>
-      <InteractiveTable columns={columns} data={data} getRowId={(r) => r.refId} pageSize={15} />
+      <InteractiveTable columns={columns} data={data} getRowId={(r) => r.refId} />
+      <Stack justifyContent={'flex-end'}>
+        <Pagination numberOfPages={numberOfPages} currentPage={page} onNavigate={onChangePage} />
+      </Stack>
 
       <ResourceErrorModal resource={erroredResource} onClose={() => setErroredResource(undefined)} />
     </>
