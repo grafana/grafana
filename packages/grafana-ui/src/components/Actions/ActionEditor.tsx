@@ -54,14 +54,14 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
     onChange(index, { ...value, title: event.target.value });
   };
 
-  const onEndpointChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange(index, { ...value, endpoint: event.target.value });
+  const onEndpointChange = (endpoint: string) => {
+    onChange(index, { ...value, endpoint });
   };
 
-  const onPayloadChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+  const onPayloadChange = (payload: string) => {
     onChange(index, {
       ...value,
-      data: event.target.value,
+      data: payload,
     });
   };
 
@@ -118,12 +118,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
       <Label>API</Label>
       <InlineFieldRow>
         <InlineField label="Endpoint" labelWidth={LABEL_WIDTH} grow={true}>
-          <SuggestionsInput
-            value={value.endpoint}
-            onChange={() => onEndpointChange}
-            suggestions={suggestions}
-            placeholder="Value"
-          />
+          <SuggestionsInput value={value.endpoint} onChange={onEndpointChange} suggestions={suggestions} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
@@ -156,9 +151,8 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
         <Field label="Payload">
           <SuggestionsInput
             value={value.data}
-            onChange={() => onPayloadChange}
+            onChange={onPayloadChange}
             suggestions={suggestions}
-            placeholder="Value"
             type={HTMLElementType.TextAreaElement}
           />
         </Field>

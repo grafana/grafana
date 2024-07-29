@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import * as React from 'react';
 
 import { VariableSuggestion } from '@grafana/data';
 
@@ -19,12 +18,12 @@ export const ParamsEditor = ({ value, onChange, suggestions }: Props) => {
   const [paramName, setParamName] = useState('');
   const [paramValue, setParamValue] = useState('');
 
-  const changeParamValue = ({ currentTarget }: React.ChangeEvent<HTMLInputElement>) => {
-    setParamValue(currentTarget.value);
+  const changeParamValue = (paramValue: string) => {
+    setParamValue(paramValue);
   };
 
-  const changeParamName = ({ currentTarget }: React.ChangeEvent<HTMLInputElement>) => {
-    setParamName(currentTarget.value);
+  const changeParamName = (paramName: string) => {
+    setParamName(paramName);
   };
 
   const removeParam = (key: string) => () => {
@@ -33,35 +32,29 @@ export const ParamsEditor = ({ value, onChange, suggestions }: Props) => {
   };
 
   const addParam = () => {
-    const key = paramName;
     let newParams: Array<[string, string]>;
     if (value) {
-      newParams = value.filter((e) => e[0] !== key);
+      newParams = value.filter((e) => e[0] !== paramName);
     } else {
       newParams = [];
     }
-    newParams.push([key, paramValue]);
+    newParams.push([paramName, paramValue]);
     newParams.sort((a, b) => a[0].localeCompare(b[0]));
+    onChange(newParams);
 
     setParamName('');
     setParamValue('');
-    onChange(newParams);
   };
 
-  const isAddParamsDisabled = !paramName && !paramValue;
+  const isAddParamsDisabled = paramName === '' || paramValue === '';
 
   return (
     <div>
       <Stack direction="row">
-        <SuggestionsInput
-          value={paramName}
-          onChange={() => changeParamName}
-          suggestions={suggestions}
-          placeholder="Key"
-        />
+        <SuggestionsInput value={paramName} onChange={changeParamName} suggestions={suggestions} placeholder="Key" />
         <SuggestionsInput
           value={paramValue}
-          onChange={() => changeParamValue}
+          onChange={changeParamValue}
           suggestions={suggestions}
           placeholder="Value"
         />
