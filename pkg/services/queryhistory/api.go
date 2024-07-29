@@ -49,7 +49,6 @@ func (s *QueryHistoryService) permissionsMiddleware(next CallbackHandler, errorM
 // 401: unauthorisedError
 // 500: internalServerError
 func (s *QueryHistoryService) createHandler(c *contextmodel.ReqContext) response.Response {
-
 	cmd := CreateQueryInQueryHistoryCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -76,7 +75,6 @@ func (s *QueryHistoryService) createHandler(c *contextmodel.ReqContext) response
 // 401: unauthorisedError
 // 500: internalServerError
 func (s *QueryHistoryService) searchHandler(c *contextmodel.ReqContext) response.Response {
-
 	timeRange := gtime.NewTimeRange(c.Query("from"), c.Query("to"))
 
 	query := SearchInQueryHistoryQuery{

@@ -42,5 +42,4 @@ func TestIntegrationCreateQueryInQueryHistory(t *testing.T) {
 			resp := permissionsMiddlewareCallback(sc.reqContext)
 			require.Equal(t, 401, resp.Status())
 		})
-
 }
