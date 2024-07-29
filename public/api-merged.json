@@ -17070,7 +17070,7 @@
       "type": "object",
       "title": "NavbarPreference defines model for NavbarPreference.",
       "properties": {
-        "bookmarkIds": {
+        "bookmarkUrls": {
           "type": "array",
           "items": {
             "type": "string"

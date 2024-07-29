@@ -131,7 +131,7 @@ export const ZipkinQueryField = ({ query, onChange, onRunQuery, datasource }: Pr
               query={query.query}
               onChange={onChangeQuery}
               onRunQuery={onRunQuery}
-              placeholder={'Insert Trace ID (run with Shift+Enter)'}
+              placeholder={'Insert Trace ID (run with Shift+)'}
               portalOrigin="zipkin"
             />
           </div>
