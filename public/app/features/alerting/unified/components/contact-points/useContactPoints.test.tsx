@@ -1,17 +1,30 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { ReactNode } from 'react';
+import { getWrapper } from 'test/test-utils';
 
-import alertmanagerMock from 'app/features/alerting/unified/components/contact-points/__mocks__/alertmanager.config.mock.json';
+import { disablePlugin } from 'app/features/alerting/unified/mocks/server/configure';
 import { setOnCallIntegrations } from 'app/features/alerting/unified/mocks/server/handlers/plugins/configure-plugins';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { AccessControlAction } from 'app/types';
 
-import { mockApi, setupMswServer } from '../../mockApi';
+import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 
 import { useContactPointsWithStatus } from './useContactPoints';
 
-const server = setupMswServer();
+const wrapper = ({ children }: { children: ReactNode }) => {
+  const ProviderWrapper = getWrapper({ renderWithRouter: true });
+  return (
+    <ProviderWrapper>
+      <AlertmanagerProvider accessType="notification" alertmanagerSourceName="grafana">
+        {children}
+      </AlertmanagerProvider>
+    </ProviderWrapper>
+  );
+};
+
+setupMswServer();
 
 describe('useContactPoints', () => {
   beforeAll(() => {
@@ -19,23 +32,10 @@ describe('useContactPoints', () => {
   });
 
   it('should return contact points with status', async () => {
-    setOnCallIntegrations([
-      {
-        display_name: 'grafana-integration',
-        value: 'ABC123',
-        integration_url: 'https://oncall-endpoint.example.com',
-      },
-    ]);
-    mockApi(server).getContactPointsList(receivers);
+    disablePlugin(SupportedPlugin.OnCall);
 
     const { result } = renderHook(() => useContactPointsWithStatus(), {
-      wrapper: ({ children }) => (
-        <TestProvider>
-          <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={'grafana'}>
-            {children}
-          </AlertmanagerProvider>
-        </TestProvider>
-      ),
+      wrapper,
     });
 
     await waitFor(() => {
@@ -53,20 +53,10 @@ describe('useContactPoints', () => {
           integration_url: 'https://oncall-endpoint.example.com',
         },
       ]);
-      mockApi(server).getContactPointsList(receivers);
 
-      const { result } = renderHook(
-        () => useContactPointsWithStatus({ includePoliciesCount: false, receiverStatusPollingInterval: 0 }),
-        {
-          wrapper: ({ children }) => (
-            <TestProvider>
-              <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={'grafana'}>
-                {children}
-              </AlertmanagerProvider>
-            </TestProvider>
-          ),
-        }
-      );
+      const { result } = renderHook(() => useContactPointsWithStatus(), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -75,5 +65,3 @@ describe('useContactPoints', () => {
     });
   });
 });
-
-const receivers = JSON.parse(JSON.stringify(alertmanagerMock)).alertmanager_config.receivers;
