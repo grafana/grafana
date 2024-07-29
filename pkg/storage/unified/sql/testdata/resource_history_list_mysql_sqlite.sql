@@ -7,6 +7,6 @@ JOIN (
 	GROUP BY mkv."namespace", mkv."group", mkv."resource", mkv."name"
 ) AS maxkv ON maxkv."guid" = kv."guid"
 WHERE kv."action" != 3
-ORDER BY kv."resource_version" ASC
+ORDER BY kv."resource_version" DESC
 LIMIT ?, ?
 ;
