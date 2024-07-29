@@ -315,6 +315,17 @@ describe('Plugin details page', () => {
       expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
     });
 
+    it('should not display an update button for a plugin that is managed', async () => {
+      const { queryByRole } = renderPluginDetails({ id, isInstalled: true, hasUpdate: true, isManaged: true });
+
+      // Does not display an "update" button
+      expect(await queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
+      expect(queryByRole('button', { name: /uninstall/i })).toBeInTheDocument();
+
+      // Does not display "install" button
+      expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
+    });
+
     it('should display an install button for enterprise plugins if license is valid', async () => {
       config.licenseInfo.enabledFeatures = { 'enterprise.plugins': true };
 
