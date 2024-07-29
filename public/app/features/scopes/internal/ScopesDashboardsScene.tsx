@@ -20,22 +20,22 @@ export interface ScopesDashboardsSceneState extends SceneObjectState {
   filteredDashboards: SuggestedDashboard[];
   forScopeNames: string[];
   isLoading: boolean;
-  isOpened: boolean;
-  isVisible: boolean;
+  isPanelOpened: boolean;
+  isEnabled: boolean;
   scopesSelected: boolean;
   searchQuery: string;
 }
 
-export const baseDashboardsState: Omit<ScopesDashboardsSceneState, 'filters'> = {
+export const getBaseDashboardsState: () => Omit<ScopesDashboardsSceneState, 'filters'> = () => ({
   dashboards: [],
   filteredDashboards: [],
   forScopeNames: [],
   isLoading: false,
-  isOpened: localStorage.getItem(DASHBOARDS_OPENED_KEY) === 'true',
-  isVisible: false,
+  isPanelOpened: localStorage.getItem(DASHBOARDS_OPENED_KEY) === 'true',
+  isEnabled: false,
   scopesSelected: false,
   searchQuery: '',
-};
+});
 
 export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsSceneState> {
   static Component = ScopesDashboardsSceneRenderer;
@@ -43,25 +43,29 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
   constructor() {
     super({
       filters: null,
-      ...baseDashboardsState,
+      ...getBaseDashboardsState(),
     });
 
     this.addActivationHandler(() => {
-      if (this.state.isOpened) {
+      if (this.state.isPanelOpened) {
         this.fetchDashboards();
       }
 
-      this._subs.add(
-        this.state.filters?.resolve().subscribeToState((newState, prevState) => {
-          if (
-            this.state.isOpened &&
-            !newState.isLoadingScopes &&
-            (prevState.isLoadingScopes || newState.scopes !== prevState.scopes)
-          ) {
-            this.fetchDashboards();
-          }
-        })
-      );
+      const resolvedFilters = this.state.filters?.resolve();
+
+      if (resolvedFilters) {
+        this._subs.add(
+          resolvedFilters.subscribeToState((newState, prevState) => {
+            if (
+              this.state.isPanelOpened &&
+              !newState.isLoadingScopes &&
+              (prevState.isLoadingScopes || newState.scopes !== prevState.scopes)
+            ) {
+              this.fetchDashboards();
+            }
+          })
+        );
+      }
     });
   }
 
@@ -104,31 +108,31 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
     });
   }
 
-  public toggle() {
-    if (this.state.isOpened) {
-      this.close();
+  public togglePanel() {
+    if (this.state.isPanelOpened) {
+      this.closePanel();
     } else {
-      this.open();
+      this.openPanel();
     }
   }
 
-  public open() {
+  public openPanel() {
     this.fetchDashboards();
-    this.setState({ isOpened: true });
+    this.setState({ isPanelOpened: true });
     localStorage.setItem(DASHBOARDS_OPENED_KEY, JSON.stringify(true));
   }
 
-  public close() {
-    this.setState({ isOpened: false });
+  public closePanel() {
+    this.setState({ isPanelOpened: false });
     localStorage.setItem(DASHBOARDS_OPENED_KEY, JSON.stringify(false));
   }
 
-  public show() {
-    this.setState({ isVisible: true });
+  public enable() {
+    this.setState({ isEnabled: true });
   }
 
-  public hide() {
-    this.setState({ isVisible: false });
+  public disable() {
+    this.setState({ isEnabled: false });
   }
 
   private filterDashboards(dashboards: SuggestedDashboard[], searchQuery: string): SuggestedDashboard[] {
@@ -139,13 +143,13 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
 }
 
 export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<ScopesDashboardsScene>) {
-  const { dashboards, filteredDashboards, isLoading, isOpened, isVisible, searchQuery, scopesSelected } =
+  const { dashboards, filteredDashboards, isLoading, isPanelOpened, isEnabled, searchQuery, scopesSelected } =
     model.useState();
   const styles = useStyles2(getStyles);
 
   const [queryParams] = useQueryParams();
 
-  if (!isVisible || !isOpened) {
+  if (!isEnabled || !isPanelOpened) {
     return null;
   }
 

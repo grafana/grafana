@@ -6,7 +6,7 @@ import { sceneGraph } from '@grafana/scenes';
 import { getDashboardAPI, setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { initializeScopes, scopesFiltersScene } from './instance';
+import { initializeScopes, scopesDashboardsScene, scopesFiltersScene } from './instance';
 import {
   buildTestScene,
   fetchNodesSpy,
@@ -448,8 +448,8 @@ describe('Scopes', () => {
     describe('View mode', () => {
       it('Enters view mode', async () => {
         await act(async () => dashboardScene.onEnterEditMode());
-        expect(scopesFiltersScene?.state?.isDisabled).toEqual(true);
-        expect(scopesFiltersScene?.state?.isOpened).toEqual(false);
+        expect(scopesFiltersScene?.state?.isReadOnly).toEqual(true);
+        expect(scopesDashboardsScene?.state?.isPanelOpened).toEqual(false);
       });
 
       it('Closes filters on enter', async () => {

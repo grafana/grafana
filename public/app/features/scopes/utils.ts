@@ -13,24 +13,24 @@ export function getSelectedScopesNames(): string[] {
   return getSelectedScopes().map((scope) => scope.metadata.name);
 }
 
-export function showScopes() {
-  scopesFiltersScene?.show();
-  scopesDashboardsScene?.show();
-}
-
-export function hideScopes() {
-  scopesFiltersScene?.hide();
-  scopesDashboardsScene?.hide();
-}
-
 export function enableScopes() {
   scopesFiltersScene?.enable();
-  scopesDashboardsScene?.show();
+  scopesDashboardsScene?.enable();
 }
 
 export function disableScopes() {
   scopesFiltersScene?.disable();
-  scopesDashboardsScene?.hide();
+  scopesDashboardsScene?.disable();
+}
+
+export function exitScopesReadOnly() {
+  scopesFiltersScene?.exitReadOnly();
+  scopesDashboardsScene?.enable();
+}
+
+export function enterScopesReadOnly() {
+  scopesFiltersScene?.enterReadOnly();
+  scopesDashboardsScene?.disable();
 }
 
 export function getClosestScopesFacade(scene: SceneObject): ScopesFacade | null {

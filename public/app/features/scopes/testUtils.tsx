@@ -23,7 +23,7 @@ import { configureStore } from 'app/store/configureStore';
 
 import { ScopesFacade } from './ScopesFacadeScene';
 import { scopesDashboardsScene, scopesFiltersScene } from './instance';
-import { baseDashboardsState } from './internal/ScopesDashboardsScene';
+import { getBaseDashboardsState } from './internal/ScopesDashboardsScene';
 import { baseFiltersState } from './internal/ScopesFiltersScene';
 import * as api from './internal/api';
 import { DASHBOARDS_OPENED_KEY } from './internal/const';
@@ -491,5 +491,5 @@ export function resetScenes() {
 
   localStorage.removeItem(DASHBOARDS_OPENED_KEY);
 
-  scopesDashboardsScene?.setState(baseDashboardsState);
+  scopesDashboardsScene?.setState(getBaseDashboardsState());
 }

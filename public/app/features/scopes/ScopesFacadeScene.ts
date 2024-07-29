@@ -1,14 +1,14 @@
 import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 
 import { scopesFiltersScene } from './instance';
-import { disableScopes, enableScopes, getSelectedScopes, hideScopes, showScopes } from './utils';
+import { disableScopes, enableScopes, enterScopesReadOnly, exitScopesReadOnly, getSelectedScopes } from './utils';
 
 interface ScopesFacadeState extends SceneObjectState {
   // A callback that will be executed when new scopes are set
   handler?: (facade: ScopesFacade) => void;
 
   // Prevent rendering the selector by default
-  hidden?: boolean;
+  disabled?: boolean;
 }
 
 export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> {
@@ -19,8 +19,8 @@ export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> {
   }
 
   private _activationHandler = () => {
-    if (!this.state.hidden) {
-      this.show();
+    if (!this.state.disabled) {
+      this.enable();
     }
 
     this._subs.add(
@@ -32,7 +32,7 @@ export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> {
     );
 
     return () => {
-      this.hide();
+      this.disable();
     };
   };
 
@@ -40,19 +40,19 @@ export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> {
     return getSelectedScopes();
   }
 
-  public show() {
-    showScopes();
-  }
-
-  public hide() {
-    hideScopes();
+  public enable() {
+    enableScopes();
   }
 
   public disable() {
     disableScopes();
   }
 
-  public enable() {
-    enableScopes();
+  public enterReadOnly() {
+    enterScopesReadOnly();
+  }
+
+  public exitReadOnly() {
+    exitScopesReadOnly();
   }
 }
