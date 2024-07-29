@@ -153,9 +153,9 @@ export function InstallControlsButton({
     return (
       <Stack alignItems="flex-start" width="auto" height="auto">
         {!plugin.isManaged && (
-        <Button disabled={disableUpdate} onClick={onUpdate}>
-          {isInstalling ? 'Updating' : 'Update'}
-        </Button>
+          <Button disabled={disableUpdate} onClick={onUpdate}>
+            {isInstalling ? 'Updating' : 'Update'}
+          </Button>
         )}
         <Button variant="destructive" disabled={isUninstalling} onClick={onUninstall}>
           {uninstallBtnText}
