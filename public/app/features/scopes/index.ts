@@ -9,6 +9,7 @@ export {
   enableScopes,
   getClosestScopesFacade,
   getSelectedScopes,
+  getSelectedScopesNames,
   hideScopes,
   showScopes,
 } from './utils';

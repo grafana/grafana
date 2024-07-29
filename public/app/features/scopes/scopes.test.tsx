@@ -6,8 +6,7 @@ import { sceneGraph } from '@grafana/scenes';
 import { getDashboardAPI, setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { ScopesFiltersScene } from './ScopesFiltersScene';
-import { ScopesScene } from './ScopesScene';
+import { initializeScopes, scopesFiltersScene } from './instance';
 import {
   buildTestScene,
   fetchNodesSpy,
@@ -15,7 +14,6 @@ import {
   fetchSelectedScopesSpy,
   fetchSuggestedDashboardsSpy,
   getDashboard,
-  getDashboardsContainer,
   getDashboardsExpand,
   getDashboardsSearch,
   getFiltersApply,
@@ -58,7 +56,9 @@ import {
   queryResultApplicationsSlothPictureFactoryTitle,
   queryResultApplicationsSlothVoteTrackerTitle,
   renderDashboard,
+  resetScenes,
 } from './testUtils';
+import { getClosestScopesFacade } from './utils';
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
@@ -66,25 +66,26 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
     get: getMock,
   }),
+  usePluginLinkExtensions: jest.fn().mockReturnValue({ extensions: [] }),
 }));
 
-describe('ScopesScene', () => {
+describe('Scopes', () => {
   describe('Feature flag off', () => {
     beforeAll(() => {
       config.featureToggles.scopeFilters = false;
+
+      initializeScopes();
     });
 
     it('Does not initialize', () => {
       const dashboardScene = buildTestScene();
       dashboardScene.activate();
-      expect(dashboardScene.state.scopes).toBeUndefined();
+      expect(scopesFiltersScene).toBeNull();
     });
   });
 
   describe('Feature flag on', () => {
     let dashboardScene: DashboardScene;
-    let scopesScene: ScopesScene;
-    let filtersScene: ScopesFiltersScene;
 
     beforeAll(() => {
       config.featureToggles.scopeFilters = true;
@@ -99,14 +100,15 @@ describe('ScopesScene', () => {
       fetchSuggestedDashboardsSpy.mockClear();
       getMock.mockClear();
 
+      initializeScopes();
+
       dashboardScene = buildTestScene();
-      scopesScene = dashboardScene.state.scopes!;
-      filtersScene = scopesScene.state.filters;
 
       renderDashboard(dashboardScene);
     });
 
     afterEach(() => {
+      resetScenes();
       cleanup();
     });
 
@@ -127,7 +129,7 @@ describe('ScopesScene', () => {
 
       it('Selects the proper scopes', async () => {
         await act(async () =>
-          filtersScene.updateScopes([
+          scopesFiltersScene?.updateScopes([
             { scopeName: 'slothPictureFactory', path: [] },
             { scopeName: 'slothVoteTracker', path: [] },
           ])
@@ -308,7 +310,7 @@ describe('ScopesScene', () => {
         await userEvents.click(getResultClustersSelect());
         await userEvents.click(getFiltersApply());
         await waitFor(() => expect(fetchSelectedScopesSpy).toHaveBeenCalled());
-        expect(filtersScene.getSelectedScopes()).toEqual(
+        expect(getClosestScopesFacade(dashboardScene)?.value).toEqual(
           mocksScopes.filter(({ metadata: { name } }) => name === 'indexHelperCluster')
         );
       });
@@ -318,7 +320,7 @@ describe('ScopesScene', () => {
         await userEvents.click(getResultClustersSelect());
         await userEvents.click(getFiltersCancel());
         await waitFor(() => expect(fetchSelectedScopesSpy).not.toHaveBeenCalled());
-        expect(filtersScene.getSelectedScopes()).toEqual([]);
+        expect(getClosestScopesFacade(dashboardScene)?.value).toEqual([]);
       });
 
       it('Shows selected scopes', async () => {
@@ -332,7 +334,7 @@ describe('ScopesScene', () => {
     describe('Dashboards list', () => {
       it('Toggles expanded state', async () => {
         await userEvents.click(getDashboardsExpand());
-        expect(getDashboardsContainer()).toBeInTheDocument();
+        expect(getNotFoundNoScopes()).toBeInTheDocument();
       });
 
       it('Does not fetch dashboards list when the list is not expanded', async () => {
@@ -446,8 +448,8 @@ describe('ScopesScene', () => {
     describe('View mode', () => {
       it('Enters view mode', async () => {
         await act(async () => dashboardScene.onEnterEditMode());
-        expect(scopesScene.state.isViewing).toEqual(true);
-        expect(scopesScene.state.isExpanded).toEqual(false);
+        expect(scopesFiltersScene?.state?.isDisabled).toEqual(true);
+        expect(scopesFiltersScene?.state?.isOpened).toEqual(false);
       });
 
       it('Closes filters on enter', async () => {
@@ -556,17 +558,24 @@ describe('ScopesScene', () => {
         locationService.push('/?scopes=scope1&scopes=scope2&scopes=scope3');
       });
 
-      it('Legacy API should not pass the scopes', () => {
-        config.featureToggles.kubernetesDashboards = false;
-        getDashboardAPI().getDashboardDTO('1');
-        expect(getMock).toHaveBeenCalledWith('/api/dashboards/uid/1', undefined);
+      afterEach(() => {
+        resetScenes();
+        cleanup();
       });
 
-      it('K8s API should not pass the scopes', () => {
+      it('Legacy API should not pass the scopes', async () => {
+        config.featureToggles.kubernetesDashboards = false;
+        getDashboardAPI().getDashboardDTO('1');
+        await waitFor(() => expect(getMock).toHaveBeenCalledWith('/api/dashboards/uid/1', undefined));
+      });
+
+      it('K8s API should not pass the scopes', async () => {
         config.featureToggles.kubernetesDashboards = true;
         getDashboardAPI().getDashboardDTO('1');
-        expect(getMock).toHaveBeenCalledWith(
-          '/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/1/dto'
+        await waitFor(() =>
+          expect(getMock).toHaveBeenCalledWith(
+            '/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/1/dto'
+          )
         );
       });
     });
@@ -580,19 +589,29 @@ describe('ScopesScene', () => {
       beforeEach(() => {
         setDashboardAPI(undefined);
         locationService.push('/?scopes=scope1&scopes=scope2&scopes=scope3');
+        initializeScopes();
       });
 
-      it('Legacy API should pass the scopes', () => {
+      afterEach(() => {
+        resetScenes();
+        cleanup();
+      });
+
+      it('Legacy API should pass the scopes', async () => {
         config.featureToggles.kubernetesDashboards = false;
         getDashboardAPI().getDashboardDTO('1');
-        expect(getMock).toHaveBeenCalledWith('/api/dashboards/uid/1', { scopes: ['scope1', 'scope2', 'scope3'] });
+        await waitFor(() =>
+          expect(getMock).toHaveBeenCalledWith('/api/dashboards/uid/1', { scopes: ['scope1', 'scope2', 'scope3'] })
+        );
       });
 
-      it('K8s API should not pass the scopes', () => {
+      it('K8s API should not pass the scopes', async () => {
         config.featureToggles.kubernetesDashboards = true;
         getDashboardAPI().getDashboardDTO('1');
-        expect(getMock).toHaveBeenCalledWith(
-          '/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/1/dto'
+        await waitFor(() =>
+          expect(getMock).toHaveBeenCalledWith(
+            '/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/1/dto'
+          )
         );
       });
     });

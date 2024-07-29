@@ -14,7 +14,7 @@ import {
   removeDashboardToFetchFromLocalStorage,
 } from 'app/features/dashboard/state/initDashboard';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
-import { scopesScene } from 'app/features/scopes';
+import { getSelectedScopesNames } from 'app/features/scopes';
 import { DashboardDTO, DashboardRoutes } from 'app/types';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
@@ -299,7 +299,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   public getCacheKey(cacheKey: string): string {
-    const scopesCacheKey = scopesScene?.getSelectedScopesNames().sort().join('__scp__') ?? '';
+    const scopesCacheKey = getSelectedScopesNames().sort().join('__scp__') ?? '';
 
     return `${cacheKey}__scp__${scopesCacheKey}`;
   }

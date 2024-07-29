@@ -26,20 +26,24 @@ export interface ScopesDashboardsSceneState extends SceneObjectState {
   searchQuery: string;
 }
 
+export const baseDashboardsState: Omit<ScopesDashboardsSceneState, 'filters'> = {
+  dashboards: [],
+  filteredDashboards: [],
+  forScopeNames: [],
+  isLoading: false,
+  isOpened: localStorage.getItem(DASHBOARDS_OPENED_KEY) === 'true',
+  isVisible: false,
+  scopesSelected: false,
+  searchQuery: '',
+};
+
 export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsSceneState> {
   static Component = ScopesDashboardsSceneRenderer;
 
   constructor() {
     super({
       filters: null,
-      dashboards: [],
-      filteredDashboards: [],
-      forScopeNames: [],
-      isLoading: false,
-      isOpened: localStorage.getItem(DASHBOARDS_OPENED_KEY) === 'true',
-      isVisible: false,
-      scopesSelected: false,
-      searchQuery: '',
+      ...baseDashboardsState,
     });
 
     this.addActivationHandler(() => {
@@ -170,7 +174,7 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
   }
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} data-testid="scopes-dashboards-container">
       <div className={styles.searchInputContainer}>
         <FilterInput
           disabled={isLoading}

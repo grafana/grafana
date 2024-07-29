@@ -34,6 +34,29 @@ export interface ScopesFiltersSceneState extends SceneObjectState {
   isVisible: boolean;
 }
 
+export const baseFiltersState: Omit<ScopesFiltersSceneState, 'dashboards'> = {
+  nodes: {
+    '': {
+      name: '',
+      reason: NodeReason.Result,
+      nodeType: 'container',
+      title: '',
+      isExpandable: true,
+      isSelectable: false,
+      isExpanded: true,
+      query: '',
+      nodes: {},
+    },
+  },
+  loadingNodeName: undefined,
+  scopes: [],
+  treeScopes: [],
+  isDisabled: false,
+  isLoadingScopes: false,
+  isOpened: false,
+  isVisible: false,
+};
+
 export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState> implements SceneObjectWithUrlSync {
   static Component = ScopesFiltersSceneRenderer;
 
@@ -44,26 +67,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   constructor() {
     super({
       dashboards: null,
-      nodes: {
-        '': {
-          name: '',
-          reason: NodeReason.Result,
-          nodeType: 'container',
-          title: '',
-          isExpandable: true,
-          isSelectable: false,
-          isExpanded: true,
-          query: '',
-          nodes: {},
-        },
-      },
-      loadingNodeName: undefined,
-      scopes: [],
-      treeScopes: [],
-      isDisabled: false,
-      isLoadingScopes: false,
-      isOpened: false,
-      isVisible: false,
+      ...baseFiltersState,
     });
 
     this.addActivationHandler(() => {

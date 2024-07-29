@@ -9,6 +9,10 @@ export function getSelectedScopes(): Scope[] {
   return getScopesFromSelectedScopes(scopesFiltersScene?.state.scopes ?? []);
 }
 
+export function getSelectedScopesNames(): string[] {
+  return getSelectedScopes().map((scope) => scope.metadata.name);
+}
+
 export function showScopes() {
   scopesFiltersScene?.show();
   scopesDashboardsScene?.show();
