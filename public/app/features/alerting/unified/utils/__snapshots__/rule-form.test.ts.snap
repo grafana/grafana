@@ -19,11 +19,7 @@ exports[`formValuesToRulerGrafanaRuleDTO should correctly convert rule form valu
 
 exports[`formValuesToRulerGrafanaRuleDTO should correctly convert rule form values for grafana recording rule 1`] = `
 {
-  "annotations": {
-    "description": "",
-    "runbook_url": "",
-    "summary": "",
-  },
+  "annotations": {},
   "grafana_alert": {
     "condition": "A",
     "data": [],
@@ -34,9 +30,7 @@ exports[`formValuesToRulerGrafanaRuleDTO should correctly convert rule form valu
     },
     "title": "",
   },
-  "labels": {
-    "": "",
-  },
+  "labels": {},
 }
 `;
 
