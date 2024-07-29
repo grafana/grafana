@@ -23,6 +23,7 @@ func getEngineMySQL(getter *sectionGetter, _ tracing.Tracer) (*xorm.Engine, erro
 	config.Params = map[string]string{
 		// See: https://dev.mysql.com/doc/refman/en/sql-mode.html
 		"@@SESSION.sql_mode": "ANSI",
+		"tls":                "preferred",
 	}
 	config.Collation = "utf8mb4_unicode_ci"
 	config.Loc = time.UTC
@@ -41,6 +42,7 @@ func getEngineMySQL(getter *sectionGetter, _ tracing.Tracer) (*xorm.Engine, erro
 		config.Net = "unix"
 	}
 
+	fmt.Println("config.FormatDSN():", config.FormatDSN())
 	// FIXME: get rid of xorm
 	engine, err := xorm.NewEngine(db.DriverMySQL, config.FormatDSN())
 	if err != nil {
