@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"time"
 
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,77 +36,116 @@ func (d *DualWriterMode4) Mode() DualWriterMode {
 // Create overrides the behavior of the generic DualWriter and writes only to Storage.
 func (d *DualWriterMode4) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	var method = "create"
-	log := d.Log.WithValues("kind", options.Kind, "method", method)
+	var kind = obj.GetObjectKind().GroupVersionKind().Kind
+	log := d.Log.WithValues("method", method, "kind", kind)
 	ctx = klog.NewContext(ctx, log)
+
+	startStorage := time.Now()
 	res, err := d.Storage.Create(ctx, obj, createValidation, options)
 	if err != nil {
 		log.Error(err, "unable to create object in storage")
 	}
+	d.recordStorageDuration(err != nil, mode4Str, kind, method, startStorage)
 	return res, err
 }
 
 // Get overrides the behavior of the generic DualWriter and retrieves an object from Storage.
 func (d *DualWriterMode4) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	var method = "get"
-	log := d.Log.WithValues("kind", options.Kind, "method", method)
+	log := d.Log.WithValues("method", method)
 	ctx = klog.NewContext(ctx, log)
+
+	startStorage := time.Now()
 	res, err := d.Storage.Get(ctx, name, options)
 	if err != nil {
 		log.Error(err, "unable to create object in storage")
 	}
+	var kind string
+	if res != nil {
+		kind = res.GetObjectKind().GroupVersionKind().Kind
+	}
+	d.recordStorageDuration(err != nil, mode4Str, kind, method, startStorage)
 	return res, err
 }
 
 func (d *DualWriterMode4) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	var method = "delete"
-	log := d.Log.WithValues("name", name, "kind", options.Kind, "method", method)
+	log := d.Log.WithValues("name", name, "method", method)
 	ctx = klog.NewContext(ctx, log)
+
+	var kind string
+	startStorage := time.Now()
 	res, async, err := d.Storage.Delete(ctx, name, deleteValidation, options)
 	if err != nil {
 		log.Error(err, "unable to delete object in storage")
 	}
+	if res != nil {
+		kind = res.GetObjectKind().GroupVersionKind().Kind
+	}
+	d.recordStorageDuration(err != nil, mode4Str, kind, method, startStorage)
 	return res, async, err
 }
 
 // DeleteCollection overrides the behavior of the generic DualWriter and deletes only from Storage.
 func (d *DualWriterMode4) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
 	var method = "delete-collection"
-	log := d.Log.WithValues("kind", options.Kind, "resourceVersion", listOptions.ResourceVersion, "method", method, "mode", mode4Str)
+	log := d.Log.WithValues("resourceVersion", listOptions.ResourceVersion, "method", method, "mode", mode4Str)
 	ctx = klog.NewContext(ctx, log)
+	var kind string
+
+	startStorage := time.Now()
 	res, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	if err != nil {
 		log.Error(err, "unable to delete collection in storage")
 	}
+	if res != nil {
+		kind = res.GetObjectKind().GroupVersionKind().Kind
+	}
+	d.recordStorageDuration(err != nil, mode4Str, kind, method, startStorage)
 	return res, err
 }
 
 // Update overrides the generic behavior of the Storage and writes only to US.
 func (d *DualWriterMode4) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	var method = "update"
-	log := d.Log.WithValues("name", name, "kind", options.Kind, "method", method)
+	log := d.Log.WithValues("name", name, "method", method)
 	ctx = klog.NewContext(ctx, log)
+	var kind string
+
+	startStorage := time.Now()
 	res, async, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if err != nil {
 		log.Error(err, "unable to update object in storage")
 	}
+	if res != nil {
+		kind = res.GetObjectKind().GroupVersionKind().Kind
+	}
+	d.recordStorageDuration(err != nil, mode4Str, kind, method, startStorage)
 	return res, async, err
 }
 
 func (d *DualWriterMode4) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	var method = "list"
-	log := d.Log.WithValues("kind", options.Kind, "resourceVersion", options.ResourceVersion, "kind", options.Kind, "method", method)
+	log := d.Log.WithValues("resourceVersion", options.ResourceVersion, "method", method)
 	ctx = klog.NewContext(ctx, log)
+
+	startStorage := time.Now()
 	res, err := d.Storage.List(ctx, options)
 	if err != nil {
 		log.Error(err, "unable to list objects in storage")
 	}
+	var kind string
+	if res != nil {
+		kind = res.GetObjectKind().GroupVersionKind().Kind
+	}
+	d.recordStorageDuration(err != nil, mode4Str, kind, method, startStorage)
 	return res, err
 }
 
 //TODO: uncomment when storage watch is implemented
 // func (d *DualWriterMode4) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
 // 	var method = "watch"
-// 	d.Log.WithValues("kind", options.Kind, "method", method, "mode", mode4Str).Info("starting to watch")
+// 	d.Log.WithValues("kind", kind, "method", method, "mode", mode4Str).Info("starting to watch")
 // 	return d.Storage.Watch(ctx, options)
 // }
 
