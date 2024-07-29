@@ -1471,6 +1471,10 @@
     }
   },
   "navigation": {
+    "item": {
+      "add-bookmark": "Åđđ ŧő ßőőĸmäřĸş",
+      "remove-bookmark": "Ŗęmővę ƒřőm ßőőĸmäřĸş"
+    },
     "kiosk": {
       "tv-alert": "Přęşş ĒŜC ŧő ęχįŧ ĸįőşĸ mőđę"
     },
