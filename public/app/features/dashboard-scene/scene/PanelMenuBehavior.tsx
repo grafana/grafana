@@ -39,7 +39,6 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const panel = menu.parent as VizPanel;
     const plugin = panel.getPlugin();
-    console.log('RERENDERES', panel);
 
     const items: PanelMenuItem[] = [];
     const moreSubMenu: PanelMenuItem[] = [];

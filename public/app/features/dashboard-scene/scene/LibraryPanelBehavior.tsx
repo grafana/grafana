@@ -70,6 +70,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     }
 
     const libPanelModel = new PanelModel(libPanel.model);
+    console.log(libPanelModel);
 
     const vizPanelState: VizPanelState = {
       title: libPanelModel.title,
@@ -82,7 +83,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
       $data: createPanelDataProvider(libPanelModel),
     };
 
-    this.setState({ _loadedPanel: libPanel, isLoaded: true, name: libPanel.name });
+    this.setState({ _loadedPanel: libPanel, isLoaded: true, name: libPanel.name, title: libPanelModel.title });
 
     const clone = vizPanel.clone(vizPanelState);
     gridItem.setState({ body: clone });

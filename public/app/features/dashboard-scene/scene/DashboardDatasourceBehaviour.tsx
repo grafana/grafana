@@ -1,7 +1,22 @@
-import { SceneObjectBase, SceneObjectState, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { Unsubscribable } from 'rxjs';
+
+import {
+  CancelActivationHandler,
+  SceneObjectBase,
+  SceneObjectState,
+  SceneQueryRunner,
+  VizPanel,
+  VizPanelState,
+} from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
-import { findVizPanelByKey, getDashboardSceneFor, getQueryRunnerFor, getVizPanelKeyForPanelId } from '../utils/utils';
+import {
+  findVizPanelByKey,
+  getDashboardSceneFor,
+  getQueryRunnerFor,
+  getVizPanelKeyForPanelId,
+  isLibraryPanel,
+} from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -18,7 +33,8 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
   private _activationHandler() {
     const queryRunner = this.parent;
     let dashboard: DashboardScene;
-
+    let libraryPanelSub: Unsubscribable;
+    debugger;
     if (!(queryRunner instanceof SceneQueryRunner)) {
       throw new Error('DashboardDatasourceBehaviour must be attached to a SceneQueryRunner');
     }
@@ -53,12 +69,29 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       throw new Error('Could not find SceneQueryRunner for panel');
     }
 
-    if (this.prevRequestId && this.prevRequestId !== sourcePanelQueryRunner.state.data?.request?.requestId) {
+    let parentLibPanelCleanUp: undefined | CancelActivationHandler;
+
+    if (isLibraryPanel(panel)) {
+      if (!panel.isActive) {
+        parentLibPanelCleanUp = panel.activate();
+      }
+      // Library panels load and create internal viz panel asynchroniously. Here we are subscribing to
+      // library panel state, and run dashboard queries when the source panel query runner is ready.
+      libraryPanelSub = panel.subscribeToState((n, p) => {
+        this.handleLibPanelStateUpdates(n, p, queryRunner);
+      });
+    } else if (this.prevRequestId && this.prevRequestId !== sourcePanelQueryRunner.state.data?.request?.requestId) {
       queryRunner.runQueries();
     }
 
     return () => {
       this.prevRequestId = sourcePanelQueryRunner?.state.data?.request?.requestId;
     };
+  }
+
+  private handleLibPanelStateUpdates(n: VizPanelState, p: VizPanelState, queryRunner: SceneQueryRunner) {
+    if (n !== p) {
+      queryRunner.runQueries();
+    }
   }
 }
