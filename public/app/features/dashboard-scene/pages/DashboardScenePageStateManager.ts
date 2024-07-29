@@ -299,7 +299,11 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   public getCacheKey(cacheKey: string): string {
-    const scopesCacheKey = getSelectedScopesNames().sort().join('__scp__') ?? '';
+    const scopesCacheKey = getSelectedScopesNames().sort().join('__scp__');
+
+    if (!scopesCacheKey) {
+      return cacheKey;
+    }
 
     return `${cacheKey}__scp__${scopesCacheKey}`;
   }
