@@ -1,5 +1,5 @@
+import { DragDropContext, DragStart, Droppable, DropResult } from '@hello-pangea/dnd';
 import { PureComponent, ReactNode } from 'react';
-import { DragDropContext, DragStart, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import {
   CoreApp,

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -35,11 +34,6 @@ type NotificationsAPIBuilder struct {
 	ng         *ngalert.AlertNG
 	namespacer request.NamespaceMapper
 	gv         schema.GroupVersion
-}
-
-func (t NotificationsAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, toMode map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
-	return grafanarest.Mode0
 }
 
 func RegisterAPIService(
@@ -77,17 +71,16 @@ func (t NotificationsAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory,
 	optsGetter generic.RESTOptionsGetter,
-	desiredMode grafanarest.DualWriterMode,
-	reg prometheus.Registerer,
+	dualWriteBuilder grafanarest.DualWriteBuilder,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(notificationsModels.GROUP, scheme, metav1.ParameterCodec, codecs)
 
-	intervals, err := timeInterval.NewStorage(t.ng.Api.MuteTimings, t.namespacer, scheme, desiredMode, optsGetter, reg)
+	intervals, err := timeInterval.NewStorage(t.ng.Api.MuteTimings, t.namespacer, scheme, optsGetter, dualWriteBuilder)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize time-interval storage: %w", err)
 	}
 
-	recvStorage, err := receiver.NewStorage(nil, t.namespacer, scheme, desiredMode, optsGetter, reg) // TODO: add receiver service
+	recvStorage, err := receiver.NewStorage(t.ng.Api.ReceiverService, t.namespacer, scheme, optsGetter, dualWriteBuilder)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize receiver storage: %w", err)
 	}

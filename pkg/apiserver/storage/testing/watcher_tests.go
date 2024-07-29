@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1053,7 +1052,7 @@ func RunTestWatchDispatchBookmarkEvents(ctx context.Context, t *testing.T, store
 		t.Run(tt.name, func(t *testing.T) {
 			pred := storage.Everything
 			pred.AllowWatchBookmarks = tt.allowWatchBookmarks
-			ctx, cancel := context.WithTimeout(context.Background(), tt.timeout)
+			ctx, cancel := context.WithTimeout(NewContext(), tt.timeout)
 			defer cancel()
 
 			watcher, err := store.Watch(ctx, key, storage.ListOptions{ResourceVersion: startRV, Predicate: pred})
@@ -1112,7 +1111,7 @@ func RunTestOptionalWatchBookmarksWithCorrectResourceVersion(ctx context.Context
 	pred := storage.Everything
 	pred.AllowWatchBookmarks = true
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(NewContext(), 3*time.Second)
 	defer cancel()
 
 	watcher, err := store.Watch(ctx, key, storage.ListOptions{ResourceVersion: startRV, Predicate: pred, Recursive: true})
@@ -1462,7 +1461,7 @@ func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interfac
 				opts.ResourceVersion = scenario.resourceVersion
 			}
 
-			w, err := store.Watch(context.Background(), KeyFunc(ns, ""), opts)
+			w, err := store.Watch(NewContext(), KeyFunc(ns, ""), opts)
 			require.NoError(t, err, "failed to create watch: %v")
 			defer w.Stop()
 
@@ -1481,6 +1480,7 @@ func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interfac
 				createdPods = append(createdPods, out)
 			}
 			testCheckResultsInStrictOrder(t, w, scenario.expectedEventsAfterEstablishingWatch(createdPods))
+
 			testCheckNoMoreResults(t, w)
 		})
 	}
@@ -1524,7 +1524,7 @@ func RunWatchSemanticInitialEventsExtended(ctx context.Context, t *testing.T, st
 	opts.SendInitialEvents = &trueVal
 	opts.Predicate.AllowWatchBookmarks = true
 
-	w, err := store.Watch(context.Background(), KeyFunc(ns, ""), opts)
+	w, err := store.Watch(NewContext(), KeyFunc(ns, ""), opts)
 	require.NoError(t, err, "failed to create watch: %v")
 	defer w.Stop()
 

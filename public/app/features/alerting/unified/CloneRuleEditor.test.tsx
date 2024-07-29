@@ -7,7 +7,6 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 import { selectors } from '@grafana/e2e-selectors/src';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { DashboardSearchItem, DashboardSearchItemType } from 'app/features/search/types';
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
 import { AccessControlAction } from '../../../types';
@@ -29,15 +28,13 @@ import {
   mockRulerGrafanaRule,
   mockRulerRuleGroup,
 } from './mocks';
-import { grafanaRulerRule } from './mocks/alertRuleApi';
-import { mockAlertmanagerConfigResponse } from './mocks/alertmanagerApi';
+import { grafanaRulerRule } from './mocks/grafanaRulerApi';
 import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from './mocks/rulerApi';
 import { AlertingQueryRunner } from './state/AlertingQueryRunner';
 import { setupDataSources } from './testSetup/datasources';
 import { buildInfoResponse } from './testSetup/featureDiscovery';
 import { RuleFormValues } from './types/rule-form';
 import { Annotation } from './utils/constants';
-import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { getDefaultFormValues } from './utils/rule-form';
 import { hashRulerRule } from './utils/rule-id';
 
@@ -80,23 +77,6 @@ function Wrapper({ children }: React.PropsWithChildren<{}>) {
   );
 }
 
-const amConfig: AlertManagerCortexConfig = {
-  alertmanager_config: {
-    receivers: [{ name: 'default' }, { name: 'critical' }],
-    route: {
-      receiver: 'default',
-      group_by: ['alertname'],
-      routes: [
-        {
-          matchers: ['env=prod', 'region!=EU'],
-        },
-      ],
-    },
-    templates: [],
-  },
-  template_files: {},
-};
-
 describe('CloneRuleEditor', function () {
   grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 
@@ -111,7 +91,6 @@ describe('CloneRuleEditor', function () {
           type: DashboardSearchItemType.DashDB,
         }),
       ]);
-      mockAlertmanagerConfigResponse(server, GRAFANA_RULES_SOURCE_NAME, amConfig);
 
       render(
         <CloneRuleEditor sourceRuleId={{ uid: grafanaRulerRule.grafana_alert.uid, ruleSourceName: 'grafana' }} />,
@@ -177,7 +156,6 @@ describe('CloneRuleEditor', function () {
           folderUid: '123',
         }),
       ]);
-      mockAlertmanagerConfigResponse(server, GRAFANA_RULES_SOURCE_NAME, amConfig);
 
       render(
         <CloneRuleEditor

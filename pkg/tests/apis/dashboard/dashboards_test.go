@@ -47,58 +47,59 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 
 	t.Run("Check discovery client", func(t *testing.T) {
 		disco := helper.GetGroupVersionInfoJSON("dashboard.grafana.app")
-		//fmt.Printf("%s", string(disco))
+		// fmt.Printf("%s", string(disco))
 
 		require.JSONEq(t, `[
-			{
-				"freshness": "Current",
-				"resources": [
-				{
-					"resource": "dashboards",
-					"responseKind": {
-					"group": "",
-					"kind": "Dashboard",
-					"version": ""
-					},
-					"scope": "Namespaced",
-					"singularResource": "dashboard",
-					"subresources": [
-					{
-						"responseKind": {
-						"group": "",
-						"kind": "DashboardWithAccessInfo",
-						"version": ""
-						},
-						"subresource": "dto",
-						"verbs": [
-						"get"
-						]
-					},
-					{
-						"responseKind": {
-						"group": "",
-						"kind": "DashboardVersionList",
-						"version": ""
-						},
-						"subresource": "versions",
-						"verbs": [
-						"get"
-						]
-					}
-					],
-					"verbs": [
-					"create",
-					"delete",
-					"deletecollection",
-					"get",
-					"list",
-					"patch",
-					"update"
-					]
-				}
-				],
-				"version": "v0alpha1"
-			}
-			]`, disco)
+  {
+    "freshness": "Current",
+    "resources": [
+      {
+        "resource": "dashboards",
+        "responseKind": {
+          "group": "",
+          "kind": "Dashboard",
+          "version": ""
+        },
+        "scope": "Namespaced",
+        "singularResource": "dashboard",
+        "subresources": [
+          {
+            "responseKind": {
+              "group": "",
+              "kind": "DashboardWithAccessInfo",
+              "version": ""
+            },
+            "subresource": "dto",
+            "verbs": [
+              "get"
+            ]
+          },
+          {
+            "responseKind": {
+              "group": "",
+              "kind": "PartialObjectMetadataList",
+              "version": ""
+            },
+            "subresource": "history",
+            "verbs": [
+              "get"
+            ]
+          }
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      }
+    ],
+    "version": "v0alpha1"
+  }
+]`, disco)
 	})
 }

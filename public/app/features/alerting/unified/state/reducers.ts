@@ -7,14 +7,12 @@ import {
   fetchAlertGroupsAction,
   fetchFolderAction,
   fetchGrafanaAnnotationsAction,
-  fetchGrafanaNotifiersAction,
   fetchPromRulesAction,
   fetchRulerRulesAction,
   fetchRulesSourceBuildInfoAction,
   saveRuleFormAction,
   testReceiversAction,
   updateAlertManagerConfigAction,
-  updateLotexNamespaceAndGroupAction,
 } from './actions';
 
 export const reducer = combineReducers({
@@ -29,7 +27,6 @@ export const reducer = combineReducers({
   ruleForm: combineReducers({
     saveRule: createAsyncSlice('saveRule', saveRuleFormAction).reducer,
   }),
-  grafanaNotifiers: createAsyncSlice('grafanaNotifiers', fetchGrafanaNotifiersAction).reducer,
   saveAMConfig: createAsyncSlice('saveAMConfig', updateAlertManagerConfigAction).reducer,
   deleteAMConfig: createAsyncSlice('deleteAMConfig', deleteAlertManagerConfigAction).reducer,
   folders: createAsyncMapSlice('folders', fetchFolderAction, (uid) => uid).reducer,
@@ -39,8 +36,6 @@ export const reducer = combineReducers({
     (alertManagerSourceName) => alertManagerSourceName
   ).reducer,
   testReceivers: createAsyncSlice('testReceivers', testReceiversAction).reducer,
-  updateLotexNamespaceAndGroup: createAsyncSlice('updateLotexNamespaceAndGroup', updateLotexNamespaceAndGroupAction)
-    .reducer,
   managedAlertStateHistory: createAsyncSlice('managedAlertStateHistory', fetchGrafanaAnnotationsAction).reducer,
 });
 

@@ -74,7 +74,9 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 				return err
 			}
 
-			config, err := o.Config()
+			// o.Config(tracer) definitely needs to happen before we override the tracer below
+			// using tracer.InitTracer with the real tracer
+			config, err := o.Config(tracer)
 			if err != nil {
 				return err
 			}

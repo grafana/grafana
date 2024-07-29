@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -140,6 +141,7 @@ func TestPrometheusWriter_Write(t *testing.T) {
 	client := &testClient{}
 	writer := &PrometheusWriter{
 		client:  client,
+		clock:   clock.New(),
 		logger:  log.New("test"),
 		metrics: metrics.NewRemoteWriterMetrics(prometheus.NewRegistry()),
 	}

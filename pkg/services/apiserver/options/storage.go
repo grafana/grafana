@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"net"
 
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/spf13/pflag"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
+
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
 type StorageType string

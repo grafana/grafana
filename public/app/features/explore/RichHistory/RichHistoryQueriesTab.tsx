@@ -156,13 +156,9 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // whenever the filter changes, get all datasource information for the filtered datasources
   const { value: datasourceFilterApis, loading: loadingDs } = useAsync(async () => {
-    const datasourcesToGet =
-      richHistorySearchFilters?.datasourceFilters && richHistorySearchFilters?.datasourceFilters.length > 0
-        ? richHistorySearchFilters?.datasourceFilters
-        : listOfDatasources.map((ds) => ds.uid);
-    const dsGetProm = await datasourcesToGet.map(async (dsf) => {
+    const datasourcesToGet = listOfDatasources.map((ds) => ds.uid);
+    const dsGetProm = datasourcesToGet.map(async (dsf) => {
       try {
         // this get works off datasource names
         return getDataSourceSrv().get(dsf);

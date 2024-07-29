@@ -9,20 +9,21 @@ var _ Requester = &StaticRequester{}
 // This is mostly copied from:
 // https://github.com/grafana/grafana/blob/v11.0.0/pkg/services/user/identity.go#L16
 type StaticRequester struct {
-	Namespace       Namespace
-	UserID          int64
-	UserUID         string
-	OrgID           int64
-	OrgName         string
-	OrgRole         RoleType
-	Login           string
-	Name            string
-	DisplayName     string
-	Email           string
-	EmailVerified   bool
-	AuthID          string
-	AuthenticatedBy string
-	IsGrafanaAdmin  bool
+	Type                       IdentityType
+	UserID                     int64
+	UserUID                    string
+	OrgID                      int64
+	OrgName                    string
+	OrgRole                    RoleType
+	Login                      string
+	Name                       string
+	DisplayName                string
+	Email                      string
+	EmailVerified              bool
+	AuthID                     string
+	AuthenticatedBy            string
+	AllowedKubernetesNamespace string
+	IsGrafanaAdmin             bool
 	// Permissions grouped by orgID and actions
 	Permissions map[int64]map[string][]string
 	IDToken     string
@@ -104,23 +105,27 @@ func (u *StaticRequester) HasUniqueId() bool {
 }
 
 // GetID returns namespaced id for the entity
-func (u *StaticRequester) GetID() NamespaceID {
-	return NewNamespaceIDString(u.Namespace, fmt.Sprintf("%d", u.UserID))
+func (u *StaticRequester) GetID() TypedID {
+	return NewTypedIDString(u.Type, fmt.Sprintf("%d", u.UserID))
 }
 
 // GetUID returns namespaced uid for the entity
-func (u *StaticRequester) GetUID() NamespaceID {
-	return NewNamespaceIDString(u.Namespace, u.UserUID)
+func (u *StaticRequester) GetUID() TypedID {
+	return NewTypedIDString(u.Type, u.UserUID)
 }
 
-// GetNamespacedID returns the namespace and ID of the active entity
+// GetTypedID returns the namespace and ID of the active entity
 // The namespace is one of the constants defined in pkg/apimachinery/identity
-func (u *StaticRequester) GetNamespacedID() (Namespace, string) {
-	return u.Namespace, fmt.Sprintf("%d", u.UserID)
+func (u *StaticRequester) GetTypedID() (IdentityType, string) {
+	return u.Type, fmt.Sprintf("%d", u.UserID)
 }
 
 func (u *StaticRequester) GetAuthID() string {
 	return u.AuthID
+}
+
+func (u *StaticRequester) GetAllowedKubernetesNamespace() string {
+	return u.AllowedKubernetesNamespace
 }
 
 func (u *StaticRequester) GetAuthenticatedBy() string {

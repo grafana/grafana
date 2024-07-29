@@ -424,10 +424,9 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 			resourceName = extractResourceNameFromMetricsURL(query.URL)
 			resourceID = extractResourceIDFromMetricsURL(query.URL)
 		}
-		if _, ok := labels[resourceIdLabel]; ok {
-			delete(labels, resourceIdLabel)
-			labels["resourceName"] = resourceName
-		}
+
+		delete(labels, resourceIdLabel)
+		labels["resourceName"] = resourceName
 
 		if query.Alias != "" {
 			displayName := formatAzureMonitorLegendKey(query, resourceID, &amr, labels, subscription)

@@ -215,7 +215,7 @@ func instrumentScenarioHandler(logger log.Logger, scenario kinds.TestDataQueryTy
 		defer span.End()
 
 		ctxLogger := logger.FromContext(ctx)
-		ctxLogger.Debug("queryData", "scenario", scenario)
+		ctxLogger.Debug(string(backend.EndpointQueryData), "scenario", scenario)
 
 		return fn(ctx, req)
 	})
