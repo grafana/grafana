@@ -2,7 +2,7 @@
 
 Grafana Labs uses a minimal [homegrown solution](../../e2e/utils/index.ts) built on top of [Cypress](https://cypress.io) for its end-to-end (E2E) tests. 
 
-> **Note:** Grafana plugins are tested differently. Plugins should be tested with a different [solution](e2e-plugins.md) that uses [Playwright](https://playwright.dev/).
+> **Note:** Grafana plugins are tested differently. Test them with a different [solution](e2e-plugins.md) that uses [Playwright](https://playwright.dev/).
 
 ## Framework structure
 
