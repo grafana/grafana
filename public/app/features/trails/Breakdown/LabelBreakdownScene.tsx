@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { min, max, isNumber, throttle } from 'lodash';
 
-import { DataFrame, FieldType, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
+import { DataFrame, FieldType, GrafanaTheme2, PanelData, ReducerID, SelectableValue } from '@grafana/data';
 import {
   PanelBuilders,
   QueryVariable,
@@ -17,34 +17,35 @@ import {
   SceneObjectBase,
   SceneObjectState,
   SceneQueryRunner,
+  SceneReactObject,
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
-import { Button, Field, useStyles2 } from '@grafana/ui';
+import { Button, Field, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
+import { AddToFiltersGraphAction } from '../ActionTabs/AddToFiltersGraphAction';
+import { ByFrameRepeater } from '../ActionTabs/ByFrameRepeater';
+import { LayoutSwitcher } from '../ActionTabs/LayoutSwitcher';
+import { breakdownPanelOptions } from '../ActionTabs/panelConfigs';
+import { BreakdownLayoutChangeCallback, BreakdownLayoutType } from '../ActionTabs/types';
+import { getLabelOptions } from '../ActionTabs/utils';
+import { BreakdownAxisChangeEvent, yAxisSyncBehavior } from '../ActionTabs/yAxisSyncBehavior';
 import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
 import { AutoQueryDef } from '../AutomaticMetricQueries/types';
 import { BreakdownLabelSelector } from '../BreakdownLabelSelector';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
 import { reportExploreMetrics } from '../interactions';
+import { getSortByPreference } from '../services/store';
 import { trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared';
 import { getColorByIndex, getTrailFor } from '../utils';
 
-import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
-import { ByFrameRepeater } from './ByFrameRepeater';
-import { LayoutSwitcher } from './LayoutSwitcher';
-import { breakdownPanelOptions } from './panelConfigs';
-import { BreakdownLayoutChangeCallback, BreakdownLayoutType } from './types';
-import { getLabelOptions } from './utils';
-import { BreakdownAxisChangeEvent, yAxisSyncBehavior } from './yAxisSyncBehavior';
-
 const MAX_PANELS_IN_ALL_LABELS_BREAKDOWN = 60;
 
-export interface BreakdownSceneState extends SceneObjectState {
-  body?: SceneObject;
+export interface LabelBreakdownSceneState extends SceneObjectState {
+  body?: LayoutSwitcher;
   labels: Array<SelectableValue<string>>;
   value?: string;
   loading?: boolean;
@@ -52,13 +53,13 @@ export interface BreakdownSceneState extends SceneObjectState {
   blockingMessage?: string;
 }
 
-export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
+export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneState> {
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_FILTERS],
     onReferencedVariableValueChanged: this.onReferencedVariableValueChanged.bind(this),
   });
 
-  constructor(state: Partial<BreakdownSceneState>) {
+  constructor(state: Partial<LabelBreakdownSceneState>) {
     super({
       labels: state.labels ?? [],
       ...state,
@@ -103,6 +104,7 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
 
   private breakdownPanelMaxValue: number | undefined;
   private breakdownPanelMinValue: number | undefined;
+
   public reportBreakdownPanelData(data: PanelData | undefined) {
     if (!data) {
       return;
@@ -170,7 +172,7 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
   private updateBody(variable: QueryVariable) {
     const options = getLabelOptions(this, variable);
 
-    const stateUpdate: Partial<BreakdownSceneState> = {
+    const stateUpdate: Partial<LabelBreakdownSceneState> = {
       loading: variable.state.loading,
       value: String(variable.state.value),
       labels: options,
@@ -207,7 +209,7 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
     variable.changeValueTo(value);
   };
 
-  public static Component = ({ model }: SceneComponentProps<BreakdownScene>) => {
+  public static Component = ({ model }: SceneComponentProps<LabelBreakdownScene>) => {
     const { labels, body, loading, value, blockingMessage } = model.useState();
     const styles = useStyles2(getStyles);
 
@@ -374,6 +376,11 @@ function buildNormalLayout(queryDef: AutoQueryDef, onBreakdownLayoutChange: Brea
     return item;
   }
 
+  const { sortBy, direction } = getSortByPreference('labels', ReducerID.stdDev, 'desc');
+  // FIXME
+  // const getFilter = () => this.state.search.state.filter ?? '';
+  const getFilter = () => '';
+
   return new LayoutSwitcher({
     $data: new SceneQueryRunner({
       datasource: trailDS,
@@ -400,12 +407,18 @@ function buildNormalLayout(queryDef: AutoQueryDef, onBreakdownLayoutChange: Brea
         body: new SceneCSSGridLayout({
           templateColumns: GRID_TEMPLATE_COLUMNS,
           autoRows: '200px',
-          children: [],
+          children: [
+            new SceneFlexItem({
+              body: new SceneReactObject({
+                reactNode: <LoadingPlaceholder text="Loading..." />,
+              }),
+            }),
+          ],
         }),
         getLayoutChild,
-        sortBy: '',
-        direction: '',
-        getFilter: () => '',
+        sortBy,
+        direction,
+        getFilter,
       }),
       new ByFrameRepeater({
         body: new SceneCSSGridLayout({
@@ -414,9 +427,9 @@ function buildNormalLayout(queryDef: AutoQueryDef, onBreakdownLayoutChange: Brea
           children: [],
         }),
         getLayoutChild,
-        sortBy: '',
-        direction: '',
-        getFilter: () => '',
+        sortBy,
+        direction,
+        getFilter,
       }),
     ],
   });
@@ -433,13 +446,14 @@ function getLabelValue(frame: DataFrame) {
   return labels[keys[0]];
 }
 
-export function buildBreakdownActionScene() {
-  return new BreakdownScene({});
+export function buildLabelBreakdownActionScene() {
+  return new LabelBreakdownScene({});
 }
 
 interface SelectLabelActionState extends SceneObjectState {
   labelName: string;
 }
+
 export class SelectLabelAction extends SceneObjectBase<SelectLabelActionState> {
   public onClick = () => {
     const label = this.state.labelName;
@@ -456,8 +470,8 @@ export class SelectLabelAction extends SceneObjectBase<SelectLabelActionState> {
   };
 }
 
-function getBreakdownSceneFor(model: SceneObject): BreakdownScene {
-  if (model instanceof BreakdownScene) {
+function getBreakdownSceneFor(model: SceneObject): LabelBreakdownScene {
+  if (model instanceof LabelBreakdownScene) {
     return model;
   }
 
