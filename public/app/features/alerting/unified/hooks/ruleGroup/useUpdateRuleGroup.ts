@@ -1,5 +1,4 @@
-import { t } from 'i18next';
-
+import { t } from 'app/core/internationalization';
 import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { alertRuleApi } from '../../api/alertRuleApi';

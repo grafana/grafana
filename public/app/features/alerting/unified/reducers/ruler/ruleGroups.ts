@@ -14,7 +14,9 @@ import {
 } from '../../utils/rules';
 
 // rule-scoped actions
-export const addRuleAction = createAction<{ rule: PostableRuleDTO }>('ruleGroup/rules/add');
+export const addRuleAction = createAction<{ rule: PostableRuleDTO; groupName?: string; interval?: string }>(
+  'ruleGroup/rules/add'
+);
 export const updateRuleAction = createAction<{ identifier: EditableRuleIdentifier; rule: PostableRuleDTO }>(
   'ruleGroup/rules/update'
 );
@@ -70,15 +72,18 @@ export const ruleGroupReducer = createReducer(initialState, (builder) => {
       reorder(draft.rules, swaps);
     })
     // rename and move should allow updating the group's name
-    .addMatcher(isAnyOf(renameRuleGroupAction, moveRuleGroupAction), (draft, { payload }) => {
+    .addMatcher(isAnyOf(renameRuleGroupAction, moveRuleGroupAction, addRuleAction), (draft, { payload }) => {
       const { groupName } = payload;
       draft.name = groupName ?? draft.name;
     })
     // update, rename and move should all allow updating the interval of the group
-    .addMatcher(isAnyOf(updateRuleGroupAction, renameRuleGroupAction, moveRuleGroupAction), (draft, { payload }) => {
-      const { interval } = payload;
-      draft.interval = interval ?? draft.interval;
-    })
+    .addMatcher(
+      isAnyOf(updateRuleGroupAction, renameRuleGroupAction, moveRuleGroupAction, addRuleAction),
+      (draft, { payload }) => {
+        const { interval } = payload;
+        draft.interval = interval ?? draft.interval;
+      }
+    )
     .addDefaultCase((_draft, action) => {
       throw new Error(`Unknown action for rule group reducer: ${action.type}`);
     });

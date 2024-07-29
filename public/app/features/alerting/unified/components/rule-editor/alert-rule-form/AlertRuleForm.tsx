@@ -158,7 +158,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     // @TODO what is "evaluateEvery" being used for?
     // @TODO move this to a hook too to make sure the logic here is tested for regressions?
     if (!existing) {
-      await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition);
+      await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, values.evaluateEvery);
     } else {
       const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
       const targetRuleGroupIdentifier = getRuleGroupLocationFromFormValues(values);

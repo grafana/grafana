@@ -1,5 +1,4 @@
-import { t } from 'i18next';
-
+import { t } from 'app/core/internationalization';
 import { EditableRuleIdentifier, RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -7,8 +6,6 @@ import { deleteRuleAction } from '../../reducers/ruler/ruleGroups';
 import { useAsync } from '../useAsync';
 
 import { useProduceNewRuleGroup } from './useProduceNewRuleGroup';
-
-const successMessage = t('alerting.rules.delete-rule.success', 'Rule successfully deleted');
 
 /**
  * Delete a single rule from a (ruler) group. This hook will ensure that mutations on the rule group are safe and will always
@@ -26,6 +23,8 @@ export function useDeleteRuleFromGroup() {
 
     const action = deleteRuleAction({ identifier: ruleIdentifier });
     const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
+
+    const successMessage = t('alerting.rules.delete-rule.success', 'Rule successfully deleted');
 
     // if we have no more rules left after reducing, remove the entire group
     if (newRuleGroupDefinition.rules.length === 0) {

@@ -1,5 +1,4 @@
-import { t } from 'i18next';
-
+import { t } from 'app/core/internationalization';
 import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -8,9 +7,6 @@ import { useAsync } from '../useAsync';
 
 import { useProduceNewRuleGroup } from './useProduceNewRuleGroup';
 
-const rulePausedMessage = t('alerting.rules.pause-rule.success', 'Rule evaluation paused');
-const ruleResumedMessage = t('alerting.rules.resume-rule.success', 'Rule evaluation resumed');
-
 /**
  * Pause a single rule in a (ruler) group. This hook will ensure that mutations on the rule group are safe and will always
  * use the latest definition of the ruler group identifier.
@@ -18,6 +14,9 @@ const ruleResumedMessage = t('alerting.rules.resume-rule.success', 'Rule evaluat
 export function usePauseRuleInGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
+
+  const rulePausedMessage = t('alerting.rules.pause-rule.success', 'Rule evaluation paused');
+  const ruleResumedMessage = t('alerting.rules.resume-rule.success', 'Rule evaluation resumed');
 
   return useAsync(async (ruleGroup: RuleGroupIdentifier, uid: string, pause: boolean) => {
     const { namespaceName } = ruleGroup;

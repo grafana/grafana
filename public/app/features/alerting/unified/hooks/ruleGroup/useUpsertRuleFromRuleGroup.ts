@@ -14,9 +14,6 @@ import { useAsync } from '../useAsync';
 import { useDeleteRuleFromGroup } from './useDeleteRuleFromGroup';
 import { useProduceNewRuleGroup } from './useProduceNewRuleGroup';
 
-const addSuccessMessage = t('alerting.rules.add-rule.success', 'Rule added successfully');
-const updateSuccessMessage = t('alerting.rules.update-rule.success', 'Rule updated successfully');
-
 /**
  * This hook will add a single rule to a rule group – a new rule group will be created if it does not already exist.
  */
@@ -24,17 +21,20 @@ export function useAddRuleToRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
 
-  return useAsync(async (ruleGroup: RuleGroupIdentifier, rule: PostableRuleDTO) => {
+  const successMessage = t('alerting.rules.add-rule.success', 'Rule added successfully');
+
+  return useAsync(async (ruleGroup: RuleGroupIdentifier, rule: PostableRuleDTO, interval?: string) => {
     const { namespaceName, dataSourceName } = ruleGroup;
 
-    const action = addRuleAction({ rule });
+    // the new rule might have to be created in a new group, pass name and interval (optional) to the action
+    const action = addRuleAction({ rule, interval, groupName: ruleGroup.groupName });
     const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
 
     const result = upsertRuleGroup({
       rulerConfig,
       namespace: namespaceName,
       payload: newRuleGroupDefinition,
-      requestOptions: { successMessage: addSuccessMessage },
+      requestOptions: { successMessage },
     }).unwrap();
 
     // @TODO remove
@@ -51,6 +51,8 @@ export function useUpdateRuleInRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
 
+  const successMessage = t('alerting.rules.update-rule.success', 'Rule updated successfully');
+
   return useAsync(
     async (ruleGroup: RuleGroupIdentifier, ruleIdentifier: EditableRuleIdentifier, ruleDefinition: PostableRuleDTO) => {
       const { namespaceName } = ruleGroup;
@@ -63,7 +65,7 @@ export function useUpdateRuleInRuleGroup() {
         rulerConfig,
         namespace: namespaceName,
         payload: newRuleGroupDefinition,
-        requestOptions: { successMessage: updateSuccessMessage },
+        requestOptions: { successMessage },
       }).unwrap();
 
       return result;
@@ -79,6 +81,8 @@ export function useMoveRuleToRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [_deleteRuleState, deleteRuleFromGroup] = useDeleteRuleFromGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
+
+  const successMessage = t('alerting.rules.update-rule.success', 'Rule updated successfully');
 
   return useAsync(
     async (
@@ -100,7 +104,7 @@ export function useMoveRuleToRuleGroup() {
         rulerConfig: targetGroupRulerConfig,
         namespace: currentRuleGroup.namespaceName,
         payload: newTargetGroup,
-        requestOptions: { successMessage: updateSuccessMessage },
+        requestOptions: { successMessage },
       }).unwrap();
 
       // 2. if not Grafana-managed: remove the rule from the existing namespace / group / ruler
