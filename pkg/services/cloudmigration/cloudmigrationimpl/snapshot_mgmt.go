@@ -381,12 +381,17 @@ func sortFolders(input []folder.CreateFolderCommand) []folder.CreateFolderComman
 	for _, folder := range input {
 		folderMap[folder.UID] = folder
 	}
+	// Dynamic map of folderUID to depth
+	depthMap := make(map[string]int)
 
 	// Function to get the depth of a folder based on its parent hierarchy
 	var getDepth func(uid string) int
 	getDepth = func(uid string) int {
 		if uid == "" {
 			return 0
+		}
+		if d, ok := depthMap[uid]; ok {
+			return d
 		}
 		folder, exists := folderMap[uid]
 		if !exists || folder.ParentUID == "" {
@@ -396,7 +401,6 @@ func sortFolders(input []folder.CreateFolderCommand) []folder.CreateFolderComman
 	}
 
 	// Calculate the depth of each folder
-	depthMap := make(map[string]int)
 	for _, folder := range input {
 		depthMap[folder.UID] = getDepth(folder.UID)
 	}
