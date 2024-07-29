@@ -100,15 +100,17 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       variables = gridItem.parent.state.$variables.clone();
     }
 
-    if (!variables && repeatOptions.repeat) {
+    if (repeatOptions.repeat) {
       const variable = sceneGraph.lookupVariable(repeatOptions.repeat, gridItem);
 
-      if (variable && variable instanceof MultiValueVariable) {
-        const clonedVar = variable.clone();
-
-        variables = new SceneVariableSet({
-          variables: [clonedVar],
-        });
+      if (variable instanceof MultiValueVariable) {
+        if (!variables) {
+          variables = new SceneVariableSet({
+            variables: [variable.clone()],
+          });
+        } else {
+          variables.state.variables.push(variable.clone());
+        }
       }
     }
 
