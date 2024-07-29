@@ -169,13 +169,13 @@ The options under the **Graph styles** section let you control the general appea
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Style](#style)                             | Choose whether to display your time series data as lines, bars, or points.                                                                                                                                                            |
 | [Line interpolation](#line-interpolation)   | Choose how the graph interpolates the series line.                                                                                                                                                                                    |
-| [Line width](#line-width)                   | Set the thickness of the series lines or the outline for bars using the **Line width** slider.                                                                                                                                        |
+| Line width                                  | Set the thickness of the series lines or the outline for bars using the **Line width** slider.                                                                                                                                        |
 | [Fill opacity](#fill-opacity)               | Set the series area fill color using the **Fill opacity** slider.                                                                                                                                                                     |
-| [Gradient mode](#gradient-mode)             | Gradient mode specifies the gradient fill, which is based on the series color.                                                                                                                                                        |
-| [Line style](#line-style)                   | Choose the style of the line.                                                                                                                                                                                                         |
+| [Gradient mode](#gradient-mode)             | Choose a gradient mode to control the gradient fill, which is based on the series color.                                                                                                                                              |
+| [Line style](#line-style)                   | Choose a solid, dashed, or dotted line style                                                                                                                                                                                          |
 | [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph.                                                                                                                                                              |
 | [Disconnect values](#disconnect-values)     | Choose whether to set a threshold above which values in the data should be disconnected.                                                                                                                                              |
-| [Show points](#show-points)                 | Choose whether to add points to lines or bars to the visualization.                                                                                                                                                                   |
+| [Show points](#show-points)                 | Set whether to show data points to lines or bars.                                                                                                                                                                                     |
 | Point size                                  | Set the size of the points, from 1 to 40 pixels in diameter.                                                                                                                                                                          |
 | [Stack series](#stack-series)               | Set whether Grafana displays series on top of each other.                                                                                                                                                                             |
 | [Bar alignment](#bar-alignment)             | Set the position of the bar relative to a data point.                                                                                                                                                                                 |
@@ -208,24 +208,24 @@ Set the series area fill color using the **Fill opacity** slider.
 
 #### Gradient mode
 
-Gradient mode specifies the gradient fill, which is based on the series color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme](ref:color-scheme).
+Choose a gradient mode to control the gradient fill, which is based on the series color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme](ref:color-scheme).
 
 - **None** - No gradient fill. This is the default setting.
 - **Opacity** - An opacity gradient where the opacity of the fill increases as y-axis values increase.
 - **Hue** - A subtle gradient that's based on the hue of the series color.
 - **Scheme** - A color gradient defined by your [Color scheme](ref:color-scheme). This setting is used for the fill area and line. For more information about scheme, refer to [Scheme gradient mode](#scheme-gradient-mode).
 
-Gradient appearance is influenced by the **Fill opacity** setting. The following image show, the **Fill opacity** is set to 50.
+Gradient appearance is influenced by the **Fill opacity** setting. The following image shows the **Fill opacity** set to 50.
 
 ![Gradient mode examples](/static/img/docs/time-series-panel/gradient-modes-v9.png)
 
 ##### Scheme gradient mode
 
-The **Gradient mode** option located under the **Graph styles** has a mode named **Scheme**. When you enable **Scheme**, the line or bar receives a gradient color defined from the selected **Color scheme**.
+The **Gradient mode** option located under the **Graph styles** section has a mode called **Scheme**. When you enable **Scheme**, the line or bar receives a gradient color defined from the selected **Color scheme**.
 
 ###### From thresholds
 
-If the **Color scheme** is set to **From thresholds (by value)** and **Gradient mode** is set to **Scheme**, then the line or bar color changes as they cross the defined thresholds.
+If the **Color scheme** is set to **From thresholds (by value)** and **Gradient mode** is set to **Scheme**, then the line or bar color changes as it crosses the defined thresholds.
 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_line.png" max-width="1200px" alt="Colors scheme: From thresholds" >}}
 
@@ -237,7 +237,7 @@ The following image shows a line chart with the **Green-Yellow-Red (by value)** 
 
 #### Line style
 
-Set the style of the line. To change the color, use the standard [color scheme](ref:color-scheme) field option.
+Choose a solid, dashed, or dotted line style:
 
 - **Solid** - Display a solid line. This is the default setting.
 - **Dash** - Display a dashed line. When you choose this option, a list appears for you to select the length and gap (length, gap) for the line dashes. Dash spacing is 10, 10 by default.
@@ -249,17 +249,19 @@ Set the style of the line. To change the color, use the standard [color scheme](
 
 {{< docs/shared lookup="visualizations/disconnect-values.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
+To change the color, use the standard [color scheme](ref:color-scheme) field option.
+
 #### Show points
 
-You can configure your visualization to add points to lines or bars.
+Set whether to show data points to lines or bars. Choose from the following:
 
-- **Auto** - Grafana determines to show or not to show points based on the density of the data. If the density is low, then points appear.
+- **Auto** - Grafana determines whether to show or not to show points based on the density of the data. If the density is low, then points appear.
 - **Always** - Show the points regardless of how dense the data set is.
 - **Never** - Don't show points.
 
 #### Stack series
 
-_Stacking_ allows Grafana to display series on top of each other. Be cautious when using stacking in the visualization as it can easily create misleading graphs. To read more about why stacking might not be the best approach, refer to [The issue with stacking](https://www.data-to-viz.com/caveat/stacking.html).
+Set whether Grafana stacks or displays series on top of each other. Be cautious when using stacking in the visualization because it can easily create misleading graphs. To read more about why stacking might not be the best approach, refer to [The issue with stacking](https://www.data-to-viz.com/caveat/stacking.html). Choose from the following:
 
 - **Off** - Turns off series stacking. When **Off**, all series share the same space in the visualization.
 - **Normal** - Stacks series on top of each other.
@@ -278,7 +280,7 @@ The stacking group option is only available as an override. For more information
 
 #### Bar alignment
 
-Set the position of the bar relative to a data point. In the examples below, **Show points** is set to **Always** which makes it easier to see the difference this setting makes. The points don't change, but the bars change in relationship to the points.
+Set the position of the bar relative to a data point. In the examples below, **Show points** is set to **Always** which makes it easier to see the difference this setting makes. The points don't change, but the bars change in relationship to the points. Choose from the following:
 
 - **Before** ![Bar alignment before icon](/static/img/docs/time-series-panel/bar-alignment-before.png)
   The bar is drawn before the point. The point is placed on the trailing corner of the bar.
