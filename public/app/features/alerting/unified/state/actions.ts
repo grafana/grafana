@@ -520,9 +520,9 @@ export const testReceiversAction = createAsyncThunk(
 export const rulesInSameGroupHaveInvalidFor = (rules: RulerRuleDTO[], everyDuration: string) => {
   return rules.filter((rule: RulerRuleDTO) => {
     const { forDuration } = getAlertInfo(rule, everyDuration);
-    const forNumber = safeParsePrometheusDuration(forDuration);
+    const forNumber = forDuration ? safeParsePrometheusDuration(forDuration) : null;
     const everyNumber = safeParsePrometheusDuration(everyDuration);
 
-    return forNumber !== 0 && forNumber < everyNumber;
+    return forNumber ? forNumber !== 0 && forNumber < everyNumber : false;
   });
 };

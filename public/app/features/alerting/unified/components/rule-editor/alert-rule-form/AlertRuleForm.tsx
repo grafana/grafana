@@ -15,16 +15,18 @@ import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedR
 import {
   getRuleGroupLocationFromFormValues,
   getRuleGroupLocationFromRuleWithLocation,
+  isGrafanaManagedRuleByType,
   isGrafanaRulerRule,
   isGrafanaRulerRulePaused,
+  isRecordingRuleByType,
 } from 'app/features/alerting/unified/utils/rules';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
 import {
   LogMessages,
   logInfo,
-  trackAlertRuleFormError,
   trackAlertRuleFormCancelled,
+  trackAlertRuleFormError,
   trackAlertRuleFormSaved,
 } from '../../../Analytics';
 import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
@@ -35,8 +37,8 @@ import {
 } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import {
-  MANUAL_ROUTING_KEY,
   DEFAULT_GROUP_EVALUATION_INTERVAL,
+  MANUAL_ROUTING_KEY,
   formValuesFromExistingRule,
   getDefaultFormValues,
   getDefaultQueries,
@@ -47,7 +49,7 @@ import {
 } from '../../../utils/rule-form';
 import { fromRulerRuleAndRuleGroupIdentifier } from '../../../utils/rule-id';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
-import { AlertRuleNameInput } from '../AlertRuleNameInput';
+import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
 import { CloudEvaluationBehavior } from '../CloudEvaluationBehavior';
 import { GrafanaEvaluationBehavior } from '../GrafanaEvaluationBehavior';
@@ -117,11 +119,11 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   } = formAPI;
 
   const type = watch('type');
-  const grafanaTypeRule = type?.includes('grafana') ?? true;
+  const grafanaTypeRule = isGrafanaManagedRuleByType(type ?? RuleFormType.grafana);
 
   const dataSourceName = watch('dataSourceName');
 
-  const showDataSourceDependantStep = Boolean(type && (type === RuleFormType.grafana || !!dataSourceName));
+  const showDataSourceDependantStep = Boolean(type && (isGrafanaManagedRuleByType(type) || !!dataSourceName));
 
   const [conditionErrorMsg, setConditionErrorMsg] = useState('');
 
@@ -262,6 +264,9 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   );
 
   const isPaused = existing && isGrafanaRulerRule(existing.rule) && isGrafanaRulerRulePaused(existing.rule);
+  if (!type) {
+    return null;
+  }
   return (
     <FormProvider {...formAPI}>
       <AppChromeUpdate actions={actionButtons} />
@@ -271,14 +276,14 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <Stack direction="column" gap={3}>
               {/* Step 1 */}
-              <AlertRuleNameInput />
+              <AlertRuleNameAndMetric />
               {/* Step 2 */}
               <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
               {/* Step 3-4-5 */}
               {showDataSourceDependantStep && (
                 <>
                   {/* Step 3 */}
-                  {type === RuleFormType.grafana && (
+                  {isGrafanaManagedRuleByType(type) && (
                     <GrafanaEvaluationBehavior
                       evaluateEvery={evaluateEvery}
                       setEvaluateEvery={setEvaluateEvery}
@@ -295,7 +300,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
                   {/* Notifications step*/}
                   <NotificationsStep alertUid={uidFromParams} />
                   {/* Annotations only for cloud and Grafana */}
-                  {type !== RuleFormType.cloudRecording && <AnnotationsStep />}
+                  {!isRecordingRuleByType(type) && <AnnotationsStep />}
                 </>
               )}
             </Stack>
@@ -314,7 +319,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         />
       ) : null}
       {showEditYaml ? (
-        type === RuleFormType.grafana ? (
+        isGrafanaManagedRuleByType(type) ? (
           <GrafanaRuleExporter alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
         ) : (
           <RuleInspector onClose={() => setShowEditYaml(false)} />

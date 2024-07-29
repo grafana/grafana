@@ -34,8 +34,8 @@ func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses() 
 	folderWildcards := accesscontrol.WildcardsFromPrefix(dashboards.ScopeFoldersPrefix)
 
 	userID := int64(0)
-	namespace, identifier := f.user.GetNamespacedID()
-	if namespace == identity.NamespaceUser || namespace == identity.NamespaceServiceAccount {
+	namespace, identifier := f.user.GetTypedID()
+	if namespace == identity.TypeUser || namespace == identity.TypeServiceAccount {
 		userID, _ = identity.IntIdentifier(namespace, identifier)
 	}
 
