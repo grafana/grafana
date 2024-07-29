@@ -15,9 +15,6 @@ replace cuelang.org/go => github.com/grafana/cue v0.0.0-20230926092038-971951014
 // import that instead of v0.X even though v0.X is newer.
 replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.52.0
 
-// Update when github.com/deepmap/oapi-codegen/v2 is updated to support later versions.
-replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.122.0
-
 require (
 	cloud.google.com/go/storage v1.38.0 // @grafana/grafana-backend-group
 	github.com/Masterminds/semver/v3 v3.2.0 // @grafana/grafana-release-guild
@@ -49,7 +46,7 @@ require (
 	golang.org/x/time v0.5.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/tools v0.22.0 // indirect; @grafana/grafana-as-code
 	google.golang.org/api v0.176.0 // @grafana/grafana-backend-group
-	google.golang.org/grpc v1.64.0 // indirect; @grafana/plugins-platform-backend
+	google.golang.org/grpc v1.64.1 // indirect; @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.34.2 // indirect; @grafana/plugins-platform-backend
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
 )

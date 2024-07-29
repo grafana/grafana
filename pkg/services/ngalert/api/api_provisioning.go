@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"net/http"
 	"strings"
 
@@ -137,11 +138,9 @@ func (srv *ProvisioningSrv) RouteGetContactPoints(c *contextmodel.ReqContext) re
 	}
 	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q, c.SignedInUser)
 	if err != nil {
-		if errors.Is(err, provisioning.ErrPermissionDenied) {
-			return ErrResp(http.StatusForbidden, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
+
 	return response.JSON(http.StatusOK, cps)
 }
 
@@ -153,10 +152,7 @@ func (srv *ProvisioningSrv) RouteGetContactPointsExport(c *contextmodel.ReqConte
 	}
 	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q, c.SignedInUser)
 	if err != nil {
-		if errors.Is(err, provisioning.ErrPermissionDenied) {
-			return ErrResp(http.StatusForbidden, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 
 	e, err := AlertingFileExportFromEmbeddedContactPoints(c.SignedInUser.GetOrgID(), cps)
@@ -297,7 +293,14 @@ func (srv *ProvisioningSrv) RoutePostMuteTiming(c *contextmodel.ReqContext, mt d
 }
 
 func (srv *ProvisioningSrv) RoutePutMuteTiming(c *contextmodel.ReqContext, mt definitions.MuteTimeInterval, name string) response.Response {
-	mt.Name = name
+	// if body does not specify name, assume that the path contains the name
+	if mt.Name == "" {
+		mt.Name = name
+	}
+	// if body contains a name, and it's different from the one in the path, assume the latter to be UID
+	if mt.Name != name {
+		mt.UID = name
+	}
 	mt.Provenance = determineProvenance(c)
 	updated, err := srv.muteTimings.UpdateMuteTiming(c.Req.Context(), mt, c.SignedInUser.GetOrgID())
 	if err != nil {
@@ -587,11 +590,15 @@ func exportResponse(c *contextmodel.ReqContext, body definitions.AlertingFileExp
 func exportHcl(download bool, body definitions.AlertingFileExport) response.Response {
 	resources := make([]hcl.Resource, 0, len(body.Groups)+len(body.ContactPoints)+len(body.Policies)+len(body.MuteTimings))
 	convertToResources := func() error {
-		for idx, group := range body.Groups {
+		for _, group := range body.Groups {
 			gr := group
+			sum := fnv.New64()
+			_, _ = sum.Write([]byte(gr.Name))
+			_, _ = sum.Write([]byte(gr.FolderUID))
+			hash := sum.Sum64()
 			resources = append(resources, hcl.Resource{
 				Type: "grafana_rule_group",
-				Name: fmt.Sprintf("rule_group_%04d", idx),
+				Name: fmt.Sprintf("rule_group_%016x", hash),
 				Body: &gr,
 			})
 		}

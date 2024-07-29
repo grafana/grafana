@@ -14,7 +14,6 @@ import AlertmanagerConfig from './AlertmanagerConfig';
 import {
   EXTERNAL_VANILLA_ALERTMANAGER_UID,
   PROVISIONED_MIMIR_ALERTMANAGER_UID,
-  setupGrafanaManagedServer,
   setupVanillaAlertmanagerServer,
 } from './__mocks__/server';
 
@@ -43,10 +42,9 @@ const ui = {
 };
 
 describe('Alerting Settings', () => {
-  const server = setupMswServer();
+  setupMswServer();
 
   beforeEach(() => {
-    setupGrafanaManagedServer(server);
     grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingInstanceRead]);
   });
 
@@ -54,7 +52,7 @@ describe('Alerting Settings', () => {
     const onReset = jest.fn();
     renderConfiguration('grafana', { onReset });
 
-    await userEvent.click(await ui.resetButton.get());
+    await userEvent.click(await ui.resetButton.find());
 
     await waitFor(() => {
       expect(ui.resetConfirmButton.query()).toBeInTheDocument();

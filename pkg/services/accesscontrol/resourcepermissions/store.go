@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -689,7 +691,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 
 	// if we have actionset feature enabled and are only working with action sets
 	// skip adding the missing actions to the permissions table
-	if !(s.shouldStoreActionSet(resource, permission) && s.cfg.OnlyStoreAccessActionSets) {
+	if !(s.shouldStoreActionSet(resource, permission) && s.cfg.RBAC.OnlyStoreAccessActionSets) {
 		for action := range missingActions {
 			p := managedPermission(action, resource, resourceID, resourceAttribute)
 			p.RoleID = roleID
@@ -824,22 +826,12 @@ func (s *InMemoryActionSets) ExpandActionSetsWithFilter(permissions []accesscont
 	return expandedPermissions
 }
 
-// GetActionSet returns the action set for the given action.
-func (s *InMemoryActionSets) GetActionSet(actionName string) []string {
-	actionSet, ok := s.actionSetToActions[actionName]
-	if !ok {
-		return nil
-	}
-	return actionSet
-}
-
-func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions []string) {
-	name := GetActionSetName(resource, permission)
+func (s *InMemoryActionSets) StoreActionSet(name string, actions []string) {
 	actionSet := &ActionSet{
 		Action:  name,
 		Actions: actions,
 	}
-	s.actionSetToActions[actionSet.Action] = actions
+	s.actionSetToActions[actionSet.Action] = append(s.actionSetToActions[actionSet.Action], actions...)
 
 	for _, action := range actions {
 		if _, ok := s.actionToActionSets[action]; !ok {
@@ -848,6 +840,21 @@ func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions
 		s.actionToActionSets[action] = append(s.actionToActionSets[action], actionSet.Action)
 	}
 	s.log.Debug("stored action set", "action set name", actionSet.Action)
+}
+
+// RegisterActionSets allow the caller to expand the existing action sets with additional permissions
+// This is intended to be used by plugins, and currently supports extending folder and dashboard action sets
+func (s *InMemoryActionSets) RegisterActionSets(ctx context.Context, pluginID string, registrations []plugins.ActionSet) error {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) || !s.features.IsEnabled(ctx, featuremgmt.FlagAccessControlOnCall) {
+		return nil
+	}
+	for _, reg := range registrations {
+		if err := pluginutils.ValidatePluginActionSet(pluginID, reg); err != nil {
+			return err
+		}
+		s.StoreActionSet(reg.Action, reg.Actions)
+	}
+	return nil
 }
 
 // GetActionSetName function creates an action set from a list of actions and stores it inmemory.

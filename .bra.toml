@@ -2,7 +2,7 @@
 init_cmds = [
   ["GO_BUILD_DEV=1", "make", "build-go"],
   ["make", "gen-jsonnet"],
-  ["./bin/grafana", "server", "-profile", "-profile-addr=127.0.0.1", "-profile-port=6000", "-profile-block-rate=1", "-profile-mutex-rate=5", "-packaging=dev", "cfg:app_mode=development"]
+  ["./bin/grafana", "server", "-profile", "-profile-addr=0.0.0.0", "-profile-port=6000", "-profile-block-rate=1", "-profile-mutex-rate=5", "-packaging=dev", "cfg:app_mode=development"]
 ]
 watch_all = true
 follow_symlinks = true
@@ -18,5 +18,5 @@ build_delay = 1500
 cmds = [
   ["GO_BUILD_DEV=1", "make", "build-go"],
   ["make", "gen-jsonnet"],
-  ["./bin/grafana", "server", "-profile", "-profile-addr=127.0.0.1", "-profile-port=6000", "-profile-block-rate=1", "-profile-mutex-rate=5", "-packaging=dev", "cfg:app_mode=development"]
+  ["./bin/grafana", "server", "-profile", "-profile-addr=0.0.0.0", "-profile-port=6000", "-profile-block-rate=1", "-profile-mutex-rate=5", "-packaging=dev", "cfg:app_mode=development"]
 ]

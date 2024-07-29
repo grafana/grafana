@@ -8,10 +8,12 @@ Overrides allow you to customize visualization settings for specific fields or s
 
 Choose from one the following override options:
 
-- **Fields with name** - Select a field from the list of all available fields.
-- **Fields with name matching regex** - Specify fields to override with a regular expression.
-- **Fields with type** - Select fields by type, such as string, numeric, or time.
-- **Fields returned by query** - Select all fields returned by a specific query, such as A, B, or C.
-- **Fields with values** - Select all fields returned by your defined reducer condition, such as **Min**, **Max**, **Count**, **Total**.
+| Option                         | Description                                                                                                   |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| Fields with name               | Select a field from the list of all available fields.                                                         |
+| Field with name matching regex | Specify fields to override with a regular expression.                                                         |
+| Fields with type               | Select fields by type, such as string, numeric, or time.                                                      |
+| Fields returned by query       | Select all fields returned by a specific query, such as A, B, or C.                                           |
+| Fields with values             | Select all fields returned by your defined reducer condition, such as **Min**, **Max**, **Count**, **Total**. |
 
 To learn more, refer to [Configure field overrides](../../configure-overrides/).
