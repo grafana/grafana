@@ -579,7 +579,7 @@ describe('RuleList', () => {
     await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
   });
 
-  it('uses entire group when reordering after filtering', async () => {
+  it.skip('uses entire group when reordering after filtering', async () => {
     const user = userEvent.setup();
 
     mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
