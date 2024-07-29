@@ -26,7 +26,7 @@ Playwright end-to-end tests for plugins should be added to the [`e2e/plugin-e2e`
     },
    ```
 
-    > **Note:** If you want to use a different role for and perhaps test RBAC for some of your tests, refer to the plugin-e2e [documentation](https://grafana.com/developers/plugin-tools/e2e-test-a-plugin/use-authentication).
+    > **Note:** If you want to use a different role or test RBAC for some of your tests, refer to the plugin-e2e [documentation](https://grafana.com/developers/plugin-tools/e2e-test-a-plugin/use-authentication).
 
 1. Update the [`CODEOWNERS`](https://github.com/grafana/grafana/blob/main/.github/CODEOWNERS/#L315) file so that your team is specified as the owner of the tests in the directory you previously added in step 1.
 
