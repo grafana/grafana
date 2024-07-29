@@ -14069,7 +14069,7 @@
           "type": "string"
         },
         "options": {
-          "$ref": "#/definitions/ReportOptionsDTO"
+          "$ref": "#/definitions/ReportOptions"
         },
         "pdfOptions": {
           "$ref": "#/definitions/PDFOptions"
@@ -19131,7 +19131,7 @@
           "type": "string"
         },
         "options": {
-          "$ref": "#/definitions/ReportOptionsDTO"
+          "$ref": "#/definitions/ReportOptions"
         },
         "orgId": {
           "type": "integer",
@@ -19237,7 +19237,7 @@
         }
       }
     },
-    "ReportOptionsDTO": {
+    "ReportOptions": {
       "type": "object",
       "properties": {
         "layout": {
