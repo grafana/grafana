@@ -39,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -1753,7 +1754,7 @@ type testEnvironment struct {
 	store            store.DBstore
 	folderService    folder.Service
 	dashboardService dashboards.DashboardService
-	configs          provisioning.AMConfigStore
+	configs          legacy_storage.AMConfigStore
 	xact             provisioning.TransactionManager
 	quotas           provisioning.QuotaChecker
 	prov             provisioning.ProvisioningStore
@@ -1780,7 +1781,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	require.NoError(t, err)
 
 	log := log.NewNopLogger()
-	configs := &provisioning.MockAMConfigStore{}
+	configs := &legacy_storage.MockAMConfigStore{}
 	configs.EXPECT().
 		GetsConfig(models.AlertConfiguration{
 			AlertmanagerConfiguration: string(raw),
@@ -1885,13 +1886,21 @@ func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
 func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) ProvisioningSrv {
 	t.Helper()
 
-	receiverSvc := notifier.NewReceiverService(env.ac, env.configs, env.prov, env.secrets, env.xact, env.log)
+	configStore := legacy_storage.NewAlertmanagerConfigStore(env.configs)
+	receiverSvc := notifier.NewReceiverService(
+		env.ac,
+		configStore,
+		env.prov,
+		env.secrets,
+		env.xact,
+		env.log,
+	)
 	return ProvisioningSrv{
 		log:                 env.log,
 		policies:            newFakeNotificationPolicyService(),
-		contactPointService: provisioning.NewContactPointService(env.configs, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store),
-		templates:           provisioning.NewTemplateService(env.configs, env.prov, env.xact, env.log),
-		muteTimings:         provisioning.NewMuteTimingService(env.configs, env.prov, env.xact, env.log, env.store),
+		contactPointService: provisioning.NewContactPointService(configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store),
+		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log),
+		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.store),
 		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, &provisioning.NotificationSettingsValidatorProviderFake{}, env.rulesAuthz),
 		folderSvc:           env.folderService,
 		featureManager:      env.features,
