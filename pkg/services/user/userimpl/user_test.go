@@ -291,6 +291,10 @@ func (f *FakeUserStore) GetByID(context.Context, int64) (*user.User, error) {
 	return f.ExpectedUser, f.ExpectedError
 }
 
+func (f *FakeUserStore) GetByUID(context.Context, int64, string) (*user.User, error) {
+	return f.ExpectedUser, f.ExpectedError
+}
+
 func (f *FakeUserStore) LoginConflict(context.Context, string, string) error {
 	return f.ExpectedError
 }
@@ -325,6 +329,10 @@ func (f *FakeUserStore) BatchDisableUsers(ctx context.Context, cmd *user.BatchDi
 
 func (f *FakeUserStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
 	return f.ExpectedSearchUserQueryResult, f.ExpectedError
+}
+
+func (f *FakeUserStore) List(ctx context.Context, query *user.ListUsersCommand) (*user.ListUserResult, error) {
+	return nil, f.ExpectedError
 }
 
 func (f *FakeUserStore) Count(ctx context.Context) (int64, error) {

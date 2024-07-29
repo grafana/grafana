@@ -1,4 +1,4 @@
-package playlist
+package peakq
 
 import (
 	"encoding/json"
@@ -16,7 +16,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestIntegrationFoldersApp(t *testing.T) {
+func TestIntegrationPeakQ(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}

@@ -1,10 +1,16 @@
-import { Team as TeamDTO } from '@grafana/schema/src/raw/team/x/team_types.gen';
-
 import { Role } from './accessControl';
 import { TeamPermissionLevel } from './acl';
 
-// The team resource
-export { TeamDTO };
+export interface TeamDTO {
+  /**
+   * Email of the team.
+   */
+  email?: string;
+  /**
+   * Name of the team.
+   */
+  name: string;
+}
 
 // This is the team resource with permissions and metadata expanded
 export interface Team {

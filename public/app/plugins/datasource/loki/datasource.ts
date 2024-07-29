@@ -1106,10 +1106,14 @@ export class LokiDatasource
       adhocFilters
     );
 
+    const step = this.templateSrv.replace(target.step, variables);
+    const legendFormat = this.templateSrv.replace(target.legendFormat, variables);
+
     return {
       ...target,
-      legendFormat: this.templateSrv.replace(target.legendFormat, rest),
       expr: exprWithAdHoc,
+      step,
+      legendFormat,
     };
   }
 
