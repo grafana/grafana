@@ -53,7 +53,7 @@ def rrc_patch_pipelines():
         test_backend(trigger, ver_mode),
         lint_backend_pipeline(trigger, ver_mode),
         integration_tests(trigger, prefix = ver_mode, ver_mode = ver_mode),
-        rrc_enterprise_downstream_pipeline(trigger=trigger),
+        rrc_enterprise_downstream_pipeline(trigger = trigger),
     ]
 
     return pipelines
@@ -71,4 +71,3 @@ def rrc_enterprise_downstream_pipeline(trigger):
         depends_on = ["rrc-integration-tests"],
         environment = environment,
     )
-    
