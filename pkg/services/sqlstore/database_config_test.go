@@ -284,9 +284,15 @@ name = grafana
 user = grafana
 password = password
 host = 127.0.0.1:3306
-[database_replicas.one] =
+[database_replica.one]
+name = grafana
+user = grafana
+password = password
 type = mysql
 host = 127.0.0.1:3306
-[database_replicas.two] =
+[database_replica.two]
+name = grafana
+user = grafana
+password = password
 type = postgres
 host = 127.0.0.1:3308`

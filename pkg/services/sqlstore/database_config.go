@@ -236,7 +236,7 @@ func buildExtraConnectionString(sep rune, urlQueryParams map[string][]string) st
 	return sb.String()
 }
 
-func validateReplicaConfigs(primary *DatabaseConfig, cfgs []*DatabaseConfig) error {
+func validateReplicaConfigs(primary *DatabaseConfig, cfgs []DatabaseConfig) error {
 	if cfgs == nil {
 		return errors.New("cfg cannot be nil")
 	}
