@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -77,8 +78,9 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 			PluginsCDNURLTemplate: cfg.PluginsCDNURLTemplate,
 			PluginSettings:        cfg.PluginSettings,
 		}),
-		namespacer:    request.GetNamespaceMapper(cfg),
-		SocialService: socialimpl.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), nil, &ssosettingstests.MockService{}),
+		namespacer:            request.GetNamespaceMapper(cfg),
+		SocialService:         socialimpl.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), nil, &ssosettingstests.MockService{}),
+		managedPluginsService: managedplugins.NewNoop(),
 	}
 
 	m := web.New()

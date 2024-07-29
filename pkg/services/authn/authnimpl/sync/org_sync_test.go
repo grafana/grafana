@@ -76,7 +76,7 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				id: &authn.Identity{
-					ID:             authn.MustParseNamespaceID("user:1"),
+					ID:             identity.MustParseTypedID("user:1"),
 					Login:          "test",
 					Name:           "test",
 					Email:          "test",
@@ -92,7 +92,7 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 				},
 			},
 			wantID: &authn.Identity{
-				ID:             authn.MustParseNamespaceID("user:1"),
+				ID:             identity.MustParseTypedID("user:1"),
 				Login:          "test",
 				Name:           "test",
 				Email:          "test",
@@ -139,7 +139,7 @@ func TestOrgSync_SetDefaultOrgHook(t *testing.T) {
 		{
 			name:              "should set default org",
 			defaultOrgSetting: 2,
-			identity:          &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
+			identity:          &authn.Identity{ID: identity.MustParseTypedID("user:1")},
 			setupMock: func(userService *usertest.MockService, orgService *orgtest.FakeOrgService) {
 				userService.On("Update", mock.Anything, mock.MatchedBy(func(cmd *user.UpdateUserCommand) bool {
 					return cmd.UserID == 1 && *cmd.OrgID == 2
@@ -149,7 +149,7 @@ func TestOrgSync_SetDefaultOrgHook(t *testing.T) {
 		{
 			name:              "should skip setting the default org when default org is not set",
 			defaultOrgSetting: -1,
-			identity:          &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
+			identity:          &authn.Identity{ID: identity.MustParseTypedID("user:1")},
 		},
 		{
 			name:              "should skip setting the default org when identity is nil",
@@ -159,28 +159,28 @@ func TestOrgSync_SetDefaultOrgHook(t *testing.T) {
 		{
 			name:              "should skip setting the default org when input err is not nil",
 			defaultOrgSetting: 2,
-			identity:          &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
+			identity:          &authn.Identity{ID: identity.MustParseTypedID("user:1")},
 			inputErr:          fmt.Errorf("error"),
 		},
 		{
 			name:              "should skip setting the default org when identity is not a user",
 			defaultOrgSetting: 2,
-			identity:          &authn.Identity{ID: authn.MustParseNamespaceID("service-account:1")},
+			identity:          &authn.Identity{ID: identity.MustParseTypedID("service-account:1")},
 		},
 		{
 			name:              "should skip setting the default org when user id is not valid",
 			defaultOrgSetting: 2,
-			identity:          &authn.Identity{ID: authn.MustParseNamespaceID("user:invalid")},
+			identity:          &authn.Identity{ID: identity.MustParseTypedID("user:invalid")},
 		},
 		{
 			name:              "should skip setting the default org when user is not allowed to use the configured default org",
 			defaultOrgSetting: 3,
-			identity:          &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
+			identity:          &authn.Identity{ID: identity.MustParseTypedID("user:1")},
 		},
 		{
 			name:              "should skip setting the default org when validateUsingOrg returns error",
 			defaultOrgSetting: 2,
-			identity:          &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
+			identity:          &authn.Identity{ID: identity.MustParseTypedID("user:1")},
 			setupMock: func(userService *usertest.MockService, orgService *orgtest.FakeOrgService) {
 				orgService.ExpectedError = fmt.Errorf("error")
 			},
@@ -188,7 +188,7 @@ func TestOrgSync_SetDefaultOrgHook(t *testing.T) {
 		{
 			name:              "should skip the hook when the user org update was unsuccessful",
 			defaultOrgSetting: 2,
-			identity:          &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
+			identity:          &authn.Identity{ID: identity.MustParseTypedID("user:1")},
 			setupMock: func(userService *usertest.MockService, orgService *orgtest.FakeOrgService) {
 				userService.On("Update", mock.Anything, mock.Anything).Return(fmt.Errorf("error"))
 			},

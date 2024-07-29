@@ -1,5 +1,6 @@
 import { Box, Button, Space, Stack, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
+import { formatDate } from 'app/core/internationalization/dates';
 
 import { GetSessionApiResponse, GetSnapshotResponseDto } from '../api';
 
@@ -20,7 +21,14 @@ interface MigrationSummaryProps {
   showUploadSnapshot: boolean;
   uploadSnapshotIsLoading: boolean;
   onUploadSnapshot: () => void;
+
+  showRebuildSnapshot: boolean;
 }
+
+const DATE_FORMAT: Intl.DateTimeFormatOptions = {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+};
 
 export function MigrationSummary(props: MigrationSummaryProps) {
   const {
@@ -29,6 +37,7 @@ export function MigrationSummary(props: MigrationSummaryProps) {
     isBusy,
     disconnectIsLoading,
     onDisconnect,
+
     showBuildSnapshot,
     buildSnapshotIsLoading,
     onBuildSnapshot,
@@ -36,11 +45,13 @@ export function MigrationSummary(props: MigrationSummaryProps) {
     showUploadSnapshot,
     uploadSnapshotIsLoading,
     onUploadSnapshot,
+
+    showRebuildSnapshot,
   } = props;
 
-  const totalCount = 0;
-  const errorCount = 0;
-  const successCount = 0;
+  const totalCount = snapshot?.stats?.total ?? 0;
+  const errorCount = snapshot?.stats?.statuses?.['ERROR'] ?? 0;
+  const successCount = snapshot?.stats?.statuses?.['OK'] ?? 0;
 
   return (
     <Box
@@ -55,7 +66,7 @@ export function MigrationSummary(props: MigrationSummaryProps) {
       <Stack gap={4} wrap="wrap">
         <MigrationInfo title={t('migrate-to-cloud.summary.snapshot-date', 'Snapshot timestamp')}>
           {snapshot?.created ? (
-            snapshot?.created
+            formatDate(snapshot.created, DATE_FORMAT)
           ) : (
             <Text color="secondary">
               <Trans i18nKey="migrate-to-cloud.summary.snapshot-not-created">Not yet created</Trans>
@@ -93,6 +104,17 @@ export function MigrationSummary(props: MigrationSummaryProps) {
       {showBuildSnapshot && (
         <Button disabled={isBusy} onClick={onBuildSnapshot} icon={buildSnapshotIsLoading ? 'spinner' : undefined}>
           <Trans i18nKey="migrate-to-cloud.summary.start-migration">Build snapshot</Trans>
+        </Button>
+      )}
+
+      {showRebuildSnapshot && (
+        <Button
+          disabled={isBusy}
+          onClick={onBuildSnapshot}
+          icon={buildSnapshotIsLoading ? 'spinner' : undefined}
+          variant="secondary"
+        >
+          <Trans i18nKey="migrate-to-cloud.summary.rebuild-snapshot">Rebuild snapshot</Trans>
         </Button>
       )}
 
