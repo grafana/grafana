@@ -10,7 +10,6 @@ This module returns a Drone configuration including pipelines and secrets.
 load("scripts/drone/events/cron.star", "cronjobs")
 load("scripts/drone/events/main.star", "main_pipelines")
 load("scripts/drone/events/pr.star", "pr_pipelines")
-load("scripts/drone/events/rrc-patch.star", "rrc_patch_pipelines")
 load(
     "scripts/drone/events/release.star",
     "integration_test_pipelines",
@@ -18,6 +17,7 @@ load(
     "publish_npm_pipelines",
     "publish_packages_pipeline",
 )
+load("scripts/drone/events/rrc-patch.star", "rrc_patch_pipelines")
 load(
     "scripts/drone/pipelines/ci_images.star",
     "publish_ci_windows_test_image_pipeline",
