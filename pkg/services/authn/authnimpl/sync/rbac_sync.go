@@ -113,6 +113,7 @@ func cloudRolesToAddAndRemove(ident *authn.Identity) ([]string, []string, error)
 
 	rolesToAdd := make([]string, 0, expectedRolesToAddCount)
 	rolesToRemove := make([]string, 0, rolesToRemoveInitialCap)
+	addedFixedRoles := make(map[string]bool)
 
 	currentRole := ident.GetOrgRole()
 	_, validRole := fixedCloudRoles[currentRole]
@@ -121,11 +122,19 @@ func cloudRolesToAddAndRemove(ident *authn.Identity) ([]string, []string, error)
 		return nil, nil, errInvalidCloudRole.Errorf("invalid role: %s", currentRole)
 	}
 
+	// First, add roles for the current role and track them
+	for _, fixedRole := range fixedCloudRoles[currentRole] {
+		rolesToAdd = append(rolesToAdd, fixedRole)
+		addedFixedRoles[fixedRole] = true
+	}
+
+	// Now, add roles to remove, ensuring we don't remove any that have been added
 	for role, fixedRoles := range fixedCloudRoles {
+		if role == currentRole {
+			continue
+		}
 		for _, fixedRole := range fixedRoles {
-			if role == currentRole {
-				rolesToAdd = append(rolesToAdd, fixedRole)
-			} else {
+			if !addedFixedRoles[fixedRole] {
 				rolesToRemove = append(rolesToRemove, fixedRole)
 			}
 		}
