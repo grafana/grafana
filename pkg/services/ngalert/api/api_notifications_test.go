@@ -202,7 +202,7 @@ func TestRouteGetReceiversResponses(t *testing.T) {
 			env := createTestEnv(t, testConfig)
 			env.ac = &recordingAccessControlFake{
 				Callback: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
-					if strings.Contains(evaluator.String(), accesscontrol.ActionAlertingProvisioningReadSecrets) {
+					if strings.Contains(evaluator.String(), accesscontrol.ActionAlertingReceiversReadSecrets) {
 						recPermCheck = true
 					}
 					return false, nil
@@ -397,7 +397,7 @@ func createNotificationSrvSutFromEnv(t *testing.T, env *testEnvironment) Notific
 	t.Helper()
 
 	receiverSvc := notifier.NewReceiverService(
-		env.ac,
+		ac.NewReceiverAccess[*models.Receiver](env.ac, false),
 		legacy_storage.NewAlertmanagerConfigStore(env.configs),
 		env.prov,
 		env.secrets,
