@@ -1892,7 +1892,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(env.configs)
 	receiverSvc := notifier.NewReceiverService(
-		ac.NewReceiverAccess(env.ac, true),
+		ac.NewReceiverAccess[*models.Receiver](env.ac, true),
 		configStore,
 		env.prov,
 		env.secrets,

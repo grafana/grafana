@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 )
 
 var (
@@ -71,36 +70,36 @@ var (
 	)
 )
 
-type ReceiverAccess struct {
-	read          actionAccess[*models.Receiver]
-	readDecrypted actionAccess[*models.Receiver]
+type ReceiverAccess[T models.Identified] struct {
+	read          actionAccess[T]
+	readDecrypted actionAccess[T]
 }
 
 // NewReceiverAccess creates a new ReceiverAccess service. If includeProvisioningActions is true, the service will include
 // permissions specific to the provisioning API.
-func NewReceiverAccess(a ac.AccessControl, includeProvisioningActions bool) *ReceiverAccess {
-	rcvAccess := &ReceiverAccess{
-		read: actionAccess[*models.Receiver]{
+func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvisioningActions bool) *ReceiverAccess[T] {
+	rcvAccess := &ReceiverAccess[T]{
+		read: actionAccess[T]{
 			genericService: genericService{
 				ac: a,
 			},
 			resource:      "receiver",
 			action:        "read",
 			authorizeSome: readRedactedReceiversPreConditionsEval,
-			authorizeOne: func(receiver *models.Receiver) ac.Evaluator {
-				return readRedactedReceiverEval(legacy_storage.NameToUid(receiver.Name)) // TODO: Implement stable UID.
+			authorizeOne: func(receiver T) ac.Evaluator {
+				return readRedactedReceiverEval(receiver.GetUID())
 			},
 			authorizeAll: readRedactedAllReceiversEval,
 		},
-		readDecrypted: actionAccess[*models.Receiver]{
+		readDecrypted: actionAccess[T]{
 			genericService: genericService{
 				ac: a,
 			},
 			resource:      "decrypted receiver",
 			action:        "read",
 			authorizeSome: readDecryptedReceiversPreConditionsEval,
-			authorizeOne: func(receiver *models.Receiver) ac.Evaluator {
-				return readDecryptedReceiverEval(legacy_storage.NameToUid(receiver.Name)) // TODO: Implement stable UID.
+			authorizeOne: func(receiver T) ac.Evaluator {
+				return readDecryptedReceiverEval(receiver.GetUID())
 			},
 			authorizeAll: readDecryptedAllReceiversEval,
 		},
@@ -111,10 +110,10 @@ func NewReceiverAccess(a ac.AccessControl, includeProvisioningActions bool) *Rec
 		rcvAccess.read.authorizeSome = ac.EvalAny(provisioningExtraReadRedactedPermissions, rcvAccess.read.authorizeSome)
 		rcvAccess.readDecrypted.authorizeSome = ac.EvalAny(provisioningExtraReadDecryptedPermissions, rcvAccess.readDecrypted.authorizeSome)
 
-		rcvAccess.read.authorizeOne = func(receiver *models.Receiver) ac.Evaluator {
+		rcvAccess.read.authorizeOne = func(receiver T) ac.Evaluator {
 			return ac.EvalAny(provisioningExtraReadRedactedPermissions, rcvAccess.read.authorizeOne(receiver))
 		}
-		rcvAccess.readDecrypted.authorizeOne = func(receiver *models.Receiver) ac.Evaluator {
+		rcvAccess.readDecrypted.authorizeOne = func(receiver T) ac.Evaluator {
 			return ac.EvalAny(provisioningExtraReadDecryptedPermissions, rcvAccess.readDecrypted.authorizeOne(receiver))
 		}
 
@@ -126,49 +125,49 @@ func NewReceiverAccess(a ac.AccessControl, includeProvisioningActions bool) *Rec
 }
 
 // HasList checks if user has access to list redacted receivers. Returns false if user does not have access.
-func (s ReceiverAccess) HasList(ctx context.Context, user identity.Requester) (bool, error) { // TODO: Remove this with fgac.
+func (s ReceiverAccess[T]) HasList(ctx context.Context, user identity.Requester) (bool, error) { // TODO: Remove this with fgac.
 	return s.read.HasAccess(ctx, user, readRedactedReceiversListEval)
 }
 
 // FilterRead filters the given list of receivers based on the read redacted access control permissions of the user.
 // This method is preferred when many receivers need to be checked.
-func (s ReceiverAccess) FilterRead(ctx context.Context, user identity.Requester, receivers ...*models.Receiver) ([]*models.Receiver, error) {
+func (s ReceiverAccess[T]) FilterRead(ctx context.Context, user identity.Requester, receivers ...T) ([]T, error) {
 	return s.read.Filter(ctx, user, receivers...)
 }
 
 // AuthorizeRead checks if user has access to read a redacted receiver. Returns an error if user does not have access.
-func (s ReceiverAccess) AuthorizeRead(ctx context.Context, user identity.Requester, receiver *models.Receiver) error {
+func (s ReceiverAccess[T]) AuthorizeRead(ctx context.Context, user identity.Requester, receiver T) error {
 	return s.read.Authorize(ctx, user, receiver)
 }
 
 // HasRead checks if user has access to read a redacted receiver. Returns false if user does not have access.
-func (s ReceiverAccess) HasRead(ctx context.Context, user identity.Requester, receiver *models.Receiver) (bool, error) {
+func (s ReceiverAccess[T]) HasRead(ctx context.Context, user identity.Requester, receiver T) (bool, error) {
 	return s.read.Has(ctx, user, receiver)
 }
 
 // HasReadAll checks if user has access to read all redacted receivers. Returns false if user does not have access.
-func (s ReceiverAccess) HasReadAll(ctx context.Context, user identity.Requester) (bool, error) { // TODO: Temporary for legacy compatibility.
+func (s ReceiverAccess[T]) HasReadAll(ctx context.Context, user identity.Requester) (bool, error) { // TODO: Temporary for legacy compatibility.
 	return s.read.HasAccess(ctx, user, s.read.authorizeAll)
 }
 
 // FilterReadDecrypted filters the given list of receivers based on the read decrypted access control permissions of the user.
 // This method is preferred when many receivers need to be checked.
-func (s ReceiverAccess) FilterReadDecrypted(ctx context.Context, user identity.Requester, receivers ...*models.Receiver) ([]*models.Receiver, error) {
+func (s ReceiverAccess[T]) FilterReadDecrypted(ctx context.Context, user identity.Requester, receivers ...T) ([]T, error) {
 	return s.readDecrypted.Filter(ctx, user, receivers...)
 }
 
 // AuthorizeReadDecrypted checks if user has access to read a decrypted receiver.
-func (s ReceiverAccess) AuthorizeReadDecrypted(ctx context.Context, user identity.Requester, receiver *models.Receiver) error {
+func (s ReceiverAccess[T]) AuthorizeReadDecrypted(ctx context.Context, user identity.Requester, receiver T) error {
 	return s.readDecrypted.Authorize(ctx, user, receiver)
 }
 
 // HasReadDecrypted checks if user has access to read a decrypted receiver. Returns false if user does not have access.
-func (s ReceiverAccess) HasReadDecrypted(ctx context.Context, user identity.Requester, receiver *models.Receiver) (bool, error) {
+func (s ReceiverAccess[T]) HasReadDecrypted(ctx context.Context, user identity.Requester, receiver T) (bool, error) {
 	return s.readDecrypted.Has(ctx, user, receiver)
 }
 
 // AuthorizeReadDecryptedAll checks if user has access to read all decrypted receiver. Returns an error if user does not have access.
-func (s ReceiverAccess) AuthorizeReadDecryptedAll(ctx context.Context, user identity.Requester) error { // TODO: Temporary for legacy compatibility.
+func (s ReceiverAccess[T]) AuthorizeReadDecryptedAll(ctx context.Context, user identity.Requester) error { // TODO: Temporary for legacy compatibility.
 	return s.readDecrypted.HasAccessOrError(ctx, user, s.readDecrypted.authorizeAll, func() string {
 		return fmt.Sprintf("%s %s", s.readDecrypted.action, s.readDecrypted.resource)
 	})

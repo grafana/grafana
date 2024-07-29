@@ -190,7 +190,7 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secrets.Service) *Receive
 	provisioningStore := fakes.NewFakeProvisioningStore()
 
 	return NewReceiverService(
-		ac.NewReceiverAccess(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), true),
+		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), true),
 		legacy_storage.NewAlertmanagerConfigStore(store),
 		provisioningStore,
 		encryptSvc,

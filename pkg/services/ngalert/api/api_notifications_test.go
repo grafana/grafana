@@ -397,7 +397,7 @@ func createNotificationSrvSutFromEnv(t *testing.T, env *testEnvironment) Notific
 	t.Helper()
 
 	receiverSvc := notifier.NewReceiverService(
-		ac.NewReceiverAccess(env.ac, false),
+		ac.NewReceiverAccess[*models.Receiver](env.ac, false),
 		legacy_storage.NewAlertmanagerConfigStore(env.configs),
 		env.prov,
 		env.secrets,
