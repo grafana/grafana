@@ -281,7 +281,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       queries,
     });
     if (defaultQueries) {
-      console.log('RUN QU 22');
       queryRunner.runQueries();
     }
 
@@ -332,7 +331,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     }
 
     dataObj.setState(dataObjStateUpdate);
-    console.log('RUN QUERIES');
     dataObj.runQueries();
   }
 
