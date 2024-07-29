@@ -64,6 +64,7 @@ describe('TraceQLSearch', () => {
       ],
     },
   } as TempoDatasource;
+  datasource.isStreamingSearchEnabled = () => false;
   datasource.languageProvider = new TempoLanguageProvider(datasource);
   let query: TempoQuery = {
     refId: 'A',
@@ -216,6 +217,7 @@ describe('TraceQLSearch', () => {
         ],
       },
     } as TempoDatasource;
+    datasource.isStreamingSearchEnabled = () => false;
     datasource.languageProvider = new TempoLanguageProvider(datasource);
     await act(async () => {
       const { container } = render(
