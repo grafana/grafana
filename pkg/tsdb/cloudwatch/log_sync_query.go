@@ -57,7 +57,7 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 		getQueryResultsOutput, err := e.syncQuery(ctx, logsClient, q, logsQuery, instance.Settings.LogsTimeout.Duration)
 		var sourceError errorsource.Error
 		if errors.As(err, &sourceError) {
-			resp.Responses[refId] = errorsource.Response(sourceError)
+			errorsource.AddErrorToResponse(refId, resp, sourceError)
 			continue
 		}
 		if err != nil {

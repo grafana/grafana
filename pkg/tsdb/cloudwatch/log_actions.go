@@ -140,12 +140,12 @@ func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 	}
 
 	if logsQuery.LogGroupName == "" {
-		return nil, fmt.Errorf("Error: Parameter 'logGroupName' is required")
+		return nil, errorsource.DownstreamError(fmt.Errorf("Error: Parameter 'logGroupName' is required"), false)
 	}
 	queryRequest.SetLogGroupName(logsQuery.LogGroupName)
 
 	if logsQuery.LogStreamName == "" {
-		return nil, fmt.Errorf("Error: Parameter 'logStreamName' is required")
+		return nil, errorsource.DownstreamError(fmt.Errorf("Error: Parameter 'logStreamName' is required"), false)
 	}
 	queryRequest.SetLogStreamName(logsQuery.LogStreamName)
 
@@ -188,7 +188,7 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 	endTime := timeRange.To
 
 	if !startTime.Before(endTime) {
-		return nil, fmt.Errorf("invalid time range: start time must be before end time")
+		return nil, errorsource.DownstreamError(fmt.Errorf("invalid time range: start time must be before end time"), false)
 	}
 
 	// The fields @log and @logStream are always included in the results of a user's query
@@ -278,8 +278,9 @@ func (e *cloudWatchExecutor) executeStopQuery(ctx context.Context, logsClient cl
 		if errors.As(err, &awsErr) && awsErr.Code() == "InvalidParameterException" {
 			response = &cloudwatchlogs.StopQueryOutput{Success: aws.Bool(false)}
 			err = nil
+		} else {
+			err = errorsource.DownstreamError(err, false)
 		}
-		err = errorsource.DownstreamError(err, false)
 	}
 
 	return response, err

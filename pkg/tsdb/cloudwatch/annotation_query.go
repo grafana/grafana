@@ -36,7 +36,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, pluginC
 	if model.Period != nil && *model.Period != "" {
 		p, err := strconv.ParseInt(*model.Period, 10, 64)
 		if err != nil {
-			return nil, err
+			return nil, errorsource.DownstreamError(fmt.Errorf("query period must be an int"), false)
 		}
 		period = p
 	}
@@ -87,7 +87,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, pluginC
 		alarmNames = filterAlarms(resp, utils.Depointerizer(model.Namespace), metricName, dimensions, statistic, period)
 	} else {
 		if model.Region == nil || model.Namespace == nil || metricName == "" || statistic == "" {
-			return result, errors.New("invalid annotations query")
+			return result, errorsource.DownstreamError(errors.New("invalid annotations query"), false)
 		}
 
 		var qd []*cloudwatch.Dimension
