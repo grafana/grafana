@@ -174,8 +174,12 @@ func InstallAPIs(
 			if err != nil {
 				return nil, err
 			}
-			if currentMode == grafanarest.Mode0 {
+			switch currentMode {
+			case grafanarest.Mode0:
 				return legacy, nil
+			case grafanarest.Mode4:
+				return storage, nil
+			default:
 			}
 			return grafanarest.NewDualWriter(currentMode, legacy, storage, reg, key), nil
 		}
