@@ -189,7 +189,7 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 
 	s.log.Debug(fmt.Sprintf("buildSnapshot: generated keys in %d ms", time.Since(start).Milliseconds()))
 
-	// Use GMS public key + the grafana generated private private key to encrypt snapshot files.
+	// Use GMS public key + the grafana generated private key to encrypt snapshot files.
 	snapshotWriter, err := snapshot.NewSnapshotWriter(contracts.AssymetricKeys{
 		Public:  snapshotMeta.EncryptionKey,
 		Private: privateKey[:],
