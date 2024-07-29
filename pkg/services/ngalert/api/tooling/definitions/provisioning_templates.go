@@ -26,6 +26,7 @@ package definitions
 //     Responses:
 //       202: NotificationTemplate
 //       400: ValidationError
+//       409: GenericPublicError
 
 // swagger:route DELETE /v1/provisioning/templates/{name} provisioning stable RouteDeleteTemplate
 //
@@ -33,12 +34,24 @@ package definitions
 //
 //     Responses:
 //       204: description: The template was deleted successfully.
+//       409: GenericPublicError
 
 // swagger:parameters RouteGetTemplate RoutePutTemplate RouteDeleteTemplate
 type RouteGetTemplateParam struct {
 	// Template Name
 	// in:path
 	Name string `json:"name"`
+}
+
+// swagger:parameters stable RouteDeleteTemplate
+type RouteDeleteTemplateParam struct {
+	// Template name
+	// in:path
+	Name string `json:"name"`
+
+	// Version of template to use for optimistic concurrency. Leave empty to disable validation
+	// in:query
+	Version string `json:"version"`
 }
 
 // swagger:model
