@@ -51,9 +51,10 @@ func newServer(t *testing.T) sql.Backend {
 	return ret
 }
 
-func TestBackendHappyPath(t *testing.T) {
-	// TODO: stop this from breaking enterprise builds https://drone.grafana.net/grafana/grafana-enterprise/73536/2/8
-	t.Skip("test is breaking enterprise builds")
+func TestIntegrationBackendHappyPath(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	ctx := testutil.NewDefaultTestContext(t)
 	store := newServer(t)
@@ -148,9 +149,11 @@ func TestBackendHappyPath(t *testing.T) {
 	})
 }
 
-func TestBackendWatchWriteEventsFromLastest(t *testing.T) {
-	// TODO: stop this from breaking enterprise builds https://drone.grafana.net/grafana/grafana-enterprise/73536/2/8
-	t.Skip("test is breaking enterprise builds")
+func TestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx := testutil.NewDefaultTestContext(t)
 	store := newServer(t)
 
@@ -168,9 +171,11 @@ func TestBackendWatchWriteEventsFromLastest(t *testing.T) {
 	assert.Equal(t, "item2", (<-stream).Key.Name)
 }
 
-func TestBackendPrepareList(t *testing.T) {
-	// TODO: stop this from breaking enterprise builds https://drone.grafana.net/grafana/grafana-enterprise/73536/2/8
-	t.Skip("test is breaking enterprise builds")
+func TestIntegrationBackendPrepareList(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx := testutil.NewDefaultTestContext(t)
 	store := newServer(t)
 
@@ -194,6 +199,13 @@ func TestBackendPrepareList(t *testing.T) {
 		})
 		assert.NoError(t, err)
 		assert.Len(t, res.Items, 5)
+		// should be sorted by resource version DESC
+		assert.Equal(t, "item6 ADDED", string(res.Items[0].Value))
+		assert.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
+		assert.Equal(t, "item5 ADDED", string(res.Items[2].Value))
+		assert.Equal(t, "item4 ADDED", string(res.Items[3].Value))
+		assert.Equal(t, "item1 ADDED", string(res.Items[4].Value))
+
 		assert.Empty(t, res.NextPageToken)
 	})
 
@@ -211,6 +223,9 @@ func TestBackendPrepareList(t *testing.T) {
 		assert.Len(t, res.Items, 3)
 		continueToken, err := sql.GetContinueToken(res.NextPageToken)
 		assert.NoError(t, err)
+		assert.Equal(t, "item6 ADDED", string(res.Items[0].Value))
+		assert.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
+		assert.Equal(t, "item5 ADDED", string(res.Items[2].Value))
 		assert.Equal(t, int64(8), continueToken.ResourceVersion)
 		assert.Equal(t, int64(3), continueToken.StartOffset)
 	})
@@ -227,10 +242,10 @@ func TestBackendPrepareList(t *testing.T) {
 		})
 		assert.NoError(t, err)
 		assert.Len(t, res.Items, 4)
-		assert.Equal(t, "item1 ADDED", string(res.Items[0].Value))
-		assert.Equal(t, "item2 ADDED", string(res.Items[1].Value))
-		assert.Equal(t, "item3 ADDED", string(res.Items[2].Value))
-		assert.Equal(t, "item4 ADDED", string(res.Items[3].Value))
+		assert.Equal(t, "item4 ADDED", string(res.Items[0].Value))
+		assert.Equal(t, "item3 ADDED", string(res.Items[1].Value))
+		assert.Equal(t, "item2 ADDED", string(res.Items[2].Value))
+		assert.Equal(t, "item1 ADDED", string(res.Items[3].Value))
 		assert.Empty(t, res.NextPageToken)
 	})
 
@@ -247,9 +262,9 @@ func TestBackendPrepareList(t *testing.T) {
 		})
 		assert.NoError(t, err)
 		assert.Len(t, res.Items, 3)
-		assert.Equal(t, "item1 ADDED", string(res.Items[0].Value))
-		assert.Equal(t, "item4 ADDED", string(res.Items[1].Value))
-		assert.Equal(t, "item5 ADDED", string(res.Items[2].Value))
+		assert.Equal(t, "item2 MODIFIED", string(res.Items[0].Value))
+		assert.Equal(t, "item5 ADDED", string(res.Items[1].Value))
+		assert.Equal(t, "item4 ADDED", string(res.Items[2].Value))
 
 		continueToken, err := sql.GetContinueToken(res.NextPageToken)
 		assert.NoError(t, err)
@@ -275,7 +290,7 @@ func TestBackendPrepareList(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Len(t, res.Items, 2)
 		assert.Equal(t, "item5 ADDED", string(res.Items[0].Value))
-		assert.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
+		assert.Equal(t, "item4 ADDED", string(res.Items[1].Value))
 
 		continueToken, err = sql.GetContinueToken(res.NextPageToken)
 		assert.NoError(t, err)

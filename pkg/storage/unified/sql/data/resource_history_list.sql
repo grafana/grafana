@@ -25,7 +25,7 @@ SELECT
     ) AS maxkv
     ON maxkv.{{ .Ident "guid" }}  = kv.{{ .Ident "guid" }} 
     WHERE kv.{{ .Ident "action" }}  != 3 
-    ORDER BY kv.{{ .Ident "resource_version" }} ASC
+    ORDER BY kv.{{ .Ident "resource_version" }} DESC
     {{ if (gt .Request.Limit 0) }}
     LIMIT {{ .Arg .Request.Offset }}, {{ .Arg .Request.Limit }}
     {{ end }}
