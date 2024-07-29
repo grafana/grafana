@@ -11,6 +11,7 @@ import {
   LoadingState,
   ThresholdsConfig,
   GrafanaTheme2,
+  TimeRange,
 } from '@grafana/data';
 import {
   GraphThresholdsStyleConfig,
@@ -38,7 +39,7 @@ interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
   data: DataFrame[];
   annotations?: DataFrame[];
   eventBus: EventBus;
-  absoluteRange: AbsoluteTimeRange;
+  timeRange: TimeRange;
   timeZone: TimeZone;
   onChangeTime: (absoluteRange: AbsoluteTimeRange) => void;
   splitOpenFn: SplitOpen;
@@ -52,7 +53,7 @@ export const GraphContainer = ({
   eventBus,
   height,
   width,
-  absoluteRange,
+  timeRange,
   timeZone,
   annotations,
   onChangeTime,
@@ -112,7 +113,7 @@ export const GraphContainer = ({
           data={slicedData}
           height={innerHeight}
           width={innerWidth}
-          absoluteRange={absoluteRange}
+          timeRange={timeRange}
           onChangeTime={onChangeTime}
           timeZone={timeZone}
           annotations={annotations}
