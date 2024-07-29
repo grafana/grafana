@@ -81,11 +81,6 @@ function useGetLatestSnapshot(sessionUid?: string, page = 1) {
     skipPollingIfUnfocused: true,
   });
 
-  // If the GetSnapshot query is still returning cached data for a snapshot that's no longer the latest,
-  // consider it as 'stale' and don't show it
-  const snapshotIsStale = snapshotResult.data?.uid !== lastItem?.uid;
-  const snapshotData = snapshotIsStale ? undefined : snapshotResult.data;
-
   useEffect(() => {
     const shouldPoll = SHOULD_POLL_STATUSES.includes(snapshotResult.data?.status);
     setShouldPoll(shouldPoll);
@@ -93,14 +88,13 @@ function useGetLatestSnapshot(sessionUid?: string, page = 1) {
 
   return {
     ...snapshotResult,
-    data: snapshotData,
 
     error: listResult.error || snapshotResult.error,
 
     // isSuccess and isUninitialised should always be from snapshotResult
     // as only the 'final' values from those are important
     isError: listResult.isError || snapshotResult.isError,
-    isLoading: listResult.isLoading || snapshotResult.isLoading || snapshotIsStale,
+    isLoading: listResult.isLoading || snapshotResult.isLoading,
     isFetching: listResult.isFetching || snapshotResult.isFetching,
   };
 }
