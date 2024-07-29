@@ -3,10 +3,6 @@ This module returns all the pipelines used in the event of pushes to an RRC bran
 """
 
 load(
-    "scripts/drone/utils/utils.star",
-    "pipeline",
-)
-load(
     "scripts/drone/pipelines/integration_tests.star",
     "integration_tests",
 )
@@ -29,6 +25,10 @@ load(
 load(
     "scripts/drone/steps/lib.star",
     "enterprise_downstream_step",
+)
+load(
+    "scripts/drone/utils/utils.star",
+    "pipeline",
 )
 
 ver_mode = "rrc"
