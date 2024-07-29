@@ -1,4 +1,4 @@
-package provisioning
+package legacy_storage
 
 import (
 	"context"
@@ -13,7 +13,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
+
+var defaultConfig = setting.GetAlertmanagerDefaultConfiguration()
 
 func TestAlertmanagerConfigStoreGet(t *testing.T) {
 	orgID := int64(1)
@@ -40,9 +43,9 @@ func TestAlertmanagerConfigStoreGet(t *testing.T) {
 		revision, err := store.Get(context.Background(), orgID)
 		require.NoError(t, err)
 
-		require.Equal(t, expected.ConfigurationVersion, revision.version)
-		require.Equal(t, expected.ConfigurationHash, revision.concurrencyToken)
-		require.Equal(t, expectedCfg, *revision.cfg)
+		require.Equal(t, expected.ConfigurationVersion, revision.Version)
+		require.Equal(t, expected.ConfigurationHash, revision.ConcurrencyToken)
+		require.Equal(t, expectedCfg, *revision.Config)
 
 		storeMock.AssertCalled(t, "GetLatestAlertmanagerConfiguration", mock.Anything, orgID)
 	})
@@ -85,13 +88,13 @@ func TestAlertmanagerConfigStoreSave(t *testing.T) {
 
 	cfg := definitions.PostableUserConfig{}
 	require.NoError(t, json.Unmarshal([]byte(defaultConfig), &cfg))
-	expectedCfg, err := serializeAlertmanagerConfig(cfg)
+	expectedCfg, err := SerializeAlertmanagerConfig(cfg)
 	require.NoError(t, err)
 
-	revision := cfgRevision{
-		cfg:              &cfg,
-		concurrencyToken: "config-hash-123",
-		version:          "123",
+	revision := ConfigRevision{
+		Config:           &cfg,
+		ConcurrencyToken: "config-hash-123",
+		Version:          "123",
 	}
 
 	t.Run("should save the config to store", func(t *testing.T) {
@@ -101,9 +104,9 @@ func TestAlertmanagerConfigStoreSave(t *testing.T) {
 		storeMock.EXPECT().UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
 			assert.Equal(t, string(expectedCfg), cmd.AlertmanagerConfiguration)
 			assert.Equal(t, orgID, cmd.OrgID)
-			assert.Equal(t, revision.version, cmd.ConfigurationVersion)
+			assert.Equal(t, revision.Version, cmd.ConfigurationVersion)
 			assert.Equal(t, false, cmd.Default)
-			assert.Equal(t, revision.concurrencyToken, cmd.FetchedConfigurationHash)
+			assert.Equal(t, revision.ConcurrencyToken, cmd.FetchedConfigurationHash)
 			return nil
 		})
 

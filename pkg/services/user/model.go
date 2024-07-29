@@ -98,6 +98,19 @@ type UpdateUserLastSeenAtCommand struct {
 	OrgID  int64
 }
 
+type ListUsersCommand struct {
+	OrgID            int64
+	Limit            int64
+	ContinueID       int64
+	IsServiceAccount bool
+}
+
+type ListUserResult struct {
+	Users      []*User
+	ContinueID int64
+	RV         int64
+}
+
 type SearchUsersQuery struct {
 	SignedInUser identity.Requester
 	OrgID        int64 `xorm:"org_id"`
@@ -120,7 +133,7 @@ type SearchUserQueryResult struct {
 
 type UserSearchHitDTO struct {
 	ID            int64                `json:"id" xorm:"id"`
-	UID           string               `json:"uid" xorm:"id"`
+	UID           string               `json:"uid" xorm:"uid"`
 	Name          string               `json:"name"`
 	Login         string               `json:"login"`
 	Email         string               `json:"email"`
@@ -204,6 +217,11 @@ type DeleteUserCommand struct {
 
 type GetUserByIDQuery struct {
 	ID int64
+}
+
+type GetUserByUIDQuery struct {
+	OrgID int64
+	UID   string
 }
 
 type StartVerifyEmailCommand struct {

@@ -3,15 +3,16 @@ import { useId } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Modal, Button, Stack, TextLink, Field, Input, Text, useStyles2, Alert } from '@grafana/ui';
+import { Modal, Button, Stack, TextLink, Field, Input, Text, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
+import { AlertWithTraceID } from 'app/features/migrate-to-cloud/shared/AlertWithTraceID';
 
 import { CreateSessionApiArg } from '../../../api';
 
 interface Props {
   isOpen: boolean;
   isLoading: boolean;
-  isError: boolean;
+  error: unknown;
   hideModal: () => void;
   onConfirm: (connectStackData: CreateSessionApiArg) => Promise<unknown>;
 }
@@ -20,7 +21,7 @@ interface FormData {
   token: string;
 }
 
-export const ConnectModal = ({ isOpen, isLoading, isError, hideModal, onConfirm }: Props) => {
+export const ConnectModal = ({ isOpen, isLoading, error, hideModal, onConfirm }: Props) => {
   const tokenId = useId();
   const styles = useStyles2(getStyles);
 
@@ -94,16 +95,17 @@ export const ConnectModal = ({ isOpen, isLoading, isError, hideModal, onConfirm 
               </Trans>
             </div>
 
-            {isError && (
-              <Alert
+            {error ? (
+              <AlertWithTraceID
+                error={error}
                 severity="error"
                 title={t('migrate-to-cloud.connect-modal.token-error-title', 'Error saving token')}
               >
                 <Trans i18nKey="migrate-to-cloud.connect-modal.token-error-description">
                   There was an error saving the token. See the Grafana server logs for more details.
                 </Trans>
-              </Alert>
-            )}
+              </AlertWithTraceID>
+            ) : undefined}
 
             <Field
               className={styles.field}
