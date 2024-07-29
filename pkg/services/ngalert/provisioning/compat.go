@@ -46,7 +46,7 @@ func PostableGrafanaReceiverToEmbeddedContactPoint(contactPoint *definitions.Pos
 	return embeddedContactPoint, nil
 }
 
-func GettableGrafanaReceiverToEmbeddedContactPoint(r *definitions.GettableGrafanaReceiver) (definitions.EmbeddedContactPoint, error) {
+func GrafanaIntegrationConfigToEmbeddedContactPoint(r *alertingNotify.GrafanaIntegrationConfig, provenance models.Provenance) (definitions.EmbeddedContactPoint, error) {
 	settingJson := simplejson.New()
 	if r.Settings != nil {
 		var err error
@@ -56,9 +56,9 @@ func GettableGrafanaReceiverToEmbeddedContactPoint(r *definitions.GettableGrafan
 		}
 	}
 
-	for k := range r.SecureFields {
-		if settingJson.Get(k).MustString() == "" {
-			settingJson.Set(k, definitions.RedactedValue)
+	for k, v := range r.SecureSettings {
+		if v != "" {
+			settingJson.Set(k, v)
 		}
 	}
 
@@ -68,6 +68,6 @@ func GettableGrafanaReceiverToEmbeddedContactPoint(r *definitions.GettableGrafan
 		Type:                  r.Type,
 		DisableResolveMessage: r.DisableResolveMessage,
 		Settings:              settingJson,
-		Provenance:            string(r.Provenance),
+		Provenance:            string(provenance),
 	}, nil
 }

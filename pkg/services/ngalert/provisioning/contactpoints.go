@@ -39,7 +39,7 @@ type ContactPointService struct {
 }
 
 type receiverService interface {
-	GetReceivers(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]apimodels.GettableApiReceiver, error)
+	GetReceivers(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error)
 }
 
 func NewContactPointService(store alertmanagerConfigStore, encryptionService secrets.Service,
@@ -78,23 +78,19 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 	if err != nil {
 		return nil, convertRecSvcErr(err)
 	}
-	grafanaReceivers := []*apimodels.GettableGrafanaReceiver{}
 	if q.Name != "" && len(res) > 0 {
-		grafanaReceivers = res[0].GettableGrafanaReceivers.GrafanaManagedReceivers // we only expect one receiver group
-	} else {
-		for _, r := range res {
-			grafanaReceivers = append(grafanaReceivers, r.GettableGrafanaReceivers.GrafanaManagedReceivers...)
-		}
+		res = []*models.Receiver{res[0]} // we only expect one receiver group
 	}
 
-	contactPoints := make([]apimodels.EmbeddedContactPoint, len(grafanaReceivers))
-	for i, gr := range grafanaReceivers {
-		contactPoint, err := GettableGrafanaReceiverToEmbeddedContactPoint(gr)
-		if err != nil {
-			return nil, err
+	contactPoints := make([]apimodels.EmbeddedContactPoint, 0, len(res))
+	for _, recv := range res {
+		for _, gr := range recv.Integrations {
+			contactPoint, err := GrafanaIntegrationConfigToEmbeddedContactPoint(gr, recv.Provenance)
+			if err != nil {
+				return nil, err
+			}
+			contactPoints = append(contactPoints, contactPoint)
 		}
-
-		contactPoints[i] = contactPoint
 	}
 
 	sort.SliceStable(contactPoints, func(i, j int) bool {

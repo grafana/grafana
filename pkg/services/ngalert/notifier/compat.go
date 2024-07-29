@@ -3,15 +3,49 @@ package notifier
 import (
 	"encoding/json"
 
-	"github.com/prometheus/alertmanager/config"
-
 	alertingNotify "github.com/grafana/alerting/notify"
 	alertingTemplates "github.com/grafana/alerting/templates"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 )
+
+func PostableApiReceiversToReceivers(postables []*apimodels.PostableApiReceiver, storedProvenances map[string]models.Provenance) []*models.Receiver {
+	receivers := make([]*models.Receiver, 0, len(postables))
+	for _, postable := range postables {
+		receivers = append(receivers, PostableApiReceiverToReceiver(postable, getReceiverProvenance(storedProvenances, postable)))
+	}
+	return receivers
+}
+
+func PostableApiReceiverToReceiver(postable *apimodels.PostableApiReceiver, provenance models.Provenance) *models.Receiver {
+	apireceiver := PostableApiReceiverToApiReceiver(postable)
+	return &models.Receiver{
+		UID:          legacy_storage.NameToUid(postable.GetName()), // TODO replace with stable UID.
+		Name:         postable.GetName(),
+		Integrations: apireceiver.Integrations,
+		Provenance:   provenance,
+	}
+}
+
+// getReceiverProvenance determines the provenance of a definitions.PostableApiReceiver based on the provenance of its integrations.
+func getReceiverProvenance(storedProvenances map[string]models.Provenance, r *apimodels.PostableApiReceiver) models.Provenance {
+	if len(r.GrafanaManagedReceivers) == 0 {
+		return models.ProvenanceNone
+	}
+
+	// Current provisioning works on the integration level, so we need some way to determine the provenance of the
+	// entire receiver. All integrations in a receiver should have the same provenance, but we don't want to rely on
+	// this assumption in case the first provenance is None and a later one is not. To this end, we return the first
+	// non-zero provenance we find.
+	for _, contactPoint := range r.GrafanaManagedReceivers {
+		if p, exists := storedProvenances[contactPoint.UID]; exists && p != models.ProvenanceNone {
+			return p
+		}
+	}
+	return models.ProvenanceNone
+}
 
 func PostableGrafanaReceiverToGrafanaIntegrationConfig(p *apimodels.PostableGrafanaReceiver) *alertingNotify.GrafanaIntegrationConfig {
 	return &alertingNotify.GrafanaIntegrationConfig{
@@ -44,75 +78,6 @@ func PostableApiAlertingConfigToApiReceivers(c apimodels.PostableApiAlertingConf
 		apiReceivers = append(apiReceivers, PostableApiReceiverToApiReceiver(receiver))
 	}
 	return apiReceivers
-}
-
-func PostableToGettableGrafanaReceiver(r *apimodels.PostableGrafanaReceiver, provenance *models.Provenance) (apimodels.GettableGrafanaReceiver, error) {
-	out := apimodels.GettableGrafanaReceiver{
-		UID:                   r.UID,
-		Name:                  r.Name,
-		Type:                  r.Type,
-		DisableResolveMessage: r.DisableResolveMessage,
-		SecureFields:          make(map[string]bool, len(r.SecureSettings)),
-	}
-	if provenance != nil {
-		out.Provenance = apimodels.Provenance(*provenance)
-	}
-
-	if r.Settings == nil && r.SecureSettings == nil {
-		return out, nil
-	}
-
-	settings := simplejson.New()
-	if r.Settings != nil {
-		var err error
-		settings, err = simplejson.NewJson(r.Settings)
-		if err != nil {
-			return apimodels.GettableGrafanaReceiver{}, err
-		}
-	}
-
-	for k, v := range r.SecureSettings {
-		if v == "" {
-			continue
-		}
-		settings.Set(k, v)
-		out.SecureFields[k] = true
-	}
-
-	jsonBytes, err := settings.MarshalJSON()
-	if err != nil {
-		return apimodels.GettableGrafanaReceiver{}, err
-	}
-
-	out.Settings = jsonBytes
-
-	return out, nil
-}
-
-func PostableToGettableApiReceiver(r *apimodels.PostableApiReceiver, provenances map[string]models.Provenance) (apimodels.GettableApiReceiver, error) {
-	out := apimodels.GettableApiReceiver{
-		Receiver: config.Receiver{
-			Name: r.Receiver.Name,
-		},
-		GettableGrafanaReceivers: apimodels.GettableGrafanaReceivers{
-			GrafanaManagedReceivers: make([]*apimodels.GettableGrafanaReceiver, 0, len(r.GrafanaManagedReceivers)),
-		},
-	}
-
-	for _, gr := range r.GrafanaManagedReceivers {
-		var prov *models.Provenance
-		if p, ok := provenances[gr.UID]; ok {
-			prov = &p
-		}
-
-		gettable, err := PostableToGettableGrafanaReceiver(gr, prov)
-		if err != nil {
-			return apimodels.GettableApiReceiver{}, err
-		}
-		out.GrafanaManagedReceivers = append(out.GrafanaManagedReceivers, &gettable)
-	}
-
-	return out, nil
 }
 
 // ToTemplateDefinitions converts the given PostableUserConfig's TemplateFiles to a slice of TemplateDefinitions.

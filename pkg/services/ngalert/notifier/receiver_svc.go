@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 
-	"github.com/grafana/alerting/definition"
+	"github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -77,37 +77,38 @@ func NewReceiverService(
 
 // GetReceiver returns a receiver by name.
 // The receiver's secure settings are decrypted if requested and the user has access to do so.
-func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiverQuery, user identity.Requester) (definitions.GettableApiReceiver, error) {
+func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiverQuery, user identity.Requester) (*models.Receiver, error) {
 	revision, err := rs.cfgStore.Get(ctx, q.OrgID)
 	if err != nil {
-		return definitions.GettableApiReceiver{}, err
+		return nil, err
 	}
 	postable := revision.GetReceiver(legacy_storage.NameToUid(q.Name))
 	if postable == nil {
-		return definitions.GettableApiReceiver{}, ErrReceiverNotFound.Errorf("")
+		return nil, ErrReceiverNotFound.Errorf("")
 	}
+
+	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
+	if err != nil {
+		return nil, err
+	}
+	rcv := PostableApiReceiverToReceiver(postable, getReceiverProvenance(storedProvenances, postable))
 
 	auth := rs.authz.AuthorizeReadDecrypted
 	if !q.Decrypt {
 		auth = rs.authz.AuthorizeRead
 	}
-	if err := auth(ctx, user, postable); err != nil {
-		return definitions.GettableApiReceiver{}, err
+	if err := auth(ctx, user, rcv); err != nil {
+		return nil, err
 	}
 
-	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
-	if err != nil {
-		return definitions.GettableApiReceiver{}, err
-	}
+	rs.decryptOrRedactSecureSettings(ctx, rcv, q.Decrypt)
 
-	rs.decryptOrRedactSecureSettings(ctx, postable, q.Decrypt)
-
-	return PostableToGettableApiReceiver(postable, storedProvenances)
+	return rcv, nil
 }
 
 // GetReceivers returns a list of receivers a user has access to.
 // Receivers can be filtered by name, and secure settings are decrypted if requested and the user has access to do so.
-func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceiversQuery, user identity.Requester) ([]definitions.GettableApiReceiver, error) {
+func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error) {
 	uids := make([]string, 0, len(q.Names))
 	for _, name := range q.Names {
 		uids = append(uids, legacy_storage.NameToUid(name))
@@ -119,38 +120,26 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	}
 	postables := revision.GetReceivers(uids)
 
-	filterFn := rs.authz.FilterReadDecrypted
-	if !q.Decrypt {
-		filterFn = rs.authz.FilterRead
-	}
-	filtered, err := filterFn(ctx, user, postables...)
-	if err != nil {
-		return nil, err
-	}
-
 	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
 	if err != nil {
 		return nil, err
 	}
+	receivers := PostableApiReceiversToReceivers(postables, storedProvenances)
 
-	var output []definitions.GettableApiReceiver
-	for i := q.Offset; i < len(filtered); i++ {
-		r := filtered[i]
-
-		rs.decryptOrRedactSecureSettings(ctx, r, q.Decrypt)
-		res, err := PostableToGettableApiReceiver(r, storedProvenances)
-		if err != nil {
-			return nil, err
-		}
-
-		output = append(output, res)
-		// stop if we have reached the limit or we have found all the requested receivers
-		if (len(output) == q.Limit && q.Limit > 0) || (len(output) == len(q.Names)) {
-			break
-		}
+	filterFn := rs.authz.FilterReadDecrypted
+	if !q.Decrypt {
+		filterFn = rs.authz.FilterRead
+	}
+	filtered, err := filterFn(ctx, user, receivers...)
+	if err != nil {
+		return nil, err
 	}
 
-	return output, nil
+	for _, r := range filtered {
+		rs.decryptOrRedactSecureSettings(ctx, r, q.Decrypt)
+	}
+
+	return limitOffset(filtered, q.Offset, q.Limit), nil
 }
 
 // ListReceivers returns a list of receivers a user has access to.
@@ -158,7 +147,7 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 // This offers an looser permissions compared to GetReceivers. When a user doesn't have read access it will check for list access instead of returning an empty list.
 // If the users has list access, all receiver settings will be removed from the response. This option is for backwards compatibility with the v1/receivers endpoint
 // and should be removed when FGAC is fully implemented.
-func (rs *ReceiverService) ListReceivers(ctx context.Context, q models.ListReceiversQuery, user identity.Requester) ([]definitions.GettableApiReceiver, error) { // TODO: Remove this method with FGAC.
+func (rs *ReceiverService) ListReceivers(ctx context.Context, q models.ListReceiversQuery, user identity.Requester) ([]*models.Receiver, error) { // TODO: Remove this method with FGAC.
 	listAccess, err := rs.authz.HasList(ctx, user)
 	if err != nil {
 		return nil, err
@@ -175,43 +164,30 @@ func (rs *ReceiverService) ListReceivers(ctx context.Context, q models.ListRecei
 	}
 	postables := revision.GetReceivers(uids)
 
-	if !listAccess {
-		var err error
-		postables, err = rs.authz.FilterRead(ctx, user, postables...)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
 	if err != nil {
 		return nil, err
 	}
+	receivers := PostableApiReceiversToReceivers(postables, storedProvenances)
 
-	var output []definitions.GettableApiReceiver
-	for i := q.Offset; i < len(postables); i++ {
-		r := postables[i]
+	if !listAccess {
+		var err error
+		receivers, err = rs.authz.FilterRead(ctx, user, receivers...)
+		if err != nil {
+			return nil, err
+		}
+	}
 
-		// Remove settings.
-		for _, integration := range r.GrafanaManagedReceivers {
+	// Remove settings.
+	for _, r := range receivers {
+		for _, integration := range r.Integrations {
 			integration.Settings = nil
 			integration.SecureSettings = nil
 			integration.DisableResolveMessage = false
 		}
-
-		res, err := PostableToGettableApiReceiver(r, storedProvenances)
-		if err != nil {
-			return nil, err
-		}
-
-		output = append(output, res)
-		// stop if we have reached the limit or we have found all the requested receivers
-		if (len(output) == q.Limit && q.Limit > 0) || (len(output) == len(q.Names)) {
-			break
-		}
 	}
 
-	return output, nil
+	return limitOffset(receivers, q.Offset, q.Limit), nil
 }
 
 // DeleteReceiver deletes a receiver by uid.
@@ -227,18 +203,19 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, orgID
 		return ErrReceiverNotFound.Errorf("")
 	}
 
-	// TODO: Implement + check optimistic concurrency.
-
-	storedProvenance, err := rs.getContactPointProvenance(ctx, postable, orgID)
+	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, orgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
 	if err != nil {
 		return err
 	}
+	existing := PostableApiReceiverToReceiver(postable, getReceiverProvenance(storedProvenances, postable))
 
-	if err := rs.validator(storedProvenance, models.Provenance(callerProvenance)); err != nil {
+	// TODO: Implement + check optimistic concurrency.
+
+	if err := rs.validator(existing.Provenance, models.Provenance(callerProvenance)); err != nil {
 		return err
 	}
 
-	usedByRoutes := revision.ReceiverNameUsedByRoutes(postable.GetName())
+	usedByRoutes := revision.ReceiverNameUsedByRoutes(existing.Name)
 	usedByRules, err := rs.UsedByRules(ctx, orgID, uid)
 	if err != nil {
 		return err
@@ -255,16 +232,16 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, orgID
 		if err != nil {
 			return err
 		}
-		return rs.deleteProvenances(ctx, orgID, postable.GrafanaManagedReceivers)
+		return rs.deleteProvenances(ctx, orgID, existing.Integrations)
 	})
 }
 
-func (rs *ReceiverService) CreateReceiver(ctx context.Context, r definitions.GettableApiReceiver, orgID int64) (definitions.GettableApiReceiver, error) {
+func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receiver, orgID int64) (*models.Receiver, error) {
 	// TODO: Stub
 	panic("not implemented")
 }
 
-func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r definitions.GettableApiReceiver, orgID int64) (definitions.GettableApiReceiver, error) {
+func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receiver, orgID int64) (*models.Receiver, error) {
 	// TODO: Stub
 	panic("not implemented")
 }
@@ -274,7 +251,7 @@ func (rs *ReceiverService) UsedByRules(ctx context.Context, orgID int64, uid str
 	return []models.AlertRuleKey{}, nil
 }
 
-func (rs *ReceiverService) deleteProvenances(ctx context.Context, orgID int64, integrations []*definition.PostableGrafanaReceiver) error {
+func (rs *ReceiverService) deleteProvenances(ctx context.Context, orgID int64, integrations []*notify.GrafanaIntegrationConfig) error {
 	// Delete provenance for all integrations.
 	for _, integration := range integrations {
 		target := definitions.EmbeddedContactPoint{UID: integration.UID}
@@ -326,27 +303,21 @@ func (rs *ReceiverService) redactor() decryptFn {
 
 type decryptFn = func(value string) (string, error)
 
-// getContactPointProvenance determines the provenance of a definitions.PostableApiReceiver based on the provenance of its integrations.
-func (rs *ReceiverService) getContactPointProvenance(ctx context.Context, r *definitions.PostableApiReceiver, orgID int64) (models.Provenance, error) {
-	if len(r.GrafanaManagedReceivers) == 0 {
-		return models.ProvenanceNone, nil
+// limitOffset returns a subslice of items with the given offset and limit. Returns the same underlying array, not a copy.
+func limitOffset[T any](items []T, offset, limit int) []T {
+	if limit == 0 && offset == 0 {
+		return items
 	}
-
-	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, orgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
-	if err != nil {
-		return "", err
+	if offset >= len(items) {
+		return nil
 	}
-
-	// Current provisioning works on the integration level, so we need some way to determine the provenance of the
-	// entire receiver. All integrations in a receiver should have the same provenance, but we don't want to rely on
-	// this assumption in case the first provenance is None and a later one is not. To this end, we return the first
-	// non-zero provenance we find.
-	for _, contactPoint := range r.GrafanaManagedReceivers {
-		if p, exists := storedProvenances[contactPoint.UID]; exists && p != models.ProvenanceNone {
-			return p, nil
-		}
+	if offset+limit >= len(items) {
+		return items[offset:]
 	}
-	return models.ProvenanceNone, nil
+	if limit == 0 {
+		limit = len(items) - offset
+	}
+	return items[offset : offset+limit]
 }
 
 func makeReceiverInUseErr(usedByRoutes bool, rules []models.AlertRuleKey) error {

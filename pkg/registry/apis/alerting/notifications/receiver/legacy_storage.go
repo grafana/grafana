@@ -25,10 +25,10 @@ var (
 var resourceInfo = notifications.ReceiverResourceInfo
 
 type ReceiverService interface {
-	GetReceiver(ctx context.Context, q models.GetReceiverQuery, user identity.Requester) (definitions.GettableApiReceiver, error)
-	GetReceivers(ctx context.Context, q models.GetReceiversQuery, user identity.Requester) ([]definitions.GettableApiReceiver, error)
-	CreateReceiver(ctx context.Context, r definitions.GettableApiReceiver, orgID int64) (definitions.GettableApiReceiver, error) // TODO: Uses Gettable for Write, consider creating new struct.
-	UpdateReceiver(ctx context.Context, r definitions.GettableApiReceiver, orgID int64) (definitions.GettableApiReceiver, error) // TODO: Uses Gettable for Write, consider creating new struct.
+	GetReceiver(ctx context.Context, q models.GetReceiverQuery, user identity.Requester) (*models.Receiver, error)
+	GetReceivers(ctx context.Context, q models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error)
+	CreateReceiver(ctx context.Context, r *models.Receiver, orgID int64) (*models.Receiver, error)
+	UpdateReceiver(ctx context.Context, r *models.Receiver, orgID int64) (*models.Receiver, error)
 	DeleteReceiver(ctx context.Context, name string, orgID int64, provenance definitions.Provenance, version string) error
 }
 
@@ -67,11 +67,11 @@ func (s *legacyStorage) List(ctx context.Context, _ *internalversion.ListOptions
 	}
 
 	q := models.GetReceiversQuery{
-		OrgID: orgId,
+		OrgID:   orgId,
+		Decrypt: false,
 		//Names:   ctx.QueryStrings("names"), // TODO: Query params.
 		//Limit:   ctx.QueryInt("limit"),
 		//Offset:  ctx.QueryInt("offset"),
-		//Decrypt: ctx.QueryBool("decrypt"),
 	}
 
 	user, err := identity.GetRequester(ctx)
@@ -94,8 +94,8 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 	}
 
 	q := models.GetReceiversQuery{
-		OrgID: info.OrgID,
-		//Decrypt: ctx.QueryBool("decrypt"), // TODO: Query params.
+		OrgID:   info.OrgID,
+		Decrypt: false,
 	}
 
 	user, err := identity.GetRequester(ctx)
@@ -109,7 +109,7 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 	}
 
 	for _, r := range res {
-		if getUID(r) == uid {
+		if r.GetUID() == uid {
 			return convertToK8sResource(info.OrgID, r, s.namespacer)
 		}
 	}
@@ -184,7 +184,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return old, false, err
 	}
 
-	if p.ObjectMeta.Name != getUID(model) {
+	if p.ObjectMeta.Name != model.GetUID() {
 		return nil, false, errors.NewBadRequest("title cannot be changed. Consider creating a new resource.")
 	}
 

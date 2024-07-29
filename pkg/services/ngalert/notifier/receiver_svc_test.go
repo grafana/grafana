@@ -43,8 +43,8 @@ func TestReceiverService_GetReceiver(t *testing.T) {
 		Receiver, err := sut.GetReceiver(context.Background(), singleQ(1, "slack receiver"), redactedUser)
 		require.NoError(t, err)
 		require.Equal(t, "slack receiver", Receiver.Name)
-		require.Len(t, Receiver.GrafanaManagedReceivers, 1)
-		require.Equal(t, "UID2", Receiver.GrafanaManagedReceivers[0].UID)
+		require.Len(t, Receiver.Integrations, 1)
+		require.Equal(t, "UID2", Receiver.Integrations[0].UID)
 	})
 
 	t.Run("service returns error when receiver does not exist", func(t *testing.T) {
@@ -143,7 +143,7 @@ func TestReceiverService_DecryptRedact(t *testing.T) {
 			t.Run(fmt.Sprintf("%s %s", tc.name, method), func(t *testing.T) {
 				sut := createReceiverServiceSut(t, secretsService)
 
-				var res definitions.GettableApiReceiver
+				var res *models.Receiver
 				var err error
 				if method == "single" {
 					q := singleQ(1, "slack receiver")
@@ -152,7 +152,7 @@ func TestReceiverService_DecryptRedact(t *testing.T) {
 				} else {
 					q := multiQ(1, "slack receiver")
 					q.Decrypt = tc.decrypt
-					var multiRes []definitions.GettableApiReceiver
+					var multiRes []*models.Receiver
 					multiRes, err = sut.GetReceivers(context.Background(), q, tc.user)
 					if tc.err == "" {
 						require.Len(t, multiRes, 1)
@@ -167,15 +167,20 @@ func TestReceiverService_DecryptRedact(t *testing.T) {
 
 				if tc.err == "" {
 					require.Equal(t, "slack receiver", res.Name)
-					require.Len(t, res.GrafanaManagedReceivers, 1)
-					require.Equal(t, "UID2", res.GrafanaManagedReceivers[0].UID)
+					require.Len(t, res.Integrations, 1)
+					require.Equal(t, "UID2", res.Integrations[0].UID)
 
-					testedSettings, err := simplejson.NewJson([]byte(res.GrafanaManagedReceivers[0].Settings))
-					require.NoError(t, err)
+					testedSecureSettings := res.Integrations[0].SecureSettings
 					if tc.decrypt {
-						require.Equal(t, "secure url", testedSettings.Get("url").MustString())
+						require.Equal(t, "secure url", testedSecureSettings["url"])
 					} else {
-						require.Equal(t, definitions.RedactedValue, testedSettings.Get("url").MustString())
+						require.Equal(t, definitions.RedactedValue, testedSecureSettings["url"])
+					}
+
+					testedSettings, err := simplejson.NewJson(res.Integrations[0].Settings)
+					require.NoError(t, err)
+					if _, ok := testedSettings.CheckGet("secure url"); ok {
+						t.Fatalf("expected secure url to not be present in normal settings, got %v", testedSettings.Get("secure url"))
 					}
 				}
 			})

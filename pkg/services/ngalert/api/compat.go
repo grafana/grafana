@@ -5,9 +5,12 @@ import (
 	"encoding/json"
 	"time"
 
+	alertingNotify "github.com/grafana/alerting/notify"
 	jsoniter "github.com/json-iterator/go"
+	amConfig "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
@@ -484,4 +487,77 @@ func ApiRecordFromModelRecord(r *models.Record) *definitions.Record {
 		Metric: r.Metric,
 		From:   r.From,
 	}
+}
+
+func GettableGrafanaReceiverFromReceiver(r *alertingNotify.GrafanaIntegrationConfig, provenance models.Provenance) (definitions.GettableGrafanaReceiver, error) {
+	out := definitions.GettableGrafanaReceiver{
+		UID:                   r.UID,
+		Name:                  r.Name,
+		Type:                  r.Type,
+		Provenance:            definitions.Provenance(provenance),
+		DisableResolveMessage: r.DisableResolveMessage,
+		SecureFields:          make(map[string]bool, len(r.SecureSettings)),
+	}
+
+	if r.Settings == nil && r.SecureSettings == nil {
+		return out, nil
+	}
+
+	settings := simplejson.New()
+	if r.Settings != nil {
+		var err error
+		settings, err = simplejson.NewJson(r.Settings)
+		if err != nil {
+			return definitions.GettableGrafanaReceiver{}, err
+		}
+	}
+
+	for k, v := range r.SecureSettings {
+		if v == "" {
+			continue
+		}
+		settings.Set(k, v)
+		out.SecureFields[k] = true
+	}
+
+	jsonBytes, err := settings.MarshalJSON()
+	if err != nil {
+		return definitions.GettableGrafanaReceiver{}, err
+	}
+
+	out.Settings = jsonBytes
+
+	return out, nil
+}
+
+func GettableApiReceiverFromReceiver(r *models.Receiver) (*definitions.GettableApiReceiver, error) {
+	out := definitions.GettableApiReceiver{
+		Receiver: amConfig.Receiver{
+			Name: r.Name,
+		},
+		GettableGrafanaReceivers: definitions.GettableGrafanaReceivers{
+			GrafanaManagedReceivers: make([]*definitions.GettableGrafanaReceiver, 0, len(r.Integrations)),
+		},
+	}
+
+	for _, integration := range r.Integrations {
+		gettable, err := GettableGrafanaReceiverFromReceiver(integration, r.Provenance)
+		if err != nil {
+			return nil, err
+		}
+		out.GrafanaManagedReceivers = append(out.GrafanaManagedReceivers, &gettable)
+	}
+	return &out, nil
+}
+
+func GettableApiReceiversFromReceivers(recvs []*models.Receiver) ([]*definitions.GettableApiReceiver, error) {
+	out := make([]*definitions.GettableApiReceiver, 0, len(recvs))
+	for _, r := range recvs {
+		gettables, err := GettableApiReceiverFromReceiver(r)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, gettables)
+	}
+	return out, nil
 }
