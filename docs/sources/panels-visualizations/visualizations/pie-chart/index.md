@@ -29,7 +29,7 @@ Pie charts display reduced series, or values in a series, from one or more queri
 
 ## Configure a pie chart visualization
 
-The following video guides you through the creation steps and common customizations of Pie chart visualizations and is great for beginners:
+The following video guides you through the creation steps and common customizations of pie chart visualizations and is great for beginners:
 
 {{< youtube id="A_lDhM9w4_g" >}}
 
