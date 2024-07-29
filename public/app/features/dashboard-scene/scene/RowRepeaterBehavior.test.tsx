@@ -6,6 +6,7 @@ import {
   SceneTimeRange,
   SceneVariableSet,
   TestVariable,
+  VariableValueOption,
 } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
@@ -117,6 +118,18 @@ describe('RowRepeaterBehavior', () => {
       expect(row2.state.y).toBe(11);
     });
   });
+
+  describe('Given a scene with empty variable', () => {
+    it('Should preserve repeat row', async () => {
+      const { scene, grid } = buildScene({ variableQueryTime: 0 }, []);
+      activateFullSceneTree(scene);
+      await new Promise((r) => setTimeout(r, 1));
+
+      // Should have 3 rows, two without repeat and one with the dummy row
+      expect(grid.state.children.length).toBe(3);
+      expect(grid.state.children[1].state.$behaviors?.[0]).toBeInstanceOf(RowRepeaterBehavior);
+    });
+  });
 });
 
 interface SceneOptions {
@@ -126,7 +139,7 @@ interface SceneOptions {
   repeatDirection?: RepeatDirection;
 }
 
-function buildScene(options: SceneOptions) {
+function buildScene(options: SceneOptions, variableOptions?: VariableValueOption[]) {
   const repeatBehavior = new RowRepeaterBehavior({ variableName: 'server' });
 
   const grid = new SceneGridLayout({
@@ -203,7 +216,7 @@ function buildScene(options: SceneOptions) {
           isMulti: true,
           includeAll: true,
           delayMs: options.variableQueryTime,
-          optionsToReturn: [
+          optionsToReturn: variableOptions ?? [
             { label: 'A', value: 'A1' },
             { label: 'B', value: 'B1' },
             { label: 'C', value: 'C1' },

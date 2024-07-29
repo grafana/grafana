@@ -1982,7 +1982,7 @@ Depending on the value of `sampler_type`, the sampler configuration parameter ca
 
 When `sampler_type` is `remote`, this specifies the URL of the sampling server. This can be used by all tracing providers.
 
-Use a sampling server that supports the Jaeger remote sampling API, such as jaeger-agent, jaeger-collector, opentelemetry-collector-contrib, or [Grafana Agent](/oss/agent/).
+Use a sampling server that supports the Jaeger remote sampling API, such as jaeger-agent, jaeger-collector, opentelemetry-collector-contrib, or [Grafana Alloy](https://grafana.com/oss/alloy-opentelemetry-collector/).
 
 <hr>
 

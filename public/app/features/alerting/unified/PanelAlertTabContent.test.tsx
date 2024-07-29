@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
-import { byTestId } from 'testing-library-selector';
+import { byTestId, byText } from 'testing-library-selector';
 
 import { DataSourceApi } from '@grafana/data';
 import { PromOptions, PrometheusDatasource } from '@grafana/prometheus';
@@ -184,6 +184,7 @@ const panel = new PanelModel({
 const ui = {
   row: byTestId('row'),
   createButton: byTestId<HTMLAnchorElement>('create-alert-rule-button'),
+  notSavedYet: byText('Dashboard not saved'),
 };
 
 const server = setupMswServer();
@@ -280,6 +281,25 @@ describe('PanelAlertTabContent', () => {
       intervalMs: 300000,
       maxDataPoints: 100,
     });
+  });
+
+  it('should not make requests for unsaved dashboard', async () => {
+    const unsavedDashboard = {
+      ...dashboard,
+      uid: null,
+    } as DashboardModel;
+
+    renderAlertTabContent(
+      unsavedDashboard,
+      new PanelModel({
+        ...panel,
+        datasource: undefined,
+        maxDataPoints: 100,
+        interval: '10s',
+      })
+    );
+
+    expect(await ui.notSavedYet.find()).toBeInTheDocument();
   });
 
   it('Will take into account datasource minInterval', async () => {

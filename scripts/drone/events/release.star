@@ -21,6 +21,9 @@ load(
     "remote_alertmanager_integration_tests_steps",
     "verify_gen_cue_step",
     "verify_gen_jsonnet_step",
+    "verify_grafanacom_step",
+    "verify_linux_DEB_packages_step",
+    "verify_linux_RPM_packages_step",
     "wire_install_step",
     "yarn_install_step",
 )
@@ -42,6 +45,7 @@ load(
 )
 
 ver_mode = "release"
+semver_regex = r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
 
 def retrieve_npm_packages_step():
     return {
@@ -57,6 +61,34 @@ def retrieve_npm_packages_step():
             "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
         },
         "commands": ["./bin/build artifacts npm retrieve --tag ${DRONE_TAG}"],
+    }
+
+def release_pr_step(depends_on = []):
+    return {
+        "name": "create-release-pr",
+        "image": images["curl"],
+        "depends_on": depends_on,
+        "environment": {
+            "GITHUB_TOKEN": from_secret("github_token"),
+            "GH_CLI_URL": "https://github.com/cli/cli/releases/download/v2.50.0/gh_2.50.0_linux_amd64.tar.gz",
+        },
+        "commands": [
+            "apk add perl",
+            "v_target=`echo $${{TAG}} | perl -pe 's/{}/v\\1.\\2.x/'`".format(semver_regex),
+            "default_target=`if [[ -n $$LATEST ]]; then echo 'main'; else echo $$v_target; fi`",
+            "backport=`if [[ -n $$LATEST ]]; then echo $$v_target; fi`",
+            # Install gh CLI
+            "curl -L $${GH_CLI_URL} | tar -xz --strip-components=1 -C /usr",
+            # Run the release-pr workflow
+            "gh workflow run " +
+            "-f dry_run=$${DRY_RUN} " +
+            "-f version=$${TAG} " +
+            # If the submitter has set a target branch, then use that, otherwise use the default
+            "-f target=$${TARGET:-$default_target} " +
+            # If the submitter has set a backport branch, then use that, otherwise use the default
+            "-f backport=$${BACKPORT:-$default_backport} " +
+            "--repo=grafana/grafana release-pr.yml",
+        ],
     }
 
 def release_npm_packages_step():
@@ -136,9 +168,20 @@ def publish_artifacts_pipelines(mode):
         publish_artifacts_step(),
         publish_static_assets_step(),
         publish_storybook_step(),
+        release_pr_step(depends_on = ["publish-artifacts", "publish-static-assets"]),
     ]
 
     return [
+        pipeline(
+            name = "create-release-pr",
+            trigger = {
+                "event": ["promote"],
+                "target": "release-pr",
+            },
+            steps = [
+                release_pr_step(),
+            ],
+        ),
         pipeline(
             name = "publish-artifacts-{}".format(mode),
             trigger = trigger,
@@ -162,7 +205,10 @@ def publish_packages_pipeline():
         compile_build_cmd(),
         publish_linux_packages_step(package_manager = "deb"),
         publish_linux_packages_step(package_manager = "rpm"),
+        verify_linux_DEB_packages_step(depends_on = ["publish-linux-packages-deb"]),
+        verify_linux_RPM_packages_step(depends_on = ["publish-linux-packages-rpm"]),
         publish_grafanacom_step(ver_mode = "release"),
+        verify_grafanacom_step(),
     ]
 
     deps = [
@@ -171,6 +217,27 @@ def publish_packages_pipeline():
     ]
 
     return [
+        pipeline(
+            name = "verify-grafanacom-artifacts",
+            trigger = {
+                "event": ["promote"],
+                "target": "verify-grafanacom-artifacts",
+            },
+            steps = [
+                verify_grafanacom_step(depends_on = []),
+            ],
+        ),
+        pipeline(
+            name = "verify-linux-packages",
+            trigger = {
+                "event": ["promote"],
+                "target": "verify-linux-packages",
+            },
+            steps = [
+                verify_linux_DEB_packages_step(),
+                verify_linux_RPM_packages_step(),
+            ],
+        ),
         pipeline(
             name = "publish-packages",
             trigger = trigger,

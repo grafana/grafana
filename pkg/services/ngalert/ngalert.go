@@ -304,8 +304,7 @@ func (ng *AlertNG) init() error {
 		AlertSender:          alertsRouter,
 		Tracer:               ng.tracer,
 		Log:                  log.New("ngalert.scheduler"),
-		//TODO: replace with real writer impl
-		RecordingWriter: writer.FakeWriter{},
+		RecordingWriter:      writer.NewPrometheusWriter(log.New("ngalert.recording.writer")),
 	}
 
 	// There are a set of feature toggles available that act as short-circuits for common configurations.

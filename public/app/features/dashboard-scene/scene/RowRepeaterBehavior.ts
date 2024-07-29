@@ -99,10 +99,18 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
     let maxYOfRows = 0;
 
+    const emptyVariablePlaceholderOption = {
+      values: ['placeholder'],
+      texts: variable.hasAllValue() ? ['All'] : ['None'],
+    };
+
+    const variableValues = values.length ? values : emptyVariablePlaceholderOption.values;
+    const variableTexts = texts.length ? texts : emptyVariablePlaceholderOption.texts;
+
     // Loop through variable values and create repeates
-    for (let index = 0; index < values.length; index++) {
+    for (let index = 0; index < variableValues.length; index++) {
       const children: SceneGridItemLike[] = [];
-      const localValue = values[index];
+      const localValue = variableValues[index];
 
       // Loop through panels inside row
       for (const source of rowContent) {
@@ -123,7 +131,14 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
         }
       }
 
-      const rowClone = this.getRowClone(rowToRepeat, index, localValue, texts[index], rowContentHeight, children);
+      const rowClone = this.getRowClone(
+        rowToRepeat,
+        index,
+        localValue,
+        variableTexts[index],
+        rowContentHeight,
+        children
+      );
       rows.push(rowClone);
     }
 

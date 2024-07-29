@@ -347,10 +347,8 @@ func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery
 	var folderPermissions []string
 	if q.Permission == dashboardaccess.PERMISSION_EDIT {
 		folderPermissions = permissions[dashboards.ActionFoldersWrite]
-		folderPermissions = append(folderPermissions, permissions[dashboards.ActionDashboardsWrite]...)
 	} else {
 		folderPermissions = permissions[dashboards.ActionFoldersRead]
-		folderPermissions = append(folderPermissions, permissions[dashboards.ActionDashboardsRead]...)
 	}
 
 	if len(folderPermissions) == 0 && !q.SignedInUser.GetIsGrafanaAdmin() {

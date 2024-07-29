@@ -37,23 +37,20 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '100%',
       overflowX: 'auto',
     }),
+    cell: css({
+      padding: theme.spacing(1),
+      minWidth: theme.spacing(3),
+    }),
     table: css({
       borderRadius: theme.shape.radius.default,
       width: '100%',
-
-      td: {
-        padding: theme.spacing(1),
-      },
-
-      'td, th': {
-        minWidth: theme.spacing(3),
-      },
     }),
     disableGrow: css({
       width: 0,
     }),
     header: css({
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+      minWidth: theme.spacing(3),
       '&, & > button': {
         position: 'relative',
         whiteSpace: 'nowrap',
@@ -88,24 +85,23 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'expanded-row-content',
       borderBottom: 'none',
     }),
+    expandedContentCell: css({
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      position: 'relative',
+      padding: theme.spacing(2, 2, 2, 5),
+
+      '&:before': {
+        content: '""',
+        position: 'absolute',
+        width: '1px',
+        top: 0,
+        left: '16px',
+        bottom: theme.spacing(2),
+        background: theme.colors.border.medium,
+      },
+    }),
     expandedContentRow: css({
       label: 'expanded-row-content',
-
-      td: {
-        borderBottom: `1px solid ${theme.colors.border.weak}`,
-        position: 'relative',
-        padding: theme.spacing(2, 2, 2, 5),
-
-        '&:before': {
-          content: '""',
-          position: 'absolute',
-          width: '1px',
-          top: 0,
-          left: '16px',
-          bottom: theme.spacing(2),
-          background: theme.colors.border.medium,
-        },
-      },
     }),
     sortableHeader: css({
       /* increases selector's specificity so that it always takes precedence over default styles  */
@@ -293,7 +289,7 @@ export function InteractiveTable<TableData extends object>({
                   {row.cells.map((cell) => {
                     const { key, ...otherCellProps } = cell.getCellProps();
                     return (
-                      <td key={key} {...otherCellProps}>
+                      <td className={styles.cell} key={key} {...otherCellProps}>
                         {cell.render('Cell', { __rowID: rowId })}
                       </td>
                     );
@@ -301,7 +297,9 @@ export function InteractiveTable<TableData extends object>({
                 </tr>
                 {isExpanded && renderExpandedRow && (
                   <tr {...otherRowProps} id={rowId} className={styles.expandedContentRow}>
-                    <td colSpan={row.cells.length}>{renderExpandedRow(row.original)}</td>
+                    <td className={styles.expandedContentCell} colSpan={row.cells.length}>
+                      {renderExpandedRow(row.original)}
+                    </td>
                   </tr>
                 )}
               </Fragment>

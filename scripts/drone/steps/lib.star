@@ -1152,6 +1152,34 @@ def publish_grafanacom_step(ver_mode):
         ],
     }
 
+def verify_grafanacom_step(depends_on = ["publish-grafanacom"]):
+    return {
+        "name": "verify-grafanacom",
+        "image": images["node"],
+        "commands": [
+            # Download and install `curl` and `bash` - both of which aren't available inside of the `node:{version}-alpine` docker image.
+            "apk add curl bash",
+
+            # There may be a slight lag between when artifacts are uploaded to Google Storage,
+            # and when they become available on the website. This `for` loop sould account for that discrepancy.
+            # We attempt the verification up to 5 times. If successful, exit the loop with a success (0) status.
+            # If any attempt fails, but it's not the final attempt, wait 60 seconds before the next attempt.
+            # If the 5th (final) attempt fails, exit with error (1) status.
+            """
+            for i in {1..5}; do
+                if ./scripts/drone/verify-grafanacom.sh; then
+                    exit 0
+                elif [ $i -eq 5 ]; then
+                    exit 1
+                else
+                    sleep 60
+                fi
+            done
+            """,
+        ],
+        "depends_on": depends_on,
+    }
+
 def publish_linux_packages_step(package_manager = "deb"):
     return {
         "name": "publish-linux-packages-{}".format(package_manager),
@@ -1172,6 +1200,110 @@ def publish_linux_packages_step(package_manager = "deb"):
                 package_manager,
             ),
         },
+    }
+
+def retry_command(command, attempts = 5, delay = 60):
+    return [
+        "for i in $(seq 1 %d); do" % attempts,
+        "    if %s; then" % command,
+        '        echo "Command succeeded on attempt $i"',
+        "        break",
+        "    else",
+        '        echo "Attempt $i failed"',
+        "        if [ $i -eq %d ]; then" % attempts,
+        "            echo 'All attempts failed'",
+        "            exit 1",
+        "        fi",
+        '        echo "Waiting %d seconds before next attempt..."' % delay,
+        "        sleep %d" % delay,
+        "    fi",
+        "done",
+    ]
+
+def verify_linux_DEB_packages_step(depends_on = []):
+    install_command = "apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -yq grafana=${TAG} >/dev/null 2>&1"
+
+    return {
+        "name": "verify-linux-DEB-packages",
+        "image": images["ubuntu"],
+        "environment": {},
+        "commands": [
+            'echo "Step 1: Updating package lists..."',
+            "apt-get update >/dev/null 2>&1",
+            'echo "Step 2: Installing prerequisites..."',
+            "DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-transport-https software-properties-common wget >/dev/null 2>&1",
+            'echo "Step 3: Adding Grafana GPG key..."',
+            "mkdir -p /etc/apt/keyrings/",
+            "wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyrings/grafana.gpg > /dev/null",
+            'echo "Step 4: Adding Grafana repository..."',
+            'echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee -a /etc/apt/sources.list.d/grafana.list',
+            'echo "Step 5: Installing Grafana..."',
+            # The packages take a bit of time to propogate within the repo. This retry will check their availability within 10 minutes.
+        ] + retry_command(install_command, attempts = 10) + [
+            'echo "Step 6: Verifying Grafana installation..."',
+            'if dpkg -s grafana | grep -q "Version: ${TAG}"; then',
+            '    echo "Successfully verified Grafana version ${TAG}"',
+            "else",
+            '    echo "Failed to verify Grafana version ${TAG}"',
+            "    exit 1",
+            "fi",
+            'echo "Verification complete."',
+        ],
+        "depends_on": depends_on,
+    }
+
+def verify_linux_RPM_packages_step(depends_on = []):
+    repo_config = (
+        "[grafana]\n" +
+        "name=grafana\n" +
+        "baseurl=https://rpm.grafana.com\n" +
+        "repo_gpgcheck=0\n" +  # Change this to 0
+        "enabled=1\n" +
+        "gpgcheck=0\n" +  # Change this to 0
+        "gpgkey=https://rpm.grafana.com/gpg.key\n" +
+        "sslverify=1\n" +
+        "sslcacert=/etc/pki/tls/certs/ca-bundle.crt\n"
+    )
+
+    repo_install_command = "dnf install -y --nogpgcheck grafana-${TAG} >/dev/null 2>&1"
+
+    return {
+        "name": "verify-linux-RPM-packages",
+        "image": images["rocky"],
+        "environment": {},
+        "commands": [
+            'echo "Step 1: Updating package lists..."',
+            "dnf check-update -y >/dev/null 2>&1 || true",
+            'echo "Step 2: Installing prerequisites..."',
+            "dnf install -y dnf-utils >/dev/null 2>&1",
+            'echo "Step 3: Adding Grafana GPG key..."',
+            "rpm --import https://rpm.grafana.com/gpg.key",
+            'echo "Step 4: Configuring Grafana repository..."',
+            "echo '" + repo_config + "' > /etc/yum.repos.d/grafana.repo",
+            'echo "Step 5: Checking RPM repository..."',
+            "dnf list available grafana-${TAG}",
+            "if [ $? -eq 0 ]; then",
+            '    echo "Grafana package found in repository. Installing from repo..."',
+        ] + retry_command(repo_install_command, attempts = 5) + [
+            '    echo "Verifying GPG key..."',
+            "    rpm --import https://rpm.grafana.com/gpg.key",
+            "    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana",
+            "else",
+            '    echo "Grafana package version ${TAG} not found in repository."',
+            "    dnf repolist",
+            "    dnf list available grafana*",
+            "    exit 1",
+            "fi",
+            'echo "Step 6: Verifying Grafana installation..."',
+            'if rpm -q grafana | grep -q "${TAG}"; then',
+            '    echo "Successfully verified Grafana version ${TAG}"',
+            "else",
+            '    echo "Failed to verify Grafana version ${TAG}"',
+            "    exit 1",
+            "fi",
+            'echo "Verification complete."',
+        ],
+        "depends_on": depends_on,
     }
 
 def verify_gen_cue_step():

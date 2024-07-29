@@ -7,22 +7,21 @@ import (
 )
 
 type Service interface {
-	// Returns the cloud migration token if it exists.
-	GetToken(context.Context) (gcom.TokenView, error)
-	// Creates a cloud migration token.
-	CreateToken(context.Context) (CreateAccessTokenResponse, error)
-	// Sends a request to CMS to test the token.
-	ValidateToken(context.Context, CloudMigration) error
+	// GetToken Returns the cloud migration token if it exists.
+	GetToken(ctx context.Context) (gcom.TokenView, error)
+	// CreateToken Creates a cloud migration token.
+	CreateToken(ctx context.Context) (CreateAccessTokenResponse, error)
+	// ValidateToken Sends a request to CMS to test the token.
+	ValidateToken(ctx context.Context, mig CloudMigration) error
 	DeleteToken(ctx context.Context, uid string) error
 
-	CreateMigration(context.Context, CloudMigrationRequest) (*CloudMigrationResponse, error)
-	GetMigration(ctx context.Context, uid string) (*CloudMigration, error)
-	DeleteMigration(ctx context.Context, uid string) (*CloudMigration, error)
-	UpdateMigration(ctx context.Context, uid string, request CloudMigrationRequest) (*CloudMigrationResponse, error)
+	CreateMigration(ctx context.Context, req CloudMigrationRequest) (*CloudMigrationResponse, error)
+	GetMigration(ctx context.Context, migUID string) (*CloudMigration, error)
+	DeleteMigration(ctx context.Context, migUID string) (*CloudMigration, error)
+	UpdateMigration(ctx context.Context, migUID string, request CloudMigrationRequest) (*CloudMigrationResponse, error)
 	GetMigrationList(context.Context) (*CloudMigrationListResponse, error)
 
-	RunMigration(ctx context.Context, uid string) (*MigrateDataResponseDTO, error)
-	CreateMigrationRun(context.Context, CloudMigrationRun) (string, error)
+	RunMigration(ctx context.Context, migUID string) (*MigrateDataResponseDTO, error)
 	GetMigrationStatus(ctx context.Context, runUID string) (*CloudMigrationRun, error)
-	GetMigrationRunList(context.Context, string) (*CloudMigrationRunList, error)
+	GetMigrationRunList(ctx context.Context, migUID string) (*CloudMigrationRunList, error)
 }

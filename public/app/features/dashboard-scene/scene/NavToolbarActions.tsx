@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -17,8 +17,10 @@ import {
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
+import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
+import store from 'app/core/store';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
@@ -37,7 +39,9 @@ interface Props {
 }
 
 export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
-  const actions = <ToolbarActions dashboard={dashboard} />;
+  const id = useId();
+
+  const actions = <ToolbarActions dashboard={dashboard} key={id} />;
   return <AppChromeUpdate actions={actions} />;
 });
 
@@ -47,17 +51,7 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  * This part is split into a separate component to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
-  const {
-    isEditing,
-    viewPanelScene,
-    isDirty,
-    uid,
-    meta,
-    editview,
-    editPanel,
-    editable,
-    hasCopiedPanel: copiedPanel,
-  } = dashboard.useState();
+  const { isEditing, viewPanelScene, isDirty, uid, meta, editview, editPanel, editable } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
   const [isAddPanelMenuOpen, setIsAddPanelMenuOpen] = useState(false);
 
@@ -68,7 +62,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const isViewingPanel = Boolean(viewPanelScene);
   const isEditedPanelDirty = useVizManagerDirty(editPanel);
   const isEditingLibraryPanel = useEditingLibraryPanel(editPanel);
-  const hasCopiedPanel = Boolean(copiedPanel);
+  const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;

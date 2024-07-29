@@ -10,6 +10,7 @@ import { compact, uniqBy } from 'lodash';
 import { Matcher, MatcherOperator, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { Labels } from '../../../../types/unified-alerting-dto';
+import { MatcherFieldValue } from '../types/silence-form';
 
 import { isPrivateLabelKey } from './labels';
 
@@ -143,6 +144,27 @@ export function quoteWithEscape(input: string) {
   const escaped = input.replace(/[\\"]/g, (c) => `\\${c}`);
   return `"${escaped}"`;
 }
+
+// The list of reserved characters that indicate we should be escaping the label key / value are
+// { } ! = ~ , \ " ' ` and any whitespace (\s), encoded in the regular expression below
+//
+// See Alertmanager PR: https://github.com/prometheus/alertmanager/pull/3453
+const RESERVED_CHARACTERS = /[\{\}\!\=\~\,\\\"\'\`\s]+/;
+
+/**
+ * Quotes string only when reserved characters are used
+ */
+export function quoteWithEscapeIfRequired(input: string) {
+  const shouldQuote = RESERVED_CHARACTERS.test(input);
+  return shouldQuote ? quoteWithEscape(input) : input;
+}
+
+export const encodeMatcher = ({ name, operator, value }: MatcherFieldValue) => {
+  const encodedLabelName = quoteWithEscapeIfRequired(name);
+  const encodedLabelValue = quoteWithEscape(value);
+
+  return `${encodedLabelName}${operator}${encodedLabelValue}`;
+};
 
 /**
  * Unquotes and unescapes a string **if it has been quoted**

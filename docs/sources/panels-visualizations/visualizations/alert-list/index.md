@@ -28,11 +28,13 @@ refs:
 
 # Alert list
 
-Alert lists allow you to display a list of important alerts that you want to track. You can configure the alert list to show the current state of your alert, such as firing, pending, or normal. Learn more about alerts in [Grafana Alerting overview][].
+Alert lists allow you to display a list of important alerts that you want to track. You can configure the alert list to show the current state of your alert, such as firing, pending, or normal. Learn more about alerts in [Grafana Alerting overview](ref:grafana-alerting-overview).
 
 {{< figure src="/static/img/docs/alert-list-panel/alert-list-panel.png" max-width="850px" alt="An alert list visualization" >}}
 
 On each dashboard load, this visualization queries the alert list, always providing the most up-to-date results.
+
+{{< docs/play title="Alert List" url="https://play.grafana.org/d/bdodlcyou483ke/" >}}
 
 ## Configure an alert list
 
