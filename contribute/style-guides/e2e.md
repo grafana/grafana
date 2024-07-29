@@ -188,4 +188,4 @@ In such cases, don't add an unnecessary `aria-label` to components so as to make
     ```
 ## See also
 
-If you are unfamiliar with the use of promises in Cypress, refer to [Cypress' documentation](https://docs.cypress.io/guides/core-concepts/introduction-to-cypress.html#Mixing-Async-and-Sync-code). They don't work as you would probably expect.
+If you are unfamiliar with the use of promises in Cypress, refer to [Cypress' documentation](https://docs.cypress.io/guides/core-concepts/introduction-to-cypress.html#Mixing-Async-and-Sync-code). 
