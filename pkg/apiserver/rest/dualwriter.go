@@ -102,7 +102,7 @@ const (
 
 // TODO: make this function private as there should only be one public way of setting the dual writing mode
 // NewDualWriter returns a new DualWriter.
-func NewDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage, reg prometheus.Registerer) DualWriter {
+func NewDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage, reg prometheus.Registerer, kind string) DualWriter {
 	metrics := &dualWriterMetrics{}
 	metrics.init(reg)
 	switch mode {
@@ -110,18 +110,18 @@ func NewDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage, r
 	// writing to legacy storage without `unifiedStorage` enabled.
 	case Mode1:
 		// read and write only from legacy storage
-		return newDualWriterMode1(legacy, storage, metrics)
+		return newDualWriterMode1(legacy, storage, metrics, kind)
 	case Mode2:
 		// write to both, read from storage but use legacy as backup
-		return newDualWriterMode2(legacy, storage, metrics)
+		return newDualWriterMode2(legacy, storage, metrics, kind)
 	case Mode3:
 		// write to both, read from storage only
-		return newDualWriterMode3(legacy, storage, metrics)
+		return newDualWriterMode3(legacy, storage, metrics, kind)
 	case Mode4:
 		// read and write only from storage
-		return newDualWriterMode4(legacy, storage, metrics)
+		return newDualWriterMode4(legacy, storage, metrics, kind)
 	default:
-		return newDualWriterMode1(legacy, storage, metrics)
+		return newDualWriterMode1(legacy, storage, metrics, kind)
 	}
 }
 
