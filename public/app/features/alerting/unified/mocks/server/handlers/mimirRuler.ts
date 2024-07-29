@@ -1,8 +1,14 @@
 import { delay, http, HttpResponse } from 'msw';
 
-import { RulerRuleGroupDTO } from '../../../../../../types/unified-alerting-dto';
+import { RulerRuleGroupDTO, RulerRulesConfigDTO } from '../../../../../../types/unified-alerting-dto';
 import { namespaces } from '../../mimirRulerApi';
 import { HandlerOptions } from '../configure';
+
+export const getRulerRulesHandler = () => {
+  return http.get(`/api/ruler/:dataSourceUID/api/v1/rules`, async () => {
+    return HttpResponse.json<RulerRulesConfigDTO>(namespaces);
+  });
+};
 
 export const updateRulerRuleNamespaceHandler = (options?: HandlerOptions) => {
   return http.post<{ namespaceName: string }>(`/api/ruler/:dataSourceUID/api/v1/rules/:namespaceName`, async () => {
@@ -65,6 +71,11 @@ export const deleteRulerRuleGroupHandler = () => {
   );
 };
 
-const handlers = [updateRulerRuleNamespaceHandler(), rulerRuleGroupHandler(), deleteRulerRuleGroupHandler()];
+const handlers = [
+  getRulerRulesHandler(),
+  updateRulerRuleNamespaceHandler(),
+  rulerRuleGroupHandler(),
+  deleteRulerRuleGroupHandler(),
+];
 
 export default handlers;
