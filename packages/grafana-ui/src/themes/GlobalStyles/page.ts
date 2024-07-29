@@ -12,7 +12,7 @@ export function getPageStyles(theme: GrafanaTheme2) {
       ? {
           display: 'flex',
           flexDirection: 'column',
-          minHeight: '100svh',
+          minHeight: '100vh',
         }
       : {
           display: 'flex',

@@ -443,7 +443,9 @@ export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2
   }
 
   const steps = thresholds.steps;
-  const getDisplay = getValueFormat(thresholds.mode === ThresholdsMode.Percentage ? 'percent' : fieldConfig.unit ?? '');
+  const getDisplay = getValueFormat(
+    thresholds.mode === ThresholdsMode.Percentage ? 'percent' : (fieldConfig.unit ?? '')
+  );
 
   // `undefined` value for decimals will use `auto`
   const format = (value: number) => formattedValueToString(getDisplay(value, fieldConfig.decimals ?? undefined));

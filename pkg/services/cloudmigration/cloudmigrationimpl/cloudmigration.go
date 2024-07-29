@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -82,6 +83,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	db db.DB,
 	dsService datasources.DataSourceService,
+	secretsStore secretskv.SecretsKVStore,
 	secretsService secrets.Service,
 	routeRegister routing.RouteRegister,
 	prom prometheus.Registerer,
@@ -95,7 +97,7 @@ func ProvideService(
 	}
 
 	s := &Service{
-		store:            &sqlStore{db: db, secretsService: secretsService},
+		store:            &sqlStore{db: db, secretsStore: secretsStore, secretsService: secretsService},
 		log:              log.New(LogPrefix),
 		cfg:              cfg,
 		features:         features,
@@ -524,7 +526,7 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 		s.report(ctx, session, gmsclient.EventStartBuildingSnapshot, 0, nil)
 
 		start := time.Now()
-		err := s.buildSnapshot(ctx, signedInUser, initResp.MaxItemsPerPartition, snapshot)
+		err := s.buildSnapshot(ctx, signedInUser, initResp.MaxItemsPerPartition, initResp.Metadata, snapshot)
 		if err != nil {
 			s.log.Error("building snapshot", "err", err.Error())
 			// Update status to error with retries
