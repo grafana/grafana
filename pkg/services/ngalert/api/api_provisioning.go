@@ -222,9 +222,10 @@ func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, name st
 
 func (srv *ProvisioningSrv) RoutePutTemplate(c *contextmodel.ReqContext, body definitions.NotificationTemplateContent, name string) response.Response {
 	tmpl := definitions.NotificationTemplate{
-		Name:       name,
-		Template:   body.Template,
-		Provenance: determineProvenance(c),
+		Name:            name,
+		Template:        body.Template,
+		Provenance:      determineProvenance(c),
+		ResourceVersion: body.ResourceVersion,
 	}
 	modified, err := srv.templates.SetTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), tmpl)
 	if err != nil {

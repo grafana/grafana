@@ -53,7 +53,8 @@ type NotificationTemplate struct {
 type NotificationTemplates []NotificationTemplate
 
 type NotificationTemplateContent struct {
-	Template string `json:"template"`
+	Template        string `json:"template"`
+	ResourceVersion string `json:"version,omitempty"`
 }
 
 // swagger:parameters RoutePutTemplate
