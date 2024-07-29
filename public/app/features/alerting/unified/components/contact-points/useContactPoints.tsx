@@ -74,7 +74,7 @@ export const useGetContactPoints = () => {
     const isLoading = onCallResponse.isLoading || alertNotifiers.isLoading || contactPointsListResponse.isLoading;
 
     if (isLoading || !contactPointsListResponse.data) {
-      return { ...contactPointsListResponse, contactPoints: [] };
+      return { ...contactPointsListResponse, isLoading: true, contactPoints: [] };
     }
 
     const enhanced = enhanceContactPointsWithMetadata(
