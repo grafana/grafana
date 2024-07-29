@@ -356,7 +356,6 @@ export const queryFiltersApply = () => screen.queryByTestId(selectors.filters.ap
 export const getFiltersApply = () => screen.getByTestId(selectors.filters.apply);
 export const getFiltersCancel = () => screen.getByTestId(selectors.filters.cancel);
 
-export const queryDashboardsExpand = () => screen.queryByTestId(selectors.dashboards.expand);
 export const getDashboardsExpand = () => screen.getByTestId(selectors.dashboards.expand);
 export const queryDashboardsContainer = () => screen.queryByTestId(selectors.dashboards.container);
 export const queryDashboardsSearch = () => screen.queryByTestId(selectors.dashboards.search);

@@ -47,7 +47,6 @@ import {
   queryAllDashboard,
   queryDashboard,
   queryDashboardsContainer,
-  queryDashboardsExpand,
   queryDashboardsSearch,
   queryFiltersApply,
   queryPersistedApplicationsSlothPictureFactoryTitle,
@@ -470,9 +469,9 @@ describe('Scopes', () => {
         expect(queryFiltersApply()).not.toBeInTheDocument();
       });
 
-      it('Hides the expand button when view mode is active', async () => {
+      it('Disables the expand button when view mode is active', async () => {
         await act(async () => dashboardScene.onEnterEditMode());
-        expect(queryDashboardsExpand()).not.toBeInTheDocument();
+        expect(getDashboardsExpand()).toBeDisabled();
       });
     });
 
