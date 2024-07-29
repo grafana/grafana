@@ -1597,7 +1597,7 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 The Redis server address that should be connected to.
 
 {{< admonition type="note" >}}
-For more information on Redis, refer to [Enable alerting high availability using Redis](https://grafana.com/docs/grafana/latest/alerting/set-up/configure-high-availability/#enable-alerting-high-availability-using-redis).
+For more information on Redis, refer to [Enable alerting high availability using Redis](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-high-availability/#enable-alerting-high-availability-using-redis).
 {{< /admonition >}}
 
 ### ha_redis_username
