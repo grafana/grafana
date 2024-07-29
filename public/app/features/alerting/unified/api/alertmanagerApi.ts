@@ -242,11 +242,11 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
       void,
       { selectedAlertmanager: string; config: AlertManagerCortexConfig }
     >({
-      query: ({ selectedAlertmanager, config, ...rest }) => ({
+      query: ({ selectedAlertmanager, config }) => ({
         url: `/api/alertmanager/${getDatasourceAPIUid(selectedAlertmanager)}/config/api/v1/alerts`,
         method: 'POST',
         data: config,
-        ...rest,
+        showSuccessAlert: false,
       }),
       invalidatesTags: ['AlertmanagerConfiguration'],
     }),
