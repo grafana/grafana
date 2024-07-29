@@ -3543,6 +3543,9 @@
             "$ref": "#/definitions/Type"
           }
         },
+        "imageOptions": {
+          "$ref": "#/definitions/ImageOptions"
+        },
         "message": {
           "type": "string"
         },
@@ -3550,7 +3553,10 @@
           "type": "string"
         },
         "options": {
-          "$ref": "#/definitions/ReportOptions"
+          "$ref": "#/definitions/ReportOptionsDTO"
+        },
+        "pdfOptions": {
+          "$ref": "#/definitions/PDFOptions"
         },
         "recipients": {
           "type": "string"
@@ -4806,6 +4812,7 @@
             "PENDING_PROCESSING",
             "PROCESSING",
             "FINISHED",
+            "CANCELED",
             "ERROR",
             "UNKNOWN"
           ]
@@ -4905,6 +4912,19 @@
         },
         "Mask": {
           "$ref": "#/definitions/IPMask"
+        }
+      }
+    },
+    "ImageOptions": {
+      "type": "object",
+      "properties": {
+        "width": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "zoomFactor": {
+          "type": "number",
+          "format": "double"
         }
       }
     },
@@ -5490,7 +5510,7 @@
       "type": "object",
       "title": "NavbarPreference defines model for NavbarPreference.",
       "properties": {
-        "savedItemIds": {
+        "bookmarkIds": {
           "type": "array",
           "items": {
             "type": "string"
@@ -5642,6 +5662,21 @@
           "type": "string"
         },
         "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "PDFOptions": {
+      "type": "object",
+      "properties": {
+        "layout": {
+          "type": "string"
+        },
+        "orientation": {
+          "type": "string"
+        },
+        "scaleFactor": {
           "type": "integer",
           "format": "int64"
         }
@@ -6415,6 +6450,7 @@
           }
         },
         "enableCsv": {
+          "description": "Deprecated: use \"csv\" value in formats instead",
           "type": "boolean"
         },
         "enableDashboardUrl": {
@@ -6430,6 +6466,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "imageOptions": {
+          "$ref": "#/definitions/ImageOptions"
+        },
         "message": {
           "type": "string"
         },
@@ -6437,11 +6476,14 @@
           "type": "string"
         },
         "options": {
-          "$ref": "#/definitions/ReportOptions"
+          "$ref": "#/definitions/ReportOptionsDTO"
         },
         "orgId": {
           "type": "integer",
           "format": "int64"
+        },
+        "pdfOptions": {
+          "$ref": "#/definitions/PDFOptions"
         },
         "recipients": {
           "type": "string"
@@ -6450,6 +6492,7 @@
           "type": "string"
         },
         "scaleFactor": {
+          "description": "Deprecated: use pdfOptions.scaleFactor instead",
           "type": "integer",
           "format": "int64"
         },
@@ -6539,7 +6582,7 @@
         }
       }
     },
-    "ReportOptions": {
+    "ReportOptionsDTO": {
       "type": "object",
       "properties": {
         "layout": {
@@ -7217,6 +7260,7 @@
             "PENDING_PROCESSING",
             "PROCESSING",
             "FINISHED",
+            "CANCELED",
             "ERROR",
             "UNKNOWN"
           ]
@@ -7246,6 +7290,10 @@
             "type": "integer",
             "format": "int64"
           }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
         },
         "types": {
           "type": "object",
@@ -8376,6 +8424,23 @@
           "format": "date-time"
         },
         "userAgent": {
+          "type": "string"
+        }
+      }
+    },
+    "healthResponse": {
+      "type": "object",
+      "properties": {
+        "commit": {
+          "type": "string"
+        },
+        "database": {
+          "type": "string"
+        },
+        "enterpriseCommit": {
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         }
       }
