@@ -4,7 +4,8 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { Icon, Link, useTheme2 } from '@grafana/ui';
+import { Icon, IconButton, Link, useTheme2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 export interface Props {
   children: React.ReactNode;
@@ -30,40 +31,82 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, id,
         // As nav links are supposed to link to internal urls this option should be used with caution
         target === '_blank' && <Icon data-testid="external-link-icon" name="external-link-alt" />
       }
-      {config.featureToggles.pinNavItems && (
-        <Icon
-          name="bookmark"
-          type={isPinned ? 'solid' : 'default'}
-          className={'pin-icon'}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onPin(id);
-          }}
-        />
-      )}
     </div>
   );
 
   return (
-    <LinkComponent
-      data-testid={selectors.components.NavMenu.item}
-      className={cx(styles.container, {
-        [styles.containerActive]: isActive,
+    <div
+      className={cx(styles.wrapper, {
+        [styles.wrapperActive]: isActive,
+        [styles.wrapperBookmark]: config.featureToggles.pinNavItems,
       })}
-      href={url}
-      target={target}
-      onClick={onClick}
-      {...(isActive && { 'aria-current': 'page' })}
     >
-      {linkContent}
-    </LinkComponent>
+      <LinkComponent
+        data-testid={selectors.components.NavMenu.item}
+        className={styles.container}
+        href={url}
+        target={target}
+        onClick={onClick}
+        {...(isActive && { 'aria-current': 'page' })}
+      >
+        {linkContent}
+      </LinkComponent>
+      {config.featureToggles.pinNavItems && (
+        <IconButton
+          name="bookmark"
+          className={'pin-icon'}
+          iconType={isPinned ? 'solid' : 'default'}
+          onClick={() => onPin(id)}
+          aria-label={
+            isPinned
+              ? t('navigation.item.remove-bookmark', 'Remove from Bookmarks')
+              : t('navigation.item.add-bookmark', 'Add to Bookmarks')
+          }
+        />
+      )}
+    </div>
   );
 }
 
 MegaMenuItemText.displayName = 'MegaMenuItemText';
 
 const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
+  wrapper: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+    width: '100%',
+    height: '100%',
+  }),
+  wrapperBookmark: css({
+    '.pin-icon': {
+      display: 'none',
+    },
+    '&:hover, &:focus-within': {
+      a: {
+        width: 'calc(100% - 20px)',
+      },
+      '.pin-icon': {
+        display: 'inline-flex',
+      },
+    },
+  }),
+  wrapperActive: css({
+    backgroundColor: theme.colors.background.secondary,
+    borderTopRightRadius: theme.shape.radius.default,
+    borderBottomRightRadius: theme.shape.radius.default,
+    position: 'relative',
+
+    '&::before': {
+      backgroundImage: theme.colors.gradients.brandVertical,
+      borderRadius: theme.shape.radius.default,
+      content: '" "',
+      display: 'block',
+      height: '100%',
+      position: 'absolute',
+      transform: 'translateX(-50%)',
+      width: theme.spacing(0.5),
+    },
+  }),
   container: css({
     alignItems: 'center',
     color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
@@ -83,23 +126,6 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
       transition: 'none',
     },
   }),
-  containerActive: css({
-    backgroundColor: theme.colors.background.secondary,
-    borderTopRightRadius: theme.shape.radius.default,
-    borderBottomRightRadius: theme.shape.radius.default,
-    position: 'relative',
-
-    '&::before': {
-      backgroundImage: theme.colors.gradients.brandVertical,
-      borderRadius: theme.shape.radius.default,
-      content: '" "',
-      display: 'block',
-      height: '100%',
-      position: 'absolute',
-      transform: 'translateX(-50%)',
-      width: theme.spacing(0.5),
-    },
-  }),
   linkContent: css({
     alignItems: 'center',
     display: 'flex',
@@ -107,16 +133,5 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     height: '100%',
     width: '100%',
     justifyContent: 'space-between',
-    '.pin-icon': {
-      display: 'none',
-      padding: theme.spacing(0.5),
-      width: theme.spacing(3),
-      height: theme.spacing(3),
-    },
-    '&:hover': {
-      '.pin-icon': {
-        display: 'block',
-      },
-    },
   }),
 });
