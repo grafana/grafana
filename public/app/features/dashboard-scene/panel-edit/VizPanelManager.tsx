@@ -15,6 +15,7 @@ import {
 import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
 import {
   DeepPartial,
+  MultiValueVariable,
   PanelBuilders,
   SceneComponentProps,
   SceneDataTransformer,
@@ -23,8 +24,10 @@ import {
   SceneObjectState,
   SceneObjectStateChangedEvent,
   SceneQueryRunner,
+  SceneVariableSet,
   SceneVariables,
   VizPanel,
+  sceneGraph,
 } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig, Panel } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
@@ -95,6 +98,18 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
     if (gridItem.parent?.state.$variables) {
       variables = gridItem.parent.state.$variables.clone();
+    }
+
+    if (!variables && repeatOptions.repeat) {
+      const variable = sceneGraph.lookupVariable(repeatOptions.repeat, gridItem);
+
+      if (variable && variable instanceof MultiValueVariable) {
+        const clonedVar = variable.clone();
+
+        variables = new SceneVariableSet({
+          variables: [clonedVar],
+        });
+      }
     }
 
     return new VizPanelManager({
@@ -266,6 +281,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       queries,
     });
     if (defaultQueries) {
+      console.log('RUN QU 22');
       queryRunner.runQueries();
     }
 
@@ -316,6 +332,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     }
 
     dataObj.setState(dataObjStateUpdate);
+    console.log('RUN QUERIES');
     dataObj.runQueries();
   }
 
