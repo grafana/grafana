@@ -6,7 +6,7 @@ Grafana Labs uses a minimal [homegrown solution](../../e2e/utils/index.ts) built
 
 ## Framework structure
 
-Grafana end-to-end tests generally store all element identifiers ([CSS selectors](https://mdn.io/docs/Web/CSS/CSS_Selectors)) within the test framework for reuse and maintainability.
+Grafana end-to-end tests generally store all element identifiers ([CSS selectors](https://mdn.io/docs/Web/CSS/CSS_Selectors)) in the test framework for reuse and maintainability.
 
 We use a framework structure inspired by https://martinfowler.com/bliki/PageObject.html. The key features of this structure include:
 
