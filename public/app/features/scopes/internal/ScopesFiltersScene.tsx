@@ -298,22 +298,23 @@ export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<Scopes
     return null;
   }
 
-  const dashboardsIconLabel = isDashboardsPanelOpened
-    ? t('scopes.suggestedDashboards.toggle.collapse', 'Collapse scope filters')
-    : t('scopes.suggestedDashboards.toggle..expand', 'Expand scope filters');
+  const dashboardsIconLabel = isReadOnly
+    ? t('scopes.suggestedDashboards.toggle.disabled', 'Suggested dashboards list is disabled due to read only mode')
+    : isDashboardsPanelOpened
+      ? t('scopes.suggestedDashboards.toggle.collapse', 'Collapse suggested dashboards list')
+      : t('scopes.suggestedDashboards.toggle..expand', 'Expand suggested dashboards list');
 
   return (
     <div className={styles.container}>
-      {!isReadOnly && (
-        <IconButton
-          name="dashboard"
-          className={styles.dashboards}
-          aria-label={dashboardsIconLabel}
-          tooltip={dashboardsIconLabel}
-          data-testid="scopes-dashboards-expand"
-          onClick={() => dashboards?.togglePanel()}
-        />
-      )}
+      <IconButton
+        name="dashboard"
+        className={styles.dashboards}
+        aria-label={dashboardsIconLabel}
+        tooltip={dashboardsIconLabel}
+        data-testid="scopes-dashboards-expand"
+        disabled={isReadOnly}
+        onClick={() => dashboards?.togglePanel()}
+      />
 
       <ScopesInput
         nodes={nodes}

@@ -1921,8 +1921,9 @@
       "noResultsNoScopes": "No scopes selected",
       "search": "Search",
       "toggle": {
-        "collapse": "Collapse scope filters",
-        "expand": "Expand scope filters"
+        "collapse": "Collapse suggested dashboards list",
+        "disabled": "Suggested dashboards list is disabled due to read only mode",
+        "expand": "Expand suggested dashboards list"
       }
     },
     "tree": {
