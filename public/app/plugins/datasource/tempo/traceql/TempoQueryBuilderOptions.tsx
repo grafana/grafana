@@ -118,9 +118,13 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, is
 const StreamingTooltip = () => {
   return (
     <div style={{ display: 'flex', gap: '4px' }}>
-      <span>Stream partial query results.</span>
+      <span>
+        Indicates if streaming is currently enabled. Streaming allows you to view partial query results before the
+        entire query completes.
+      </span>
       <a
         href={'https://grafana.com/docs/tempo/latest/traceql/#stream-query-results'}
+        aria-label={'Learn more about streaming query results'}
         target={'_blank'}
         rel="noreferrer"
         style={{ textDecoration: 'underline' }}
