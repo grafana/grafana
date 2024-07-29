@@ -214,7 +214,7 @@ func isDeletedMarker(raw []byte) bool {
 	return false
 }
 
-func (s *cdkBackend) PrepareList(ctx context.Context, req *ListRequest) (*ListResponse, error) {
+func (s *cdkBackend) PrepareList(ctx context.Context, req *ListRequest, filter ResourceReadFilter) (*ListResponse, error) {
 	resources, err := buildTree(ctx, s, req.Options.Key)
 	if err != nil {
 		return nil, err

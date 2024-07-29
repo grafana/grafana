@@ -3,7 +3,6 @@ package resource
 import (
 	context "context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -12,21 +11,11 @@ import (
 
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-)
-
-// Package-level errors.
-var (
-	ErrNotFound                 = errors.New("resource not found")
-	ErrOptimisticLockingFailed  = errors.New("optimistic locking failed")
-	ErrUserNotFoundInContext    = errors.New("user not found in context")
-	ErrUnableToReadResourceJSON = errors.New("unable to read resource json")
-	ErrNotImplementedYet        = errors.New("not implemented yet")
 )
 
 // ResourceServer implements all services
@@ -74,9 +63,8 @@ type ResourceServerOptions struct {
 	// Diagnostics
 	Diagnostics DiagnosticsServer
 
-	// Check if a user has access to write folders
-	// When this is nil, no resources can have folders configured
-	WriteAccess WriteAccessHooks
+	// Check if a user has access to read/write items
+	Authorizer Authorizer
 
 	// Callbacks for startup and shutdown
 	Lifecycle LifecycleHooks
@@ -99,6 +87,9 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	if opts.Diagnostics == nil {
 		opts.Diagnostics = &noopService{}
 	}
+	if opts.Authorizer == nil {
+		opts.Authorizer = NewAlwaysAuthorizer()
+	}
 	if opts.Now == nil {
 		opts.Now = func() int64 {
 			return time.Now().UnixMilli()
@@ -119,7 +110,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		backend:     opts.Backend,
 		index:       opts.Index,
 		diagnostics: opts.Diagnostics,
-		access:      opts.WriteAccess,
+		authorizer:  opts.Authorizer,
 		lifecycle:   opts.Lifecycle,
 		now:         opts.Now,
 		ctx:         ctx,
@@ -135,7 +126,7 @@ type server struct {
 	backend     StorageBackend
 	index       ResourceIndexServer
 	diagnostics DiagnosticsServer
-	access      WriteAccessHooks
+	authorizer  Authorizer
 	lifecycle   LifecycleHooks
 	now         func() int64
 
@@ -197,19 +188,15 @@ func (s *server) Stop(ctx context.Context) error {
 }
 
 // Old value indicates an update -- otherwise a create
-func (s *server) newEvent(ctx context.Context, key *ResourceKey, value, oldValue []byte) (*WriteEvent, error) {
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, ErrUserNotFoundInContext
-	}
+func (s *server) newEvent(ctx context.Context, user identity.Requester, key *ResourceKey, value, oldValue []byte) (*WriteEvent, *ErrorResult) {
 	tmp := &unstructured.Unstructured{}
-	err = tmp.UnmarshalJSON(value)
+	err := tmp.UnmarshalJSON(value)
 	if err != nil {
-		return nil, err
+		return nil, errToStatus(err)
 	}
 	obj, err := utils.MetaAccessor(tmp)
 	if err != nil {
-		return nil, err
+		return nil, errToStatus(err)
 	}
 
 	event := &WriteEvent{
@@ -225,27 +212,27 @@ func (s *server) newEvent(ctx context.Context, key *ResourceKey, value, oldValue
 		temp := &unstructured.Unstructured{}
 		err = temp.UnmarshalJSON(oldValue)
 		if err != nil {
-			return nil, err
+			return nil, errToStatus(err)
 		}
 		event.ObjectOld, err = utils.MetaAccessor(temp)
 		if err != nil {
-			return nil, err
+			return nil, errToStatus(err)
 		}
 	}
 
 	if key.Namespace != obj.GetNamespace() {
-		return nil, apierrors.NewBadRequest("key/namespace do not match")
+		return nil, newBadRequest("key/namespace do not match")
 	}
 
 	gvk := obj.GetGroupVersionKind()
 	if gvk.Kind == "" {
-		return nil, apierrors.NewBadRequest("expecting resources with a kind in the body")
+		return nil, newBadRequest("expecting resources with a kind in the body")
 	}
 	if gvk.Version == "" {
-		return nil, apierrors.NewBadRequest("expecting resources with an apiVersion")
+		return nil, newBadRequest("expecting resources with an apiVersion")
 	}
 	if gvk.Group != "" && gvk.Group != key.Group {
-		return nil, apierrors.NewBadRequest(
+		return nil, newBadRequest(
 			fmt.Sprintf("group in key does not match group in the body (%s != %s)", key.Group, gvk.Group),
 		)
 	}
@@ -253,31 +240,31 @@ func (s *server) newEvent(ctx context.Context, key *ResourceKey, value, oldValue
 	// This needs to be a create function
 	if key.Name == "" {
 		if obj.GetName() == "" {
-			return nil, apierrors.NewBadRequest("missing name")
+			return nil, newBadRequest("missing name")
 		}
 		key.Name = obj.GetName()
 	} else if key.Name != obj.GetName() {
-		return nil, apierrors.NewBadRequest(
+		return nil, newBadRequest(
 			fmt.Sprintf("key/name do not match (key: %s, name: %s)", key.Name, obj.GetName()))
 	}
 	err = validateName(obj.GetName())
 	if err != nil {
-		return nil, err
+		return nil, errToStatus(err)
 	}
 
 	folder := obj.GetFolder()
 	if folder != "" {
-		err = s.access.CanWriteFolder(ctx, user, folder)
+		err := s.authorizer.CanWriteToFolder(ctx, user, key.Resource, folder)
 		if err != nil {
 			return nil, err
 		}
 	}
 	origin, err := obj.GetOriginInfo()
 	if err != nil {
-		return nil, apierrors.NewBadRequest("invalid origin info")
+		return nil, newBadRequest("invalid origin info")
 	}
-	if origin != nil {
-		err = s.access.CanWriteOrigin(ctx, user, origin.Name)
+	if origin != nil && origin.Name != "UI" {
+		err := s.authorizer.CanWriteOrigin(ctx, user, origin.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -294,6 +281,19 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	}
 
 	rsp := &CreateResponse{}
+	user, err := identity.GetRequester(ctx)
+	if err != nil || user == nil {
+		rsp.Error = &ErrorResult{
+			Code:    http.StatusUnauthorized,
+			Message: "Unable get requester from context",
+		}
+		return rsp, nil
+	}
+	if err := s.authorizer.CanCreate(ctx, user, req.Key); err != nil {
+		rsp.Error = err
+		return rsp, nil
+	}
+
 	found, _ := s.backend.Read(ctx, &ReadRequest{Key: req.Key})
 	if found != nil && len(found.Value) > 0 {
 		rsp.Error = &ErrorResult{
@@ -303,56 +303,18 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 		return rsp, nil
 	}
 
-	event, err := s.newEvent(ctx, req.Key, req.Value, nil)
-	if err != nil {
-		rsp.Error, err = errToStatus(err)
-		return rsp, err
+	event, errs := s.newEvent(ctx, user, req.Key, req.Value, nil)
+	if errs != nil {
+		rsp.Error = errs
+		return rsp, nil
 	}
 
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
-		rsp.Error, err = errToStatus(err)
+		rsp.Error = errToStatus(err)
+		err = nil
 	}
 	return rsp, err
-}
-
-// Convert golang errors to status result errors that can be returned to a client
-func errToStatus(err error) (*ErrorResult, error) {
-	if err != nil {
-		apistatus, ok := err.(apierrors.APIStatus)
-		if ok {
-			s := apistatus.Status()
-			res := &ErrorResult{
-				Message: s.Message,
-				Reason:  string(s.Reason),
-				Code:    s.Code,
-			}
-			if s.Details != nil {
-				res.Details = &ErrorDetails{
-					Group:             s.Details.Group,
-					Kind:              s.Details.Kind,
-					Name:              s.Details.Name,
-					Uid:               string(s.Details.UID),
-					RetryAfterSeconds: s.Details.RetryAfterSeconds,
-				}
-				for _, c := range s.Details.Causes {
-					res.Details.Causes = append(res.Details.Causes, &ErrorCause{
-						Reason:  string(c.Type),
-						Message: c.Message,
-						Field:   c.Field,
-					})
-				}
-			}
-			return res, nil
-		}
-
-		// TODO... better conversion??
-		return &ErrorResult{
-			Message: err.Error(),
-			Code:    500,
-		}, nil
-	}
-	return nil, err
 }
 
 func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateResponse, error) {
@@ -365,7 +327,19 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 
 	rsp := &UpdateResponse{}
 	if req.ResourceVersion < 0 {
-		rsp.Error, _ = errToStatus(apierrors.NewBadRequest("update must include the previous version"))
+		rsp.Error = newBadRequest("update must include the previous version")
+		return rsp, nil
+	}
+	user, err := identity.GetRequester(ctx)
+	if err != nil || user == nil {
+		rsp.Error = &ErrorResult{
+			Code:    http.StatusUnauthorized,
+			Message: "Unable get requester from context",
+		}
+		return rsp, nil
+	}
+	if err := s.authorizer.CanUpdate(ctx, user, req.Key); err != nil {
+		rsp.Error = err
 		return rsp, nil
 	}
 
@@ -376,28 +350,29 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 		return nil, err
 	}
 	if latest.Value == nil {
-		return nil, apierrors.NewBadRequest("current value does not exist")
+		rsp.Error = newBadRequest("current value does not exist")
+		return rsp, nil
 	}
 
 	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
-		return nil, ErrOptimisticLockingFailed
+		rsp.Error = errToStatus(ErrOptimisticLockingFailed)
+		return rsp, err
 	}
 
-	event, err := s.newEvent(ctx, req.Key, req.Value, latest.Value)
-	if err != nil {
-		rsp.Error, err = errToStatus(err)
-		return rsp, err
+	event, status := s.newEvent(ctx, user, req.Key, req.Value, latest.Value)
+	if status != nil {
+		rsp.Error = status
+		return rsp, nil
 	}
 
 	event.Type = WatchEvent_MODIFIED
 	event.PreviousRV = latest.ResourceVersion
 
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
-	rsp.Error, err = errToStatus(err)
 	if err != nil {
-		rsp.Error, err = errToStatus(err)
+		rsp.Error = errToStatus(err)
 	}
-	return rsp, err
+	return rsp, nil
 }
 
 func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteResponse, error) {
@@ -410,7 +385,20 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 
 	rsp := &DeleteResponse{}
 	if req.ResourceVersion < 0 {
-		return nil, apierrors.NewBadRequest("update must include the previous version")
+		rsp.Error = newBadRequest("update must include the previous version")
+		return rsp, nil
+	}
+	user, err := identity.GetRequester(ctx)
+	if err != nil || user == nil {
+		rsp.Error = &ErrorResult{
+			Code:    http.StatusUnauthorized,
+			Message: "Unable get requester from context",
+		}
+		return rsp, nil
+	}
+	if err := s.authorizer.CanUpdate(ctx, user, req.Key); err != nil {
+		rsp.Error = err
+		return rsp, nil
 	}
 
 	latest, err := s.backend.Read(ctx, &ReadRequest{
@@ -429,15 +417,12 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 		Type:       WatchEvent_DELETED,
 		PreviousRV: latest.ResourceVersion,
 	}
-	requester, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, apierrors.NewBadRequest("unable to get user")
-	}
+
 	marker := &DeletedMarker{}
 	err = json.Unmarshal(latest.Value, marker)
 	if err != nil {
-		return nil, apierrors.NewBadRequest(
-			fmt.Sprintf("unable to read previous object, %v", err))
+		rsp.Error = newBadRequest(fmt.Sprintf("unable to read previous object, %v", err))
+		return rsp, nil
 	}
 	obj, err := utils.MetaAccessor(marker)
 	if err != nil {
@@ -447,7 +432,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	obj.SetUpdatedTimestamp(&now.Time)
 	obj.SetManagedFields(nil)
 	obj.SetFinalizers(nil)
-	obj.SetUpdatedBy(requester.GetUID().String())
+	obj.SetUpdatedBy(user.GetUID().String())
 	marker.TypeMeta = metav1.TypeMeta{
 		Kind:       "DeletedMarker",
 		APIVersion: "common.grafana.app/v0alpha1", // ?? or can we stick this in common?
@@ -455,13 +440,15 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	marker.Annotations["RestoreResourceVersion"] = fmt.Sprintf("%d", event.PreviousRV)
 	event.Value, err = json.Marshal(marker)
 	if err != nil {
-		return nil, apierrors.NewBadRequest(
-			fmt.Sprintf("unable creating deletion marker, %v", err))
+		rsp.Error = newBadRequest(fmt.Sprintf("unable creating deletion marker, %v", err))
+		return rsp, nil
 	}
 
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
-	rsp.Error, err = errToStatus(err)
-	return rsp, err
+	if err != nil {
+		rsp.Error = errToStatus(err)
+	}
+	return rsp, nil
 }
 
 func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
@@ -469,13 +456,19 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 		return nil, err
 	}
 
-	// if req.Key.Group == "" {
-	// 	status, _ := errToStatus(apierrors.NewBadRequest("missing group"))
-	// 	return &ReadResponse{Status: status}, nil
-	// }
+	user, err := identity.GetRequester(ctx)
+	if err != nil || user == nil {
+		return &ReadResponse{Error: &ErrorResult{
+			Code:    http.StatusUnauthorized,
+			Message: "Unable get requester from context",
+		}}, nil
+	}
+	if err := s.authorizer.CanUpdate(ctx, user, req.Key); err != nil {
+		return &ReadResponse{Error: err}, nil
+	}
+
 	if req.Key.Resource == "" {
-		status, _ := errToStatus(apierrors.NewBadRequest("missing resource"))
-		return &ReadResponse{Error: status}, nil
+		return &ReadResponse{Error: newBadRequest("missing resource")}, nil
 	}
 
 	rsp, err := s.backend.Read(ctx, req)
@@ -483,9 +476,9 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 		if rsp == nil {
 			rsp = &ReadResponse{}
 		}
-		rsp.Error, err = errToStatus(err)
+		rsp.Error = errToStatus(err)
 	}
-	return rsp, err
+	return rsp, nil
 }
 
 func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, error) {
@@ -493,9 +486,19 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 		return nil, err
 	}
 
-	rsp, err := s.backend.PrepareList(ctx, req)
-	// Status???
-	return rsp, err
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, fmt.Errorf("missing user")
+	}
+	filter, status := s.authorizer.ListFilter(ctx, user, req.Options.Key)
+	if status != nil {
+		return nil, err
+	}
+
+	return s.backend.PrepareList(ctx, req, filter)
 }
 
 func (s *server) initWatcher() error {
