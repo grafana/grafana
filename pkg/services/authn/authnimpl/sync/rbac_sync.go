@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"errors"
+
 	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
