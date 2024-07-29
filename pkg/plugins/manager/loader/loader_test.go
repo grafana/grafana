@@ -89,11 +89,11 @@ func TestLoader_Load(t *testing.T) {
 							},
 						},
 						Includes: []*plugins.Includes{
-							{Name: "EC2", Path: "dashboards/ec2.json", Type: "dashboard", Role: "Viewer", Action: plugins.ActionAppAccess},
-							{Name: "EBS", Path: "dashboards/EBS.json", Type: "dashboard", Role: "Viewer", Action: plugins.ActionAppAccess},
-							{Name: "Lambda", Path: "dashboards/Lambda.json", Type: "dashboard", Role: "Viewer", Action: plugins.ActionAppAccess},
-							{Name: "Logs", Path: "dashboards/Logs.json", Type: "dashboard", Role: "Viewer", Action: plugins.ActionAppAccess},
-							{Name: "RDS", Path: "dashboards/RDS.json", Type: "dashboard", Role: "Viewer", Action: plugins.ActionAppAccess},
+							{Name: "EC2", Path: "dashboards/ec2.json", Type: "dashboard", Role: "Viewer"},
+							{Name: "EBS", Path: "dashboards/EBS.json", Type: "dashboard", Role: "Viewer"},
+							{Name: "Lambda", Path: "dashboards/Lambda.json", Type: "dashboard", Role: "Viewer"},
+							{Name: "Logs", Path: "dashboards/Logs.json", Type: "dashboard", Role: "Viewer"},
+							{Name: "RDS", Path: "dashboards/RDS.json", Type: "dashboard", Role: "Viewer"},
 						},
 						Dependencies: plugins.Dependencies{
 							GrafanaVersion: "*",

@@ -99,7 +99,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 					Plugins:        []Dependency{},
 				},
 				Includes: []*Includes{
-					{Name: "Pie Charts", Path: "dashboards/demo.json", Type: "dashboard", Role: org.RoleViewer, Action: ActionAppAccess},
+					{Name: "Pie Charts", Path: "dashboards/demo.json", Type: "dashboard", Role: org.RoleViewer},
 				},
 			},
 		},
