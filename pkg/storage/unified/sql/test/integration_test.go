@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
@@ -60,39 +59,39 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 	store := newServer(t)
 
 	stream, err := store.WatchWriteEvents(ctx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	t.Run("Add 3 resources", func(t *testing.T) {
 		rv, err := writeEvent(ctx, store, "item1", resource.WatchEvent_ADDED)
-		assert.NoError(t, err)
-		assert.Equal(t, int64(1), rv)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), rv)
 
 		rv, err = writeEvent(ctx, store, "item2", resource.WatchEvent_ADDED)
-		assert.NoError(t, err)
-		assert.Equal(t, int64(2), rv)
+		require.NoError(t, err)
+		require.Equal(t, int64(2), rv)
 
 		rv, err = writeEvent(ctx, store, "item3", resource.WatchEvent_ADDED)
-		assert.NoError(t, err)
-		assert.Equal(t, int64(3), rv)
+		require.NoError(t, err)
+		require.Equal(t, int64(3), rv)
 	})
 
 	t.Run("Update item2", func(t *testing.T) {
 		rv, err := writeEvent(ctx, store, "item2", resource.WatchEvent_MODIFIED)
-		assert.NoError(t, err)
-		assert.Equal(t, int64(4), rv)
+		require.NoError(t, err)
+		require.Equal(t, int64(4), rv)
 	})
 
 	t.Run("Delete item1", func(t *testing.T) {
 		rv, err := writeEvent(ctx, store, "item1", resource.WatchEvent_DELETED)
-		assert.NoError(t, err)
-		assert.Equal(t, int64(5), rv)
+		require.NoError(t, err)
+		require.Equal(t, int64(5), rv)
 	})
 
 	t.Run("Read latest item 2", func(t *testing.T) {
 		resp, err := store.Read(ctx, &resource.ReadRequest{Key: resourceKey("item2")})
-		assert.NoError(t, err)
-		assert.Equal(t, int64(4), resp.ResourceVersion)
-		assert.Equal(t, "item2 MODIFIED", string(resp.Value))
+		require.NoError(t, err)
+		require.Equal(t, int64(4), resp.ResourceVersion)
+		require.Equal(t, "item2 MODIFIED", string(resp.Value))
 	})
 
 	t.Run("Read early verion of item2", func(t *testing.T) {
@@ -100,9 +99,9 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 			Key:             resourceKey("item2"),
 			ResourceVersion: 3, // item2 was created at rv=2 and updated at rv=4
 		})
-		assert.NoError(t, err)
-		assert.Equal(t, int64(2), resp.ResourceVersion)
-		assert.Equal(t, "item2 ADDED", string(resp.Value))
+		require.NoError(t, err)
+		require.Equal(t, int64(2), resp.ResourceVersion)
+		require.Equal(t, "item2 ADDED", string(resp.Value))
 	})
 
 	t.Run("PrepareList latest", func(t *testing.T) {
@@ -115,37 +114,37 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 				},
 			},
 		})
-		assert.NoError(t, err)
-		assert.Len(t, resp.Items, 2)
-		assert.Equal(t, "item2 MODIFIED", string(resp.Items[0].Value))
-		assert.Equal(t, "item3 ADDED", string(resp.Items[1].Value))
-		assert.Equal(t, int64(5), resp.ResourceVersion)
+		require.NoError(t, err)
+		require.Len(t, resp.Items, 2)
+		require.Equal(t, "item2 MODIFIED", string(resp.Items[0].Value))
+		require.Equal(t, "item3 ADDED", string(resp.Items[1].Value))
+		require.Equal(t, int64(5), resp.ResourceVersion)
 	})
 
 	t.Run("Watch events", func(t *testing.T) {
 		event := <-stream
-		assert.Equal(t, "item1", event.Key.Name)
-		assert.Equal(t, int64(1), event.ResourceVersion)
-		assert.Equal(t, resource.WatchEvent_ADDED, event.Type)
+		require.Equal(t, "item1", event.Key.Name)
+		require.Equal(t, int64(1), event.ResourceVersion)
+		require.Equal(t, resource.WatchEvent_ADDED, event.Type)
 		event = <-stream
-		assert.Equal(t, "item2", event.Key.Name)
-		assert.Equal(t, int64(2), event.ResourceVersion)
-		assert.Equal(t, resource.WatchEvent_ADDED, event.Type)
+		require.Equal(t, "item2", event.Key.Name)
+		require.Equal(t, int64(2), event.ResourceVersion)
+		require.Equal(t, resource.WatchEvent_ADDED, event.Type)
 
 		event = <-stream
-		assert.Equal(t, "item3", event.Key.Name)
-		assert.Equal(t, int64(3), event.ResourceVersion)
-		assert.Equal(t, resource.WatchEvent_ADDED, event.Type)
+		require.Equal(t, "item3", event.Key.Name)
+		require.Equal(t, int64(3), event.ResourceVersion)
+		require.Equal(t, resource.WatchEvent_ADDED, event.Type)
 
 		event = <-stream
-		assert.Equal(t, "item2", event.Key.Name)
-		assert.Equal(t, int64(4), event.ResourceVersion)
-		assert.Equal(t, resource.WatchEvent_MODIFIED, event.Type)
+		require.Equal(t, "item2", event.Key.Name)
+		require.Equal(t, int64(4), event.ResourceVersion)
+		require.Equal(t, resource.WatchEvent_MODIFIED, event.Type)
 
 		event = <-stream
-		assert.Equal(t, "item1", event.Key.Name)
-		assert.Equal(t, int64(5), event.ResourceVersion)
-		assert.Equal(t, resource.WatchEvent_DELETED, event.Type)
+		require.Equal(t, "item1", event.Key.Name)
+		require.Equal(t, int64(5), event.ResourceVersion)
+		require.Equal(t, resource.WatchEvent_DELETED, event.Type)
 	})
 }
 
@@ -159,16 +158,16 @@ func TestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T) {
 
 	// Create a few resources before initing the watch
 	_, err := writeEvent(ctx, store, "item1", resource.WatchEvent_ADDED)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Start the watch
 	stream, err := store.WatchWriteEvents(ctx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Create one more event
 	_, err = writeEvent(ctx, store, "item2", resource.WatchEvent_ADDED)
-	assert.NoError(t, err)
-	assert.Equal(t, "item2", (<-stream).Key.Name)
+	require.NoError(t, err)
+	require.Equal(t, "item2", (<-stream).Key.Name)
 }
 
 func TestIntegrationBackendPrepareList(t *testing.T) {
@@ -197,16 +196,16 @@ func TestIntegrationBackendPrepareList(t *testing.T) {
 				},
 			},
 		})
-		assert.NoError(t, err)
-		assert.Len(t, res.Items, 5)
+		require.NoError(t, err)
+		require.Len(t, res.Items, 5)
 		// should be sorted by resource version DESC
-		assert.Equal(t, "item6 ADDED", string(res.Items[0].Value))
-		assert.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
-		assert.Equal(t, "item5 ADDED", string(res.Items[2].Value))
-		assert.Equal(t, "item4 ADDED", string(res.Items[3].Value))
-		assert.Equal(t, "item1 ADDED", string(res.Items[4].Value))
+		require.Equal(t, "item6 ADDED", string(res.Items[0].Value))
+		require.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
+		require.Equal(t, "item5 ADDED", string(res.Items[2].Value))
+		require.Equal(t, "item4 ADDED", string(res.Items[3].Value))
+		require.Equal(t, "item1 ADDED", string(res.Items[4].Value))
 
-		assert.Empty(t, res.NextPageToken)
+		require.Empty(t, res.NextPageToken)
 	})
 
 	t.Run("list latest first page ", func(t *testing.T) {
@@ -219,15 +218,15 @@ func TestIntegrationBackendPrepareList(t *testing.T) {
 				},
 			},
 		})
-		assert.NoError(t, err)
-		assert.Len(t, res.Items, 3)
+		require.NoError(t, err)
+		require.Len(t, res.Items, 3)
 		continueToken, err := sql.GetContinueToken(res.NextPageToken)
-		assert.NoError(t, err)
-		assert.Equal(t, "item6 ADDED", string(res.Items[0].Value))
-		assert.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
-		assert.Equal(t, "item5 ADDED", string(res.Items[2].Value))
-		assert.Equal(t, int64(8), continueToken.ResourceVersion)
-		assert.Equal(t, int64(3), continueToken.StartOffset)
+		require.NoError(t, err)
+		require.Equal(t, "item6 ADDED", string(res.Items[0].Value))
+		require.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
+		require.Equal(t, "item5 ADDED", string(res.Items[2].Value))
+		require.Equal(t, int64(8), continueToken.ResourceVersion)
+		require.Equal(t, int64(3), continueToken.StartOffset)
 	})
 
 	t.Run("list at revision", func(t *testing.T) {
@@ -240,13 +239,13 @@ func TestIntegrationBackendPrepareList(t *testing.T) {
 				},
 			},
 		})
-		assert.NoError(t, err)
-		assert.Len(t, res.Items, 4)
-		assert.Equal(t, "item4 ADDED", string(res.Items[0].Value))
-		assert.Equal(t, "item3 ADDED", string(res.Items[1].Value))
-		assert.Equal(t, "item2 ADDED", string(res.Items[2].Value))
-		assert.Equal(t, "item1 ADDED", string(res.Items[3].Value))
-		assert.Empty(t, res.NextPageToken)
+		require.NoError(t, err)
+		require.Len(t, res.Items, 4)
+		require.Equal(t, "item4 ADDED", string(res.Items[0].Value))
+		require.Equal(t, "item3 ADDED", string(res.Items[1].Value))
+		require.Equal(t, "item2 ADDED", string(res.Items[2].Value))
+		require.Equal(t, "item1 ADDED", string(res.Items[3].Value))
+		require.Empty(t, res.NextPageToken)
 	})
 
 	t.Run("fetch first page at revision with limit", func(t *testing.T) {
@@ -260,16 +259,17 @@ func TestIntegrationBackendPrepareList(t *testing.T) {
 				},
 			},
 		})
-		assert.NoError(t, err)
-		assert.Len(t, res.Items, 3)
-		assert.Equal(t, "item2 MODIFIED", string(res.Items[0].Value))
-		assert.Equal(t, "item5 ADDED", string(res.Items[1].Value))
-		assert.Equal(t, "item4 ADDED", string(res.Items[2].Value))
+		require.NoError(t, err)
+		require.Len(t, res.Items, 3)
+		t.Log(res.Items)
+		require.Equal(t, "item2 MODIFIED", string(res.Items[0].Value))
+		require.Equal(t, "item5 ADDED", string(res.Items[1].Value))
+		require.Equal(t, "item4 ADDED", string(res.Items[2].Value))
 
 		continueToken, err := sql.GetContinueToken(res.NextPageToken)
-		assert.NoError(t, err)
-		assert.Equal(t, int64(7), continueToken.ResourceVersion)
-		assert.Equal(t, int64(3), continueToken.StartOffset)
+		require.NoError(t, err)
+		require.Equal(t, int64(7), continueToken.ResourceVersion)
+		require.Equal(t, int64(3), continueToken.StartOffset)
 	})
 
 	t.Run("fetch second page at revision", func(t *testing.T) {
@@ -287,15 +287,15 @@ func TestIntegrationBackendPrepareList(t *testing.T) {
 				},
 			},
 		})
-		assert.NoError(t, err)
-		assert.Len(t, res.Items, 2)
-		assert.Equal(t, "item5 ADDED", string(res.Items[0].Value))
-		assert.Equal(t, "item4 ADDED", string(res.Items[1].Value))
+		require.NoError(t, err)
+		require.Len(t, res.Items, 2)
+		require.Equal(t, "item5 ADDED", string(res.Items[0].Value))
+		require.Equal(t, "item4 ADDED", string(res.Items[1].Value))
 
 		continueToken, err = sql.GetContinueToken(res.NextPageToken)
-		assert.NoError(t, err)
-		assert.Equal(t, int64(8), continueToken.ResourceVersion)
-		assert.Equal(t, int64(4), continueToken.StartOffset)
+		require.NoError(t, err)
+		require.Equal(t, int64(8), continueToken.ResourceVersion)
+		require.Equal(t, int64(4), continueToken.StartOffset)
 	})
 }
 func TestClientServer(t *testing.T) {
