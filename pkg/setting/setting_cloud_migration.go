@@ -2,6 +2,7 @@ package setting
 
 import (
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -52,6 +53,6 @@ func (cfg *Cfg) readCloudMigrationSettings() {
 
 	if cfg.CloudMigration.SnapshotFolder == "" {
 		homeDir, _ := os.UserHomeDir()
-		cfg.CloudMigration.SnapshotFolder = homeDir
+		cfg.CloudMigration.SnapshotFolder = filepath.Join(homeDir, "migration_snapshot")
 	}
 }
