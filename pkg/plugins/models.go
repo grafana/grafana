@@ -9,6 +9,8 @@ import (
 
 const (
 	TypeDashboard = "dashboard"
+
+	ActionAppAccess = "plugins.app:access"
 )
 
 var (
