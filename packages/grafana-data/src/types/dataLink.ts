@@ -51,7 +51,6 @@ export interface DataLink<T extends DataQuery = any> {
   internal?: InternalDataLink<T>;
 
   origin?: DataLinkConfigOrigin;
-  sortIndex?: number;
 }
 
 /**

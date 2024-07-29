@@ -9,12 +9,10 @@ import {
   contentTypeOptions,
   defaultActionConfig,
   httpMethodOptions,
-  callApi,
   VariableSuggestion,
 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
-import { Button } from '../Button';
 import { Field } from '../Forms/Field';
 import { InlineField } from '../Forms/InlineField';
 import { InlineFieldRow } from '../Forms/InlineFieldRow';
@@ -158,13 +156,13 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
         </Field>
       )}
 
-      {value && value.endpoint && (
-        <>
-          <Button onClick={() => callApi(value)} title="Test API">
-            Test API
-          </Button>
-        </>
-      )}
+      {/*{value && value.endpoint && (*/}
+      {/*  <>*/}
+      {/*    <Button onClick={() => callApi(value)} title="Test API">*/}
+      {/*      Test API*/}
+      {/*    </Button>*/}
+      {/*  </>*/}
+      {/*)}*/}
 
       <br />
       {value?.method !== HttpRequestMethod.GET &&

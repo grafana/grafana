@@ -3,6 +3,7 @@ import { CSSProperties } from 'react';
 import { OnDrag, OnResize, OnRotate } from 'react-moveable/declaration/types';
 
 import { FieldType, getLinksSupplier, LinkModel, OneClickMode, ValueLinkConfig } from '@grafana/data';
+import { ActionModel } from '@grafana/data/src/types/action';
 import { LayerElement } from 'app/core/components/Layers/types';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
@@ -17,6 +18,7 @@ import { getConnectionsByTarget, getRowIndex, isConnectionTarget } from 'app/plu
 
 import { CanvasElementItem, CanvasElementOptions } from '../element';
 import { canvasElementRegistry } from '../registry';
+import { getActionsSupplier } from '../utils';
 
 import { FrameState } from './frame';
 import { RootElement } from './root';
@@ -44,6 +46,7 @@ export class ElementState implements LayerElement {
   data?: any; // depends on the type
 
   getLinks?: (config: ValueLinkConfig) => LinkModel[];
+  getActions?: (config: ValueLinkConfig) => ActionModel[];
 
   constructor(
     public item: CanvasElementItem,
@@ -377,7 +380,7 @@ export class ElementState implements LayerElement {
       const defaultField = {
         name: 'Default field',
         type: FieldType.string,
-        config: { links: this.options.links ?? [] },
+        config: { links: this.options.links ?? [], actions: this.options.actions ?? [] },
         values: [],
       };
 
@@ -395,6 +398,24 @@ export class ElementState implements LayerElement {
           },
         },
         scene?.panel.props.replaceVariables!
+      );
+
+      // @TODO: UPDATE!!
+      this.getActions = getActionsSupplier(
+        frames[0],
+        defaultField,
+        {
+          __dataContext: {
+            value: {
+              data: frames,
+              field: defaultField,
+              frame: frames[0],
+              frameIndex: 0,
+            },
+          },
+        },
+        scene?.panel.props.replaceVariables!,
+        this.options.actions ?? []
       );
     }
 
@@ -595,11 +616,20 @@ export class ElementState implements LayerElement {
 
     const shouldHandleOneClickLink =
       this.options.oneClickMode === OneClickMode.Link && this.options.links && this.options.links.length > 0;
+
+    const shouldHandleOneClickAction =
+      this.options.oneClickMode === OneClickMode.Action && this.options.actions && this.options.actions.length > 0;
+
     if (shouldHandleOneClickLink && this.div) {
       const primaryDataLink = this.getPrimaryDataLink();
       if (primaryDataLink) {
         this.div.style.cursor = 'pointer';
         this.div.title = `Navigate to ${primaryDataLink.title === '' ? 'data link' : primaryDataLink.title}`;
+      }
+    } else if (shouldHandleOneClickAction && this.div) {
+      const primaryAction = this.getPrimaryAction();
+      if (primaryAction) {
+        this.div.style.cursor = 'pointer';
       }
     }
   };
@@ -608,6 +638,15 @@ export class ElementState implements LayerElement {
     if (this.getLinks) {
       const links = this.getLinks({ valueRowIndex: getRowIndex(this.data.field, this.getScene()!) });
       return links[0];
+    }
+
+    return undefined;
+  };
+
+  getPrimaryAction = () => {
+    if (this.getActions) {
+      const actions = this.getActions({ valueRowIndex: getRowIndex(this.data.field, this.getScene()!) });
+      return actions[0];
     }
 
     return undefined;
@@ -643,6 +682,11 @@ export class ElementState implements LayerElement {
       let primaryDataLink = this.getPrimaryDataLink();
       if (primaryDataLink) {
         window.open(primaryDataLink.href, primaryDataLink.target);
+      }
+    } else if (this.options.oneClickMode === OneClickMode.Action) {
+      let primaryAction = this.getPrimaryAction();
+      if (primaryAction) {
+        primaryAction.onClick!(event);
       }
     } else {
       this.handleTooltip(event);

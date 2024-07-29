@@ -145,6 +145,7 @@ export {
   validateFieldConfig,
   applyRawFieldOverrides,
   useFieldOverrides,
+  getFieldDataContextClone,
 } from './field/fieldOverrides';
 export { getFieldDisplayValuesProxy } from './field/getFieldDisplayValuesProxy';
 export {
@@ -797,11 +798,12 @@ export {
 } from './types/dataLink';
 export {
   type Action,
+  type ActionModel,
   HttpRequestMethod,
   defaultActionConfig,
   contentTypeOptions,
   httpMethodOptions,
-  callApi,
+  getActionsSupplier,
 } from './types/action';
 export { DataFrameType } from './types/dataFrameTypes';
 export {

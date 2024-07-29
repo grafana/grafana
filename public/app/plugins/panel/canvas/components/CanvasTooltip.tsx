@@ -11,6 +11,7 @@ import {
   formattedValueToString,
   getFieldDisplayName,
 } from '@grafana/data/src';
+import { ActionModel } from '@grafana/data/src/types/action';
 import { Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
@@ -83,6 +84,22 @@ export const CanvasTooltip = ({ scene }: Props) => {
     });
   }
 
+  const actions: Array<ActionModel<Field>> = [];
+  const actionLookup = new Set<string>();
+
+  const elementHasActions = (element.options.actions?.length ?? 0) > 0;
+
+  console.log('elementHasActions', elementHasActions, element.options.actions);
+  if (elementHasActions && element.getActions) {
+    element.getActions({}).forEach((action) => {
+      const key = `${action.title}/${Math.random()}`;
+      if (!actionLookup.has(key)) {
+        actions.push(action);
+        actionLookup.add(key);
+      }
+    });
+  }
+
   return (
     <>
       {scene.tooltip?.element && scene.tooltip.anchorPoint && (
@@ -97,7 +114,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
               {scene.tooltip.isOpen && <CloseButton style={{ zIndex: 1 }} onClick={onClose} />}
               <VizTooltipHeader item={headerItem} isPinned={scene.tooltip.isOpen!} />
               {element.data.text && <VizTooltipContent items={contentItems} isPinned={scene.tooltip.isOpen!} />}
-              {links.length > 0 && <VizTooltipFooter dataLinks={links} />}
+              {(links.length > 0 || actions.length > 0) && <VizTooltipFooter dataLinks={links} actions={actions} />}
             </section>
           </VizTooltipContainer>
         </Portal>

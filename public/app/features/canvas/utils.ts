@@ -1,71 +1,16 @@
+import {
+  Action,
+  ActionModel,
+  DataContextScopedVar,
+  DataFrame,
+  Field,
+  getFieldDataContextClone,
+  HttpRequestMethod,
+  InterpolateFunction,
+  ScopedVars,
+  ValueLinkConfig,
+} from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
-
-import { getFieldDataContextClone } from '../field/fieldOverrides';
-
-import { DataContextScopedVar, ScopedVars } from './ScopedVars';
-import { DataFrame, Field, ValueLinkConfig } from './dataFrame';
-import { InterpolateFunction } from './panel';
-import { SelectableValue } from './select';
-
-export interface Action<T = any> {
-  title: string;
-  method: string;
-  endpoint: string;
-  data?: string;
-  contentType?: string;
-  queryParams?: Array<[string, string]>;
-  headerParams?: Array<[string, string]>;
-
-  // If exists, handle click directly
-  // Not saved in JSON/DTO
-  onClick?: (event: ActionClickEvent) => T;
-}
-
-/**
- * Processed Action Model. The values are ready to use
- */
-export interface ActionModel<T = any> {
-  title: string;
-
-  // When a click callback exists, this is passed the raw mouse|react event
-  onClick?: (e: any, origin?: any) => void;
-}
-
-export interface ActionClickEvent<T = any> {
-  origin: T;
-  replaceVariables: InterpolateFunction | undefined;
-  e?: any; // mouse|react event
-}
-export enum HttpRequestMethod {
-  GET = 'GET',
-  POST = 'POST',
-  PUT = 'PUT',
-}
-
-export const httpMethodOptions = [
-  { label: HttpRequestMethod.GET, value: HttpRequestMethod.GET },
-  { label: HttpRequestMethod.POST, value: HttpRequestMethod.POST },
-  { label: HttpRequestMethod.PUT, value: HttpRequestMethod.PUT },
-];
-
-export const contentTypeOptions: SelectableValue[] = [
-  { label: 'JSON', value: 'application/json' },
-  { label: 'Text', value: 'text/plain' },
-  { label: 'JavaScript', value: 'application/javascript' },
-  { label: 'HTML', value: 'text/html' },
-  { label: 'XML', value: 'application/XML' },
-  { label: 'x-www-form-urlencoded', value: 'application/x-www-form-urlencoded' },
-];
-
-export const defaultActionConfig: Action = {
-  title: '',
-  endpoint: '',
-  method: HttpRequestMethod.POST,
-  data: '{}',
-  contentType: 'application/json',
-  queryParams: [],
-  headerParams: [],
-};
 
 export const getActionsSupplier =
   (
@@ -87,8 +32,9 @@ export const getActionsSupplier =
         __dataContext: dataContext,
       };
 
-      const boundReplaceVariables: InterpolateFunction = (value, scopedVars, format) =>
-        replaceVariables(value, { ...actionScopedVars, ...scopedVars }, format);
+      const boundReplaceVariables: InterpolateFunction = (value, scopedVars, format) => {
+        return replaceVariables(value, { ...actionScopedVars, ...scopedVars }, format);
+      };
 
       // We are not displaying reduction result
       if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
@@ -103,6 +49,7 @@ export const getActionsSupplier =
         actionModel = {
           title: replaceVariables(action.title || '', actionScopedVars),
           onClick: (evt: MouseEvent, origin: Field) => {
+            // @TODO
             action.onClick!({
               origin: origin ?? field,
               e: evt,
@@ -111,7 +58,6 @@ export const getActionsSupplier =
           },
         };
       } else {
-        // request
         actionModel = {
           title: replaceVariables(action.title || '', actionScopedVars),
           onClick: (evt: MouseEvent, origin: Field) => {
