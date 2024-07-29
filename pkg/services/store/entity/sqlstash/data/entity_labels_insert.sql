@@ -6,24 +6,12 @@ INSERT INTO {{ .Ident "entity_labels" }}
     )
 
     VALUES
-        {{/*
-          When we enter the "range" loop the "." will be changed, so we need to
-          store the current ".GUID" in a variable to be able to use its value
-        */}}
-        {{ $guid := .GUID }}
-
-        {{ $this := . }}
-        {{ $addComma := false }}
+        {{ $comma := listSep ", " }}
         {{ range $name, $value := .Labels }}
-            {{ if $addComma }}
-                ,
-            {{ end }}
-            {{ $addComma = true }}
-
-            (
-                {{ $this.Arg $guid }},
-                {{ $this.Arg $name }},
-                {{ $this.Arg $value }}
+            {{- call $comma -}} (
+                {{ $.Arg $.GUID }},
+                {{ $.Arg $name }},
+                {{ $.Arg $value }}
             )
         {{ end }}
 ;

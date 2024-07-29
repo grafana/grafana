@@ -65,7 +65,7 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 			InstanceStore:           st,
 			MaxStateSaveConcurrency: 1,
 		})
-		syncStatePersister.Sync(context.Background(), span, transitions, nil)
+		syncStatePersister.Sync(context.Background(), span, transitions)
 		savedKeys := map[ngmodels.AlertInstanceKey]ngmodels.AlertInstance{}
 		for _, op := range st.RecordedOps() {
 			saved := op.(ngmodels.AlertInstance)
@@ -86,7 +86,7 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 			InstanceStore:           st,
 			MaxStateSaveConcurrency: 1,
 		})
-		syncStatePersister.Sync(context.Background(), span, transitions, nil)
+		syncStatePersister.Sync(context.Background(), span, transitions)
 
 		savedKeys := map[ngmodels.AlertInstanceKey]ngmodels.AlertInstance{}
 		for _, op := range st.RecordedOps() {

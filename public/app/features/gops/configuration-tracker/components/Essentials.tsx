@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Drawer, Dropdown, Icon, LinkButton, Menu, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
@@ -110,7 +109,7 @@ function OpenLinkButton(props: LinkButtonProps) {
   const urlToGo = done ? urlToGoWhenDone : urlToGoWhenNotDone;
   return (
     <LinkButton href={urlToGo} variant="secondary">
-      {done ? labelOnDone ?? label : label}
+      {done ? (labelOnDone ?? label) : label}
     </LinkButton>
   );
 }

@@ -337,6 +337,7 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 		return 0, "", ErrFolderNameMissing
 	}
 
+	// TODO use folder service instead
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Provisioning).Inc()
 	cmd := &dashboards.GetDashboardQuery{
 		FolderID: util.Pointer(int64(0)), // nolint:staticcheck

@@ -1150,7 +1150,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			query, err := buildAppInsightsQuery(ctx, tt.queryModel, dsInfo, appInsightsRegExp)
+			query, err := buildAppInsightsQuery(ctx, tt.queryModel, dsInfo, appInsightsRegExp, backend.Logger)
 			tt.Err(t, err)
 			if diff := cmp.Diff(&tt.azureLogAnalyticsQuery, query); diff != "" {
 				t.Errorf("Result mismatch (-want +got): \n%s", diff)

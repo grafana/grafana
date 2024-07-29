@@ -1,6 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/OperationListExplained.tsx
 import { Grammar } from 'prismjs';
-import React from 'react';
 
 import { OperationExplainedBox } from './OperationExplainedBox';
 import { RawQuery } from './RawQuery';
@@ -35,7 +34,7 @@ export function OperationListExplained<T extends QueryWithOperations>({
           return `Operation ${op.id} not found`;
         }
         const title = def.renderer(op, def, '<expr>');
-        const body = def.explainHandler ? def.explainHandler(op, def) : def.documentation ?? 'no docs';
+        const body = def.explainHandler ? def.explainHandler(op, def) : (def.documentation ?? 'no docs');
 
         return (
           <div

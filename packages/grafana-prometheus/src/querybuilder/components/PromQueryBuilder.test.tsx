@@ -1,7 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilder.test.tsx
 import { getByText, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import {
   DataSourceInstanceSettings,
@@ -174,20 +173,24 @@ describe('PromQueryBuilder', () => {
   });
 
   it('shows hints for histogram metrics', async () => {
-    setup({
+    const { container } = setup({
       metric: 'histogram_metric_bucket',
       labels: [],
       operations: [],
     });
+    await openMetricSelect(container);
+    await userEvent.click(screen.getByText('histogram_metric_bucket'));
     await waitFor(() => expect(screen.getByText('hint: add histogram_quantile')).toBeInTheDocument());
   });
 
   it('shows hints for counter metrics', async () => {
-    setup({
+    const { container } = setup({
       metric: 'histogram_metric_sum',
       labels: [],
       operations: [],
     });
+    await openMetricSelect(container);
+    await userEvent.click(screen.getByText('histogram_metric_sum'));
     await waitFor(() => expect(screen.getByText('hint: add rate')).toBeInTheDocument());
   });
 
@@ -200,7 +203,7 @@ describe('PromQueryBuilder', () => {
     for (let i = 0; i < 25; i++) {
       data.series.push(new MutableDataFrame());
     }
-    setup(
+    const { container } = setup(
       {
         metric: 'histogram_metric_sum',
         labels: [],
@@ -208,6 +211,8 @@ describe('PromQueryBuilder', () => {
       },
       data
     );
+    await openMetricSelect(container);
+    await userEvent.click(screen.getByText('histogram_metric_sum'));
     await waitFor(() => expect(screen.getAllByText(/hint:/)).toHaveLength(2));
   });
 

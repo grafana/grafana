@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';

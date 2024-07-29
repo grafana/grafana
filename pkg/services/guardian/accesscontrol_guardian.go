@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
@@ -309,7 +309,7 @@ func (a *accessControlFolderGuardian) CanCreate(folderID int64, isFolder bool) (
 
 func (a *accessControlDashboardGuardian) evaluate(evaluator accesscontrol.Evaluator) (bool, error) {
 	ok, err := a.ac.Evaluate(a.ctx, a.user, evaluator)
-	namespaceID, userID := a.user.GetNamespacedID()
+	namespaceID, userID := a.user.GetTypedID()
 	if err != nil {
 		id := 0
 		if a.dashboard != nil {
@@ -331,7 +331,7 @@ func (a *accessControlDashboardGuardian) evaluate(evaluator accesscontrol.Evalua
 
 func (a *accessControlFolderGuardian) evaluate(evaluator accesscontrol.Evaluator) (bool, error) {
 	ok, err := a.ac.Evaluate(a.ctx, a.user, evaluator)
-	namespaceID, userID := a.user.GetNamespacedID()
+	namespaceID, userID := a.user.GetTypedID()
 	if err != nil {
 		uid := ""
 		orgID := 0

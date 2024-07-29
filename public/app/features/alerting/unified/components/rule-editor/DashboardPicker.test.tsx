@@ -1,6 +1,5 @@
 import { render, waitFor } from '@testing-library/react';
 import { noop } from 'lodash';
-import React from 'react';
 import { Props } from 'react-virtualized-auto-sizer';
 import { byRole } from 'testing-library-selector';
 

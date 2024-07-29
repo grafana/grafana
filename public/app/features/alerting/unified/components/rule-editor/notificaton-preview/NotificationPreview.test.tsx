@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, waitFor, within, userEvent } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
@@ -9,7 +8,7 @@ import { MatcherOperator } from '../../../../../../plugins/datasource/alertmanag
 import { Labels } from '../../../../../../types/unified-alerting-dto';
 import { mockApi, setupMswServer } from '../../../mockApi';
 import { grantUserPermissions, mockAlertQuery } from '../../../mocks';
-import { mockPreviewApiResponse } from '../../../mocks/alertRuleApi';
+import { mockPreviewApiResponse } from '../../../mocks/grafanaRulerApi';
 import * as dataSource from '../../../utils/datasource';
 import {
   AlertManagerDataSource,

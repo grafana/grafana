@@ -10,7 +10,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "11.1.0-pre";
+export const pluginVersion = "11.2.0-pre";
 
 /**
  * Auto is "table" in the UI

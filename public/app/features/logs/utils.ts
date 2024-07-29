@@ -13,6 +13,7 @@ import {
   MutableDataFrame,
   QueryResultMeta,
   LogsVolumeType,
+  NumericLogLevel,
 } from '@grafana/data';
 
 import { getDataframeFields } from './components/logParser';
@@ -48,6 +49,17 @@ export function getLogLevelFromKey(key: string | number): LogLevel {
   const level = LogLevel[key.toString().toLowerCase() as keyof typeof LogLevel];
   if (level) {
     return level;
+  }
+  if (typeof key === 'string') {
+    // The level did not match any entry of LogLevel. It might be unknown or a numeric level.
+    const numericLevel = parseInt(key, 10);
+    // Safety check to confirm that we're parsing a number and not a number with a string.
+    // For example `parseInt('1abcd', 10)` outputs 1
+    if (key.length === numericLevel.toString().length) {
+      return NumericLogLevel[key] || LogLevel.unknown;
+    }
+  } else if (typeof key === 'number') {
+    return NumericLogLevel[key] || LogLevel.unknown;
   }
 
   return LogLevel.unknown;
@@ -139,6 +151,22 @@ export const checkLogsError = (logRow: LogRowModel): { hasError: boolean; errorM
   }
   return {
     hasError: false,
+  };
+};
+
+export const checkLogsSampled = (logRow: LogRowModel): { isSampled: boolean; sampleMessage?: string } => {
+  if (logRow.labels.__adaptive_logs_sampled__) {
+    let msg =
+      logRow.labels.__adaptive_logs_sampled__ === 'true'
+        ? 'Logs like this one have been dropped by Adaptive Logs'
+        : `${logRow.labels.__adaptive_logs_sampled__}% of logs like this one have been dropped by Adaptive Logs`;
+    return {
+      isSampled: true,
+      sampleMessage: msg,
+    };
+  }
+  return {
+    isSampled: false,
   };
 };
 

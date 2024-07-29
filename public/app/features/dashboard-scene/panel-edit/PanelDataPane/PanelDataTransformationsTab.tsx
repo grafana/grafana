@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
-import { DragDropContext, DropResult, Droppable } from 'react-beautiful-dnd';
+import { DragDropContext, DropResult, Droppable } from '@hello-pangea/dnd';
+import { useState } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2, IconName, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

@@ -162,7 +162,7 @@ If you are unsure which visualization to pick, Grafana can provide visualization
 {{< /admonition >}}
 
 - Graphs & charts
-  - [Time series](ref:time-series) is the default and main Graph visualization.
+  - [Time series](ref:time-series) is the default and main graph visualization. Alerts are supported in this panel.
   - [State timeline](ref:state-timeline) for state changes over time.
   - [Status history](ref:status-history) for periodic state over time.
   - [Bar chart](ref:bar-chart) shows any categorical data.

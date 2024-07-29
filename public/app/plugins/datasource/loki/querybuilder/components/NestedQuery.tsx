@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import { memo } from 'react';
 
 import { GrafanaTheme2, toOption } from '@grafana/data';
 import { EditorRows, FlexItem } from '@grafana/experimental';
@@ -21,7 +21,7 @@ export interface Props {
   onRunQuery: () => void;
 }
 
-export const NestedQuery = React.memo<Props>(
+export const NestedQuery = memo<Props>(
   ({ nestedQuery, index, datasource, onChange, onRemove, onRunQuery, showExplain }) => {
     const styles = useStyles2(getStyles);
 

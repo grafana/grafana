@@ -712,7 +712,7 @@ func TestAlertManagers_buildRedactedAMs(t *testing.T) {
 			amUrls:   []string{"1234://user:password@localhost:9094"},
 			errCalls: 1,
 			errLog:   "Failed to parse alertmanager string",
-			expected: nil,
+			expected: []string{},
 		},
 	}
 
@@ -724,6 +724,7 @@ func TestAlertManagers_buildRedactedAMs(t *testing.T) {
 					URL: url,
 				})
 			}
+
 			require.Equal(t, tt.expected, buildRedactedAMs(&fakeLogger, cfgs, tt.orgId))
 			require.Equal(t, tt.errCalls, fakeLogger.ErrorLogs.Calls)
 			require.Equal(t, tt.errLog, fakeLogger.ErrorLogs.Message)

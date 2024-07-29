@@ -1,4 +1,4 @@
-import { DataHoverPayload } from '../events';
+import { DataHoverPayload } from '../events/common';
 import { eventFactory } from '../events/eventFactory';
 import { BusEventBase, BusEventWithPayload } from '../events/types';
 
@@ -13,6 +13,7 @@ export const AppEvents = {
   alertSuccess: eventFactory<AlertPayload>('alert-success'),
   alertWarning: eventFactory<AlertPayload>('alert-warning'),
   alertError: eventFactory<AlertErrorPayload>('alert-error'),
+  alertInfo: eventFactory<AlertPayload>('alert-info'),
 };
 
 export const PanelEvents = {

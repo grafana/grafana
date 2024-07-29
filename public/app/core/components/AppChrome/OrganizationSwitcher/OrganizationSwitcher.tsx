@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';

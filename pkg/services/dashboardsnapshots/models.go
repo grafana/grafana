@@ -3,9 +3,9 @@ package dashboardsnapshots
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 // DashboardSnapshot model

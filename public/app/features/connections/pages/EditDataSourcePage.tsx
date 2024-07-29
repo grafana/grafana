@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 
 import DataSourceTabPage from 'app/features/datasources/components/DataSourceTabPage';

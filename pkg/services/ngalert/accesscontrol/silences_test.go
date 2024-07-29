@@ -10,8 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	alertingModels "github.com/grafana/alerting/models"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -212,6 +213,12 @@ func TestAuthorizeReadSilence(t *testing.T) {
 					} else {
 						require.Equal(t, 0, store.Calls)
 					}
+
+					// Verify SilenceAccess.
+					permSets, err := svc.SilenceAccess(context.Background(), testCase.user, []*models.Silence{silence})
+					assert.NoError(t, err)
+					assert.Len(t, permSets, 1)
+					assert.Equal(t, testCase.expectedErr == nil, permSets[silence].Has(models.SilencePermissionRead))
 				})
 			}
 		})
@@ -383,6 +390,12 @@ func TestAuthorizeCreateSilence(t *testing.T) {
 					} else {
 						require.Equal(t, 0, store.Calls)
 					}
+
+					// Verify SilenceAccess.
+					permSets, err := svc.SilenceAccess(context.Background(), testCase.user, []*models.Silence{silence})
+					assert.NoError(t, err)
+					assert.Len(t, permSets, 1)
+					assert.Equal(t, expectedErr == nil, permSets[silence].Has(models.SilencePermissionCreate))
 				})
 			}
 		})
@@ -554,7 +567,270 @@ func TestAuthorizeUpdateSilence(t *testing.T) {
 					} else {
 						require.Equal(t, 0, store.Calls)
 					}
+
+					// Verify SilenceAccess.
+					permSets, err := svc.SilenceAccess(context.Background(), testCase.user, []*models.Silence{silence})
+					assert.NoError(t, err)
+					assert.Len(t, permSets, 1)
+					assert.Equal(t, expectedErr == nil, permSets[silence].Has(models.SilencePermissionWrite))
 				})
+			}
+		})
+	}
+}
+
+func TestSilenceAccess(t *testing.T) {
+	global := testSilence("global", nil)
+	ruleSilence1 := testSilence("rule-1", utils.Pointer("rule-1-uid"))
+	folder1 := "rule-1-folder-uid"
+	folder1Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder1)
+	ruleSilence2 := testSilence("rule-2", utils.Pointer("rule-2-uid"))
+	folder2 := "rule-2-folder-uid"
+	folder2Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2)
+	notFoundRule := testSilence("unknown-rule", utils.Pointer("unknown-rule-uid"))
+
+	silences := []*models.Silence{
+		global,
+		ruleSilence1,
+		ruleSilence2,
+		notFoundRule,
+	}
+
+	type override struct {
+		expectedPermissions models.SilencePermissionSet
+	}
+
+	permit := func(permission ...models.SilencePermission) override {
+		o := override{expectedPermissions: models.SilencePermissionSet{}}
+		for _, p := range permission {
+			o.expectedPermissions[p] = true
+		}
+		return o
+	}
+
+	deny := func(permission ...models.SilencePermission) override {
+		o := override{expectedPermissions: models.SilencePermissionSet{}}
+		for _, p := range permission {
+			o.expectedPermissions[p] = false
+		}
+		return o
+	}
+
+	testCases := []struct {
+		name                string
+		user                identity.Requester
+		expectedPermissions models.SilencePermissionSet
+		expectedDbAccess    bool
+		overrides           map[*models.Silence]override
+	}{
+		{
+			name: "not authorized without permissions",
+			user: newUser(),
+		},
+		{
+			name: "instance read gives read access to everything",
+			user: newUser(ac.Permission{Action: instancesRead}),
+			expectedPermissions: models.SilencePermissionSet{
+				models.SilencePermissionRead: true,
+			},
+		},
+		{
+			name: "silence wildcard read gives read access to everything",
+			user: newUser(ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
+			expectedPermissions: models.SilencePermissionSet{
+				models.SilencePermissionRead: true,
+			},
+		},
+		{
+			name: "silence read in folders gives read access to global and folders",
+			user: newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}, ac.Permission{Action: silenceRead, Scope: folder2Scope}),
+			overrides: map[*models.Silence]override{
+				global:       permit(models.SilencePermissionRead),
+				ruleSilence1: permit(models.SilencePermissionRead),
+				ruleSilence2: permit(models.SilencePermissionRead),
+			},
+			expectedPermissions: models.SilencePermissionSet{},
+			expectedDbAccess:    true,
+		},
+		{
+			name: "instance reade+write+create can do everything",
+			user: newUser(ac.Permission{Action: instancesRead}, ac.Permission{Action: instancesWrite}, ac.Permission{Action: instancesCreate}),
+			expectedPermissions: models.SilencePermissionSet{
+				models.SilencePermissionRead:   true,
+				models.SilencePermissionCreate: true,
+				models.SilencePermissionWrite:  true,
+			},
+		},
+		{
+			name: "silence wildcard read + instance write+create can do everything",
+			user: newUser(ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}, ac.Permission{Action: instancesWrite}, ac.Permission{Action: instancesCreate}),
+			expectedPermissions: models.SilencePermissionSet{
+				models.SilencePermissionRead:   true,
+				models.SilencePermissionCreate: true,
+				models.SilencePermissionWrite:  true,
+			},
+		},
+		{
+			name: "instance readr+write can read and write",
+			user: newUser(ac.Permission{Action: instancesRead}, ac.Permission{Action: instancesWrite}),
+			expectedPermissions: models.SilencePermissionSet{
+				models.SilencePermissionRead:  true,
+				models.SilencePermissionWrite: true,
+			},
+		},
+		{
+			name: "silence wildcard read + instance write can read and write",
+			user: newUser(ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}, ac.Permission{Action: instancesWrite}),
+			expectedPermissions: models.SilencePermissionSet{
+				models.SilencePermissionRead:  true,
+				models.SilencePermissionWrite: true,
+			},
+		},
+		{
+			name: "instance reader+create can read and create",
+			user: newUser(ac.Permission{Action: instancesRead}, ac.Permission{Action: instancesCreate}),
+			expectedPermissions: models.SilencePermissionSet{
+				models.SilencePermissionRead:   true,
+				models.SilencePermissionCreate: true,
+			},
+		},
+		{
+			name: "silence wildcard read + instance create can read and create",
+			user: newUser(ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}, ac.Permission{Action: instancesCreate}),
+			expectedPermissions: models.SilencePermissionSet{
+				models.SilencePermissionRead:   true,
+				models.SilencePermissionCreate: true,
+			},
+		},
+		{
+			name:                "cannot write/create without read - instance permissions",
+			user:                newUser(ac.Permission{Action: instancesWrite}, ac.Permission{Action: instancesCreate}),
+			expectedPermissions: models.SilencePermissionSet{},
+		},
+		{
+			name:                "cannot write/create without read - silence permissions",
+			user:                newUser(ac.Permission{Action: silenceWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}, ac.Permission{Action: silenceCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
+			expectedPermissions: models.SilencePermissionSet{},
+		},
+		{
+			name: "instance read + silence write in folder",
+			user: newUser(ac.Permission{Action: silenceWrite, Scope: folder1Scope}, ac.Permission{Action: instancesRead}),
+			overrides: map[*models.Silence]override{
+				ruleSilence1: permit(models.SilencePermissionWrite),
+			},
+			expectedPermissions: models.SilencePermissionSet{
+				models.SilencePermissionRead: true,
+			},
+			expectedDbAccess: true,
+		},
+		{
+			name: "instance read + silence create in folder",
+			user: newUser(ac.Permission{Action: silenceCreate, Scope: folder1Scope}, ac.Permission{Action: instancesRead}),
+			overrides: map[*models.Silence]override{
+				ruleSilence1: permit(models.SilencePermissionCreate),
+			},
+			expectedPermissions: models.SilencePermissionSet{
+				models.SilencePermissionRead: true,
+			},
+			expectedDbAccess: true,
+		},
+		{
+			name: "silence read in folder + instance write also provides global write",
+			user: newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}, ac.Permission{Action: instancesWrite}),
+			overrides: map[*models.Silence]override{
+				global:       permit(models.SilencePermissionRead, models.SilencePermissionWrite),
+				ruleSilence1: permit(models.SilencePermissionRead, models.SilencePermissionWrite),
+			},
+			expectedPermissions: models.SilencePermissionSet{},
+			expectedDbAccess:    true,
+		},
+		{
+			name: "silence read in folder + instance create also provides global create",
+			user: newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}, ac.Permission{Action: instancesCreate}),
+			overrides: map[*models.Silence]override{
+				global:       permit(models.SilencePermissionRead, models.SilencePermissionCreate),
+				ruleSilence1: permit(models.SilencePermissionRead, models.SilencePermissionCreate),
+			},
+			expectedPermissions: models.SilencePermissionSet{},
+			expectedDbAccess:    true,
+		},
+		{
+			name: "silence wildcard write doesn't provide global write but does provide unknown rule write",
+			user: newUser(ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}, ac.Permission{Action: silenceWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
+			overrides: map[*models.Silence]override{
+				global:       deny(models.SilencePermissionWrite),
+				notFoundRule: deny(models.SilencePermissionWrite), // This is arguable, can consider changing this in the future.
+			},
+			expectedPermissions: models.SilencePermissionSet{
+				models.SilencePermissionRead:  true,
+				models.SilencePermissionWrite: true,
+			},
+			expectedDbAccess: true,
+		},
+		{
+			name: "silence wildcard create doesn't provide global create but does provide unknown rule create",
+			user: newUser(ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}, ac.Permission{Action: silenceCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
+			overrides: map[*models.Silence]override{
+				global:       deny(models.SilencePermissionCreate),
+				notFoundRule: deny(models.SilencePermissionCreate), // This is arguable, can consider changing this in the future.
+			},
+			expectedPermissions: models.SilencePermissionSet{
+				models.SilencePermissionRead:   true,
+				models.SilencePermissionCreate: true,
+			},
+			expectedDbAccess: true,
+		},
+		{
+			name: "silence read + write in single folder",
+			user: newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}, ac.Permission{Action: silenceWrite, Scope: folder1Scope}),
+			overrides: map[*models.Silence]override{
+				global:       permit(models.SilencePermissionRead),
+				ruleSilence1: permit(models.SilencePermissionRead, models.SilencePermissionWrite),
+			},
+			expectedPermissions: models.SilencePermissionSet{},
+			expectedDbAccess:    true,
+		},
+		{
+			name: "silence read + create in single folder",
+			user: newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}, ac.Permission{Action: silenceCreate, Scope: folder1Scope}),
+			overrides: map[*models.Silence]override{
+				global:       permit(models.SilencePermissionRead),
+				ruleSilence1: permit(models.SilencePermissionRead, models.SilencePermissionCreate),
+			},
+			expectedPermissions: models.SilencePermissionSet{},
+			expectedDbAccess:    true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ac := &recordingAccessControlFake{}
+			store := &fakeRuleUIDToNamespaceStore{
+				Response: map[string]string{
+					*ruleSilence1.GetRuleUID(): folder1,
+					*ruleSilence2.GetRuleUID(): folder2,
+				},
+			}
+			svc := NewSilenceService(ac, store)
+
+			perms, err := svc.SilenceAccess(context.Background(), tc.user, silences)
+			assert.NoError(t, err)
+			if tc.expectedDbAccess {
+				assert.Equalf(t, 1, store.Calls, "expected 1 db access, but got %d store calls", store.Calls)
+			} else {
+				assert.Equalf(t, 0, store.Calls, "expected no db access, but got %d store calls", store.Calls)
+			}
+
+			for _, silence := range silences {
+				expectedPermissions := tc.expectedPermissions.Clone()
+				if s, ok := tc.overrides[silence]; ok {
+					for k, v := range s.expectedPermissions {
+						expectedPermissions[k] = v
+					}
+				}
+				for _, permission := range models.SilencePermissions() {
+					assert.Equalf(t, expectedPermissions.Has(permission), perms[silence].Has(permission), "expected %s=%t permission for silence %s but got %t", permission, expectedPermissions.Has(permission), *silence.ID, perms[silence].Has(permission))
+				}
 			}
 		})
 	}

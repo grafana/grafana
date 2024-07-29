@@ -1,4 +1,3 @@
-import React from 'react';
 import { Redirect, RouteComponentProps } from 'react-router-dom';
 
 import { isTruthy } from '@grafana/data';
@@ -84,7 +83,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/d-solo/:uid/:slug?',
-      pageClass: 'dashboard-solo',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
       component: SafeDynamicImport(() =>
@@ -96,7 +94,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     // This route handles embedding of snapshot/scripted dashboard panels
     {
       path: '/dashboard-solo/:type/:slug',
-      pageClass: 'dashboard-solo',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
       component: SafeDynamicImport(
@@ -435,11 +432,11 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "SnapshotListPage" */ 'app/features/manage-dashboards/SnapshotListPage')
       ),
     },
-    config.featureToggles.dashboardRestore && {
-      path: '/dashboard/trash',
-      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsDelete]),
+    config.featureToggles.dashboardRestoreUI && {
+      path: '/dashboard/recently-deleted',
+      roles: () => ['Admin'],
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "TrashPage" */ 'app/features/trash-section/TrashPage')
+        () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')
       ),
     },
     {
@@ -506,13 +503,18 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "NotificationsPage"*/ 'app/features/notifications/NotificationsPage')
       ),
     },
-    {
+    config.featureToggles.exploreMetrics && {
       path: '/explore/metrics',
       chromeless: false,
       exact: false,
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
       ),
+    },
+    {
+      path: '/bookmarks',
+      component: () => <NavLandingPage navId="bookmarks" />,
     },
     ...getPluginCatalogRoutes(),
     ...getSupportBundleRoutes(),

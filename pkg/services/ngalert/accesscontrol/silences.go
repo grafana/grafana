@@ -6,8 +6,8 @@ import (
 
 	"golang.org/x/exp/maps"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -123,15 +123,15 @@ func (s SilenceService) FilterByAccess(ctx context.Context, user identity.Reques
 	}
 
 	result := make([]*models.Silence, 0, len(silences))
-	namespacesByAccess := make(map[string]bool) // caches results of permissions check for each namespace to avoid repeated checks for the same folder
+	accessCacheByFolder := make(map[string]bool)
 	for _, silWithFolder := range silencesWithFolders {
-		hasAccess, ok := namespacesByAccess[silWithFolder.folderUID]
+		hasAccess, ok := accessCacheByFolder[silWithFolder.folderUID]
 		if !ok {
 			hasAccess = s.authorizeReadSilence(ctx, user, silWithFolder) == nil
 
 			// Cache non-empty namespaces to avoid repeated checks for the same folder.
 			if silWithFolder.folderUID != "" {
-				namespacesByAccess[silWithFolder.folderUID] = hasAccess
+				accessCacheByFolder[silWithFolder.folderUID] = hasAccess
 			}
 		}
 		if hasAccess {
@@ -284,6 +284,66 @@ func (s SilenceService) authorizeUpdateSilence(ctx context.Context, user identit
 	})
 }
 
+// SilenceAccess returns the permission sets for a slice of silences. The permission set includes read, write, and
+// create which corresponds the given user being able to read, write, and create each given silence, respectively.
+func (s SilenceService) SilenceAccess(ctx context.Context, user identity.Requester, silences []*models.Silence) (map[*models.Silence]models.SilencePermissionSet, error) {
+	basePerms := make(models.SilencePermissionSet, 3)
+	canReadAll, err := s.authorizeReadSilencePreConditions(ctx, user)
+	if err != nil || canReadAll {
+		basePerms[models.SilencePermissionRead] = err == nil
+	}
+	canUpdateAny, err := s.authorizeUpdateSilencePreConditions(ctx, user)
+	if err != nil || canUpdateAny {
+		basePerms[models.SilencePermissionWrite] = err == nil
+	}
+	canCreateAny, err := s.authorizeCreateSilencePreConditions(ctx, user)
+	if err != nil || canCreateAny {
+		basePerms[models.SilencePermissionCreate] = err == nil
+	}
+
+	if basePerms.AllSet() {
+		// Shortcut for the case when all permissions are known based on preconditions. We don't need to hit the database to find folder UIDs.
+		return withPermissionSet(silences, basePerms), nil
+	}
+
+	silencesWithFolders, err := s.withFolders(ctx, user.GetOrgID(), silences...)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[*models.Silence]models.SilencePermissionSet, len(silences))
+	accessCacheByFolder := make(map[string]models.SilencePermissionSet)
+	for _, silWithFolder := range silencesWithFolders {
+		if perms, ok := accessCacheByFolder[silWithFolder.folderUID]; ok {
+			result[silWithFolder.Silence] = perms.Clone()
+			continue
+		}
+
+		permSet := basePerms.Clone()
+		if _, ok := permSet[models.SilencePermissionRead]; !ok {
+			err := s.authorizeReadSilence(ctx, user, silWithFolder)
+			permSet[models.SilencePermissionRead] = err == nil
+		}
+
+		if _, ok := permSet[models.SilencePermissionWrite]; !ok {
+			err := s.authorizeUpdateSilence(ctx, user, silWithFolder)
+			permSet[models.SilencePermissionWrite] = err == nil
+		}
+
+		if _, ok := permSet[models.SilencePermissionCreate]; !ok {
+			err := s.authorizeCreateSilence(ctx, user, silWithFolder)
+			permSet[models.SilencePermissionCreate] = err == nil
+		}
+
+		result[silWithFolder.Silence] = permSet
+		// Cache non-empty namespaces to avoid repeated checks for the same folder.
+		if silWithFolder.folderUID != "" {
+			accessCacheByFolder[silWithFolder.folderUID] = permSet
+		}
+	}
+	return result, nil
+}
+
 // withFolders resolves rule UIDs to folder UIDs for rule-specific silences and returns a list of silenceWithFolder
 // that includes rule information, if available.
 func (s SilenceService) withFolders(ctx context.Context, orgID int64, silences ...*models.Silence) ([]*silenceWithFolder, error) {
@@ -312,4 +372,12 @@ func (s SilenceService) withFolders(ctx context.Context, orgID int64, silences .
 		}
 	}
 	return result, nil
+}
+
+func withPermissionSet(silences []*models.Silence, perms models.SilencePermissionSet) map[*models.Silence]models.SilencePermissionSet {
+	result := make(map[*models.Silence]models.SilencePermissionSet, len(silences))
+	for _, silence := range silences {
+		result[silence] = perms.Clone()
+	}
+	return result
 }

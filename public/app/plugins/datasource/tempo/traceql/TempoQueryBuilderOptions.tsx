@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { EditorField, EditorRow } from '@grafana/experimental';
 import { AutoSizeInput, RadioButtonGroup } from '@grafana/ui';
@@ -44,11 +44,15 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
   const onTableTypeChange = (val: SearchTableType) => {
     onChange({ ...query, tableType: val });
   };
+  const onStepChange = (e: React.FormEvent<HTMLInputElement>) => {
+    onChange({ ...query, step: e.currentTarget.value });
+  };
 
   const collapsedInfoList = [
     `Limit: ${query.limit || DEFAULT_LIMIT}`,
     `Spans Limit: ${query.spss || DEFAULT_SPSS}`,
     `Table Format: ${query.tableType === SearchTableType.Traces ? 'Traces' : 'Spans'}`,
+    `Step: ${query.step || 'auto'}`,
   ];
 
   return (
@@ -85,6 +89,19 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
               ]}
               value={query.tableType}
               onChange={onTableTypeChange}
+            />
+          </EditorField>
+          <EditorField
+            label="Step"
+            tooltip="Defines the step for metric queries. Use duration notation, for example 30s or 1m"
+          >
+            <AutoSizeInput
+              className="width-4"
+              placeholder="auto"
+              type="string"
+              defaultValue={query.step}
+              onCommitChange={onStepChange}
+              value={query.step}
             />
           </EditorField>
         </QueryOptionGroup>

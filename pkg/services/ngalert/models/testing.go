@@ -16,6 +16,8 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	alertingModels "github.com/grafana/alerting/models"
+
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -602,6 +604,7 @@ func CopyRule(r *AlertRule, mutators ...AlertRuleMutator) *AlertRule {
 		NoDataState:     r.NoDataState,
 		ExecErrState:    r.ExecErrState,
 		For:             r.For,
+		Record:          r.Record,
 	}
 
 	if r.DashboardUID != nil {
@@ -838,6 +841,11 @@ func AlertInstanceGen(mutators ...AlertInstanceMutator) *AlertInstance {
 		CurrentStateSince: currentStateSince,
 		CurrentStateEnd:   currentStateSince.Add(time.Duration(rand.Intn(100) + 200)),
 		LastEvalTime:      time.Now().Add(-time.Duration(rand.Intn(100) + 50)),
+		LastSentAt:        util.Pointer(time.Now().Add(-time.Duration(rand.Intn(100) + 50))),
+	}
+
+	if instance.CurrentState == InstanceStateNormal && rand.Intn(2) == 1 {
+		instance.ResolvedAt = util.Pointer(time.Now().Add(-time.Duration(rand.Intn(100) + 50)))
 	}
 
 	for _, mutator := range mutators {
@@ -1052,6 +1060,29 @@ func (n SilenceMutators) WithMatcher(name, value string, matchType labels.MatchT
 			IsEqual: util.Pointer(matchType == labels.MatchRegexp || matchType == labels.MatchEqual),
 		}
 		s.Silence.Matchers = append(s.Silence.Matchers, &m)
+	}
+}
+func (n SilenceMutators) WithRuleUID(value string) Mutator[Silence] {
+	return func(s *Silence) {
+		name := alertingModels.RuleUIDLabel
+		m := amv2.Matcher{
+			Name:    &name,
+			Value:   &value,
+			IsRegex: util.Pointer(false),
+			IsEqual: util.Pointer(true),
+		}
+		for _, matcher := range s.Silence.Matchers {
+			if isRuleUIDMatcher(*matcher) {
+				*matcher = m
+				return
+			}
+		}
+		s.Silence.Matchers = append(s.Silence.Matchers, &m)
+	}
+}
+func (n SilenceMutators) Expired() Mutator[Silence] {
+	return func(s *Silence) {
+		s.EndsAt = util.Pointer(strfmt.DateTime(time.Now().Add(-time.Minute)))
 	}
 }
 

@@ -1,5 +1,5 @@
 {
-  "extends": ["@grafana/eslint-config"],
+  "extends": ["@grafana/eslint-config", "plugin:react/jsx-runtime"],
   "root": true,
   "plugins": ["@emotion", "lodash", "jest", "import", "jsx-a11y", "@grafana", "no-barrel-files"],
   "settings": {

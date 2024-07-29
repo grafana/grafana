@@ -1,4 +1,4 @@
-import React, { ComponentType, useEffect, useRef } from 'react';
+import { ComponentType, useEffect, useRef } from 'react';
 import { Observable, ReplaySubject } from 'rxjs';
 
 import { EventBusSrv, PanelData, PanelPlugin, PanelProps, FieldConfigSource } from '@grafana/data';

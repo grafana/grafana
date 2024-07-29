@@ -3,10 +3,8 @@ kind: Scope
 metadata:
   name: example
 spec:
-    title: Example scope
+    title: bar-scope
     description: Longer description for a scope
-    category: should this be an enum or an external reference?
-    type: should this be an enum or an external reference?
     filters: 
       - key: aaa
         operator: equals

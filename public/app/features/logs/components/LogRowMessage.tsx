@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { CoreApp, findHighlightChunksInText, LogRowContextOptions, LogRowModel } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
+import { PopoverContent } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowMenuCell } from './LogRowMenuCell';
@@ -25,6 +26,7 @@ interface Props {
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
+  pinLineButtonTooltipTitle?: PopoverContent;
   pinned?: boolean;
   styles: LogRowStyles;
   mouseIsOver: boolean;
@@ -77,7 +79,7 @@ const restructureLog = (
   return line;
 };
 
-export const LogRowMessage = React.memo((props: Props) => {
+export const LogRowMessage = memo((props: Props) => {
   const {
     row,
     wrapLogMessage,
@@ -88,6 +90,7 @@ export const LogRowMessage = React.memo((props: Props) => {
     onPermalinkClick,
     onUnpinLine,
     onPinLine,
+    pinLineButtonTooltipTitle,
     pinned,
     mouseIsOver,
     onBlur,
@@ -124,6 +127,7 @@ export const LogRowMessage = React.memo((props: Props) => {
             onPermalinkClick={onPermalinkClick}
             onPinLine={onPinLine}
             onUnpinLine={onUnpinLine}
+            pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
             pinned={pinned}
             styles={styles}
             mouseIsOver={mouseIsOver}

@@ -20,6 +20,7 @@ export const DashboardInteractions = {
       | 'share'
       | 'createLibraryPanel'
       | 'unlinkLibraryPanel'
+      | 'replaceLibraryPanel'
       | 'duplicate'
       | 'copy'
       | 'remove'
@@ -43,7 +44,7 @@ export const DashboardInteractions = {
   },
 
   // Sharing interactions:
-  sharingTabChanged: (properties?: Record<string, unknown>) => {
+  sharingCategoryClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('sharing_category_clicked', properties);
   },
   shareLinkCopied: (properties?: Record<string, unknown>) => {

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -131,9 +131,11 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    height: '100%',
-  }),
+  container: config.featureToggles.bodyScrolling
+    ? css({})
+    : css({
+        height: '100%',
+      }),
   readme: css({
     '& img': {
       maxWidth: '100%',

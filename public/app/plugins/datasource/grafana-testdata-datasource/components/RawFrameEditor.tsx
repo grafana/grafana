@@ -1,5 +1,5 @@
 import { isArray } from 'lodash';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { dataFrameToJSON, toDataFrame, toDataFrameDTO } from '@grafana/data';
 import { toDataQueryResponse } from '@grafana/runtime';

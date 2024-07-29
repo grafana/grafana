@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { ItemValues } from './ItemValues';
 import { RawListValue } from './RawListItem';

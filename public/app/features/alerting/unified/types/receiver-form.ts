@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 import { CloudNotifierType, NotifierType } from 'app/types';

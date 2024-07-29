@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { DataSourceApi } from '@grafana/data';
 import {
   SceneComponentProps,

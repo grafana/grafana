@@ -35,6 +35,10 @@ func (e *cloudWatchExecutor) parseResponse(ctx context.Context, startTime time.T
 			dataRes.Error = fmt.Errorf("ArithmeticError in query %q: %s", queryRow.RefId, response.ArithmeticErrorMessage)
 		}
 
+		if response.HasPermissionError {
+			dataRes.Error = fmt.Errorf("PermissionError in query %q: %s", queryRow.RefId, response.PermissionErrorMessage)
+		}
+
 		var err error
 		dataRes.Frames, err = buildDataFrames(ctx, startTime, endTime, response, queryRow)
 		if err != nil {
@@ -79,6 +83,9 @@ func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) m
 				if *message.Code == "ArithmeticError" {
 					response.AddArithmeticError(message.Value)
 				}
+				if *message.Code == "Forbidden" {
+					response.AddPermissionError(message.Value)
+				}
 			}
 
 			response.AddMetricDataResult(r)
@@ -98,9 +105,17 @@ func parseLabels(cloudwatchLabel string, query *models.CloudWatchQuery) (string,
 
 	splitLabels := strings.Split(cloudwatchLabel, keySeparator)
 	// The first part is the name of the time series, followed by the labels
+	name := splitLabels[0]
 	labelsIndex := 1
 
-	labels := data.Labels{}
+	// set Series to the name of the time series as a fallback
+	labels := data.Labels{"Series": name}
+
+	// do not parse labels for raw queries
+	if query.MetricEditorMode == models.MetricEditorModeRaw {
+		return name, labels
+	}
+
 	for _, dim := range dims {
 		values := query.Dimensions[dim]
 		if isSingleValue(values) {
@@ -111,7 +126,7 @@ func parseLabels(cloudwatchLabel string, query *models.CloudWatchQuery) (string,
 		labels[dim] = splitLabels[labelsIndex]
 		labelsIndex++
 	}
-	return splitLabels[0], labels
+	return name, labels
 }
 
 func getLabels(cloudwatchLabel string, query *models.CloudWatchQuery, addSeriesLabelAsFallback bool) data.Labels {

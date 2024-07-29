@@ -6,7 +6,7 @@ import (
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc"
 
-	grpcUtils "github.com/grafana/grafana/pkg/services/store/entity/grpc"
+	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
 
 func NewEntityStoreClientLocal(server EntityStoreServer) EntityStoreClient {

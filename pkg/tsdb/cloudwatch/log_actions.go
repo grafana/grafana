@@ -57,14 +57,10 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 		eg.Go(func() error {
 			dataframe, err := e.executeLogAction(ectx, logsQuery, query, req.PluginContext)
 			if err != nil {
-				var AWSError *AWSError
-				if errors.As(err, &AWSError) {
-					resultChan <- backend.Responses{
-						query.RefID: backend.DataResponse{Frames: data.Frames{}, Error: AWSError},
-					}
-					return nil
+				resultChan <- backend.Responses{
+					query.RefID: backend.DataResponse{Frames: data.Frames{}, Error: err},
 				}
-				return err
+				return nil
 			}
 
 			groupedFrames, err := groupResponseFrame(dataframe, logsQuery.StatsGroups)

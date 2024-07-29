@@ -21,6 +21,7 @@ export const DEFAULT_METRICS_QUERY: Omit<CloudWatchMetricsQuery, 'refId'> = {
   period: '',
   metricQueryType: MetricQueryType.Search,
   metricEditorMode: MetricEditorMode.Builder,
+  sql: undefined,
   sqlExpression: '',
   matchExact: true,
 };

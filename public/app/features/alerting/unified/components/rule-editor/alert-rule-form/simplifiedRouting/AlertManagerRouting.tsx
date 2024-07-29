@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -7,7 +7,7 @@ import { Alert, CollapsableSection, LoadingPlaceholder, Stack, useStyles2 } from
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
 
-import { ContactPointReceiverSummary } from '../../../contact-points/ContactPoints';
+import { ContactPointReceiverSummary } from '../../../contact-points/ContactPoint';
 import { useContactPointsWithStatus } from '../../../contact-points/useContactPoints';
 import { ContactPointWithMetadata } from '../../../contact-points/utils';
 

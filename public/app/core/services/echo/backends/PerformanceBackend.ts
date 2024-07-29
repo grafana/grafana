@@ -32,9 +32,17 @@ export class PerformanceBackend implements EchoBackend<PerformanceEvent, Perform
       return;
     }
 
-    backendSrv.post('/api/frontend-metrics', {
-      events: this.buffer,
-    });
+    backendSrv
+      .post(
+        '/api/frontend-metrics',
+        {
+          events: this.buffer,
+        },
+        { showErrorAlert: false }
+      )
+      .catch(() => {
+        // Just swallow this error - it's non-critical
+      });
 
     this.buffer = [];
   };

@@ -1,4 +1,4 @@
-import React, { JSX, useEffect, useState } from 'react';
+import { JSX, useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaEdition } from '@grafana/data/src/types/config';
@@ -54,6 +54,9 @@ export const AuthConfigPageUnconnected = ({
 
   // filter out saml from sso providers because it is already included in availableProviders
   providers = providers.filter((p) => p.provider !== 'saml');
+
+  // temporarily remove LDAP until its configuration form is ready
+  providers = providers.filter((p) => p.provider !== 'ldap');
 
   const providerList = availableProviders.length
     ? [

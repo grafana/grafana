@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useMemo, useReducer } from 'react';
+import { FC, useEffect, useMemo, useReducer } from 'react';
 
 import { LoadingState } from '@grafana/data';
 import { Button, Modal, useStyles2 } from '@grafana/ui';

@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/mock"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 var _ accesscontrol.PermissionsService = new(MockPermissionsService)
@@ -46,7 +46,7 @@ func (m *MockPermissionsService) SetPermissions(ctx context.Context, orgID int64
 
 func (m *MockPermissionsService) DeleteResourcePermissions(ctx context.Context, orgID int64, resourceID string) error {
 	mockedArgs := m.Called(ctx, orgID, resourceID)
-	return mockedArgs.Error(1)
+	return mockedArgs.Error(0)
 }
 
 func (m *MockPermissionsService) MapActions(permission accesscontrol.ResourcePermission) string {

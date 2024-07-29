@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { omit } from 'lodash';
-import React, { InputHTMLAttributes } from 'react';
+import { InputHTMLAttributes } from 'react';
+import * as React from 'react';
 
 import { Button } from '../Button/Button';
 import { FormField } from '../FormField/FormField';

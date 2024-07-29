@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { CellProps } from 'react-table';
 
 import { GrafanaTheme2 } from '@grafana/data';

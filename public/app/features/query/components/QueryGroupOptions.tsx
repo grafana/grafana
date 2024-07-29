@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { PureComponent, ChangeEvent, FocusEvent } from 'react';
+import { PureComponent, ChangeEvent, FocusEvent } from 'react';
+import * as React from 'react';
 
 import { rangeUtil, PanelData, DataSourceApi } from '@grafana/data';
 import { Switch, Input, InlineFormLabel, stylesFactory } from '@grafana/ui';

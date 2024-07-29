@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -70,7 +71,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 func (uss *UsageStats) gatherMetrics(ctx context.Context, metrics *sync.Map) {
 	ctxTracer, span := uss.tracer.Start(ctx, "UsageStats.GatherLoop")
 	defer span.End()
-	totC, errC := 0, 0
+	var totC, errC uint64
 
 	sem := make(chan struct{}, maxConcurrentCollectors) // create a semaphore with a capacity of 5
 	var wg sync.WaitGroup
@@ -87,9 +88,9 @@ func (uss *UsageStats) gatherMetrics(ctx context.Context, metrics *sync.Map) {
 			defer cancel()
 
 			fnMetrics, err := uss.runMetricsFunc(ctxWithTimeout, fn)
-			totC++
+			atomic.AddUint64(&totC, 1)
 			if err != nil {
-				errC++
+				atomic.AddUint64(&errC, 1)
 				return
 			}
 

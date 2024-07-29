@@ -384,7 +384,6 @@ const prepConfig = (getData: () => DataFrame[], scatterSeries: ScatterSeries[], 
                 // if pointHints.fixed? don't recalc size
                 // if pointColor has 0 opacity, draw as single path (assuming all strokes are alpha 1)
 
-                u.ctx.moveTo(cx + size / 2, cy);
                 u.ctx.beginPath();
                 u.ctx.arc(cx, cy, size / 2, 0, deg360);
 

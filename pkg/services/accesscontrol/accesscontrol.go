@@ -2,17 +2,22 @@ package accesscontrol
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol")
 
 type AccessControl interface {
 	// Evaluate evaluates access to the given resources.
@@ -76,9 +81,10 @@ type Options struct {
 type SearchOptions struct {
 	ActionPrefix string // Needed for the PoC v1, it's probably going to be removed.
 	Action       string
+	ActionSets   []string
 	Scope        string
-	NamespacedID string    // ID of the identity (ex: user:3, service-account:4)
-	wildcards    Wildcards // private field computed based on the Scope
+	TypedID      identity.TypedID // ID of the identity (ex: user:3, service-account:4)
+	wildcards    Wildcards        // private field computed based on the Scope
 	RolePrefixes []string
 }
 
@@ -98,21 +104,17 @@ func (s *SearchOptions) Wildcards() []string {
 }
 
 func (s *SearchOptions) ComputeUserID() (int64, error) {
-	if s.NamespacedID == "" {
-		return 0, errors.New("namespacedID must be set")
-	}
-
-	id, err := identity.ParseNamespaceID(s.NamespacedID)
+	id, err := s.TypedID.ParseInt()
 	if err != nil {
 		return 0, err
 	}
 
 	// Validate namespace type is user or service account
-	if id.Namespace() != identity.NamespaceUser && id.Namespace() != identity.NamespaceServiceAccount {
-		return 0, fmt.Errorf("invalid namespace: %s", id.Namespace())
+	if s.TypedID.Type() != identity.TypeUser && s.TypedID.Type() != identity.TypeServiceAccount {
+		return 0, fmt.Errorf("invalid type: %s", s.TypedID.Type())
 	}
 
-	return id.ParseInt()
+	return id, nil
 }
 
 type SyncUserRolesCommand struct {
@@ -231,30 +233,24 @@ func BuildPermissionsMap(permissions []Permission) map[string]bool {
 }
 
 // GroupScopesByAction will group scopes on action
+//
+// Deprecated: use GroupScopesByActionContext instead
 func GroupScopesByAction(permissions []Permission) map[string][]string {
-	// Use a map to deduplicate scopes.
-	// User can have the same permission from multiple sources (e.g. team, basic role, directly assigned etc).
-	// User will also have duplicate permissions if action sets are used, as we will be double writing permissions for a while.
-	m := make(map[string]map[string]struct{})
+	return GroupScopesByActionContext(context.Background(), permissions)
+}
+
+// GroupScopesByAction will group scopes on action
+func GroupScopesByActionContext(ctx context.Context, permissions []Permission) map[string][]string {
+	_, span := tracer.Start(ctx, "accesscontrol.GroupScopesByActionContext", trace.WithAttributes(
+		attribute.Int("permissions_count", len(permissions)),
+	))
+	defer span.End()
+
+	m := make(map[string][]string)
 	for i := range permissions {
-		if _, ok := m[permissions[i].Action]; !ok {
-			m[permissions[i].Action] = make(map[string]struct{})
-		}
-		m[permissions[i].Action][permissions[i].Scope] = struct{}{}
+		m[permissions[i].Action] = append(m[permissions[i].Action], permissions[i].Scope)
 	}
-
-	res := make(map[string][]string, len(m))
-	for action, scopes := range m {
-		scopeList := make([]string, len(scopes))
-		i := 0
-		for scope := range scopes {
-			scopeList[i] = scope
-			i++
-		}
-		res[action] = scopeList
-	}
-
-	return res
+	return m
 }
 
 // Reduce will reduce a list of permissions to its minimal form, grouping scopes by action
@@ -359,6 +355,20 @@ func GetOrgRoles(user identity.Requester) []string {
 	}
 
 	return roles
+}
+
+// PermissionsForActions generate Permissions for all actions provided scoped to provided scope.
+func PermissionsForActions(actions []string, scope string) []Permission {
+	permissions := make([]Permission, len(actions))
+
+	for i, action := range actions {
+		permissions[i] = Permission{
+			Action: action,
+			Scope:  scope,
+		}
+	}
+
+	return permissions
 }
 
 func BackgroundUser(name string, orgID int64, role org.RoleType, permissions []Permission) identity.Requester {

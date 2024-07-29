@@ -1,13 +1,11 @@
-import React from 'react';
-
-import { Box } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { InfoItem } from '../../shared/InfoItem';
 
 export const InfoPaneLeft = () => {
   return (
-    <Box alignItems="flex-start" display="flex" padding={2} gap={2} direction="column" backgroundColor="secondary">
+    <Stack gap={4} direction="column">
       <InfoItem
         title={t('migrate-to-cloud.what-is-cloud.title', 'What is Grafana Cloud?')}
         linkTitle={t('migrate-to-cloud.what-is-cloud.link-title', 'Learn about cloud features')}
@@ -19,6 +17,7 @@ export const InfoPaneLeft = () => {
           installation.
         </Trans>
       </InfoItem>
+
       <InfoItem
         title={t('migrate-to-cloud.why-host.title', 'Why host with Grafana?')}
         linkTitle={t('migrate-to-cloud.why-host.link-title', 'More questions? Talk to an expert')}
@@ -29,6 +28,7 @@ export const InfoPaneLeft = () => {
           SLOs, incident management, machine learning, and powerful observability integrations.
         </Trans>
       </InfoItem>
+
       <InfoItem
         title={t('migrate-to-cloud.is-it-secure.title', 'Is it secure?')}
         linkTitle={t('migrate-to-cloud.is-it-secure.link-title', 'Grafana Labs Trust Center')}
@@ -40,6 +40,6 @@ export const InfoPaneLeft = () => {
           unauthorized access, use, or disclosure.
         </Trans>
       </InfoItem>
-    </Box>
+    </Stack>
   );
 };

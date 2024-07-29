@@ -2,9 +2,11 @@ package notifier
 
 import (
 	"context"
+	"crypto/tls"
 	"slices"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -21,13 +23,14 @@ import (
 )
 
 type redisConfig struct {
-	addr     string
-	username string
-	password string
-	db       int
-	name     string
-	prefix   string
-	maxConns int
+	addr        string
+	username    string
+	password    string
+	db          int
+	name        string
+	prefix      string
+	maxConns    int
+	clusterMode bool
 
 	tlsEnabled bool
 	tls        dstls.ClientConfig
@@ -55,7 +58,7 @@ const (
 
 type redisPeer struct {
 	name      string
-	redis     *redis.Client
+	redis     redis.UniversalClient
 	prefix    string
 	logger    log.Logger
 	states    map[string]alertingCluster.State
@@ -95,25 +98,34 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		poolSize = cfg.maxConns
 	}
 
-	opts := &redis.Options{
-		Addr:     cfg.addr,
-		Username: cfg.username,
-		Password: cfg.password,
-		DB:       cfg.db,
-		PoolSize: poolSize,
-	}
+	addrs := strings.Split(cfg.addr, ",")
 
+	var tlsClientConfig *tls.Config
+	var err error
 	if cfg.tlsEnabled {
-		tlsClientConfig, err := cfg.tls.GetTLSConfig()
+		tlsClientConfig, err = cfg.tls.GetTLSConfig()
 		if err != nil {
 			logger.Error("Failed to get TLS config", "err", err)
 			return nil, err
-		} else {
-			opts.TLSConfig = tlsClientConfig
 		}
 	}
 
-	rdb := redis.NewClient(opts)
+	opts := &redis.UniversalOptions{
+		Addrs:     addrs,
+		Username:  cfg.username,
+		Password:  cfg.password,
+		DB:        cfg.db,
+		PoolSize:  poolSize,
+		TLSConfig: tlsClientConfig,
+	}
+
+	var rdb redis.UniversalClient
+	if cfg.clusterMode {
+		rdb = redis.NewClusterClient(opts.Cluster())
+	} else {
+		rdb = redis.NewClient(opts.Simple())
+	}
+
 	cmd := rdb.Ping(context.Background())
 	if cmd.Err() != nil {
 		logger.Error("Failed to ping redis - redis-based alertmanager clustering may not be available", "err", cmd.Err())

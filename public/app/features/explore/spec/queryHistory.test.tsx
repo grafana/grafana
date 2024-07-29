@@ -1,4 +1,3 @@
-import React from 'react';
 import { Props } from 'react-virtualized-auto-sizer';
 
 import { EventBusSrv, serializeStateToUrlParam } from '@grafana/data';

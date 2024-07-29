@@ -1,5 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/monaco-query-field/MonacoQueryFieldLazy.tsx
-import React, { Suspense } from 'react';
+import { Suspense } from 'react';
 
 import MonacoQueryField from './MonacoQueryField';
 import { Props } from './MonacoQueryFieldProps';

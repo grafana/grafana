@@ -156,9 +156,9 @@
         ],
         "responses": {
           "200": {
-            "description": "gettableSilence",
+            "description": "gettableGrafanaSilence",
             "schema": {
-              "$ref": "#/definitions/gettableSilence"
+              "$ref": "#/definitions/gettableGrafanaSilence"
             }
           },
           "400": {
@@ -214,13 +214,25 @@
             },
             "name": "filter",
             "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "Return rule metadata with silence.",
+            "name": "ruleMetadata",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "Return access control metadata with silence.",
+            "name": "accesscontrol",
+            "in": "query"
           }
         ],
         "responses": {
           "200": {
-            "description": "gettableSilences",
+            "description": "gettableGrafanaSilences",
             "schema": {
-              "$ref": "#/definitions/gettableSilences"
+              "$ref": "#/definitions/gettableGrafanaSilences"
             }
           },
           "400": {
@@ -838,6 +850,18 @@
               "type": "string"
             },
             "name": "filter",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "Return rule metadata with silence.",
+            "name": "ruleMetadata",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "Return access control metadata with silence.",
+            "name": "accesscontrol",
             "in": "query"
           },
           {
@@ -3060,6 +3084,12 @@
             "schema": {
               "$ref": "#/definitions/ValidationError"
             }
+          },
+          "409": {
+            "description": "GenericPublicError",
+            "schema": {
+              "$ref": "#/definitions/GenericPublicError"
+            }
           }
         }
       },
@@ -3077,6 +3107,17 @@
             "name": "name",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "description": "Version of mute timing to use for optimistic concurrency. Leave empty to disable validation",
+            "name": "version",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
           }
         ],
         "responses": {
@@ -3498,6 +3539,7 @@
     },
     "/v1/rules/history": {
       "get": {
+        "description": "Allows to query alerting state history.\nIn addition to defined query parameters it accepts filter by labels. The query parameter name must start with 'labels_'\nExample: /v1/rules/history?labels_myKey1=myValue1\u0026labels_myKey2=myValue2",
         "produces": [
           "application/json"
         ],
@@ -3506,9 +3548,69 @@
         ],
         "summary": "Query state history.",
         "operationId": "RouteGetStateHistory",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "The timestamp of the start point of the time range the history is obtained.",
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "The timestamp of the end point of the time range the history is obtained.",
+            "name": "to",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "Limits the number of records that needs to be returned.",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Filter by rule UID. Required the state history is configured to use annotations for storage.",
+            "name": "ruleUID",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Filter by rules that are or were assigned to the specific dashboard.",
+            "name": "DashboardUID",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "Filter by dashboard's panel ID. Requires Dashboard UID to be specified.",
+            "name": "PanelID",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/StateHistory"
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "404": {
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          },
+          "500": {
+            "description": "Failure",
+            "schema": {
+              "$ref": "#/definitions/Failure"
+            }
           }
         }
       }
@@ -3533,10 +3635,10 @@
           "format": "date-time"
         },
         "annotations": {
-          "$ref": "#/definitions/overrideLabels"
+          "$ref": "#/definitions/Labels"
         },
         "labels": {
-          "$ref": "#/definitions/overrideLabels"
+          "$ref": "#/definitions/Labels"
         },
         "state": {
           "type": "string"
@@ -3731,6 +3833,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "record": {
+          "$ref": "#/definitions/AlertRuleRecordExport"
+        },
         "title": {
           "type": "string"
         },
@@ -3878,6 +3983,18 @@
         }
       }
     },
+    "AlertRuleRecordExport": {
+      "type": "object",
+      "title": "Record is the provisioned export of models.Record.",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "metric": {
+          "type": "string"
+        }
+      }
+    },
     "AlertingFileExport": {
       "type": "object",
       "title": "AlertingFileExport is the full provisioned file export.",
@@ -3936,7 +4053,7 @@
           }
         },
         "annotations": {
-          "$ref": "#/definitions/overrideLabels"
+          "$ref": "#/definitions/Labels"
         },
         "duration": {
           "type": "number",
@@ -3950,7 +4067,7 @@
           "type": "string"
         },
         "labels": {
-          "$ref": "#/definitions/overrideLabels"
+          "$ref": "#/definitions/Labels"
         },
         "lastError": {
           "type": "string"
@@ -3984,7 +4101,7 @@
           }
         },
         "type": {
-          "$ref": "#/definitions/RuleType"
+          "type": "string"
         }
       }
     },
@@ -4480,7 +4597,7 @@
       }
     },
     "EvalQueriesResponse": {
-      "$ref": "#/definitions/EvalQueriesResponse"
+      "type": "object"
     },
     "ExplorePanelsState": {
       "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
@@ -5213,6 +5330,9 @@
           "items": {
             "$ref": "#/definitions/TimeIntervalItem"
           }
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -6301,6 +6421,9 @@
           "items": {
             "$ref": "#/definitions/TimeIntervalItem"
           }
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -6448,6 +6571,9 @@
         },
         "provenance": {
           "$ref": "#/definitions/Provenance"
+        },
+        "record": {
+          "$ref": "#/definitions/Record"
         },
         "ruleGroup": {
           "type": "string",
@@ -6770,13 +6896,20 @@
     },
     "Record": {
       "type": "object",
-      "title": "Record defines how data produced by a recording rule is written.",
+      "required": [
+        "metric",
+        "from"
+      ],
       "properties": {
         "from": {
-          "type": "string"
+          "description": "Which expression node should be used as the input for the recorded metric.",
+          "type": "string",
+          "example": "A"
         },
         "metric": {
-          "type": "string"
+          "description": "Name of the recorded metric.",
+          "type": "string",
+          "example": "grafana_alerts_ratio"
         }
       }
     },
@@ -6952,7 +7085,7 @@
           "type": "string"
         },
         "labels": {
-          "$ref": "#/definitions/overrideLabels"
+          "$ref": "#/definitions/Labels"
         },
         "lastError": {
           "type": "string"
@@ -6968,7 +7101,7 @@
           "type": "string"
         },
         "type": {
-          "$ref": "#/definitions/RuleType"
+          "type": "string"
         }
       }
     },
@@ -7079,10 +7212,6 @@
         }
       }
     },
-    "RuleType": {
-      "type": "string",
-      "title": "RuleType models the type of a rule."
-    },
     "SNSConfig": {
       "type": "object",
       "properties": {
@@ -7167,6 +7296,20 @@
         },
         "SecretKey": {
           "$ref": "#/definitions/Secret"
+        }
+      }
+    },
+    "SilenceMetadata": {
+      "type": "object",
+      "properties": {
+        "folder_uid": {
+          "type": "string"
+        },
+        "rule_title": {
+          "type": "string"
+        },
+        "rule_uid": {
+          "type": "string"
         }
       }
     },
@@ -7972,15 +8115,15 @@
         "receiver": {
           "$ref": "#/definitions/receiver"
         }
-      },
-      "$ref": "#/definitions/alertGroup"
+      }
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/alertGroup"
-      },
-      "$ref": "#/definitions/alertGroups"
+      }
     },
     "alertStatus": {
       "description": "AlertStatus alert status",
@@ -8134,16 +8277,83 @@
           "type": "string",
           "format": "date-time"
         }
-      },
-      "$ref": "#/definitions/gettableAlert"
+      }
     },
     "gettableAlerts": {
       "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/gettableAlert"
-      },
-      "$ref": "#/definitions/gettableAlerts"
+      }
+    },
+    "gettableGrafanaSilence": {
+      "type": "object",
+      "required": [
+        "comment",
+        "createdBy",
+        "endsAt",
+        "matchers",
+        "startsAt",
+        "id",
+        "status",
+        "updatedAt"
+      ],
+      "properties": {
+        "accessControl": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "example": {
+            "create": false,
+            "read": true,
+            "write": false
+          }
+        },
+        "comment": {
+          "description": "comment",
+          "type": "string"
+        },
+        "createdBy": {
+          "description": "created by",
+          "type": "string"
+        },
+        "endsAt": {
+          "description": "ends at",
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "description": "id",
+          "type": "string"
+        },
+        "matchers": {
+          "$ref": "#/definitions/matchers"
+        },
+        "metadata": {
+          "$ref": "#/definitions/SilenceMetadata"
+        },
+        "startsAt": {
+          "description": "starts at",
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "$ref": "#/definitions/silenceStatus"
+        },
+        "updatedAt": {
+          "description": "updated at",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "gettableGrafanaSilences": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/gettableGrafanaSilence"
+      }
     },
     "gettableSilence": {
       "description": "GettableSilence gettable silence",
@@ -8192,17 +8402,17 @@
           "type": "string",
           "format": "date-time"
         }
-      },
-      "$ref": "#/definitions/gettableSilence"
+      }
     },
     "gettableSilences": {
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/gettableSilence"
-      },
-      "$ref": "#/definitions/gettableSilences"
+      }
     },
     "integration": {
+      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -8230,8 +8440,7 @@
           "description": "send resolved",
           "type": "boolean"
         }
-      },
-      "$ref": "#/definitions/integration"
+      }
     },
     "labelSet": {
       "description": "LabelSet label set",
@@ -8272,14 +8481,6 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/matcher"
-      }
-    },
-    "overrideLabels": {
-      "description": "The custom marshaling for labels.Labels ends up doing this anyways.",
-      "type": "object",
-      "title": "override the labels type with a map for generation.",
-      "additionalProperties": {
-        "type": "string"
       }
     },
     "peerStatus": {
@@ -8347,6 +8548,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -8381,10 +8583,10 @@
           "type": "string",
           "format": "date-time"
         }
-      },
-      "$ref": "#/definitions/postableSilence"
+      }
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",
@@ -8407,8 +8609,7 @@
           "description": "name",
           "type": "string"
         }
-      },
-      "$ref": "#/definitions/receiver"
+      }
     },
     "silence": {
       "description": "Silence silence",
@@ -8559,7 +8760,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/receiver"
+          "$ref": "#/definitions/Receiver"
         }
       }
     }

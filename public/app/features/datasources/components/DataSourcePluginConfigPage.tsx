@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { GenericDataSourcePlugin } from '../types';
 
 export type Props = {

@@ -2,13 +2,14 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
-import React, { FormEvent, memo } from 'react';
+import { createRef, FormEvent, memo } from 'react';
 
 import { DateTime, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../../themes';
 import { getModalStyles } from '../../Modal/getModalStyles';
+import { WeekStart } from '../WeekStartPicker';
 
 import { Body } from './CalendarBody';
 import { Footer } from './CalendarFooter';
@@ -58,6 +59,7 @@ export interface TimePickerCalendarProps {
   onClose: () => void;
   onApply: (e: FormEvent<HTMLButtonElement>) => void;
   onChange: (from: DateTime, to: DateTime) => void;
+  weekStart?: WeekStart;
 
   /**
    * When true, the calendar is rendered as a floating "tooltip" next to the input.
@@ -73,7 +75,7 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
   const { modalBackdrop } = useStyles2(getModalStyles);
   const styles = getStyles(theme, props.isReversed);
   const { isOpen, isFullscreen: isFullscreenProp, onClose } = props;
-  const ref = React.createRef<HTMLElement>();
+  const ref = createRef<HTMLElement>();
   const { dialogProps } = useDialog(
     {
       'aria-label': selectors.components.TimePicker.calendar.label,

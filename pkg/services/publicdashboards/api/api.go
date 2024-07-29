@@ -297,20 +297,16 @@ func (api *Api) DeletePublicDashboard(c *contextmodel.ReqContext) response.Respo
 		return response.Err(err)
 	}
 
-	return response.JSON(http.StatusOK, nil)
+	return response.Empty(http.StatusOK)
 }
 
 // Copied from pkg/api/metrics.go
 func toJsonStreamingResponse(ctx context.Context, features featuremgmt.FeatureToggles, qdr *backend.QueryDataResponse) response.Response {
-	statusWhenError := http.StatusBadRequest
-	if features.IsEnabled(ctx, featuremgmt.FlagDatasourceQueryMultiStatus) {
-		statusWhenError = http.StatusMultiStatus
-	}
-
 	statusCode := http.StatusOK
 	for _, res := range qdr.Responses {
 		if res.Error != nil {
-			statusCode = statusWhenError
+			statusCode = http.StatusBadRequest
+			break
 		}
 	}
 

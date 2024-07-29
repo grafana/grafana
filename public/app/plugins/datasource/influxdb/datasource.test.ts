@@ -104,10 +104,10 @@ describe('InfluxDataSource Frontend Mode [influxdbBackendMigration=false]', () =
 
     it('should replace $timefilter', async () => {
       ds = getMockInfluxDS(getMockDSInstanceSettings({ httpMode: 'GET' }));
-      await ds.metricFindQuery(query, queryOptions);
+      await ds.metricFindQuery({ refId: 'test', query }, queryOptions);
       expect(fetchMock.mock.lastCall[0].params?.q).toMatch('time >= 1514764800000ms and time <= 1514851200000ms');
       ds = getMockInfluxDS(getMockDSInstanceSettings({ httpMode: 'POST' }));
-      await ds.metricFindQuery(query, queryOptions);
+      await ds.metricFindQuery({ refId: 'test', query }, queryOptions);
       expect(fetchMock.mock.lastCall[0].params?.q).toBeFalsy();
       expect(fetchMock.mock.lastCall[0].data).toMatch(
         'time%20%3E%3D%201514764800000ms%20and%20time%20%3C%3D%201514851200000ms'
@@ -116,23 +116,23 @@ describe('InfluxDataSource Frontend Mode [influxdbBackendMigration=false]', () =
 
     it('should not have any data in request body if http mode is GET', async () => {
       ds = getMockInfluxDS(getMockDSInstanceSettings({ httpMode: 'GET' }));
-      await ds.metricFindQuery(query, queryOptions);
+      await ds.metricFindQuery({ refId: 'test', query }, queryOptions);
       expect(fetchMock.mock.lastCall[0].data).toBeNull();
     });
 
     it('should have data in request body if http mode is POST', async () => {
       ds = getMockInfluxDS(getMockDSInstanceSettings({ httpMode: 'POST' }));
-      await ds.metricFindQuery(query, queryOptions);
+      await ds.metricFindQuery({ refId: 'test', query }, queryOptions);
       expect(fetchMock.mock.lastCall[0].data).not.toBeNull();
       expect(fetchMock.mock.lastCall[0].data).toMatch('q=SELECT');
     });
 
     it('parse response correctly', async () => {
       ds = getMockInfluxDS(getMockDSInstanceSettings({ httpMode: 'GET' }));
-      let responseGet = await ds.metricFindQuery(query, queryOptions);
+      let responseGet = await ds.metricFindQuery({ refId: 'test', query }, queryOptions);
       expect(responseGet).toEqual([{ text: 'cpu' }]);
       ds = getMockInfluxDS(getMockDSInstanceSettings({ httpMode: 'POST' }));
-      let responsePost = await ds.metricFindQuery(query, queryOptions);
+      let responsePost = await ds.metricFindQuery({ refId: 'test', query }, queryOptions);
       expect(responsePost).toEqual([{ text: 'cpu' }]);
     });
   });

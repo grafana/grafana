@@ -19,9 +19,7 @@ type Scope struct {
 
 type ScopeSpec struct {
 	Title       string `json:"title"`
-	Type        string `json:"type"`
 	Description string `json:"description"`
-	Category    string `json:"category"`
 
 	// +listType=atomic
 	Filters []ScopeFilter `json:"filters"`
@@ -62,8 +60,10 @@ type ScopeDashboardBinding struct {
 }
 
 type ScopeDashboardBindingSpec struct {
-	Dashboard string `json:"dashboard"`
-	Scope     string `json:"scope"`
+	Dashboard      string `json:"dashboard"`
+	DashboardTitle string `json:"dashboardTitle"`
+
+	Scope string `json:"scope"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -72,6 +72,14 @@ type ScopeDashboardBindingList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []ScopeDashboardBinding `json:"items,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type FindScopeDashboardBindingsResults struct {
+	metav1.TypeMeta `json:",inline"`
+
+	Items   []ScopeDashboardBinding `json:"items,omitempty"`
+	Message string                  `json:"message,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -107,8 +115,9 @@ type ScopeNodeSpec struct {
 
 	NodeType NodeType `json:"nodeType"` // container | leaf
 
-	Title       string `json:"title"`
-	Description string `json:"description,omitempty"`
+	Title              string `json:"title"`
+	Description        string `json:"description,omitempty"`
+	DisableMultiSelect bool   `json:"disableMultiSelect"`
 
 	LinkType LinkType `json:"linkType,omitempty"` // scope (later more things)
 	LinkID   string   `json:"linkId,omitempty"`   // the k8s name
@@ -124,20 +133,9 @@ type ScopeNodeList struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type TreeResults struct {
+type FindScopeNodeChildrenResults struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []TreeItem `json:"items,omitempty"`
-}
-
-type TreeItem struct {
-	NodeID   string   `json:"nodeId,omitempty"`
-	NodeType NodeType `json:"nodeType"` // container | leaf
-
-	Title       string `json:"title"`
-	Description string `json:"description,omitempty"`
-
-	LinkType LinkType `json:"linkType,omitempty"` // scope (later more things)
-	LinkID   string   `json:"linkId,omitempty"`   // the k8s name
+	Items []ScopeNode `json:"items,omitempty"`
 }

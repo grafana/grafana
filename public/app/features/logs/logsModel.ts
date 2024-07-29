@@ -201,8 +201,6 @@ function isLogsData(series: DataFrame) {
   return series.fields.some((f) => f.type === FieldType.time) && series.fields.some((f) => f.type === FieldType.string);
 }
 
-export const infiniteScrollRefId = 'infinite-scroll-';
-
 /**
  * Convert dataFrame into LogsModel which consists of creating separate array of log rows and metrics series. Metrics
  * series can be either already included in the dataFrame or will be computed from the log rows.
@@ -215,29 +213,12 @@ export function dataFrameToLogsModel(
   dataFrame: DataFrame[],
   intervalMs?: number,
   absoluteRange?: AbsoluteTimeRange,
-  queries?: DataQuery[]
+  queries?: DataQuery[],
+  deduplicateResults?: boolean
 ): LogsModel {
-  // Until nanosecond precision for requests is supported, we need to account for possible duplicate rows.
-  let infiniteScrollingResults = false;
-  queries = queries?.map((query) => {
-    if (query.refId.includes(infiniteScrollRefId)) {
-      infiniteScrollingResults = true;
-      return {
-        ...query,
-        refId: query.refId.replace(infiniteScrollRefId, ''),
-      };
-    }
-    return query;
-  });
-  if (infiniteScrollingResults) {
-    dataFrame = dataFrame.map((frame) => ({
-      ...frame,
-      refId: frame.refId?.replace(infiniteScrollRefId, ''),
-    }));
-  }
-
   const { logSeries } = separateLogsAndMetrics(dataFrame);
-  const logsModel = logSeriesToLogsModel(logSeries, queries, infiniteScrollingResults);
+  // Until nanosecond precision for requests is supported, we need to account for possible duplicate rows.
+  const logsModel = logSeriesToLogsModel(logSeries, queries, Boolean(deduplicateResults));
 
   if (logsModel) {
     // Create histogram metrics from logs using the interval as bucket size for the line count
@@ -444,7 +425,7 @@ export function logSeriesToLogsModel(
 
       let logLevel = LogLevel.unknown;
       const logLevelKey = (logLevelField && logLevelField.values[j]) || (labels && labels['level']);
-      if (logLevelKey) {
+      if (typeof logLevelKey === 'number' || typeof logLevelKey === 'string') {
         logLevel = getLogLevelFromKey(logLevelKey);
       } else {
         logLevel = getLogLevel(entry);

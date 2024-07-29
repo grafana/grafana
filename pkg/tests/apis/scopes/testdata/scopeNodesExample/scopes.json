@@ -8,7 +8,6 @@
         "name": "slothClusterNorth"
       },
       "spec": {
-        "category": "clusters",
         "description": "slothClusterNorth",
         "filters": [
           {
@@ -17,8 +16,7 @@
             "value": "slothClusterNorth"
           }
         ],
-        "title": "slothClusterNorth",
-        "type": "cluster"
+        "title": "slothClusterNorth"
       }
     },
     {
@@ -28,7 +26,6 @@
         "name": "slothClusterSouth"
       },
       "spec": {
-        "category": "clusters",
         "description": "slothClusterSouth",
         "filters": [
           {
@@ -37,8 +34,7 @@
             "value": "slothClusterSouth"
           }
         ],
-        "title": "slothClusterSouth",
-        "type": "cluster"
+        "title": "slothClusterSouth"
       }
     },
     {
@@ -48,7 +44,6 @@
         "name": "slothPictureFactory"
       },
       "spec": {
-        "category": "apps",
         "description": "slothPictureFactory",
         "filters": [
           {
@@ -57,8 +52,7 @@
             "value": "slothPictureFactory"
           }
         ],
-        "title": "slothPictureFactory",
-        "type": "app"
+        "title": "slothPictureFactory"
       }
     },
     {
@@ -68,7 +62,6 @@
         "name": "slothVoteTracker"
       },
       "spec": {
-        "category": "apps",
         "description": "slothVoteTracker",
         "filters": [
           {
@@ -77,8 +70,7 @@
             "value": "slothVoteTracker"
           }
         ],
-        "title": "slothVoteTracker",
-        "type": "app"
+        "title": "slothVoteTracker"
       }
     },
     {
@@ -88,7 +80,6 @@
         "name": "indexHelperCluster"
       },
       "spec": {
-        "category": "indexHelpers",
         "description": "redundant label filter but makes queries faster",
         "filters": [
           {
@@ -97,8 +88,7 @@
             "value": "cluster"
           }
         ],
-        "title": "Cluster Index Helper",
-        "type": "indexHelper"
+        "title": "Cluster Index Helper"
       }
     }
   ]

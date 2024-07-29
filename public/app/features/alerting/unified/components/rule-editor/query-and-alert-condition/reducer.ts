@@ -1,6 +1,13 @@
 import { createAction, createReducer } from '@reduxjs/toolkit';
 
-import { DataQuery, getDefaultRelativeTimeRange, getNextRefId, rangeUtil, RelativeTimeRange } from '@grafana/data';
+import {
+  DataQuery,
+  getDataSourceRef,
+  getDefaultRelativeTimeRange,
+  getNextRefId,
+  rangeUtil,
+  RelativeTimeRange,
+} from '@grafana/data';
 import { findDataSourceFromExpressionRecursive } from 'app/features/alerting/unified/utils/dataSourceFromExpression';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { isExpressionQuery } from 'app/features/expressions/guards';
@@ -64,10 +71,7 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
         datasourceUid: datasource.uid,
         model: {
           refId: '',
-          datasource: {
-            type: datasource.type,
-            uid: datasource.uid,
-          },
+          datasource: getDataSourceRef(datasource),
         },
       });
     })

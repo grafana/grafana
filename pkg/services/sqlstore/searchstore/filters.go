@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -125,6 +126,14 @@ type DashboardFilter struct {
 
 func (f DashboardFilter) Where() (string, []any) {
 	return sqlUIDin("dashboard.uid", f.UIDs)
+}
+
+type K6FolderFilter struct{}
+
+func (f K6FolderFilter) Where() (string, []any) {
+	filter := "dashboard.uid != ? AND (dashboard.folder_uid != ? OR dashboard.folder_uid IS NULL)"
+	params := []any{accesscontrol.K6FolderUID, accesscontrol.K6FolderUID}
+	return filter, params
 }
 
 type TagsFilter struct {

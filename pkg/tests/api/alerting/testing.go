@@ -35,7 +35,6 @@ const defaultAlertmanagerConfigJSON = `
 			"receiver": "grafana-default-email",
 			"group_by": ["grafana_folder", "alertname"]
 		},
-		"templates": null,
 		"receivers": [{
 			"name": "grafana-default-email",
 			"grafana_managed_receiver_configs": [{
@@ -239,6 +238,17 @@ func convertGettableGrafanaRuleToPostable(gettable *apimodels.GettableGrafanaRul
 
 type apiClient struct {
 	url string
+}
+
+type LegacyApiClient struct {
+	apiClient
+}
+
+func NewAlertingLegacyAPIClient(host, user, pass string) LegacyApiClient {
+	cli := newAlertingApiClient(host, user, pass)
+	return LegacyApiClient{
+		apiClient: cli,
+	}
 }
 
 func newAlertingApiClient(host, user, pass string) apiClient {

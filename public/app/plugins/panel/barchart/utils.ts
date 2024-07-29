@@ -148,7 +148,8 @@ export function prepSeries(
 }
 
 export interface PrepConfigOpts {
-  series: DataFrame[];
+  series: DataFrame[]; // series with hideFrom.viz: false
+  totalSeries: number; // total series count (including hidden)
   color?: Field | null;
   orientation: VizOrientation;
   options: Options;
@@ -156,7 +157,7 @@ export interface PrepConfigOpts {
   theme: GrafanaTheme2;
 }
 
-export const prepConfig = ({ series, color, orientation, options, timeZone, theme }: PrepConfigOpts) => {
+export const prepConfig = ({ series, totalSeries, color, orientation, options, timeZone, theme }: PrepConfigOpts) => {
   let {
     showValue,
     groupWidth,
@@ -205,8 +206,11 @@ export const prepConfig = ({ series, color, orientation, options, timeZone, them
   const vizOrientation = getScaleOrientation(orientation);
 
   // Use bar width when only one field
-  if (frame.fields.length === 2) {
-    groupWidth = barWidth;
+  if (frame.fields.length === 2 && stacking === StackingMode.None) {
+    if (totalSeries === 1) {
+      groupWidth = barWidth;
+    }
+
     barWidth = 1;
   }
 

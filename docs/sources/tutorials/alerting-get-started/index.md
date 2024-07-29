@@ -1,11 +1,9 @@
 ---
 Feedback Link: https://github.com/grafana/tutorials/issues/new
-authors:
-  - antonio-calero-merello
 categories:
   - alerting
 description: Get started with Grafana Alerting by creating your first alert in just a few minutes. Learn how to set up an alert, send alert notifications to a public webhook, and generate sample data to observe your alert in action.
-id: alerting-get-started
+id: alerting-get-started-pt1
 labels:
   products:
     - enterprise
@@ -13,11 +11,11 @@ labels:
     - cloud
 tags:
   - beginner
-title: Get started with Grafana Alerting
+title: Get started with Grafana Alerting - Part 1
 weight: 50
 ---
 
-# Get Started with Grafana Alerting
+# Get Started with Grafana Alerting - Part 1
 
 In this guide, we'll walk you through the process of setting up your first alert in just a few minutes. You'll witness your alert in action with real-time data, as well as sending alert notifications.
 
@@ -26,6 +24,10 @@ In this tutorial you will:
 - Create a contact point.
 - Set up an alert rule.
 - Receive firing and resolved alert notifications in a public webhook.
+
+{{< admonition type="tip" >}}
+Check out [Part 2](http://grafana.com/tutorials/alerting-get-started-pt2/) if you want to learn more about alerts and notification routing.
+{{< /admonition >}}
 
 ## Before you begin
 
@@ -185,6 +187,10 @@ To edit the Alert rule:
 1. Click **Save rule and exit**.
 
 By incrementing the threshold, the condition is no longer met, and after the evaluation interval has concluded (1 minute approx.), you should receive an alert notification with status **“Resolved”**.
+
+## Learn more
+
+Your learning journey continues in [Part 2](http://grafana.com/tutorials/alerting-get-started-pt2/) where you will learn about alert instances and notification routing.
 
 ## Summary
 

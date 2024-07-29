@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/grafana/dskit/instrument"
 	"github.com/grafana/dskit/middleware"
@@ -33,28 +34,33 @@ type Provider interface {
 }
 
 type gPRCServerService struct {
-	cfg     *setting.Cfg
-	logger  log.Logger
-	server  *grpc.Server
-	address string
-	enabled bool
+	cfg         *setting.Cfg
+	logger      log.Logger
+	server      *grpc.Server
+	address     string
+	enabled     bool
+	startedChan chan struct{}
 }
 
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, tracer tracing.Tracer, registerer prometheus.Registerer) (Provider, error) {
 	s := &gPRCServerService{
-		cfg:     cfg,
-		logger:  log.New("grpc-server"),
-		enabled: features.IsEnabledGlobally(featuremgmt.FlagGrpcServer),
+		cfg:         cfg,
+		logger:      log.New("grpc-server"),
+		enabled:     features.IsEnabledGlobally(featuremgmt.FlagGrpcServer),
+		startedChan: make(chan struct{}),
 	}
 
 	// Register the metric here instead of an init() function so that we do
 	// nothing unless the feature is actually enabled.
 	if grpcRequestDuration == nil {
 		grpcRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: "grafana",
-			Name:      "grpc_request_duration_seconds",
-			Help:      "Time (in seconds) spent serving HTTP requests.",
-			Buckets:   instrument.DefBuckets,
+			Namespace:                       "grafana",
+			Name:                            "grpc_request_duration_seconds",
+			Help:                            "Time (in seconds) spent serving gRPC calls.",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1, // enable native histograms
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"method", "route", "status_code", "ws"})
 
 		if err := registerer.Register(grpcRequestDuration); err != nil {
@@ -106,6 +112,7 @@ func (s *gPRCServerService) Run(ctx context.Context) error {
 	}
 
 	s.address = listener.Addr().String()
+	close(s.startedChan)
 
 	serveErr := make(chan error, 1)
 	go func() {
@@ -137,5 +144,6 @@ func (s *gPRCServerService) GetServer() *grpc.Server {
 }
 
 func (s *gPRCServerService) GetAddress() string {
+	<-s.startedChan
 	return s.address
 }

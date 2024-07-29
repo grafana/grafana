@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useMemo, PropsWithChildren } from 'react';
+import { useMemo, PropsWithChildren } from 'react';
 
 import { dateTime, DateTimeInput, GrafanaTheme2 } from '@grafana/data';
 

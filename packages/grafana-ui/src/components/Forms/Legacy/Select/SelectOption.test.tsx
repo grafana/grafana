@@ -1,4 +1,3 @@
-import React from 'react';
 import { OptionProps } from 'react-select';
 import renderer from 'react-test-renderer';
 

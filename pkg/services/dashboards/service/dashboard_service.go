@@ -7,16 +7,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/prometheus/client_golang/prometheus"
-
 	"golang.org/x/exp/slices"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -236,8 +234,8 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 
 func resolveUserID(user identity.Requester, log log.Logger) (int64, error) {
 	userID := int64(0)
-	namespaceID, identifier := user.GetNamespacedID()
-	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+	namespaceID, identifier := user.GetTypedID()
+	if namespaceID != identity.TypeUser && namespaceID != identity.TypeServiceAccount {
 		log.Debug("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", identifier)
 	} else {
 		var err error
@@ -333,7 +331,6 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 
 func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.Context, dto *folder.CreateFolderCommand) (*folder.Folder, error) {
 	dto.SignedInUser = accesscontrol.BackgroundUser("dashboard_provisioning", dto.OrgID, org.RoleAdmin, provisionerPermissions)
-
 	f, err := dr.folderService.Create(ctx, dto)
 	if err != nil {
 		dr.log.Error("failed to create folder for provisioned dashboards", "folder", dto.Title, "org", dto.OrgID, "err", err)
@@ -491,18 +488,27 @@ func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, que
 }
 
 func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *dashboards.SaveDashboardDTO, dash *dashboards.Dashboard, provisioned bool) {
+	resource := "dashboard"
+	if dash.IsFolder {
+		resource = "folder"
+	}
+
+	if !dr.cfg.RBAC.PermissionsOnCreation(resource) {
+		return
+	}
+
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 	// nolint:staticcheck
 	inFolder := dash.FolderID > 0
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
 	if !provisioned {
-		namespaceID, userIDstr := dto.User.GetNamespacedID()
+		namespaceID, userIDstr := dto.User.GetTypedID()
 		userID, err := identity.IntIdentifier(namespaceID, userIDstr)
 
 		if err != nil {
 			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "namespaceID", namespaceID, "userID", userID, "error", err)
-		} else if namespaceID == identity.NamespaceUser && userID > 0 {
+		} else if namespaceID == identity.TypeUser && userID > 0 {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 				UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 			})
@@ -527,16 +533,20 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 }
 
 func (dr *DashboardServiceImpl) setDefaultFolderPermissions(ctx context.Context, cmd *folder.CreateFolderCommand, f *folder.Folder, provisioned bool) {
+	if !dr.cfg.RBAC.PermissionsOnCreation("folder") {
+		return
+	}
+
 	inFolder := f.ParentUID != ""
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
 	if !provisioned {
-		namespaceID, userIDstr := cmd.SignedInUser.GetNamespacedID()
+		namespaceID, userIDstr := cmd.SignedInUser.GetTypedID()
 		userID, err := identity.IntIdentifier(namespaceID, userIDstr)
 
 		if err != nil {
 			dr.log.Error("Could not make user admin", "folder", cmd.Title, "namespaceID", namespaceID, "userID", userID, "error", err)
-		} else if namespaceID == identity.NamespaceUser && userID > 0 {
+		} else if namespaceID == identity.TypeUser && userID > 0 {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 				UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 			})
@@ -735,7 +745,9 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 			hit.Tags = append(hit.Tags, item.Term)
 		}
 		if item.Deleted != nil {
-			hit.RemainingTrashAtAge = util.RemainingDaysUntil((*item.Deleted).Add(daysInTrash))
+			deletedDate := (*item.Deleted).Add(daysInTrash)
+			hit.IsDeleted = true
+			hit.PermanentlyDeleteDate = &deletedDate
 		}
 	}
 	return hitList

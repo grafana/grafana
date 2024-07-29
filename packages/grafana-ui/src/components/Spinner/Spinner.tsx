@@ -1,5 +1,5 @@
 import { cx, css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -7,6 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes';
 import { IconSize, isIconSize } from '../../types';
 import { t } from '../../utils/i18n';
+import { spin } from '../../utils/keyframes';
 import { Icon } from '../Icon/Icon';
 import { getIconRoot, getIconSubDir } from '../Icon/utils';
 
@@ -46,7 +47,6 @@ export const Spinner = ({
   // TODO remove once we fully remove the deprecated type
   if (typeof size !== 'string' || !isIconSize(size)) {
     const iconRoot = getIconRoot();
-    const iconName = 'spinner';
     const subDir = getIconSubDir(iconName, 'default');
     const svgPath = `${iconRoot}${subDir}/${iconName}.svg`;
     return (
@@ -65,7 +65,7 @@ export const Spinner = ({
           src={svgPath}
           width={size}
           height={size}
-          className={cx('fa-spin', deprecatedStyles.icon, className)}
+          className={cx(styles.spin, deprecatedStyles.icon, className)}
           style={style}
         />
       </div>
@@ -84,12 +84,7 @@ export const Spinner = ({
       )}
     >
       <Icon
-        className={cx(
-          {
-            'fa-spin': !prefersReducedMotion,
-          },
-          iconClassName
-        )}
+        className={cx(styles.spin, iconClassName)}
         name={iconName}
         size={size}
         aria-label={t('grafana-ui.spinner.aria-label', 'Loading')}
@@ -101,6 +96,11 @@ export const Spinner = ({
 const getStyles = (theme: GrafanaTheme2) => ({
   inline: css({
     display: 'inline-block',
+  }),
+  spin: css({
+    [theme.transitions.handleMotion('no-preference')]: {
+      animation: `${spin} 2s infinite linear`,
+    },
   }),
 });
 

@@ -1,10 +1,11 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
+import * as React from 'react';
 import { ReplaySubject, Subscription } from 'rxjs';
 
 import { PanelProps } from '@grafana/data';
 import { locationService } from '@grafana/runtime/src';
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
-import { CanvasFrameOptions } from 'app/features/canvas';
+import { CanvasFrameOptions } from 'app/features/canvas/frame';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';

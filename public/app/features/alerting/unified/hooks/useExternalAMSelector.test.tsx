@@ -1,31 +1,17 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { SetupServer, setupServer } from 'msw/node';
+import { SetupServer } from 'msw/node';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { DataSourceSettings } from '@grafana/data';
-import { setBackendSrv } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 
 import { mockAlertmanagersResponse } from '../mocks/alertmanagerApi';
 
 import { normalizeDataSourceURL, useExternalDataSourceAlertmanagers } from './useExternalAmSelector';
 
-const server = setupServer();
-
-beforeAll(() => {
-  setBackendSrv(backendSrv);
-  server.listen({ onUnhandledRequest: 'error' });
-});
-
-beforeEach(() => {
-  server.resetHandlers();
-});
-
-afterAll(() => {
-  server.close();
-});
+const server = setupMswServer();
 
 describe('useExternalDataSourceAlertmanagers', () => {
   it('Should get the correct data source settings', async () => {

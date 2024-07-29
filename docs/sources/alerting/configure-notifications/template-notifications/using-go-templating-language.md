@@ -256,7 +256,7 @@ You can use indentation, both tabs and spaces, and line breaks, to make template
 {{ end }}
 ```
 
-However, indentation in the template will also be present in the text. Next we will see how to remove it.
+However, indentation in the template is also present in the text. Next, we look at how to remove it.
 
 ## Remove spaces and line breaks
 

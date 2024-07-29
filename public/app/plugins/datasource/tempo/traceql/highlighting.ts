@@ -52,7 +52,7 @@ export const computeErrorMessage = (errorNode: SyntaxNode) => {
         case SpansetPipelineExpression:
           return 'Invalid spanset combining operator after spanset expression.';
         case Pipe:
-          return 'Invalid aggregation operator after pipepile operator.';
+          return 'Invalid aggregation operator after pipeline operator.';
         default:
           return 'Invalid spanset expression after spanset combining operator.';
       }

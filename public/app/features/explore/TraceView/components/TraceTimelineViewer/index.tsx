@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import React, { RefObject } from 'react';
+import { PureComponent, RefObject } from 'react';
 
 import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { SpanBarOptions, TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
@@ -129,7 +129,7 @@ const NUM_TICKS = 5;
  * re-render the ListView every time the cursor is moved on the trace minimap
  * or `TimelineHeaderRow`.
  */
-export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, State> {
+export class UnthemedTraceTimelineViewer extends PureComponent<TProps, State> {
   constructor(props: TProps) {
     super(props);
     this.state = { height: 0 };

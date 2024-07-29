@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -19,52 +20,14 @@ import (
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	featuretoggleapi "github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt/strcase"
 )
 
 func TestFeatureToggleFiles(t *testing.T) {
-	legacyNames := map[string]bool{
-		"live-service-web-worker": true,
-	}
-
 	t.Run("check registry constraints", func(t *testing.T) {
-		invalidNames := make([]string, 0)
-
-		// Check that all flags set in code are valid
-		for _, flag := range standardFeatureFlags {
-			if flag.Expression == "true" && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStageDeprecated) {
-				t.Errorf("only FeatureStageGeneralAvailability or FeatureStageDeprecated features can be enabled by default.  See: %s", flag.Name)
-			}
-			if flag.RequiresDevMode && flag.Stage != FeatureStageExperimental {
-				t.Errorf("only alpha features can require dev mode.  See: %s", flag.Name)
-			}
-			if flag.Stage == FeatureStageUnknown {
-				t.Errorf("standard toggles should not have an unknown state.  See: %s", flag.Name)
-			}
-			if flag.Description != strings.TrimSpace(flag.Description) {
-				t.Errorf("flag Description should not start/end with spaces.  See: %s", flag.Name)
-			}
-			if flag.Name != strings.TrimSpace(flag.Name) {
-				t.Errorf("flag Name should not start/end with spaces.  See: %s", flag.Name)
-			}
-			if flag.AllowSelfServe && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStagePublicPreview || flag.Stage == FeatureStageDeprecated) {
-				t.Errorf("only allow self-serving GA, PublicPreview and Deprecated toggles")
-			}
-			if flag.Owner == "" {
-				t.Errorf("feature %s does not have an owner. please fill the FeatureFlag.Owner property", flag.Name)
-			}
-			// Check camel case names
-			if flag.Name != strcase.ToLowerCamel(flag.Name) && !legacyNames[flag.Name] {
-				invalidNames = append(invalidNames, flag.Name)
-			}
-		}
-
-		// Make sure the names are valid
-		require.Empty(t, invalidNames, "%s feature names should be camel cased", invalidNames)
-		// acronyms can be configured as needed via `ConfigureAcronym` function from `./strcase/camel.go`
-
+		verifyFlagsConfiguration(t)
 		// Now that we know they are valid, update the json database
 		t.Run("update k8s resource list", func(t *testing.T) {
 			created := v1.NewTime(time.Now().UTC())
@@ -96,6 +59,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 					AllowSelfServe:    flag.AllowSelfServe,
 					HideFromAdminPage: flag.HideFromAdminPage,
 					HideFromDocs:      flag.HideFromDocs,
+					Expression:        flag.Expression,
 					// EnabledVersion: ???,
 				}
 
@@ -145,6 +109,25 @@ func TestFeatureToggleFiles(t *testing.T) {
 				})
 			}
 
+			// Set the dates from git history
+			dates := readFlagDateInfo(t)
+			for idx, item := range current.Items {
+				found, ok := dates[item.Name]
+				if ok {
+					// current.Items[idx].ResourceVersion = fmt.Sprintf("%d", found.created.UnixMilli()+int64(idx))
+					current.Items[idx].CreationTimestamp = v1.NewTime(found.created)
+					if found.deleted != nil {
+						tmp := v1.NewTime(*found.deleted)
+						current.Items[idx].DeletionTimestamp = &tmp
+					}
+				}
+			}
+
+			// Sort by name -- will avoid more git conflicts
+			sort.Slice(current.Items, func(i, j int) bool {
+				return current.Items[i].Name < current.Items[j].Name
+			})
+
 			out, err := json.MarshalIndent(current, "", "  ")
 			require.NoError(t, err)
 
@@ -178,6 +161,85 @@ func TestFeatureToggleFiles(t *testing.T) {
 			generateCSV(),
 		)
 	})
+}
+
+// Check if all flags are configured properly
+func verifyFlagsConfiguration(t *testing.T) {
+	legacyNames := map[string]bool{
+		"live-service-web-worker": true,
+	}
+	invalidNames := make([]string, 0)
+
+	// Check that all flags set in code are valid
+	for _, flag := range standardFeatureFlags {
+		if flag.Expression == "true" && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStageDeprecated) {
+			t.Errorf("only FeatureStageGeneralAvailability or FeatureStageDeprecated features can be enabled by default.  See: %s", flag.Name)
+		}
+		if flag.RequiresDevMode && flag.Stage != FeatureStageExperimental {
+			t.Errorf("only alpha features can require dev mode.  See: %s", flag.Name)
+		}
+		if flag.Stage == FeatureStageUnknown {
+			t.Errorf("standard toggles should not have an unknown state.  See: %s", flag.Name)
+		}
+		if flag.Description != strings.TrimSpace(flag.Description) {
+			t.Errorf("flag Description should not start/end with spaces.  See: %s", flag.Name)
+		}
+		if flag.Name != strings.TrimSpace(flag.Name) {
+			t.Errorf("flag Name should not start/end with spaces.  See: %s", flag.Name)
+		}
+		if flag.AllowSelfServe && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStagePublicPreview || flag.Stage == FeatureStageDeprecated) {
+			t.Errorf("only allow self-serving GA, PublicPreview and Deprecated toggles")
+		}
+		if flag.Owner == "" {
+			t.Errorf("feature %s does not have an owner. please fill the FeatureFlag.Owner property", flag.Name)
+		}
+		if flag.Stage == FeatureStageGeneralAvailability && flag.Expression == "" {
+			t.Errorf("GA features must be explicitly enabled or disabled, please add the `Expression` property for %s", flag.Name)
+		}
+		if !(flag.Expression == "" || flag.Expression == "true" || flag.Expression == "false") {
+			t.Errorf("the `Expression` property for %s is incorrect. valid values are: `true`, `false` or empty string for default", flag.Name)
+		}
+		// Check camel case names
+		if flag.Name != strcase.ToLowerCamel(flag.Name) && !legacyNames[flag.Name] {
+			invalidNames = append(invalidNames, flag.Name)
+		}
+	}
+
+	// Make sure the names are valid
+	require.Empty(t, invalidNames, "%s feature names should be camel cased", invalidNames)
+	// acronyms can be configured as needed via `ConfigureAcronym` function from `./strcase/camel.go`
+}
+
+type flagDateInfo struct {
+	created time.Time
+	deleted *time.Time
+}
+
+// Load a cached copy of the feature toggle dates
+func readFlagDateInfo(t *testing.T) map[string]flagDateInfo {
+	info := make(map[string]flagDateInfo, 300)
+	// This file is created by running the script in:
+	// https://github.com/grafana/grafana-enterprise/blob/ff-git-log-history/scripts/sidecar/main.go#L9
+	body, err := os.ReadFile("toggles-gitlog.csv")
+	require.NoError(t, err)
+	reader := csv.NewReader(bytes.NewBuffer(body))
+	rows, err := reader.ReadAll()
+	require.NoError(t, err)
+	for _, row := range rows {
+		if strings.HasPrefix(row[0], "#") {
+			continue
+		}
+		d := flagDateInfo{}
+		d.created, err = time.Parse(time.RFC3339, row[1])
+		require.NoError(t, err)
+		if row[2] != "" {
+			tmp, err := time.Parse(time.RFC3339, row[2])
+			require.NoError(t, err)
+			d.deleted = &tmp
+		}
+		info[row[0]] = d
+	}
+	return info
 }
 
 func verifyAndGenerateFile(t *testing.T, fpath string, gen string) {
@@ -341,7 +403,7 @@ For more information about feature release stages, refer to [Release life cycle 
 
 ## General availability feature toggles
 
-[Generally available](https://grafana.com/docs/release-life-cycle/#general-availability) features are enabled by default. You can disable these feature by setting the feature flag to "false" in the configuration.
+Most [generally available](https://grafana.com/docs/release-life-cycle/#general-availability) features are enabled by default. You can disable these feature by setting the feature flag to "false" in the configuration.
 
 ` + writeToggleDocsTable(func(flag FeatureFlag) bool {
 		return flag.Stage == FeatureStageGeneralAvailability

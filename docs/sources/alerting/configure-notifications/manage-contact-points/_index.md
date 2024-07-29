@@ -26,11 +26,31 @@ labels:
 title: Configure contact points
 weight: 410
 refs:
+  email:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-email/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-email/
+  discord:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-discord/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-discord/
+  telegram:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-telegram/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-telegram/
   webhook:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/
+  opsgenie:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-opsgenie/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-opsgenie/
   pagerduty:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/pager-duty/
@@ -46,28 +66,34 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-slack/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-slack/
+  teams:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-teams/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-teams/
+  external-alertmanager:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager/
 ---
 
 # Configure contact points
 
 Use contact points to select your preferred communication channel for receiving notifications when your alert rules are firing. You can add, edit, delete, export, and test a contact point.
 
-{{% admonition type="note" %}}
-You cannot delete contact points that are in use by a notification policy. Either delete the notification policy or update it to use another contact point.
-{{% /admonition %}}
-
 On the **Contact Points** tab, you can:
 
-- Search for name and type of contact points and integrations
-- View all existing contact points and integrations
-- View how many notification policies each contact point is being used for and navigate directly to the linked notification policies
-- View the status of notification deliveries
-- Export individual contact points or all contact points in JSON, YAML, or Terraform format
-- Delete contact points that are not in use by a notification policy
+- Search for name and type of contact points and integrations.
+- View all existing contact points and integrations.
+- View how many notification policies each contact point is being used for and navigate directly to the linked notification policies.
+- View the status of notification deliveries.
+- Export individual contact points or all contact points in JSON, YAML, or Terraform format.
+- Delete contact points. Note that you cannot delete contact points that are in use by a notification policy. To proceed, either delete the notification policy or update it to use another contact point.
 
 On the **Notification templates** tab, you can:
 
-- View, edit, copy or delete existing notification templates
+- View, edit, copy or delete existing notification templates.
 
 ## Add a contact point
 
@@ -122,33 +148,33 @@ Complete the following steps to test a contact point.
 1. Choose whether to send a predefined test notification or choose custom to add your own custom annotations and labels to include in the notification.
 1. Click **Send test notification** to fire the alert.
 
-## Configure contact point integrations
+## List of supported integrations
 
 Each contact point integration has its own configuration options and setup process. In most cases, this involves providing an API key or a Webhook URL.
 
-After you have configured an integration, you can use it as part of your contact points to receive notifications whenever your alert changes its state. The following section covers the basic steps to configure your integrations, so you can start receiving real-time alerts and stay on top of your monitoring data.
-
-## List of supported integrations
+The following table lists the contact point integrations supported by Grafana.
 
 | Name                         | Type                      |
 | ---------------------------- | ------------------------- |
+| Alertmanager                 | `prometheus-alertmanager` |
+| Cisco Webex Teams            | `webex`                   |
 | DingDing                     | `dingding`                |
-| Discord                      | `discord`                 |
-| Email                        | `email`                   |
+| [Discord](ref:discord)       | `discord`                 |
+| [Email](ref:email)           | `email`                   |
 | Google Chat                  | `googlechat`              |
 | [Grafana Oncall](ref:oncall) | `oncall`                  |
-| Hipchat                      | `hipchat`                 |
-| Kafka                        | `kafka`                   |
+| Kafka REST Proxy             | `kafka`                   |
 | Line                         | `line`                    |
-| Microsoft Teams              | `teams`                   |
-| Opsgenie                     | `opsgenie`                |
+| [Microsoft Teams](ref:teams) | `teams`                   |
+| [Opsgenie](ref:opsgenie)     | `opsgenie`                |
 | [Pagerduty](ref:pagerduty)   | `pagerduty`               |
-| Prometheus Alertmanager      | `prometheus-alertmanager` |
 | Pushover                     | `pushover`                |
-| Sensu                        | `sensu`                   |
 | Sensu Go                     | `sensugo`                 |
 | [Slack](ref:slack)           | `slack`                   |
-| Telegram                     | `telegram`                |
-| Threema                      | `threema`                 |
+| [Telegram](ref:telegram)     | `telegram`                |
+| Threema Gateway              | `threema`                 |
 | VictorOps                    | `victorops`               |
+| WeCom                        | `wecom`                   |
 | [Webhook](ref:webhook)       | `webhook`                 |
+
+Some of these integrations are not compatible with [external Alertmanagers](ref:external-alertmanager). For the list of Prometheus Alertmanager integrations, refer to the [Prometheus Alertmanager receiver settings](https://prometheus.io/docs/alerting/latest/configuration/#receiver-integration-settings).

@@ -34,11 +34,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/images-in-notifications/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/images-in-notifications/
-  alert-manager:
+  notifications:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/alertmanager/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/alertmanager/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/
   create-recording-rules:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
@@ -76,14 +76,12 @@ Additionally, you can also add [expressions to transform your data](ref:expressi
 {{< figure src="/media/docs/alerting/grafana-managed-alerting-architecture.png" max-width="750px" caption="How Grafana-managed alerting works by default" >}}
 
 1. Alert rules are created within Grafana based on one or more data sources.
-
 1. Alert rules are evaluated by the Alert Rule Evaluation Engine from within Grafana.
-
-1. Firing and resolved alert instances are delivered to the internal Grafana [Alertmanager](ref:alert-manager) which handles notifications.
+1. Firing and resolved alert instances are forwarded to [handle their notifications](ref:notifications).
 
 ### Supported data sources
 
-Grafana-managed alert rules can query backend data sources if Grafana Alerting is enabled by specifying `{"backend": true, "alerting": true}` in the [plugin.json](/developers/plugin-tools/reference-plugin-json).
+Grafana-managed alert rules can query backend data sources if Grafana Alerting is enabled by specifying `{"backend": true, "alerting": true}` in the [plugin.json](https://grafana.com/developers/plugin-tools/reference/plugin-json).
 
 Find the public data sources supporting Alerting in the [Grafana Plugins directory](/grafana/plugins/data-source-plugins/?features=alerting).
 
@@ -98,7 +96,7 @@ They are only supported for Prometheus-based or Loki data sources with the Ruler
 1. Alert rules are created and stored within the data source itself.
 1. Alert rules can only query Prometheus-based data. It can use either queries or [recording rules](#recording-rules).
 1. Alert rules are evaluated by the Alert Rule Evaluation Engine.
-1. Firing and resolved alert instances are delivered to the configured [Alertmanager](ref:alert-manager) which handles notifications.
+1. Firing and resolved alert instances are forwarded to [handle their notifications](ref:notifications).
 
 ### Recording rules
 
@@ -120,6 +118,5 @@ When choosing which alert rule type to use, consider the following comparison be
 | Add expressions to transform<wbr /> your data and set alert conditions         | Yes                                                                                                                          | No                                                                                                                                                      |
 | Use images in alert notifications                                              | Yes                                                                                                                          | No                                                                                                                                                      |
 | Organization                                                                   | Organize and manage access with folders                                                                                      | Use namespaces                                                                                                                                          |
-| Evaluation of alert rules in the same evaluation group                         | Concurrent evaluation                                                                                                        | Sequential evaluation                                                                                                                                   |
 | Scaling                                                                        | More resource intensive, depend on the database, and are likely to suffer from transient errors. They only scale vertically. | Store alert rules within the data source itself and allow for “infinite” scaling. Generate and send alert notifications from the location of your data. |
 | Alert rule evaluation and delivery                                             | Alert rule evaluation and delivery is done from within Grafana, using an external Alertmanager; or both.                     | Alert rule evaluation and alert delivery is distributed, meaning there is no single point of failure.                                                   |

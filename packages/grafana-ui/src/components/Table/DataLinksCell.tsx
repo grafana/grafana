@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { getCellLinks } from '../../utils';
 
 import { TableCellProps } from './types';

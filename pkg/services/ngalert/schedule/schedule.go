@@ -11,6 +11,8 @@ import (
 	"github.com/benbjohnson/clock"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -19,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/util/ticker"
 )
 
@@ -45,6 +46,10 @@ type AlertsSender interface {
 type RulesStore interface {
 	GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodels.AlertRuleKeyWithVersion, error)
 	GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error
+}
+
+type RecordingWriter interface {
+	Write(ctx context.Context, name string, t time.Time, frames data.Frames, extraLabels map[string]string) error
 }
 
 type schedule struct {
@@ -94,7 +99,7 @@ type schedule struct {
 
 	tracer tracing.Tracer
 
-	recordingWriter writer.Writer
+	recordingWriter RecordingWriter
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -113,7 +118,7 @@ type SchedulerCfg struct {
 	AlertSender          AlertsSender
 	Tracer               tracing.Tracer
 	Log                  log.Logger
-	RecordingWriter      writer.Writer
+	RecordingWriter      RecordingWriter
 }
 
 // NewScheduler returns a new scheduler.
@@ -278,7 +283,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 		if newRoutine && !invalidInterval {
 			dispatcherGroup.Go(func() error {
-				return ruleRoutine.Run(key)
+				return ruleRoutine.Run()
 			})
 		}
 

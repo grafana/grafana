@@ -1,4 +1,4 @@
-import React, { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { RawTimeRange, TimeRange } from '@grafana/data';
