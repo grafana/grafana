@@ -53,6 +53,6 @@ func (cfg *Cfg) readCloudMigrationSettings() {
 
 	if cfg.CloudMigration.SnapshotFolder == "" {
 		homeDir, _ := os.UserHomeDir()
-		cfg.CloudMigration.SnapshotFolder = filepath.Join(homeDir, "migration_snapshot")
+		cfg.CloudMigration.SnapshotFolder = filepath.Join(homeDir, "data/cloud_migration")
 	}
 }
