@@ -5,7 +5,8 @@ This module returns the pipeline used for publishing Docker images and its steps
 load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
-    "download_grabpl_step", "fetch_images_step",
+    "download_grabpl_step",
+    "fetch_images_step",
     "identify_runner_step",
     "publish_images_step",
 )
