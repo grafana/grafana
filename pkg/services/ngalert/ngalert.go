@@ -343,7 +343,8 @@ func (ng *AlertNG) init() error {
 
 	ng.AlertsRouter = alertsRouter
 
-	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
+	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService)
+	conditionValidator := eval.NewConditionValidator(ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
 
 	recordingWriter, err := createRecordingWriter(ng.FeatureToggles, ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, clk, ng.tracer, ng.Metrics.GetRemoteWriterMetrics())
 	if err != nil {
@@ -461,6 +462,7 @@ func (ng *AlertNG) init() error {
 		AlertRules:           alertRuleService,
 		AlertsRouter:         alertsRouter,
 		EvaluatorFactory:     evalFactory,
+		ConditionValidator:   conditionValidator,
 		FeatureManager:       ng.FeatureToggles,
 		AppUrl:               appUrl,
 		Historian:            history,

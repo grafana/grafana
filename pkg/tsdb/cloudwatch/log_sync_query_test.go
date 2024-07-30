@@ -390,14 +390,17 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 				{
 					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
 					JSON: json.RawMessage(`{
+					  "refId": "A",
 						"queryMode":    "Logs"
 					}`),
 				},
 			},
 		})
 
-		require.Nil(t, res)
-		require.Error(t, err)
-		require.Equal(t, "CloudWatch Error: foo: bar", err.Error())
+		require.NotNil(t, res)
+		require.NotNil(t, res.Responses["A"])
+		require.Equal(t, "CloudWatch error: foo: bar", res.Responses["A"].Error.Error())
+		require.Equal(t, backend.ErrorSourceDownstream, res.Responses["A"].ErrorSource)
+		require.Nil(t, err)
 	})
 }

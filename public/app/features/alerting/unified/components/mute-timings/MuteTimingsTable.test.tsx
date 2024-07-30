@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { render, waitFor, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 
@@ -36,15 +36,15 @@ describe('MuteTimingsTable', () => {
       AccessControlAction.AlertingNotificationsRead,
       AccessControlAction.AlertingNotificationsWrite,
     ]);
-    const { findByRole } = renderWithProvider();
-    expect(await findByRole('button', { name: /export all/i })).toBeInTheDocument();
+    renderWithProvider();
+    expect(await screen.findByRole('button', { name: /export all/i })).toBeInTheDocument();
   });
   it('It does not show export button when not allowed ', async () => {
     // when not allowed
     grantUserPermissions([]);
-    const { queryByRole } = renderWithProvider();
+    renderWithProvider();
     await waitFor(() => {
-      expect(queryByRole('button', { name: /export all/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /export all/i })).not.toBeInTheDocument();
     });
   });
   it('It does not show export button when not supported ', async () => {
@@ -53,9 +53,9 @@ describe('MuteTimingsTable', () => {
       AccessControlAction.AlertingNotificationsRead,
       AccessControlAction.AlertingNotificationsWrite,
     ]);
-    const { queryByRole } = renderWithProvider('potato');
+    renderWithProvider('potato');
     await waitFor(() => {
-      expect(queryByRole('button', { name: /export all/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /export all/i })).not.toBeInTheDocument();
     });
   });
 });
