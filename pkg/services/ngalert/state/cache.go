@@ -91,10 +91,10 @@ func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngMo
 		states = &ruleStates{states: make(map[data.Fingerprint]*State)}
 		c.states[stateCandidate.OrgID][stateCandidate.AlertRuleUID] = states
 	}
-	return states.getOrAdd(stateCandidate)
+	return states.getOrAdd(stateCandidate, log)
 }
 
-func (rs *ruleStates) getOrAdd(stateCandidate State) *State {
+func (rs *ruleStates) getOrAdd(stateCandidate State, log log.Logger) *State {
 	state, ok := rs.states[stateCandidate.CacheID]
 	// Check if the state with this ID already exists.
 	if !ok {
@@ -115,6 +115,10 @@ func (rs *ruleStates) getOrAdd(stateCandidate State) *State {
 	}
 	state.Annotations = stateCandidate.Annotations
 	state.Values = stateCandidate.Values
+	if state.ResultFingerprint != stateCandidate.ResultFingerprint {
+		log.Info("Result fingerprint has changed", "oldFingerprint", state.ResultFingerprint, "newFingerprint", stateCandidate.ResultFingerprint, "cacheID", state.CacheID, "stateLabels", state.Labels.String())
+		state.ResultFingerprint = stateCandidate.ResultFingerprint
+	}
 	rs.states[stateCandidate.CacheID] = state
 	return state
 }
