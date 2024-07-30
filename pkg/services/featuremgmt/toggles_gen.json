@@ -1776,11 +1776,14 @@
     {
       "metadata": {
         "name": "newVizLegend",
-        "resourceVersion": "1721309877141",
-        "creationTimestamp": "2024-07-18T13:37:57Z"
+        "resourceVersion": "1722348470620",
+        "creationTimestamp": "2024-07-18T13:37:57Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-07-30 14:07:50.620309 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enchanced legend for visualizations",
+        "description": "Enhanced legend for visualizations",
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true

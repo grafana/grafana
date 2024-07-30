@@ -716,7 +716,7 @@ const (
 	FlagDashboardRestoreUI = "dashboardRestoreUI"
 
 	// FlagNewVizLegend
-	// Enchanced legend for visualizations
+	// Enhanced legend for visualizations
 	FlagNewVizLegend = "newVizLegend"
 
 	// FlagCloudWatchRoundUpEndTime

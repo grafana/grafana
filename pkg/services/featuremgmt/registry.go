@@ -1336,7 +1336,7 @@ var (
 		},
 		{
 			Name:         "newVizLegend",
-			Description:  "Enchanced legend for visualizations",
+			Description:  "Enhanced legend for visualizations",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
