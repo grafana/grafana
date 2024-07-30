@@ -172,7 +172,7 @@ def enterprise_downstream_step(ver_mode):
       Drone step.
     """
     repo = "grafana/grafana-enterprise@"
-    if ver_mode == "pr":
+    if ver_mode == "pr" or ver_mode == "rrc":
         repo += "${DRONE_SOURCE_BRANCH}"
     else:
         repo += "main"
@@ -196,6 +196,9 @@ def enterprise_downstream_step(ver_mode):
     if ver_mode == "pr":
         step.update({"failure": "ignore"})
         step["settings"]["params"].append("OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}")
+
+    if ver_mode == "rrc":
+        step["settings"]["params"].append("SOURCE_TAG=${DRONE_TAG}")
 
     return step
 
