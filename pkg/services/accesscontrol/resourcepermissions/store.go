@@ -827,6 +827,13 @@ func (s *InMemoryActionSets) ExpandActionSetsWithFilter(permissions []accesscont
 }
 
 func (s *InMemoryActionSets) StoreActionSet(name string, actions []string) {
+	// To avoid backwards incompatible changes, we don't want to store these actions in the DB
+	// Once action sets are fully enabled, we can include dashboards.ActionFoldersCreate in the list of other folder edit/admin actions
+	// Tracked in https://github.com/grafana/identity-access-team/issues/794
+	if name == "folders:edit" || name == "folders:admin" {
+		actions = append(actions, dashboards.ActionFoldersCreate)
+	}
+
 	actionSet := &ActionSet{
 		Action:  name,
 		Actions: actions,

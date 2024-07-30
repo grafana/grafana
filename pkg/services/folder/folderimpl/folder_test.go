@@ -53,7 +53,8 @@ import (
 )
 
 var orgID = int64(1)
-var usr = &user.SignedInUser{UserID: 1, OrgID: orgID}
+var usr = &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{orgID: {dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)}}}}
+var noPermUsr = &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
 
 func TestIntegrationProvideFolderService(t *testing.T) {
 	if testing.Short() {
@@ -121,7 +122,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				_, err := service.Get(context.Background(), &folder.GetFolderQuery{
 					UID:          &folderUID,
 					OrgID:        orgID,
-					SignedInUser: usr,
+					SignedInUser: noPermUsr,
 				})
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
@@ -130,7 +131,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				_, err := service.Get(context.Background(), &folder.GetFolderQuery{
 					UID:          &folderUID,
 					OrgID:        orgID,
-					SignedInUser: usr,
+					SignedInUser: noPermUsr,
 				})
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
@@ -141,9 +142,9 @@ func TestIntegrationFolderService(t *testing.T) {
 					OrgID:        orgID,
 					Title:        f.Title,
 					UID:          folderUID,
-					SignedInUser: usr,
+					SignedInUser: noPermUsr,
 				})
-				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
+				require.Error(t, err)
 			})
 
 			title := "Folder-TEST"
@@ -155,7 +156,7 @@ func TestIntegrationFolderService(t *testing.T) {
 					UID:          folderUID,
 					OrgID:        orgID,
 					NewTitle:     &title,
-					SignedInUser: usr,
+					SignedInUser: noPermUsr,
 				})
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
@@ -170,7 +171,7 @@ func TestIntegrationFolderService(t *testing.T) {
 					UID:              folderUID,
 					OrgID:            orgID,
 					ForceDeleteRules: false,
-					SignedInUser:     usr,
+					SignedInUser:     noPermUsr,
 				})
 				require.Error(t, err)
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
@@ -906,11 +907,15 @@ func TestNestedFolderService(t *testing.T) {
 
 			db, _ := sqlstore.InitTestDB(t)
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), db)
+
+			tempUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
+			tempUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)}}
+
 			_, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
 				OrgID:        orgID,
 				Title:        dash.Title,
 				UID:          dash.UID,
-				SignedInUser: usr,
+				SignedInUser: tempUser,
 			})
 			require.NoError(t, err)
 			require.True(t, nestedFolderStore.CreateCalled)
@@ -918,7 +923,7 @@ func TestNestedFolderService(t *testing.T) {
 	})
 
 	t.Run("with nested folder feature flag on", func(t *testing.T) {
-		t.Run("Should be able to create a nested folder under the root", func(t *testing.T) {
+		t.Run("Should be able to create a nested folder under the root with the right permissions", func(t *testing.T) {
 			g := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 			t.Cleanup(func() {
@@ -938,17 +943,48 @@ func TestNestedFolderService(t *testing.T) {
 			nestedFolderStore := NewFakeStore()
 			features := featuremgmt.WithFeatures("nestedFolders")
 
+			tempUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
+			tempUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)}}
+
 			db, _ := sqlstore.InitTestDB(t)
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), db)
 			_, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
 				OrgID:        orgID,
 				Title:        dash.Title,
 				UID:          dash.UID,
-				SignedInUser: usr,
+				SignedInUser: tempUser,
 			})
 			require.NoError(t, err)
 			// CreateFolder should also call the folder store's create method.
 			require.True(t, nestedFolderStore.CreateCalled)
+		})
+
+		t.Run("Should not be able to create a nested folder under the root with subfolder creation permissions", func(t *testing.T) {
+			g := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+			t.Cleanup(func() {
+				guardian.New = g
+			})
+
+			// dashboard store commands that should be called.
+			dashStore := &dashboards.FakeDashboardStore{}
+
+			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
+			nestedFolderStore := NewFakeStore()
+			features := featuremgmt.WithFeatures("nestedFolders")
+
+			tempUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
+			tempUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("subfolder_uid")}}
+
+			db, _ := sqlstore.InitTestDB(t)
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), db)
+			_, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+				OrgID:        orgID,
+				Title:        "some_folder",
+				UID:          "some_uid",
+				SignedInUser: tempUser,
+			})
+			require.ErrorIs(t, err, dashboards.ErrFolderCreationAccessDenied)
 		})
 
 		t.Run("Should not be able to create new folder under another folder without the right permissions", func(t *testing.T) {
@@ -979,7 +1015,7 @@ func TestNestedFolderService(t *testing.T) {
 				SignedInUser: tempUser,
 				ParentUID:    "some_parent",
 			})
-			require.ErrorIs(t, err, dashboards.ErrFolderAccessDenied)
+			require.ErrorIs(t, err, dashboards.ErrFolderCreationAccessDenied)
 		})
 
 		t.Run("Should be able to create new folder under another folder with the right permissions", func(t *testing.T) {
@@ -1012,6 +1048,19 @@ func TestNestedFolderService(t *testing.T) {
 				OrgID:        orgID,
 				Title:        dash.Title,
 				UID:          dash.UID,
+				SignedInUser: nestedFolderUser,
+				ParentUID:    "some_parent",
+			})
+			require.NoError(t, err)
+			require.True(t, nestedFolderStore.CreateCalled)
+
+			// Parent write access check will eventually be replaced with scoped folder creation check
+			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("some_parent")}}
+
+			_, err = folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+				OrgID:        orgID,
+				Title:        dash.Title + "2",
+				UID:          dash.UID + "2",
 				SignedInUser: nestedFolderUser,
 				ParentUID:    "some_parent",
 			})
@@ -1215,7 +1264,7 @@ func TestNestedFolderService(t *testing.T) {
 			require.Error(t, err, dashboards.ErrFolderAccessDenied)
 		})
 
-		t.Run("move to the root folder with folder creation permissions succeeds", func(t *testing.T) {
+		t.Run("move to the root folder with root folder creation permissions succeeds", func(t *testing.T) {
 			dashStore := &dashboards.FakeDashboardStore{}
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
 
@@ -1228,12 +1277,29 @@ func TestNestedFolderService(t *testing.T) {
 			}
 
 			nestedFolderUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
-			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersCreate: {}}
+			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)}}
 
 			features := featuremgmt.WithFeatures("nestedFolders")
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), dbtest.NewFakeDB())
 			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "", OrgID: orgID, SignedInUser: nestedFolderUser})
 			require.NoError(t, err)
+			// the folder is set inside InTransaction() but the fake one is called
+			// require.NotNil(t, f)
+		})
+
+		t.Run("move to the root folder with only subfolder creation permissions fails", func(t *testing.T) {
+			dashStore := &dashboards.FakeDashboardStore{}
+			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
+
+			nestedFolderStore := NewFakeStore()
+
+			nestedFolderUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
+			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("some_subfolder")}}
+
+			features := featuremgmt.WithFeatures("nestedFolders")
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), dbtest.NewFakeDB())
+			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "", OrgID: orgID, SignedInUser: nestedFolderUser})
+			require.Error(t, err)
 			// the folder is set inside InTransaction() but the fake one is called
 			// require.NotNil(t, f)
 		})
@@ -1960,7 +2026,7 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 
 	signedInAdminUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
 		orgID: {
-			dashboards.ActionFoldersCreate: {},
+			dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll},
 			dashboards.ActionFoldersWrite:  {dashboards.ScopeFoldersAll},
 			dashboards.ActionFoldersRead:   {dashboards.ScopeFoldersAll},
 		},
@@ -2418,6 +2484,8 @@ func CreateSubtreeInStore(t *testing.T, store store, service *Service, depth int
 		title := fmt.Sprintf("%sfolder-%d", prefix, i)
 		cmd.Title = title
 		cmd.UID = util.GenerateShortUID()
+		cmd.OrgID = orgID
+		cmd.SignedInUser = &user.SignedInUser{OrgID: orgID, Permissions: map[int64]map[string][]string{orgID: {dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll}}}}
 
 		f, err := service.Create(context.Background(), &cmd)
 		require.NoError(t, err)
