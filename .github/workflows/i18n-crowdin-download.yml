@@ -18,6 +18,14 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
 
+      - name: Generate token
+        if: steps.crowdin-download.outputs.pull_request_url
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_PEM }}
+
       - name: Download sources
         id: crowdin-download
         uses: crowdin/github-action@v1
@@ -53,17 +61,9 @@ jobs:
           github_user_name: "github-actions[bot]"
           github_user_email: "41898282+github-actions[bot]@users.noreply.github.com"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
           CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
           CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
-
-      - name: Generate token
-        if: steps.crowdin-download.outputs.pull_request_url
-        id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-        with:
-          app_id: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_PEM }}
 
       - name: Get pull request ID
         if: steps.crowdin-download.outputs.pull_request_url
@@ -74,7 +74,7 @@ jobs:
           pr_id=$(gh pr view ${{ steps.crowdin-download.outputs.pull_request_url }} --json id -q .id)
           echo "PULL_REQUEST_ID=$pr_id" >> "$GITHUB_ENV"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
       - name: Get project board ID
         uses: octokit/graphql-action@v2.x
@@ -119,4 +119,4 @@ jobs:
         if: steps.crowdin-download.outputs.pull_request_url
         with:
           pr: ${{ steps.crowdin-download.outputs.pull_request_number }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.generate_token.outputs.token }}

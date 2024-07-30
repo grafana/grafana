@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { locationService } from '@grafana/runtime';
 import { Button } from '@grafana/ui';

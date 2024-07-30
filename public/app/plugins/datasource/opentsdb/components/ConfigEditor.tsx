@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataSourceHttpSettings } from '@grafana/ui';

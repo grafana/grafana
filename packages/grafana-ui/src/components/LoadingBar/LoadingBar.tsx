@@ -1,5 +1,5 @@
 import { css, keyframes } from '@emotion/css';
-import React, { CSSProperties } from 'react';
+import { CSSProperties } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 

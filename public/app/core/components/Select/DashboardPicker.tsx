@@ -1,9 +1,10 @@
 import debounce from 'debounce-promise';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { AsyncSelectProps, AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { DashboardDTO } from 'app/types';
 
@@ -15,7 +16,7 @@ interface Props extends Omit<AsyncSelectProps<DashboardPickerDTO>, 'value' | 'on
 export type DashboardPickerDTO = Pick<DashboardDTO['dashboard'], 'uid' | 'title'> &
   Pick<DashboardDTO['meta'], 'folderUid' | 'folderTitle'>;
 
-const formatLabel = (folderTitle = 'General', dashboardTitle: string) => `${folderTitle}/${dashboardTitle}`;
+const formatLabel = (folderTitle = 'Dashboards', dashboardTitle: string) => `${folderTitle}/${dashboardTitle}`;
 
 async function findDashboards(query = '') {
   return backendSrv.search({ type: 'dash-db', query, limit: 100 }).then((result: DashboardSearchItem[]) => {
@@ -54,7 +55,7 @@ export const DashboardPicker = ({
     (async () => {
       // value was manually changed from outside or we are rendering for the first time.
       // We need to fetch dashboard information.
-      const res = await backendSrv.getDashboardByUid(value);
+      const res = await getDashboardAPI().getDashboardDTO(value);
       if (res.dashboard) {
         setCurrent({
           value: {

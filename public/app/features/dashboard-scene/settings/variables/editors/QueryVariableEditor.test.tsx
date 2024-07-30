@@ -1,6 +1,6 @@
 import { getByRole, render, screen, act, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import * as React from 'react';
 import { lastValueFrom, of } from 'rxjs';
 
 import {

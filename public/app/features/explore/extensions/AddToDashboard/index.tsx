@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { Modal, ToolbarButton } from '@grafana/ui';
 import { t } from 'app/core/internationalization';

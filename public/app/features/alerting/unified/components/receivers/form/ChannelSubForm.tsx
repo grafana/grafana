@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useFormContext, FieldErrors, FieldValues, Controller } from 'react-hook-form';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
+import { Controller, FieldErrors, FieldValues, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Alert, Button, Field, Select, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, Select, Text, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { ChannelValues, CommonSettingsComponentType } from '../../../types/receiver-form';
@@ -53,6 +55,7 @@ export function ChannelSubForm<R extends ChannelValues>({
 
   const { control, watch, register, trigger, formState, setValue } = useFormContext();
   const selectedType = watch(fieldName('type')) ?? defaultValues.type; // nope, setting "default" does not work at all.
+  const parse_mode = watch(fieldName('settings.parse_mode'));
   const { loading: testingReceiver } = useUnifiedAlertingSelector((state) => state.testReceivers);
 
   // TODO I don't like integration specific code here but other ways require a bigger refactoring
@@ -122,13 +125,17 @@ export function ChannelSubForm<R extends ChannelValues>({
   };
 
   const notifier = notifiers.find(({ dto: { type } }) => type === selectedType);
+  const isTelegram = selectedType === 'telegram';
+  // Grafana AM takes "None" value and maps to an empty string,
+  // Cloud AM takes no value at all
+  const isParseModeNone = parse_mode === 'None' || !parse_mode;
+  const showTelegramWarning = isTelegram && !isParseModeNone;
   // if there are mandatory options defined, optional options will be hidden by a collapse
   // if there aren't mandatory options, all options will be shown without collapse
   const mandatoryOptions = notifier?.dto.options.filter((o) => o.required);
   const optionalOptions = notifier?.dto.options.filter((o) => !o.required);
 
   const contactPointTypeInputId = `contact-point-type-${pathPrefix}`;
-
   return (
     <div className={styles.wrapper} data-testid="item-container">
       <div className={styles.topRow}>
@@ -188,6 +195,21 @@ export function ChannelSubForm<R extends ChannelValues>({
       </div>
       {notifier && (
         <div className={styles.innerContent}>
+          {showTelegramWarning && (
+            <Alert
+              title={t(
+                'alerting.contact-points.telegram.parse-mode-warning-title',
+                'Telegram messages are limited to 4096 UTF-8 characters.'
+              )}
+              severity="warning"
+            >
+              <Trans i18nKey="alerting.contact-points.telegram.parse-mode-warning-body">
+                If you use a <Text variant="code">parse_mode</Text> option other than <Text variant="code">None</Text>,
+                truncation may result in an invalid message, causing the notification to fail. For longer messages, we
+                recommend using an alternative contact method.
+              </Trans>
+            </Alert>
+          )}
           <ChannelOptions<R>
             defaultValues={defaultValues}
             selectedChannelOptions={mandatoryOptions?.length ? mandatoryOptions! : optionalOptions!}

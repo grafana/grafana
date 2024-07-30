@@ -17,7 +17,7 @@ You can install Grafana from the RPM repository, from standalone RPM, or with th
 
 If you install via RPM or the `.tar.gz` file, then you must manually update Grafana for each new version.
 
-The following video guides you through the steps, common commands and the ways in which you can install Grafana in RHEL or Fedora as described in this document:
+The following video demonstrates how to install Grafana on RHEL or Fedora as outlined in this document:
 
 {{< youtube id="4khbLlyoqzE" >}}
 

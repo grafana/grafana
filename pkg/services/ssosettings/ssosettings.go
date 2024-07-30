@@ -3,8 +3,8 @@ package ssosettings
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 )
 

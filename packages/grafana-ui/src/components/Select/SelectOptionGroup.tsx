@@ -1,4 +1,3 @@
-import React from 'react';
 import { GroupProps } from 'react-select';
 
 import { useStyles2 } from '../../themes/ThemeContext';

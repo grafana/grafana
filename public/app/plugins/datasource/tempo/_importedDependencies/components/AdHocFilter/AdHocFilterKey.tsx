@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import { ReactElement } from 'react';
 
 import { AdHocVariableFilter, DataSourceRef, SelectableValue } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -68,7 +68,8 @@ const fetchFilterKeys = async (
   }
 
   const otherFilters = allFilters.filter((f) => f.key !== currentKey);
-  const metrics = await ds.getTagKeys({ filters: otherFilters });
+  const response = await ds.getTagKeys({ filters: otherFilters });
+  const metrics = Array.isArray(response) ? response : response.data;
   return metrics.map((m) => ({ label: m.text, value: m.text }));
 };
 

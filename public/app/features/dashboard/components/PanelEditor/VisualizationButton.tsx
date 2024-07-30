@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { ToolbarButton, ButtonGroup } from '@grafana/ui';

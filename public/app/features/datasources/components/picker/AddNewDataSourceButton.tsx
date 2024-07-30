@@ -1,5 +1,4 @@
-import React from 'react';
-
+import { locationUtil } from '@grafana/data';
 import { LinkButton, ButtonVariant } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { Trans } from 'app/core/internationalization';
@@ -13,7 +12,7 @@ interface AddNewDataSourceButtonProps {
 
 export function AddNewDataSourceButton({ variant, onClick }: AddNewDataSourceButtonProps) {
   const hasCreateRights = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
-  const newDataSourceURL = CONNECTIONS_ROUTES.DataSourcesNew;
+  const newDataSourceURL = locationUtil.assureBaseUrl(CONNECTIONS_ROUTES.DataSourcesNew);
 
   return (
     <LinkButton

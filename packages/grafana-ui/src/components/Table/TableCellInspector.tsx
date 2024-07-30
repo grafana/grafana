@@ -1,5 +1,4 @@
 import { isString } from 'lodash';
-import React from 'react';
 
 import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
 import { Drawer } from '../Drawer/Drawer';

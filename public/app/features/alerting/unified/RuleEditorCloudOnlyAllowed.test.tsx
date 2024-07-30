@@ -1,6 +1,5 @@
 import { screen, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { byText } from 'testing-library-selector';
 
@@ -184,7 +183,7 @@ describe('RuleEditor cloud: checking editable data sources', () => {
 
     // render rule editor, select mimir/loki managed alerts
     renderRuleEditor();
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+    await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
 
     await ui.inputs.name.find();
 

@@ -1,7 +1,8 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/MetricSelect.tsx
 import { css } from '@emotion/css';
 import debounce from 'debounce-promise';
-import React, { RefCallback, useCallback, useState } from 'react';
+import { RefCallback, useCallback, useState } from 'react';
+import * as React from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
@@ -17,12 +18,12 @@ import {
   Icon,
   InlineField,
   InlineFieldRow,
+  SelectMenuOptions,
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
-import { SelectMenuOptions } from '../../gcopypaste/packages/grafana-ui/src/components/Select/SelectBase';
 import { truncateResult } from '../../language_utils';
 import { regexifyLabelValuesQueryString } from '../parsingUtils';
 import { QueryBuilderLabelFilter } from '../shared/types';

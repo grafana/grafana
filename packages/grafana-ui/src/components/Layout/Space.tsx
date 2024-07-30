@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { ThemeSpacingTokens } from '@grafana/data';
 
 import { Box } from './Box/Box';

@@ -17,7 +17,7 @@ labels:
     - enterprise
     - oss
 title: Templates
-weight: 114
+weight: 115
 refs:
   variables-label-annotation:
     - pattern: /docs/grafana/
@@ -105,6 +105,10 @@ Here are some commonly used built-in [variables](ref:variables-label-annotation)
   And it would print:
 
         CPU usage for instance1 has exceeded 80% for the last 5 minutes: 81.2345
+
+{{% admonition type="caution" %}}
+Extra whitespace in label templates can break matches with notification policies.
+{{% /admonition %}}
 
 ### Template annotations
 

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { HTMLProps, ReactNode } from 'react';
+import { forwardRef, HTMLProps, ReactNode } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -31,7 +31,7 @@ interface StyleDeps {
   width?: number;
 }
 
-export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
+export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
   const { className, addonAfter, addonBefore, prefix, suffix, invalid, loading, width = 0, ...restProps } = props;
   /**
    * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding to the input

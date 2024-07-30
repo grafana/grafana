@@ -323,7 +323,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
             scaleKey,
             label: customConfig.axisLabel,
             size: customConfig.axisWidth,
-            placement: isHorizontal ? customConfig.axisPlacement ?? AxisPlacement.Auto : AxisPlacement.Bottom,
+            placement: isHorizontal ? (customConfig.axisPlacement ?? AxisPlacement.Auto) : AxisPlacement.Bottom,
             formatValue: (v, decimals) => formattedValueToString(fmt(v, decimals)),
             theme,
             grid: { show: customConfig.axisGridShow },

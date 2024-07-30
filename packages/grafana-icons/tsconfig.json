@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "jsx": "react-jsx",
     "baseUrl": "./",
     "declarationDir": "./compiled",
     "emitDeclarationOnly": true,
@@ -9,5 +10,5 @@
   },
   "exclude": ["dist/**/*"],
   "extends": "@grafana/tsconfig",
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.tsx"]
 }

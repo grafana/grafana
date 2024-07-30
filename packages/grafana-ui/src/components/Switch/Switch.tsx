@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import React, { HTMLProps, useRef } from 'react';
+import { forwardRef, HTMLProps, useRef } from 'react';
 
 import { GrafanaTheme2, deprecationWarning } from '@grafana/data';
 
@@ -14,7 +14,7 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
   invalid?: boolean;
 }
 
-export const Switch = React.forwardRef<HTMLInputElement, Props>(
+export const Switch = forwardRef<HTMLInputElement, Props>(
   ({ value, checked, onChange, id, label, disabled, invalid = false, ...inputProps }, ref) => {
     if (checked) {
       deprecationWarning('Switch', 'checked prop', 'value');
@@ -53,7 +53,7 @@ export interface InlineSwitchProps extends Props {
   transparent?: boolean;
 }
 
-export const InlineSwitch = React.forwardRef<HTMLInputElement, InlineSwitchProps>(
+export const InlineSwitch = forwardRef<HTMLInputElement, InlineSwitchProps>(
   ({ transparent, className, showLabel, label, value, id, invalid, ...props }, ref) => {
     const styles = useStyles2(getSwitchStyles, transparent);
 

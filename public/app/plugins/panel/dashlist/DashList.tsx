@@ -1,5 +1,6 @@
 import { take } from 'lodash';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
 
 import {
   DataLinkBuiltInVars,

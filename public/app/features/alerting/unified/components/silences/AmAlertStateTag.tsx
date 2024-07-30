@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { AlertState } from 'app/plugins/datasource/alertmanager/types';
 
 import { State, StateTag } from '../StateTag';

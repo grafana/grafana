@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { AdHocVariableFilter } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneTimeRangeLike } from '@grafana/scenes';
 
@@ -26,7 +24,7 @@ function DataTrailEmbeddedRenderer({ model }: SceneComponentProps<DataTrailEmbed
   return <model.trail.Component model={model.trail} />;
 }
 
-export function buildDataTrailFromState({ metric, filters, dataSourceUid, timeRange }: DataTrailEmbeddedState) {
+function buildDataTrailFromState({ metric, filters, dataSourceUid, timeRange }: DataTrailEmbeddedState) {
   return new DataTrail({
     $timeRange: timeRange,
     metric,

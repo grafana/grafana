@@ -72,6 +72,10 @@
             "pr": {
               "type": "number",
               "description": "GitHub pull request the plugin was built from"
+            },
+            "build": {
+              "type": "number",
+              "description": "Build job number used to build this plugin."
             }
           }
         },
@@ -166,7 +170,7 @@
         "grafanaDependency": {
           "type": "string",
           "description": "Required Grafana version for this plugin. Validated using https://github.com/npm/node-semver.",
-          "pattern": "^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?(\\-[0-9]+)?$"
+          "pattern": "^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)?(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x\\*]+)?(\\.[0-9x\\*]+)?)?$"
         },
         "plugins": {
           "type": "array",
@@ -175,7 +179,7 @@
           "items": {
             "type": "object",
             "description": "Plugin dependency. Used to display information about plugin dependencies in the Grafana UI.",
-            "required": ["id", "name", "type", "version"],
+            "required": ["id", "name", "type"],
             "properties": {
               "id": {
                 "type": "string",
@@ -189,7 +193,8 @@
                 "type": "string"
               },
               "version": {
-                "type": "string"
+                "type": "string",
+                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
               }
             }
           }
@@ -333,10 +338,10 @@
     },
     "routes": {
       "type": "array",
-      "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](/developers/plugin-tools/create-a-plugin/extend-a-plugin/add-authentication-for-data-source-plugins).",
+      "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](https://grafana.com/developers/plugin-tools/how-to-guides/data-source-plugins/add-authentication-for-data-source-plugins).",
       "items": {
         "type": "object",
-        "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](/developers/plugin-tools/create-a-plugin/extend-a-plugin/add-authentication-for-data-source-plugins).",
+        "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](https://grafana.com/developers/plugin-tools/how-to-guides/data-source-plugins/add-authentication-for-data-source-plugins).",
         "additionalProperties": false,
         "properties": {
           "path": {
@@ -578,11 +583,6 @@
         },
         "required": ["extensionPointId", "title", "type"]
       }
-    },
-    "apiVersion": {
-      "type": "string",
-      "description": "[internal only] The API version for the plugin. Used for Datasource API servers. This metadata is temporary and will be removed in the future.",
-      "pattern": "^v([\\d]+)(?:(alpha|beta)([\\d]+))?$"
     }
   }
 }

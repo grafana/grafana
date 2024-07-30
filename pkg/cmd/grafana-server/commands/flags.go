@@ -1,21 +1,28 @@
 package commands
 
-import "github.com/urfave/cli/v2"
+import (
+	"runtime"
+
+	"github.com/urfave/cli/v2"
+)
 
 // flags for the grafana server command(s)
 var (
-	ConfigFile      string
-	HomePath        string
-	PidFile         string
-	Packaging       string
-	ConfigOverrides string
-	Version         bool
-	VerboseVersion  bool
-	Profile         bool
-	ProfileAddr     string
-	ProfilePort     uint64
-	Tracing         bool
-	TracingFile     string
+	ConfigFile           string
+	HomePath             string
+	PidFile              string
+	Packaging            string
+	ConfigOverrides      string
+	Version              bool
+	VerboseVersion       bool
+	Profile              bool
+	ProfileAddr          string
+	ProfilePort          uint64
+	ProfileBlockRate     int
+	ProfileMutexFraction int
+	ProfileContention    bool
+	Tracing              bool
+	TracingFile          string
 )
 
 var commonFlags = []cli.Flag{
@@ -74,6 +81,18 @@ var commonFlags = []cli.Flag{
 		Value:       6060,
 		Usage:       "Define custom port for profiling",
 		Destination: &ProfilePort,
+	},
+	&cli.IntFlag{
+		Name:        "profile-block-rate",
+		Value:       1,
+		Usage:       "Controls the fraction of goroutine blocking events that are reported in the blocking profile. The profiler aims to sample an average of one blocking event per rate nanoseconds spent blocked. To turn off profiling entirely, use 0",
+		Destination: &ProfileBlockRate,
+	},
+	&cli.IntFlag{
+		Name:        "profile-mutex-rate",
+		Value:       runtime.SetMutexProfileFraction(-1),
+		Usage:       "Controls the fraction of mutex contention events that are reported in the mutex profile. On average 1/rate events are reported. To turn off mutex profiling entirely, use 0",
+		Destination: &ProfileMutexFraction,
 	},
 	&cli.BoolFlag{
 		Name:        "tracing",

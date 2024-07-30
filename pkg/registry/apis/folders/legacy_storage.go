@@ -11,11 +11,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/storage/entity"
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
@@ -83,7 +83,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		return nil, err
 	}
 
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, err
 	}
 
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +195,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, err
 	}
 
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, false, err
 	}
@@ -267,7 +267,7 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if err != nil {
 		return v, false, err // includes the not-found error
 	}
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, false, err
 	}

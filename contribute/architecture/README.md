@@ -1,9 +1,6 @@
 # Architecture
 
-Are you looking to take on contributions with bigger impact? These guides help you get a better understanding of the structure and design of the Grafana codebase.
+Do you want to make Grafana contributions with bigger impact? These guides help you get a better understanding of the structure and design of the Grafana codebase.
 
-Learn more about the backend architecture in [contribute/backend](/contribute/backend/README.md).
-
-Learn more about the frontend architecture:
-
-- Part 1: [Data requests](frontend-data-requests.md)
+- To learn more about the frontend architecture, refer to [Frontend data requests](frontend-data-requests.md).
+- To learn more about the backend architecture, refer to [contribute/backend](/contribute/backend/README.md).

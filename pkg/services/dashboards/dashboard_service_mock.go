@@ -5,7 +5,7 @@ package dashboards
 import (
 	context "context"
 
-	identity "github.com/grafana/grafana/pkg/services/auth/identity"
+	identity "github.com/grafana/grafana/pkg/apimachinery/identity"
 	mock "github.com/stretchr/testify/mock"
 
 	model "github.com/grafana/grafana/pkg/services/search/model"

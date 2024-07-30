@@ -1,4 +1,5 @@
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
+import * as React from 'react';
 
 import { ValueMatcherID, BasicValueMatcherOptions } from '@grafana/data';
 import { Input } from '@grafana/ui';

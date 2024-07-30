@@ -7,7 +7,7 @@ import { XYSeriesConfig, Options } from './panelcfg.gen';
 export const xyChartMigrationHandler = (panel: PanelModel): Options => {
   const pluginVersion = panel?.pluginVersion ?? '';
 
-  if (pluginVersion === '') {
+  if (pluginVersion === '' || parseFloat(pluginVersion) < 11.1) {
     return migrateOptions(panel);
   }
 
@@ -189,7 +189,7 @@ function migrateOptions(panel: PanelModel): Options {
       frame: {
         matcher: {
           id: FrameMatcherID.byIndex,
-          options: frame ?? (seriesMapping === SeriesMapping.Manual ? i++ : frameShared ?? 0),
+          options: frame ?? (seriesMapping === SeriesMapping.Manual ? i++ : (frameShared ?? 0)),
         },
       },
       x: {

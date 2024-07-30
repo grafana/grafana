@@ -64,6 +64,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/
+  alert-list:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/alert-list/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/alert-list/
+  time-series:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/
 ---
 
 # Configure Grafana-managed alert rules
@@ -227,6 +237,10 @@ Annotations add metadata to provide more information on the alert in your alert 
 
    Links alerts to panels in a dashboard.
 
+   {{% admonition type="note" %}}
+   At the moment, alerts are only supported in the [time series](ref:time-series) and [alert list](ref:alert-list) visualizations.
+   {{% /admonition %}}
+
    {{< docs/play title="visualizations with linked alerts in Grafana" url="https://play.grafana.org/d/000000074/" >}}
 
 1. Click **Save rule**.
@@ -254,6 +268,8 @@ You can also configure the alert instance state when its evaluation returns an e
 | Alerting            | Sets alert instance state to `Alerting`. It waits until the [pending period](ref:pending-period) has finished.                                                                                                                         |
 | Normal              | Sets alert instance state to `Normal`.                                                                                                                                                                                                 |
 | Keep Last State     | Maintains the alert instance in its last state. Useful for mitigating temporary issues, refer to [Keep last state](ref:keep-last-state).                                                                                               |
+
+When you configure the No data or Error behavior to `Alerting` or `Normal`, Grafana will attempt to keep a stable set of fields under notification `Values`. If your query returns no data or an error, Grafana re-uses the latest known set of fields in `Values`, but will use `-1` in place of the measured value.
 
 ## Create alerts from panels
 

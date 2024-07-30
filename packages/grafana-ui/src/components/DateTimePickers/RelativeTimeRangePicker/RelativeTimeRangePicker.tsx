@@ -3,7 +3,7 @@ import { autoUpdate, flip, shift, useClick, useDismiss, useFloating, useInteract
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { FormEvent, useCallback, useRef, useState } from 'react';
+import { FormEvent, useCallback, useRef, useState } from 'react';
 
 import { RelativeTimeRange, GrafanaTheme2, TimeOption } from '@grafana/data';
 

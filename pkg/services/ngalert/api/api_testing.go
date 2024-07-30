@@ -17,9 +17,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -83,7 +83,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		}
 	}
 
-	evaluator, err := srv.evaluator.Create(eval.NewContext(c.Req.Context(), c.SignedInUser), rule.GetEvalCondition())
+	evaluator, err := srv.evaluator.Create(eval.NewContext(c.Req.Context(), c.SignedInUser), rule.GetEvalCondition().WithSource("preview"))
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to build evaluator for queries and expressions")
 	}
@@ -112,6 +112,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		rule,
 		results,
 		state.GetRuleExtraLabels(log.New("testing"), rule, folder.Fullpath, includeFolder),
+		nil,
 	)
 
 	alerts := make([]*amv2.PostableAlert, 0, len(transitions))

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import { memo } from 'react';
 
 import { GrafanaTheme2, LinkTarget } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -99,7 +99,7 @@ export interface Props {
   hideEdition?: boolean;
 }
 
-export const Footer = React.memo(({ customLinks, hideEdition }: Props) => {
+export const Footer = memo(({ customLinks, hideEdition }: Props) => {
   const links = (customLinks || getFooterLinks()).concat(getVersionLinks(hideEdition));
   const styles = useStyles2(getStyles);
 

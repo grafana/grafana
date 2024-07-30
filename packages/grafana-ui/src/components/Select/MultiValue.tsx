@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { useTheme2 } from '../../themes';
 import { IconButton, Props as IconButtonProps } from '../IconButton/IconButton';

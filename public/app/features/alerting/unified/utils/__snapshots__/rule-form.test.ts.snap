@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`formValuesToRulerGrafanaRuleDTO should correctly convert rule form values 1`] = `
+exports[`formValuesToRulerGrafanaRuleDTO should correctly convert rule form values for grafana alerting rule 1`] = `
 {
   "annotations": {
     "description": "",
@@ -15,6 +15,29 @@ exports[`formValuesToRulerGrafanaRuleDTO should correctly convert rule form valu
     "is_paused": false,
     "no_data_state": "NoData",
     "notification_settings": undefined,
+    "title": "",
+  },
+  "labels": {
+    "": "",
+  },
+}
+`;
+
+exports[`formValuesToRulerGrafanaRuleDTO should correctly convert rule form values for grafana recording rule 1`] = `
+{
+  "annotations": {
+    "description": "",
+    "runbook_url": "",
+    "summary": "",
+  },
+  "grafana_alert": {
+    "condition": "A",
+    "data": [],
+    "is_paused": false,
+    "record": {
+      "from": "A",
+      "metric": "",
+    },
     "title": "",
   },
   "labels": {

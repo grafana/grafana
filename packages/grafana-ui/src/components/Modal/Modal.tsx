@@ -2,7 +2,8 @@ import { cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
-import React, { PropsWithChildren, useRef } from 'react';
+import { PropsWithChildren, useRef } from 'react';
+import * as React from 'react';
 
 import { useStyles2 } from '../../themes';
 import { IconName } from '../../types';

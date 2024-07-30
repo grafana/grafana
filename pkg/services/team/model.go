@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/search/model"
 )
@@ -88,6 +88,13 @@ type SearchTeamsQuery struct {
 	TeamIds      []int64
 	SignedInUser identity.Requester
 	HiddenUsers  map[string]struct{}
+}
+
+type ListTeamsCommand struct {
+	Limit int
+	Start int
+	OrgID int64
+	UID   string
 }
 
 type TeamDTO struct {

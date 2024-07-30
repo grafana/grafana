@@ -26,6 +26,7 @@ export interface AzureSettings {
   workloadIdentityEnabled: boolean;
   userIdentityEnabled: boolean;
   userIdentityFallbackCredentialsEnabled: boolean;
+  azureEntraPasswordCredentialsEnabled: boolean;
 }
 
 export interface AzureCloudInfo {
@@ -121,6 +122,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   pluginAdminEnabled = true;
   pluginAdminExternalManageEnabled = false;
   pluginCatalogHiddenPlugins: string[] = [];
+  pluginCatalogManagedPlugins: string[] = [];
   pluginsCDNBaseURL = '';
   expressionsEnabled = false;
   customTheme?: undefined;
@@ -131,6 +133,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     workloadIdentityEnabled: false,
     userIdentityEnabled: false,
     userIdentityFallbackCredentialsEnabled: false,
+    azureEntraPasswordCredentialsEnabled: false,
   };
   caching = {
     enabled: false,
@@ -177,6 +180,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rootFolderUID: string | undefined;
   localFileSystemAvailable: boolean | undefined;
   cloudMigrationIsTarget: boolean | undefined;
+  cloudMigrationFeedbackURL = '';
+  reportingStaticContext?: Record<string, string>;
+  exploreDefaultTimeOffset = '1h';
 
   /**
    * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of

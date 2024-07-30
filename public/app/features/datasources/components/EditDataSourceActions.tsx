@@ -1,9 +1,6 @@
-import React from 'react';
-
 import { config } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types';
 
 import { useDataSource } from '../state';
 import { trackCreateDashboardClicked, trackDsConfigClicked, trackExploreClicked } from '../tracking';
@@ -15,7 +12,7 @@ interface Props {
 
 export function EditDataSourceActions({ uid }: Props) {
   const dataSource = useDataSource(uid);
-  const hasExploreRights = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
+  const hasExploreRights = contextSrv.hasAccessToExplore();
 
   return (
     <>

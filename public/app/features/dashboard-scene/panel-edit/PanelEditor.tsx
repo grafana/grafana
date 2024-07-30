@@ -49,8 +49,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     this._subs.add(
       panelManager.subscribeToState((n, p) => {
-        if (n.panel.state.pluginId !== p.panel.state.pluginId) {
-          this._initDataPane(n.panel.state.pluginId);
+        if (n.pluginId !== p.pluginId) {
+          this._initDataPane(n.pluginId);
         }
       })
     );

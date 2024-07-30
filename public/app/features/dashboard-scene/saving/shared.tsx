@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { isFetchError } from '@grafana/runtime';

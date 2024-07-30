@@ -2,7 +2,7 @@ import { isNumber } from 'lodash';
 import { FeatureLike } from 'ol/Feature';
 import Map from 'ol/Map';
 import VectorImage from 'ol/layer/VectorImage';
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { ReplaySubject } from 'rxjs';
 
 import {

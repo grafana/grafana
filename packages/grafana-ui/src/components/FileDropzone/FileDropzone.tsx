@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { isString, uniqueId } from 'lodash';
-import React, { ReactNode, useCallback, useState } from 'react';
+import { ReactNode, useCallback, useState } from 'react';
 import { Accept, DropEvent, DropzoneOptions, FileError, FileRejection, useDropzone, ErrorCode } from 'react-dropzone';
 
 import { formattedValueToString, getValueFormat, GrafanaTheme2 } from '@grafana/data';

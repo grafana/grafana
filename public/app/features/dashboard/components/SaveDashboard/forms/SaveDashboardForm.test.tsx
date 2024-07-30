@@ -1,6 +1,5 @@
 import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { Dashboard } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state';

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
 import { Box } from '@grafana/ui';

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { FrameMatcherID, MatcherConfig, StandardEditorProps } from '@grafana/data';
 import { RefIDPicker } from '@grafana/ui/src/components/MatchersUI/FieldsByFrameRefIdMatcher';

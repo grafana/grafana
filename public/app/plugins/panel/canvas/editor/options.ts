@@ -11,10 +11,12 @@ import { CanvasConnection, CanvasElementOptions } from '../panelcfg.gen';
 import { LineStyle } from '../types';
 
 import { LineStyleEditor } from './LineStyleEditor';
+import { DataLinksEditor } from './element/DataLinksEditor';
 
 interface OptionSuppliers {
   addBackground: PanelOptionsSupplier<CanvasElementOptions>;
   addBorder: PanelOptionsSupplier<CanvasElementOptions>;
+  addDataLinks: PanelOptionsSupplier<CanvasElementOptions>;
   addColor: PanelOptionsSupplier<CanvasConnection>;
   addSize: PanelOptionsSupplier<CanvasConnection>;
   addRadius: PanelOptionsSupplier<CanvasConnection>;
@@ -203,6 +205,17 @@ export const optionBuilder: OptionSuppliers = {
       editor: LineStyleEditor,
       settings: {},
       defaultValue: { value: LineStyle.Solid, label: 'Solid' },
+    });
+  },
+
+  addDataLinks: (builder, context) => {
+    builder.addCustomEditor({
+      category: ['Data links'],
+      id: 'dataLinks',
+      path: 'links',
+      name: 'Links',
+      editor: DataLinksEditor,
+      settings: context.options,
     });
   },
 };

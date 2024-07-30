@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import { forwardRef } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, ScopedVars } from '@grafana/data';
@@ -170,7 +170,7 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-export const DashboardLinkButton = React.forwardRef<unknown, ButtonLinkProps>(({ className, ...otherProps }, ref) => {
+export const DashboardLinkButton = forwardRef<unknown, ButtonLinkProps>(({ className, ...otherProps }, ref) => {
   const styles = useStyles2(getStyles);
   const Component = otherProps.href ? LinkButton : Button;
   return (

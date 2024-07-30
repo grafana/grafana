@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { AlignedData, Range } from 'uplot';
 
 import {
@@ -86,7 +86,12 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
     let rebuildConfig = false;
 
     if (prevProps.sparkline !== this.props.sparkline) {
-      rebuildConfig = !compareDataFrameStructures(this.state.alignedDataFrame, prevState.alignedDataFrame);
+      const isStructureChanged = !compareDataFrameStructures(this.state.alignedDataFrame, prevState.alignedDataFrame);
+      const isRangeChanged = !isEqual(
+        alignedDataFrame.fields[1].state?.range,
+        prevState.alignedDataFrame.fields[1].state?.range
+      );
+      rebuildConfig = isStructureChanged || isRangeChanged;
     } else {
       rebuildConfig = !isEqual(prevProps.config, this.props.config);
     }

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneVariable, SceneVariables, sceneGraph } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
@@ -263,13 +261,11 @@ function VariableEditorSettingsView({
   onDelete,
   onValidateVariableName,
 }: VariableEditorSettingsEditViewProps) {
-  const parentTab = pageNav.children!.find((p) => p.active)!;
-  parentTab.parentItem = pageNav;
   const { name } = variable.useState();
 
   const editVariablePageNav = {
     text: name,
-    parentItem: parentTab,
+    parentItem: pageNav,
   };
   return (
     <Page navModel={navModel} pageNav={editVariablePageNav} layout={PageLayoutType.Standard}>

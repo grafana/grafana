@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { IconName } from '@grafana/data';
 import { reportInteraction, config } from '@grafana/runtime';

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { dump, load } from 'js-yaml';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 

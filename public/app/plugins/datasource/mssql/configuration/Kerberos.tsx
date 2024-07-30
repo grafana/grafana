@@ -1,4 +1,4 @@
-import React, { SyntheticEvent } from 'react';
+import { SyntheticEvent } from 'react';
 
 import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
 import { ConfigSubSection } from '@grafana/experimental';

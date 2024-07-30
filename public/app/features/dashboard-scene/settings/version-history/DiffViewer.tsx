@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import ReactDiffViewer, { ReactDiffViewerProps, DiffMethod } from 'react-diff-viewer';
 import tinycolor from 'tinycolor2';
 

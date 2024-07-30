@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { SelectableValue } from '@grafana/data';
 import { RadioButtonGroup, Field } from '@grafana/ui';
 import { t } from 'app/core/internationalization';

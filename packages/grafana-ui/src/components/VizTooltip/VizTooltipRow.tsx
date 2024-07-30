@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import { CSSProperties, ReactNode, useEffect, useRef, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -16,6 +17,7 @@ interface VizTooltipRowProps extends Omit<VizTooltipItem, 'value'> {
   isActive?: boolean; // for series list
   marginRight?: string;
   isPinned: boolean;
+  showValueScroll?: boolean;
 }
 
 enum LabelValueTypes {
@@ -25,6 +27,7 @@ enum LabelValueTypes {
 
 const SUCCESSFULLY_COPIED_TEXT = 'Copied to clipboard';
 const SHOW_SUCCESS_DURATION = 2 * 1000;
+const HORIZONTAL_PX_PER_CHAR = 7;
 
 export const VizTooltipRow = ({
   label,
@@ -37,11 +40,23 @@ export const VizTooltipRow = ({
   marginRight = '0px',
   isPinned,
   lineStyle,
+  showValueScroll,
 }: VizTooltipRowProps) => {
   const styles = useStyles2(getStyles, justify, marginRight);
 
+  const innerValueScrollStyle: CSSProperties = showValueScroll
+    ? {
+        maxHeight: 55,
+        whiteSpace: 'wrap',
+        wordBreak: 'break-word',
+        overflowY: 'auto',
+      }
+    : {
+        whiteSpace: 'wrap',
+        wordBreak: 'break-word',
+      };
+
   const [showLabelTooltip, setShowLabelTooltip] = useState(false);
-  const [showValueTooltip, setShowValueTooltip] = useState(false);
 
   const [copiedText, setCopiedText] = useState<Record<string, string> | null>(null);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
@@ -106,13 +121,10 @@ export const VizTooltipRow = ({
 
   const onMouseLeaveLabel = () => setShowLabelTooltip(false);
 
-  const onMouseEnterValue = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (event.currentTarget.offsetWidth < event.currentTarget.scrollWidth) {
-      setShowValueTooltip(true);
-    }
-  };
-
-  const onMouseLeaveValue = () => setShowValueTooltip(false);
+  // if label is > 50% window width, try to put label/value pairs on new lines
+  if (label.length * HORIZONTAL_PX_PER_CHAR > window.innerWidth / 2) {
+    label = label.replaceAll('{', '{\n  ').replaceAll('}', '\n}').replaceAll(', ', ',\n  ');
+  }
 
   return (
     <div className={styles.contentWrapper}>
@@ -160,27 +172,26 @@ export const VizTooltipRow = ({
         )}
 
         {!isPinned ? (
-          <div className={cx(styles.value, isActive)}>{value}</div>
+          <div className={cx(styles.value, isActive)} style={innerValueScrollStyle}>
+            {value}
+          </div>
         ) : (
-          <Tooltip content={value ? value.toString() : ''} interactive={false} show={showValueTooltip}>
-            <>
-              {showCopySuccess && copiedText?.value && (
-                <InlineToast placement="top" referenceElement={valueRef.current}>
-                  {SUCCESSFULLY_COPIED_TEXT}
-                </InlineToast>
-              )}
-              {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
-              <div
-                className={cx(styles.value, isActive, navigator?.clipboard && styles.copy)}
-                onMouseEnter={onMouseEnterValue}
-                onMouseLeave={onMouseLeaveValue}
-                onClick={() => copyToClipboard(value ? value.toString() : '', LabelValueTypes.value)}
-                ref={valueRef}
-              >
-                {value}
-              </div>
-            </>
-          </Tooltip>
+          <>
+            {showCopySuccess && copiedText?.value && (
+              <InlineToast placement="top" referenceElement={valueRef.current}>
+                {SUCCESSFULLY_COPIED_TEXT}
+              </InlineToast>
+            )}
+            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
+            <div
+              className={cx(styles.value, isActive, navigator?.clipboard && styles.copy)}
+              style={innerValueScrollStyle}
+              onClick={() => copyToClipboard(value ? value.toString() : '', LabelValueTypes.value)}
+              ref={valueRef}
+            >
+              {value}
+            </div>
+          </>
         )}
 
         {color && colorPlacement === ColorPlacement.trailing && (
@@ -199,9 +210,8 @@ export const VizTooltipRow = ({
 const getStyles = (theme: GrafanaTheme2, justify: string, marginRight: string) => ({
   contentWrapper: css({
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'start',
     justifyContent: justify,
-    flexWrap: 'wrap',
     marginRight: marginRight,
   }),
   label: css({
@@ -219,7 +229,6 @@ const getStyles = (theme: GrafanaTheme2, justify: string, marginRight: string) =
   valueWrapper: css({
     display: 'flex',
     alignItems: 'center',
-    minWidth: 0,
   }),
   activeSeries: css({
     fontWeight: theme.typography.fontWeightBold,

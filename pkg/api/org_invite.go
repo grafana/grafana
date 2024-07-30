@@ -10,10 +10,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -101,9 +101,9 @@ func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response
 	cmd.Name = inviteDto.Name
 	cmd.Status = tempuser.TmpUserInvitePending
 
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
+	namespace, identifier := c.SignedInUser.GetTypedID()
 	var userID int64
-	if namespace == identity.NamespaceUser || namespace == identity.NamespaceServiceAccount {
+	if namespace == identity.TypeUser || namespace == identity.TypeServiceAccount {
 		var err error
 		userID, err = strconv.ParseInt(identifier, 10, 64)
 		if err != nil {

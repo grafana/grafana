@@ -1,47 +1,48 @@
-import React from 'react';
-import { render, waitFor, userEvent, screen } from 'test/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { dateTime } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService, setDataSourceSrv } from '@grafana/runtime';
-import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { config, locationService } from '@grafana/runtime';
+import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { waitForServerRequest } from 'app/features/alerting/unified/mocks/server/events';
 import {
-  MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER,
   MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER,
+  MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER,
 } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
+import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
 import { silenceCreateHandler } from 'app/features/alerting/unified/mocks/server/handlers/silences';
-import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator, SilenceState } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
 import Silences from './Silences';
-import { grantUserPermissions, MOCK_SILENCE_ID_EXISTING, mockDataSource, MockDataSourceSrv } from './mocks';
-import { AlertmanagerProvider } from './state/AlertmanagerContext';
+import {
+  MOCK_SILENCE_ID_EXISTING,
+  MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID,
+  MOCK_SILENCE_ID_LACKING_PERMISSIONS,
+  grantUserPermissions,
+  mockDataSource,
+  mockSilences,
+} from './mocks';
+import { grafanaRulerRule } from './mocks/grafanaRulerApi';
 import { setupDataSources } from './testSetup/datasources';
-import { DataSourceType } from './utils/datasource';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 jest.mock('app/core/services/context_srv');
 
 const TEST_TIMEOUT = 60000;
 
 const renderSilences = (location = '/alerting/silences/') => {
-  locationService.push(location);
-  return render(
-    <AlertmanagerProvider accessType="instance">
-      <Silences />
-    </AlertmanagerProvider>,
-    {
-      historyOptions: {
-        initialEntries: [location],
-      },
-    }
-  );
+  return render(<Silences />, {
+    historyOptions: {
+      initialEntries: [location],
+    },
+  });
 };
 
 const dataSources = {
   am: mockDataSource({
-    name: 'Alertmanager',
+    name: GRAFANA_RULES_SOURCE_NAME,
     type: DataSourceType.Alertmanager,
   }),
   [MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER]: mockDataSource({
@@ -61,6 +62,7 @@ const ui = {
   addSilenceButton: byRole('link', { name: /add silence/i }),
   queryBar: byPlaceholderText('Search'),
   existingSilenceNotFound: byRole('alert', { name: /existing silence .* not found/i }),
+  noPermissionToEdit: byRole('alert', { name: /do not have permission/i }),
   editor: {
     timeRange: byTestId(selectors.components.TimePicker.openButton),
     durationField: byLabelText('Duration'),
@@ -74,19 +76,8 @@ const ui = {
     addMatcherButton: byRole('button', { name: 'Add matcher' }),
     submit: byText(/save silence/i),
     createdBy: byText(/created by \*/i),
+    loadingIndicator: byTestId('Spinner'),
   },
-};
-
-const resetMocks = () => {
-  jest.resetAllMocks();
-
-  grantUserPermissions([
-    AccessControlAction.AlertingInstanceRead,
-    AccessControlAction.AlertingInstanceCreate,
-    AccessControlAction.AlertingInstanceUpdate,
-    AccessControlAction.AlertingInstancesExternalRead,
-    AccessControlAction.AlertingInstancesExternalWrite,
-  ]);
 };
 
 const setUserLogged = (isLogged: boolean) => {
@@ -107,20 +98,22 @@ const addAdditionalMatcher = async () => {
   await user.click(ui.editor.addMatcherButton.get());
 };
 
-setupMswServer();
+const server = setupMswServer();
 
 beforeEach(() => {
   setupDataSources(dataSources.am, dataSources[MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER]);
+  grantUserPermissions([
+    AccessControlAction.AlertingInstanceRead,
+    AccessControlAction.AlertingInstanceCreate,
+    AccessControlAction.AlertingInstanceUpdate,
+    AccessControlAction.AlertingInstancesExternalRead,
+    AccessControlAction.AlertingInstancesExternalWrite,
+  ]);
 });
 
+afterEach(() => jest.resetAllMocks());
+
 describe('Silences', () => {
-  beforeAll(resetMocks);
-  afterEach(resetMocks);
-
-  beforeEach(() => {
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
-  });
-
   it(
     'loads and shows silences',
     async () => {
@@ -133,10 +126,10 @@ describe('Silences', () => {
       expect(ui.expiredTable.get()).toBeInTheDocument();
 
       const allSilences = ui.silenceRow.queryAll();
-      expect(allSilences).toHaveLength(3);
-      expect(allSilences[0]).toHaveTextContent('foo=bar');
-      expect(allSilences[1]).toHaveTextContent('foo!=bar');
-      expect(allSilences[2]).toHaveTextContent('foo=bar');
+      expect(allSilences).toHaveLength(mockSilences.length);
+      expect(within(allSilences[0]).getByLabelText('Tags')).toHaveTextContent('foo=bar');
+      expect(within(allSilences[1]).getByLabelText('Tags')).toHaveTextContent('foo!=bar');
+      expect(allSilences[2]).toHaveTextContent(MOCK_GRAFANA_ALERT_RULE_TITLE);
 
       await user.click(ui.expiredCaret.get());
 
@@ -144,7 +137,10 @@ describe('Silences', () => {
       expect(ui.expiredTable.query()).not.toBeInTheDocument();
 
       const activeSilences = ui.silenceRow.queryAll();
-      expect(activeSilences).toHaveLength(2);
+      const expectedActiveSilences = mockSilences.filter(
+        (silence) => silence.status.state !== SilenceState.Expired
+      ).length;
+      expect(activeSilences).toHaveLength(expectedActiveSilences);
       expect(activeSilences[0]).toHaveTextContent('foo=bar');
       expect(activeSilences[1]).toHaveTextContent('foo!=bar');
     },
@@ -161,6 +157,7 @@ describe('Silences', () => {
       expect(notExpiredTable).toBeInTheDocument();
 
       const silencedAlertRows = await ui.silencedAlertCell.findAll(notExpiredTable);
+
       expect(silencedAlertRows[0]).toHaveTextContent('2');
       expect(silencedAlertRows[1]).toHaveTextContent('0');
     },
@@ -175,8 +172,8 @@ describe('Silences', () => {
 
       const queryBar = await ui.queryBar.find();
       await user.type(queryBar, 'foo=bar');
-
-      await waitFor(() => expect(ui.silenceRow.getAll()).toHaveLength(2));
+      await screen.findByRole('button', { name: /clear filters/i });
+      expect(ui.silenceRow.getAll()).toHaveLength(1);
     },
     TEST_TIMEOUT
   );
@@ -207,10 +204,9 @@ describe('Silences', () => {
 
 describe('Silence create/edit', () => {
   const baseUrlPath = '/alerting/silence/new';
-  beforeAll(resetMocks);
-  afterEach(resetMocks);
 
   beforeEach(() => {
+    mockAlertRuleApi(server).getAlertRule(MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID, grafanaRulerRule);
     setUserLogged(true);
   });
 
@@ -258,7 +254,7 @@ describe('Silence create/edit', () => {
     'creates a new silence',
     async () => {
       const user = userEvent.setup();
-      renderSilences(`${baseUrlPath}?alertmanager=Alertmanager`);
+      renderSilences(`${baseUrlPath}?alertmanager=${GRAFANA_RULES_SOURCE_NAME}`);
       expect(await ui.editor.durationField.find()).toBeInTheDocument();
 
       const postRequest = waitForServerRequest(silenceCreateHandler());
@@ -314,6 +310,11 @@ describe('Silence create/edit', () => {
     expect(await ui.existingSilenceNotFound.find()).toBeInTheDocument();
   });
 
+  it('shows an error when user cannot edit/recreate silence', async () => {
+    renderSilences(`/alerting/silence/${MOCK_SILENCE_ID_LACKING_PERMISSIONS}/edit`);
+    expect(await ui.noPermissionToEdit.find()).toBeInTheDocument();
+  });
+
   it('populates form with existing silence information', async () => {
     renderSilences(`/alerting/silence/${MOCK_SILENCE_ID_EXISTING}/edit`);
 
@@ -321,7 +322,13 @@ describe('Silence create/edit', () => {
     // existing fields have been filled out as well
     await waitFor(() => expect(ui.editor.matcherName.get()).toHaveValue('foo'));
     expect(ui.editor.matcherValue.get()).toHaveValue('bar');
-    expect(ui.editor.comment.get()).toHaveValue('Silence noisy alerts');
+    expect(ui.editor.comment.get()).toHaveValue('Happy path silence');
+  });
+
+  it('populates form with existing silence information that has __alert_rule_uid__', async () => {
+    mockAlertRuleApi(server).getAlertRule(MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID, grafanaRulerRule);
+    renderSilences(`/alerting/silence/${MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID}/edit`);
+    expect(await screen.findByLabelText(/alert rule/i)).toHaveValue(grafanaRulerRule.grafana_alert.title);
   });
 
   it(
@@ -331,7 +338,7 @@ describe('Silence create/edit', () => {
 
       const postRequest = waitForServerRequest(silenceCreateHandler());
 
-      renderSilences(`${baseUrlPath}?alertmanager=Alertmanager`);
+      renderSilences(`${baseUrlPath}?alertmanager=${GRAFANA_RULES_SOURCE_NAME}`);
       await waitFor(() => expect(ui.editor.durationField.query()).not.toBeNull());
 
       await enterSilenceLabel(0, 'foo', MatcherOperator.equal, 'bar');
@@ -340,7 +347,7 @@ describe('Silence create/edit', () => {
 
       expect(await ui.notExpiredTable.find()).toBeInTheDocument();
 
-      expect(locationService.getSearch().get('alertmanager')).toBe('Alertmanager');
+      expect(locationService.getSearch().get('alertmanager')).toBe(GRAFANA_RULES_SOURCE_NAME);
 
       const createSilenceRequest = await postRequest;
       const requestBody = await createSilenceRequest.clone().json();

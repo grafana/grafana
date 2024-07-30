@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/BurntSushi/toml"
 
@@ -13,63 +14,76 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const defaultTimeout = 10
+const DefaultTimeout = 10
 
-// Config holds list of connections to LDAP
+// Config holds parameters from the .ini config file
 type Config struct {
-	Servers []*ServerConfig `toml:"servers"`
+	Enabled           bool
+	ConfigFilePath    string
+	AllowSignUp       bool
+	SkipOrgRoleSync   bool
+	SyncCron          string
+	ActiveSyncEnabled bool
+}
+
+// ServersConfig holds list of connections to LDAP
+type ServersConfig struct {
+	Servers []*ServerConfig `toml:"servers" json:"servers"`
 }
 
 // ServerConfig holds connection data to LDAP
 type ServerConfig struct {
-	Host string `toml:"host"`
-	Port int    `toml:"port"`
+	Host string `toml:"host" json:"host"`
+	Port int    `toml:"port" json:"port,omitempty"`
 
-	UseSSL        bool     `toml:"use_ssl"`
-	StartTLS      bool     `toml:"start_tls"`
-	SkipVerifySSL bool     `toml:"ssl_skip_verify"`
-	MinTLSVersion string   `toml:"min_tls_version"`
-	minTLSVersion uint16   `toml:"-"`
-	TLSCiphers    []string `toml:"tls_ciphers"`
-	tlsCiphers    []uint16 `toml:"-"`
+	UseSSL          bool     `toml:"use_ssl" json:"use_ssl,omitempty"`
+	StartTLS        bool     `toml:"start_tls" json:"start_tls,omitempty"`
+	SkipVerifySSL   bool     `toml:"ssl_skip_verify" json:"ssl_skip_verify,omitempty"`
+	MinTLSVersion   string   `toml:"min_tls_version" json:"min_tls_version,omitempty"`
+	MinTLSVersionID uint16   `toml:"-" json:"-"`
+	TLSCiphers      []string `toml:"tls_ciphers" json:"tls_ciphers,omitempty"`
+	TLSCipherIDs    []uint16 `toml:"-" json:"-"`
 
-	RootCACert   string       `toml:"root_ca_cert"`
-	ClientCert   string       `toml:"client_cert"`
-	ClientKey    string       `toml:"client_key"`
-	BindDN       string       `toml:"bind_dn"`
-	BindPassword string       `toml:"bind_password"`
-	Timeout      int          `toml:"timeout"`
-	Attr         AttributeMap `toml:"attributes"`
+	RootCACert      string       `toml:"root_ca_cert" json:"root_ca_cert,omitempty"`
+	RootCACertValue []string     `json:"root_ca_cert_value,omitempty"`
+	ClientCert      string       `toml:"client_cert" json:"client_cert,omitempty"`
+	ClientCertValue string       `json:"client_cert_value,omitempty"`
+	ClientKey       string       `toml:"client_key" json:"client_key,omitempty"`
+	ClientKeyValue  string       `json:"client_key_value,omitempty"`
+	BindDN          string       `toml:"bind_dn" json:"bind_dn,omitempty"`
+	BindPassword    string       `toml:"bind_password" json:"bind_password,omitempty"`
+	Timeout         int          `toml:"timeout" json:"timeout,omitempty"`
+	Attr            AttributeMap `toml:"attributes" json:"attributes,omitempty"`
 
-	SearchFilter  string   `toml:"search_filter"`
-	SearchBaseDNs []string `toml:"search_base_dns"`
+	SearchFilter  string   `toml:"search_filter" json:"search_filter,omitempty"`
+	SearchBaseDNs []string `toml:"search_base_dns" json:"search_base_dns,omitempty"`
 
-	GroupSearchFilter              string   `toml:"group_search_filter"`
-	GroupSearchFilterUserAttribute string   `toml:"group_search_filter_user_attribute"`
-	GroupSearchBaseDNs             []string `toml:"group_search_base_dns"`
+	GroupSearchFilter              string   `toml:"group_search_filter" json:"group_search_filter,omitempty"`
+	GroupSearchFilterUserAttribute string   `toml:"group_search_filter_user_attribute" json:"group_search_filter_user_attribute,omitempty"`
+	GroupSearchBaseDNs             []string `toml:"group_search_base_dns" json:"group_search_base_dns,omitempty"`
 
-	Groups []*GroupToOrgRole `toml:"group_mappings"`
+	Groups []*GroupToOrgRole `toml:"group_mappings" json:"group_mappings,omitempty"`
 }
 
 // AttributeMap is a struct representation for LDAP "attributes" setting
 type AttributeMap struct {
-	Username string `toml:"username"`
-	Name     string `toml:"name"`
-	Surname  string `toml:"surname"`
-	Email    string `toml:"email"`
-	MemberOf string `toml:"member_of"`
+	Username string `toml:"username" json:"username,omitempty"`
+	Name     string `toml:"name" json:"name,omitempty"`
+	Surname  string `toml:"surname" json:"surname,omitempty"`
+	Email    string `toml:"email" json:"email,omitempty"`
+	MemberOf string `toml:"member_of" json:"member_of,omitempty"`
 }
 
 // GroupToOrgRole is a struct representation of LDAP
 // config "group_mappings" setting
 type GroupToOrgRole struct {
-	GroupDN string `toml:"group_dn"`
-	OrgId   int64  `toml:"org_id"`
+	GroupDN string `toml:"group_dn" json:"group_dn"`
+	OrgId   int64  `toml:"org_id" json:"org_id"`
 
 	// This pointer specifies if setting was set (for backwards compatibility)
-	IsGrafanaAdmin *bool `toml:"grafana_admin"`
+	IsGrafanaAdmin *bool `toml:"grafana_admin" json:"grafana_admin,omitempty"`
 
-	OrgRole org.RoleType `toml:"org_role"`
+	OrgRole org.RoleType `toml:"org_role" json:"org_role,omitempty"`
 }
 
 // logger for all LDAP stuff
@@ -80,32 +94,59 @@ var loadingMutex = &sync.Mutex{}
 
 // We need to define in this space so `GetConfig` fn
 // could be defined as singleton
-var config *Config
+var cachedConfig struct {
+	config       *ServersConfig
+	filePath     string
+	fileModified time.Time
+}
+
+func GetLDAPConfig(cfg *setting.Cfg) *Config {
+	return &Config{
+		Enabled:           cfg.LDAPAuthEnabled,
+		ConfigFilePath:    cfg.LDAPConfigFilePath,
+		AllowSignUp:       cfg.LDAPAllowSignup,
+		SkipOrgRoleSync:   cfg.LDAPSkipOrgRoleSync,
+		SyncCron:          cfg.LDAPSyncCron,
+		ActiveSyncEnabled: cfg.LDAPActiveSyncEnabled,
+	}
+}
 
 // GetConfig returns the LDAP config if LDAP is enabled otherwise it returns nil. It returns either cached value of
 // the config or it reads it and caches it first.
-func GetConfig(cfg *setting.Cfg) (*Config, error) {
+func GetConfig(cfg *Config) (*ServersConfig, error) {
 	if cfg != nil {
-		if !cfg.LDAPAuthEnabled {
+		if !cfg.Enabled {
 			return nil, nil
 		}
-	} else if !cfg.LDAPAuthEnabled {
+	} else if !cfg.Enabled {
 		return nil, nil
 	}
 
-	// Make it a singleton
-	if config != nil {
-		return config, nil
+	configFileStats, err := os.Stat(cfg.ConfigFilePath)
+	if err != nil {
+		return nil, err
+	}
+	configFileModified := configFileStats.ModTime()
+
+	// return the config from cache if the config file hasn't been modified
+	if cachedConfig.config != nil && cachedConfig.filePath == cfg.ConfigFilePath && cachedConfig.fileModified.Equal(configFileModified) {
+		return cachedConfig.config, nil
 	}
 
 	loadingMutex.Lock()
 	defer loadingMutex.Unlock()
 
-	return readConfig(cfg.LDAPConfigFilePath)
+	cachedConfig.config, err = readConfig(cfg.ConfigFilePath)
+	if err == nil {
+		cachedConfig.filePath = cfg.ConfigFilePath
+		cachedConfig.fileModified = configFileModified
+	}
+
+	return cachedConfig.config, err
 }
 
-func readConfig(configFile string) (*Config, error) {
-	result := &Config{}
+func readConfig(configFile string) (*ServersConfig, error) {
+	result := &ServersConfig{}
 
 	logger.Info("LDAP enabled, reading config file", "file", configFile)
 
@@ -143,14 +184,14 @@ func readConfig(configFile string) (*Config, error) {
 		}
 
 		if server.MinTLSVersion != "" {
-			server.minTLSVersion, err = util.TlsNameToVersion(server.MinTLSVersion)
+			server.MinTLSVersionID, err = util.TlsNameToVersion(server.MinTLSVersion)
 			if err != nil {
 				logger.Error("Failed to set min TLS version. Ignoring", "err", err)
 			}
 		}
 
 		if len(server.TLSCiphers) > 0 {
-			server.tlsCiphers, err = util.TlsCiphersToIDs(server.TLSCiphers)
+			server.TLSCipherIDs, err = util.TlsCiphersToIDs(server.TLSCiphers)
 			if err != nil {
 				logger.Error("Unrecognized TLS Cipher(s). Ignoring", "err", err)
 			}
@@ -168,7 +209,7 @@ func readConfig(configFile string) (*Config, error) {
 
 		// set default timeout if unspecified
 		if server.Timeout == 0 {
-			server.Timeout = defaultTimeout
+			server.Timeout = DefaultTimeout
 		}
 	}
 

@@ -11,11 +11,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/singleflight"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -66,7 +66,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 	cacheKey := prefixCacheKey(id.GetCacheKey())
 
 	result, err, _ := s.si.Do(cacheKey, func() (interface{}, error) {
-		namespace, identifier := id.GetNamespacedID()
+		namespace, identifier := id.GetTypedID()
 
 		cachedToken, err := s.cache.Get(ctx, cacheKey)
 		if err == nil {
@@ -92,10 +92,12 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			},
 		}
 
-		if identity.IsNamespace(namespace, identity.NamespaceUser) {
+		if identity.IsIdentityType(namespace, identity.TypeUser) {
 			claims.Rest.Email = id.GetEmail()
 			claims.Rest.EmailVerified = id.IsEmailVerified()
 			claims.Rest.AuthenticatedBy = id.GetAuthenticatedBy()
+			claims.Rest.Username = id.GetLogin()
+			claims.Rest.UID = id.GetUID()
 		}
 
 		token, err := s.signer.SignIDToken(ctx, claims)
@@ -142,7 +144,7 @@ func (s *Service) hook(ctx context.Context, identity *authn.Identity, _ *authn.R
 	token, err := s.SignIdentity(ctx, identity)
 	if err != nil {
 		if shouldLogErr(err) {
-			namespace, id := identity.GetNamespacedID()
+			namespace, id := identity.GetTypedID()
 			s.logger.FromContext(ctx).Error("Failed to sign id token", "err", err, "namespace", namespace, "id", id)
 		}
 		// for now don't return error so we don't break authentication from this hook

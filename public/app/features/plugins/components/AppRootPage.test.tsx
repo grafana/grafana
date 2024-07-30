@@ -1,5 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';

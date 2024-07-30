@@ -1,4 +1,3 @@
-import React from 'react';
 import type { RequireAtLeastOne } from 'type-fest';
 
 import { Tooltip, type IconName, Text, Icon } from '@grafana/ui';

@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import debouncePromise from 'debounce-promise';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';

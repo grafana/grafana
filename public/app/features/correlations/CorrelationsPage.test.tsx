@@ -1,7 +1,6 @@
 import { render, waitFor, screen, within, Matcher, getByRole } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { merge, uniqueId } from 'lodash';
-import React from 'react';
 import { openMenu } from 'react-select-event';
 import { Observable } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';

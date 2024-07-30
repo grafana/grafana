@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import { DashboardCursorSync, PanelProps, TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
@@ -45,7 +45,7 @@ export const HeatmapPanel = ({
 }: HeatmapPanelProps) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { sync, eventsScope, canAddAnnotations } = usePanelContext();
+  const { sync, eventsScope, canAddAnnotations, onSelectRange } = usePanelContext();
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
@@ -59,11 +59,19 @@ export const HeatmapPanel = ({
 
   const info = useMemo(() => {
     try {
-      return prepareHeatmapData(data.series, data.annotations, options, palette, theme, replaceVariables);
+      return prepareHeatmapData({
+        frames: data.series,
+        annotations: data.annotations,
+        options,
+        palette,
+        theme,
+        replaceVariables,
+        timeRange,
+      });
     } catch (ex) {
       return { warning: `${ex}` };
     }
-  }, [data.series, data.annotations, options, palette, theme, replaceVariables]);
+  }, [data.series, data.annotations, options, palette, theme, replaceVariables, timeRange]);
 
   const facets = useMemo(() => {
     let exemplarsXFacet: number[] | undefined = []; // "Time" field
@@ -113,6 +121,7 @@ export const HeatmapPanel = ({
       exemplarColor: options.exemplars?.color ?? 'rgba(255,0,255,0.7)',
       yAxisConfig: options.yAxis,
       ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(options.calculation?.yBuckets?.value || 1) : 1,
+      selectionMode: options.selectionMode,
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -179,6 +188,7 @@ export const HeatmapPanel = ({
                   options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
                 }
                 queryZoom={onChangeTimeRange}
+                onSelectRange={onSelectRange}
                 syncMode={cursorSync}
                 syncScope={eventsScope}
                 render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {
@@ -208,6 +218,7 @@ export const HeatmapPanel = ({
                       panelData={data}
                       annotate={enableAnnotationCreation ? annotate : undefined}
                       maxHeight={options.tooltip.maxHeight}
+                      maxWidth={options.tooltip.maxWidth}
                     />
                   );
                 }}

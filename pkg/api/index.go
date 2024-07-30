@@ -10,9 +10,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/webassets"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/middleware"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -28,7 +28,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		return nil, err
 	}
 
-	userID, _ := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	userID, _ := identity.UserIdentifier(c.SignedInUser.GetTypedID())
 
 	prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: userID, OrgID: c.SignedInUser.GetOrgID(), Teams: c.Teams}
 	prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
@@ -158,7 +158,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
-	data.NavTree.ApplyAdminIA()
+	data.NavTree.ApplyCostManagementIA()
 	data.NavTree.ApplyHelpVersion(data.Settings.BuildInfo.VersionString) // RunIndexDataHooks can modify the version string
 	data.NavTree.Sort()
 
@@ -166,10 +166,10 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 }
 
 func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dtos.AnalyticsSettings {
-	namespace, _ := c.SignedInUser.GetNamespacedID()
+	namespace, _ := c.SignedInUser.GetTypedID()
 
 	// Anonymous users do not have an email or auth info
-	if namespace != identity.NamespaceUser {
+	if namespace != identity.TypeUser {
 		return dtos.AnalyticsSettings{Identifier: "@" + hs.Cfg.AppURL}
 	}
 

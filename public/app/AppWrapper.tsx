@@ -1,11 +1,11 @@
 import { Action, KBarProvider } from 'kbar';
-import React, { ComponentType } from 'react';
+import { Component, ComponentType } from 'react';
 import { Provider } from 'react-redux';
 import { Router, Redirect, Switch, RouteComponentProps } from 'react-router-dom';
 import { CompatRouter, CompatRoute } from 'react-router-dom-v5-compat';
 
 import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
-import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, PortalContainer } from '@grafana/ui';
+import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, PortalContainer, Stack } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
@@ -42,7 +42,7 @@ export function addPageBanner(fn: ComponentType) {
   pageBanners.push(fn);
 }
 
-export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState> {
+export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
   constructor(props: AppWrapperProps) {
     super(props);
     this.state = {};
@@ -109,12 +109,14 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                       <GlobalStyles />
                       <div className="grafana-app">
                         <AppChrome>
-                          {pageBanners.map((Banner, index) => (
-                            <Banner key={index.toString()} />
-                          ))}
                           <AngularRoot />
                           <AppNotificationList />
-                          {ready && this.renderRoutes()}
+                          <Stack gap={0} grow={1} direction="column">
+                            {pageBanners.map((Banner, index) => (
+                              <Banner key={index.toString()} />
+                            ))}
+                            {ready && this.renderRoutes()}
+                          </Stack>
                           {bodyRenderHooks.map((Hook, index) => (
                             <Hook key={index.toString()} />
                           ))}

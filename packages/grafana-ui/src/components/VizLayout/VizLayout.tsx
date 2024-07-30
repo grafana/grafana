@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { FC, CSSProperties, ComponentType } from 'react';
+import { FC, CSSProperties, ComponentType } from 'react';
+import * as React from 'react';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';

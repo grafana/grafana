@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { DataQuery, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';

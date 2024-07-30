@@ -1,6 +1,7 @@
 // Libraries
 import { map } from 'lodash';
-import React, { memo } from 'react';
+import { memo } from 'react';
+import * as React from 'react';
 
 // Types
 import { SelectableValue } from '@grafana/data';

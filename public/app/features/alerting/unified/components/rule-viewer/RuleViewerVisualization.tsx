@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { PanelData } from '@grafana/data';
 
 import { VizWrapper } from '../rule-editor/VizWrapper';

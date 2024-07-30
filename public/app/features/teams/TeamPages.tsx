@@ -1,5 +1,5 @@
 import { createSelector } from '@reduxjs/toolkit';
-import React, { useMemo, useRef } from 'react';
+import { memo, useMemo, useRef } from 'react';
 import { useParams } from 'react-router';
 import { useAsync } from 'react-use';
 
@@ -48,7 +48,7 @@ const pageNavSelector = createSelector(
   }
 );
 
-const TeamPages = React.memo(() => {
+const TeamPages = memo(() => {
   const isSyncEnabled = useRef(featureEnabled('teamsync'));
   const params = useParams<TeamPageRouteParams>();
   const teamId = useMemo(() => parseInt(params.id, 10), [params]);

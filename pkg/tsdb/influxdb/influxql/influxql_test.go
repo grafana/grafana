@@ -3,6 +3,7 @@ package influxql
 import (
 	"context"
 	"io"
+	"net/http"
 	"net/url"
 	"testing"
 
@@ -58,5 +59,54 @@ func TestExecutor_createRequest(t *testing.T) {
 		datasource.HTTPMode = "PUT"
 		_, err := createRequest(context.Background(), logger, datasource, query, defaultRetentionPolicy)
 		require.EqualError(t, err, ErrInvalidHttpMode.Error())
+	})
+}
+
+func TestReadCustomMetadata(t *testing.T) {
+	t.Run("should read nothing if no X-Grafana-Meta-Add-<Thing> header exists", func(t *testing.T) {
+		header := http.Header{}
+		header.Add("content-type", "text/html")
+		header.Add("content-encoding", "gzip")
+		res := &http.Response{
+			Header: header,
+		}
+		result := readCustomMetadata(res)
+		require.Nil(t, result)
+	})
+
+	t.Run("should read X-Grafana-Meta-Add-<Thing> header", func(t *testing.T) {
+		header := http.Header{}
+		header.Add("content-type", "text/html")
+		header.Add("content-encoding", "gzip")
+		header.Add("X-Grafana-Meta-Add-TestThing", "test1234")
+		res := &http.Response{
+			Header: header,
+		}
+		result := readCustomMetadata(res)
+		expected := map[string]any{
+			"testthing": "test1234",
+		}
+		require.NotNil(t, result)
+		require.Equal(t, expected, result)
+	})
+
+	t.Run("should read multiple X-Grafana-Meta-Add-<Thing> header", func(t *testing.T) {
+		header := http.Header{}
+		header.Add("content-type", "text/html")
+		header.Add("content-encoding", "gzip")
+		header.Add("X-Grafana-Meta-Add-TestThing", "test111")
+		header.Add("X-Grafana-Meta-Add-TestThing2", "test222")
+		header.Add("X-Grafana-Meta-Add-Test-Other", "other")
+		res := &http.Response{
+			Header: header,
+		}
+		result := readCustomMetadata(res)
+		expected := map[string]any{
+			"testthing":  "test111",
+			"testthing2": "test222",
+			"test-other": "other",
+		}
+		require.NotNil(t, result)
+		require.Equal(t, expected, result)
 	})
 }

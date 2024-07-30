@@ -1,4 +1,4 @@
-import { FormattedValue } from '../valueFormats';
+import { FormattedValue } from '../valueFormats/valueFormats';
 
 export type DisplayProcessor = (value: unknown, decimals?: DecimalCount) => DisplayValue;
 

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, EditorField, EditorFieldGroup, InputGroup } from '@grafana/experimental';
 import { Select } from '@grafana/ui';

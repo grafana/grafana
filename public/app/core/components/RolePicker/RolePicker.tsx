@@ -1,4 +1,4 @@
-import React, { FormEvent, useCallback, useEffect, useState, useRef } from 'react';
+import { FormEvent, useCallback, useEffect, useState, useRef } from 'react';
 
 import { ClickOutsideWrapper, Portal, useTheme2 } from '@grafana/ui';
 import { Role, OrgRole } from 'app/types';

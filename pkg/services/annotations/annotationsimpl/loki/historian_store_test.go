@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -29,8 +30,6 @@ import (
 	historymodel "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
@@ -42,7 +41,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sql, cfg := db.InitTestDBWithCfg(t)
+	sql, cfg := db.InitTestReplDBWithCfg(t)
 
 	dashboard1 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
 		UserID: 1,
@@ -778,6 +777,7 @@ func NewFakeLokiClient() *FakeLokiClient {
 			ReadPathURL:    url,
 			Encoder:        historian.JsonEncoder{},
 			MaxQueryLength: 721 * time.Hour,
+			MaxQuerySize:   65536,
 		},
 		metrics: metrics,
 		log:     log.New("ngalert.state.historian", "backend", "loki"),
@@ -810,6 +810,10 @@ func (c *FakeLokiClient) RangeQuery(ctx context.Context, query string, from, to,
 	// reset expected streams on read
 	c.rangeQueryRes = []historian.Stream{}
 	return res, nil
+}
+
+func (c *FakeLokiClient) MaxQuerySize() int {
+	return c.cfg.MaxQuerySize
 }
 
 func TestUseStore(t *testing.T) {

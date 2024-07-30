@@ -25,10 +25,10 @@ import (
 	_ "github.com/hashicorp/golang-lru/v2"
 	_ "github.com/linkedin/goavro/v2"
 	_ "github.com/m3db/prometheus_remote_client_golang/promremote"
+	_ "github.com/phpdave11/gofpdi"
 	_ "github.com/robfig/cron/v3"
 	_ "github.com/russellhaering/goxmldsig"
 	_ "github.com/stretchr/testify/require"
-	_ "github.com/vectordotdev/go-datemath"
 	_ "golang.org/x/time/rate"
 	_ "xorm.io/builder"
 )

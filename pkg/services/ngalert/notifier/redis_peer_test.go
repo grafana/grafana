@@ -16,6 +16,35 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestNewRedisPeerClusterMode(t *testing.T) {
+	// Write client and server certificates/keys to tempDir, both issued by the same CA
+	certPaths := createX509TestDir(t)
+
+	// Set up tls.Config and start miniredis with server-side TLS
+	x509Cert, err := tls.LoadX509KeyPair(certPaths.serverCert, certPaths.serverKey)
+	require.NoError(t, err)
+
+	mr, err := miniredis.RunTLS(&tls.Config{
+		Certificates: []tls.Certificate{x509Cert},
+		ClientAuth:   tls.NoClientCert,
+	})
+	require.NoError(t, err)
+	defer mr.Close()
+
+	redisPeer, err := newRedisPeer(redisConfig{
+		clusterMode: true,
+		addr:        mr.Addr(),
+		tlsEnabled:  true,
+		tls: dstls.ClientConfig{
+			CAPath:     certPaths.ca,
+			ServerName: "localhost",
+		}}, log.NewNopLogger(), prometheus.NewRegistry(), time.Second*60)
+	require.NoError(t, err)
+
+	ping := redisPeer.redis.Ping(context.Background())
+	require.NoError(t, ping.Err())
+}
+
 func TestNewRedisPeerWithTLS(t *testing.T) {
 	// Write client and server certificates/keys to tempDir, both issued by the same CA
 	certPaths := createX509TestDir(t)

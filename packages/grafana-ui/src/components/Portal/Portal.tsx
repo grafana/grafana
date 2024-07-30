@@ -1,4 +1,5 @@
-﻿import React, { PropsWithChildren, useLayoutEffect, useRef } from 'react';
+import { PropsWithChildren, useLayoutEffect, useRef } from 'react';
+import * as React from 'react';
 import ReactDOM from 'react-dom';
 
 import { useTheme2 } from '../../themes';

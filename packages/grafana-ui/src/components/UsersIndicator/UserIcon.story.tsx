@@ -1,5 +1,4 @@
 import { Meta, StoryFn } from '@storybook/react';
-import React from 'react';
 
 import { UserIcon } from './UserIcon';
 import mdx from './UserIcon.mdx';

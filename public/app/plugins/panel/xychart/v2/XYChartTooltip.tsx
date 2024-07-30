@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 
 import { DataFrame } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
@@ -56,7 +56,7 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, xySeries, dismiss, i
   const headerItem: VizTooltipItem = {
     label,
     value: '',
-    color: alpha(seriesColor!, 0.5),
+    color: alpha(seriesColor ?? '#fff', 0.5),
     colorIndicator: ColorIndicator.marker_md,
   };
 
@@ -72,14 +72,14 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, xySeries, dismiss, i
   ];
 
   // mapped fields for size/color
-  if (sizeField != null) {
+  if (sizeField != null && sizeField !== yField) {
     contentItems.push({
       label: stripSeriesName(sizeField.state?.displayName ?? sizeField.name, label),
       value: fmt(sizeField, sizeField.values[rowIndex]),
     });
   }
 
-  if (colorField != null) {
+  if (colorField != null && colorField !== yField) {
     contentItems.push({
       label: stripSeriesName(colorField.state?.displayName ?? colorField.name, label),
       value: fmt(colorField, colorField.values[rowIndex]),

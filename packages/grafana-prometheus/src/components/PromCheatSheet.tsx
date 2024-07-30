@@ -1,7 +1,8 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromCheatSheet.tsx
-import React from 'react';
+import { css } from '@emotion/css';
 
-import { QueryEditorHelpProps } from '@grafana/data';
+import { GrafanaTheme2, QueryEditorHelpProps } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 import { PromQuery } from '../types';
 
@@ -29,23 +30,44 @@ const CHEAT_SHEET_ITEMS = [
   },
 ];
 
-export const PromCheatSheet = (props: QueryEditorHelpProps<PromQuery>) => (
-  <div>
-    <h2>PromQL Cheat Sheet</h2>
-    {CHEAT_SHEET_ITEMS.map((item, index) => (
-      <div className="cheat-sheet-item" key={index}>
-        <div className="cheat-sheet-item__title">{item.title}</div>
-        {item.expression ? (
-          <button
-            type="button"
-            className="cheat-sheet-item__example"
-            onClick={(e) => props.onClickExample({ refId: 'A', expr: item.expression })}
-          >
-            <code>{item.expression}</code>
-          </button>
-        ) : null}
-        <div className="cheat-sheet-item__label">{item.label}</div>
-      </div>
-    ))}
-  </div>
-);
+export const PromCheatSheet = (props: QueryEditorHelpProps<PromQuery>) => {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <div>
+      <h2>PromQL Cheat Sheet</h2>
+      {CHEAT_SHEET_ITEMS.map((item, index) => (
+        <div className={styles.cheatSheetItem} key={index}>
+          <div className={styles.cheatSheetItemTitle}>{item.title}</div>
+          {item.expression ? (
+            <button
+              type="button"
+              className={styles.cheatSheetExample}
+              onClick={(e) => props.onClickExample({ refId: 'A', expr: item.expression })}
+            >
+              <code>{item.expression}</code>
+            </button>
+          ) : null}
+          {item.label}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  cheatSheetItem: css({
+    margin: theme.spacing(3, 0),
+  }),
+  cheatSheetItemTitle: css({
+    fontSize: theme.typography.h3.fontSize,
+  }),
+  cheatSheetExample: css({
+    margin: theme.spacing(0.5, 0),
+    // element is interactive, clear button styles
+    textAlign: 'left',
+    border: 'none',
+    background: 'transparent',
+    display: 'block',
+  }),
+});

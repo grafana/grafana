@@ -13,21 +13,28 @@ const history: Array<HistoryItem<LokiQuery>> = [
     ts: 12345678,
     query: {
       refId: 'test-1',
-      expr: '{test: unit}',
+      expr: '{test="unit"}',
     },
   },
   {
     ts: 87654321,
     query: {
       refId: 'test-1',
-      expr: '{unit: test}',
+      expr: '{unit="test"}',
     },
   },
   {
     ts: 87654321,
     query: {
       refId: 'test-1',
-      expr: '{unit: test}',
+      expr: '{unit="test"}',
+    },
+  },
+  {
+    ts: 87654325,
+    query: {
+      refId: 'test-2',
+      expr: '{unit="test"} ', // will be trimmed and removed
     },
   },
   {
@@ -82,11 +89,11 @@ describe('CompletionDataProvider', () => {
   });
 
   test('Returns the expected history entries', () => {
-    expect(completionProvider.getHistory()).toEqual(['{test: unit}', '{unit: test}']);
+    expect(completionProvider.getHistory()).toEqual(['{unit="test"}', '{test="unit"}']);
   });
 
   test('Processes updates to the current historyRef value', () => {
-    expect(completionProvider.getHistory()).toEqual(['{test: unit}', '{unit: test}']);
+    expect(completionProvider.getHistory()).toEqual(['{unit="test"}', '{test="unit"}']);
 
     historyRef.current = [
       {

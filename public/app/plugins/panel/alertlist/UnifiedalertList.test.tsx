@@ -1,13 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { Provider } from 'react-redux';
 import { byRole, byText } from 'testing-library-selector';
 
 import { FieldConfigSource, getDefaultTimeRange, LoadingState, PanelProps, PluginExtensionTypes } from '@grafana/data';
 import { TimeRangeUpdatedEvent, usePluginLinkExtensions } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { mockPromRulesApiResponse } from 'app/features/alerting/unified/mocks/alertRuleApi';
+import { mockPromRulesApiResponse } from 'app/features/alerting/unified/mocks/grafanaRulerApi';
 import { mockRulerRulesApiResponse } from 'app/features/alerting/unified/mocks/rulerApi';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';

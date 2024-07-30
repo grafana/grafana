@@ -34,8 +34,6 @@ Contact points contain the configuration for sending alert notifications. You ca
 
 A contact point is a [list of integrations](ref:contact-point-integrations), each of which sends a notification to a particular email, webhook, or service such as Slack, Pagerduty, or Grafana OnCall. Each contact point also defines the notification message to be sent, which can use the predefined message, a custom message, or notification templates.
 
-{{< figure src="/media/docs/alerting/alerting-contact-points.png" max-width="750px" alt="Set the evaluation behavior of the alert rule in Grafana." >}}
-
 Contact points can have multiple integrations of the same kind, or a combination of integrations of different kinds. For example, a contact point could contain a Pagerduty integration; an email and Slack integration; or a Pagerduty integration, a Slack integration, and two email integrations.
 
 You can also configure a contact point with no integrations; in which case no notifications are sent.

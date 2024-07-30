@@ -69,7 +69,6 @@ var defaultDetectors = []angulardetector.AngularDetector{
 	&angulardetector.ContainsBytesDetector{Pattern: []byte("ConfigCtrl")},
 	&angulardetector.ContainsBytesDetector{Pattern: []byte("app/plugins/sdk")},
 	&angulardetector.ContainsBytesDetector{Pattern: []byte("angular.isNumber(")},
-	&angulardetector.ContainsBytesDetector{Pattern: []byte("editor.html")},
 	&angulardetector.ContainsBytesDetector{Pattern: []byte("ctrl.annotation")},
 
 	&angulardetector.RegexDetector{Regex: regexp.MustCompile(`["']QueryCtrl["']`)},

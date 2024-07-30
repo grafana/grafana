@@ -1,7 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/RawQuery.tsx
 import { css, cx } from '@emotion/css';
 import Prism, { Grammar } from 'prismjs';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';

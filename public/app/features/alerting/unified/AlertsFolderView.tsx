@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { orderBy } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -14,8 +14,9 @@ import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
 import { usePagination } from './hooks/usePagination';
 import { useURLSearchParams } from './hooks/useURLSearchParams';
 import { fetchPromRulesAction, fetchRulerRulesAction } from './state/actions';
-import { combineMatcherStrings, labelsMatchMatchers, parseMatchers } from './utils/alertmanager';
+import { combineMatcherStrings, labelsMatchMatchers } from './utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { parsePromQLStyleMatcherLooseSafe } from './utils/matchers';
 import { createViewLink } from './utils/misc';
 
 interface Props {
@@ -168,7 +169,7 @@ function filterAndSortRules(
   labelFilter: string,
   sortOrder: SortOrder
 ) {
-  const matchers = parseMatchers(labelFilter);
+  const matchers = parsePromQLStyleMatcherLooseSafe(labelFilter);
   let rules = originalRules.filter(
     (rule) => rule.name.toLowerCase().includes(nameFilter.toLowerCase()) && labelsMatchMatchers(rule.labels, matchers)
   );

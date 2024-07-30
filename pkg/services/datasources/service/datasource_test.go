@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -110,10 +111,9 @@ func TestService_AddDataSource(t *testing.T) {
 			dsService.pluginStore = &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{{
 					JSONData: plugins.JSONData{
-						ID:         "test",
-						Type:       plugins.TypeDataSource,
-						Name:       "test",
-						APIVersion: "v0alpha1", // When a value exists in plugin.json, the callbacks will be executed
+						ID:   "test",
+						Type: plugins.TypeDataSource,
+						Name: "test",
 					},
 				}},
 			}
@@ -150,10 +150,9 @@ func TestService_AddDataSource(t *testing.T) {
 			dsService.pluginStore = &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{{
 					JSONData: plugins.JSONData{
-						ID:         "test",
-						Type:       plugins.TypeDataSource,
-						Name:       "test",
-						APIVersion: "v0alpha1", // When a value exists in plugin.json, the callbacks will be executed
+						ID:   "test",
+						Type: plugins.TypeDataSource,
+						Name: "test",
 					},
 				}},
 			}
@@ -200,10 +199,9 @@ func TestService_AddDataSource(t *testing.T) {
 			dsService.pluginStore = &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{{
 					JSONData: plugins.JSONData{
-						ID:         "test",
-						Type:       plugins.TypeDataSource,
-						Name:       "test",
-						APIVersion: "v0alpha1", // When a value exists in plugin.json, the callbacks will be executed
+						ID:   "test",
+						Type: plugins.TypeDataSource,
+						Name: "test",
 					},
 				}},
 			}
@@ -491,10 +489,9 @@ func TestService_UpdateDataSource(t *testing.T) {
 		dsService.pluginStore = &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{{
 				JSONData: plugins.JSONData{
-					ID:         "test",
-					Type:       plugins.TypeDataSource,
-					Name:       "test",
-					APIVersion: "v0alpha1", // When a value exists in plugin.json, the callbacks will be executed
+					ID:   "test",
+					Type: plugins.TypeDataSource,
+					Name: "test",
 				},
 			}},
 		}
@@ -539,6 +536,75 @@ func TestService_UpdateDataSource(t *testing.T) {
 		require.True(t, validateExecuted)
 		require.True(t, mutateExecuted)
 		require.Equal(t, "test-datasource-updated", dsUpdated.Name)
+	})
+}
+
+func TestService_DeleteDataSource(t *testing.T) {
+	t.Run("should not return an error if data source doesn't exist", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		quotaService := quotatest.New(false, nil)
+		permissionSvc := acmock.NewMockedPermissionsService()
+		permissionSvc.On("DeleteResourcePermissions", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, featuremgmt.WithFeatures(), acmock.New(), permissionSvc, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
+		require.NoError(t, err)
+
+		cmd := &datasources.DeleteDataSourceCommand{
+			UID:   uuid.New().String(),
+			ID:    1,
+			OrgID: 1,
+		}
+
+		err = dsService.DeleteDataSource(context.Background(), cmd)
+		require.NoError(t, err)
+	})
+
+	t.Run("should successfully delete a data source that exists", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		quotaService := quotatest.New(false, nil)
+
+		permissionSvc := acmock.NewMockedPermissionsService()
+		permissionSvc.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil).Once()
+		permissionSvc.On("DeleteResourcePermissions", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+
+		f := ini.Empty()
+		f.Section("rbac").Key("resources_with_managed_permissions_on_creation").SetValue("datasource")
+		cfg, err := setting.NewCfgFromINIFile(f)
+		require.NoError(t, err)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), permissionSvc, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
+		require.NoError(t, err)
+
+		// First add the datasource
+		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID:  1,
+			Name:   "test",
+			Type:   "test",
+			UserID: 0,
+		})
+		require.NoError(t, err)
+
+		cmd := &datasources.DeleteDataSourceCommand{
+			ID:    ds.ID,
+			UID:   ds.UID,
+			OrgID: 1,
+		}
+
+		err = dsService.DeleteDataSource(context.Background(), cmd)
+		require.NoError(t, err)
+
+		// Data source doesn't exist anymore
+		ds, err = dsService.GetDataSource(context.Background(), &datasources.GetDataSourceQuery{
+			OrgID: 1,
+			UID:   ds.UID,
+		})
+		require.Nil(t, ds)
+		require.ErrorIs(t, err, datasources.ErrDataSourceNotFound)
+
+		permissionSvc.AssertExpectations(t)
 	})
 }
 

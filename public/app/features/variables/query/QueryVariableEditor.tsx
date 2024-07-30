@@ -1,4 +1,4 @@
-import React, { FormEvent, PureComponent } from 'react';
+import { FormEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import {
@@ -131,7 +131,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
   render() {
     const { extended, variable } = this.props;
-    if (!extended || !extended.dataSource || !extended.VariableQueryEditor) {
+    if (!extended || !extended.dataSource) {
       return null;
     }
 

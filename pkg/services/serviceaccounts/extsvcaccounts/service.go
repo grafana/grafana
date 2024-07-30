@@ -7,13 +7,13 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -101,7 +101,7 @@ func (esa *ExtSvcAccountsService) RetrieveExtSvcAccount(ctx context.Context, org
 		Name:       svcAcc.Name,
 		OrgID:      svcAcc.OrgId,
 		IsDisabled: svcAcc.IsDisabled,
-		Role:       roletype.RoleType(svcAcc.Role),
+		Role:       identity.RoleType(svcAcc.Role),
 	}, nil
 }
 
@@ -285,7 +285,7 @@ func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *sa
 		ctxLogger.Info("Create service account", "service", cmd.ExtSvcSlug, "orgID", cmd.OrgID)
 		sa, err := esa.saSvc.CreateServiceAccount(ctx, cmd.OrgID, &sa.CreateServiceAccountForm{
 			Name:       sa.ExtSvcPrefix + cmd.ExtSvcSlug,
-			Role:       newRole(roletype.RoleNone),
+			Role:       newRole(identity.RoleNone),
 			IsDisabled: newBool(false),
 		})
 		if err != nil {
@@ -347,7 +347,13 @@ func (esa *ExtSvcAccountsService) getExtSvcAccountToken(ctx context.Context, org
 	// Get credentials from store
 	credentials, err := esa.GetExtSvcCredentials(ctx, orgID, extSvcSlug)
 	if err != nil && !errors.Is(err, ErrCredentialsNotFound) {
-		return "", err
+		if !errors.Is(err, &satokengen.ErrInvalidApiKey{}) {
+			return "", err
+		}
+		ctxLogger.Warn("Invalid token found in store, recovering...", "service", extSvcSlug, "orgID", orgID)
+		if err := esa.removeExtSvcAccountToken(ctx, orgID, saID, extSvcSlug); err != nil {
+			return "", err
+		}
 	}
 	if credentials != nil {
 		return credentials.Secret, nil
@@ -362,7 +368,7 @@ func (esa *ExtSvcAccountsService) getExtSvcAccountToken(ctx context.Context, org
 
 	ctxLogger.Debug("Add service account token", "service", extSvcSlug, "orgID", orgID)
 	if _, err := esa.saSvc.AddServiceAccountToken(ctx, saID, &sa.AddServiceAccountTokenCommand{
-		Name:  tokenNamePrefix + "-" + extSvcSlug,
+		Name:  tokenName(extSvcSlug),
 		OrgId: orgID,
 		Key:   newKeyInfo.HashedKey,
 	}); err != nil {
@@ -380,6 +386,35 @@ func (esa *ExtSvcAccountsService) getExtSvcAccountToken(ctx context.Context, org
 	return newKeyInfo.ClientSecret, nil
 }
 
+func (esa *ExtSvcAccountsService) removeExtSvcAccountToken(ctx context.Context, orgID, saID int64, extSvcSlug string) error {
+	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.removeExtSvcAccountToken")
+	defer span.End()
+
+	ctxLogger := esa.logger.FromContext(ctx)
+	ctxLogger.Debug("List service account tokens", "service", extSvcSlug, "orgID", orgID)
+	tokens, err := esa.saSvc.ListTokens(ctx, &sa.GetSATokensQuery{OrgID: &orgID, ServiceAccountID: &saID})
+	if err != nil {
+		return err
+	}
+	notFound := int64(-1)
+	tknID := notFound
+	for _, token := range tokens {
+		if token.Name == tokenName(extSvcSlug) {
+			ctxLogger.Debug("Found token", "service", extSvcSlug, "orgID", orgID)
+			tknID = token.ID
+			break
+		}
+	}
+	if tknID != notFound {
+		ctxLogger.Debug("Remove token", "service", extSvcSlug, "orgID", orgID)
+		if err := esa.saSvc.DeleteServiceAccountToken(ctx, orgID, saID, tknID); err != nil {
+			return err
+		}
+	}
+	return esa.DeleteExtSvcCredentials(ctx, orgID, extSvcSlug)
+}
+
+// FIXME: If the warning log never appears, we can remove this function
 func genTokenWithRetries(ctxLogger log.Logger, extSvcSlug string) (satokengen.KeyGenResult, error) {
 	var newKeyInfo satokengen.KeyGenResult
 	var err error
@@ -437,9 +472,9 @@ func (esa *ExtSvcAccountsService) GetExtSvcCredentials(ctx context.Context, orgI
 	if !ok {
 		return nil, ErrCredentialsNotFound.Errorf("No credential found for in store %v", extSvcSlug)
 	}
-	if strings.Contains(token, "\x00") {
-		ctxLogger.Warn("Loaded token from store containing NUL", "service", extSvcSlug)
-		logTokenNULParts(ctxLogger, extSvcSlug, token)
+	if _, err := satokengen.Decode(token); err != nil {
+		ctxLogger.Error("Failed to decode token", "error", err.Error())
+		return nil, err
 	}
 	return &Credentials{Secret: token}, nil
 }
@@ -474,4 +509,8 @@ func (esa *ExtSvcAccountsService) handlePluginStateChanged(ctx context.Context, 
 		return nil
 	}
 	return errEnable
+}
+
+func tokenName(extSvcSlug string) string {
+	return tokenNamePrefix + "-" + extSvcSlug
 }

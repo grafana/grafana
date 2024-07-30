@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -59,7 +59,7 @@ const UserListAnonymousDevicesPageUnConnected = ({
       <div className={styles.actionBar} data-testid={selectors.container}>
         <div className={styles.row}>
           <FilterInput
-            placeholder="Search devices by ip adress."
+            placeholder="Search devices by IP address."
             autoFocus={true}
             value={query}
             onChange={changeAnonQuery}

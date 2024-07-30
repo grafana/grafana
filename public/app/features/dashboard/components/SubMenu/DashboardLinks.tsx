@@ -1,4 +1,3 @@
-import React from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { sanitizeUrl } from '@grafana/data/src/text/sanitize';
