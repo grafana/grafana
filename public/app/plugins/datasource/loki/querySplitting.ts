@@ -53,7 +53,7 @@ export function partitionTimeRange(
  * At the end, we will filter the targets that don't need to be executed in the next request batch,
  * becasue, for example, the `maxLines` have been reached.
  */
-function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQueryResponse | null): LokiQuery[] {
+export function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQueryResponse | null): LokiQuery[] {
   if (!response) {
     return targets;
   }
@@ -203,7 +203,7 @@ function getNextRequestPointers(requests: LokiGroupedRequest[], requestGroup: nu
   };
 }
 
-function querySupportsSplitting(query: LokiQuery) {
+export function querySupportsSplitting(query: LokiQuery) {
   return (
     query.queryType !== LokiQueryType.Instant &&
     // Queries with $__range variable should not be split because then the interpolated $__range variable is incorrect
@@ -275,7 +275,7 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
 
 // Replicate from backend for split queries for now, until we can move query splitting to the backend
 // https://github.com/grafana/grafana/blob/main/pkg/tsdb/loki/step.go#L23
-function calculateStep(intervalMs: number, range: TimeRange, resolution: number, step: string | undefined) {
+export function calculateStep(intervalMs: number, range: TimeRange, resolution: number, step: string | undefined) {
   // If we can parse step,the we use it
   // Otherwise we will calculate step based on interval
   const interval_regex = /(-?\d+(?:\.\d+)?)(ms|[Mwdhmsy])/;
