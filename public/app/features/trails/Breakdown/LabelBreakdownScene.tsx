@@ -225,11 +225,8 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
         <StatusWrapper {...{ isLoading: loading, blockingMessage }}>
           <div className={styles.controls}>
             {!loading && labels.length && (
-              // <div className={styles.controlsLeft}>
               <BreakdownLabelSelector options={labels} value={value} onChange={model.onChange} />
-              // </div>
             )}
-            {/*<div className={styles.controlsRight}>*/}
             {value !== ALL_VARIABLE_VALUE && (
               <>
                 <search.Component model={search} />
@@ -237,7 +234,6 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
               </>
             )}
             {body instanceof LayoutSwitcher && <body.Selector model={body} />}
-            {/*</div>*/}
           </div>
           <div className={styles.content}>{body && <body.Component model={body} />}</div>
         </StatusWrapper>
@@ -265,18 +261,6 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       alignItems: 'flex-start',
       gap: theme.spacing(2),
-    }),
-    controlsRight: css({
-      flexGrow: 0,
-      display: 'flex',
-      justifyContent: 'flex-end',
-    }),
-    controlsLeft: css({
-      display: 'flex',
-      justifyContent: 'flex-left',
-      justifyItems: 'left',
-      width: '100%',
-      flexDirection: 'column',
     }),
   };
 }
