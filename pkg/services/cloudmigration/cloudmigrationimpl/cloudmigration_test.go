@@ -266,22 +266,10 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 			},
 		}
 
-		snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: uid,
-			SessionUID:  sess.UID,
-		})
-		assert.NoError(t, err)
-		assert.Equal(t, cloudmigration.SnapshotStatusFinished, snapshot.Status)
-		assert.Equal(t, 1, gmsClientMock.getStatusCalled)
-		assert.Len(t, snapshot.Resources, 1)
-		assert.Equal(t, gmsClientMock.getSnapshotResponse.Results[0], snapshot.Resources[0])
-
 		// ensure it is persisted
 		snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
 			SnapshotUID: uid,
 			SessionUID:  sess.UID,
-			ResultPage:  1,
-			ResultLimit: 100,
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, cloudmigration.SnapshotStatusFinished, snapshot.Status)

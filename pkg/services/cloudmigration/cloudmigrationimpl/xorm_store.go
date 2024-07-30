@@ -331,10 +331,14 @@ func (ss *sqlStore) CreateUpdateSnapshotResources(ctx context.Context, snapshotU
 }
 
 func (ss *sqlStore) GetSnapshotResources(ctx context.Context, snapshotUid string, page int, limit int) ([]cloudmigration.CloudMigrationResource, error) {
-	var resources []cloudmigration.CloudMigrationResource
-	if limit == 0 {
-		return resources, nil
+	if page < 1 {
+		page = 1
 	}
+	if limit == 0 {
+		limit = 100
+	}
+
+	var resources []cloudmigration.CloudMigrationResource
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		offset := (page - 1) * limit
 		sess.Limit(limit, offset)
