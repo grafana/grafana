@@ -8,7 +8,6 @@ import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { Input, Props as InputProps } from '../Input/Input';
-import { Spinner } from '../Spinner/Spinner';
 
 import { getComboboxStyles } from './getComboboxStyles';
 
