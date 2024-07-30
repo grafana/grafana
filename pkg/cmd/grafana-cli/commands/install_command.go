@@ -117,8 +117,13 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 
 	// If a version is specified, check if it is already installed
 	if version != "" {
-		if services.PluginVersionInstalled(pluginID, version, o.pluginDir) {
+		if p, ok := services.PluginVersionInstalled(pluginID, version, o.pluginDir); ok {
 			services.Logger.Successf("Plugin %s v%s already installed.", pluginID, version)
+			for _, depP := range p.JSONData.Dependencies.Plugins {
+				if err := doInstallPlugin(ctx, depP.ID, depP.Version, o, installing); err != nil {
+					return err
+				}
+			}
 			return nil
 		}
 	}
@@ -144,8 +149,13 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 			return err
 		}
 
-		if services.PluginVersionInstalled(pluginID, archiveInfo.Version, o.pluginDir) {
+		if p, ok := services.PluginVersionInstalled(pluginID, archiveInfo.Version, o.pluginDir); ok {
 			services.Logger.Successf("Plugin %s v%s already installed.", pluginID, archiveInfo.Version)
+			for _, depP := range p.JSONData.Dependencies.Plugins {
+				if err = doInstallPlugin(ctx, depP.ID, depP.Version, o, installing); err != nil {
+					return err
+				}
+			}
 			return nil
 		}
 
