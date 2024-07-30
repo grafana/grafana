@@ -1,7 +1,7 @@
 import { AdHocVariableFilter } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import { BreakdownLayoutType } from './ActionTabs/types';
+import { BreakdownLayoutType } from './Breakdown/types';
 import { TrailStepType } from './DataTrailsHistory';
 import { ActionViewType } from './shared';
 

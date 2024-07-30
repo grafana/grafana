@@ -24,13 +24,6 @@ import {
 import { DataQuery } from '@grafana/schema';
 import { Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
-import { AddToFiltersGraphAction } from '../ActionTabs/AddToFiltersGraphAction';
-import { ByFrameRepeater } from '../ActionTabs/ByFrameRepeater';
-import { LayoutSwitcher } from '../ActionTabs/LayoutSwitcher';
-import { breakdownPanelOptions } from '../ActionTabs/panelConfigs';
-import { BreakdownLayoutChangeCallback, BreakdownLayoutType } from '../ActionTabs/types';
-import { getLabelOptions } from '../ActionTabs/utils';
-import { BreakdownAxisChangeEvent, yAxisSyncBehavior } from '../ActionTabs/yAxisSyncBehavior';
 import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
 import { AutoQueryDef } from '../AutomaticMetricQueries/types';
 import { BreakdownLabelSelector } from '../BreakdownLabelSelector';
@@ -42,7 +35,14 @@ import { ALL_VARIABLE_VALUE } from '../services/variables';
 import { trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared';
 import { getColorByIndex, getTrailFor } from '../utils';
 
+import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
+import { ByFrameRepeater } from './ByFrameRepeater';
+import { LayoutSwitcher } from './LayoutSwitcher';
 import { SortByScene } from './SortByScene';
+import { breakdownPanelOptions } from './panelConfigs';
+import { BreakdownLayoutChangeCallback, BreakdownLayoutType } from './types';
+import { getLabelOptions } from './utils';
+import { BreakdownAxisChangeEvent, yAxisSyncBehavior } from './yAxisSyncBehavior';
 
 const MAX_PANELS_IN_ALL_LABELS_BREAKDOWN = 60;
 
