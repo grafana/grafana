@@ -398,7 +398,7 @@ message OriginResponse {
   int64 resource_version = 3;
 
   // Error details
-  ErrorResult error = 8;
+  ErrorResult error = 4;
 }
 
 message HealthCheckRequest {
