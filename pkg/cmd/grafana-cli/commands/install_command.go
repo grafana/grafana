@@ -115,6 +115,14 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 		installing[pluginID] = false
 	}()
 
+	// If a version is specified, check if it is already installed
+	if version != "" {
+		if services.PluginVersionInstalled(pluginID, version, o.pluginDir) {
+			services.Logger.Successf("Plugin %s v%s already installed.", pluginID, version)
+			return nil
+		}
+	}
+
 	repository := repo.NewManager(repo.ManagerCfg{
 		SkipTLSVerify: o.insecure,
 		BaseURL:       o.repoURL,
