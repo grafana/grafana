@@ -24,7 +24,7 @@ You can use Explore to query and visualize traces from tracing data sources. Sup
 - [New Relic](/docs/plugins/grafana-newrelic-datasource/latest/)
 - [Infinity](/docs/plugins/yesoreyeram-infinity-datasource/latest/)
 
-If you are getting started working with traces in Tempo refer to the following documents:
+Here are some references to learn more about traces and how you can use them:  
 
 - [Get started with Grafana Tempo](docs/<TEMPO_VERSION>/latest/getting-started/)
 - [Trace structure](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/trace-structure/#trace-structure)
