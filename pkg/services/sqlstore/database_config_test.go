@@ -237,6 +237,22 @@ func TestValidateReplicaConfigs(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("valid but awkward config", func(t *testing.T) {
+		inicfg, err := ini.Load([]byte(testReplCfg))
+		require.NoError(t, err)
+		cfg, err := setting.NewCfgFromINIFile(inicfg)
+		require.NoError(t, err)
+
+		dbCfgs, err := NewRODatabaseConfigs(cfg, nil)
+		require.NoError(t, err)
+
+		// The primary is mysql, but the replicas are mysqlWithHooks. This can
+		// occur when some but not all the replicas (or primary) have
+		// instrument_queries enabled
+		err = validateReplicaConfigs(&DatabaseConfig{Type: "mysqlWithHooks"}, dbCfgs)
+		require.NoError(t, err)
+	})
+
 	t.Run("invalid config: primary database type mismatch", func(t *testing.T) {
 		// valid repl config, the issue is that the primary has a different type
 		inicfg, err := ini.Load([]byte(testReplCfg))
