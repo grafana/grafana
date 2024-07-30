@@ -2,7 +2,7 @@ import { SerializedError } from '@reduxjs/toolkit';
 import userEvent from '@testing-library/user-event';
 import { SetupServer } from 'msw/node';
 import { TestProvider } from 'test/helpers/TestProvider';
-import { prettyDOM, render, screen, waitFor, within } from 'test/test-utils';
+import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { PluginExtensionTypes } from '@grafana/data';
@@ -728,7 +728,6 @@ describe('RuleList', () => {
         await userEvent.click(ui.editCloudGroupIcon.get(groups[0]));
 
         await waitFor(() => expect(ui.editGroupModal.dialog.get()).toBeInTheDocument());
-        prettyDOM(ui.editGroupModal.dialog.get());
 
         expect(ui.editGroupModal.namespaceInput.get()).toHaveDisplayValue('namespace1');
         expect(ui.editGroupModal.ruleGroupInput.get()).toHaveDisplayValue('group1');

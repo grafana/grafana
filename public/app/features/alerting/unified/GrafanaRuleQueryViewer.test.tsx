@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { render, waitFor, screen } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { DataSourceRef } from '@grafana/schema';
@@ -73,12 +73,11 @@ describe('GrafanaRuleQueryViewer', () => {
       getExpression('C', { type: '' }),
       getExpression('D', { type: '' }),
     ];
-    const { getByTestId } = render(
-      <GrafanaRuleQueryViewer queries={[...queries, ...expressions]} condition="A" rule={rule} />,
-      { wrapper: TestProvider }
-    );
+    render(<GrafanaRuleQueryViewer queries={[...queries, ...expressions]} condition="A" rule={rule} />, {
+      wrapper: TestProvider,
+    });
 
-    await waitFor(() => expect(getByTestId('queries-container')).toHaveStyle('flex-wrap: wrap'));
-    expect(getByTestId('expressions-container')).toHaveStyle('flex-wrap: wrap');
+    await waitFor(() => expect(screen.getByTestId('queries-container')).toHaveStyle('flex-wrap: wrap'));
+    expect(screen.getByTestId('expressions-container')).toHaveStyle('flex-wrap: wrap');
   });
 });

@@ -113,7 +113,7 @@ describe('RuleEditor grafana managed rules', () => {
     ] as DashboardSearchHit[]);
 
     renderRuleEditor();
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+    await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
 
     await userEvent.type(await ui.inputs.name.find(), 'my great new rule');
 

@@ -147,7 +147,7 @@ describe('RuleEditor recording rules', () => {
     });
 
     renderRuleEditor(undefined, true);
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+    await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
     await userEvent.type(await ui.inputs.name.find(), 'my great new recording rule');
 
     const dataSourceSelect = ui.inputs.dataSource.get();

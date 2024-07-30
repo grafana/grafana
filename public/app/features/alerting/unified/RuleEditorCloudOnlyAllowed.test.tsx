@@ -183,7 +183,7 @@ describe('RuleEditor cloud: checking editable data sources', () => {
 
     // render rule editor, select mimir/loki managed alerts
     renderRuleEditor();
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+    await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
 
     await ui.inputs.name.find();
 

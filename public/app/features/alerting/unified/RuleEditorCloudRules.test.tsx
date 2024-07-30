@@ -113,13 +113,13 @@ describe('RuleEditor cloud', () => {
     const user = userEvent.setup();
 
     renderRuleEditor();
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+    await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
 
     const removeExpressionsButtons = screen.getAllByLabelText('Remove expression');
     expect(removeExpressionsButtons).toHaveLength(2);
 
     // Needs to wait for featrue discovery API call to finish - Check if ruler enabled
-    await waitFor(() => expect(screen.getByText('Data source-managed')).toBeInTheDocument());
+    expect(await screen.findByText('Data source-managed')).toBeInTheDocument();
 
     const switchToCloudButton = screen.getByText('Data source-managed');
     expect(switchToCloudButton).toBeInTheDocument();

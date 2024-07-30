@@ -147,14 +147,14 @@ describe('NotificationPreview', () => {
     // we expect the alert manager label to be missing as there is only one alert manager configured to receive alerts
     await waitFor(() => {
       expect(ui.grafanaAlertManagerLabel.query()).not.toBeInTheDocument();
-      expect(ui.otherAlertManagerLabel.query()).not.toBeInTheDocument();
     });
+    expect(ui.otherAlertManagerLabel.query()).not.toBeInTheDocument();
 
+    const matchingPoliciesElements = ui.route.queryAll;
     await waitFor(() => {
-      const matchingPoliciesElements = ui.route.queryAll();
-      expect(matchingPoliciesElements).toHaveLength(1);
-      expect(matchingPoliciesElements[0]).toHaveTextContent(/tomato = red/);
+      expect(matchingPoliciesElements()).toHaveLength(1);
     });
+    expect(matchingPoliciesElements()[0]).toHaveTextContent(/tomato = red/);
   });
   it('should render notification preview with alert manager sections, when having more than one alert manager configured to receive alerts', async () => {
     // two alert managers configured  to receive alerts
@@ -174,8 +174,8 @@ describe('NotificationPreview', () => {
     // we expect the alert manager label to be present as there is more than one alert manager configured to receive alerts
     await waitFor(() => {
       expect(ui.grafanaAlertManagerLabel.query()).toBeInTheDocument();
-      expect(ui.otherAlertManagerLabel.query()).toBeInTheDocument();
     });
+    expect(ui.otherAlertManagerLabel.query()).toBeInTheDocument();
 
     const matchingPoliciesElements = ui.route.queryAll();
     expect(matchingPoliciesElements).toHaveLength(2);

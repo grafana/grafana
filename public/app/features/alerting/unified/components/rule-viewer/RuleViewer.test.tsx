@@ -170,10 +170,8 @@ describe('RuleViewer', () => {
       }
 
       // actions
-      await waitFor(() => {
-        expect(ELEMENTS.actions.edit.get()).toBeInTheDocument();
-        expect(ELEMENTS.actions.more.button.get()).toBeInTheDocument();
-      });
+      expect(await ELEMENTS.actions.edit.find()).toBeInTheDocument();
+      expect(ELEMENTS.actions.more.button.get()).toBeInTheDocument();
 
       // check the "more actions" button
       await userEvent.click(ELEMENTS.actions.more.button.get());

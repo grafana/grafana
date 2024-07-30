@@ -104,20 +104,20 @@ describe('CloneRuleEditor', function () {
 
       await waitFor(() => {
         expect(ui.inputs.name.get()).toHaveValue(`${grafanaRulerRule.grafana_alert.title} (copy)`);
-        expect(ui.inputs.folderContainer.get()).toHaveTextContent('folder-one');
-        expect(ui.inputs.group.get()).toHaveTextContent(grafanaRulerRule.grafana_alert.rule_group);
-        expect(
-          byRole('listitem', {
-            name: 'severity: critical',
-          }).get()
-        ).toBeInTheDocument();
-        expect(
-          byRole('listitem', {
-            name: 'region: nasa',
-          }).get()
-        ).toBeInTheDocument();
-        expect(ui.inputs.annotationValue(0).get()).toHaveTextContent(grafanaRulerRule.annotations[Annotation.summary]);
       });
+      expect(ui.inputs.folderContainer.get()).toHaveTextContent('folder-one');
+      expect(ui.inputs.group.get()).toHaveTextContent(grafanaRulerRule.grafana_alert.rule_group);
+      expect(
+        byRole('listitem', {
+          name: 'severity: critical',
+        }).get()
+      ).toBeInTheDocument();
+      expect(
+        byRole('listitem', {
+          name: 'region: nasa',
+        }).get()
+      ).toBeInTheDocument();
+      expect(ui.inputs.annotationValue(0).get()).toHaveTextContent(grafanaRulerRule.annotations[Annotation.summary]);
     });
   });
 
@@ -174,21 +174,21 @@ describe('CloneRuleEditor', function () {
 
       await waitFor(() => {
         expect(ui.inputs.name.get()).toHaveValue('First Ruler Rule (copy)');
-        expect(ui.inputs.expr.get()).toHaveValue('vector(1) > 0');
-        expect(ui.inputs.namespace.get()).toHaveTextContent('namespace-one');
-        expect(ui.inputs.group.get()).toHaveTextContent('group1');
-        expect(
-          byRole('listitem', {
-            name: 'severity: critical',
-          }).get()
-        ).toBeInTheDocument();
-        expect(
-          byRole('listitem', {
-            name: 'region: nasa',
-          }).get()
-        ).toBeInTheDocument();
-        expect(ui.inputs.annotationValue(0).get()).toHaveTextContent('This is a very important alert rule');
       });
+      expect(ui.inputs.expr.get()).toHaveValue('vector(1) > 0');
+      expect(ui.inputs.namespace.get()).toHaveTextContent('namespace-one');
+      expect(ui.inputs.group.get()).toHaveTextContent('group1');
+      expect(
+        byRole('listitem', {
+          name: 'severity: critical',
+        }).get()
+      ).toBeInTheDocument();
+      expect(
+        byRole('listitem', {
+          name: 'region: nasa',
+        }).get()
+      ).toBeInTheDocument();
+      expect(ui.inputs.annotationValue(0).get()).toHaveTextContent('This is a very important alert rule');
     });
   });
 
