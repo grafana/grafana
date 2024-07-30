@@ -86,7 +86,7 @@ The following video guides you through the creation steps and common customizati
 
 ## Supported data formats
 
-Time series visualizations require time series data&mdash;a sequence of measurements, ordered in time, and formatted as a table&mdash;where every row in the table represents one individual measurement at a specific time. Learn more about [time series data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/).
+Time series visualizations require time-series data&mdash;a sequence of measurements, ordered in time, and formatted as a table&mdash;where every row in the table represents one individual measurement at a specific time. Learn more about [time-series data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/).
 
 ## Alert rules
 
@@ -172,7 +172,7 @@ The options under the **Graph styles** section let you control the general appea
 
 | Option                                      | Description                                                                                                                                                                                                                           |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Style](#style)                             | Choose whether to display your time series data as lines, bars, or points.                                                                                                                                                            |
+| [Style](#style)                             | Choose whether to display your time-series data as lines, bars, or points.                                                                                                                                                            |
 | [Line interpolation](#line-interpolation)   | Choose how the graph interpolates the series line.                                                                                                                                                                                    |
 | Line width                                  | Set the thickness of the series lines or the outline for bars using the **Line width** slider.                                                                                                                                        |
 | [Fill opacity](#fill-opacity)               | Set the series area fill color using the **Fill opacity** slider.                                                                                                                                                                     |
@@ -188,7 +188,7 @@ The options under the **Graph styles** section let you control the general appea
 
 #### Style
 
-Choose whether to display your time series data as lines, bars, or points. You can use overrides to combine multiple styles in the same graph. Choose from the following:
+Choose whether to display your time-series data as lines, bars, or points. You can use overrides to combine multiple styles in the same graph. Choose from the following:
 
 ![Style modes](/static/img/docs/time-series-panel/style-modes-v9.png)
 
