@@ -54,6 +54,7 @@ export function MetricSegment({ metricIndex, segment, state }: Props) {
       inputMinWidth={150}
       allowCustomValue={true}
       allowCreateWhileLoading={true}
+      createOptionPosition="first"
       loadOptions={debouncedLoadOptions}
       reloadOptionsOnChange={true}
       onChange={onSegmentChangedDebounced}
