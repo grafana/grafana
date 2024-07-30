@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -221,3 +222,71 @@ func TestBuildConnectionStringPostgres(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateReplicaConfigs(t *testing.T) {
+	t.Run("valid config", func(t *testing.T) {
+		inicfg, err := ini.Load([]byte(testReplCfg))
+		require.NoError(t, err)
+		cfg, err := setting.NewCfgFromINIFile(inicfg)
+		require.NoError(t, err)
+
+		dbCfgs, err := NewRODatabaseConfigs(cfg, nil)
+		require.NoError(t, err)
+
+		err = validateReplicaConfigs(&DatabaseConfig{Type: "mysql"}, dbCfgs)
+		require.NoError(t, err)
+	})
+
+	t.Run("invalid config: primary database type mismatch", func(t *testing.T) {
+		// valid repl config, the issue is that the primary has a different type
+		inicfg, err := ini.Load([]byte(testReplCfg))
+		require.NoError(t, err)
+		cfg, err := setting.NewCfgFromINIFile(inicfg)
+		require.NoError(t, err)
+
+		dbCfgs, err := NewRODatabaseConfigs(cfg, nil)
+		require.NoError(t, err)
+
+		err = validateReplicaConfigs(&DatabaseConfig{Type: "postgres"}, dbCfgs)
+		require.Error(t, err)
+
+		if uw, ok := err.(interface{ Unwrap() []error }); ok {
+			errs := uw.Unwrap()
+			require.Equal(t, 1, len(errs))
+		}
+	})
+
+	t.Run("invalid repl config", func(t *testing.T) {
+		// Type mismatch + duplicate hosts
+		inicfg, err := ini.Load([]byte(invalidReplCfg))
+		require.NoError(t, err)
+		cfg, err := setting.NewCfgFromINIFile(inicfg)
+		require.NoError(t, err)
+
+		dbCfgs, err := NewRODatabaseConfigs(cfg, nil)
+		require.NoError(t, err)
+
+		err = validateReplicaConfigs(&DatabaseConfig{Type: "mysql"}, dbCfgs)
+		require.Error(t, err)
+
+		if uw, ok := err.(interface{ Unwrap() []error }); ok {
+			errs := uw.Unwrap()
+			require.Equal(t, 2, len(errs))
+		}
+	})
+}
+
+// This cfg has a duplicate host for repls 0 and 1, and a type mismatch in repl 2
+var invalidReplCfg = `
+[database_replicas]
+type = mysql
+name = grafana
+user = grafana
+password = password
+host = 127.0.0.1:3306
+[database_replicas.one] =
+type = mysql
+host = 127.0.0.1:3306
+[database_replicas.two] =
+type = postgres
+host = 127.0.0.1:3308`

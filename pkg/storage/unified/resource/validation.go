@@ -9,7 +9,7 @@ var validNameCharPattern = `a-zA-Z0-9\-\_\.`
 var validNamePattern = regexp.MustCompile(`^[` + validNameCharPattern + `]*$`).MatchString
 
 func validateName(name string) error {
-	if len(name) < 2 {
+	if len(name) == 0 {
 		return fmt.Errorf("name is too short")
 	}
 	if len(name) > 64 {
