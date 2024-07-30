@@ -185,14 +185,6 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 		s.log.Debug(fmt.Sprintf("buildSnapshot: method completed in %d ms", time.Since(start).Milliseconds()))
 	}()
 
-	// Update status to snapshot creating with retries
-	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
-		UID:    snapshotMeta.UID,
-		Status: cloudmigration.SnapshotStatusCreating,
-	}); err != nil {
-		return err
-	}
-
 	publicKey, privateKey, err := box.GenerateKey(cryptoRand.Reader)
 	if err != nil {
 		return fmt.Errorf("nacl: generating public and private key: %w", err)
@@ -286,14 +278,6 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 	defer func() {
 		s.log.Debug(fmt.Sprintf("uploadSnapshot: method completed in %d ms", time.Since(start).Milliseconds()))
 	}()
-
-	// update snapshot status to uploading with retries
-	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
-		UID:    snapshotMeta.UID,
-		Status: cloudmigration.SnapshotStatusUploading,
-	}); err != nil {
-		return err
-	}
 
 	indexFilePath := filepath.Join(snapshotMeta.LocalDir, "index.json")
 	// LocalDir can be set in the configuration, therefore the file path can be set to any path.

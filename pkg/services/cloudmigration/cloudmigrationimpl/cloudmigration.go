@@ -512,8 +512,13 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 	}
 	snapshot.UID = uid
 
-	// ensure the client polls for status
-	s.report(ctx, session, gmsclient.EventStartBuildingSnapshot, 0, nil)
+	// Update status to "creating" to ensure the frontend polls from now on
+	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
+		UID:    uid,
+		Status: cloudmigration.SnapshotStatusCreating,
+	}); err != nil {
+		return nil, err
+	}
 
 	// start building the snapshot asynchronously while we return a success response to the client
 	go func() {
@@ -525,6 +530,8 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 
 		ctx, cancelFunc := context.WithCancel(context.Background())
 		s.cancelFunc = cancelFunc
+
+		s.report(ctx, session, gmsclient.EventStartBuildingSnapshot, 0, nil)
 
 		start := time.Now()
 		err := s.buildSnapshot(ctx, signedInUser, initResp.MaxItemsPerPartition, initResp.Metadata, snapshot)
@@ -649,8 +656,13 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 
 	s.log.Info("Uploading snapshot in local directory", "gmsSnapshotUID", snapshot.GMSSnapshotUID, "localDir", snapshot.LocalDir, "uploadURL", uploadUrl)
 
-	// ensure the client polls for status
-	s.report(ctx, session, gmsclient.EventStartUploadingSnapshot, 0, nil)
+	// Update status to "creating" to ensure the frontend polls from now on
+	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
+		UID:    snapshotUid,
+		Status: cloudmigration.SnapshotStatusUploading,
+	}); err != nil {
+		return err
+	}
 
 	// start uploading the snapshot asynchronously while we return a success response to the client
 	go func() {
@@ -662,6 +674,8 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 
 		ctx, cancelFunc := context.WithCancel(context.Background())
 		s.cancelFunc = cancelFunc
+
+		s.report(ctx, session, gmsclient.EventStartUploadingSnapshot, 0, nil)
 
 		start := time.Now()
 		err := s.uploadSnapshot(ctx, session, snapshot, uploadUrl)
