@@ -222,7 +222,7 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
 // TODO move somewhere else
 export const createListFilterLink = (values: Array<[string, string]>) => {
   const params = new URLSearchParams([['search', values.map(([key, value]) => `${key}:"${value}"`).join(' ')]]);
-  return createRelativeUrl(`/alerting/list?${params.toString()}`);
+  return createRelativeUrl(`/alerting/list`, params);
 };
 
 interface TitleProps {
