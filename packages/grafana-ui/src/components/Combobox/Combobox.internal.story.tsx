@@ -1,7 +1,7 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn, StoryObj } from '@storybook/react';
 import { Chance } from 'chance';
-import { ComponentProps, useMemo, useState } from 'react';
+import { ComponentProps, useState } from 'react';
 
 import { Combobox, Option, Value } from './Combobox';
 
@@ -68,7 +68,6 @@ manyOptions.push({ label: 'Banana', value: 'banana', description: 'A yellow frui
 
 const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions, ...args }) => {
   const [value, setValue] = useState<Value | null>(manyOptions[5].value);
-  //const options = useMemo(() => generateOptions(numberOfOptions), [numberOfOptions]);
   return (
     <Combobox
       {...args}
