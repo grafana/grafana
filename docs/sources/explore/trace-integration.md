@@ -66,10 +66,10 @@ When zoomed in, hovering over the minimap displays the **Reset selectio** button
 
 Timeline shows list of spans within the trace. Each span row consists of the following components:
 
-- **Expand children -** Expands or collapses all the children spans of the selected span.
-- **Service name -** Name of the service logged the span.
-- **Operation name -** Name of the operation that this span represents.
-- **Span duration bar -** Visual representation of the operation duration within the trace.
+- **Expand children** - Expands or collapses all the children spans of the selected span.
+- **Service name** - Name of the service logged the span.
+- **Operation name** - Name of the operation that this span represents.
+- **Span duration bar** - Visual representation of the operation duration within the trace.
 
 Click anywhere on the span row to reveal span details.
 
