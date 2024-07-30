@@ -563,33 +563,36 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
               ]}
             />
           </Field>
-          <Field
-            label={
-              <div className={styles.displayOptionTooltip}>
-                <Trans>OTel filter</Trans>
-                <IconButton name={'info-circle'} size="sm" variant={'secondary'} tooltip={otelTooltip} />
-              </div>
-            }
-            className={styles.displayOption}
-          >
-            <Select
-              value={otelResource ?? 'none'}
-              onChange={model.onOtelFilterChange}
-              onOpenMenu={() => {
-                /* REPORT INTERACTION FOR OTEL */
-              }}
-              onCloseMenu={() => {
-                /* REPORT INTERACTION FOR OTEL */
-              }}
-              options={[
-                {
-                  label: 'None',
-                  value: OTEL_DEFAULT,
-                },
-                ...otelOptions,
-              ]}
-            />
-          </Field>
+          {/* Only show OTEL if the job&instance pairs exist in the DS on target_info */}
+          {otelOptions.length > 0 && (
+            <Field
+              label={
+                <div className={styles.displayOptionTooltip}>
+                  <Trans>OTel filter</Trans>
+                  <IconButton name={'info-circle'} size="sm" variant={'secondary'} tooltip={otelTooltip} />
+                </div>
+              }
+              className={styles.displayOption}
+            >
+              <Select
+                value={otelResource ?? 'none'}
+                onChange={model.onOtelFilterChange}
+                onOpenMenu={() => {
+                  /* REPORT INTERACTION FOR OTEL */
+                }}
+                onCloseMenu={() => {
+                  /* REPORT INTERACTION FOR OTEL */
+                }}
+                options={[
+                  {
+                    label: 'None',
+                    value: OTEL_DEFAULT,
+                  },
+                  ...otelOptions,
+                ]}
+              />
+            </Field>
+          )}
           <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} />
         </div>
         {metricNamesError && (
