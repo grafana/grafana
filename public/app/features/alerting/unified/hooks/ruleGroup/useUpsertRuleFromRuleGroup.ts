@@ -34,7 +34,7 @@ export function useAddRuleToRuleGroup() {
       rulerConfig,
       namespace: namespaceName,
       payload: newRuleGroupDefinition,
-      requestOptions: { successMessage },
+      notificationOptions: { successMessage },
     }).unwrap();
 
     // @TODO remove
@@ -65,7 +65,7 @@ export function useUpdateRuleInRuleGroup() {
         rulerConfig,
         namespace: namespaceName,
         payload: newRuleGroupDefinition,
-        requestOptions: { successMessage },
+        notificationOptions: { successMessage },
       }).unwrap();
 
       return result;
@@ -104,7 +104,7 @@ export function useMoveRuleToRuleGroup() {
         rulerConfig: targetGroupRulerConfig,
         namespace: currentRuleGroup.namespaceName,
         payload: newTargetGroup,
-        requestOptions: { successMessage },
+        notificationOptions: { successMessage },
       }).unwrap();
 
       // 2. if not Grafana-managed: remove the rule from the existing namespace / group / ruler

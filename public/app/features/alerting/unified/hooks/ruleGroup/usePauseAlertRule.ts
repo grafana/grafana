@@ -28,7 +28,7 @@ export function usePauseRuleInGroup() {
       rulerConfig,
       namespace: namespaceName,
       payload: newRuleGroupDefinition,
-      requestOptions: {
+      notificationOptions: {
         successMessage: pause ? rulePausedMessage : ruleResumedMessage,
       },
     }).unwrap();

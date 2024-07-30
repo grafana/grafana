@@ -34,7 +34,7 @@ export function useUpdateRuleGroupConfiguration() {
       rulerConfig,
       namespace: namespaceName,
       payload: newRuleGroupDefinition,
-      requestOptions: { successMessage: ruleUpdateSuccessMessage },
+      notificationOptions: { successMessage: ruleUpdateSuccessMessage },
     }).unwrap();
   });
 }
@@ -78,7 +78,7 @@ export function useMoveRuleGroup() {
           namespace: targetNamespace,
           group: targetGroupName,
           // since this could throw 404
-          requestOptions: { showErrorAlert: false },
+          notificationOptions: { showErrorAlert: false },
         })
           .unwrap()
           .catch(notFoundToNullOrThrow);
@@ -94,7 +94,7 @@ export function useMoveRuleGroup() {
         rulerConfig,
         namespace: targetNamespace,
         payload: newRuleGroupDefinition,
-        requestOptions: { successMessage },
+        notificationOptions: { successMessage },
       }).unwrap();
 
       // now remove the old one
@@ -102,7 +102,7 @@ export function useMoveRuleGroup() {
         rulerConfig,
         namespace: oldNamespace,
         group: oldGroupName,
-        requestOptions: { showSuccessAlert: false },
+        notificationOptions: { showSuccessAlert: false },
       }).unwrap();
 
       return result;
@@ -136,7 +136,7 @@ export function useRenameRuleGroup() {
       namespace: namespaceName,
       group: newGroupName,
       // since this could throw 404
-      requestOptions: { showErrorAlert: false },
+      notificationOptions: { showErrorAlert: false },
     })
       .unwrap()
       .catch(notFoundToNullOrThrow);
@@ -151,7 +151,7 @@ export function useRenameRuleGroup() {
       rulerConfig,
       namespace: namespaceName,
       payload: newRuleGroupDefinition,
-      requestOptions: { successMessage },
+      notificationOptions: { successMessage },
     }).unwrap();
 
     // now delete the group we renamed
@@ -159,7 +159,7 @@ export function useRenameRuleGroup() {
       rulerConfig,
       namespace: namespaceName,
       group: oldGroupName,
-      requestOptions: { showSuccessAlert: false },
+      notificationOptions: { showSuccessAlert: false },
     }).unwrap();
 
     return result;
@@ -184,7 +184,7 @@ export function useReorderRuleForRuleGroup() {
       rulerConfig,
       namespace: namespaceName,
       payload: newRuleGroupDefinition,
-      requestOptions: { successMessage: ruleUpdateSuccessMessage },
+      notificationOptions: { successMessage: ruleUpdateSuccessMessage },
     }).unwrap();
   });
 }

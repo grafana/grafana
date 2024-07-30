@@ -45,7 +45,7 @@ export function useProduceNewRuleGroup() {
       namespace: namespaceName,
       group: groupName,
       // @TODO maybe only supress if 404?
-      requestOptions: { showErrorAlert: false },
+      notificationOptions: { showErrorAlert: false },
     })
       .unwrap()
       .catch(notFoundToNullOrThrow);

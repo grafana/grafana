@@ -26,18 +26,18 @@ export type ExtendedBackendSrvRequest = BackendSrvRequest & {
 };
 
 // utility type for passing request options to endpoints
-export type WithRequestOptions<T> = T & {
-  requestOptions?: Partial<ExtendedBackendSrvRequest>;
+export type WithNotificationOptions<T> = T & {
+  notificationOptions?: Partial<ExtendedBackendSrvRequest>;
 };
 
-export function withRequestOptions(
+export function withNotificationOptions(
   options: BackendSrvRequest,
-  requestOptions: Partial<ExtendedBackendSrvRequest> = {},
+  notificationOptions: Partial<ExtendedBackendSrvRequest> = {},
   defaults: Partial<ExtendedBackendSrvRequest> = {}
 ): ExtendedBackendSrvRequest {
   return {
     ...options,
-    ...defaultsDeep(requestOptions, defaults),
+    ...defaultsDeep(notificationOptions, defaults),
   };
 }
 

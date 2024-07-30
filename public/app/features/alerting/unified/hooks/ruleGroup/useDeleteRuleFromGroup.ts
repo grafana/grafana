@@ -32,7 +32,7 @@ export function useDeleteRuleFromGroup() {
         rulerConfig,
         namespace: namespaceName,
         group: groupName,
-        requestOptions: { successMessage },
+        notificationOptions: { successMessage },
       }).unwrap();
     }
 
@@ -41,7 +41,7 @@ export function useDeleteRuleFromGroup() {
       rulerConfig,
       namespace: namespaceName,
       payload: newRuleGroupDefinition,
-      requestOptions: { successMessage },
+      notificationOptions: { successMessage },
     }).unwrap();
   });
 }
