@@ -660,10 +660,17 @@
       "stop-scan": "Stop scan"
     },
     "query-library": {
+      "cancel": "Cancel",
+      "default-description": "Public",
       "delete-query": "Delete query",
       "delete-query-text": "You're about to remove this query from the query library. This action cannot be undone. Do you want to continue?",
       "delete-query-title": "Delete query",
-      "query-deleted": "Query deleted"
+      "private": "Private",
+      "public": "Public",
+      "query-deleted": "Query deleted",
+      "query-template-added": "Query template successfully added to the library",
+      "query-template-error": "Error attempting to add this query to the library",
+      "save": "Save"
     },
     "rich-history": {
       "close-tooltip": "Close query history",
@@ -694,7 +701,6 @@
       "edit-comment-tooltip": "Edit comment",
       "optional-description": "An optional description of what the query does.",
       "query-comment-label": "Query comment",
-      "query-template-added": "Query template successfully added to the library",
       "query-text-label": "Query text",
       "save-comment": "Save comment",
       "star-query-tooltip": "Star query",
@@ -1787,6 +1793,7 @@
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
       "remove-query": "Remove query",
+      "save-to-query-library": "Save to query library",
       "show-response": "Show response",
       "toggle-edit-mode": "Toggle text edit mode"
     },
