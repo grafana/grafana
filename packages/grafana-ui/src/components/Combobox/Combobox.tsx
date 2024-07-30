@@ -8,6 +8,7 @@ import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { Input, Props as InputProps } from '../Input/Input';
+import { Spinner } from '../Spinner/Spinner';
 
 import { getComboboxStyles } from './getComboboxStyles';
 
@@ -49,9 +50,7 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
   const MIN_WIDTH = 400;
   const [items, setItems] = useState(options);
   const selectedItem = useMemo(() => options.find((option) => option.value === value) || null, [options, value]);
-  console.log('selectedItem', selectedItem);
-  console.log(value);
-  console.log(options);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef(null);
   const styles = useStyles2(getComboboxStyles);
@@ -71,7 +70,8 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
       scrollIntoView: () => {},
       onInputValueChange: (changes) => {
         // Ignore this internal state change, as it does not work when clearing input
-        if (changes.type === useCombobox.stateChangeTypes.ControlledPropUpdatedSelectedItem) {
+        // Check value instead of selectedItem, as selectedItem is incorrect
+        if (changes.type === useCombobox.stateChangeTypes.ControlledPropUpdatedSelectedItem && value === null) {
           setInputValue('');
           return;
         }
