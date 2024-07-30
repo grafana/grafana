@@ -32,26 +32,28 @@ func TestReplStore_ReadReplica(t *testing.T) {
 }
 
 func TestNewRODatabaseConfig(t *testing.T) {
-	inicfg, err := ini.Load([]byte(replCfg))
-	require.NoError(t, err)
-	cfg, err := setting.NewCfgFromINIFile(inicfg)
-	require.NoError(t, err)
+	t.Run("valid config", func(t *testing.T) {
+		inicfg, err := ini.Load([]byte(testReplCfg))
+		require.NoError(t, err)
+		cfg, err := setting.NewCfgFromINIFile(inicfg)
+		require.NoError(t, err)
 
-	dbCfgs, err := NewRODatabaseConfigs(cfg, nil)
-	require.NoError(t, err)
+		dbCfgs, err := NewRODatabaseConfigs(cfg, nil)
+		require.NoError(t, err)
 
-	var connStr = func(port int) string {
-		return fmt.Sprintf("grafana:password@tcp(127.0.0.1:%d)/grafana?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true", port)
-	}
-
-	for i, c := range dbCfgs {
-		if !cmp.Equal(c.ConnectionString, connStr(i+3306)) {
-			t.Errorf("wrong result for connection string %d.\nGot: %s,\nWant: %s", i, c.ConnectionString, connStr(i+3306))
+		var connStr = func(port int) string {
+			return fmt.Sprintf("grafana:password@tcp(127.0.0.1:%d)/grafana?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true", port)
 		}
-	}
+
+		for i, c := range dbCfgs {
+			if !cmp.Equal(c.ConnectionString, connStr(i+3306)) {
+				t.Errorf("wrong result for connection string %d.\nGot: %s,\nWant: %s", i, c.ConnectionString, connStr(i+3306))
+			}
+		}
+	})
 }
 
-var replCfg = `
+var testReplCfg = `
 [database_replicas]
 type = mysql
 name = grafana

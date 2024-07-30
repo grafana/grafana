@@ -10,7 +10,7 @@ import {
   Receiver,
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
-import { FolderDTO, NotifierDTO, StoreState, ThunkResult } from 'app/types';
+import { FolderDTO, StoreState, ThunkResult } from 'app/types';
 import {
   CombinedRuleGroup,
   CombinedRuleNamespace,
@@ -49,7 +49,6 @@ import {
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { fetchAnnotations } from '../api/annotations';
 import { discoverFeatures } from '../api/buildInfo';
-import { fetchNotifiers } from '../api/grafana';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import { FetchRulerRulesFilter, deleteRulerRulesGroup, fetchRulerRules, setRulerRuleGroup } from '../api/ruler';
 import { RuleFormValues } from '../types/rule-form';
@@ -436,11 +435,6 @@ function reportSwitchingRoutingType(values: RuleFormValues, existingRule: RuleWi
     }
   }
 }
-
-export const fetchGrafanaNotifiersAction = createAsyncThunk(
-  'unifiedalerting/fetchGrafanaNotifiers',
-  (): Promise<NotifierDTO[]> => withSerializedError(fetchNotifiers())
-);
 
 export const fetchGrafanaAnnotationsAction = createAsyncThunk(
   'unifiedalerting/fetchGrafanaAnnotations',
