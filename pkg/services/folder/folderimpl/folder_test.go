@@ -959,7 +959,7 @@ func TestNestedFolderService(t *testing.T) {
 			require.True(t, nestedFolderStore.CreateCalled)
 		})
 
-		t.Run("Should not be able to create a nested folder under the root with subfolder creation permissions", func(t *testing.T) {
+		t.Run("Should not be able to create a folder under the root with subfolder creation permissions", func(t *testing.T) {
 			g := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 			t.Cleanup(func() {
@@ -1218,6 +1218,13 @@ func TestNestedFolderService(t *testing.T) {
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), dbtest.NewFakeDB())
 			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: nestedFolderUser})
 			require.NoError(t, err)
+
+			// Parent write access check will eventually be replaced with scoped folder creation check
+			nestedFolderUser.Permissions[orgID] = map[string][]string{
+				dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("myFolder"), dashboards.ScopeFoldersProvider.GetResourceScopeUID("newFolder2")},
+			}
+			_, err = folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder2", OrgID: orgID, SignedInUser: nestedFolderUser})
+			require.NoError(t, err)
 		})
 
 		t.Run("cannot move the k6 folder even when has permissions to move folders", func(t *testing.T) {
@@ -1305,8 +1312,6 @@ func TestNestedFolderService(t *testing.T) {
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), dbtest.NewFakeDB())
 			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "", OrgID: orgID, SignedInUser: nestedFolderUser})
 			require.Error(t, err)
-			// the folder is set inside InTransaction() but the fake one is called
-			// require.NotNil(t, f)
 		})
 
 		t.Run("move when parentUID in the current subtree returns error from nested folder service", func(t *testing.T) {
@@ -2356,7 +2361,10 @@ func TestIntegration_canMove(t *testing.T) {
 			description:       "can move a folder to the root with folder create permissions",
 			destinationFolder: "",
 			permissions: map[string][]string{
-				dashboards.ActionFoldersCreate: {},
+				dashboards.ActionFoldersCreate: {
+					dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID),
+					dashboards.ScopeFoldersProvider.GetResourceScopeUID(sourceFolder.UID),
+				},
 			},
 		},
 		{
