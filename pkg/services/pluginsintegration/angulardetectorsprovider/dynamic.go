@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -332,3 +333,10 @@ func makeHttpClient() http.Client {
 		Transport: tr,
 	}
 }
+
+// static checks
+
+var (
+	_ registry.BackgroundService = (*Dynamic)(nil)
+	_ registry.CanBeDisabled     = (*Dynamic)(nil)
+)
