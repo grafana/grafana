@@ -44,7 +44,7 @@ const BasicWithState: StoryFn<typeof Combobox> = (args) => {
       {...args}
       value={value}
       onChange={(val) => {
-        setValue(val?.value || '');
+        setValue(val?.value || null);
         action('onChange')(val);
       }}
     />
