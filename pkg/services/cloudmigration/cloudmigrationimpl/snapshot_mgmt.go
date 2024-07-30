@@ -32,7 +32,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	}
 
 	// Dashboards and folders are linked via the schema, so we need to get both
-	dashboards, folders, err := s.getDashboardAndFolderCommands(ctx, signedInUser)
+	dashs, folders, err := s.getDashboardAndFolderCommands(ctx, signedInUser)
 	if err != nil {
 		s.log.Error("Failed to get dashboards and folders", "err", err)
 		return nil, err
@@ -40,7 +40,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 
 	migrationDataSlice := make(
 		[]cloudmigration.MigrateDataRequestItem, 0,
-		len(dataSources)+len(dashboards)+len(folders),
+		len(dataSources)+len(dashs)+len(folders),
 	)
 
 	for _, ds := range dataSources {
@@ -52,13 +52,19 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		})
 	}
 
-	for _, dashboard := range dashboards {
+	for _, dashboard := range dashs {
 		dashboard.Data.Del("id")
 		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 			Type:  cloudmigration.DashboardDataType,
 			RefID: dashboard.UID,
 			Name:  dashboard.Title,
-			Data:  map[string]any{"dashboard": dashboard.Data},
+			Data: dashboards.SaveDashboardCommand{
+				Dashboard: dashboard.Data,
+				Overwrite: true, // currently only intended to be a push, not a sync; revisit during the preview
+				Message:   fmt.Sprintf("Created via the Grafana Cloud Migration Assistant by on-prem user %s", signedInUser.Login),
+				IsFolder:  false,
+				FolderUID: dashboard.FolderUID,
+			},
 		})
 	}
 
@@ -74,6 +80,10 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 
 	migrationData := &cloudmigration.MigrateDataRequest{
 		Items: migrationDataSlice,
+	}
+
+	for _, i := range migrationData.Items {
+		s.log.Info("migration data", "item", i)
 	}
 
 	return migrationData, nil
@@ -138,6 +148,7 @@ func (s *Service) getDashboardAndFolderCommands(ctx context.Context, signedInUse
 			folderUids = append(folderUids, d.UID)
 		} else {
 			dashboardCmds = append(dashboardCmds, *d)
+			s.log.Info("dashboard cmd", "o", *d)
 		}
 	}
 
