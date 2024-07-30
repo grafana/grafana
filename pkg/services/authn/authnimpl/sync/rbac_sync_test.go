@@ -189,7 +189,6 @@ func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
 				accesscontrol.FixedCloudViewerRole,
 				accesscontrol.FixedCloudSupportTicketReader,
 				accesscontrol.FixedCloudAdminRole,
-				accesscontrol.FixedCloudSupportTicketAdmin,
 			},
 		},
 		{
@@ -208,7 +207,6 @@ func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
 				accesscontrol.FixedCloudViewerRole,
 				accesscontrol.FixedCloudSupportTicketReader,
 				accesscontrol.FixedCloudEditorRole,
-				accesscontrol.FixedCloudSupportTicketAdmin,
 			},
 		},
 		{
