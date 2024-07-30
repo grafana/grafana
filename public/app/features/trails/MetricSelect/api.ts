@@ -49,8 +49,13 @@ export async function getMetricNames(dataSourceUid: string, timeRange: RawTimeRa
   return { ...response, limitReached: false };
 }
 
-// query the DS for list of single series on target_info matching job and instance
-// parse the results to get label filters.
+/**
+ * Query the DS for list of single series on target_info matching job and instance
+ * parse the results to get label filters.
+ * @param dataSourceUid
+ * @param timeRange
+ * @returns OtelResourcesType[], labels for the query result requesting matching job and instance on target_info metric
+ */
 export async function getOtelResources(dataSourceUid: string, timeRange: RawTimeRange): Promise<OtelResourcesType[]> {
   const url = `/api/datasources/uid/${dataSourceUid}/resources/api/v1/query`;
   const params: Record<string, string | number> = {

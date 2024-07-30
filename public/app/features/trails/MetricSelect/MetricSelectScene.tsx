@@ -63,6 +63,7 @@ export interface MetricSelectSceneState extends SceneObjectState {
   body: SceneFlexLayout | SceneCSSGridLayout;
   rootGroup?: Node;
   otelResources?: OtelResourcesType[];
+  otelResource?: string;
   metricPrefix?: string;
   showPreviews?: boolean;
   metricNames?: string[];
@@ -92,6 +93,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       showPreviews: true,
       $variables: state.$variables,
       metricPrefix: state.metricPrefix ?? METRIC_PREFIX_ALL,
+      otelResource: state.otelResource ?? OTEL_DEFAULT,
       body:
         state.body ??
         new SceneCSSGridLayout({
@@ -210,6 +212,14 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       matchTerms.push(`__name__=~"${metricSearchRegex}"`);
     }
 
+    // add OTEL job and instance labels to filter metrics
+    const selectedOtelResource = this.state.otelResource ?? '';
+    if (selectedOtelResource && selectedOtelResource !== 'none') {
+      const otelResource = JSON.parse(selectedOtelResource);
+      matchTerms.push(`job="${otelResource.job}"`);
+      matchTerms.push(`instance="${otelResource.instance}"`);
+    }
+
     const match = `{${matchTerms.join(',')}}`;
     const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
     this.setState({ metricNamesLoading: true, metricNamesError: undefined, metricNamesWarning: undefined });
@@ -267,17 +277,26 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     return rootGroupNode;
   }
 
+  /**
+   * This calls the Prometheus data source with a query to get OTEL resources
+   * @returns OtelResourcesType[], a collection of job&instance pairs on the `target_info` metric
+   */
   private async generateOtelResources() {
+    // call up in to the parent trail
     const trail = getTrailFor(this);
+    // get the time range
     const timeRange: RawTimeRange | undefined = trail.state.$timeRange?.state;
     if (!timeRange) {
       return [];
     }
+    // get the data source UID for making calls to the DS
     const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
 
-    const resources = await getOtelResources(datasourceUid, timeRange);
+    // call the DS to get the list
     // query the datasource with a variable query for metrics
     // get list of matching job and instance on target_info
+    const resources = await getOtelResources(datasourceUid, timeRange);
+
     return resources;
   }
 
@@ -439,6 +458,12 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     this.buildLayout();
   };
 
+  public onOtelFilterChange = (val: SelectableValue) => {
+    this.setState({ otelResource: val.value });
+    // do not debounce this because we are not typing
+    this._refreshMetricNames();
+  };
+
   public reportPrefixFilterInteraction = (isMenuOpen: boolean) => {
     const trail = getTrailFor(this);
     const { steps, currentStep } = trail.state.history.state;
@@ -466,6 +491,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       metricNamesWarning,
       rootGroup,
       metricPrefix,
+      otelResources,
+      otelResource,
     } = model.useState();
     const { children } = body.useState();
     const trail = getTrailFor(model);
@@ -498,6 +525,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
         <Icon className={styles.warningIcon} name="exclamation-triangle" />
       </Tooltip>
     ) : undefined;
+
+    const otelOptions = otelResources?.map((r) => ({ label: JSON.stringify(r), value: JSON.stringify(r) })) ?? [];
 
     return (
       <div className={styles.container}>
@@ -537,23 +566,27 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
           <Field
             label={
               <div className={styles.displayOptionTooltip}>
-                <Trans>OTel resources</Trans>
+                <Trans>OTel filter</Trans>
                 <IconButton name={'info-circle'} size="sm" variant={'secondary'} tooltip={otelTooltip} />
               </div>
             }
             className={styles.displayOption}
           >
             <Select
-              value={''}
-              onChange={() => {} /*model.onPrefixFilterChange*/}
-              onOpenMenu={() => {} /*model.reportPrefixFilterInteraction(true)*/}
-              onCloseMenu={() => {} /*model.reportPrefixFilterInteraction(false)*/}
+              value={otelResource ?? 'none'}
+              onChange={model.onOtelFilterChange}
+              onOpenMenu={() => {
+                /* REPORT INTERACTION FOR OTEL */
+              }}
+              onCloseMenu={() => {
+                /* REPORT INTERACTION FOR OTEL */
+              }}
               options={[
                 {
                   label: 'None',
                   value: OTEL_DEFAULT,
                 },
-                // ...Array.from(rootGroup?.groups.keys() ?? []).map((g) => ({ label: `${g}_`, value: g })),
+                ...otelOptions,
               ]}
             />
           </Field>
