@@ -5,6 +5,7 @@ import { Alert, Box, Stack, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import {
+  GetSnapshotResponseDto,
   SnapshotDto,
   useCancelSnapshotMutation,
   useCreateSnapshotMutation,
@@ -129,6 +130,16 @@ export const Page = () => {
   const showUploadSnapshot = status === 'PENDING_UPLOAD' || SNAPSHOT_UPLOADING_STATUSES.includes(status);
   const showRebuildSnapshot = SNAPSHOT_REBUILD_STATUSES.includes(status);
 
+  const error = getError({
+    snapshot: snapshot.data,
+    getSnapshotError: snapshot.error,
+    getSessionError: session.error,
+    createSnapshotError: createSnapshotResult.error,
+    uploadSnapshotError: uploadSnapshotResult.error,
+    cancelSnapshotError: cancelSnapshotResult.error,
+    disconnectSnapshotError: disconnectResult.error,
+  });
+
   const handleDisconnect = useCallback(async () => {
     if (sessionUid) {
       performDisconnect({ uid: sessionUid });
@@ -167,33 +178,6 @@ export const Page = () => {
   return (
     <>
       <Stack direction="column" gap={4}>
-        {/* TODO: show errors from all mutation's in a... modal? */}
-
-        {createSnapshotResult.isError && (
-          <AlertWithTraceID
-            error={createSnapshotResult.error}
-            severity="error"
-            title={t('migrate-to-cloud.summary.run-migration-error-title', 'Error creating snapshot')}
-          >
-            <Text element="p">
-              <Trans i18nKey="migrate-to-cloud.summary.run-migration-error-description">
-                See the Grafana server logs for more details
-              </Trans>
-            </Text>
-          </AlertWithTraceID>
-        )}
-
-        {disconnectResult.isError && (
-          <Alert
-            severity="error"
-            title={t('migrate-to-cloud.summary.disconnect-error-title', 'There was an error disconnecting')}
-          >
-            <Trans i18nKey="migrate-to-cloud.summary.disconnect-error-description">
-              See the Grafana server logs for more details
-            </Trans>
-          </Alert>
-        )}
-
         {session.data && (
           <MigrationSummary
             session={session.data}
@@ -209,6 +193,12 @@ export const Page = () => {
             onUploadSnapshot={handleUploadSnapshot}
             showRebuildSnapshot={showRebuildSnapshot}
           />
+        )}
+
+        {error && (
+          <AlertWithTraceID severity={error.severity ?? 'warning'} title={error.title} error={error.error}>
+            <Text element="p">{error.body}</Text>
+          </AlertWithTraceID>
         )}
 
         {(showBuildSnapshot || showBuildingSnapshot) && (
@@ -251,3 +241,107 @@ export const Page = () => {
     </>
   );
 };
+
+interface GetErrorProps {
+  snapshot: GetSnapshotResponseDto | undefined;
+  getSessionError: unknown; // From getLatestSessionQuery
+  getSnapshotError: unknown; // From getLatestSnapshotQuery
+  createSnapshotError: unknown; // From createSnapshotMutation
+  uploadSnapshotError: unknown; // From uploadSnapshotMutation
+  cancelSnapshotError: unknown; // From cancelSnapshotMutation
+  disconnectSnapshotError: unknown; // From disconnectMutation
+}
+
+interface ErrorDescription {
+  title: string;
+  body: string;
+  severity?: 'error' | 'warning';
+  error?: unknown;
+}
+
+function getError(props: GetErrorProps): ErrorDescription | undefined {
+  const {
+    snapshot,
+    getSnapshotError,
+    getSessionError,
+    createSnapshotError,
+    uploadSnapshotError,
+    cancelSnapshotError,
+    disconnectSnapshotError,
+  } = props;
+
+  const seeLogs = t('migrate-to-cloud.onprem.error-see-server-logs', 'See the Grafana server logs for more details');
+
+  if (getSessionError) {
+    return {
+      severity: 'error',
+      title: t('migrate-to-cloud.onprem.get-session-error-title', 'Error loading migration configuration'),
+      body: seeLogs,
+      error: getSessionError,
+    };
+  }
+
+  if (getSnapshotError) {
+    return {
+      severity: 'error',
+      title: t('migrate-to-cloud.onprem.get-snapshot-error-title', 'Error loading snapshot'),
+      body: seeLogs,
+      error: getSnapshotError,
+    };
+  }
+
+  if (disconnectSnapshotError) {
+    return {
+      title: t('migrate-to-cloud.onprem.disconnect-error-title', 'Error disconnecting'),
+      body: seeLogs,
+      error: disconnectSnapshotError,
+    };
+  }
+
+  if (createSnapshotError) {
+    return {
+      title: t('migrate-to-cloud.onprem.create-snapshot-error-title', 'Error creating snapshot'),
+      body: seeLogs,
+      error: createSnapshotError,
+    };
+  }
+
+  if (uploadSnapshotError) {
+    return {
+      title: t('migrate-to-cloud.onprem.upload-snapshot-error-title', 'Error uploading snapshot'),
+      body: seeLogs,
+      error: uploadSnapshotError,
+    };
+  }
+
+  if (cancelSnapshotError) {
+    return {
+      title: t('migrate-to-cloud.onprem.cancel-snapshot-error-title', 'Error cancelling creating snapshot'),
+      body: seeLogs,
+      error: cancelSnapshotError,
+    };
+  }
+
+  if (snapshot?.status === 'ERROR') {
+    return {
+      title: t('migrate-to-cloud.onprem.snapshot-error-status-title', 'Error migrating resources'),
+      body: t(
+        'migrate-to-cloud.onprem.snapshot-error-status-body',
+        'There was an error creating the snapshot or starting the migration process. See the Grafana server logs for more details'
+      ),
+    };
+  }
+
+  const errorCount = snapshot?.stats?.statuses?.['ERROR'] ?? 0;
+  if (errorCount > 0) {
+    return {
+      title: t('migrate-to-cloud.onprem.some-resources-errored-title', 'Resource migration complete'),
+      body: t(
+        'migrate-to-cloud.onprem.some-resources-errored-body',
+        'The migration has completed, but some items could not be migrated to the cloud stack. Check the failed resources for more details'
+      ),
+    };
+  }
+
+  return undefined;
+}
