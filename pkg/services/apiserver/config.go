@@ -60,7 +60,7 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	o.StorageOptions.DualWriterDesiredModes = unifiedStorageCfg
 
 	// TODO: ensure backwards compatibility with production
-	// remove this after changing the unified_storage_mode key format in HGAPI
+	// remove this after changing the unified_storage key format in HGAPI
 	if _, ok := o.StorageOptions.DualWriterDesiredModes[playlist.RESOURCE+"."+playlist.GROUP]; ok {
 		o.StorageOptions.DualWriterDesiredModes[playlist.RESOURCE+"."+playlist.GROUP] = o.StorageOptions.DualWriterDesiredModes[playlist.GROUPRESOURCE]
 	}
