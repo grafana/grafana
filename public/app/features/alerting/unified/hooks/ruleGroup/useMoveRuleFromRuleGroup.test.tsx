@@ -12,11 +12,10 @@ import { grantUserPermissions } from '../../mocks';
 import {
   grafanaRulerEmptyGroup,
   grafanaRulerGroup,
-  grafanaRulerGroupName,
   grafanaRulerNamespace,
   grafanaRulerRule,
 } from '../../mocks/grafanaRulerApi';
-import { group1, group2, GROUP_3, NAMESPACE_1, NAMESPACE_2 } from '../../mocks/mimirRulerApi';
+import { group1, GROUP_3, NAMESPACE_1, NAMESPACE_2 } from '../../mocks/mimirRulerApi';
 import { mimirDataSource } from '../../mocks/server/configure';
 import { MIMIR_DATASOURCE_UID } from '../../mocks/server/constants';
 import { captureRequests, serializeRequests } from '../../mocks/server/events';
