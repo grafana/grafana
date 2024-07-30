@@ -15,7 +15,14 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { getPluginLinkExtensions, setPluginImportUtils } from '@grafana/runtime';
-import { MultiValueVariable, SceneGridLayout, SceneGridRow, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import {
+  MultiValueVariable,
+  sceneGraph,
+  SceneGridLayout,
+  SceneGridRow,
+  SceneTimeRange,
+  VizPanel,
+} from '@grafana/scenes';
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
@@ -1092,6 +1099,37 @@ describe('transformSceneToSaveModel', () => {
 
       const saveModel = transformSceneToSaveModel(scene);
       expect((saveModel.panels![1] as any).options.content).toBe('new content');
+    });
+  });
+
+  describe('Given a scene with repeated panels and non-repeated panels', () => {
+    it('should save repeated panels itemHeight as height', () => {
+      const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
+      const gridItem = sceneGraph.findByKey(scene, 'grid-item-2') as DashboardGridItem;
+      expect(gridItem).toBeInstanceOf(DashboardGridItem);
+      expect(gridItem.state.height).toBe(10);
+      expect(gridItem.state.itemHeight).toBe(10);
+      expect(gridItem.state.itemHeight).toBe(10);
+      expect(gridItem.state.variableName).toBe('pod');
+      gridItem.setState({ itemHeight: 24 });
+      const saveModel = transformSceneToSaveModel(scene);
+      expect(saveModel.panels?.[3].gridPos?.h).toBe(24);
+    });
+
+    it('should not save non-repeated panels itemHeight as height', () => {
+      const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
+      const gridItem = sceneGraph.findByKey(scene, 'grid-item-15') as DashboardGridItem;
+      expect(gridItem).toBeInstanceOf(DashboardGridItem);
+      expect(gridItem.state.height).toBe(2);
+      expect(gridItem.state.itemHeight).toBe(2);
+      expect(gridItem.state.variableName).toBeUndefined();
+      gridItem.setState({ itemHeight: 24 });
+      let saveModel = transformSceneToSaveModel(scene);
+      expect(saveModel.panels?.[1].gridPos?.h).toBe(2);
+
+      gridItem.setState({ height: 34 });
+      saveModel = transformSceneToSaveModel(scene);
+      expect(saveModel.panels?.[1].gridPos?.h).toBe(34);
     });
   });
 });

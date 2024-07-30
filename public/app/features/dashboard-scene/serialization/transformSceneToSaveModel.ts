@@ -200,7 +200,7 @@ export function gridItemToPanel(
   x = gridItem_.state.x ?? 0;
   y = gridItem_.state.y ?? 0;
   w = gridItem_.state.width ?? 0;
-  h = gridItem_.state.itemHeight ?? gridItem_.state.height ?? 0;
+  h = (gridItem_.state.variableName ? gridItem_.state.itemHeight : gridItem_.state.height) ?? 0;
 
   if (!vizPanel) {
     throw new Error('Unsupported grid item type');
