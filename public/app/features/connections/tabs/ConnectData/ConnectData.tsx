@@ -3,11 +3,11 @@ import { useMemo, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2, PluginType } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
-import { useStyles2, LoadingPlaceholder, EmptyState, TextLink } from '@grafana/ui';
+import { useStyles2, LoadingPlaceholder, EmptyState } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { t } from 'app/core/internationalization';
+import { RoadmapLinks } from 'app/features/plugins/admin/components/RoadmapLinks';
 import { useGetAll } from 'app/features/plugins/admin/state/hooks';
 import { AccessControlAction } from 'app/types';
 
@@ -104,24 +104,7 @@ export function AddNewConnection() {
           message={t('connections.connect-data.empty-message', 'No results matching your query were found')}
         />
       )}
-      <div className={styles.spacer} />
-      <div>
-        <TextLink
-          href="https://github.com/grafana/grafana/issues/new?assignees=&labels=area%2Fdatasource%2Ctype%2Fnew-plugin-request&projects=&template=3-data_source_request.yaml&title=%5BNew+Data+Source%5D%3A+%3Cname-of-service%3E"
-          onClick={() => reportInteraction('connections_data_source_request_clicked')}
-          external
-        >
-          Request a new data source
-        </TextLink>
-        <br />
-        <TextLink
-          href="https://github.com/orgs/grafana/projects/619/views/1?pane=info"
-          onClick={() => reportInteraction('connections_data_source_roadmap_clicked')}
-          external
-        >
-          View roadmap
-        </TextLink>
-      </div>
+      <RoadmapLinks />
     </>
   );
 }
