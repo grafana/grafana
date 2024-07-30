@@ -447,7 +447,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	obj.SetUpdatedTimestamp(&now.Time)
 	obj.SetManagedFields(nil)
 	obj.SetFinalizers(nil)
-	obj.SetUpdatedBy(requester.GetUID().String())
+	obj.SetUpdatedBy(requester.GetUID())
 	marker.TypeMeta = metav1.TypeMeta{
 		Kind:       "DeletedMarker",
 		APIVersion: "common.grafana.app/v0alpha1", // ?? or can we stick this in common?

@@ -150,7 +150,7 @@ func encodeIdentityInMetadata(user identity.Requester) metadata.MD {
 
 		// Or we can create it directly
 		mdUserID, user.GetID().String(),
-		mdUserUID, user.GetUID().String(),
+		mdUserUID, user.GetUID(),
 		mdOrgName, user.GetOrgName(),
 		mdOrgID, strconv.FormatInt(user.GetOrgID(), 10),
 		mdOrgRole, string(user.GetOrgRole()),
@@ -158,6 +158,6 @@ func encodeIdentityInMetadata(user identity.Requester) metadata.MD {
 
 		// TODO, Remove after this is deployed to unified storage
 		"grafana-userid", user.GetID().ID(),
-		"grafana-useruid", user.GetUID().ID(),
+		"grafana-useruid", user.GetRawIdentifier(),
 	)
 }
