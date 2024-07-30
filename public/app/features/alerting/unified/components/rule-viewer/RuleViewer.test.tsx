@@ -2,8 +2,7 @@ import { within } from '@testing-library/react';
 import { render, waitFor, screen, userEvent } from 'test/test-utils';
 import { byText, byRole } from 'testing-library-selector';
 
-import { setBackendSrv, setPluginExtensionsHook } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { setPluginExtensionsHook } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
@@ -17,7 +16,7 @@ import {
   mockDataSource,
   mockPluginLinkExtension,
 } from '../../mocks';
-import { grafanaRulerRule } from '../../mocks/alertRuleApi';
+import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
 import { setupDataSources } from '../../testSetup/datasources';
 import { Annotation } from '../../utils/constants';
 import { DataSourceType } from '../../utils/datasource';
@@ -95,7 +94,6 @@ beforeAll(() => {
     AccessControlAction.AlertingRuleDelete,
     AccessControlAction.AlertingInstanceCreate,
   ]);
-  setBackendSrv(backendSrv);
 });
 
 describe('RuleViewer', () => {

@@ -17,6 +17,7 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -207,8 +208,8 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			accessToken: &validAccessTokenClaims,
 			orgID:       1,
 			want: &authn.Identity{
-				ID:                         authn.MustParseNamespaceID("access-policy:this-uid"),
-				UID:                        authn.MustParseNamespaceID("access-policy:this-uid"),
+				ID:                         identity.MustParseTypedID("access-policy:this-uid"),
+				UID:                        identity.MustParseTypedID("access-policy:this-uid"),
 				OrgID:                      1,
 				AllowedKubernetesNamespace: "default",
 				AuthenticatedBy:            "extendedjwt",
@@ -223,8 +224,8 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			accessToken: &validAcessTokenClaimsWildcard,
 			orgID:       1,
 			want: &authn.Identity{
-				ID:                         authn.MustParseNamespaceID("access-policy:this-uid"),
-				UID:                        authn.MustParseNamespaceID("access-policy:this-uid"),
+				ID:                         identity.MustParseTypedID("access-policy:this-uid"),
+				UID:                        identity.MustParseTypedID("access-policy:this-uid"),
 				OrgID:                      1,
 				AllowedKubernetesNamespace: "*",
 				AuthenticatedBy:            "extendedjwt",
@@ -240,7 +241,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			idToken:     &validIDTokenClaims,
 			orgID:       1,
 			want: &authn.Identity{
-				ID:                         authn.MustParseNamespaceID("user:2"),
+				ID:                         identity.MustParseTypedID("user:2"),
 				OrgID:                      1,
 				AllowedKubernetesNamespace: "default",
 				AuthenticatedBy:            "extendedjwt",
@@ -260,7 +261,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			idToken:     &validIDTokenClaims,
 			orgID:       1,
 			want: &authn.Identity{
-				ID:                         authn.MustParseNamespaceID("user:2"),
+				ID:                         identity.MustParseTypedID("user:2"),
 				OrgID:                      1,
 				AllowedKubernetesNamespace: "*",
 				AuthenticatedBy:            "extendedjwt",
@@ -285,7 +286,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				},
 			},
 			want: &authn.Identity{
-				ID:                         authn.MustParseNamespaceID("user:2"),
+				ID:                         identity.MustParseTypedID("user:2"),
 				OrgID:                      1,
 				AllowedKubernetesNamespace: "stack-1234",
 				AuthenticatedBy:            "extendedjwt",

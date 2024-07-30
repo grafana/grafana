@@ -10,6 +10,7 @@ import (
 	authlib "github.com/grafana/authlib/authn"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -74,7 +75,6 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 
 	claims, err := s.accessTokenVerifier.Verify(ctx, jwtToken)
 	if err != nil {
-		s.log.Error("Failed to verify access token", "error", err)
 		return nil, errExtJWTInvalid.Errorf("failed to verify access token: %w", err)
 	}
 
@@ -82,7 +82,6 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	if idToken != "" {
 		idTokenClaims, err := s.idTokenVerifier.Verify(ctx, idToken)
 		if err != nil {
-			s.log.Error("Failed to verify id token", "error", err)
 			return nil, errExtJWTInvalid.Errorf("failed to verify id token: %w", err)
 		}
 
@@ -110,21 +109,21 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTMisMatchedNamespaceClaims.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
 	}
 
-	accessID, err := authn.ParseNamespaceID(accessTokenClaims.Subject)
+	accessID, err := identity.ParseTypedID(accessTokenClaims.Subject)
 	if err != nil {
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", accessID.String())
 	}
 
-	if !accessID.IsNamespace(authn.NamespaceAccessPolicy) {
+	if !accessID.IsType(identity.TypeAccessPolicy) {
 		return nil, errExtJWTInvalid.Errorf("unexpected identity: %s", accessID.String())
 	}
 
-	userID, err := authn.ParseNamespaceID(idTokenClaims.Subject)
+	userID, err := identity.ParseTypedID(idTokenClaims.Subject)
 	if err != nil {
 		return nil, errExtJWTInvalid.Errorf("failed to parse id token subject: %w", err)
 	}
 
-	if !userID.IsNamespace(authn.NamespaceUser) {
+	if !userID.IsType(identity.TypeUser) {
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", userID.String())
 	}
 
@@ -156,12 +155,12 @@ func (s *ExtendedJWT) authenticateAsService(claims *authlib.Claims[authlib.Acces
 		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected access token namespace: %s", claims.Rest.Namespace)
 	}
 
-	id, err := authn.ParseNamespaceID(claims.Subject)
+	id, err := identity.ParseTypedID(claims.Subject)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse access token subject: %w", err)
 	}
 
-	if !id.IsNamespace(authn.NamespaceAccessPolicy) {
+	if !id.IsType(identity.TypeAccessPolicy) {
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", id.String())
 	}
 

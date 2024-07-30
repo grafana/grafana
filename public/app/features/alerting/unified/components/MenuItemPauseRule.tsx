@@ -7,7 +7,8 @@ import {
 } from 'app/features/alerting/unified/utils/rules';
 import { CombinedRule } from 'app/types/unified-alerting';
 
-import { usePauseRuleInGroup } from '../hooks/useProduceNewRuleGroup';
+import { usePauseRuleInGroup } from '../hooks/ruleGroup/usePauseAlertRule';
+import { isLoading } from '../hooks/useAsync';
 import { stringifyErrorLike } from '../utils/misc';
 
 interface Props {
@@ -24,7 +25,7 @@ interface Props {
  */
 const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
   const notifyApp = useAppNotification();
-  const [pauseRule, updateState] = usePauseRuleInGroup();
+  const [updateState, pauseRule] = usePauseRuleInGroup();
 
   const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
   const icon = isPaused ? 'play' : 'pause';
@@ -42,7 +43,7 @@ const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
       const ruleGroupId = getRuleGroupLocationFromCombinedRule(rule);
       const ruleUID = rule.rulerRule.grafana_alert.uid;
 
-      await pauseRule(ruleGroupId, ruleUID, newIsPaused);
+      await pauseRule.execute(ruleGroupId, ruleUID, newIsPaused);
     } catch (error) {
       notifyApp.error(`Failed to ${newIsPaused ? 'pause' : 'resume'} the rule: ${stringifyErrorLike(error)}`);
       return;
@@ -55,7 +56,7 @@ const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
     <Menu.Item
       label={title}
       icon={icon}
-      disabled={updateState.isLoading}
+      disabled={isLoading(updateState)}
       onClick={() => {
         setRulePause(!isPaused);
       }}

@@ -1,4 +1,4 @@
-import { DataHoverPayload } from '../events';
+import { DataHoverPayload } from '../events/common';
 import { eventFactory } from '../events/eventFactory';
 import { BusEventBase, BusEventWithPayload } from '../events/types';
 

@@ -20,7 +20,7 @@ export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, o
     <tr>
       <td>{getAvatar(item)}</td>
       <td>{getDescription(item)}</td>
-      <td>{item.isInherited && <em className="muted no-wrap">Inherited from folder</em>}</td>
+      <td>{item.isInherited && <em className={styles.inherited}>Inherited from folder</em>}</td>
       <td>
         <Select
           disabled={!canSet || !item.isManaged}
@@ -102,5 +102,9 @@ const getPermissionInfo = (p: ResourcePermission) => `Actions: ${[...new Set(p.a
 const getStyles = (theme: GrafanaTheme2) => ({
   warning: css({
     color: theme.colors.warning.main,
+  }),
+  inherited: css({
+    color: theme.colors.text.secondary,
+    flexWrap: 'nowrap',
   }),
 });

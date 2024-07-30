@@ -80,6 +80,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
         border: `solid 1px ${borderColor}`,
         borderRadius: theme.shape.borderRadius(2),
+
+        // Ensure we preserve whitespace, as otherwise it's not noticeable _at all_
+        // when rendering the matcher, and is only noticeable when editing
+        whiteSpace: 'pre',
       }),
     };
   },

@@ -9,10 +9,9 @@ import (
 )
 
 type dualWriterMetrics struct {
-	legacy      *prometheus.HistogramVec
-	storage     *prometheus.HistogramVec
-	outcome     *prometheus.HistogramVec
-	legacyReads *prometheus.CounterVec
+	legacy  *prometheus.HistogramVec
+	storage *prometheus.HistogramVec
+	outcome *prometheus.HistogramVec
 }
 
 // DualWriterStorageDuration is a metric summary for dual writer storage duration per mode
@@ -39,12 +38,6 @@ var DualWriterOutcome = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 	NativeHistogramBucketFactor: 1.1,
 }, []string{"mode", "name", "method"})
 
-var DualWriterReadLegacyCounts = prometheus.NewCounterVec(prometheus.CounterOpts{
-	Name:      "dual_writer_read_legacy_count",
-	Help:      "Histogram for the runtime of dual writer reads from legacy",
-	Namespace: "grafana",
-}, []string{"kind", "method"})
-
 func (m *dualWriterMetrics) init(reg prometheus.Registerer) {
 	log := klog.NewKlogr()
 	m.legacy = DualWriterLegacyDuration
@@ -58,24 +51,20 @@ func (m *dualWriterMetrics) init(reg prometheus.Registerer) {
 	}
 }
 
-func (m *dualWriterMetrics) recordLegacyDuration(isError bool, mode string, name string, method string, startFrom time.Time) {
+func (m *dualWriterMetrics) recordLegacyDuration(isError bool, mode string, kind string, method string, startFrom time.Time) {
 	duration := time.Since(startFrom).Seconds()
-	m.legacy.WithLabelValues(strconv.FormatBool(isError), mode, name, method).Observe(duration)
+	m.legacy.WithLabelValues(strconv.FormatBool(isError), mode, kind, method).Observe(duration)
 }
 
-func (m *dualWriterMetrics) recordStorageDuration(isError bool, mode string, name string, method string, startFrom time.Time) {
+func (m *dualWriterMetrics) recordStorageDuration(isError bool, mode string, kind string, method string, startFrom time.Time) {
 	duration := time.Since(startFrom).Seconds()
-	m.storage.WithLabelValues(strconv.FormatBool(isError), mode, name, method).Observe(duration)
+	m.storage.WithLabelValues(strconv.FormatBool(isError), mode, kind, method).Observe(duration)
 }
 
-func (m *dualWriterMetrics) recordOutcome(mode string, name string, outcome bool, method string) {
+func (m *dualWriterMetrics) recordOutcome(mode string, name string, areEqual bool, method string) {
 	var observeValue float64
-	if outcome {
+	if !areEqual {
 		observeValue = 1
 	}
 	m.outcome.WithLabelValues(mode, name, method).Observe(observeValue)
-}
-
-func (m *dualWriterMetrics) recordReadLegacyCount(kind string, method string) {
-	m.legacyReads.WithLabelValues(kind, method).Inc()
 }

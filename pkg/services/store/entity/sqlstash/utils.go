@@ -10,7 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
-	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 func createETag(body []byte, meta []byte, status []byte) string {
@@ -32,7 +32,7 @@ func getCurrentUser(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("%w: %w", ErrUserNotFoundInContext, err)
 	}
 
-	return user.GetUID().String(), nil
+	return user.GetUID(), nil
 }
 
 // ptrOr returns the first non-nil pointer in the list or a new non-nil pointer.

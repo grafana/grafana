@@ -170,29 +170,43 @@ curl --location --request POST '<grafana_url>/api/access-control/roles/' \
 
 By default, only a Grafana Server Admin can create and manage custom roles. If you want your `Editors` to do the same, [update the `Editor` basic role permissions]({{< ref "./manage-rbac-roles.md#update-basic-role-permissions" >}}). There are two ways to achieve this:
 
-- Add the `fixed:roles:writer` role permissions to the `basic:editor` role using the `role > from` list of your provisioning file:
+- Add the following permissions to the `basic:editor` role, using provisioning or the [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#update-a-role" >}}):
 
-```yaml
-apiVersion: 2
+  | action         | scope                       |
+  | -------------- | --------------------------- |
+  | `roles:read`   | `roles:*`                   |
+  | `roles:write`  | `permissions:type:delegate` |
+  | `roles:delete` | `permissions:type:delegate` |
 
-roles:
-  - name: 'basic:editor'
-    global: true
-    version: 3
-    from:
-      - name: 'basic:editor'
-        global: true
-      - name: 'fixed:roles:writer'
-        global: true
-```
+  As an example, here is a small bash script that fetches the role, modifies it using `jq` and updates it:
 
-- Or add the following permissions to the `basic:editor` role, using provisioning or the [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#update-a-role" >}}):
+  ```bash
+  # Fetch the role, modify it to add the desired permissions and increment its version
+  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
+    -X GET '<grafana_url>/api/access-control/roles/basic_editor' | \
+    jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
+    jq '.permissions += [{"action": "roles:read", "scope": "roles:*"}, {"action": "roles:write", "scope": "permissions:type:delegate"}, {"action": "roles:delete", "scope": "permissions:type:delegate"}]' > /tmp/basic_editor.json
 
-| action         | scope                       |
-| -------------- | --------------------------- |
-| `roles:read`   | `roles:*`                   |
-| `roles:write`  | `permissions:type:delegate` |
-| `roles:delete` | `permissions:type:delegate` |
+  # Update the role
+  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' -H 'Content-Type: application/json' \
+    -X PUT-d @/tmp/basic_editor.json '<grafana_url>/api/access-control/roles/basic_editor'
+  ```
+
+- Or add the `fixed:roles:writer` role permissions to the `basic:editor` role using the `role > from` list of your provisioning file:
+
+  ```yaml
+  apiVersion: 2
+
+  roles:
+    - name: 'basic:editor'
+      global: true
+      version: 3
+      from:
+        - name: 'basic:editor'
+          global: true
+        - name: 'fixed:roles:writer'
+          global: true
+  ```
 
 > **Note:** Any user or service account with the ability to modify roles can only create, update, or delete roles with permissions they have been granted. For example, a user with the `Editor` role would be able to create and manage roles only with the permissions they have or with a subset of them.
 
@@ -200,32 +214,46 @@ roles:
 
 If you want your `Viewers` to create reports, [update the `Viewer` basic role permissions]({{< ref "./manage-rbac-roles.md#update-basic-role-permissions" >}}). There are two ways to achieve this:
 
-- Add the `fixed:reports:writer` role permissions to the `basic:viewer` role using the `role > from` list of your provisioning file:
-
-```yaml
-apiVersion: 2
-
-roles:
-  - name: 'basic:viewer'
-    global: true
-    version: 3
-    from:
-      - name: 'basic:viewer'
-        global: true
-      - name: 'fixed:reports:writer'
-        global: true
-```
-
-> **Note:** The `fixed:reports:writer` role assigns more permissions than just creating reports. For more information about fixed role permission assignments, refer to [Fixed role definitions]({{< relref "./rbac-fixed-basic-role-definitions/#fixed-role-definitions" >}}).
-
 - Add the following permissions to the `basic:viewer` role, using provisioning or the [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#update-a-role" >}}):
 
-| Action           | Scope                           |
-| ---------------- | ------------------------------- |
-| `reports:create` | n/a                             |
-| `reports:write`  | `reports:*` <br> `reports:id:*` |
-| `reports:read`   | `reports:*`                     |
-| `reports:send`   | `reports:*`                     |
+  | Action           | Scope                           |
+  | ---------------- | ------------------------------- |
+  | `reports:create` | n/a                             |
+  | `reports:write`  | `reports:*` <br> `reports:id:*` |
+  | `reports:read`   | `reports:*`                     |
+  | `reports:send`   | `reports:*`                     |
+
+  As an example, here is a small bash script that fetches the role, modifies it using `jq` and updates it:
+
+  ```bash
+  # Fetch the role, modify it to add the desired permissions and increment its version
+  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
+    -X GET '<grafana_url>/api/access-control/roles/basic_viewer' | \
+    jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
+    jq '.permissions += [{"action": "reports:create"}, {"action": "reports:read", "scope": "reports:*"}, {"action": "reports:write", "scope": "reports:*"}, {"action": "reports:send", "scope": "reports:*"}]' > /tmp/basic_viewer.json
+
+  # Update the role
+  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' -H 'Content-Type: application/json' \
+    -X PUT-d @/tmp/basic_viewer.json '<grafana_url>/api/access-control/roles/basic_viewer'
+  ```
+
+- Or add the `fixed:reports:writer` role permissions to the `basic:viewer` role using the `role > from` list of your provisioning file:
+
+  ```yaml
+  apiVersion: 2
+
+  roles:
+    - name: 'basic:viewer'
+      global: true
+      version: 3
+      from:
+        - name: 'basic:viewer'
+          global: true
+        - name: 'fixed:reports:writer'
+          global: true
+  ```
+
+> **Note:** The `fixed:reports:writer` role assigns more permissions than just creating reports. For more information about fixed role permission assignments, refer to [Fixed role definitions]({{< relref "./rbac-fixed-basic-role-definitions/#fixed-role-definitions" >}}).
 
 ### Prevent a Grafana Admin from creating and inviting users
 
@@ -239,27 +267,41 @@ The permissions to remove are:
 
 There are two ways to achieve this:
 
-- Use the `role > from` list and `permission > state` option of your provisioning file:
+- Use [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#update-a-role" >}}).
 
-```yaml
-apiVersion: 2
+  As an example, here is a small bash script that fetches the role, modifies it using `jq` and updates it:
 
-roles:
-  - name: 'basic:editor'
-    global: true
-    version: 3
-    from:
-      - name: 'basic:editor'
-        global: true
-    permissions:
-      - action: 'users:create'
-        state: 'absent'
-      - action: 'org.users:add'
-        scope: 'users:*'
-        state: 'absent'
-```
+  ```bash
+  # Fetch the role, modify it to remove the undesired permissions and increment its version
+  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
+    -X GET '<grafana_url>/api/access-control/roles/basic_grafana_admin' | \
+    jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
+    jq 'del(.permissions[] | select (.action == "users:create")) | del(.permissions[] | select (.action == "org.users:add" and .scope == "users:*"))' > /tmp/basic_grafana_admin.json
 
-- Or use [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#update-a-role" >}}).
+  # Update the role
+  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' -H 'Content-Type: application/json' \
+    -X PUT-d @/tmp/basic_grafana_admin.json '<grafana_url>/api/access-control/roles/basic_grafana_admin'
+  ```
+
+- Or use the `role > from` list and `permission > state` option of your provisioning file:
+
+  ```yaml
+  apiVersion: 2
+
+  roles:
+    - name: 'basic:grafana_admin'
+      global: true
+      version: 3
+      from:
+        - name: 'basic:grafana_admin'
+          global: true
+      permissions:
+        - action: 'users:create'
+          state: 'absent'
+        - action: 'org.users:add'
+          scope: 'users:*'
+          state: 'absent'
+  ```
 
 ### Prevent Viewers from accessing an App Plugin
 
@@ -287,29 +329,44 @@ If you want to revoke their access to the On Call App plugin, you need to:
 
 Here are two ways to achieve this:
 
-- Use the `role > from` list and `permission > state` option of your provisioning file:
+- Use [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#update-a-role" >}}).
 
-```yaml
----
-apiVersion: 2
+  As an example, here is a small bash script that fetches the role, modifies it using `jq` and updates it:
 
-roles:
-  - name: 'basic:viewer'
-    version: 8
-    global: true
-    from:
-      - name: 'basic:viewer'
-        global: true
-    permissions:
-      - action: 'plugins.app:access'
-        scope: 'plugins:*'
-        state: 'absent'
-      - action: 'plugins.app:access'
-        scope: 'plugins:id:kentik-connect-app'
-        state: 'present'
-```
+  ```bash
+  # Fetch the role, modify it to remove the undesired permissions, add the new permission and increment its version
+  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
+    -X GET '<grafana_url>/api/access-control/roles/basic_viewer' | \
+    jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
+    jq 'del(.permissions[] | select (.action == "plugins.app:access" and .scope == "plugins:*"))' | \
+    jq '.permissions += [{"action": "plugins.app:access", "scope": "plugins:id:kentik-connect-app"}]' > /tmp/basic_viewer.json
 
-- Or use [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#update-a-role" >}}).
+  # Update the role
+  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' -H 'Content-Type: application/json' \
+    -X PUT-d @/tmp/basic_viewer.json '<grafana_url>/api/access-control/roles/basic_viewer'
+  ```
+
+- Or use the `role > from` list and `permission > state` option of your provisioning file:
+
+  ```yaml
+  ---
+  apiVersion: 2
+
+  roles:
+    - name: 'basic:viewer'
+      version: 8
+      global: true
+      from:
+        - name: 'basic:viewer'
+          global: true
+      permissions:
+        - action: 'plugins.app:access'
+          scope: 'plugins:*'
+          state: 'absent'
+        - action: 'plugins.app:access'
+          scope: 'plugins:id:kentik-connect-app'
+          state: 'present'
+  ```
 
 ### Manage user permissions through teams
 
