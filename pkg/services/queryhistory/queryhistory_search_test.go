@@ -262,10 +262,11 @@ func TestIntegrationGetQueriesFromQueryHistory(t *testing.T) {
 			require.Equal(t, 0, response.Result.TotalCount)
 		})
 
-	testScenario(t, "When user is viewer, return 401", true, false,
+	testScenario(t, "When user is viewer and has no RBAC permissions, return 401", true, false,
 		func(t *testing.T, sc scenarioContext) {
 			sc.reqContext.Req.Form.Add("datasourceUid", "test")
-			resp := sc.service.searchHandler(sc.reqContext)
+			permissionsMiddlewareCallback := sc.service.permissionsMiddleware(sc.service.searchHandler, "Failed to get query history")
+			resp := permissionsMiddlewareCallback(sc.reqContext)
 			require.Equal(t, 401, resp.Status())
 		})
 
