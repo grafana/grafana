@@ -18,10 +18,8 @@ import (
 	"gocloud.dev/blob"
 	_ "gocloud.dev/blob/fileblob"
 	_ "gocloud.dev/blob/memblob"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type CDKBackendOptions struct {
@@ -135,7 +133,7 @@ func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64
 	return rv, err
 }
 
-func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
+func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *ReadResponse {
 	rv := req.ResourceVersion
 
 	path := s.getPath(req.Key, rv)
@@ -163,15 +161,15 @@ func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) (*ReadResponse,
 	raw, err := s.bucket.ReadAll(ctx, path)
 	if raw == nil && req.ResourceVersion > 0 {
 		if req.ResourceVersion > s.rv.Load() {
-			return nil, &apierrors.StatusError{
-				ErrStatus: metav1.Status{
-					Reason:  metav1.StatusReasonTimeout, // match etcd behavior
+			return &ReadResponse{
+				Error: &ErrorResult{
 					Code:    http.StatusGatewayTimeout,
+					Reason:  string(metav1.StatusReasonTimeout), // match etcd behavior
 					Message: "ResourceVersion is larger than max",
-					Details: &metav1.StatusDetails{
-						Causes: []metav1.StatusCause{
+					Details: &ErrorDetails{
+						Causes: []*ErrorCause{
 							{
-								Type:    metav1.CauseTypeResourceVersionTooLarge,
+								Reason:  string(metav1.CauseTypeResourceVersionTooLarge),
 								Message: fmt.Sprintf("requested: %d, current %d", req.ResourceVersion, s.rv.Load()),
 							},
 						},
@@ -181,7 +179,7 @@ func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) (*ReadResponse,
 		}
 
 		// If the there was an explicit request, get the latest
-		rsp, _ := s.Read(ctx, &ReadRequest{Key: req.Key})
+		rsp := s.ReadResource(ctx, &ReadRequest{Key: req.Key})
 		if rsp != nil && len(rsp.Value) > 0 {
 			raw = rsp.Value
 			rv = rsp.ResourceVersion
@@ -192,15 +190,12 @@ func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) (*ReadResponse,
 		raw = nil
 	}
 	if raw == nil {
-		return nil, apierrors.NewNotFound(schema.GroupResource{
-			Group:    req.Key.Group,
-			Resource: req.Key.Resource,
-		}, req.Key.Name)
+		return &ReadResponse{Error: NewNotFoundError(req.Key)}
 	}
 	return &ReadResponse{
 		ResourceVersion: rv,
 		Value:           raw,
-	}, err
+	}
 }
 
 func isDeletedMarker(raw []byte) bool {

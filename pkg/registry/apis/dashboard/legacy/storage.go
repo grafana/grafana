@@ -123,13 +123,15 @@ func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid 
 }
 
 // Read implements ResourceStoreServer.
-func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResponse, error) {
+func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.ReadResponse {
+	rsp := &resource.ReadResponse{}
 	info, err := request.ParseNamespace(req.Key.Namespace)
 	if err == nil {
 		err = isDashboardKey(req.Key, true)
 	}
 	if err != nil {
-		return nil, err
+		rsp.Error = resource.AsErrorResult(err)
+		return rsp
 	}
 	version := int64(0)
 	if req.ResourceVersion > 0 {
@@ -138,21 +140,21 @@ func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest
 
 	dash, rv, err := a.GetDashboard(ctx, info.OrgID, req.Key.Name, version)
 	if err != nil {
-		return nil, err
+		rsp.Error = resource.AsErrorResult(err)
+		return rsp
 	}
 	if dash == nil {
-		return &resource.ReadResponse{
-			Error: &resource.ErrorResult{
-				Code: http.StatusNotFound,
-			},
-		}, err
+		rsp.Error = &resource.ErrorResult{
+			Code: http.StatusNotFound,
+		}
 	}
 
-	value, err := json.Marshal(dash)
-	return &resource.ReadResponse{
-		ResourceVersion: rv,
-		Value:           value,
-	}, err
+	rsp.ResourceVersion = rv
+	rsp.Value, err = json.Marshal(dash)
+	if err != nil {
+		rsp.Error = resource.AsErrorResult(err)
+	}
+	return rsp
 }
 
 // List implements AppendingStore.
@@ -218,6 +220,11 @@ func (a *dashboardSqlAccess) WatchWriteEvents(ctx context.Context) (<-chan *reso
 		a.subscribers = subs
 	}()
 	return stream, nil
+}
+
+// Simple wrapper for index implementation
+func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResponse, error) {
+	return a.ReadResource(ctx, req), nil
 }
 
 func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryRequest) (*resource.HistoryResponse, error) {

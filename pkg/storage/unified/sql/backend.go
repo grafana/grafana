@@ -17,8 +17,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/protobuf/proto"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const trace_prefix = "sql.resource."
@@ -295,7 +293,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	return newVersion, err
 }
 
-func (b *backend) Read(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResponse, error) {
+func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.ReadResponse {
 	_, span := b.tracer.Start(ctx, trace_prefix+".Read")
 	defer span.End()
 
@@ -315,15 +313,14 @@ func (b *backend) Read(ctx context.Context, req *resource.ReadRequest) (*resourc
 
 	res, err := dbutil.QueryRow(ctx, b.db, sr, readReq)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, apierrors.NewNotFound(schema.GroupResource{
-			Group:    req.Key.Group,
-			Resource: req.Key.Resource,
-		}, req.Key.Name)
+		return &resource.ReadResponse{
+			Error: resource.NewNotFoundError(req.Key),
+		}
 	} else if err != nil {
-		return nil, fmt.Errorf("get resource version: %w", err)
+		return &resource.ReadResponse{Error: resource.AsErrorResult(err)}
 	}
 
-	return &res.ReadResponse, nil
+	return &res.ReadResponse
 }
 
 func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest) (int64, resource.ListIterator, error) {

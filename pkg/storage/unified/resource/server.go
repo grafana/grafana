@@ -3,7 +3,6 @@ package resource
 import (
 	context "context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -20,16 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// Package-level errors.
-var (
-	ErrNotFound                 = errors.New("resource not found")
-	ErrOptimisticLockingFailed  = errors.New("optimistic locking failed")
-	ErrUserNotFoundInContext    = errors.New("user not found in context")
-	ErrUnableToReadResourceJSON = errors.New("unable to read resource json")
-	ErrNotImplementedYet        = errors.New("not implemented yet")
-)
-
-// ResourceServer implements all services
+// ResourceServer implements all gRPC services
 type ResourceServer interface {
 	ResourceStoreServer
 	ResourceIndexServer
@@ -73,8 +63,8 @@ type StorageBackend interface {
 	// Return the revisionVersion for this event or error
 	WriteEvent(context.Context, WriteEvent) (int64, error)
 
-	// Read a value from storage optionally at an explicit version
-	Read(context.Context, *ReadRequest) (*ReadResponse, error)
+	// Read a resource from storage optionally at an explicit version
+	ReadResource(context.Context, *ReadRequest) *ReadResponse
 
 	// When the ResourceServer executes a List request, this iterator will
 	// query the backend for potential results.  All results will be
@@ -321,7 +311,7 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	}
 
 	rsp := &CreateResponse{}
-	found, _ := s.backend.Read(ctx, &ReadRequest{Key: req.Key})
+	found := s.backend.ReadResource(ctx, &ReadRequest{Key: req.Key})
 	if found != nil && len(found.Value) > 0 {
 		rsp.Error = &ErrorResult{
 			Code:    http.StatusConflict,
@@ -332,54 +322,15 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 
 	event, err := s.newEvent(ctx, req.Key, req.Value, nil)
 	if err != nil {
-		rsp.Error, err = errToStatus(err)
-		return rsp, err
+		rsp.Error = AsErrorResult(err)
+		return rsp, nil
 	}
 
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
-		rsp.Error, err = errToStatus(err)
+		rsp.Error = AsErrorResult(err)
 	}
-	return rsp, err
-}
-
-// Convert golang errors to status result errors that can be returned to a client
-func errToStatus(err error) (*ErrorResult, error) {
-	if err != nil {
-		apistatus, ok := err.(apierrors.APIStatus)
-		if ok {
-			s := apistatus.Status()
-			res := &ErrorResult{
-				Message: s.Message,
-				Reason:  string(s.Reason),
-				Code:    s.Code,
-			}
-			if s.Details != nil {
-				res.Details = &ErrorDetails{
-					Group:             s.Details.Group,
-					Kind:              s.Details.Kind,
-					Name:              s.Details.Name,
-					Uid:               string(s.Details.UID),
-					RetryAfterSeconds: s.Details.RetryAfterSeconds,
-				}
-				for _, c := range s.Details.Causes {
-					res.Details.Causes = append(res.Details.Causes, &ErrorCause{
-						Reason:  string(c.Type),
-						Message: c.Message,
-						Field:   c.Field,
-					})
-				}
-			}
-			return res, nil
-		}
-
-		// TODO... better conversion??
-		return &ErrorResult{
-			Message: err.Error(),
-			Code:    500,
-		}, nil
-	}
-	return nil, err
+	return rsp, nil
 }
 
 func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateResponse, error) {
@@ -392,18 +343,19 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 
 	rsp := &UpdateResponse{}
 	if req.ResourceVersion < 0 {
-		rsp.Error, _ = errToStatus(apierrors.NewBadRequest("update must include the previous version"))
+		rsp.Error = AsErrorResult(apierrors.NewBadRequest("update must include the previous version"))
 		return rsp, nil
 	}
 
-	latest, err := s.backend.Read(ctx, &ReadRequest{
+	latest := s.backend.ReadResource(ctx, &ReadRequest{
 		Key: req.Key,
 	})
-	if err != nil {
-		return nil, err
+	if latest.Error != nil {
+		return rsp, nil
 	}
 	if latest.Value == nil {
-		return nil, apierrors.NewBadRequest("current value does not exist")
+		rsp.Error = NewBadRequestError("current value does not exist")
+		return rsp, nil
 	}
 
 	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
@@ -412,7 +364,7 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 
 	event, err := s.newEvent(ctx, req.Key, req.Value, latest.Value)
 	if err != nil {
-		rsp.Error, err = errToStatus(err)
+		rsp.Error = AsErrorResult(err)
 		return rsp, err
 	}
 
@@ -420,11 +372,10 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 	event.PreviousRV = latest.ResourceVersion
 
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
-	rsp.Error, err = errToStatus(err)
 	if err != nil {
-		rsp.Error, err = errToStatus(err)
+		rsp.Error = AsErrorResult(err)
 	}
-	return rsp, err
+	return rsp, nil
 }
 
 func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteResponse, error) {
@@ -440,14 +391,16 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 		return nil, apierrors.NewBadRequest("update must include the previous version")
 	}
 
-	latest, err := s.backend.Read(ctx, &ReadRequest{
+	latest := s.backend.ReadResource(ctx, &ReadRequest{
 		Key: req.Key,
 	})
-	if err != nil {
-		return nil, err
+	if latest.Error != nil {
+		rsp.Error = latest.Error
+		return rsp, nil
 	}
 	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
-		return nil, ErrOptimisticLockingFailed
+		rsp.Error = AsErrorResult(ErrOptimisticLockingFailed)
+		return rsp, nil
 	}
 
 	now := metav1.NewTime(time.UnixMilli(s.now()))
@@ -487,8 +440,10 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	}
 
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
-	rsp.Error, err = errToStatus(err)
-	return rsp, err
+	if err != nil {
+		rsp.Error = AsErrorResult(err)
+	}
+	return rsp, nil
 }
 
 func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
@@ -497,22 +452,16 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 	}
 
 	// if req.Key.Group == "" {
-	// 	status, _ := errToStatus(apierrors.NewBadRequest("missing group"))
+	// 	status, _ := AsErrorResult(apierrors.NewBadRequest("missing group"))
 	// 	return &ReadResponse{Status: status}, nil
 	// }
 	if req.Key.Resource == "" {
-		status, _ := errToStatus(apierrors.NewBadRequest("missing resource"))
-		return &ReadResponse{Error: status}, nil
+		return &ReadResponse{Error: NewBadRequestError("missing resource")}, nil
 	}
 
-	rsp, err := s.backend.Read(ctx, req)
-	if err != nil {
-		if rsp == nil {
-			rsp = &ReadResponse{}
-		}
-		rsp.Error, err = errToStatus(err)
-	}
-	return rsp, err
+	rsp := s.backend.ReadResource(ctx, req)
+	// TODO, check folder permissions etc
+	return rsp, nil
 }
 
 func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, error) {
@@ -525,7 +474,8 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 	rsp := &ListResponse{}
 	rv, iter, err := s.backend.ListIterator(ctx, req)
 	if err != nil {
-		return nil, err
+		rsp.Error = AsErrorResult(err)
+		return rsp, nil
 	}
 
 	defer func() {
@@ -534,9 +484,11 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 		}
 	}()
 
+	rsp.ResourceVersion = rv
 	for iter.Next() {
 		if err = iter.Error(); err != nil {
-			return nil, err
+			rsp.Error = AsErrorResult(err)
+			return rsp, nil
 		}
 
 		item := &ResourceWrapper{
@@ -556,10 +508,10 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 	}
 
 	if err = iter.Error(); err != nil {
-		return nil, err
+		rsp.Error = AsErrorResult(err)
+		return rsp, nil
 	}
 
-	rsp.ResourceVersion = rv
 	return rsp, err
 }
 

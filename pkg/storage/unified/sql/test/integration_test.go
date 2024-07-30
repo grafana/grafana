@@ -96,18 +96,18 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 	})
 
 	t.Run("Read latest item 2", func(t *testing.T) {
-		resp, err := backend.Read(ctx, &resource.ReadRequest{Key: resourceKey("item2")})
-		require.NoError(t, err)
+		resp := backend.ReadResource(ctx, &resource.ReadRequest{Key: resourceKey("item2")})
+		require.Nil(t, resp.Error)
 		require.Equal(t, int64(4), resp.ResourceVersion)
 		require.Equal(t, "item2 MODIFIED", string(resp.Value))
 	})
 
 	t.Run("Read early version of item2", func(t *testing.T) {
-		resp, err := backend.Read(ctx, &resource.ReadRequest{
+		resp := backend.ReadResource(ctx, &resource.ReadRequest{
 			Key:             resourceKey("item2"),
 			ResourceVersion: 3, // item2 was created at rv=2 and updated at rv=4
 		})
-		require.NoError(t, err)
+		require.Nil(t, resp.Error)
 		require.Equal(t, int64(2), resp.ResourceVersion)
 		require.Equal(t, "item2 ADDED", string(resp.Value))
 	})
@@ -123,6 +123,7 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
+		require.Nil(t, resp.Error)
 		require.Len(t, resp.Items, 2)
 		require.Equal(t, "item2 MODIFIED", string(resp.Items[0].Value))
 		require.Equal(t, "item3 ADDED", string(resp.Items[1].Value))
@@ -205,6 +206,7 @@ func TestIntegrationBackendPrepareList(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
+		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 5)
 		// should be sorted by resource version DESC
 		require.Equal(t, "item6 ADDED", string(res.Items[0].Value))
@@ -227,6 +229,7 @@ func TestIntegrationBackendPrepareList(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
+		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 3)
 		continueToken, err := sql.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
@@ -247,6 +250,7 @@ func TestIntegrationBackendPrepareList(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
+		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 4)
 		require.Equal(t, "item4 ADDED", string(res.Items[0].Value))
 		require.Equal(t, "item3 ADDED", string(res.Items[1].Value))
@@ -267,6 +271,8 @@ func TestIntegrationBackendPrepareList(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 3)
 		t.Log(res.Items)
 		require.Equal(t, "item2 MODIFIED", string(res.Items[0].Value))
@@ -293,6 +299,7 @@ func TestIntegrationBackendPrepareList(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
+		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 2)
 		require.Equal(t, "item5 ADDED", string(res.Items[0].Value))
 		require.Equal(t, "item4 ADDED", string(res.Items[1].Value))
