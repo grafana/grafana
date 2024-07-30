@@ -26,9 +26,10 @@ You can use Explore to query and visualize traces from tracing data sources. Sup
 
 Here are some references to learn more about traces and how you can use them:  
 
-- [Get started with Grafana Tempo](docs/<TEMPO_VERSION>/latest/getting-started/)
+- [Introduction to tracing](https://grafana.com/docs/tempo/<TEMPO_VERSION>/introduction/)
 - [Trace structure](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/trace-structure/#trace-structure)
-- [How TraceQL works](/docs/tempo/<TEMPO_VERSION>/traceql/architecture/)
+- [Traces and telemetry](https://grafana.com/docs/tempo/<TEMPO_VERSION>/introduction/telemetry/)
+- [Using traces to find solutions to problems](https://grafana.com/docs/tempo/<TEMPO_VERSION>/introduction/solutions-with-traces/)
 - [Best practices for tracing](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/tracing-best-practices/)
 
 
