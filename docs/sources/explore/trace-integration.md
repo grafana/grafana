@@ -134,7 +134,8 @@ Click the document icon to open a split view in Explore with the configured data
 
 ### Trace to metrics
 
-You can navigate from a span in a trace view directly to metrics relevant for that span. This feature is available for the Tempo, Jaeger, and Zipkin data sources.
+You can navigate from a span in a trace view directly to metrics relevant for that span.
+This feature is available for the Tempo, Jaeger, and Zipkin data sources.
 
 Refer to each individual data source's documentation for configuration instructions.
 For Tempo, refer to [Trace to metrics configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#trace-to-metrics).
