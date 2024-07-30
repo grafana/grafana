@@ -58,7 +58,7 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 	ctx := testutil.NewDefaultTestContext(t)
 	store := newServer(t)
 
-	stream, err := store.WatchWriteEvents(ctx)
+	stream, err := store.WatchWriteEvents(context.Background()) // Using a different context to avoid canceling the stream after the DefaultContextTimeout
 	require.NoError(t, err)
 
 	t.Run("Add 3 resources", func(t *testing.T) {
@@ -161,7 +161,7 @@ func TestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T) {
 	require.NoError(t, err)
 
 	// Start the watch
-	stream, err := store.WatchWriteEvents(ctx)
+	stream, err := store.WatchWriteEvents(context.Background()) // Using a different context to avoid canceling the stream after the DefaultContextTimeout
 	require.NoError(t, err)
 
 	// Create one more event
