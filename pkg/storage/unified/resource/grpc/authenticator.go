@@ -39,14 +39,14 @@ func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, erro
 	if !ok {
 		return nil, fmt.Errorf("no metadata found")
 	}
-	user, err := f.DecodeMetadata(ctx, md)
+	user, err := f.decodeMetadata(ctx, md)
 	if err != nil {
 		return nil, err
 	}
 	return identity.WithRequester(ctx, user), nil
 }
 
-func (f *Authenticator) DecodeMetadata(ctx context.Context, meta metadata.MD) (identity.Requester, error) {
+func (f *Authenticator) decodeMetadata(ctx context.Context, meta metadata.MD) (identity.Requester, error) {
 	// Avoid NPE/panic with getting keys
 	getter := func(key string) string {
 		v := meta.Get(key)
@@ -76,7 +76,7 @@ func (f *Authenticator) DecodeMetadata(ctx context.Context, meta metadata.MD) (i
 	// TODO, remove after this has been deployed to unified storage
 	if getter(mdUserID) == "" {
 		var err error
-		user.Namespace = identity.NamespaceUser
+		user.Type = identity.TypeUser
 		user.UserID, err = strconv.ParseInt(getter("grafana-userid"), 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("invalid user id: %w", err)
@@ -88,17 +88,17 @@ func (f *Authenticator) DecodeMetadata(ctx context.Context, meta metadata.MD) (i
 		return user, nil
 	}
 
-	ns, err := identity.ParseNamespaceID(getter(mdUserID))
+	ns, err := identity.ParseTypedID(getter(mdUserID))
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
-	user.Namespace = ns.Namespace()
+	user.Type = ns.Type()
 	user.UserID, err = ns.ParseInt()
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
 
-	ns, err = identity.ParseNamespaceID(getter(mdUserUID))
+	ns, err = identity.ParseTypedID(getter(mdUserUID))
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
@@ -150,7 +150,7 @@ func encodeIdentityInMetadata(user identity.Requester) metadata.MD {
 
 		// Or we can create it directly
 		mdUserID, user.GetID().String(),
-		mdUserUID, user.GetUID().String(),
+		mdUserUID, user.GetUID(),
 		mdOrgName, user.GetOrgName(),
 		mdOrgID, strconv.FormatInt(user.GetOrgID(), 10),
 		mdOrgRole, string(user.GetOrgRole()),
@@ -158,6 +158,6 @@ func encodeIdentityInMetadata(user identity.Requester) metadata.MD {
 
 		// TODO, Remove after this is deployed to unified storage
 		"grafana-userid", user.GetID().ID(),
-		"grafana-useruid", user.GetUID().ID(),
+		"grafana-useruid", user.GetRawIdentifier(),
 	)
 }

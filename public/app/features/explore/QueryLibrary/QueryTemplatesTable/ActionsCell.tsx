@@ -11,6 +11,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import ExploreRunQueryButton from '../../ExploreRunQueryButton';
 import { QueryTemplateForm } from '../QueryTemplateForm';
+import { useQueriesDrawerContext } from '../../QueriesDrawer/QueriesDrawerContext';
 
 import { useQueryLibraryListStyles } from './styles';
 import { QueryTemplateRow } from './types';
@@ -24,6 +25,7 @@ interface ActionsCellProps {
 function ActionsCell({ queryTemplate, rootDatasourceUid, queryUid }: ActionsCellProps) {
   const [deleteQueryTemplate] = useDeleteQueryTemplateMutation();
   const [editFormOpen, setEditFormOpen] = useState(false);
+  const { setDrawerOpened } = useQueriesDrawerContext();
   const styles = useQueryLibraryListStyles();
 
   const onDeleteQuery = (queryUid: string) => {
@@ -88,6 +90,11 @@ function ActionsCell({ queryTemplate, rootDatasourceUid, queryUid }: ActionsCell
           }}
         />
       </Modal>
+      <ExploreRunQueryButton
+        queries={queryTemplate.query ? [queryTemplate.query] : []}
+        rootDatasourceUid={rootDatasourceUid}
+        onClick={() => setDrawerOpened(false)}
+      />
     </div>
   );
 }

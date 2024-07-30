@@ -21,9 +21,9 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -89,11 +89,6 @@ func (b *SnapshotsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return resourceInfo.GroupVersion()
 }
 
-func (b *SnapshotsAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
-	return grafanarest.Mode0
-}
-
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&dashboardsnapshot.DashboardSnapshot{},
@@ -130,8 +125,7 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
-	_ grafanarest.DualWriterMode,
-	_ prometheus.Registerer,
+	_ grafanarest.DualWriteBuilder,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(dashboardsnapshot.GROUP, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
@@ -253,7 +247,7 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 					},
 				},
 				Handler: func(w http.ResponseWriter, r *http.Request) {
-					user, err := appcontext.User(r.Context())
+					user, err := identity.GetRequester(r.Context())
 					if err != nil {
 						errhttp.Write(r.Context(), err, w)
 						return
@@ -264,7 +258,7 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 							Req:  r,
 							Resp: web.NewResponseWriter(r.Method, w),
 						},
-						SignedInUser: user,
+						// SignedInUser: user, ????????????
 					}
 
 					vars := mux.Vars(r)
@@ -273,9 +267,9 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 						wrap.JsonApiErr(http.StatusBadRequest, "expected namespace", nil)
 						return
 					}
-					if info.OrgID != user.OrgID {
+					if info.OrgID != user.GetOrgID() {
 						wrap.JsonApiErr(http.StatusBadRequest,
-							fmt.Sprintf("user orgId does not match namespace (%d != %d)", info.OrgID, user.OrgID), nil)
+							fmt.Sprintf("user orgId does not match namespace (%d != %d)", info.OrgID, user.GetOrgID()), nil)
 						return
 					}
 

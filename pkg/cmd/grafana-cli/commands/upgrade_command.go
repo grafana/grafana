@@ -35,7 +35,7 @@ func upgradeCommand(c utils.CommandLine) error {
 			return fmt.Errorf("failed to remove plugin '%s': %w", pluginID, err)
 		}
 
-		err = installPlugin(ctx, pluginID, "", c)
+		err = installPlugin(ctx, pluginID, "", newInstallPluginOpts(c))
 		if err == nil {
 			logRestartNotice()
 		}

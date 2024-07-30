@@ -27,7 +27,7 @@ func TestIntegrationAuthorize(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sql, cfg := db.InitTestDBWithCfg(t)
+	sql, cfg := db.InitTestReplDBWithCfg(t)
 
 	dash1 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
 		UserID: 1,

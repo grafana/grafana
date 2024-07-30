@@ -1,8 +1,8 @@
 package receiver
 
 import (
+	"encoding/json"
 	"fmt"
-	"hash/fnv"
 
 	"github.com/prometheus/alertmanager/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,12 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 )
 
 func getUID(t definitions.GettableApiReceiver) string {
-	sum := fnv.New64()
-	_, _ = sum.Write([]byte(t.Name))
-	return fmt.Sprintf("%016x", sum.Sum64())
+	return legacy_storage.NameToUid(t.Name)
 }
 
 func convertToK8sResources(orgID int64, receivers []definitions.GettableApiReceiver, namespacer request.NamespaceMapper) (*model.ReceiverList, error) {
@@ -48,7 +47,7 @@ func convertToK8sResource(orgID int64, receiver definitions.GettableApiReceiver,
 			Uid:                   &integration.UID,
 			Type:                  integration.Type,
 			DisableResolveMessage: &integration.DisableResolveMessage,
-			Settings:              integration.Settings,
+			Settings:              json.RawMessage(integration.Settings),
 			SecureFields:          integration.SecureFields,
 		})
 	}
@@ -83,7 +82,7 @@ func convertToDomainModel(receiver *model.Receiver) (definitions.GettableApiRece
 		grafanaIntegration := definitions.GettableGrafanaReceiver{
 			Name:         receiver.Spec.Title,
 			Type:         integration.Type,
-			Settings:     integration.Settings,
+			Settings:     definitions.RawMessage(integration.Settings),
 			SecureFields: integration.SecureFields,
 			//Provenance:   "", //TODO: Convert provenance?
 		}

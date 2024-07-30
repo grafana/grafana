@@ -1,7 +1,7 @@
 import { ArrayDataFrame } from '../dataframe/ArrayDataFrame';
 import { createDataFrame, toDataFrame } from '../dataframe/processDataFrame';
 import { relativeToTimeRange } from '../datetime/rangeutil';
-import { createTheme } from '../themes';
+import { createTheme } from '../themes/createTheme';
 import { FieldMatcherID } from '../transformations/matchers/ids';
 import { ScopedVars } from '../types/ScopedVars';
 import { GrafanaConfig } from '../types/config';

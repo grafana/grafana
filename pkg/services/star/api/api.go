@@ -47,8 +47,8 @@ func (api *API) getDashboardHelper(ctx context.Context, orgID int64, id int64, u
 }
 
 func (api *API) GetStars(c *contextmodel.ReqContext) response.Response {
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
-	if namespace != identity.NamespaceUser && namespace != identity.NamespaceServiceAccount {
+	namespace, identifier := c.SignedInUser.GetTypedID()
+	if namespace != identity.TypeUser && namespace != identity.TypeServiceAccount {
 		return response.Error(http.StatusBadRequest, "Only users and service accounts can star dashboards", nil)
 	}
 
@@ -101,8 +101,8 @@ func (api *API) GetStars(c *contextmodel.ReqContext) response.Response {
 // 403: forbiddenError
 // 500: internalServerError
 func (api *API) StarDashboard(c *contextmodel.ReqContext) response.Response {
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
-	if namespace != identity.NamespaceUser && namespace != identity.NamespaceServiceAccount {
+	namespace, identifier := c.SignedInUser.GetTypedID()
+	if namespace != identity.TypeUser && namespace != identity.TypeServiceAccount {
 		return response.Error(http.StatusBadRequest, "Only users and service accounts can star dashboards", nil)
 	}
 
@@ -146,8 +146,8 @@ func (api *API) StarDashboardByUID(c *contextmodel.ReqContext) response.Response
 		return response.Error(http.StatusBadRequest, "Invalid dashboard UID", nil)
 	}
 
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
-	if namespace != identity.NamespaceUser && namespace != identity.NamespaceServiceAccount {
+	namespace, identifier := c.SignedInUser.GetTypedID()
+	if namespace != identity.TypeUser && namespace != identity.TypeServiceAccount {
 		return response.Error(http.StatusBadRequest, "Only users and service accounts can star dashboards", nil)
 	}
 
@@ -193,8 +193,8 @@ func (api *API) UnstarDashboard(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "Invalid dashboard ID", nil)
 	}
 
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
-	if namespace != identity.NamespaceUser && namespace != identity.NamespaceServiceAccount {
+	namespace, identifier := c.SignedInUser.GetTypedID()
+	if namespace != identity.TypeUser && namespace != identity.TypeServiceAccount {
 		return response.Error(http.StatusBadRequest, "Only users and service accounts can star dashboards", nil)
 	}
 
@@ -233,8 +233,8 @@ func (api *API) UnstarDashboardByUID(c *contextmodel.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "Invalid dashboard UID", nil)
 	}
 
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
-	if namespace != identity.NamespaceUser && namespace != identity.NamespaceServiceAccount {
+	namespace, identifier := c.SignedInUser.GetTypedID()
+	if namespace != identity.TypeUser && namespace != identity.TypeServiceAccount {
 		return response.Error(http.StatusBadRequest, "Only users and service accounts can star dashboards", nil)
 	}
 

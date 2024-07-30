@@ -242,11 +242,11 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
       void,
       { selectedAlertmanager: string; config: AlertManagerCortexConfig }
     >({
-      query: ({ selectedAlertmanager, config, ...rest }) => ({
+      query: ({ selectedAlertmanager, config }) => ({
         url: `/api/alertmanager/${getDatasourceAPIUid(selectedAlertmanager)}/config/api/v1/alerts`,
         method: 'POST',
         data: config,
-        ...rest,
+        showSuccessAlert: false,
       }),
       invalidatesTags: ['AlertmanagerConfiguration'],
     }),
@@ -276,6 +276,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
       },
     }),
     // Grafana Managed Alertmanager only
+    // TODO: Remove as part of migration to k8s API for receivers
     getContactPointsList: build.query<GrafanaManagedContactPoint[], void>({
       query: () => ({ url: '/api/v1/notifications/receivers' }),
     }),
