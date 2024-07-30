@@ -73,7 +73,7 @@ Time series visualizations are the default and primary way to visualize data poi
 {{< figure src="/static/img/docs/time-series-panel/time_series_small_example.png" max-width="1200px" alt="Time series" >}}
 
 {{< admonition type="note" >}}
-You can migrate from the legacy Graph visualization to the time series visualization. To migrate, open the panel and click the **Migrate** button in the side panel.
+You can migrate from the legacy Graph visualization to the time series visualization. To migrate, open the panel and click the **Migrate** button in the side pane.
 {{< /admonition >}}
 
 ## Configure a time series visualization
@@ -115,7 +115,7 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 
 ## Configuration options
 
-{{< docs/shared lookup="visualizations/config-options-text.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Panel options
 
@@ -177,7 +177,7 @@ The options under the **Graph styles** section let you control the general appea
 | Line width                                  | Set the thickness of the series lines or the outline for bars using the **Line width** slider.                                                                                                                                        |
 | [Fill opacity](#fill-opacity)               | Set the series area fill color using the **Fill opacity** slider.                                                                                                                                                                     |
 | [Gradient mode](#gradient-mode)             | Choose a gradient mode to control the gradient fill, which is based on the series color.                                                                                                                                              |
-| [Line style](#line-style)                   | Choose a solid, dashed, or dotted line style                                                                                                                                                                                          |
+| [Line style](#line-style)                   | Choose a solid, dashed, or dotted line style.                                                                                                                                                                                         |
 | [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph.                                                                                                                                                              |
 | [Disconnect values](#disconnect-values)     | Choose whether to set a threshold above which values in the data should be disconnected.                                                                                                                                              |
 | [Show points](#show-points)                 | Set whether to show data points to lines or bars.                                                                                                                                                                                     |
