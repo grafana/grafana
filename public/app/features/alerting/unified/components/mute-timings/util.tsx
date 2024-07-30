@@ -88,7 +88,7 @@ export function renderTimeIntervals(muteTiming: MuteTimeInterval) {
 /**
  * Get the correct namespace to use when using the K8S API.
  */
-export const getNamespace = () => config.namespace;
+export const getK8sNamespace = () => config.namespace;
 
 /**
  * Should we call the kubernetes-style API for managing the time intervals?

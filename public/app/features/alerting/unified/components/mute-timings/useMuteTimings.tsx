@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { timeIntervalsApi } from 'app/features/alerting/unified/api/timeIntervalsApi';
 import {
-  getNamespace,
+  getK8sNamespace,
   mergeTimeIntervals,
   shouldUseK8sApi,
 } from 'app/features/alerting/unified/components/mute-timings/util';
@@ -59,7 +59,7 @@ const parseK8sTimeInterval: (item: TimeIntervalV0Alpha1) => MuteTiming = (item) 
   const { metadata, spec } = item;
   return {
     ...spec,
-    id: metadata.uid || spec.name,
+    id: spec.name,
     metadata,
     provisioned: metadata.annotations?.[PROVENANCE_ANNOTATION] !== PROVENANCE_NONE,
   };
@@ -120,7 +120,7 @@ export const useMuteTimings = ({ alertmanager }: BaseAlertmanagerArgs) => {
 
   useEffect(() => {
     if (useK8sApi) {
-      const namespace = getNamespace();
+      const namespace = getK8sNamespace();
       getGrafanaTimeIntervals({ namespace });
     } else {
       getAlertmanagerTimeIntervals(alertmanager);
@@ -147,7 +147,7 @@ export const useCreateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
   const isGrafanaAm = alertmanager === GRAFANA_RULES_SOURCE_NAME;
 
   if (useK8sApi) {
-    const namespace = getNamespace();
+    const namespace = getK8sNamespace();
     return ({ timeInterval }: { timeInterval: MuteTimeInterval }) =>
       createGrafanaTimeInterval({
         namespace,
@@ -216,7 +216,7 @@ export const useGetMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertma
 
   useEffect(() => {
     if (useK8sApi) {
-      const namespace = getNamespace();
+      const namespace = getK8sNamespace();
       getGrafanaTimeInterval({ namespace, name: nameToFind }, true);
     } else {
       getAlertmanagerTimeInterval(alertmanager, true);
@@ -243,7 +243,7 @@ export const useUpdateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
 
   if (useK8sApi) {
     return async ({ timeInterval, originalName }: { timeInterval: MuteTimeInterval; originalName: string }) => {
-      const namespace = getNamespace();
+      const namespace = getK8sNamespace();
       return replaceGrafanaTimeInterval({
         name: originalName,
         namespace,
@@ -305,7 +305,7 @@ export const useDeleteMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
 
   if (useK8sApi) {
     return async ({ name }: { name: string }) => {
-      const namespace = getNamespace();
+      const namespace = getK8sNamespace();
       return deleteGrafanaTimeInterval({
         name,
         namespace,

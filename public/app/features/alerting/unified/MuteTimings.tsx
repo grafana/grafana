@@ -2,17 +2,17 @@ import { useEffect, useState } from 'react';
 import { Redirect, Route, Switch, useRouteMatch } from 'react-router-dom';
 
 import { NavModelItem } from '@grafana/data';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useGetMuteTiming } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
+import { useURLSearchParams } from 'app/features/alerting/unified/hooks/useURLSearchParams';
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import MuteTimingForm from './components/mute-timings/MuteTimingForm';
 import { useAlertmanager } from './state/AlertmanagerContext';
 
 const EditTimingRoute = () => {
-  const [queryParams] = useQueryParams();
+  const [queryParams] = useURLSearchParams();
   const { selectedAlertmanager } = useAlertmanager();
-  const name = String(queryParams['muteName']);
+  const name = queryParams.get('muteName')!;
   const {
     isLoading,
     data: timeInterval,

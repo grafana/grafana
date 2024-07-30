@@ -65,7 +65,7 @@ const AmRoutes = () => {
 
   const { selectedAlertmanager, hasConfigurationAPI, isGrafanaAlertmanager } = useAlertmanager();
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
-  const { data: muteTimings } = useMuteTimings({ alertmanager: selectedAlertmanager ?? '' });
+  const { data: muteTimings = [] } = useMuteTimings({ alertmanager: selectedAlertmanager ?? '' });
 
   const contactPointsState = useGetContactPointsState(selectedAlertmanager ?? '');
 
@@ -209,7 +209,7 @@ const AmRoutes = () => {
     return null;
   }
 
-  const numberOfMuteTimings = muteTimings?.length || 0;
+  const numberOfMuteTimings = muteTimings.length;
   const haveData = result && !resultError && !resultLoading;
   const isFetching = !result && resultLoading;
   const haveError = resultError && !resultLoading;
