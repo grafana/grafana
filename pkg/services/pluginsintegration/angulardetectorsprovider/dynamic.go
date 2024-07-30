@@ -35,6 +35,7 @@ type Dynamic struct {
 
 	httpClient http.Client
 	baseURL    string
+	disabled   bool
 
 	// store is the underlying angular patterns store used as a cache.
 	store angularpatternsstore.Service
@@ -64,6 +65,9 @@ func ProvideDynamic(cfg *setting.Cfg, store angularpatternsstore.Service) (*Dyna
 		httpClient:            makeHttpClient(),
 		baseURL:               cfg.GrafanaComAPIURL,
 		backgroundJobInterval: backgroundJobInterval,
+		// Disable the background service if the user has opted out of plugin updates.
+		// (useful for air-gapped installations)
+		disabled: !cfg.CheckForPluginUpdates,
 	}
 	d.log.Debug("Providing dynamic angular detection patterns", "baseURL", d.baseURL, "interval", d.backgroundJobInterval)
 
@@ -294,6 +298,11 @@ func (d *Dynamic) Run(ctx context.Context) error {
 			return ctx.Err()
 		}
 	}
+}
+
+// IsDisabled returns whether the dynamic detectors provider background service is disabled.
+func (d *Dynamic) IsDisabled() bool {
+	return d.disabled
 }
 
 // ProvideDetectors returns the cached detectors. It returns an empty slice if there's no value.
