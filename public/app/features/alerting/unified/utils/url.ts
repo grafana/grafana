@@ -6,9 +6,12 @@ export function createRelativeUrl(
 ) {
   const searchParams = new URLSearchParams(queryParams);
   const searchParamsString = searchParams.toString();
-  const pathWithSlash = path.startsWith('/') ? path : `/${path}`;
 
-  return `${config.appSubUrl}${pathWithSlash}${searchParamsString ? `?${searchParamsString}` : ''}`;
+  return `${config.appSubUrl}${addSlashIfNotPresent(path)}${searchParamsString ? `?${searchParamsString}` : ''}`;
+}
+
+function addSlashIfNotPresent(path: string) {
+  return path.startsWith('/') ? path : `/${path}`;
 }
 
 export function createAbsoluteUrl(
@@ -19,7 +22,7 @@ export function createAbsoluteUrl(
   const searchParamsString = searchParams.toString();
 
   try {
-    const baseUrl = new URL(config.appSubUrl + path, config.appUrl);
+    const baseUrl = new URL(config.appSubUrl + addSlashIfNotPresent(path), config.appUrl);
     return `${baseUrl.href}${searchParamsString ? `?${searchParamsString}` : ''}`;
   } catch (err) {
     return createRelativeUrl(path, queryParams);
