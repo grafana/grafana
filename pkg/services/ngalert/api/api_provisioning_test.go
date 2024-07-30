@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -1583,6 +1584,9 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			env := createTestEnv(t, testConfig)
 			env.ac = &recordingAccessControlFake{
 				Callback: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+					if strings.Contains(evaluator.String(), accesscontrol.ActionAlertingReceiversList) {
+						return true, nil
+					}
 					if strings.Contains(evaluator.String(), accesscontrol.ActionAlertingProvisioningReadSecrets) {
 						recPermCheck = true
 					}
@@ -1888,7 +1892,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(env.configs)
 	receiverSvc := notifier.NewReceiverService(
-		env.ac,
+		ac.NewReceiverAccess[*models.Receiver](env.ac, true),
 		configStore,
 		env.prov,
 		env.secrets,

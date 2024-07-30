@@ -24,6 +24,10 @@ func getEngineMySQL(getter *sectionGetter, _ trace.Tracer) (*xorm.Engine, error)
 		// See: https://dev.mysql.com/doc/refman/en/sql-mode.html
 		"@@SESSION.sql_mode": "ANSI",
 	}
+	tls := getter.String("db_tls")
+	if tls != "" {
+		config.Params["tls"] = tls
+	}
 	config.Collation = "utf8mb4_unicode_ci"
 	config.Loc = time.UTC
 	config.AllowNativePasswords = true

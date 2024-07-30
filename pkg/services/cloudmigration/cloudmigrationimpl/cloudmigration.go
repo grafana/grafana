@@ -512,6 +512,15 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 	}
 	snapshot.UID = uid
 
+	// Update status to "creating" to ensure the frontend polls from now on
+	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
+		UID:       uid,
+		SessionID: sessionUid,
+		Status:    cloudmigration.SnapshotStatusCreating,
+	}); err != nil {
+		return nil, err
+	}
+
 	// start building the snapshot asynchronously while we return a success response to the client
 	go func() {
 		s.cancelMutex.Lock()
@@ -531,8 +540,9 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 			s.log.Error("building snapshot", "err", err.Error())
 			// Update status to error with retries
 			if err := s.updateSnapshotWithRetries(context.Background(), cloudmigration.UpdateSnapshotCmd{
-				UID:    snapshot.UID,
-				Status: cloudmigration.SnapshotStatusError,
+				UID:       snapshot.UID,
+				SessionID: sessionUid,
+				Status:    cloudmigration.SnapshotStatusError,
 			}); err != nil {
 				s.log.Error("critical failure during snapshot creation - please report any error logs")
 			}
@@ -550,7 +560,7 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 	defer span.End()
 
 	sessionUid, snapshotUid := query.SessionUID, query.SnapshotUID
-	snapshot, err := s.store.GetSnapshotByUID(ctx, snapshotUid, query.ResultPage, query.ResultLimit)
+	snapshot, err := s.store.GetSnapshotByUID(ctx, sessionUid, snapshotUid, query.ResultPage, query.ResultLimit)
 	if err != nil {
 		return nil, fmt.Errorf("fetching snapshot for uid %s: %w", snapshotUid, err)
 	}
@@ -583,13 +593,18 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 		// We need to update the snapshot in our db before reporting anything
 		if err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
 			UID:       snapshot.UID,
+			SessionID: sessionUid,
 			Status:    localStatus,
 			Resources: snapshotMeta.Results,
 		}); err != nil {
 			return nil, fmt.Errorf("error updating snapshot status: %w", err)
 		}
-		snapshot.Status = localStatus
-		snapshot.Resources = append(snapshot.Resources, snapshotMeta.Results...)
+
+		// Refresh the snapshot after the update
+		snapshot, err = s.store.GetSnapshotByUID(ctx, sessionUid, snapshotUid, query.ResultPage, query.ResultLimit)
+		if err != nil {
+			return nil, fmt.Errorf("fetching snapshot for uid %s: %w", snapshotUid, err)
+		}
 	}
 
 	return snapshot, nil
@@ -644,6 +659,15 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 
 	s.log.Info("Uploading snapshot in local directory", "gmsSnapshotUID", snapshot.GMSSnapshotUID, "localDir", snapshot.LocalDir, "uploadURL", uploadUrl)
 
+	// Update status to "uploading" to ensure the frontend polls from now on
+	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
+		UID:       snapshotUid,
+		SessionID: sessionUid,
+		Status:    cloudmigration.SnapshotStatusUploading,
+	}); err != nil {
+		return err
+	}
+
 	// start uploading the snapshot asynchronously while we return a success response to the client
 	go func() {
 		s.cancelMutex.Lock()
@@ -663,8 +687,9 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 			s.log.Error("uploading snapshot", "err", err.Error())
 			// Update status to error with retries
 			if err := s.updateSnapshotWithRetries(context.Background(), cloudmigration.UpdateSnapshotCmd{
-				UID:    snapshot.UID,
-				Status: cloudmigration.SnapshotStatusError,
+				UID:       snapshot.UID,
+				SessionID: sessionUid,
+				Status:    cloudmigration.SnapshotStatusError,
 			}); err != nil {
 				s.log.Error("critical failure during snapshot upload - please report any error logs")
 			}
@@ -692,8 +717,9 @@ func (s *Service) CancelSnapshot(ctx context.Context, sessionUid string, snapsho
 	s.cancelFunc = nil
 
 	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
-		UID:    snapshotUid,
-		Status: cloudmigration.SnapshotStatusCanceled,
+		UID:       snapshotUid,
+		SessionID: sessionUid,
+		Status:    cloudmigration.SnapshotStatusCanceled,
 	}); err != nil {
 		s.log.Error("critical failure during snapshot cancelation - please report any error logs")
 	}

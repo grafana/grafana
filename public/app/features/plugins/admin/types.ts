@@ -44,6 +44,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   isInstalled: boolean;
   isDisabled: boolean;
   isDeprecated: boolean;
+  isManaged: boolean; // Indicates that the plugin version is managed by Grafana
   // `isPublished` is TRUE if the plugin is published to grafana.com
   isPublished: boolean;
   name: string;
