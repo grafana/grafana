@@ -48,6 +48,8 @@ func (s *legacyServer) Read(ctx context.Context, req *authzv1.ReadRequest) (*aut
 	ctx, span := s.tracer.Start(ctx, "authz.grpc.Read")
 	defer span.End()
 
+	// FIXME: once we have access tokens, we need to do namespace validation here
+
 	action := req.GetAction()
 	subject := req.GetSubject()
 	stackID := req.GetStackId() // TODO can we consider the stackID as the orgID?
@@ -74,5 +76,8 @@ func (s *legacyServer) Read(ctx context.Context, req *authzv1.ReadRequest) (*aut
 	for _, perm := range permissions {
 		data = append(data, &authzv1.ReadResponse_Data{Object: perm.Scope})
 	}
-	return &authzv1.ReadResponse{Data: data}, nil
+	return &authzv1.ReadResponse{
+		Data:  data,
+		Found: len(data) > 0,
+	}, nil
 }
