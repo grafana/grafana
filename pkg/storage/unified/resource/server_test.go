@@ -116,7 +116,7 @@ func TestSimpleServer(t *testing.T) {
 		require.NoError(t, err)
 		obj.SetAnnotation("test", "hello")
 		obj.SetUpdatedTimestampMillis(now)
-		obj.SetUpdatedBy(testUserA.GetUID().String())
+		obj.SetUpdatedBy(testUserA.GetUID())
 		raw, err = json.Marshal(tmp)
 		require.NoError(t, err)
 

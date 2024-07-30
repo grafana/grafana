@@ -140,7 +140,8 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "Failed to save annotation", err)
 	}
 
-	userID, err := c.SignedInUser.GetID().UserID()
+	// nolint:staticcheck
+	userID, err := c.SignedInUser.GetInternalID()
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to save annotation", err)
 	}
@@ -227,7 +228,8 @@ func (hs *HTTPServer) PostGraphiteAnnotation(c *contextmodel.ReqContext) respons
 		return response.Error(http.StatusBadRequest, "Failed to save Graphite annotation", err)
 	}
 
-	userID, err := c.SignedInUser.GetID().UserID()
+	// nolint:staticcheck
+	userID, err := c.SignedInUser.GetInternalID()
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to save Graphite annotation", err)
 	}
@@ -284,7 +286,8 @@ func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Resp
 		}
 	}
 
-	userID, err := c.SignedInUser.GetID().UserID()
+	// nolint:staticcheck
+	userID, err := c.SignedInUser.GetInternalID()
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update annotation", err)
 	}
@@ -346,7 +349,8 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 		}
 	}
 
-	userID, err := c.SignedInUser.GetID().UserID()
+	// nolint:staticcheck
+	userID, err := c.SignedInUser.GetInternalID()
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update annotation", err)
 	}

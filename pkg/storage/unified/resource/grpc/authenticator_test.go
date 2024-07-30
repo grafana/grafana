@@ -27,6 +27,7 @@ func TestBasicEncodeDecode(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, before.GetID(), after.GetID())
 	require.Equal(t, before.GetUID(), after.GetUID())
+	require.Equal(t, before.GetIdentityType(), after.GetIdentityType())
 	require.Equal(t, before.GetLogin(), after.GetLogin())
 	require.Equal(t, before.GetOrgID(), after.GetOrgID())
 	require.Equal(t, before.GetOrgName(), after.GetOrgName())

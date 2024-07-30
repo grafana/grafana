@@ -466,7 +466,8 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 }
 
 func (c *K8sTestHelper) SetPermissions(user User, permissions []resourcepermissions.SetResourcePermissionCommand) {
-	id, err := user.Identity.GetID().UserID()
+	// nolint:staticcheck
+	id, err := user.Identity.GetInternalID()
 	require.NoError(c.t, err)
 
 	permissionsStore := resourcepermissions.NewStore(c.env.Cfg, c.env.SQLStore, featuremgmt.WithFeatures())

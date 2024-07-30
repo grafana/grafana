@@ -42,8 +42,75 @@ type SignedInUser struct {
 	Permissions map[int64]map[string][]string `json:"-"`
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
-	IDToken      string `json:"-" xorm:"-"`
-	NamespacedID identity.TypedID
+	IDToken string `json:"-" xorm:"-"`
+
+	// When other settings are not deterministic, this value is used
+	FallbackType identity.IdentityType
+}
+
+// GetRawIdentifier implements Requester.
+func (u *SignedInUser) GetRawIdentifier() string {
+	if u.UserUID == "" {
+		// nolint:staticcheck
+		id, _ := u.GetInternalID()
+		return strconv.FormatInt(id, 10)
+	}
+	return u.UserUID
+}
+
+// Deprecated: use GetUID
+func (u *SignedInUser) GetInternalID() (int64, error) {
+	switch {
+	case u.ApiKeyID != 0:
+		return u.ApiKeyID, nil
+	case u.IsAnonymous:
+		return 0, nil
+	default:
+	}
+	return u.UserID, nil
+}
+
+// GetIdentityType implements Requester.
+func (u *SignedInUser) GetIdentityType() identity.IdentityType {
+	switch {
+	case u.ApiKeyID != 0:
+		return identity.TypeAPIKey
+	case u.IsServiceAccount:
+		return identity.TypeServiceAccount
+	case u.UserID > 0:
+		return identity.TypeUser
+	case u.IsAnonymous:
+		return identity.TypeAnonymous
+	case u.AuthenticatedBy == "render" && u.UserID == 0:
+		return identity.TypeRenderService
+	}
+	return u.FallbackType
+}
+
+// GetName implements identity.Requester.
+func (u *SignedInUser) GetName() string {
+	return u.Name
+}
+
+// GetExtra implements Requester.
+func (u *SignedInUser) GetExtra() map[string][]string {
+	extra := map[string][]string{}
+	if u.IDToken != "" {
+		extra["id-token"] = []string{u.IDToken}
+	}
+	if u.OrgRole.IsValid() {
+		extra["user-instance-role"] = []string{string(u.GetOrgRole())}
+	}
+	return extra
+}
+
+// GetGroups implements Requester.
+func (u *SignedInUser) GetGroups() []string {
+	groups := []string{}
+	for _, t := range u.Teams {
+		groups = append(groups, strconv.FormatInt(t, 10))
+	}
+	return groups
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
@@ -194,25 +261,11 @@ func (u *SignedInUser) GetTypedID() (identity.IdentityType, string) {
 		return identity.TypeRenderService, "0"
 	}
 
-	return u.NamespacedID.Type(), u.NamespacedID.ID()
+	return u.FallbackType, strconv.FormatInt(u.UserID, 10)
 }
 
-// GetUID returns namespaced uid for the entity
-func (u *SignedInUser) GetUID() identity.TypedID {
-	switch {
-	case u.ApiKeyID != 0:
-		return identity.NewTypedIDString(identity.TypeAPIKey, strconv.FormatInt(u.ApiKeyID, 10))
-	case u.IsServiceAccount:
-		return identity.NewTypedIDString(identity.TypeServiceAccount, u.UserUID)
-	case u.UserID > 0:
-		return identity.NewTypedIDString(identity.TypeUser, u.UserUID)
-	case u.IsAnonymous:
-		return identity.NewTypedIDString(identity.TypeAnonymous, "0")
-	case u.AuthenticatedBy == "render" && u.UserID == 0:
-		return identity.NewTypedIDString(identity.TypeRenderService, "0")
-	}
-
-	return identity.NewTypedIDString(identity.TypeEmpty, "0")
+func (u *SignedInUser) GetUID() string {
+	return fmt.Sprintf("%s:%s", u.GetIdentityType(), u.GetRawIdentifier())
 }
 
 func (u *SignedInUser) GetAuthID() string {

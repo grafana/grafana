@@ -3,14 +3,13 @@ package authorizer
 import (
 	"context"
 
+	orgsvc "github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8suser "k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/authorization/authorizerfactory"
 	"k8s.io/apiserver/pkg/authorization/union"
-
-	orgsvc "github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ authorizer.Authorizer = (*GrafanaAuthorizer)(nil)

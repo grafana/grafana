@@ -3,17 +3,28 @@ package identity
 import (
 	"fmt"
 	"strconv"
+
+	"k8s.io/apiserver/pkg/authentication/user"
 )
 
 type Requester interface {
-	// GetID returns namespaced id for the entity
+	user.Info
+
+	// GetIdentityType returns the type for the requester
+	GetIdentityType() IdentityType
+	// GetRawIdentifier returns only the identifier part of the UID, excluding the type
+	GetRawIdentifier() string
+	// Deprecated: use GetUID instead
+	GetInternalID() (int64, error)
+
+	// GetID returns namespaced internalID for the entity
+	// Deprecated: use GetUID instead
 	GetID() TypedID
 	// GetTypedID returns the namespace and ID of the active entity.
 	// The namespace is one of the constants defined in pkg/apimachinery/identity.
 	// Deprecated: use GetID instead
 	GetTypedID() (kind IdentityType, identifier string)
-	// GetUID returns namespaced uid for the entity
-	GetUID() TypedID
+
 	// GetDisplayName returns the display name of the active entity.
 	// The display name is the name if it is set, otherwise the login or email.
 	GetDisplayName() string
