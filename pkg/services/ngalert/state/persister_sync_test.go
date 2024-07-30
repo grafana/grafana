@@ -50,7 +50,6 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 					State:             toState.State,
 					StateReason:       toState.Reason,
 					Labels:            ngmodels.GenerateAlertLabels(5, fmt.Sprintf("%d--", i)),
-					ResultFingerprint: data.Fingerprint(rand.Int63()),
 				},
 				PreviousState:       fromState.State,
 				PreviousStateReason: fromState.Reason,
