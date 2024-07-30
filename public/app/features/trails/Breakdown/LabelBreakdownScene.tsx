@@ -36,6 +36,7 @@ import { trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared'
 import { getColorByIndex, getTrailFor } from '../utils';
 
 import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
+import { BreakdownSearchScene } from './BreakdownSearchScene';
 import { ByFrameRepeater } from './ByFrameRepeater';
 import { LayoutSwitcher } from './LayoutSwitcher';
 import { SortByScene } from './SortByScene';
@@ -48,6 +49,7 @@ const MAX_PANELS_IN_ALL_LABELS_BREAKDOWN = 60;
 
 export interface LabelBreakdownSceneState extends SceneObjectState {
   body?: LayoutSwitcher;
+  search: BreakdownSearchScene;
   sortBy: SortByScene;
   labels: Array<SelectableValue<string>>;
   value?: string;
@@ -67,6 +69,7 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
       ...state,
       labels: state.labels ?? [],
       sortBy: new SortByScene({ target: 'labels' }),
+      search: new BreakdownSearchScene('labels'),
     });
 
     this.addActivationHandler(this._onActivate.bind(this));
@@ -187,7 +190,7 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
     if (!variable.state.loading && variable.state.options.length) {
       stateUpdate.body = variable.hasAllValue()
         ? buildAllLayout(options, this._query!, this.onBreakdownLayoutChange)
-        : buildNormalLayout(this._query!, this.onBreakdownLayoutChange);
+        : buildNormalLayout(this._query!, this.onBreakdownLayoutChange, this.state.search);
     } else if (!variable.state.loading) {
       stateUpdate.body = undefined;
       stateUpdate.blockingMessage = 'Unable to retrieve label options for currently selected metric.';
@@ -214,7 +217,7 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
   };
 
   public static Component = ({ model }: SceneComponentProps<LabelBreakdownScene>) => {
-    const { labels, body, sortBy, loading, value, blockingMessage } = model.useState();
+    const { labels, body, search, sortBy, loading, value, blockingMessage } = model.useState();
     const styles = useStyles2(getStyles);
 
     return (
@@ -222,14 +225,19 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
         <StatusWrapper {...{ isLoading: loading, blockingMessage }}>
           <div className={styles.controls}>
             {!loading && labels.length && (
-              <div className={styles.controlsLeft}>
-                <BreakdownLabelSelector options={labels} value={value} onChange={model.onChange} />
-              </div>
+              // <div className={styles.controlsLeft}>
+              <BreakdownLabelSelector options={labels} value={value} onChange={model.onChange} />
+              // </div>
             )}
-            <div className={styles.controlsRight}>
-              {value !== ALL_VARIABLE_VALUE && <sortBy.Component model={sortBy} />}
-              {body instanceof LayoutSwitcher && <body.Selector model={body} />}
-            </div>
+            {/*<div className={styles.controlsRight}>*/}
+            {value !== ALL_VARIABLE_VALUE && (
+              <>
+                <search.Component model={search} />
+                <sortBy.Component model={sortBy} />
+              </>
+            )}
+            {body instanceof LayoutSwitcher && <body.Selector model={body} />}
+            {/*</div>*/}
           </div>
           <div className={styles.content}>{body && <body.Component model={body} />}</div>
         </StatusWrapper>
@@ -255,8 +263,7 @@ function getStyles(theme: GrafanaTheme2) {
     controls: css({
       flexGrow: 0,
       display: 'flex',
-      alignItems: 'top',
-      justifyContent: 'space-between',
+      alignItems: 'flex-start',
       gap: theme.spacing(2),
     }),
     controlsRight: css({
@@ -350,7 +357,11 @@ export function buildAllLayout(
 
 const GRID_TEMPLATE_COLUMNS = 'repeat(auto-fit, minmax(400px, 1fr))';
 
-function buildNormalLayout(queryDef: AutoQueryDef, onBreakdownLayoutChange: BreakdownLayoutChangeCallback) {
+function buildNormalLayout(
+  queryDef: AutoQueryDef,
+  onBreakdownLayoutChange: BreakdownLayoutChangeCallback,
+  searchScene: BreakdownSearchScene
+) {
   const unit = queryDef.unit;
 
   function getLayoutChild(data: PanelData, frame: DataFrame, frameIndex: number): SceneFlexItem {
@@ -380,9 +391,7 @@ function buildNormalLayout(queryDef: AutoQueryDef, onBreakdownLayoutChange: Brea
   }
 
   const { sortBy, direction } = getSortByPreference('labels', ReducerID.stdDev, 'desc');
-  // FIXME
-  // const getFilter = () => this.state.search.state.filter ?? '';
-  const getFilter = () => '';
+  const getFilter = () => searchScene.state.filter ?? '';
 
   return new LayoutSwitcher({
     $data: new SceneQueryRunner({
