@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { TextLink, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   spacer: css({
@@ -20,7 +21,7 @@ export const RoadmapLinks = () => {
         onClick={() => reportInteraction('connections_data_source_request_clicked')}
         external
       >
-        Request a new data source
+        <Trans i18nKey="connections.connect-data.request-data-source">Request a new data source</Trans>
       </TextLink>
       <br />
       <TextLink
@@ -28,7 +29,7 @@ export const RoadmapLinks = () => {
         onClick={() => reportInteraction('connections_data_source_roadmap_clicked')}
         external
       >
-        View roadmap
+        <Trans i18nKey="connections.connect-data.roadmap">View roadmap</Trans>
       </TextLink>
     </div>
   );
