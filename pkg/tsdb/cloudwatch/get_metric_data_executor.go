@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
@@ -27,7 +28,7 @@ func (e *cloudWatchExecutor) executeRequest(ctx context.Context, client cloudwat
 
 		resp, err := client.GetMetricDataWithContext(ctx, metricDataInput)
 		if err != nil {
-			return mdo, err
+			return mdo, errorsource.DownstreamError(err, false)
 		}
 
 		mdo = append(mdo, resp)

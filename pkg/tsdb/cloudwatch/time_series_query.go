@@ -8,6 +8,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
@@ -23,13 +24,13 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 	resp := backend.NewQueryDataResponse()
 
 	if len(req.Queries) == 0 {
-		return nil, fmt.Errorf("request contains no queries")
+		return nil, errorsource.DownstreamError(fmt.Errorf("request contains no queries"), false)
 	}
 	// startTime and endTime are always the same for all queries
 	startTime := req.Queries[0].TimeRange.From
 	endTime := req.Queries[0].TimeRange.To
 	if !startTime.Before(endTime) {
-		return nil, fmt.Errorf("invalid time range: start time must be before end time")
+		return nil, errorsource.DownstreamError(fmt.Errorf("invalid time range: start time must be before end time"), false)
 	}
 
 	instance, err := e.getInstance(ctx, req.PluginContext)
@@ -127,9 +128,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 	}
 
 	if err := eg.Wait(); err != nil {
-		dataResponse := backend.DataResponse{
-			Error: fmt.Errorf("metric request error: %q", err),
-		}
+		dataResponse := errorsource.Response(fmt.Errorf("metric request error: %w", err))
 		resultChan <- &responseWrapper{
 			RefId:        getQueryRefIdFromErrorString(err.Error(), requestQueries),
 			DataResponse: &dataResponse,
