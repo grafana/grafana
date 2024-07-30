@@ -23,7 +23,7 @@ export const RichHistoryAddToLibrary = ({ query }: Props) => {
         {buttonLabel}
       </Button>
       <Modal
-        title={t('explore.add-to-library-modal.title', 'Add query to Query Library')}
+        title={t('explore.query-template-modal.add-title', 'Add query to Query Library')}
         isOpen={isOpen}
         onDismiss={() => setIsOpen(false)}
       >

@@ -132,7 +132,7 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
         </ExploreDrawer>
       )}
       <Modal
-        title={t('explore.add-to-library-modal.title', 'Add query to Query Library')}
+        title={t('explore.query-template-modal.add-title', 'Add query to Query Library')}
         isOpen={queryToAdd !== undefined}
         onDismiss={() => setQueryToAdd(undefined)}
       >

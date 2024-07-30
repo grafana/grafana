@@ -32,10 +32,17 @@ const VisibilityOptions = [
   { value: 'Private', label: t('explore.query-library.private', 'Private') },
 ];
 
-const info = t(
-  'explore.add-to-library-modal.info',
-  `You're about to save this query. Once saved, you can easily access it in the Query Library tab for future use and reference.`
-);
+const getInstuctions = (isAdd: boolean) => {
+  return isAdd
+    ? t(
+        'explore.query-template-modal.add-info',
+        `You're about to save this query. Once saved, you can easily access it in the Query Library tab for future use and reference.`
+      )
+    : t(
+        'explore.query-template-modal.edit-info',
+        `You're about to edit this query. Once saved, you can easily access it in the Query Library tab for future use and reference.`
+      );
+};
 
 export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }: Props) => {
   const { register, handleSubmit } = useForm<QueryDetails>({
@@ -121,34 +128,34 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <p>{info}</p>
+      <p>{getInstuctions(templateData === undefined)}</p>
       {queryText &&
         queryText.map((queryString, i) => (
-          <Field key={`query-${i}`} label={t('explore.add-to-library-modal.query', 'Query')}>
+          <Field key={`query-${i}`} label={t('explore.query-template-modal.query', 'Query')}>
             <TextArea readOnly={true} value={queryString}></TextArea>
           </Field>
         ))}
       {queryToAdd && (
         <>
-          <Field label={t('explore.add-to-library-modal.data-source-name', 'Data source name')}>
+          <Field label={t('explore.query-template-modal.data-source-name', 'Data source name')}>
             <DataSourcePicker current={datasource?.uid} disabled={true} />
           </Field>
-          <Field label={t('explore.add-to-library-modal.data-source-type', 'Data source type')}>
+          <Field label={t('explore.query-template-modall.data-source-type', 'Data source type')}>
             <Input disabled={true} defaultValue={datasource?.meta.name}></Input>
           </Field>
         </>
       )}
-      <Field label={t('explore.add-to-library-modal.description', 'Description')}>
+      <Field label={t('explore.query-template-modal.description', 'Description')}>
         <Input id="query-template-description" autoFocus={true} {...register('description')}></Input>
       </Field>
-      <Field label={t('explore.add-to-library-modal.visibility', 'Visibility')}>
+      <Field label={t('explore.query-template-modal.visibility', 'Visibility')}>
         <RadioButtonGroup options={VisibilityOptions} value={'Public'} disabled={true} />
       </Field>
       <InlineSwitch
         showLabel={true}
         disabled={true}
         label={t(
-          'explore.add-to-library-modal.auto-star',
+          'explore.query-template-modal.auto-star',
           'Auto-star this query to add it to your starred list in the Query Library.'
         )}
       />

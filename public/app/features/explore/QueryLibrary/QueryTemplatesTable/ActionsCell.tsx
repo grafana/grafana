@@ -78,7 +78,7 @@ function ActionsCell({ queryTemplate, rootDatasourceUid, queryUid }: ActionsCell
         rootDatasourceUid={rootDatasourceUid}
       />
       <Modal
-        title={t('explore.add-to-library-modal.title', 'Add query to Query Library')}
+        title={t('explore.query-template-modal.edit-title', 'Edit query')}
         isOpen={editFormOpen}
         onDismiss={() => setEditFormOpen(false)}
       >
