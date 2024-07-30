@@ -104,7 +104,9 @@ Refer to [Span and resource attributes](/docs/tempo/<TEMPO_VERSION>/operations/b
 
 ### Span filters
 
-Span filters allow you to refine the spans displayed in the trace timeline viewer. The more filters you add, the more specific the filtered spans become. Click on a trace to access Span filters.
+Span filters allow you to refine the spans displayed in the trace timeline viewer.
+The more filters you add, the more specific the filtered spans become.
+Click on a trace to access Span filters.
 
 ![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters-v10-1.png)
 
