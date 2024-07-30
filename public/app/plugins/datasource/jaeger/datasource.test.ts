@@ -38,6 +38,28 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
+const defaultQuery: DataQueryRequest<JaegerQuery> = {
+  requestId: '1',
+  interval: '0',
+  intervalMs: 10,
+  panelId: 0,
+  scopedVars: {},
+  range: {
+    from: dateTime().subtract(1, 'h'),
+    to: dateTime(),
+    raw: { from: '1h', to: 'now' },
+  },
+  timezone: 'browser',
+  app: 'explore',
+  startTime: 0,
+  targets: [
+    {
+      query: '12345',
+      refId: '1',
+    },
+  ],
+};
+
 describe('JaegerDatasource', () => {
   const defaultSearchRangeParams = `start=${Number(defaultQuery.range.from) * 1000}&end=${Number(defaultQuery.range.to) * 1000}`;
 
@@ -138,16 +160,19 @@ describe('JaegerDatasource', () => {
     expect(response.data[0].fields[0].name).toBe('traceID');
   });
 
-  it("call for `query()` when `queryType === 'search'`, using default range", async () => {
+  it('uses default range when no range is provided for search query,', async () => {
     const mock = setupFetchMock({ data: [testResponse] });
     const ds = new JaegerDatasource(defaultSettings);
-    const query = JSON.parse(JSON.stringify(defaultQuery));
-    // @ts-ignore
-    query.range = undefined;
+    const query = {
+      ...defaultQuery,
+      targets: [{ queryType: 'search', refId: 'a', service: 'jaeger-query', operation: ALL_OPERATIONS_KEY }],
+      // set range to undefined to test default range
+      range: undefined,
+    } as unknown as DataQueryRequest<JaegerQuery>;
 
-    ds.query({ ...query, targets: [{ queryType: 'search', refId: 'a', service: 'jaeger-query', operation: ALL_OPERATIONS_KEY }] });
-
+    ds.query(query);
     expect(mock).toHaveBeenCalledWith({
+      // Check that query has time range from 6 hours ago to now (default range)
       url: `${defaultSettings.url}/api/traces?service=jaeger-query&start=1704085200000000&end=1704106800000000&lookback=custom`,
     });
   });
@@ -422,26 +447,4 @@ const defaultSettings: DataSourceInstanceSettings<JaegerJsonData> = {
     },
   },
   readOnly: false,
-};
-
-const defaultQuery: DataQueryRequest<JaegerQuery> = {
-  requestId: '1',
-  interval: '0',
-  intervalMs: 10,
-  panelId: 0,
-  scopedVars: {},
-  range: {
-    from: dateTime().subtract(1, 'h'),
-    to: dateTime(),
-    raw: { from: '1h', to: 'now' },
-  },
-  timezone: 'browser',
-  app: 'explore',
-  startTime: 0,
-  targets: [
-    {
-      query: '12345',
-      refId: '1',
-    },
-  ],
 };
