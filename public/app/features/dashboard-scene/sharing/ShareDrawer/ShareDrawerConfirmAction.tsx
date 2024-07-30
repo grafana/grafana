@@ -42,7 +42,7 @@ export function ShareDrawerConfirmAction({
       description={description}
       confirmButtonLabel={confirmButtonLabel}
       confirmButtonVariant="destructive"
-      dismissButtonLabel="Cancel"
+      dismissButtonLabel={t('share-drawer.confirm-action.cancel-button', 'Cancel')}
       dismissButtonVariant="secondary"
       justifyButtons="flex-start"
       onConfirm={onConfirm}
