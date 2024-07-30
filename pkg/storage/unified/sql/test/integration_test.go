@@ -187,7 +187,7 @@ func TestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T) {
 	require.Equal(t, "item2", (<-stream).Key.Name)
 }
 
-func TestIntegrationBackendPrepareList(t *testing.T) {
+func TestIntegrationBackendList(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -198,7 +198,7 @@ func TestIntegrationBackendPrepareList(t *testing.T) {
 	// Create a few resources before initing the watch
 	_, _ = writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)    // rv=1
 	_, _ = writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED)    // rv=2 - will be modified at rv=6
-	_, _ = writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED)    // rv=3 - will be deleted at rv=7
+	_, _ = writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED)    // rv=3 - will be deleted  at rv=7
 	_, _ = writeEvent(ctx, backend, "item4", resource.WatchEvent_ADDED)    // rv=4
 	_, _ = writeEvent(ctx, backend, "item5", resource.WatchEvent_ADDED)    // rv=5
 	_, _ = writeEvent(ctx, backend, "item2", resource.WatchEvent_MODIFIED) // rv=6
@@ -315,6 +315,7 @@ func TestIntegrationBackendPrepareList(t *testing.T) {
 		continueToken, err = sql.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
 		require.Equal(t, int64(8), continueToken.ResourceVersion)
+		require.Equal(t, int64(4), continueToken.StartOffset)
 	})
 }
 func TestClientServer(t *testing.T) {

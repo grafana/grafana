@@ -287,11 +287,6 @@ func (c *cdkListIterator) Next() bool {
 	}
 }
 
-// Close implements ListIterator.
-func (c *cdkListIterator) Close() error {
-	return nil
-}
-
 // Error implements ListIterator.
 func (c *cdkListIterator) Error() error {
 	return c.err
