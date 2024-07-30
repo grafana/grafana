@@ -1,8 +1,8 @@
 SELECT
-    {{ .Ident "resource_version" }},
-    {{ .Ident "namespace" }}
-    {{ .Ident "name" }}
-    {{ .Ident "value" }}
+    kv.{{ .Ident "resource_version" }},
+    kv.{{ .Ident "namespace" }},
+    kv.{{ .Ident "name" }},
+    kv.{{ .Ident "value" }}
     FROM {{ .Ident "resource_history" }} as kv 
     INNER JOIN  (
         SELECT {{ .Ident "namespace" }}, {{ .Ident "group" }}, {{ .Ident "resource" }}, {{ .Ident "name" }},  max({{ .Ident "resource_version" }}) AS {{ .Ident "resource_version" }}

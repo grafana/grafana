@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/klog/v2"
 
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -200,43 +199,6 @@ func (b *entityBridge) ReadResource(ctx context.Context, req *resource.ReadReque
 }
 
 // List implements ResourceServer.
-func (b *entityBridge) PrepareList(ctx context.Context, req *resource.ListRequest) *resource.ListResponse {
-	key := req.Options.Key
-	query := &entity.EntityListRequest{
-		NextPageToken: req.NextPageToken,
-		Limit:         req.Limit,
-		Key:           []string{toEntityKey(key)},
-		WithBody:      true,
-	}
-
-	if len(req.Options.Labels) > 0 {
-		query.Labels = make(map[string]string)
-		for _, q := range req.Options.Labels {
-			// The entity structure only supports equals
-			// the rest will be processed handled by the upstream predicate
-			op := selection.Operator(q.Operator)
-			if op == selection.Equals || op == selection.DoubleEquals {
-				query.Labels[q.Key] = q.Values[0]
-			}
-		}
-	}
-
-	found, err := b.client.List(ctx, query)
-	if err != nil {
-		return &resource.ListResponse{
-			Error: resource.AsErrorResult(err),
-		}
-	}
-
-	rsp := &resource.ListResponse{
-		ResourceVersion: found.ResourceVersion,
-		NextPageToken:   found.NextPageToken,
-	}
-	for _, item := range found.Results {
-		rsp.Items = append(rsp.Items, &resource.ResourceWrapper{
-			ResourceVersion: item.ResourceVersion,
-			Value:           item.Body,
-		})
-	}
-	return rsp
+func (b *entityBridge) ListIterator(ctx context.Context, req *resource.ListRequest) (int64, resource.ListIterator, error) {
+	return 0, nil, fmt.Errorf("not impplemented")
 }
