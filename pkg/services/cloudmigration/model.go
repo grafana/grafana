@@ -145,6 +145,7 @@ type ListSnapshotsQuery struct {
 
 type UpdateSnapshotCmd struct {
 	UID       string
+	SessionID string
 	Status    SnapshotStatus
 	Resources []CloudMigrationResource
 }
