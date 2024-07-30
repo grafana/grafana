@@ -73,12 +73,14 @@ export interface MetricSelectSceneState extends SceneObjectState {
 const ROW_PREVIEW_HEIGHT = '175px';
 const ROW_CARD_HEIGHT = '64px';
 const METRIC_PREFIX_ALL = 'all';
+const OTEL_DEFAULT = 'none';
 
 const MAX_METRIC_NAMES = 20000;
 
 const viewByTooltip =
   'View by the metric prefix. A metric prefix is a single word at the beginning of the metric name, relevant to the domain the metric belongs to.';
 
+const otelTooltip = 'Select an OTel target to filter metrics.';
 export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> implements SceneObjectWithUrlSync {
   private previewCache: Record<string, MetricPanel> = {};
   private ignoreNextUpdate = false;
@@ -511,6 +513,29 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
                   value: METRIC_PREFIX_ALL,
                 },
                 ...Array.from(rootGroup?.groups.keys() ?? []).map((g) => ({ label: `${g}_`, value: g })),
+              ]}
+            />
+          </Field>
+          <Field
+            label={
+              <div className={styles.displayOptionTooltip}>
+                <Trans>OTel resources</Trans>
+                <IconButton name={'info-circle'} size="sm" variant={'secondary'} tooltip={otelTooltip} />
+              </div>
+            }
+            className={styles.displayOption}
+          >
+            <Select
+              value={''}
+              onChange={() => {} /*model.onPrefixFilterChange*/}
+              onOpenMenu={() => {} /*model.reportPrefixFilterInteraction(true)*/}
+              onCloseMenu={() => {} /*model.reportPrefixFilterInteraction(false)*/}
+              options={[
+                {
+                  label: 'None',
+                  value: OTEL_DEFAULT,
+                },
+                // ...Array.from(rootGroup?.groups.keys() ?? []).map((g) => ({ label: `${g}_`, value: g })),
               ]}
             />
           </Field>
