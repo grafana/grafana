@@ -32,7 +32,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	}
 
 	// Dashboards and folders are linked via the schema, so we need to get both
-	dashboards, folders, err := s.getDashboardAndFolderCommands(ctx, signedInUser)
+	dashs, folders, err := s.getDashboardAndFolderCommands(ctx, signedInUser)
 	if err != nil {
 		s.log.Error("Failed to get dashboards and folders", "err", err)
 		return nil, err
@@ -40,7 +40,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 
 	migrationDataSlice := make(
 		[]cloudmigration.MigrateDataRequestItem, 0,
-		len(dataSources)+len(dashboards)+len(folders),
+		len(dataSources)+len(dashs)+len(folders),
 	)
 
 	for _, ds := range dataSources {
@@ -52,13 +52,19 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		})
 	}
 
-	for _, dashboard := range dashboards {
+	for _, dashboard := range dashs {
 		dashboard.Data.Del("id")
 		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 			Type:  cloudmigration.DashboardDataType,
 			RefID: dashboard.UID,
 			Name:  dashboard.Title,
-			Data:  map[string]any{"dashboard": dashboard.Data},
+			Data: dashboards.SaveDashboardCommand{
+				Dashboard: dashboard.Data,
+				Overwrite: true, // currently only intended to be a push, not a sync; revisit during the preview
+				Message:   fmt.Sprintf("Created via the Grafana Cloud Migration Assistant by on-prem user \"%s\"", signedInUser.Login),
+				IsFolder:  false,
+				FolderUID: dashboard.FolderUID,
+			},
 		})
 	}
 
@@ -174,14 +180,6 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 		s.log.Debug(fmt.Sprintf("buildSnapshot: method completed in %d ms", time.Since(start).Milliseconds()))
 	}()
 
-	// Update status to snapshot creating with retries
-	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
-		UID:    snapshotMeta.UID,
-		Status: cloudmigration.SnapshotStatusCreating,
-	}); err != nil {
-		return err
-	}
-
 	publicKey, privateKey, err := box.GenerateKey(cryptoRand.Reader)
 	if err != nil {
 		return fmt.Errorf("nacl: generating public and private key: %w", err)
@@ -256,6 +254,7 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 	// update snapshot status to pending upload with retries
 	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
 		UID:       snapshotMeta.UID,
+		SessionID: snapshotMeta.SessionUID,
 		Status:    cloudmigration.SnapshotStatusPendingUpload,
 		Resources: localSnapshotResource,
 	}); err != nil {
@@ -275,14 +274,6 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 	defer func() {
 		s.log.Debug(fmt.Sprintf("uploadSnapshot: method completed in %d ms", time.Since(start).Milliseconds()))
 	}()
-
-	// update snapshot status to uploading with retries
-	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
-		UID:    snapshotMeta.UID,
-		Status: cloudmigration.SnapshotStatusUploading,
-	}); err != nil {
-		return err
-	}
 
 	indexFilePath := filepath.Join(snapshotMeta.LocalDir, "index.json")
 	// LocalDir can be set in the configuration, therefore the file path can be set to any path.
@@ -333,8 +324,9 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 
 	// update snapshot status to processing with retries
 	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
-		UID:    snapshotMeta.UID,
-		Status: cloudmigration.SnapshotStatusProcessing,
+		UID:       snapshotMeta.UID,
+		SessionID: snapshotMeta.SessionUID,
+		Status:    cloudmigration.SnapshotStatusProcessing,
 	}); err != nil {
 		return err
 	}
