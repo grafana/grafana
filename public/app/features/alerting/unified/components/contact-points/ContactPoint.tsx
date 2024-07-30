@@ -39,7 +39,7 @@ export const ContactPoint = ({
   const styles = useStyles2(getStyles);
 
   // TODO probably not the best way to figure out if we want to show either only the summary or full metadata for the receivers?
-  const showFullMetadata = receivers.some((receiver) => Boolean(receiver[RECEIVER_STATUS_KEY]));
+  const showFullMetadata = receivers.some((receiver) => Boolean(receiver[RECEIVER_META_KEY]));
 
   return (
     <div className={styles.contactPointWrapper} data-testid="contact-point">
