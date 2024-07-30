@@ -28,7 +28,7 @@ type ResourceServer interface {
 }
 
 type ListIterator interface {
-	Next() bool
+	Next() bool // sql.Rows
 
 	// Iterator error (if exts)
 	Error() error
@@ -490,6 +490,8 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
 		}
+
+		// TODO: add authz filters
 
 		item := &ResourceWrapper{
 			ResourceVersion: iter.ResourceVersion(),

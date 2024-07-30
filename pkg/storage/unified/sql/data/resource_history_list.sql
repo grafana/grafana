@@ -48,6 +48,6 @@ SELECT
     {{ end }}
     ORDER BY kv.{{ .Ident "resource_version" }} DESC
     {{ if (gt .Request.Limit 0) }}
-    LIMIT {{ .Arg .Request.Limit }}
+    LIMIT {{ .Arg .Request.Limit }} OFFSET {{ .Arg .Request.Offset }}
     {{ end }}
 ;

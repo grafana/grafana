@@ -122,8 +122,8 @@ func (r sqlResourceListRequest) Validate() error {
 }
 
 type historyListRequest struct {
-	ResourceVersion, Limit int64
-	Options                *resource.ListOptions
+	ResourceVersion, Limit, Offset int64
+	Options                        *resource.ListOptions
 }
 type sqlResourceHistoryListRequest struct {
 	*sqltemplate.SQLTemplate

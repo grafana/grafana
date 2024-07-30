@@ -342,7 +342,9 @@ func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest) (
 }
 
 type listIter struct {
-	rows *sql.Rows
+	rows   *sql.Rows
+	offset int64
+	listRV int64
 
 	// any error
 	err error
@@ -361,7 +363,7 @@ func (l *listIter) Close() error {
 
 // ContinueToken implements resource.ListIterator.
 func (l *listIter) ContinueToken() string {
-	return ContinueToken{ResourceVersion: l.rv}.String()
+	return ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset}.String()
 }
 
 // Error implements resource.ListIterator.
@@ -392,6 +394,7 @@ func (l *listIter) Value() []byte {
 // Next implements resource.ListIterator.
 func (l *listIter) Next() bool {
 	if l.rows.Next() {
+		l.offset++
 		l.err = l.rows.Scan(l.rv, l.namespace, l.name, l.value)
 		return true
 	}
@@ -422,6 +425,7 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest) (in
 		if err != nil {
 			return fmt.Errorf("list latest resources: %w", err)
 		}
+		iter.listRV = rv // used in continue token
 		return nil
 	})
 
@@ -432,28 +436,25 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest) (in
 func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest) (int64, resource.ListIterator, error) {
 	// Get the RV
 	rv := req.ResourceVersion
-	if rv < 1 {
-		return 0, nil, fmt.Errorf("expecting real resourceVersion")
-	}
+	offset := int64(0)
 	if req.NextPageToken != "" {
 		continueToken, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
 			return rv, nil, fmt.Errorf("get continue token: %w", err)
 		}
-		if continueToken.ResourceVersion > rv {
-			return 0, nil, fmt.Errorf("continue token resource version is greater than the original list")
-		}
 		rv = continueToken.ResourceVersion
+		offset = continueToken.StartOffset
 	}
 
-	iter := &listIter{}
+	iter := &listIter{listRV: rv, offset: offset}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
 		listReq := sqlResourceHistoryListRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Request: &historyListRequest{
 				ResourceVersion: rv,
-				Limit:           0, // use the iterator
+				Limit:           0, // use the iterator to limit
+				Offset:          offset,
 				Options:         req.Options,
 			},
 		}
