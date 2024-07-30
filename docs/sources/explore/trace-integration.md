@@ -49,9 +49,9 @@ Grafana's trace view provides an overview of a request as it travels through you
 
 The trace view header includes the following:
 
-- **Header title -** Shows the name of the root span and trace ID.
-- **Search -** Highlights spans containing the searched text.
-- **Metadata -** Various metadata about the trace.
+- **Header title** - Shows the name of the root span and trace ID.
+- **Search** - Highlights spans containing the searched text.
+- **Metadata** - Various metadata about the trace.
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-header.png" class="docs-image--no-shadow" max-width= "750px" caption="Trace view header" >}}
 
