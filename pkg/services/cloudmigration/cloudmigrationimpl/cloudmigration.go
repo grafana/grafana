@@ -591,6 +591,7 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 		// We need to update the snapshot in our db before reporting anything
 		if err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
 			UID:       snapshot.UID,
+			SessionID: sessionUid,
 			Status:    localStatus,
 			Resources: snapshotMeta.Results,
 		}); err != nil {

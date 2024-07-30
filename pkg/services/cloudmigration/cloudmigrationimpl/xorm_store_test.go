@@ -187,7 +187,7 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.Equal(t, cloudmigration.SnapshotStatusCreating, snapshot.Status)
 
 		// update its status
-		err = s.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{UID: snapshotUid, Status: cloudmigration.SnapshotStatusCreating})
+		err = s.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{UID: snapshotUid, Status: cloudmigration.SnapshotStatusCreating, SessionID: sessionUid})
 		require.NoError(t, err)
 
 		//retrieve it again
