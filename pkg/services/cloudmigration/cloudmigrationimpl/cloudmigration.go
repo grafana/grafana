@@ -659,7 +659,7 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 
 	s.log.Info("Uploading snapshot in local directory", "gmsSnapshotUID", snapshot.GMSSnapshotUID, "localDir", snapshot.LocalDir, "uploadURL", uploadUrl)
 
-	// Update status to "creating" to ensure the frontend polls from now on
+	// Update status to "uploading" to ensure the frontend polls from now on
 	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
 		UID:       snapshotUid,
 		SessionID: sessionUid,
