@@ -43,6 +43,7 @@ var (
 	sqlResourceVersionGet    = mustTemplate("resource_version_get.sql")
 	sqlResourceVersionInc    = mustTemplate("resource_version_inc.sql")
 	sqlResourceVersionInsert = mustTemplate("resource_version_insert.sql")
+	sqlResourceVersionList   = mustTemplate("resource_version_list.sql")
 )
 
 // TxOptions.
@@ -55,33 +56,6 @@ var (
 		ReadOnly:  true,
 	}
 )
-
-// SQLError is an error returned by the database, which includes additionally
-// debugging information about what was sent to the database.
-type SQLError struct {
-	Err          error
-	CallType     string // either Query, QueryRow or Exec
-	TemplateName string
-	Query        string
-	RawQuery     string
-	ScanDest     []any
-
-	// potentially regulated information is not exported and only directly
-	// available for local testing and local debugging purposes, making sure it
-	// is never marshaled to JSON or any other serialization.
-
-	arguments []any
-}
-
-func (e SQLError) Unwrap() error {
-	return e.Err
-}
-
-func (e SQLError) Error() string {
-	return fmt.Sprintf("%s: %s with %d input arguments and %d output "+
-		"destination arguments: %v", e.TemplateName, e.CallType,
-		len(e.arguments), len(e.ScanDest), e.Err)
-}
 
 type sqlResourceRequest struct {
 	*sqltemplate.SQLTemplate
@@ -104,8 +78,11 @@ func (r *historyPollResponse) Results() (*historyPollResponse, error) {
 	return r, nil
 }
 
+type groupResourceRV map[string]map[string]int64
 type sqlResourceHistoryPollRequest struct {
 	*sqltemplate.SQLTemplate
+	Resource             string
+	Group                string
 	SinceResourceVersion int64
 	Response             *historyPollResponse
 }
@@ -145,6 +122,18 @@ func (r sqlResourceListRequest) Validate() error {
 	return nil // TODO
 }
 
+func (r sqlResourceListRequest) Results() (*resource.ResourceWrapper, error) {
+	// sqlResourceListRequest is a set-returning query. As such, it
+	// should not return its *Response, since that will be overwritten in the
+	// next call to `Scan`, so it needs to return a copy of it. Note, though,
+	// that it is safe to return the same `Response.Value` since `Scan`
+	// allocates a new slice of bytes each time.
+	return &resource.ResourceWrapper{
+		ResourceVersion: r.Response.ResourceVersion,
+		Value:           r.Response.Value,
+	}, nil
+}
+
 type historyListRequest struct {
 	ResourceVersion, Limit, Offset int64
 	Options                        *resource.ListOptions
@@ -157,6 +146,18 @@ type sqlResourceHistoryListRequest struct {
 
 func (r sqlResourceHistoryListRequest) Validate() error {
 	return nil // TODO
+}
+
+func (r sqlResourceHistoryListRequest) Results() (*resource.ResourceWrapper, error) {
+	// sqlResourceHistoryListRequest is a set-returning query. As such, it
+	// should not return its *Response, since that will be overwritten in the
+	// next call to `Scan`, so it needs to return a copy of it. Note, though,
+	// that it is safe to return the same `Response.Value` since `Scan`
+	// allocates a new slice of bytes each time.
+	return &resource.ResourceWrapper{
+		ResourceVersion: r.Response.ResourceVersion,
+		Value:           r.Response.Value,
+	}, nil
 }
 
 // update RV
@@ -176,6 +177,11 @@ type resourceVersion struct {
 	ResourceVersion int64
 }
 
+type groupResourceVersion struct {
+	Group, Resource string
+	ResourceVersion int64
+}
+
 func (r *resourceVersion) Results() (*resourceVersion, error) {
 	return r, nil
 }
@@ -183,9 +189,19 @@ func (r *resourceVersion) Results() (*resourceVersion, error) {
 type sqlResourceVersionRequest struct {
 	*sqltemplate.SQLTemplate
 	Group, Resource string
+	ReadOnly        bool
 	*resourceVersion
 }
 
 func (r sqlResourceVersionRequest) Validate() error {
+	return nil // TODO
+}
+
+type sqlResourceVersionListRequest struct {
+	*sqltemplate.SQLTemplate
+	*groupResourceVersion
+}
+
+func (r sqlResourceVersionListRequest) Validate() error {
 	return nil // TODO
 }

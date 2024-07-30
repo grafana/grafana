@@ -1,4 +1,4 @@
-resource "grafana_rule_group" "rule_group_0000" {
+resource "grafana_rule_group" "rule_group_d3e8424bfbf66bc3" {
   org_id           = 1
   name             = "group101"
   folder_uid       = "e4584834-1a87-4dff-8913-8a4748dfca79"

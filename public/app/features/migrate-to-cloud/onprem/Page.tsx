@@ -1,7 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { Alert, Box, Stack } from '@grafana/ui';
+import { Alert, Box, Stack, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import {
@@ -14,6 +14,7 @@ import {
   useGetSnapshotQuery,
   useUploadSnapshotMutation,
 } from '../api';
+import { AlertWithTraceID } from '../shared/AlertWithTraceID';
 
 import { DisconnectModal } from './DisconnectModal';
 import { EmptyState } from './EmptyState/EmptyState';
@@ -56,19 +57,24 @@ const SHOULD_POLL_STATUSES: Array<SnapshotDto['status']> = [
   'PROCESSING',
 ];
 
+const SNAPSHOT_REBUILD_STATUSES: Array<SnapshotDto['status']> = ['PENDING_PROCESSING', 'FINISHED', 'ERROR', 'UNKNOWN'];
 const SNAPSHOT_BUILDING_STATUSES: Array<SnapshotDto['status']> = ['INITIALIZING', 'CREATING'];
-
 const SNAPSHOT_UPLOADING_STATUSES: Array<SnapshotDto['status']> = ['UPLOADING', 'PENDING_PROCESSING', 'PROCESSING'];
 
 const STATUS_POLL_INTERVAL = 5 * 1000;
 
-function useGetLatestSnapshot(sessionUid?: string) {
+const PAGE_SIZE = 50;
+
+function useGetLatestSnapshot(sessionUid?: string, page = 1) {
   const [shouldPoll, setShouldPoll] = useState(false);
 
   const listResult = useGetShapshotListQuery(sessionUid ? { uid: sessionUid } : skipToken);
-  const lastItem = listResult.data?.snapshots?.at(-1); // TODO: account for pagination and ensure we're truely getting the last one
+  const lastItem = listResult.data?.snapshots?.at(0);
 
-  const getSnapshotQueryArgs = sessionUid && lastItem?.uid ? { uid: sessionUid, snapshotUid: lastItem.uid } : skipToken;
+  const getSnapshotQueryArgs =
+    sessionUid && lastItem?.uid
+      ? { uid: sessionUid, snapshotUid: lastItem.uid, resultLimit: PAGE_SIZE, resultPage: page }
+      : skipToken;
 
   const snapshotResult = useGetSnapshotQuery(getSnapshotQueryArgs, {
     pollingInterval: shouldPoll ? STATUS_POLL_INTERVAL : 0,
@@ -96,7 +102,8 @@ function useGetLatestSnapshot(sessionUid?: string) {
 export const Page = () => {
   const [disconnectModalOpen, setDisconnectModalOpen] = useState(false);
   const session = useGetLatestSession();
-  const snapshot = useGetLatestSnapshot(session.data?.uid);
+  const [page, setPage] = useState(1);
+  const snapshot = useGetLatestSnapshot(session.data?.uid, page);
   const [performCreateSnapshot, createSnapshotResult] = useCreateSnapshotMutation();
   const [performUploadSnapshot, uploadSnapshotResult] = useUploadSnapshotMutation();
   const [performCancelSnapshot, cancelSnapshotResult] = useCancelSnapshotMutation();
@@ -120,6 +127,7 @@ export const Page = () => {
   const showBuildSnapshot = !snapshot.isLoading && !snapshot.data;
   const showBuildingSnapshot = SNAPSHOT_BUILDING_STATUSES.includes(status);
   const showUploadSnapshot = status === 'PENDING_UPLOAD' || SNAPSHOT_UPLOADING_STATUSES.includes(status);
+  const showRebuildSnapshot = SNAPSHOT_REBUILD_STATUSES.includes(status);
 
   const handleDisconnect = useCallback(async () => {
     if (sessionUid) {
@@ -147,7 +155,11 @@ export const Page = () => {
 
   if (isInitialLoading) {
     // TODO: better loading state
-    return <div>Loading...</div>;
+    return (
+      <div>
+        <Trans i18nKey="migrate-to-cloud.summary.page-loading">Loading...</Trans>
+      </div>
+    );
   } else if (!session.data) {
     return <EmptyState />;
   }
@@ -156,18 +168,19 @@ export const Page = () => {
     <>
       <Stack direction="column" gap={4}>
         {/* TODO: show errors from all mutation's in a... modal? */}
+
         {createSnapshotResult.isError && (
-          <Alert
+          <AlertWithTraceID
+            error={createSnapshotResult.error}
             severity="error"
-            title={t(
-              'migrate-to-cloud.summary.run-migration-error-title',
-              'There was an error migrating your resources'
-            )}
+            title={t('migrate-to-cloud.summary.run-migration-error-title', 'Error creating snapshot')}
           >
-            <Trans i18nKey="migrate-to-cloud.summary.run-migration-error-description">
-              See the Grafana server logs for more details
-            </Trans>
-          </Alert>
+            <Text element="p">
+              <Trans i18nKey="migrate-to-cloud.summary.run-migration-error-description">
+                See the Grafana server logs for more details
+              </Trans>
+            </Text>
+          </AlertWithTraceID>
         )}
 
         {disconnectResult.isError && (
@@ -194,6 +207,7 @@ export const Page = () => {
             showUploadSnapshot={showUploadSnapshot}
             uploadSnapshotIsLoading={uploadSnapshotResult.isLoading || SNAPSHOT_UPLOADING_STATUSES.includes(status)}
             onUploadSnapshot={handleUploadSnapshot}
+            showRebuildSnapshot={showRebuildSnapshot}
           />
         )}
 
@@ -218,7 +232,12 @@ export const Page = () => {
         )}
 
         {snapshot.data?.results && snapshot.data.results.length > 0 && (
-          <ResourcesTable resources={snapshot.data.results} />
+          <ResourcesTable
+            resources={snapshot.data.results}
+            onChangePage={setPage}
+            numberOfPages={Math.ceil((snapshot?.data?.stats?.total || 0) / PAGE_SIZE)}
+            page={page}
+          />
         )}
       </Stack>
 

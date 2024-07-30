@@ -459,7 +459,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
     state: undefined,
     config:
       bucketDecimals === 0
-        ? config ?? {}
+        ? (config ?? {})
         : {
             ...config,
             decimals: bucketDecimals,

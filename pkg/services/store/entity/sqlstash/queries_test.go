@@ -392,7 +392,7 @@ func TestQueries(t *testing.T) {
 							expectedQuery := sqltemplate.FormatSQL(rawQuery)
 
 							for _, d := range ds {
-								t.Run(d.Name(), func(t *testing.T) {
+								t.Run(d.DialectName(), func(t *testing.T) {
 									// not parallel for the same reason
 
 									tc.Data.SetDialect(d)

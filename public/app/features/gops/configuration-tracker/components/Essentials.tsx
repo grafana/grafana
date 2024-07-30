@@ -109,7 +109,7 @@ function OpenLinkButton(props: LinkButtonProps) {
   const urlToGo = done ? urlToGoWhenDone : urlToGoWhenNotDone;
   return (
     <LinkButton href={urlToGo} variant="secondary">
-      {done ? labelOnDone ?? label : label}
+      {done ? (labelOnDone ?? label) : label}
     </LinkButton>
   );
 }
