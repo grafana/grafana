@@ -114,7 +114,7 @@ export const SuggestionsInput = ({
       if (x[startPos - 1] === '$') {
         input.value = x.slice(0, startPos) + item.value + x.slice(curPos);
       } else {
-        input.value = x.slice(0, startPos) + '$' + item.value + x.slice(curPos);
+        input.value = x.slice(0, startPos) + '$' + `{${item.value}}` + x.slice(curPos);
       }
 
       setVariableValue(input.value);
@@ -186,10 +186,6 @@ export const SuggestionsInput = ({
               autoHeightMax="300px"
               setScrollTop={({ scrollTop }) => setScrollTop(scrollTop)}
             >
-              {/* This suggestion component has a specialized name,
-                    but is rather generalistic in implementation,
-                    so we're using it in transformations also.
-                    We should probably rename this to something more general. */}
               <DataLinkSuggestions
                 activeRef={activeRef}
                 suggestions={suggestions}

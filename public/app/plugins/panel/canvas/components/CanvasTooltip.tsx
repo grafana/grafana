@@ -89,7 +89,6 @@ export const CanvasTooltip = ({ scene }: Props) => {
 
   const elementHasActions = (element.options.actions?.length ?? 0) > 0;
 
-  console.log('elementHasActions', elementHasActions, element.options.actions);
   if (elementHasActions && element.getActions) {
     element.getActions({}).forEach((action) => {
       const key = `${action.title}/${Math.random()}`;
