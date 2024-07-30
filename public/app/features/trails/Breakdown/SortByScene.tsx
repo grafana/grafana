@@ -94,24 +94,6 @@ export class SortByScene extends SceneObjectBase<SortBySceneState> {
     const value = group?.options.find((option) => option.value === sortBy);
     return (
       <>
-        <InlineField>
-          <Select
-            onChange={model.onDirectionChange}
-            aria-label="Sort direction"
-            placeholder=""
-            value={direction}
-            options={[
-              {
-                label: 'Asc',
-                value: 'asc',
-              },
-              {
-                label: 'Desc',
-                value: 'desc',
-              },
-            ]}
-          ></Select>
-        </InlineField>
         <InlineField
           label="Sort by"
           htmlFor="sort-by-criteria"
@@ -125,6 +107,25 @@ export class SortByScene extends SceneObjectBase<SortBySceneState> {
             placeholder={'Choose criteria'}
             onChange={model.onCriteriaChange}
             inputId="sort-by-criteria"
+          />
+        </InlineField>
+        <InlineField>
+          <Select
+            onChange={model.onDirectionChange}
+            aria-label="Sort direction"
+            placeholder=""
+            width={10}
+            value={direction}
+            options={[
+              {
+                label: 'Asc',
+                value: 'asc',
+              },
+              {
+                label: 'Desc',
+                value: 'desc',
+              },
+            ]}
           />
         </InlineField>
       </>

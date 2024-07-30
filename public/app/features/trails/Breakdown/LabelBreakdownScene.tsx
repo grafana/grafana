@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { min, max, isNumber, throttle } from 'lodash';
+import { isNumber, max, min, throttle } from 'lodash';
 
 import { DataFrame, FieldType, GrafanaTheme2, PanelData, ReducerID, SelectableValue } from '@grafana/data';
 import {
@@ -22,8 +22,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
-import { Button, Field, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
-import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
+import { Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
 import { AddToFiltersGraphAction } from '../ActionTabs/AddToFiltersGraphAction';
 import { ByFrameRepeater } from '../ActionTabs/ByFrameRepeater';
@@ -39,13 +38,17 @@ import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
 import { reportExploreMetrics } from '../interactions';
 import { getSortByPreference } from '../services/store';
+import { ALL_VARIABLE_VALUE } from '../services/variables';
 import { trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared';
 import { getColorByIndex, getTrailFor } from '../utils';
+
+import { SortByScene } from './SortByScene';
 
 const MAX_PANELS_IN_ALL_LABELS_BREAKDOWN = 60;
 
 export interface LabelBreakdownSceneState extends SceneObjectState {
   body?: LayoutSwitcher;
+  sortBy: SortByScene;
   labels: Array<SelectableValue<string>>;
   value?: string;
   loading?: boolean;
@@ -61,8 +64,9 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
 
   constructor(state: Partial<LabelBreakdownSceneState>) {
     super({
-      labels: state.labels ?? [],
       ...state,
+      labels: state.labels ?? [],
+      sortBy: new SortByScene({ target: 'labels' }),
     });
 
     this.addActivationHandler(this._onActivate.bind(this));
@@ -210,7 +214,7 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
   };
 
   public static Component = ({ model }: SceneComponentProps<LabelBreakdownScene>) => {
-    const { labels, body, loading, value, blockingMessage } = model.useState();
+    const { labels, body, sortBy, loading, value, blockingMessage } = model.useState();
     const styles = useStyles2(getStyles);
 
     return (
@@ -219,16 +223,13 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
           <div className={styles.controls}>
             {!loading && labels.length && (
               <div className={styles.controlsLeft}>
-                <Field label="By label">
-                  <BreakdownLabelSelector options={labels} value={value} onChange={model.onChange} />
-                </Field>
+                <BreakdownLabelSelector options={labels} value={value} onChange={model.onChange} />
               </div>
             )}
-            {body instanceof LayoutSwitcher && (
-              <div className={styles.controlsRight}>
-                <body.Selector model={body} />
-              </div>
-            )}
+            <div className={styles.controlsRight}>
+              {value !== ALL_VARIABLE_VALUE && <sortBy.Component model={sortBy} />}
+              {body instanceof LayoutSwitcher && <body.Selector model={body} />}
+            </div>
           </div>
           <div className={styles.content}>{body && <body.Component model={body} />}</div>
         </StatusWrapper>
@@ -244,6 +245,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       minHeight: '100%',
       flexDirection: 'column',
+      paddingTop: theme.spacing(1),
     }),
     content: css({
       flexGrow: 1,
@@ -254,6 +256,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 0,
       display: 'flex',
       alignItems: 'top',
+      justifyContent: 'space-between',
       gap: theme.spacing(2),
     }),
     controlsRight: css({
