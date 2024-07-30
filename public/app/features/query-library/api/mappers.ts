@@ -48,7 +48,7 @@ export const convertAddQueryTemplateCommandToDataQuerySpec = (
     apiVersion: API_VERSION,
     kind: QueryTemplateKinds.QueryTemplate,
     metadata: {
-      generateName: 'A' + title,
+      generateName: 'A' + title.replaceAll(' ', '-'),
     },
     spec: {
       title: title,
