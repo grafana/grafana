@@ -7,7 +7,7 @@
 // which may help alleviate this when it lands:
 // https://github.com/reduxjs/redux-toolkit/pull/3485
 
-import { DefinitionsFromApi, OverrideResultType } from '@reduxjs/toolkit/dist/query/endpointDefinitions';
+import { DefinitionsFromApi, OverrideResultType } from '@reduxjs/toolkit/query';
 
 import {
   ListTimeIntervalForAllNamespacesApiResponse,
