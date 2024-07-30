@@ -56,7 +56,8 @@ export type GrafanaNotifierType =
   | 'pushover'
   | 'LINE'
   | 'kafka'
-  | 'wecom';
+  | 'wecom'
+  | 'mqtt';
 
 export type CloudNotifierType =
   | 'oncall' // Only FE implementation for now
@@ -72,7 +73,8 @@ export type CloudNotifierType =
   | 'telegram'
   | 'sns'
   | 'discord'
-  | 'msteams';
+  | 'msteams'
+  | 'mqtt';
 
 export type NotifierType = GrafanaNotifierType | CloudNotifierType;
 export interface NotifierDTO<T = NotifierType> {
