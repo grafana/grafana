@@ -1478,6 +1478,10 @@
     }
   },
   "navigation": {
+    "item": {
+      "add-bookmark": "Add to Bookmarks",
+      "remove-bookmark": "Remove from Bookmarks"
+    },
     "kiosk": {
       "tv-alert": "Press ESC to exit kiosk mode"
     },

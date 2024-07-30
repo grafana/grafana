@@ -111,7 +111,6 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
       contactPoints: [],
       isLoading: false,
       error: undefined,
-      refetchReceivers: jest.fn(),
     });
 
     mocks.searchFolders.mockResolvedValue([
@@ -185,7 +184,6 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
       contactPoints: contactPointsAvailable,
       isLoading: false,
       error: undefined,
-      refetchReceivers: jest.fn(),
     });
 
     mocks.searchFolders.mockResolvedValue([
