@@ -94,12 +94,6 @@ Span details include:
 
 Refer to [Span and resource attributes](/docs/tempo/<TEMPO_VERSION>/operations/best-practices/#span-and-resource-attributes) for more detail.
 
-<!-- - Operation name.
-- Span metadata.
-- Tags: Any tags associated with this span.
-- Process metadata: Metadata about the process that logged this span.
-- Logs: List of logs logged by this span and associated key values. In case of Zipkin logs section shows Zipkin annotations. -->
-
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-span-details.png" class="docs-image--no-shadow" max-width= "900px"  caption="Trace view span details" >}}
 
 ### Span filters
