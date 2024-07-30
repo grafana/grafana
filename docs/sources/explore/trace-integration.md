@@ -31,7 +31,6 @@ Here are some references to learn more about traces and how you can use them:
 - [How TraceQL works](/docs/tempo/<TEMPO_VERSION>/traceql/architecture/)
 - [Best practices for tracing](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/tracing-best-practices/)
 
-Learn more about how to use traces to troubleshoot issues by reading [Use traces to find solutions](https://grafana.com/docs/tempo/<TEMPO_VERSION>/introduction/solutions-with-traces/).
 
 ## Query editors
 
