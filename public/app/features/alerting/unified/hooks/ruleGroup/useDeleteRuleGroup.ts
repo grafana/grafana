@@ -2,7 +2,11 @@ import { dispatch, getState } from 'app/store/store';
 import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
-import { fetchPromAndRulerRulesAction, getDataSourceRulerConfig } from '../../state/actions';
+import {
+  fetchPromAndRulerRulesAction,
+  fetchRulesSourceBuildInfoAction,
+  getDataSourceRulerConfig,
+} from '../../state/actions';
 import { useAsync } from '../useAsync';
 
 export function useDeleteRuleGroup() {
@@ -12,6 +16,7 @@ export function useDeleteRuleGroup() {
     const { dataSourceName, namespaceName, groupName } = ruleGroupIdentifier;
 
     // @TODO get rid of getState, *sigh*
+    await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: dataSourceName }));
     const rulerConfig = getDataSourceRulerConfig(getState, dataSourceName);
 
     const result = await deleteRuleGroup({ rulerConfig, namespace: namespaceName, group: groupName }).unwrap();

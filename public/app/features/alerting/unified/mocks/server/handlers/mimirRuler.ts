@@ -1,12 +1,22 @@
 import { delay, http, HttpResponse } from 'msw';
 
-import { RulerRuleGroupDTO, RulerRulesConfigDTO } from '../../../../../../types/unified-alerting-dto';
+import {
+  PromRulesResponse,
+  RulerRuleGroupDTO,
+  RulerRulesConfigDTO,
+} from '../../../../../../types/unified-alerting-dto';
 import { namespaces } from '../../mimirRulerApi';
 import { HandlerOptions } from '../configure';
 
 export const getRulerRulesHandler = () => {
   return http.get(`/api/ruler/:dataSourceUID/api/v1/rules`, async () => {
     return HttpResponse.json<RulerRulesConfigDTO>(namespaces);
+  });
+};
+
+export const prometheusRulesHandler = () => {
+  return http.get('/api/prometheus/:dataSourceUID/api/v1/rules', () => {
+    return HttpResponse.json<PromRulesResponse>({ status: 'success', data: { groups: [] } });
   });
 };
 
@@ -73,6 +83,7 @@ export const deleteRulerRuleGroupHandler = () => {
 
 const handlers = [
   getRulerRulesHandler(),
+  prometheusRulesHandler(),
   updateRulerRuleNamespaceHandler(),
   rulerRuleGroupHandler(),
   deleteRulerRuleGroupHandler(),
