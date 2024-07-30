@@ -119,7 +119,7 @@ You can add one or more of the following filters:
 
 To only show the spans you have matched, toggle **Show matches only**.
 
-Refer to [Span filters](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/span-filters/) for more in depth information on working with span filters.
+Refer to [Span filters](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/span-filters/) for more in depth information.
 
 Watch the following video to learn more about filtering trace spans in Grafana:
 {{< youtube id="VP2XV3IIc80" >}}
