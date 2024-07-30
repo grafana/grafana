@@ -5,8 +5,7 @@ This module returns the pipeline used for publishing Docker images and its steps
 load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
-    "download_grabpl_step",
-    "fetch_images_step",
+    "download_grabpl_step", "fetch_images_step",
     "identify_runner_step",
     "publish_images_step",
 )
@@ -29,7 +28,7 @@ def publish_image_public_step():
     Returns:
       A drone step which publishes Docker images for a public release.
     """
-    command = """
+    command = """bash -c '
     debug=
     if [[ -n $${DRY_RUN} ]];  then debug=echo; fi
     docker login -u $${DOCKER_USER} -p $${DOCKER_PASSWORD}
@@ -71,8 +70,7 @@ def publish_image_public_step():
         $$debug docker manifest push grafana/grafana:latest
         $$debug docker manifest push grafana/grafana:latest-ubuntu
 
-    fi
-    """
+    fi'"""
     return {
         "environment": {
             "DOCKER_USER": from_secret("docker_username"),
