@@ -13,12 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
+	playlistapi "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/middleware"
 	internalplaylist "github.com/grafana/grafana/pkg/registry/apis/playlist"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
@@ -27,7 +27,8 @@ import (
 func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
 	// Register the actual handlers
 	apiRoute.Group("/playlists", func(playlistRoute routing.RouteRegister) {
-		if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesPlaylists) {
+		unifiedStorageOptions := hs.Cfg.UnifiedStorage
+		if mode, ok := unifiedStorageOptions[playlistapi.GROUPRESOURCE]; ok && mode > 0 {
 			// Use k8s client to implement legacy API
 			handler := newPlaylistK8sHandler(hs)
 			playlistRoute.Get("/", handler.searchPlaylists)

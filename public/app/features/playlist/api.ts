@@ -207,7 +207,3 @@ export function searchPlaylists(playlists: Playlist[], query?: string): Playlist
   query = query.toLowerCase();
   return playlists.filter((v) => v.name.toLowerCase().includes(query!));
 }
-
-export function getPlaylistAPI() {
-  return config.featureToggles.kubernetesPlaylists ? new K8sAPI() : new LegacyAPI();
-}
