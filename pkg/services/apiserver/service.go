@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -204,6 +205,16 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 	s.builders = append(s.builders, b)
 }
 
+func unaryMetadataInjectInterceptor(traceId string) grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		meta := metadata.Pairs("trace-id", traceId)
+		//TODO is this the right traceID syntax? Does it matter?
+		fmt.Println("trace-id", traceId)
+		ctx = metadata.NewOutgoingContext(ctx, meta)
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
+}
+
 // nolint:gocyclo
 func (s *service) start(ctx context.Context) error {
 	defer close(s.startedCh)
@@ -281,8 +292,14 @@ func (s *service) start(ctx context.Context) error {
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
 			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
+
+		//traceID := tracing.TraceIDFromContext(ctx, false)
+		opts := []grpc.DialOption{
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithUnaryInterceptor(unaryMetadataInjectInterceptor("hello-world")),
+		}
 		// Create a connection to the gRPC server
-		conn, err := grpc.NewClient(o.StorageOptions.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.NewClient(o.StorageOptions.Address, opts...)
 		if err != nil {
 			return err
 		}
