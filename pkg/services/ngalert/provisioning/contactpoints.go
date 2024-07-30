@@ -550,15 +550,6 @@ func getCaseInsensitive(jsonObj *simplejson.Json, key string) (string, string, e
 	return key, "", nil
 }
 
-// handleWrappedError unwraps an error and wraps it with a new expected error type. If the error is not wrapped, it returns just the expected error.
-func handleWrappedError(err error, expected error) error {
-	err = errors.Unwrap(err)
-	if err == nil {
-		return expected
-	}
-	return fmt.Errorf("%w: %s", expected, err.Error())
-}
-
 // convertRecSvcErr converts errors from notifier.ReceiverService to errors expected from ContactPointService.
 func convertRecSvcErr(err error) error {
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
