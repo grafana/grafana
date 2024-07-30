@@ -82,14 +82,11 @@ func TestIntegrationFolderService(t *testing.T) {
 
 		features := featuremgmt.WithFeatures()
 
-		ac := acmock.New().WithPermissions([]accesscontrol.Permission{
-			{Action: accesscontrol.ActionAlertingRuleDelete, Scope: dashboards.ScopeFoldersAll},
-		})
 		alertingStore := ngstore.DBstore{
 			SQLStore:      db,
 			Cfg:           cfg.UnifiedAlerting,
 			Logger:        log.New("test-alerting-store"),
-			AccessControl: ac,
+			AccessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
 		}
 
 		service := &Service{
