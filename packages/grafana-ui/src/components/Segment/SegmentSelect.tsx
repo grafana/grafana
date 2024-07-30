@@ -27,6 +27,8 @@ export interface Props<T> extends Omit<HTMLProps<HTMLDivElement>, 'value' | 'onC
    * will work as canceling and using the previous value
    */
   allowEmptyValue?: boolean;
+  allowCreateWhileLoading?: boolean;
+  createOptionPosition?: 'first' | 'last';
   placeholder?: string;
 }
 
@@ -40,8 +42,10 @@ export function SegmentSelect<T>({
   loadOptions = undefined,
   width: widthPixels,
   noOptionsMessage = '',
+  allowCreateWhileLoading = false,
   allowCustomValue = false,
   allowEmptyValue = false,
+  createOptionPosition = 'last',
   ...rest
 }: React.PropsWithChildren<Props<T>>) {
   const ref = useRef<HTMLDivElement>(null);
@@ -85,7 +89,9 @@ export function SegmentSelect<T>({
             }
           }
         }}
+        allowCreateWhileLoading={allowCreateWhileLoading}
         allowCustomValue={allowCustomValue}
+        createOptionPosition={createOptionPosition}
         {...asyncOptions}
       />
     </div>

@@ -37,7 +37,9 @@ export function SegmentAsync<T>({
   Component,
   className,
   allowCustomValue,
+  allowCreateWhileLoading,
   allowEmptyValue,
+  createOptionPosition,
   disabled,
   placeholder,
   inputMinWidth,
@@ -89,8 +91,10 @@ export function SegmentAsync<T>({
       loadOptions={reloadOptionsOnChange ? fetchOptions : undefined}
       width={width}
       noOptionsMessage={noOptionMessageHandler(state)}
+      allowCreateWhileLoading={allowCreateWhileLoading}
       allowCustomValue={allowCustomValue}
       allowEmptyValue={allowEmptyValue}
+      createOptionPosition={createOptionPosition}
       onClickOutside={() => {
         setExpanded(false);
       }}
