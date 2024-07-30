@@ -36,8 +36,8 @@ type StorageBackend interface {
 	// Return the revisionVersion for this event or error
 	WriteEvent(context.Context, WriteEvent) (int64, error)
 
-	// Read a value from storage optionally at an explicit version
-	Read(context.Context, *ReadRequest) *ReadResponse
+	// Read a resource from storage optionally at an explicit version
+	ReadResource(context.Context, *ReadRequest) *ReadResponse
 
 	// When the ResourceServer executes a List request, it will first
 	// query the backend for potential results.  All results will be
@@ -284,7 +284,7 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	}
 
 	rsp := &CreateResponse{}
-	found := s.backend.Read(ctx, &ReadRequest{Key: req.Key})
+	found := s.backend.ReadResource(ctx, &ReadRequest{Key: req.Key})
 	if found != nil && len(found.Value) > 0 {
 		rsp.Error = &ErrorResult{
 			Code:    http.StatusConflict,
@@ -320,7 +320,7 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 		return rsp, nil
 	}
 
-	latest := s.backend.Read(ctx, &ReadRequest{
+	latest := s.backend.ReadResource(ctx, &ReadRequest{
 		Key: req.Key,
 	})
 	if latest.Error != nil {
@@ -364,7 +364,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 		return nil, apierrors.NewBadRequest("update must include the previous version")
 	}
 
-	latest := s.backend.Read(ctx, &ReadRequest{
+	latest := s.backend.ReadResource(ctx, &ReadRequest{
 		Key: req.Key,
 	})
 	if latest.Error != nil {
@@ -432,7 +432,7 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 		return &ReadResponse{Error: NewBadRequestError("missing resource")}, nil
 	}
 
-	rsp := s.backend.Read(ctx, req)
+	rsp := s.backend.ReadResource(ctx, req)
 	// TODO, check folder permissions etc
 	return rsp, nil
 }

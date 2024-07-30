@@ -293,7 +293,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	return newVersion, err
 }
 
-func (b *backend) Read(ctx context.Context, req *resource.ReadRequest) *resource.ReadResponse {
+func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.ReadResponse {
 	_, span := b.tracer.Start(ctx, trace_prefix+".Read")
 	defer span.End()
 

@@ -258,17 +258,13 @@ message ListRequest {
 }
 
 message ListResponse {
-  // Error details
-  ErrorResult error = 1;
-
-  // The actual items
-  repeated ResourceWrapper items = 2;
+  repeated ResourceWrapper items = 1;
 
   // When more results exist, pass this in the next request
-  string next_page_token = 3;
+  string next_page_token = 2;
 
   // ResourceVersion of the list response
-  int64 resource_version = 4;
+  int64 resource_version = 3;
 
   // remainingItemCount is the number of subsequent items in the list which are not included in this
   // list response. If the list request contained label or field selectors, then the number of
@@ -280,7 +276,10 @@ message ListResponse {
   // The intended use of the remainingItemCount is *estimating* the size of a collection. Clients
   // should not rely on the remainingItemCount to be set or to be exact.
   // +optional
-  int64 remaining_item_count = 5; // 0 won't be set either (no next page token)
+  int64 remaining_item_count = 4; // 0 won't be set either (no next page token)
+
+  // Error details
+  ErrorResult error = 5;
 }
 
 message WatchRequest {
@@ -340,17 +339,16 @@ message HistoryRequest {
 }
 
 message HistoryResponse {
-  // Error details
-  ErrorResult error = 1;
-
-  // Show historical items
-  repeated ResourceMeta items = 2;
+  repeated ResourceMeta items = 1;
 
   // More results exist... pass this in the next request
-  string next_page_token = 3;
+  string next_page_token = 2;
 
   // ResourceVersion of the list response
-  int64 resource_version = 4;
+  int64 resource_version = 3;
+
+  // Error details
+  ErrorResult error = 4;
 }
 
 message OriginRequest {
@@ -391,16 +389,16 @@ message ResourceOriginInfo {
 }
 
 message OriginResponse {
-  // Error details
-  ErrorResult error = 1;
-
-  repeated ResourceOriginInfo items = 2;
+  repeated ResourceOriginInfo items = 1;
 
   // More results exist... pass this in the next request
-  string next_page_token = 3;
+  string next_page_token = 2;
 
   // ResourceVersion of the list response
-  int64 resource_version = 4;
+  int64 resource_version = 3;
+
+  // Error details
+  ErrorResult error = 8;
 }
 
 message HealthCheckRequest {
@@ -443,7 +441,9 @@ service ResourceStore {
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 service ResourceIndex {
   // TODO: rpc Search(...) ... eventually a typed response
-  
+
+  rpc Read(ReadRequest) returns (ReadResponse); // Duplicated -- for client read only usage
+
   // Show resource history (and trash)
   rpc History(HistoryRequest) returns (HistoryResponse);
 

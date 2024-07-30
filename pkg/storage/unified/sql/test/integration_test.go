@@ -88,14 +88,14 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 	})
 
 	t.Run("Read latest item 2", func(t *testing.T) {
-		resp := store.Read(ctx, &resource.ReadRequest{Key: resourceKey("item2")})
+		resp := store.ReadResource(ctx, &resource.ReadRequest{Key: resourceKey("item2")})
 		require.NoError(t, err)
 		require.Equal(t, int64(4), resp.ResourceVersion)
 		require.Equal(t, "item2 MODIFIED", string(resp.Value))
 	})
 
 	t.Run("Read early verion of item2", func(t *testing.T) {
-		resp := store.Read(ctx, &resource.ReadRequest{
+		resp := store.ReadResource(ctx, &resource.ReadRequest{
 			Key:             resourceKey("item2"),
 			ResourceVersion: 3, // item2 was created at rv=2 and updated at rv=4
 		})

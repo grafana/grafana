@@ -122,7 +122,7 @@ func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid 
 }
 
 // Read implements ResourceStoreServer.
-func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest) *resource.ReadResponse {
+func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.ReadResponse {
 	rsp := &resource.ReadResponse{}
 	info, err := request.ParseNamespace(req.Key.Namespace)
 	if err == nil {
@@ -253,6 +253,11 @@ func (a *dashboardSqlAccess) WatchWriteEvents(ctx context.Context) (<-chan *reso
 		a.subscribers = subs
 	}()
 	return stream, nil
+}
+
+// Simple wrapper for index implementation
+func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResponse, error) {
+	return a.ReadResource(ctx, req), nil
 }
 
 func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryRequest) (*resource.HistoryResponse, error) {

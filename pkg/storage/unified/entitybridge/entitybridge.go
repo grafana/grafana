@@ -183,7 +183,7 @@ func (b *entityBridge) IsHealthy(ctx context.Context, req *resource.HealthCheckR
 }
 
 // Read implements ResourceServer.
-func (b *entityBridge) Read(ctx context.Context, req *resource.ReadRequest) *resource.ReadResponse {
+func (b *entityBridge) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.ReadResponse {
 	v, err := b.client.Read(ctx, &entity.ReadEntityRequest{
 		Key:      toEntityKey(req.Key),
 		WithBody: true,

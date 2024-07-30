@@ -133,7 +133,7 @@ func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64
 	return rv, err
 }
 
-func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) *ReadResponse {
+func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *ReadResponse {
 	rv := req.ResourceVersion
 
 	path := s.getPath(req.Key, rv)
@@ -179,7 +179,7 @@ func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) *ReadResponse {
 		}
 
 		// If the there was an explicit request, get the latest
-		rsp := s.Read(ctx, &ReadRequest{Key: req.Key})
+		rsp := s.ReadResource(ctx, &ReadRequest{Key: req.Key})
 		if rsp != nil && len(rsp.Value) > 0 {
 			raw = rsp.Value
 			rv = rsp.ResourceVersion

@@ -31,6 +31,10 @@ func (n *noopService) IsHealthy(context.Context, *HealthCheckRequest) (*HealthCh
 	}, nil
 }
 
+func (n *noopService) Read(context.Context, *ReadRequest) (*ReadResponse, error) {
+	return nil, ErrNotImplementedYet
+}
+
 func (n *noopService) History(context.Context, *HistoryRequest) (*HistoryResponse, error) {
 	return nil, ErrNotImplementedYet
 }
