@@ -24,14 +24,13 @@ You can use Explore to query and visualize traces from tracing data sources. Sup
 - [New Relic](/docs/plugins/grafana-newrelic-datasource/latest/)
 - [Infinity](/docs/plugins/yesoreyeram-infinity-datasource/latest/)
 
-Here are some references to learn more about traces and how you can use them:  
+Here are some references to learn more about traces and how you can use them:
 
 - [Introduction to tracing](https://grafana.com/docs/tempo/<TEMPO_VERSION>/introduction/)
 - [Trace structure](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/trace-structure/#trace-structure)
 - [Traces and telemetry](https://grafana.com/docs/tempo/<TEMPO_VERSION>/introduction/telemetry/)
 - [Using traces to find solutions to problems](https://grafana.com/docs/tempo/<TEMPO_VERSION>/introduction/solutions-with-traces/)
 - [Best practices for tracing](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/tracing-best-practices/)
-
 
 ## Query editors
 
