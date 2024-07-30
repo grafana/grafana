@@ -88,24 +88,24 @@ func TestBackendHappyPath(t *testing.T) {
 	})
 
 	t.Run("Read latest item 2", func(t *testing.T) {
-		resp, err := store.Read(ctx, &resource.ReadRequest{Key: resourceKey("item2")})
-		assert.NoError(t, err)
+		resp := store.Read(ctx, &resource.ReadRequest{Key: resourceKey("item2")})
+		assert.Nil(t, resp.Error)
 		assert.Equal(t, int64(4), resp.ResourceVersion)
 		assert.Equal(t, "item2 MODIFIED", string(resp.Value))
 	})
 
 	t.Run("Read early verion of item2", func(t *testing.T) {
-		resp, err := store.Read(ctx, &resource.ReadRequest{
+		resp := store.Read(ctx, &resource.ReadRequest{
 			Key:             resourceKey("item2"),
 			ResourceVersion: 3, // item2 was created at rv=2 and updated at rv=4
 		})
-		assert.NoError(t, err)
+		assert.Nil(t, resp.Error)
 		assert.Equal(t, int64(2), resp.ResourceVersion)
 		assert.Equal(t, "item2 ADDED", string(resp.Value))
 	})
 
 	t.Run("PrepareList latest", func(t *testing.T) {
-		resp, err := store.PrepareList(ctx, &resource.ListRequest{
+		resp := store.PrepareList(ctx, &resource.ListRequest{
 			Options: &resource.ListOptions{
 				Key: &resource.ResourceKey{
 					Namespace: "namespace",
@@ -114,7 +114,7 @@ func TestBackendHappyPath(t *testing.T) {
 				},
 			},
 		})
-		assert.NoError(t, err)
+		assert.Nil(t, resp.Error)
 		assert.Len(t, resp.Items, 2)
 		assert.Equal(t, "item2 MODIFIED", string(resp.Items[0].Value))
 		assert.Equal(t, "item3 ADDED", string(resp.Items[1].Value))
@@ -184,7 +184,7 @@ func TestBackendPrepareList(t *testing.T) {
 	_, _ = writeEvent(ctx, store, "item3", resource.WatchEvent_DELETED)  // rv=7
 	_, _ = writeEvent(ctx, store, "item6", resource.WatchEvent_ADDED)    // rv=8
 	t.Run("fetch all latest", func(t *testing.T) {
-		res, err := store.PrepareList(ctx, &resource.ListRequest{
+		res := store.PrepareList(ctx, &resource.ListRequest{
 			Options: &resource.ListOptions{
 				Key: &resource.ResourceKey{
 					Group:    "group",
@@ -192,13 +192,13 @@ func TestBackendPrepareList(t *testing.T) {
 				},
 			},
 		})
-		assert.NoError(t, err)
+		assert.Nil(t, res.Error)
 		assert.Len(t, res.Items, 5)
 		assert.Empty(t, res.NextPageToken)
 	})
 
 	t.Run("list latest first page ", func(t *testing.T) {
-		res, err := store.PrepareList(ctx, &resource.ListRequest{
+		res := store.PrepareList(ctx, &resource.ListRequest{
 			Limit: 3,
 			Options: &resource.ListOptions{
 				Key: &resource.ResourceKey{
@@ -207,7 +207,7 @@ func TestBackendPrepareList(t *testing.T) {
 				},
 			},
 		})
-		assert.NoError(t, err)
+		assert.Nil(t, res.Error)
 		assert.Len(t, res.Items, 3)
 		continueToken, err := sql.GetContinueToken(res.NextPageToken)
 		assert.NoError(t, err)
@@ -216,7 +216,7 @@ func TestBackendPrepareList(t *testing.T) {
 	})
 
 	t.Run("list at revision", func(t *testing.T) {
-		res, err := store.PrepareList(ctx, &resource.ListRequest{
+		res := store.PrepareList(ctx, &resource.ListRequest{
 			ResourceVersion: 4,
 			Options: &resource.ListOptions{
 				Key: &resource.ResourceKey{
@@ -225,7 +225,7 @@ func TestBackendPrepareList(t *testing.T) {
 				},
 			},
 		})
-		assert.NoError(t, err)
+		assert.Nil(t, res.Error)
 		assert.Len(t, res.Items, 4)
 		assert.Equal(t, "item1 ADDED", string(res.Items[0].Value))
 		assert.Equal(t, "item2 ADDED", string(res.Items[1].Value))
@@ -235,7 +235,7 @@ func TestBackendPrepareList(t *testing.T) {
 	})
 
 	t.Run("fetch first page at revision with limit", func(t *testing.T) {
-		res, err := store.PrepareList(ctx, &resource.ListRequest{
+		res := store.PrepareList(ctx, &resource.ListRequest{
 			Limit:           3,
 			ResourceVersion: 7,
 			Options: &resource.ListOptions{
@@ -245,7 +245,7 @@ func TestBackendPrepareList(t *testing.T) {
 				},
 			},
 		})
-		assert.NoError(t, err)
+		assert.Nil(t, res.Error)
 		assert.Len(t, res.Items, 3)
 		assert.Equal(t, "item1 ADDED", string(res.Items[0].Value))
 		assert.Equal(t, "item4 ADDED", string(res.Items[1].Value))
@@ -262,7 +262,7 @@ func TestBackendPrepareList(t *testing.T) {
 			ResourceVersion: 8,
 			StartOffset:     2,
 		}
-		res, err := store.PrepareList(ctx, &resource.ListRequest{
+		res := store.PrepareList(ctx, &resource.ListRequest{
 			NextPageToken: continueToken.String(),
 			Limit:         2,
 			Options: &resource.ListOptions{
@@ -272,12 +272,12 @@ func TestBackendPrepareList(t *testing.T) {
 				},
 			},
 		})
-		assert.NoError(t, err)
+		assert.Nil(t, res.Error)
 		assert.Len(t, res.Items, 2)
 		assert.Equal(t, "item5 ADDED", string(res.Items[0].Value))
 		assert.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
 
-		continueToken, err = sql.GetContinueToken(res.NextPageToken)
+		continueToken, err := sql.GetContinueToken(res.NextPageToken)
 		assert.NoError(t, err)
 		assert.Equal(t, int64(8), continueToken.ResourceVersion)
 		assert.Equal(t, int64(4), continueToken.StartOffset)

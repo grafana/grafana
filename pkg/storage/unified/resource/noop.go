@@ -42,11 +42,11 @@ func (n *noopService) List(context.Context, *ListRequest) (*ListResponse, error)
 }
 
 // History implements ResourceServer.
-func (n *noopService) History(context.Context, *HistoryRequest) (*HistoryResponse, error) {
+func (n *noopService) History(context.Context, *HistoryRequest) *HistoryResponse {
 	return nil, ErrNotImplementedYet
 }
 
 // Origin implements ResourceServer.
-func (n *noopService) Origin(context.Context, *OriginRequest) (*OriginResponse, error) {
+func (n *noopService) Origin(context.Context, *OriginRequest) *OriginResponse {
 	return nil, ErrNotImplementedYet
 }
