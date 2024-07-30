@@ -47,9 +47,9 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 		for i, toState := range allStates {
 			tr := StateTransition{
 				State: &State{
-					State:             toState.State,
-					StateReason:       toState.Reason,
-					Labels:            ngmodels.GenerateAlertLabels(5, fmt.Sprintf("%d--", i)),
+					State:       toState.State,
+					StateReason: toState.Reason,
+					Labels:      ngmodels.GenerateAlertLabels(5, fmt.Sprintf("%d--", i)),
 				},
 				PreviousState:       fromState.State,
 				PreviousStateReason: fromState.Reason,
