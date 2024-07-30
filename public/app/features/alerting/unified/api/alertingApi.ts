@@ -91,7 +91,7 @@ export const alertingApi = createApi({
   // @TODO
   // Ideally we wouldn't pass any args in to the endpoint at all and toast message behaviour should be controlled
   // in the hooks or components that consume the RTKQ endpoints.
-  serializeQueryArgs: (args) => defaultSerializeQueryArgs(omit(args, 'queryArgs.requestOptions')),
+  serializeQueryArgs: (args) => defaultSerializeQueryArgs(omit(args, 'queryArgs.notificationOptions')),
   tagTypes: [
     'AlertingConfiguration',
     'AlertmanagerConfiguration',
