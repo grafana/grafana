@@ -1,7 +1,7 @@
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { Field, FieldSet, Select } from '@grafana/ui';
+import { Field, FieldSet, Input, Select } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
@@ -12,7 +12,7 @@ import { useCorrelationsFormContext } from './correlationsFormContext';
 import { FormDTO } from './types';
 
 export const ConfigureCorrelationTargetForm = () => {
-  const { control, formState } = useFormContext<FormDTO>();
+  const { control, formState, register } = useFormContext<FormDTO>();
   const withDsUID = (fn: Function) => (ds: DataSourceInstanceSettings) => fn(ds.uid);
   const { correlation } = useCorrelationsFormContext();
   const targetUID: string | undefined = useWatch({ name: 'targetUID' }) || correlation?.targetUID;
@@ -89,6 +89,39 @@ export const ConfigureCorrelationTargetForm = () => {
               dsUid={targetUID}
               invalid={!!formState.errors?.config?.target}
               error={formState.errors?.config?.target?.message}
+            />
+          </>
+        )}
+        {configType === CORR_CONFIG_TYPES.external.value && (
+          <>
+            <Controller
+              control={control}
+              name="config.target"
+              rules={{
+                required: {
+                  value: true,
+                  message: t('correlations.target-form.control-rules', 'This field is required.'),
+                },
+              }}
+              render={({ field: { onChange, value } }) => (
+                <Field
+                  label={t('correlations.target-form.target-label', 'Target')}
+                  description={t(
+                    'correlations.target-form.target-description',
+                    'Specify which data source is queried when the link is clicked'
+                  )}
+                  htmlFor="target"
+                  invalid={!!formState.errors.targetUID}
+                  error={formState.errors.targetUID?.message}
+                >
+                  <Input
+                    value={value?.url}
+                    onChange={(e) => {
+                      onChange({ url: e.target });
+                    }}
+                  />
+                </Field>
+              )}
             />
           </>
         )}
