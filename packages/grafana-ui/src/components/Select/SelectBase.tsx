@@ -277,7 +277,7 @@ export function SelectBase<T, Rest = {}>({
   if (allowCustomValue) {
     ReactSelectComponent = Creatable;
     creatableProps.allowCreateWhileLoading = allowCreateWhileLoading;
-    creatableProps.formatCreateLabel = formatCreateLabel ?? defaultFormatCreateLabel;
+    creatableProps.formatCreateLabel = formatCreateLabel ?? defaultFormatCreateLabel(createOptionPosition);
     creatableProps.onCreateOption = onCreateOption;
     creatableProps.createOptionPosition = createOptionPosition;
     creatableProps.isValidNewOption = isValidNewOption;
@@ -358,16 +358,24 @@ export function SelectBase<T, Rest = {}>({
   );
 }
 
-function defaultFormatCreateLabel(input: string) {
-  return (
-    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-      <div>{input}</div>
-      <div style={{ flexGrow: 1 }} />
-      <div className="muted small" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-        Hit enter to add
+function defaultFormatCreateLabel(createOptionPosition: 'first' | 'last') {
+  let hint;
+  if (createOptionPosition === 'first') {
+    hint = 'Hit enter to add';
+  } else {
+    hint = 'Click to add';
+  }
+  return function defaultFormatCreateLabel(input: string) {
+    return (
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div>{input}</div>
+        <div style={{ flexGrow: 1 }} />
+        <div className="muted small" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {hint}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 }
 
 type CustomIndicatorsContainerProps = IndicatorsContainerProps & {
