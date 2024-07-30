@@ -44,7 +44,7 @@ const BasicWithState: StoryFn<typeof Combobox> = (args) => {
       {...args}
       value={value}
       onChange={(val) => {
-        setValue(val?.value || null);
+        setValue(val?.value || '');
         action('onChange')(val);
       }}
     />
@@ -66,18 +66,16 @@ function generateOptions(amount: number): Option[] {
 const manyOptions = generateOptions(1e5);
 manyOptions.push({ label: 'Banana', value: 'banana', description: 'A yellow fruit' });
 
-const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions }) => {
-  const [value, setValue] = useState<Value>(manyOptions[5].value);
-  const options = useMemo(() => generateOptions(numberOfOptions), [numberOfOptions]);
+const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions, ...args }) => {
+  const [value, setValue] = useState<Value | null>(manyOptions[5].value);
+  //const options = useMemo(() => generateOptions(numberOfOptions), [numberOfOptions]);
   return (
     <Combobox
-      options={options}
+      {...args}
+      options={manyOptions}
       value={value}
       onChange={(val) => {
-        if (!val) {
-          return;
-        }
-        setValue(val.value);
+        setValue(val?.value || null);
         action('onChange')(val);
       }}
     />

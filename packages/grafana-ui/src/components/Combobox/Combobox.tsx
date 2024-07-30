@@ -21,7 +21,7 @@ export type Option = {
 interface ComboboxProps
   extends Omit<InputProps, 'width' | 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange'> {
   onChange: (val: Option | null) => void;
-  value: Value;
+  value: Value | null;
   options: Option[];
 }
 
@@ -49,6 +49,9 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
   const MIN_WIDTH = 400;
   const [items, setItems] = useState(options);
   const selectedItem = useMemo(() => options.find((option) => option.value === value) || null, [options, value]);
+  console.log('selectedItem', selectedItem);
+  console.log(value);
+  console.log(options);
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef(null);
   const styles = useStyles2(getComboboxStyles);
@@ -66,9 +69,13 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
       itemToString,
       selectedItem,
       scrollIntoView: () => {},
-      onInputValueChange: ({ inputValue }) => {
-        console.log(inputValue);
-        setItems(options.filter(itemFilter(inputValue)));
+      onInputValueChange: (changes) => {
+        // Ignore this internal state change, as it does not work when clearing input
+        if (changes.type === useCombobox.stateChangeTypes.ControlledPropUpdatedSelectedItem) {
+          setInputValue('');
+          return;
+        }
+        setItems(options.filter(itemFilter(changes.inputValue)));
       },
       onIsOpenChange: ({ isOpen, selectedItem }) => {
         // Basically onBlur handler
@@ -76,11 +83,9 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
           setItems(options);
           return;
         }
-        console.log(selectedItem);
         selectedItem ? setInputValue(selectedItem.label) : setInputValue('');
       },
       onSelectedItemChange: ({ selectedItem }) => {
-        console.log(selectedItem);
         selectedItem ? setInputValue(selectedItem.label) : setInputValue('');
         onChange(selectedItem);
       },
@@ -116,7 +121,7 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
       <Input
         suffix={
           <>
-            {!!value && (
+            {!!value && value === selectedItem?.value && (
               <Icon
                 name="times"
                 className={styles.clear}
@@ -124,6 +129,11 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
                 tabIndex={0}
                 onClick={() => {
                   selectItem(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    selectItem(null);
+                  }
                 }}
               />
             )}
