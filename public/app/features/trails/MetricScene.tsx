@@ -16,11 +16,11 @@ import { Box, Icon, LinkButton, Stack, Tab, TabsBar, ToolbarButton, Tooltip, use
 
 import { getExploreUrl } from '../../core/utils/explore';
 
-import { buildBreakdownActionScene } from './ActionTabs/BreakdownScene';
 import { buildMetricOverviewScene } from './ActionTabs/MetricOverviewScene';
 import { buildRelatedMetricsScene } from './ActionTabs/RelatedMetricsScene';
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { AutoQueryDef, AutoQueryInfo } from './AutomaticMetricQueries/types';
+import { buildLabelBreakdownActionScene } from './Breakdown/LabelBreakdownScene';
 import { MAIN_PANEL_MAX_HEIGHT, MAIN_PANEL_MIN_HEIGHT, MetricGraphScene } from './MetricGraphScene';
 import { ShareTrailButton } from './ShareTrailButton';
 import { useBookmarkState } from './TrailStore/useBookmarkState';
@@ -110,7 +110,7 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
 
 const actionViewsDefinitions: ActionViewDefinition[] = [
   { displayName: 'Overview', value: 'overview', getScene: buildMetricOverviewScene },
-  { displayName: 'Breakdown', value: 'breakdown', getScene: buildBreakdownActionScene },
+  { displayName: 'Breakdown', value: 'breakdown', getScene: buildLabelBreakdownActionScene },
   {
     displayName: 'Related metrics',
     value: 'related',

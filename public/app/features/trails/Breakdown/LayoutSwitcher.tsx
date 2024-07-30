@@ -50,7 +50,7 @@ export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> impleme
     const { activeBreakdownLayout, breakdownLayoutOptions } = model.useState();
 
     return (
-      <Field label="View">
+      <Field>
         <RadioButtonGroup
           options={breakdownLayoutOptions}
           value={activeBreakdownLayout}

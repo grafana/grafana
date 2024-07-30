@@ -1,7 +1,7 @@
 import { AdHocVariableFilter } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import { BreakdownLayoutType } from './ActionTabs/types';
+import { BreakdownLayoutType } from './Breakdown/types';
 import { TrailStepType } from './DataTrailsHistory';
 import { ActionViewType } from './shared';
 
@@ -110,6 +110,12 @@ type Interactions = {
       | 'close'
     )
   };
+  sorting_changed: {
+      // type of sorting
+      sortBy: string
+      // direction asc | desc
+      direction: string
+  }
 };
 
 const PREFIX = 'grafana_explore_metrics_';
