@@ -277,6 +277,9 @@ message ListResponse {
   // should not rely on the remainingItemCount to be set or to be exact.
   // +optional
   int64 remaining_item_count = 4; // 0 won't be set either (no next page token)
+
+  // Error details
+  ErrorResult error = 5;
 }
 
 message WatchRequest {
@@ -343,6 +346,9 @@ message HistoryResponse {
 
   // ResourceVersion of the list response
   int64 resource_version = 3;
+
+  // Error details
+  ErrorResult error = 4;
 }
 
 message OriginRequest {
@@ -390,6 +396,9 @@ message OriginResponse {
 
   // ResourceVersion of the list response
   int64 resource_version = 3;
+
+  // Error details
+  ErrorResult error = 4;
 }
 
 message HealthCheckRequest {

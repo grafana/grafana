@@ -122,13 +122,15 @@ func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid 
 }
 
 // Read implements ResourceStoreServer.
-func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResponse, error) {
+func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.ReadResponse {
+	rsp := &resource.ReadResponse{}
 	info, err := request.ParseNamespace(req.Key.Namespace)
 	if err == nil {
 		err = isDashboardKey(req.Key, true)
 	}
 	if err != nil {
-		return nil, err
+		rsp.Error = resource.AsErrorResult(err)
+		return rsp
 	}
 	version := int64(0)
 	if req.ResourceVersion > 0 {
@@ -137,40 +139,44 @@ func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest
 
 	dash, rv, err := a.GetDashboard(ctx, info.OrgID, req.Key.Name, version)
 	if err != nil {
-		return nil, err
+		rsp.Error = resource.AsErrorResult(err)
+		return rsp
 	}
 	if dash == nil {
-		return &resource.ReadResponse{
-			Error: &resource.ErrorResult{
-				Code: http.StatusNotFound,
-			},
-		}, err
+		rsp.Error = &resource.ErrorResult{
+			Code: http.StatusNotFound,
+		}
 	}
 
-	value, err := json.Marshal(dash)
-	return &resource.ReadResponse{
-		ResourceVersion: rv,
-		Value:           value,
-	}, err
+	rsp.ResourceVersion = rv
+	rsp.Value, err = json.Marshal(dash)
+	if err != nil {
+		rsp.Error = resource.AsErrorResult(err)
+	}
+	return rsp
 }
 
 // List implements AppendingStore.
-func (a *dashboardSqlAccess) PrepareList(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
+func (a *dashboardSqlAccess) PrepareList(ctx context.Context, req *resource.ListRequest) *resource.ListResponse {
+	list := &resource.ListResponse{}
 	opts := req.Options
 	info, err := request.ParseNamespace(opts.Key.Namespace)
 	if err == nil {
 		err = isDashboardKey(opts.Key, false)
 	}
 	if err != nil {
-		return nil, err
+		list.Error = resource.AsErrorResult(err)
+		return list
 	}
 
 	token, err := readContinueToken(req.NextPageToken)
 	if err != nil {
-		return nil, err
+		list.Error = resource.AsErrorResult(err)
+		return list
 	}
 	if token.orgId > 0 && token.orgId != info.OrgID {
-		return nil, fmt.Errorf("token and orgID mismatch")
+		list.Error = resource.NewBadRequestError("token and orgID mismatch")
+		return list
 	}
 
 	query := &DashboardQuery{
@@ -183,16 +189,17 @@ func (a *dashboardSqlAccess) PrepareList(ctx context.Context, req *resource.List
 
 	rows, limit, err := a.getRows(ctx, query)
 	if err != nil {
-		return nil, err
+		list.Error = resource.AsErrorResult(err)
+		return list
 	}
 	defer func() { _ = rows.Close() }()
 
 	totalSize := 0
-	list := &resource.ListResponse{}
 	for {
 		row, err := rows.Next()
 		if err != nil || row == nil {
-			return list, err
+			list.Error = resource.AsErrorResult(err)
+			return list
 		}
 
 		totalSize += row.Bytes
@@ -201,12 +208,13 @@ func (a *dashboardSqlAccess) PrepareList(ctx context.Context, req *resource.List
 			// 	row.token.folder = *query.Requirements.Folder
 			// }
 			list.NextPageToken = row.token.String() // will skip this one but start here next time
-			return list, err
+			return list
 		}
 		// TODO -- make it smaller and stick the body as an annotation...
 		val, err := json.Marshal(row.Dash)
 		if err != nil {
-			return list, err
+			list.Error = resource.AsErrorResult(err)
+			return list
 		}
 		list.Items = append(list.Items, &resource.ResourceWrapper{
 			ResourceVersion: row.RV,
@@ -245,6 +253,11 @@ func (a *dashboardSqlAccess) WatchWriteEvents(ctx context.Context) (<-chan *reso
 		a.subscribers = subs
 	}()
 	return stream, nil
+}
+
+// Simple wrapper for index implementation
+func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResponse, error) {
+	return a.ReadResource(ctx, req), nil
 }
 
 func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryRequest) (*resource.HistoryResponse, error) {

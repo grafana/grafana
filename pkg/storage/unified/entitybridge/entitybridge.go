@@ -183,22 +183,24 @@ func (b *entityBridge) IsHealthy(ctx context.Context, req *resource.HealthCheckR
 }
 
 // Read implements ResourceServer.
-func (b *entityBridge) Read(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResponse, error) {
+func (b *entityBridge) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.ReadResponse {
 	v, err := b.client.Read(ctx, &entity.ReadEntityRequest{
 		Key:      toEntityKey(req.Key),
 		WithBody: true,
 	})
 	if err != nil {
-		return nil, err
+		return &resource.ReadResponse{
+			Error: resource.AsErrorResult(err),
+		}
 	}
 	return &resource.ReadResponse{
 		ResourceVersion: v.ResourceVersion,
 		Value:           v.Body,
-	}, nil
+	}
 }
 
 // List implements ResourceServer.
-func (b *entityBridge) PrepareList(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
+func (b *entityBridge) PrepareList(ctx context.Context, req *resource.ListRequest) *resource.ListResponse {
 	key := req.Options.Key
 	query := &entity.EntityListRequest{
 		NextPageToken: req.NextPageToken,
@@ -221,7 +223,9 @@ func (b *entityBridge) PrepareList(ctx context.Context, req *resource.ListReques
 
 	found, err := b.client.List(ctx, query)
 	if err != nil {
-		return nil, err
+		return &resource.ListResponse{
+			Error: resource.AsErrorResult(err),
+		}
 	}
 
 	rsp := &resource.ListResponse{
@@ -234,5 +238,5 @@ func (b *entityBridge) PrepareList(ctx context.Context, req *resource.ListReques
 			Value:           item.Body,
 		})
 	}
-	return rsp, nil
+	return rsp
 }
