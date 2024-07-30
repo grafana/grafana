@@ -1277,7 +1277,12 @@ func TestNestedFolderService(t *testing.T) {
 			}
 
 			nestedFolderUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
-			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)}}
+			nestedFolderUser.Permissions[orgID] = map[string][]string{
+				dashboards.ActionFoldersCreate: {
+					dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID),
+					dashboards.ScopeFoldersProvider.GetResourceScopeUID("myFolder"),
+				},
+			}
 
 			features := featuremgmt.WithFeatures("nestedFolders")
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), dbtest.NewFakeDB())

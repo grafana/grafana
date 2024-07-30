@@ -3,6 +3,7 @@ package resourcepermissions
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -831,22 +832,20 @@ func (s *InMemoryActionSets) StoreActionSet(name string, actions []string) {
 	// Once action sets are fully enabled, we can include dashboards.ActionFoldersCreate in the list of other folder edit/admin actions
 	// Tracked in https://github.com/grafana/identity-access-team/issues/794
 	if name == "folders:edit" || name == "folders:admin" {
-		actions = append(actions, dashboards.ActionFoldersCreate)
+		if !slices.Contains(s.actionSetToActions[name], dashboards.ActionFoldersCreate) {
+			actions = append(actions, dashboards.ActionFoldersCreate)
+		}
 	}
 
-	actionSet := &ActionSet{
-		Action:  name,
-		Actions: actions,
-	}
-	s.actionSetToActions[actionSet.Action] = append(s.actionSetToActions[actionSet.Action], actions...)
+	s.actionSetToActions[name] = append(s.actionSetToActions[name], actions...)
 
 	for _, action := range actions {
 		if _, ok := s.actionToActionSets[action]; !ok {
 			s.actionToActionSets[action] = []string{}
 		}
-		s.actionToActionSets[action] = append(s.actionToActionSets[action], actionSet.Action)
+		s.actionToActionSets[action] = append(s.actionToActionSets[action], name)
 	}
-	s.log.Debug("stored action set", "action set name", actionSet.Action)
+	s.log.Debug("stored action set", "action set name", name)
 }
 
 // RegisterActionSets allow the caller to expand the existing action sets with additional permissions
