@@ -6,6 +6,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // Package-level errors.
@@ -62,4 +63,33 @@ func AsErrorResult(err error) *ErrorResult {
 		Message: err.Error(),
 		Code:    500,
 	}
+}
+
+func ErrorResultAsError(status *ErrorResult) error {
+	if status == nil {
+		return nil
+	}
+	err := &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    status.Code,
+		Reason:  metav1.StatusReason(status.Reason),
+		Message: status.Message,
+	}}
+	if status.Details != nil {
+		err.ErrStatus.Details = &metav1.StatusDetails{
+			Group:             status.Details.Group,
+			Kind:              status.Details.Kind,
+			Name:              status.Details.Name,
+			UID:               types.UID(status.Details.Uid),
+			RetryAfterSeconds: status.Details.RetryAfterSeconds,
+		}
+		for _, c := range status.Details.Causes {
+			err.ErrStatus.Details.Causes = append(err.ErrStatus.Details.Causes, metav1.StatusCause{
+				Type:    metav1.CauseType(c.Reason),
+				Message: c.Message,
+				Field:   c.Field,
+			})
+		}
+	}
+	return err
 }

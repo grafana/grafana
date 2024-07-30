@@ -99,9 +99,12 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		Name:      name,
 	}
 	store := r.builder.legacy.access
-	rsp, err := store.Read(ctx, &resource.ReadRequest{Key: key})
+	rsp := store.Read(ctx, &resource.ReadRequest{Key: key})
 	if err != nil {
 		return nil, err
+	}
+	if rsp.Error != nil {
+		return nil, resource.ErrorResultAsError(rsp.Error)
 	}
 	dash := &dashboard.Dashboard{}
 	err = json.Unmarshal(rsp.Value, dash)
