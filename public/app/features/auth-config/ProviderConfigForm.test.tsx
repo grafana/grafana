@@ -32,6 +32,8 @@ jest.mock('@grafana/runtime', () => ({
     push: jest.fn(),
   },
   reportInteraction: jest.fn(),
+  featureEnabled: jest.fn(() => false),
+  DefaultAuthorizer: jest.fn(),
 }));
 
 const reportInteractionMock = jest.mocked(reportInteraction);

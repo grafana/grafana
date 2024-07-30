@@ -6,6 +6,8 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: jest.fn().mockReturnValue({
     get: jest.fn(),
   }),
+  featureEnabled: jest.fn(() => false),
+  DefaultAuthorizer: jest.fn(),
   config: {},
 }));
 
