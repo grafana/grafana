@@ -10,8 +10,8 @@ import { dispatch } from 'app/store/store';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import ExploreRunQueryButton from '../../ExploreRunQueryButton';
-import { QueryTemplateForm } from '../QueryTemplateForm';
 import { useQueriesDrawerContext } from '../../QueriesDrawer/QueriesDrawerContext';
+import { QueryTemplateForm } from '../QueryTemplateForm';
 
 import { useQueryLibraryListStyles } from './styles';
 import { QueryTemplateRow } from './types';

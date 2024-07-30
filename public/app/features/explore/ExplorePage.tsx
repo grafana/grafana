@@ -21,7 +21,7 @@ import { ExploreActions } from './ExploreActions';
 import { ExploreDrawer } from './ExploreDrawer';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
 import { QueriesDrawerContextProvider, useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
-import { AddToLibraryForm } from './QueryLibrary/AddToLibraryForm';
+import { QueryTemplateForm } from './QueryLibrary/QueryTemplateForm';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -136,7 +136,7 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
         isOpen={queryToAdd !== undefined}
         onDismiss={() => setQueryToAdd(undefined)}
       >
-        <AddToLibraryForm
+        <QueryTemplateForm
           onCancel={() => {
             setQueryToAdd(undefined);
           }}
@@ -145,7 +145,7 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
               setQueryToAdd(undefined);
             }
           }}
-          query={queryToAdd!}
+          queryToAdd={queryToAdd!}
         />
       </Modal>
     </div>
