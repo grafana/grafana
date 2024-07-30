@@ -30,7 +30,7 @@ func (f *DefaultPluginFactory) createPlugin(bundle *plugins.FoundBundle, class p
 		return nil, err
 	}
 
-	children := make([]*plugins.Plugin, 0, len(bundle.Children))
+	plugin.Children := make([]*plugins.Plugin, 0, len(bundle.Children))
 	for _, child := range bundle.Children {
 		cp, err := f.newPlugin(*child, class, sig)
 		if err != nil {
