@@ -31,7 +31,6 @@ func (f *DefaultPluginFactory) createPlugin(bundle *plugins.FoundBundle, class p
 	}
 
 	if len(bundle.Children) == 0 {
-		plugin.Children = []*plugins.Plugin{}
 		return plugin, nil
 	}
 
