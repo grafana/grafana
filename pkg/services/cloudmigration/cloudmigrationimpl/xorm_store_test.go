@@ -182,7 +182,7 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.NotEmpty(t, snapshotUid)
 
 		//retrieve it from the db
-		snapshot, err := s.GetSnapshotByUID(ctx, snapshotUid, 0, 0)
+		snapshot, err := s.GetSnapshotByUID(ctx, sessionUid, snapshotUid, 0, 0)
 		require.NoError(t, err)
 		require.Equal(t, cloudmigration.SnapshotStatusCreating, snapshot.Status)
 
@@ -191,7 +191,7 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.NoError(t, err)
 
 		//retrieve it again
-		snapshot, err = s.GetSnapshotByUID(ctx, snapshotUid, 0, 0)
+		snapshot, err = s.GetSnapshotByUID(ctx, sessionUid, snapshotUid, 0, 0)
 		require.NoError(t, err)
 		require.Equal(t, cloudmigration.SnapshotStatusCreating, snapshot.Status)
 

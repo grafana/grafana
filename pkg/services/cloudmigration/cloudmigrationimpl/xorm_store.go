@@ -160,6 +160,10 @@ func (ss *sqlStore) GetMigrationStatusList(ctx context.Context, migrationUID str
 }
 
 func (ss *sqlStore) CreateSnapshot(ctx context.Context, snapshot cloudmigration.CloudMigrationSnapshot) (string, error) {
+	if snapshot.SessionUID == "" {
+		return "", fmt.Errorf("sessionUID is required")
+	}
+
 	if snapshot.UID == "" {
 		snapshot.UID = util.GenerateShortUID()
 	}
@@ -193,8 +197,8 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 		// Update status if set
 		if update.Status != "" {
 			if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-				rawSQL := "UPDATE cloud_migration_snapshot SET status=? WHERE uid=?"
-				if _, err := sess.Exec(rawSQL, update.Status, update.UID); err != nil {
+				rawSQL := "UPDATE cloud_migration_snapshot SET status=? WHERE session_uid=? AND uid=?"
+				if _, err := sess.Exec(rawSQL, update.Status, update.SessionID, update.UID); err != nil {
 					return fmt.Errorf("updating snapshot status for uid %s: %w", update.UID, err)
 				}
 				return nil
@@ -215,10 +219,10 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 	return err
 }
 
-func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, uid string, resultPage int, resultLimit int) (*cloudmigration.CloudMigrationSnapshot, error) {
+func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, sessionUid, uid string, resultPage int, resultLimit int) (*cloudmigration.CloudMigrationSnapshot, error) {
 	var snapshot cloudmigration.CloudMigrationSnapshot
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		exist, err := sess.Where("uid=?", uid).Get(&snapshot)
+		exist, err := sess.Where("session_uid=? AND uid=?", sessionUid, uid).Get(&snapshot)
 		if err != nil {
 			return err
 		}
