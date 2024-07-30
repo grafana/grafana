@@ -209,12 +209,13 @@ func isDeletedMarker(raw []byte) bool {
 	return false
 }
 
-func (s *cdkBackend) ListIterator(ctx context.Context, req *ListRequest) (int64, ListIterator, error) {
+func (s *cdkBackend) ListIterator(ctx context.Context, req *ListRequest, cb func(ListIterator) error) (int64, error) {
 	resources, err := buildTree(ctx, s, req.Options.Key)
 	if err != nil {
-		return 0, nil, err
+		return 0, err
 	}
-	return resources.listRV, resources, err
+	err = cb(resources)
+	return resources.listRV, err
 }
 
 func (s *cdkBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {

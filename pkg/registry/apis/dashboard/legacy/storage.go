@@ -158,22 +158,22 @@ func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.Rea
 }
 
 // List implements AppendingStore.
-func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.ListRequest) (int64, resource.ListIterator, error) {
+func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	opts := req.Options
 	info, err := request.ParseNamespace(opts.Key.Namespace)
 	if err == nil {
 		err = isDashboardKey(opts.Key, false)
 	}
 	if err != nil {
-		return 0, nil, err
+		return 0, err
 	}
 
 	token, err := readContinueToken(req.NextPageToken)
 	if err != nil {
-		return 0, nil, err
+		return 0, err
 	}
 	if token.orgId > 0 && token.orgId != info.OrgID {
-		return 0, nil, fmt.Errorf("token and orgID mismatch")
+		return 0, fmt.Errorf("token and orgID mismatch")
 	}
 
 	query := &DashboardQuery{
@@ -186,10 +186,18 @@ func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.Lis
 
 	listRV, err := a.currentRV(ctx)
 	if err != nil {
-		return 0, nil, err
+		return 0, err
 	}
 	rows, err := a.getRows(ctx, query)
-	return listRV, rows, err
+	if rows != nil {
+		defer func() {
+			_ = rows.Close()
+		}()
+	}
+	if err != nil {
+		err = cb(rows)
+	}
+	return listRV, err
 }
 
 // Watch implements AppendingStore.

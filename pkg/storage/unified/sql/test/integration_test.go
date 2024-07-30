@@ -63,7 +63,15 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	ctx := testutil.NewDefaultTestContext(t)
+	testUserA := &identity.StaticRequester{
+		Type:           identity.TypeUser,
+		Login:          "testuser",
+		UserID:         123,
+		UserUID:        "u123",
+		OrgRole:        identity.RoleAdmin,
+		IsGrafanaAdmin: true, // can do anything
+	}
+	ctx := identity.WithRequester(context.Background(), testUserA)
 	backend, server := newServer(t)
 
 	stream, err := backend.WatchWriteEvents(context.Background()) // Using a different context to avoid canceling the stream after the DefaultContextTimeout

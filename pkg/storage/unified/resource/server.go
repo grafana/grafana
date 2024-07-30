@@ -33,9 +33,6 @@ type ListIterator interface {
 	// Iterator error (if exts)
 	Error() error
 
-	// Explicitly close the iterator before returning the page
-	Close() error
-
 	// The token that can be used to start iterating *after* this item
 	ContinueToken() string
 
@@ -71,7 +68,7 @@ type StorageBackend interface {
 	// checked against the kubernetes requirements before finally returning
 	// results.  The list options can be used to improve performance
 	// but are the the final answer.
-	ListIterator(context.Context, *ListRequest) (int64, ListIterator, error)
+	ListIterator(context.Context, *ListRequest, func(ListIterator) error) (int64, error)
 
 	// Get all events from the store
 	// For HA setups, this will be more events than the local WriteEvent above!
@@ -474,21 +471,35 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 	maxPageBytes := 1024 * 1024 * 2 // 2mb/page
 	pageBytes := 0
 	rsp := &ListResponse{}
-	rv, iter, err := s.backend.ListIterator(ctx, req)
+	rv, err := s.backend.ListIterator(ctx, req, func(iter ListIterator) error {
+		for iter.Next() {
+			if err := iter.Error(); err != nil {
+				return err
+			}
+
+			// TODO: add authz filters
+
+			item := &ResourceWrapper{
+				ResourceVersion: iter.ResourceVersion(),
+				Value:           iter.Value(),
+			}
+
+			pageBytes += len(item.Value)
+			rsp.Items = append(rsp.Items, item)
+			if len(rsp.Items) >= int(req.Limit) || pageBytes >= maxPageBytes {
+				t := iter.ContinueToken()
+				if iter.Next() {
+					rsp.NextPageToken = t
+				}
+				break
+			}
+		}
+		return nil
+	})
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 		return rsp, nil
 	}
-	if iter == nil {
-		rsp.Error = &ErrorResult{Code: http.StatusInternalServerError, Message: "expected iterator"}
-		return rsp, nil
-	}
-
-	defer func() {
-		if err := iter.Close(); err != nil {
-			s.log.Warn("error closing list", "error", err)
-		}
-	}()
 
 	if rv < 1 {
 		rsp.Error = &ErrorResult{
@@ -498,36 +509,6 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 		return rsp, nil
 	}
 	rsp.ResourceVersion = rv
-
-	for iter.Next() {
-		if err = iter.Error(); err != nil {
-			rsp.Error = AsErrorResult(err)
-			return rsp, nil
-		}
-
-		// TODO: add authz filters
-
-		item := &ResourceWrapper{
-			ResourceVersion: iter.ResourceVersion(),
-			Value:           iter.Value(),
-		}
-
-		pageBytes += len(item.Value)
-		rsp.Items = append(rsp.Items, item)
-		if len(rsp.Items) >= int(req.Limit) || pageBytes >= maxPageBytes {
-			t := iter.ContinueToken()
-			if iter.Next() {
-				rsp.NextPageToken = t
-			}
-			break
-		}
-	}
-
-	if err = iter.Error(); err != nil {
-		rsp.Error = AsErrorResult(err)
-		return rsp, nil
-	}
-
 	return rsp, err
 }
 
