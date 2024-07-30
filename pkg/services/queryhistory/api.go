@@ -21,19 +21,19 @@ func (s *QueryHistoryService) registerAPIEndpoints() {
 		entities.Delete("/:uid", middleware.ReqSignedIn, routing.Wrap(s.permissionsMiddleware(s.deleteHandler, "Failed to delete query history")))
 		entities.Post("/star/:uid", middleware.ReqSignedIn, routing.Wrap(s.permissionsMiddleware(s.starHandler, "Failed to star query history")))
 		entities.Delete("/star/:uid", middleware.ReqSignedIn, routing.Wrap(s.permissionsMiddleware(s.unstarHandler, "Failed to unstar query history")))
-		entities.Patch("/:uid", middleware.ReqSignedIn, routing.Wrap(s.patchCommentHandler))
+		entities.Patch("/:uid", middleware.ReqSignedIn, routing.Wrap(s.permissionsMiddleware(s.patchCommentHandler, "Failed to update comment of query in query history")))
 	})
 }
 
 type CallbackHandler func(c *contextmodel.ReqContext) response.Response
 
-func (s *QueryHistoryService) permissionsMiddleware(next CallbackHandler, errorMessage string) CallbackHandler {
+func (s *QueryHistoryService) permissionsMiddleware(handler CallbackHandler, errorMessage string) CallbackHandler {
 	return func(c *contextmodel.ReqContext) response.Response {
 		hasAccess := ac.HasAccess(s.accessControl, c)
 		if c.GetOrgRole() == org.RoleViewer && !s.Cfg.ViewersCanEdit && !hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
 			return response.Error(http.StatusUnauthorized, errorMessage, nil)
 		}
-		return next(c)
+		return handler(c)
 	}
 }
 
