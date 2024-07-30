@@ -61,7 +61,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 			Data: dashboards.SaveDashboardCommand{
 				Dashboard: dashboard.Data,
 				Overwrite: true, // currently only intended to be a push, not a sync; revisit during the preview
-				Message:   fmt.Sprintf("Created via the Grafana Cloud Migration Assistant by on-prem user %s", signedInUser.Login),
+				Message:   fmt.Sprintf("Created via the Grafana Cloud Migration Assistant by on-prem user \"%s\"", signedInUser.Login),
 				IsFolder:  false,
 				FolderUID: dashboard.FolderUID,
 			},
