@@ -50,7 +50,8 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
         const isReceiving = isReceivingGrafanaAlerts(alertmanager);
         const isProvisioned = isProvisionedDataSource(alertmanager.dataSourceSettings);
         const isReadOnly = isVanillaPrometheusAlertManagerDataSource(alertmanager.dataSourceSettings.name);
-
+        // typescript on next line is wrong, as DATASOURCES_ROUTES.Edit is a RelativeUrl type, and replacing :uid with uid makes still a RelativeUrl
+        // @ts-ignore
         const detailHref = createRelativeUrl(DATASOURCES_ROUTES.Edit.replace(/:uid/gi, uid));
 
         const handleEditConfiguration = () => onEditConfiguration(name);

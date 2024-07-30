@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Drawer, Dropdown, Icon, LinkButton, Menu, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
+import { RelativeUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
 import { SectionDto, SectionDtoStep, SectionsDto, StepButtonDto } from '../irmHooks';
 
@@ -86,9 +86,9 @@ function Step({ step }: StepProps) {
 }
 
 interface LinkButtonProps {
-  urlLink?: { url: string; queryParams?: Record<string, string> };
+  urlLink?: { url: RelativeUrl; queryParams?: Record<string, string> };
   label: string;
-  urlLinkOnDone?: { url: string; queryParams?: Record<string, string> };
+  urlLinkOnDone?: { url: RelativeUrl; queryParams?: Record<string, string> };
   labelOnDone?: string;
   done?: boolean;
 }
