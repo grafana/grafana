@@ -144,7 +144,6 @@ func (s *Service) getDashboardAndFolderCommands(ctx context.Context, signedInUse
 			folderUids = append(folderUids, d.UID)
 		} else {
 			dashboardCmds = append(dashboardCmds, *d)
-			s.log.Info("dashboard cmd", "o", *d)
 		}
 	}
 
