@@ -1608,9 +1608,9 @@ Status: Accepted
 
 {{% responsive-table %}}
 
-| Name     | Type   | Go type  | Required | Default | Description                                            | Example |
-| -------- | ------ | -------- | :------: | ------- | ------------------------------------------------------ | ------- |
-| template | string | `string` |          |         |                                                        |         |
+| Name     | Type   | Go type  | Required | Default | Description                                             | Example |
+| -------- | ------ | -------- | :------: | ------- | ------------------------------------------------------- | ------- |
+| template | string | `string` |          |         |                                                         |         |
 | version  | string | `string` |          |         | Version of resource. Should be empty for new templates. |         |
 
 {{% /responsive-table %}}
@@ -1806,11 +1806,11 @@ Status: Accepted
 
 {{% responsive-table %}}
 
-| Name       | Type       | Go type          | Required | Default | Description                                                     | Example |
-| ---------- | ---------- | ---------------- | :------: | ------- | --------------------------------------------------------------- | ------- |
-| statusCode | string     | `string`         |    ✓     |         | HTTP Status Code                                                |         |
-| messageId  | string     | `string`         |    ✓     |         | Unique code of the error                                        |         |
-| message    | string     | `string`         |          |         | Error message                                                   |         |
+| Name       | Type       | Go type          | Required | Default | Description                                                              | Example |
+| ---------- | ---------- | ---------------- | :------: | ------- | ------------------------------------------------------------------------ | ------- |
+| statusCode | string     | `string`         |    ✓     |         | HTTP Status Code                                                         |         |
+| messageId  | string     | `string`         |    ✓     |         | Unique code of the error                                                 |         |
+| message    | string     | `string`         |          |         | Error message                                                            |         |
 | extra      | map of any | `map[string]any` |          |         | Extra information about the error. Format is specific to the error code. |         |
 
 {{% /responsive-table %}}
