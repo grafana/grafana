@@ -115,14 +115,6 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 		installing[pluginID] = false
 	}()
 
-	// If a version is specified, check if it is already installed
-	if version != "" {
-		if services.PluginVersionInstalled(pluginID, version, o.pluginDir) {
-			services.Logger.Successf("Plugin %s v%s already installed.", pluginID, version)
-			return nil
-		}
-	}
-
 	repository := repo.NewManager(repo.ManagerCfg{
 		SkipTLSVerify: o.insecure,
 		BaseURL:       o.repoURL,
@@ -133,13 +125,23 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 
 	var archive *repo.PluginArchive
 	var err error
-	pluginZipURL := o.pluginURL
-	if pluginZipURL != "" {
-		if archive, err = repository.GetPluginArchiveByURL(ctx, pluginZipURL, compatOpts); err != nil {
+	if o.pluginURL != "" {
+		archive, err = repository.GetPluginArchiveByURL(ctx, o.pluginURL, compatOpts)
+		if err != nil {
 			return err
 		}
 	} else {
-		if archive, err = repository.GetPluginArchive(ctx, pluginID, version, compatOpts); err != nil {
+		archiveInfo, err := repository.GetPluginArchiveInfo(ctx, pluginID, version, compatOpts)
+		if err != nil {
+			return err
+		}
+
+		if services.PluginVersionInstalled(pluginID, archiveInfo.Version, o.pluginDir) {
+			services.Logger.Successf("Plugin %s v%s already installed.", pluginID, archiveInfo.Version)
+			return nil
+		}
+
+		if archive, err = repository.GetPluginArchiveByURL(ctx, archiveInfo.URL, compatOpts); err != nil {
 			return err
 		}
 	}
