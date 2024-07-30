@@ -12,6 +12,7 @@ type FakeUserService struct {
 	ExpectedError            error
 	ExpectedSetUsingOrgError error
 	ExpectedSearchUsers      user.SearchUserQueryResult
+	ExpectedListUsers        user.ListUserResult
 	ExpectedUserProfileDTO   *user.UserProfileDTO
 	ExpectedUserProfileDTOs  []*user.UserProfileDTO
 	ExpectedUsageStats       map[string]any
@@ -53,6 +54,10 @@ func (f *FakeUserService) GetByID(ctx context.Context, query *user.GetUserByIDQu
 	return f.ExpectedUser, f.ExpectedError
 }
 
+func (f *FakeUserService) GetByUID(ctx context.Context, query *user.GetUserByUIDQuery) (*user.User, error) {
+	return f.ExpectedUser, f.ExpectedError
+}
+
 func (f *FakeUserService) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
 	return f.ExpectedUser, f.ExpectedError
 }
@@ -91,6 +96,10 @@ func (f *FakeUserService) NewAnonymousSignedInUser(ctx context.Context) (*user.S
 
 func (f *FakeUserService) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
 	return &f.ExpectedSearchUsers, f.ExpectedError
+}
+
+func (f *FakeUserService) List(ctx context.Context, query *user.ListUsersCommand) (*user.ListUserResult, error) {
+	return &f.ExpectedListUsers, f.ExpectedError
 }
 
 func (f *FakeUserService) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {

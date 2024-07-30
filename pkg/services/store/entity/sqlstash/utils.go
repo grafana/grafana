@@ -32,7 +32,7 @@ func getCurrentUser(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("%w: %w", ErrUserNotFoundInContext, err)
 	}
 
-	return user.GetUID().String(), nil
+	return user.GetUID(), nil
 }
 
 // ptrOr returns the first non-nil pointer in the list or a new non-nil pointer.

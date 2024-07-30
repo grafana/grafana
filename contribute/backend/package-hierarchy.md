@@ -9,18 +9,18 @@ inspiration for the way we organize packages.
 
 ## Principles of how to structure a service in Grafana
 
-[](services.md)
+To learn how to structure a Grafana service, refer to [our documentation](services.md).
 
 ### Domain types and interfaces should be in local "root" packages
 
-Let's say you're creating a _tea pot_ service, place everything another
+Let's say you're creating a "tea pot" service. You should place everything another
 service needs to interact with the tea pot service in
-_pkg/services/teapot_, choosing a name according to
-[Go's package naming conventions](https://go.dev/blog/package-names).
+`pkg/services/teapot`. Choose a name according to the
+[Go package naming conventions](https://go.dev/blog/package-names).
 
-Typically, you'd have one or more interfaces that your service provides
-in the root package along with any types, errors, and other constants
-that makes sense for another service interacting with this service to
+Typically, you have one or more interfaces that your service provides
+in the root package. Also, you should have any types, errors, and other constants
+that makes sense for another service to interact with the tea pot service to
 use.
 
 Avoid depending on other services when structuring the root package to
@@ -28,37 +28,34 @@ reduce the risk of running into circular dependencies.
 
 ### Sub-packages should depend on roots, not the other way around
 
-Small-to-medium sized packages should be able to have only a single
+Small to medium-sized packages should be able to have only a single
 sub-package containing the implementation of the service. By moving the
 implementation into a separate package we reduce the risk of triggering
-circular dependencies (in Go, circular dependencies are evaluated per
-package and this structure logically moves it to be per type or function
-declaration).
+circular dependencies.
 
-Large packages may need utilize multiple sub-packages at the discretion
+> **Note:** In Go, circular dependencies are evaluated per package, and this structure logically moves it to be per type or function declaration.
+
+Large packages may need to utilize multiple sub-packages at the discretion
 of the implementor. Keep interfaces and domain types to the root
 package.
 
-### Try to name sub-packages for project wide uniqueness
+### Try to name sub-packages for project-wide uniqueness
 
-Prefix sub-packages with the service name or an abbreviation of the
-service name (whichever is more appropriate) to provide an ideally
-unique package name. This allows `teaimpl` to be distinguished from
-`coffeeimpl` without the need for package aliases, and encourages the
-use of the same name to reference your package throughout the codebase.
+Prefix sub-packages with the service name or an abbreviation of the service name, whichever is more appropriate, to provide a unique package name.
+This allows `teaimpl` to be distinguished from `coffeeimpl` without the need for package aliases, and encourages the use of the same name to reference your package throughout the codebase.
 
 ### A well-behaving service provides test doubles for itself
 
 Other services may depend on your service, and it's good practice to
 provide means for those services to set up a test instance of the
-dependency as needed. Refer to
-[Google Testing's Testing on the Toilet: Know Your Test Doubles](https://testing.googleblog.com/2013/07/testing-on-toilet-know-your-test-doubles.html) for a brief
+dependency as needed. Refer to Google's
+[Testing on the Toilet: Know Your Test Doubles](https://testing.googleblog.com/2013/07/testing-on-toilet-know-your-test-doubles.html) for a brief
 explanation of how we semantically aim to differentiate fakes, mocks,
 and stubs within our codebase.
 
 Place test doubles in a sub-package to your root package named
 `<servicename>test` or `<service-abbreviation>test`, such that the `teapot` service may have the
-`teapottest` or `teatest`
+`teapottest` or `teatest`.
 
 A stub or mock may be sufficient if the service is not a dependency of a
 lot of services or if it's called primarily for side effects so that a
@@ -70,34 +67,32 @@ regular service without the need of complicated setup.
 
 ### Separate store and logic
 
-When building a new service, data validation, manipulation, scheduled
-events and so forth should be collected in a service implementation that
-is built to be agnostic about its store.
+When building a new service, collect data validation, manipulation, scheduled
+events, and so forth, in a service implementation. This implementation should
+be built so that it is agnostic about its store.
 
 The storage should be an interface that is not directly called from
 outside the service and should be kept to a minimum complexity to
 provide the functionality necessary for the service.
 
-A litmus test to reduce the complexity of the storage interface is
-whether an in-memory implementation is a feasible test double to build
-to test the service.
+Use a simple litmus test to determine whether an in-memory implementation is a feasible test-double to assess the service. This will reduce the complexity of the storage interface.
 
 ### Outside the service root
 
-Some parts of the service definition remains outside the
-service directory and reflects the legacy package hierarchy.
-As of June 2022, the parts that remain outside the service are:
+Some parts of the service definition remain outside the
+service directory and reflect the legacy package hierarchy.
+As of June 2022, the parts that remain outside the service are migrations and API endpoints.
 
 #### Migrations
 
-`pkg/services/sqlstore/migrations` contains all migrations for SQL
-databases, for all services (not including Grafana Enterprise).
+The `pkg/services/sqlstore/migrations` package contains all migrations for SQL
+databases for all Grafana services except for Grafana Enterprise.
 Migrations are written per the [database.md](database.md#migrations) document.
 
 #### API endpoints
 
-`pkg/api/api.go` contains the endpoint definitions for the most of
-Grafana HTTP API (not including Grafana Enterprise).
+The `pkg/api/api.go` package contains the endpoint definitions for the most of
+Grafana HTTP API except for Grafana Enterprise.
 
 ## Practical example
 
@@ -170,16 +165,16 @@ func (s *sqlStore) Delete(ctx.Context, root.DeleteLetterCommand) error { … }
 
 ## Legacy package hierarchy
 
-> **Note:** A lot of services still adhere to the legacy model as outlined below. While it is ok to
+> **Note:** Many services still adhere to the legacy model as outlined below. While it is okay to
 > extend existing services based on the legacy model, you are _strongly_ encouraged to structure any
 > new services or major refactorings using the new package layout.
 
 Grafana has long used a package-by-layer layout where domain types
-are placed in **pkg/models**, all SQL logic in **pkg/services/sqlstore**,
+are placed in `pkg/models`, all SQL logic in `pkg/services/sqlstore`,
 and so forth.
 
-This is an example of how the _tea pot_ service could be structured
-throughout the codebase in the legacy model.
+This is an example of how the tea pot service could be structured
+throughout the codebase in the legacy model:
 
 - _pkg/_
   - _api/_
@@ -205,13 +200,13 @@ throughout the codebase in the legacy model.
       for the service.
 
 The implementation of legacy services varies widely from service to
-service, some or more of these files may be missing and there may be
+service. Some of these files, perhaps many, may be missing and there may be
 more files related to a service than those listed here.
 
-Some legacy services providing infrastructure will also take care of the
+Some legacy services that provide infrastructure also take care of the
 integration with several domains. The cleanup service both
 provides the infrastructure to occasionally run cleanup scripts and
-defines the cleanup scripts. Ideally, this would be migrated
-to only handle the scheduling and synchronization of clean up jobs.
-The logic for the individual jobs would be placed with a service that is
+defines the cleanup scripts. Ideally, the service should be migrated
+to only handle the scheduling and synchronization of cleanup jobs.
+The logic for the individual jobs should be placed with a service that is
 related to whatever is being cleaned up.

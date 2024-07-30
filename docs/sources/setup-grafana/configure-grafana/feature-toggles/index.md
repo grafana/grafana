@@ -101,6 +101,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `newPDFRendering`                      | New implementation for the dashboard-to-PDF rendering                                                                                                                                        |
 | `ssoSettingsSAML`                      | Use the new SSO Settings API to configure the SAML connector                                                                                                                                 |
 | `openSearchBackendFlowEnabled`         | Enables the backend query flow for Open Search datasource plugin                                                                                                                             |
+| `cloudwatchMetricInsightsCrossAccount` | Enables cross account observability for Cloudwatch Metric Insights query builder                                                                                                             |
 
 ## Experimental feature toggles
 
