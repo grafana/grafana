@@ -2,6 +2,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { getWrapper } from 'test/test-utils';
 
+import { config } from '@grafana/runtime';
 import { disablePlugin } from 'app/features/alerting/unified/mocks/server/configure';
 import { setOnCallIntegrations } from 'app/features/alerting/unified/mocks/server/handlers/plugins/configure-plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
@@ -26,42 +27,47 @@ const wrapper = ({ children }: { children: ReactNode }) => {
 
 setupMswServer();
 
+const getHookResponse = async (featureToggleEnabled: boolean) => {
+  config.featureToggles.alertingApiServer = featureToggleEnabled;
+  const { result } = renderHook(() => useContactPointsWithStatus(), {
+    wrapper,
+  });
+
+  await waitFor(() => {
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  return result.current;
+};
+
 describe('useContactPoints', () => {
-  beforeAll(() => {
+  beforeEach(() => {
     grantUserPermissions([AccessControlAction.AlertingNotificationsRead]);
+    setOnCallIntegrations([
+      {
+        display_name: 'grafana-integration',
+        value: 'ABC123',
+        integration_url: 'https://oncall-endpoint.example.com',
+      },
+    ]);
   });
 
   it('should return contact points with status', async () => {
     disablePlugin(SupportedPlugin.OnCall);
+    const snapshot = await getHookResponse(false);
+    expect(snapshot).toMatchSnapshot();
+  });
 
-    const { result } = renderHook(() => useContactPointsWithStatus(), {
-      wrapper,
-    });
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-    expect(result.current).toMatchSnapshot();
+  it('returns matching responses with and without alertingApiServer', async () => {
+    const snapshotAmConfig = await getHookResponse(false);
+    const snapshotAlertingApiServer = await getHookResponse(true);
+    expect(snapshotAmConfig).toEqual(snapshotAlertingApiServer);
   });
 
   describe('when having oncall plugin installed and no alert manager config data', () => {
     it('should return contact points with oncall metadata', async () => {
-      setOnCallIntegrations([
-        {
-          display_name: 'grafana-integration',
-          value: 'ABC123',
-          integration_url: 'https://oncall-endpoint.example.com',
-        },
-      ]);
-
-      const { result } = renderHook(() => useContactPointsWithStatus(), {
-        wrapper,
-      });
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
-      expect(result.current).toMatchSnapshot();
+      const snapshot = await getHookResponse(false);
+      expect(snapshot).toMatchSnapshot();
     });
   });
 });
