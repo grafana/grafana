@@ -1,3 +1,4 @@
+import init from '@bsull/augurs';
 import { css } from '@emotion/css';
 import { isNumber, max, min, throttle } from 'lodash';
 
@@ -39,7 +40,7 @@ import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
 import { BreakdownSearchScene } from './BreakdownSearchScene';
 import { ByFrameRepeater } from './ByFrameRepeater';
 import { LayoutSwitcher } from './LayoutSwitcher';
-import { SortByScene } from './SortByScene';
+import { SortByScene, SortCriteriaChanged } from './SortByScene';
 import { breakdownPanelOptions } from './panelConfigs';
 import { BreakdownLayoutChangeCallback, BreakdownLayoutType } from './types';
 import { getLabelOptions } from './utils';
@@ -78,6 +79,9 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
   private _query?: AutoQueryDef;
 
   private _onActivate() {
+    // eslint-disable-next-line no-console
+    init().then(() => console.debug('Grafana ML initialized'));
+
     const variable = this.getVariable();
 
     variable.subscribeToState((newState, oldState) => {
@@ -89,6 +93,8 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
         this.updateBody(variable);
       }
     });
+
+    this._subs.add(this.subscribeToEvent(SortCriteriaChanged, this.handleSortByChange));
 
     const metricScene = sceneGraph.getAncestor(this, MetricScene);
     const metric = metricScene.state.metric;
@@ -169,6 +175,20 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
 
     return variable;
   }
+
+  private handleSortByChange = (event: SortCriteriaChanged) => {
+    if (event.target !== 'labels') {
+      return;
+    }
+    if (this.state.body instanceof LayoutSwitcher) {
+      this.state.body.state.breakdownLayouts.forEach((layout) => {
+        if (layout instanceof ByFrameRepeater) {
+          layout.sort(event.sortBy, event.direction);
+        }
+      });
+    }
+    // FIXME report interaction
+  };
 
   private onReferencedVariableValueChanged() {
     const variable = this.getVariable();
