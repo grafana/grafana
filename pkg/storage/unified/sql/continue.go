@@ -7,7 +7,6 @@ import (
 )
 
 type ContinueToken struct {
-	StartOffset     int64 `json:"o"`
 	ResourceVersion int64 `json:"v"`
 }
 

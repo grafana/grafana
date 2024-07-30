@@ -37,6 +37,33 @@ type ResourceServer interface {
 	LifecycleHooks
 }
 
+type ListIterator interface {
+	Next() bool
+
+	// Iterator error (if exts)
+	Error() error
+
+	// Explicitly close the iterator before returning the page
+	Close() error
+
+	// The token that can be used to start iterating *after* this item
+	ContinueToken() string
+
+	// ResourceVersion of the current item
+	ResourceVersion() int64
+
+	// Namespace of the current item
+	// Used for fast(er) authz filtering
+	Namespace() string
+
+	// Name of the current item
+	// Used for fast(er) authz filtering
+	Name() string
+
+	// Value for the current item
+	Value() []byte
+}
+
 // The StorageBackend is an internal abstraction that supports interacting with
 // the underlying raw storage medium.  This interface is never exposed directly,
 // it is provided by concrete instances that actually write values.
@@ -49,12 +76,12 @@ type StorageBackend interface {
 	// Read a value from storage optionally at an explicit version
 	Read(context.Context, *ReadRequest) (*ReadResponse, error)
 
-	// When the ResourceServer executes a List request, it will first
+	// When the ResourceServer executes a List request, this iterator will
 	// query the backend for potential results.  All results will be
 	// checked against the kubernetes requirements before finally returning
 	// results.  The list options can be used to improve performance
 	// but are the the final answer.
-	PrepareList(context.Context, *ListRequest) (*ListResponse, error)
+	ListIterator(context.Context, *ListRequest) (int64, ListIterator, error)
 
 	// Get all events from the store
 	// For HA setups, this will be more events than the local WriteEvent above!
@@ -493,8 +520,46 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 		return nil, err
 	}
 
-	rsp, err := s.backend.PrepareList(ctx, req)
-	// Status???
+	maxPageBytes := 1024
+	pageBytes := 0
+	rsp := &ListResponse{}
+	rv, iter, err := s.backend.ListIterator(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if err := iter.Close(); err != nil {
+			s.log.Warn("error closing list", "error", err)
+		}
+	}()
+
+	for iter.Next() {
+		if err = iter.Error(); err != nil {
+			return nil, err
+		}
+
+		item := &ResourceWrapper{
+			ResourceVersion: iter.ResourceVersion(),
+			Value:           iter.Value(),
+		}
+
+		pageBytes += len(item.Value)
+		rsp.Items = append(rsp.Items, item)
+		if len(rsp.Items) >= int(req.Limit) || pageBytes >= maxPageBytes {
+			t := iter.ContinueToken()
+			if iter.Next() {
+				rsp.NextPageToken = t
+			}
+			break
+		}
+	}
+
+	if err = iter.Error(); err != nil {
+		return nil, err
+	}
+
+	rsp.ResourceVersion = rv
 	return rsp, err
 }
 

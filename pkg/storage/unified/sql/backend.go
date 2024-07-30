@@ -326,12 +326,12 @@ func (b *backend) Read(ctx context.Context, req *resource.ReadRequest) (*resourc
 	return &res.ReadResponse, nil
 }
 
-func (b *backend) PrepareList(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
+func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest) (int64, resource.ListIterator, error) {
 	_, span := b.tracer.Start(ctx, trace_prefix+"List")
 	defer span.End()
 
 	if req.Options == nil || req.Options.Key.Group == "" || req.Options.Key.Resource == "" {
-		return nil, fmt.Errorf("missing group or resource")
+		return 0, nil, fmt.Errorf("missing group or resource")
 	}
 
 	// TODO: think about how to handler VersionMatch. We should be able to use latest for the first page (only).
@@ -344,16 +344,72 @@ func (b *backend) PrepareList(ctx context.Context, req *resource.ListRequest) (*
 	return b.listLatest(ctx, req)
 }
 
-// listLatest fetches the resources from the resource table.
-func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
-	out := &resource.ListResponse{
-		ResourceVersion: 0,
-	}
+type listIter struct {
+	rows *sql.Rows
 
+	// any error
+	err error
+
+	// The row
+	rv        int64
+	value     []byte
+	namespace string
+	name      string
+}
+
+// Close implements resource.ListIterator.
+func (l *listIter) Close() error {
+	return l.rows.Close()
+}
+
+// ContinueToken implements resource.ListIterator.
+func (l *listIter) ContinueToken() string {
+	return ContinueToken{ResourceVersion: l.rv}.String()
+}
+
+// Error implements resource.ListIterator.
+func (l *listIter) Error() error {
+	return l.err
+}
+
+// Name implements resource.ListIterator.
+func (l *listIter) Name() string {
+	return l.name
+}
+
+// Namespace implements resource.ListIterator.
+func (l *listIter) Namespace() string {
+	return l.namespace
+}
+
+// ResourceVersion implements resource.ListIterator.
+func (l *listIter) ResourceVersion() int64 {
+	return l.rv
+}
+
+// Value implements resource.ListIterator.
+func (l *listIter) Value() []byte {
+	return l.value
+}
+
+// Next implements resource.ListIterator.
+func (l *listIter) Next() bool {
+	if l.rows.Next() {
+		l.err = l.rows.Scan(l.rv, l.namespace, l.name, l.value)
+		return true
+	}
+	return false
+}
+
+var _ resource.ListIterator = (*listIter)(nil)
+
+// listLatest fetches the resources from the resource table.
+func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest) (int64, resource.ListIterator, error) {
+	var rv int64
+	iter := &listIter{}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
-
-		out.ResourceVersion, err = fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
+		rv, err = fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
 		if err != nil {
 			return err
 		}
@@ -361,90 +417,58 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest) (*r
 		listReq := sqlResourceListRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Request:     new(resource.ListRequest),
-			Response:    new(resource.ResourceWrapper),
 		}
 		listReq.Request = proto.Clone(req).(*resource.ListRequest)
-		if req.Limit > 0 {
-			listReq.Request.Limit++ // fetch one extra row for Limit
-		}
+		listReq.Request.Limit = 0 // limit handled by iterator
 
-		items, err := dbutil.Query(ctx, tx, sqlResourceList, listReq)
+		iter.rows, err = dbutil.QueryRows(ctx, tx, sqlResourceList, listReq)
 		if err != nil {
 			return fmt.Errorf("list latest resources: %w", err)
 		}
-
-		if 0 < req.Limit && int(req.Limit) < len(items) {
-			// remove the additional item we added synthetically above
-			clear(items[req.Limit:])
-			items = items[:req.Limit]
-
-			out.NextPageToken = ContinueToken{
-				ResourceVersion: out.ResourceVersion,
-				StartOffset:     req.Limit,
-			}.String()
-		}
-		out.Items = items
-
 		return nil
 	})
 
-	return out, err
+	return rv, iter, err
 }
 
 // listAtRevision fetches the resources from the resource_history table at a specific revision.
-func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
+func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest) (int64, resource.ListIterator, error) {
 	// Get the RV
 	rv := req.ResourceVersion
-	offset := int64(0)
+	if rv < 1 {
+		return 0, nil, fmt.Errorf("expecting real resourceVersion")
+	}
 	if req.NextPageToken != "" {
 		continueToken, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
-			return nil, fmt.Errorf("get continue token: %w", err)
+			return rv, nil, fmt.Errorf("get continue token: %w", err)
+		}
+		if continueToken.ResourceVersion > rv {
+			return 0, nil, fmt.Errorf("continue token resource version is greater than the original list")
 		}
 		rv = continueToken.ResourceVersion
-		offset = continueToken.StartOffset
 	}
 
-	out := &resource.ListResponse{
-		ResourceVersion: rv,
-	}
-
+	iter := &listIter{}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+		var err error
 		listReq := sqlResourceHistoryListRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Request: &historyListRequest{
 				ResourceVersion: rv,
-				Limit:           req.Limit,
-				Offset:          offset,
+				Limit:           0, // use the iterator
 				Options:         req.Options,
 			},
-			Response: new(resource.ResourceWrapper),
-		}
-		if listReq.Request.Limit > 0 {
-			listReq.Request.Limit++ // fetch one extra row for Limit
 		}
 
-		items, err := dbutil.Query(ctx, tx, sqlResourceHistoryList, listReq)
+		iter.rows, err = dbutil.QueryRows(ctx, tx, sqlResourceHistoryList, listReq)
 		if err != nil {
 			return fmt.Errorf("list resources at revision: %w", err)
 		}
-
-		if 0 < req.Limit && int(req.Limit) < len(items) {
-			// remove the additional item we added synthetically above
-			clear(items[req.Limit:])
-			items = items[:req.Limit]
-
-			out.NextPageToken = ContinueToken{
-				ResourceVersion: out.ResourceVersion,
-				StartOffset:     req.Limit + offset,
-			}.String()
-		}
-		out.Items = items
-
 		return nil
 	})
 
-	return out, err
+	return req.ResourceVersion, iter, err
 }
 
 func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
