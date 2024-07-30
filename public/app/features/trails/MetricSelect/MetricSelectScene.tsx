@@ -45,7 +45,7 @@ import {
 import { getFilters, getTrailFor, isSceneTimeRangeState } from '../utils';
 
 import { SelectMetricAction } from './SelectMetricAction';
-import { getMetricNames } from './api';
+import { getMetricNames, getOtelResources, OtelResourcesType } from './api';
 import { getPreviewPanelFor } from './previewPanel';
 import { sortRelatedMetrics } from './relatedMetrics';
 import { createJSRegExpFromSearchTerms, createPromRegExp, deriveSearchTermsFromInput } from './util';
@@ -62,6 +62,7 @@ interface MetricPanel {
 export interface MetricSelectSceneState extends SceneObjectState {
   body: SceneFlexLayout | SceneCSSGridLayout;
   rootGroup?: Node;
+  otelResources?: OtelResourcesType[];
   metricPrefix?: string;
   showPreviews?: boolean;
   metricNames?: string[];
@@ -79,8 +80,8 @@ const MAX_METRIC_NAMES = 20000;
 
 const viewByTooltip =
   'View by the metric prefix. A metric prefix is a single word at the beginning of the metric name, relevant to the domain the metric belongs to.';
-
 const otelTooltip = 'Select an OTel target to filter metrics.';
+
 export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> implements SceneObjectWithUrlSync {
   private previewCache: Record<string, MetricPanel> = {};
   private ignoreNextUpdate = false;
@@ -229,9 +230,12 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       let bodyLayout = this.state.body;
       const rootGroupNode = await this.generateGroups(metricNames);
 
+      const otelResources = await this.generateOtelResources();
+
       this.setState({
         metricNames,
         rootGroup: rootGroupNode,
+        otelResources: otelResources,
         body: bodyLayout,
         metricNamesLoading: false,
         metricNamesWarning,
@@ -261,6 +265,20 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     };
     const { root: rootGroupNode } = groopParser.parse(metricNames);
     return rootGroupNode;
+  }
+
+  private async generateOtelResources() {
+    const trail = getTrailFor(this);
+    const timeRange: RawTimeRange | undefined = trail.state.$timeRange?.state;
+    if (!timeRange) {
+      return [];
+    }
+    const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
+
+    const resources = await getOtelResources(datasourceUid, timeRange);
+    // query the datasource with a variable query for metrics
+    // get list of matching job and instance on target_info
+    return resources;
   }
 
   private onMetricNamesChanged() {
