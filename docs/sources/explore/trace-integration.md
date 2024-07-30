@@ -58,7 +58,7 @@ The trace view header includes the following:
 ### Minimap
 
 **Minimap** displays a condensed view of the trace timeline. Drag your mouse over the minimap to zoom into a smaller time range. This also updates the main timeline, making it easier to view shorter spans
-When zoomed in, hovering over the minimap displays the **Reset selectio** button, which resets the zoom.
+When zoomed in, hovering over the minimap displays the **Reset selection** button, which resets the zoom.
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-minimap.png" class="docs-image--no-shadow" max-width= "900px" caption="Trace view minimap example" >}}
 
