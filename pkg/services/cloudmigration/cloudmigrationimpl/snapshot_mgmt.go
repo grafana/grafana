@@ -82,10 +82,6 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		Items: migrationDataSlice,
 	}
 
-	for _, i := range migrationData.Items {
-		s.log.Info("migration data", "item", i)
-	}
-
 	return migrationData, nil
 }
 
