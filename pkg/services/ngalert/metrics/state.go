@@ -8,6 +8,7 @@ import (
 type State struct {
 	StateUpdateDuration   prometheus.Histogram
 	StateFullSyncDuration prometheus.Histogram
+	StateFullSyncLastTime prometheus.Gauge
 	r                     prometheus.Registerer
 }
 
@@ -37,5 +38,11 @@ func NewStateMetrics(r prometheus.Registerer) *State {
 				Buckets:   []float64{0.01, 0.1, 1, 2, 5, 10, 60},
 			},
 		),
+		StateFullSyncLastTime: promauto.With(r).NewGauge(prometheus.GaugeOpts{
+			Namespace: Namespace,
+			Subsystem: Subsystem,
+			Name:      "state_full_sync_last_time",
+			Help:      "Timestamp of the last full sync in seconds.",
+		}),
 	}
 }

@@ -35,13 +35,13 @@ func NewAsyncStatePersister(log log.Logger, ticker *clock.Ticker, cfg ManagerCfg
 func (a *AsyncStatePersister) Async(ctx context.Context, cache *cache) {
 	for {
 		select {
-		case <-a.ticker.C:
-			if err := a.fullSync(ctx, cache); err != nil {
+		case tickTime := <-a.ticker.C:
+			if err := a.fullSync(ctx, cache, tickTime); err != nil {
 				a.log.Error("Failed to do a full state sync to database", "err", err)
 			}
 		case <-ctx.Done():
 			a.log.Info("Scheduler is shutting down, doing a final state sync.")
-			if err := a.fullSync(context.Background(), cache); err != nil {
+			if err := a.fullSync(context.Background(), cache, time.Now()); err != nil {
 				a.log.Error("Failed to do a full state sync to database", "err", err)
 			}
 			a.ticker.Stop()
@@ -51,7 +51,7 @@ func (a *AsyncStatePersister) Async(ctx context.Context, cache *cache) {
 	}
 }
 
-func (a *AsyncStatePersister) fullSync(ctx context.Context, cache *cache) error {
+func (a *AsyncStatePersister) fullSync(ctx context.Context, cache *cache, tickTime time.Time) error {
 	startTime := time.Now()
 	a.log.Debug("Full state sync start")
 	instances := cache.asInstances(a.doNotSaveNormalState)
@@ -67,6 +67,7 @@ func (a *AsyncStatePersister) fullSync(ctx context.Context, cache *cache) error 
 	a.log.Debug("Full state sync done", "duration", time.Since(startTime), "instances", len(instances))
 	if a.metrics != nil {
 		a.metrics.StateFullSyncDuration.Observe(time.Since(startTime).Seconds())
+		a.metrics.StateFullSyncLastTime.Set(float64(tickTime.Unix()))
 	}
 	return nil
 }
