@@ -15,10 +15,10 @@ import {
 } from '@grafana/scenes';
 import { Alert, Button } from '@grafana/ui';
 
-import { getLabelValue } from '../Breakdown/SortByScene';
 import { fuzzySearch } from '../services/search';
 import { sortSeries } from '../services/sorting';
 
+import { getLabelValue } from './SortByScene';
 import { findSceneObjectsByType } from './utils';
 
 interface ByFrameRepeaterState extends SceneObjectState {

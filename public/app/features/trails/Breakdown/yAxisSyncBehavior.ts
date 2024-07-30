@@ -8,8 +8,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 
-import { LabelBreakdownScene } from '../Breakdown/LabelBreakdownScene';
-
+import { LabelBreakdownScene } from './LabelBreakdownScene';
 import { findSceneObjectsByType } from './utils';
 
 export class BreakdownAxisChangeEvent extends BusEventWithPayload<{ min: number; max: number }> {

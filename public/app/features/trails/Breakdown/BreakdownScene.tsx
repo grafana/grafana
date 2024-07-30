@@ -20,10 +20,10 @@ import {
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import { DataQuery } from '@grafana/schema/dist/esm/index';
 import { Button, Field, useStyles2 } from '@grafana/ui';
-import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
+import { ALL_VARIABLE_VALUE } from '../../variables/constants';
 import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
 import { AutoQueryDef } from '../AutomaticMetricQueries/types';
 import { BreakdownLabelSelector } from '../BreakdownLabelSelector';
