@@ -126,7 +126,9 @@ Watch the following video to learn more about filtering trace spans in Grafana:
 
 ### Trace to logs
 
-You can navigate from a span in a trace view directly to logs relevant for that span. This feature is available for the Tempo, Jaeger, and Zipkin data sources. Refer to each individual data source's documentation for configuration instructions.
+You can navigate from a span in a trace view directly to logs relevant for that span.
+This feature is available for the Tempo, Jaeger, and Zipkin data sources.
+Refer to each individual data source's documentation for configuration instructions.
 
 Click the document icon to open a split view in Explore with the configured data source and query relevant logs for the span.
 
