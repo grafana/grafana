@@ -1558,7 +1558,7 @@ Status: Accepted
 | -------------- | -------------------------------- | ----------------- | :------: | ------- | ------------------- | ------- |
 | name           | string                           | `string`          |          |         |                     |         |
 | time_intervals | [][TimeInterval](#time-interval) | `[]*TimeInterval` |          |         |                     |         |
-| version        | string                           | `string`          |          |         | version of resource |         |
+| version        | string                           | `string`          |          |         | Version of resource |         |
 
 {{% /responsive-table %}}
 
@@ -1598,7 +1598,7 @@ Status: Accepted
 | name       | string                    | `string`     |          |         |                     |         |
 | provenance | [Provenance](#provenance) | `Provenance` |          |         |                     |         |
 | template   | string                    | `string`     |          |         |                     |         |
-| version    | string                    | `string`     |          |         | version of resource |         |
+| version    | string                    | `string`     |          |         | Version of resource |         |
 
 {{% /responsive-table %}}
 
@@ -1611,7 +1611,7 @@ Status: Accepted
 | Name     | Type   | Go type  | Required | Default | Description                                            | Example |
 | -------- | ------ | -------- | :------: | ------- | ------------------------------------------------------ | ------- |
 | template | string | `string` |          |         |                                                        |         |
-| version  | string | `string` |          |         | version of resource. Should be empty for new templates |         |
+| version  | string | `string` |          |         | Version of resource. Should be empty for new templates. |         |
 
 {{% /responsive-table %}}
 
@@ -1811,6 +1811,6 @@ Status: Accepted
 | statusCode | string     | `string`         |    ✓     |         | HTTP Status Code                                                |         |
 | messageId  | string     | `string`         |    ✓     |         | Unique code of the error                                        |         |
 | message    | string     | `string`         |          |         | Error message                                                   |         |
-| extra      | map of any | `map[string]any` |          |         | Extra information about error. Format is specific to error code |         |
+| extra      | map of any | `map[string]any` |          |         | Extra information about the error. Format is specific to the error code. |         |
 
 {{% /responsive-table %}}
