@@ -112,10 +112,10 @@ Click on a trace to access Span filters.
 
 You can add one or more of the following filters:
 
-- **Service name -** Filter by selecting a service name from the dropdown.
-- **Span name -** Filter by selecting a span name from the dropdown.
-- **Duration -** Filter by duration. Accepted units include ns, us, ms, s, m, h.
-- **Tags -** Filter by tags, process tags, or log fields in your span.
+- **Service name** - Filter by selecting a service name from the dropdown.
+- **Span name** - Filter by selecting a span name from the dropdown.
+- **Duration** - Filter by duration. Accepted units include ns, us, ms, s, m, h.
+- **Tags** - Filter by tags, process tags, or log fields in your span.
 
 To only show the spans you have matched, toggle **Show matches only**.
 
