@@ -9,13 +9,13 @@
 //  }
 //  Name: 
 //  Dimensions: 2 Fields by 1 Rows
-//  +-------------------------------+----------------------+
-//  | Name: Time                    | Name: Percentage CPU |
-//  | Labels:                       | Labels:              |
-//  | Type: []time.Time             | Type: []*float64     |
-//  +-------------------------------+----------------------+
-//  | 2019-02-08 10:13:00 +0000 UTC | 2.0875               |
-//  +-------------------------------+----------------------+
+//  +-------------------------------+------------------------------+
+//  | Name: Time                    | Name: Percentage CPU         |
+//  | Labels:                       | Labels: resourceName=grafana |
+//  | Type: []time.Time             | Type: []*float64             |
+//  +-------------------------------+------------------------------+
+//  | 2019-02-08 10:13:00 +0000 UTC | 2.0875                       |
+//  +-------------------------------+------------------------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
@@ -55,7 +55,9 @@
               "frame": "float64",
               "nullable": true
             },
-            "labels": {},
+            "labels": {
+              "resourceName": "grafana"
+            },
             "config": {
               "displayName": "custom",
               "links": [

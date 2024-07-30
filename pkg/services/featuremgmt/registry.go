@@ -1344,18 +1344,18 @@ var (
 		{
 			Name:              "bodyScrolling",
 			Description:       "Adjusts Page to make body the scrollable element",
-			Stage:             FeatureStageExperimental,
+			Stage:             FeatureStagePublicPreview,
 			Owner:             grafanaFrontendPlatformSquad,
 			Expression:        "false", // enabled by default
 			FrontendOnly:      true,
-			AllowSelfServe:    false,
+			AllowSelfServe:    true,
 			HideFromDocs:      true,
-			HideFromAdminPage: true,
+			HideFromAdminPage: false,
 		},
 		{
 			Name:         "cloudwatchMetricInsightsCrossAccount",
-			Description:  "Enables cross account observability for Cloudwatch Metric Insights",
-			Stage:        FeatureStageExperimental,
+			Description:  "Enables cross account observability for Cloudwatch Metric Insights query builder",
+			Stage:        FeatureStagePublicPreview,
 			Owner:        awsDatasourcesSquad,
 			FrontendOnly: true,
 		},

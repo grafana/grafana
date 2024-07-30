@@ -1,7 +1,7 @@
 package setting
 
 import (
-	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -23,6 +23,7 @@ type CloudMigrationSettings struct {
 	CreateTokenTimeout          time.Duration
 	DeleteTokenTimeout          time.Duration
 	TokenExpiresAfter           time.Duration
+	FeedbackURL                 string
 
 	IsDeveloperMode bool
 }
@@ -47,9 +48,9 @@ func (cfg *Cfg) readCloudMigrationSettings() {
 	cfg.CloudMigration.DeleteTokenTimeout = cloudMigration.Key("delete_token_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.TokenExpiresAfter = cloudMigration.Key("token_expires_after").MustDuration(7 * 24 * time.Hour)
 	cfg.CloudMigration.IsDeveloperMode = cloudMigration.Key("developer_mode").MustBool(false)
+	cfg.CloudMigration.FeedbackURL = cloudMigration.Key("feedback_url").MustString("")
 
 	if cfg.CloudMigration.SnapshotFolder == "" {
-		homeDir, _ := os.UserHomeDir()
-		cfg.CloudMigration.SnapshotFolder = homeDir
+		cfg.CloudMigration.SnapshotFolder = filepath.Join(cfg.DataPath, "cloud_migration")
 	}
 }
