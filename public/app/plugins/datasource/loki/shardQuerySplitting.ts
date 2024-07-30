@@ -56,7 +56,7 @@ export function splitQueriesByStreamShard(datasource: LokiDatasource, request: D
 
     subquerySubsciption = datasource.runQuery(subRequest).subscribe({
       next: (partialResponse) => {
-        mergedResponse = combineResponses(mergedResponse, partialResponse);
+        mergedResponse = combineResponses(mergedResponse, partialResponse, false);
         if ((mergedResponse.errors ?? []).length > 0 || mergedResponse.error != null) {
           shouldStop = true;
         }
@@ -66,7 +66,9 @@ export function splitQueriesByStreamShard(datasource: LokiDatasource, request: D
         nextRequest();
       },
       error: (error) => {
-        subscriber.error(error);
+        console.error(error);
+        subscriber.next(mergedResponse);
+        nextRequest();
       },
     });
   };
