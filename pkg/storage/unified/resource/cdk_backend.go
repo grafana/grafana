@@ -190,13 +190,7 @@ func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) *ReadResponse {
 		raw = nil
 	}
 	if raw == nil {
-		return &ReadResponse{Error: &ErrorResult{
-			Code: http.StatusNotFound,
-		}}
-		// return nil, apierrors.NewNotFound(schema.GroupResource{
-		// 	Group:    req.Key.Group,
-		// 	Resource: req.Key.Resource,
-		// }, req.Key.Name)
+		return &ReadResponse{Error: NewNotFoundError(req.Key)}
 	}
 	return &ReadResponse{
 		ResourceVersion: rv,

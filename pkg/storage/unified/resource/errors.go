@@ -11,11 +11,9 @@ import (
 
 // Package-level errors.
 var (
-	ErrNotFound                 = errors.New("resource not found")
-	ErrOptimisticLockingFailed  = errors.New("optimistic locking failed")
-	ErrUserNotFoundInContext    = errors.New("user not found in context")
-	ErrUnableToReadResourceJSON = errors.New("unable to read resource json")
-	ErrNotImplementedYet        = errors.New("not implemented yet")
+	ErrOptimisticLockingFailed = errors.New("optimistic locking failed")
+	ErrUserNotFoundInContext   = errors.New("user not found in context")
+	ErrNotImplementedYet       = errors.New("not implemented yet")
 )
 
 func NewBadRequestError(msg string) *ErrorResult {
@@ -26,11 +24,23 @@ func NewBadRequestError(msg string) *ErrorResult {
 	}
 }
 
+func NewNotFoundError(key *ResourceKey) *ErrorResult {
+	return &ErrorResult{
+		Code: http.StatusNotFound,
+		Details: &ErrorDetails{
+			Group: key.Group,
+			Kind:  key.Resource, // yup, resource as kind same is true in apierrors.NewNotFound()
+			Name:  key.Name,
+		},
+	}
+}
+
 // Convert golang errors to status result errors that can be returned to a client
 func AsErrorResult(err error) *ErrorResult {
 	if err == nil {
 		return nil
 	}
+
 	apistatus, ok := err.(apierrors.APIStatus)
 	if ok {
 		s := apistatus.Status()
@@ -65,31 +75,32 @@ func AsErrorResult(err error) *ErrorResult {
 	}
 }
 
-func ErrorResultAsError(status *ErrorResult) error {
-	if status == nil {
+func GetError(res *ErrorResult) error {
+	if res == nil {
 		return nil
 	}
-	err := &apierrors.StatusError{ErrStatus: metav1.Status{
+
+	status := &apierrors.StatusError{ErrStatus: metav1.Status{
 		Status:  metav1.StatusFailure,
-		Code:    status.Code,
-		Reason:  metav1.StatusReason(status.Reason),
-		Message: status.Message,
+		Code:    res.Code,
+		Reason:  metav1.StatusReason(res.Reason),
+		Message: res.Message,
 	}}
-	if status.Details != nil {
-		err.ErrStatus.Details = &metav1.StatusDetails{
-			Group:             status.Details.Group,
-			Kind:              status.Details.Kind,
-			Name:              status.Details.Name,
-			UID:               types.UID(status.Details.Uid),
-			RetryAfterSeconds: status.Details.RetryAfterSeconds,
+	if res.Details != nil {
+		status.ErrStatus.Details = &metav1.StatusDetails{
+			Group:             res.Details.Group,
+			Kind:              res.Details.Kind,
+			Name:              res.Details.Name,
+			UID:               types.UID(res.Details.Uid),
+			RetryAfterSeconds: res.Details.RetryAfterSeconds,
 		}
-		for _, c := range status.Details.Causes {
-			err.ErrStatus.Details.Causes = append(err.ErrStatus.Details.Causes, metav1.StatusCause{
+		for _, c := range res.Details.Causes {
+			status.ErrStatus.Details.Causes = append(status.ErrStatus.Details.Causes, metav1.StatusCause{
 				Type:    metav1.CauseType(c.Reason),
 				Message: c.Message,
 				Field:   c.Field,
 			})
 		}
 	}
-	return err
+	return status
 }

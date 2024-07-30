@@ -104,7 +104,7 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		return nil, err
 	}
 	if rsp.Error != nil {
-		return nil, resource.ErrorResultAsError(rsp.Error)
+		return nil, resource.GetError(rsp.Error)
 	}
 	dash := &dashboard.Dashboard{}
 	err = json.Unmarshal(rsp.Value, dash)

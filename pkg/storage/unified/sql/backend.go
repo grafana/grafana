@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"net/http"
 	"sync"
 	"time"
 
@@ -315,14 +314,7 @@ func (b *backend) Read(ctx context.Context, req *resource.ReadRequest) *resource
 	res, err := dbutil.QueryRow(ctx, b.db, sr, readReq)
 	if errors.Is(err, sql.ErrNoRows) {
 		return &resource.ReadResponse{
-			Error: &resource.ErrorResult{
-				Code: http.StatusNotFound,
-				Details: &resource.ErrorDetails{
-					Group: req.Key.Group,
-					Kind:  req.Key.Resource, // yup, resource as kind
-					Name:  req.Key.Name,
-				},
-			},
+			Error: resource.NewNotFoundError(req.Key),
 		}
 	} else if err != nil {
 		return &resource.ReadResponse{Error: resource.AsErrorResult(err)}

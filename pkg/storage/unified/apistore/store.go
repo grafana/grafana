@@ -143,7 +143,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		if rsp.Error.Code == http.StatusConflict {
 			return storage.NewKeyExistsError(key, 0)
 		}
-		return resource.ErrorResultAsError(rsp.Error)
+		return resource.GetError(rsp.Error)
 	}
 
 	if err := copyModifiedObjectToDestination(obj, out); err != nil {
@@ -221,7 +221,7 @@ func (s *Storage) Delete(
 		return err
 	}
 	if rsp.Error != nil {
-		return resource.ErrorResultAsError(rsp.Error)
+		return resource.GetError(rsp.Error)
 	}
 	if err := s.versioner.UpdateObject(out, uint64(rsp.ResourceVersion)); err != nil {
 		return err
@@ -385,7 +385,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 			return nil, err
 		}
 		if rsp.Error != nil {
-			return nil, resource.ErrorResultAsError(rsp.Error)
+			return nil, resource.GetError(rsp.Error)
 		}
 		maybeUpdatedRV = uint64(rsp.ResourceVersion)
 		if maybeUpdatedRV < 1 {
@@ -432,7 +432,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 			}
 			return storage.NewKeyNotFoundError(key, req.ResourceVersion)
 		}
-		return resource.ErrorResultAsError(rsp.Error)
+		return resource.GetError(rsp.Error)
 	}
 
 	_, _, err = s.codec.Decode(rsp.Value, nil, objPtr)
@@ -464,7 +464,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return err
 	}
 	if rsp.Error != nil {
-		return resource.ErrorResultAsError(rsp.Error)
+		return resource.GetError(rsp.Error)
 	}
 
 	if err := s.validateMinimumResourceVersion(opts.ResourceVersion, uint64(rsp.ResourceVersion)); err != nil {
@@ -578,7 +578,7 @@ func (s *Storage) GuaranteedUpdate(
 					return apierrors.NewNotFound(s.gr, req.Key.Name)
 				}
 			} else {
-				return resource.ErrorResultAsError(rsp.Error)
+				return resource.GetError(rsp.Error)
 			}
 		}
 
@@ -642,7 +642,7 @@ func (s *Storage) GuaranteedUpdate(
 			return err
 		}
 		if rsp2.Error != nil {
-			return resource.ErrorResultAsError(rsp2.Error)
+			return resource.GetError(rsp2.Error)
 		}
 		rv = rsp2.ResourceVersion
 	} else {
@@ -655,7 +655,7 @@ func (s *Storage) GuaranteedUpdate(
 			return err
 		}
 		if rsp2.Error != nil {
-			return resource.ErrorResultAsError(rsp2.Error)
+			return resource.GetError(rsp2.Error)
 		}
 		rv = rsp2.ResourceVersion
 	}

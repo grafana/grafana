@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// ResourceServer implements all services
+// ResourceServer implements all gRPC services
 type ResourceServer interface {
 	ResourceStoreServer
 	ResourceIndexServer
