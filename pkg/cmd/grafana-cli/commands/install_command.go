@@ -115,14 +115,6 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 		installing[pluginID] = false
 	}()
 
-	// If a version is specified, check if it is already installed
-	if version != "" {
-		if services.PluginVersionInstalled(pluginID, version, o.pluginDir) {
-			services.Logger.Successf("Plugin %s v%s already installed.", pluginID, version)
-			return nil
-		}
-	}
-
 	repository := repo.NewManager(repo.ManagerCfg{
 		SkipTLSVerify: o.insecure,
 		BaseURL:       o.repoURL,
@@ -130,6 +122,22 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 	})
 
 	compatOpts := repo.NewCompatOpts(services.GrafanaVersion, runtime.GOOS, runtime.GOARCH)
+
+	// If a version is specified, check if it is already installed
+	if version != "" {
+		if services.PluginVersionInstalled(pluginID, version, o.pluginDir) {
+			services.Logger.Successf("Plugin %s v%s already installed.", pluginID, version)
+			return nil
+		}
+	} else {
+		versionInfo, err := repository.GetPluginArchiveInfo(ctx, pluginID, version, compatOpts)
+		if err == nil {
+			if services.PluginVersionInstalled(pluginID, versionInfo.Version, o.pluginDir) {
+				services.Logger.Successf("Plugin %s v%s already installed.", pluginID, versionInfo.Version)
+				return nil
+			}
+		}
+	}
 
 	var archive *repo.PluginArchive
 	var err error
