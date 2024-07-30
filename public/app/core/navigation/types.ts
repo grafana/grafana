@@ -13,7 +13,7 @@ export type GrafanaRouteComponent<T extends {} = any> = React.ComponentType<Graf
 export interface RouteDescriptor {
   path: string;
   component: GrafanaRouteComponent;
-  roles?: () => string[];
+  roles?: () => string[]; // TODO(aarongodin): understand what this means
   pageClass?: string;
   /** Can be used like an id for the route if the same component is used by many routes */
   routeName?: string;

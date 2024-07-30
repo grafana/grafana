@@ -3,6 +3,8 @@
  * {
  *   action: true;
  * }
+ *
+ * TODO(aarongodin): rename this to `UserPermissions`
  */
 export type UserPermission = Record<string, boolean>;
 

@@ -47,7 +47,7 @@ export interface LicenseInfo {
   licenseUrl: string;
   stateInfo: string;
   edition: GrafanaEdition;
-  enabledFeatures: { [key: string]: boolean };
+  enabledFeatures: Record<string, boolean>;
   trialExpiry?: number;
 }
 

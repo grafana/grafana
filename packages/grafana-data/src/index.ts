@@ -842,10 +842,3 @@ export { CircularVector } from './vector/CircularVector';
 export { vectorator } from './vector/FunctionalVector';
 export { ArrayVector } from './vector/ArrayVector';
 export { CircularDataFrame } from './dataframe/CircularDataFrame';
-export {
-  type CurrentUser,
-  userHasPermission,
-  userHasPermissionInMetadata,
-  userHasAllPermissions,
-  userHasAnyPermission,
-} from './rbac/rbac';

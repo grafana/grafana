@@ -1,20 +1,13 @@
 import { extend } from 'lodash';
 
-import {
-  AnalyticsSettings,
-  OrgRole,
-  rangeUtil,
-  WithAccessControlMetadata,
-  userHasPermission,
-  userHasPermissionInMetadata,
-  userHasAnyPermission,
-} from '@grafana/data';
-import { featureEnabled, getBackendSrv } from '@grafana/runtime';
+import { AnalyticsSettings, OrgRole, rangeUtil, WithAccessControlMetadata } from '@grafana/data';
+import { featureEnabled } from '@grafana/runtime';
 import { getSessionExpiry } from 'app/core/utils/auth';
 import { AccessControlAction, UserPermission } from 'app/types';
 import { CurrentUserInternal } from 'app/types/config';
 
 import config from '../../core/config';
+import { Authorizer, DefaultAuthorizer } from '../accesscontrol/authorize';
 
 // When set to auto, the interval will be based on the query range
 // NOTE: this is defined here rather than TimeSrv so we avoid circular dependencies
@@ -87,6 +80,7 @@ export class ContextSrv {
   sidemenuSmallBreakpoint = false;
   hasEditPermissionInFolders: boolean;
   minRefreshInterval: string;
+  authorizer: Authorizer;
 
   private tokenRotationJobId = 0;
 
@@ -101,18 +95,14 @@ export class ContextSrv {
     this.isEditor = this.hasRole('Editor') || this.hasRole('Admin');
     this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
     this.minRefreshInterval = config.minRefreshInterval;
+    // TODO(aarongodin): add switch here for whether the non-cached authorizer should be used
+    this.authorizer = new DefaultAuthorizer();
 
     this.scheduleTokenRotationJob();
   }
 
   async fetchUserPermissions() {
-    try {
-      this.user.permissions = await getBackendSrv().get('/api/access-control/user/actions', {
-        reloadcache: true,
-      });
-    } catch (e) {
-      console.error(e);
-    }
+    this.user.permissions = await this.authorizer.getSignedInUserPermissions(true);
   }
 
   /**
@@ -133,18 +123,32 @@ export class ContextSrv {
     }
   }
 
+  hasAccessToExplore() {
+    return this.hasPermission(AccessControlAction.DataSourcesExplore) && config.exploreEnabled;
+  }
+
+  // evaluates access control permissions, granting access if the user has any of them
+  evaluatePermission(actions: string[]) {
+    if (this.authorizer.hasAnyPermission(this.user, actions)) {
+      return [];
+    }
+    // Hack to reject when user does not have permission
+    // TODO(aarongodin): fix this hack?
+    return ['Reject'];
+  }
+
   licensedAccessControlEnabled(): boolean {
     return featureEnabled('accesscontrol');
   }
 
   // Checks whether user has required permission
   hasPermissionInMetadata(action: AccessControlAction | string, object: WithAccessControlMetadata): boolean {
-    return userHasPermissionInMetadata(action, object);
+    return this.authorizer.hasPermission({ permissions: object.accessControl }, action);
   }
 
   // Checks whether user has required permission
   hasPermission(action: AccessControlAction | string): boolean {
-    return userHasPermission(action, this.user);
+    return this.authorizer.hasPermission(this.user, action);
   }
 
   isGrafanaVisible() {
@@ -171,19 +175,6 @@ export class ContextSrv {
       return intervals.filter((str) => str !== '').filter(this.isAllowedInterval);
     }
     return intervals;
-  }
-
-  hasAccessToExplore() {
-    return this.hasPermission(AccessControlAction.DataSourcesExplore) && config.exploreEnabled;
-  }
-
-  // evaluates access control permissions, granting access if the user has any of them
-  evaluatePermission(actions: string[]) {
-    if (userHasAnyPermission(actions, this.user)) {
-      return [];
-    }
-    // Hack to reject when user does not have permission
-    return ['Reject'];
   }
 
   // schedules a job to perform token ration in the background
