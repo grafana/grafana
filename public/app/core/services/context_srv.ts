@@ -1,13 +1,12 @@
 import { extend } from 'lodash';
 
 import { AnalyticsSettings, OrgRole, rangeUtil, WithAccessControlMetadata } from '@grafana/data';
-import { featureEnabled } from '@grafana/runtime';
+import { featureEnabled, Authorizer, DefaultAuthorizer, OptimisticAuthorizer, getBackendSrv } from '@grafana/runtime';
 import { getSessionExpiry } from 'app/core/utils/auth';
 import { AccessControlAction, UserPermission } from 'app/types';
 import { CurrentUserInternal } from 'app/types/config';
 
 import config from '../../core/config';
-import { Authorizer, DefaultAuthorizer } from '../accesscontrol/authorize';
 
 // When set to auto, the interval will be based on the query range
 // NOTE: this is defined here rather than TimeSrv so we avoid circular dependencies
@@ -95,8 +94,12 @@ export class ContextSrv {
     this.isEditor = this.hasRole('Editor') || this.hasRole('Admin');
     this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
     this.minRefreshInterval = config.minRefreshInterval;
-    // TODO(aarongodin): add switch here for whether the non-cached authorizer should be used
-    this.authorizer = new DefaultAuthorizer();
+
+    if (featureEnabled('disableFrontendPermissionCache')) {
+      this.authorizer = new OptimisticAuthorizer(getBackendSrv, this.user.permissions);
+    } else {
+      this.authorizer = new DefaultAuthorizer(getBackendSrv);
+    }
 
     this.scheduleTokenRotationJob();
   }

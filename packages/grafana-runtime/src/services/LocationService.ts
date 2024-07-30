@@ -1,4 +1,5 @@
 import * as H from 'history';
+import { type LocationListener, type UnregisterCallback } from 'history';
 
 import { deprecationWarning, UrlQueryMap, urlUtil } from '@grafana/data';
 import { attachDebugger, createLogger } from '@grafana/ui';
@@ -20,6 +21,7 @@ export interface LocationService {
   getHistory: () => H.History;
   getSearch: () => URLSearchParams;
   getSearchObject: () => UrlQueryMap;
+  listen: (cb: LocationListener) => void;
 
   /**
    * This is from the old LocationSrv interface
@@ -30,6 +32,7 @@ export interface LocationService {
 /** @internal */
 export class HistoryWrapper implements LocationService {
   private readonly history: H.History;
+  private listeners: UnregisterCallback[];
 
   constructor(history?: H.History) {
     // If no history passed create an in memory one if being called from test
@@ -38,6 +41,7 @@ export class HistoryWrapper implements LocationService {
       (process.env.NODE_ENV === 'test'
         ? H.createMemoryHistory({ initialEntries: ['/'] })
         : H.createBrowserHistory({ basename: config.appSubUrl ?? '/' }));
+    this.listeners = [];
 
     this.partial = this.partial.bind(this);
     this.push = this.push.bind(this);
@@ -45,6 +49,7 @@ export class HistoryWrapper implements LocationService {
     this.getSearch = this.getSearch.bind(this);
     this.getHistory = this.getHistory.bind(this);
     this.getLocation = this.getLocation.bind(this);
+    this.listen = this.listen.bind(this);
   }
 
   getHistory() {
@@ -99,6 +104,11 @@ export class HistoryWrapper implements LocationService {
 
   getSearchObject() {
     return locationSearchToObject(this.history.location.search);
+  }
+
+  listen(cb: LocationListener) {
+    const cancel = this.history.listen(cb);
+    this.listeners.push(cancel);
   }
 
   /** @deprecated use partial, push or replace instead */

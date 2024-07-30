@@ -730,4 +730,8 @@ const (
 	// FlagPrometheusAzureOverrideAudience
 	// Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
+
+	// FlagDisableFrontendPermissionCache
+	// Disables the standard frontend in-memory caching of permissions.
+	FlagDisableFrontendPermissionCache = "disableFrontendPermissionCache"
 )

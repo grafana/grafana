@@ -1,4 +1,6 @@
-import { CurrentUser } from '@grafana/data';
+import { type CurrentUserDTO } from '@grafana/data';
+
+export interface CurrentUser extends Omit<CurrentUserDTO, 'lightTheme'> {}
 
 let singletonInstance: CurrentUser | null = null;
 

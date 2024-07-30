@@ -898,6 +898,20 @@
     },
     {
       "metadata": {
+        "name": "disableFrontendPermissionCache",
+        "resourceVersion": "1722357544765",
+        "creationTimestamp": "2024-07-30T16:39:04Z"
+      },
+      "spec": {
+        "description": "Disables the standard frontend in-memory caching of permissions.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "frontend": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "disableNumericMetricsSortingInExpressions",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-04-16T14:52:47Z"
