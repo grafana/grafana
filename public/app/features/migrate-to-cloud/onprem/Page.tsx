@@ -57,7 +57,7 @@ const SHOULD_POLL_STATUSES: Array<SnapshotDto['status']> = [
   'PROCESSING',
 ];
 
-const SNAPSHOT_REBUILD_STATUSES: Array<SnapshotDto['status']> = ['PENDING_PROCESSING', 'FINISHED', 'ERROR', 'UNKNOWN'];
+const SNAPSHOT_REBUILD_STATUSES: Array<SnapshotDto['status']> = ['PENDING_UPLOAD', 'FINISHED', 'ERROR', 'UNKNOWN'];
 const SNAPSHOT_BUILDING_STATUSES: Array<SnapshotDto['status']> = ['INITIALIZING', 'CREATING'];
 const SNAPSHOT_UPLOADING_STATUSES: Array<SnapshotDto['status']> = ['UPLOADING', 'PENDING_PROCESSING', 'PROCESSING'];
 
