@@ -748,6 +748,99 @@ describe('combinePanelData', () => {
   });
 });
 
+describe('mergeFrames', () => {
+  it('combines metric frames', () => {
+    const { metricFrameA, metricFrameB } = getMockFrames();
+    const responseA: DataQueryResponse = {
+      data: [metricFrameB],
+    };
+    const responseB: DataQueryResponse = {
+      data: [metricFrameA],
+    };
+    expect(combineResponses(responseA, responseB, false)).toEqual({
+      data: [
+        {
+          fields: [
+            {
+              config: {},
+              name: 'Time',
+              type: 'time',
+              values: [1000000, 2000000, 3000000, 4000000],
+            },
+            {
+              config: {},
+              name: 'Value',
+              type: 'number',
+              values: [6, 7, 5, 4],
+              labels: {
+                level: 'debug',
+              },
+            },
+          ],
+          length: 4,
+          meta: {
+            type: 'timeseries-multi',
+            stats: [
+              {
+                displayName: 'Summary: total bytes processed',
+                unit: 'decbytes',
+                value: 33,
+              },
+            ],
+          },
+          refId: 'A',
+        },
+      ],
+    });
+  });
+
+  it('combines and identifies new frames in the response', () => {
+    const { metricFrameA, metricFrameB, metricFrameC } = getMockFrames();
+    const responseA: DataQueryResponse = {
+      data: [metricFrameB],
+    };
+    const responseB: DataQueryResponse = {
+      data: [metricFrameA, metricFrameC],
+    };
+    expect(combineResponses(responseA, responseB, false)).toEqual({
+      data: [
+        {
+          fields: [
+            {
+              config: {},
+              name: 'Time',
+              type: 'time',
+              values: [1000000, 2000000, 3000000, 4000000],
+            },
+            {
+              config: {},
+              name: 'Value',
+              type: 'number',
+              values: [6, 7, 5, 4],
+              labels: {
+                level: 'debug',
+              },
+            },
+          ],
+          length: 4,
+          meta: {
+            type: 'timeseries-multi',
+            stats: [
+              {
+                displayName: 'Summary: total bytes processed',
+                unit: 'decbytes',
+                value: 33,
+              },
+            ],
+          },
+          refId: 'A',
+        },
+        metricFrameC,
+      ],
+    });
+  });
+})
+
 export function getMockFrames() {
   const logFrameA: DataFrame = {
     refId: 'A',

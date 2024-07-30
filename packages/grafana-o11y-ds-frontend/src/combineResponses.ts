@@ -1,4 +1,5 @@
 import {
+  amendTable,
   DataFrame,
   DataFrameType,
   DataQueryResponse,
@@ -8,6 +9,7 @@ import {
   PanelData,
   QueryResultMetaStat,
   shallowCompare,
+  Table,
 } from '@grafana/data';
 
 export function combinePanelData(currentData: PanelData, newData: PanelData): PanelData {
@@ -15,7 +17,7 @@ export function combinePanelData(currentData: PanelData, newData: PanelData): Pa
   return { ...currentData, series };
 }
 
-export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
+export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse, assumeOrder = true) {
   if (!currentResult) {
     return cloneQueryResponse(newResult);
   }
@@ -26,7 +28,11 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
       currentResult.data.push(cloneDataFrame(newFrame));
       return;
     }
-    combineFrames(currentFrame, newFrame);
+    if (assumeOrder) {
+      combineFrames(currentFrame, newFrame);
+    } else {
+      mergeFrames(currentFrame, newFrame);
+    }
   });
 
   const mergedErrors = [...(currentResult.errors ?? []), ...(newResult.errors ?? [])];
@@ -74,6 +80,61 @@ function combineFrames(dest: DataFrame, source: DataFrame) {
     if (sourceField.nanos) {
       const nanos: number[] = dest.fields[i].nanos?.slice() || [];
       dest.fields[i].nanos = source.fields[i].nanos?.concat(nanos);
+    }
+  }
+  dest.length += source.length;
+  dest.meta = {
+    ...dest.meta,
+    stats: getCombinedMetadataStats(dest.meta?.stats ?? [], source.meta?.stats ?? []),
+  };
+}
+
+function mergeFrames(dest: DataFrame, source: DataFrame) {
+  const destTimeValues = dest.fields.find((field) => field.type === FieldType.time)?.values.slice(0) ?? [];
+  const sourceTimeValues = source.fields.find((field) => field.type === FieldType.time)?.values.slice(0) ?? [];
+
+  // `dest` and `source` might have more or less fields, we need to go through all of them
+  const totalFields = Math.max(dest.fields.length, source.fields.length);
+  for (let i = 0; i < totalFields; i++) {
+    // For now, skip undefined fields that exist in the new frame
+    if (!dest.fields[i]) {
+      continue;
+    }
+    // Index is not reliable when frames have disordered fields, or an extra/missing field, so we find them by name.
+    // If the field has no name, we fallback to the old index version.
+    const sourceField = findSourceField(dest.fields[i], source.fields, i);
+    if (!sourceField) {
+      continue;
+    }
+
+    const prevTable: Table = [
+      destTimeValues,
+      dest.fields[i].values
+    ];
+
+    const nextTable: Table = [
+      sourceTimeValues,
+      sourceField.values
+    ];
+
+    const amendedTable = amendTable(prevTable, nextTable);
+    dest.fields[i].values = amendedTable[1];
+
+    if (sourceField.nanos) {
+      const nanos: number[] = dest.fields[i].nanos?.slice() || [];
+
+      const prevTable: Table = [
+        destTimeValues,
+        nanos
+      ];
+  
+      const nextTable: Table = [
+        sourceTimeValues,
+        sourceField.nanos
+      ];
+  
+      const amendedTable = amendTable(prevTable, nextTable);
+      dest.fields[i].nanos = amendedTable[1];
     }
   }
   dest.length += source.length;
