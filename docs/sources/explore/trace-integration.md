@@ -71,7 +71,7 @@ Timeline shows list of spans within the trace. Each span row consists of the fol
 - **Operation name -** Name of the operation that this span represents.
 - **Span duration bar -** Visual representation of the operation duration within the trace.
 
-Clicking anywhere on the span row shows span details.
+Click anywhere on the span row to reveal span details.
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-timeline.png" class="docs-image--no-shadow" max-width= "900px"  caption="Trace view timeline" >}}
 
