@@ -236,7 +236,7 @@ func buildExtraConnectionString(sep rune, urlQueryParams map[string][]string) st
 	return sb.String()
 }
 
-func validateReplicaConfigs(primary *DatabaseConfig, cfgs []*DatabaseConfig) error {
+func validateReplicaConfigs(primary *DatabaseConfig, cfgs []DatabaseConfig) error {
 	if cfgs == nil {
 		return errors.New("cfg cannot be nil")
 	}
@@ -256,12 +256,29 @@ func validateReplicaConfigs(primary *DatabaseConfig, cfgs []*DatabaseConfig) err
 	}
 
 	// Verify that every database is the same type and version, and that it matches the primary database.
+	// The database Yype may include a "withHooks" suffix, which is used to differentiate drivers for instrumentation and ignored for the purpose of this check.
 	for _, cfg := range cfgs {
-		if cfg.Type != primary.Type {
+		if databaseDriverFromName(cfg.Type) != databaseDriverFromName(primary.Type) {
 			result = errors.Join(result, fmt.Errorf("the replicas must have the same database type as the primary database (%s != %s)", primary.Type, cfg.Type))
 			break // Only need to report this once
 		}
 	}
 
 	return result
+}
+
+// databaseDriverFromName strips any suffixes from the driver type that are not relevant to the database driver.
+// This is used to remove the "WithHooks" or "ReplWithHooks" suffixes which are used to differentiate drivers for instrumentation.
+func databaseDriverFromName(driverTy string) string {
+	if strings.HasPrefix(driverTy, migrator.MySQL) {
+		return migrator.MySQL
+	}
+	if strings.HasPrefix(driverTy, migrator.Postgres) {
+		return migrator.Postgres
+	}
+	if strings.HasPrefix(driverTy, migrator.SQLite) {
+		return migrator.SQLite
+	}
+	// default
+	return driverTy
 }
