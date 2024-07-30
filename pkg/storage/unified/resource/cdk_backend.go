@@ -325,7 +325,6 @@ var _ ListIterator = (*cdkListIterator)(nil)
 
 func buildTree(ctx context.Context, s *cdkBackend, key *ResourceKey) (*cdkListIterator, error) {
 	byPrefix := make(map[string]*cdkResource)
-	maxRV := int64(0)
 	path := s.getPath(key, 0)
 	iter := s.bucket.List(&blob.ListOptions{Prefix: path, Delimiter: ""}) // "" is recursive
 	for {
@@ -351,9 +350,6 @@ func buildTree(ctx context.Context, s *cdkBackend, key *ResourceKey) (*cdkListIt
 						key: obj.Key,
 					})
 				}
-				if rv > maxRV {
-					maxRV = rv
-				}
 			}
 		}
 	}
@@ -376,7 +372,7 @@ func buildTree(ctx context.Context, s *cdkBackend, key *ResourceKey) (*cdkListIt
 		ctx:       ctx,
 		bucket:    s.bucket,
 		resources: resources,
-		listRV:    maxRV,
+		listRV:    s.rv.Load(),
 		index:     -1, // must call next first
 	}, nil
 }

@@ -184,9 +184,11 @@ func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.Lis
 		Labels:   req.Options.Labels,
 	}
 
-	listRV := int64(0) // TODO?  max
+	listRV, err := a.currentRV(ctx)
+	if err != nil {
+		return 0, nil, err
+	}
 	rows, err := a.getRows(ctx, query)
-
 	return listRV, rows, err
 }
 

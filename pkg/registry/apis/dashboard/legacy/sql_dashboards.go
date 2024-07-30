@@ -70,6 +70,16 @@ func NewDashboardAccess(sql db.DB,
 	}
 }
 
+func (a *dashboardSqlAccess) currentRV(ctx context.Context) (int64, error) {
+	t := time.Now()
+	max := ""
+	err := a.sess.Get(ctx, &max, "SELECT MAX(updated) FROM dashboard")
+	if err == nil && max != "" {
+		t, err = time.Parse(time.DateTime, max)
+	}
+	return t.UnixMilli(), err
+}
+
 const selector = `SELECT
 	dashboard.org_id, dashboard.id,
 	dashboard.uid, dashboard.folder_uid,
@@ -148,7 +158,7 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 			sqlcmd = fmt.Sprintf("%s AND dashboard.uid=$%d", sqlcmd, len(args))
 		} else if query.LastID > 0 {
 			args = append(args, query.LastID)
-			sqlcmd = fmt.Sprintf("%s AND dashboard.id>=$%d", sqlcmd, len(args))
+			sqlcmd = fmt.Sprintf("%s AND dashboard.id>$%d", sqlcmd, len(args))
 		}
 		if query.GetTrash {
 			sqlcmd = sqlcmd + " AND dashboard.deleted IS NOT NULL"
@@ -208,16 +218,19 @@ func (r *rowsWrapper) Next() bool {
 	if r.err != nil {
 		return false
 	}
+	var err error
 
 	// breaks after first readable value
 	for r.rows.Next() {
-		d, err := r.a.scanRow(r.rows)
+		r.row, err = r.a.scanRow(r.rows)
 		if err != nil {
 			r.err = err
 			return false
 		}
 
-		if d != nil {
+		if r.row != nil {
+			d := r.row
+
 			// Access control checker
 			scopes := []string{dashboards.ScopeDashboardsProvider.GetResourceScopeUID(d.Dash.Name)}
 			if d.FolderUID != "" { // Copied from searchV2... not sure the logic is right

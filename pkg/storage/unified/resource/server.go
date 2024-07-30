@@ -468,13 +468,19 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
-
-	maxPageBytes := 1024
+	if req.Limit < 1 {
+		req.Limit = 50 // default max 50 items in a page
+	}
+	maxPageBytes := 1024 * 1024 * 2 // 2mb/page
 	pageBytes := 0
 	rsp := &ListResponse{}
 	rv, iter, err := s.backend.ListIterator(ctx, req)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
+		return rsp, nil
+	}
+	if iter == nil {
+		rsp.Error = &ErrorResult{Code: http.StatusInternalServerError, Message: "expected iterator"}
 		return rsp, nil
 	}
 
@@ -484,7 +490,15 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 		}
 	}()
 
+	if rv < 1 {
+		rsp.Error = &ErrorResult{
+			Code:    http.StatusInternalServerError,
+			Message: fmt.Sprintf("invalid resource version for list: %v", rv),
+		}
+		return rsp, nil
+	}
 	rsp.ResourceVersion = rv
+
 	for iter.Next() {
 		if err = iter.Error(); err != nil {
 			rsp.Error = AsErrorResult(err)
