@@ -19,7 +19,17 @@ exports[`RuleEditor cloud can create a new cloud alert 1`] = `
       "name": "group-3",
       "rules": [
         {
-          "alert": "alert1",
+          "alert": "rule 3",
+          "annotations": {
+            "summary": "test alert",
+          },
+          "expr": "up = 1",
+          "labels": {
+            "severity": "warning",
+          },
+        },
+        {
+          "alert": "rule 4",
           "annotations": {
             "summary": "test alert",
           },
