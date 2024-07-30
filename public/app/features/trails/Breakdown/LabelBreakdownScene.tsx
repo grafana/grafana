@@ -187,7 +187,7 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
         }
       });
     }
-    // FIXME report interaction
+    reportExploreMetrics('sorting_changed', { sortBy: event.sortBy, direction: event.direction });
   };
 
   private onReferencedVariableValueChanged() {
