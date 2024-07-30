@@ -93,6 +93,7 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
     const user = userEvent.setup();
 
     renderSimplifiedRuleEditor();
+    await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
 
     await user.type(await ui.inputs.name.find(), 'my great new rule');
 
@@ -111,7 +112,7 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
   it('simplified routing is not available when Grafana AM is not enabled', async () => {
     setAlertmanagerChoices(AlertmanagerChoice.External, 1);
     renderSimplifiedRuleEditor();
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+    await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
 
     expect(ui.inputs.simplifiedRouting.contactPointRouting.query()).not.toBeInTheDocument();
   });
@@ -121,6 +122,7 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
     const contactPointName = 'lotsa-emails';
 
     renderSimplifiedRuleEditor();
+    await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
 
     await user.type(await ui.inputs.name.find(), 'my great new rule');
 
