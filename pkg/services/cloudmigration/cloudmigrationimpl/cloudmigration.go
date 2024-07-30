@@ -514,8 +514,9 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 
 	// Update status to "creating" to ensure the frontend polls from now on
 	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
-		UID:    uid,
-		Status: cloudmigration.SnapshotStatusCreating,
+		UID:       uid,
+		SessionID: sessionUid,
+		Status:    cloudmigration.SnapshotStatusCreating,
 	}); err != nil {
 		return nil, err
 	}
@@ -539,8 +540,9 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 			s.log.Error("building snapshot", "err", err.Error())
 			// Update status to error with retries
 			if err := s.updateSnapshotWithRetries(context.Background(), cloudmigration.UpdateSnapshotCmd{
-				UID:    snapshot.UID,
-				Status: cloudmigration.SnapshotStatusError,
+				UID:       snapshot.UID,
+				SessionID: sessionUid,
+				Status:    cloudmigration.SnapshotStatusError,
 			}); err != nil {
 				s.log.Error("critical failure during snapshot creation - please report any error logs")
 			}
@@ -659,8 +661,9 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 
 	// Update status to "creating" to ensure the frontend polls from now on
 	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
-		UID:    snapshotUid,
-		Status: cloudmigration.SnapshotStatusUploading,
+		UID:       snapshotUid,
+		SessionID: sessionUid,
+		Status:    cloudmigration.SnapshotStatusUploading,
 	}); err != nil {
 		return err
 	}
@@ -684,8 +687,9 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 			s.log.Error("uploading snapshot", "err", err.Error())
 			// Update status to error with retries
 			if err := s.updateSnapshotWithRetries(context.Background(), cloudmigration.UpdateSnapshotCmd{
-				UID:    snapshot.UID,
-				Status: cloudmigration.SnapshotStatusError,
+				UID:       snapshot.UID,
+				SessionID: sessionUid,
+				Status:    cloudmigration.SnapshotStatusError,
 			}); err != nil {
 				s.log.Error("critical failure during snapshot upload - please report any error logs")
 			}
@@ -713,8 +717,9 @@ func (s *Service) CancelSnapshot(ctx context.Context, sessionUid string, snapsho
 	s.cancelFunc = nil
 
 	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
-		UID:    snapshotUid,
-		Status: cloudmigration.SnapshotStatusCanceled,
+		UID:       snapshotUid,
+		SessionID: sessionUid,
+		Status:    cloudmigration.SnapshotStatusCanceled,
 	}); err != nil {
 		s.log.Error("critical failure during snapshot cancelation - please report any error logs")
 	}
