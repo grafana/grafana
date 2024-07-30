@@ -1627,7 +1627,9 @@
       "settings-title": "Settings"
     },
     "configuration": {
+      "display-annotations-description": "Present annotations on this Dashboard",
       "display-annotations-label": "Display annotations",
+      "enable-time-range-description": "Allow people to change time range",
       "enable-time-range-label": "Enable time range",
       "settings-label": "Settings",
       "success-pause": "Your dashboard access has been paused",
@@ -1943,7 +1945,8 @@
   },
   "share-drawer": {
     "confirm-action": {
-      "back-arrow-button": "Back button"
+      "back-arrow-button": "Back button",
+      "cancel-button": "Cancel"
     }
   },
   "share-modal": {

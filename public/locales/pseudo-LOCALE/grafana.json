@@ -1627,7 +1627,9 @@
       "settings-title": "Ŝęŧŧįŉģş"
     },
     "configuration": {
+      "display-annotations-description": "Přęşęŉŧ äŉŉőŧäŧįőŉş őŉ ŧĥįş Đäşĥþőäřđ",
       "display-annotations-label": "Đįşpľäy äŉŉőŧäŧįőŉş",
+      "enable-time-range-description": "Åľľőŵ pęőpľę ŧő čĥäŉģę ŧįmę řäŉģę",
       "enable-time-range-label": "Ēŉäþľę ŧįmę řäŉģę",
       "settings-label": "Ŝęŧŧįŉģş",
       "success-pause": "Ÿőūř đäşĥþőäřđ äččęşş ĥäş þęęŉ päūşęđ",
@@ -1943,7 +1945,8 @@
   },
   "share-drawer": {
     "confirm-action": {
-      "back-arrow-button": "ßäčĸ þūŧŧőŉ"
+      "back-arrow-button": "ßäčĸ þūŧŧőŉ",
+      "cancel-button": "Cäŉčęľ"
     }
   },
   "share-modal": {
