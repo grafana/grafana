@@ -38,8 +38,6 @@ func (f *DefaultPluginFactory) createPlugin(bundle *plugins.FoundBundle, class p
 		}
 		cp.Parent = plugin
 		plugin.Children = append(plugin.Children, cp)
-
-		children = append(children, cp)
 	}
 
 	return plugin, nil
