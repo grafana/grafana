@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import { autoUpdate, flip, useFloating } from '@floating-ui/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
@@ -26,7 +26,7 @@ interface ComboboxProps
 }
 
 function itemToString(item: Option | null) {
-  return item?.label || '';
+  return item?.label ?? '';
 }
 
 function itemFilter(inputValue: string) {
@@ -67,25 +67,17 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
       itemToString,
       selectedItem,
       scrollIntoView: () => {},
-      onInputValueChange: (changes) => {
-        // Ignore this internal state change, as it does not work when clearing input
-        // Check value instead of selectedItem, as selectedItem is incorrect
-        if (changes.type === useCombobox.stateChangeTypes.ControlledPropUpdatedSelectedItem && value === null) {
-          setInputValue('');
-          return;
-        }
-        setItems(options.filter(itemFilter(changes.inputValue)));
+      onInputValueChange: ({ inputValue }) => {
+        setItems(options.filter(itemFilter(inputValue)));
       },
-      onIsOpenChange: ({ isOpen, selectedItem }) => {
-        // Basically onBlur handler
+      onIsOpenChange: ({ isOpen }) => {
+        // Default to displaying all values when opening
         if (isOpen) {
           setItems(options);
           return;
         }
-        selectedItem ? setInputValue(selectedItem.label) : setInputValue('');
       },
       onSelectedItemChange: ({ selectedItem }) => {
-        selectedItem ? setInputValue(selectedItem.label) : setInputValue('');
         onChange(selectedItem);
       },
       onHighlightedIndexChange: ({ highlightedIndex, type }) => {
@@ -94,6 +86,10 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
         }
       },
     });
+
+  const onBlur = useCallback(() => {
+    setInputValue(selectedItem?.label ?? '');
+  }, [selectedItem, setInputValue]);
 
   // the order of middleware is important!
   const middleware = [
@@ -147,6 +143,7 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
            *  Downshift repo: https://github.com/downshift-js/downshift/tree/master
            */
           onChange: () => {},
+          onBlur,
         })}
       />
       <div
