@@ -1,7 +1,7 @@
 package schedule
 
 import (
-	context "context"
+	"context"
 	"errors"
 	"fmt"
 	"net/url"
@@ -227,8 +227,7 @@ func (a *alertRule) Stop(reason error) {
 
 func (a *alertRule) Run() error {
 	grafanaCtx := a.ctx
-	logger := a.logger
-	logger.Debug("Alert rule routine started")
+	a.logger.Debug("Alert rule routine started")
 
 	var currentFingerprint fingerprint
 	defer a.stopApplied()
@@ -237,20 +236,23 @@ func (a *alertRule) Run() error {
 		// used by external services (API) to notify that rule is updated.
 		case ctx := <-a.updateCh:
 			if currentFingerprint == ctx.Fingerprint {
-				logger.Info("Rule's fingerprint has not changed. Skip resetting the state", "currentFingerprint", currentFingerprint)
+				a.logger.Info("Rule's fingerprint has not changed. Skip resetting the state", "currentFingerprint", currentFingerprint)
 				continue
 			}
 
-			logger.Info("Clearing the state of the rule because it was updated", "isPaused", ctx.IsPaused, "fingerprint", ctx.Fingerprint)
+			a.logger.Info("Clearing the state of the rule because it was updated", "isPaused", ctx.IsPaused, "fingerprint", ctx.Fingerprint)
 			// clear the state. So the next evaluation will start from the scratch.
 			a.resetState(grafanaCtx, ctx.IsPaused)
 			currentFingerprint = ctx.Fingerprint
 		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-a.evalCh:
 			if !ok {
-				logger.Debug("Evaluation channel has been closed. Exiting")
+				a.logger.Debug("Evaluation channel has been closed. Exiting")
 				return nil
 			}
+			f := ctx.Fingerprint()
+			logger := a.logger.New("version", ctx.rule.Version, "fingerprint", f, "now", ctx.scheduledAt)
+			logger.Debug("Processing tick")
 
 			func() {
 				orgID := fmt.Sprint(a.key.OrgID)
@@ -265,11 +267,11 @@ func (a *alertRule) Run() error {
 
 				for attempt := int64(1); attempt <= a.maxAttempts; attempt++ {
 					isPaused := ctx.rule.IsPaused
-					f := ctx.Fingerprint()
+
 					// Do not clean up state if the eval loop has just started.
 					var needReset bool
 					if currentFingerprint != 0 && currentFingerprint != f {
-						logger.Debug("Got a new version of alert rule. Clear up the state", "fingerprint", f)
+						logger.Debug("Got a new version of alert rule. Clear up the state", "current_fingerprint", currentFingerprint, "fingerprint", f)
 						needReset = true
 					}
 					// We need to reset state if the loop has started and the alert is already paused. It can happen,
@@ -307,20 +309,20 @@ func (a *alertRule) Run() error {
 						logger.Error("Skip evaluation and updating the state because the context has been cancelled", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt)
 						return
 					}
-
 					retry := attempt < a.maxAttempts
-					err := a.evaluate(tracingCtx, f, attempt, ctx, span, retry)
+					err := a.evaluate(tracingCtx, ctx, span, retry, logger)
 					// This is extremely confusing - when we exhaust all retry attempts, or we have no retryable errors
 					// we return nil - so technically, this is meaningless to know whether the evaluation has errors or not.
 					span.End()
 					if err == nil {
+						logger.Debug("Tick processed", "attempt", attempt, "duration", a.clock.Now().Sub(evalStart))
 						return
 					}
 
-					logger.Error("Failed to evaluate rule", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt, "error", err)
+					logger.Error("Failed to evaluate rule", "attempt", attempt, "error", err)
 					select {
 					case <-tracingCtx.Done():
-						logger.Error("Context has been cancelled while backing off", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt)
+						logger.Error("Context has been cancelled while backing off", "attempt", attempt)
 						return
 					case <-time.After(retryDelay):
 						continue
@@ -339,13 +341,13 @@ func (a *alertRule) Run() error {
 				states := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key), a.key, ngmodels.StateReasonRuleDeleted)
 				a.expireAndSend(grafanaCtx, states)
 			}
-			logger.Debug("Stopping alert rule routine")
+			a.logger.Debug("Stopping alert rule routine")
 			return nil
 		}
 	}
 }
 
-func (a *alertRule) evaluate(ctx context.Context, f fingerprint, attempt int64, e *Evaluation, span trace.Span, retry bool) error {
+func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span, retry bool, logger log.Logger) error {
 	orgID := fmt.Sprint(a.key.OrgID)
 	evalAttemptTotal := a.metrics.EvalAttemptTotal.WithLabelValues(orgID)
 	evalAttemptFailures := a.metrics.EvalAttemptFailures.WithLabelValues(orgID)
@@ -353,7 +355,6 @@ func (a *alertRule) evaluate(ctx context.Context, f fingerprint, attempt int64, 
 	processDuration := a.metrics.ProcessDuration.WithLabelValues(orgID)
 	sendDuration := a.metrics.SendDuration.WithLabelValues(orgID)
 
-	logger := a.logger.FromContext(ctx).New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "now", e.scheduledAt).FromContext(ctx)
 	start := a.clock.Now()
 
 	evalCtx := eval.NewContextWithPreviousResults(ctx, SchedulerUserFor(e.rule.OrgID), a.newLoadedMetricsReader(e.rule))
@@ -430,7 +431,7 @@ func (a *alertRule) evaluate(ctx context.Context, f fingerprint, attempt int64, 
 		state.GetRuleExtraLabels(logger, e.rule, e.folderTitle, !a.disableGrafanaFolder),
 		func(ctx context.Context, statesToSend state.StateTransitions) {
 			start := a.clock.Now()
-			alerts := a.send(ctx, statesToSend)
+			alerts := a.send(ctx, logger, statesToSend)
 			span.AddEvent("results sent", trace.WithAttributes(
 				attribute.Int64("alerts_sent", int64(len(alerts.PostableAlerts))),
 			))
@@ -443,13 +444,14 @@ func (a *alertRule) evaluate(ctx context.Context, f fingerprint, attempt int64, 
 }
 
 // send sends alerts for the given state transitions.
-func (a *alertRule) send(ctx context.Context, states state.StateTransitions) definitions.PostableAlerts {
+func (a *alertRule) send(ctx context.Context, logger log.Logger, states state.StateTransitions) definitions.PostableAlerts {
 	alerts := definitions.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(states))}
 	for _, alertState := range states {
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *state.StateToPostableAlert(alertState, a.appURL))
 	}
 
 	if len(alerts.PostableAlerts) > 0 {
+		logger.Debug("Sending transitions to notifier", "transitions", len(alerts.PostableAlerts))
 		a.sender.Send(ctx, a.key, alerts)
 	}
 	return alerts
