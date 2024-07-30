@@ -254,6 +254,7 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 	// update snapshot status to pending upload with retries
 	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
 		UID:       snapshotMeta.UID,
+		SessionID: snapshotMeta.SessionUID,
 		Status:    cloudmigration.SnapshotStatusPendingUpload,
 		Resources: localSnapshotResource,
 	}); err != nil {
@@ -323,8 +324,9 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 
 	// update snapshot status to processing with retries
 	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
-		UID:    snapshotMeta.UID,
-		Status: cloudmigration.SnapshotStatusProcessing,
+		UID:       snapshotMeta.UID,
+		SessionID: snapshotMeta.SessionUID,
+		Status:    cloudmigration.SnapshotStatusProcessing,
 	}); err != nil {
 		return err
 	}
