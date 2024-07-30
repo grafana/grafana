@@ -3399,8 +3399,10 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - |-
-    bash -c '
+  - apk add bash
+  - |2-
+
+        bash -c '
         debug=
         if [[ -n $${DRY_RUN} ]];  then debug=echo; fi
         docker login -u $${DOCKER_USER} -p $${DOCKER_PASSWORD}
@@ -3528,8 +3530,10 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - |-
-    bash -c '
+  - apk add bash
+  - |2-
+
+        bash -c '
         debug=
         if [[ -n $${DRY_RUN} ]];  then debug=echo; fi
         docker login -u $${DOCKER_USER} -p $${DOCKER_PASSWORD}
@@ -6075,6 +6079,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 54d938f95ff60ac62126ec728a95c747f20e0a47d72612a299ebe98f13c029d1
+hmac: 3ec8f984961a401ed9785c3f537a725e1ba3912b713e1796561634d9c99f93ba
 
 ...

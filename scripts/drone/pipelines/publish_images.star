@@ -28,7 +28,8 @@ def publish_image_public_step():
     Returns:
       A drone step which publishes Docker images for a public release.
     """
-    command = """bash -c '
+    command = """
+    bash -c '
     debug=
     if [[ -n $${DRY_RUN} ]];  then debug=echo; fi
     docker login -u $${DOCKER_USER} -p $${DOCKER_PASSWORD}
@@ -79,7 +80,10 @@ def publish_image_public_step():
         "name": "publish-images-grafana",
         "image": images["docker"],
         "depends_on": ["fetch-images"],
-        "commands": [command],
+        "commands": [
+            "apk add bash",
+            command,
+        ],
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
 
