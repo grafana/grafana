@@ -400,6 +400,13 @@ var _ resource.ListIterator = (*listIter)(nil)
 
 // listLatest fetches the resources from the resource table.
 func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	if req.NextPageToken != "" {
+		return 0, fmt.Errorf("only works for the first page")
+	}
+	if req.ResourceVersion > 0 {
+		return 0, fmt.Errorf("only works for the 'latest' resource version")
+	}
+
 	iter := &listIter{}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
@@ -443,6 +450,9 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 		}
 		iter.listRV = continueToken.ResourceVersion
 		iter.offset = continueToken.StartOffset
+	}
+	if iter.listRV < 1 {
+		return 0, fmt.Errorf("expecting an explicit resource version query")
 	}
 
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
