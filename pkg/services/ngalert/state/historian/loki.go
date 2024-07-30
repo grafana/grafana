@@ -123,12 +123,12 @@ func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleM
 		defer cancel()
 		defer close(errCh)
 		logger := h.log.FromContext(ctx)
-
+		logger.Debug("Saving state history batch", "samples", len(logStream.Values))
 		org := fmt.Sprint(rule.OrgID)
 		h.metrics.WritesTotal.WithLabelValues(org, "loki").Inc()
 		h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(len(logStream.Values)))
 
-		if err := h.recordStreams(ctx, []Stream{logStream}, logger); err != nil {
+		if err := h.recordStreams(ctx, logStream, logger); err != nil {
 			logger.Error("Failed to save alert state history batch", "error", err)
 			h.metrics.WritesFailed.WithLabelValues(org, "loki").Inc()
 			h.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(len(logStream.Values)))
@@ -336,12 +336,12 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 	}
 }
 
-func (h *RemoteLokiBackend) recordStreams(ctx context.Context, streams []Stream, logger log.Logger) error {
-	if err := h.client.Push(ctx, streams); err != nil {
+func (h *RemoteLokiBackend) recordStreams(ctx context.Context, stream Stream, logger log.Logger) error {
+	if err := h.client.Push(ctx, []Stream{stream}); err != nil {
 		return err
 	}
 
-	logger.Debug("Done saving alert state history batch")
+	logger.Debug("Done saving alert state history batch", "samples", len(stream.Values))
 	return nil
 }
 
