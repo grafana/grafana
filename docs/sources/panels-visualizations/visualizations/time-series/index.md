@@ -59,6 +59,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/
+  panel-editor-alerts:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-editor-overview/#data-section
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/panel-editor-overview/#data-section
 ---
 
 # Time series
@@ -68,12 +73,12 @@ Time series visualizations are the default and primary way to visualize data poi
 {{< figure src="/static/img/docs/time-series-panel/time_series_small_example.png" max-width="1200px" alt="Time series" >}}
 
 {{< admonition type="note" >}}
-You can migrate from the legacy Graph visualization to the time series visualization. To migrate, open the panel and click the **Migrate** button in the side pane.
+You can migrate from the legacy Graph visualization to the time series visualization. To migrate, open the panel and click the **Migrate** button in the side panel.
 {{< /admonition >}}
 
 ## Configure a time series visualization
 
-The following video guides you through the creation steps and common customizations of time series visualizations and is great for beginners:
+The following video guides you through the creation steps and common customizations of time series visualizations, and is great for beginners:
 
 {{< youtube id="RKtW87cPxsw" >}}
 
@@ -81,13 +86,15 @@ The following video guides you through the creation steps and common customizati
 
 ## Supported data formats
 
-Time series visualizations require time series data: a sequence of measurements, ordered in time, and formatted as a table, where every row in the table represents one individual measurement at a specific time. Learn more about [time series data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/).
+Time series visualizations require time series data&mdash;a sequence of measurements, ordered in time, and formatted as a table&mdash;where every row in the table represents one individual measurement at a specific time. Learn more about [time series data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/).
 
 ## Alert rules
 
-You can [link alert rules](ref:link-alert) to time series visualizations to observe when alerts fire and are resolved, in the form of annotations. In addition, you can create alert rules from the **Alert** tab within the panel editor.
+You can [link alert rules](ref:link-alert) to time series visualizations in the form of annotations to observe when alerts fire and are resolved. In addition, you can create alert rules from the **Alert** tab within the [panel editor](ref:panel-editor-alerts).
 
 ## Special overrides
+
+The following overrides help you further refine a time series visualization.
 
 ### Transform override property
 
@@ -98,7 +105,7 @@ Use the **Graph styles > Transform** [override property](#field-overrides) to tr
 
 ### Fill below to override property
 
-The **Graph styles > Fill below to** option fills the area between two series. This option is only available as a series/field override. When you configure the property, you select the series for which you want the fill to stop.
+The **Graph styles > Fill below to** [override property](#field-overrides) fills the area between two series. When you configure the property, select the series for which you want the fill to stop.
 
 The following example shows three series: Min, Max, and Value. The Min and Max series have **Line width** set to 0. Max has a **Fill below to** override set to Min, which fills the area between Max and Min with the Max line color.
 
@@ -108,7 +115,7 @@ The following example shows three series: Min, Max, and Value. The Min and Max s
 
 ## Configuration options
 
-The following section describes the configuration options available in the panel editor pane for this visualization. These options are, as much as possible, ordered as they appear in the application.
+{{< docs/shared lookup="visualizations/config-options-text.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Panel options
 
