@@ -16,7 +16,7 @@ import { trackQuery } from './tracking';
 import { LokiQuery } from './types';
 
 export function splitQueriesByStreamShard(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>, splittingTargets: LokiQuery[], nonSplittingTargets: LokiQuery[] = []) {
-  const endShard = 50;
+  let endShard = 0;
   let shouldStop = false;
   let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming, key: uuidv4() };
   let subquerySubsciption: Subscription | null = null;
@@ -72,7 +72,20 @@ export function splitQueriesByStreamShard(datasource: LokiDatasource, request: D
   };
 
   const response = new Observable<DataQueryResponse>((subscriber) => {
-    runNextRequest(subscriber, 0);
+    datasource.languageProvider.fetchLabelValues('__stream_shard__', { timeRange: request.range })
+      .then((values) => {
+        values.forEach(shard => {
+          if (parseInt(shard, 10) > endShard) {
+            endShard = parseInt(shard, 10);
+          }
+        });
+        console.log(`Sharding up to ${endShard}`);
+        runNextRequest(subscriber, 0);
+      }).catch((e) => {
+        console.error(e);
+        shouldStop = true;
+        runNextRequest(subscriber, 0);
+      })
     return () => {
       shouldStop = true;
       if (subquerySubsciption != null) {
