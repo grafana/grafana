@@ -30,6 +30,11 @@ func (f *DefaultPluginFactory) createPlugin(bundle *plugins.FoundBundle, class p
 		return nil, err
 	}
 
+	if len(bundle.Children) == 0 {
+		plugin.Children = []*plugins.Plugin{}
+		return plugin, nil
+	}
+
 	plugin.Children = make([]*plugins.Plugin, 0, len(bundle.Children))
 	for _, child := range bundle.Children {
 		cp, err := f.newPlugin(*child, class, sig)
