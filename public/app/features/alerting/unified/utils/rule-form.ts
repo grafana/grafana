@@ -122,8 +122,8 @@ export const getDefautManualRouting = () => {
 export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
   const { name, expression, forTime, forTimeUnit, keepFiringForTime, keepFiringForTimeUnit, type } = values;
 
-  const annotations = arrayToRecord(cleanKeyValuePairs(values.annotations));
-  const labels = arrayToRecord(cleanKeyValuePairs(values.labels));
+  const annotations = arrayToRecord(cleanAnnotations(values.annotations));
+  const labels = arrayToRecord(cleanLabels(values.labels));
 
   if (type === RuleFormType.cloudAlerting) {
     let keepFiringFor: string | undefined;
@@ -223,8 +223,8 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
 
   const notificationSettings = getNotificationSettingsForDTO(manualRouting, contactPoints);
 
-  const annotations = arrayToRecord(cleanKeyValuePairs(values.annotations));
-  const labels = arrayToRecord(cleanKeyValuePairs(values.labels));
+  const annotations = arrayToRecord(cleanAnnotations(values.annotations));
+  const labels = arrayToRecord(cleanLabels(values.labels));
 
   const wantsAlertingRule = isGrafanaAlertingRuleByType(type);
   const wantsRecordingRule = isGrafanaRecordingRuleByType(type!);
@@ -270,8 +270,12 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
   throw new Error(`Failed to convert form values to Grafana rule: unknown type ${type}`);
 }
 
-export const cleanKeyValuePairs = (kvs: KVObject[]) => kvs.map(trimKeyAndValue).filter(nonEmptyKeyValue);
-const nonEmptyKeyValue = ({ key, value }: KVObject): Boolean => Boolean(key) && Boolean(value);
+export const cleanAnnotations = (kvs: KVObject[]) =>
+  kvs.map(trimKeyAndValue).filter(({ key, value }: KVObject): Boolean => Boolean(key) && Boolean(value));
+
+export const cleanLabels = (kvs: KVObject[]) =>
+  kvs.map(trimKeyAndValue).filter(({ key }: KVObject): Boolean => Boolean(key));
+
 const trimKeyAndValue = ({ key, value }: KVObject): KVObject => ({
   key: key.trim(),
   value: value.trim(),
