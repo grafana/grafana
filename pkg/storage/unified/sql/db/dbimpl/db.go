@@ -9,6 +9,13 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 )
 
+const (
+	DriverPostgres = "postgres"
+	DriverMySQL    = "mysql"
+	DriverSQLite   = "sqlite"
+	DriverSQLite3  = "sqlite3"
+)
+
 func NewDB(d *sql.DB, driverName string) db.DB {
 	// remove the suffix from the instrumented driver created by the older
 	// Grafana code

@@ -58,6 +58,7 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 	ctx := testutil.NewDefaultTestContext(t)
 	store := newServer(t)
 
+	context.WithTimeout(context.Background())
 	stream, err := store.WatchWriteEvents(context.Background()) // Using a different context to avoid canceling the stream after the DefaultContextTimeout
 	require.NoError(t, err)
 

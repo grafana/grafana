@@ -9,8 +9,6 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"go.opentelemetry.io/otel/trace"
 	"xorm.io/xorm"
-
-	"github.com/grafana/grafana/pkg/services/store/entity/db"
 )
 
 func getEngineMySQL(getter *sectionGetter, _ trace.Tracer) (*xorm.Engine, error) {
@@ -47,7 +45,7 @@ func getEngineMySQL(getter *sectionGetter, _ trace.Tracer) (*xorm.Engine, error)
 	}
 
 	// FIXME: get rid of xorm
-	engine, err := xorm.NewEngine(db.DriverMySQL, config.FormatDSN())
+	engine, err := xorm.NewEngine(DriverMySQL, config.FormatDSN())
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
@@ -101,7 +99,7 @@ func getEnginePostgres(getter *sectionGetter, _ trace.Tracer) (*xorm.Engine, err
 	}
 
 	// FIXME: get rid of xorm
-	engine, err := xorm.NewEngine(db.DriverPostgres, dsn)
+	engine, err := xorm.NewEngine(DriverPostgres, dsn)
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
