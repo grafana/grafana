@@ -95,33 +95,22 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 function getStyles(theme: GrafanaTheme2) {
   return {
     pageContainer: css(
-      config.featureToggles.bodyScrolling
-        ? {
-            display: 'grid',
-            gridTemplateAreas: `
-        "panels"`,
-            gridTemplateColumns: `1fr`,
-            gridTemplateRows: '1fr',
-            height: '100%',
-            position: 'absolute',
-            width: '100%',
-            [theme.breakpoints.down('sm')]: {
-              display: 'flex',
-              flexDirection: 'column',
-            },
-          }
-        : {
-            display: 'grid',
-            gridTemplateAreas: `
-        "panels"`,
-            gridTemplateColumns: `1fr`,
-            gridTemplateRows: '1fr',
-            height: '100%',
-            [theme.breakpoints.down('sm')]: {
-              display: 'flex',
-              flexDirection: 'column',
-            },
-          }
+      {
+        display: 'grid',
+        gridTemplateAreas: `
+  "panels"`,
+        gridTemplateColumns: `1fr`,
+        gridTemplateRows: '1fr',
+        height: '100%',
+        [theme.breakpoints.down('sm')]: {
+          display: 'flex',
+          flexDirection: 'column',
+        },
+      },
+      config.featureToggles.bodyScrolling && {
+        position: 'absolute',
+        width: '100%',
+      }
     ),
     pageContainerWithControls: css({
       gridTemplateAreas: `
@@ -142,14 +131,12 @@ function getStyles(theme: GrafanaTheme2) {
         "scopes panels"`,
     }),
     panelsContainer: css(
-      config.featureToggles.bodyScrolling
-        ? {
-            gridArea: 'panels',
-            minHeight: 'unset !important',
-          }
-        : {
-            gridArea: 'panels',
-          }
+      {
+        gridArea: 'panels',
+      },
+      config.featureToggles.bodyScrolling && {
+        minHeight: 'unset !important',
+      }
     ),
     controlsWrapper: css({
       display: 'flex',

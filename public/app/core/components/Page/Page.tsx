@@ -100,35 +100,30 @@ Page.Contents = PageContents;
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css(
+      {
+        label: 'page-wrapper',
+        display: 'flex',
+        flex: '1 1 0',
+        flexDirection: 'column',
+      },
       config.featureToggles.bodyScrolling
         ? {
-            label: 'page-wrapper',
-            display: 'flex',
-            flex: '1 1 0',
-            flexDirection: 'column',
             position: 'relative',
           }
         : {
-            label: 'page-wrapper',
             height: '100%',
-            display: 'flex',
-            flex: '1 1 0',
-            flexDirection: 'column',
             minHeight: 0,
           }
     ),
     pageContent: css(
-      config.featureToggles.bodyScrolling
-        ? {
-            display: 'flex',
-            flexDirection: 'column',
-            label: 'page-content',
-            flexGrow: 1,
-          }
-        : {
-            label: 'page-content',
-            flexGrow: 1,
-          }
+      {
+        label: 'page-content',
+        flexGrow: 1,
+      },
+      config.featureToggles.bodyScrolling && {
+        display: 'flex',
+        flexDirection: 'column',
+      }
     ),
     primaryBg: css({
       background: theme.colors.background.primary,

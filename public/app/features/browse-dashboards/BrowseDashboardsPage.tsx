@@ -171,17 +171,16 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   pageContents: css(
+    {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
+    },
     config.featureToggles.bodyScrolling
       ? {
-          display: 'flex',
-          flexDirection: 'column',
           flex: 1,
-          gap: theme.spacing(1),
         }
       : {
-          display: 'flex',
-          flexDirection: 'column',
-          gap: theme.spacing(1),
           height: '100%',
         }
   ),
