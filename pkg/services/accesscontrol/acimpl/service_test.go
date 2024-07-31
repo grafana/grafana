@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -42,6 +43,7 @@ func setupTestEnv(t testing.TB) *Service {
 		roles:         accesscontrol.BuildBasicRoleDefinitions(),
 		tracer:        tracing.InitializeTracerForTest(),
 		store:         database.ProvideService(db.InitTestReplDB(t)),
+		permRegistry:  permreg.ProvidePermissionRegistry(),
 	}
 	require.NoError(t, ac.RegisterFixedRoles(context.Background()))
 	return ac
@@ -71,6 +73,7 @@ func TestUsageMetrics(t *testing.T) {
 				tracing.InitializeTracerForTest(),
 				nil,
 				nil,
+				permreg.ProvidePermissionRegistry(),
 			)
 			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])
 		})
