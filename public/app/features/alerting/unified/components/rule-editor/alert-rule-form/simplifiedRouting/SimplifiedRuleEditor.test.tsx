@@ -2,34 +2,23 @@ import { ReactNode } from 'react';
 import { Route } from 'react-router-dom';
 import { ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { render, screen, waitFor, waitForElementToBeRemoved, userEvent } from 'test/test-utils';
+import { render, screen, waitForElementToBeRemoved, userEvent } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import RuleEditor from 'app/features/alerting/unified/RuleEditor';
-import * as ruler from 'app/features/alerting/unified/api/ruler';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
-import { setAlertmanagerChoices, setRulerRuleGroupHandler } from 'app/features/alerting/unified/mocks/server/configure';
-import {
-  captureRequests,
-  serializeRequests,
-  waitForServerRequest,
-} from 'app/features/alerting/unified/mocks/server/events';
+import { setAlertmanagerChoices } from 'app/features/alerting/unified/mocks/server/configure';
+import { captureRequests, serializeRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { FOLDER_TITLE_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/search';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import {
-  DataSourceType,
-  GRAFANA_DATASOURCE_NAME,
-  GRAFANA_RULES_SOURCE_NAME,
-} from 'app/features/alerting/unified/utils/datasource';
-import { getDefaultQueries } from 'app/features/alerting/unified/utils/rule-form';
+import { DataSourceType, GRAFANA_DATASOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
-import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
-import { grafanaRulerEmptyGroup, grafanaRulerNamespace2 } from '../../../../mocks/grafanaRulerApi';
+import { grafanaRulerEmptyGroup } from '../../../../mocks/grafanaRulerApi';
 import { setupDataSources } from '../../../../testSetup/datasources';
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
