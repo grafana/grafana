@@ -5,14 +5,14 @@ import { Field, FieldSet, Input, Select } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { CORR_CONFIG_TYPES, CorrelationConfigType } from '../types';
+import { CORR_CONFIG_TYPES, CorrelationConfigType, ExternalTypeTarget } from '../types';
 
 import { QueryEditorField } from './QueryEditorField';
 import { useCorrelationsFormContext } from './correlationsFormContext';
 import { FormDTO } from './types';
 
 export const ConfigureCorrelationTargetForm = () => {
-  const { control, formState, register } = useFormContext<FormDTO>();
+  const { control, formState } = useFormContext<FormDTO>();
   const withDsUID = (fn: Function) => (ds: DataSourceInstanceSettings) => fn(ds.uid);
   const { correlation } = useCorrelationsFormContext();
   const targetUID: string | undefined = useWatch({ name: 'targetUID' }) || correlation?.targetUID;
@@ -65,7 +65,7 @@ export const ConfigureCorrelationTargetForm = () => {
                 <Field
                   label={t('correlations.target-form.target-label', 'Target')}
                   description={t(
-                    'correlations.target-form.target-description',
+                    CORR_CONFIG_TYPES[configType].targetDescriptionKey,
                     'Specify which data source is queried when the link is clicked'
                   )}
                   htmlFor="target"
@@ -115,9 +115,9 @@ export const ConfigureCorrelationTargetForm = () => {
                   error={formState.errors.targetUID?.message}
                 >
                   <Input
-                    value={value?.url}
+                    value={(value as ExternalTypeTarget).url || ''}
                     onChange={(e) => {
-                      onChange({ url: e.target });
+                      onChange({ url: e.currentTarget.value });
                     }}
                   />
                 </Field>

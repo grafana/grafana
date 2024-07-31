@@ -372,7 +372,8 @@
     "target-form": {
       "control-rules": "This field is required.",
       "sub-text": "<0>Define what data source the correlation will link to, and what query will run when the correlation is clicked.</0>",
-      "target-description": "Specify which data source is queried when the link is clicked",
+      "target-query-description": "Specify which data source is queried when the link is clicked",
+      "target-external-description": "Specify the URL that will open when the link is clicked",
       "target-label": "Target",
       "title": "Setup the target for the correlation (Step 2 of 3)"
     },
