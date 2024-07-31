@@ -2,7 +2,6 @@ package interceptors
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"go.opentelemetry.io/otel"
@@ -21,11 +20,9 @@ func TracingUnaryInterceptor(tracer tracing.Tracer) grpc.UnaryServerInterceptor 
 		handler grpc.UnaryHandler,
 	) (resp any, err error) {
 		if md, ok := metadata.FromIncomingContext(ctx); ok {
-			fmt.Println("metadata.FromIncomingContext(ctx)", md)
 			ctx = otel.GetTextMapPropagator().Extract(ctx, propagation.HeaderCarrier(md))
 		}
 
-		fmt.Println("traceID received", tracing.TraceIDFromContext(ctx, false))
 		ctx, span := tracer.Start(ctx, tracingPrefix+info.FullMethod)
 		defer span.End()
 		resp, err = handler(ctx, req)

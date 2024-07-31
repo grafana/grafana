@@ -286,9 +286,6 @@ func (s *service) start(ctx context.Context) error {
 			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
 
-		traceID := tracing.TraceIDFromContext(ctx, false)
-		fmt.Println("Propagating traceID from apiserver", traceID)
-
 		opts := []grpc.DialOption{
 			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
