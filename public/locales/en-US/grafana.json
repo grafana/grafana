@@ -272,6 +272,11 @@
       "success": "Copied"
     }
   },
+  "combobox": {
+    "clear": {
+      "title": "Clear value"
+    }
+  },
   "command-palette": {
     "action": {
       "change-theme": "Change theme...",

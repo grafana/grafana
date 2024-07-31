@@ -77,5 +77,12 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         top: 0,
       },
     }),
+    clear: css({
+      label: 'grafana-select-clear',
+      cursor: 'pointer',
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
+    }),
   };
 };

@@ -272,6 +272,11 @@
       "success": "Cőpįęđ"
     }
   },
+  "combobox": {
+    "clear": {
+      "title": "Cľęäř väľūę"
+    }
+  },
   "command-palette": {
     "action": {
       "change-theme": "Cĥäŉģę ŧĥęmę...",
