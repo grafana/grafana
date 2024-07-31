@@ -95,7 +95,7 @@ func (c *constantAuthorizer) CanUpdate(ctx context.Context, id identity.Requeste
 
 // ListFilter implements Authorizer.
 func (c *constantAuthorizer) ListFilter(ctx context.Context, id identity.Requester, key *ResourceKey) (ResourceReadFilter, *ErrorResult) {
-	return func(namespace, name, folder string) bool { return c.result }, nil
+	return func(namespace, name, folder string) bool { return !c.result }, nil
 }
 
 // CanWriteOrigin implements Authorizer.
