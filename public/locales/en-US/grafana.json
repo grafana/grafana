@@ -1111,6 +1111,19 @@
       "modal-title": "Migration token created",
       "status": "Current status: <2></2>"
     },
+    "onprem": {
+      "cancel-snapshot-error-title": "Error cancelling creating snapshot",
+      "create-snapshot-error-title": "Error creating snapshot",
+      "disconnect-error-title": "Error disconnecting",
+      "error-see-server-logs": "See the Grafana server logs for more details",
+      "get-session-error-title": "Error loading migration configuration",
+      "get-snapshot-error-title": "Error loading snapshot",
+      "snapshot-error-status-body": "There was an error creating the snapshot or starting the migration process. See the Grafana server logs for more details",
+      "snapshot-error-status-title": "Error migrating resources",
+      "some-resources-errored-body": "The migration has completed, but some items could not be migrated to the cloud stack. Check the failed resources for more details",
+      "some-resources-errored-title": "Resource migration complete",
+      "upload-snapshot-error-title": "Error uploading snapshot"
+    },
     "pdc": {
       "body": "Exposing your data sources to the internet can raise security concerns. Private data source connect (PDC) allows Grafana Cloud to access your existing data sources over a secure network tunnel.",
       "link-title": "Learn about PDC",
@@ -1154,13 +1167,9 @@
     "summary": {
       "cancel-snapshot": "Cancel snapshot",
       "disconnect": "Disconnect",
-      "disconnect-error-description": "See the Grafana server logs for more details",
-      "disconnect-error-title": "There was an error disconnecting",
       "errored-resource-count": "Errors",
       "page-loading": "Loading...",
       "rebuild-snapshot": "Rebuild snapshot",
-      "run-migration-error-description": "See the Grafana server logs for more details",
-      "run-migration-error-title": "Error creating snapshot",
       "snapshot-date": "Snapshot timestamp",
       "snapshot-not-created": "Not yet created",
       "start-migration": "Build snapshot",
