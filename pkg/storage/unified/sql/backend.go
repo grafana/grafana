@@ -435,6 +435,15 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 		if err != nil {
 			return err
 		}
+
+		discardedResultSets, err := dbutil.DiscardRows(rows)
+		if err != nil {
+			return fmt.Errorf("closing rows: %w", err)
+		}
+		if discardedResultSets > 1 {
+			return fmt.Errorf("too many result sets: %v", discardedResultSets)
+		}
+
 		iter.rows = rows
 		return cb(iter)
 	})
@@ -487,6 +496,15 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 		if err != nil {
 			return err
 		}
+
+		discardedResultSets, err := dbutil.DiscardRows(rows)
+		if err != nil {
+			return fmt.Errorf("closing rows: %w", err)
+		}
+		if discardedResultSets > 1 {
+			return fmt.Errorf("too many result sets: %v", discardedResultSets)
+		}
+
 		iter.rows = rows
 		return cb(iter)
 	})
