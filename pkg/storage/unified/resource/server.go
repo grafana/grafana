@@ -27,6 +27,30 @@ type ResourceServer interface {
 	LifecycleHooks
 }
 
+type ListIterator interface {
+	Next() bool // sql.Rows
+
+	// Iterator error (if exts)
+	Error() error
+
+	// The token that can be used to start iterating *after* this item
+	ContinueToken() string
+
+	// ResourceVersion of the current item
+	ResourceVersion() int64
+
+	// Namespace of the current item
+	// Used for fast(er) authz filtering
+	Namespace() string
+
+	// Name of the current item
+	// Used for fast(er) authz filtering
+	Name() string
+
+	// Value for the current item
+	Value() []byte
+}
+
 // The StorageBackend is an internal abstraction that supports interacting with
 // the underlying raw storage medium.  This interface is never exposed directly,
 // it is provided by concrete instances that actually write values.
@@ -39,12 +63,12 @@ type StorageBackend interface {
 	// Read a resource from storage optionally at an explicit version
 	ReadResource(context.Context, *ReadRequest) *ReadResponse
 
-	// When the ResourceServer executes a List request, it will first
+	// When the ResourceServer executes a List request, this iterator will
 	// query the backend for potential results.  All results will be
 	// checked against the kubernetes requirements before finally returning
 	// results.  The list options can be used to improve performance
 	// but are the the final answer.
-	PrepareList(context.Context, *ListRequest) *ListResponse
+	ListIterator(context.Context, *ListRequest, func(ListIterator) error) (int64, error)
 
 	// Get all events from the store
 	// For HA setups, this will be more events than the local WriteEvent above!
@@ -441,10 +465,51 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
+	if req.Limit < 1 {
+		req.Limit = 50 // default max 50 items in a page
+	}
+	maxPageBytes := 1024 * 1024 * 2 // 2mb/page
+	pageBytes := 0
+	rsp := &ListResponse{}
+	rv, err := s.backend.ListIterator(ctx, req, func(iter ListIterator) error {
+		for iter.Next() {
+			if err := iter.Error(); err != nil {
+				return err
+			}
 
-	rsp := s.backend.PrepareList(ctx, req)
-	// Status???
-	return rsp, nil
+			// TODO: add authz filters
+
+			item := &ResourceWrapper{
+				ResourceVersion: iter.ResourceVersion(),
+				Value:           iter.Value(),
+			}
+
+			pageBytes += len(item.Value)
+			rsp.Items = append(rsp.Items, item)
+			if len(rsp.Items) >= int(req.Limit) || pageBytes >= maxPageBytes {
+				t := iter.ContinueToken()
+				if iter.Next() {
+					rsp.NextPageToken = t
+				}
+				break
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		rsp.Error = AsErrorResult(err)
+		return rsp, nil
+	}
+
+	if rv < 1 {
+		rsp.Error = &ErrorResult{
+			Code:    http.StatusInternalServerError,
+			Message: fmt.Sprintf("invalid resource version for list: %v", rv),
+		}
+		return rsp, nil
+	}
+	rsp.ResourceVersion = rv
+	return rsp, err
 }
 
 func (s *server) initWatcher() error {

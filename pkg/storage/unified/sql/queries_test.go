@@ -159,7 +159,6 @@ func TestQueries(t *testing.T) {
 							},
 						},
 					},
-					Response: new(resource.ResourceWrapper),
 				},
 				Expected: expected{
 					"resource_list_mysql_sqlite.sql": dialects{
