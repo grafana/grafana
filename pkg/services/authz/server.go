@@ -44,6 +44,11 @@ func newLegacyServer(
 	return s, nil
 }
 
+func (s *legacyServer) AuthFuncOverride(ctx context.Context, fullMethodName string) (context.Context, error) {
+	// TODO: No Auth only on dev mode
+	return ctx, nil
+}
+
 func (s *legacyServer) Read(ctx context.Context, req *authzv1.ReadRequest) (*authzv1.ReadResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "authz.grpc.Read")
 	defer span.End()
