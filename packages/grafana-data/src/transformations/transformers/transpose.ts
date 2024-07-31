@@ -93,7 +93,7 @@ function determineFieldType(fieldTypes: FieldType[]): FieldType {
   return uniqueFieldTypes.size === 1 ? [...uniqueFieldTypes][0] : FieldType.string;
 }
 
-function fieldValuesAsStrings(field: Field, values: any[]) {
+function fieldValuesAsStrings(field: Field, values: unknown[]) {
   switch (field.type) {
     case FieldType.time:
     case FieldType.number:
