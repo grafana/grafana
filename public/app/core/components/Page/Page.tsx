@@ -117,10 +117,19 @@ const getStyles = (theme: GrafanaTheme2) => {
             minHeight: 0,
           }
     ),
-    pageContent: css({
-      label: 'page-content',
-      flexGrow: 1,
-    }),
+    pageContent: css(
+      config.featureToggles.bodyScrolling
+        ? {
+            display: 'flex',
+            flexDirection: 'column',
+            label: 'page-content',
+            flexGrow: 1,
+          }
+        : {
+            label: 'page-content',
+            flexGrow: 1,
+          }
+    ),
     primaryBg: css({
       background: theme.colors.background.primary,
     }),

@@ -4,6 +4,7 @@ import { useMedia } from 'react-use';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { CustomScrollbar, useStyles2, useTheme2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -93,18 +94,35 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    pageContainer: css({
-      display: 'grid',
-      gridTemplateAreas: `
+    pageContainer: css(
+      config.featureToggles.bodyScrolling
+        ? {
+            display: 'grid',
+            gridTemplateAreas: `
         "panels"`,
-      gridTemplateColumns: `1fr`,
-      gridTemplateRows: '1fr',
-      height: '100%',
-      [theme.breakpoints.down('sm')]: {
-        display: 'flex',
-        flexDirection: 'column',
-      },
-    }),
+            gridTemplateColumns: `1fr`,
+            gridTemplateRows: '1fr',
+            height: '100%',
+            position: 'absolute',
+            width: '100%',
+            [theme.breakpoints.down('sm')]: {
+              display: 'flex',
+              flexDirection: 'column',
+            },
+          }
+        : {
+            display: 'grid',
+            gridTemplateAreas: `
+        "panels"`,
+            gridTemplateColumns: `1fr`,
+            gridTemplateRows: '1fr',
+            height: '100%',
+            [theme.breakpoints.down('sm')]: {
+              display: 'flex',
+              flexDirection: 'column',
+            },
+          }
+    ),
     pageContainerWithControls: css({
       gridTemplateAreas: `
         "controls"
@@ -123,9 +141,16 @@ function getStyles(theme: GrafanaTheme2) {
         "scopes controls"
         "scopes panels"`,
     }),
-    panelsContainer: css({
-      gridArea: 'panels',
-    }),
+    panelsContainer: css(
+      config.featureToggles.bodyScrolling
+        ? {
+            gridArea: 'panels',
+            minHeight: 'unset !important',
+          }
+        : {
+            gridArea: 'panels',
+          }
+    ),
     controlsWrapper: css({
       display: 'flex',
       flexDirection: 'column',

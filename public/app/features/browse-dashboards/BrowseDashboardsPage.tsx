@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -170,17 +170,32 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
 });
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  pageContents: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1),
-    height: '100%',
-  }),
+  pageContents: css(
+    config.featureToggles.bodyScrolling
+      ? {
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1,
+          gap: theme.spacing(1),
+        }
+      : {
+          display: 'flex',
+          flexDirection: 'column',
+          gap: theme.spacing(1),
+          height: '100%',
+        }
+  ),
 
   // AutoSizer needs an element to measure the full height available
-  subView: css({
-    height: '100%',
-  }),
+  subView: css(
+    config.featureToggles.bodyScrolling
+      ? {
+          flex: 1,
+        }
+      : {
+          height: '100%',
+        }
+  ),
 
   filters: css({
     display: 'none',
