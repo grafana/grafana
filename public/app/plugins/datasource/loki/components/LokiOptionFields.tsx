@@ -30,11 +30,11 @@ export const queryTypeOptions: Array<SelectableValue<LokiQueryType>> = [
 ];
 
 export const queryDirections: Array<SelectableValue<LokiQueryDirection>> = [
-  { value: LokiQueryDirection.Backward, label: 'Backward', description: 'Search in backwards direction.' },
+  { value: LokiQueryDirection.Backward, label: 'Backward', description: 'Search in backward direction.' },
   {
     value: LokiQueryDirection.Forward,
     label: 'Forward',
-    description: 'Search in forwards direction.',
+    description: 'Search in forward direction.',
   },
 ];
 
