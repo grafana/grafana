@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"time"
 
 	snapshot "github.com/grafana/grafana-cloud-migration-snapshot/src"
@@ -31,7 +32,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	}
 
 	// Dashboards and folders are linked via the schema, so we need to get both
-	dashboards, folders, err := s.getDashboardAndFolderCommands(ctx, signedInUser)
+	dashs, folders, err := s.getDashboardAndFolderCommands(ctx, signedInUser)
 	if err != nil {
 		s.log.Error("Failed to get dashboards and folders", "err", err)
 		return nil, err
@@ -39,7 +40,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 
 	migrationDataSlice := make(
 		[]cloudmigration.MigrateDataRequestItem, 0,
-		len(dataSources)+len(dashboards)+len(folders),
+		len(dataSources)+len(dashs)+len(folders),
 	)
 
 	for _, ds := range dataSources {
@@ -51,16 +52,23 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		})
 	}
 
-	for _, dashboard := range dashboards {
+	for _, dashboard := range dashs {
 		dashboard.Data.Del("id")
 		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 			Type:  cloudmigration.DashboardDataType,
 			RefID: dashboard.UID,
 			Name:  dashboard.Title,
-			Data:  map[string]any{"dashboard": dashboard.Data},
+			Data: dashboards.SaveDashboardCommand{
+				Dashboard: dashboard.Data,
+				Overwrite: true, // currently only intended to be a push, not a sync; revisit during the preview
+				Message:   fmt.Sprintf("Created via the Grafana Cloud Migration Assistant by on-prem user \"%s\"", signedInUser.Login),
+				IsFolder:  false,
+				FolderUID: dashboard.FolderUID,
+			},
 		})
 	}
 
+	folders = sortFolders(folders)
 	for _, f := range folders {
 		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 			Type:  cloudmigration.FolderDataType,
@@ -114,6 +122,7 @@ func (s *Service) getDataSourceCommands(ctx context.Context) ([]datasources.AddD
 	return result, err
 }
 
+// getDashboardAndFolderCommands returns the json payloads required by the dashboard and folder creation APIs
 func (s *Service) getDashboardAndFolderCommands(ctx context.Context, signedInUser *user.SignedInUser) ([]dashboards.Dashboard, []folder.CreateFolderCommand, error) {
 	dashs, err := s.dashboardService.GetAllDashboards(ctx)
 	if err != nil {
@@ -171,14 +180,6 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 		s.log.Debug(fmt.Sprintf("buildSnapshot: method completed in %d ms", time.Since(start).Milliseconds()))
 	}()
 
-	// Update status to snapshot creating with retries
-	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
-		UID:    snapshotMeta.UID,
-		Status: cloudmigration.SnapshotStatusCreating,
-	}); err != nil {
-		return err
-	}
-
 	publicKey, privateKey, err := box.GenerateKey(cryptoRand.Reader)
 	if err != nil {
 		return fmt.Errorf("nacl: generating public and private key: %w", err)
@@ -186,7 +187,7 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 
 	s.log.Debug(fmt.Sprintf("buildSnapshot: generated keys in %d ms", time.Since(start).Milliseconds()))
 
-	// Use GMS public key + the grafana generated private private key to encrypt snapshot files.
+	// Use GMS public key + the grafana generated private key to encrypt snapshot files.
 	snapshotWriter, err := snapshot.NewSnapshotWriter(contracts.AssymetricKeys{
 		Public:  snapshotMeta.EncryptionKey,
 		Private: privateKey[:],
@@ -253,6 +254,7 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 	// update snapshot status to pending upload with retries
 	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
 		UID:       snapshotMeta.UID,
+		SessionID: snapshotMeta.SessionUID,
 		Status:    cloudmigration.SnapshotStatusPendingUpload,
 		Resources: localSnapshotResource,
 	}); err != nil {
@@ -272,14 +274,6 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 	defer func() {
 		s.log.Debug(fmt.Sprintf("uploadSnapshot: method completed in %d ms", time.Since(start).Milliseconds()))
 	}()
-
-	// update snapshot status to uploading with retries
-	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
-		UID:    snapshotMeta.UID,
-		Status: cloudmigration.SnapshotStatusUploading,
-	}); err != nil {
-		return err
-	}
 
 	indexFilePath := filepath.Join(snapshotMeta.LocalDir, "index.json")
 	// LocalDir can be set in the configuration, therefore the file path can be set to any path.
@@ -330,8 +324,9 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 
 	// update snapshot status to processing with retries
 	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
-		UID:    snapshotMeta.UID,
-		Status: cloudmigration.SnapshotStatusProcessing,
+		UID:       snapshotMeta.UID,
+		SessionID: snapshotMeta.SessionUID,
+		Status:    cloudmigration.SnapshotStatusProcessing,
 	}); err != nil {
 		return err
 	}
@@ -368,4 +363,44 @@ func (s *Service) updateSnapshotWithRetries(ctx context.Context, cmd cloudmigrat
 		return fmt.Errorf("failed to update snapshot status: %w", err)
 	}
 	return nil
+}
+
+// sortFolders implements a sort such that parent folders always come before their children
+// Implementation inspired by ChatGPT, OpenAI's language model.
+func sortFolders(input []folder.CreateFolderCommand) []folder.CreateFolderCommand {
+	// Map from UID to the corresponding folder for quick lookup
+	folderMap := make(map[string]folder.CreateFolderCommand)
+	for _, folder := range input {
+		folderMap[folder.UID] = folder
+	}
+	// Dynamic map of folderUID to depth
+	depthMap := make(map[string]int)
+
+	// Function to get the depth of a folder based on its parent hierarchy
+	var getDepth func(uid string) int
+	getDepth = func(uid string) int {
+		if uid == "" {
+			return 0
+		}
+		if d, ok := depthMap[uid]; ok {
+			return d
+		}
+		folder, exists := folderMap[uid]
+		if !exists || folder.ParentUID == "" {
+			return 1
+		}
+		return 1 + getDepth(folder.ParentUID)
+	}
+
+	// Calculate the depth of each folder
+	for _, folder := range input {
+		depthMap[folder.UID] = getDepth(folder.UID)
+	}
+
+	// Sort folders by their depth, ensuring a stable sort
+	sort.SliceStable(input, func(i, j int) bool {
+		return depthMap[input[i].UID] < depthMap[input[j].UID]
+	})
+
+	return input
 }

@@ -73,6 +73,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       weekStart: '',
       language: '',
       queryHistory: { homeTab: '' },
+      navbar: { bookmarkIds: [] },
     };
 
     this.themeOptions = getBuiltInThemes(config.featureToggles.extraThemes).map((theme) => ({
@@ -94,6 +95,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       weekStart: prefs.weekStart,
       language: prefs.language,
       queryHistory: prefs.queryHistory,
+      navbar: prefs.navbar,
     });
   }
 
@@ -102,8 +104,8 @@ export class SharedPreferences extends PureComponent<Props, State> {
     const confirmationResult = this.props.onConfirm ? await this.props.onConfirm() : true;
 
     if (confirmationResult) {
-      const { homeDashboardUID, theme, timezone, weekStart, language, queryHistory } = this.state;
-      await this.service.update({ homeDashboardUID, theme, timezone, weekStart, language, queryHistory });
+      const { homeDashboardUID, theme, timezone, weekStart, language, queryHistory, navbar } = this.state;
+      await this.service.update({ homeDashboardUID, theme, timezone, weekStart, language, queryHistory, navbar });
       window.location.reload();
     }
   };

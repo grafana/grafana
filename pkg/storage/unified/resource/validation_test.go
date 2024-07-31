@@ -13,6 +13,7 @@ func TestNameValidation(t *testing.T) {
 	))
 
 	// OK
+	require.NoError(t, validateName("a"))
 	require.NoError(t, validateName("hello-world"))
 	require.NoError(t, validateName("hello.world"))
 	require.NoError(t, validateName("hello_world"))

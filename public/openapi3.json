@@ -3241,6 +3241,10 @@
           "credentials_file": {
             "type": "string"
           },
+          "credentials_ref": {
+            "description": "CredentialsRef is the name of the secret within the secret manager to use as credentials.",
+            "type": "string"
+          },
           "type": {
             "type": "string"
           }
@@ -3310,10 +3314,18 @@
           "password_file": {
             "type": "string"
           },
+          "password_ref": {
+            "description": "PasswordRef is the name of the secret within the secret manager to use as the password.",
+            "type": "string"
+          },
           "username": {
             "type": "string"
           },
           "username_file": {
+            "type": "string"
+          },
+          "username_ref": {
+            "description": "UsernameRef is the name of the secret within the secret manager to use as the username.",
             "type": "string"
           }
         },
@@ -6244,6 +6256,9 @@
             "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
             "type": "boolean"
           },
+          "http_headers": {
+            "$ref": "#/components/schemas/Headers"
+          },
           "no_proxy": {
             "description": "NoProxy contains addresses that should not use a proxy.",
             "type": "string"
@@ -6252,7 +6267,7 @@
             "$ref": "#/components/schemas/OAuth2"
           },
           "proxy_connect_header": {
-            "$ref": "#/components/schemas/Header"
+            "$ref": "#/components/schemas/ProxyHeader"
           },
           "proxy_from_environment": {
             "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
@@ -6269,12 +6284,39 @@
         "type": "object"
       },
       "Header": {
-        "additionalProperties": {
-          "items": {
-            "$ref": "#/components/schemas/Secret"
+        "properties": {
+          "files": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
-          "type": "array"
+          "secrets": {
+            "items": {
+              "$ref": "#/components/schemas/Secret"
+            },
+            "type": "array"
+          },
+          "values": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
         },
+        "title": "Headers represents the configuration for HTTP headers.",
+        "type": "object"
+      },
+      "Headers": {
+        "properties": {
+          "Headers": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Header"
+            },
+            "type": "object"
+          }
+        },
+        "title": "Headers represents the configuration for HTTP headers.",
         "type": "object"
       },
       "Hit": {
@@ -7312,6 +7354,10 @@
           "client_secret_file": {
             "type": "string"
           },
+          "client_secret_ref": {
+            "description": "ClientSecretRef is the name of the secret within the secret manager to use as the client\nsecret.",
+            "type": "string"
+          },
           "endpoint_params": {
             "additionalProperties": {
               "type": "string"
@@ -7323,7 +7369,7 @@
             "type": "string"
           },
           "proxy_connect_header": {
-            "$ref": "#/components/schemas/Header"
+            "$ref": "#/components/schemas/ProxyHeader"
           },
           "proxy_from_environment": {
             "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
@@ -8519,7 +8565,7 @@
             "type": "string"
           },
           "proxy_connect_header": {
-            "$ref": "#/components/schemas/Header"
+            "$ref": "#/components/schemas/ProxyHeader"
           },
           "proxy_from_environment": {
             "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
@@ -8528,6 +8574,15 @@
           "proxy_url": {
             "$ref": "#/components/schemas/URL"
           }
+        },
+        "type": "object"
+      },
+      "ProxyHeader": {
+        "additionalProperties": {
+          "items": {
+            "$ref": "#/components/schemas/Secret"
+          },
+          "type": "array"
         },
         "type": "object"
       },
@@ -10592,12 +10647,20 @@
             "description": "The CA cert to use for the targets.",
             "type": "string"
           },
+          "ca_ref": {
+            "description": "CARef is the name of the secret within the secret manager to use as the CA cert for the\ntargets.",
+            "type": "string"
+          },
           "cert": {
             "description": "Text of the client cert file for the targets.",
             "type": "string"
           },
           "cert_file": {
             "description": "The client cert file for the targets.",
+            "type": "string"
+          },
+          "cert_ref": {
+            "description": "CertRef is the name of the secret within the secret manager to use as the client cert for\nthe targets.",
             "type": "string"
           },
           "insecure_skip_verify": {
@@ -10609,6 +10672,10 @@
           },
           "key_file": {
             "description": "The client key file for the targets.",
+            "type": "string"
+          },
+          "key_ref": {
+            "description": "KeyRef is the name of the secret within the secret manager to use as the client key for\nthe targets.",
             "type": "string"
           },
           "max_version": {
@@ -12336,6 +12403,7 @@
         "type": "object"
       },
       "gettableAlerts": {
+        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -12459,6 +12527,7 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
@@ -12479,37 +12548,6 @@
             "type": "string"
           }
         },
-        "type": "object"
-      },
-      "integration": {
-        "description": "Integration integration",
-        "properties": {
-          "lastNotifyAttempt": {
-            "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
-            "format": "date-time",
-            "type": "string"
-          },
-          "lastNotifyAttemptDuration": {
-            "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
-            "type": "string"
-          },
-          "lastNotifyAttemptError": {
-            "description": "Error string for the last attempt to deliver a notification. Empty if the last attempt was successful.",
-            "type": "string"
-          },
-          "name": {
-            "description": "name",
-            "type": "string"
-          },
-          "sendResolved": {
-            "description": "send resolved",
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "name",
-          "sendResolved"
-        ],
         "type": "object"
       },
       "labelSet": {
@@ -12686,25 +12724,12 @@
       "receiver": {
         "description": "Receiver receiver",
         "properties": {
-          "active": {
-            "description": "active",
-            "type": "boolean"
-          },
-          "integrations": {
-            "description": "integrations",
-            "items": {
-              "$ref": "#/components/schemas/integration"
-            },
-            "type": "array"
-          },
           "name": {
             "description": "name",
             "type": "string"
           }
         },
         "required": [
-          "active",
-          "integrations",
           "name"
         ],
         "type": "object"
