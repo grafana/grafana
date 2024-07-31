@@ -8,10 +8,7 @@ import {
 import { TransposeTransformerOptions } from '@grafana/data/src/transformations/transformers/transpose';
 import { InlineField, InlineFieldRow, Input, RadioButtonGroup } from '@grafana/ui';
 
-export const TransposeTransfomerEditor = ({
-  options,
-  onChange,
-}: TransformerUIProps<TransposeTransformerOptions>) => {
+export const TransposeTransfomerEditor = ({ options, onChange }: TransformerUIProps<TransposeTransformerOptions>) => {
   const addNewFields = [
     { label: 'Yes', value: true },
     { label: 'No', value: false },
