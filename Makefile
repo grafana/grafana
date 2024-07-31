@@ -173,6 +173,7 @@ gen-jsonnet:
 update-workspace:
 	@echo "updating workspace"
 	$(GO) mod download
+	$(GO) work sync
 
 .PHONY: build-go
 build-go: update-workspace gen-go ## Build all Go binaries.
