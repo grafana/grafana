@@ -207,9 +207,6 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 
 // nolint:gocyclo
 func (s *service) start(ctx context.Context) error {
-	ctx, span := s.tracing.Start(ctx, "apiserver.start")
-	defer span.End()
-
 	defer close(s.startedCh)
 
 	// Get the list of groups the server will support
