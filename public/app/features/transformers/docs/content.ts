@@ -505,9 +505,7 @@ Use this transformation to customize the output of a string field. This transfor
 - **Trim** - Removes all leading and trailing spaces from the string.
 - **Substring** - Returns a substring of the string, using the specified start and end positions.
 
-This transformation provides a convenient way to standardize and tailor the presentation of string data for better visualization and analysis.
-
-> **Note:** This transformation is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the \`formatString\` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.`;
+This transformation provides a convenient way to standardize and tailor the presentation of string data for better visualization and analysis.`;
     },
   },
   formatTime: {
