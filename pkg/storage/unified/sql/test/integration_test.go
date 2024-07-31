@@ -60,7 +60,7 @@ func newServer(t *testing.T) (sql.Backend, resource.ResourceServer) {
 }
 
 func TestIntegrationBackendHappyPath(t *testing.T) {
-	t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
+	// t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -168,7 +168,7 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 }
 
 func TestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T) {
-	t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
+	// t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -191,7 +191,7 @@ func TestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T) {
 }
 
 func TestIntegrationBackendList(t *testing.T) {
-	t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
+	// t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -220,12 +220,12 @@ func TestIntegrationBackendList(t *testing.T) {
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 5)
-		// should be sorted by resource version DESC
-		require.Equal(t, "item6 ADDED", string(res.Items[0].Value))
+		// should be sorted by key ASC
+		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
 		require.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
-		require.Equal(t, "item5 ADDED", string(res.Items[2].Value))
-		require.Equal(t, "item4 ADDED", string(res.Items[3].Value))
-		require.Equal(t, "item1 ADDED", string(res.Items[4].Value))
+		require.Equal(t, "item4 ADDED", string(res.Items[2].Value))
+		require.Equal(t, "item5 ADDED", string(res.Items[3].Value))
+		require.Equal(t, "item6 ADDED", string(res.Items[4].Value))
 
 		require.Empty(t, res.NextPageToken)
 	})
@@ -245,9 +245,9 @@ func TestIntegrationBackendList(t *testing.T) {
 		require.Len(t, res.Items, 3)
 		continueToken, err := sql.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
-		require.Equal(t, "item6 ADDED", string(res.Items[0].Value))
+		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
 		require.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
-		require.Equal(t, "item5 ADDED", string(res.Items[2].Value))
+		require.Equal(t, "item4 ADDED", string(res.Items[2].Value))
 		require.Equal(t, int64(8), continueToken.ResourceVersion)
 	})
 
@@ -264,10 +264,10 @@ func TestIntegrationBackendList(t *testing.T) {
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 4)
-		require.Equal(t, "item4 ADDED", string(res.Items[0].Value))
-		require.Equal(t, "item3 ADDED", string(res.Items[1].Value))
-		require.Equal(t, "item2 ADDED", string(res.Items[2].Value))
-		require.Equal(t, "item1 ADDED", string(res.Items[3].Value))
+		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
+		require.Equal(t, "item2 ADDED", string(res.Items[1].Value))
+		require.Equal(t, "item3 ADDED", string(res.Items[2].Value))
+		require.Equal(t, "item4 ADDED", string(res.Items[3].Value))
 		require.Empty(t, res.NextPageToken)
 	})
 
@@ -287,8 +287,8 @@ func TestIntegrationBackendList(t *testing.T) {
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 3)
 		t.Log(res.Items)
-		require.Equal(t, "item2 MODIFIED", string(res.Items[0].Value))
-		require.Equal(t, "item5 ADDED", string(res.Items[1].Value))
+		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
+		require.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
 		require.Equal(t, "item4 ADDED", string(res.Items[2].Value))
 
 		continueToken, err := sql.GetContinueToken(res.NextPageToken)
@@ -315,8 +315,8 @@ func TestIntegrationBackendList(t *testing.T) {
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 2)
 		t.Log(res.Items)
-		require.Equal(t, "item5 ADDED", string(res.Items[0].Value))
-		require.Equal(t, "item4 ADDED", string(res.Items[1].Value))
+		require.Equal(t, "item4 ADDED", string(res.Items[0].Value))
+		require.Equal(t, "item5 ADDED", string(res.Items[1].Value))
 
 		continueToken, err = sql.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
@@ -325,7 +325,7 @@ func TestIntegrationBackendList(t *testing.T) {
 	})
 }
 func TestClientServer(t *testing.T) {
-	t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
+	// t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 	dbstore := infraDB.InitTestDB(t)
 
