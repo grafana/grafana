@@ -59,9 +59,14 @@ describe('PanelRepeaterGridItem', () => {
       throwError: 'Error',
     });
 
+    // we expect console.error when variable encounters an error
+    const origError = console.error;
+    console.error = jest.fn();
+
     activateFullSceneTree(scene);
 
     expect(repeater.state.repeatedPanels?.length).toBe(1);
+    console.error = origError;
   });
 
   it('Should display a panel when there are variable errors async query', async () => {
@@ -71,11 +76,16 @@ describe('PanelRepeaterGridItem', () => {
       throwError: 'Error',
     });
 
+    // we expect console.error when variable encounters an error
+    const origError = console.error;
+    console.error = jest.fn();
+
     activateFullSceneTree(scene);
 
     await new Promise((r) => setTimeout(r, 10));
 
     expect(repeater.state.repeatedPanels?.length).toBe(1);
+    console.error = origError;
   });
 
   it('Should adjust container height to fit panels direction is horizontal', async () => {
