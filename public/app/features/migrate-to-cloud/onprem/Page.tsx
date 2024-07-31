@@ -1,7 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { Alert, Box, Stack, Text } from '@grafana/ui';
+import { Box, Stack, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import {
@@ -82,10 +82,12 @@ function useGetLatestSnapshot(sessionUid?: string, page = 1) {
     skipPollingIfUnfocused: true,
   });
 
+  const isError = listResult.isError || snapshotResult.isError;
+
   useEffect(() => {
-    const shouldPoll = SHOULD_POLL_STATUSES.includes(snapshotResult.data?.status);
+    const shouldPoll = !isError && SHOULD_POLL_STATUSES.includes(snapshotResult.data?.status);
     setShouldPoll(shouldPoll);
-  }, [snapshotResult?.data?.status]);
+  }, [snapshotResult?.data?.status, isError]);
 
   return {
     ...snapshotResult,
@@ -94,7 +96,7 @@ function useGetLatestSnapshot(sessionUid?: string, page = 1) {
 
     // isSuccess and isUninitialised should always be from snapshotResult
     // as only the 'final' values from those are important
-    isError: listResult.isError || snapshotResult.isError,
+    isError,
     isLoading: listResult.isLoading || snapshotResult.isLoading,
     isFetching: listResult.isFetching || snapshotResult.isFetching,
   };
@@ -125,9 +127,10 @@ export const Page = () => {
     snapshot.isLoading ||
     disconnectResult.isLoading;
 
-  const showBuildSnapshot = !snapshot.isLoading && !snapshot.data;
+  const showBuildSnapshot = !snapshot.isError && !snapshot.isLoading && !snapshot.data;
   const showBuildingSnapshot = SNAPSHOT_BUILDING_STATUSES.includes(status);
-  const showUploadSnapshot = status === 'PENDING_UPLOAD' || SNAPSHOT_UPLOADING_STATUSES.includes(status);
+  const showUploadSnapshot =
+    !snapshot.isError && (status === 'PENDING_UPLOAD' || SNAPSHOT_UPLOADING_STATUSES.includes(status));
   const showRebuildSnapshot = SNAPSHOT_REBUILD_STATUSES.includes(status);
 
   const error = getError({
@@ -177,7 +180,7 @@ export const Page = () => {
 
   return (
     <>
-      <Stack direction="column" gap={4}>
+      <Stack direction="column" gap={2}>
         {session.data && (
           <MigrationSummary
             session={session.data}
@@ -333,7 +336,7 @@ function getError(props: GetErrorProps): ErrorDescription | undefined {
   }
 
   const errorCount = snapshot?.stats?.statuses?.['ERROR'] ?? 0;
-  if (errorCount > 0) {
+  if (snapshot?.status === 'FINISHED' && errorCount > 0) {
     return {
       title: t('migrate-to-cloud.onprem.some-resources-errored-title', 'Resource migration complete'),
       body: t(
