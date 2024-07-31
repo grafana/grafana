@@ -23,6 +23,13 @@ export type ExtendedBackendSrvRequest = BackendSrvRequest & {
    * will not be shown
    */
   errorMessage?: string;
+  /**
+   * Data to send with a request. Maps to the `data` property on a `BackendSrvRequest`
+   *
+   * This is done to allow us to more easily consume code-gen APIs that expect/send a `body` property
+   * to endpoints.
+   */
+  body?: BackendSrvRequest['data'];
 };
 
 // utility type for passing request options to endpoints
@@ -43,10 +50,11 @@ export function withRequestOptions(
 
 export const backendSrvBaseQuery =
   (): BaseQueryFn<ExtendedBackendSrvRequest> =>
-  async ({ successMessage, errorMessage, ...requestOptions }) => {
+  async ({ successMessage, errorMessage, body, ...requestOptions }) => {
     try {
       const modifiedRequestOptions: BackendSrvRequest = {
         ...requestOptions,
+        ...(body && { data: body }),
         ...(successMessage && { showSuccessAlert: false }),
         ...(errorMessage && { showErrorAlert: false }),
       };

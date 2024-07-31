@@ -99,6 +99,14 @@
         "title": "Ůŉäþľę ŧő đįşpľäy äľľ ęvęŉŧş"
       }
     },
+    "common": {
+      "cancel": "Cäŉčęľ",
+      "delete": "Đęľęŧę",
+      "edit": "Ēđįŧ",
+      "export": "Ēχpőřŧ",
+      "export-all": "Ēχpőřŧ äľľ",
+      "view": "Vįęŵ"
+    },
     "contact-points": {
       "delivery-duration": "Ŀäşŧ đęľįvęřy ŧőőĸ <1></1>",
       "last-delivery-attempt": "Ŀäşŧ đęľįvęřy äŧŧęmpŧ",
@@ -118,6 +126,16 @@
       "new-recording-rule": "Ńęŵ řęčőřđįŉģ řūľę",
       "title": "Ğřäƒäŉä"
     },
+    "mute_timings": {
+      "error-loading": {
+        "description": "Cőūľđ ŉőŧ ľőäđ mūŧę ŧįmįŉģş. Pľęäşę ŧřy äģäįŉ ľäŧęř.",
+        "title": "Ēřřőř ľőäđįŉģ mūŧę ŧįmįŉģş"
+      }
+    },
+    "mute-timings": {
+      "save": "Ŝävę mūŧę ŧįmįŉģ",
+      "saving": "Ŝävįŉģ mūŧę ŧįmįŉģ"
+    },
     "policies": {
       "metadata": {
         "timingOptions": {
@@ -135,6 +153,10 @@
           }
         }
       }
+    },
+    "provisioning": {
+      "badge-tooltip-provenance": "Ŧĥįş řęşőūřčę ĥäş þęęŉ přővįşįőŉęđ vįä {{provenance}} äŉđ čäŉŉőŧ þę ęđįŧęđ ŧĥřőūģĥ ŧĥę ŮĨ",
+      "badge-tooltip-standard": "Ŧĥįş řęşőūřčę ĥäş þęęŉ přővįşįőŉęđ äŉđ čäŉŉőŧ þę ęđįŧęđ ŧĥřőūģĥ ŧĥę ŮĨ"
     },
     "rule-groups": {
       "delete": {
