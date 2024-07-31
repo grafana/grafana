@@ -8,10 +8,9 @@ import (
 
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/metadata"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -206,20 +205,6 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 	s.builders = append(s.builders, b)
 }
 
-func unaryMetadataInjectInterceptor(parentCtx context.Context) grpc.UnaryClientInterceptor {
-	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		// Inject the trace context into the metadata map carrier. This should create a traceparent header
-		md := propagation.MapCarrier{}
-		propagation.TraceContext{}.Inject(ctx, md)
-		fmt.Println("metadata", md)
-
-		// Append the keys from the metadata map carrier to the outgoing context
-		ctx = metadata.AppendToOutgoingContext(ctx, "traceparent", md["traceparent"])
-
-		return invoker(ctx, method, req, reply, cc, opts...)
-	}
-}
-
 // nolint:gocyclo
 func (s *service) start(ctx context.Context) error {
 	ctx, span := s.tracing.Start(ctx, "apiserver.start")
@@ -305,8 +290,8 @@ func (s *service) start(ctx context.Context) error {
 		fmt.Println("Propagating traceID from apiserver", traceID)
 
 		opts := []grpc.DialOption{
+			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithUnaryInterceptor(unaryMetadataInjectInterceptor(ctx)),
 		}
 		// Create a connection to the gRPC server
 		conn, err := grpc.NewClient(o.StorageOptions.Address, opts...)
