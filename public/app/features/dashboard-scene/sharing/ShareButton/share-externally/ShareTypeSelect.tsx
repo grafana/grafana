@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { SelectableValue, toIconName } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
@@ -70,29 +69,24 @@ export default function ShareTypeSelect({
         </Label>
         {isLoading && <Spinner />}
       </Stack>
-      <Stack direction="row" gap={1} alignItems="center">
-        {isEmailSharingEnabled() ? (
-          <Select
-            data-testid={selectors.shareTypeSelect}
-            options={options}
-            value={value}
-            disabled={!hasWritePermissions}
-            onChange={(v) => {
-              setShareType(v);
-              onUpdateShareType(v.value!);
-            }}
-            className={styles.select}
-          />
-        ) : (
-          <>
-            {toIconName(anyOneWithTheLinkOpt.icon) && <Icon name={toIconName(anyOneWithTheLinkOpt.icon)!} />}
-            <Text>{anyOneWithTheLinkOpt.label}</Text>
-          </>
-        )}
-        <Text element="p" variant="bodySmall" color="disabled">
-          <Trans i18nKey="public-dashboard.share-configuration.access-label">can access</Trans>
-        </Text>
-      </Stack>
+      {isEmailSharingEnabled() ? (
+        <Select
+          data-testid={selectors.shareTypeSelect}
+          options={options}
+          value={value}
+          disabled={!hasWritePermissions}
+          onChange={(v) => {
+            setShareType(v);
+            onUpdateShareType(v.value!);
+          }}
+          className={styles.select}
+        />
+      ) : (
+        <>
+          {toIconName(anyOneWithTheLinkOpt.icon) && <Icon name={toIconName(anyOneWithTheLinkOpt.icon)!} />}
+          <Text>{anyOneWithTheLinkOpt.label}</Text>
+        </>
+      )}
     </div>
   );
 }

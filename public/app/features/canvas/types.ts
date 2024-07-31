@@ -30,6 +30,7 @@ export interface TextData {
   align: Align;
   valign: VAlign;
   links?: LinkModel[];
+  field?: string;
 }
 
 export interface TextConfig {

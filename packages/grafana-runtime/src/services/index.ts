@@ -33,3 +33,4 @@ export {
 export { setPluginComponentHook, usePluginComponent } from './pluginExtensions/usePluginComponent';
 
 export { isPluginExtensionLink, isPluginExtensionComponent } from './pluginExtensions/utils';
+export { setCurrentUser } from './user';

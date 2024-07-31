@@ -386,6 +386,8 @@ func generateTestAlertInstance(orgID int64, ruleID string) models.AlertInstance 
 		CurrentStateEnd:   time.Now(),
 		CurrentStateSince: time.Now(),
 		LastEvalTime:      time.Now(),
+		LastSentAt:        util.Pointer(time.Now()),
+		ResolvedAt:        util.Pointer(time.Now()),
 		CurrentReason:     "abc",
 	}
 }

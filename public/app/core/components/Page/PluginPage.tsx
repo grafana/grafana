@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import { useContext } from 'react';
 
 import { PluginPageProps } from '@grafana/runtime';
 import { PluginPageContext } from 'app/features/plugins/components/PluginPageContext';

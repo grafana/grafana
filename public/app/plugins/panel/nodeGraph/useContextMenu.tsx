@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { MouseEvent, useCallback, useState } from 'react';
+import { MouseEvent, useCallback, useState } from 'react';
+import * as React from 'react';
 
 import { DataFrame, Field, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { ContextMenu, MenuGroup, MenuItem, useStyles2 } from '@grafana/ui';

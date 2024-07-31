@@ -2,7 +2,8 @@
 import classNames from 'classnames';
 import { cloneDeep, filter, has, uniqBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
-import React, { PureComponent, ReactNode } from 'react';
+import { PureComponent, ReactNode } from 'react';
+import * as React from 'react';
 
 // Utils & Services
 import {
@@ -19,6 +20,7 @@ import {
   PanelEvents,
   QueryResultMetaNotice,
   TimeRange,
+  getDataSourceRef,
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -38,7 +40,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
-import { RowActionComponents } from './QueryActionComponent';
+import { QueryActionComponent, RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { QueryErrorAlert } from './QueryErrorAlert';
 
@@ -363,7 +365,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   onClickExample = (query: TQuery) => {
     if (query.datasource === undefined) {
-      query.datasource = { type: this.props.dataSource.type, uid: this.props.dataSource.uid };
+      query.datasource = getDataSourceRef(this.props.dataSource);
     }
 
     this.props.onChange({
@@ -423,9 +425,17 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderExtraActions = () => {
-    const { query, queries, data, onAddQuery, dataSource } = this.props;
+    const { query, queries, data, onAddQuery, dataSource, app } = this.props;
 
-    const extraActions = RowActionComponents.getAllExtraRenderAction()
+    const unscopedActions = RowActionComponents.getAllExtraRenderAction();
+
+    let scopedActions: QueryActionComponent[] = [];
+
+    if (app !== undefined) {
+      scopedActions = RowActionComponents.getScopedExtraRenderAction(app);
+    }
+
+    const extraActions = [...unscopedActions, ...scopedActions]
       .map((action, index) =>
         action({
           query,

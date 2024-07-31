@@ -1,4 +1,5 @@
-import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import * as React from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow, InlineSelect } from '@grafana/experimental';
@@ -30,7 +31,7 @@ export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatch
 
 const metricEditorModes: Array<SelectableValue<MetricQueryType>> = [
   { label: 'Metric Search', value: MetricQueryType.Search },
-  { label: 'Metric Query', value: MetricQueryType.Query },
+  { label: 'Metric Insights', value: MetricQueryType.Insights },
 ];
 const editorModes = [
   { label: 'Builder', value: MetricEditorMode.Builder },
@@ -47,7 +48,7 @@ export const MetricsQueryEditor = (props: Props) => {
     (newMetricEditorMode: MetricEditorMode) => {
       if (
         codeEditorIsDirty &&
-        query.metricQueryType === MetricQueryType.Query &&
+        query.metricQueryType === MetricQueryType.Insights &&
         query.metricEditorMode === MetricEditorMode.Code
       ) {
         setShowConfirm(true);
@@ -89,7 +90,7 @@ export const MetricsQueryEditor = (props: Props) => {
         <ConfirmModal
           isOpen={showConfirm}
           title="Are you sure?"
-          body="You will lose changes made to the query if you change to Metric Query Builder mode."
+          body="You will lose changes made to the query if you change to Metric Insights Builder mode."
           confirmText="Yes, I am sure."
           dismissText="No, continue editing the query."
           icon="exclamation-triangle"
@@ -99,7 +100,7 @@ export const MetricsQueryEditor = (props: Props) => {
             onChange({
               ...query,
               ...DEFAULT_METRICS_QUERY,
-              metricQueryType: MetricQueryType.Query,
+              metricQueryType: MetricQueryType.Insights,
               metricEditorMode: MetricEditorMode.Builder,
             });
           }}
@@ -151,7 +152,7 @@ export const MetricsQueryEditor = (props: Props) => {
           )}
         </>
       )}
-      {query.metricQueryType === MetricQueryType.Query && (
+      {query.metricQueryType === MetricQueryType.Insights && (
         <>
           {query.metricEditorMode === MetricEditorMode.Code && (
             <SQLCodeEditor

@@ -147,10 +147,12 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 		return &mockMetricClient
 	}
 
-	t.Run("Queries with the same region should call GetSession with that region 1 time and call GetMetricDataWithContext 1 time", func(t *testing.T) {
+	t.Run("Queries with the same region should call GetSessionWithAuthSettings with that region 1 time and call GetMetricDataWithContext 1 time", func(t *testing.T) {
 		mockSessionCache := &mockSessionCache{}
-		mockSessionCache.On("GetSession", mock.MatchedBy(
-			func(config awsds.SessionConfig) bool { return config.Settings.Region == "us-east-1" })). // region from queries is asserted here
+		mockSessionCache.On("GetSessionWithAuthSettings", mock.MatchedBy(
+			func(config awsds.GetSessionConfig) bool {
+				return config.Settings.Region == "us-east-1"
+			})). // region from queries is asserted here
 			Return(&session.Session{Config: &aws.Config{}}, nil).Once()
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return DataSource{Settings: models.CloudWatchSettings{}, sessions: mockSessionCache}, nil
@@ -198,14 +200,18 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 		// GetMetricData is asserted to have been called 1 time for the 1 region present in the queries
 	})
 
-	t.Run("3 queries with 2 regions calls GetSession 2 times and calls GetMetricDataWithContext 2 times", func(t *testing.T) {
+	t.Run("3 queries with 2 regions calls GetSessionWithAuthSettings 2 times and calls GetMetricDataWithContext 2 times", func(t *testing.T) {
 		sessionCache := &mockSessionCache{}
-		sessionCache.On("GetSession", mock.MatchedBy(
-			func(config awsds.SessionConfig) bool { return config.Settings.Region == "us-east-1" })).
-			Return(&session.Session{Config: &aws.Config{}}, nil, nil).Once()
-		sessionCache.On("GetSession", mock.MatchedBy(
-			func(config awsds.SessionConfig) bool { return config.Settings.Region == "us-east-2" })).
-			Return(&session.Session{Config: &aws.Config{}}, nil, nil).Once()
+		sessionCache.On("GetSessionWithAuthSettings", mock.MatchedBy(
+			func(config awsds.GetSessionConfig) bool {
+				return config.Settings.Region == "us-east-1"
+			})).
+			Return(&session.Session{Config: &aws.Config{}}, nil).Once()
+		sessionCache.On("GetSessionWithAuthSettings", mock.MatchedBy(
+			func(config awsds.GetSessionConfig) bool {
+				return config.Settings.Region == "us-east-2"
+			})).
+			Return(&session.Session{Config: &aws.Config{}}, nil).Once()
 
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return DataSource{Settings: models.CloudWatchSettings{}, sessions: sessionCache}, nil

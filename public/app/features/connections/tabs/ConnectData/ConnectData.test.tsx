@@ -1,6 +1,5 @@
 import { render, RenderResult, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginType } from '@grafana/data';
@@ -12,6 +11,11 @@ import { AccessControlAction } from 'app/types';
 import { AddNewConnection } from './ConnectData';
 
 jest.mock('app/features/datasources/api');
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  useChromeHeaderHeight: jest.fn(),
+}));
 
 const renderPage = (plugins: CatalogPlugin[] = []): RenderResult => {
   return render(

@@ -1,5 +1,4 @@
 import { last, times } from 'lodash';
-import React from 'react';
 
 import { config } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';

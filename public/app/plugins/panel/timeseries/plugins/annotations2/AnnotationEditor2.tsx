@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import { Controller } from 'react-hook-form';
 import { useAsyncFn, useClickAway } from 'react-use';
 

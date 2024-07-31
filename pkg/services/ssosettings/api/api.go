@@ -101,7 +101,7 @@ func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Request
 		return nil, err
 	}
 
-	var authorizedProviders []*models.SSOSettings
+	authorizedProviders := make([]*models.SSOSettings, 0, len(allProviders))
 	for _, provider := range allProviders {
 		ev := ac.EvalPermission(ac.ActionSettingsRead, ac.Scope("settings", "auth."+provider.Provider, "*"))
 		hasAccess, err := api.AccessControl.Evaluate(ctx, identity, ev)

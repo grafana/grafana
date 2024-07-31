@@ -161,6 +161,12 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     this.setStateAndDoSearch({ starred: false });
   };
 
+  onSetStarred = (starred: boolean) => {
+    if (starred !== this.state.starred) {
+      this.setStateAndDoSearch({ starred });
+    }
+  };
+
   onSortChange = (sort: string | undefined) => {
     if (sort) {
       localStorage.setItem(SEARCH_SELECTED_SORT, sort);
@@ -191,14 +197,14 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   };
 
   hasSearchFilters() {
-    return (
+    return Boolean(
       this.state.query ||
-      this.state.tag.length ||
-      this.state.starred ||
-      this.state.panel_type ||
-      this.state.sort ||
-      this.state.deleted ||
-      this.state.layout === SearchLayout.List
+        this.state.tag.length ||
+        this.state.starred ||
+        this.state.panel_type ||
+        this.state.sort ||
+        this.state.deleted ||
+        this.state.layout === SearchLayout.List
     );
   }
 

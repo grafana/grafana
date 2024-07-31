@@ -19,14 +19,15 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
     asCellText?: boolean,
     textShouldWrap?: boolean,
     textWrapped?: boolean,
-    rowStyled?: boolean
+    rowStyled?: boolean,
+    rowExpanded?: boolean
   ) => {
     return css({
       label: overflowOnHover ? 'cellContainerOverflow' : 'cellContainerNoOverflow',
       padding: `${cellPadding}px`,
       width: '100%',
       // Cell height need to account for row border
-      height: `${rowHeight - 1}px`,
+      height: rowExpanded ? 'auto !important' : `${rowHeight - 1}px`,
       wordBreak: textWrapped ? 'break-all' : 'inherit',
 
       display: 'flex',
@@ -43,8 +44,8 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       alignItems: 'center',
       borderRight: `1px solid ${borderColor}`,
 
-      color: rowStyled ? 'inherit' : color ?? undefined,
-      background: rowStyled ? undefined : background ?? undefined,
+      color: rowStyled ? 'inherit' : (color ?? undefined),
+      background: rowStyled ? undefined : (background ?? undefined),
       backgroundClip: 'padding-box',
 
       '&:last-child:not(:only-child)': {
@@ -59,7 +60,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         wordBreak: textShouldWrap ? 'break-word' : undefined,
         whiteSpace: textShouldWrap && overflowOnHover ? 'normal' : 'nowrap',
         boxShadow: overflowOnHover ? `0 0 2px ${theme.colors.primary.main}` : undefined,
-        background: rowStyled ? 'inherit' : backgroundHover ?? theme.colors.background.primary,
+        background: rowStyled ? 'inherit' : (backgroundHover ?? theme.colors.background.primary),
         zIndex: 1,
         '.cellActions': {
           color: '#FFF',

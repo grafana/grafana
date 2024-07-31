@@ -1671,8 +1671,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false,
-    "apiVersion": "v0alpha1"
+    "angularDetected": false
   },
   {
     "name": "Text",

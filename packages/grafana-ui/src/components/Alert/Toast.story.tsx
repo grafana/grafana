@@ -1,6 +1,5 @@
 import { action } from '@storybook/addon-actions';
 import { StoryFn, Meta } from '@storybook/react';
-import React from 'react';
 
 import { Alert, AlertVariant, Stack } from '@grafana/ui';
 
@@ -31,11 +30,9 @@ const meta: Meta<typeof Alert> = {
 
 export const Basic: StoryFn<typeof Alert> = (args) => {
   return (
-    <div className="page-alert-list">
-      <Alert {...args} elevated>
-        Child content that includes some alert details, like maybe what actually happened.
-      </Alert>
-    </div>
+    <Alert {...args} elevated>
+      Child content that includes some alert details, like maybe what actually happened.
+    </Alert>
   );
 };
 

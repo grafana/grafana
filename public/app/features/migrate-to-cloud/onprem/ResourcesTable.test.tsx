@@ -1,5 +1,4 @@
 import { render as rtlRender, screen } from '@testing-library/react';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { setBackendSrv, config } from '@grafana/runtime';
@@ -9,12 +8,16 @@ import { wellFormedDashboardMigrationItem, wellFormedDatasourceMigrationItem } f
 import { registerMockAPI } from '../fixtures/mswAPI';
 import { wellFormedDatasource } from '../fixtures/others';
 
-import { ResourcesTable } from './ResourcesTable';
+import { ResourcesTable, ResourcesTableProps } from './ResourcesTable';
 
 setBackendSrv(backendSrv);
 
-function render(...[ui, options]: Parameters<typeof rtlRender>) {
-  rtlRender(<TestProvider>{ui}</TestProvider>, options);
+function render(props: Partial<ResourcesTableProps>) {
+  rtlRender(
+    <TestProvider>
+      <ResourcesTable onChangePage={() => {}} numberOfPages={10} page={0} resources={props.resources || []} />
+    </TestProvider>
+  );
 }
 
 describe('ResourcesTable', () => {
@@ -47,7 +50,7 @@ describe('ResourcesTable', () => {
       }),
     ];
 
-    render(<ResourcesTable resources={resources} />);
+    render({ resources });
 
     expect(screen.getByText('Datasource A')).toBeInTheDocument();
   });
@@ -56,7 +59,7 @@ describe('ResourcesTable', () => {
     const item = wellFormedDatasourceMigrationItem(2);
     const resources = [item];
 
-    render(<ResourcesTable resources={resources} />);
+    render({ resources });
 
     expect(screen.getByText(`Data source ${item.refId}`)).toBeInTheDocument();
     expect(screen.getByText(`Unknown data source`)).toBeInTheDocument();
@@ -65,7 +68,7 @@ describe('ResourcesTable', () => {
   it('renders dashboards', async () => {
     const resources = [wellFormedDashboardMigrationItem(1)];
 
-    render(<ResourcesTable resources={resources} />);
+    render({ resources });
 
     expect(await screen.findByText('My Dashboard')).toBeInTheDocument();
   });
@@ -77,7 +80,7 @@ describe('ResourcesTable', () => {
       }),
     ];
 
-    render(<ResourcesTable resources={resources} />);
+    render({ resources });
 
     expect(await screen.findByText('Unable to load dashboard')).toBeInTheDocument();
     expect(await screen.findByText('Dashboard dashboard-404')).toBeInTheDocument();
@@ -91,7 +94,7 @@ describe('ResourcesTable', () => {
       }),
     ];
 
-    render(<ResourcesTable resources={resources} />);
+    render({ resources });
 
     expect(screen.getByText('Uploaded to cloud')).toBeInTheDocument();
   });
@@ -104,7 +107,7 @@ describe('ResourcesTable', () => {
       }),
     ];
 
-    render(<ResourcesTable resources={resources} />);
+    render({ resources });
 
     expect(screen.getByText('Error')).toBeInTheDocument();
   });
@@ -118,7 +121,7 @@ describe('ResourcesTable', () => {
       }),
     ];
 
-    render(<ResourcesTable resources={resources} />);
+    render({ resources });
 
     expect(
       screen.getByRole('button', {

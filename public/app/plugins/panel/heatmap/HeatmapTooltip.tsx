@@ -1,4 +1,5 @@
-import React, { ReactElement, useEffect, useRef, useState, ReactNode } from 'react';
+import { ReactElement, useEffect, useRef, useState, ReactNode } from 'react';
+import * as React from 'react';
 import uPlot from 'uplot';
 
 import {

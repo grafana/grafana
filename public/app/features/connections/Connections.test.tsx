@@ -1,5 +1,4 @@
 import { render, RenderResult, screen } from '@testing-library/react';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { locationService } from '@grafana/runtime';
@@ -16,6 +15,10 @@ import { ROUTE_BASE_ID, ROUTES } from './constants';
 
 jest.mock('app/core/services/context_srv');
 jest.mock('app/features/datasources/api');
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  useChromeHeaderHeight: jest.fn(),
+}));
 
 const renderPage = (
   path = `/${ROUTE_BASE_ID}`,

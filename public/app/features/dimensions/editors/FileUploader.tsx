@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { Dispatch, SetStateAction, useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { FileDropzone, useStyles2, Button, DropzoneFile, Field } from '@grafana/ui';

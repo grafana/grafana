@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Alert, LinkButton } from '@grafana/ui';
 
 import { AlertmanagerAction } from '../../../hooks/useAbilities';

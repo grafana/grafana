@@ -8,7 +8,7 @@ import (
 
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 
-	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
@@ -56,11 +56,11 @@ func (s *cachingLegacyDataSourceLookup) GetDataSourceFromDeprecatedFields(ctx co
 	if id == 0 && name == "" {
 		return nil, fmt.Errorf("either name or ID must be set")
 	}
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}
-	key := fmt.Sprintf("%d/%s/%d", user.OrgID, name, id)
+	key := fmt.Sprintf("%d/%s/%d", user.GetOrgID(), name, id)
 	s.cacheMu.Lock()
 	defer s.cacheMu.Unlock()
 
@@ -70,13 +70,13 @@ func (s *cachingLegacyDataSourceLookup) GetDataSourceFromDeprecatedFields(ctx co
 	}
 
 	ds, err := s.retriever.GetDataSource(ctx, &datasources.GetDataSourceQuery{
-		OrgID: user.OrgID,
+		OrgID: user.GetOrgID(),
 		Name:  name,
 		ID:    id,
 	})
 	if errors.Is(err, datasources.ErrDataSourceNotFound) && name != "" {
 		ds, err = s.retriever.GetDataSource(ctx, &datasources.GetDataSourceQuery{
-			OrgID: user.OrgID,
+			OrgID: user.GetOrgID(),
 			UID:   name, // Sometimes name is actually the UID :(
 		})
 	}

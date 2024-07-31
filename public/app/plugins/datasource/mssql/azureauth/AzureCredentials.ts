@@ -15,5 +15,7 @@ export function isCredentialsComplete(credentials: AzureCredentialsType): boolea
       return true;
     case AzureAuthType.CLIENT_SECRET:
       return !!(credentials.azureCloud && credentials.tenantId && credentials.clientId && credentials.clientSecret);
+    case AzureAuthType.AD_PASSWORD:
+      return !!(credentials.clientId && credentials.password && credentials.userId);
   }
 }

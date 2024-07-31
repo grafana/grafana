@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -45,7 +44,7 @@ type IServer interface {
 
 // Server is basic struct of LDAP authorization
 type Server struct {
-	cfg        *setting.Cfg
+	cfg        *Config
 	Config     *ServerConfig
 	Connection IConnection
 	log        log.Logger
@@ -86,7 +85,7 @@ var (
 )
 
 // New creates the new LDAP connection
-func New(config *ServerConfig, cfg *setting.Cfg) IServer {
+func New(config *ServerConfig, cfg *Config) IServer {
 	return &Server{
 		Config: config,
 		cfg:    cfg,
@@ -118,8 +117,8 @@ func (server *Server) Dial() error {
 				InsecureSkipVerify: server.Config.SkipVerifySSL,
 				ServerName:         host,
 				RootCAs:            certPool,
-				MinVersion:         server.Config.minTLSVersion,
-				CipherSuites:       server.Config.tlsCiphers,
+				MinVersion:         server.Config.MinTLSVersionID,
+				CipherSuites:       server.Config.TLSCipherIDs,
 			}
 			if len(clientCert.Certificate) > 0 {
 				tlsCfg.Certificates = append(tlsCfg.Certificates, clientCert)
@@ -414,7 +413,7 @@ func (server *Server) users(logins []string) (
 // If there are no ldap group mappings access is true
 // otherwise a single group must match
 func (server *Server) validateGrafanaUser(user *login.ExternalUserInfo) error {
-	if !server.cfg.LDAPSkipOrgRoleSync && len(server.Config.Groups) > 0 &&
+	if !server.cfg.SkipOrgRoleSync && len(server.Config.Groups) > 0 &&
 		(len(user.OrgRoles) == 0 && (user.IsGrafanaAdmin == nil || !*user.IsGrafanaAdmin)) {
 		server.log.Warn(
 			"User does not belong in any of the specified LDAP groups",
@@ -499,7 +498,7 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*login.ExternalUserInf
 	}
 
 	// Skipping org role sync
-	if server.cfg.LDAPSkipOrgRoleSync {
+	if server.cfg.SkipOrgRoleSync {
 		server.log.Debug("Skipping organization role mapping.")
 		return extUser, nil
 	}

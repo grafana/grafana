@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
 import { t } from 'app/core/internationalization';
@@ -9,6 +7,7 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { gridItemToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { SceneShareTabState } from './types';
 
@@ -26,7 +25,7 @@ export class ShareLibraryPanelTab extends SceneObjectBase<ShareLibraryPanelTabSt
 }
 
 function ShareLibraryPanelTabRenderer({ model }: SceneComponentProps<ShareLibraryPanelTab>) {
-  const { panelRef, dashboardRef, modalRef } = model.useState();
+  const { panelRef, modalRef } = model.useState();
 
   if (!panelRef) {
     return null;
@@ -36,7 +35,7 @@ function ShareLibraryPanelTabRenderer({ model }: SceneComponentProps<ShareLibrar
   const parent = panel.parent;
 
   if (parent instanceof DashboardGridItem) {
-    const dashboardScene = dashboardRef.resolve();
+    const dashboardScene = getDashboardSceneFor(model);
     const panelJson = gridItemToPanel(parent);
     const panelModel = new PanelModel(panelJson);
 

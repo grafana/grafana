@@ -38,14 +38,14 @@ export const openQueryLibrary = async () => {
   await userEvent.click(button);
   await waitFor(async () => {
     screen.getByRole('tab', {
-      name: /tab query library/i,
+      name: /query library/i,
     });
   });
 };
 
 export const switchToQueryHistory = async () => {
   const tab = screen.getByRole('tab', {
-    name: /tab query history/i,
+    name: /query history/i,
   });
   await userEvent.click(tab);
 };
@@ -59,7 +59,7 @@ export const submitAddToQueryLibrary = async ({ description }: { description: st
   const input = within(screen.getByRole('dialog')).getByLabelText('Description');
   await userEvent.type(input, description);
   const saveButton = screen.getByRole('button', {
-    name: /save/i,
+    name: /^save$/i,
   });
   await userEvent.click(saveButton);
 };
@@ -71,7 +71,7 @@ export const closeQueryHistory = async () => {
 };
 
 export const switchToQueryHistoryTab = async (name: 'Settings' | 'Query History') => {
-  await userEvent.click(withinQueryHistory().getByRole('tab', { name: `Tab ${name}` }));
+  await userEvent.click(withinQueryHistory().getByRole('tab', { name }));
 };
 
 export const selectStarredTabFirst = async () => {

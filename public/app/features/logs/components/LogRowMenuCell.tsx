@@ -1,4 +1,4 @@
-import React, { FocusEvent, SyntheticEvent, useCallback } from 'react';
+import { memo, FocusEvent, SyntheticEvent, useCallback } from 'react';
 
 import { LogRowContextOptions, LogRowModel, getDefaultTimeRange, locationUtil, urlUtil } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
@@ -28,7 +28,7 @@ interface Props {
   onPinToContentOutlineClick?: (row: LogRowModel, onOpenContext: (row: LogRowModel) => void) => void;
 }
 
-export const LogRowMenuCell = React.memo(
+export const LogRowMenuCell = memo(
   ({
     logText,
     onOpenContext,

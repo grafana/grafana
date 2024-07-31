@@ -154,6 +154,22 @@ export const checkLogsError = (logRow: LogRowModel): { hasError: boolean; errorM
   };
 };
 
+export const checkLogsSampled = (logRow: LogRowModel): { isSampled: boolean; sampleMessage?: string } => {
+  if (logRow.labels.__adaptive_logs_sampled__) {
+    let msg =
+      logRow.labels.__adaptive_logs_sampled__ === 'true'
+        ? 'Logs like this one have been dropped by Adaptive Logs'
+        : `${logRow.labels.__adaptive_logs_sampled__}% of logs like this one have been dropped by Adaptive Logs`;
+    return {
+      isSampled: true,
+      sampleMessage: msg,
+    };
+  }
+  return {
+    isSampled: false,
+  };
+};
+
 export const escapeUnescapedString = (string: string) =>
   string.replace(/\\r\\n|\\n|\\t|\\r/g, (match: string) => (match.slice(1) === 't' ? '\t' : '\n'));
 

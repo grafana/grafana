@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
@@ -22,9 +21,10 @@ type FakeRuleService struct {
 	AuthorizeDatasourceAccessForRuleGroupFunc func(context.Context, identity.Requester, models.RulesGroup) error
 	HasAccessToRuleGroupFunc                  func(context.Context, identity.Requester, models.RulesGroup) (bool, error)
 	AuthorizeAccessToRuleGroupFunc            func(context.Context, identity.Requester, models.RulesGroup) error
-	HasAccessInFolderFunc                     func(context.Context, identity.Requester, accesscontrol.Namespaced) (bool, error)
-	AuthorizeAccessInFolderFunc               func(context.Context, identity.Requester, accesscontrol.Namespaced) error
+	HasAccessInFolderFunc                     func(context.Context, identity.Requester, models.Namespaced) (bool, error)
+	AuthorizeAccessInFolderFunc               func(context.Context, identity.Requester, models.Namespaced) error
 	AuthorizeRuleChangesFunc                  func(context.Context, identity.Requester, *store.GroupDelta) error
+	CanReadAllRulesFunc                       func(context.Context, identity.Requester) (bool, error)
 
 	Calls []Call
 }
@@ -77,7 +77,7 @@ func (s *FakeRuleService) AuthorizeAccessToRuleGroup(ctx context.Context, user i
 	return nil
 }
 
-func (s *FakeRuleService) HasAccessInFolder(ctx context.Context, user identity.Requester, namespaced accesscontrol.Namespaced) (bool, error) {
+func (s *FakeRuleService) HasAccessInFolder(ctx context.Context, user identity.Requester, namespaced models.Namespaced) (bool, error) {
 	s.Calls = append(s.Calls, Call{"HasAccessInFolder", []interface{}{ctx, user, namespaced}})
 	if s.HasAccessInFolderFunc != nil {
 		return s.HasAccessInFolderFunc(ctx, user, namespaced)
@@ -85,7 +85,7 @@ func (s *FakeRuleService) HasAccessInFolder(ctx context.Context, user identity.R
 	return false, nil
 }
 
-func (s *FakeRuleService) AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, namespaced accesscontrol.Namespaced) error {
+func (s *FakeRuleService) AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, namespaced models.Namespaced) error {
 	s.Calls = append(s.Calls, Call{"AuthorizeAccessInFolder", []interface{}{ctx, user, namespaced}})
 	if s.AuthorizeAccessInFolderFunc != nil {
 		return s.AuthorizeAccessInFolderFunc(ctx, user, namespaced)
@@ -99,4 +99,12 @@ func (s *FakeRuleService) AuthorizeRuleChanges(ctx context.Context, user identit
 		return s.AuthorizeRuleChangesFunc(ctx, user, change)
 	}
 	return nil
+}
+
+func (s *FakeRuleService) CanReadAllRules(ctx context.Context, user identity.Requester) (bool, error) {
+	s.Calls = append(s.Calls, Call{"CanReadAllRules", []interface{}{ctx, user}})
+	if s.CanReadAllRulesFunc != nil {
+		return s.CanReadAllRulesFunc(ctx, user)
+	}
+	return false, nil
 }

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { PageLayoutType } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Permissions } from 'app/core/components/AccessControl';

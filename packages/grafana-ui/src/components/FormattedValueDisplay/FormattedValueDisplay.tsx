@@ -1,4 +1,4 @@
-import React, { CSSProperties, HTMLProps } from 'react';
+import { CSSProperties, HTMLProps } from 'react';
 
 import { FormattedValue } from '@grafana/data';
 

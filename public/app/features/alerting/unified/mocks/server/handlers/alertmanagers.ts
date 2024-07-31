@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 
 import alertmanagerConfigMock from 'app/features/alerting/unified/components/contact-points/__mocks__/alertmanager.config.mock.json';
+import receiversMock from 'app/features/alerting/unified/components/contact-points/__mocks__/receivers.mock.json';
 import { MOCK_SILENCE_ID_EXISTING, mockAlertmanagerAlert } from 'app/features/alerting/unified/mocks';
 import { defaultGrafanaAlertingConfigurationStatusResponse } from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import { MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
@@ -41,11 +42,15 @@ const getGrafanaAlertmanagerTemplatePreview = () =>
     HttpResponse.json({})
   );
 
+const getGrafanaReceiversHandler = () =>
+  http.get('/api/alertmanager/grafana/config/api/v1/receivers', () => HttpResponse.json(receiversMock));
+
 const handlers = [
   alertmanagerAlertsListHandler(),
   grafanaAlertingConfigurationStatusHandler(),
   getGrafanaAlertmanagerConfigHandler(),
   updateGrafanaAlertmanagerConfigHandler(),
   getGrafanaAlertmanagerTemplatePreview(),
+  getGrafanaReceiversHandler(),
 ];
 export default handlers;

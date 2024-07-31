@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2, dateMath } from '@grafana/data';
 import {
@@ -23,7 +23,7 @@ import { AlertmanagerAlert, Silence, SilenceState } from 'app/plugins/datasource
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
-import { parseMatchers } from '../../utils/alertmanager';
+import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
 import { getSilenceFiltersFromUrlParams, makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { Authorize } from '../Authorize';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
@@ -220,7 +220,7 @@ const useFilteredSilences = (silences: Silence[], expired = false) => {
         }
       }
       if (queryString) {
-        const matchers = parseMatchers(queryString);
+        const matchers = parsePromQLStyleMatcherLooseSafe(queryString);
         const matchersMatch = matchers.every((matcher) =>
           silence.matchers?.some(
             ({ name, value, isEqual, isRegex }) =>

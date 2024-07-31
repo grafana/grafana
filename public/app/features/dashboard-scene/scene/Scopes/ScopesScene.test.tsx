@@ -1,47 +1,62 @@
 import { act, cleanup, waitFor } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
 
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
+import { getDashboardAPI, setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { ScopesFiltersScene } from './ScopesFiltersScene';
 import { ScopesScene } from './ScopesScene';
 import {
   buildTestScene,
-  fetchDashboardsSpy,
   fetchNodesSpy,
   fetchScopeSpy,
-  fetchScopesSpy,
-  getApplicationsClustersExpand,
-  getApplicationsClustersSelect,
-  getApplicationsExpand,
-  getApplicationsSearch,
-  getApplicationsSlothPictureFactorySelect,
-  getApplicationsSlothPictureFactoryTitle,
-  getApplicationsSlothVoteTrackerSelect,
-  getFiltersApply,
-  getFiltersCancel,
-  getFiltersInput,
-  getClustersExpand,
-  getClustersSelect,
-  getClustersSlothClusterNorthSelect,
-  getClustersSlothClusterSouthSelect,
+  fetchSelectedScopesSpy,
+  fetchSuggestedDashboardsSpy,
   getDashboard,
   getDashboardsContainer,
   getDashboardsExpand,
   getDashboardsSearch,
-  mocksNodes,
-  mocksScopeDashboardBindings,
+  getFiltersApply,
+  getFiltersCancel,
+  getFiltersInput,
+  getMock,
+  getNotFoundForFilter,
+  getNotFoundForFilterClear,
+  getNotFoundForScope,
+  getNotFoundNoScopes,
+  getPersistedApplicationsSlothPictureFactorySelect,
+  getPersistedApplicationsSlothPictureFactoryTitle,
+  getPersistedApplicationsSlothVoteTrackerTitle,
+  getResultApplicationsClustersExpand,
+  getResultApplicationsClustersSelect,
+  getResultApplicationsClustersSlothClusterNorthSelect,
+  getResultApplicationsClustersSlothClusterSouthSelect,
+  getResultApplicationsExpand,
+  getResultApplicationsSlothPictureFactorySelect,
+  getResultApplicationsSlothPictureFactoryTitle,
+  getResultApplicationsSlothVoteTrackerSelect,
+  getResultApplicationsSlothVoteTrackerTitle,
+  getResultClustersExpand,
+  getResultClustersSelect,
+  getResultClustersSlothClusterEastRadio,
+  getResultClustersSlothClusterNorthRadio,
+  getResultClustersSlothClusterSouthRadio,
+  getTreeHeadline,
+  getTreeSearch,
   mocksScopes,
-  queryFiltersApply,
-  queryApplicationsClustersSlothClusterNorthTitle,
-  queryApplicationsClustersTitle,
-  queryApplicationsSlothPictureFactoryTitle,
-  queryApplicationsSlothVoteTrackerTitle,
+  queryAllDashboard,
   queryDashboard,
   queryDashboardsContainer,
   queryDashboardsExpand,
+  queryDashboardsSearch,
+  queryFiltersApply,
+  queryPersistedApplicationsSlothPictureFactoryTitle,
+  queryPersistedApplicationsSlothVoteTrackerTitle,
+  queryResultApplicationsClustersTitle,
+  queryResultApplicationsSlothPictureFactoryTitle,
+  queryResultApplicationsSlothVoteTrackerTitle,
   renderDashboard,
 } from './testUtils';
 
@@ -49,31 +64,7 @@ jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
-    get: jest.fn().mockImplementation((url: string, params: { parent: string; scope: string[]; query?: string }) => {
-      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_node_children')) {
-        return {
-          items: mocksNodes.filter(
-            ({ parent, spec: { title } }) => parent === params.parent && title.includes(params.query ?? '')
-          ),
-        };
-      }
-
-      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/')) {
-        const name = url.replace('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/', '');
-
-        return mocksScopes.find((scope) => scope.metadata.name === name) ?? {};
-      }
-
-      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_dashboard_bindings')) {
-        return {
-          items: mocksScopeDashboardBindings.filter(({ spec: { scope: bindingScope } }) =>
-            params.scope.includes(bindingScope)
-          ),
-        };
-      }
-
-      return {};
-    }),
+    get: getMock,
   }),
 }));
 
@@ -104,8 +95,9 @@ describe('ScopesScene', () => {
 
       fetchNodesSpy.mockClear();
       fetchScopeSpy.mockClear();
-      fetchScopesSpy.mockClear();
-      fetchDashboardsSpy.mockClear();
+      fetchSelectedScopesSpy.mockClear();
+      fetchSuggestedDashboardsSpy.mockClear();
+      getMock.mockClear();
 
       dashboardScene = buildTestScene();
       scopesScene = dashboardScene.state.scopes!;
@@ -121,75 +113,187 @@ describe('ScopesScene', () => {
     describe('Tree', () => {
       it('Navigates through scopes nodes', async () => {
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsExpand());
-        await userEvents.click(getApplicationsClustersExpand());
-        await userEvents.click(getApplicationsExpand());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultApplicationsClustersExpand());
+        await userEvents.click(getResultApplicationsExpand());
       });
 
       it('Fetches scope details on select', async () => {
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsExpand());
-        await userEvents.click(getApplicationsSlothVoteTrackerSelect());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultApplicationsSlothVoteTrackerSelect());
         await waitFor(() => expect(fetchScopeSpy).toHaveBeenCalledTimes(1));
       });
 
       it('Selects the proper scopes', async () => {
-        await act(async () => filtersScene.updateScopes(['slothPictureFactory', 'slothVoteTracker']));
+        await act(async () =>
+          filtersScene.updateScopes([
+            { scopeName: 'slothPictureFactory', path: [] },
+            { scopeName: 'slothVoteTracker', path: [] },
+          ])
+        );
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsExpand());
-        expect(getApplicationsSlothVoteTrackerSelect()).toBeChecked();
-        expect(getApplicationsSlothPictureFactorySelect()).toBeChecked();
+        await userEvents.click(getResultApplicationsExpand());
+        expect(getResultApplicationsSlothVoteTrackerSelect()).toBeChecked();
+        expect(getResultApplicationsSlothPictureFactorySelect()).toBeChecked();
       });
 
       it('Can select scopes from same level', async () => {
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsExpand());
-        await userEvents.click(getApplicationsSlothVoteTrackerSelect());
-        await userEvents.click(getApplicationsSlothPictureFactorySelect());
-        await userEvents.click(getApplicationsClustersSelect());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultApplicationsSlothVoteTrackerSelect());
+        await userEvents.click(getResultApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getResultApplicationsClustersSelect());
         await userEvents.click(getFiltersApply());
         expect(getFiltersInput().value).toBe('slothVoteTracker, slothPictureFactory, Cluster Index Helper');
       });
 
-      it("Can't navigate deeper than the level where scopes are selected", async () => {
+      it('Can select a node from an inner level', async () => {
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsExpand());
-        await userEvents.click(getApplicationsSlothVoteTrackerSelect());
-        await userEvents.click(getApplicationsClustersExpand());
-        expect(queryApplicationsClustersSlothClusterNorthTitle()).not.toBeInTheDocument();
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultApplicationsSlothVoteTrackerSelect());
+        await userEvents.click(getResultApplicationsClustersExpand());
+        await userEvents.click(getResultApplicationsClustersSlothClusterNorthSelect());
+        await userEvents.click(getFiltersApply());
+        expect(getFiltersInput().value).toBe('slothClusterNorth');
       });
 
       it('Can select a node from an upper level', async () => {
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsExpand());
-        await userEvents.click(getApplicationsSlothVoteTrackerSelect());
-        await userEvents.click(getApplicationsExpand());
-        await userEvents.click(getClustersSelect());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultApplicationsSlothVoteTrackerSelect());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultClustersSelect());
         await userEvents.click(getFiltersApply());
         expect(getFiltersInput().value).toBe('Cluster Index Helper');
       });
 
       it('Respects only one select per container', async () => {
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getClustersExpand());
-        await userEvents.click(getClustersSlothClusterNorthSelect());
-        expect(getClustersSlothClusterSouthSelect()).toBeDisabled();
+        await userEvents.click(getResultClustersExpand());
+        await userEvents.click(getResultClustersSlothClusterNorthRadio());
+        expect(getResultClustersSlothClusterNorthRadio().checked).toBe(true);
+        expect(getResultClustersSlothClusterSouthRadio().checked).toBe(false);
+        await userEvents.click(getResultClustersSlothClusterSouthRadio());
+        expect(getResultClustersSlothClusterNorthRadio().checked).toBe(false);
+        expect(getResultClustersSlothClusterSouthRadio().checked).toBe(true);
       });
 
       it('Search works', async () => {
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsExpand());
-        await userEvents.type(getApplicationsSearch(), 'Clusters');
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.type(getTreeSearch(), 'Clusters');
         await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(3));
-        expect(queryApplicationsSlothPictureFactoryTitle()).not.toBeInTheDocument();
-        expect(queryApplicationsSlothVoteTrackerTitle()).not.toBeInTheDocument();
-        expect(getApplicationsClustersSelect()).toBeInTheDocument();
-        await userEvents.clear(getApplicationsSearch());
-        await userEvents.type(getApplicationsSearch(), 'sloth');
+        expect(queryResultApplicationsSlothPictureFactoryTitle()).not.toBeInTheDocument();
+        expect(queryResultApplicationsSlothVoteTrackerTitle()).not.toBeInTheDocument();
+        expect(getResultApplicationsClustersSelect()).toBeInTheDocument();
+        await userEvents.clear(getTreeSearch());
+        await userEvents.type(getTreeSearch(), 'sloth');
         await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(4));
-        expect(getApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
-        expect(getApplicationsSlothVoteTrackerSelect()).toBeInTheDocument();
-        expect(queryApplicationsClustersTitle()).not.toBeInTheDocument();
+        expect(getResultApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
+        expect(getResultApplicationsSlothVoteTrackerSelect()).toBeInTheDocument();
+        expect(queryResultApplicationsClustersTitle()).not.toBeInTheDocument();
+      });
+
+      it('Opens to a selected scope', async () => {
+        await userEvents.click(getFiltersInput());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultClustersExpand());
+        await userEvents.click(getFiltersApply());
+        await userEvents.click(getFiltersInput());
+        expect(queryResultApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
+      });
+
+      it('Persists a scope', async () => {
+        await userEvents.click(getFiltersInput());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultApplicationsSlothPictureFactorySelect());
+        await userEvents.type(getTreeSearch(), 'slothVoteTracker');
+        await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(3));
+        expect(getPersistedApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
+        expect(queryPersistedApplicationsSlothVoteTrackerTitle()).not.toBeInTheDocument();
+        expect(queryResultApplicationsSlothPictureFactoryTitle()).not.toBeInTheDocument();
+        expect(getResultApplicationsSlothVoteTrackerTitle()).toBeInTheDocument();
+      });
+
+      it('Does not persist a retrieved scope', async () => {
+        await userEvents.click(getFiltersInput());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultApplicationsSlothPictureFactorySelect());
+        await userEvents.type(getTreeSearch(), 'slothPictureFactory');
+        await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(3));
+        expect(queryPersistedApplicationsSlothPictureFactoryTitle()).not.toBeInTheDocument();
+        expect(getResultApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
+      });
+
+      it('Removes persisted nodes', async () => {
+        await userEvents.click(getFiltersInput());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultApplicationsSlothPictureFactorySelect());
+        await userEvents.type(getTreeSearch(), 'slothVoteTracker');
+        await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(3));
+        await userEvents.clear(getTreeSearch());
+        await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(4));
+        expect(queryPersistedApplicationsSlothPictureFactoryTitle()).not.toBeInTheDocument();
+        expect(queryPersistedApplicationsSlothVoteTrackerTitle()).not.toBeInTheDocument();
+        expect(getResultApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
+        expect(getResultApplicationsSlothVoteTrackerTitle()).toBeInTheDocument();
+      });
+
+      it('Persists nodes from search', async () => {
+        await userEvents.click(getFiltersInput());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.type(getTreeSearch(), 'sloth');
+        await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(3));
+        await userEvents.click(getResultApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getResultApplicationsSlothVoteTrackerSelect());
+        await userEvents.type(getTreeSearch(), 'slothunknown');
+        await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(4));
+        expect(getPersistedApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
+        expect(getPersistedApplicationsSlothVoteTrackerTitle()).toBeInTheDocument();
+        await userEvents.clear(getTreeSearch());
+        await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(5));
+        expect(getResultApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
+        expect(getResultApplicationsSlothVoteTrackerTitle()).toBeInTheDocument();
+      });
+
+      it('Selects a persisted scope', async () => {
+        await userEvents.click(getFiltersInput());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultApplicationsSlothPictureFactorySelect());
+        await userEvents.type(getTreeSearch(), 'slothVoteTracker');
+        await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(3));
+        await userEvents.click(getResultApplicationsSlothVoteTrackerSelect());
+        await userEvents.click(getFiltersApply());
+        expect(getFiltersInput().value).toBe('slothPictureFactory, slothVoteTracker');
+      });
+
+      it('Deselects a persisted scope', async () => {
+        await userEvents.click(getFiltersInput());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultApplicationsSlothPictureFactorySelect());
+        await userEvents.type(getTreeSearch(), 'slothVoteTracker');
+        await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(3));
+        await userEvents.click(getResultApplicationsSlothVoteTrackerSelect());
+        await userEvents.click(getFiltersApply());
+        expect(getFiltersInput().value).toBe('slothPictureFactory, slothVoteTracker');
+        await userEvents.click(getFiltersInput());
+        await userEvents.click(getPersistedApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getFiltersApply());
+        expect(getFiltersInput().value).toBe('slothVoteTracker');
+      });
+
+      it('Shows the proper headline', async () => {
+        await userEvents.click(getFiltersInput());
+        expect(getTreeHeadline()).toHaveTextContent('Recommended');
+        await userEvents.type(getTreeSearch(), 'Applications');
+        await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(2));
+        expect(getTreeHeadline()).toHaveTextContent('Results');
+        await userEvents.type(getTreeSearch(), 'unknown');
+        await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(3));
+        expect(getTreeHeadline()).toHaveTextContent('No results found for your query');
       });
     });
 
@@ -201,9 +305,9 @@ describe('ScopesScene', () => {
 
       it('Fetches scope details on save', async () => {
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getClustersSelect());
+        await userEvents.click(getResultClustersSelect());
         await userEvents.click(getFiltersApply());
-        await waitFor(() => expect(fetchScopesSpy).toHaveBeenCalled());
+        await waitFor(() => expect(fetchSelectedScopesSpy).toHaveBeenCalled());
         expect(filtersScene.getSelectedScopes()).toEqual(
           mocksScopes.filter(({ metadata: { name } }) => name === 'indexHelperCluster')
         );
@@ -211,15 +315,15 @@ describe('ScopesScene', () => {
 
       it("Doesn't save the scopes on close", async () => {
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getClustersSelect());
+        await userEvents.click(getResultClustersSelect());
         await userEvents.click(getFiltersCancel());
-        await waitFor(() => expect(fetchScopesSpy).not.toHaveBeenCalled());
+        await waitFor(() => expect(fetchSelectedScopesSpy).not.toHaveBeenCalled());
         expect(filtersScene.getSelectedScopes()).toEqual([]);
       });
 
       it('Shows selected scopes', async () => {
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getClustersSelect());
+        await userEvents.click(getResultClustersSelect());
         await userEvents.click(getFiltersApply());
         expect(getFiltersInput().value).toEqual('Cluster Index Helper');
       });
@@ -233,49 +337,49 @@ describe('ScopesScene', () => {
 
       it('Does not fetch dashboards list when the list is not expanded', async () => {
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsExpand());
-        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultApplicationsSlothPictureFactorySelect());
         await userEvents.click(getFiltersApply());
-        await waitFor(() => expect(fetchDashboardsSpy).not.toHaveBeenCalled());
+        await waitFor(() => expect(fetchSuggestedDashboardsSpy).not.toHaveBeenCalled());
       });
 
       it('Fetches dashboards list when the list is expanded', async () => {
         await userEvents.click(getDashboardsExpand());
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsExpand());
-        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultApplicationsSlothPictureFactorySelect());
         await userEvents.click(getFiltersApply());
-        await waitFor(() => expect(fetchDashboardsSpy).toHaveBeenCalled());
+        await waitFor(() => expect(fetchSuggestedDashboardsSpy).toHaveBeenCalled());
       });
 
       it('Fetches dashboards list when the list is expanded after scope selection', async () => {
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsExpand());
-        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultApplicationsSlothPictureFactorySelect());
         await userEvents.click(getFiltersApply());
         await userEvents.click(getDashboardsExpand());
-        await waitFor(() => expect(fetchDashboardsSpy).toHaveBeenCalled());
+        await waitFor(() => expect(fetchSuggestedDashboardsSpy).toHaveBeenCalled());
       });
 
       it('Shows dashboards for multiple scopes', async () => {
         await userEvents.click(getDashboardsExpand());
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsExpand());
-        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultApplicationsSlothPictureFactorySelect());
         await userEvents.click(getFiltersApply());
         expect(getDashboard('1')).toBeInTheDocument();
         expect(getDashboard('2')).toBeInTheDocument();
         expect(queryDashboard('3')).not.toBeInTheDocument();
         expect(queryDashboard('4')).not.toBeInTheDocument();
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsSlothVoteTrackerSelect());
+        await userEvents.click(getResultApplicationsSlothVoteTrackerSelect());
         await userEvents.click(getFiltersApply());
         expect(getDashboard('1')).toBeInTheDocument();
         expect(getDashboard('2')).toBeInTheDocument();
         expect(getDashboard('3')).toBeInTheDocument();
         expect(getDashboard('4')).toBeInTheDocument();
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getResultApplicationsSlothPictureFactorySelect());
         await userEvents.click(getFiltersApply());
         expect(queryDashboard('1')).not.toBeInTheDocument();
         expect(queryDashboard('2')).not.toBeInTheDocument();
@@ -286,13 +390,56 @@ describe('ScopesScene', () => {
       it('Filters the dashboards list', async () => {
         await userEvents.click(getDashboardsExpand());
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsExpand());
-        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultApplicationsSlothPictureFactorySelect());
         await userEvents.click(getFiltersApply());
         expect(getDashboard('1')).toBeInTheDocument();
         expect(getDashboard('2')).toBeInTheDocument();
         await userEvents.type(getDashboardsSearch(), '1');
         expect(queryDashboard('2')).not.toBeInTheDocument();
+      });
+
+      it('Deduplicates the dashboards list', async () => {
+        await userEvents.click(getDashboardsExpand());
+        await userEvents.click(getFiltersInput());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultApplicationsClustersExpand());
+        await userEvents.click(getResultApplicationsClustersSlothClusterNorthSelect());
+        await userEvents.click(getResultApplicationsClustersSlothClusterSouthSelect());
+        await userEvents.click(getFiltersApply());
+        expect(queryAllDashboard('5')).toHaveLength(1);
+        expect(queryAllDashboard('6')).toHaveLength(1);
+        expect(queryAllDashboard('7')).toHaveLength(1);
+        expect(queryAllDashboard('8')).toHaveLength(1);
+      });
+
+      it('Does show a proper message when no scopes are selected', async () => {
+        await userEvents.click(getDashboardsExpand());
+        expect(getNotFoundNoScopes()).toBeInTheDocument();
+        expect(queryDashboardsSearch()).not.toBeInTheDocument();
+      });
+
+      it('Does not show the input when there are no dashboards found for scope', async () => {
+        await userEvents.click(getDashboardsExpand());
+        await userEvents.click(getFiltersInput());
+        await userEvents.click(getResultClustersExpand());
+        await userEvents.click(getResultClustersSlothClusterEastRadio());
+        await userEvents.click(getFiltersApply());
+        expect(getNotFoundForScope()).toBeInTheDocument();
+        expect(queryDashboardsSearch()).not.toBeInTheDocument();
+      });
+
+      it('Does show the input and a message when there are no dashboards found for filter', async () => {
+        await userEvents.click(getDashboardsExpand());
+        await userEvents.click(getFiltersInput());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getFiltersApply());
+        await userEvents.type(getDashboardsSearch(), 'unknown');
+        expect(queryDashboardsSearch()).toBeInTheDocument();
+        expect(getNotFoundForFilter()).toBeInTheDocument();
+        await userEvents.click(getNotFoundForFilterClear());
+        expect(getDashboardsSearch().value).toBe('');
       });
     });
 
@@ -330,8 +477,8 @@ describe('ScopesScene', () => {
     describe('Enrichers', () => {
       it('Data requests', async () => {
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsExpand());
-        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultApplicationsSlothPictureFactorySelect());
         await userEvents.click(getFiltersApply());
         await waitFor(() => {
           const queryRunner = sceneGraph.findObject(dashboardScene, (o) => o.state.key === 'data-query-runner')!;
@@ -341,7 +488,7 @@ describe('ScopesScene', () => {
         });
 
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsSlothVoteTrackerSelect());
+        await userEvents.click(getResultApplicationsSlothVoteTrackerSelect());
         await userEvents.click(getFiltersApply());
         await waitFor(() => {
           const queryRunner = sceneGraph.findObject(dashboardScene, (o) => o.state.key === 'data-query-runner')!;
@@ -353,7 +500,7 @@ describe('ScopesScene', () => {
         });
 
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getResultApplicationsSlothPictureFactorySelect());
         await userEvents.click(getFiltersApply());
         await waitFor(() => {
           const queryRunner = sceneGraph.findObject(dashboardScene, (o) => o.state.key === 'data-query-runner')!;
@@ -365,8 +512,8 @@ describe('ScopesScene', () => {
 
       it('Filters requests', async () => {
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsExpand());
-        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultApplicationsSlothPictureFactorySelect());
         await userEvents.click(getFiltersApply());
         await waitFor(() => {
           expect(dashboardScene.enrichFiltersRequest().scopes).toEqual(
@@ -375,7 +522,7 @@ describe('ScopesScene', () => {
         });
 
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsSlothVoteTrackerSelect());
+        await userEvents.click(getResultApplicationsSlothVoteTrackerSelect());
         await userEvents.click(getFiltersApply());
         await waitFor(() => {
           expect(dashboardScene.enrichFiltersRequest().scopes).toEqual(
@@ -386,13 +533,67 @@ describe('ScopesScene', () => {
         });
 
         await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getResultApplicationsSlothPictureFactorySelect());
         await userEvents.click(getFiltersApply());
         await waitFor(() => {
           expect(dashboardScene.enrichFiltersRequest().scopes).toEqual(
             mocksScopes.filter(({ metadata: { name } }) => name === 'slothVoteTracker')
           );
         });
+      });
+    });
+  });
+
+  describe('Dashboards API', () => {
+    describe('Feature flag off', () => {
+      beforeAll(() => {
+        config.featureToggles.scopeFilters = true;
+        config.featureToggles.passScopeToDashboardApi = false;
+      });
+
+      beforeEach(() => {
+        setDashboardAPI(undefined);
+        locationService.push('/?scopes=scope1&scopes=scope2&scopes=scope3');
+      });
+
+      it('Legacy API should not pass the scopes', () => {
+        config.featureToggles.kubernetesDashboards = false;
+        getDashboardAPI().getDashboardDTO('1');
+        expect(getMock).toHaveBeenCalledWith('/api/dashboards/uid/1', undefined);
+      });
+
+      it('K8s API should not pass the scopes', () => {
+        config.featureToggles.kubernetesDashboards = true;
+        getDashboardAPI().getDashboardDTO('1');
+        expect(getMock).toHaveBeenCalledWith(
+          '/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/1/dto'
+        );
+      });
+    });
+
+    describe('Feature flag on', () => {
+      beforeAll(() => {
+        config.featureToggles.scopeFilters = true;
+        config.featureToggles.passScopeToDashboardApi = true;
+      });
+
+      beforeEach(() => {
+        setDashboardAPI(undefined);
+        locationService.push('/?scopes=scope1&scopes=scope2&scopes=scope3');
+      });
+
+      it('Legacy API should pass the scopes', () => {
+        config.featureToggles.kubernetesDashboards = false;
+        getDashboardAPI().getDashboardDTO('1');
+        expect(getMock).toHaveBeenCalledWith('/api/dashboards/uid/1', { scopes: ['scope1', 'scope2', 'scope3'] });
+      });
+
+      it('K8s API should not pass the scopes', () => {
+        config.featureToggles.kubernetesDashboards = true;
+        getDashboardAPI().getDashboardDTO('1');
+        expect(getMock).toHaveBeenCalledWith(
+          '/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/1/dto'
+        );
       });
     });
   });

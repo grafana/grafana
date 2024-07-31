@@ -1,4 +1,5 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
+import * as React from 'react';
 import { useToggle } from 'react-use';
 
 import { DataTransformerConfig, TransformerRegistryItem, FrameMatcherID, DataTopic } from '@grafana/data';
@@ -167,7 +168,7 @@ export const TransformationOperationRow = ({
         <TransformationEditor
           debugMode={showDebug}
           index={index}
-          data={topic === DataTopic.Annotations ? data.annotations ?? [] : data.series}
+          data={topic === DataTopic.Annotations ? (data.annotations ?? []) : data.series}
           configs={configs}
           uiConfig={uiConfig}
           onChange={onChange}

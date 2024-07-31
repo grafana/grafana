@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import { memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Tooltip, useStyles2, type PopoverContent } from '@grafana/ui';
@@ -58,7 +58,7 @@ const FunctionEditor = ({ onMoveLeft, onMoveRight, func, ...props }: FunctionEdi
   );
 };
 
-const TooltipContent = React.memo(() => {
+const TooltipContent = memo(() => {
   return (
     <span>
       This function is not supported. Check your function for typos and{' '}

@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import memoizeOne from 'memoize-one';
-import React, { PureComponent, MouseEvent, createRef } from 'react';
+import { PureComponent, MouseEvent, createRef } from 'react';
 
 import {
   TimeZone,
@@ -48,7 +48,7 @@ export interface Props extends Themeable2 {
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
-  onPinLine?: (row: LogRowModel) => void;
+  onPinLine?: (row: LogRowModel, allowUnPin?: boolean) => void;
   onUnpinLine?: (row: LogRowModel) => void;
   pinLineButtonTooltipTitle?: PopoverContent;
   onLogRowHover?: (row?: LogRowModel) => void;
@@ -63,6 +63,7 @@ export interface Props extends Themeable2 {
   scrollIntoView?: (element: HTMLElement) => void;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   pinnedRowId?: string;
+  pinnedLogs?: string[];
   containerRendered?: boolean;
   /**
    * If false or undefined, the `contain:strict` css property will be added to the wrapping `<table>` for performance reasons.
@@ -105,7 +106,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   };
 
   popoverMenuSupported() {
-    if (!config.featureToggles.logRowsPopoverMenu || this.props.app !== CoreApp.Explore) {
+    if (!config.featureToggles.logRowsPopoverMenu) {
       return false;
     }
     return Boolean(this.props.onClickFilterOutString || this.props.onClickFilterString);
@@ -147,6 +148,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     if (document.getSelection()?.toString()) {
       return;
     }
+    this.closePopoverMenu();
   };
 
   closePopoverMenu = () => {
@@ -190,7 +192,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   );
 
   render() {
-    const { deduplicatedRows, logRows, dedupStrategy, theme, logsSortOrder, previewLimit, ...rest } = this.props;
+    const { deduplicatedRows, logRows, dedupStrategy, theme, logsSortOrder, previewLimit, pinnedLogs, ...rest } =
+      this.props;
     const { renderAll } = this.state;
     const styles = getLogRowStyles(theme);
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
@@ -240,7 +243,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onPinLine={this.props.onPinLine}
                   onUnpinLine={this.props.onUnpinLine}
                   pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
-                  pinned={this.props.pinnedRowId === row.uid}
+                  pinned={this.props.pinnedRowId === row.uid || pinnedLogs?.some((logId) => logId === row.rowId)}
                   isFilterLabelActive={this.props.isFilterLabelActive}
                   handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
                   {...rest}
@@ -263,7 +266,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onPinLine={this.props.onPinLine}
                   onUnpinLine={this.props.onUnpinLine}
                   pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
-                  pinned={this.props.pinnedRowId === row.uid}
+                  pinned={this.props.pinnedRowId === row.uid || pinnedLogs?.some((logId) => logId === row.rowId)}
                   isFilterLabelActive={this.props.isFilterLabelActive}
                   handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
                   {...rest}

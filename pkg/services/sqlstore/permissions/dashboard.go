@@ -166,8 +166,8 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 	folderWildcards := accesscontrol.WildcardsFromPrefix(dashboards.ScopeFoldersPrefix)
 
 	userID := int64(0)
-	namespace, identifier := f.user.GetNamespacedID()
-	if namespace == identity.NamespaceUser || namespace == identity.NamespaceServiceAccount {
+	namespace, identifier := f.user.GetTypedID()
+	if namespace == identity.TypeUser || namespace == identity.TypeServiceAccount {
 		userID, _ = identity.IntIdentifier(namespace, identifier)
 	}
 
@@ -435,8 +435,10 @@ func (f *accessControlDashboardPermissionFilter) nestedFoldersSelectors(permSele
 }
 
 func getAllowedUIDs(action string, user identity.Requester, scopePrefix string) []any {
-	var args []any
-	for _, uidScope := range user.GetPermissions()[action] {
+	uidScopes := user.GetPermissions()[action]
+
+	args := make([]any, 0, len(uidScopes))
+	for _, uidScope := range uidScopes {
 		if !strings.HasPrefix(uidScope, scopePrefix) {
 			continue
 		}

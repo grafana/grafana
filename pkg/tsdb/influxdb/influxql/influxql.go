@@ -23,7 +23,10 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
-const defaultRetentionPolicy = "default"
+const (
+	defaultRetentionPolicy = "default"
+	metadataPrefix         = "x-grafana-meta-add-"
+)
 
 var (
 	ErrInvalidHttpMode = errors.New("'httpMode' should be either 'GET' or 'POST'")
@@ -174,11 +177,6 @@ func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.Datasource
 	if err != nil {
 		return backend.DataResponse{}, err
 	}
-
-	if res.StatusCode/100 != 2 {
-		return backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %v", res.Body)}, nil
-	}
-
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			logger.Warn("Failed to close response body", "err", err)
@@ -195,7 +193,25 @@ func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.Datasource
 	} else {
 		resp = buffered.ResponseParse(res.Body, res.StatusCode, query)
 	}
+
+	if resp.Frames != nil && len(resp.Frames) > 0 {
+		resp.Frames[0].Meta.Custom = readCustomMetadata(res)
+	}
+
 	return *resp, nil
+}
+
+func readCustomMetadata(res *http.Response) map[string]any {
+	var result map[string]any
+	for k := range res.Header {
+		if key, found := strings.CutPrefix(strings.ToLower(k), metadataPrefix); found {
+			if result == nil {
+				result = make(map[string]any)
+			}
+			result[key] = res.Header.Get(k)
+		}
+	}
+	return result
 }
 
 // startTrace setups a trace but does not panic if tracer is nil which helps with testing

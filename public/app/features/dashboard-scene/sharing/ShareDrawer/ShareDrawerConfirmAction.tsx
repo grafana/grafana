@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Spinner, Stack, Text } from '@grafana/ui';
@@ -43,7 +42,7 @@ export function ShareDrawerConfirmAction({
       description={description}
       confirmButtonLabel={confirmButtonLabel}
       confirmButtonVariant="destructive"
-      dismissButtonLabel="Cancel"
+      dismissButtonLabel={t('share-drawer.confirm-action.cancel-button', 'Cancel')}
       dismissButtonVariant="secondary"
       justifyButtons="flex-start"
       onConfirm={onConfirm}

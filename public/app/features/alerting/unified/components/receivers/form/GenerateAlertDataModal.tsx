@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { addDays, subDays } from 'date-fns';
 import { uniqueId } from 'lodash';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';

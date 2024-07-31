@@ -15,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -61,7 +60,7 @@ func TestWithRuleMetadata(t *testing.T) {
 	user := ac.BackgroundUser("test", 1, org.RoleNone, nil)
 	t.Run("Attach rule metadata to silences", func(t *testing.T) {
 		ruleAuthz := fakes.FakeRuleService{}
-		ruleAuthz.HasAccessInFolderFunc = func(ctx context.Context, user identity.Requester, silence accesscontrol.Namespaced) (bool, error) {
+		ruleAuthz.HasAccessInFolderFunc = func(ctx context.Context, user identity.Requester, silence models.Namespaced) (bool, error) {
 			return true, nil
 		}
 
@@ -95,7 +94,7 @@ func TestWithRuleMetadata(t *testing.T) {
 	})
 	t.Run("Don't attach full rule metadata if no access or global", func(t *testing.T) {
 		ruleAuthz := fakes.FakeRuleService{}
-		ruleAuthz.HasAccessInFolderFunc = func(ctx context.Context, user identity.Requester, silence accesscontrol.Namespaced) (bool, error) {
+		ruleAuthz.HasAccessInFolderFunc = func(ctx context.Context, user identity.Requester, silence models.Namespaced) (bool, error) {
 			return silence.GetNamespaceUID() == "folder1", nil
 		}
 
@@ -134,7 +133,7 @@ func TestWithRuleMetadata(t *testing.T) {
 	})
 	t.Run("Don't check same namespace access more than once", func(t *testing.T) {
 		ruleAuthz := fakes.FakeRuleService{}
-		ruleAuthz.HasAccessInFolderFunc = func(ctx context.Context, user identity.Requester, silence accesscontrol.Namespaced) (bool, error) {
+		ruleAuthz.HasAccessInFolderFunc = func(ctx context.Context, user identity.Requester, silence models.Namespaced) (bool, error) {
 			return true, nil
 		}
 
@@ -159,7 +158,7 @@ func TestWithRuleMetadata(t *testing.T) {
 		require.NoError(t, svc.WithRuleMetadata(context.Background(), user, silencesWithMetadata...))
 		assert.Lenf(t, ruleAuthz.Calls, 1, "HasAccessInFolder should be called only once per namespace")
 		assert.Equal(t, "HasAccessInFolder", ruleAuthz.Calls[0].MethodName)
-		assert.Equal(t, "folder1", ruleAuthz.Calls[0].Arguments[2].(accesscontrol.Namespaced).GetNamespaceUID())
+		assert.Equal(t, "folder1", ruleAuthz.Calls[0].Arguments[2].(models.Namespaced).GetNamespaceUID())
 	})
 }
 

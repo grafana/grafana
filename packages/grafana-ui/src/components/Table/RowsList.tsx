@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, UIEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
+import { CSSProperties, UIEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
 import { Cell, Row, TableState, HeaderGroup } from 'react-table';
 import { VariableSizeList } from 'react-window';
 import { Subscription, debounceTime } from 'rxjs';
@@ -80,6 +81,9 @@ export const RowsList = (props: RowsListProps) => {
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
+  if (initialRowIndex === undefined && rowHighlightIndex !== undefined) {
+    setRowHighlightIndex(undefined);
+  }
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
@@ -267,9 +271,10 @@ export const RowsList = (props: RowsListProps) => {
       prepareRow(row);
 
       const expandedRowStyle = tableState.expanded[row.id] ? css({ '&:hover': { background: 'inherit' } }) : {};
+      const rowExpanded = nestedDataField && tableState.expanded[row.id];
 
       if (rowHighlightIndex !== undefined && row.index === rowHighlightIndex) {
-        style = { ...style, backgroundColor: theme.components.table.rowHoverBackground };
+        style = { ...style, backgroundColor: theme.components.table.rowSelected };
         additionalProps = {
           'aria-selected': 'true',
         };
@@ -284,7 +289,8 @@ export const RowsList = (props: RowsListProps) => {
 
       // If there's a text wrapping field we set the height of it here
       if (textWrapField) {
-        const seriesIndex = data.fields.findIndex((field) => field.name === textWrapField.name);
+        const visibleFields = data.fields.filter((field) => !Boolean(field.config.custom?.hidden));
+        const seriesIndex = visibleFields.findIndex((field) => field.name === textWrapField.name);
         const pxLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
         const bbox = guessTextBoundingBox(
           textWrapField.values[index],
@@ -295,16 +301,18 @@ export const RowsList = (props: RowsListProps) => {
         );
         style.height = bbox.height;
       }
+      const { key, ...rowProps } = row.getRowProps({ style, ...additionalProps });
 
       return (
         <div
-          {...row.getRowProps({ style, ...additionalProps })}
+          key={key}
+          {...rowProps}
           className={cx(tableStyles.row, expandedRowStyle)}
           onMouseEnter={() => onRowHover(index, data)}
           onMouseLeave={onRowLeave}
         >
           {/*add the nested data to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
-          {nestedDataField && tableState.expanded[row.id] && (
+          {rowExpanded && (
             <ExpandedRow
               nestedData={nestedDataField}
               tableStyles={tableStyles}
@@ -326,6 +334,7 @@ export const RowsList = (props: RowsListProps) => {
               timeRange={timeRange}
               frame={data}
               rowStyled={rowBg !== undefined}
+              rowExpanded={rowExpanded}
               textWrapped={textWrapField !== undefined}
               height={Number(style.height)}
             />
@@ -346,7 +355,7 @@ export const RowsList = (props: RowsListProps) => {
       tableState.expanded,
       tableStyles,
       textWrapField,
-      theme.components.table.rowHoverBackground,
+      theme.components.table.rowSelected,
       theme.typography.fontSize,
       theme.typography.body.lineHeight,
       timeRange,
@@ -366,7 +375,8 @@ export const RowsList = (props: RowsListProps) => {
     }
 
     if (textWrapField) {
-      const seriesIndex = data.fields.findIndex((field) => field.name === textWrapField.name);
+      const visibleFields = data.fields.filter((field) => !Boolean(field.config.custom?.hidden));
+      const seriesIndex = visibleFields.findIndex((field) => field.name === textWrapField.name);
       const pxLineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
       return guessTextBoundingBox(
         textWrapField.values[index],

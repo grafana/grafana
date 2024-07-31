@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ComponentType, PureComponent } from 'react';
+import { ComponentType, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { bindActionCreators } from 'redux';
 

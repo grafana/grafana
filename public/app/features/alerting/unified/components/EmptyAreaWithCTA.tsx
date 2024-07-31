@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ButtonHTMLAttributes } from 'react';
+import { ButtonHTMLAttributes } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, ButtonVariant, IconName, LinkButton, useStyles2 } from '@grafana/ui';

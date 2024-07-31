@@ -386,7 +386,7 @@ type fakeStateManager struct {
 	stateCallback func(now time.Time) []state.StateTransition
 }
 
-func (f *fakeStateManager) ProcessEvalResults(_ context.Context, evaluatedAt time.Time, _ *models.AlertRule, _ eval.Results, _ data.Labels) []state.StateTransition {
+func (f *fakeStateManager) ProcessEvalResults(_ context.Context, evaluatedAt time.Time, _ *models.AlertRule, _ eval.Results, _ data.Labels, _ state.Sender) state.StateTransitions {
 	return f.stateCallback(evaluatedAt)
 }
 

@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
 
@@ -58,6 +57,7 @@ describe('PluginListItem', () => {
     isDisabled: false,
     isDeprecated: false,
     isPublished: true,
+    isManaged: false,
   };
 
   /** As Grid */

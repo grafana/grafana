@@ -1,5 +1,5 @@
 import * as H from 'history';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { locationUtil, NavModel, NavModelItem } from '@grafana/data';
@@ -199,7 +199,7 @@ function getSectionNav(
     subTitle: page.subTitle,
   }));
 
-  const pageNavWithSectionParent = applySectionAsParent(pageNav, sectionNav.node);
+  const pageNavWithSectionParent = applySectionAsParent(pageNav, sectionNav.main);
 
   main.parentItem = pageNavWithSectionParent;
 

@@ -1,3 +1,7 @@
+// font-awesome icons are deprecated
+// DO NOT move these to emotion globals
+// because of the amount of styles here, it causes performance issues
+// TODO remove this once we've communicated a proper deprecation and removal strategy
 /*!
  *  Font Awesome 4.7.0 by @davegandy - http://fontawesome.io - @fontawesome
  *  License - http://fontawesome.io/license (Font: SIL OFL 1.1, CSS: MIT License)

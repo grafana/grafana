@@ -21,8 +21,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/alerting/definition"
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -105,7 +107,7 @@ func TestNewAlertmanager(t *testing.T) {
 				DefaultConfig:     defaultGrafanaConfig,
 			}
 			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-			am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m)
+			am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 			if test.expErr != "" {
 				require.EqualError(tt, err, test.expErr)
 				return
@@ -167,6 +169,8 @@ func TestApplyConfig(t *testing.T) {
 		DefaultConfig: defaultGrafanaConfig,
 		PromoteConfig: true,
 		SyncInterval:  1 * time.Hour,
+		ExternalURL:   "https://test.grafana.com",
+		StaticHeaders: map[string]string{"Header-1": "Value-1", "Header-2": "Value-2"},
 	}
 
 	ctx := context.Background()
@@ -177,7 +181,7 @@ func TestApplyConfig(t *testing.T) {
 
 	// An error response from the remote Alertmanager should result in the readiness check failing.
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m)
+	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	config := &ngmodels.AlertConfiguration{
@@ -196,6 +200,10 @@ func TestApplyConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.JSONEq(t, testGrafanaConfigWithSecret, string(amCfg))
 	require.True(t, configSent.Promoted)
+
+	// Grafana's URL and static headers should be sent alongside the configuration.
+	require.Equal(t, cfg.ExternalURL, configSent.ExternalURL)
+	require.Equal(t, cfg.StaticHeaders, configSent.StaticHeaders)
 
 	// If we already got a 200 status code response and the sync interval hasn't elapsed,
 	// we shouldn't send the state/configuration again.
@@ -305,6 +313,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 				decryptFn,
 				test.autogenFn,
 				m,
+				tracing.InitializeTracerForTest(),
 			)
 			require.NoError(t, err)
 
@@ -364,7 +373,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m)
+	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	encodedFullState, err := am.getFullState(ctx)
@@ -521,7 +530,7 @@ func TestIntegrationRemoteAlertmanagerGetStatus(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// We should get the default Cloud Alertmanager configuration.
@@ -555,7 +564,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// We should have no silences at first.
@@ -640,7 +649,7 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// Wait until the Alertmanager is ready to send alerts.
@@ -660,9 +669,9 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	require.Equal(t, 0, len(alertGroups))
 
 	// Let's create two active alerts and one expired one.
-	alert1 := genAlert(true, map[string]string{"test_1": "test_1"})
-	alert2 := genAlert(true, map[string]string{"test_2": "test_2"})
-	alert3 := genAlert(false, map[string]string{"test_3": "test_3"})
+	alert1 := genAlert(true, map[string]string{"test_1": "test_1", "empty": "", alertingModels.NamespaceUIDLabel: "test_1"})
+	alert2 := genAlert(true, map[string]string{"test_2": "test_2", "empty": "", alertingModels.NamespaceUIDLabel: "test_2"})
+	alert3 := genAlert(false, map[string]string{"test_3": "test_3", "empty": "", alertingModels.NamespaceUIDLabel: "test_3"})
 	postableAlerts := apimodels.PostableAlerts{
 		PostableAlerts: []amv2.PostableAlert{alert1, alert2, alert3},
 	}
@@ -679,6 +688,12 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	alertGroups, err = am.GetAlertGroups(context.Background(), true, true, true, []string{}, "")
 	require.NoError(t, err)
 	require.Equal(t, 1, len(alertGroups))
+
+	// Labels with empty values and the namespace UID label should be removed.
+	for _, a := range alertGroups {
+		require.NotContains(t, a.Labels, "empty")
+		require.NotContains(t, a.Labels, alertingModels.NamespaceUIDLabel)
+	}
 
 	// Filtering by `test_1=test_1` should return one alert.
 	alerts, err = am.GetAlerts(context.Background(), true, true, true, []string{"test_1=test_1"}, "")
@@ -709,13 +724,19 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// We should start with the default config.
 	rcvs, err := am.GetReceivers(context.Background())
 	require.NoError(t, err)
-	require.Equal(t, "empty-receiver", rcvs[0].Name)
+	require.Equal(t, []apimodels.Receiver{
+		{
+			Active:       true,
+			Name:         "empty-receiver",
+			Integrations: []apimodels.Integration{},
+		},
+	}, rcvs)
 }
 
 func genAlert(active bool, labels map[string]string) amv2.PostableAlert {
@@ -746,6 +767,7 @@ global:
     http_config:
         follow_redirects: true
         enable_http2: true
+        http_headers: null
     smtp_hello: localhost
     smtp_require_tls: true
     pagerduty_url: https://events.pagerduty.com/v2/enqueue

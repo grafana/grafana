@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { SecretTextArea, RESET_BUTTON_TEXT, CONFIGURED_TEXT } from './SecretTextArea';
 

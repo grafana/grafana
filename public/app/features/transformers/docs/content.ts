@@ -68,8 +68,6 @@ Use this transformation to add a new field calculated from two other fields. Eac
 - **Alias** - (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
 - **Replace all fields** - (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
 
-> **Note:** **Cumulative functions** and **Window functions** modes are currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the \`addFieldFromCalculationStatFunctions\` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
-
 In the example below, we added two fields together and named them Sum.
 
 ${buildImageContent(
@@ -196,6 +194,9 @@ This transformation has the following options:
   - **Numeric** - attempts to make the values numbers
   - **String** - will make the values strings
   - **Time** - attempts to parse the values as time
+    - The input will be parsed according to the [Moment.js parsing format](https://momentjs.com/docs/#/parsing/)
+    - It will parse the numeric input as a Unix epoch timestamp in milliseconds.
+      You must multiply your input by 1000 if it's in seconds.
     - Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss
   - **Boolean** - will make the values booleans
   - **Enum** - will make the values enums
@@ -504,9 +505,7 @@ Use this transformation to customize the output of a string field. This transfor
 - **Trim** - Removes all leading and trailing spaces from the string.
 - **Substring** - Returns a substring of the string, using the specified start and end positions.
 
-This transformation provides a convenient way to standardize and tailor the presentation of string data for better visualization and analysis.
-
-> **Note:** This transformation is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the \`formatString\` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.`;
+This transformation provides a convenient way to standardize and tailor the presentation of string data for better visualization and analysis.`;
     },
   },
   formatTime: {
@@ -634,7 +633,7 @@ Use this transformation to construct a matrix by specifying fields from your que
     },
   },
   groupToNestedTable: {
-    name: 'Group to nested table',
+    name: 'Group to nested tables',
     getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
   Use this transformation to group the data by a specified field (column) value and process calculations on each group. Records are generated that share the same grouped field value, to be displayed in a nested table.

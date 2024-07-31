@@ -1,4 +1,5 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 
 import { isEmptyObject, SelectableValue, VariableRefresh } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';

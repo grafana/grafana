@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { DataFrame, DataLink, VariableSuggestion } from '@grafana/data';
 

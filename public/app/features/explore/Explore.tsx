@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { get, groupBy } from 'lodash';
-import React from 'react';
+import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer, { HorizontalSize } from 'react-virtualized-auto-sizer';
 
@@ -14,6 +14,7 @@ import {
   QueryFixAction,
   RawTimeRange,
   SplitOpenOptions,
+  store,
   SupplementaryQueryType,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -34,7 +35,7 @@ import { StoreState } from 'app/types';
 
 import { getTimeZone } from '../profile/state/selectors';
 
-import { ContentOutline } from './ContentOutline/ContentOutline';
+import { CONTENT_OUTLINE_LOCAL_STORAGE_KEYS, ContentOutline } from './ContentOutline/ContentOutline';
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { CorrelationHelper } from './CorrelationHelper';
@@ -139,7 +140,7 @@ export type Props = ExploreProps & ConnectedProps<typeof connector>;
  * `format`, to indicate eventual transformations by the datasources' result transformers.
  */
 
-export class Explore extends React.PureComponent<Props, ExploreState> {
+export class Explore extends PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   graphEventBus: EventBus;
   logsEventBus: EventBus;
@@ -147,7 +148,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      contentOutlineVisible: false,
+      contentOutlineVisible: store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.visible, true),
     };
     this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
     this.logsEventBus = props.eventBus.newScopedBus('logs', { onlyLocal: false });
@@ -175,6 +176,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   };
 
   onContentOutlineToogle = () => {
+    store.set(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.visible, !this.state.contentOutlineVisible);
     this.setState((state) => {
       reportInteraction('explore_toolbar_contentoutline_clicked', {
         item: 'outline',
@@ -334,7 +336,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderCustom(width: number) {
-    const { timeZone, queryResponse, absoluteRange, eventBus } = this.props;
+    const { timeZone, queryResponse, eventBus } = this.props;
 
     const groupedByPlugin = groupBy(queryResponse?.customFrames, 'meta.preferredVisualisationPluginId');
 
@@ -347,7 +349,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             pluginId={pluginId}
             frames={frames}
             state={queryResponse.state}
-            absoluteRange={absoluteRange}
+            timeRange={queryResponse.timeRange}
             height={400}
             width={width}
             splitOpenFn={this.onSplitOpen(pluginId)}
@@ -359,7 +361,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderGraphPanel(width: number) {
-    const { graphResult, absoluteRange, timeZone, queryResponse, showFlameGraph } = this.props;
+    const { graphResult, timeZone, queryResponse, showFlameGraph } = this.props;
 
     return (
       <ContentOutlineItem panelId="Graph" title="Graph" icon="graph-bar">
@@ -367,7 +369,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           data={graphResult!}
           height={showFlameGraph ? 180 : 400}
           width={width}
-          absoluteRange={absoluteRange}
+          timeRange={queryResponse.timeRange}
           timeZone={timeZone}
           onChangeTime={this.onUpdateTimeRange}
           annotations={queryResponse.annotations}
@@ -674,7 +676,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showTable,
     showTrace,
     showCustom,
-    absoluteRange,
     queryResponse,
     showNodeGraph,
     showFlameGraph,
@@ -695,7 +696,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     isLive,
     graphResult,
     logsResult: logsResult ?? undefined,
-    absoluteRange,
     queryResponse,
     syncedTimes,
     timeZone,

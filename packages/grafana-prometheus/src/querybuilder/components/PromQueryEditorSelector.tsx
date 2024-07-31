@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryEditorSelector.tsx
 import { isEqual, map } from 'lodash';
-import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
+import { memo, SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
 import { CoreApp, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -37,7 +37,7 @@ export const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2
 
 type Props = PromQueryEditorProps;
 
-export const PromQueryEditorSelector = React.memo<Props>((props) => {
+export const PromQueryEditorSelector = memo<Props>((props) => {
   const {
     onChange,
     onRunQuery,

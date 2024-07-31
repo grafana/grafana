@@ -1,5 +1,5 @@
 import { intersection } from 'lodash';
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 
