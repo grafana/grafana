@@ -47,6 +47,7 @@ func TestSignedInUser(t *testing.T) {
 		require.Equal(t, u.GetName(), res.User.GetName())
 		require.Equal(t, u.GetUID(), res.User.GetUID())
 		require.Equal(t, []string{"1", "2"}, res.User.GetGroups())
+		require.Empty(t, res.User.GetExtra()["id-token"])
 	})
 
 	t.Run("should set ID token when available", func(t *testing.T) {
@@ -71,6 +72,7 @@ func TestSignedInUser(t *testing.T) {
 		require.Equal(t, u.GetName(), res.User.GetName())
 		require.Equal(t, u.GetUID(), res.User.GetUID())
 		require.Equal(t, []string{"1", "2"}, res.User.GetGroups())
+		require.Equal(t, "test-id-token", res.User.GetExtra()["id-token"][0])
 	})
 }
 
