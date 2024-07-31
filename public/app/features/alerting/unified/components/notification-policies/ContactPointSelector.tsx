@@ -1,29 +1,66 @@
-import { SelectableValue } from '@grafana/data';
-import { Select, SelectCommonProps, Text, Stack } from '@grafana/ui';
-import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
+import { css, cx, keyframes } from '@emotion/css';
+import { useState } from 'react';
 
-import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY } from '../contact-points/constants';
-import { useContactPointsWithStatus } from '../contact-points/useContactPoints';
-import { ReceiverConfigWithMetadata } from '../contact-points/utils';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Select, SelectCommonProps, Text, Stack, Alert, IconButton, useStyles2 } from '@grafana/ui';
 
-export const ContactPointSelector = (props: SelectCommonProps<string>) => {
-  const { selectedAlertmanager } = useAlertmanager();
-  const { contactPoints, isLoading, error } = useContactPointsWithStatus({ alertmanager: selectedAlertmanager! });
+import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY, useGetContactPoints } from '../contact-points/useContactPoints';
+import { ContactPointWithMetadata, ReceiverConfigWithMetadata } from '../contact-points/utils';
+
+const MAX_CONTACT_POINTS_RENDERED = 500;
+
+// Mock sleep method, as fetching receivers is very fast and may seem like it hasn't occurred
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const LOADING_SPINNER_DURATION = 1000;
+
+export const ContactPointSelector = ({
+  selectProps,
+  showRefreshButton,
+}: {
+  selectProps: SelectCommonProps<ContactPointWithMetadata>;
+  showRefreshButton?: boolean;
+}) => {
+  const { contactPoints, isLoading, error, refetch } = useGetContactPoints();
+  const [loaderSpinning, setLoaderSpinning] = useState(false);
+  const styles = useStyles2(getStyles);
 
   // TODO error handling
   if (error) {
-    return <span>Failed to load contact points</span>;
+    return <Alert title="Failed to fetch contact points" severity="error" />;
   }
 
-  const options: Array<SelectableValue<string>> = contactPoints.map((contactPoint) => {
+  const options: Array<SelectableValue<ContactPointWithMetadata>> = contactPoints.map((contactPoint) => {
     return {
       label: contactPoint.name,
-      value: contactPoint.name,
+      value: contactPoint,
       component: () => <ReceiversSummary receivers={contactPoint.grafana_managed_receiver_configs} />,
     };
   });
 
-  return <Select options={options} isLoading={isLoading} {...props} />;
+  const onClickRefresh = () => {
+    setLoaderSpinning(true);
+    Promise.all([refetch(), sleep(LOADING_SPINNER_DURATION)]).finally(() => {
+      setLoaderSpinning(false);
+    });
+  };
+
+  return (
+    <Stack>
+      <Select virtualized={options.length > MAX_CONTACT_POINTS_RENDERED} options={options} {...selectProps} />
+      {showRefreshButton && (
+        <IconButton
+          name="sync"
+          onClick={onClickRefresh}
+          aria-label="Refresh contact points"
+          tooltip="Refresh contact points list"
+          className={cx(styles.refreshButton, {
+            [styles.loading]: loaderSpinning || isLoading,
+          })}
+        />
+      )}
+    </Stack>
+  );
 };
 
 interface ReceiversProps {
@@ -50,3 +87,30 @@ const ReceiversSummary = ({ receivers }: ReceiversProps) => {
     </Stack>
   );
 };
+
+const rotation = keyframes({
+  from: {
+    transform: 'rotate(0deg)',
+  },
+  to: {
+    transform: 'rotate(720deg)',
+  },
+});
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  refreshButton: css({
+    color: theme.colors.text.secondary,
+    cursor: 'pointer',
+    borderRadius: theme.shape.radius.circle,
+    overflow: 'hidden',
+  }),
+  loading: css({
+    pointerEvents: 'none',
+    [theme.transitions.handleMotion('no-preference')]: {
+      animation: `${rotation} 2s infinite linear`,
+    },
+    [theme.transitions.handleMotion('reduce')]: {
+      animation: `${rotation} 6s infinite linear`,
+    },
+  }),
+});

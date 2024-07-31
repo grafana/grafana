@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { debounce, isEqual } from 'lodash';
 import { useCallback, useEffect, useRef } from 'react';
 
-import { SelectableValue } from '@grafana/data';
-import { Button, Field, Icon, Input, Label, Select, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { ObjectMatcher, Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { Button, Field, Icon, Input, Label, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
+import { ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { matcherToObjectMatcher } from '../../utils/alertmanager';
@@ -15,14 +15,12 @@ import {
 } from '../../utils/matchers';
 
 interface NotificationPoliciesFilterProps {
-  receivers: Receiver[];
   onChangeMatchers: (labels: ObjectMatcher[]) => void;
   onChangeReceiver: (receiver: string | undefined) => void;
   matchingCount: number;
 }
 
 const NotificationPoliciesFilter = ({
-  receivers,
   onChangeReceiver,
   onChangeMatchers,
   matchingCount,
@@ -49,9 +47,6 @@ const NotificationPoliciesFilter = ({
     }
     setSearchParams({ contactPoint: undefined, queryString: undefined });
   }, [setSearchParams]);
-
-  const receiverOptions: Array<SelectableValue<string>> = receivers.map(toOption);
-  const selectedContactPoint = receiverOptions.find((option) => option.value === contactPoint) ?? null;
 
   const hasFilters = queryString || contactPoint;
 
@@ -103,17 +98,15 @@ const NotificationPoliciesFilter = ({
         />
       </Field>
       <Field label="Search by contact point" style={{ marginBottom: 0 }}>
-        <Select
+        <ContactPointSelector
           id="receiver"
           aria-label="Search by contact point"
-          value={selectedContactPoint}
-          options={receiverOptions}
           onChange={(option) => {
-            setSearchParams({ contactPoint: option?.value });
+            setSearchParams({ contactPoint: option?.value?.name });
           }}
           width={28}
           isClearable
-        />
+        ></ContactPointSelector>
       </Field>
       {hasFilters && (
         <Stack alignItems="center">
@@ -177,11 +170,6 @@ export function findRoutesByMatchers(route: RouteWithID, labelMatchersFilter: Ob
 
   return labelMatchersFilter.every((filter) => routeMatchers.some((matcher) => isEqual(filter, matcher)));
 }
-
-const toOption = (receiver: Receiver) => ({
-  label: receiver.name,
-  value: receiver.name,
-});
 
 const getNotificationPoliciesFilters = (searchParams: URLSearchParams) => ({
   queryString: searchParams.get('queryString') ?? undefined,

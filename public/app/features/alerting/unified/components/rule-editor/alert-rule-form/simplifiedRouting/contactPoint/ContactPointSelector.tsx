@@ -1,19 +1,15 @@
 import { css, cx, keyframes } from '@emotion/css';
 import * as React from 'react';
 import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
+import { useFormContext, Controller } from 'react-hook-form';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import {
-  ActionMeta,
-  Field,
-  FieldValidationMessage,
-  IconButton,
-  Select,
-  Stack,
-  TextLink,
-  useStyles2,
-} from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
+import { ActionMeta, Field, FieldValidationMessage, LoadingPlaceholder, Stack, TextLink } from '@grafana/ui';
+import { ContactPointReceiverSummary } from 'app/features/alerting/unified/components/contact-points/ContactPoint';
+import { useGetContactPoints } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
+import { ContactPointSelector as ContactPointSelectorDropdown } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
@@ -21,39 +17,27 @@ import { ContactPointWithMetadata } from '../../../../contact-points/utils';
 
 export interface ContactPointSelectorProps {
   alertManager: string;
-  options: Array<{
-    label: string;
-    value: ContactPointWithMetadata;
-    description: React.JSX.Element;
-  }>;
   onSelectContactPoint: (contactPoint?: ContactPointWithMetadata) => void;
-  refetchReceivers: () => Promise<unknown>;
 }
 
-const MAX_CONTACT_POINTS_RENDERED = 500;
-
-export function ContactPointSelector({
-  alertManager,
-  options,
-  onSelectContactPoint,
-  refetchReceivers,
-}: ContactPointSelectorProps) {
-  const styles = useStyles2(getStyles);
+export function ContactPointSelector({ alertManager, onSelectContactPoint }: ContactPointSelectorProps) {
+  const { isLoading, contactPoints = [] } = useGetContactPoints();
   const { control, watch, trigger } = useFormContext<RuleFormValues>();
 
   const contactPointInForm = watch(`contactPoints.${alertManager}.selectedContactPoint`);
 
-  const selectedContactPointWithMetadata = options.find((option) => option.value.name === contactPointInForm)?.value;
+  const options = contactPoints.map((receiver) => {
+    const integrations = receiver?.grafana_managed_receiver_configs;
+    const component = () => <ContactPointReceiverSummary receivers={integrations ?? []} />;
+
+    return { label: receiver.name, value: receiver, component };
+  });
+
+  const selectedContactPointWithMetadata = contactPoints.find((option) => option.name === contactPointInForm);
   const selectedContactPointSelectableValue: SelectableValue<ContactPointWithMetadata> =
     selectedContactPointWithMetadata
       ? { value: selectedContactPointWithMetadata, label: selectedContactPointWithMetadata.name }
       : { value: undefined, label: '' };
-
-  const LOADING_SPINNER_DURATION = 1000;
-
-  const [loadingContactPoints, setLoadingContactPoints] = useState(false);
-  // we need to keep track if the fetching takes more than 1 second, so we can show the loading spinner until the fetching is done
-  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
   // if we have a contact point selected, check if it still exists in the event that someone has deleted it
   const validateContactPoint = useCallback(() => {
@@ -62,56 +46,36 @@ export function ContactPointSelector({
     }
   }, [alertManager, contactPointInForm, trigger]);
 
-  const onClickRefresh = () => {
-    setLoadingContactPoints(true);
-    Promise.all([refetchReceivers(), sleep(LOADING_SPINNER_DURATION)]).finally(() => {
-      setLoadingContactPoints(false);
-      validateContactPoint();
-    });
-  };
-
   // validate the contact point and check if it still exists when mounting the component
   useEffect(() => {
     validateContactPoint();
   }, [validateContactPoint]);
 
+  if (isLoading) {
+    return <LoadingPlaceholder text="Loading..." />;
+  }
   return (
     <Stack direction="column">
       <Stack direction="row" alignItems="center">
         <Field label="Contact point" data-testid="contact-point-picker">
           <Controller
-            render={({ field: { onChange, ref, ...field }, fieldState: { error } }) => (
+            render={({ field: { onChange }, fieldState: { error } }) => (
               <>
-                <div className={styles.contactPointsSelector}>
-                  <Select<ContactPointWithMetadata>
-                    virtualized={options.length > MAX_CONTACT_POINTS_RENDERED}
-                    aria-label="Contact point"
-                    defaultValue={selectedContactPointSelectableValue}
-                    onChange={(value: SelectableValue<ContactPointWithMetadata>, _: ActionMeta) => {
-                      onChange(value?.value?.name);
-                      onSelectContactPoint(value?.value);
+                <Stack>
+                  <ContactPointSelectorDropdown
+                    selectProps={{
+                      'aria-label': 'Contact point',
+                      defaultValue: selectedContactPointSelectableValue,
+                      onChange: (value: SelectableValue<ContactPointWithMetadata>, _: ActionMeta) => {
+                        onChange(value?.value?.name);
+                        onSelectContactPoint(value?.value);
+                      },
+                      width: 50,
                     }}
-                    // We are passing a JSX.Element into the "description" for options, which isn't how the TS typings are defined.
-                    // The regular Select component will render it just fine, but we can't update the typings because SelectableValue
-                    // is shared with other components where the "description" _has_ to be a string.
-                    // I've tried unsuccessfully to separate the typings just I'm giving up :'(
-                    // @ts-ignore
-                    options={options}
-                    width={50}
+                    showRefreshButton
                   />
-                  <div className={styles.contactPointsInfo}>
-                    <IconButton
-                      name="sync"
-                      onClick={onClickRefresh}
-                      aria-label="Refresh contact points"
-                      tooltip="Refresh contact points list"
-                      className={cx(styles.refreshButton, {
-                        [styles.loading]: loadingContactPoints,
-                      })}
-                    />
-                    <LinkToContactPoints />
-                  </div>
-                </div>
+                  <LinkToContactPoints />
+                </Stack>
 
                 {/* Error can come from the required validation we have in here, or from the manual setError we do in the parent component.
                 The only way I found to check the custom error is to check if the field has a value and if it's not in the options. */}
@@ -149,47 +113,3 @@ function LinkToContactPoints() {
     </TextLink>
   );
 }
-
-const rotation = keyframes({
-  from: {
-    transform: 'rotate(720deg)',
-  },
-  to: {
-    transform: 'rotate(0deg)',
-  },
-});
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  contactPointsSelector: css({
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-    marginTop: theme.spacing(1),
-  }),
-  contactPointsInfo: css({
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing(1),
-  }),
-  refreshButton: css({
-    color: theme.colors.text.secondary,
-    cursor: 'pointer',
-    borderRadius: theme.shape.radius.circle,
-    overflow: 'hidden',
-  }),
-  loading: css({
-    pointerEvents: 'none',
-    [theme.transitions.handleMotion('no-preference')]: {
-      animation: `${rotation} 2s infinite linear`,
-    },
-    [theme.transitions.handleMotion('reduce')]: {
-      animation: `${rotation} 6s infinite linear`,
-    },
-  }),
-  warn: css({
-    color: theme.colors.warning.text,
-  }),
-});
