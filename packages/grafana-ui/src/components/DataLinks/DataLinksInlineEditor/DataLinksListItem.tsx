@@ -88,6 +88,7 @@ const getDataLinkListItemStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
+      maxWidth: '80%',
     }),
     errored: css({
       color: theme.colors.error.text,
@@ -107,7 +108,6 @@ const getDataLinkListItemStyles = (theme: GrafanaTheme2) => {
       whiteSpace: 'nowrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
-      maxWidth: '90%',
     }),
     dragRow: css({
       position: 'relative',
