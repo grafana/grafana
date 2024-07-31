@@ -1,5 +1,7 @@
+import { DataTransformerConfig } from '@grafana/schema';
+
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { DataTransformerConfig, FieldType } from '../../types';
+import { FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
 
