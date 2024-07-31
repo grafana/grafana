@@ -99,6 +99,14 @@
         "title": "Unable to display all events"
       }
     },
+    "common": {
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "export": "Export",
+      "export-all": "Export all",
+      "view": "View"
+    },
     "contact-points": {
       "delivery-duration": "Last delivery took <1></1>",
       "last-delivery-attempt": "Last delivery attempt",
@@ -118,6 +126,16 @@
       "new-recording-rule": "New recording rule",
       "title": "Grafana"
     },
+    "mute_timings": {
+      "error-loading": {
+        "description": "Could not load mute timings. Please try again later.",
+        "title": "Error loading mute timings"
+      }
+    },
+    "mute-timings": {
+      "save": "Save mute timing",
+      "saving": "Saving mute timing"
+    },
     "policies": {
       "metadata": {
         "timingOptions": {
@@ -135,6 +153,10 @@
           }
         }
       }
+    },
+    "provisioning": {
+      "badge-tooltip-provenance": "This resource has been provisioned via {{provenance}} and cannot be edited through the UI",
+      "badge-tooltip-standard": "This resource has been provisioned and cannot be edited through the UI"
     },
     "rule-groups": {
       "delete": {

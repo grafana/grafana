@@ -12,8 +12,10 @@ import mimirRulerHandlers from 'app/features/alerting/unified/mocks/server/handl
 import notificationsHandlers from 'app/features/alerting/unified/mocks/server/handlers/notifications';
 import pluginsHandlers from 'app/features/alerting/unified/mocks/server/handlers/plugins';
 import allPluginHandlers from 'app/features/alerting/unified/mocks/server/handlers/plugins/all-plugin-handlers';
+import provisioningHandlers from 'app/features/alerting/unified/mocks/server/handlers/provisioning';
 import searchHandlers from 'app/features/alerting/unified/mocks/server/handlers/search';
 import silenceHandlers from 'app/features/alerting/unified/mocks/server/handlers/silences';
+import timeIntervalK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/timeIntervals.k8s';
 
 /**
  * Array of all mock handlers that are required across Alerting tests
@@ -27,11 +29,15 @@ const allHandlers = [
   ...evalHandlers,
   ...folderHandlers,
   ...pluginsHandlers,
+  ...provisioningHandlers,
   ...silenceHandlers,
   ...searchHandlers,
   ...notificationsHandlers,
 
   ...allPluginHandlers,
+
+  // Kubernetes-style handlers
+  ...timeIntervalK8sHandlers,
 ];
 
 export default allHandlers;
