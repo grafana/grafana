@@ -2,13 +2,13 @@ package interceptors
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-
-	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 const tracingPrefix = "gRPC Server "
@@ -21,9 +21,14 @@ func TracingUnaryInterceptor(tracer tracing.Tracer) grpc.UnaryServerInterceptor 
 		handler grpc.UnaryHandler,
 	) (resp any, err error) {
 		if md, ok := metadata.FromIncomingContext(ctx); ok {
+			fmt.Println("metadata.FromIncomingContext(ctx)", md)
 			ctx = otel.GetTextMapPropagator().Extract(ctx, propagation.HeaderCarrier(md))
+
+			// trace info is present in the metadata, but its not getting propagated to the context properly
+			// TODO propagate trace from metadata to ctx
 		}
 
+		fmt.Println("traceID received", tracing.TraceIDFromContext(ctx, false))
 		ctx, span := tracer.Start(ctx, tracingPrefix+info.FullMethod)
 		defer span.End()
 		resp, err = handler(ctx, req)

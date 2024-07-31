@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
@@ -205,18 +206,24 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 	s.builders = append(s.builders, b)
 }
 
-func unaryMetadataInjectInterceptor(traceId string) grpc.UnaryClientInterceptor {
+func unaryMetadataInjectInterceptor(ctx context.Context) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		meta := metadata.Pairs("trace-id", traceId)
-		//TODO is this the right traceID syntax? Does it matter?
-		fmt.Println("trace-id", traceId)
-		ctx = metadata.NewOutgoingContext(ctx, meta)
+		spanCtx := trace.SpanContextFromContext(ctx)
+		traceID := spanCtx.TraceID().String()
+		spanID := spanCtx.SpanID().String()
+		// not sure what I need to pass here to get it to propagate
+		ctx = metadata.AppendToOutgoingContext(ctx, "trace_id", traceID)
+		ctx = metadata.AppendToOutgoingContext(ctx, "span_id", spanID)
+		ctx = metadata.AppendToOutgoingContext(ctx, "traceparent", "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01")
 		return invoker(ctx, method, req, reply, cc, opts...)
 	}
 }
 
 // nolint:gocyclo
 func (s *service) start(ctx context.Context) error {
+	ctx, span := s.tracing.Start(ctx, "apiserver.start")
+	defer span.End()
+
 	defer close(s.startedCh)
 
 	// Get the list of groups the server will support
@@ -293,10 +300,12 @@ func (s *service) start(ctx context.Context) error {
 			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
 
-		//traceID := tracing.TraceIDFromContext(ctx, false)
+		traceID := tracing.TraceIDFromContext(ctx, false)
+		fmt.Println("Propagating traceID from apiserver", traceID)
+
 		opts := []grpc.DialOption{
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithUnaryInterceptor(unaryMetadataInjectInterceptor("hello-world")),
+			grpc.WithUnaryInterceptor(unaryMetadataInjectInterceptor(ctx)),
 		}
 		// Create a connection to the gRPC server
 		conn, err := grpc.NewClient(o.StorageOptions.Address, opts...)
