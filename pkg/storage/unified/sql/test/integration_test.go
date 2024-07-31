@@ -60,7 +60,7 @@ func newServer(t *testing.T) (sql.Backend, resource.ResourceServer) {
 }
 
 func TestIntegrationBackendHappyPath(t *testing.T) {
-	t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
+	// t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -168,7 +168,7 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 }
 
 func TestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T) {
-	t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
+	// t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -325,7 +325,7 @@ func TestIntegrationBackendList(t *testing.T) {
 	})
 }
 func TestClientServer(t *testing.T) {
-	t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
+	// t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 	dbstore := infraDB.InitTestDB(t)
 
