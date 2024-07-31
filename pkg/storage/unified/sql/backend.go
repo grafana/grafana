@@ -17,6 +17,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/protobuf/proto"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 const trace_prefix = "sql.resource."
@@ -426,7 +427,7 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 		if rows != nil {
 			defer func() {
 				if err := rows.Close(); err != nil {
-					b.log.Warn("error closing rows", "error", err)
+					b.log.Warn("listLatest error closing rows", "error", err)
 				}
 			}()
 		}
@@ -450,9 +451,13 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 		}
 		iter.listRV = continueToken.ResourceVersion
 		iter.offset = continueToken.StartOffset
+
+		if req.ResourceVersion != 0 && req.ResourceVersion != iter.listRV {
+			return 0, apierrors.NewBadRequest("request resource version does not math token")
+		}
 	}
 	if iter.listRV < 1 {
-		return 0, fmt.Errorf("expecting an explicit resource version query")
+		return 0, apierrors.NewBadRequest("expecting an explicit resource version query")
 	}
 
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
@@ -470,7 +475,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 		if rows != nil {
 			defer func() {
 				if err := rows.Close(); err != nil {
-					b.log.Warn("error closing rows", "error", err)
+					b.log.Warn("listAtRevision error closing rows", "error", err)
 				}
 			}()
 		}
@@ -647,7 +652,7 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 // in a single roundtrip. This would reduce the latency of the operation, and also increase the
 // throughput of the system. This is a good candidate for a future optimization.
 func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, key *resource.ResourceKey) (newVersion int64, err error) {
-	// TODO: refactor this code to run in a multi-statement transaction in order to minimise the number of roundtrips.
+	// TODO: refactor this code to run in a multi-statement transaction in order to minimize the number of round trips.
 	// 1 Lock the row for update
 	rv, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionRequest{
 		SQLTemplate:     sqltemplate.New(d),
@@ -687,6 +692,6 @@ func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemp
 		return 0, fmt.Errorf("increase resource version: %w", err)
 	}
 
-	// 3. Retun the incremended value
+	// 3. Return the incremented value
 	return nextRV, nil
 }
