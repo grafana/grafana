@@ -3,6 +3,7 @@ import { memo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { t } from 'app/core/internationalization';
@@ -91,17 +92,31 @@ const RecentlyDeletedPage = memo(() => {
 });
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  pageContents: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1),
-    height: '100%',
-  }),
+  pageContents: css(
+    {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
+    },
+    config.featureToggles.bodyScrolling
+      ? {
+          flex: 1,
+        }
+      : {
+          height: '100%',
+        }
+  ),
 
   // AutoSizer needs an element to measure the full height available
-  subView: css({
-    height: '100%',
-  }),
+  subView: css(
+    config.featureToggles.bodyScrolling
+      ? {
+          flex: 1,
+        }
+      : {
+          height: '100%',
+        }
+  ),
 
   filters: css({
     display: 'none',
