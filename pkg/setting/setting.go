@@ -342,8 +342,6 @@ type Cfg struct {
 	ExternalSnapshotUrl  string
 	ExternalSnapshotName string
 	ExternalEnabled      bool
-	// Deprecated: setting this to false adds deprecation warnings at runtime
-	SnapShotRemoveExpired bool
 
 	// Only used in https://snapshots.raintank.io/
 	SnapshotPublicMode bool
@@ -1851,7 +1849,6 @@ func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 	cfg.ExternalSnapshotName = valueAsString(snapshots, "external_snapshot_name", "")
 
 	cfg.ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
-	cfg.SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
 	cfg.SnapshotPublicMode = snapshots.Key("public_mode").MustBool(false)
 
 	return nil
