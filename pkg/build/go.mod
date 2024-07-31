@@ -33,7 +33,7 @@ require (
 	github.com/stretchr/testify v1.9.0 // @grafana/grafana-backend-group
 	github.com/urfave/cli v1.22.15 // @grafana/grafana-backend-group
 	github.com/urfave/cli/v2 v2.27.1 // @grafana/grafana-backend-group
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.51.0 // indirect; @grafana/plugins-platform-backend
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.53.0 // indirect; @grafana/plugins-platform-backend
 	go.opentelemetry.io/otel v1.28.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.28.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.28.0 // indirect; @grafana/grafana-backend-group
@@ -46,7 +46,7 @@ require (
 	golang.org/x/time v0.5.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/tools v0.22.0 // indirect; @grafana/grafana-as-code
 	google.golang.org/api v0.176.0 // @grafana/grafana-backend-group
-	google.golang.org/grpc v1.64.1 // indirect; @grafana/plugins-platform-backend
+	google.golang.org/grpc v1.65.0 // indirect; @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.34.2 // indirect; @grafana/plugins-platform-backend
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
 )
