@@ -24,6 +24,7 @@ export function ContactPointsFilterSelector({ onSelectContactPoint }: ContactPoi
       <ContactPointSelector
         showRefreshButton
         selectProps={{
+          width: 40,
           onChange: (selectValue) => {
             onSelectContactPoint(selectValue.value?.name!);
           },

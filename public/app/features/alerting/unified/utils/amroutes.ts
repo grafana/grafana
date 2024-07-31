@@ -212,7 +212,7 @@ export const stringToSelectableValue = (str: string): SelectableValue<string> =>
 export const stringsToSelectableValues = (arr: string[] | undefined): Array<SelectableValue<string>> =>
   (arr ?? []).map(stringToSelectableValue);
 
-export const mapSelectValueToString = (selectableValue: SelectableValue<string>): string | null => {
+export const mapSelectValueToString = <T>(selectableValue: SelectableValue<T>): string | null => {
   // this allows us to deal with cleared values
   if (selectableValue === null) {
     return null;

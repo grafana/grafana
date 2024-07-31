@@ -6,9 +6,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { useFormContext, Controller } from 'react-hook-form';
 
 import { SelectableValue } from '@grafana/data';
-import { ActionMeta, Field, FieldValidationMessage, LoadingPlaceholder, Stack, TextLink } from '@grafana/ui';
-import { ContactPointReceiverSummary } from 'app/features/alerting/unified/components/contact-points/ContactPoint';
-import { useGetContactPoints } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
+import { ActionMeta, Field, FieldValidationMessage, Stack, TextLink } from '@grafana/ui';
 import { ContactPointSelector as ContactPointSelectorDropdown } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
@@ -21,23 +19,9 @@ export interface ContactPointSelectorProps {
 }
 
 export function ContactPointSelector({ alertManager, onSelectContactPoint }: ContactPointSelectorProps) {
-  const { isLoading, contactPoints = [] } = useGetContactPoints();
   const { control, watch, trigger } = useFormContext<RuleFormValues>();
 
   const contactPointInForm = watch(`contactPoints.${alertManager}.selectedContactPoint`);
-
-  const options = contactPoints.map((receiver) => {
-    const integrations = receiver?.grafana_managed_receiver_configs;
-    const component = () => <ContactPointReceiverSummary receivers={integrations ?? []} />;
-
-    return { label: receiver.name, value: receiver, component };
-  });
-
-  const selectedContactPointWithMetadata = contactPoints.find((option) => option.name === contactPointInForm);
-  const selectedContactPointSelectableValue: SelectableValue<ContactPointWithMetadata> =
-    selectedContactPointWithMetadata
-      ? { value: selectedContactPointWithMetadata, label: selectedContactPointWithMetadata.name }
-      : { value: undefined, label: '' };
 
   // if we have a contact point selected, check if it still exists in the event that someone has deleted it
   const validateContactPoint = useCallback(() => {
@@ -51,9 +35,6 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
     validateContactPoint();
   }, [validateContactPoint]);
 
-  if (isLoading) {
-    return <LoadingPlaceholder text="Loading..." />;
-  }
   return (
     <Stack direction="column">
       <Stack direction="row" alignItems="center">
@@ -64,8 +45,6 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
                 <Stack>
                   <ContactPointSelectorDropdown
                     selectProps={{
-                      'aria-label': 'Contact point',
-                      defaultValue: selectedContactPointSelectableValue,
                       onChange: (value: SelectableValue<ContactPointWithMetadata>, _: ActionMeta) => {
                         onChange(value?.value?.name);
                         onSelectContactPoint(value?.value);
@@ -73,6 +52,7 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
                       width: 50,
                     }}
                     showRefreshButton
+                    selectedContactPointName={contactPointInForm}
                   />
                   <LinkToContactPoints />
                 </Stack>
@@ -87,14 +67,6 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
               required: {
                 value: true,
                 message: 'Contact point is required.',
-              },
-              validate: {
-                contactPointExists: (value: string) => {
-                  if (options.some((option) => option.value.name === value)) {
-                    return true;
-                  }
-                  return `Contact point ${contactPointInForm} does not exist.`;
-                },
               },
             }}
             control={control}
