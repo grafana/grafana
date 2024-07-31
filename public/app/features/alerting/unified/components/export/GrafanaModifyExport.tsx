@@ -11,7 +11,7 @@ import { stringifyErrorLike } from '../../utils/misc';
 import { formValuesFromExistingRule } from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
 import { isGrafanaRulerRule } from '../../utils/rules';
-import { createUrl } from '../../utils/url';
+import { createRelativeUrl } from '../../utils/url';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { ModifyExportRuleForm } from '../rule-editor/alert-rule-form/ModifyExportRuleForm';
 
@@ -79,7 +79,7 @@ function RuleModifyExport({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }
       <Alert
         title="Cannot load the rule. The rule does not exist"
         buttonContent="Go back to alert list"
-        onRemove={() => locationService.replace(createUrl('/alerting/list'))}
+        onRemove={() => locationService.replace(createRelativeUrl('/alerting/list'))}
       />
     );
   }
@@ -90,7 +90,7 @@ function RuleModifyExport({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }
       <Alert
         title="This rule is not a Grafana-managed alert rule"
         buttonContent="Go back to alert list"
-        onRemove={() => locationService.replace(createUrl('/alerting/list'))}
+        onRemove={() => locationService.replace(createRelativeUrl('/alerting/list'))}
       />
     );
   }

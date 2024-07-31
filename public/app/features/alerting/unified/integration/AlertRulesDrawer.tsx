@@ -3,7 +3,7 @@ import { lazy, Suspense } from 'react';
 import { Drawer, LoadingPlaceholder, Stack, TextLink } from '@grafana/ui';
 
 import { t } from '../../../../core/internationalization';
-import { createUrl } from '../utils/url';
+import { createRelativeUrl } from '../utils/url';
 
 const AlertRulesDrawerContent = lazy(
   () => import(/* webpackChunkName: "alert-rules-drawer-content" */ './AlertRulesDrawerContent')
@@ -30,7 +30,7 @@ function DrawerSubtitle({ dashboardUid }: { dashboardUid: string }) {
   return (
     <Stack gap={2}>
       <div>{t('dashboard.alert-rules-drawer.subtitle', 'Alert rules related to this dashboard')}</div>
-      <TextLink href={createUrl(`/alerting/list/?${searchParams.toString()}`)}>
+      <TextLink href={createRelativeUrl(`/alerting/list/?${searchParams.toString()}`)}>
         {t('dashboard.alert-rules-drawer.redirect-link', 'List in Grafana Alerting')}
       </TextLink>
     </Stack>
