@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math"
 	"sync"
 	"time"
 
@@ -461,11 +462,15 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 	}
 
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+		limit := int64(0) // ignore limit
+		if iter.offset > 0 {
+			limit = math.MaxInt64 // a limit is required for offset
+		}
 		listReq := sqlResourceHistoryListRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Request: &historyListRequest{
 				ResourceVersion: iter.listRV,
-				Limit:           0, // use the iterator to limit
+				Limit:           limit,
 				Offset:          iter.offset,
 				Options:         req.Options,
 			},

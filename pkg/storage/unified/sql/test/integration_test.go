@@ -199,7 +199,7 @@ func TestIntegrationBackendList(t *testing.T) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 	backend, server := newServer(t)
 
-	// Create a few resources before initing the watch
+	// Create a few resources before starting the watch
 	_, _ = writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)    // rv=1
 	_, _ = writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED)    // rv=2 - will be modified at rv=6
 	_, _ = writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED)    // rv=3 - will be deleted  at rv=7
@@ -297,7 +297,6 @@ func TestIntegrationBackendList(t *testing.T) {
 	})
 
 	t.Run("fetch second page at revision", func(t *testing.T) {
-		// t.Skip()
 		continueToken := &sql.ContinueToken{
 			ResourceVersion: 8,
 			StartOffset:     2,
@@ -315,6 +314,7 @@ func TestIntegrationBackendList(t *testing.T) {
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 2)
+		t.Log(res.Items)
 		require.Equal(t, "item5 ADDED", string(res.Items[0].Value))
 		require.Equal(t, "item4 ADDED", string(res.Items[1].Value))
 
