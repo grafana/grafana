@@ -9,7 +9,6 @@ import (
 )
 
 func enableTraceQLStreaming(mg *Migrator) {
-
 	mg.AddMigration("Enable traceQL streaming for all Tempo datasources", &AddTraceQLStreamingToJsonData{})
 }
 
