@@ -3205,7 +3205,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-core@npm:^1.3.6, @grafana/faro-core@npm:^1.7.3, @grafana/faro-core@npm:^1.8.2":
+"@grafana/faro-core@npm:^1.3.6, @grafana/faro-core@npm:^1.8.2":
   version: 1.8.2
   resolution: "@grafana/faro-core@npm:1.8.2"
   dependencies:
@@ -3215,18 +3215,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-web-sdk@npm:1.7.3":
-  version: 1.7.3
-  resolution: "@grafana/faro-web-sdk@npm:1.7.3"
-  dependencies:
-    "@grafana/faro-core": "npm:^1.7.3"
-    ua-parser-js: "npm:^1.0.32"
-    web-vitals: "npm:^3.1.1"
-  checksum: 10/b9962241f0e095ab3a9eb0e5810dec56b971b600fce61a98f2fc0b1b97874621c0ba82a84e3c25f5c66696e27bf06bb0bc5cb34f4c0faf539ebab07a7374673a
-  languageName: node
-  linkType: hard
-
-"@grafana/faro-web-sdk@npm:^1.3.6":
+"@grafana/faro-web-sdk@npm:1.8.2, @grafana/faro-web-sdk@npm:^1.3.6":
   version: 1.8.2
   resolution: "@grafana/faro-web-sdk@npm:1.8.2"
   dependencies:
@@ -3403,7 +3392,7 @@ __metadata:
     "@grafana/data": "npm:11.2.0-pre"
     "@grafana/e2e-selectors": "npm:11.2.0-pre"
     "@grafana/experimental": "npm:1.7.13"
-    "@grafana/faro-web-sdk": "npm:1.7.3"
+    "@grafana/faro-web-sdk": "npm:1.8.2"
     "@grafana/runtime": "npm:11.2.0-pre"
     "@grafana/schema": "npm:11.2.0-pre"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
@@ -30339,13 +30328,6 @@ __metadata:
   dependencies:
     defaults: "npm:^1.0.3"
   checksum: 10/182ebac8ca0b96845fae6ef44afd4619df6987fe5cf552fdee8396d3daa1fb9b8ec5c6c69855acb7b3c1231571393bd1f0a4cdc4028d421575348f64bb0a8817
-  languageName: node
-  linkType: hard
-
-"web-vitals@npm:^3.1.1":
-  version: 3.1.1
-  resolution: "web-vitals@npm:3.1.1"
-  checksum: 10/4ccf63501e06fcd7cff063f1355195b5755afcc0b7c18991d89398fab5626ebc4331b71dcdb2ae525a5940f4e7c9c7f859e3bd3c27476dab1d1c7d8f5e472029
   languageName: node
   linkType: hard
 
