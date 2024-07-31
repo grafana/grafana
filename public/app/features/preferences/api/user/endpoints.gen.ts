@@ -38,7 +38,7 @@ export type CookiePreferencesDefinesModelForCookiePreferences = {
   };
 };
 export type NavbarPreferenceDefinesModelForNavbarPreference = {
-  bookmarkIds?: string[];
+  bookmarkUrls?: string[];
 };
 export type QueryHistoryPreferenceDefinesModelForQueryHistoryPreference = {
   /** HomeTab one of: '' | 'query' | 'starred'; */

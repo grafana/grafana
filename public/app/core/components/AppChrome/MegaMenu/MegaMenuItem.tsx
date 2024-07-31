@@ -104,9 +104,8 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
             }}
             target={link.target}
             url={link.url}
-            id={link.id}
             onPin={() => onPin(link)}
-            isPinned={isPinned(link.id)}
+            isPinned={isPinned(link.url)}
           >
             <div
               className={cx(styles.labelWrapper, {

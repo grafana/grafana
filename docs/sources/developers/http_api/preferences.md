@@ -53,7 +53,7 @@ Content-Type: application/json
     "timezone": "utc",
     "weekStart": "",
     "navbar": {
-        "bookmarkIds": null
+        "bookmarkUrls": null
     },
     "queryHistory": {
         "homeTab": ""
@@ -142,7 +142,7 @@ Content-Type: application/json
     "timezone": "",
     "weekStart": "",
     "navbar": {
-        "bookmarkIds": null
+        "bookmarkUrls": null
     },
     "queryHistory": {
         "homeTab": ""

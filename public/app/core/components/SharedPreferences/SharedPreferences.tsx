@@ -73,7 +73,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       weekStart: '',
       language: '',
       queryHistory: { homeTab: '' },
-      navbar: { bookmarkIds: [] },
+      navbar: { bookmarkUrls: [] },
     };
 
     this.themeOptions = getBuiltInThemes(config.featureToggles.extraThemes).map((theme) => ({

@@ -13,12 +13,11 @@ export interface Props {
   onClick?: () => void;
   target?: HTMLAnchorElement['target'];
   url: string;
-  id?: string;
   onPin: (id?: string) => void;
   isPinned?: boolean;
 }
 
-export function MegaMenuItemText({ children, isActive, onClick, target, url, id, onPin, isPinned }: Props) {
+export function MegaMenuItemText({ children, isActive, onClick, target, url, onPin, isPinned }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme, isActive);
   const LinkComponent = !target && url.startsWith('/') ? Link : 'a';
@@ -51,12 +50,12 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, id,
       >
         {linkContent}
       </LinkComponent>
-      {config.featureToggles.pinNavItems && id && id !== 'bookmarks' && (
+      {config.featureToggles.pinNavItems && url && url !== '/bookmarks' && (
         <IconButton
           name="bookmark"
           className={'pin-icon'}
           iconType={isPinned ? 'solid' : 'default'}
-          onClick={() => onPin(id)}
+          onClick={() => onPin(url)}
           aria-label={
             isPinned
               ? t('navigation.item.remove-bookmark', 'Remove from Bookmarks')

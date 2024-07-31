@@ -54,29 +54,28 @@ export const MegaMenu = memo(
     };
 
     const isPinned = useCallback(
-      (id?: string) => {
-        if (!id || !pinnedItems?.length) {
+      (url?: string) => {
+        if (!url || !pinnedItems?.length) {
           return false;
         }
-        return pinnedItems?.includes(id);
+        return pinnedItems?.includes(url);
       },
       [pinnedItems]
     );
 
     const onPinItem = (item: NavModelItem) => {
-      const id = item.id;
-      if (id && config.featureToggles.pinNavItems) {
-        const navItem = navTree.find((item) => item.id === id);
-        const isSaved = isPinned(id);
-        const newItems = isSaved ? pinnedItems.filter((i) => id !== i) : [...pinnedItems, id];
+      const url = item.url;
+      if (url && config.featureToggles.pinNavItems) {
+        const isSaved = isPinned(url);
+        const newItems = isSaved ? pinnedItems.filter((i) => url !== i) : [...pinnedItems, url];
         const interactionName = isSaved ? 'grafana_nav_item_unpinned' : 'grafana_nav_item_pinned';
         reportInteraction(interactionName, {
-          path: navItem?.url ?? id,
+          path: url,
         });
         patchPreferences({
           patchPrefsCmd: {
             navbar: {
-              bookmarkIds: newItems,
+              bookmarkUrls: newItems,
             },
           },
         }).then((data) => {

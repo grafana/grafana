@@ -18,7 +18,7 @@ type CookiePreferences struct {
 
 // NavbarPreference defines model for NavbarPreference.
 type NavbarPreference struct {
-	BookmarkIds []string `json:"bookmarkIds"`
+	BookmarkUrls []string `json:"bookmarkUrls"`
 }
 
 // QueryHistoryPreference defines model for QueryHistoryPreference.
