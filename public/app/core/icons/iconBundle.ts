@@ -180,6 +180,7 @@ import u1169 from '../../../img/icons/mono/heart-break.svg';
 import u1170 from '../../../img/icons/mono/panel-add.svg';
 import u1171 from '../../../img/icons/mono/library-panel.svg';
 import u1172 from '../../../img/icons/unicons/record-audio.svg';
+import u1173 from '../../../img/icons/solid/bookmark.svg';
 // do not edit this list directly
 // the list of icons live here: @grafana/ui/components/Icon/cached.json
 
@@ -386,6 +387,7 @@ export function initIconCache() {
   cacheItem(u1170, resolvePath('mono/panel-add.svg'));
   cacheItem(u1171, resolvePath('mono/library-panel.svg'));
   cacheItem(u1172, resolvePath('unicons/record-audio.svg'));
+  cacheItem(u1173, resolvePath('solid/bookmark.svg'));
   // do not edit this list directly
   // the list of icons live here: @grafana/ui/components/Icon/cached.json
 }
