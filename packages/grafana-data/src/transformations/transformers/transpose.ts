@@ -1,6 +1,6 @@
 import { map } from 'rxjs/operators';
 
-import { DataFrame, FieldType } from '../../types/dataFrame';
+import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
@@ -38,11 +38,10 @@ export const transposeTransformer: DataTransformerInfo<TransposeTransformerOptio
 
 function transposeDataFrame(options: TransposeTransformerOptions, data: DataFrame[]): DataFrame[] {
   return data.map((frame) => {
+    const firstField = frame.fields[0];
     const headers = options.addNewFields
-      ? ['Field'].concat(Array.from({ length: frame.fields[0].values.length }, (_, i) => `Value${i + 1}`))
-      : [frame.fields[0].name].concat(
-          frame.fields[0].values.map((value) => convertValueToString(frame.fields[0].type, value))
-        );
+      ? ['Field'].concat(firstField.values.map((_, i) => `Value${i + 1}`))
+      : [firstField.name].concat(fieldValuesAsStrings(firstField, firstField.values));
     const rows = options.addNewFields
       ? frame.fields.map((field) => field.name)
       : frame.fields.map((field) => field.name).slice(1);
@@ -68,14 +67,14 @@ function transposeDataFrame(options: TransposeTransformerOptions, data: DataFram
         values: options.addNewFields
           ? frame.fields.map((field) => {
               if (fieldType === FieldType.string) {
-                return convertValueToString(field.type, field.values[index - 1]);
+                return fieldValuesAsStrings(field, [field.values[index - 1]])[0];
               }
               return field.values[index - 1];
             })
           : frame.fields
               .map((field) => {
                 if (fieldType === FieldType.string) {
-                  return convertValueToString(field.type, field.values[index - 1]);
+                  return fieldValuesAsStrings(field, [field.values[index - 1]])[0];
                 }
                 return field.values[index - 1];
               })
@@ -87,7 +86,7 @@ function transposeDataFrame(options: TransposeTransformerOptions, data: DataFram
     return {
       ...frame,
       fields: newFields,
-      length: newFields.map((field) => field.values.length).reduce((a, b) => Math.max(a, b), 0),
+      length: Math.max(...newFields.map((field) => field.values.length)),
     };
   });
 }
@@ -100,29 +99,16 @@ function determineFieldType(fieldTypes: FieldType[]): FieldType {
   return FieldType.string;
 }
 
-function convertValueToString(originalFieldType: FieldType, value: unknown): string {
-  switch (typeof value) {
-    case 'string':
-      return value;
-    case 'boolean':
-      return value ? 'true' : 'false';
-    case 'number':
-      return value.toString();
-    case 'object':
-      if (Array.isArray(value)) {
-        return JSON.stringify(value);
-      } else if (value instanceof Date) {
-        return value.toString();
-      } else if (value === null) {
-        return 'null';
-      } else if (originalFieldType === FieldType.frame) {
-        return JSON.stringify(value);
-      } else if (originalFieldType === FieldType.enum) {
-        return value.toString();
-      } else {
-        return JSON.stringify(value);
-      }
+function fieldValuesAsStrings(field: Field, values: any[]) {
+  switch (field.type) {
+    case FieldType.time:
+    case FieldType.number:
+    case FieldType.boolean:
+    case FieldType.string:
+      return values.map((v) => `${v}`);
+    case FieldType.enum:
+      return values.map((v) => field.config.type!.enum!.text![v]);
     default:
-      return '';
+      return values.map((v) => JSON.stringify(v));
   }
 }
