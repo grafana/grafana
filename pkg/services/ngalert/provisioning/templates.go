@@ -178,10 +178,26 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 		revision.Config.TemplateFiles = map[string]string{}
 	}
 
-	existingName := tmpl.Name
-	exisitingContent, found := revision.Config.TemplateFiles[existingName]
+	var found bool
+	var existingName, existingContent string
+	// if UID is specified, look by UID.
+	if tmpl.UID != "" {
+		existingName, existingContent, found = getTemplateByUid(revision.Config.TemplateFiles, tmpl.UID)
+		// do not fall back to name because we address by UID, and resource can be deleted\renamed
+	} else {
+		existingName = tmpl.Name
+		existingContent, found = revision.Config.TemplateFiles[existingName]
+	}
 	if !found {
 		return definitions.NotificationTemplate{}, ErrTemplateNotFound.Errorf("")
+	}
+
+	if existingName != tmpl.Name { // if template is renamed, check if this name is already taken
+		_, ok := revision.Config.TemplateFiles[tmpl.Name]
+		if ok {
+			// return error if template is being renamed to one that already exists
+			return definitions.NotificationTemplate{}, ErrTemplateExists.Errorf("")
+		}
 	}
 
 	// check that provenance is not changed in an invalid way
@@ -193,7 +209,7 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 		return definitions.NotificationTemplate{}, err
 	}
 
-	err = t.checkOptimisticConcurrency(tmpl.Name, exisitingContent, models.Provenance(tmpl.Provenance), tmpl.ResourceVersion, "update")
+	err = t.checkOptimisticConcurrency(tmpl.Name, existingContent, models.Provenance(tmpl.Provenance), tmpl.ResourceVersion, "update")
 	if err != nil {
 		return definitions.NotificationTemplate{}, err
 	}
@@ -201,6 +217,14 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 	revision.Config.TemplateFiles[tmpl.Name] = tmpl.Template
 
 	err = t.xact.InTransaction(ctx, func(ctx context.Context) error {
+		if existingName != tmpl.Name { // if template by was found by UID and it's name is different, then this is the rename operation. Delete old resources.
+			delete(revision.Config.TemplateFiles, existingName)
+			err := t.provenanceStore.DeleteProvenance(ctx, &definitions.NotificationTemplate{Name: existingName}, orgID)
+			if err != nil {
+				return err
+			}
+		}
+
 		if err := t.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
@@ -211,7 +235,7 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 	}
 
 	return definitions.NotificationTemplate{
-		UID:             legacy_storage.NameToUid(tmpl.Name),
+		UID:             legacy_storage.NameToUid(tmpl.Name), // if name was changed, this UID will not match the incoming one
 		Name:            tmpl.Name,
 		Template:        tmpl.Template,
 		Provenance:      tmpl.Provenance,
