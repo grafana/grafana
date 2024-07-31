@@ -82,7 +82,7 @@ export function splitQueriesByStreamShard(datasource: LokiDatasource, request: D
           }
         });
         console.log(`Sharding up to ${endShard}`);
-        runNextRequest(subscriber, 0);
+        runNextRequest(subscriber, -1);
       }).catch((e) => {
         console.error(e);
         shouldStop = true;

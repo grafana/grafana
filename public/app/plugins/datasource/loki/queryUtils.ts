@@ -331,8 +331,9 @@ export const addShardingPlaceholderSelector = (query: string) => {
 }
 
 export const interpolateShardingSelector = (queries: LokiQuery[], shard: number) => {
+  const shardValue = shard < 0 ? '' : shard.toString();
   return queries.map(query => ({
     ...query,
-    expr: query.expr.replace(new RegExp(`${SHARDING_PLACEHOLDER}`, 'g'), shard.toString()),
+    expr: query.expr.replace(new RegExp(`${SHARDING_PLACEHOLDER}`, 'g'), shardValue),
   }))
 }
