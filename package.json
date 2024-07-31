@@ -285,7 +285,7 @@
     "@react-aria/focus": "3.18.1",
     "@react-aria/overlays": "3.23.1",
     "@react-aria/utils": "3.25.1",
-    "@react-awesome-query-builder/ui": "6.5.2",
+    "@react-awesome-query-builder/ui": "6.6.2",
     "@reduxjs/toolkit": "2.2.7",
     "@testing-library/react-hooks": "^8.0.1",
     "@visx/event": "3.3.0",
