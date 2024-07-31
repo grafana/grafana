@@ -22,7 +22,7 @@ function hasPermission(principal: AuthorizationPrincipal, action: string): boole
  * It would be up to the user of DefaultAuthorizer to decide how to store and provide authorization
  * information to checks.
  */
-export class DefaultAuthorizer {
+export class DefaultAuthorizer implements Authorizer {
   private backend: () => BackendSrv;
 
   constructor(backend: () => BackendSrv) {
@@ -53,7 +53,7 @@ export class DefaultAuthorizer {
  * Permissions are refreshed through every page navigation and are more fresh than the
  * DefaultAuthorizer.
  */
-export class OptimisticAuthorizer {
+export class OptimisticAuthorizer implements Authorizer {
   private backend: () => BackendSrv;
   private permissions?: PermissionMap;
   private singleflight: Promise<PermissionMap> | null;
