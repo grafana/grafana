@@ -24,8 +24,10 @@ func TracingUnaryInterceptor(tracer tracing.Tracer) grpc.UnaryServerInterceptor 
 			fmt.Println("metadata.FromIncomingContext(ctx)", md)
 			ctx = otel.GetTextMapPropagator().Extract(ctx, propagation.HeaderCarrier(md))
 
-			// trace info is present in the metadata, but its not getting propagated to the context properly
-			// TODO propagate trace from metadata to ctx
+			// extract traceparent from metadata into context
+			mapCarrier := propagation.MapCarrier{}
+			mapCarrier.Set("traceparent", md["traceparent"][0])
+			ctx = propagation.TraceContext{}.Extract(ctx, mapCarrier)
 		}
 
 		fmt.Println("traceID received", tracing.TraceIDFromContext(ctx, false))
