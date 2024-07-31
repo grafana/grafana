@@ -125,6 +125,10 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddRecordingRuleColumns(mg)
 
 	ualert.AddStateResolvedAtColumns(mg)
+
+	if oss.features != nil && oss.features.IsEnabledGlobally(featuremgmt.FlagTraceQLStreaming) {
+		enableTraceQLStreaming(mg)
+	}
 }
 
 func addStarMigrations(mg *Migrator) {
