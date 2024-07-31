@@ -51,9 +51,11 @@ describe('GrafanaReceiverForm', () => {
 
       await clickSelectOption(byTestId('items.0.type').get(), 'Grafana OnCall');
       // Clicking on a disable element shouldn't change the form value. email is the default value
+      // eslint-disable-next-line testing-library/no-node-access
       expect(ui.integrationType.get().closest('form')).toHaveFormValues({ 'items.0.type': 'email' });
 
       await clickSelectOption(byTestId('items.0.type').get(), 'Alertmanager');
+      // eslint-disable-next-line testing-library/no-node-access
       expect(ui.integrationType.get().closest('form')).toHaveFormValues({ 'items.0.type': 'prometheus-alertmanager' });
     });
 
@@ -73,6 +75,7 @@ describe('GrafanaReceiverForm', () => {
 
       await clickSelectOption(byTestId('items.0.type').get(), 'Grafana OnCall');
 
+      // eslint-disable-next-line testing-library/no-node-access
       expect(ui.integrationType.get().closest('form')).toHaveFormValues({ 'items.0.type': 'oncall' });
       expect(ui.onCallIntegrationType.get()).toBeInTheDocument();
 
@@ -87,6 +90,7 @@ describe('GrafanaReceiverForm', () => {
 
       await user.type(ui.newOnCallIntegrationName.get(), 'emea-oncall');
 
+      // eslint-disable-next-line testing-library/no-node-access
       expect(ui.integrationType.get().closest('form')).toHaveFormValues({
         'items.0.settings.integration_type': 'new_oncall_integration',
         'items.0.settings.integration_name': 'emea-oncall',
@@ -98,6 +102,7 @@ describe('GrafanaReceiverForm', () => {
 
       await clickSelectOption(ui.existingOnCallIntegrationSelect(0).get(), 'apac-oncall');
 
+      // eslint-disable-next-line testing-library/no-node-access
       expect(ui.integrationType.get().closest('form')).toHaveFormValues({
         'items.0.settings.url': 'https://apac.oncall.example.com',
         'items.0.settings.integration_name': undefined,
