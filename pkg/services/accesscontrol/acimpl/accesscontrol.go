@@ -108,7 +108,7 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 
 	return eval.EvaluateCustom(func(action, scope string) (bool, error) {
 		kind, _, identifier := accesscontrol.SplitScope(scope)
-		key, ok := zanzana.TranslateToTuple(user.GetUID().String(), action, kind, identifier, user.GetOrgID())
+		key, ok := zanzana.TranslateToTuple(user.GetUID(), action, kind, identifier, user.GetOrgID())
 		if !ok {
 			// unsupported translation
 			return false, errAccessNotImplemented

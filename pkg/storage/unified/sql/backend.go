@@ -17,8 +17,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/protobuf/proto"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const trace_prefix = "sql.resource."
@@ -295,7 +293,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	return newVersion, err
 }
 
-func (b *backend) Read(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResponse, error) {
+func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.ReadResponse {
 	_, span := b.tracer.Start(ctx, trace_prefix+".Read")
 	defer span.End()
 
@@ -315,23 +313,24 @@ func (b *backend) Read(ctx context.Context, req *resource.ReadRequest) (*resourc
 
 	res, err := dbutil.QueryRow(ctx, b.db, sr, readReq)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, apierrors.NewNotFound(schema.GroupResource{
-			Group:    req.Key.Group,
-			Resource: req.Key.Resource,
-		}, req.Key.Name)
+		return &resource.ReadResponse{
+			Error: resource.NewNotFoundError(req.Key),
+		}
 	} else if err != nil {
-		return nil, fmt.Errorf("get resource version: %w", err)
+		return &resource.ReadResponse{Error: resource.AsErrorResult(err)}
 	}
 
-	return &res.ReadResponse, nil
+	return &res.ReadResponse
 }
 
-func (b *backend) PrepareList(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
+func (b *backend) PrepareList(ctx context.Context, req *resource.ListRequest) *resource.ListResponse {
 	_, span := b.tracer.Start(ctx, trace_prefix+"List")
 	defer span.End()
 
 	if req.Options == nil || req.Options.Key.Group == "" || req.Options.Key.Resource == "" {
-		return nil, fmt.Errorf("missing group or resource")
+		return &resource.ListResponse{
+			Error: resource.NewBadRequestError("missing group or resource"),
+		}
 	}
 
 	// TODO: think about how to handler VersionMatch. We should be able to use latest for the first page (only).
@@ -345,7 +344,7 @@ func (b *backend) PrepareList(ctx context.Context, req *resource.ListRequest) (*
 }
 
 // listLatest fetches the resources from the resource table.
-func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
+func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest) *resource.ListResponse {
 	out := &resource.ListResponse{
 		ResourceVersion: 0,
 	}
@@ -387,19 +386,23 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest) (*r
 
 		return nil
 	})
-
-	return out, err
+	if err != nil {
+		out.Error = resource.AsErrorResult(err)
+	}
+	return out
 }
 
 // listAtRevision fetches the resources from the resource_history table at a specific revision.
-func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
+func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest) *resource.ListResponse {
 	// Get the RV
 	rv := req.ResourceVersion
 	offset := int64(0)
 	if req.NextPageToken != "" {
 		continueToken, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
-			return nil, fmt.Errorf("get continue token: %w", err)
+			return &resource.ListResponse{
+				Error: resource.AsErrorResult(fmt.Errorf("get continue token: %w", err)),
+			}
 		}
 		rv = continueToken.ResourceVersion
 		offset = continueToken.StartOffset
@@ -443,8 +446,10 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest)
 
 		return nil
 	})
-
-	return out, err
+	if err != nil {
+		out.Error = resource.AsErrorResult(err)
+	}
+	return out
 }
 
 func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
