@@ -12,7 +12,7 @@ func TestIntegrationGetQueriesFromQueryHistory(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	testScenario(t, "When users tries to get query in empty query history, it should return empty result", false,
+	testScenario(t, "When users tries to get query in empty query history, it should return empty result", false, false,
 		func(t *testing.T, sc scenarioContext) {
 			sc.reqContext.Req.Form.Add("datasourceUid", "test")
 			resp := sc.service.searchHandler(sc.reqContext)
@@ -262,10 +262,11 @@ func TestIntegrationGetQueriesFromQueryHistory(t *testing.T) {
 			require.Equal(t, 0, response.Result.TotalCount)
 		})
 
-	testScenario(t, "When user is viewer, return 401", true,
+	testScenario(t, "When user is viewer and has no RBAC permissions, return 401", true, false,
 		func(t *testing.T, sc scenarioContext) {
 			sc.reqContext.Req.Form.Add("datasourceUid", "test")
-			resp := sc.service.searchHandler(sc.reqContext)
+			permissionsMiddlewareCallback := sc.service.permissionsMiddleware(sc.service.searchHandler, "Failed to get query history")
+			resp := permissionsMiddlewareCallback(sc.reqContext)
 			require.Equal(t, 401, resp.Status())
 		})
 
