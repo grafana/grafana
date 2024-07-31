@@ -307,7 +307,9 @@
   "connections": {
     "connect-data": {
       "category-header-label": "Data sources",
-      "empty-message": "No results matching your query were found"
+      "empty-message": "No results matching your query were found",
+      "request-data-source": "Request a new data source",
+      "roadmap": "View roadmap"
     },
     "search": {
       "placeholder": "Search all"

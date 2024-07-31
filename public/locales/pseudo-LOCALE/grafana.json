@@ -307,7 +307,9 @@
   "connections": {
     "connect-data": {
       "category-header-label": "Đäŧä şőūřčęş",
-      "empty-message": "Ńő řęşūľŧş mäŧčĥįŉģ yőūř qūęřy ŵęřę ƒőūŉđ"
+      "empty-message": "Ńő řęşūľŧş mäŧčĥįŉģ yőūř qūęřy ŵęřę ƒőūŉđ",
+      "request-data-source": "Ŗęqūęşŧ ä ŉęŵ đäŧä şőūřčę",
+      "roadmap": "Vįęŵ řőäđmäp"
     },
     "search": {
       "placeholder": "Ŝęäřčĥ äľľ"
