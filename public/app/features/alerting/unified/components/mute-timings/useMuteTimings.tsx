@@ -160,7 +160,9 @@ export const useCreateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
     const newConfig = produce(result, (draft) => {
       const propertyToUpdate = isGrafanaAm ? 'mute_time_intervals' : 'time_intervals';
       draft.alertmanager_config[propertyToUpdate] = draft.alertmanager_config[propertyToUpdate] ?? [];
-      draft.alertmanager_config[propertyToUpdate]!.push(timeInterval);
+      draft.alertmanager_config[propertyToUpdate] = (draft.alertmanager_config[propertyToUpdate] ?? []).concat(
+        timeInterval
+      );
     });
 
     return dispatch(
