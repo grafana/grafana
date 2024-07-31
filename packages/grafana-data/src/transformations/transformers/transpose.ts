@@ -40,8 +40,8 @@ function transposeDataFrame(options: TransposeTransformerOptions, data: DataFram
   return data.map((frame) => {
     const firstField = frame.fields[0];
     const headers = options.addNewFields
-      ? ['Field'].concat(firstField.values.map((_, i) => `Value${i + 1}`))
-      : [firstField.name].concat(fieldValuesAsStrings(firstField, firstField.values));
+      ? ['Field', ...firstField.values.map((_, i) => `Value${i + 1}`)]
+      : [firstField.name, ...fieldValuesAsStrings(firstField, firstField.values)];
     const rows = options.addNewFields
       ? frame.fields.map((field) => field.name)
       : frame.fields.map((field) => field.name).slice(1);
@@ -57,13 +57,16 @@ function transposeDataFrame(options: TransposeTransformerOptions, data: DataFram
             : options.renameFirstField === ''
               ? fieldName
               : options.renameFirstField,
-          values: rows,
           type: FieldType.string,
           config: {},
+          values: rows,
         };
       }
+
       return {
         name: fieldName,
+        type: fieldType,
+        config: {},
         values: options.addNewFields
           ? frame.fields.map((field) => {
               if (fieldType === FieldType.string) {
@@ -79,8 +82,6 @@ function transposeDataFrame(options: TransposeTransformerOptions, data: DataFram
                 return field.values[index - 1];
               })
               .slice(1),
-        type: fieldType,
-        config: {},
       };
     });
     return {
@@ -92,11 +93,8 @@ function transposeDataFrame(options: TransposeTransformerOptions, data: DataFram
 }
 
 function determineFieldType(fieldTypes: FieldType[]): FieldType {
-  const uniqueFieldTypes = Array.from(new Set(fieldTypes));
-  if (uniqueFieldTypes.length === 1) {
-    return uniqueFieldTypes[0];
-  }
-  return FieldType.string;
+  const uniqueFieldTypes = new Set(fieldTypes);
+  return uniqueFieldTypes.size === 1 ? [...uniqueFieldTypes][0] : FieldType.string;
 }
 
 function fieldValuesAsStrings(field: Field, values: any[]) {
