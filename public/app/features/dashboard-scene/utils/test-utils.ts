@@ -102,6 +102,7 @@ interface SceneOptions {
   numberOfOptions?: number;
   usePanelRepeater?: boolean;
   useRowRepeater?: boolean;
+  throwError?: string;
 }
 
 export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel | LibraryVizPanel) {
@@ -155,6 +156,7 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
       { label: 'D', value: '4' },
       { label: 'E', value: '5' },
     ].slice(0, options.numberOfOptions),
+    throwError: defaults.throwError,
   });
 
   const rowRepeatVariable = new TestVariable({
@@ -172,6 +174,7 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
       { label: 'DD', value: '44' },
       { label: 'EE', value: '55' },
     ].slice(0, options.numberOfOptions),
+    throwError: defaults.throwError,
   });
 
   const scene = new EmbeddedScene({

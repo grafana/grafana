@@ -1,6 +1,8 @@
 SELECT
-    {{ .Ident "resource_version" | .Into .Response.ResourceVersion }},
-    {{ .Ident "value" | .Into .Response.Value }}
+    {{ .Ident "resource_version" }},
+    {{ .Ident "namespace" }},
+    {{ .Ident "name" }},
+    {{ .Ident "value" }}
     FROM {{ .Ident "resource" }}
     WHERE 1 = 1
         {{ if and .Request.Options .Request.Options.Key }}
@@ -18,7 +20,4 @@ SELECT
             {{ end }}
         {{ end }}
     ORDER BY {{ .Ident "resource_version" }} DESC
-    {{ if (gt .Request.Limit 0) }}
-    LIMIT {{ .Arg .Request.Limit }}
-    {{ end }}
 ;
