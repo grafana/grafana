@@ -209,32 +209,13 @@ func isDeletedMarker(raw []byte) bool {
 	return false
 }
 
-func (s *cdkBackend) PrepareList(ctx context.Context, req *ListRequest) *ListResponse {
+func (s *cdkBackend) ListIterator(ctx context.Context, req *ListRequest, cb func(ListIterator) error) (int64, error) {
 	resources, err := buildTree(ctx, s, req.Options.Key)
 	if err != nil {
-		return &ListResponse{
-			Error: AsErrorResult(err),
-		}
+		return 0, err
 	}
-
-	rsp := &ListResponse{
-		ResourceVersion: s.rv.Load(),
-	}
-	for _, item := range resources {
-		latest := item.versions[0]
-		raw, err := s.bucket.ReadAll(ctx, latest.key)
-		if err != nil {
-			rsp.Error = AsErrorResult(err)
-			return rsp
-		}
-		if !isDeletedMarker(raw) {
-			rsp.Items = append(rsp.Items, &ResourceWrapper{
-				ResourceVersion: latest.rv,
-				Value:           raw,
-			})
-		}
-	}
-	return rsp
+	err = cb(resources)
+	return resources.listRV, err
 }
 
 func (s *cdkBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
@@ -264,9 +245,82 @@ type cdkVersion struct {
 	key string
 }
 
-func buildTree(ctx context.Context, s *cdkBackend, key *ResourceKey) ([]cdkResource, error) {
-	byPrefix := make(map[string]*cdkResource)
+type cdkListIterator struct {
+	bucket *blob.Bucket
+	ctx    context.Context
+	err    error
 
+	listRV    int64
+	resources []cdkResource
+	index     int
+
+	currentRV  int64
+	currentKey string
+	currentVal []byte
+}
+
+// Next implements ListIterator.
+func (c *cdkListIterator) Next() bool {
+	if c.err != nil {
+		return false
+	}
+	for {
+		c.currentVal = nil
+		c.index += 1
+		if c.index >= len(c.resources) {
+			return false
+		}
+
+		item := c.resources[c.index]
+		latest := item.versions[0]
+		raw, err := c.bucket.ReadAll(c.ctx, latest.key)
+		if err != nil {
+			c.err = err
+			return false
+		}
+		if !isDeletedMarker(raw) {
+			c.currentRV = latest.rv
+			c.currentKey = latest.key
+			c.currentVal = raw
+			return true
+		}
+	}
+}
+
+// Error implements ListIterator.
+func (c *cdkListIterator) Error() error {
+	return c.err
+}
+
+// ResourceVersion implements ListIterator.
+func (c *cdkListIterator) ResourceVersion() int64 {
+	return c.currentRV
+}
+
+// Value implements ListIterator.
+func (c *cdkListIterator) Value() []byte {
+	return c.currentVal
+}
+
+// ContinueToken implements ListIterator.
+func (c *cdkListIterator) ContinueToken() string {
+	return fmt.Sprintf("index:%d/key:%s", c.index, c.currentKey)
+}
+
+// Name implements ListIterator.
+func (c *cdkListIterator) Name() string {
+	return c.currentKey // TODO (parse name from key)
+}
+
+// Namespace implements ListIterator.
+func (c *cdkListIterator) Namespace() string {
+	return c.currentKey // TODO (parse namespace from key)
+}
+
+var _ ListIterator = (*cdkListIterator)(nil)
+
+func buildTree(ctx context.Context, s *cdkBackend, key *ResourceKey) (*cdkListIterator, error) {
+	byPrefix := make(map[string]*cdkResource)
 	path := s.getPath(key, 0)
 	iter := s.bucket.List(&blob.ListOptions{Prefix: path, Delimiter: ""}) // "" is recursive
 	for {
@@ -310,5 +364,11 @@ func buildTree(ctx context.Context, s *cdkBackend, key *ResourceKey) ([]cdkResou
 		return a > b
 	})
 
-	return resources, nil
+	return &cdkListIterator{
+		ctx:       ctx,
+		bucket:    s.bucket,
+		resources: resources,
+		listRV:    s.rv.Load(),
+		index:     -1, // must call next first
+	}, nil
 }

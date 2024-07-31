@@ -107,8 +107,10 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
     let maxYOfRows = 0;
 
+    // when variable has no options (due to error or similar) it will not render any panels at all
+    //  adding a placeholder in this case so that there is at least empty panel that can display error
     const emptyVariablePlaceholderOption = {
-      values: ['placeholder'],
+      values: [''],
       texts: variable.hasAllValue() ? ['All'] : ['None'],
     };
 

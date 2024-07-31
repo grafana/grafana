@@ -99,6 +99,14 @@
         "title": "Unable to display all events"
       }
     },
+    "common": {
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "export": "Export",
+      "export-all": "Export all",
+      "view": "View"
+    },
     "contact-points": {
       "delivery-duration": "Last delivery took <1></1>",
       "last-delivery-attempt": "Last delivery attempt",
@@ -118,6 +126,16 @@
       "new-recording-rule": "New recording rule",
       "title": "Grafana"
     },
+    "mute_timings": {
+      "error-loading": {
+        "description": "Could not load mute timings. Please try again later.",
+        "title": "Error loading mute timings"
+      }
+    },
+    "mute-timings": {
+      "save": "Save mute timing",
+      "saving": "Saving mute timing"
+    },
     "policies": {
       "metadata": {
         "timingOptions": {
@@ -135,6 +153,10 @@
           }
         }
       }
+    },
+    "provisioning": {
+      "badge-tooltip-provenance": "This resource has been provisioned via {{provenance}} and cannot be edited through the UI",
+      "badge-tooltip-standard": "This resource has been provisioned and cannot be edited through the UI"
     },
     "rule-groups": {
       "delete": {
@@ -272,6 +294,11 @@
       "success": "Copied"
     }
   },
+  "combobox": {
+    "clear": {
+      "title": "Clear value"
+    }
+  },
   "command-palette": {
     "action": {
       "change-theme": "Change theme...",
@@ -302,7 +329,9 @@
   "connections": {
     "connect-data": {
       "category-header-label": "Data sources",
-      "empty-message": "No results matching your query were found"
+      "empty-message": "No results matching your query were found",
+      "request-data-source": "Request a new data source",
+      "roadmap": "View roadmap"
     },
     "search": {
       "placeholder": "Search all"
@@ -660,10 +689,17 @@
       "stop-scan": "Stop scan"
     },
     "query-library": {
+      "cancel": "Cancel",
+      "default-description": "Public",
       "delete-query": "Delete query",
       "delete-query-text": "You're about to remove this query from the query library. This action cannot be undone. Do you want to continue?",
       "delete-query-title": "Delete query",
-      "query-deleted": "Query deleted"
+      "private": "Private",
+      "public": "Public",
+      "query-deleted": "Query deleted",
+      "query-template-added": "Query template successfully added to the library",
+      "query-template-error": "Error attempting to add this query to the library",
+      "save": "Save"
     },
     "rich-history": {
       "close-tooltip": "Close query history",
@@ -694,7 +730,6 @@
       "edit-comment-tooltip": "Edit comment",
       "optional-description": "An optional description of what the query does.",
       "query-comment-label": "Query comment",
-      "query-template-added": "Query template successfully added to the library",
       "query-text-label": "Query text",
       "save-comment": "Save comment",
       "star-query-tooltip": "Star query",
@@ -1630,7 +1665,9 @@
       "settings-title": "Settings"
     },
     "configuration": {
+      "display-annotations-description": "Present annotations on this Dashboard",
       "display-annotations-label": "Display annotations",
+      "enable-time-range-description": "Allow people to change time range",
       "enable-time-range-label": "Enable time range",
       "settings-label": "Settings",
       "success-pause": "Your dashboard access has been paused",
@@ -1796,6 +1833,7 @@
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
       "remove-query": "Remove query",
+      "save-to-query-library": "Save to query library",
       "show-response": "Show response",
       "toggle-edit-mode": "Toggle text edit mode"
     },
@@ -1945,7 +1983,8 @@
   },
   "share-drawer": {
     "confirm-action": {
-      "back-arrow-button": "Back button"
+      "back-arrow-button": "Back button",
+      "cancel-button": "Cancel"
     }
   },
   "share-modal": {
