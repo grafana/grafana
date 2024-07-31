@@ -7,10 +7,9 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"go.opentelemetry.io/otel/trace"
 	"xorm.io/xorm"
-
-	"github.com/grafana/grafana/pkg/services/store/entity/db"
 )
 
 func getEngineMySQL(getter *sectionGetter, _ trace.Tracer) (*xorm.Engine, error) {
