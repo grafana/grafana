@@ -2,9 +2,10 @@ import { cx } from '@emotion/css';
 import { autoUpdate, flip, useFloating } from '@floating-ui/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
+import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { Input, Props as InputProps } from '../Input/Input';
 
@@ -20,12 +21,12 @@ export type Option = {
 interface ComboboxProps
   extends Omit<InputProps, 'width' | 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange'> {
   onChange: (val: Option | null) => void;
-  value: Value;
+  value: Value | null;
   options: Option[];
 }
 
 function itemToString(item: Option | null) {
-  return item?.label || '';
+  return item?.label ?? '';
 }
 
 function itemFilter(inputValue: string) {
@@ -48,6 +49,7 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
   const MIN_WIDTH = 400;
   const [items, setItems] = useState(options);
   const selectedItem = useMemo(() => options.find((option) => option.value === value) || null, [options, value]);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef(null);
   const styles = useStyles2(getComboboxStyles);
@@ -59,21 +61,35 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
     overscan: 2,
   });
 
-  const { getInputProps, getMenuProps, getItemProps, isOpen, highlightedIndex } = useCombobox({
-    items,
-    itemToString,
-    selectedItem,
-    scrollIntoView: () => {},
-    onInputValueChange: ({ inputValue }) => {
-      setItems(options.filter(itemFilter(inputValue)));
-    },
-    onSelectedItemChange: ({ selectedItem }) => onChange(selectedItem),
-    onHighlightedIndexChange: ({ highlightedIndex, type }) => {
-      if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
-        rowVirtualizer.scrollToIndex(highlightedIndex);
-      }
-    },
-  });
+  const { getInputProps, getMenuProps, getItemProps, isOpen, highlightedIndex, setInputValue, selectItem } =
+    useCombobox({
+      items,
+      itemToString,
+      selectedItem,
+      scrollIntoView: () => {},
+      onInputValueChange: ({ inputValue }) => {
+        setItems(options.filter(itemFilter(inputValue)));
+      },
+      onIsOpenChange: ({ isOpen }) => {
+        // Default to displaying all values when opening
+        if (isOpen) {
+          setItems(options);
+          return;
+        }
+      },
+      onSelectedItemChange: ({ selectedItem }) => {
+        onChange(selectedItem);
+      },
+      onHighlightedIndexChange: ({ highlightedIndex, type }) => {
+        if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
+          rowVirtualizer.scrollToIndex(highlightedIndex);
+        }
+      },
+    });
+
+  const onBlur = useCallback(() => {
+    setInputValue(selectedItem?.label ?? '');
+  }, [selectedItem, setInputValue]);
 
   // the order of middleware is important!
   const middleware = [
@@ -98,7 +114,27 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
   return (
     <div>
       <Input
-        suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
+        suffix={
+          <>
+            {!!value && value === selectedItem?.value && (
+              <Icon
+                name="times"
+                className={styles.clear}
+                title={t('combobox.clear.title', 'Clear value')}
+                tabIndex={0}
+                onClick={() => {
+                  selectItem(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    selectItem(null);
+                  }
+                }}
+              />
+            )}
+            <Icon name={isOpen ? 'search' : 'angle-down'} />
+          </>
+        }
         {...restProps}
         {...getInputProps({
           ref: inputRef,
@@ -107,6 +143,7 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
            *  Downshift repo: https://github.com/downshift-js/downshift/tree/master
            */
           onChange: () => {},
+          onBlur,
         })}
       />
       <div

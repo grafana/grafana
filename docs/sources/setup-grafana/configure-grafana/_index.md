@@ -754,10 +754,6 @@ Set name for external snapshot button. Defaults to `Publish to snapshots.raintan
 
 Set to true to enable this Grafana instance to act as an external snapshot server and allow unauthenticated requests for creating and deleting snapshots. Default is `false`.
 
-### snapshot_remove_expired
-
-Enable this to automatically remove expired snapshots. Default is `true`.
-
 <hr />
 
 ## [dashboards]
@@ -1493,6 +1489,10 @@ Turn on console instrumentation. Only affects Grafana Javascript Agent
 ### instrumentations_webvitals_enabled
 
 Turn on webvitals instrumentation. Only affects Grafana Javascript Agent
+
+### instrumentations_tracing_enabled
+
+Turns on tracing instrumentation. Only affects Grafana Javascript Agent.
 
 ### api_key
 
