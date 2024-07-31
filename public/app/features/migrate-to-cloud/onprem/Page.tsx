@@ -69,7 +69,7 @@ function useGetLatestSnapshot(sessionUid?: string, page = 1) {
   const [shouldPoll, setShouldPoll] = useState(false);
 
   const listResult = useGetShapshotListQuery(sessionUid ? { uid: sessionUid } : skipToken);
-  const lastItem = listResult.data?.snapshots?.at(0);
+  const lastItem = listResult.currentData?.snapshots?.at(0);
 
   const getSnapshotQueryArgs =
     sessionUid && lastItem?.uid
@@ -88,6 +88,13 @@ function useGetLatestSnapshot(sessionUid?: string, page = 1) {
 
   return {
     ...snapshotResult,
+
+    // RTK Query will retain old data if a new request has been skipped.
+    // This meant that if you loaded a snapshot, disconnected, and then reconnected, we would
+    // show the old snapshot.
+    // This ensures that if the query has been skipped (because GetSessionList returned nothing)
+    // we don't return stale data
+    data: getSnapshotQueryArgs === skipToken ? undefined : snapshotResult.data,
 
     error: listResult.error || snapshotResult.error,
 
