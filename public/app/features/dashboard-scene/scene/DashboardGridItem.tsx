@@ -167,12 +167,26 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
     const panelToRepeat = this.state.body instanceof LibraryVizPanel ? this.state.body.state.panel! : this.state.body;
     const repeatedPanels: VizPanel[] = [];
 
+    // when variable has no options (due to error or similar) it will not render any panels at all
+    //  adding a placeholder in this case so that there is at least empty panel that can display error
+    const emptyVariablePlaceholderOption = {
+      values: [''],
+      texts: variable.hasAllValue() ? ['All'] : ['None'],
+    };
+
+    const variableValues = values.length ? values : emptyVariablePlaceholderOption.values;
+    const variableTexts = texts.length ? texts : emptyVariablePlaceholderOption.texts;
+
     // Loop through variable values and create repeats
-    for (let index = 0; index < values.length; index++) {
+    for (let index = 0; index < variableValues.length; index++) {
       const cloneState: Partial<VizPanelState> = {
         $variables: new SceneVariableSet({
           variables: [
-            new LocalValueVariable({ name: variable.state.name, value: values[index], text: String(texts[index]) }),
+            new LocalValueVariable({
+              name: variable.state.name,
+              value: variableValues[index],
+              text: String(variableTexts[index]),
+            }),
           ],
         }),
         key: `${panelToRepeat.state.key}-clone-${index}`,

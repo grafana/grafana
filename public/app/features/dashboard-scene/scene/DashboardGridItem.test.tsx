@@ -40,6 +40,54 @@ describe('PanelRepeaterGridItem', () => {
     expect(repeater.state.repeatedPanels?.length).toBe(5);
   });
 
+  it('Should display a panel when there are no options', async () => {
+    const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 1, numberOfOptions: 0 });
+
+    activateFullSceneTree(scene);
+
+    expect(repeater.state.repeatedPanels?.length).toBe(0);
+
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(repeater.state.repeatedPanels?.length).toBe(1);
+  });
+
+  it('Should display a panel when there are variable errors', () => {
+    const { scene, repeater } = buildPanelRepeaterScene({
+      variableQueryTime: 0,
+      numberOfOptions: 0,
+      throwError: 'Error',
+    });
+
+    // we expect console.error when variable encounters an error
+    const origError = console.error;
+    console.error = jest.fn();
+
+    activateFullSceneTree(scene);
+
+    expect(repeater.state.repeatedPanels?.length).toBe(1);
+    console.error = origError;
+  });
+
+  it('Should display a panel when there are variable errors async query', async () => {
+    const { scene, repeater } = buildPanelRepeaterScene({
+      variableQueryTime: 1,
+      numberOfOptions: 0,
+      throwError: 'Error',
+    });
+
+    // we expect console.error when variable encounters an error
+    const origError = console.error;
+    console.error = jest.fn();
+
+    activateFullSceneTree(scene);
+
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(repeater.state.repeatedPanels?.length).toBe(1);
+    console.error = origError;
+  });
+
   it('Should adjust container height to fit panels direction is horizontal', async () => {
     const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 0, maxPerRow: 2, itemHeight: 10 });
 
