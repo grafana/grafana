@@ -15,6 +15,7 @@ export interface ContactPointsFilterSelectorProps {
   selectedContactPoint: string | undefined;
   onSelectContactPoint: (contactPoint: string) => void;
   refetchReceivers: () => Promise<unknown>;
+  isLoading: boolean;
 }
 
 const MAX_CONTACT_POINTS_RENDERED = 500;
@@ -24,6 +25,7 @@ export function ContactPointsFilterSelector({
   selectedContactPoint,
   onSelectContactPoint,
   refetchReceivers,
+  isLoading,
 }: ContactPointsFilterSelectorProps) {
   const styles = useStyles2(getStyles);
 
@@ -51,6 +53,8 @@ export function ContactPointsFilterSelector({
           aria-label="Contact point"
           value={selectedContactPoint ?? null}
           isClearable
+          isLoading={isLoading}
+          loadingMessage="Loading..."
           onChange={(value: SelectableValue<string>, _: ActionMeta) => {
             onSelectContactPoint(value?.value ?? '');
           }}

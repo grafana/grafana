@@ -150,7 +150,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
     trackRulesSearchComponentInteraction('contactPoint');
   };
 
-  const { options, canRenderContactPointSelector, refetchReceivers } = useContactPointOptions();
+  const { options, canRenderContactPointSelector, refetchReceivers, isLoadingContactPoints } = useContactPointOptions();
   const searchIcon = <Icon name={'search'} />;
   return (
     <div className={styles.container}>
@@ -238,6 +238,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
             <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME}>
               <ContactPointsFilterSelector
                 options={options}
+                isLoading={isLoadingContactPoints}
                 selectedContactPoint={filterState.contactPoint}
                 onSelectContactPoint={handleContactPointChange}
                 refetchReceivers={refetchReceivers}
