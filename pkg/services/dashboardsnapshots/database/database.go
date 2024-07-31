@@ -34,7 +34,7 @@ func NewStore(db db.DB, skipDeleteExpired bool) *DashboardSnapshotStore {
 	if skipDeleteExpired {
 		log.Warn("[Deprecated] The snapshot_remove_expired setting is outdated. Please remove from your config.")
 	}
-	return &DashboardSnapshotStore{store: db, skipDeleteExpired: skipDeleteExpired}
+	return &DashboardSnapshotStore{store: db, skipDeleteExpired: skipDeleteExpired, log: log}
 }
 
 // DeleteExpiredSnapshots removes snapshots with old expiry dates.
