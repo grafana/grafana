@@ -31,14 +31,18 @@
     {
       "metadata": {
         "name": "addFieldFromCalculationStatFunctions",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-11-03T14:39:58Z"
+        "resourceVersion": "1722289107837",
+        "creationTimestamp": "2023-11-03T14:39:58Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-07-29 21:38:27.837976 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Add cumulative and window functions to the add field from calculation transformation",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
