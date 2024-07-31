@@ -794,6 +794,55 @@ describe('mergeFrames', () => {
     });
   });
 
+  it('adds old to new values when combining', () => {
+    const { metricFrameA, metricFrameB } = getMockFrames();
+
+    metricFrameB.fields[0].values = [3000000, 3500000, 4000000]
+    metricFrameB.fields[1].values = [5, 10, 6];
+
+    const responseA: DataQueryResponse = {
+      data: [metricFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [metricFrameB],
+    };
+    expect(combineResponses(responseA, responseB, false)).toEqual({
+      data: [
+        {
+          fields: [
+            {
+              config: {},
+              name: 'Time',
+              type: 'time',
+              values: [3000000, 3500000, 4000000],
+            },
+            {
+              config: {},
+              name: 'Value',
+              type: 'number',
+              values: [10, 10, 10],
+              labels: {
+                level: 'debug',
+              },
+            },
+          ],
+          length: 4,
+          meta: {
+            type: 'timeseries-multi',
+            stats: [
+              {
+                displayName: 'Summary: total bytes processed',
+                unit: 'decbytes',
+                value: 33,
+              },
+            ],
+          },
+          refId: 'A',
+        },
+      ],
+    });
+  });
+
   it('combines and identifies new frames in the response', () => {
     const { metricFrameA, metricFrameB, metricFrameC } = getMockFrames();
     const responseA: DataQueryResponse = {
