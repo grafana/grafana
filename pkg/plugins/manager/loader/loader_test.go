@@ -446,7 +446,7 @@ func TestLoader_Load(t *testing.T) {
 			JSONData:      pluginJSON,
 			Signature:     plugins.SignatureStatusValid,
 			SignatureType: plugins.SignatureTypeCommunity,
-			FS:            plugins.NewFakeFS(),
+			FS:            fakes.NoopPluginFS(),
 		}
 
 		var steps []string
@@ -503,7 +503,7 @@ func TestLoader_Load(t *testing.T) {
 			JSONData:      pluginJSON,
 			Signature:     plugins.SignatureStatusValid,
 			SignatureType: plugins.SignatureTypeCommunity,
-			FS:            plugins.NewFakeFS(),
+			FS:            fakes.NoopPluginFS(),
 		}
 
 		var steps []string
@@ -564,7 +564,7 @@ func TestLoader_Load(t *testing.T) {
 			JSONData:      pluginJSON,
 			Signature:     plugins.SignatureStatusValid,
 			SignatureType: plugins.SignatureTypeCommunity,
-			FS:            plugins.NewFakeFS(),
+			FS:            fakes.NoopPluginFS(),
 		}
 		et.Record(context.Background(), &plugins.Error{PluginID: "test-datasource", ErrorCode: plugins.ErrorCode("previous error")})
 

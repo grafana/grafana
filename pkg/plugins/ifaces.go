@@ -68,6 +68,7 @@ type FS interface {
 	fs.FS
 
 	Base() string
+	FromRelative(string) (string, error)
 	Files() ([]string, error)
 }
 

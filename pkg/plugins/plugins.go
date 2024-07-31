@@ -534,3 +534,7 @@ func (pt Type) IsValid() bool {
 	}
 	return false
 }
+
+func DefaultLogoPath(pluginType Type) string {
+	return path.Join("public/img", fmt.Sprintf("icn-%s.svg", string(pluginType)))
+}

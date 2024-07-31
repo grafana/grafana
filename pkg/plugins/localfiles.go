@@ -129,6 +129,11 @@ func (f LocalFS) Base() string {
 	return f.basePath
 }
 
+// FromRelative returns the absolute path of a file given its relative path.
+func (f LocalFS) FromRelative(p string) (string, error) {
+	return filepath.Join(f.basePath, p), nil
+}
+
 // Files returns a slice of all the relative file paths on the LocalFS.
 // The returned strings can be passed to Open() to open those files.
 // The returned strings use os-specific path separator.
@@ -221,6 +226,10 @@ func (f StaticFS) Open(name string) (fs.File, error) {
 	}
 	// Use the wrapped FS to access the file
 	return f.FS.Open(name)
+}
+
+func (f StaticFS) FromRelative(p string) (string, error) {
+	return f.FS.FromRelative(p)
 }
 
 // Files returns a slice of all static file paths relative to the base path.

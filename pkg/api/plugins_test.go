@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -268,7 +269,11 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for a relative path", func(t *testing.T) {
-		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.ClassExternal, plugins.NewFakeFS())
+		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.ClassExternal, &fakes.FakePluginFS{
+			OpenFunc: func(name string) (fs.File, error) {
+				return nil, plugins.ErrFileNotExist
+			},
+		})
 		pluginRegistry := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,
@@ -303,7 +308,11 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an non-existing plugin file", func(t *testing.T) {
-		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.ClassExternal, plugins.NewFakeFS())
+		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.ClassExternal, &fakes.FakePluginFS{
+			OpenFunc: func(name string) (fs.File, error) {
+				return nil, plugins.ErrFileNotExist
+			},
+		})
 		service := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,
@@ -595,13 +604,13 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 		ID: "test-app", Type: "app", Name: "test-app",
 		Info: plugins.Info{
 			Version: "1.0.0",
-		}}, plugins.ClassExternal, plugins.NewFakeFS())
+		}}, plugins.ClassExternal, fakes.NoopPluginFS())
 	p2 := createPlugin(
 		plugins.JSONData{ID: "mysql", Type: "datasource", Name: "MySQL",
 			Info: plugins.Info{
 				Author:      plugins.InfoLink{Name: "Grafana Labs", URL: "https://grafana.com"},
 				Description: "Data source for MySQL databases",
-			}}, plugins.ClassCore, plugins.NewFakeFS())
+			}}, plugins.ClassCore, fakes.NoopPluginFS())
 
 	pluginRegistry := &fakes.FakePluginRegistry{
 		Store: map[string]*plugins.Plugin{
@@ -779,7 +788,7 @@ func Test_PluginsSettings(t *testing.T) {
 		ID: pID, Type: "datasource", Name: pID,
 		Info: plugins.Info{
 			Version: "1.0.0",
-		}}, plugins.ClassExternal, plugins.NewFakeFS())
+		}}, plugins.ClassExternal, fakes.NoopPluginFS())
 
 	pluginRegistry := &fakes.FakePluginRegistry{
 		Store: map[string]*plugins.Plugin{

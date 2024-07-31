@@ -13,8 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 )
 
-func extPath(pluginID string) *fakes.FakePluginFiles {
-	return fakes.NewFakePluginFiles(pluginID)
+func extPath(pluginID string) *fakes.FakePluginFS {
+	return fakes.NewFakePluginFS(pluginID)
 }
 
 func TestService(t *testing.T) {
@@ -45,7 +45,7 @@ func TestService(t *testing.T) {
 			}
 			svc := ProvideService(cfg, pluginscdn.ProvideService(cfg))
 
-			tableOldFS := fakes.NewFakePluginFiles("/grafana/public/app/plugins/panel/table-old")
+			tableOldFS := fakes.NewFakePluginFS("/grafana/public/app/plugins/panel/table-old")
 			jsonData := map[string]plugins.JSONData{
 				"table-old": {ID: "table-old", Info: plugins.Info{Version: "1.0.0"}},
 

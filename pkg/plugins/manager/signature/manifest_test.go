@@ -355,6 +355,10 @@ func (f fsPathSeparatorFiles) Open(name string) (fs.File, error) {
 	return f.FS.Open(strings.ReplaceAll(name, f.separator, string(filepath.Separator)))
 }
 
+func (f fsPathSeparatorFiles) FromRelative(p string) (string, error) {
+	return f.FS.FromRelative(strings.ReplaceAll(p, f.separator, string(filepath.Separator)))
+}
+
 func TestFSPathSeparatorFiles(t *testing.T) {
 	for _, tc := range []struct {
 		name string

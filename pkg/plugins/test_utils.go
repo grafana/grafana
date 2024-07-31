@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"bytes"
+	"errors"
 	"io/fs"
 	"os"
 	"time"
@@ -28,6 +29,10 @@ func (f inMemoryFS) Base() string {
 	return ""
 }
 
+func (f inMemoryFS) FromRelative(_ string) (string, error) {
+	return "", errors.New("not implemented")
+}
+
 func (f inMemoryFS) Files() ([]string, error) {
 	fps := make([]string, 0, len(f.files))
 	for fn := range f.files {
@@ -41,11 +46,6 @@ func (f inMemoryFS) Open(fn string) (fs.File, error) {
 		return nil, ErrFileNotExist
 	}
 	return &inMemoryFile{path: fn, reader: bytes.NewReader(f.files[fn])}, nil
-}
-
-// NewFakeFS returns a new FS that always returns ErrFileNotExist when trying to Open() and empty Files().
-func NewFakeFS() FS {
-	return NewInMemoryFS(nil)
 }
 
 // inMemoryFile is a fs.File whose content is stored in memory.

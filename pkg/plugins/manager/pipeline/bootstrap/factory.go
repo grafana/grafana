@@ -80,7 +80,7 @@ func setImages(p *plugins.Plugin, assetPath *assetpath.Service) error {
 	var err error
 	for _, dst := range []*string{&p.Info.Logos.Small, &p.Info.Logos.Large} {
 		if len(*dst) == 0 {
-			*dst = assetPath.DefaultLogoPath(p.Type)
+			*dst = plugins.DefaultLogoPath(p.Type)
 			continue
 		}
 
