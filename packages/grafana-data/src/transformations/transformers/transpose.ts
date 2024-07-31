@@ -52,11 +52,7 @@ function transposeDataFrame(options: TransposeTransformerOptions, data: DataFram
     const newFields = headers.map((fieldName, index) => {
       if (index === 0) {
         return {
-          name: !options.renameFirstField
-            ? fieldName
-            : options.renameFirstField === ''
-              ? fieldName
-              : options.renameFirstField,
+          name: !options.renameFirstField ? fieldName : options.renameFirstField,
           type: FieldType.string,
           config: {},
           values: rows,
