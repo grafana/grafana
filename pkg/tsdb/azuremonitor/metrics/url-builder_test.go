@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -143,6 +144,63 @@ func TestBuildResourceURI(t *testing.T) {
 				if err.Error() != expectedErrorMessage {
 					t.Errorf("Expected error message %s, but got %s", expectedErrorMessage, err.Error())
 				}
+			}
+		})
+
+		t.Run("provider extraction from metricNamespaceArray", func(t *testing.T) {
+			ub := &urlBuilder{
+				DefaultSubscription: strPtr("default-sub"),
+				MetricNamespace:     strPtr("provider1/service1"),
+				ResourceGroup:       strPtr("rg"),
+				ResourceName:        strPtr("rn1/rn2/rn3"),
+			}
+			expectedProvider := "provider1"
+
+			uri, err := ub.buildResourceURI()
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			if uri == nil {
+				t.Fatalf("Expected non-nil uri")
+			}
+			if !strings.Contains(*uri, expectedProvider) {
+				t.Errorf("Expected provider %v in uri %v", expectedProvider, *uri)
+			}
+		})
+
+		t.Run("when metricNamespace is not in the correct format", func(t *testing.T) {
+			ub := &urlBuilder{
+				DefaultSubscription: strPtr("default-sub"),
+				MetricNamespace:     strPtr("invalidformat"),
+			}
+
+			_, err := ub.buildResourceURI()
+			if err == nil || err.Error() != "metricNamespace is not in the correct format" {
+				t.Errorf("Expected error: metricNamespace is not in the correct format")
+			}
+		})
+
+		t.Run("when resourceNameArray index out of range", func(t *testing.T) {
+			ub := &urlBuilder{
+				DefaultSubscription: strPtr("default-sub"),
+				MetricNamespace:     strPtr("provider1/service1"),
+				ResourceName:        strPtr("rn1/rn2/rn3"),
+			}
+
+			_, err := ub.buildResourceURI()
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			ub = &urlBuilder{
+				DefaultSubscription: strPtr("default-sub"),
+				MetricNamespace:     strPtr("provider1/service1/service2"),
+				ResourceName:        strPtr(""),
+			}
+
+			_, err = ub.buildResourceURI()
+			if err == nil || err.Error() != "resourceNameArray does not have enough elements" {
+				t.Errorf("Expected error: resourceNameArray does not have enough elements")
 			}
 		})
 	})

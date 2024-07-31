@@ -51,6 +51,14 @@ func (s *Service) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) e
 	return s.store.Delete(ctx, cmd)
 }
 
+func (s *Service) ListTeams(ctx context.Context, query *team.ListTeamsCommand) ([]*team.Team, error) {
+	ctx, span := s.tracer.Start(ctx, "team.ListTeams", trace.WithAttributes(
+		attribute.Int64("orgID", query.OrgID),
+	))
+	defer span.End()
+	return s.store.ListTeams(ctx, query)
+}
+
 func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
 	ctx, span := s.tracer.Start(ctx, "team.SearchTeams", trace.WithAttributes(
 		attribute.Int64("orgID", query.OrgID),

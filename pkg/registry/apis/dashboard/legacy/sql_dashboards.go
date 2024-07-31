@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardsV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -333,9 +332,9 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 
 func getUserID(v sql.NullString) string {
 	if v.String == "" {
-		return identity.NewNamespaceIDString(identity.NamespaceProvisioning, "").String()
+		return identity.NewTypedIDString(identity.TypeProvisioning, "").String()
 	}
-	return identity.NewNamespaceIDString(identity.NamespaceUser, v.String).String()
+	return identity.NewTypedIDString(identity.TypeUser, v.String).String()
 }
 
 // DeleteDashboard implements DashboardAccess.
@@ -363,7 +362,7 @@ func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, u
 // SaveDashboard implements DashboardAccess.
 func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *dashboardsV0.Dashboard) (*dashboardsV0.Dashboard, bool, error) {
 	created := false
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, created, err
 	}
@@ -386,6 +385,11 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		dash.Spec.Remove("uid")
 	}
 
+	userID, err := user.GetID().UserID()
+	if err != nil {
+		return nil, false, err
+	}
+
 	meta, err := utils.MetaAccessor(dash)
 	if err != nil {
 		return nil, false, err
@@ -395,7 +399,7 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		Dashboard: simplejson.NewFromAny(dash.Spec.UnstructuredContent()),
 		FolderUID: meta.GetFolder(),
 		Overwrite: true, // already passed the revisionVersion checks!
-		UserID:    user.UserID,
+		UserID:    userID,
 	})
 	if err != nil {
 		return nil, false, err

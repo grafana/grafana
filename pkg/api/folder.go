@@ -188,11 +188,14 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 }
 
 func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, folder *folder.Folder) error {
+	if !hs.Cfg.RBAC.PermissionsOnCreation("folder") {
+		return nil
+	}
 	var permissions []accesscontrol.SetResourcePermissionCommand
 	var userID int64
 
-	namespace, id := user.GetNamespacedID()
-	if namespace == identity.NamespaceUser {
+	namespace, id := user.GetTypedID()
+	if namespace == identity.TypeUser {
 		var errID error
 		userID, errID = identity.IntIdentifier(namespace, id)
 		if errID != nil {

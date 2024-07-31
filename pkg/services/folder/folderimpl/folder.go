@@ -580,8 +580,8 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 
 	userID := int64(0)
 	var err error
-	namespaceID, userIDstr := user.GetNamespacedID()
-	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+	namespaceID, userIDstr := user.GetTypedID()
+	if namespaceID != identity.TypeUser && namespaceID != identity.TypeServiceAccount {
 		s.log.Debug("User does not belong to a user or service account namespace, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
 	} else {
 		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
@@ -668,7 +668,7 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 		}
 
 		if cmd.NewTitle != nil {
-			namespace, id := cmd.SignedInUser.GetNamespacedID()
+			namespace, id := cmd.SignedInUser.GetTypedID()
 
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 			if err := s.bus.Publish(ctx, &events.FolderTitleUpdated{
@@ -725,8 +725,8 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 	}
 
 	var userID int64
-	namespace, id := cmd.SignedInUser.GetNamespacedID()
-	if namespace == identity.NamespaceUser || namespace == identity.NamespaceServiceAccount {
+	namespace, id := cmd.SignedInUser.GetTypedID()
+	if namespace == identity.TypeUser || namespace == identity.TypeServiceAccount {
 		userID, err = identity.IntIdentifier(namespace, id)
 		if err != nil {
 			s.log.ErrorContext(ctx, "failed to parse user ID", "namespace", namespace, "userID", id, "error", err)
@@ -882,14 +882,7 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	}
 
 	// Check that the user is allowed to move the folder to the destination folder
-	var evaluator accesscontrol.Evaluator
-	if cmd.NewParentUID != "" {
-		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.NewParentUID))
-	} else {
-		// Evaluate folder creation permission when moving folder to the root level
-		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)
-	}
-	hasAccess, evalErr := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator)
+	hasAccess, evalErr := s.canMove(ctx, cmd)
 	if evalErr != nil {
 		return nil, evalErr
 	}
@@ -953,6 +946,68 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		return nil, err
 	}
 	return f, nil
+}
+
+func (s *Service) canMove(ctx context.Context, cmd *folder.MoveFolderCommand) (bool, error) {
+	// Check that the user is allowed to move the folder to the destination folder
+	var evaluator accesscontrol.Evaluator
+	parentUID := cmd.NewParentUID
+	if parentUID != "" {
+		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(parentUID))
+	} else {
+		// Evaluate folder creation permission when moving folder to the root level
+		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)
+		parentUID = folder.GeneralFolderUID
+	}
+	if hasAccess, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator); err != nil {
+		return false, err
+	} else if !hasAccess {
+		return false, dashboards.ErrMoveAccessDenied.Errorf("user does not have permissions to move a folder to folder with UID %s", parentUID)
+	}
+
+	// Check that the user would not be elevating their permissions by moving a folder to the destination folder
+	// This is needed for plugins, as different folders can have different plugin configs
+	// We do this by checking that there are no permissions that user has on the destination parent folder but not on the source folder
+	// We also need to look at the folder tree for the destination folder, as folder permissions are inherited
+	newFolderAndParentUIDs, err := s.getFolderAndParentUIDScopes(ctx, parentUID, cmd.OrgID)
+	if err != nil {
+		return false, err
+	}
+
+	permissions := cmd.SignedInUser.GetPermissions()
+	var evaluators []accesscontrol.Evaluator
+	currentFolderScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID)
+	for action, scopes := range permissions {
+		for _, scope := range newFolderAndParentUIDs {
+			if slices.Contains(scopes, scope) {
+				evaluators = append(evaluators, accesscontrol.EvalPermission(action, currentFolderScope))
+				break
+			}
+		}
+	}
+
+	if hasAccess, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, accesscontrol.EvalAll(evaluators...)); err != nil {
+		return false, err
+	} else if !hasAccess {
+		return false, dashboards.ErrFolderAccessEscalation.Errorf("user cannot move a folder to another folder where they have higher permissions")
+	}
+	return true, nil
+}
+
+func (s *Service) getFolderAndParentUIDScopes(ctx context.Context, folderUID string, orgID int64) ([]string, error) {
+	folderAndParentUIDScopes := []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}
+	if folderUID == folder.GeneralFolderUID {
+		return folderAndParentUIDScopes, nil
+	}
+	folderParents, err := s.store.GetParents(ctx, folder.GetParentsQuery{UID: folderUID, OrgID: orgID})
+	if err != nil {
+		return nil, err
+	}
+	for _, newParent := range folderParents {
+		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(newParent.UID)
+		folderAndParentUIDScopes = append(folderAndParentUIDScopes, scope)
+	}
+	return folderAndParentUIDScopes, nil
 }
 
 // nestedFolderDelete inspects the folder referenced by the cmd argument, deletes all the entries for
@@ -1087,8 +1142,8 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 	}
 
 	userID := int64(0)
-	namespaceID, userIDstr := dto.User.GetNamespacedID()
-	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+	namespaceID, userIDstr := dto.User.GetTypedID()
+	if namespaceID != identity.TypeUser && namespaceID != identity.TypeServiceAccount {
 		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
 	} else {
 		userID, err = identity.IntIdentifier(namespaceID, userIDstr)

@@ -445,6 +445,7 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 	dtoStats := SnapshotResourceStats{
 		Types:    make(map[MigrateDataType]int, len(snapshot.StatsRollup.CountsByStatus)),
 		Statuses: make(map[ItemStatus]int, len(snapshot.StatsRollup.CountsByType)),
+		Total:    snapshot.StatsRollup.Total,
 	}
 	for s, c := range snapshot.StatsRollup.CountsByStatus {
 		dtoStats.Statuses[ItemStatus(s)] = c
