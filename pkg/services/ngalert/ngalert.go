@@ -343,7 +343,8 @@ func (ng *AlertNG) init() error {
 
 	ng.AlertsRouter = alertsRouter
 
-	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
+	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService)
+	conditionValidator := eval.NewConditionValidator(ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
 
 	recordingWriter, err := createRecordingWriter(ng.FeatureToggles, ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, clk, ng.tracer, ng.Metrics.GetRemoteWriterMetrics())
 	if err != nil {
@@ -411,7 +412,15 @@ func (ng *AlertNG) init() error {
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store)
 	receiverService := notifier.NewReceiverService(
-		ng.accesscontrol,
+		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true), // TODO: Remove provisioning actions from regular API.
+		configStore,
+		ng.store,
+		ng.SecretsService,
+		ng.store,
+		ng.Log,
+	)
+	provisioningReceiverService := notifier.NewReceiverService(
+		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true),
 		configStore,
 		ng.store,
 		ng.SecretsService,
@@ -421,7 +430,7 @@ func (ng *AlertNG) init() error {
 
 	// Provisioning
 	policyService := provisioning.NewNotificationPolicyService(configStore, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
-	contactPointService := provisioning.NewContactPointService(configStore, ng.SecretsService, ng.store, ng.store, receiverService, ng.Log, ng.store)
+	contactPointService := provisioning.NewContactPointService(configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store)
 	templateService := provisioning.NewTemplateService(configStore, ng.store, ng.store, ng.Log)
 	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.store, ng.store, ng.Log, ng.store)
 	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.folderService, ng.QuotaService, ng.store,
@@ -453,6 +462,7 @@ func (ng *AlertNG) init() error {
 		AlertRules:           alertRuleService,
 		AlertsRouter:         alertsRouter,
 		EvaluatorFactory:     evalFactory,
+		ConditionValidator:   conditionValidator,
 		FeatureManager:       ng.FeatureToggles,
 		AppUrl:               appUrl,
 		Historian:            history,
