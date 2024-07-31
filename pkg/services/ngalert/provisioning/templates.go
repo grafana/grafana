@@ -50,6 +50,7 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]defi
 	templates := make([]definitions.NotificationTemplate, 0, len(revision.Config.TemplateFiles))
 	for name, tmpl := range revision.Config.TemplateFiles {
 		tmpl := definitions.NotificationTemplate{
+			UID:             legacy_storage.NameToUid(name),
 			Name:            name,
 			Template:        tmpl,
 			ResourceVersion: calculateTemplateFingerprint(tmpl),
@@ -76,7 +77,8 @@ func (t *TemplateService) GetTemplate(ctx context.Context, orgID int64, name str
 			continue
 		}
 		tmpl := definitions.NotificationTemplate{
-			Name:            name,
+			UID:             legacy_storage.NameToUid(tmplName),
+			Name:            tmplName,
 			Template:        tmpl,
 			ResourceVersion: calculateTemplateFingerprint(tmpl),
 		}
@@ -150,6 +152,7 @@ func (t *TemplateService) createTemplate(ctx context.Context, revision *legacy_s
 	}
 
 	return definitions.NotificationTemplate{
+		UID:             legacy_storage.NameToUid(tmpl.Name),
 		Name:            tmpl.Name,
 		Template:        tmpl.Template,
 		Provenance:      tmpl.Provenance,
@@ -208,6 +211,7 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 	}
 
 	return definitions.NotificationTemplate{
+		UID:             legacy_storage.NameToUid(tmpl.Name),
 		Name:            tmpl.Name,
 		Template:        tmpl.Template,
 		Provenance:      tmpl.Provenance,

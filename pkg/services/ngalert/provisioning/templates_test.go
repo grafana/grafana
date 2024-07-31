@@ -46,18 +46,21 @@ func TestGetTemplates(t *testing.T) {
 
 		expected := []definitions.NotificationTemplate{
 			{
+				UID:             legacy_storage.NameToUid("template1"),
 				Name:            "template1",
 				Template:        "test1",
 				Provenance:      definitions.Provenance(models.ProvenanceAPI),
 				ResourceVersion: calculateTemplateFingerprint("test1"),
 			},
 			{
+				UID:             legacy_storage.NameToUid("template2"),
 				Name:            "template2",
 				Template:        "test2",
 				Provenance:      definitions.Provenance(models.ProvenanceFile),
 				ResourceVersion: calculateTemplateFingerprint("test2"),
 			},
 			{
+				UID:             legacy_storage.NameToUid("template3"),
 				Name:            "template3",
 				Template:        "test3",
 				Provenance:      definitions.Provenance(models.ProvenanceNone),
@@ -144,6 +147,7 @@ func TestGetTemplate(t *testing.T) {
 		require.NoError(t, err)
 
 		expected := definitions.NotificationTemplate{
+			UID:             legacy_storage.NameToUid(templateName),
 			Name:            templateName,
 			Template:        templateContent,
 			Provenance:      definitions.Provenance(models.ProvenanceAPI),
@@ -244,6 +248,7 @@ func TestUpsertTemplate(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Equal(t, definitions.NotificationTemplate{
+			UID:             legacy_storage.NameToUid(tmpl.Name),
 			Name:            tmpl.Name,
 			Template:        tmpl.Template,
 			Provenance:      tmpl.Provenance,
@@ -285,6 +290,7 @@ func TestUpsertTemplate(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, definitions.NotificationTemplate{
+				UID:             legacy_storage.NameToUid(tmpl.Name),
 				Name:            tmpl.Name,
 				Template:        tmpl.Template,
 				Provenance:      tmpl.Provenance,
@@ -321,6 +327,7 @@ func TestUpsertTemplate(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, definitions.NotificationTemplate{
+				UID:             legacy_storage.NameToUid(tmpl.Name),
 				Name:            tmpl.Name,
 				Template:        tmpl.Template,
 				Provenance:      tmpl.Provenance,
@@ -355,6 +362,7 @@ func TestUpsertTemplate(t *testing.T) {
 
 		expectedContent := fmt.Sprintf("{{ define \"%s\" }}\n  content\n{{ end }}", templateName)
 		require.Equal(t, definitions.NotificationTemplate{
+			UID:             legacy_storage.NameToUid(tmpl.Name),
 			Name:            tmpl.Name,
 			Template:        expectedContent,
 			Provenance:      tmpl.Provenance,
@@ -565,6 +573,7 @@ func TestCreateTemplate(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Equal(t, definitions.NotificationTemplate{
+			UID:             legacy_storage.NameToUid(tmpl.Name),
 			Name:            tmpl.Name,
 			Template:        tmpl.Template,
 			Provenance:      tmpl.Provenance,
@@ -727,6 +736,7 @@ func TestUpdateTemplate(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, definitions.NotificationTemplate{
+				UID:             legacy_storage.NameToUid(tmpl.Name),
 				Name:            tmpl.Name,
 				Template:        tmpl.Template,
 				Provenance:      tmpl.Provenance,
@@ -756,6 +766,7 @@ func TestUpdateTemplate(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, definitions.NotificationTemplate{
+				UID:             legacy_storage.NameToUid(tmpl.Name),
 				Name:            tmpl.Name,
 				Template:        tmpl.Template,
 				Provenance:      tmpl.Provenance,
