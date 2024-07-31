@@ -422,7 +422,6 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 			Request:     new(resource.ListRequest),
 		}
 		listReq.Request = proto.Clone(req).(*resource.ListRequest)
-		listReq.Request.Limit = 0 // limit handled by iterator
 
 		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceList, listReq)
 		if rows != nil {

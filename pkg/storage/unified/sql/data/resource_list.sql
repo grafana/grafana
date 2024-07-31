@@ -20,7 +20,4 @@ SELECT
             {{ end }}
         {{ end }}
     ORDER BY {{ .Ident "resource_version" }} DESC
-    {{ if (gt .Request.Limit 0) }}
-    LIMIT {{ .Arg .Request.Limit }}
-    {{ end }}
 ;
