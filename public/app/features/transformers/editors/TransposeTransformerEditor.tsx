@@ -1,5 +1,3 @@
-import React from 'react';
-
 import {
   DataTransformerID,
   standardTransformers,
@@ -11,7 +9,6 @@ import { TransposeTransformerOptions } from '@grafana/data/src/transformations/t
 import { InlineField, InlineFieldRow, Input, RadioButtonGroup } from '@grafana/ui';
 
 export const TransposeTransfomerEditor = ({
-  input,
   options,
   onChange,
 }: TransformerUIProps<TransposeTransformerOptions>) => {
