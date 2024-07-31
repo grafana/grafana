@@ -1,4 +1,4 @@
-SELECT kv."resource_version", kv."value"
+SELECT kv."resource_version", kv."namespace", kv."name", kv."value"
 FROM "resource_history" as kv
 INNER JOIN (
 	SELECT "namespace", "group", "resource", "name", max("resource_version") AS "resource_version"

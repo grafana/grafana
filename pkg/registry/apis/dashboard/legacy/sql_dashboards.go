@@ -3,6 +3,7 @@ package legacy
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"sync"
@@ -38,9 +39,6 @@ type dashboardRow struct {
 	// The folder UID (needed for access control checks)
 	FolderUID string
 
-	// Size (in bytes) of the dashboard payload
-	Bytes int
-
 	// The token we can use that will start a new connection that includes
 	// this same dashboard
 	token *continueToken
@@ -70,6 +68,16 @@ func NewDashboardAccess(sql db.DB,
 		dashStore:    dashStore,
 		provisioning: provisioning,
 	}
+}
+
+func (a *dashboardSqlAccess) currentRV(ctx context.Context) (int64, error) {
+	t := time.Now()
+	max := ""
+	err := a.sess.Get(ctx, &max, "SELECT MAX(updated) FROM dashboard")
+	if err == nil && max != "" {
+		t, err = time.Parse(time.DateTime, max)
+	}
+	return t.UnixMilli(), err
 }
 
 const selector = `SELECT
@@ -107,9 +115,9 @@ const history = `SELECT
   LEFT OUTER JOIN user AS UpdatedUSER ON dashboard_version.created_by = UpdatedUSER.id
   WHERE dashboard.is_folder = false`
 
-func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery) (*rowsWrapper, int, error) {
+func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery) (*rowsWrapper, error) {
 	if len(query.Labels) > 0 {
-		return nil, 0, fmt.Errorf("labels not yet supported")
+		return nil, fmt.Errorf("labels not yet supported")
 		// if query.Requirements.Folder != nil {
 		// 	args = append(args, *query.Requirements.Folder)
 		// 	sqlcmd = fmt.Sprintf("%s AND dashboard.folder_uid=$%d", sqlcmd, len(args))
@@ -119,20 +127,15 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 	var sqlcmd string
 	args := []any{query.OrgID}
 
-	limit := query.Limit
-	if limit < 1 {
-		limit = 15 //
-	}
-
 	if query.GetHistory || query.Version > 0 {
 		if query.GetTrash {
-			return nil, 0, fmt.Errorf("trash not included in history table")
+			return nil, fmt.Errorf("trash not included in history table")
 		}
 
 		sqlcmd = fmt.Sprintf("%s AND dashboard.org_id=$%d\n  ", history, len(args))
 
 		if query.UID == "" {
-			return nil, 0, fmt.Errorf("history query must have a UID")
+			return nil, fmt.Errorf("history query must have a UID")
 		}
 
 		args = append(args, query.UID)
@@ -146,8 +149,7 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 			sqlcmd = fmt.Sprintf("%s AND dashboard_version.version<$%d", sqlcmd, len(args))
 		}
 
-		args = append(args, (limit + 2)) // add more so we can include a next token
-		sqlcmd = fmt.Sprintf("%s\n   ORDER BY dashboard_version.version desc LIMIT $%d", sqlcmd, len(args))
+		sqlcmd = fmt.Sprintf("%s\n   ORDER BY dashboard_version.version desc", sqlcmd)
 	} else {
 		sqlcmd = fmt.Sprintf("%s AND dashboard.org_id=$%d\n  ", selector, len(args))
 
@@ -156,7 +158,7 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 			sqlcmd = fmt.Sprintf("%s AND dashboard.uid=$%d", sqlcmd, len(args))
 		} else if query.LastID > 0 {
 			args = append(args, query.LastID)
-			sqlcmd = fmt.Sprintf("%s AND dashboard.id>=$%d", sqlcmd, len(args))
+			sqlcmd = fmt.Sprintf("%s AND dashboard.id>$%d", sqlcmd, len(args))
 		}
 		if query.GetTrash {
 			sqlcmd = sqlcmd + " AND dashboard.deleted IS NOT NULL"
@@ -164,8 +166,7 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 			sqlcmd = sqlcmd + " AND dashboard.deleted IS NULL"
 		}
 
-		args = append(args, (limit + 2)) // add more so we can include a next token
-		sqlcmd = fmt.Sprintf("%s\n   ORDER BY dashboard.id asc LIMIT $%d", sqlcmd, len(args))
+		sqlcmd = fmt.Sprintf("%s\n   ORDER BY dashboard.id asc", sqlcmd)
 	}
 	// fmt.Printf("%s // %v\n", sqlcmd, args)
 
@@ -176,7 +177,7 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 		}
 		rows = nil
 	}
-	return rows, limit, err
+	return rows, err
 }
 
 func (a *dashboardSqlAccess) doQuery(ctx context.Context, query string, args ...any) (*rowsWrapper, error) {
@@ -196,25 +197,40 @@ func (a *dashboardSqlAccess) doQuery(ctx context.Context, query string, args ...
 	}, err
 }
 
+var _ resource.ListIterator = (*rowsWrapper)(nil)
+
 type rowsWrapper struct {
-	a     *dashboardSqlAccess
-	rows  *sql.Rows
-	idx   int
-	total int64
+	a    *dashboardSqlAccess
+	rows *sql.Rows
 
 	canReadDashboard func(scopes ...string) bool
+
+	// Current
+	row *dashboardRow
+	err error
 }
 
 func (r *rowsWrapper) Close() error {
 	return r.rows.Close()
 }
 
-func (r *rowsWrapper) Next() (*dashboardRow, error) {
+func (r *rowsWrapper) Next() bool {
+	if r.err != nil {
+		return false
+	}
+	var err error
+
 	// breaks after first readable value
 	for r.rows.Next() {
-		r.idx++
-		d, err := r.a.scanRow(r.rows)
-		if d != nil {
+		r.row, err = r.a.scanRow(r.rows)
+		if err != nil {
+			r.err = err
+			return false
+		}
+
+		if r.row != nil {
+			d := r.row
+
 			// Access control checker
 			scopes := []string{dashboards.ScopeDashboardsProvider.GetResourceScopeUID(d.Dash.Name)}
 			if d.FolderUID != "" { // Copied from searchV2... not sure the logic is right
@@ -223,13 +239,44 @@ func (r *rowsWrapper) Next() (*dashboardRow, error) {
 			if !r.canReadDashboard(scopes...) {
 				continue
 			}
-			r.total += int64(d.Bytes)
-		}
 
-		// returns the first folder it can
-		return d, err
+			// returns the first folder it can
+			return true
+		}
 	}
-	return nil, nil
+	return false
+}
+
+// ContinueToken implements resource.ListIterator.
+func (r *rowsWrapper) ContinueToken() string {
+	return r.row.token.String()
+}
+
+// Error implements resource.ListIterator.
+func (r *rowsWrapper) Error() error {
+	return r.err
+}
+
+// Name implements resource.ListIterator.
+func (r *rowsWrapper) Name() string {
+	return r.row.Dash.Name
+}
+
+// Namespace implements resource.ListIterator.
+func (r *rowsWrapper) Namespace() string {
+	return r.row.Dash.Namespace
+}
+
+// ResourceVersion implements resource.ListIterator.
+func (r *rowsWrapper) ResourceVersion() int64 {
+	return r.row.RV
+}
+
+// Value implements resource.ListIterator.
+func (r *rowsWrapper) Value() []byte {
+	b, err := json.Marshal(r.row.Dash)
+	r.err = err
+	return b
 }
 
 func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
@@ -318,14 +365,14 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 			})
 		}
 
-		row.Bytes = len(data)
-		if row.Bytes > 0 {
+		if len(data) > 0 {
 			err = dash.Spec.UnmarshalJSON(data)
 			if err != nil {
 				return row, err
 			}
-			dash.Spec.Set("id", dashboard_id) // add it so we can get it from the body later
 		}
+		// add it so we can get it from the body later
+		dash.Spec.Set("id", dashboard_id)
 	}
 	return row, err
 }
