@@ -113,12 +113,6 @@ describe('delete rule', () => {
   });
 
   it('should delete the entire group if no more rules are left', async () => {
-    server.use(
-      deleteRulerRuleGroupHandler({
-        response: new HttpResponse(undefined, { status: 200 }),
-      })
-    );
-
     const rule = mockCombinedRule({
       rulerRule: grafanaRulerRule,
     });
