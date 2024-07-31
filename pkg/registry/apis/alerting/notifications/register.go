@@ -15,7 +15,8 @@ import (
 
 	notificationsModels "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	receiver "github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/receiver"
+	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/receiver"
+	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/routing_tree"
 	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/template_group"
 	timeInterval "github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/timeinterval"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -87,10 +88,16 @@ func (t *NotificationsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiser
 		return fmt.Errorf("failed to initialize templates group storage: %w", err)
 	}
 
+	routeStorage, err := routing_tree.NewStorage(t.ng.Api.Policies, t.namespacer)
+	if err != nil {
+		return fmt.Errorf("failed to initialize route storage: %w", err)
+	}
+
 	apiGroupInfo.VersionedResourcesStorageMap[notificationsModels.VERSION] = map[string]rest.Storage{
 		notificationsModels.TimeIntervalResourceInfo.StoragePath():  intervals,
 		notificationsModels.ReceiverResourceInfo.StoragePath():      recvStorage,
 		notificationsModels.TemplateGroupResourceInfo.StoragePath(): templ,
+		notificationsModels.RouteResourceInfo.StoragePath():         routeStorage,
 	}
 	return nil
 }
@@ -115,7 +122,8 @@ func (t *NotificationsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3
 	delete(oas.Paths.Paths, root+notificationsModels.ReceiverResourceInfo.GroupResource().Resource)
 	delete(oas.Paths.Paths, root+notificationsModels.TimeIntervalResourceInfo.GroupResource().Resource)
 	delete(oas.Paths.Paths, root+notificationsModels.TemplateGroupResourceInfo.GroupResource().Resource)
-
+	delete(oas.Paths.Paths, root+notificationsModels.RouteResourceInfo.GroupResource().Resource)
+	
 	// The root API discovery list
 	sub := oas.Paths.Paths[root]
 	if sub != nil && sub.Get != nil {
@@ -134,6 +142,8 @@ func (t *NotificationsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return timeInterval.Authorize(ctx, t.authz, a)
 			case notificationsModels.ReceiverResourceInfo.GroupResource().Resource:
 				return receiver.Authorize(ctx, t.receiverAuth, a)
+			case notificationsModels.RouteResourceInfo.GroupResource().Resource:
+				return routing_tree.Authorize(ctx, t.authz, a)
 			}
 			return authorizer.DecisionNoOpinion, "", nil
 		})

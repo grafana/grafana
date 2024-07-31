@@ -18,9 +18,10 @@ func init() {
 }
 
 const (
-	GROUP      = "notifications.alerting.grafana.app"
-	VERSION    = "v0alpha1"
-	APIVERSION = GROUP + "/" + VERSION
+	GROUP                      = "notifications.alerting.grafana.app"
+	VERSION                    = "v0alpha1"
+	APIVERSION                 = GROUP + "/" + VERSION
+	UserDefinedRoutingTreeName = "user-defined"
 )
 
 var (
@@ -130,6 +131,7 @@ func AddKnownTypesGroup(scheme *runtime.Scheme, g schema.GroupVersion) error {
 		&TemplateGroup{},
 		&TemplateGroupList{},
 		&RoutingTree{},
+		&RoutingTreeList{},
 	)
 	metav1.AddToGroupVersion(scheme, g)
 
