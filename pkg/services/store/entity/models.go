@@ -8,7 +8,6 @@ import context "context"
 
 const (
 	StandardKindDashboard = "dashboard"
-	StandardKindPlaylist  = "playlist"
 	StandardKindFolder    = "folder"
 
 	// StandardKindDataSource: not a real kind yet, but used to define references from dashboards
@@ -18,9 +17,6 @@ const (
 	// StandardKindPanel: only used for searchV2 right now
 	// Standalone panel is not an object kind yet -- library panel, or nested in dashboard
 	StandardKindPanel = "panel"
-
-	// StandardKindJSONObj generic json object
-	StandardKindJSONObj = "jsonobj"
 
 	// StandardKindQuery early development on panel query library
 	// the kind may need to change to better encapsulate { targets:[], transforms:[] }
