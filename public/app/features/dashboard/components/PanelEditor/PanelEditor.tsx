@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 
 import { FieldConfigSource, GrafanaTheme2, NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   Button,
   HorizontalGroup,
@@ -495,20 +495,33 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, props: Props) => {
   const paneSpacing = theme.spacing(2);
 
   return {
-    wrapper: css({
-      width: '100%',
-      flexGrow: 1,
-      minHeight: 0,
-      display: 'flex',
-      paddingTop: theme.spacing(2),
-    }),
-    verticalSplitPanesWrapper: css({
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      width: '100%',
-      position: 'relative',
-    }),
+    wrapper: css(
+      {
+        width: '100%',
+        flexGrow: 1,
+        minHeight: 0,
+        display: 'flex',
+        paddingTop: theme.spacing(2),
+      },
+      config.featureToggles.bodyScrolling && {
+        flexDirection: 'column',
+      }
+    ),
+    verticalSplitPanesWrapper: css(
+      {
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
+      },
+      config.featureToggles.bodyScrolling
+        ? {
+            flex: 1,
+          }
+        : {
+            height: '100%',
+            width: '100%',
+          }
+    ),
     mainPaneWrapper: css({
       display: 'flex',
       flexDirection: 'column',
