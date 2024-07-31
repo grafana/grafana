@@ -1,4 +1,4 @@
-import { getByTestId, render } from '@testing-library/react';
+import { screen, render } from '@testing-library/react';
 import { byRole } from 'testing-library-selector';
 
 import { LogRecordViewerByTimestamp } from './LogRecordViewer';
@@ -22,8 +22,8 @@ describe('LogRecordViewerByTimestamp', () => {
     const logElement = ui.log.get();
     expect(logElement).toBeInTheDocument();
 
-    const entry1 = getByTestId(logElement, 1681739580000);
-    const entry2 = getByTestId(logElement, 1681739600000);
+    const entry1 = screen.getByTestId(1681739580000);
+    const entry2 = screen.getByTestId(1681739600000);
 
     expect(entry1).toHaveTextContent('foo=bar');
     expect(entry1).toHaveTextContent('severity=warning');
