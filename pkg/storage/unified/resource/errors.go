@@ -6,18 +6,17 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // Package-level errors.
 var (
-	ErrNotFound                 = errors.New("resource not found")
-	ErrOptimisticLockingFailed  = errors.New("optimistic locking failed")
-	ErrUserNotFoundInContext    = errors.New("user not found in context")
-	ErrUnableToReadResourceJSON = errors.New("unable to read resource json")
-	ErrNotImplementedYet        = errors.New("not implemented yet")
+	ErrOptimisticLockingFailed = errors.New("optimistic locking failed")
+	ErrUserNotFoundInContext   = errors.New("user not found in context")
+	ErrNotImplementedYet       = errors.New("not implemented yet")
 )
 
-func newBadRequest(msg string) *ErrorResult {
+func NewBadRequestError(msg string) *ErrorResult {
 	return &ErrorResult{
 		Message: msg,
 		Code:    http.StatusBadRequest,
@@ -25,11 +24,23 @@ func newBadRequest(msg string) *ErrorResult {
 	}
 }
 
+func NewNotFoundError(key *ResourceKey) *ErrorResult {
+	return &ErrorResult{
+		Code: http.StatusNotFound,
+		Details: &ErrorDetails{
+			Group: key.Group,
+			Kind:  key.Resource, // yup, resource as kind same is true in apierrors.NewNotFound()
+			Name:  key.Name,
+		},
+	}
+}
+
 // Convert golang errors to status result errors that can be returned to a client
-func errToStatus(err error) *ErrorResult {
+func AsErrorResult(err error) *ErrorResult {
 	if err == nil {
 		return nil
 	}
+
 	apistatus, ok := err.(apierrors.APIStatus)
 	if ok {
 		s := apistatus.Status()
@@ -62,4 +73,34 @@ func errToStatus(err error) *ErrorResult {
 		Message: err.Error(),
 		Code:    500,
 	}
+}
+
+func GetError(res *ErrorResult) error {
+	if res == nil {
+		return nil
+	}
+
+	status := &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    res.Code,
+		Reason:  metav1.StatusReason(res.Reason),
+		Message: res.Message,
+	}}
+	if res.Details != nil {
+		status.ErrStatus.Details = &metav1.StatusDetails{
+			Group:             res.Details.Group,
+			Kind:              res.Details.Kind,
+			Name:              res.Details.Name,
+			UID:               types.UID(res.Details.Uid),
+			RetryAfterSeconds: res.Details.RetryAfterSeconds,
+		}
+		for _, c := range res.Details.Causes {
+			status.ErrStatus.Details.Causes = append(status.ErrStatus.Details.Causes, metav1.StatusCause{
+				Type:    metav1.CauseType(c.Reason),
+				Message: c.Message,
+				Field:   c.Field,
+			})
+		}
+	}
+	return status
 }

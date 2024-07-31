@@ -31,14 +31,18 @@
     {
       "metadata": {
         "name": "addFieldFromCalculationStatFunctions",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-11-03T14:39:58Z"
+        "resourceVersion": "1722289107837",
+        "creationTimestamp": "2023-11-03T14:39:58Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-07-29 21:38:27.837976 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Add cumulative and window functions to the add field from calculation transformation",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
@@ -642,12 +646,15 @@
     {
       "metadata": {
         "name": "cloudwatchMetricInsightsCrossAccount",
-        "resourceVersion": "1719497905377",
-        "creationTimestamp": "2024-07-02T10:34:12Z"
+        "resourceVersion": "1722005531805",
+        "creationTimestamp": "2024-07-02T10:34:12Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-07-26 14:52:11.80525 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables cross account observability for Cloudwatch Metric Insights",
-        "stage": "experimental",
+        "description": "Enables cross account observability for Cloudwatch Metric Insights query builder",
+        "stage": "preview",
         "codeowner": "@grafana/aws-datasources",
         "frontend": true
       }
@@ -1140,14 +1147,18 @@
     {
       "metadata": {
         "name": "formatString",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-10-13T18:17:12Z"
+        "resourceVersion": "1722290290367",
+        "creationTimestamp": "2023-10-13T18:17:12Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-07-29 21:58:10.367328 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable format string transformer",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {

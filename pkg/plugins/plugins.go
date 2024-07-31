@@ -175,6 +175,11 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 		if include.Role == "" {
 			include.Role = org.RoleViewer
 		}
+
+		// Default to app access for app plugins
+		if plugin.Type == TypeApp && include.Role == org.RoleViewer && include.Action == "" {
+			include.Action = ActionAppAccess
+		}
 	}
 
 	return plugin, nil

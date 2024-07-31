@@ -7,17 +7,23 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
+// Quickly check if an resource (in a folder) should be seen
+// returns true when the item should be excluded from list results
 type ResourceReadFilter func(namespace, name, folder string) bool
 
+// Authorizer checks if a user is able to access a resource
+// Functions return an ErrorResult when not accessible so that access details
+// can be better communicated in the result
 type Authorizer interface {
 	CanCreate(ctx context.Context, id identity.Requester, key *ResourceKey) *ErrorResult
 	CanUpdate(ctx context.Context, id identity.Requester, key *ResourceKey) *ErrorResult
 	CanDelete(ctx context.Context, id identity.Requester, key *ResourceKey) *ErrorResult
 
+	// Does not know about folder
 	CanRead(ctx context.Context, id identity.Requester, key *ResourceKey) *ErrorResult
 
 	// Check that the requester can read an item in the linked folder
-	CanReadItemInFolder(ctx context.Context, id identity.Requester, namespace string, folder string) *ErrorResult
+	CanReadItemInFolder(ctx context.Context, id identity.Requester, resource string, folder string) *ErrorResult
 
 	// The requester is allowed to write an item to a folder
 	CanWriteToFolder(ctx context.Context, id identity.Requester, resource string, folder string) *ErrorResult
@@ -26,7 +32,7 @@ type Authorizer interface {
 	CanWriteOrigin(ctx context.Context, id identity.Requester, origin string) *ErrorResult
 
 	// Return an authz filter for a list request
-	// NOTE the key may not include a name.
+	// NOTE the key must include a resource, but will likely not include a name
 	// This will return an error if not allowed to read anything
 	ListFilter(ctx context.Context, id identity.Requester, key *ResourceKey) (ResourceReadFilter, *ErrorResult)
 }
@@ -71,11 +77,12 @@ func (c *constantAuthorizer) CanRead(ctx context.Context, id identity.Requester,
 	return &ErrorResult{Code: http.StatusForbidden, Message: "can not read"}
 }
 
-func (c *constantAuthorizer) CanReadItemInFolder(ctx context.Context, id identity.Requester, namespace string, folder string) *ErrorResult {
+// CanRead implements Authorizer.
+func (c *constantAuthorizer) CanReadItemInFolder(ctx context.Context, id identity.Requester, resource string, folder string) *ErrorResult {
 	if c.result {
 		return nil
 	}
-	return &ErrorResult{Code: http.StatusForbidden, Message: "can not item in folder"}
+	return &ErrorResult{Code: http.StatusForbidden, Message: "can not read"}
 }
 
 // CanUpdate implements Authorizer.

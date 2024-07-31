@@ -114,24 +114,11 @@ func (r sqlResourceReadRequest) Validate() error {
 // List
 type sqlResourceListRequest struct {
 	*sqltemplate.SQLTemplate
-	Request  *resource.ListRequest
-	Response *resource.ResourceWrapper
+	Request *resource.ListRequest
 }
 
 func (r sqlResourceListRequest) Validate() error {
 	return nil // TODO
-}
-
-func (r sqlResourceListRequest) Results() (*resource.ResourceWrapper, error) {
-	// sqlResourceListRequest is a set-returning query. As such, it
-	// should not return its *Response, since that will be overwritten in the
-	// next call to `Scan`, so it needs to return a copy of it. Note, though,
-	// that it is safe to return the same `Response.Value` since `Scan`
-	// allocates a new slice of bytes each time.
-	return &resource.ResourceWrapper{
-		ResourceVersion: r.Response.ResourceVersion,
-		Value:           r.Response.Value,
-	}, nil
 }
 
 type historyListRequest struct {

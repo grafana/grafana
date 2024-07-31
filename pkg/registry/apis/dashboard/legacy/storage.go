@@ -101,9 +101,8 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 	return rv, err
 }
 
-// Read implements ResourceStoreServer.
 func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid string, v int64) (*dashboard.Dashboard, int64, error) {
-	rows, _, err := a.getRows(ctx, &DashboardQuery{
+	rows, err := a.getRows(ctx, &DashboardQuery{
 		OrgID:   orgId,
 		UID:     uid,
 		Limit:   2, // will only be one!
@@ -114,21 +113,25 @@ func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid 
 	}
 	defer func() { _ = rows.Close() }()
 
-	row, err := rows.Next()
-	if err != nil || row == nil {
-		return nil, 0, err
+	if rows.Next() {
+		row := rows.row
+		if row != nil {
+			return row.Dash, row.RV, rows.err
+		}
 	}
-	return row.Dash, row.RV, nil
+	return nil, 0, rows.err
 }
 
 // Read implements ResourceStoreServer.
-func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResponse, error) {
+func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.ReadResponse {
+	rsp := &resource.ReadResponse{}
 	info, err := request.ParseNamespace(req.Key.Namespace)
 	if err == nil {
 		err = isDashboardKey(req.Key, true)
 	}
 	if err != nil {
-		return nil, err
+		rsp.Error = resource.AsErrorResult(err)
+		return rsp
 	}
 	version := int64(0)
 	if req.ResourceVersion > 0 {
@@ -137,40 +140,40 @@ func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest
 
 	dash, rv, err := a.GetDashboard(ctx, info.OrgID, req.Key.Name, version)
 	if err != nil {
-		return nil, err
+		rsp.Error = resource.AsErrorResult(err)
+		return rsp
 	}
 	if dash == nil {
-		return &resource.ReadResponse{
-			Error: &resource.ErrorResult{
-				Code: http.StatusNotFound,
-			},
-		}, err
+		rsp.Error = &resource.ErrorResult{
+			Code: http.StatusNotFound,
+		}
 	}
 
-	value, err := json.Marshal(dash)
-	return &resource.ReadResponse{
-		ResourceVersion: rv,
-		Value:           value,
-	}, err
+	rsp.ResourceVersion = rv
+	rsp.Value, err = json.Marshal(dash)
+	if err != nil {
+		rsp.Error = resource.AsErrorResult(err)
+	}
+	return rsp
 }
 
 // List implements AppendingStore.
-func (a *dashboardSqlAccess) PrepareList(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
+func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	opts := req.Options
 	info, err := request.ParseNamespace(opts.Key.Namespace)
 	if err == nil {
 		err = isDashboardKey(opts.Key, false)
 	}
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
 	token, err := readContinueToken(req.NextPageToken)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 	if token.orgId > 0 && token.orgId != info.OrgID {
-		return nil, fmt.Errorf("token and orgID mismatch")
+		return 0, fmt.Errorf("token and orgID mismatch")
 	}
 
 	query := &DashboardQuery{
@@ -181,38 +184,20 @@ func (a *dashboardSqlAccess) PrepareList(ctx context.Context, req *resource.List
 		Labels:   req.Options.Labels,
 	}
 
-	rows, limit, err := a.getRows(ctx, query)
+	listRV, err := a.currentRV(ctx)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
-	defer func() { _ = rows.Close() }()
-
-	totalSize := 0
-	list := &resource.ListResponse{}
-	for {
-		row, err := rows.Next()
-		if err != nil || row == nil {
-			return list, err
-		}
-
-		totalSize += row.Bytes
-		if len(list.Items) > 0 && (totalSize > query.MaxBytes || len(list.Items) >= limit) {
-			// if query.Requirements.Folder != nil {
-			// 	row.token.folder = *query.Requirements.Folder
-			// }
-			list.NextPageToken = row.token.String() // will skip this one but start here next time
-			return list, err
-		}
-		// TODO -- make it smaller and stick the body as an annotation...
-		val, err := json.Marshal(row.Dash)
-		if err != nil {
-			return list, err
-		}
-		list.Items = append(list.Items, &resource.ResourceWrapper{
-			ResourceVersion: row.RV,
-			Value:           val,
-		})
+	rows, err := a.getRows(ctx, query)
+	if rows != nil {
+		defer func() {
+			_ = rows.Close()
+		}()
 	}
+	if err != nil {
+		err = cb(rows)
+	}
+	return listRV, err
 }
 
 // Watch implements AppendingStore.
@@ -247,6 +232,11 @@ func (a *dashboardSqlAccess) WatchWriteEvents(ctx context.Context) (<-chan *reso
 	return stream, nil
 }
 
+// Simple wrapper for index implementation
+func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResponse, error) {
+	return a.ReadResource(ctx, req), nil
+}
+
 func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryRequest) (*resource.HistoryResponse, error) {
 	info, err := request.ParseNamespace(req.Key.Namespace)
 	if err == nil {
@@ -277,7 +267,7 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 		query.GetHistory = true
 	}
 
-	rows, limit, err := a.getRows(ctx, query)
+	rows, err := a.getRows(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -285,21 +275,11 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 
 	totalSize := 0
 	list := &resource.HistoryResponse{}
-	for {
-		row, err := rows.Next()
-		if err != nil || row == nil {
+	for rows.Next() {
+		if rows.err != nil || rows.row == nil {
 			return list, err
 		}
-
-		totalSize += row.Bytes
-		if len(list.Items) > 0 && (totalSize > query.MaxBytes || len(list.Items) >= limit) {
-			// if query.Requirements.Folder != nil {
-			// 	row.token.folder = *query.Requirements.Folder
-			// }
-			row.token.id = getVersionFromRV(row.RV) // Use the version as the increment
-			list.NextPageToken = row.token.String() // will skip this one but start here next time
-			return list, err
-		}
+		row := rows.row
 
 		partial := &metav1.PartialObjectMetadata{
 			ObjectMeta: row.Dash.ObjectMeta,
@@ -310,17 +290,25 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 		if err != nil {
 			return list, err
 		}
-		full, err := json.Marshal(row.Dash.Spec)
-		if err != nil {
+
+		totalSize += len(rows.Value())
+		if len(list.Items) > 0 && (totalSize > query.MaxBytes || len(list.Items) >= query.Limit) {
+			// if query.Requirements.Folder != nil {
+			// 	row.token.folder = *query.Requirements.Folder
+			// }
+			row.token.id = getVersionFromRV(row.RV) // Use the version as the increment
+			list.NextPageToken = row.token.String() // will skip this one but start here next time
 			return list, err
 		}
+
 		list.Items = append(list.Items, &resource.ResourceMeta{
 			ResourceVersion:   row.RV,
 			PartialObjectMeta: val,
-			Size:              int32(len(full)),
+			Size:              int32(len(rows.Value())),
 			Hash:              "??", // hash the full?
 		})
 	}
+	return list, err
 }
 
 // Used for efficient provisioning

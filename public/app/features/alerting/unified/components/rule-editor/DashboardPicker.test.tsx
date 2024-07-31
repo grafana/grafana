@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { noop } from 'lodash';
 import { Props } from 'react-virtualized-auto-sizer';
 import { byRole } from 'testing-library-selector';
@@ -63,17 +63,15 @@ describe('DashboardPicker', () => {
       wrapper: TestProvider,
     });
 
-    await waitFor(() => {
-      expect(ui.dashboardButton(/Dashboard 1/).get()).toBeInTheDocument();
-      expect(ui.dashboardButton(/Dashboard 2/).get()).toBeInTheDocument();
-      expect(ui.dashboardButton(/Dashboard 3/).get()).toBeInTheDocument();
+    expect(await ui.dashboardButton(/Dashboard 1/).find()).toBeInTheDocument();
+    expect(ui.dashboardButton(/Dashboard 2/).get()).toBeInTheDocument();
+    expect(ui.dashboardButton(/Dashboard 3/).get()).toBeInTheDocument();
 
-      const panels = ui.dashboardButton(/<No title>/).getAll();
-      expect(panels).toHaveLength(3);
+    const panels = ui.dashboardButton(/<No title>/).getAll();
+    expect(panels).toHaveLength(3);
 
-      panels.forEach((panel) => {
-        expect(panel).not.toBeDisabled();
-      });
+    panels.forEach((panel) => {
+      expect(panel).not.toBeDisabled();
     });
   });
 });
