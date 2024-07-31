@@ -78,7 +78,7 @@ Click anywhere on the span row to reveal span details.
 
 Traces are composed of one or more spans.
 A span is a unit of work within a trace that has a start time relative to the beginning of the trace, a duration and an operation name for the unit of work.
-It usually has a reference to a parent span (unless it’s the first span, the root span, in a trace).
+It usually has a reference to a parent span, unless it’s the first span, the root span, in a trace.
 It frequently includes key/value attributes that are relevant to the span itself, for example the HTTP method used in the request, as well as other metadata such as the service name, sub-span events, or links to other spans.
 
 You can expand any span in a trace and view the details, including the span and resource attributes.
