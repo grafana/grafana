@@ -1,7 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { Box, Stack, Text } from '@grafana/ui';
+import { AlertVariant, Box, Stack, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import {
@@ -206,7 +206,7 @@ export const Page = () => {
         )}
 
         {error && (
-          <AlertWithTraceID severity={error.severity ?? 'warning'} title={error.title} error={error.error}>
+          <AlertWithTraceID severity={error.severity} title={error.title} error={error.error}>
             <Text element="p">{error.body}</Text>
           </AlertWithTraceID>
         )}
@@ -265,7 +265,7 @@ interface GetErrorProps {
 interface ErrorDescription {
   title: string;
   body: string;
-  severity?: 'error' | 'warning';
+  severity: AlertVariant;
   error?: unknown;
 }
 
@@ -302,6 +302,7 @@ function getError(props: GetErrorProps): ErrorDescription | undefined {
 
   if (disconnectSnapshotError) {
     return {
+      severity: 'warning',
       title: t('migrate-to-cloud.onprem.disconnect-error-title', 'Error disconnecting'),
       body: seeLogs,
       error: disconnectSnapshotError,
@@ -310,6 +311,7 @@ function getError(props: GetErrorProps): ErrorDescription | undefined {
 
   if (createSnapshotError) {
     return {
+      severity: 'warning',
       title: t('migrate-to-cloud.onprem.create-snapshot-error-title', 'Error creating snapshot'),
       body: seeLogs,
       error: createSnapshotError,
@@ -318,6 +320,7 @@ function getError(props: GetErrorProps): ErrorDescription | undefined {
 
   if (uploadSnapshotError) {
     return {
+      severity: 'warning',
       title: t('migrate-to-cloud.onprem.upload-snapshot-error-title', 'Error uploading snapshot'),
       body: seeLogs,
       error: uploadSnapshotError,
@@ -326,6 +329,7 @@ function getError(props: GetErrorProps): ErrorDescription | undefined {
 
   if (cancelSnapshotError) {
     return {
+      severity: 'warning',
       title: t('migrate-to-cloud.onprem.cancel-snapshot-error-title', 'Error cancelling creating snapshot'),
       body: seeLogs,
       error: cancelSnapshotError,
@@ -334,6 +338,7 @@ function getError(props: GetErrorProps): ErrorDescription | undefined {
 
   if (snapshot?.status === 'ERROR') {
     return {
+      severity: 'warning',
       title: t('migrate-to-cloud.onprem.snapshot-error-status-title', 'Error migrating resources'),
       body: t(
         'migrate-to-cloud.onprem.snapshot-error-status-body',
@@ -345,6 +350,7 @@ function getError(props: GetErrorProps): ErrorDescription | undefined {
   const errorCount = snapshot?.stats?.statuses?.['ERROR'] ?? 0;
   if (snapshot?.status === 'FINISHED' && errorCount > 0) {
     return {
+      severity: 'warning',
       title: t('migrate-to-cloud.onprem.some-resources-errored-title', 'Resource migration complete'),
       body: t(
         'migrate-to-cloud.onprem.some-resources-errored-body',
