@@ -7,9 +7,14 @@ import { EditorField, EditorRow, QueryOptionGroup } from '@grafana/experimental'
 import { config, reportInteraction } from '@grafana/runtime';
 import { Alert, AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
 
-import { preprocessMaxLines, queryTypeOptions, RESOLUTION_OPTIONS } from '../../components/LokiOptionFields';
+import {
+  preprocessMaxLines,
+  queryDirections,
+  queryTypeOptions,
+  RESOLUTION_OPTIONS,
+} from '../../components/LokiOptionFields';
 import { getLokiQueryType, isLogsQuery } from '../../queryUtils';
-import { LokiQuery, LokiQueryType, QueryStats } from '../../types';
+import { LokiQuery, LokiQueryDirection, LokiQueryType, QueryStats } from '../../types';
 
 export interface Props {
   query: LokiQuery;
@@ -26,6 +31,11 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
 
     const onQueryTypeChange = (value: LokiQueryType) => {
       onChange({ ...query, queryType: value });
+      onRunQuery();
+    };
+
+    const onQueryDirectionChange = (value: LokiQueryDirection) => {
+      onChange({ ...query, direction: value });
       onRunQuery();
     };
 
@@ -73,6 +83,8 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       ? queryTypeOptions.filter((o) => o.value !== LokiQueryType.Instant)
       : queryTypeOptions;
 
+    const queryDirection = query.direction ?? LokiQueryDirection.Backward;
+
     // if the state's queryType is still Instant, trigger a change to range for log queries
     if (isLogQuery && queryType === LokiQueryType.Instant) {
       onChange({ ...query, queryType: LokiQueryType.Range });
@@ -111,16 +123,21 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
             </EditorField>
           )}
           {isLogQuery && (
-            <EditorField label="Line limit" tooltip="Upper limit for number of log lines returned by query.">
-              <AutoSizeInput
-                className="width-4"
-                placeholder={maxLines.toString()}
-                type="number"
-                min={0}
-                defaultValue={query.maxLines?.toString() ?? ''}
-                onCommitChange={onMaxLinesChange}
-              />
-            </EditorField>
+            <>
+              <EditorField label="Line limit" tooltip="Upper limit for number of log lines returned by query.">
+                <AutoSizeInput
+                  className="width-4"
+                  placeholder={maxLines.toString()}
+                  type="number"
+                  min={0}
+                  defaultValue={query.maxLines?.toString() ?? ''}
+                  onCommitChange={onMaxLinesChange}
+                />
+              </EditorField>
+              <EditorField label="Direction" tooltip="Direction to search for logs.">
+                <RadioButtonGroup options={queryDirections} value={queryDirection} onChange={onQueryDirectionChange} />
+              </EditorField>
+            </>
           )}
           {!isLogQuery && (
             <>
