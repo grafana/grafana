@@ -108,7 +108,7 @@ panelTitleSearchInV1,experimental,@grafana/search-and-storage,true,false,false
 managedPluginsInstall,GA,@grafana/plugins-platform-backend,false,false,false
 prometheusPromQAIL,experimental,@grafana/observability-metrics,false,false,true
 prometheusCodeModeMetricNamesSearch,experimental,@grafana/observability-metrics,false,false,true
-addFieldFromCalculationStatFunctions,preview,@grafana/dataviz-squad,false,false,true
+addFieldFromCalculationStatFunctions,GA,@grafana/dataviz-squad,false,false,true
 alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,false
 alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false
 alertmanagerRemoteOnly,experimental,@grafana/alerting-squad,false,false,false
