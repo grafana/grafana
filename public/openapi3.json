@@ -7188,7 +7188,7 @@
       },
       "NavbarPreference": {
         "properties": {
-          "bookmarkIds": {
+          "bookmarkUrls": {
             "items": {
               "type": "string"
             },
