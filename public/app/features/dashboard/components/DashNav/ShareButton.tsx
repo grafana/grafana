@@ -3,7 +3,6 @@ import { locationService } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
   return (
@@ -12,7 +11,6 @@ export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
       variant="primary"
       size="sm"
       onClick={() => {
-        DashboardInteractions.toolbarShareClick();
         locationService.partial({ shareView: 'link' });
       }}
     >
