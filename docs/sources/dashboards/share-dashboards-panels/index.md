@@ -50,11 +50,12 @@ refs:
 
 Grafana enables you to share dashboards and panels with other users within an organization and in certain situations, publicly on the Web. You can share using:
 
-- A direct link
-- A snapshot
-- An embedded link (for panels only)
-- An export link (for dashboards only)
-- A report
+- Direct links with users in and outside of your organization
+- Snapshots
+- Embeds
+- PDFs
+- JSON files
+- Reports
 
 You must have an authorized viewer permission to see an image rendered by a direct link.
 
@@ -68,13 +69,13 @@ As of Grafana 8.0, anonymous access permission is not available in Grafana Cloud
 
 You can share dashboards in the following ways:
 
-- Internally with a link
-- Externally with a link (to anyone)
-- Externally by email (to specific people)
-- As a snapshot
-- As a report
-- As a JSON file
-- As a PDF
+- [Internally with a link](#share-internally)
+- [Externally by email (to specific people)](#share-externally-with-specific-people)
+- [Externally with a link (to anyone)](#share-externally-to-anyone-with-a-link)
+- [As a report](#schedule-a-report)
+- [As a snapshot](#share-a-snapshot)
+- [As a PDF export](#export-a-dashboard-as-pdf)
+- [As a JSON file export](#export-a-dashboard-as-json)
 
 When you share a dashboard externally as a link or by email, those dashboards are included a list of your shared dashboards. To view the list and manage these dashboards, navigate to **Dashboards > Shared dashboards**.
 
@@ -94,6 +95,14 @@ Share a personalized, direct link to your dashboard within your organization.
 1. Click **Copy link**.
 1. Send the copied link to a Grafana user with authorization to view the link.
 1. Click the **X** at the top-right corner to close the share drawer.
+
+Once you have a customized internal link, you can share it quickly by following these steps:
+
+1. Click **Dashboards** in the main menu.
+1. Click the dashboard you want to share.
+1. Click the **Share** button to copy a shortened link.
+
+This link has any customizations like time range locking or theme you've previously set.
 
 ### Share externally with specific people
 
@@ -204,9 +213,11 @@ The snapshot is immediately deleted. You may need to clear your browser cache or
 
 ## Export a dashboard
 
+In addition to sharing dashboards as links, reports, and snapshots, you can export them as PDFs or JSON files.
+
 ### Export a dashboard as PDF
 
-Export a
+To export a dashboard in its current state as a PDF, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
@@ -222,7 +233,7 @@ Export a
 
 ### Export a dashboard as JSON
 
-The dashboard export action creates a Grafana JSON file that contains everything you need, including layout, variables, styles, data sources, queries, and so on, so that you can later import the dashboard.
+Export a Grafana JSON file that contains everything you need, including layout, variables, styles, data sources, queries, and so on, so that you can later import the dashboard. To export a JSON file, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
