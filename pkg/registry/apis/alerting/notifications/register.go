@@ -13,6 +13,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	notificationsModels "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -98,6 +99,26 @@ func (t NotificationsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefini
 
 func (t NotificationsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil
+}
+
+// PostProcessOpenAPI is a hook to alter OpenAPI3 specification of the API server.
+func (b *NotificationsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	// The plugin description
+	oas.Info.Description = "Grafana Alerting Notification resources"
+
+	// The root api URL
+	root := "/apis/" + b.GetGroupVersion().String() + "/"
+
+	// Hide the ability to list or watch across all tenants
+	delete(oas.Paths.Paths, root+notificationsModels.ReceiverResourceInfo.GroupResource().Resource)
+	delete(oas.Paths.Paths, root+notificationsModels.TimeIntervalResourceInfo.GroupResource().Resource)
+
+	// The root API discovery list
+	sub := oas.Paths.Paths[root]
+	if sub != nil && sub.Get != nil {
+		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
+	}
+	return oas, nil
 }
 
 func (t NotificationsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
