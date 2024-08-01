@@ -8,14 +8,15 @@ import (
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
-func enableTraceQLStreaming(mg *Migrator) {
-	mg.AddMigration("Enable traceQL streaming for all Tempo datasources", &AddTraceQLStreamingToJsonData{})
+func enableTraceQLStreaming(mg *Migrator, enable bool) {
+	mg.AddMigration("Enable traceQL streaming for all Tempo datasources", &AddTraceQLStreamingToJsonData{Enable: enable})
 }
 
 var _ CodeMigration = new(AddTraceQLStreamingToJsonData)
 
 type AddTraceQLStreamingToJsonData struct {
 	MigrationBase
+	Enable bool
 }
 
 func (m *AddTraceQLStreamingToJsonData) SQL(dialect Dialect) string {
@@ -29,6 +30,11 @@ type TempoIdJsonDataDTO struct {
 
 func (m *AddTraceQLStreamingToJsonData) Exec(sess *xorm.Session, mg *Migrator) error {
 	datasources := make([]*TempoIdJsonDataDTO, 0)
+
+	// Skip update if the feature flag is not enabled but mark the migration as completed
+	if !m.Enable {
+		return nil
+	}
 
 	err := sess.SQL("SELECT id, json_data FROM data_source WHERE type = 'tempo'").Find(&datasources)
 
