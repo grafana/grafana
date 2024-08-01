@@ -505,6 +505,20 @@ describe('Language completion provider', () => {
           )
         );
       });
+
+      it('should dont send match[] parameter if there is no metric', async () => {
+        const mockQueries: PromQuery[] = [
+          {
+            refId: 'A',
+            expr: '',
+          },
+        ];
+        const fetchLabel = languageProvider.fetchLabels;
+        const requestSpy = jest.spyOn(languageProvider, 'request');
+        await fetchLabel(tr, mockQueries);
+        expect(requestSpy).toHaveBeenCalled();
+        expect(requestSpy.mock.calls[0][0].indexOf('match[]')).toEqual(-1);
+      });
     });
   });
 

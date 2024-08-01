@@ -1,7 +1,8 @@
 import { Subscription } from 'rxjs';
 
-import { toDataFrame, toDataFrameDTO } from '../../dataframe';
-import { DataFrame, DataTransformerConfig, FieldDTO, FieldType } from '../../types';
+import { toDataFrame, toDataFrameDTO } from '../../dataframe/processDataFrame';
+import { DataFrame, FieldDTO, FieldType } from '../../types/dataFrame';
+import { DataTransformerConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
 

@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
 
@@ -7,11 +6,11 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { waitForServerRequest } from 'app/features/alerting/unified/mocks/server/events';
-import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/alertRules';
 import {
   MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER,
   MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER,
 } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
+import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
 import { silenceCreateHandler } from 'app/features/alerting/unified/mocks/server/handlers/silences';
 import { MatcherOperator, SilenceState } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
@@ -25,7 +24,7 @@ import {
   mockDataSource,
   mockSilences,
 } from './mocks';
-import { grafanaRulerRule } from './mocks/alertRuleApi';
+import { grafanaRulerRule } from './mocks/grafanaRulerApi';
 import { setupDataSources } from './testSetup/datasources';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
@@ -81,18 +80,6 @@ const ui = {
   },
 };
 
-const resetMocks = () => {
-  jest.resetAllMocks();
-
-  grantUserPermissions([
-    AccessControlAction.AlertingInstanceRead,
-    AccessControlAction.AlertingInstanceCreate,
-    AccessControlAction.AlertingInstanceUpdate,
-    AccessControlAction.AlertingInstancesExternalRead,
-    AccessControlAction.AlertingInstancesExternalWrite,
-  ]);
-};
-
 const setUserLogged = (isLogged: boolean) => {
   config.bootData.user.isSignedIn = isLogged;
   config.bootData.user.name = isLogged ? 'admin' : '';
@@ -115,12 +102,18 @@ const server = setupMswServer();
 
 beforeEach(() => {
   setupDataSources(dataSources.am, dataSources[MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER]);
+  grantUserPermissions([
+    AccessControlAction.AlertingInstanceRead,
+    AccessControlAction.AlertingInstanceCreate,
+    AccessControlAction.AlertingInstanceUpdate,
+    AccessControlAction.AlertingInstancesExternalRead,
+    AccessControlAction.AlertingInstancesExternalWrite,
+  ]);
 });
 
-describe('Silences', () => {
-  beforeAll(resetMocks);
-  afterEach(resetMocks);
+afterEach(() => jest.resetAllMocks());
 
+describe('Silences', () => {
   it(
     'loads and shows silences',
     async () => {
@@ -211,8 +204,6 @@ describe('Silences', () => {
 
 describe('Silence create/edit', () => {
   const baseUrlPath = '/alerting/silence/new';
-  beforeAll(resetMocks);
-  afterEach(resetMocks);
 
   beforeEach(() => {
     mockAlertRuleApi(server).getAlertRule(MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID, grafanaRulerRule);

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"maps"
 	"sort"
 	"strconv"
 	"strings"
@@ -20,6 +21,7 @@ import (
 
 	alertingModels "github.com/grafana/alerting/models"
 
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/cmputil"
@@ -102,6 +104,17 @@ const (
 	OkErrState       ExecutionErrorState = "OK"
 	KeepLastErrState ExecutionErrorState = "KeepLast"
 )
+
+type RuleType string
+
+const (
+	RuleTypeAlerting  = "alerting"
+	RuleTypeRecording = "recording"
+)
+
+func (r RuleType) String() string {
+	return string(r)
+}
 
 const (
 	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
@@ -258,6 +271,17 @@ type AlertRule struct {
 	NotificationSettings []NotificationSettings `xorm:"notification_settings"` // we use slice to workaround xorm mapping that does not serialize a struct to JSON unless it's a slice
 }
 
+// Namespaced describes a class of resources that are stored in a specific namespace.
+type Namespaced interface {
+	GetNamespaceUID() string
+}
+
+type Namespace folder.Folder
+
+func (n Namespace) GetNamespaceUID() string {
+	return n.UID
+}
+
 // AlertRuleWithOptionals This is to avoid having to pass in additional arguments deep in the call stack. Alert rule
 // object is created in an early validation step without knowledge about current alert rule fields or if they need to be
 // overridden. This is done in a later step and, in that step, we did not have knowledge about if a field was optional
@@ -344,13 +368,21 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 }
 
 func (alertRule *AlertRule) GetEvalCondition() Condition {
-	if alertRule.IsRecordingRule() {
+	meta := map[string]string{
+		"Name":    alertRule.Title,
+		"Uid":     alertRule.UID,
+		"Type":    string(alertRule.Type()),
+		"Version": strconv.FormatInt(alertRule.Version, 10),
+	}
+	if alertRule.Type() == RuleTypeRecording {
 		return Condition{
+			Metadata:  meta,
 			Condition: alertRule.Record.From,
 			Data:      alertRule.Data,
 		}
 	}
 	return Condition{
+		Metadata:  meta,
 		Condition: alertRule.Condition,
 		Data:      alertRule.Data,
 	}
@@ -512,7 +544,7 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 	}
 
 	var err error
-	if alertRule.IsRecordingRule() {
+	if alertRule.Type() == RuleTypeRecording {
 		err = validateRecordingRuleFields(alertRule)
 	} else {
 		err = validateAlertRuleFields(alertRule)
@@ -586,8 +618,11 @@ func (alertRule *AlertRule) GetFolderKey() FolderKey {
 	}
 }
 
-func (alertRule *AlertRule) IsRecordingRule() bool {
-	return alertRule.Record != nil
+func (alertRule *AlertRule) Type() RuleType {
+	if alertRule.Record != nil {
+		return RuleTypeRecording
+	}
+	return RuleTypeAlerting
 }
 
 // AlertRuleVersion is the model for alert rule versions in unified alerting.
@@ -644,7 +679,8 @@ type ListAlertRulesQuery struct {
 	DashboardUID string
 	PanelID      int64
 
-	ReceiverName string
+	ReceiverName     string
+	TimeIntervalName string
 }
 
 // CountAlertRulesQuery is the query for counting alert rules
@@ -678,18 +714,6 @@ type ListNamespaceAlertRulesQuery struct {
 	NamespaceUID string
 }
 
-// ListOrgRuleGroupsQuery is the query for listing unique rule groups
-// for an organization
-type ListOrgRuleGroupsQuery struct {
-	OrgID         int64
-	NamespaceUIDs []string
-
-	// DashboardUID and PanelID are optional and allow filtering rules
-	// to return just those for a dashboard and panel.
-	DashboardUID string
-	PanelID      int64
-}
-
 type UpdateRule struct {
 	Existing *AlertRule
 	New      AlertRule
@@ -698,12 +722,33 @@ type UpdateRule struct {
 // Condition contains backend expressions and queries and the RefID
 // of the query or expression that will be evaluated.
 type Condition struct {
+	// Additional information provided to the evaluation to include to the request as headers in format `X-Rule-{Key}`
+	Metadata map[string]string
 	// Condition is the RefID of the query or expression from
 	// the Data property to get the results for.
 	Condition string `json:"condition"`
 
 	// Data is an array of data source queries and/or server side expressions.
 	Data []AlertQuery `json:"data"`
+}
+
+func (c Condition) withMetadata(key, value string) Condition {
+	meta := make(map[string]string, len(c.Metadata)+1)
+	maps.Copy(meta, c.Metadata)
+	meta[key] = value
+	return Condition{
+		Metadata:  meta,
+		Condition: c.Condition,
+		Data:      c.Data,
+	}
+}
+
+func (c Condition) WithFolder(folderTitle string) Condition {
+	return c.withMetadata("Folder", folderTitle)
+}
+
+func (c Condition) WithSource(source string) Condition {
+	return c.withMetadata("Source", source)
 }
 
 // IsValid checks the condition's validity.
@@ -723,7 +768,7 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOp
 	if ruleToPatch.Title == "" {
 		ruleToPatch.Title = existingRule.Title
 	}
-	if ruleToPatch.Condition == "" || len(ruleToPatch.Data) == 0 {
+	if !hasAnyCondition(ruleToPatch) || len(ruleToPatch.Data) == 0 {
 		ruleToPatch.Condition = existingRule.Condition
 		ruleToPatch.Data = existingRule.Data
 	}
@@ -827,4 +872,8 @@ func (r *Record) Fingerprint() data.Fingerprint {
 	writeString(r.Metric)
 	writeString(r.From)
 	return data.Fingerprint(h.Sum64())
+}
+
+func hasAnyCondition(rule *AlertRuleWithOptionals) bool {
+	return rule.Condition != "" || (rule.Record != nil && rule.Record.From != "")
 }

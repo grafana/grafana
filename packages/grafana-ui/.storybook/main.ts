@@ -15,7 +15,7 @@ const stories = ['../src/Intro.mdx', storyGlob];
 // We limit icon paths to only the available icons so publishing
 // doesn't require uploading 1000s of unused assets.
 const iconPaths = Object.keys(availableIconsIndex)
-  .filter((iconName) => !iconName.includes('fa'))
+  .filter((iconName) => !iconName.startsWith('fa '))
   .map((iconName) => {
     const subDir = getIconSubDir(iconName as IconName, 'default');
     return {
@@ -96,10 +96,19 @@ const mainConfig: StorybookConfig = {
       tsconfigPath: path.resolve(__dirname, 'tsconfig.json'),
       shouldExtractLiteralValuesFromEnum: true,
       shouldRemoveUndefinedFromOptional: true,
-      propFilter: (prop: any) => (prop.parent ? !/node_modules/.test(prop.parent.fileName) : true),
+      propFilter: (prop) => (prop.parent ? !/node_modules/.test(prop.parent.fileName) : true),
       savePropValueAsString: true,
     },
   },
+  swc: () => ({
+    jsc: {
+      transform: {
+        react: {
+          runtime: 'automatic',
+        },
+      },
+    },
+  }),
   webpackFinal: async (config) => {
     // expose jquery as a global so jquery plugins don't break at runtime.
     config.module?.rules?.push({

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { CanvasFrameOptions } from '../frame';
 
 import { FrameState } from './frame';

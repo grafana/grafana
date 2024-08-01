@@ -1,4 +1,4 @@
-import React, { FormEvent, PureComponent } from 'react';
+import { FormEvent, PureComponent } from 'react';
 
 import { ConstantVariableModel } from '@grafana/data';
 import { ConstantVariableForm } from 'app/features/dashboard-scene/settings/variables/components/ConstantVariableForm';

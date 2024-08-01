@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { pickBy } from 'lodash';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useDebounce } from 'react-use';
 
@@ -30,6 +30,7 @@ import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/cons
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { MatcherOperator, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 
+import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { SilenceFormFields } from '../../types/silence-form';
 import { matcherFieldToMatcher } from '../../utils/alertmanager';
 import { makeAMLink } from '../../utils/misc';
@@ -113,6 +114,11 @@ export const SilencesEditor = ({
   onCancel,
   ruleUid,
 }: SilencesEditorProps) => {
+  const [previewAlertsSupported, previewAlertsAllowed] = useAlertmanagerAbility(
+    AlertmanagerAction.PreviewSilencedInstances
+  );
+  const canPreview = previewAlertsSupported && previewAlertsAllowed;
+
   const [createSilence, { isLoading }] = alertSilencesApi.endpoints.createSilence.useMutation();
   const formAPI = useForm({ defaultValues: formValues });
   const styles = useStyles2(getStyles);
@@ -236,7 +242,9 @@ export const SilencesEditor = ({
               />
             </Field>
           )}
-          <SilencedInstancesPreview amSourceName={alertManagerSourceName} matchers={matchers} ruleUid={ruleUid} />
+          {canPreview && (
+            <SilencedInstancesPreview amSourceName={alertManagerSourceName} matchers={matchers} ruleUid={ruleUid} />
+          )}
         </FieldSet>
         <Stack gap={1}>
           {isLoading && (

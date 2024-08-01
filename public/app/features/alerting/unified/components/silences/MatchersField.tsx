@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';

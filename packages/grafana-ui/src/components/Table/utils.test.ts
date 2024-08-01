@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import { Row } from 'react-table';
 
 import { Field, FieldType, MutableDataFrame, SelectableValue } from '@grafana/data';
@@ -12,6 +13,7 @@ import {
   sortNumber,
   sortOptions,
   valuesToOptions,
+  guessLongestField,
 } from './utils';
 
 function getData() {
@@ -40,6 +42,45 @@ function getData() {
       },
     ],
   });
+  return data;
+}
+
+function getWrappableData(numRecords: number) {
+  const data = new MutableDataFrame({
+    fields: [
+      { name: 'Time', type: FieldType.time, values: [] },
+      {
+        name: 'Lorem 5',
+        type: FieldType.string,
+        values: [],
+        config: {
+          custom: {
+            align: 'center',
+          },
+        },
+      },
+      {
+        name: 'Lorem 10',
+        type: FieldType.string,
+        values: [],
+        config: {
+          custom: {
+            align: 'center',
+          },
+        },
+      },
+    ],
+  });
+
+  // Set values for the dataframe
+  // We're not concerned about time in
+  // this case so we simply leave it as zero
+  for (let i = 0; i < numRecords; i++) {
+    data.fields[0].values[i] = 0;
+    data.fields[1].values[i] = faker.lorem.paragraphs(9);
+    data.fields[2].values[i] = faker.lorem.paragraphs(11);
+  }
+
   return data;
 }
 
@@ -500,6 +541,56 @@ describe('Table utils', () => {
       const stop = performance.now();
       const diff = stop - start;
       expect(diff).toBeLessThanOrEqual(20);
+    });
+  });
+
+  describe('guessLongestField', () => {
+    it('should guess the longest field correct if there are few records', () => {
+      const data = getWrappableData(10);
+      const config = {
+        defaults: {
+          custom: {
+            cellOptions: {
+              wrapText: true,
+            },
+          },
+        },
+      };
+
+      const longestField = guessLongestField(config, data);
+      expect(longestField?.name).toBe('Lorem 10');
+    });
+
+    it('should guess the longest field correctly if there are many records', () => {
+      const data = getWrappableData(1000);
+      const config = {
+        defaults: {
+          custom: {
+            cellOptions: {
+              wrapText: true,
+            },
+          },
+        },
+      };
+
+      const longestField = guessLongestField(config, data);
+      expect(longestField?.name).toBe('Lorem 10');
+    });
+
+    it('should return undefined if there is no data', () => {
+      const data = getData();
+      const config = {
+        defaults: {
+          custom: {
+            cellOptions: {
+              wrapText: true,
+            },
+          },
+        },
+      };
+
+      const longestField = guessLongestField(config, data);
+      expect(longestField).toBe(undefined);
     });
   });
 });

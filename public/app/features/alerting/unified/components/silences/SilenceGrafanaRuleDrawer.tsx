@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Drawer, Stack } from '@grafana/ui';
 import { SilencesEditor } from 'app/features/alerting/unified/components/silences/SilencesEditor';
 import { getDefaultSilenceFormValues } from 'app/features/alerting/unified/components/silences/utils';

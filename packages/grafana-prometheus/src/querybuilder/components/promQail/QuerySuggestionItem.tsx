@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/promQail/QuerySuggestionItem.tsx
 import { cx } from '@emotion/css';
-import React, { FormEvent, useState } from 'react';
+import { FormEvent, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';

@@ -62,6 +62,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingInstanceRead,
         AccessControlAction.AlertingInstancesExternalRead,
+        AccessControlAction.AlertingSilenceRead,
       ]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
@@ -163,6 +164,16 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "AlertGroups" */ 'app/features/alerting/unified/AlertGroups')
+      ),
+    },
+    {
+      path: '/alerting/history/',
+      roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "HistoryPage" */ 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistoryPage'
+          )
       ),
     },
     {

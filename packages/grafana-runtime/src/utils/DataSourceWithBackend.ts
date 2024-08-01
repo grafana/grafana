@@ -231,9 +231,9 @@ class DataSourceWithBackend<
 
     if (request.dashboardUID) {
       headers[PluginRequestHeaders.DashboardUID] = request.dashboardUID;
-    }
-    if (request.panelId) {
-      headers[PluginRequestHeaders.PanelID] = `${request.panelId}`;
+      if (request.panelId) {
+        headers[PluginRequestHeaders.PanelID] = `${request.panelId}`;
+      }
     }
     if (request.panelPluginId) {
       headers[PluginRequestHeaders.PanelPluginId] = `${request.panelPluginId}`;

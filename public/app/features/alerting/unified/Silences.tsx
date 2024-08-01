@@ -1,4 +1,3 @@
-import React from 'react';
 import { Route, RouteChildrenProps, Switch } from 'react-router-dom';
 
 import { withErrorBoundary } from '@grafana/ui';

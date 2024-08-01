@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { CoreApp, QueryEditorProps } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';

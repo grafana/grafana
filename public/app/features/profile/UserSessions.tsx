@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import { t } from 'i18next';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Icon, LoadingPlaceholder } from '@grafana/ui';
-import { i18nDate, Trans } from 'app/core/internationalization';
+import { Trans } from 'app/core/internationalization';
+import { formatDate } from 'app/core/internationalization/dates';
 import { UserSession } from 'app/types';
 
 interface Props {
@@ -50,7 +51,7 @@ class UserSessions extends PureComponent<Props> {
                 {sessions.map((session: UserSession, index) => (
                   <tr key={index}>
                     {session.isActive ? <td>Now</td> : <td>{session.seenAt}</td>}
-                    <td>{i18nDate(session.createdAt, { dateStyle: 'long' })}</td>
+                    <td>{formatDate(session.createdAt, { dateStyle: 'long' })}</td>
                     <td>{session.clientIp}</td>
                     <td>
                       {session.browser} on {session.os} {session.osVersion}

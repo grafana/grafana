@@ -1,6 +1,5 @@
 import { render, RenderResult, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginType, escapeStringForRegex } from '@grafana/data';
@@ -180,6 +179,17 @@ describe('Browse list of plugins', () => {
       // Other plugin types shouldn't be shown
       expect(queryByText('Plugin 2')).not.toBeInTheDocument();
       expect(queryByText('Plugin 3')).not.toBeInTheDocument();
+    });
+
+    test('Show request data source and roadmap links', async () => {
+      const { queryByText } = renderBrowse('/plugins', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', type: PluginType.datasource }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', type: PluginType.panel }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', type: PluginType.datasource }),
+      ]);
+
+      expect(queryByText('Request a new data source')).toBeInTheDocument();
+      expect(queryByText('View roadmap')).toBeInTheDocument();
     });
   });
 

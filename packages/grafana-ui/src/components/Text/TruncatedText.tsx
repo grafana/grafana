@@ -1,4 +1,5 @@
-import React, { useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import * as React from 'react';
 import ReactDOMServer from 'react-dom/server';
 
 import { Tooltip } from '../Tooltip/Tooltip';

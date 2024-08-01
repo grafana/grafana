@@ -1,4 +1,4 @@
-import { cloneDeep, find, first as _first, isNumber, isObject, isString, map as _map } from 'lodash';
+import { cloneDeep, first as _first, isNumber, isObject, isString, map as _map, find } from 'lodash';
 import { from, generate, lastValueFrom, Observable, of } from 'rxjs';
 import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap } from 'rxjs/operators';
 import { SemVer } from 'semver';
@@ -121,7 +121,6 @@ export class ElasticDatasource
   queryBuilder: ElasticQueryBuilder;
   indexPattern: IndexPattern;
   intervalPattern?: Interval;
-  logMessageField?: string;
   logLevelField?: string;
   dataLinks: DataLinkConfig[];
   languageProvider: LanguageProvider;
@@ -140,7 +139,7 @@ export class ElasticDatasource
     this.name = instanceSettings.name;
     this.isProxyAccess = instanceSettings.access === 'proxy';
     const settingsData = instanceSettings.jsonData || {};
-
+    // instanceSettings.database is deprecated and should be removed in the future
     this.index = settingsData.index ?? instanceSettings.database ?? '';
     this.timeField = settingsData.timeField;
     this.indexPattern = new IndexPattern(this.index, settingsData.interval);
@@ -150,18 +149,14 @@ export class ElasticDatasource
     this.queryBuilder = new ElasticQueryBuilder({
       timeField: this.timeField,
     });
-    this.logMessageField = settingsData.logMessageField || '';
     this.logLevelField = settingsData.logLevelField || '';
     this.dataLinks = settingsData.dataLinks || [];
     this.includeFrozen = settingsData.includeFrozen ?? false;
+    // we want to cache the database version so we don't have to ask for it every time
     this.databaseVersion = null;
     this.annotations = {
       QueryEditor: ElasticsearchAnnotationsQueryEditor,
     };
-
-    if (this.logMessageField === '') {
-      this.logMessageField = undefined;
-    }
 
     if (this.logLevelField === '') {
       this.logLevelField = undefined;
@@ -181,6 +176,11 @@ export class ElasticDatasource
     return this.postResource(path, data, resourceOptions);
   }
 
+  /**
+   * Implemented as part of DataSourceWithQueryImportSupport.
+   * Imports queries from AbstractQuery objects when switching between different data source types.
+   * @returns A Promise that resolves to an array of ES queries.
+   */
   async importFromAbstractQueries(abstractQueries: AbstractQuery[]): Promise<ElasticsearchQuery[]> {
     return abstractQueries.map((abstractQuery) => this.languageProvider.importFromAbstractQuery(abstractQuery));
   }
@@ -235,6 +235,11 @@ export class ElasticDatasource
     );
   }
 
+  /**
+   * Implemented as part of the DataSourceAPI. It allows the datasource to serve as a source of annotations for a dashboard.
+   * @returns A promise that resolves to an array of AnnotationEvent objects representing the annotations for the dashboard.
+   * @todo This is deprecated and it is recommended to use the `AnnotationSupport` feature for annotations.
+   */
   annotationQuery(options: any): Promise<AnnotationEvent[]> {
     const payload = this.prepareAnnotationRequest(options);
     trackAnnotationQuery(options.annotation);
@@ -255,6 +260,7 @@ export class ElasticDatasource
     );
   }
 
+  // Private method used in the `annotationQuery` to prepare the payload for the Elasticsearch annotation request
   private prepareAnnotationRequest(options: {
     annotation: ElasticsearchAnnotationQuery;
     // Should be DashboardModel but cannot import that here from the main app. This is a temporary solution as we need to move from deprecated annotations.
@@ -348,6 +354,7 @@ export class ElasticDatasource
     return payload;
   }
 
+  // Private method used in the `annotationQuery` to process Elasticsearch hits into AnnotationEvents
   private processHitsToAnnotationEvents(annotation: ElasticsearchAnnotationQuery, hits: ElasticsearchHits) {
     const timeField = annotation.timeField || '@timestamp';
     const timeEndField = annotation.timeEndField || null;
@@ -416,10 +423,15 @@ export class ElasticDatasource
     return list;
   }
 
+  // Replaces variables in a Lucene query string
   interpolateLuceneQuery(queryString: string, scopedVars?: ScopedVars) {
     return this.templateSrv.replace(queryString, scopedVars, 'lucene');
   }
 
+  /**
+   * Implemented as a part of DataSourceApi. Interpolates variables and adds ad hoc filters to a list of ES queries.
+   * @returns An array of ES queries with interpolated variables and ad hoc filters using `applyTemplateVariables`.
+   */
   interpolateVariablesInQueries(
     queries: ElasticsearchQuery[],
     scopedVars: ScopedVars,
@@ -428,6 +440,9 @@ export class ElasticDatasource
     return queries.map((q) => this.applyTemplateVariables(q, scopedVars, filters));
   }
 
+  /**
+   * @todo Remove as we have health checks in the backend
+   */
   async testDatasource() {
     // we explicitly ask for uncached, "fresh" data here
     const dbVersion = await this.getDatabaseVersion(false);
@@ -456,7 +471,8 @@ export class ElasticDatasource
     );
   }
 
-  getQueryHeader(searchType: string, timeFrom?: DateTime, timeTo?: DateTime): string {
+  // Private method used in `getTerms` to get the header for the Elasticsearch query
+  private getQueryHeader(searchType: string, timeFrom?: DateTime, timeTo?: DateTime): string {
     const queryHeader = {
       search_type: searchType,
       ignore_unavailable: true,
@@ -466,6 +482,11 @@ export class ElasticDatasource
     return JSON.stringify(queryHeader);
   }
 
+  /**
+   * Implemented as part of DataSourceApi. Converts a ES query to a simple text string.
+   * Used, for example, in Query history.
+   * @returns A text representation of the query.
+   */
   getQueryDisplayText(query: ElasticsearchQuery) {
     // TODO: This might be refactored a bit.
     const metricAggs = query.metrics;
@@ -517,6 +538,10 @@ export class ElasticDatasource
     return text;
   }
 
+  /**
+   * Part of `DataSourceWithLogsContextSupport`, used to retrieve log context for a log row.
+   * @returns A promise that resolves to an object containing the log context data as DataFrames.
+   */
   getLogRowContext = async (row: LogRowModel, options?: LogRowContextOptions): Promise<{ data: DataFrame[] }> => {
     const contextRequest = this.makeLogContextDataRequest(row, options);
     return lastValueFrom(
@@ -552,10 +577,20 @@ export class ElasticDatasource
     }
   }
 
+  /**
+   * Implemented for DataSourceWithSupplementaryQueriesSupport.
+   * It returns the supplementary types that the data source supports.
+   * @returns An array of supported supplementary query types.
+   */
   getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[] {
     return [SupplementaryQueryType.LogsVolume, SupplementaryQueryType.LogsSample];
   }
 
+  /**
+   * Implemented for DataSourceWithSupplementaryQueriesSupport.
+   * It retrieves supplementary queries based on the provided options and ES query.
+   * @returns A supplemented ES query or undefined if unsupported.
+   */
   getSupplementaryQuery(options: SupplementaryQueryOptions, query: ElasticsearchQuery): ElasticsearchQuery | undefined {
     let isQuerySuitable = false;
 
@@ -628,6 +663,10 @@ export class ElasticDatasource
     }
   }
 
+  /**
+   * Private method used in the `getDataProvider` for DataSourceWithSupplementaryQueriesSupport, specifically for Logs volume queries.
+   * @returns An Observable of DataQueryResponse or undefined if no suitable queries are found.
+   */
   private getLogsVolumeDataProvider(
     request: DataQueryRequest<ElasticsearchQuery>
   ): DataQueryRequest<ElasticsearchQuery> | undefined {
@@ -643,6 +682,10 @@ export class ElasticDatasource
     return { ...logsVolumeRequest, targets };
   }
 
+  /**
+   * Private method used in the `getDataProvider` for DataSourceWithSupplementaryQueriesSupport, specifically for Logs sample queries.
+   * @returns An Observable of DataQueryResponse or undefined if no suitable queries are found.
+   */
   private getLogsSampleDataProvider(
     request: DataQueryRequest<ElasticsearchQuery>
   ): DataQueryRequest<ElasticsearchQuery> | undefined {
@@ -659,6 +702,10 @@ export class ElasticDatasource
     return { ...logsSampleRequest, targets: elasticQueries };
   }
 
+  /**
+   * Required by DataSourceApi. It executes queries based on the provided DataQueryRequest.
+   * @returns An Observable of DataQueryResponse containing the query results.
+   */
   query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
     const start = new Date();
     return super.query(request).pipe(
@@ -672,6 +719,11 @@ export class ElasticDatasource
     );
   }
 
+  /**
+   * Filters out queries that are hidden. Used when running queries through backend.
+   * It is called from DatasourceWithBackend.
+   * @returns `true` if the query is not hidden.
+   */
   filterQuery(query: ElasticsearchQuery): boolean {
     if (query.hide) {
       return false;
@@ -679,13 +731,17 @@ export class ElasticDatasource
     return true;
   }
 
-  isMetadataField(fieldName: string) {
+  // Private method used in the `getFields` to check if a field is a metadata field.
+  private isMetadataField(fieldName: string) {
     return ELASTIC_META_FIELDS.includes(fieldName);
   }
 
-  // TODO: instead of being a string, this could be a custom type representing all the elastic types
-  // FIXME: This doesn't seem to return actual MetricFindValues, we should either change the return type
-  // or fix the implementation.
+  /**
+   * Get the list of the fields to display in query editor or used for example in getTagKeys.
+   * @todo instead of being a string, this could be a custom type representing all the elastic types
+   * @fixme This doesn't seem to return actual MetricFindValues, we should either change the return type
+   * or fix the implementation.
+   */
   getFields(type?: string[], range?: TimeRange): Observable<MetricFindValue[]> {
     const typeMap: Record<string, string> = {
       float: 'number',
@@ -767,6 +823,10 @@ export class ElasticDatasource
     );
   }
 
+  /**
+   * Get values for a given field.
+   * Used for example in getTagValues.
+   */
   getTerms(queryDef: TermsQuery, range = getDefaultTimeRange()): Observable<MetricFindValue[]> {
     const searchType = 'query_then_fetch';
     const header = this.getQueryHeader(searchType, range.from, range.to);
@@ -798,6 +858,7 @@ export class ElasticDatasource
     );
   }
 
+  // Method used to create URL that includes correct parameters based on ES data source config.
   getMultiSearchUrl() {
     const searchParams = new URLSearchParams();
 
@@ -812,6 +873,10 @@ export class ElasticDatasource
     return ('_msearch?' + searchParams.toString()).replace(/\?$/, '');
   }
 
+  /**
+   * Implemented as part of DataSourceAPI and used for template variable queries.
+   * @returns A Promise that resolves to an array of results from the metric find query.
+   */
   metricFindQuery(query: string, options?: { range: TimeRange }): Promise<MetricFindValue[]> {
     const range = options?.range;
     const parsedQuery = JSON.parse(query);
@@ -831,14 +896,26 @@ export class ElasticDatasource
     return Promise.resolve([]);
   }
 
+  /**
+   * Implemented as part of the DataSourceAPI. Retrieves tag keys that can be used for ad-hoc filtering.
+   * @returns A Promise that resolves to an array of label names represented as MetricFindValue objects.
+   */
   getTagKeys() {
     return lastValueFrom(this.getFields());
   }
 
+  /**
+   * Implemented as part of the DataSourceAPI. Retrieves tag values that can be used for ad-hoc filtering.
+   * @returns A Promise that resolves to an array of label values represented as MetricFindValue objects
+   */
   getTagValues(options: DataSourceGetTagValuesOptions<ElasticsearchQuery>) {
     return lastValueFrom(this.getTerms({ field: options.key }, options.timeRange));
   }
 
+  /**
+   * Implemented as part of the DataSourceAPI.
+   * Used by alerting to check if query contains template variables.
+   */
   targetContainsTemplate(target: ElasticsearchQuery) {
     if (this.templateSrv.containsTemplate(target.query) || this.templateSrv.containsTemplate(target.alias)) {
       return true;
@@ -875,6 +952,7 @@ export class ElasticDatasource
     return false;
   }
 
+  // Private method used in the `targetContainsTemplate` to check if an object contains template variables.
   private objectContainsTemplate(obj: any) {
     if (typeof obj === 'string') {
       return this.templateSrv.containsTemplate(obj);
@@ -898,6 +976,11 @@ export class ElasticDatasource
     return false;
   }
 
+  /**
+   * Implemented for `DataSourceWithToggleableQueryFiltersSupport`. Toggles a filter on or off based on the provided filter action.
+   * It is used for example in Explore to toggle fields on and off trough log details.
+   * @returns A new ES query with the filter toggled as specified.
+   */
   toggleQueryFilter(query: ElasticsearchQuery, filter: ToggleFilterAction): ElasticsearchQuery {
     let expression = query.query ?? '';
     switch (filter.type) {
@@ -921,11 +1004,20 @@ export class ElasticDatasource
     return { ...query, query: expression };
   }
 
+  /**
+   * Implemented for `DataSourceWithToggleableQueryFiltersSupport`. Checks if a query expression contains a filter based on the provided filter options.
+   * @returns A boolean value indicating whether the filter exists in the query expression.
+   */
   queryHasFilter(query: ElasticsearchQuery, options: QueryFilterOptions): boolean {
     let expression = query.query ?? '';
     return queryHasFilter(expression, options.key, options.value);
   }
 
+  /**
+   * Implemented as part of `DataSourceWithQueryModificationSupport`. Used to modify a query based on the provided action.
+   * It is used, for example, in the Query Builder to apply hints such as parsers, operations, etc.
+   * @returns A new ES query with the specified modification applied.
+   */
   modifyQuery(query: ElasticsearchQuery, action: QueryFixAction): ElasticsearchQuery {
     if (!action.options) {
       return query;
@@ -954,10 +1046,18 @@ export class ElasticDatasource
     return { ...query, query: expression };
   }
 
+  /**
+   * Implemented as part of `DataSourceWithQueryModificationSupport`. Returns a list of operation
+   * types that are supported by `modifyQuery()`.
+   */
   getSupportedQueryModifications() {
     return ['ADD_FILTER', 'ADD_FILTER_OUT', 'ADD_STRING_FILTER', 'ADD_STRING_FILTER_OUT'];
   }
 
+  /**
+   * Adds ad hoc filters to a query expression, handling proper escaping of filter values.
+   * @returns The query expression with ad hoc filters and correctly escaped values.
+   */
   addAdHocFilters(query: string, adhocFilters?: AdHocVariableFilter[]) {
     if (!adhocFilters) {
       return query;
@@ -970,7 +1070,11 @@ export class ElasticDatasource
     return finalQuery;
   }
 
-  // Used when running queries through backend
+  /**
+   * Applies template variables and add hoc filters to a query. Used when running queries through backend.
+   * It is called from DatasourceWithBackend.
+   * @returns A modified ES query with template variables and ad hoc filters applied.
+   */
   applyTemplateVariables(
     query: ElasticsearchQuery,
     scopedVars: ScopedVars,
@@ -1006,6 +1110,7 @@ export class ElasticDatasource
     return finalQuery;
   }
 
+  // Private method used in the `getDatabaseVersion` to get the database version from the Elasticsearch API.
   private getDatabaseVersionUncached(): Promise<SemVer | null> {
     // we want this function to never fail
     const getDbVersionObservable = from(this.getResourceRequest(''));
@@ -1029,6 +1134,11 @@ export class ElasticDatasource
     );
   }
 
+  /**
+   * Method used to get the database version from cache or from the Elasticsearch API.
+   * Elasticsearch data source supports only certain versions of Elasticsearch and we
+   * want to check the version and notify the user if the version is not supported.
+   * */
   async getDatabaseVersion(useCachedData = true): Promise<SemVer | null> {
     if (useCachedData) {
       const cached = this.databaseVersion;
@@ -1042,6 +1152,7 @@ export class ElasticDatasource
     return freshDatabaseVersion;
   }
 
+  // private method used in the `getLogRowContext` to create a log context data request.
   private makeLogContextDataRequest = (row: LogRowModel, options?: LogRowContextOptions) => {
     const direction = options?.direction || LogRowContextQueryDirection.Backward;
     const logQuery: Logs = {
@@ -1087,6 +1198,7 @@ export class ElasticDatasource
   };
 }
 
+// Function to enhance the data frame with data links configured in the data source settings.
 export function enhanceDataFrameWithDataLinks(dataFrame: DataFrame, dataLinks: DataLinkConfig[]) {
   if (!dataLinks.length) {
     return;

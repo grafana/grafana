@@ -80,7 +80,7 @@ type CloudWatchService struct {
 }
 
 type SessionCache interface {
-	GetSession(c awsds.SessionConfig) (*session.Session, error)
+	GetSessionWithAuthSettings(c awsds.GetSessionConfig, as awsds.AuthSettings) (*session.Session, error)
 }
 
 func newExecutor(im instancemgmt.InstanceManager, logger log.Logger) *cloudWatchExecutor {
@@ -192,12 +192,12 @@ func (e *cloudWatchExecutor) getRequestContextOnlySettings(ctx context.Context, 
 }
 
 func (e *cloudWatchExecutor) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	ctx = instrumentContext(ctx, "callResource", req.PluginContext)
+	ctx = instrumentContext(ctx, string(backend.EndpointCallResource), req.PluginContext)
 	return e.resourceHandler.CallResource(ctx, req, sender)
 }
 
 func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	ctx = instrumentContext(ctx, "queryData", req.PluginContext)
+	ctx = instrumentContext(ctx, string(backend.EndpointQueryData), req.PluginContext)
 	q := req.Queries[0]
 	var model DataQueryJson
 	err := json.Unmarshal(q.JSON, &model)
@@ -236,7 +236,7 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 }
 
 func (e *cloudWatchExecutor) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	ctx = instrumentContext(ctx, "checkHealth", req.PluginContext)
+	ctx = instrumentContext(ctx, string(backend.EndpointCheckHealth), req.PluginContext)
 	status := backend.HealthStatusOk
 	metricsTest := "Successfully queried the CloudWatch metrics API."
 	logsTest := "Successfully queried the CloudWatch logs API."
@@ -299,7 +299,7 @@ func (ds *DataSource) newSession(region string) (*session.Session, error) {
 		}
 		region = ds.Settings.Region
 	}
-	sess, err := ds.sessions.GetSession(awsds.SessionConfig{
+	sess, err := ds.sessions.GetSessionWithAuthSettings(awsds.GetSessionConfig{
 		// https://github.com/grafana/grafana/issues/46365
 		// HTTPClient: instance.HTTPClient,
 		Settings: awsds.AWSDatasourceSettings{
@@ -313,9 +313,8 @@ func (ds *DataSource) newSession(region string) (*session.Session, error) {
 			AccessKey:     ds.Settings.AccessKey,
 			SecretKey:     ds.Settings.SecretKey,
 		},
-		UserAgentName: aws.String("Cloudwatch"),
-		AuthSettings:  &ds.Settings.GrafanaSettings,
-	})
+		UserAgentName: aws.String("Cloudwatch")},
+		ds.Settings.GrafanaSettings)
 	if err != nil {
 		return nil, err
 	}

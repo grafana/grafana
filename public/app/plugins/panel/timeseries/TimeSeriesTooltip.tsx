@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 
 import { DataFrame, Field, FieldType, formattedValueToString } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
@@ -86,7 +86,7 @@ export const TimeSeriesTooltip = ({
   const headerItem: VizTooltipItem | null = xField.config.custom?.hideFrom?.tooltip
     ? null
     : {
-        label: xField.type === FieldType.time ? '' : xField.state?.displayName ?? xField.name,
+        label: xField.type === FieldType.time ? '' : (xField.state?.displayName ?? xField.name),
         value: xVal,
       };
 

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { Input, Tooltip, Icon, Button, useTheme2, InlineField, InlineFieldRow } from '@grafana/ui';
@@ -121,7 +121,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
           )}
           <div className="page-action-bar__spacer" />
           {groups.length > 0 && (
-            <Button className="pull-right" onClick={this.onToggleAdding} disabled={isReadOnly}>
+            <Button onClick={this.onToggleAdding} disabled={isReadOnly}>
               <Icon name="plus" /> Add group
             </Button>
           )}

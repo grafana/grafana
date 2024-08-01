@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { memo, useCallback } from 'react';
 
 import { LineStyle } from '@grafana/schema';
 
@@ -18,7 +18,7 @@ interface Props {
 /**
  * @internal
  */
-export const VizLegendSeriesIcon = React.memo(({ seriesName, color, gradient, readonly, lineStyle }: Props) => {
+export const VizLegendSeriesIcon = memo(({ seriesName, color, gradient, readonly, lineStyle }: Props) => {
   const { onSeriesColorChange } = usePanelContext();
   const onChange = useCallback(
     (color: string) => {

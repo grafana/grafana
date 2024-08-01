@@ -1,31 +1,17 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { SetupServer, setupServer } from 'msw/node';
+import { SetupServer } from 'msw/node';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { DataSourceSettings } from '@grafana/data';
-import { setBackendSrv } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 
 import { mockAlertmanagersResponse } from '../mocks/alertmanagerApi';
 
 import { normalizeDataSourceURL, useExternalDataSourceAlertmanagers } from './useExternalAmSelector';
 
-const server = setupServer();
-
-beforeAll(() => {
-  setBackendSrv(backendSrv);
-  server.listen({ onUnhandledRequest: 'error' });
-});
-
-beforeEach(() => {
-  server.resetHandlers();
-});
-
-afterAll(() => {
-  server.close();
-});
+const server = setupMswServer();
 
 describe('useExternalDataSourceAlertmanagers', () => {
   it('Should get the correct data source settings', async () => {
@@ -37,12 +23,10 @@ describe('useExternalDataSourceAlertmanagers', () => {
     const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper: TestProvider });
     await waitFor(() => {
       // Assert
-      const { current } = result;
-
-      expect(current).toHaveLength(1);
-      expect(current[0].dataSourceSettings.uid).toBe('1');
-      expect(current[0].dataSourceSettings.url).toBe('http://grafana.com');
+      expect(result.current).toHaveLength(1);
     });
+    expect(result.current[0].dataSourceSettings.uid).toBe('1');
+    expect(result.current[0].dataSourceSettings.url).toBe('http://grafana.com');
   });
 
   it('Should have uninterested state if data source does not want alerts', async () => {
@@ -54,11 +38,9 @@ describe('useExternalDataSourceAlertmanagers', () => {
     const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper: TestProvider });
     await waitFor(() => {
       // Assert
-      const { current } = result;
-
-      expect(current).toHaveLength(1);
-      expect(current[0].status).toBe('uninterested');
+      expect(result.current).toHaveLength(1);
     });
+    expect(result.current[0].status).toBe('uninterested');
   });
 
   it('Should have active state if available in the activeAlertManagers', async () => {
@@ -75,11 +57,9 @@ describe('useExternalDataSourceAlertmanagers', () => {
     const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper: TestProvider });
     await waitFor(() => {
       // Assert
-      const { current } = result;
-
-      expect(current).toHaveLength(1);
-      expect(current[0].status).toBe('active');
+      expect(result.current).toHaveLength(1);
     });
+    expect(result.current[0].status).toBe('active');
   });
 
   it('Should have dropped state if available in the droppedAlertManagers', async () => {
@@ -97,11 +77,9 @@ describe('useExternalDataSourceAlertmanagers', () => {
 
     await waitFor(() => {
       // Assert
-      const { current } = result;
-
-      expect(current).toHaveLength(1);
-      expect(current[0].status).toBe('dropped');
+      expect(result.current).toHaveLength(1);
     });
+    expect(result.current[0].status).toBe('dropped');
   });
 
   it('Should have pending state if not available neither in dropped nor in active alertManagers', async () => {
@@ -119,11 +97,9 @@ describe('useExternalDataSourceAlertmanagers', () => {
 
     await waitFor(() => {
       // Assert
-      const { current } = result;
-
-      expect(current).toHaveLength(1);
-      expect(current[0].status).toBe('pending');
+      expect(result.current).toHaveLength(1);
     });
+    expect(result.current[0].status).toBe('pending');
   });
 
   it('Should match Alertmanager url when datasource url does not have protocol specified', async () => {
@@ -141,12 +117,10 @@ describe('useExternalDataSourceAlertmanagers', () => {
 
     await waitFor(() => {
       // Assert
-      const { current } = result;
-
-      expect(current).toHaveLength(1);
-      expect(current[0].status).toBe('active');
-      expect(current[0].dataSourceSettings.url).toBe('localhost:9093');
+      expect(result.current).toHaveLength(1);
     });
+    expect(result.current[0].status).toBe('active');
+    expect(result.current[0].dataSourceSettings.url).toBe('localhost:9093');
   });
 
   it('Should have inconclusive state when there are many Alertmanagers of the same URL on both active and inactive', async () => {
@@ -168,8 +142,8 @@ describe('useExternalDataSourceAlertmanagers', () => {
     await waitFor(() => {
       // Assert
       expect(result.current).toHaveLength(1);
-      expect(result.current[0].status).toBe('inconclusive');
     });
+    expect(result.current[0].status).toBe('inconclusive');
   });
 
   it('Should have not have inconclusive state when all Alertmanagers of the same URL are active', async () => {
@@ -191,8 +165,8 @@ describe('useExternalDataSourceAlertmanagers', () => {
     await waitFor(() => {
       // Assert
       expect(result.current).toHaveLength(1);
-      expect(result.current[0].status).toBe('active');
     });
+    expect(result.current[0].status).toBe('active');
   });
 });
 

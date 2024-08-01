@@ -1,5 +1,4 @@
 import { screen } from '@testing-library/react';
-import React from 'react';
 import { Route, Router } from 'react-router-dom';
 import { render } from 'test/test-utils';
 

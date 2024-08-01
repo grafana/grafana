@@ -7,7 +7,7 @@ import (
 )
 
 func valuesToListMetricRespone[T any](values []T) []resources.ResourceResponse[T] {
-	var response []resources.ResourceResponse[T]
+	response := make([]resources.ResourceResponse[T], 0, len(values))
 	for _, value := range values {
 		response = append(response, resources.ResourceResponse[T]{Value: value})
 	}

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { PropsWithChildren, useEffect, useMemo } from 'react';
+import { useState, PropsWithChildren, useEffect, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCopyToClipboard } from 'react-use';
 
@@ -37,7 +37,7 @@ interface TemplatesPickerProps {
   valueInForm: string;
 }
 export function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPickerProps) {
-  const [showTemplates, setShowTemplates] = React.useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
   const onClick = () => {
     setShowTemplates(true);
     trackEditInputWithTemplate();
@@ -117,14 +117,14 @@ interface TemplateSelectorProps {
 function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSelectorProps) {
   const styles = useStyles2(getStyles);
   const useGetDefaultTemplatesQuery = templatesApi.endpoints.getDefaultTemplates.useQuery;
-  const [template, setTemplate] = React.useState<Template | undefined>(undefined);
-  const [inputToUpdate, setInputToUpdate] = React.useState<string>('');
-  const [inputToUpdateCustom, setInputToUpdateCustom] = React.useState<string>(valueInForm);
+  const [template, setTemplate] = useState<Template | undefined>(undefined);
+  const [inputToUpdate, setInputToUpdate] = useState<string>('');
+  const [inputToUpdateCustom, setInputToUpdateCustom] = useState<string>(valueInForm);
 
   const { selectedAlertmanager } = useAlertmanager();
   const { data, error } = useAlertmanagerConfig(selectedAlertmanager);
   const { data: defaultTemplates } = useGetDefaultTemplatesQuery();
-  const [templateOption, setTemplateOption] = React.useState<TemplateFieldOption>('Existing');
+  const [templateOption, setTemplateOption] = useState<TemplateFieldOption>('Existing');
   const [_, copyToClipboard] = useCopyToClipboard();
 
   const templateOptions: Array<SelectableValue<TemplateFieldOption>> = [

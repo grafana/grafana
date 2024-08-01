@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { indexOf } from 'lodash';
-import React from 'react';
+import { Component } from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -20,7 +20,7 @@ export interface DashboardRowProps extends Themeable2 {
   dashboard: DashboardModel;
 }
 
-export class UnthemedDashboardRow extends React.Component<DashboardRowProps> {
+export class UnthemedDashboardRow extends Component<DashboardRowProps> {
   sub?: Unsubscribable;
 
   componentDidMount() {

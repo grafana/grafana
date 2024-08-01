@@ -16,7 +16,6 @@ import (
 
 	"github.com/andybalholm/brotli"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 )
 
 // nameExp matches the part after the last '/' symbol
@@ -397,7 +396,7 @@ func writeResponse(rw http.ResponseWriter, code int, msg string) {
 
 func (s *Service) getDataSourceFromHTTPReq(req *http.Request) (*datasourceInfo, error) {
 	ctx := req.Context()
-	pluginContext := httpadapter.PluginConfigFromContext(ctx)
+	pluginContext := backend.PluginConfigFromContext(ctx)
 	i, err := s.im.Get(ctx, pluginContext)
 	if err != nil {
 		return nil, nil

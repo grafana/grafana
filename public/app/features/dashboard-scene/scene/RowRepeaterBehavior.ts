@@ -12,10 +12,13 @@ import {
   SceneVariableSet,
   VariableDependencyConfig,
   VariableValueSingle,
+  VizPanelMenu,
 } from '@grafana/scenes';
 
 import { getMultiVariableValues } from '../utils/utils';
 
+import { DashboardGridItem } from './DashboardGridItem';
+import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 interface RowRepeaterBehaviorState extends SceneObjectState {
@@ -77,7 +80,12 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
       return;
     }
 
-    if (!(variable instanceof MultiValueVariable)) {
+    if (variable instanceof MultiValueVariable) {
+      if (!(variable as MultiValueVariable).state.isMulti) {
+        // There is no use in repeating a row for a variable that is not a multi value select variable.
+        return;
+      }
+    } else {
       console.error('RepeatedRowBehavior: Variable is not a MultiValueVariable');
       return;
     }
@@ -99,10 +107,20 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
     let maxYOfRows = 0;
 
+    // when variable has no options (due to error or similar) it will not render any panels at all
+    //  adding a placeholder in this case so that there is at least empty panel that can display error
+    const emptyVariablePlaceholderOption = {
+      values: [''],
+      texts: variable.hasAllValue() ? ['All'] : ['None'],
+    };
+
+    const variableValues = values.length ? values : emptyVariablePlaceholderOption.values;
+    const variableTexts = texts.length ? texts : emptyVariablePlaceholderOption.texts;
+
     // Loop through variable values and create repeates
-    for (let index = 0; index < values.length; index++) {
+    for (let index = 0; index < variableValues.length; index++) {
       const children: SceneGridItemLike[] = [];
-      const localValue = values[index];
+      const localValue = variableValues[index];
 
       // Loop through panels inside row
       for (const source of rowContent) {
@@ -111,9 +129,18 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
         const itemKey = index > 0 ? `${source.state.key}-clone-${localValue}` : source.state.key;
         const itemClone = source.clone({ key: itemKey, y: itemY });
 
-        //Make sure all the child scene objects have unique keys
+        // Make sure all the child scene objects have unique keys
+        // and add proper menu to the repeated panel
         if (index > 0) {
           ensureUniqueKeys(itemClone, localValue);
+
+          if (itemClone instanceof DashboardGridItem) {
+            itemClone.state.body.setState({
+              menu: new VizPanelMenu({
+                $behaviors: [repeatPanelMenuBehavior],
+              }),
+            });
+          }
         }
 
         children.push(itemClone);
@@ -123,7 +150,14 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
         }
       }
 
-      const rowClone = this.getRowClone(rowToRepeat, index, localValue, texts[index], rowContentHeight, children);
+      const rowClone = this.getRowClone(
+        rowToRepeat,
+        index,
+        localValue,
+        variableTexts[index],
+        rowContentHeight,
+        children
+      );
       rows.push(rowClone);
     }
 

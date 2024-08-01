@@ -48,11 +48,13 @@ func SplitString(str string) []string {
 		return res
 	}
 
-	var result []string
 	matches := stringListItemMatcher.FindAllString(str, -1)
-	for _, match := range matches {
-		result = append(result, strings.Trim(match, "\""))
+
+	result := make([]string, len(matches))
+	for i, match := range matches {
+		result[i] = strings.Trim(match, "\"")
 	}
+
 	return result
 }
 

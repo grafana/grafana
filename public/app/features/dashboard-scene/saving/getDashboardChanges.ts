@@ -72,8 +72,14 @@ export function getHasTimeChanged(saveModel: Dashboard, originalSaveModel: Dashb
 }
 
 export function adHocVariableFiltersEqual(a: AdHocVariableModel, b: AdHocVariableModel) {
-  if (a.filters === undefined || b.filters === undefined) {
-    throw new Error('AdHoc variable missing filter property');
+  if (a.filters === undefined && b.filters === undefined) {
+    console.warn('Adhoc variable filter property is undefined');
+    return true;
+  }
+
+  if ((a.filters === undefined && b.filters !== undefined) || (b.filters === undefined && a.filters !== undefined)) {
+    console.warn('Adhoc variable filter property is undefined');
+    return false;
   }
 
   if (a.filters.length !== b.filters.length) {

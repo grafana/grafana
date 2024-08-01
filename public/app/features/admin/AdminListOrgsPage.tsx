@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { getBackendSrv, isFetchError } from '@grafana/runtime';

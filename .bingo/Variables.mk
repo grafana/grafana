@@ -35,11 +35,11 @@ $(DRONE): $(BINGO_DIR)/drone.mod
 	@echo "(re)installing $(GOBIN)/drone-v1.5.0"
 	@cd $(BINGO_DIR) && GOWORK=off CGO_ENABLED=0 $(GO) build -mod=mod -modfile=drone.mod -o=$(GOBIN)/drone-v1.5.0 "github.com/drone/drone-cli/drone"
 
-GOLANGCI_LINT := $(GOBIN)/golangci-lint-v1.59.0
+GOLANGCI_LINT := $(GOBIN)/golangci-lint-v1.59.1
 $(GOLANGCI_LINT): $(BINGO_DIR)/golangci-lint.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/golangci-lint-v1.59.0"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=golangci-lint.mod -o=$(GOBIN)/golangci-lint-v1.59.0 "github.com/golangci/golangci-lint/cmd/golangci-lint"
+	@echo "(re)installing $(GOBIN)/golangci-lint-v1.59.1"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=golangci-lint.mod -o=$(GOBIN)/golangci-lint-v1.59.1 "github.com/golangci/golangci-lint/cmd/golangci-lint"
 
 JB := $(GOBIN)/jb-v0.5.1
 $(JB): $(BINGO_DIR)/jb.mod
@@ -53,11 +53,9 @@ $(LEFTHOOK): $(BINGO_DIR)/lefthook.mod
 	@echo "(re)installing $(GOBIN)/lefthook-v1.4.8"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=lefthook.mod -o=$(GOBIN)/lefthook-v1.4.8 "github.com/evilmartians/lefthook"
 
-# swagger 0.30.5 isn't compatibile with go 1.22 yet so pinning to a specific commit until there's a new release
-# https://github.com/go-swagger/go-swagger/issues/3070
-SWAGGER := $(GOBIN)/swagger-db51e79a0e37c572d8b59ae0c58bf2bbbbe53285
+SWAGGER := $(GOBIN)/swagger-v0.30.6-0.20240310114303-db51e79a0e37
 $(SWAGGER): $(BINGO_DIR)/swagger.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/swagger-db51e79a0e37c572d8b59ae0c58bf2bbbbe53285"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=swagger.mod -o=$(GOBIN)/swagger-db51e79a0e37c572d8b59ae0c58bf2bbbbe53285 "github.com/go-swagger/go-swagger/cmd/swagger"
+	@echo "(re)installing $(GOBIN)/swagger-v0.30.6-0.20240310114303-db51e79a0e37"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=swagger.mod -o=$(GOBIN)/swagger-v0.30.6-0.20240310114303-db51e79a0e37 "github.com/go-swagger/go-swagger/cmd/swagger"
 

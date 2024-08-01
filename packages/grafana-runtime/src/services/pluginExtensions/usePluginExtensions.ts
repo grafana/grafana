@@ -15,6 +15,9 @@ export function setPluginExtensionsHook(hook: UsePluginExtensions): void {
   singleton = hook;
 }
 
+/**
+ * @deprecated Use either usePluginLinks() or usePluginComponents() instead.
+ */
 export function usePluginExtensions(options: GetPluginExtensionsOptions): UsePluginExtensionsResult {
   if (!singleton) {
     throw new Error('usePluginExtensions(options) can only be used after the Grafana instance has started.');
@@ -22,6 +25,39 @@ export function usePluginExtensions(options: GetPluginExtensionsOptions): UsePlu
   return singleton(options);
 }
 
+export function usePluginLinks(options: GetPluginExtensionsOptions): {
+  links: PluginExtensionLink[];
+  isLoading: boolean;
+} {
+  const { extensions, isLoading } = usePluginExtensions(options);
+
+  return useMemo(() => {
+    return {
+      links: extensions.filter(isPluginExtensionLink),
+      isLoading,
+    };
+  }, [extensions, isLoading]);
+}
+
+export function usePluginComponents<Props = {}>(
+  options: GetPluginExtensionsOptions
+): { components: Array<React.ComponentType<Props>>; isLoading: boolean } {
+  const { extensions, isLoading } = usePluginExtensions(options);
+
+  return useMemo(
+    () => ({
+      components: extensions
+        .filter(isPluginExtensionComponent)
+        .map(({ component }) => component as React.ComponentType<Props>),
+      isLoading,
+    }),
+    [extensions, isLoading]
+  );
+}
+
+/**
+ * @deprecated Use usePluginLinks() instead.
+ */
 export function usePluginLinkExtensions(
   options: GetPluginExtensionsOptions
 ): UsePluginExtensionsResult<PluginExtensionLink> {
@@ -35,6 +71,9 @@ export function usePluginLinkExtensions(
   }, [extensions, isLoading]);
 }
 
+/**
+ * @deprecated Use usePluginComponents() instead.
+ */
 export function usePluginComponentExtensions<Props = {}>(
   options: GetPluginExtensionsOptions
 ): { extensions: Array<PluginExtensionComponent<Props>>; isLoading: boolean } {

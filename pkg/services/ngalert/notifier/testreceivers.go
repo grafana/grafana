@@ -7,8 +7,6 @@ import (
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
-	"github.com/go-openapi/strfmt"
-	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/types"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -92,36 +90,5 @@ func (am *alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 }
 
 func (am *alertmanager) GetReceivers(_ context.Context) ([]apimodels.Receiver, error) {
-	apiReceivers := make([]apimodels.Receiver, 0, len(am.Base.GetReceivers()))
-	for _, rcv := range am.Base.GetReceivers() {
-		// Build integrations slice for each receiver.
-		integrations := make([]*models.Integration, 0, len(rcv.Integrations()))
-		for _, integration := range rcv.Integrations() {
-			name := integration.Name()
-			sendResolved := integration.SendResolved()
-			ts, d, err := integration.GetReport()
-			integrations = append(integrations, &apimodels.Integration{
-				Name:                      &name,
-				SendResolved:              &sendResolved,
-				LastNotifyAttempt:         strfmt.DateTime(ts),
-				LastNotifyAttemptDuration: d.String(),
-				LastNotifyAttemptError: func() string {
-					if err != nil {
-						return err.Error()
-					}
-					return ""
-				}(),
-			})
-		}
-
-		active := rcv.Active()
-		name := rcv.Name()
-		apiReceivers = append(apiReceivers, apimodels.Receiver{
-			Active:       &active,
-			Integrations: integrations,
-			Name:         &name,
-		})
-	}
-
-	return apiReceivers, nil
+	return am.Base.GetReceivers(), nil
 }

@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import debounce from 'debounce-promise';
 import { startCase, uniqBy } from 'lodash';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, SelectableValue, TimeRange } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';

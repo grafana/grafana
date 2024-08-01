@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useHistory } from 'react-router';
 
 import { Alert, LoadingPlaceholder } from '@grafana/ui';

@@ -36,6 +36,8 @@
     image: "grafana/pyroscope:latest"
     ports:
       - "4040:4040"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
   agent:
     image: grafana/agent:v0.37.0
     environment:

@@ -1,5 +1,5 @@
 import memoizeOne from 'memoize-one';
-import React, { useId } from 'react';
+import { useId } from 'react';
 
 import { PanelProps } from '@grafana/data';
 

@@ -1,5 +1,5 @@
 import { Meta } from '@storybook/react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { Button } from '../../Button/Button';
 

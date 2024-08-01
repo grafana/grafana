@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"net/http"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -46,7 +47,7 @@ type ContactPointService interface {
 type TemplateService interface {
 	GetTemplates(ctx context.Context, orgID int64) ([]definitions.NotificationTemplate, error)
 	SetTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error)
-	DeleteTemplate(ctx context.Context, orgID int64, name string) error
+	DeleteTemplate(ctx context.Context, orgID int64, name string, provenance definitions.Provenance) error
 }
 
 type NotificationPolicyService interface {
@@ -135,13 +136,11 @@ func (srv *ProvisioningSrv) RouteGetContactPoints(c *contextmodel.ReqContext) re
 		Name:  c.Query("name"),
 		OrgID: c.SignedInUser.GetOrgID(),
 	}
-	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q, nil)
+	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q, c.SignedInUser)
 	if err != nil {
-		if errors.Is(err, provisioning.ErrPermissionDenied) {
-			return ErrResp(http.StatusForbidden, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
+
 	return response.JSON(http.StatusOK, cps)
 }
 
@@ -153,10 +152,7 @@ func (srv *ProvisioningSrv) RouteGetContactPointsExport(c *contextmodel.ReqConte
 	}
 	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q, c.SignedInUser)
 	if err != nil {
-		if errors.Is(err, provisioning.ErrPermissionDenied) {
-			return ErrResp(http.StatusForbidden, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 
 	e, err := AlertingFileExportFromEmbeddedContactPoints(c.SignedInUser.GetOrgID(), cps)
@@ -241,7 +237,7 @@ func (srv *ProvisioningSrv) RoutePutTemplate(c *contextmodel.ReqContext, body de
 }
 
 func (srv *ProvisioningSrv) RouteDeleteTemplate(c *contextmodel.ReqContext, name string) response.Response {
-	err := srv.templates.DeleteTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), name)
+	err := srv.templates.DeleteTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), name, determineProvenance(c))
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -297,7 +293,14 @@ func (srv *ProvisioningSrv) RoutePostMuteTiming(c *contextmodel.ReqContext, mt d
 }
 
 func (srv *ProvisioningSrv) RoutePutMuteTiming(c *contextmodel.ReqContext, mt definitions.MuteTimeInterval, name string) response.Response {
-	mt.Name = name
+	// if body does not specify name, assume that the path contains the name
+	if mt.Name == "" {
+		mt.Name = name
+	}
+	// if body contains a name, and it's different from the one in the path, assume the latter to be UID
+	if mt.Name != name {
+		mt.UID = name
+	}
 	mt.Provenance = determineProvenance(c)
 	updated, err := srv.muteTimings.UpdateMuteTiming(c.Req.Context(), mt, c.SignedInUser.GetOrgID())
 	if err != nil {
@@ -341,7 +344,7 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar de
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	if upstreamModel.IsRecordingRule() && !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
+	if upstreamModel.Type() == alerting_models.RuleTypeRecording && !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
 		return ErrResp(
 			http.StatusBadRequest,
 			fmt.Errorf("%w: recording rules cannot be created on this instance", alerting_models.ErrAlertRuleFailedValidation),
@@ -377,7 +380,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar def
 		ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	if updated.IsRecordingRule() && !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
+	if updated.Type() == alerting_models.RuleTypeRecording && !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
 		return ErrResp(
 			http.StatusBadRequest,
 			fmt.Errorf("%w: recording rules cannot be created on this instance", alerting_models.ErrAlertRuleFailedValidation),
@@ -587,11 +590,15 @@ func exportResponse(c *contextmodel.ReqContext, body definitions.AlertingFileExp
 func exportHcl(download bool, body definitions.AlertingFileExport) response.Response {
 	resources := make([]hcl.Resource, 0, len(body.Groups)+len(body.ContactPoints)+len(body.Policies)+len(body.MuteTimings))
 	convertToResources := func() error {
-		for idx, group := range body.Groups {
+		for _, group := range body.Groups {
 			gr := group
+			sum := fnv.New64()
+			_, _ = sum.Write([]byte(gr.Name))
+			_, _ = sum.Write([]byte(gr.FolderUID))
+			hash := sum.Sum64()
 			resources = append(resources, hcl.Resource{
 				Type: "grafana_rule_group",
-				Name: fmt.Sprintf("rule_group_%04d", idx),
+				Name: fmt.Sprintf("rule_group_%016x", hash),
 				Body: &gr,
 			})
 		}

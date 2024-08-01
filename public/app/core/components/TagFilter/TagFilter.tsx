@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { components, MultiValueRemoveProps } from 'react-select';
 
 import { escapeStringForRegex, GrafanaTheme2 } from '@grafana/data';
 import { Icon, MultiSelect, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { TagBadge } from './TagBadge';
+import { TagBadge, getStyles as getTagBadgeStyles } from './TagBadge';
 import { TagOption, TagSelectOption } from './TagOption';
 
 export interface TermCount {
@@ -116,7 +116,6 @@ export const TagFilter = ({
   };
 
   const selectOptions = {
-    key: selectKey,
     onFocus,
     isLoading,
     options,
@@ -160,38 +159,42 @@ export const TagFilter = ({
           Clear tags
         </button>
       )}
-      <MultiSelect {...selectOptions} prefix={<Icon name="tag-alt" />} aria-label="Tag filter" />
+      <MultiSelect key={selectKey} {...selectOptions} prefix={<Icon name="tag-alt" />} aria-label="Tag filter" />
     </div>
   );
 };
 
 TagFilter.displayName = 'TagFilter';
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  tagFilter: css`
-    position: relative;
-    min-width: 180px;
-    flex-grow: 1;
+const getStyles = (theme: GrafanaTheme2) => {
+  const tagBadgeStyles = getTagBadgeStyles(theme);
 
-    .label-tag {
-      margin-left: 6px;
-      cursor: pointer;
-    }
-  `,
-  clear: css`
-    background: none;
-    border: none;
-    text-decoration: underline;
-    font-size: 12px;
-    padding: none;
-    position: absolute;
-    top: -17px;
-    right: 0;
-    cursor: pointer;
-    color: ${theme.colors.text.secondary};
+  return {
+    tagFilter: css({
+      position: 'relative',
+      minWidth: '180px',
+      flexGrow: 1,
 
-    &:hover {
-      color: ${theme.colors.text.primary};
-    }
-  `,
-});
+      [`.${tagBadgeStyles.badge}`]: {
+        marginLeft: '6px',
+        cursor: 'pointer',
+      },
+    }),
+    clear: css({
+      background: 'none',
+      border: 'none',
+      textDecoration: 'underline',
+      fontSize: '12px',
+      padding: 'none',
+      position: 'absolute',
+      top: '-17px',
+      right: 0,
+      cursor: 'pointer',
+      color: theme.colors.text.secondary,
+
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
+    }),
+  };
+};

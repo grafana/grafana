@@ -4,7 +4,7 @@ import { renderHook } from '@testing-library/react-hooks';
 import { PluginExtensionTypes } from '@grafana/data';
 
 import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
-import { createPluginExtensionsHook } from './usePluginExtensions';
+import { createUsePluginExtensions } from './usePluginExtensions';
 
 describe('usePluginExtensions()', () => {
   let reactiveRegistry: ReactivePluginExtensionsRegistry;
@@ -14,7 +14,7 @@ describe('usePluginExtensions()', () => {
   });
 
   it('should return an empty array if there are no extensions registered for the extension point', () => {
-    const usePluginExtensions = createPluginExtensionsHook(reactiveRegistry);
+    const usePluginExtensions = createUsePluginExtensions(reactiveRegistry);
     const { result } = renderHook(() =>
       usePluginExtensions({
         extensionPointId: 'foo/bar',
@@ -48,7 +48,7 @@ describe('usePluginExtensions()', () => {
       ],
     });
 
-    const usePluginExtensions = createPluginExtensionsHook(reactiveRegistry);
+    const usePluginExtensions = createUsePluginExtensions(reactiveRegistry);
     const { result } = renderHook(() => usePluginExtensions({ extensionPointId }));
 
     expect(result.current.extensions.length).toBe(2);
@@ -59,7 +59,7 @@ describe('usePluginExtensions()', () => {
   it('should dynamically update the extensions registered for a certain extension point', () => {
     const extensionPointId = 'plugins/foo/bar';
     const pluginId = 'my-app-plugin';
-    const usePluginExtensions = createPluginExtensionsHook(reactiveRegistry);
+    const usePluginExtensions = createUsePluginExtensions(reactiveRegistry);
     let { result, rerender } = renderHook(() => usePluginExtensions({ extensionPointId }));
 
     // No extensions yet
@@ -99,7 +99,7 @@ describe('usePluginExtensions()', () => {
   it('should only render the hook once', () => {
     const spy = jest.spyOn(reactiveRegistry, 'asObservable');
     const extensionPointId = 'plugins/foo/bar';
-    const usePluginExtensions = createPluginExtensionsHook(reactiveRegistry);
+    const usePluginExtensions = createUsePluginExtensions(reactiveRegistry);
 
     renderHook(() => usePluginExtensions({ extensionPointId }));
     expect(spy).toHaveBeenCalledTimes(1);
@@ -108,7 +108,7 @@ describe('usePluginExtensions()', () => {
   it('should return the same extensions object if the context object is the same', () => {
     const extensionPointId = 'plugins/foo/bar';
     const pluginId = 'my-app-plugin';
-    const usePluginExtensions = createPluginExtensionsHook(reactiveRegistry);
+    const usePluginExtensions = createUsePluginExtensions(reactiveRegistry);
 
     // Add extensions to the registry
     act(() => {
@@ -143,7 +143,7 @@ describe('usePluginExtensions()', () => {
   it('should return a new extensions object if the context object is different', () => {
     const extensionPointId = 'plugins/foo/bar';
     const pluginId = 'my-app-plugin';
-    const usePluginExtensions = createPluginExtensionsHook(reactiveRegistry);
+    const usePluginExtensions = createUsePluginExtensions(reactiveRegistry);
 
     // Add extensions to the registry
     act(() => {
@@ -178,7 +178,7 @@ describe('usePluginExtensions()', () => {
     const extensionPointId = 'plugins/foo/bar';
     const pluginId = 'my-app-plugin';
     const context = {};
-    const usePluginExtensions = createPluginExtensionsHook(reactiveRegistry);
+    const usePluginExtensions = createUsePluginExtensions(reactiveRegistry);
 
     // Add the first extension
     act(() => {

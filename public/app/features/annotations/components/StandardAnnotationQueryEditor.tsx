@@ -1,4 +1,4 @@
-import React, { PureComponent, ReactElement } from 'react';
+import { PureComponent, ReactElement } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import {

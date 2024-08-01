@@ -1,6 +1,7 @@
 // Libraries
 import { css } from '@emotion/css';
-import React, { MouseEvent } from 'react';
+import { MouseEvent } from 'react';
+import * as React from 'react';
 
 // Components
 import { GrafanaTheme2 } from '@grafana/data';

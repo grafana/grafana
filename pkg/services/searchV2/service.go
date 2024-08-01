@@ -199,7 +199,7 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 		return nil, errors.New("auth error")
 	}
 
-	usr.Permissions[orgId] = accesscontrol.GroupScopesByAction(permissions)
+	usr.Permissions[orgId] = accesscontrol.GroupScopesByActionContext(ctx, permissions)
 	return usr, nil
 }
 

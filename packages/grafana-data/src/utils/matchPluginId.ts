@@ -1,4 +1,4 @@
-import { PluginMeta } from '../types';
+import { PluginMeta } from '../types/plugin';
 
 export function matchPluginId(idToMatch: string, pluginMeta: PluginMeta) {
   if (pluginMeta.id === idToMatch) {

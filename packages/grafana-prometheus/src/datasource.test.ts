@@ -19,14 +19,6 @@ import {
 import { config, getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runtime';
 
 import {
-  createAnnotationResponse,
-  createDataRequest,
-  createDefaultPromResponse,
-  createEmptyAnnotationResponse,
-  fetchMockCalledWith,
-  getMockTimeRange,
-} from './__mocks__/datasource';
-import {
   alignRange,
   extractRuleMappingFromGroups,
   PrometheusDatasource,
@@ -34,7 +26,22 @@ import {
   prometheusSpecialRegexEscape,
 } from './datasource';
 import PromQlLanguageProvider from './language_provider';
-import { PromApplication, PrometheusCacheLevel, PromOptions, PromQuery, PromQueryRequest } from './types';
+import {
+  createAnnotationResponse,
+  createDataRequest,
+  createDefaultPromResponse,
+  createEmptyAnnotationResponse,
+  fetchMockCalledWith,
+  getMockTimeRange,
+} from './test/__mocks__/datasource';
+import {
+  PromApplication,
+  PrometheusCacheLevel,
+  PromOptions,
+  PromQuery,
+  PromQueryRequest,
+  RawRecordingRules,
+} from './types';
 
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
 
@@ -395,7 +402,7 @@ describe('PrometheusDatasource', () => {
     });
 
     it('returns a mapping for recording rules only', () => {
-      const groups = [
+      const groups: RawRecordingRules[] = [
         {
           rules: [
             {
@@ -415,7 +422,50 @@ describe('PrometheusDatasource', () => {
         },
       ];
       const mapping = extractRuleMappingFromGroups(groups);
-      expect(mapping).toEqual({ 'job:http_inprogress_requests:sum': 'sum(http_inprogress_requests) by (job)' });
+      expect(mapping).toEqual({
+        'job:http_inprogress_requests:sum': [{ query: 'sum(http_inprogress_requests) by (job)' }],
+      });
+    });
+
+    it('should extract rules with same name respecting its labels', () => {
+      const groups: RawRecordingRules[] = [
+        {
+          name: 'nameOfTheGroup:uid11',
+          file: 'the_file_123',
+          rules: [
+            {
+              name: 'metric_5m',
+              query: 'super_duper_query',
+              labels: {
+                uuid: 'uuid111',
+              },
+              type: 'recording',
+            },
+          ],
+        },
+        {
+          name: 'nameOfTheGroup:uid22',
+          file: 'the_file_456',
+          rules: [
+            {
+              name: 'metric_5m',
+              query: 'another_super_duper_query',
+              labels: {
+                uuid: 'uuid222',
+              },
+              type: 'recording',
+            },
+          ],
+        },
+      ];
+
+      const mapping = extractRuleMappingFromGroups(groups);
+      expect(mapping['metric_5m']).toBeDefined();
+      expect(mapping['metric_5m'].length).toEqual(2);
+      expect(mapping['metric_5m'][0].query).toEqual('super_duper_query');
+      expect(mapping['metric_5m'][0].labels).toEqual({ uuid: 'uuid111' });
+      expect(mapping['metric_5m'][1].query).toEqual('another_super_duper_query');
+      expect(mapping['metric_5m'][1].labels).toEqual({ uuid: 'uuid222' });
     });
   });
 
@@ -552,7 +602,7 @@ describe('PrometheusDatasource', () => {
       config.featureToggles.promQLScope = undefined;
     });
 
-    it('should call replace function 2 times', () => {
+    it('should call replace function 3 times', () => {
       const query: PromQuery = {
         expr: 'test{job="testjob"}',
         format: 'time_series',
@@ -563,7 +613,7 @@ describe('PrometheusDatasource', () => {
       replaceMock.mockReturnValue(interval);
 
       const queries = ds.interpolateVariablesInQueries([query], { Interval: { text: interval, value: interval } });
-      expect(templateSrvStub.replace).toBeCalledTimes(2);
+      expect(templateSrvStub.replace).toBeCalledTimes(3);
       expect(queries[0].interval).toBe(interval);
     });
 
@@ -752,6 +802,55 @@ describe('PrometheusDatasource', () => {
 
       const result = ds.applyTemplateVariables(query, {}, filters);
       expect(result).toMatchObject({ expr: 'test{job="99", k1="v1", k2!="v2"} > 99' });
+    });
+
+    it('should replace variables in ad-hoc filters', () => {
+      const searchPattern = /\$A/g;
+      replaceMock.mockImplementation((a: string) => a?.replace(searchPattern, '99') ?? a);
+
+      const query = {
+        expr: 'test',
+        refId: 'A',
+      };
+      const filters = [
+        {
+          key: 'job',
+          operator: '=~',
+          value: '$A',
+        },
+      ];
+
+      const result = ds.applyTemplateVariables(query, {}, filters);
+      expect(result).toMatchObject({ expr: 'test{job=~"99"}' });
+    });
+
+    it('should replace variables in adhoc filters on backend when promQLScope is enabled', () => {
+      config.featureToggles.promQLScope = true;
+      const searchPattern = /\$A/g;
+      replaceMock.mockImplementation((a: string) => a?.replace(searchPattern, '99') ?? a);
+
+      const query = {
+        expr: 'test',
+        refId: 'A',
+      };
+      const filters = [
+        {
+          key: 'job',
+          operator: '=~',
+          value: '$A',
+        },
+      ];
+      const result = ds.applyTemplateVariables(query, {}, filters);
+      expect(result).toMatchObject({
+        expr: 'test',
+        adhocFilters: [
+          {
+            key: 'job',
+            operator: 'regex-match',
+            value: '99',
+          },
+        ],
+      });
     });
   });
 

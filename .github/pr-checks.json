@@ -1,12 +1,5 @@
 [
   {
-    "type": "check-milestone",
-    "title": "Milestone Check",
-    "targetUrl": "https://github.com/grafana/grafana/blob/main/contribute/merge-pull-request.md#assign-a-milestone",
-    "success": "Milestone set",
-    "failure": "Milestone not set"
-  },
-  {
     "type": "check-changelog",
     "title": "Changelog Check",
     "labels": {

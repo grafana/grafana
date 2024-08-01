@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { AnchorHTMLAttributes, forwardRef } from 'react';
+import { AnchorHTMLAttributes, forwardRef } from 'react';
 
 import { GrafanaTheme2, locationUtil, textUtil, ThemeTypographyVariantTypes } from '@grafana/data';
 
@@ -27,7 +27,7 @@ interface TextLinkProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 't
   weight?: 'light' | 'regular' | 'medium' | 'bold';
   /** Set the icon to be shown. An external link will show the 'external-link-alt' icon as default.*/
   icon?: IconName;
-  children: string;
+  children: React.ReactNode;
 }
 
 const svgSizes: {

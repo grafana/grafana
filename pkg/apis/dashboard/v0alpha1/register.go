@@ -19,12 +19,6 @@ var DashboardResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	func() runtime.Object { return &DashboardList{} },
 )
 
-var DashboardSummaryResourceInfo = common.NewResourceInfo(GROUP, VERSION,
-	"summary", "summary", "DashboardSummary",
-	func() runtime.Object { return &DashboardSummary{} },
-	func() runtime.Object { return &DashboardSummaryList{} },
-)
-
 var (
 	// SchemeGroupVersion is group version used to register these objects
 	SchemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}

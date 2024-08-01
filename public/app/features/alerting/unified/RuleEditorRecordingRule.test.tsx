@@ -1,6 +1,6 @@
 import { screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import * as React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { byText } from 'testing-library-selector';
@@ -147,7 +147,7 @@ describe('RuleEditor recording rules', () => {
     });
 
     renderRuleEditor(undefined, true);
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+    await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
     await userEvent.type(await ui.inputs.name.find(), 'my great new recording rule');
 
     const dataSourceSelect = ui.inputs.dataSource.get();

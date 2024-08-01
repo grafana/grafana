@@ -205,7 +205,7 @@ function isIntervalVariableError(node: SyntaxNode) {
 function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
   const label = getString(expr, node.getChild(LabelName));
   const op = getString(expr, node.getChild(MatchOp));
-  const value = getString(expr, node.getChild(StringLiteral)).replace(/"/g, '');
+  const value = getString(expr, node.getChild(StringLiteral)).replace(/^["'`]|["'`]$/g, '');
   return {
     label,
     op,

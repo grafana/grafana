@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { dateMath, GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -29,7 +28,7 @@ export const SilenceDetails = ({ silence }: Props) => {
       <div>{duration}</div>
       <div className={styles.title}>Created by</div>
       <div>{createdBy}</div>
-      {silencedAlerts.length > 0 && (
+      {Array.isArray(silencedAlerts) && (
         <>
           <div className={styles.title}>Affected alerts</div>
           <SilencedAlertsTable silencedAlerts={silencedAlerts} />

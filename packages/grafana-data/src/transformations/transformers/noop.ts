@@ -1,4 +1,4 @@
-import { DataFrame } from '../../types';
+import { DataFrame } from '../../types/dataFrame';
 import { SynchronousDataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';

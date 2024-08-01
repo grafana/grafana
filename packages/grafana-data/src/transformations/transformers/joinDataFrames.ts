@@ -1,5 +1,6 @@
-import { getTimeField, sortDataFrame } from '../../dataframe';
-import { DataFrame, Field, FieldMatcher, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types';
+import { getTimeField, sortDataFrame } from '../../dataframe/processDataFrame';
+import { DataFrame, Field, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types/dataFrame';
+import { FieldMatcher } from '../../types/transformations';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -203,7 +204,8 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
         if (frame.name) {
           if (field.name === TIME_SERIES_VALUE_FIELD_NAME) {
             name = frame.name;
-          } else {
+          } else if (labels.name == null) {
+            // add the name label from frame
             labels = { ...labels, name: frame.name };
           }
         }
@@ -211,7 +213,7 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
         fields.push({
           ...field,
           name,
-          labels, // add the name label from frame
+          labels,
         });
       }
 

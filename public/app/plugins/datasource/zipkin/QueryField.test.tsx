@@ -1,5 +1,4 @@
 import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
-import React from 'react';
 
 import { CascaderOption } from '@grafana/ui';
 

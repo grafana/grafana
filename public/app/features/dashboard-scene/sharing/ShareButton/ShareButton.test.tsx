@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
@@ -24,16 +23,6 @@ describe('ShareButton', () => {
     expect(await screen.findByTestId(selector.shareLink)).toBeInTheDocument();
     expect(await screen.findByTestId(selector.arrowMenu)).toBeInTheDocument();
   });
-
-  it('should call createAndCopyDashboardShortLink when share link clicked', async () => {
-    setup();
-
-    const shareLink = await screen.findByTestId(selector.shareLink);
-
-    await userEvent.click(shareLink);
-    expect(createAndCopyDashboardShortLinkMock).toHaveBeenCalled();
-  });
-
   it('should render menu when arrow button clicked', async () => {
     setup();
 

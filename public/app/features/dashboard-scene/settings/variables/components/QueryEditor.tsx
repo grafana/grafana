@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { DataSourceApi, LoadingState, TimeRange } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { QueryVariable } from '@grafana/scenes';

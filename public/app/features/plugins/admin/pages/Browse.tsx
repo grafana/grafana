@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ReactElement } from 'react';
+import { ReactElement } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { SelectableValue, GrafanaTheme2, PluginType } from '@grafana/data';
@@ -13,6 +13,7 @@ import { useSelector } from 'app/types';
 
 import { HorizontalGroup } from '../components/HorizontalGroup';
 import { PluginList } from '../components/PluginList';
+import { RoadmapLinks } from '../components/RoadmapLinks';
 import { SearchField } from '../components/SearchField';
 import { Sorters } from '../helpers';
 import { useHistory } from '../hooks/useHistory';
@@ -162,6 +163,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
         <div className={styles.listWrap}>
           <PluginList plugins={plugins} displayMode={displayMode} isLoading={isLoading} />
         </div>
+        <RoadmapLinks />
       </Page.Contents>
     </Page>
   );

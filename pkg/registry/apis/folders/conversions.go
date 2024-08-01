@@ -5,9 +5,10 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
@@ -32,7 +33,7 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 		if v.ID > 0 { // nolint:staticcheck
 			meta.SetOriginInfo(&utils.ResourceOriginInfo{
 				Name: "SQL",
-				Key:  fmt.Sprintf("%d", v.ID), // nolint:staticcheck
+				Path: fmt.Sprintf("%d", v.ID), // nolint:staticcheck
 			})
 		}
 		if v.CreatedBy > 0 {
@@ -45,6 +46,6 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	if v.ParentUID != "" {
 		meta.SetFolder(v.ParentUID)
 	}
-	f.UID = utils.CalculateClusterWideUID(f)
+	f.UID = gapiutil.CalculateClusterWideUID(f)
 	return f
 }

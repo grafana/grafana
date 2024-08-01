@@ -3,8 +3,8 @@ package authntest
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models/usertoken"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 )
 
@@ -78,7 +78,7 @@ func (f *FakeService) Logout(_ context.Context, _ identity.Requester, _ *usertok
 	panic("unimplemented")
 }
 
-func (f *FakeService) ResolveIdentity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
+func (f *FakeService) ResolveIdentity(ctx context.Context, orgID int64, namespaceID identity.TypedID) (*authn.Identity, error) {
 	if f.ExpectedIdentities != nil {
 		if f.CurrentIndex >= len(f.ExpectedIdentities) {
 			panic("ExpectedIdentities is empty")

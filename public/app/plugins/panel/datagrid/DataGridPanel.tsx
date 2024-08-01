@@ -8,7 +8,7 @@ import DataEditor, {
   Rectangle,
   HeaderClickedEventArgs,
 } from '@glideapps/glide-data-grid';
-import React, { useEffect, useReducer } from 'react';
+import { useEffect, useReducer } from 'react';
 
 import { Field, PanelProps, FieldType, DataFrame } from '@grafana/data';
 import { PanelDataErrorView, reportInteraction } from '@grafana/runtime';

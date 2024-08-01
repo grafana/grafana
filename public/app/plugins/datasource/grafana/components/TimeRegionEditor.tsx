@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import moment, { Moment } from 'moment/moment';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { getTimeZoneInfo, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, Field, FieldSet, Select, Stack, TimeZonePicker, useStyles2 } from '@grafana/ui';

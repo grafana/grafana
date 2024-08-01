@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 
@@ -54,8 +54,10 @@ export type PluginExtensionLinkConfig<Context extends object = object> = {
   // (It is called with the original event object)
   onClick?: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
 
-  // The unique identifier of the Extension Point
-  // (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
+  /**
+   * The unique identifier of the Extension Point
+   * (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
+   */
   extensionPointId: string;
 
   // (Optional) A function that can be used to configure the extension dynamically based on the extension point's context
@@ -86,8 +88,10 @@ export type PluginExtensionComponentConfig<Props = {}> = {
   // (This component receives contextual information as props when it is rendered. You can just return `null` from the component to hide it.)
   component: React.ComponentType<Props>;
 
-  // The unique identifier of the Extension Point
-  // (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
+  /**
+   * The unique identifier of the Extension Point
+   * (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
+   */
   extensionPointId: string;
 };
 

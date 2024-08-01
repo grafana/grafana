@@ -1,6 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
@@ -12,6 +11,7 @@ jest.mock('@grafana/runtime', () => ({
     post: postMock,
   }),
   config: {
+    ...jest.requireActual('@grafana/runtime').config,
     loginError: false,
     buildInfo: {
       version: 'v1.0',
