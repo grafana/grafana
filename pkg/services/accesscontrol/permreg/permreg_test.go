@@ -167,7 +167,7 @@ func Test_permissionRegistry_GetScopePrefixes(t *testing.T) {
 		name   string
 		action string
 		want   PrefixSet
-		want1  bool
+		shouldExist  bool
 	}{
 		{
 			name:   "get folders read scope prefixes",
