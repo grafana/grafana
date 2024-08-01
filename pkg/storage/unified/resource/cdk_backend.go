@@ -359,9 +359,9 @@ func buildTree(ctx context.Context, s *cdkBackend, key *ResourceKey) (*cdkListIt
 		resources = append(resources, *res)
 	}
 	sort.Slice(resources, func(i, j int) bool {
-		a := resources[i].versions[0].rv
-		b := resources[j].versions[0].rv
-		return a > b
+		a := resources[i].prefix
+		b := resources[j].prefix
+		return a < b
 	})
 
 	return &cdkListIterator{

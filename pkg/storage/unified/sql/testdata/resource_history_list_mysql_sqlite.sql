@@ -8,6 +8,6 @@ INNER JOIN (
 ) AS maxkv
 ON maxkv."resource_version" = kv."resource_version" AND maxkv."namespace" = kv."namespace" AND maxkv."group" = kv."group" AND maxkv."resource" = kv."resource" AND maxkv."name" = kv."name"
 WHERE kv."action" != 3 AND kv."namespace" = ?
-ORDER BY kv."resource_version" DESC
+ORDER BY kv."namespace" ASC, kv."name" ASC
 LIMIT ? OFFSET ?
 ;
