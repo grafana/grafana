@@ -11,7 +11,7 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
-import { createUrl } from '../../utils/url';
+import { createRelativeUrl } from '../../utils/url';
 import { DeclareIncidentMenuItem } from '../bridges/DeclareIncidentButton';
 
 interface Props {
@@ -123,9 +123,12 @@ type PropsWithIdentifier = { identifier: RuleIdentifier };
 
 const ExportMenuItem = ({ identifier }: PropsWithIdentifier) => {
   const returnTo = location.pathname + location.search;
-  const url = createUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`, {
-    returnTo,
-  });
+  const url = createRelativeUrl(
+    `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`,
+    {
+      returnTo,
+    }
+  );
 
   return <Menu.Item key="with-modifications" label="With modifications" icon="file-edit-alt" url={url} />;
 };
