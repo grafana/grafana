@@ -4,18 +4,8 @@ import {
   PROVENANCE_ANNOTATION,
   PROVENANCE_NONE,
 } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
+import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
 import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval } from 'app/features/alerting/unified/openapi/timeIntervalsApi.gen';
-
-const baseUrl = '/apis/notifications.alerting.grafana.app/v0alpha1';
-
-const getK8sResponse = <T>(kind: string, items: T[]) => {
-  return {
-    kind,
-    apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
-    metadata: {},
-    items,
-  };
-};
 
 /** UID of a time interval that we expect to follow all happy paths within tests/mocks */
 export const TIME_INTERVAL_UID_HAPPY_PATH = 'f4eae7a4895fa786';
@@ -57,25 +47,28 @@ const getIntervalByName = (name: string) => {
 };
 
 export const listNamespacedTimeIntervalHandler = () =>
-  http.get<{ namespace: string }>(`${baseUrl}/namespaces/:namespace/timeintervals`, ({ params }) => {
-    const { namespace } = params;
+  http.get<{ namespace: string }>(
+    `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/timeintervals`,
+    ({ params }) => {
+      const { namespace } = params;
 
-    // k8s APIs expect `default` rather than `org-1` - this is one particular example
-    // to make sure we're performing the correct logic when calling this API
-    if (namespace === 'org-1') {
-      return HttpResponse.json(
-        {
-          message: 'error reading namespace: use default rather than org-1',
-        },
-        { status: 403 }
-      );
+      // k8s APIs expect `default` rather than `org-1` - this is one particular example
+      // to make sure we're performing the correct logic when calling this API
+      if (namespace === 'org-1') {
+        return HttpResponse.json(
+          {
+            message: 'error reading namespace: use default rather than org-1',
+          },
+          { status: 403 }
+        );
+      }
+      return HttpResponse.json(allTimeIntervals);
     }
-    return HttpResponse.json(allTimeIntervals);
-  });
+  );
 
 const readNamespacedTimeIntervalHandler = () =>
   http.get<{ namespace: string; name: string }>(
-    `${baseUrl}/namespaces/:namespace/timeintervals/:name`,
+    `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/timeintervals/:name`,
     ({ params }) => {
       const { name } = params;
 
@@ -89,7 +82,7 @@ const readNamespacedTimeIntervalHandler = () =>
 
 const replaceNamespacedTimeIntervalHandler = () =>
   http.put<{ namespace: string; name: string }>(
-    `${baseUrl}/namespaces/:namespace/timeintervals/:name`,
+    `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/timeintervals/:name`,
     async ({ params, request }) => {
       const { name } = params;
 
@@ -104,14 +97,17 @@ const replaceNamespacedTimeIntervalHandler = () =>
   );
 
 const createNamespacedTimeIntervalHandler = () =>
-  http.post<{ namespace: string }>(`${baseUrl}/namespaces/:namespace/timeintervals`, () => {
+  http.post<{ namespace: string }>(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/timeintervals`, () => {
     return HttpResponse.json({});
   });
 
 const deleteNamespacedTimeIntervalHandler = () =>
-  http.delete<{ namespace: string }>(`${baseUrl}/namespaces/:namespace/timeintervals/:name`, () => {
-    return HttpResponse.json({});
-  });
+  http.delete<{ namespace: string }>(
+    `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/timeintervals/:name`,
+    () => {
+      return HttpResponse.json({});
+    }
+  );
 
 const handlers = [
   listNamespacedTimeIntervalHandler(),
