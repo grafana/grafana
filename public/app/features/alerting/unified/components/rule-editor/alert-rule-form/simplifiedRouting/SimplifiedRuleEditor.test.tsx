@@ -178,7 +178,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
     it('allows selecting a contact point when using alerting API server', async () => {
       const user = userEvent.setup();
       renderSimplifiedRuleEditor();
-      await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+      await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
 
       await user.click(await ui.inputs.simplifiedRouting.contactPointRouting.find());
 
