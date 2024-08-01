@@ -10,7 +10,7 @@ import {
   getDefaultTimeRange,
 } from '@grafana/data';
 
-import { cloneQueryResponse, combinePanelData, combineResponses } from './combineResponses';
+import { cloneQueryResponse, combinePanelData, combineResponses, mergeFrames } from './combineResponses';
 
 describe('cloneQueryResponse', () => {
   const { logFrameA } = getMockFrames();
@@ -757,7 +757,7 @@ describe('mergeFrames', () => {
     const responseB: DataQueryResponse = {
       data: [metricFrameA],
     };
-    expect(combineResponses(responseA, responseB, false)).toEqual({
+    expect(combineResponses(responseA, responseB, mergeFrames)).toEqual({
       data: [
         {
           fields: [
@@ -806,7 +806,7 @@ describe('mergeFrames', () => {
     const responseB: DataQueryResponse = {
       data: [metricFrameB],
     };
-    expect(combineResponses(responseA, responseB, false)).toEqual({
+    expect(combineResponses(responseA, responseB, mergeFrames)).toEqual({
       data: [
         {
           fields: [
@@ -851,7 +851,7 @@ describe('mergeFrames', () => {
     const responseB: DataQueryResponse = {
       data: [metricFrameA, metricFrameC],
     };
-    expect(combineResponses(responseA, responseB, false)).toEqual({
+    expect(combineResponses(responseA, responseB, mergeFrames)).toEqual({
       data: [
         {
           fields: [

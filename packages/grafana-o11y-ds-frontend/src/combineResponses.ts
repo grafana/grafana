@@ -16,7 +16,7 @@ export function combinePanelData(currentData: PanelData, newData: PanelData): Pa
   return { ...currentData, series };
 }
 
-export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse, assumeOrder = true) {
+export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse, combineFunction = combineAdjacentFrames) {
   if (!currentResult) {
     return cloneQueryResponse(newResult);
   }
@@ -27,11 +27,7 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
       currentResult.data.push(cloneDataFrame(newFrame));
       return;
     }
-    if (assumeOrder) {
-      combineFrames(currentFrame, newFrame);
-    } else {
-      mergeFrames(currentFrame, newFrame);
-    }
+    combineFunction(currentFrame, newFrame);
   });
 
   const mergedErrors = [...(currentResult.errors ?? []), ...(newResult.errors ?? [])];
@@ -61,7 +57,10 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
   return currentResult;
 }
 
-function combineFrames(dest: DataFrame, source: DataFrame) {
+/**
+ * Given two data frames, combine their values assuming source contains older data, with no overlaps.
+ */
+function combineAdjacentFrames(dest: DataFrame, source: DataFrame) {
   // `dest` and `source` might have more or less fields, we need to go through all of them
   const totalFields = Math.max(dest.fields.length, source.fields.length);
   for (let i = 0; i < totalFields; i++) {
@@ -88,12 +87,16 @@ function combineFrames(dest: DataFrame, source: DataFrame) {
   };
 }
 
-function mergeFrames(dest: DataFrame, source: DataFrame) {
+/**
+ * Given two data frames, merge their values. Overlapping values will be added together.
+ */
+export function mergeFrames(dest: DataFrame, source: DataFrame) {
+  const destTimeField = dest.fields.find((field) => field.type === FieldType.time);
   const sourceTimeValues = source.fields.find((field) => field.type === FieldType.time)?.values.slice(0) ?? [];
   const totalFields = Math.max(dest.fields.length, source.fields.length);
 
   for (let i = 0; i < sourceTimeValues.length; i++) {
-    const destTimeValues = dest.fields.find((field) => field.type === FieldType.time)?.values.slice(0) ?? [];
+    const destTimeValues = destTimeField?.values.slice(0) ?? [];
     const destIdx = resolveIdx(sourceTimeValues[i], destTimeValues);
 
     for (let f = 0; f < totalFields; f++) {

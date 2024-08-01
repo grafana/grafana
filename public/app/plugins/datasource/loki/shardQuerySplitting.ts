@@ -7,7 +7,7 @@ import {
   LoadingState,
   DataQueryResponse,
 } from '@grafana/data';
-import { combineResponses } from '@grafana/o11y-ds-frontend';
+import { combineResponses, mergeFrames } from '@grafana/o11y-ds-frontend';
 
 import { LokiDatasource } from './datasource';
 import { adjustTargetsFromResponseState, querySupportsSplitting } from './querySplitting';
@@ -56,7 +56,7 @@ export function splitQueriesByStreamShard(datasource: LokiDatasource, request: D
 
     subquerySubsciption = datasource.runQuery(subRequest).subscribe({
       next: (partialResponse) => {
-        mergedResponse = combineResponses(mergedResponse, partialResponse, false);
+        mergedResponse = combineResponses(mergedResponse, partialResponse, mergeFrames);
         if ((mergedResponse.errors ?? []).length > 0 || mergedResponse.error != null) {
           shouldStop = true;
         }
