@@ -4,8 +4,10 @@ import { useForm } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
+import { Trans } from 'app/core/internationalization';
+import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import {
@@ -23,10 +25,7 @@ import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { alertStateToReadable } from '../../utils/rules';
 import { HoverCard } from '../HoverCard';
-import { ContactPointReceiverSummary } from '../contact-points/ContactPoint';
-import { useGetContactPoints } from '../contact-points/useContactPoints';
 
-import { ContactPointsFilterSelector } from './ContactPointsFilterSelector';
 import { MultipleDataSourcePicker } from './MultipleDataSourcePicker';
 
 const ViewOptions: SelectableValue[] = [
@@ -85,7 +84,9 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
   const queryStringKey = `queryString-${filterKey}`;
 
   const searchQueryRef = useRef<HTMLInputElement | null>(null);
-  const { handleSubmit, register, setValue } = useForm<{ searchQuery: string }>({ defaultValues: { searchQuery } });
+  const { handleSubmit, register, setValue } = useForm<{ searchQuery: string }>({
+    defaultValues: { searchQuery },
+  });
   const { ref, ...rest } = register('searchQuery');
 
   useEffect(() => {
@@ -150,8 +151,9 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
     trackRulesSearchComponentInteraction('contactPoint');
   };
 
-  const { options, canRenderContactPointSelector, refetchReceivers } = useContactPointOptions();
+  const canRenderContactPointSelector = config.featureToggles.alertingSimplifiedRouting ?? false;
   const searchIcon = <Icon name={'search'} />;
+
   return (
     <div className={styles.container}>
       <Stack direction="column" gap={1}>
@@ -236,12 +238,22 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
           </div>
           {canRenderContactPointSelector && (
             <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME}>
-              <ContactPointsFilterSelector
-                options={options}
-                selectedContactPoint={filterState.contactPoint}
-                onSelectContactPoint={handleContactPointChange}
-                refetchReceivers={refetchReceivers}
-              />
+              <Stack direction="column" gap={0}>
+                <Text variant="bodySmall">
+                  <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
+                </Text>
+                <ContactPointSelector
+                  selectedContactPointName={filterState.contactPoint}
+                  showRefreshButton
+                  selectProps={{
+                    width: 40,
+                    onChange: (selectValue) => {
+                      handleContactPointChange(selectValue?.value?.name!);
+                    },
+                    isClearable: true,
+                  }}
+                />
+              </Stack>
             </AlertmanagerProvider>
           )}
           {pluginsFilterEnabled && (
@@ -316,34 +328,6 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
       </Stack>
     </div>
   );
-};
-
-const useContactPointOptions = () => {
-  const {
-    isLoading: isLoadingContactPoints,
-    error: errorInContactPointStatus,
-    contactPoints,
-    refetch: refetchReceivers,
-  } = useGetContactPoints();
-
-  const options = contactPoints.map((receiver) => {
-    const integrations = receiver?.grafana_managed_receiver_configs;
-    const description = <ContactPointReceiverSummary receivers={integrations ?? []} />;
-
-    return { label: receiver.name, value: receiver.name, description };
-  });
-
-  const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
-  const canRenderContactPointSelector =
-    simplifiedRoutingToggleEnabled && !isLoadingContactPoints && !errorInContactPointStatus;
-
-  return {
-    options,
-    isLoadingContactPoints,
-    errorInContactPointStatus,
-    canRenderContactPointSelector,
-    refetchReceivers,
-  };
 };
 
 const getStyles = (theme: GrafanaTheme2) => {

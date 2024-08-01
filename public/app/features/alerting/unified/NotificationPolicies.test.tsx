@@ -45,7 +45,6 @@ const mocks = {
   },
   contextSrv: jest.mocked(contextSrv),
 };
-const useGetGrafanaReceiverTypeCheckerMock = jest.spyOn(grafanaApp, 'useGetGrafanaReceiverTypeChecker');
 
 const renderNotificationPolicies = (alertManagerSourceName?: string) => {
   return render(<NotificationPolicies />, {
@@ -195,7 +194,6 @@ describe('NotificationPolicies', () => {
     mocks.contextSrv.evaluatePermission.mockImplementation(() => []);
     mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: false });
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
-    useGetGrafanaReceiverTypeCheckerMock.mockReturnValue(() => undefined);
   });
 
   afterEach(() => {

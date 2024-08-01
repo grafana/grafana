@@ -45,7 +45,7 @@ const NotificationPoliciesFilter = ({
     if (searchInputRef.current) {
       searchInputRef.current.value = '';
     }
-    setSearchParams({ contactPoint: undefined, queryString: undefined });
+    setSearchParams({ contactPoint: '', queryString: undefined });
   }, [setSearchParams]);
 
   const hasFilters = queryString || contactPoint;
@@ -99,14 +99,17 @@ const NotificationPoliciesFilter = ({
       </Field>
       <Field label="Search by contact point" style={{ marginBottom: 0 }}>
         <ContactPointSelector
-          id="receiver"
-          aria-label="Search by contact point"
-          onChange={(option) => {
-            setSearchParams({ contactPoint: option?.value?.name });
+          selectProps={{
+            id: 'receiver',
+            'aria-label': 'Search by contact point',
+            onChange: (option) => {
+              setSearchParams({ contactPoint: option?.value?.name });
+            },
+            width: 28,
+            isClearable: true,
           }}
-          width={28}
-          isClearable
-        ></ContactPointSelector>
+          selectedContactPointName={searchParams.get('contactPoint') ?? undefined}
+        />
       </Field>
       {hasFilters && (
         <Stack alignItems="center">

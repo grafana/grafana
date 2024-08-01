@@ -3,9 +3,9 @@ import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { Button } from '@grafana/ui';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import { RouteWithID } from '../../../../../plugins/datasource/alertmanager/types';
-import * as grafanaApp from '../../components/receivers/grafanaAppReceivers/grafanaApp';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { FormAmRoute } from '../../types/amroutes';
 import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
@@ -21,8 +21,7 @@ const ui = {
   repeatIntervalInput: byRole('textbox', { name: /Repeat interval/ }),
 };
 
-const useGetGrafanaReceiverTypeCheckerMock = jest.spyOn(grafanaApp, 'useGetGrafanaReceiverTypeChecker');
-useGetGrafanaReceiverTypeCheckerMock.mockReturnValue(() => undefined);
+setupMswServer();
 
 // TODO Default and Notification policy form should be unified so we don't need to maintain two almost identical forms
 describe('EditNotificationPolicyForm', function () {

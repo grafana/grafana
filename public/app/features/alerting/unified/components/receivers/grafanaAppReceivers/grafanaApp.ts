@@ -7,7 +7,7 @@ import { SupportedPlugin } from '../../../types/pluginBridges';
 import { isOnCallReceiver } from './onCall/onCall';
 import { AmRouteReceiver } from './types';
 
-export const useGetGrafanaReceiverTypeChecker = () => {
+const useGetGrafanaReceiverTypeChecker = () => {
   const { installed: isOnCallEnabled } = usePluginBridge(SupportedPlugin.OnCall);
   const { data } = onCallApi.useGrafanaOnCallIntegrationsQuery(undefined, {
     skip: !isOnCallEnabled,

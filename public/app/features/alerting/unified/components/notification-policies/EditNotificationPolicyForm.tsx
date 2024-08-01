@@ -28,7 +28,6 @@ import {
   commonGroupByOptions,
   emptyArrayFieldMatcher,
   mapMultiSelectValueToStrings,
-  mapSelectValueToString,
   promDurationValidator,
   repeatIntervalValidator,
   stringToSelectableValue,
@@ -60,8 +59,6 @@ export const AmRoutesExpandedForm = ({
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route?.group_by));
   const muteTimingOptions = useMuteTimingOptions();
   const emptyMatcher = [{ name: '', operator: MatcherOperator.equal, value: '' }];
-
-  const receiversWithOnCallOnTop = receivers.sort(onCallFirst);
 
   const formAmRoute = {
     ...amRouteToFormAmRoute(route),

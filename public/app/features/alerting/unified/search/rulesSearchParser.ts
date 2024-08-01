@@ -22,7 +22,7 @@ export interface RulesFilter {
   ruleHealth?: RuleHealth;
   dashboardUid?: string;
   plugins?: 'hide';
-  contactPoint?: string;
+  contactPoint?: string | null;
 }
 
 const filterSupportedTerms: FilterSupportedTerm[] = [

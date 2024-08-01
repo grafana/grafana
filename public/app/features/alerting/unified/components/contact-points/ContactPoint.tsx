@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { groupBy, size, upperFirst } from 'lodash';
+import { groupBy, size, take, upperFirst } from 'lodash';
 import { Fragment, ReactNode } from 'react';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
@@ -152,7 +152,7 @@ interface ContactPointReceiverMetadata {
 }
 
 type ContactPointReceiverSummaryProps = {
-  receivers: GrafanaManagedReceiverConfig[];
+  receivers: ReceiverConfigWithMetadata[];
 };
 
 /**
@@ -160,19 +160,36 @@ type ContactPointReceiverSummaryProps = {
  * don't have any metadata worth showing other than a summary of what types are configured for the contact point
  */
 export const ContactPointReceiverSummary = ({ receivers }: ContactPointReceiverSummaryProps) => {
+  // limit for how many integrations are rendered
+  const INTEGRATIONS_LIMIT = 2;
   const countByType = groupBy(receivers, (receiver) => receiver.type);
+
+  const numberOfUniqueIntegrations = size(countByType);
+  const integrationsShown = Object.entries(countByType).slice(0, INTEGRATIONS_LIMIT);
+  const numberOfIntegrationsNotShown = numberOfUniqueIntegrations - INTEGRATIONS_LIMIT;
 
   return (
     <Stack direction="column" gap={0}>
       <Stack direction="row" alignItems="center" gap={1}>
-        {Object.entries(countByType).map(([type, receivers], index) => {
+        {integrationsShown.map(([type, receivers], index) => {
           const iconName = INTEGRATION_ICONS[type];
           const receiverName = receiverTypeNames[type] ?? upperFirst(type);
           const isLastItem = size(countByType) - 1 === index;
+          // Pick the first integration of the grouped receivers, since they should all be the same type
+          // e.g. if we have multiple Oncall, they _should_ all have the same plugin metadata,
+          // so we can just use the first one for additional display purposes
+          const receiver = receivers[0];
 
           return (
             <Fragment key={type}>
               <Stack direction="row" alignItems="center" gap={0.5}>
+                {receiver[RECEIVER_PLUGIN_META_KEY]?.icon && (
+                  <img
+                    width="14px"
+                    src={receiver[RECEIVER_PLUGIN_META_KEY]?.icon}
+                    alt={receiver[RECEIVER_PLUGIN_META_KEY]?.title}
+                  />
+                )}
                 {iconName && <Icon name={iconName} />}
                 <Text variant="body">
                   {receiverName}
@@ -183,6 +200,7 @@ export const ContactPointReceiverSummary = ({ receivers }: ContactPointReceiverS
             </Fragment>
           );
         })}
+        {numberOfIntegrationsNotShown > 0 && <span>{`+${numberOfIntegrationsNotShown} more`}</span>}
       </Stack>
     </Stack>
   );

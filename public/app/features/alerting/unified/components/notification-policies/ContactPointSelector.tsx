@@ -2,10 +2,11 @@ import { css, cx, keyframes } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Select, SelectCommonProps, Text, Stack, Alert, IconButton, useStyles2, LoadingPlaceholder } from '@grafana/ui';
+import { Select, SelectCommonProps, Stack, Alert, IconButton, useStyles2, LoadingPlaceholder } from '@grafana/ui';
+import { ContactPointReceiverSummary } from 'app/features/alerting/unified/components/contact-points/ContactPoint';
 
-import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY, useGetContactPoints } from '../contact-points/useContactPoints';
-import { ContactPointWithMetadata, ReceiverConfigWithMetadata } from '../contact-points/utils';
+import { useGetContactPoints } from '../contact-points/useContactPoints';
+import { ContactPointWithMetadata } from '../contact-points/utils';
 
 const MAX_CONTACT_POINTS_RENDERED = 500;
 
@@ -13,16 +14,18 @@ const MAX_CONTACT_POINTS_RENDERED = 500;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const LOADING_SPINNER_DURATION = 1000;
 
+type ContactPointSelectorProps = {
+  selectProps: SelectCommonProps<ContactPointWithMetadata>;
+  showRefreshButton?: boolean;
+  /** Name of a contact point to optionally find and set as the preset value on the dropdown */
+  selectedContactPointName?: string | null;
+};
+
 export const ContactPointSelector = ({
   selectProps,
   showRefreshButton,
   selectedContactPointName,
-}: {
-  selectProps: SelectCommonProps<ContactPointWithMetadata>;
-  showRefreshButton?: boolean;
-  /** Name of a contact point to optionally find and set as the preset value on the dropdown */
-  selectedContactPointName?: string;
-}) => {
+}: ContactPointSelectorProps) => {
   const { contactPoints, isLoading, error, refetch } = useGetContactPoints();
   const [loaderSpinning, setLoaderSpinning] = useState(false);
   const styles = useStyles2(getStyles);
@@ -31,12 +34,12 @@ export const ContactPointSelector = ({
     return {
       label: contactPoint.name,
       value: contactPoint,
-      component: () => <ReceiversSummary receivers={contactPoint.grafana_managed_receiver_configs} />,
+      component: () => <ContactPointReceiverSummary receivers={contactPoint.grafana_managed_receiver_configs} />,
     };
   });
 
-  const matchedContactPoint: SelectableValue<ContactPointWithMetadata> = useMemo(() => {
-    return options.find((option) => option.value?.name === selectedContactPointName) || { value: undefined, label: '' };
+  const matchedContactPoint: SelectableValue<ContactPointWithMetadata> | null = useMemo(() => {
+    return options.find((option) => option.value?.name === selectedContactPointName) || null;
   }, [options, selectedContactPointName]);
 
   // force some minimum wait period for fetching contact points
@@ -60,7 +63,8 @@ export const ContactPointSelector = ({
       <Select
         virtualized={options.length > MAX_CONTACT_POINTS_RENDERED}
         options={options}
-        defaultValue={matchedContactPoint}
+        // defaultValue={matchedContactPoint}
+        value={matchedContactPoint}
         {...selectProps}
       />
       {showRefreshButton && (
@@ -74,31 +78,6 @@ export const ContactPointSelector = ({
           })}
         />
       )}
-    </Stack>
-  );
-};
-
-interface ReceiversProps {
-  receivers: ReceiverConfigWithMetadata[];
-}
-
-const ReceiversSummary = ({ receivers }: ReceiversProps) => {
-  return (
-    <Stack direction="row">
-      {receivers.map((receiver, index) => (
-        <Stack key={receiver.uid ?? index} direction="row" gap={0.5}>
-          {receiver[RECEIVER_PLUGIN_META_KEY]?.icon && (
-            <img
-              width="16px"
-              src={receiver[RECEIVER_PLUGIN_META_KEY]?.icon}
-              alt={receiver[RECEIVER_PLUGIN_META_KEY]?.title}
-            />
-          )}
-          <Text key={index} variant="bodySmall" color="secondary">
-            {receiver[RECEIVER_META_KEY].name ?? receiver[RECEIVER_PLUGIN_META_KEY]?.title ?? receiver.type}
-          </Text>
-        </Stack>
-      ))}
     </Stack>
   );
 };
