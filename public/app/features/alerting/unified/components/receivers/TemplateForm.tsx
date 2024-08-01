@@ -24,17 +24,18 @@ import {
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { AlertManagerCortexConfig, TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
 
 import { AppChromeUpdate } from '../../../../../core/components/AppChrome/AppChromeUpdate';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { updateAlertManagerConfigAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { ensureDefine } from '../../utils/templates';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHeader';
+import {
+  useCreateNotificationTemplate,
+  useUpdateNotificationTemplate,
+} from '../contact-points/useNotificationTemplates';
 
 import { PayloadEditor } from './PayloadEditor';
 import { TemplateDataDocs } from './TemplateDataDocs';
@@ -82,13 +83,15 @@ export const isDuplicating = (location: Location) => location.pathname.endsWith(
  */
 export const TemplateForm = ({ existing, alertManagerSourceName, config, provenance }: Props) => {
   const styles = useStyles2(getStyles);
-  const dispatch = useDispatch();
+
+  const createNewTemplate = useCreateNotificationTemplate(alertManagerSourceName);
+  const updateTemplate = useUpdateNotificationTemplate(alertManagerSourceName);
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
   const formRef = useRef<HTMLFormElement>(null);
   const isGrafanaAlertManager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
 
-  const { loading, error } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
+  const { error } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
 
   const [cheatsheetOpened, toggleCheatsheetOpened] = useToggle(false);
 
@@ -114,42 +117,49 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
   const submit = (values: TemplateFormValues) => {
     // wrap content in "define" if it's not already wrapped, in case user did not do it/
     // it's not obvious that this is needed for template to work
-    const content = ensureDefine(values.name, values.content);
+    // const content = ensureDefine(values.name, values.content);
 
-    // add new template to template map
-    const template_files = {
-      ...config.template_files,
-      [values.name]: content,
-    };
+    // // add new template to template map
+    // const template_files = {
+    //   ...config.template_files,
+    //   [values.name]: content,
+    // };
 
-    // delete existing one (if name changed, otherwise it was overwritten in previous step)
-    if (existing && existing.name !== values.name) {
-      delete template_files[existing.name];
+    if (!existing) {
+      return createNewTemplate(values);
     }
 
-    // make sure name for the template is configured on the alertmanager config object
-    const templates = [
-      ...(config.alertmanager_config.templates ?? []).filter((name) => name !== existing?.name),
-      values.name,
-    ];
+    return updateTemplate(existing.name, values);
 
-    const newConfig: AlertManagerCortexConfig = {
-      template_files,
-      alertmanager_config: {
-        ...config.alertmanager_config,
-        templates,
-      },
-    };
-    dispatch(
-      updateAlertManagerConfigAction({
-        alertManagerSourceName,
-        newConfig,
-        oldConfig: config,
-        successMessage: 'Template saved.',
-        redirectPath: '/alerting/notifications',
-        redirectSearch: `tab=${ContactPointsActiveTabs.NotificationTemplates}`,
-      })
-    );
+    // delete existing one (if name changed, otherwise it was overwritten in previous step)
+    // if (existing && existing.name !== values.name) {
+    //   delete template_files[existing.name];
+    // }
+
+    // // make sure name for the template is configured on the alertmanager config object
+    // const templates = [
+    //   ...(config.alertmanager_config.templates ?? []).filter((name) => name !== existing?.name),
+    //   values.name,
+    // ];
+
+    // const newConfig: AlertManagerCortexConfig = {
+    //   template_files,
+    //   alertmanager_config: {
+    //     ...config.alertmanager_config,
+    //     templates,
+    //   },
+    // };
+
+    // return dispatch(
+    //   updateAlertManagerConfigAction({
+    //     alertManagerSourceName,
+    //     newConfig,
+    //     oldConfig: config,
+    //     successMessage: 'Template saved.',
+    //     redirectPath: '/alerting/notifications',
+    //     redirectSearch: `tab=${ContactPointsActiveTabs.NotificationTemplates}`,
+    //   })
+    // ).unwrap();
   };
 
   const formApi = useForm<TemplateFormValues>({
@@ -159,7 +169,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
   const {
     handleSubmit,
     register,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     getValues,
     setValue,
     watch,
@@ -173,11 +183,11 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
 
   const actionButtons = (
     <Stack>
-      <Button onClick={() => formRef.current?.requestSubmit()} variant="primary" size="sm" disabled={loading}>
+      <Button onClick={() => formRef.current?.requestSubmit()} variant="primary" size="sm" disabled={isSubmitting}>
         Save
       </Button>
       <LinkButton
-        disabled={loading}
+        disabled={isSubmitting}
         href={makeAMLink('alerting/notifications', alertManagerSourceName, {
           tab: ContactPointsActiveTabs.NotificationTemplates,
         })}
