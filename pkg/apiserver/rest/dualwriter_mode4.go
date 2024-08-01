@@ -13,9 +13,9 @@ import (
 )
 
 type DualWriterMode4 struct {
-	Legacy       LegacyStorage
-	Storage      Storage
-	rest.Watcher // watch is only available in mode 3 and 4
+	Legacy   LegacyStorage
+	Storage  Storage
+	watchImp rest.Watcher // watch is only available in mode 3 and 4
 	*dualWriterMetrics
 	kind string
 	Log  klog.Logger
@@ -126,8 +126,8 @@ func (d *DualWriterMode4) List(ctx context.Context, options *metainternalversion
 
 func (d *DualWriterMode4) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
 	var method = "watch"
-	d.Log.WithValues("kind", d.kind, "method", method, "mode", mode4Str).Info("starting to watch")
-	return d.Watch(ctx, options)
+	d.Log.WithValues("method", method, "mode", mode4Str).Info("starting to watch")
+	return d.watchImp.Watch(ctx, options)
 }
 
 func (d *DualWriterMode4) Destroy() {
