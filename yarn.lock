@@ -17743,7 +17743,7 @@ __metadata:
     fork-ts-checker-webpack-plugin: "npm:9.0.2"
     glob: "npm:10.4.1"
     history: "npm:4.10.1"
-    html-loader: "npm:5.0.0"
+    html-loader: "npm:5.1.0"
     html-webpack-plugin: "npm:5.6.0"
     http-server: "npm:14.1.1"
     i18next: "npm:^23.0.0"
@@ -18241,15 +18241,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html-loader@npm:5.0.0":
-  version: 5.0.0
-  resolution: "html-loader@npm:5.0.0"
+"html-loader@npm:5.1.0":
+  version: 5.1.0
+  resolution: "html-loader@npm:5.1.0"
   dependencies:
     html-minifier-terser: "npm:^7.2.0"
     parse5: "npm:^7.1.2"
   peerDependencies:
     webpack: ^5.0.0
-  checksum: 10/27db0ac562ba9ac3736f095435e08cc7844ed32029662ebabe7045cf8ba473978a8df6198be0166c0abf456cd8914830083c3f6847c828f51dc6fc13bbd85699
+  checksum: 10/0be79d37e6d995ab5e60fd808291e75890626decbd6a2d73e634f4308928ebfcc604e1a179d643543f40c99f7cccc15b08a1f0572554e6eba38a6777922968cb
   languageName: node
   linkType: hard
 

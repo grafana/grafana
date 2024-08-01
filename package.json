@@ -184,7 +184,7 @@
     "expose-loader": "5.0.0",
     "fork-ts-checker-webpack-plugin": "9.0.2",
     "glob": "10.4.1",
-    "html-loader": "5.0.0",
+    "html-loader": "5.1.0",
     "html-webpack-plugin": "5.6.0",
     "http-server": "14.1.1",
     "i18next-parser": "8.13.0",
