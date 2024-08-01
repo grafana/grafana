@@ -69,7 +69,6 @@ func TestHTTPServer_readEncryptedCertificates(t *testing.T) {
 		require.NotNil(t, err)
 		require.Equal(t, err.Error(), "error parsing PKCS8 Private key: pkcs8: incorrect password")
 	})
-
 }
 
 // returns Cfg and cleanup function for the created files
@@ -78,10 +77,12 @@ func getHttpServerCfg(t *testing.T) (*setting.Cfg, func()) {
 	cert, err := os.CreateTemp("", "certWithPass*.crt")
 	require.NoError(t, err)
 	_, err = cert.Write(certWithPass)
+	require.NoError(t, err)
 
 	privateKey, err := os.CreateTemp("", "privateKey*.key")
 	require.NoError(t, err)
 	_, err = privateKey.Write(privateKeyWithPass)
+	require.NoError(t, err)
 
 	cfg := setting.NewCfg()
 	cfg.CertPassword = password
