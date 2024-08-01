@@ -1,4 +1,6 @@
-import { locationService } from './LocationService';
+import { renderHook } from '@testing-library/react-hooks';
+
+import { locationService, HistoryWrapper, useLocationService, LocationServiceProvider } from './LocationService';
 
 describe('LocationService', () => {
   describe('getSearchObject', () => {
@@ -49,6 +51,17 @@ describe('LocationService', () => {
       expect(locationService.getLocation().state).toEqual({
         some: 'stateToPersist',
       });
+    });
+  });
+
+  describe('hook access', () => {
+    it('can set and access service from a context', () => {
+      const locationServiceLocal = new HistoryWrapper();
+      const wrapper: React.FunctionComponent<{ children: React.ReactNode }> = ({ children }) => (
+        <LocationServiceProvider service={locationServiceLocal}>{children}</LocationServiceProvider>
+      );
+      const hookResult = renderHook(() => useLocationService(), { wrapper });
+      expect(hookResult.result.current).toBe(locationServiceLocal);
     });
   });
 });
