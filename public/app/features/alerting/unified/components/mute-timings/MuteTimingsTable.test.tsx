@@ -8,7 +8,7 @@ import {
   setMuteTimingsListError,
 } from 'app/features/alerting/unified/mocks/server/configure';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
-import { TIME_INTERVAL_UID_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/timeIntervals.k8s';
+import { TIME_INTERVAL_UID_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
 import { AccessControlAction } from 'app/types';
 
 import { grantUserPermissions } from '../../mocks';
