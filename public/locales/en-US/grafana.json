@@ -2067,10 +2067,16 @@
   },
   "share-panel": {
     "drawer": {
+      "new-library-panel-title": "New library panel",
       "share-link-title": "Link settings"
     },
     "menu": {
+      "new-library-panel-title": "New library panel",
       "share-link-title": "Share link"
+    },
+    "new-library-panel": {
+      "cancel-button": "Cancel",
+      "create-button": "Create library panel"
     }
   },
   "share-playlist": {

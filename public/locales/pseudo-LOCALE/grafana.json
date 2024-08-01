@@ -2067,10 +2067,16 @@
   },
   "share-panel": {
     "drawer": {
+      "new-library-panel-title": "Ńęŵ ľįþřäřy päŉęľ",
       "share-link-title": "Ŀįŉĸ şęŧŧįŉģş"
     },
     "menu": {
+      "new-library-panel-title": "Ńęŵ ľįþřäřy päŉęľ",
       "share-link-title": "Ŝĥäřę ľįŉĸ"
+    },
+    "new-library-panel": {
+      "cancel-button": "Cäŉčęľ",
+      "create-button": "Cřęäŧę ľįþřäřy päŉęľ"
     }
   },
   "share-playlist": {
