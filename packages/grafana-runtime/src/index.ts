@@ -54,4 +54,4 @@ export { setReturnToPreviousHook, useReturnToPrevious } from './utils/returnToPr
 export { setChromeHeaderHeightHook, useChromeHeaderHeight } from './utils/chromeHeaderHeight';
 export { type EmbeddedDashboardProps, EmbeddedDashboard, setEmbeddedDashboard } from './components/EmbeddedDashboard';
 export { hasPermission, hasPermissionInMetadata, hasAllPermissions, hasAnyPermission } from './utils/rbac';
-export { ChrisSpecialFunction } from './services/i18n';
+export * from './services/i18n';
