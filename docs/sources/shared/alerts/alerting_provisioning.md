@@ -10,12 +10,6 @@ The Alerting provisioning API can be used to create, modify, and delete resource
 
 To manage resources related to [data source-managed alerts]({{< relref "/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule" >}}), including recording rules, use the [Mimir tool](https://grafana.com/docs/mimir/latest/manage/tools/mimirtool/) and [Cortex tool](https://github.com/grafana/cortex-tools#cortextool).
 
-## Information
-
-### Version
-
-1.1.0
-
 ## All endpoints
 
 ### Alert rules
