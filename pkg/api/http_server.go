@@ -850,6 +850,7 @@ func handleEncryptedCertificates(cfg *setting.Cfg) (*tls.Certificate, error) {
 	keyPemBlock, _ := pem.Decode(keyData)
 	var decodedKeyBlock []byte
 	if strings.HasSuffix(keyPemBlock.Type, "PRIVATE KEY") {
+		// nolint:staticcheck
 		if x509.IsEncryptedPEMBlock(keyPemBlock) || strings.Contains(keyPemBlock.Type, "ENCRYPTED PRIVATE KEY") {
 			if certKeyFilePassword == "" {
 				return nil, fmt.Errorf("TLSClientKey is encrypted and no password was provided to decrypt private key")
@@ -858,8 +859,10 @@ func handleEncryptedCertificates(cfg *setting.Cfg) (*tls.Certificate, error) {
 			var keyBytes []byte
 			var err error
 			// Process the X.509-encrypted or PKCS-encrypted PEM block.
+			// nolint:staticcheck
 			if x509.IsEncryptedPEMBlock(keyPemBlock) {
 				// Only covers encrypted PEM data with a DEK-Info header.
+				// nolint:staticcheck
 				keyBytes, err = x509.DecryptPEMBlock(keyPemBlock, []byte(certKeyFilePassword))
 				if err != nil {
 					return nil, fmt.Errorf("error decryting x509 PemBlock: %w", err)
