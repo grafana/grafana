@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -532,7 +531,7 @@ func withQueryForHealth(health string) models.AlertRuleMutator {
 func setupWriter(t *testing.T, target *writer.TestRemoteWriteTarget, reg prometheus.Registerer) *writer.PrometheusWriter {
 	provider := testClientProvider{}
 	m := metrics.NewNGAlert(reg)
-	wr, err := writer.NewPrometheusWriter(target.ClientSettings(), provider, clock.NewMock(), tracing.InitializeTracerForTest(), log.NewNopLogger(), m.GetRemoteWriterMetrics())
+	wr, err := writer.NewPrometheusWriter(target.ClientSettings(), provider, clock.NewMock(), log.NewNopLogger(), m.GetRemoteWriterMetrics())
 	require.NoError(t, err)
 	return wr
 }
