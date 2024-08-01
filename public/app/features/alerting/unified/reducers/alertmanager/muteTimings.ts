@@ -1,8 +1,10 @@
-import { createAction, createReducer } from '@reduxjs/toolkit';
+import { createAction, createReducer, isAnyOf } from '@reduxjs/toolkit';
 import { remove } from 'lodash';
 
+import { filenameAlreadyExists } from 'app/features/storage/storage';
 import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
+import { mergeTimeIntervals } from '../../components/mute-timings/util';
 import { renameMuteTimings } from '../../utils/alertmanager';
 
 export const addMuteTimingAction = createAction<{ interval: MuteTimeInterval }>('muteTiming/add');
@@ -62,6 +64,16 @@ export const muteTimingsReducer = createReducer(initialState, (builder) => {
 
       remove(draft.alertmanager_config.time_intervals ?? [], (interval) => interval.name === name);
       remove(draft.alertmanager_config.mute_time_intervals ?? [], (interval) => interval.name === name);
+    })
+    // when either updating or creating a new time interval, check if we don't already have one with that name
+    .addMatcher(isAnyOf(addMuteTimingAction, updateMuteTimingAction), (draft, { payload }) => {
+      const newName = payload.interval.name;
+      const muteTimings = mergeTimeIntervals(draft.alertmanager_config);
+
+      const intervalAlreadyExists = Boolean(muteTimings.find((interval) => interval.name === newName));
+      if (intervalAlreadyExists) {
+        throw new Error(`Mute timing already exists with name "${newName}"`);
+      }
     })
     .addDefaultCase((_state, action) => {
       throw new Error(`Unknown action for mute timing reducer: ${action.type}`);
