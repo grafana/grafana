@@ -1,5 +1,6 @@
 {
   "_comment": "",
+  "{unit}": "",
   "access-control": {
     "add-permission": {
       "role-label": "Rolle",
@@ -55,6 +56,140 @@
     },
     "pause": ""
   },
+  "alerting": {
+    "central-alert-history": {
+      "details": {
+        "error": "",
+        "header": {
+          "alert-rule": "",
+          "instance": "",
+          "state": "",
+          "timestamp": ""
+        },
+        "loading": "",
+        "no-recognized-state": "",
+        "no-values": "",
+        "not-found": "",
+        "number-transitions": "",
+        "state": {
+          "alerting": "",
+          "error": "",
+          "no-data": "",
+          "normal": "",
+          "pending": ""
+        },
+        "state-transitions": "",
+        "unknown-event-state": "",
+        "unknown-rule": "",
+        "value-in-transition": ""
+      },
+      "error": "",
+      "filter": {
+        "clear": "",
+        "info": {
+          "label1": "",
+          "label2": "",
+          "label3": "",
+          "label4": ""
+        }
+      },
+      "filterBy": "",
+      "too-many-events": {
+        "text": "",
+        "title": ""
+      }
+    },
+    "common": {
+      "cancel": "",
+      "delete": "",
+      "edit": "",
+      "export": "",
+      "export-all": "",
+      "view": ""
+    },
+    "contact-points": {
+      "delivery-duration": "",
+      "last-delivery-attempt": "",
+      "last-delivery-failed": "",
+      "no-delivery-attempts": "",
+      "only-firing": "",
+      "telegram": {
+        "parse-mode-warning-body": "",
+        "parse-mode-warning-title": ""
+      },
+      "used-by_one": "",
+      "used-by_other": ""
+    },
+    "grafana-rules": {
+      "export-rules": "",
+      "loading": "",
+      "new-recording-rule": "",
+      "title": ""
+    },
+    "mute_timings": {
+      "error-loading": {
+        "description": "",
+        "title": ""
+      }
+    },
+    "mute-timings": {
+      "save": "",
+      "saving": ""
+    },
+    "policies": {
+      "metadata": {
+        "timingOptions": {
+          "groupInterval": {
+            "description": "",
+            "label": ""
+          },
+          "groupWait": {
+            "description": "",
+            "label": ""
+          },
+          "repeatInterval": {
+            "description": "",
+            "label": ""
+          }
+        }
+      }
+    },
+    "provisioning": {
+      "badge-tooltip-provenance": "",
+      "badge-tooltip-standard": ""
+    },
+    "rule-groups": {
+      "delete": {
+        "success": ""
+      },
+      "move": {
+        "success": ""
+      },
+      "rename": {
+        "success": ""
+      },
+      "update": {
+        "success": ""
+      }
+    },
+    "rule-state": {
+      "creating": "",
+      "deleting": "",
+      "paused": "",
+      "recording-rule": ""
+    },
+    "rules": {
+      "delete-rule": {
+        "success": ""
+      },
+      "pause-rule": {
+        "success": ""
+      },
+      "resume-rule": {
+        "success": ""
+      }
+    }
+  },
   "annotations": {
     "empty-state": {
       "button-title": "",
@@ -75,6 +210,7 @@
     "action": {
       "cancel-button": "Abbrechen",
       "cannot-move-folders": "",
+      "confirmation-text": "",
       "delete-button": "Löschen",
       "delete-modal-invalid-text": "Ein oder mehrere Ordner enthalten Bibliotheksfenster oder Alarmierungsregeln. Löschen Sie diese zuerst, um fortzufahren.",
       "delete-modal-invalid-title": "Ordner kann nicht gelöscht werden",
@@ -132,6 +268,9 @@
       "search-placeholder": "Ordner suchen",
       "unknown-error": "Unbekannter Fehler"
     },
+    "hard-delete": {
+      "success": ""
+    },
     "manage-folder-nav": {
       "alert-rules": "Warnregeln",
       "dashboards": "Dashboards",
@@ -145,21 +284,19 @@
     "no-results": {
       "clear": "Suche und Filter löschen",
       "text": ""
-    }
-  },
-  "central-alert-history": {
-    "error": "",
-    "filter": {
-      "button": {
-        "clear": ""
-      },
-      "label": "",
-      "placeholder": ""
+    },
+    "soft-delete": {
+      "success": ""
     }
   },
   "clipboard-button": {
     "inline-toast": {
       "success": "Kopiert"
+    }
+  },
+  "combobox": {
+    "clear": {
+      "title": ""
     }
   },
   "command-palette": {
@@ -192,7 +329,9 @@
   "connections": {
     "connect-data": {
       "category-header-label": "Datenquellen",
-      "empty-message": ""
+      "empty-message": "",
+      "request-data-source": "",
+      "roadmap": ""
     },
     "search": {
       "placeholder": "Alle durchsuchen"
@@ -427,6 +566,12 @@
       "title": "Anmerkungen"
     },
     "dashboard-delete-button": "",
+    "dashboard-delete-modal": {
+      "confirmation-text": "",
+      "delete-button": "",
+      "text": "",
+      "title": ""
+    },
     "general": {
       "auto-refresh-description": "",
       "auto-refresh-label": "Automatisch aktualisieren",
@@ -437,6 +582,8 @@
       "panel-options-graph-tooltip-description": "Steuert das Tooltip- und Hover-Highlight-Verhalten in verschiedenen Bereichen. Laden Sie das Dashboard neu, damit die Änderungen wirksam werden",
       "panel-options-graph-tooltip-label": "Graph-Tooltip",
       "panel-options-label": "Fenster-Optionen",
+      "panels-preload-description": "",
+      "panels-preload-label": "",
       "tags-label": "Tags",
       "title": "Allgemein",
       "title-label": "Titel"
@@ -451,6 +598,14 @@
     },
     "permissions": {
       "title": "Berechtigungen"
+    },
+    "provisioned-delete-modal": {
+      "confirm-button": "",
+      "text-1": "",
+      "text-2": "",
+      "text-3": "",
+      "text-link": "",
+      "title": ""
     },
     "settings": {
       "title": "Einstellungen"
@@ -514,6 +669,7 @@
       "message": "Keine Datenquellen gefunden"
     }
   },
+  "Description": "",
   "explore": {
     "add-to-dashboard": "Zum Dashboard hinzufügen",
     "add-to-library-modal": {
@@ -533,10 +689,17 @@
       "stop-scan": ""
     },
     "query-library": {
+      "cancel": "",
+      "default-description": "",
       "delete-query": "",
       "delete-query-text": "",
       "delete-query-title": "",
-      "query-deleted": ""
+      "private": "",
+      "public": "",
+      "query-deleted": "",
+      "query-template-added": "",
+      "query-template-error": "",
+      "save": ""
     },
     "rich-history": {
       "close-tooltip": "Abfrageverlauf schließen",
@@ -567,7 +730,6 @@
       "edit-comment-tooltip": "Kommentar bearbeiten",
       "optional-description": "Eine optionale Beschreibung dessen, was die Abfrage tut.",
       "query-comment-label": "Abfrage-Kommentar",
-      "query-template-added": "",
       "query-text-label": "Abfragetext",
       "save-comment": "Kommentar speichern",
       "star-query-tooltip": "Abfrage anwählen",
@@ -677,6 +839,24 @@
       "split-widen": "Bereich verbreitern"
     }
   },
+  "explore-metrics": {
+    "viewBy": ""
+  },
+  "export": {
+    "json": {
+      "cancel-button": "",
+      "copy-button": "",
+      "download-button": "",
+      "download-successful_toast_message": "",
+      "export-externally-label": "",
+      "info-text": "",
+      "title": ""
+    },
+    "menu": {
+      "export-as-json-label": "",
+      "export-as-json-tooltip": ""
+    }
+  },
   "folder-picker": {
     "loading": "Ordner werden geladen …"
   },
@@ -760,6 +940,7 @@
       "refresh": "Aktualisieren"
     }
   },
+  "Labels": "",
   "library-panel": {
     "add-modal": {
       "cancel": "Abbrechen",
@@ -797,6 +978,22 @@
       "success": "Bibliotheks-Panel wurde gespeichert"
     }
   },
+  "link": {
+    "share": {
+      "config-alert-description": "",
+      "config-alert-title": "",
+      "config-description": "",
+      "copy-link-button": "",
+      "copy-to-clipboard": "",
+      "short-url-label": "",
+      "time-range-description": "",
+      "time-range-label": ""
+    },
+    "share-panel": {
+      "config-description": "",
+      "render-image": ""
+    }
+  },
   "login": {
     "error": {
       "blocked": "Sie haben die Anzahl der Anmeldeversuche für diesen Benutzer überschritten. Bitte versuchen Sie es später erneut.",
@@ -824,6 +1021,16 @@
     }
   },
   "migrate-to-cloud": {
+    "build-snapshot": {
+      "description": "",
+      "title": "",
+      "when-complete": ""
+    },
+    "building-snapshot": {
+      "description": "",
+      "description-eta": "",
+      "title": ""
+    },
     "can-i-move": {
       "body": "Sobald Sie diese Installation mit einem Cloud Stack verbinden, können Sie Datenquellen und Dashboards hochladen.",
       "link-title": "Erfahren Sie, wie Sie andere Einstellungen migrieren",
@@ -850,6 +1057,12 @@
       "button": "Diese Instanz in die Cloud migrieren",
       "header": "Lassen Sie uns Ihren Grafana Stack verwalten"
     },
+    "delete-migration-token-confirm": {
+      "body": "",
+      "confirm-button": "",
+      "error-title": "",
+      "title": ""
+    },
     "disconnect-modal": {
       "body": "Dadurch wird das Migrationstoken von dieser Installation entfernt. Wenn Sie in Zukunft weitere Ressourcen hochladen möchten, müssen Sie ein neues Migrationstoken eingeben.",
       "cancel": "Abbrechen",
@@ -867,7 +1080,7 @@
       "step-3": "Sie werden nach einem Migrationstoken gefragt. Generieren Sie eines von diesem Bildschirm.",
       "step-4": "Wählen Sie in Ihrer selbstverwalteten Instanz „Alles hochladen“ aus, um Datenquellen und Dashboards auf diesen Cloud Stack hochzuladen.",
       "step-5": "Wenn einige Ihrer Datenquellen nicht über das öffentliche Internet funktionieren, müssen Sie Private Data Source Connect in Ihrer selbstverwalteten Umgebung installieren.",
-      "title": "So legen Sie los"
+      "title": ""
     },
     "is-it-secure": {
       "body": "Grafana Labs verpflichtet sich, die höchsten Standards in Bezug auf Datenschutz und Sicherheit zu wahren. Durch die Einführung branchenüblicher Sicherheitstechnologien und -verfahren schützen wir die Daten unserer Kunden vor unbefugtem Zugriff, Nutzung oder Offenlegung.",
@@ -875,12 +1088,12 @@
       "title": "Ist es sicher?"
     },
     "migrate-to-this-stack": {
-      "body": "Einige Konfigurationen von Ihrer selbst verwalteten Grafana-Instanz können automatisch in diesen Cloud Stack kopiert werden.",
+      "body": "",
       "link-title": "Gesamte Migrationsanleitung anzeigen",
-      "title": "Konfiguration zu diesem Stack migrieren"
+      "title": ""
     },
     "migration-token": {
-      "body": "Ihre selbst verwaltete Grafana-Instanz benötigt ein spezielles Authentifizierungs-Token, um sich sicher mit diesem Cloud Stack zu verbinden.",
+      "delete-button": "",
       "delete-modal-body": "Wenn Sie dieses Token bereits mit einer selbst verwalteten Installation verwendet haben, kann diese Installation keine Inhalte mehr hochladen.",
       "delete-modal-cancel": "Abbrechen",
       "delete-modal-confirm": "Löschen",
@@ -896,8 +1109,20 @@
       "modal-field-description": "Kopieren Sie den Token jetzt, denn Sie werden ihn später nicht mehr sehen können. Wenn Sie einen Token verlieren, müssen Sie einen neuen Token erstellen.",
       "modal-field-label": "Token",
       "modal-title": "Migrationstoken erstellt",
-      "status": "",
-      "title": "Migrationstoken"
+      "status": ""
+    },
+    "onprem": {
+      "cancel-snapshot-error-title": "",
+      "create-snapshot-error-title": "",
+      "disconnect-error-title": "",
+      "error-see-server-logs": "",
+      "get-session-error-title": "",
+      "get-snapshot-error-title": "",
+      "snapshot-error-status-body": "",
+      "snapshot-error-status-title": "",
+      "some-resources-errored-body": "",
+      "some-resources-errored-title": "",
+      "upload-snapshot-error-title": ""
     },
     "pdc": {
       "body": "Wenn Sie Ihre Datenquellen dem Internet aussetzen, kann dies zu Sicherheitsrisiken führen. Private Data Source Connect (PDC) ermöglicht Grafana Cloud den Zugriff auf Ihre bestehenden Datenquellen über einen sicheren Netzwerktunnel.",
@@ -908,6 +1133,18 @@
       "body": "Grafana Cloud bietet einen großzügigen kostenlosen Tarif und eine 14-tägige Testphase mit unbegrenzter Nutzung. Nach Ablauf der Testphase wird Ihnen die Nutzung über die Grenzen des kostenlosen Tarifs hinaus in Rechnung gestellt.",
       "link-title": "Grafana Cloud Preisgestaltung",
       "title": "Was kostet es?"
+    },
+    "public-preview": {
+      "button-text": "",
+      "message": "",
+      "title": ""
+    },
+    "resource-error": {
+      "dismiss-button": "",
+      "resource-summary": "",
+      "specific-error": "",
+      "title": "",
+      "unknown-error": ""
     },
     "resource-status": {
       "error-details-button": "Details",
@@ -928,17 +1165,24 @@
       "unknown": "Unbekannt"
     },
     "summary": {
+      "cancel-snapshot": "",
       "disconnect": "Verbindung trennen",
-      "disconnect-error-description": "",
-      "disconnect-error-title": "Es gab einen Fehler beim Trennen der Verbindung",
-      "run-migration-error-description": "",
-      "run-migration-error-title": "",
+      "errored-resource-count": "",
+      "page-loading": "",
+      "rebuild-snapshot": "",
+      "snapshot-date": "",
+      "snapshot-not-created": "",
       "start-migration": "",
-      "target-stack-title": ""
+      "successful-resource-count": "",
+      "target-stack-title": "",
+      "total-resource-count": "",
+      "upload-migration": ""
     },
     "token-status": {
       "active": "Token erstellt und aktiv",
-      "no-active": "Kein aktiver Token"
+      "no-active": "Kein aktiver Token",
+      "unknown": "",
+      "unknown-error": ""
     },
     "what-is-cloud": {
       "body": "Grafana Cloud ist eine vollständig verwaltete, in der Cloud gehostete Observability-Plattform, die ideal für Cloud-native Umgebungen ist. Sie enthält alles, was Sie an Grafana lieben, ohne den Aufwand für Wartung, Upgrades und Betreuung einer Installation.",
@@ -978,8 +1222,8 @@
       "title": "Benachrichtigungskanäle"
     },
     "alerting-groups": {
-      "subtitle": "Zeige gruppierte Warnungen vom Alertmanager an",
-      "title": "Gruppen"
+      "subtitle": "",
+      "title": ""
     },
     "alerting-home": {
       "title": "Home"
@@ -1020,6 +1264,12 @@
     },
     "authentication": {
       "title": "Authentifizierung"
+    },
+    "bookmarks": {
+      "title": ""
+    },
+    "bookmarks-empty": {
+      "title": ""
     },
     "collector": {
       "title": "Sammler"
@@ -1112,7 +1362,7 @@
       "title": "Home"
     },
     "incidents": {
-      "title": "Störungen"
+      "title": ""
     },
     "infrastructure": {
       "subtitle": "Verstehen Sie den Zustand Ihrer Infrastruktur",
@@ -1265,6 +1515,10 @@
     }
   },
   "navigation": {
+    "item": {
+      "add-bookmark": "",
+      "remove-bookmark": ""
+    },
     "kiosk": {
       "tv-alert": "Drücke ESC, um den Kiosk-Modus zu verlassen"
     },
@@ -1287,6 +1541,7 @@
     },
     "title": "Das Neueste aus dem Blog"
   },
+  "No description available": "",
   "notifications": {
     "empty-state": {
       "description": "",
@@ -1410,7 +1665,9 @@
       "settings-title": "Einstellungen"
     },
     "configuration": {
+      "display-annotations-description": "",
       "display-annotations-label": "",
+      "enable-time-range-description": "",
       "enable-time-range-label": "",
       "settings-label": "",
       "success-pause": "",
@@ -1500,7 +1757,6 @@
       "success-delete-old": ""
     },
     "share-configuration": {
-      "access-label": "",
       "share-type-label": ""
     },
     "share-externally": {
@@ -1577,6 +1833,7 @@
       "expand-row": "Suchzeile erweitern",
       "hide-response": "",
       "remove-query": "Abfrage entfernen",
+      "save-to-query-library": "",
       "show-response": "",
       "toggle-edit-mode": "Textbearbeitungsmodus umschalten"
     },
@@ -1586,6 +1843,11 @@
     "buttons": {
       "delete": "",
       "restore": ""
+    },
+    "page": {
+      "no-deleted-dashboards": "",
+      "no-deleted-dashboards-text": "",
+      "no-search-result": ""
     },
     "permanently-delete-modal": {
       "confirm-text": "",
@@ -1601,6 +1863,11 @@
       "title": "",
       "text_one": "",
       "text_other": ""
+    }
+  },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": ""
     }
   },
   "refresh-picker": {
@@ -1643,6 +1910,10 @@
     },
     "suggestedDashboards": {
       "loading": "",
+      "noResultsForFilter": "",
+      "noResultsForFilterClear": "",
+      "noResultsForScopes": "",
+      "noResultsNoScopes": "",
       "search": "",
       "toggle": {
         "collapse": "",
@@ -1652,7 +1923,11 @@
     "tree": {
       "collapse": "",
       "expand": "",
-      "headline": "",
+      "headline": {
+        "noResults": "",
+        "recommended": "",
+        "results": ""
+      },
       "search": ""
     }
   },
@@ -1695,9 +1970,21 @@
       "title": ""
     }
   },
+  "share-dashboard": {
+    "menu": {
+      "export-json-title": "",
+      "share-externally-title": "",
+      "share-internally-description": "",
+      "share-internally-title": "",
+      "share-snapshot-title": ""
+    },
+    "share-button": "",
+    "share-button-tooltip": ""
+  },
   "share-drawer": {
     "confirm-action": {
-      "back-arrow-button": ""
+      "back-arrow-button": "",
+      "cancel-button": ""
     }
   },
   "share-modal": {
@@ -1778,6 +2065,14 @@
       "copy-button": "In Zwischenablage kopieren"
     }
   },
+  "share-panel": {
+    "drawer": {
+      "share-link-title": ""
+    },
+    "menu": {
+      "share-link-title": ""
+    }
+  },
   "share-playlist": {
     "checkbox-description": "Fensterhöhen werden an die Bildschirmgröße angepasst",
     "checkbox-label": "Autofit",
@@ -1845,6 +2140,23 @@
     },
     "external-badge": "Extern",
     "name-column-header": "Name",
+    "share": {
+      "cancel-button": "",
+      "copy-link-button": "",
+      "delete-button": "",
+      "delete-description": "",
+      "delete-title": "",
+      "deleted-alert": "",
+      "expiration-label": "",
+      "info-alert": "",
+      "learn-more-button": "",
+      "local-button": "",
+      "name-label": "",
+      "new-snapshot-button": "",
+      "success-creation": "",
+      "success-delete": "",
+      "view-all-button": ""
+    },
     "url-column-header": "Snapshot url",
     "view-button": "Anzeigen"
   },
@@ -1927,6 +2239,9 @@
       "add-transformation-header": "Daten transformieren beginnen"
     }
   },
+  "Type": "",
+  "Unit": "",
+  "Unknown": "",
   "user-orgs": {
     "current-org-button": "Aktuell",
     "name-column": "Name",
