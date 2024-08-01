@@ -16,14 +16,6 @@ To manage resources related to [data source-managed alerts]({{< relref "/docs/gr
 
 1.1.0
 
-## Content negotiation
-
-### Produces
-
-- application/json
-- text/yaml
-- application/yaml
-
 ## All endpoints
 
 ### Alert rules
