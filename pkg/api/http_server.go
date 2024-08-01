@@ -12,6 +12,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"github.com/youmark/pkcs8"
 	"math/big"
 	"net"
 	"net/http"
@@ -819,11 +820,78 @@ func (hs *HTTPServer) readCertificates() (*tls.Certificate, error) {
 		return nil, fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
 	}
 
-	tlsCert, err := tls.LoadX509KeyPair(hs.Cfg.CertFile, hs.Cfg.KeyFile)
-	if err != nil {
-		return nil, fmt.Errorf("could not load SSL certificate: %w", err)
+	var tlsCert tls.Certificate
+
+	if hs.Cfg.CertPassword != "" {
+		return handleEncryptedCertificates(hs.Cfg)
+	} else {
+		var err error
+		tlsCert, err = tls.LoadX509KeyPair(hs.Cfg.CertFile, hs.Cfg.KeyFile)
+		if err != nil {
+			return nil, fmt.Errorf("could not load SSL certificate: %w", err)
+		}
 	}
 	return &tlsCert, nil
+}
+
+func handleEncryptedCertificates(cfg *setting.Cfg) (*tls.Certificate, error) {
+	certData, err := os.ReadFile(cfg.CertFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read certificate file: %w", err)
+	}
+
+	keyData, err := os.ReadFile(cfg.KeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read private key file: %w", err)
+	}
+	certKeyFilePassword := cfg.CertPassword
+
+	// handle private key
+	keyPemBlock, _ := pem.Decode(keyData)
+	var decodedKeyBlock []byte
+	if strings.HasSuffix(keyPemBlock.Type, "PRIVATE KEY") {
+		if x509.IsEncryptedPEMBlock(keyPemBlock) || strings.Contains(keyPemBlock.Type, "ENCRYPTED PRIVATE KEY") {
+			if certKeyFilePassword == "" {
+				return nil, fmt.Errorf("TLSClientKey is encrypted and no password was provided to decrypt private key")
+			}
+
+			var keyBytes []byte
+			var err error
+			// Process the X.509-encrypted or PKCS-encrypted PEM block.
+			if x509.IsEncryptedPEMBlock(keyPemBlock) {
+				// Only covers encrypted PEM data with a DEK-Info header.
+				keyBytes, err = x509.DecryptPEMBlock(keyPemBlock, []byte(certKeyFilePassword))
+				if err != nil {
+					return nil, fmt.Errorf("error decryting x509 PemBlock: %w", err)
+				}
+			} else if strings.Contains(keyPemBlock.Type, "ENCRYPTED") {
+				// The pkcs8 package only handles the PKCS #5 v2.0 scheme.
+				decrypted, err := pkcs8.ParsePKCS8PrivateKey(keyPemBlock.Bytes, []byte(certKeyFilePassword))
+				if err != nil {
+					return nil, fmt.Errorf("error parsing PKCS8 Private key: %w", err)
+				}
+				keyBytes, err = x509.MarshalPKCS8PrivateKey(decrypted)
+				if err != nil {
+					return nil, fmt.Errorf("error marshaling PKCS8 Private key: %w", err)
+				}
+			}
+			var encoded bytes.Buffer
+			err = pem.Encode(&encoded, &pem.Block{Type: keyPemBlock.Type, Bytes: keyBytes})
+			if err != nil {
+				return nil, fmt.Errorf("error encoding pem file: %w", err)
+			}
+			decodedKeyBlock = encoded.Bytes()
+		} else {
+			decodedKeyBlock = keyPemBlock.Bytes
+		}
+	}
+
+	// create the decrypted cert to return
+	cert, err := tls.X509KeyPair(certData, decodedKeyBlock)
+	if err != nil {
+		return nil, fmt.Errorf("failed tls X509KeyPair parse: %w", err)
+	}
+	return &cert, nil
 }
 
 func (hs *HTTPServer) configureTLS() error {
@@ -869,7 +937,7 @@ func (hs *HTTPServer) GetCertificate(*tls.ClientHelloInfo) (*tls.Certificate, er
 	return tlsCerts, nil
 }
 
-// fsnotify module can be used to detect file changes and based on the event certs can be reloaded
+// WatchAndUpdateCerts fsnotify module can be used to detect file changes and based on the event certs can be reloaded
 // since it adds a direct dependency for the optional feature. So that is the reason periodic watching
 // of cert files is chosen. If fsnotify is added as direct dependency in future, then the implementation
 // can be revisited to align to fsnotify.

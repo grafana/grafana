@@ -92,6 +92,7 @@ type Cfg struct {
 	// HTTP Server Settings
 	CertFile          string
 	KeyFile           string
+	CertPassword      string
 	CertWatchInterval time.Duration
 	HTTPAddr          string
 	HTTPPort          string
@@ -1782,6 +1783,7 @@ func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
 	certFile := server.Key("cert_file").String()
 	keyFile := server.Key("cert_key").String()
 	if useTLS {
+		// TODO LND Review this for GRPC?
 		serverCert, err := tls.LoadX509KeyPair(certFile, keyFile)
 		if err != nil {
 			return fmt.Errorf("%s error loading X509 key pair: %w", errPrefix, err)
@@ -1874,11 +1876,15 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 		cfg.Protocol = HTTPSScheme
 		cfg.CertFile = server.Key("cert_file").String()
 		cfg.KeyFile = server.Key("cert_key").String()
+		cfg.CertPassword = server.Key("cert_pass").String()
 	}
 	if protocolStr == "h2" {
+		// TODO LND Review how this is implemented and if should add cert password
 		cfg.Protocol = HTTP2Scheme
 		cfg.CertFile = server.Key("cert_file").String()
 		cfg.KeyFile = server.Key("cert_key").String()
+		// TODO LND added but not tested
+		cfg.CertPassword = server.Key("cert_pass").String()
 	}
 	if protocolStr == "socket" {
 		cfg.Protocol = SocketScheme
