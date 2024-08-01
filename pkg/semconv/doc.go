@@ -1,5 +1,5 @@
-// Package semconv contains OpenTelemetry semantic conventions for Grafana.
+// Package semconv contains Grafana's OpenTelemetry semantic conventions.
 //
-// The conventions are used to define the structure of the telemetry data that is
-// produced by Grafana.
+// This package contains the standard attributes that are emitted
+// by Grafana's OpenTelemetry instrumentation.
 package semconv // import "github.com/grafana/grafana/pkg/semconv"
