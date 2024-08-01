@@ -1,6 +1,5 @@
 {
   "_comment": "The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.",
-  "{unit}": "{unit}",
   "access-control": {
     "add-permission": {
       "role-label": "Role",
@@ -669,7 +668,6 @@
       "message": "No data sources found"
     }
   },
-  "Description": "Description",
   "explore": {
     "add-to-dashboard": "Add to dashboard",
     "add-to-library-modal": {
@@ -940,7 +938,6 @@
       "refresh": "Refresh"
     }
   },
-  "Labels": "Labels",
   "library-panel": {
     "add-modal": {
       "cancel": "Cancel",
@@ -1541,7 +1538,6 @@
     },
     "title": "Latest from the blog"
   },
-  "No description available": "No description available",
   "notifications": {
     "empty-state": {
       "description": "Notifications you have received will appear here",
@@ -2233,15 +2229,22 @@
       "select-search-input": "Type to search (country, city, abbreviation)"
     }
   },
+  "trails": {
+    "metric-overview": {
+      "description-label": "Description",
+      "labels-label": "Labels",
+      "no-description": "No description available",
+      "type-label": "Type",
+      "unit-label": "Unit",
+      "unknown-type": "Unknown"
+    }
+  },
   "transformations": {
     "empty": {
       "add-transformation-body": "Transformations allow data to be changed in various ways before your visualization is shown.<1></1>This includes joining data together, renaming fields, making calculations, formatting data for display, and more.",
       "add-transformation-header": "Start transforming data"
     }
   },
-  "Type": "Type",
-  "Unit": "Unit",
-  "Unknown": "Unknown",
   "user-orgs": {
     "current-org-button": "Current",
     "name-column": "Name",
