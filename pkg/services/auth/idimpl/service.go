@@ -98,6 +98,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			claims.Rest.AuthenticatedBy = id.GetAuthenticatedBy()
 			claims.Rest.Username = id.GetLogin()
 			claims.Rest.UID = id.GetUID()
+			claims.Rest.DisplayName = id.GetDisplayName()
 		}
 
 		token, err := s.signer.SignIDToken(ctx, claims)

@@ -146,16 +146,18 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 
 	// Make the status pending processing and ensure GMS gets called
 	err = s.store.UpdateSnapshot(context.Background(), cloudmigration.UpdateSnapshotCmd{
-		UID:    uid,
-		Status: cloudmigration.SnapshotStatusPendingProcessing,
+		UID:       uid,
+		SessionID: sess.UID,
+		Status:    cloudmigration.SnapshotStatusPendingProcessing,
 	})
 	assert.NoError(t, err)
 
 	cleanupFunc := func() {
 		gmsClientMock.getStatusCalled = 0
 		err = s.store.UpdateSnapshot(context.Background(), cloudmigration.UpdateSnapshotCmd{
-			UID:    uid,
-			Status: cloudmigration.SnapshotStatusPendingProcessing,
+			UID:       uid,
+			SessionID: sess.UID,
+			Status:    cloudmigration.SnapshotStatusPendingProcessing,
 		})
 		assert.NoError(t, err)
 	}
@@ -264,22 +266,10 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 			},
 		}
 
-		snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: uid,
-			SessionUID:  sess.UID,
-		})
-		assert.NoError(t, err)
-		assert.Equal(t, cloudmigration.SnapshotStatusFinished, snapshot.Status)
-		assert.Equal(t, 1, gmsClientMock.getStatusCalled)
-		assert.Len(t, snapshot.Resources, 1)
-		assert.Equal(t, gmsClientMock.getSnapshotResponse.Results[0], snapshot.Resources[0])
-
 		// ensure it is persisted
 		snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
 			SnapshotUID: uid,
 			SessionUID:  sess.UID,
-			ResultPage:  1,
-			ResultLimit: 100,
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, cloudmigration.SnapshotStatusFinished, snapshot.Status)
@@ -323,8 +313,9 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 		cloudmigration.SnapshotStatusError,
 	} {
 		err = s.store.UpdateSnapshot(context.Background(), cloudmigration.UpdateSnapshotCmd{
-			UID:    uid,
-			Status: status,
+			UID:       uid,
+			SessionID: sess.UID,
+			Status:    status,
 		})
 		assert.NoError(t, err)
 		_, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
@@ -341,8 +332,9 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 		cloudmigration.SnapshotStatusProcessing,
 	} {
 		err = s.store.UpdateSnapshot(context.Background(), cloudmigration.UpdateSnapshotCmd{
-			UID:    uid,
-			Status: status,
+			UID:       uid,
+			SessionID: sess.UID,
+			Status:    status,
 		})
 		assert.NoError(t, err)
 		_, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{

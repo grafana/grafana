@@ -330,7 +330,7 @@ export interface TimeInterval {
 export type MuteTimeInterval = {
   name: string;
   time_intervals: TimeInterval[];
-  provenance?: string;
+  provisioned?: boolean;
 };
 
 export interface AlertManagerDataSourceJsonData extends DataSourceJsonData {
