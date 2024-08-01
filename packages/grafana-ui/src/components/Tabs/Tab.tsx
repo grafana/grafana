@@ -5,7 +5,7 @@ import * as React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { stylesFactory, useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types';
 import { clearButtonStyles } from '../Button';
@@ -58,7 +58,7 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
             href={href}
             // don't think we can avoid the type assertion here :(
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            ref={ref as React.ForwardedRef<HTMLButtonElement>}
+            ref={ref as React.ForwardedRef<HTMLAnchorElement>}
           >
             {content()}
           </a>
