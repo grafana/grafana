@@ -51,12 +51,11 @@ refs:
 Grafana enables you to share dashboards and panels with other users within an organization and in certain situations, publicly on the Web. You can share using:
 
 - A direct link
-- A Snapshot
+- A snapshot
 - An embedded link (for panels only)
 - An export link (for dashboards only)
 - A report
 
-<!-- has any of the information in these next 3 sentences changed? -->
 
 You must have an authorized viewer permission to see an image rendered by a direct link.
 
