@@ -56,7 +56,6 @@ Grafana enables you to share dashboards and panels with other users within an or
 - An export link (for dashboards only)
 - A report
 
-
 You must have an authorized viewer permission to see an image rendered by a direct link.
 
 The same permission is also required to view embedded links unless you have anonymous access permission enabled for your Grafana instance.
@@ -139,7 +138,7 @@ To share your dashboard so that anyone with the link can access it, follow these
 1. Each recipient will receive an email with link to the dashboard that's valid until you revoke access to the dashboard.
 1. Click the **X** at the top-right corner to close the share drawer.
 
-### Update access to an external dashboard link
+#### Update access to an external dashboard link
 
 You can update the access to externally shared dashboard links by following these steps:
 
@@ -174,7 +173,6 @@ To manage your reports, navigate to **Dashboards > Reporting > Reports**.
 
 A dashboard snapshot publicly shares a dashboard while removing sensitive data such as queries and panel links, leaving only visible metrics and series names. Anyone with the link can access the snapshot.
 
-
 You can publish snapshots to your local instance or to [snapshots.raintank.io](http://snapshots.raintank.io). The latter is a free service provided by Grafana Labs that enables you to publish dashboard snapshots to an external Grafana instance. Anyone with the link can view it. You can set an expiration time if you want the snapshot removed after a certain time period.
 
 To share your dashboard with anyone as a snapshot, follow these steps.
@@ -195,7 +193,7 @@ To share your dashboard with anyone as a snapshot, follow these steps.
 
 1. Click the **X** at the top-right corner to close the share drawer.
 
-### Delete a snapshot
+#### Delete a snapshot
 
 To delete existing snapshots, follow these steps:
 
@@ -203,6 +201,24 @@ To delete existing snapshots, follow these steps:
 1. Click the red **x** next to the snapshot that you want to delete.
 
 The snapshot is immediately deleted. You may need to clear your browser cache or use a private or incognito browser to confirm this.
+
+## Export a dashboard
+
+### Export a dashboard as PDF
+
+Export a
+
+1. Click **Dashboards** in the main menu.
+1. Open the dashboard you want to export.
+1. Click the **Export** drop-down in the top-right corner and select **Export as PDF**.
+1. Select either **Landscape** or **Portrait** for the PDF orientation.
+1. Select either **Grid** or **Simple** for the PDF layout.
+1. Set the **Zoom** level, which increases or decreases the numbrer of rows and columns in table visualizations.
+1. Click **Generate PDF**.
+
+   The PDF opens in another tab where you can download it.
+
+1. Click the **X** at the top-right corner to close the share drawer.
 
 ### Export a dashboard as JSON
 
