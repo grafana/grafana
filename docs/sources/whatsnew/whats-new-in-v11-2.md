@@ -28,54 +28,6 @@ For even more detail about all the changes in this release, refer to the [change
 
 ## Dashboards and visualizations
 
-### Scenes-powered Dashboards is generally available
-
-<!-- #grafana-dashboards -->
-
-_Generally available in all editions of Grafana_
-
-For the past few months we've been working on a major update of our **Dashboards** architecture and migrated it to the Scenes library. This migration provides us with more stable, dynamic, and flexible dashboards as well as setting the foundation for what we envision the future of Grafana dashboards will be. Here are two of the improvements that are being introduced as part of this work:
-
-#### Edit mode
-
-It can be difficult to efficiently navigate through the visually cluttered options during the dashboard editing process. With the introduction of the edit mode, we aim to provide an easier way to discover and interact with the dashboard edit experience.
-
-#### Fixed positioning of template variables and time picker
-
-We moved the time picker into the dashboard canvas and now, together with template variables, it will stick to the top as you scroll through your dashboard. This has historically been a very [requested feature](https://github.com/grafana/grafana/issues/11166) that we're very happy to be able to finally roll out!
-
-#### Timezone parameter in Grafana URL
-
-We've added a new URL parameter `tz`. This allows sharing dashboards with a selected time zone, ensuring that the receiver views it in the intended time zone regardless of their local settings.
-
-#### Kiosk mode displays dashboard controls
-
-When playing a playlist or displaying a dashboard in full screen, controls are now shown by default. These controls include the time and refresh picker, variables, annotations, and links.
-
-If you prefer to hide these controls during playlist playback, new configuration options are available when starting a playlist. You can choose which controls to display while the playlist is running.
-
-For configuring controls outside of playlist playback, you can use the following URL parameters:
-
-- `_dash.hideTimePicker`: Hides the time and refresh picker
-- `_dash.hideVariables`: Hides variables and annotations controls
-- `_dash.hideLinks`: Hides dashboard links
-
-#### Known limitations
-
-- The [variable usage check](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/inspect-variable/) is not yet available.
-<!-- Replace this link with Cloud version in WNIC and maybe remove the general docs link -->
-- Editing a panel:
-
-  - The **Library panels** tab is not available anymore. You can replace a library panel from the panel menu.
-  - The **Overrides** tab is missing in panel options (coming in Grafana v11.2.0). Overrides are shown at the bottom of the option list.
-  - The drop-down to collapse the visualization picker is missing (coming in Grafana v11.2.0).
-
-- Share button is not visible when edit mode is enabled (coming in Grafana v11.2.0).
-
-If you want to learn more, in detail, about all the improvements we've made, don't miss our blog post.
-
-{{< youtube id="kcKwBhvrsHc" >}}
-
 ### Data link improvements in canvas visualizations
 
 <!-- Adela Almasan, Nathan Marrs, #grafana-dataviz -->
@@ -84,15 +36,35 @@ _Generally available in all editions of Grafana_
 
 We've updated canvas visualizations so that you can add data links to canvas elements without using an override. The **Selected element** configuration now includes a **Data links** section where you can add data links to elements using the same steps as in other visualizations.
 
-Data links in canvas elements can also be configured to open with a single click. To enable this functionality, toggle the **One-click** switch in the **Selected element** data link options. If there are multiple data links for an element, the first link in the list has the one-click functionality.
+Data links in canvas elements can also be configured to open with a single click. To enable this functionality, select **Link** under the one **One-click** section in the **Selected element** data link options. If there are multiple data links for an element, the first link in the list has the one-click functionality.
 
 As part of this improvement, we've also added the ability to control the order in which data links are displayed by dragging and dropping them. This improvement has been added to all visualizations.
 
-{{< video-embed src="/media/docs/grafana/panels-visualizations/canvas-one-click-data-link.mp4" >}}
+{{< video-embed src="/media/docs/grafana/panels-visualizations/canvas-one-click-datalink-.mp4" >}}
 
 In future releases, we'll add one-click functionality to data links in other Grafana visualizations.
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#data-links)
+
+## Alerting
+
+### Centralized alert history page
+
+<!-- Ryan Kehoe, Sonia Alguilar -->
+
+_Generally available in all editions of Grafana_
+
+View a history of all alert events generated by your Grafana-managed alert rules from one centralized page. This helps you see patterns in your alerts over time, observe trends, make predictions, and even debug alerts that might be firing too often.
+
+An alert event is displayed each time an alert instance changes its state over a period of time. All alert events are displayed regardless of whether silences or mute timings are set, so you’ll see a complete set of your data history even if you’re not necessarily being notified.
+
+For Grafana Enterprise and OSS users:
+
+To try out the new alert history page, enable the alertingCentralAlertHistory feature toggle and [configure Loki annotations](https://grafana.com/docs/grafana/latest/alerting/set-up/configure-alert-state-history/).
+
+{{< figure src="/media/docs/alerting/alert-state-history.png" >}}
+
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/view-state-health/)
 
 ## Explore
 
@@ -109,3 +81,47 @@ Grafana Explore now allows for logs filtering and pinning in content outline.
 **Filtering Logs:** All log levels are now automatically available in the content outline. You can filter by log level, currently supported for Elasticsearch and Loki data sources. To select multiple filters, hold down the command key on Mac or the control key on Windows while clicking.
 
 **Pinning Logs:** The new pinning feature allows users to pin logs to the content outline, making them easily accessible for quick reference during investigations. To pin a log, hover over a log in the logs panel and click on the _Pin to content outline_ icon in the log row menu. Clicking on a pinned log will open the log context modal, showing the log highlighted in context with other logs. From here, you can also open the log in split mode to preserve the time range in the left pane while having the time range specific to that log in the right pane.
+
+## Data sources
+
+### Cloudwatch Metric Insights cross account observability support
+
+<!-- #grafana-aws-datasources -->
+
+_Generally available in all editions of Grafana_
+
+We are excited to announce support for cross-account querying in Metric Insights query builder for AWS Cloudwatch Plugin. This enables building SQL queries to monitor across multiple accounts in the same region in AWS Cloudwatch. \
+This feature introduces an account dropdown for selecting one or all of your source accounts and builds a query that targets them. Furthermore, results can be grouped by account ID by selecting "Account ID" in the Group By dropdown. \
+For more complex queries that are not covered by the options in the builder you can switch to the manual Code editor and edit the query.\
+\
+To set up cross-account querying for AWS Cloudwatch Plugin, see instructions [here](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/query-editor/#cross-account-observability).
+
+## Authentication and authorization
+
+### Map org-specific user roles from your OAuth provider
+
+<!-- #identity-access, @Misi -->
+
+_Generally available in Grafana Open Source and Enterprise_
+
+Assign users to particular organizations with a specific role in Grafana, depending on an attribute value obtained from your identity provider.
+
+This is a longstanding feature request from the community. We collaborated with our community to implement the request and have added this capability in Grafana 11.2.0.
+
+For Generic OAuth and Okta, you can configure the claim (using the `org_attribute_path` setting) that contains the organizations which the user belongs to. Other OAuth providers use the same attribute for organization mapping that is used for group mapping: Entra ID (previously Azure AD), GitLab and Google use the current user’s Groups, and GitHub uses the user’s Teams.
+
+To configure organization mapping for your instance, please check the documentation for the OAuth provider you are using in the [Grafana documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/). You can find an example of how to configure organization mapping on each OAuth provider page under the **Org roles mapping example** section.
+
+### Better SAML integration for Azure AD
+
+_Generally available in all editions of Grafana_
+
+<!-- Lino Urdiales -->
+
+When setting up Grafana with Azure AD using the SAML protocol, the Azure AD Graph API sometimes returns a follow-up Graph API call rather than the information itself. This is the case for users who belong to more than 150 groups when using SAML.
+
+With Grafana 11.2, we offer a mechanism for setting up an application as a Service Account in Azure AD and retrieving information from Graph API.
+
+Please refer to our documentation on how to set up an Azure AD registered application for this setup.
+
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/#configure-a-graph-api-application-in-azure-ad)
