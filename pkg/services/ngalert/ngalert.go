@@ -346,7 +346,7 @@ func (ng *AlertNG) init() error {
 	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService)
 	conditionValidator := eval.NewConditionValidator(ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
 
-	recordingWriter, err := createRecordingWriter(ng.FeatureToggles, ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, clk, ng.tracer, ng.Metrics.GetRemoteWriterMetrics())
+	recordingWriter, err := createRecordingWriter(ng.FeatureToggles, ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, clk, ng.Metrics.GetRemoteWriterMetrics())
 	if err != nil {
 		return fmt.Errorf("failed to initialize recording writer: %w", err)
 	}
@@ -663,11 +663,11 @@ func createRemoteAlertmanager(cfg remote.AlertmanagerConfig, kvstore kvstore.KVS
 	return remote.NewAlertmanager(cfg, notifier.NewFileStore(cfg.OrgID, kvstore), decryptFn, autogenFn, m, tracer)
 }
 
-func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, clock clock.Clock, tracer tracing.Tracer, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {
+func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, clock clock.Clock, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {
 	logger := log.New("ngalert.writer")
 
 	if featureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
-		return writer.NewPrometheusWriter(settings, httpClientProvider, clock, tracer, logger, m)
+		return writer.NewPrometheusWriter(settings, httpClientProvider, clock, logger, m)
 	}
 
 	return writer.NoopWriter{}, nil
