@@ -14,6 +14,7 @@ export enum ReducerID {
   variance = 'variance',
   stdDev = 'stdDev',
   last = 'last',
+  median = 'median',
   first = 'first',
   count = 'count',
   range = 'range',
@@ -276,6 +277,14 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'Average Value',
     standard: true,
     aliasIds: ['avg'],
+    preservesUnits: true,
+  },
+  {
+    id: ReducerID.median,
+    name: 'Median',
+    description: 'Median Value',
+    standard: true,
+    aliasIds: ['median'],
     preservesUnits: true,
   },
   {

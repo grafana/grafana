@@ -4806,6 +4806,7 @@
             "PENDING_PROCESSING",
             "PROCESSING",
             "FINISHED",
+            "CANCELED",
             "ERROR",
             "UNKNOWN"
           ]
@@ -5490,7 +5491,7 @@
       "type": "object",
       "title": "NavbarPreference defines model for NavbarPreference.",
       "properties": {
-        "savedItemIds": {
+        "bookmarkIds": {
           "type": "array",
           "items": {
             "type": "string"
@@ -7217,6 +7218,7 @@
             "PENDING_PROCESSING",
             "PROCESSING",
             "FINISHED",
+            "CANCELED",
             "ERROR",
             "UNKNOWN"
           ]
@@ -7246,6 +7248,10 @@
             "type": "integer",
             "format": "int64"
           }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
         },
         "types": {
           "type": "object",
@@ -8376,6 +8382,23 @@
           "format": "date-time"
         },
         "userAgent": {
+          "type": "string"
+        }
+      }
+    },
+    "healthResponse": {
+      "type": "object",
+      "properties": {
+        "commit": {
+          "type": "string"
+        },
+        "database": {
+          "type": "string"
+        },
+        "enterpriseCommit": {
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         }
       }
