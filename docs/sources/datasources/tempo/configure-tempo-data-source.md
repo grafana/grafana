@@ -100,6 +100,12 @@ To use this feature, you need to:
 - Use Tempo version 2.2 or newer. Grafana Cloud uses has the latest version of Tempo.
 - For self-managed Tempo instances: If your Tempo instance is behind a load balancer or proxy that does not supporting gRPC or HTTP2, streaming will probably not work and should be disabled.
 
+For streaming to work for a particular Tempo data source, both `traceQLStreaming` must be set to true for the Grafana and the data source must be set to allow streaming.
+
+If the data source allows streaming but `traceQLStreaming=false`, no streaming will occur.
+
+If the data source has streaming disabled and `traceQLStreaming=true`, no streaming wil happen for that data source.
+
 ### Activate streaming
 
 To activate the Streaming section in your Tempo data source settings:
