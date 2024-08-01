@@ -580,8 +580,7 @@ export const TooltipPlugin2 = ({
 
     const onscroll = (e: Event) => {
       updatePlotVisible();
-      const isValidScrollTarget = e.target instanceof HTMLElement || e.target instanceof Document;
-      _isHovering && isValidScrollTarget && e.target.contains(_plot!.root) && dismiss();
+      _isHovering && e.target instanceof Node && e.target.contains(_plot!.root) && dismiss();
     };
 
     window.addEventListener('resize', updateWinSize);
