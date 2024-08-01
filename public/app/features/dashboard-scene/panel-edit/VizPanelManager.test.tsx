@@ -812,7 +812,11 @@ describe('VizPanelManager', () => {
     const { scene, panel } = setupTest('panel-10');
 
     scene.setState({
-      $variables: new SceneVariableSet({ variables: [new CustomVariable({ name: 'custom', query: 'A,B,C' })] }),
+      $variables: new SceneVariableSet({
+        variables: [
+          new CustomVariable({ name: 'custom', query: 'A,B,C', value: ['A', 'B', 'C'], text: ['A', 'B', 'C'] }),
+        ],
+      }),
     });
 
     scene.setState({ editPanel: buildPanelEditScene(panel) });

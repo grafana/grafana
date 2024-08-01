@@ -15,6 +15,7 @@ import {
 import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
 import {
   DeepPartial,
+  LocalValueVariable,
   MultiValueVariable,
   PanelBuilders,
   SceneComponentProps,
@@ -44,7 +45,7 @@ import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
-import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import { getDashboardSceneFor, getMultiVariableValues, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 export interface VizPanelManagerState extends SceneObjectState {
   panel: VizPanel;
@@ -103,13 +104,20 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     if (repeatOptions.repeat) {
       const variable = sceneGraph.lookupVariable(repeatOptions.repeat, gridItem);
 
-      if (variable instanceof MultiValueVariable) {
+      if (variable instanceof MultiValueVariable && variable.state.value.length) {
+        const { values, texts } = getMultiVariableValues(variable);
+
+        const varWithDefaultValue = new LocalValueVariable({
+          name: variable.state.name,
+          value: values[0],
+          text: String(texts[0]),
+        });
         if (!variables) {
           variables = new SceneVariableSet({
-            variables: [variable.clone()],
+            variables: [varWithDefaultValue],
           });
         } else {
-          variables.state.variables.push(variable.clone());
+          variables.state.variables.push(varWithDefaultValue);
         }
       }
     }
