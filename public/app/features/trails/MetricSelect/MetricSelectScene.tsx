@@ -35,6 +35,8 @@ import { StatusWrapper } from '../StatusWrapper';
 import { Node, Parser } from '../groop/parser';
 import { getMetricDescription } from '../helpers/MetricDatasourceHelper';
 import { reportExploreMetrics } from '../interactions';
+import { getOtelTargets } from '../otel/api';
+import { OtelTargetType } from '../otel/types';
 import {
   getVariablesWithMetricConstant,
   MetricSelectedEvent,
@@ -45,7 +47,7 @@ import {
 import { getFilters, getTrailFor, isSceneTimeRangeState } from '../utils';
 
 import { SelectMetricAction } from './SelectMetricAction';
-import { getMetricNames, getOtelResources, OtelResourcesType } from './api';
+import { getMetricNames } from './api';
 import { getPreviewPanelFor } from './previewPanel';
 import { sortRelatedMetrics } from './relatedMetrics';
 import { createJSRegExpFromSearchTerms, createPromRegExp, deriveSearchTermsFromInput } from './util';
@@ -62,7 +64,7 @@ interface MetricPanel {
 export interface MetricSelectSceneState extends SceneObjectState {
   body: SceneFlexLayout | SceneCSSGridLayout;
   rootGroup?: Node;
-  otelResources?: OtelResourcesType[];
+  otelResources?: OtelTargetType[];
   otelResource?: string;
   metricPrefix?: string;
   showPreviews?: boolean;
@@ -295,7 +297,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     // call the DS to get the list
     // query the datasource with a variable query for metrics
     // get list of matching job and instance on target_info
-    const resources = await getOtelResources(datasourceUid, timeRange);
+    const resources = await getOtelTargets(datasourceUid, timeRange);
 
     return resources;
   }
