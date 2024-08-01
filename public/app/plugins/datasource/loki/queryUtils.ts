@@ -25,7 +25,7 @@ import {
 } from '@grafana/lezer-logql';
 import { DataQuery } from '@grafana/schema';
 
-import { addLabelToQuery, getStreamSelectorPositions, NodePosition } from './modifyQuery';
+import { addLabelToQuery, getStreamSelectorPositions, NodePosition, removeLabelFromQuery } from './modifyQuery';
 import { ErrorId } from './querybuilder/parsingUtils';
 import { LabelType, LokiQuery, LokiQueryType } from './types';
 
@@ -330,7 +330,14 @@ export const addShardingPlaceholderSelector = (query: string) => {
   return addLabelToQuery(query, '__stream_shard__', '=', SHARDING_PLACEHOLDER, LabelType.Indexed);
 }
 
-export const interpolateShardingSelector = (queries: LokiQuery[], shard: number) => {
+export const interpolateShardingSelector = (queries: LokiQuery[], shard?: number) => {
+  if (shard === undefined) {
+    return queries.map(query => ({
+      ...query,
+      expr: removeLabelFromQuery(query.expr, '__stream_shard__', '=', SHARDING_PLACEHOLDER),
+    }))
+  }
+
   const shardValue = shard < 0 ? '' : shard.toString();
   return queries.map(query => ({
     ...query,

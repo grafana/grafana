@@ -21,7 +21,7 @@ export function splitQueriesByStreamShard(datasource: LokiDatasource, request: D
   let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming, key: uuidv4() };
   let subquerySubsciption: Subscription | null = null;
 
-  const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, shard: number) => {
+  const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, shard?: number) => {
     if (shouldStop) {
       subscriber.complete();
       return;
@@ -34,6 +34,10 @@ export function splitQueriesByStreamShard(datasource: LokiDatasource, request: D
     };
 
     const nextRequest = () => {
+      if (!shard) {
+        done();
+        return;
+      }
       const nextShard = shard+1;
       if (nextShard <= endShard) {
         runNextRequest(subscriber, nextShard);
@@ -81,8 +85,13 @@ export function splitQueriesByStreamShard(datasource: LokiDatasource, request: D
             endShard = parseInt(shard, 10);
           }
         });
-        console.log(`Sharding up to ${endShard}`);
-        runNextRequest(subscriber, -1);
+        if (endShard === 0) {
+          console.warn(`Shard splitting not supported. Issuing a regular query.`);
+          runNextRequest(subscriber);
+        } else {
+          console.log(`Querying up to ${endShard} shards`);
+          runNextRequest(subscriber, -1);
+        }
       }).catch((e) => {
         console.error(e);
         shouldStop = true;
