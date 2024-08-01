@@ -435,7 +435,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Role: ac.RoleDTO{
 			Name:        "fixed:folders:creator",
 			DisplayName: "Creator",
-			Description: "Create root level folders",
+			Description: "Create folders under root level",
 			Group:       "Folders",
 			Permissions: []ac.Permission{
 				{Action: dashboards.ActionFoldersCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)},
