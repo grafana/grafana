@@ -36,7 +36,14 @@ import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { reportChangeInLabelFilters } from './interactions';
 import { getOtelTargets } from './otel/api';
 import { OtelTargetType } from './otel/types';
-import { MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_DATASOURCE_EXPR, VAR_FILTERS } from './shared';
+import {
+  MetricSelectedEvent,
+  trailDS,
+  VAR_DATASOURCE,
+  VAR_DATASOURCE_EXPR,
+  VAR_FILTERS,
+  VAR_OTEL_RESOURCES,
+} from './shared';
 import { getMetricName, getTrailFor } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
@@ -51,6 +58,9 @@ export interface DataTrailState extends SceneObjectState {
   initialDS?: string;
   initialFilters?: AdHocVariableFilter[];
 
+  // this is for otel, if the data source has it, it will be updated here
+  otelTargets?: OtelTargetType[];
+  otelResources?: string[];
   // Synced with url
   metric?: string;
   metricSearch?: string;
@@ -223,6 +233,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
       getOtelTargets(datasourceUid, timeRange)
         .then((targets: OtelTargetType[]) => {
+          // Store these: these are the single series targets
+          this.setState({ otelTargets: targets });
           // create a list of unique targets
           let targetLabels: { job: string[]; instance: string[] } = {
             job: [],
@@ -242,6 +254,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
           if (targetLabels.job.length > 0 && targetLabels.instance.length > 0) {
             // build the new query to get all the labels
             const expr = `target_info{job=~"${targetLabels.job.join('|')}",instance=~"${targetLabels.instance.join('|')}"}`;
+            // pass it a new query expr
             return getOtelTargets(datasourceUid, timeRange, expr);
           } else {
             throw new Error('Data source missing otel resources');
@@ -265,6 +278,17 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
           });
           // store the labels for single series
           // update state that data source has otel resources
+          this.setState({ otelResources });
+          // build the label options for otel variables
+          const otellabels = otelResources.map((resource) => {
+            return { text: resource };
+          });
+
+          this.setState({ otelResources });
+          // update the default keys on the OTEL label variable selector
+          const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, this);
+          // @ts-ignore this is to update defaultKeys which exists but ts says it doesn't
+          otelResourcesVariable?.setState({ defaultKeys: otellabels });
         })
         .catch((err) => {
           console.log(err);
@@ -325,6 +349,15 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
         layout: 'vertical',
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
+      }),
+      new AdHocFiltersVariable({
+        name: VAR_OTEL_RESOURCES,
+        addFilterButtonText: 'Otel resources',
+        datasource: trailDS,
+        hide: VariableHide.hideLabel,
+        layout: 'vertical',
+        filters: initialFilters ?? [],
+        defaultKeys: [],
       }),
     ],
   });
