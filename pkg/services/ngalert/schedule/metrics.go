@@ -32,22 +32,34 @@ func sortedUIDs(alertRules []*models.AlertRule) []string {
 	return uids
 }
 
-func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
-	rulesPerOrg := make(map[int64]int64)                // orgID -> count
-	orgsPaused := make(map[int64]int64)                 // orgID -> count
-	orgsNfSettings := make(map[int64]int64)             // orgID -> count
-	groupsPerOrg := make(map[int64]map[string]struct{}) // orgID -> set of groups
-	for _, rule := range alertRules {
-		rulesPerOrg[rule.OrgID]++
+type ruleKey struct {
+	orgID    int64
+	group    string
+	ruleType models.RuleType
+	state    string
+}
 
+func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
+	buckets := make(map[ruleKey]int64)
+	orgsNfSettings := make(map[int64]int64)
+	groupsPerOrg := make(map[int64]map[string]struct{})
+
+	for _, rule := range alertRules {
+		state := metrics.AlertRuleActiveLabelValue
 		if rule.IsPaused {
-			orgsPaused[rule.OrgID]++
+			state = metrics.AlertRulePausedLabelValue
 		}
+		key := ruleKey{
+			orgID:    rule.OrgID,
+			group:    rule.RuleGroup,
+			ruleType: rule.Type(),
+			state:    state,
+		}
+		buckets[key]++
 
 		if len(rule.NotificationSettings) > 0 {
 			orgsNfSettings[rule.OrgID]++
 		}
-
 		orgGroups, ok := groupsPerOrg[rule.OrgID]
 		if !ok {
 			orgGroups = make(map[string]struct{})
@@ -56,11 +68,11 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 		orgGroups[rule.RuleGroup] = struct{}{}
 	}
 
-	for orgID, numRules := range rulesPerOrg {
-		numRulesPaused := orgsPaused[orgID]
-		numRulesNfSettings := orgsNfSettings[orgID]
-		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRuleActiveLabelValue).Set(float64(numRules - numRulesPaused))
-		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRulePausedLabelValue).Set(float64(numRulesPaused))
+	for key, count := range buckets {
+		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(key.orgID), key.group, key.ruleType.String(), key.state).Set(float64(count))
+	}
+
+	for orgID, numRulesNfSettings := range orgsNfSettings {
 		sch.metrics.SimpleNotificationRules.WithLabelValues(fmt.Sprint(orgID)).Set(float64(numRulesNfSettings))
 	}
 
