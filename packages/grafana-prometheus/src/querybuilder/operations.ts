@@ -195,7 +195,6 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     //
     createFunction({ id: PromOperationId.Exp }),
     createFunction({ id: PromOperationId.Floor }),
-    createFunction({ id: PromOperationId.Group }),
     createFunction({ id: PromOperationId.Hour }),
     createFunction({
       id: PromOperationId.LabelJoin,

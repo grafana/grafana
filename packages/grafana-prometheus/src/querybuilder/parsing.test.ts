@@ -783,6 +783,21 @@ describe('buildVisualQueryFromString', () => {
       })
     );
   });
+
+  it('parses the group function as an aggregation', () => {
+    expect(buildVisualQueryFromString('group by (job) (go_goroutines)')).toEqual(
+      noErrors({
+        metric: 'go_goroutines',
+        labels: [],
+        operations: [
+          {
+            id: '__group_by',
+            params: ['job'],
+          },
+        ],
+      })
+    );
+  });
 });
 
 function noErrors(query: PromVisualQuery) {
