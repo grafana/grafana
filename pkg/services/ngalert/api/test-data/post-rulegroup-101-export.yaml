@@ -81,7 +81,6 @@ groups:
                 type: reduce
           noDataState: NoData
           execErrState: Alerting
-          for: 0s
           isPaused: false
           notification_settings:
             receiver: Test-Receiver
@@ -134,7 +133,6 @@ groups:
                 maxDataPoints: 100
                 refId: condition
                 type: math
-          for: 0s
           isPaused: false
           record:
             metric: test_metric
