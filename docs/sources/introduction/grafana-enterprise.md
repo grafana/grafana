@@ -80,6 +80,7 @@ With a Grafana Enterprise license, you also get access to premium data sources, 
 - [Azure Devops](/grafana/plugins/grafana-azuredevops-datasource)
 - [Catchpoint](/grafana/plugins/grafana-catchpoint-datasource)
 - [Cloudflare](/grafana/plugins/grafana-cloudflare-datasource)
+- [CockroachDB](/grafana/plugins/grafana-cockroachdb-datasource)
 - [Databricks](/grafana/plugins/grafana-databricks-datasource)
 - [DataDog](/grafana/plugins/grafana-datadog-datasource)
 - [Dynatrace](/grafana/plugins/grafana-dynatrace-datasource)
