@@ -12,7 +12,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/youmark/pkcs8"
 	"math/big"
 	"net"
 	"net/http"
@@ -110,6 +109,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/youmark/pkcs8"
 )
 
 type HTTPServer struct {
