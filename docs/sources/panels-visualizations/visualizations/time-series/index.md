@@ -68,7 +68,7 @@ refs:
 
 # Time series
 
-Time series visualizations are the default and primary way to visualize data points over intervals of time, as a graph. They can render series as lines, points, or bars and are versatile enough to display almost any time-series data.
+Time series visualizations are the default way to visualize data points over intervals of time, as a graph. They can render series as lines, points, or bars and are versatile enough to display almost any time-series data.
 
 {{< figure src="/static/img/docs/time-series-panel/time_series_small_example.png" max-width="1200px" alt="Time series" >}}
 
@@ -258,15 +258,15 @@ To change the color, use the standard [color scheme](ref:color-scheme) field opt
 
 #### Show points
 
-Set whether to show data points to lines or bars. Choose from the following:
+Set whether to show data points as lines or bars. Choose from the following:
 
-- **Auto** - Grafana determines whether to show or not to show points based on the density of the data. If the density is low, then points appear.
+- **Auto** - Grafana determines a point's visibility based on the density of the data. If the density is low, then points appear.
 - **Always** - Show the points regardless of how dense the data set is.
 - **Never** - Don't show points.
 
 #### Stack series
 
-Set whether Grafana stacks or displays series on top of each other. Be cautious when using stacking in the visualization because it can easily create misleading graphs. To read more about why stacking might not be the best approach, refer to [The issue with stacking](https://www.data-to-viz.com/caveat/stacking.html). Choose from the following:
+Set whether Grafana stacks or displays series on top of each other. Be cautious when using stacking because it can create misleading graphs. To read more about why stacking might not be the best approach, refer to [The issue with stacking](https://www.data-to-viz.com/caveat/stacking.html). Choose from the following:
 
 - **Off** - Turns off series stacking. When **Off**, all series share the same space in the visualization.
 - **Normal** - Stacks series on top of each other.
