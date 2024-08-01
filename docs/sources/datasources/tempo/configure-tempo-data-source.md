@@ -58,6 +58,8 @@ refs:
 
 # Configure the Tempo data source
 
+The Tempo data source sets how your Tempo data connects to Grafana and lets you configure features and integrations with other telemetry signals.
+
 To configure basic settings for the Tempo data source, complete the following steps:
 
 1.  Click **Connections** in the left-side menu.
@@ -81,6 +83,30 @@ You can also configure settings specific to the Tempo data source.
 This video explains how to add data sources, including Loki, Tempo, and Mimir, to Grafana and Grafana Cloud. Tempo data source set up starts at 4:58 in the video.
 
 {{< youtube id="cqHO0oYW6Ic" start="298" >}}
+
+## Streaming
+<!-- Streaming toggle will be deprecated in Grafana 11.2 and removed in 11.3. -->
+
+Streaming provides immediate visibility of incoming traces on the results table for a TraceQL query.
+
+The Streaming section is available in the Tempo data source settings for Grafana Cloud.
+This capability requires Tempo 2.2 and onwards.
+
+### Requirements
+
+To use this feature, you need to:
+
+* Use Tempo version 2.2 or newer. Grafana Cloud uses has the latest version of Tempo.
+* For self-managed Tempo instances: If your Tempo instance is behind a load balancer or proxy that does not supporting gRPC or HTTP2, streaming will probably not work and should be disabled.
+
+### Activate streaming
+
+To activate the Streaming section in your Tempo data source settings:
+
+1. Activate the `traceQLStreaming` feature toggle in your Grafana configuration file.
+  * If you are using Grafana Cloud, contact Customer Support to activate this feature toggle.
+1. Select the **Queries** toggle to activate streaming for queries.
+
 
 ## Trace to logs
 
@@ -208,7 +234,8 @@ To use custom queries with the configuration, follow these steps:
 
 ## Custom query variables
 
-To use a variable in your trace to logs, metrics or profiles you need to wrap it in `${}`. For example, `${__span.name}`.
+To use a variable in your trace to logs, metrics, or profiles, you need to wrap it in `${}`.
+For example, `${__span.name}`.
 
 | Variable name          | Description                                                                                                                                                                                                                                                                                                                              |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
