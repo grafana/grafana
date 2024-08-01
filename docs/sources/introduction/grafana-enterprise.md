@@ -61,7 +61,7 @@ Grafana Enterprise adds the following features:
 - [Data source permissions]({{< relref "../administration/data-source-management#data-source-permissions" >}}) to restrict query access to specific teams and users.
 - [Data source query and resource caching]({{< relref "../administration/data-source-management#query-and-resource-caching" >}}) to temporarily store query results in Grafana to reduce data source load and rate limiting.
 - [Reporting]({{< relref "../dashboards/create-reports" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whomever you choose.
-- [Export dashboard as PDF]({{< relref "../dashboards/share-dashboards-panels#export-dashboard-as-pdf" >}})
+- [Export dashboard as PDF]({{< relref "../dashboards/share-dashboards-panels#export-a-dashboard-as-pdf" >}})
 - [Custom branding]({{< relref "../setup-grafana/configure-grafana/configure-custom-branding" >}}) to customize Grafana from the brand and logo to the footer links.
 - [Usage insights]({{< relref "../dashboards/assess-dashboard-usage" >}}) to understand how your Grafana instance is used.
 - [Recorded queries]({{< relref "../administration/recorded-queries" >}}) to see trends over time for your data sources.

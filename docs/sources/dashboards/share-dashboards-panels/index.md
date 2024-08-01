@@ -184,6 +184,10 @@ A dashboard snapshot publicly shares a dashboard while removing sensitive data s
 
 You can publish snapshots to your local instance or to [snapshots.raintank.io](http://snapshots.raintank.io). The latter is a free service provided by Grafana Labs that enables you to publish dashboard snapshots to an external Grafana instance. Anyone with the link can view it. You can set an expiration time if you want the snapshot removed after a certain time period.
 
+{{< admonition type=note >}}
+The snapshots.raintank.io option is disabled by default in Grafana Cloud. To enable it...
+{{< /admonition >}}
+
 To share your dashboard with anyone as a snapshot, follow these steps.
 
 1. Click **Dashboards** in the main menu.
