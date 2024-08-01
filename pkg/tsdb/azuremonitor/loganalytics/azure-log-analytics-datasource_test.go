@@ -250,11 +250,11 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 	t.Run("creates a request with multiple resources", func(t *testing.T) {
 		ds := AzureLogAnalyticsDatasource{}
 		req, err := ds.createRequest(ctx, logger, url, &AzureLogAnalyticsQuery{
-			Resources: []string{"r1", "r2"},
+			Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.operationalInsights/workSpaces/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.operationalInsights/workSpaces/r2"},
 			Query:     "Perf",
 		})
 		require.NoError(t, err)
-		expectedBody := `{"query":"Perf","timespan":"0001-01-01T00:00:00Z/0001-01-01T00:00:00Z","workspaces":["r1","r2"]}`
+		expectedBody := `{"query":"Perf","timespan":"0001-01-01T00:00:00Z/0001-01-01T00:00:00Z","workspaces":["/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.operationalInsights/workSpaces/r1","/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.operationalInsights/workSpaces/r2"]}`
 		body, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 		if !cmp.Equal(string(body), expectedBody) {
@@ -267,7 +267,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 		from := time.Now()
 		to := from.Add(3 * time.Hour)
 		req, err := ds.createRequest(ctx, logger, url, &AzureLogAnalyticsQuery{
-			Resources: []string{"r1", "r2"},
+			Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.operationalInsights/workSpaces/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.operationalInsights/workSpaces/r2"},
 			Query:     "Perf",
 			TimeRange: backend.TimeRange{
 				From: from,
@@ -275,7 +275,49 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		expectedBody := fmt.Sprintf(`{"query":"Perf","timespan":"%s/%s","workspaces":["r1","r2"]}`, from.Format(time.RFC3339), to.Format(time.RFC3339))
+		expectedBody := fmt.Sprintf(`{"query":"Perf","timespan":"%s/%s","workspaces":["/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.operationalInsights/workSpaces/r1","/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.operationalInsights/workSpaces/r2"]}`, from.Format(time.RFC3339), to.Format(time.RFC3339))
+		body, err := io.ReadAll(req.Body)
+		require.NoError(t, err)
+		if !cmp.Equal(string(body), expectedBody) {
+			t.Errorf("Unexpected Body: %v", cmp.Diff(string(body), expectedBody))
+		}
+	})
+
+	t.Run("correctly classifies resources as workspaces when matching criteria", func(t *testing.T) {
+		ds := AzureLogAnalyticsDatasource{}
+		from := time.Now()
+		to := from.Add(3 * time.Hour)
+		req, err := ds.createRequest(ctx, log.NewNopLogger(), url, &AzureLogAnalyticsQuery{
+			Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.operationalInsights/workSpaces/ws1", "microsoft.operationalInsights/workspaces/ws2"}, // Note different casings and partial paths
+			Query:     "Perf",
+			TimeRange: backend.TimeRange{
+				From: from,
+				To:   to,
+			},
+		})
+		require.NoError(t, err)
+		expectedBody := fmt.Sprintf(`{"query":"Perf","timespan":"%s/%s","workspaces":["/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.operationalInsights/workSpaces/ws1","microsoft.operationalInsights/workspaces/ws2"]}`, from.Format(time.RFC3339), to.Format(time.RFC3339)) // Expecting resources to be classified as workspaces
+		body, err := io.ReadAll(req.Body)
+		require.NoError(t, err)
+		if !cmp.Equal(string(body), expectedBody) {
+			t.Errorf("Unexpected Body: %v", cmp.Diff(string(body), expectedBody))
+		}
+	})
+
+	t.Run("correctly passes multiple resources not classified as workspaces", func(t *testing.T) {
+		ds := AzureLogAnalyticsDatasource{}
+		from := time.Now()
+		to := from.Add(3 * time.Hour)
+		req, err := ds.createRequest(ctx, log.NewNopLogger(), url, &AzureLogAnalyticsQuery{
+			Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/SomeOtherService/serviceInstances/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/SomeOtherService/serviceInstances/r2"},
+			Query:     "Perf",
+			TimeRange: backend.TimeRange{
+				From: from,
+				To:   to,
+			},
+		})
+		require.NoError(t, err)
+		expectedBody := fmt.Sprintf(`{"query":"Perf","resources":["/subscriptions/test-sub/resourceGroups/test-rg/providers/SomeOtherService/serviceInstances/r1","/subscriptions/test-sub/resourceGroups/test-rg/providers/SomeOtherService/serviceInstances/r2"],"timespan":"%s/%s"}`, from.Format(time.RFC3339), to.Format(time.RFC3339))
 		body, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 		if !cmp.Equal(string(body), expectedBody) {
