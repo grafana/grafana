@@ -803,7 +803,6 @@ export {
   defaultActionConfig,
   contentTypeOptions,
   httpMethodOptions,
-  getActionsSupplier,
 } from './types/action';
 export { DataFrameType } from './types/dataFrameTypes';
 export {

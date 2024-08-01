@@ -156,14 +156,6 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
         </Field>
       )}
 
-      {/*{value && value.endpoint && (*/}
-      {/*  <>*/}
-      {/*    <Button onClick={() => callApi(value)} title="Test API">*/}
-      {/*      Test API*/}
-      {/*    </Button>*/}
-      {/*  </>*/}
-      {/*)}*/}
-
       <br />
       {value?.method !== HttpRequestMethod.GET &&
         value?.contentType === defaultActionConfig.contentType &&

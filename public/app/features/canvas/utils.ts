@@ -1,6 +1,7 @@
 import {
   Action,
   ActionModel,
+  AppEvents,
   DataContextScopedVar,
   DataFrame,
   Field,
@@ -11,6 +12,8 @@ import {
   ValueLinkConfig,
 } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+
+import { appEvents } from '../../core/core';
 
 export const getActionsSupplier =
   (
@@ -49,7 +52,6 @@ export const getActionsSupplier =
         actionModel = {
           title: replaceVariables(action.title || '', actionScopedVars),
           onClick: (evt: MouseEvent, origin: Field) => {
-            // @TODO
             action.onClick!({
               origin: origin ?? field,
               e: evt,
@@ -108,14 +110,10 @@ const buildActionOnClick = (action: Action, replaceVariables: InterpolateFunctio
     .fetch(request)
     .subscribe({
       error: (error) => {
-        // appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
-        console.error('API call error: ', error);
-        // updateLoadingStateCallback && updateLoadingStateCallback(false);
+        appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
       },
       complete: () => {
-        // appEvents.emit(AppEvents.alertSuccess, ['API call was successful']);
-        console.log('API call was successful');
-        // updateLoadingStateCallback && updateLoadingStateCallback(false);
+        appEvents.emit(AppEvents.alertSuccess, ['API call was successful']);
       },
     });
 };

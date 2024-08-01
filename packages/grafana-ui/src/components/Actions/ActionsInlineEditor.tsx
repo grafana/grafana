@@ -91,7 +91,7 @@ export const ActionsInlineEditor = ({
     onChange(update);
   };
 
-  const renderFirstLink = (actionsJSX: ReactNode, key: string) => {
+  const renderFirstAction = (actionsJSX: ReactNode, key: string) => {
     if (showOneClick) {
       return (
         <div className={styles.oneClickOverlay} key={key}>
@@ -126,7 +126,7 @@ export const ActionsInlineEditor = ({
                 );
 
                 if (idx === 0) {
-                  return renderFirstLink(actionsJSX, key);
+                  return renderFirstAction(actionsJSX, key);
                 }
 
                 return actionsJSX;

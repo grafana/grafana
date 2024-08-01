@@ -400,7 +400,6 @@ export class ElementState implements LayerElement {
         scene?.panel.props.replaceVariables!
       );
 
-      // @TODO: UPDATE!!
       this.getActions = getActionsSupplier(
         frames[0],
         defaultField,

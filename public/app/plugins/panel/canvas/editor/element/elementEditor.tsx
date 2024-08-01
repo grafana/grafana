@@ -2,6 +2,7 @@ import { capitalize, get as lodashGet } from 'lodash';
 
 import { OneClickMode } from '@grafana/data';
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
+import { config } from '@grafana/runtime';
 import { CanvasElementOptions } from 'app/features/canvas/element';
 import {
   DEFAULT_CANVAS_ELEMENT_CONFIG,
@@ -67,6 +68,8 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
       const current = options?.type ? options.type : DEFAULT_CANVAS_ELEMENT_CONFIG.type;
       const layerTypes = getElementTypes(opts.scene.shouldShowAdvancedTypes, current).options;
 
+      const actionsEnabled = config.featureToggles.vizActions;
+
       const isUnsupported =
         !opts.scene.shouldShowAdvancedTypes && !defaultElementItems.filter((item) => item.id === options?.type).length;
 
@@ -120,17 +123,22 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
         optionBuilder.addBorder(builder, ctx);
       }
 
+      const oneClickModeOptions = [
+        { value: OneClickMode.Off, label: capitalize(OneClickMode.Off) },
+        { value: OneClickMode.Link, label: capitalize(OneClickMode.Link) },
+      ];
+
+      if (actionsEnabled) {
+        oneClickModeOptions.push({ value: OneClickMode.Action, label: capitalize(OneClickMode.Action) });
+      }
+
       builder.addRadio({
-        category: ['Data links and actions'],
+        category: actionsEnabled ? ['Data links and actions'] : ['Data links'],
         path: 'oneClickMode',
         name: 'One-click',
-        description: 'When enabled, a single click opens the first link or action',
+        description: 'When enabled, a single click opens the first link' + actionsEnabled ? ' or action' : '',
         settings: {
-          options: [
-            { value: OneClickMode.Off, label: capitalize(OneClickMode.Off) },
-            { value: OneClickMode.Link, label: capitalize(OneClickMode.Link) },
-            { value: OneClickMode.Action, label: capitalize(OneClickMode.Action) },
-          ],
+          options: oneClickModeOptions,
         },
         defaultValue: OneClickMode.Off,
       });

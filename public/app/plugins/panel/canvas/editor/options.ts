@@ -2,6 +2,7 @@ import { capitalize } from 'lodash';
 
 import { FieldType } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
+import { config } from '@grafana/runtime';
 import { ConnectionDirection } from 'app/features/canvas/element';
 import { SVGElements } from 'app/features/canvas/runtime/element';
 import { ColorDimensionEditor, ResourceDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
@@ -212,7 +213,7 @@ export const optionBuilder: OptionSuppliers = {
 
   addDataLinks: (builder, context) => {
     builder.addCustomEditor({
-      category: ['Data links and actions'],
+      category: config.featureToggles.vizActions ? ['Data links and actions'] : ['Data links'],
       id: 'dataLinks',
       path: 'links',
       name: 'Links',
@@ -229,6 +230,7 @@ export const optionBuilder: OptionSuppliers = {
       name: 'Actions',
       editor: ActionsEditor,
       settings: context.options,
+      showIf: () => config.featureToggles.vizActions,
     });
   },
 };
