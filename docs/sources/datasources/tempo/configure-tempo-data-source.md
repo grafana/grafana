@@ -85,6 +85,7 @@ This video explains how to add data sources, including Loki, Tempo, and Mimir, t
 {{< youtube id="cqHO0oYW6Ic" start="298" >}}
 
 ## Streaming
+
 <!-- Streaming toggle will be deprecated in Grafana 11.2 and removed in 11.3. -->
 
 Streaming provides immediate visibility of incoming traces on the results table for a TraceQL query.
@@ -96,17 +97,18 @@ This capability requires Tempo 2.2 and onwards.
 
 To use this feature, you need to:
 
-* Use Tempo version 2.2 or newer. Grafana Cloud uses has the latest version of Tempo.
-* For self-managed Tempo instances: If your Tempo instance is behind a load balancer or proxy that does not supporting gRPC or HTTP2, streaming will probably not work and should be disabled.
+- Use Tempo version 2.2 or newer. Grafana Cloud uses has the latest version of Tempo.
+- For self-managed Tempo instances: If your Tempo instance is behind a load balancer or proxy that does not supporting gRPC or HTTP2, streaming will probably not work and should be disabled.
 
 ### Activate streaming
 
 To activate the Streaming section in your Tempo data source settings:
 
 1. Activate the `traceQLStreaming` feature toggle in your Grafana configuration file.
-  * If you are using Grafana Cloud, contact Customer Support to activate this feature toggle.
-1. Select the **Queries** toggle to activate streaming for queries.
 
+- If you are using Grafana Cloud, contact Customer Support to activate this feature toggle.
+
+1. Select the **Queries** toggle to activate streaming for queries.
 
 ## Trace to logs
 
