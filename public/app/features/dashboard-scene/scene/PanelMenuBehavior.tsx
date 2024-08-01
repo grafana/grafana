@@ -22,6 +22,7 @@ import { addDataTrailPanelAction } from 'app/features/trails/Integrations/dashbo
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
+import { ShareLibraryPanelTab } from '../sharing/ShareLibraryPanelTab';
 import { ShareModal } from '../sharing/ShareModal';
 import { SharePanelInternally } from '../sharing/panel-share/SharePanelInternally';
 import { DashboardInteractions } from '../utils/interactions';
@@ -96,6 +97,22 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
           dashboard.showModal(drawer);
         },
       });
+
+      if (!(parent instanceof LibraryVizPanel)) {
+        subMenu.push({
+          text: t('share-panel.menu.new-library-panel-title', 'New library panel'),
+          iconClassName: 'library-panel',
+          shortcut: 'p u',
+          onClick: () => {
+            const drawer = new ShareDrawer({
+              title: t('share-panel.drawer.new-library-panel-title', 'New library panel'),
+              body: new ShareLibraryPanelTab({ panelRef: panel.getRef() }),
+            });
+
+            dashboard.showModal(drawer);
+          },
+        });
+      }
 
       items.push({
         type: 'submenu',
