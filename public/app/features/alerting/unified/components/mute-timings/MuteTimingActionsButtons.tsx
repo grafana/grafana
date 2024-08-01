@@ -18,7 +18,9 @@ interface MuteTimingActionsButtonsProps {
 }
 
 export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }: MuteTimingActionsButtonsProps) => {
-  const deleteMuteTiming = useDeleteMuteTiming({ alertmanager: alertManagerSourceName! });
+  const [_deleteMuteTimingRequestState, deleteMuteTiming] = useDeleteMuteTiming({
+    alertmanager: alertManagerSourceName!,
+  });
   const [showDeleteDrawer, setShowDeleteDrawer] = useState(false);
   const [ExportDrawer, showExportDrawer] = useExportMuteTimingsDrawer();
   const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportMuteTimings);
@@ -73,9 +75,7 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
         body={`Are you sure you would like to delete "${muteTiming.name}"?`}
         confirmText={t('alerting.common.delete', 'Delete')}
         onConfirm={async () => {
-          await deleteMuteTiming({
-            name: muteTiming?.metadata?.name || muteTiming.name,
-          });
+          await deleteMuteTiming.execute(muteTiming?.metadata?.name || muteTiming.name);
 
           closeDeleteModal();
         }}
