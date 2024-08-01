@@ -1879,11 +1879,9 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 		cfg.CertPassword = server.Key("cert_pass").String()
 	}
 	if protocolStr == "h2" {
-		// TODO LND Review how this is implemented and if should add cert password
 		cfg.Protocol = HTTP2Scheme
 		cfg.CertFile = server.Key("cert_file").String()
 		cfg.KeyFile = server.Key("cert_key").String()
-		// TODO LND added but not tested
 		cfg.CertPassword = server.Key("cert_pass").String()
 	}
 	if protocolStr == "socket" {
