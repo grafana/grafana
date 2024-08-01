@@ -26,6 +26,14 @@ export function useProduceNewAlertmanagerConfiguration() {
     throw ERR_NO_ACTIVE_AM;
   }
 
+  /**
+   * This function will fetch the latest Alertmanager configuration, apply a diff to it via a reducer and
+   * returns the result.
+   *
+   * ┌────────────────────────────┐  ┌───────────────┐  ┌───────────────────┐
+   * │ fetch latest configuration │─▶│ apply reducer │─▶│  new rule config  │
+   * └────────────────────────────┘  └───────────────┘  └───────────────────┘
+   */
   const produceNewAlertmanagerConfiguration = async (action: Action) => {
     const currentAlertmanagerConfiguration = await fetchAlertmanagerConfig(selectedAlertmanager).unwrap();
     const newConfig = alertmanagerConfigurationReducer(currentAlertmanagerConfiguration, action);
