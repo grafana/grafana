@@ -846,48 +846,42 @@ func handleEncryptedCertificates(cfg *setting.Cfg) (*tls.Certificate, error) {
 	}
 	certKeyFilePassword := cfg.CertPassword
 
-	// handle private key
+	// handle encrypted private key
 	keyPemBlock, _ := pem.Decode(keyData)
 	var decodedKeyBlock []byte
-	if strings.HasSuffix(keyPemBlock.Type, "PRIVATE KEY") {
-		// nolint:staticcheck
-		if x509.IsEncryptedPEMBlock(keyPemBlock) || strings.Contains(keyPemBlock.Type, "ENCRYPTED PRIVATE KEY") {
-			if certKeyFilePassword == "" {
-				return nil, fmt.Errorf("TLSClientKey is encrypted and no password was provided to decrypt private key")
-			}
+	// nolint:staticcheck
 
-			var keyBytes []byte
-			var err error
-			// Process the X.509-encrypted or PKCS-encrypted PEM block.
-			// nolint:staticcheck
-			if x509.IsEncryptedPEMBlock(keyPemBlock) {
-				// Only covers encrypted PEM data with a DEK-Info header.
-				// nolint:staticcheck
-				keyBytes, err = x509.DecryptPEMBlock(keyPemBlock, []byte(certKeyFilePassword))
-				if err != nil {
-					return nil, fmt.Errorf("error decryting x509 PemBlock: %w", err)
-				}
-			} else if strings.Contains(keyPemBlock.Type, "ENCRYPTED") {
-				// The pkcs8 package only handles the PKCS #5 v2.0 scheme.
-				decrypted, err := pkcs8.ParsePKCS8PrivateKey(keyPemBlock.Bytes, []byte(certKeyFilePassword))
-				if err != nil {
-					return nil, fmt.Errorf("error parsing PKCS8 Private key: %w", err)
-				}
-				keyBytes, err = x509.MarshalPKCS8PrivateKey(decrypted)
-				if err != nil {
-					return nil, fmt.Errorf("error marshaling PKCS8 Private key: %w", err)
-				}
-			}
-			var encoded bytes.Buffer
-			err = pem.Encode(&encoded, &pem.Block{Type: keyPemBlock.Type, Bytes: keyBytes})
-			if err != nil {
-				return nil, fmt.Errorf("error encoding pem file: %w", err)
-			}
-			decodedKeyBlock = encoded.Bytes()
-		} else {
-			decodedKeyBlock = keyPemBlock.Bytes
+	var keyBytes []byte
+	// Process the X.509-encrypted or PKCS-encrypted PEM block.
+	// nolint:staticcheck
+	if x509.IsEncryptedPEMBlock(keyPemBlock) {
+		// Only covers encrypted PEM data with a DEK-Info header.
+		// nolint:staticcheck
+		keyBytes, err = x509.DecryptPEMBlock(keyPemBlock, []byte(certKeyFilePassword))
+		if err != nil {
+			return nil, fmt.Errorf("error decryting x509 PemBlock: %w", err)
 		}
+	} else if strings.Contains(keyPemBlock.Type, "ENCRYPTED") {
+		// The pkcs8 package only handles the PKCS #5 v2.0 scheme.
+		decrypted, err := pkcs8.ParsePKCS8PrivateKey(keyPemBlock.Bytes, []byte(certKeyFilePassword))
+		if err != nil {
+			return nil, fmt.Errorf("error parsing PKCS8 Private key: %w", err)
+		}
+		keyBytes, err = x509.MarshalPKCS8PrivateKey(decrypted)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling PKCS8 Private key: %w", err)
+		}
+	} else {
+		// in this case, the password was provided but the key is not encrypted or is not supported
+		return nil, fmt.Errorf("password provided but Private key is not encrypted or not supported")
 	}
+
+	var encoded bytes.Buffer
+	err = pem.Encode(&encoded, &pem.Block{Type: keyPemBlock.Type, Bytes: keyBytes})
+	if err != nil {
+		return nil, fmt.Errorf("error encoding pem file: %w", err)
+	}
+	decodedKeyBlock = encoded.Bytes()
 
 	// create the decrypted cert to return
 	cert, err := tls.X509KeyPair(certData, decodedKeyBlock)
