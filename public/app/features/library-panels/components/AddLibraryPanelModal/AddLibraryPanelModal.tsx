@@ -41,13 +41,13 @@ export const AddLibraryPanelContents = ({
 
     saveLibraryPanel(panel, folderUid!).then((res: LibraryPanel | FetchError) => {
       if (!isFetchError(res)) {
-        onDismiss?.();
+        config.featureToggles.newDashboardSharingComponent ? onCancelClick?.() : onDismiss?.();
         onCreateLibraryPanel?.(res);
       } else {
         panel.libraryPanel = undefined;
       }
     });
-  }, [panel, panelName, saveLibraryPanel, folderUid, onDismiss, onCreateLibraryPanel]);
+  }, [panel, panelName, saveLibraryPanel, folderUid, onDismiss, onCreateLibraryPanel, onCancelClick]);
 
   const isValidName = useAsync(async () => {
     try {
