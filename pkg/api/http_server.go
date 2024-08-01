@@ -835,6 +835,7 @@ func (hs *HTTPServer) readCertificates() (*tls.Certificate, error) {
 }
 
 func handleEncryptedCertificates(cfg *setting.Cfg) (*tls.Certificate, error) {
+	certKeyFilePassword := cfg.CertPassword
 	certData, err := os.ReadFile(cfg.CertFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read certificate file: %w", err)
@@ -844,12 +845,9 @@ func handleEncryptedCertificates(cfg *setting.Cfg) (*tls.Certificate, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to read private key file: %w", err)
 	}
-	certKeyFilePassword := cfg.CertPassword
 
 	// handle encrypted private key
 	keyPemBlock, _ := pem.Decode(keyData)
-	var decodedKeyBlock []byte
-	// nolint:staticcheck
 
 	var keyBytes []byte
 	// Process the X.509-encrypted or PKCS-encrypted PEM block.
@@ -876,15 +874,14 @@ func handleEncryptedCertificates(cfg *setting.Cfg) (*tls.Certificate, error) {
 		return nil, fmt.Errorf("password provided but Private key is not encrypted or not supported")
 	}
 
-	var encoded bytes.Buffer
-	err = pem.Encode(&encoded, &pem.Block{Type: keyPemBlock.Type, Bytes: keyBytes})
+	var encodedKey bytes.Buffer
+	err = pem.Encode(&encodedKey, &pem.Block{Type: keyPemBlock.Type, Bytes: keyBytes})
 	if err != nil {
 		return nil, fmt.Errorf("error encoding pem file: %w", err)
 	}
-	decodedKeyBlock = encoded.Bytes()
 
 	// create the decrypted cert to return
-	cert, err := tls.X509KeyPair(certData, decodedKeyBlock)
+	cert, err := tls.X509KeyPair(certData, encodedKey.Bytes())
 	if err != nil {
 		return nil, fmt.Errorf("failed tls X509KeyPair parse: %w", err)
 	}
