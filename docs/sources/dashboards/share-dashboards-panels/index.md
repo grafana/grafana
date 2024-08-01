@@ -76,8 +76,9 @@ You can share dashboards in the following ways:
 - As a snapshot
 - As a report
 - As a JSON file
+- As a PDF
 
-When you share a dashboard externally as a link or by email, those dashboards are included a list of your public dashboards. To view the list and manage these dashboards, navigate to **Dashboards > Public dashboards**.
+When you share a dashboard externally as a link or by email, those dashboards are included a list of your shared dashboards. To view the list and manage these dashboards, navigate to **Dashboards > Shared dashboards**.
 
 <!-- image of list here -->
 
@@ -98,7 +99,11 @@ Share a personalized, direct link to your dashboard within your organization.
 
 ### Share externally with specific people
 
-To share with specific external users, you can send them a link by email. Use this option when you only want to share your dashboard with specific people instead of anyone who navigates to the link. Sharing a link by email creates a 30-day token associated with that external user.
+{{< admonition type="note" >}}
+This feature is only available in Grafana Enterprise and Grafana Cloud.
+{{< /admonition >}}
+
+To share with specific external users, you can send them a link by email. Use this option when you only want to share your dashboard with specific people instead of anyone who navigates to the link. Sharing a link by email creates a 30-day token.
 
 When you share a dashboard with an email link, your organization is billed per user for the duration of the 30-day token, regardless of how many dashboards are shared. Billing stops after 30 days unless you renew the token.
 
@@ -132,7 +137,7 @@ To share your dashboard so that anyone with the link can access it, follow these
 1. (Optional) Set the following options:
    - **Enable time range** - Allow people accessing the link to change the time range. This configuration screen shows the default time range of the dashboard.
    - **Display annotations** - Allow people accessing the link to view the dashboard annotations.
-1. Each recipient will receive an email with link to the dashboard that's valid for 30 days.
+1. Each recipient will receive an email with link to the dashboard that's valid until you revoke access to the dashboard.
 1. Click the **X** at the top-right corner to close the share drawer.
 
 ### Update access to an external dashboard link
@@ -150,6 +155,10 @@ You can update the access to externally shared dashboard links by following thes
 
 ### Schedule a report
 
+{{< admonition type="note" >}}
+This feature is only available in Grafana Enterprise.
+{{< /admonition >}}
+
 To share your dashboard as a report, follow these steps:
 
 1. Click **Dashboards** in the main menu.
@@ -166,7 +175,6 @@ To manage your reports, navigate to **Dashboards > Reporting > Reports**.
 
 A dashboard snapshot publicly shares a dashboard while removing sensitive data such as queries and panel links, leaving only visible metrics and series names. Anyone with the link can access the snapshot.
 
-<!-- is the following para still true? -->
 
 You can publish snapshots to your local instance or to [snapshots.raintank.io](http://snapshots.raintank.io). The latter is a free service provided by Grafana Labs that enables you to publish dashboard snapshots to an external Grafana instance. Anyone with the link can view it. You can set an expiration time if you want the snapshot removed after a certain time period.
 
