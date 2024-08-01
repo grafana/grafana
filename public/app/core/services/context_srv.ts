@@ -95,7 +95,7 @@ export class ContextSrv {
     this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
     this.minRefreshInterval = config.minRefreshInterval;
 
-    if (featureEnabled('disableFrontendPermissionCache')) {
+    if (config.featureToggles.disableFrontendPermissionCache) {
       this.authorizer = new OptimisticAuthorizer(getBackendSrv, this.user.permissions);
     } else {
       this.authorizer = new DefaultAuthorizer(getBackendSrv);
