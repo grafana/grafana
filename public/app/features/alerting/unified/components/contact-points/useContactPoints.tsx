@@ -7,6 +7,13 @@ import { produce } from 'immer';
 import { remove } from 'lodash';
 import { useMemo } from 'react';
 
+import {
+  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver,
+  generatedReceiversApi,
+} from 'app/features/alerting/unified/openapi/receiversApi.gen';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { getNamespace, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
+
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { onCallApi } from '../../api/onCallApi';
 import { usePluginBridge } from '../../hooks/usePluginBridge';
@@ -14,10 +21,6 @@ import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { SupportedPlugin } from '../../types/pluginBridges';
 
 import { enhanceContactPointsWithMetadata } from './utils';
-
-export const RECEIVER_STATUS_KEY = Symbol('receiver_status');
-export const RECEIVER_META_KEY = Symbol('receiver_metadata');
-export const RECEIVER_PLUGIN_META_KEY = Symbol('receiver_plugin_metadata');
 
 const RECEIVER_STATUS_POLLING_INTERVAL = 10 * 1000; // 10 seconds
 
@@ -37,8 +40,8 @@ const {
   useLazyGetAlertmanagerConfigurationQuery,
   useUpdateAlertmanagerConfigurationMutation,
 } = alertmanagerApi;
-
 const { useGrafanaOnCallIntegrationsQuery } = onCallApi;
+const { useListNamespacedReceiverQuery } = generatedReceiversApi;
 
 /**
  * Check if OnCall is installed, and fetch the list of integrations if so.
@@ -60,6 +63,35 @@ const useOnCallIntegrations = ({ skip }: { skip?: boolean } = {}) => {
   }, [installed, loading, oncallIntegrationsResponse]);
 };
 
+type K8sReceiver = ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver;
+
+// TODO: Make this typed as returning `GrafanaManagedContactPoint` - we can't yet do this as the schema thinks
+// its returning integration settings as a `string` rather than `Record<string, any>`
+const parseK8sReceiver = (item: K8sReceiver) => {
+  return { name: item.spec.title, grafana_managed_receiver_configs: item.spec.integrations };
+};
+
+const useK8sContactPoints = (...[hookParams, queryOptions]: Parameters<typeof useListNamespacedReceiverQuery>) => {
+  return useListNamespacedReceiverQuery(hookParams, {
+    ...queryOptions,
+    selectFromResult: ({ data, ...rest }) => {
+      return {
+        ...rest,
+        data: data?.items.map((item) => parseK8sReceiver(item)),
+      };
+    },
+  });
+};
+
+const useGetGrafanaContactPoints = () => {
+  const namespace = getNamespace();
+  const useK8sApi = shouldUseK8sApi(GRAFANA_RULES_SOURCE_NAME);
+  const grafanaResponse = useGetContactPointsListQuery(undefined, { skip: useK8sApi });
+  const k8sResponse = useK8sContactPoints({ namespace }, { skip: !useK8sApi });
+
+  return useK8sApi ? k8sResponse : grafanaResponse;
+};
+
 /**
  * Fetch contact points from separate endpoint (i.e. not the Alertmanager config) and combine with
  * OnCall integrations and any additional metadata from list of notifiers
@@ -68,7 +100,7 @@ const useOnCallIntegrations = ({ skip }: { skip?: boolean } = {}) => {
 export const useGetContactPoints = () => {
   const onCallResponse = useOnCallIntegrations();
   const alertNotifiers = useGrafanaNotifiersQuery();
-  const contactPointsListResponse = useGetContactPointsListQuery();
+  const contactPointsListResponse = useGetGrafanaContactPoints();
 
   return useMemo(() => {
     const isLoading = onCallResponse.isLoading || alertNotifiers.isLoading || contactPointsListResponse.isLoading;

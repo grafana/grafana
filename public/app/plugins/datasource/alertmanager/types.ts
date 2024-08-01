@@ -67,12 +67,20 @@ export type WebhookConfig = {
 
 export type GrafanaManagedReceiverConfig = {
   uid?: string;
-  disableResolveMessage: boolean;
+  disableResolveMessage?: boolean;
   secureFields?: Record<string, boolean>;
   secureSettings?: Record<string, any>;
   settings?: Record<string, any>; // sometimes settings are optional for security reasons (RBAC)
   type: string;
-  name: string;
+  /**
+   * Name of the _receiver_, which in most cases will be the
+   * same as the contact point's name. This should not be used, and is optional because the
+   * kubernetes API does not return it for us (and we don't want to/shouldn't use it)
+   *
+   * @deprecated Do not rely on this property - it won't be present in kuberenetes API responses
+   * and should be the same as the contact point name anyway
+   */
+  name?: string;
   updated?: string;
   created?: string;
   provenance?: string;

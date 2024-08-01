@@ -26,7 +26,7 @@ export interface CloudChannelValues extends ChannelValues {
 export interface GrafanaChannelValues extends ChannelValues {
   type: NotifierType;
   provenance?: string;
-  disableResolveMessage: boolean;
+  disableResolveMessage?: boolean;
 }
 
 export interface CommonSettingsComponentProps {

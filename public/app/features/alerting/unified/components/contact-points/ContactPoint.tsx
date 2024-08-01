@@ -16,7 +16,7 @@ import { MetaText } from '../MetaText';
 import { ReceiverMetadataBadge } from '../receivers/grafanaAppReceivers/ReceiverMetadataBadge';
 import { ReceiverPluginMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';
 
-import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY, RECEIVER_STATUS_KEY } from './useContactPoints';
+import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY, RECEIVER_STATUS_KEY } from './constants';
 import { getReceiverDescription, ReceiverConfigWithMetadata, RouteReference } from './utils';
 
 interface ContactPointProps {
