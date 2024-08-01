@@ -34,7 +34,6 @@ func sortedUIDs(alertRules []*models.AlertRule) []string {
 
 type ruleKey struct {
 	orgID    int64
-	group    string
 	ruleType models.RuleType
 	state    string
 }
@@ -51,7 +50,6 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 		}
 		key := ruleKey{
 			orgID:    rule.OrgID,
-			group:    rule.RuleGroup,
 			ruleType: rule.Type(),
 			state:    state,
 		}
@@ -69,7 +67,7 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 	}
 
 	for key, count := range buckets {
-		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(key.orgID), key.group, key.ruleType.String(), key.state).Set(float64(count))
+		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(key.orgID), key.ruleType.String(), key.state).Set(float64(count))
 	}
 
 	for orgID, numRulesNfSettings := range orgsNfSettings {
