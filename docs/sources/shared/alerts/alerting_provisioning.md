@@ -18,10 +18,6 @@ To manage resources related to [data source-managed alerts]({{< relref "/docs/gr
 
 ## Content negotiation
 
-### Consumes
-
-- application/json
-
 ### Produces
 
 - application/json
@@ -215,10 +211,6 @@ Status: No Content
 ```
 DELETE /api/v1/provisioning/contact-points/:uid
 ```
-
-#### Consumes
-
-- application/json
 
 #### Parameters
 
@@ -884,10 +876,6 @@ Status: Not Found
 POST /api/v1/provisioning/alert-rules
 ```
 
-#### Consumes
-
-- application/json
-
 #### Parameters
 
 {{% responsive-table %}}
@@ -929,10 +917,6 @@ Status: Bad Request
 ```
 POST /api/v1/provisioning/contact-points
 ```
-
-#### Consumes
-
-- application/json
 
 #### Parameters
 
@@ -976,10 +960,6 @@ Status: Bad Request
 POST /api/v1/provisioning/mute-timings
 ```
 
-#### Consumes
-
-- application/json
-
 #### Parameters
 
 {{% responsive-table %}}
@@ -1021,10 +1001,6 @@ Status: Bad Request
 ```
 PUT /api/v1/provisioning/alert-rules/:uid
 ```
-
-#### Consumes
-
-- application/json
 
 #### Parameters
 
@@ -1068,10 +1044,6 @@ Status: Bad Request
 ```
 PUT /api/v1/provisioning/folder/:folderUid/rule-groups/:group
 ```
-
-#### Consumes
-
-- application/json
 
 #### Parameters
 
@@ -1117,10 +1089,6 @@ Status: Bad Request
 PUT /api/v1/provisioning/contact-points/:uid
 ```
 
-#### Consumes
-
-- application/json
-
 #### Parameters
 
 {{% responsive-table %}}
@@ -1163,10 +1131,6 @@ Status: Bad Request
 ```
 PUT /api/v1/provisioning/mute-timings/:name
 ```
-
-#### Consumes
-
-- application/json
 
 #### Parameters
 
@@ -1211,10 +1175,6 @@ Status: Bad Request
 PUT /api/v1/provisioning/policies
 ```
 
-#### Consumes
-
-- application/json
-
 #### Parameters
 
 {{% responsive-table %}}
@@ -1256,10 +1216,6 @@ Status: Bad Request
 ```
 PUT /api/v1/provisioning/templates/:name
 ```
-
-#### Consumes
-
-- application/json
 
 {{% responsive-table %}}
 
@@ -1303,10 +1259,6 @@ Status: Bad Request
 ```
 DELETE /api/v1/provisioning/policies
 ```
-
-#### Consumes
-
-- application/json
 
 #### All responses
 
