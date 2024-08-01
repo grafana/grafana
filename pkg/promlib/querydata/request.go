@@ -218,9 +218,7 @@ func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *mo
 			}
 			dr.Frames = append(dr.Frames, res.Frames...)
 		}
-
 	}
-
 	wg.Wait()
 
 	return dr
