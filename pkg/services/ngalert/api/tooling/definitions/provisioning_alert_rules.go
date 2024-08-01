@@ -275,7 +275,7 @@ type AlertRuleExport struct {
 	Labels               *map[string]string                   `json:"labels,omitempty" yaml:"labels,omitempty" hcl:"labels"`
 	IsPaused             bool                                 `json:"isPaused" yaml:"isPaused" hcl:"is_paused"`
 	NotificationSettings *AlertRuleNotificationSettingsExport `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty" hcl:"notification_settings,block"`
-	Record               *AlertRuleRecordExport               `json:"record,omitempty" yaml:"record,omitempty" hcl:"record"`
+	Record               *AlertRuleRecordExport               `json:"record,omitempty" yaml:"record,omitempty" hcl:"record,block"`
 }
 
 // AlertQueryExport is the provisioned export of models.AlertQuery.
