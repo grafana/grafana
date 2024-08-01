@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 set -o errexit
 set -o nounset
@@ -8,7 +8,8 @@ rm -rf data/grafana-aggregator
 
 mkdir -p data/grafana-aggregator
 
-openssl req -nodes -new -x509 -keyout data/grafana-aggregator/ca.key -out data/grafana-aggregator/ca.crt
+openssl req -nodes -new -x509 -keyout data/grafana-aggregator/ca.key -out data/grafana-aggregator/ca.crt \
+  -subj "/C=US/ST=New Sweden/L=Stockholm /O=Grafana/OU=R&D/CN=test-ca/emailAddress=test@grafana.app"
 openssl req -out data/grafana-aggregator/client.csr -new -newkey rsa:4096 -nodes -keyout data/grafana-aggregator/client.key \
   -subj "/CN=development/O=system:masters" \
   -addext "extendedKeyUsage = clientAuth"
