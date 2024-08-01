@@ -9,7 +9,7 @@ import (
 type Integration struct {
 	DisableResolveMessage *bool `json:"disableResolveMessage,omitempty"`
 	// +mapType=atomic
-	SecureFields map[string]bool     `json:"SecureFields,omitempty"`
+	SecureFields map[string]bool     `json:"secureFields,omitempty"`
 	Settings     common.Unstructured `json:"settings"`
 	Type         string              `json:"type"`
 	Uid          *string             `json:"uid,omitempty"`
