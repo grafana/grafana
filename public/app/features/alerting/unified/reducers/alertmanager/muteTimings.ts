@@ -1,7 +1,6 @@
 import { createAction, createReducer, isAnyOf } from '@reduxjs/toolkit';
 import { remove } from 'lodash';
 
-import { filenameAlreadyExists } from 'app/features/storage/storage';
 import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
 import { mergeTimeIntervals } from '../../components/mute-timings/util';
