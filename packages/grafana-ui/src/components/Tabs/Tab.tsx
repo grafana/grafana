@@ -5,7 +5,7 @@ import * as React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../themes';
+import { stylesFactory, useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types';
 import { clearButtonStyles } from '../Button';
@@ -47,34 +47,37 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
       'data-testid': selectors.components.Tab.title(label),
       ...otherProps,
       onClick: onChangeTab,
-      role: 'tab',
       'aria-selected': active,
     };
 
     if (href) {
       return (
-        <a
-          {...commonProps}
-          href={href}
-          // don't think we can avoid the type assertion here :(
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          ref={ref as React.ForwardedRef<HTMLAnchorElement>}
-        >
-          {content()}
-        </a>
+        <div className={tabsStyles.item} role="tab">
+          <a
+            {...commonProps}
+            href={href}
+            // don't think we can avoid the type assertion here :(
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            ref={ref as React.ForwardedRef<HTMLButtonElement>}
+          >
+            {content()}
+          </a>
+        </div>
       );
     }
 
     return (
-      <button
-        {...commonProps}
-        type="button"
-        // don't think we can avoid the type assertion here :(
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        ref={ref as React.ForwardedRef<HTMLButtonElement>}
-      >
-        {content()}
-      </button>
+      <div className={tabsStyles.item} role="tab">
+        <button
+          {...commonProps}
+          type="button"
+          // don't think we can avoid the type assertion here :(
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          ref={ref as React.ForwardedRef<HTMLButtonElement>}
+        >
+          {content()}
+        </button>
+      </div>
     );
   }
 );
@@ -91,11 +94,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(0.5),
     }),
     link: css({
-      position: 'relative',
       color: theme.colors.text.secondary,
       padding: theme.spacing(1, 1.5, 0.5),
       borderRadius: theme.shape.radius.default,
-      textWrap: 'nowrap',
 
       display: 'block',
       height: '100%',
@@ -129,6 +130,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     activeStyle: css({
       label: 'activeTabStyle',
       color: theme.colors.text.primary,
+      overflow: 'hidden',
 
       '&::before': {
         backgroundImage: theme.colors.gradients.brandHorizontal,
