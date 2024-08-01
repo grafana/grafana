@@ -20,14 +20,14 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
   const [inputWidth, setInputWidth] = React.useState(minWidth);
 
   useEffect(() => {
-    setInputWidth(getWidthFor(value.toString(), minWidth, maxWidth));
+    setInputWidth(getWidthFor(value?.toString(), minWidth, maxWidth));
   }, [value, maxWidth, minWidth]);
 
   return (
     <Input
       {...restProps}
       ref={ref}
-      value={value.toString()}
+      value={value?.toString()}
       onChange={(event) => {
         setValue(event.currentTarget.value);
       }}
@@ -51,7 +51,7 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
   );
 });
 
-function getWidthFor(value: string, minWidth: number, maxWidth: number | undefined): number {
+function getWidthFor(value: Props['defaultValue'], minWidth: number, maxWidth: number | undefined): number {
   if (!value) {
     return minWidth;
   }
