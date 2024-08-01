@@ -19,7 +19,6 @@ jobs:
           ref: ${{ github.head_ref }}
 
       - name: Generate token
-        if: steps.crowdin-download.outputs.pull_request_url
         id: generate_token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         with:
@@ -110,7 +109,6 @@ jobs:
                 }
               }
             }
-
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
