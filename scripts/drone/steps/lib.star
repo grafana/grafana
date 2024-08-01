@@ -172,7 +172,7 @@ def enterprise_downstream_step(ver_mode):
       Drone step.
     """
     repo = "grafana/grafana-enterprise@"
-    if ver_mode == "pr":
+    if ver_mode == "pr" or ver_mode == "rrc":
         repo += "${DRONE_SOURCE_BRANCH}"
     else:
         repo += "main"
@@ -196,6 +196,9 @@ def enterprise_downstream_step(ver_mode):
     if ver_mode == "pr":
         step.update({"failure": "ignore"})
         step["settings"]["params"].append("OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}")
+
+    if ver_mode == "rrc":
+        step["settings"]["params"].append("SOURCE_TAG=${DRONE_TAG}")
 
     return step
 
@@ -1318,7 +1321,7 @@ def verify_linux_RPM_packages_step(depends_on = []):
             'echo "Step 3: Adding Grafana GPG key..."',
             "rpm --import https://rpm.grafana.com/gpg.key",
             'echo "Step 4: Configuring Grafana repository..."',
-            "echo '" + repo_config + "' > /etc/yum.repos.d/grafana.repo",
+            "echo -e '" + repo_config + "' > /etc/yum.repos.d/grafana.repo",
             'echo "Step 5: Checking RPM repository..."',
             "dnf list available grafana-${TAG}",
             "if [ $? -eq 0 ]; then",

@@ -421,6 +421,24 @@ func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
 			require.True(t, jobCalls.calledX(tcRuns), "should have the correct number of job calls")
 			require.True(t, gcom.httpCalls.calledX(tcRuns), "should have the correct number of gcom api calls")
 		})
+
+		t.Run("IsDisabled", func(t *testing.T) {
+			for _, tc := range []struct {
+				name                  string
+				checkForPluginUpdates bool
+				expIsDisabled         bool
+			}{
+				{name: "true", checkForPluginUpdates: true, expIsDisabled: false},
+				{name: "false", checkForPluginUpdates: false, expIsDisabled: true},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					cfg := setting.NewCfg()
+					cfg.CheckForPluginUpdates = tc.checkForPluginUpdates
+					svc := provideDynamic(t, srv.URL, provideDynamicOpts{cfg: cfg})
+					require.Equal(t, tc.expIsDisabled, svc.IsDisabled(), "IsDisabled should return correct value")
+				})
+			}
+		})
 	})
 }
 

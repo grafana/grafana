@@ -181,7 +181,7 @@ func InstallAPIs(
 				return storage, nil
 			default:
 			}
-			return grafanarest.NewDualWriter(currentMode, legacy, storage, reg), nil
+			return grafanarest.NewDualWriter(currentMode, legacy, storage, reg, key), nil
 		}
 	}
 

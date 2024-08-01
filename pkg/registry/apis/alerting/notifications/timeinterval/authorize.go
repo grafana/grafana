@@ -3,17 +3,16 @@ package timeinterval
 import (
 	"context"
 
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-
-	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
 func Authorize(ctx context.Context, ac accesscontrol.AccessControl, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 	if attr.GetResource() != resourceInfo.GroupResource().Resource {
 		return authorizer.DecisionNoOpinion, "", nil
 	}
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return authorizer.DecisionDeny, "valid user is required", err
 	}

@@ -143,7 +143,7 @@ export type ErrorResponseBody = {
   /** a human readable version of the error */
   message: string;
   /** Status An optional status to denote the cause of the error.
-
+    
     For example, a 412 Precondition Failed error may include additional information of why that error happened. */
   status?: string;
 };
@@ -159,11 +159,21 @@ export type MigrateDataResponseItemDto = {
   status: 'OK' | 'ERROR' | 'PENDING' | 'UNKNOWN';
   type: 'DASHBOARD' | 'DATASOURCE' | 'FOLDER';
 };
+export type SnapshotResourceStats = {
+  statuses?: {
+    [key: string]: number;
+  };
+  total?: number;
+  types?: {
+    [key: string]: number;
+  };
+};
 export type GetSnapshotResponseDto = {
   created?: string;
   finished?: string;
   results?: MigrateDataResponseItemDto[];
   sessionUid?: string;
+  stats?: SnapshotResourceStats;
   status?:
     | 'INITIALIZING'
     | 'CREATING'
@@ -172,6 +182,7 @@ export type GetSnapshotResponseDto = {
     | 'PENDING_PROCESSING'
     | 'PROCESSING'
     | 'FINISHED'
+    | 'CANCELED'
     | 'ERROR'
     | 'UNKNOWN';
   uid?: string;
@@ -188,6 +199,7 @@ export type SnapshotDto = {
     | 'PENDING_PROCESSING'
     | 'PROCESSING'
     | 'FINISHED'
+    | 'CANCELED'
     | 'ERROR'
     | 'UNKNOWN';
   uid?: string;

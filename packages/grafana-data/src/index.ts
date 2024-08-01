@@ -794,6 +794,7 @@ export {
   VariableOrigin,
   type VariableSuggestion,
   VariableSuggestionsScope,
+  OneClickMode,
 } from './types/dataLink';
 export { DataFrameType } from './types/dataFrameTypes';
 export {

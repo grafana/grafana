@@ -3,7 +3,6 @@ package resource
 import (
 	context "context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -20,21 +19,36 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// Package-level errors.
-var (
-	ErrNotFound                 = errors.New("resource not found")
-	ErrOptimisticLockingFailed  = errors.New("optimistic locking failed")
-	ErrUserNotFoundInContext    = errors.New("user not found in context")
-	ErrUnableToReadResourceJSON = errors.New("unable to read resource json")
-	ErrNotImplementedYet        = errors.New("not implemented yet")
-)
-
-// ResourceServer implements all services
+// ResourceServer implements all gRPC services
 type ResourceServer interface {
 	ResourceStoreServer
 	ResourceIndexServer
 	DiagnosticsServer
 	LifecycleHooks
+}
+
+type ListIterator interface {
+	Next() bool // sql.Rows
+
+	// Iterator error (if exts)
+	Error() error
+
+	// The token that can be used to start iterating *after* this item
+	ContinueToken() string
+
+	// ResourceVersion of the current item
+	ResourceVersion() int64
+
+	// Namespace of the current item
+	// Used for fast(er) authz filtering
+	Namespace() string
+
+	// Name of the current item
+	// Used for fast(er) authz filtering
+	Name() string
+
+	// Value for the current item
+	Value() []byte
 }
 
 // The StorageBackend is an internal abstraction that supports interacting with
@@ -46,15 +60,15 @@ type StorageBackend interface {
 	// Return the revisionVersion for this event or error
 	WriteEvent(context.Context, WriteEvent) (int64, error)
 
-	// Read a value from storage optionally at an explicit version
-	Read(context.Context, *ReadRequest) (*ReadResponse, error)
+	// Read a resource from storage optionally at an explicit version
+	ReadResource(context.Context, *ReadRequest) *ReadResponse
 
-	// When the ResourceServer executes a List request, it will first
+	// When the ResourceServer executes a List request, this iterator will
 	// query the backend for potential results.  All results will be
 	// checked against the kubernetes requirements before finally returning
 	// results.  The list options can be used to improve performance
 	// but are the the final answer.
-	PrepareList(context.Context, *ListRequest) (*ListResponse, error)
+	ListIterator(context.Context, *ListRequest, func(ListIterator) error) (int64, error)
 
 	// Get all events from the store
 	// For HA setups, this will be more events than the local WriteEvent above!
@@ -108,7 +122,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(identity.WithRequester(context.Background(),
 		&identity.StaticRequester{
-			Namespace:      identity.NamespaceServiceAccount,
+			Type:           identity.TypeServiceAccount,
 			Login:          "watcher", // admin user for watch
 			UserID:         1,
 			IsGrafanaAdmin: true,
@@ -150,11 +164,11 @@ type server struct {
 }
 
 // Init implements ResourceServer.
-func (s *server) Init() error {
+func (s *server) Init(ctx context.Context) error {
 	s.once.Do(func() {
 		// Call lifecycle hooks
 		if s.lifecycle != nil {
-			err := s.lifecycle.Init()
+			err := s.lifecycle.Init(ctx)
 			if err != nil {
 				s.initErr = fmt.Errorf("initialize Resource Server: %w", err)
 			}
@@ -172,18 +186,28 @@ func (s *server) Init() error {
 	return s.initErr
 }
 
-func (s *server) Stop() {
+func (s *server) Stop(ctx context.Context) error {
 	s.initErr = fmt.Errorf("service is stopping")
 
+	var stopFailed bool
 	if s.lifecycle != nil {
-		s.lifecycle.Stop()
+		err := s.lifecycle.Stop(ctx)
+		if err != nil {
+			stopFailed = true
+			s.initErr = fmt.Errorf("service stopeed with error: %w", err)
+		}
 	}
 
 	// Stops the streaming
 	s.cancel()
 
 	// mark the value as done
+	if stopFailed {
+		return s.initErr
+	}
 	s.initErr = fmt.Errorf("service is stopped")
+
+	return nil
 }
 
 // Old value indicates an update -- otherwise a create
@@ -279,12 +303,12 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	ctx, span := s.tracer.Start(ctx, "storage_server.Create")
 	defer span.End()
 
-	if err := s.Init(); err != nil {
+	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
 
 	rsp := &CreateResponse{}
-	found, _ := s.backend.Read(ctx, &ReadRequest{Key: req.Key})
+	found := s.backend.ReadResource(ctx, &ReadRequest{Key: req.Key})
 	if found != nil && len(found.Value) > 0 {
 		rsp.Error = &ErrorResult{
 			Code:    http.StatusConflict,
@@ -295,78 +319,40 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 
 	event, err := s.newEvent(ctx, req.Key, req.Value, nil)
 	if err != nil {
-		rsp.Error, err = errToStatus(err)
-		return rsp, err
+		rsp.Error = AsErrorResult(err)
+		return rsp, nil
 	}
 
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
-		rsp.Error, err = errToStatus(err)
+		rsp.Error = AsErrorResult(err)
 	}
-	return rsp, err
-}
-
-// Convert golang errors to status result errors that can be returned to a client
-func errToStatus(err error) (*ErrorResult, error) {
-	if err != nil {
-		apistatus, ok := err.(apierrors.APIStatus)
-		if ok {
-			s := apistatus.Status()
-			res := &ErrorResult{
-				Message: s.Message,
-				Reason:  string(s.Reason),
-				Code:    s.Code,
-			}
-			if s.Details != nil {
-				res.Details = &ErrorDetails{
-					Group:             s.Details.Group,
-					Kind:              s.Details.Kind,
-					Name:              s.Details.Name,
-					Uid:               string(s.Details.UID),
-					RetryAfterSeconds: s.Details.RetryAfterSeconds,
-				}
-				for _, c := range s.Details.Causes {
-					res.Details.Causes = append(res.Details.Causes, &ErrorCause{
-						Reason:  string(c.Type),
-						Message: c.Message,
-						Field:   c.Field,
-					})
-				}
-			}
-			return res, nil
-		}
-
-		// TODO... better conversion??
-		return &ErrorResult{
-			Message: err.Error(),
-			Code:    500,
-		}, nil
-	}
-	return nil, err
+	return rsp, nil
 }
 
 func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.Update")
 	defer span.End()
 
-	if err := s.Init(); err != nil {
+	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
 
 	rsp := &UpdateResponse{}
 	if req.ResourceVersion < 0 {
-		rsp.Error, _ = errToStatus(apierrors.NewBadRequest("update must include the previous version"))
+		rsp.Error = AsErrorResult(apierrors.NewBadRequest("update must include the previous version"))
 		return rsp, nil
 	}
 
-	latest, err := s.backend.Read(ctx, &ReadRequest{
+	latest := s.backend.ReadResource(ctx, &ReadRequest{
 		Key: req.Key,
 	})
-	if err != nil {
-		return nil, err
+	if latest.Error != nil {
+		return rsp, nil
 	}
 	if latest.Value == nil {
-		return nil, apierrors.NewBadRequest("current value does not exist")
+		rsp.Error = NewBadRequestError("current value does not exist")
+		return rsp, nil
 	}
 
 	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
@@ -375,7 +361,7 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 
 	event, err := s.newEvent(ctx, req.Key, req.Value, latest.Value)
 	if err != nil {
-		rsp.Error, err = errToStatus(err)
+		rsp.Error = AsErrorResult(err)
 		return rsp, err
 	}
 
@@ -383,18 +369,17 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 	event.PreviousRV = latest.ResourceVersion
 
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
-	rsp.Error, err = errToStatus(err)
 	if err != nil {
-		rsp.Error, err = errToStatus(err)
+		rsp.Error = AsErrorResult(err)
 	}
-	return rsp, err
+	return rsp, nil
 }
 
 func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.Delete")
 	defer span.End()
 
-	if err := s.Init(); err != nil {
+	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
 
@@ -403,14 +388,16 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 		return nil, apierrors.NewBadRequest("update must include the previous version")
 	}
 
-	latest, err := s.backend.Read(ctx, &ReadRequest{
+	latest := s.backend.ReadResource(ctx, &ReadRequest{
 		Key: req.Key,
 	})
-	if err != nil {
-		return nil, err
+	if latest.Error != nil {
+		rsp.Error = latest.Error
+		return rsp, nil
 	}
 	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
-		return nil, ErrOptimisticLockingFailed
+		rsp.Error = AsErrorResult(ErrOptimisticLockingFailed)
+		return rsp, nil
 	}
 
 	now := metav1.NewTime(time.UnixMilli(s.now()))
@@ -437,7 +424,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	obj.SetUpdatedTimestamp(&now.Time)
 	obj.SetManagedFields(nil)
 	obj.SetFinalizers(nil)
-	obj.SetUpdatedBy(requester.GetUID().String())
+	obj.SetUpdatedBy(requester.GetUID())
 	marker.TypeMeta = metav1.TypeMeta{
 		Kind:       "DeletedMarker",
 		APIVersion: "common.grafana.app/v0alpha1", // ?? or can we stick this in common?
@@ -450,41 +437,78 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	}
 
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
-	rsp.Error, err = errToStatus(err)
-	return rsp, err
+	if err != nil {
+		rsp.Error = AsErrorResult(err)
+	}
+	return rsp, nil
 }
 
 func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
-	if err := s.Init(); err != nil {
+	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
 
 	// if req.Key.Group == "" {
-	// 	status, _ := errToStatus(apierrors.NewBadRequest("missing group"))
+	// 	status, _ := AsErrorResult(apierrors.NewBadRequest("missing group"))
 	// 	return &ReadResponse{Status: status}, nil
 	// }
 	if req.Key.Resource == "" {
-		status, _ := errToStatus(apierrors.NewBadRequest("missing resource"))
-		return &ReadResponse{Error: status}, nil
+		return &ReadResponse{Error: NewBadRequestError("missing resource")}, nil
 	}
 
-	rsp, err := s.backend.Read(ctx, req)
-	if err != nil {
-		if rsp == nil {
-			rsp = &ReadResponse{}
-		}
-		rsp.Error, err = errToStatus(err)
-	}
-	return rsp, err
+	rsp := s.backend.ReadResource(ctx, req)
+	// TODO, check folder permissions etc
+	return rsp, nil
 }
 
 func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, error) {
-	if err := s.Init(); err != nil {
+	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
+	if req.Limit < 1 {
+		req.Limit = 50 // default max 50 items in a page
+	}
+	maxPageBytes := 1024 * 1024 * 2 // 2mb/page
+	pageBytes := 0
+	rsp := &ListResponse{}
+	rv, err := s.backend.ListIterator(ctx, req, func(iter ListIterator) error {
+		for iter.Next() {
+			if err := iter.Error(); err != nil {
+				return err
+			}
 
-	rsp, err := s.backend.PrepareList(ctx, req)
-	// Status???
+			// TODO: add authz filters
+
+			item := &ResourceWrapper{
+				ResourceVersion: iter.ResourceVersion(),
+				Value:           iter.Value(),
+			}
+
+			pageBytes += len(item.Value)
+			rsp.Items = append(rsp.Items, item)
+			if len(rsp.Items) >= int(req.Limit) || pageBytes >= maxPageBytes {
+				t := iter.ContinueToken()
+				if iter.Next() {
+					rsp.NextPageToken = t
+				}
+				break
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		rsp.Error = AsErrorResult(err)
+		return rsp, nil
+	}
+
+	if rv < 1 {
+		rsp.Error = &ErrorResult{
+			Code:    http.StatusInternalServerError,
+			Message: fmt.Sprintf("invalid resource version for list: %v", rv),
+		}
+		return rsp, nil
+	}
+	rsp.ResourceVersion = rv
 	return rsp, err
 }
 
@@ -508,11 +532,11 @@ func (s *server) initWatcher() error {
 }
 
 func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
-	if err := s.Init(); err != nil {
+	ctx := srv.Context()
+
+	if err := s.Init(ctx); err != nil {
 		return err
 	}
-
-	ctx := srv.Context()
 
 	// Start listening -- this will buffer any changes that happen while we backfill
 	stream, err := s.broadcaster.Subscribe(ctx)
@@ -565,7 +589,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 
 // History implements ResourceServer.
 func (s *server) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
-	if err := s.Init(); err != nil {
+	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
 	return s.index.History(ctx, req)
@@ -573,7 +597,7 @@ func (s *server) History(ctx context.Context, req *HistoryRequest) (*HistoryResp
 
 // Origin implements ResourceServer.
 func (s *server) Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error) {
-	if err := s.Init(); err != nil {
+	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
 	return s.index.Origin(ctx, req)
@@ -581,7 +605,7 @@ func (s *server) Origin(ctx context.Context, req *OriginRequest) (*OriginRespons
 
 // IsHealthy implements ResourceServer.
 func (s *server) IsHealthy(ctx context.Context, req *HealthCheckRequest) (*HealthCheckResponse, error) {
-	if err := s.Init(); err != nil {
+	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
 	return s.diagnostics.IsHealthy(ctx, req)

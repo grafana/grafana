@@ -8,12 +8,14 @@ comments: |
 
 You can customize the following standard options:
 
-- **Unit** - Choose which unit a field should use.
-- **Min**/**Max** - Set the minimum and maximum values used in percentage threshold calculations or leave these field empty for them to be calculated automatically.
-- **Field min/max** - Enable **Field min/max** to have Grafana calculate the min or max of each field individually, based on the minimum or maximum value of the field.
-- **Decimals** - Specify the number of decimals Grafana includes in the rendered value.
-- **Display name** - Set the display title of all fields. You can use variables in the field title.
-- **Color scheme** - Set single or multiple colors for your entire visualization.
-- **No value** - Enter what Grafana should display if the field value is empty or null. The default value is a hyphen (-).
+| Option        | Description                                                                                                                                       |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit          | Choose which unit a field should use.                                                                                                             |
+| Min/Max       | Set the minimum and maximum values used in percentage threshold calculations or leave these field empty for them to be calculated automatically.  |
+| Field min/max | Enable **Field min/max** to have Grafana calculate the min or max of each field individually, based on the minimum or maximum value of the field. |
+| Decimals      | Specify the number of decimals Grafana includes in the rendered value.                                                                            |
+| Display name  | Set the display title of all fields. You can use variables in the field title.                                                                    |
+| Color scheme  | Set single or multiple colors for your entire visualization.                                                                                      |
+| No value      | Enter what Grafana should display if the field value is empty or null. The default value is a hyphen (-).                                         |
 
 To learn more, refer to [Configure standard options](../../configure-standard-options/).

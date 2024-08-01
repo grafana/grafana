@@ -83,9 +83,12 @@ export const DefaultCell = (props: TableCellProps) => {
     cellProps.style = { ...cellProps.style, textWrap: 'wrap' };
   }
 
+  const { key, ...rest } = cellProps;
+
   return (
     <div
-      {...cellProps}
+      key={key}
+      {...rest}
       onMouseEnter={showActions ? onMouseEnter : undefined}
       onMouseLeave={showActions ? onMouseLeave : undefined}
       className={cellStyle}

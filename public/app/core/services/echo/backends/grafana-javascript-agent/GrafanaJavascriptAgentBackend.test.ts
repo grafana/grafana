@@ -68,6 +68,7 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     errorInstrumentalizationEnabled: true,
     consoleInstrumentalizationEnabled: true,
     webVitalsInstrumentalizationEnabled: true,
+    tracingInstrumentalizationEnabled: true,
     customEndpoint: '/log-grafana-javascript-agent',
     user: {
       email: 'darth.vader@sith.glx',
