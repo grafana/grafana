@@ -12,24 +12,6 @@ import (
 
 const tracingPrefix = "gRPC Server "
 
-func TracingUnaryInterceptor(tracer tracing.Tracer) grpc.UnaryServerInterceptor {
-	return func(
-		ctx context.Context,
-		req any,
-		info *grpc.UnaryServerInfo,
-		handler grpc.UnaryHandler,
-	) (resp any, err error) {
-		if md, ok := metadata.FromIncomingContext(ctx); ok {
-			ctx = otel.GetTextMapPropagator().Extract(ctx, propagation.HeaderCarrier(md))
-		}
-
-		ctx, span := tracer.Start(ctx, tracingPrefix+info.FullMethod)
-		defer span.End()
-		resp, err = handler(ctx, req)
-		return resp, err
-	}
-}
-
 func TracingStreamInterceptor(tracer tracing.Tracer) grpc.StreamServerInterceptor {
 	return func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		ctx := stream.Context()
