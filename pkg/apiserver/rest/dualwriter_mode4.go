@@ -124,7 +124,6 @@ func (d *DualWriterMode4) List(ctx context.Context, options *metainternalversion
 	return res, err
 }
 
-// TODO: uncomment when storage watch is implemented
 func (d *DualWriterMode4) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
 	var method = "watch"
 	d.Log.WithValues("kind", d.kind, "method", method, "mode", mode4Str).Info("starting to watch")
