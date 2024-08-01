@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { AdHocVariableFilter, GrafanaTheme2, PageLayoutType, VariableHide, urlUtil } from '@grafana/data';
+import { AdHocVariableFilter, GrafanaTheme2, PageLayoutType, RawTimeRange, VariableHide, urlUtil } from '@grafana/data';
 import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -34,8 +34,10 @@ import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { reportChangeInLabelFilters } from './interactions';
-import { MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS } from './shared';
-import { getMetricName } from './utils';
+import { getOtelTargets } from './otel/api';
+import { OtelTargetType } from './otel/types';
+import { MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_DATASOURCE_EXPR, VAR_FILTERS } from './shared';
+import { getMetricName, getTrailFor } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
   topScene?: SceneObject;
@@ -210,7 +212,68 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     this.setState(stateUpdate);
   }
 
+  checkOtelResources() {
+    // call up in to the parent trail
+    const trail = getTrailFor(this);
+    // get the time range
+    const timeRange: RawTimeRange | undefined = trail.state.$timeRange?.state;
+    if (timeRange) {
+      // get the data source UID for making calls to the DS
+      const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
+
+      getOtelTargets(datasourceUid, timeRange)
+        .then((targets: OtelTargetType[]) => {
+          // create a list of unique targets
+          let targetLabels: { job: string[]; instance: string[] } = {
+            job: [],
+            instance: [],
+          };
+
+          targets.forEach((target: OtelTargetType) => {
+            const job = target.job ?? '';
+            const instance = target.instance ?? '';
+
+            if (job && instance) {
+              targetLabels.job.push(job);
+              targetLabels.instance.push(instance);
+            }
+          });
+
+          if (targetLabels.job.length > 0 && targetLabels.instance.length > 0) {
+            // build the new query to get all the labels
+            const expr = `target_info{job=~"${targetLabels.job.join('|')}",instance=~"${targetLabels.instance.join('|')}"}`;
+            return getOtelTargets(datasourceUid, timeRange, expr);
+          } else {
+            throw new Error('Data source missing otel resources');
+          }
+        })
+        .then((targets) => {
+          // we now have a list of the single series target_info metric with all labels
+          // iterate through the labels to build a collection
+          let otelResources: string[] = [];
+          targets.forEach((target) => {
+            Object.keys(target).forEach((resource) => {
+              // ignore __name__, job, and instance
+              if (resource === '__name__' || resource === 'job' || resource === 'instance') {
+                return;
+              }
+
+              if (!otelResources.includes(resource)) {
+                otelResources.push(resource);
+              }
+            });
+          });
+          // store the labels for single series
+          // update state that data source has otel resources
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
+  }
+
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
+    model.checkOtelResources();
     const { controls, topScene, history, settings, metric } = model.useState();
     const chromeHeaderHeight = useChromeHeaderHeight();
     const styles = useStyles2(getStyles, chromeHeaderHeight ?? 0);
