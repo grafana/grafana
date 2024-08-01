@@ -30,6 +30,7 @@ const logs = [
       { key: 'message', value: 'oh the next log message' },
       { key: 'more', value: 'stuff' },
     ],
+    name: 'foo event name',
   },
 ];
 
@@ -71,5 +72,21 @@ describe('AccordianLogs tests', () => {
     expect(screen.queryAllByRole('cell')).toHaveLength(6);
     expect(screen.getByText(/^something$/)).toBeInTheDocument();
     expect(screen.getByText(/^else$/)).toBeInTheDocument();
+  });
+
+  it('renders event name and duration when events list is closed', () => {
+    setup({ isOpen: true, openedItems: new Set() } as AccordianLogsProps);
+    expect(
+      screen.getByRole('switch', { name: 'foo event name (15μs): message = oh the next log message more = stuff' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('switch', { name: '5μs: message = oh the log message something = else' })
+    ).toBeInTheDocument();
+  });
+
+  it('renders event name and duration when events list is open', () => {
+    setup({ isOpen: true, openedItems: new Set(logs) } as AccordianLogsProps);
+    expect(screen.getByRole('switch', { name: 'foo event name (15μs)' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: '5μs' })).toBeInTheDocument();
   });
 });
