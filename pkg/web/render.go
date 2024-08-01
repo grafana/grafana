@@ -25,13 +25,12 @@ import (
 	"golang.org/x/sync/singleflight"
 )
 
-// Renderer is a Middleware that injects a template renderer into the macaron context, enabling ctx.HTML calls in the handlers.
+// RendererWithFS is a Middleware that injects a template renderer into the macaron context, enabling ctx.HTML calls in the handlers.
 // If MACARON_ENV is set to "development" then templates will be recompiled on every request. For more performance, set the
 // MACARON_ENV environment variable to "production".
-func Renderer(dir, leftDelim, rightDelim string) Middleware {
+func RendererWithFS(fsys fs.FS, leftDelim, rightDelim string) Middleware {
 	var devEnvGr singleflight.Group
-	fs := os.DirFS(dir)
-	t, err := compileTemplates(fs, leftDelim, rightDelim)
+	t, err := compileTemplates(fsys, leftDelim, rightDelim)
 	if err != nil {
 		panic("Renderer: " + err.Error())
 	}
@@ -41,7 +40,7 @@ func Renderer(dir, leftDelim, rightDelim string) Middleware {
 			ctx.template = t
 			if Env == DEV {
 				tt, err, _ := devEnvGr.Do("dev", func() (any, error) {
-					return compileTemplates(fs, leftDelim, rightDelim)
+					return compileTemplates(fsys, leftDelim, rightDelim)
 				})
 				if err != nil {
 					panic("Context.HTML:" + err.Error())
@@ -53,11 +52,16 @@ func Renderer(dir, leftDelim, rightDelim string) Middleware {
 	}
 }
 
+func Renderer(dir, leftDelim, rightDelim string) Middleware {
+	return RendererWithFS(os.DirFS(dir), leftDelim, rightDelim)
+}
+
 func compileTemplates(filesystem fs.FS, leftDelim, rightDelim string) (*template.Template, error) {
 	t := template.New("")
 	t.Delims(leftDelim, rightDelim)
 	err := fs.WalkDir(filesystem, ".", func(path string, d fs.DirEntry, e error) error {
 		if e != nil {
+			// TODO: at least warn that template could not be loaded
 			return nil // skip unreadable or erroneous filesystem items
 		}
 		if d.IsDir() {
