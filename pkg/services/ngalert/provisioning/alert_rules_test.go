@@ -1486,7 +1486,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 
 	signedInUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
 		orgID: {
-			dashboards.ActionFoldersCreate: {},
+			dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll},
 			dashboards.ActionFoldersRead:   {dashboards.ScopeFoldersAll},
 			dashboards.ActionFoldersWrite:  {dashboards.ScopeFoldersAll}},
 	}}

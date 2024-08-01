@@ -30,7 +30,7 @@ import (
 
 var (
 	provisionerPermissions = []accesscontrol.Permission{
-		{Action: dashboards.ActionFoldersCreate},
+		{Action: dashboards.ActionFoldersCreate, Scope: dashboards.ScopeFoldersAll},
 		{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
 		{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
 		{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},

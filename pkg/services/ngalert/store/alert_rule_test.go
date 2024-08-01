@@ -1243,5 +1243,5 @@ func setupFolderService(t *testing.T, sqlStore db.ReplDB, cfg *setting.Cfg, feat
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore.DB())
 	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
 
-	return testutil.SetupFolderService(t, cfg, sqlStore.DB(), dashboardStore, folderStore, inProcBus, features, &actest.FakeAccessControl{})
+	return testutil.SetupFolderService(t, cfg, sqlStore.DB(), dashboardStore, folderStore, inProcBus, features, &actest.FakeAccessControl{ExpectedEvaluate: true})
 }

@@ -251,7 +251,7 @@ func TestService_RegisterActionSets(t *testing.T) {
 				},
 				{
 					Action:  "folders:edit",
-					Actions: []string{"folders:read", "dashboards:read", "folders:write", "dashboards:write"},
+					Actions: []string{"folders:read", "dashboards:read", "folders:write", "dashboards:write", "folders:create"},
 				},
 			},
 		},

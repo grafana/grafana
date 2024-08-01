@@ -839,6 +839,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 				dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll},
 				dashboards.ActionFoldersRead:    []string{dashboards.ScopeFoldersAll},
 				dashboards.ActionFoldersWrite:   []string{dashboards.ScopeFoldersAll},
+				dashboards.ActionFoldersCreate:  []string{dashboards.ScopeFoldersAll},
 			},
 		},
 	}
@@ -956,6 +957,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 				dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll},
 				dashboards.ActionFoldersRead:    []string{dashboards.ScopeFoldersAll},
 				dashboards.ActionFoldersWrite:   []string{dashboards.ScopeFoldersAll},
+				dashboards.ActionFoldersCreate:  []string{dashboards.ScopeFoldersAll},
 			},
 		},
 	}
