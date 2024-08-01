@@ -89,7 +89,14 @@ func (i *Identity) GetIdentityType() identity.IdentityType {
 
 // GetExtra implements identity.Requester.
 func (i *Identity) GetExtra() map[string][]string {
-	return map[string][]string{}
+	extra := map[string][]string{}
+	if i.IDToken != "" {
+		extra["id-token"] = []string{i.IDToken}
+	}
+	if i.GetOrgRole().IsValid() {
+		extra["user-instance-role"] = []string{string(i.GetOrgRole())}
+	}
+	return extra
 }
 
 // GetGroups implements identity.Requester.

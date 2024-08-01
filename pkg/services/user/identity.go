@@ -94,7 +94,14 @@ func (u *SignedInUser) GetName() string {
 
 // GetExtra implements Requester.
 func (u *SignedInUser) GetExtra() map[string][]string {
-	return map[string][]string{}
+	extra := map[string][]string{}
+	if u.IDToken != "" {
+		extra["id-token"] = []string{u.IDToken}
+	}
+	if u.OrgRole.IsValid() {
+		extra["user-instance-role"] = []string{string(u.GetOrgRole())}
+	}
+	return extra
 }
 
 // GetGroups implements Requester.
