@@ -1,13 +1,20 @@
-import general from './common';
-import { createHistogramQueryDefs } from './histogram';
-import { createSummaryQueryDefs } from './summary';
-import { MetricQueriesGenerator } from './types';
+import { AutoQueryInfo } from '../types';
 
-const SUFFIX_TO_ALTERNATIVE_GENERATOR: Record<string, MetricQueriesGenerator> = {
-  sum: createSummaryQueryDefs,
-  bucket: createHistogramQueryDefs,
-};
+import { createDefaultMetricQueryDefs } from './default';
+import { createHistogramMetricQueryDefs } from './histogram';
+import { createSummaryMetricQueryDefs } from './summary';
 
-export function getQueryGeneratorFor(suffix?: string) {
-  return (suffix && SUFFIX_TO_ALTERNATIVE_GENERATOR[suffix]) || general.generator;
+// TODO: when we have a known unit parameter, use that rather than having the generator functions infer from suffix
+export type MetricQueriesGenerator = (metricParts: string[]) => AutoQueryInfo;
+
+export function getQueryGeneratorFor(suffix?: string): MetricQueriesGenerator {
+  if (suffix === 'sum') {
+    return createSummaryMetricQueryDefs;
+  }
+
+  if (suffix === 'bucket') {
+    return createHistogramMetricQueryDefs;
+  }
+
+  return createDefaultMetricQueryDefs;
 }
