@@ -10,7 +10,7 @@ import {
   Receiver,
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
-import { FolderDTO, NotifierDTO, StoreState, ThunkResult } from 'app/types';
+import { FolderDTO, StoreState, ThunkResult } from 'app/types';
 import {
   CombinedRuleGroup,
   CombinedRuleNamespace,
@@ -49,7 +49,6 @@ import {
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { fetchAnnotations } from '../api/annotations';
 import { discoverFeatures } from '../api/buildInfo';
-import { fetchNotifiers } from '../api/grafana';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import { FetchRulerRulesFilter, deleteRulerRulesGroup, fetchRulerRules, setRulerRuleGroup } from '../api/ruler';
 import { RuleFormValues } from '../types/rule-form';
@@ -437,11 +436,6 @@ function reportSwitchingRoutingType(values: RuleFormValues, existingRule: RuleWi
   }
 }
 
-export const fetchGrafanaNotifiersAction = createAsyncThunk(
-  'unifiedalerting/fetchGrafanaNotifiers',
-  (): Promise<NotifierDTO[]> => withSerializedError(fetchNotifiers())
-);
-
 export const fetchGrafanaAnnotationsAction = createAsyncThunk(
   'unifiedalerting/fetchGrafanaAnnotations',
   (alertId: string): Promise<StateHistoryItem[]> => withSerializedError(fetchAnnotations(alertId))
@@ -618,31 +612,29 @@ export const deleteMuteTimingAction = (alertManagerSourceName: string, muteTimin
           mute_time_intervals: muteIntervalsFiltered,
         };
 
-    if (config) {
-      const { mute_time_intervals: _, ...configWithoutMuteTimings } = config?.alertmanager_config ?? {};
-      withAppEvents(
-        dispatch(
-          updateAlertManagerConfigAction({
-            alertManagerSourceName,
-            oldConfig: config,
-            newConfig: {
-              ...config,
-              alertmanager_config: {
-                ...configWithoutMuteTimings,
-                route: config.alertmanager_config.route
-                  ? removeMuteTimingFromRoute(muteTimingName, config.alertmanager_config?.route)
-                  : undefined,
-                ...time_intervals_without_mute_to_save,
-              },
+    const { mute_time_intervals: _, ...configWithoutMuteTimings } = config?.alertmanager_config ?? {};
+    return withAppEvents(
+      dispatch(
+        updateAlertManagerConfigAction({
+          alertManagerSourceName,
+          oldConfig: config,
+          newConfig: {
+            ...config,
+            alertmanager_config: {
+              ...configWithoutMuteTimings,
+              route: config.alertmanager_config.route
+                ? removeMuteTimingFromRoute(muteTimingName, config.alertmanager_config?.route)
+                : undefined,
+              ...time_intervals_without_mute_to_save,
             },
-          })
-        ),
-        {
-          successMessage: `Deleted "${muteTimingName}" from Alertmanager configuration`,
-          errorMessage: 'Failed to delete mute timing',
-        }
-      );
-    }
+          },
+        })
+      ),
+      {
+        successMessage: `Deleted "${muteTimingName}" from Alertmanager configuration`,
+        errorMessage: 'Failed to delete mute timing',
+      }
+    );
   };
 };
 

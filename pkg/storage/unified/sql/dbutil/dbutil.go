@@ -107,10 +107,8 @@ func Exec(ctx context.Context, x db.ContextExecer, tmpl *template.Template, req 
 }
 
 // Query uses `req` as input for a single-statement, set-returning query
-// generated with `tmpl`, and executed in `x`. The `Results` method of `req`
-// should return a deep copy since it will be used multiple times to decode each
-// value. It returns an error if more than one result set is returned.
-func Query[T any](ctx context.Context, x db.ContextExecer, tmpl *template.Template, req sqltemplate.WithResults[T]) ([]T, error) {
+// generated with `tmpl`, and executed in `x`.
+func QueryRows(ctx context.Context, x db.ContextExecer, tmpl *template.Template, req sqltemplate.SQLTemplateIface) (*sql.Rows, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("Query: invalid request for template %q: %w",
 			tmpl.Name(), err)
@@ -133,6 +131,18 @@ func Query[T any](ctx context.Context, x db.ContextExecer, tmpl *template.Templa
 			Query:        query,
 			RawQuery:     rawQuery,
 		}
+	}
+	return rows, err
+}
+
+// Query uses `req` as input for a single-statement, set-returning query
+// generated with `tmpl`, and executed in `x`. The `Results` method of `req`
+// should return a deep copy since it will be used multiple times to decode each
+// value. It returns an error if more than one result set is returned.
+func Query[T any](ctx context.Context, x db.ContextExecer, tmpl *template.Template, req sqltemplate.WithResults[T]) ([]T, error) {
+	rows, err := QueryRows(ctx, x, tmpl, req)
+	if err != nil {
+		return nil, err
 	}
 
 	var ret []T
