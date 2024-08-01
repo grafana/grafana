@@ -6,6 +6,7 @@ import { useExportMuteTimingsDrawer } from 'app/features/alerting/unified/compon
 
 import { Authorize } from '../../components/Authorize';
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { isLoading } from '../../hooks/useAsync';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { isDisabled } from '../../utils/mute-timings';
@@ -18,7 +19,7 @@ interface MuteTimingActionsButtonsProps {
 }
 
 export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }: MuteTimingActionsButtonsProps) => {
-  const [_deleteMuteTimingRequestState, deleteMuteTiming] = useDeleteMuteTiming({
+  const [deleteMuteTimingRequestState, deleteMuteTiming] = useDeleteMuteTiming({
     alertmanager: alertManagerSourceName!,
   });
   const [showDeleteDrawer, setShowDeleteDrawer] = useState(false);
@@ -33,7 +34,13 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
   });
 
   const viewOrEditButton = (
-    <LinkButton href={viewOrEditHref} variant="secondary" size="sm" icon={muteTiming.provisioned ? 'eye' : 'pen'}>
+    <LinkButton
+      href={viewOrEditHref}
+      variant="secondary"
+      size="sm"
+      icon={muteTiming.provisioned ? 'eye' : 'pen'}
+      disabled={isLoading(deleteMuteTimingRequestState)}
+    >
       {muteTiming.provisioned ? (
         <Trans i18nKey="alerting.common.view">View</Trans>
       ) : (
@@ -54,7 +61,7 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
             variant="secondary"
             size="sm"
             data-testid="export"
-            disabled={!exportAllowed}
+            disabled={!exportAllowed || isLoading(deleteMuteTimingRequestState)}
             onClick={() => showExportDrawer(muteTiming.name)}
           >
             <Trans i18nKey="alerting.common.export">Export</Trans>
@@ -63,7 +70,13 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
 
         {!muteTiming.provisioned && (
           <Authorize actions={[AlertmanagerAction.DeleteMuteTiming]}>
-            <LinkButton icon="trash-alt" variant="secondary" size="sm" onClick={() => setShowDeleteDrawer(true)}>
+            <LinkButton
+              icon="trash-alt"
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowDeleteDrawer(true)}
+              disabled={isLoading(deleteMuteTimingRequestState)}
+            >
               <Trans i18nKey="alerting.common.delete">Delete</Trans>
             </LinkButton>
           </Authorize>

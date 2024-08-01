@@ -268,9 +268,9 @@ export const useDeleteMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
     return updateConfiguration(action);
   });
 
-  const deleteFromK8sAPI = useAsync((name: string) => {
+  const deleteFromK8sAPI = useAsync(async (name: string) => {
     const namespace = getK8sNamespace();
-    return deleteGrafanaTimeInterval({
+    await deleteGrafanaTimeInterval({
       name,
       namespace,
       ioK8SApimachineryPkgApisMetaV1DeleteOptions: {},
