@@ -7,13 +7,15 @@ import (
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 )
 
 type DualWriterMode4 struct {
-	Legacy  LegacyStorage
-	Storage Storage
+	Legacy   LegacyStorage
+	Storage  Storage
+	watchImp rest.Watcher // watch is only available in mode 3 and 4
 	*dualWriterMetrics
 	kind string
 	Log  klog.Logger
@@ -122,12 +124,11 @@ func (d *DualWriterMode4) List(ctx context.Context, options *metainternalversion
 	return res, err
 }
 
-//TODO: uncomment when storage watch is implemented
-// func (d *DualWriterMode4) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
-// 	var method = "watch"
-// 	d.Log.WithValues("kind", d.kind, "method", method, "mode", mode4Str).Info("starting to watch")
-// 	return d.Storage.Watch(ctx, options)
-// }
+func (d *DualWriterMode4) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
+	var method = "watch"
+	d.Log.WithValues("method", method, "mode", mode4Str).Info("starting to watch")
+	return d.watchImp.Watch(ctx, options)
+}
 
 func (d *DualWriterMode4) Destroy() {
 	d.Storage.Destroy()
