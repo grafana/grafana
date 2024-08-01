@@ -128,6 +128,12 @@ func Test_permissionRegistry_IsPermissionValid(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name:    "invalid folders read with wrong attribute",
+			action:  "folders:read",
+			scope:   "folders:id:3",
+			wantErr: true,
+		},
+		{
 			name:    "valid app plugin settings read",
 			action:  "test-app.settings:read",
 			scope:   "",
@@ -164,34 +170,34 @@ func Test_permissionRegistry_GetScopePrefixes(t *testing.T) {
 	pr.RegisterPermission("test-app.settings:read", "")
 
 	tests := []struct {
-		name   string
-		action string
-		want   PrefixSet
-		shouldExist  bool
+		name        string
+		action      string
+		want        PrefixSet
+		shouldExist bool
 	}{
 		{
-			name:   "get folders read scope prefixes",
-			action: "folders:read",
-			want:   PrefixSet{"folders:uid:": true},
-			want1:  true,
+			name:        "get folders read scope prefixes",
+			action:      "folders:read",
+			want:        PrefixSet{"folders:uid:": true},
+			shouldExist: true,
 		},
 		{
-			name:   "get app plugin settings read scope prefixes",
-			action: "test-app.settings:read",
-			want:   PrefixSet{},
-			want1:  true,
+			name:        "get app plugin settings read scope prefixes",
+			action:      "test-app.settings:read",
+			want:        PrefixSet{},
+			shouldExist: true,
 		},
 		{
-			name:   "get unknown action scope prefixes",
-			action: "unknown:write",
-			want:   PrefixSet{},
-			want1:  false,
+			name:        "get unknown action scope prefixes",
+			action:      "unknown:write",
+			want:        PrefixSet{},
+			shouldExist: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, got1 := pr.GetScopePrefixes(tt.action)
-			if !tt.want1 {
+			if !tt.shouldExist {
 				require.False(t, got1)
 				return
 			}
