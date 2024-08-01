@@ -21,7 +21,6 @@ import { MatcherOperator, RouteWithID } from 'app/plugins/datasource/alertmanage
 
 import { useMuteTimingOptions } from '../../hooks/useMuteTimingOptions';
 import { FormAmRoute } from '../../types/amroutes';
-import { SupportedPlugin } from '../../types/pluginBridges';
 import { matcherFieldOptions } from '../../utils/alertmanager';
 import {
   amRouteToFormAmRoute,
@@ -306,14 +305,6 @@ export const AmRoutesExpandedForm = ({
     </form>
   );
 };
-
-function onCallFirst(receiver: AmRouteReceiver) {
-  if (receiver.grafanaAppReceiverType === SupportedPlugin.OnCall) {
-    return -1;
-  } else {
-    return 0;
-  }
-}
 
 const getStyles = (theme: GrafanaTheme2) => {
   const commonSpacing = theme.spacing(3.5);

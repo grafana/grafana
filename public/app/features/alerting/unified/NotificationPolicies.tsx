@@ -253,7 +253,6 @@ const AmRoutes = () => {
                 <Stack direction="column" gap={1}>
                   {rootRoute && (
                     <NotificationPoliciesFilter
-                      receivers={receivers}
                       onChangeMatchers={setLabelMatchersFilter}
                       onChangeReceiver={setContactPointFilter}
                       matchingCount={routesMatchingFilters.matchedRoutesWithPath.size}

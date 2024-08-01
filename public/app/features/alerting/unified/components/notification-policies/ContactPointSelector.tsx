@@ -34,7 +34,9 @@ export const ContactPointSelector = ({
     return {
       label: contactPoint.name,
       value: contactPoint,
-      component: () => <ContactPointReceiverSummary receivers={contactPoint.grafana_managed_receiver_configs} />,
+      component: () => (
+        <ContactPointReceiverSummary receivers={contactPoint.grafana_managed_receiver_configs} limit={2} />
+      ),
     };
   });
 

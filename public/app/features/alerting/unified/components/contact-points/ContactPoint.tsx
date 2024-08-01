@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { groupBy, size, take, upperFirst } from 'lodash';
+import { groupBy, size, upperFirst } from 'lodash';
 import { Fragment, ReactNode } from 'react';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
@@ -8,7 +8,6 @@ import { Trans } from 'app/core/internationalization';
 import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';
 import { ContactPointHeader } from 'app/features/alerting/unified/components/contact-points/ContactPointHeader';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
-import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
 
 import { INTEGRATION_ICONS } from '../../types/contact-points';
@@ -153,15 +152,16 @@ interface ContactPointReceiverMetadata {
 
 type ContactPointReceiverSummaryProps = {
   receivers: ReceiverConfigWithMetadata[];
+  limit?: number;
 };
 
 /**
  * This summary is used when we're dealing with non-Grafana managed alertmanager since they
  * don't have any metadata worth showing other than a summary of what types are configured for the contact point
  */
-export const ContactPointReceiverSummary = ({ receivers }: ContactPointReceiverSummaryProps) => {
+export const ContactPointReceiverSummary = ({ receivers, limit }: ContactPointReceiverSummaryProps) => {
   // limit for how many integrations are rendered
-  const INTEGRATIONS_LIMIT = 2;
+  const INTEGRATIONS_LIMIT = limit ?? Number.MAX_VALUE;
   const countByType = groupBy(receivers, (receiver) => receiver.type);
 
   const numberOfUniqueIntegrations = size(countByType);

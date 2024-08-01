@@ -19,7 +19,6 @@ import NotificationPolicies, { findRoutesMatchingFilters } from './NotificationP
 import { fetchAlertManagerConfig, fetchStatus, updateAlertManagerConfig } from './api/alertmanager';
 import { alertmanagerApi } from './api/alertmanagerApi';
 import { discoverAlertmanagerFeatures } from './api/buildInfo';
-import * as grafanaApp from './components/receivers/grafanaAppReceivers/grafanaApp';
 import { MockDataSourceSrv, mockDataSource, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
 import { defaultGroupBy } from './utils/amroutes';
 import { getAllDataSources } from './utils/config';

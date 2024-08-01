@@ -244,7 +244,6 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
                 </Text>
                 <ContactPointSelector
                   selectedContactPointName={filterState.contactPoint}
-                  showRefreshButton
                   selectProps={{
                     width: 40,
                     onChange: (selectValue) => {
