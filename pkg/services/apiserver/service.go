@@ -288,7 +288,10 @@ func (s *service) start(ctx context.Context) error {
 		}
 
 		// Create a client instance
-		client := resource.NewResourceStoreClientGRPC(conn)
+		client, err := resource.NewResourceStoreClientGRPC(conn)
+		if err != nil {
+			return err
+		}
 		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client, o.RecommendedOptions.Etcd.StorageConfig)
 
 	case grafanaapiserveroptions.StorageTypeLegacy:
