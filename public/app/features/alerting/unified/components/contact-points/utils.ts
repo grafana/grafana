@@ -34,13 +34,14 @@ export function getReceiverDescription(receiver: ReceiverConfigWithMetadata): Re
   if (!receiver.settings) {
     return undefined;
   }
+  const { settings } = receiver;
   switch (receiver.type) {
     case 'email': {
-      const hasEmailAddresses = 'addresses' in receiver.settings; // when dealing with alertmanager email_configs we don't normalize the settings
-      return hasEmailAddresses ? summarizeEmailAddresses(receiver.settings['addresses']) : undefined;
+      const addresses = settings.addresses || settings.to; // when dealing with alertmanager email_configs we don't normalize the settings
+      return addresses ? summarizeEmailAddresses(addresses) : undefined;
     }
     case 'slack': {
-      const recipient: string | undefined = receiver.settings['recipient'];
+      const recipient = settings.recipient || settings.channel;
       if (!recipient) {
         return;
       }
@@ -50,12 +51,10 @@ export function getReceiverDescription(receiver: ReceiverConfigWithMetadata): Re
       return `#${channelName}`;
     }
     case 'kafka': {
-      const topicName: string | undefined = receiver.settings['kafkaTopic'];
-      return topicName;
+      return settings.kafkaTopic;
     }
     case 'webhook': {
-      const url: string | undefined = receiver.settings['url'];
-      return url;
+      return settings.url;
     }
     case ReceiverTypes.OnCall: {
       return receiver[RECEIVER_PLUGIN_META_KEY]?.description;
@@ -123,11 +122,7 @@ export function enhanceContactPointsWithMetadata(
   const usedContactPoints = getUsedContactPoints(fullyInheritedTree);
   const usedContactPointsByName = groupBy(usedContactPoints, 'receiver');
 
-  const contactPointsList = alertmanagerConfiguration
-    ? (alertmanagerConfiguration?.alertmanager_config.receivers ?? [])
-    : (contactPoints ?? []);
-
-  const enhanced = contactPointsList.map((contactPoint) => {
+  const enhanced = contactPoints.map((contactPoint) => {
     const receivers = extractReceivers(contactPoint);
     const statusForReceiver = status.find((status) => status.name === contactPoint.name);
 

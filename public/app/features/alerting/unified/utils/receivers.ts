@@ -1,4 +1,4 @@
-import { isEmpty, times } from 'lodash';
+import { isEmpty } from 'lodash';
 
 import { GrafanaManagedReceiverConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
 
@@ -12,10 +12,14 @@ import { GrafanaManagedReceiverConfig, Receiver } from 'app/plugins/datasource/a
  * We don't normalize the configuration settings and those are blank for vanilla Alertmanager receivers.
  *
  * Example input:
- *  { name: 'my receiver', email_configs: [{ from: "foo@bar.com" }] }
+ *  ```
+ * { name: 'my receiver', email_configs: [{ from: "foo@bar.com" }] }
+ * ```
  *
  * Example output:
- *  { name: 'my receiver', grafana_managed_receiver_configs: [{ type: 'email', settings: {} }] }
+ *  ```
+ * { name: 'my receiver', grafana_managed_receiver_configs: [{ type: 'email', settings: {} }] }
+ * ```
  */
 export function extractReceivers(receiver: Receiver): GrafanaManagedReceiverConfig[] {
   if ('grafana_managed_receiver_configs' in receiver) {
@@ -27,13 +31,14 @@ export function extractReceivers(receiver: Receiver): GrafanaManagedReceiverConf
     .filter(([_, value]) => Array.isArray(value) && !isEmpty(value))
     .reduce((acc: GrafanaManagedReceiverConfig[], [key, value]) => {
       const type = key.replace('_configs', '');
-
-      const configs = times(value.length, () => ({
-        name: receiver.name,
-        type: type,
-        settings: [], // we don't normalize the configuration values
-        disableResolveMessage: false,
-      }));
+      const configs = value.map((settings: unknown) => {
+        return {
+          name: receiver.name,
+          type,
+          settings,
+          disableResolveMessage: false,
+        };
+      });
 
       return acc.concat(configs);
     }, []);

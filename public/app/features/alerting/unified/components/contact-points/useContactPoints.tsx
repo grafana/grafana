@@ -11,6 +11,7 @@ import {
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver,
   generatedReceiversApi,
 } from 'app/features/alerting/unified/openapi/receiversApi.gen';
+import { cloudNotifierTypes } from 'app/features/alerting/unified/utils/cloud-alertmanager-notifier-types';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { getNamespace, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 
@@ -175,7 +176,7 @@ export function useContactPointsWithStatus() {
       contactPoints: result.data
         ? enhanceContactPointsWithMetadata(
             fetchContactPointsStatus.data,
-            fetchReceiverMetadata.data,
+            isGrafanaAlertmanager ? fetchReceiverMetadata.data : cloudNotifierTypes,
             onCallMetadata,
             result.data.alertmanager_config.receivers ?? [],
             result.data
