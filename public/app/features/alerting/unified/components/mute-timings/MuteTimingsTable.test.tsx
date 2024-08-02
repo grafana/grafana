@@ -8,11 +8,11 @@ import {
   setMuteTimingsListError,
 } from 'app/features/alerting/unified/mocks/server/configure';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
-import { TIME_INTERVAL_UID_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/timeIntervals.k8s';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
 import { grantUserPermissions } from '../../mocks';
+import { TIME_INTERVAL_UID_HAPPY_PATH } from '../../mocks/server/handlers/k8s/timeIntervals.k8s';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
