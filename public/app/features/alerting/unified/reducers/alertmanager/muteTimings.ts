@@ -3,7 +3,7 @@ import { remove } from 'lodash';
 
 import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
-import { renameMuteTimings } from '../../utils/alertmanager';
+import { removeMuteTimingFromRoute, renameMuteTimings } from '../../utils/alertmanager';
 
 export const addMuteTimingAction = createAction<{ interval: MuteTimeInterval }>('muteTiming/add');
 export const updateMuteTimingAction = createAction<{
@@ -59,9 +59,15 @@ export const muteTimingsReducer = createReducer(initialState, (builder) => {
     // let's also check there
     .addCase(deleteMuteTimingAction, (draft, { payload }) => {
       const { name } = payload;
+      const { alertmanager_config } = draft;
+      const { time_intervals = [], mute_time_intervals = [] } = alertmanager_config;
 
-      remove(draft.alertmanager_config.time_intervals ?? [], (interval) => interval.name === name);
-      remove(draft.alertmanager_config.mute_time_intervals ?? [], (interval) => interval.name === name);
+      // remove the mute timings from the legacy and new time intervals definition
+      remove(time_intervals, (interval) => interval.name === name);
+      remove(mute_time_intervals, (interval) => interval.name === name);
+
+      // remove the mute timing from all routes
+      alertmanager_config.route = removeMuteTimingFromRoute(name, alertmanager_config.route ?? {});
     })
     .addDefaultCase((_state, action) => {
       throw new Error(`Unknown action for mute timing reducer: ${action.type}`);
