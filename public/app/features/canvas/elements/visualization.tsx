@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { EmbeddedScene, PanelBuilders, SceneFlexItem, SceneFlexLayout, SceneQueryRunner } from '@grafana/scenes';
 import { stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -16,15 +16,21 @@ import {
   defaultBgColor,
   defaultTextColor,
 } from '../element';
-import { Align, TextConfig, TextData, VAlign } from '../types';
+import { Align, VAlign, VizElementConfig, VizElementData } from '../types';
 
-class VisualizationDisplay extends PureComponent<CanvasElementProps<TextConfig, TextData>> {
+const panelTypes: Array<SelectableValue<string>> = Object.keys(PanelBuilders).map((type) => {
+  return { label: type, value: type };
+});
+class VisualizationDisplay extends PureComponent<CanvasElementProps<VizElementConfig, VizElementData>> {
   render() {
     const { data } = this.props;
     const styles = getStyles(config.theme2, data);
 
-    // TODO hardcoded for timeseries panel needs to be driven by element options
-    const panelToEmbed = PanelBuilders.timeseries().setTitle('Embedded Panel');
+    let panelToEmbed = PanelBuilders.timeseries().setTitle('Embedded Panel');
+    if (data?.vizType) {
+      // TODO make this better
+      panelToEmbed = PanelBuilders[data.vizType as keyof typeof PanelBuilders]().setTitle('Embedded Panel');
+    }
 
     // TODO data needs to be tied to element options and come from dashboard dataframes
     const panelData = new SceneQueryRunner({
@@ -78,7 +84,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, data) => ({
   }),
 }));
 
-export const visualizationItem: CanvasElementItem<TextConfig, TextData> = {
+export const visualizationItem: CanvasElementItem<VizElementConfig, VizElementData> = {
   id: 'visualization',
   name: 'Visualization',
   description: 'Visualization',
@@ -98,6 +104,7 @@ export const visualizationItem: CanvasElementItem<TextConfig, TextData> = {
       color: {
         fixed: defaultTextColor,
       },
+      vizType: 'timeseries',
     },
     background: {
       color: {
@@ -108,15 +115,16 @@ export const visualizationItem: CanvasElementItem<TextConfig, TextData> = {
   }),
 
   // Called when data changes
-  prepareData: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<TextConfig>) => {
+  prepareData: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<VizElementConfig>) => {
     const textConfig = elementOptions.config;
 
-    const data: TextData = {
+    const data: VizElementData = {
       text: textConfig?.text ? dimensionContext.getText(textConfig.text).value() : '',
       field: textConfig?.text?.field,
       align: textConfig?.align ?? Align.Center,
       valign: textConfig?.valign ?? VAlign.Middle,
       size: textConfig?.size,
+      vizType: textConfig?.vizType,
     };
 
     if (textConfig?.color) {
@@ -130,6 +138,14 @@ export const visualizationItem: CanvasElementItem<TextConfig, TextData> = {
   registerOptionsUI: (builder) => {
     const category = ['Visualization'];
     builder
+      .addSelect({
+        category,
+        path: 'config.vizType',
+        name: 'Viz Type',
+        settings: {
+          options: panelTypes,
+        },
+      })
       .addCustomEditor({
         category,
         id: 'textSelector',
