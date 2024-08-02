@@ -25,6 +25,7 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
     if (isOpen) {
       DashboardInteractions.toolbarShareClick();
     }
+
     setIsOpen(isOpen);
   }, []);
 
