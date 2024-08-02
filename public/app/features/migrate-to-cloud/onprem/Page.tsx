@@ -23,6 +23,7 @@ import { EmptyState } from './EmptyState/EmptyState';
 import { MigrationSummary } from './MigrationSummary';
 import { ResourcesTable } from './ResourcesTable';
 import { BuildSnapshotCTA, CreatingSnapshotCTA } from './SnapshotCTAs';
+import { SupportedTypesDisclosure } from './SupportedTypesDisclosure';
 
 /**
  * Here's how migrations work:
@@ -231,12 +232,15 @@ export const Page = () => {
         )}
 
         {snapshot.data?.results && snapshot.data.results.length > 0 && (
-          <ResourcesTable
-            resources={snapshot.data.results}
-            onChangePage={setPage}
-            numberOfPages={Math.ceil((snapshot?.data?.stats?.total || 0) / PAGE_SIZE)}
-            page={page}
-          />
+          <Stack gap={4} direction="column">
+            <ResourcesTable
+              resources={snapshot.data.results}
+              onChangePage={setPage}
+              numberOfPages={Math.ceil((snapshot?.data?.stats?.total || 0) / PAGE_SIZE)}
+              page={page}
+            />
+            <SupportedTypesDisclosure />
+          </Stack>
         )}
       </Stack>
 
