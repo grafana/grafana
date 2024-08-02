@@ -25,17 +25,6 @@ func NewScopedObject(typ, id, scope string) string {
 	return NewObject(typ, fmt.Sprintf("%s-%s", scope, id))
 }
 
-// rbac action to relation translation
-var actionTranslations = map[string]string{}
-
-type kindTranslation struct {
-	typ       string
-	orgScoped bool
-}
-
-// all kinds that we can translate into a openFGA object
-var kindTranslations = map[string]kindTranslation{}
-
 func TranslateToTuple(user string, action, kind, identifier string, orgID int64) (*openfgav1.TupleKey, bool) {
 	relation, ok := actionTranslations[action]
 	if !ok {
