@@ -124,8 +124,7 @@ func TestProcessTicks(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
 			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
         	            	# TYPE grafana_alerting_rule_group_rules gauge
-        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active"} 1
-        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="paused"} 0
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active",type="alerting"} 1
 				`, alertRule1.OrgID)
 
 		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
@@ -152,8 +151,7 @@ func TestProcessTicks(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
 			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
         	            	# TYPE grafana_alerting_rule_group_rules gauge
-        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active"} 2
-        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="paused"} 0
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active",type="alerting"} 2
 				`, alertRule1.OrgID)
 
 		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
@@ -208,8 +206,8 @@ func TestProcessTicks(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
 			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
         	            	# TYPE grafana_alerting_rule_group_rules gauge
-        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active"} 1
-        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="paused"} 1
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active",type="alerting"} 1
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="paused",type="alerting"} 1
 				`, alertRule1.OrgID)
 
 		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
@@ -241,8 +239,7 @@ func TestProcessTicks(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
 			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
         	            	# TYPE grafana_alerting_rule_group_rules gauge
-        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active"} 0
-        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="paused"} 2
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="paused",type="alerting"} 2
 				`, alertRule1.OrgID)
 
 		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
@@ -269,8 +266,7 @@ func TestProcessTicks(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
 			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
         	            	# TYPE grafana_alerting_rule_group_rules gauge
-        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active"} 2
-        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="paused"} 0
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active",type="alerting"} 2
 				`, alertRule1.OrgID)
 
 		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
@@ -296,8 +292,7 @@ func TestProcessTicks(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
 			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
         	            	# TYPE grafana_alerting_rule_group_rules gauge
-        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active"} 1
-        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="paused"} 0
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active",type="alerting"} 1
 				`, alertRule1.OrgID)
 
 		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")

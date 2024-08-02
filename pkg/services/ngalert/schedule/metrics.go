@@ -74,6 +74,7 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 	}
 
 	// Set metrics
+	sch.metrics.GroupRules.Reset()
 	for key, count := range buckets {
 		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(key.orgID), key.ruleType.String(), key.state).Set(float64(count))
 	}
