@@ -199,7 +199,7 @@
     "knip": "^5.10.0",
     "lerna": "8.1.7",
     "mini-css-extract-plugin": "2.9.0",
-    "msw": "2.3.4",
+    "msw": "2.3.5",
     "mutationobserver-shim": "0.3.7",
     "ngtemplate-loader": "2.1.0",
     "node-notifier": "10.0.1",
