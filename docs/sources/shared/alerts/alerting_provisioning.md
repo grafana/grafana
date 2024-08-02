@@ -10,6 +10,8 @@ The Alerting Provisioning HTTP API can be used to create, modify, and delete res
 
 For details about the differences between Grafana-managed and data source-managed alerts, refer to the [Introduction to alert rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/).
 
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
+
 ## Grafana-managed endpoints
 
 ### Alert rules
