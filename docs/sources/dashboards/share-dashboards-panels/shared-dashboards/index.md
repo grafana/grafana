@@ -175,6 +175,8 @@ You can check usage analytics about your externally shared dashboard by clicking
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-insights-11.2.png" max-width="400px" class="docs-image--no-shadow" alt="Dashboard insights icon" >}}
 
+<!--image to be updated -->
+
 Learn more about the kind of information provided in the [dashboard insights documentation](ref:dashboard-insights-documentation).
 
 ## Supported data sources
