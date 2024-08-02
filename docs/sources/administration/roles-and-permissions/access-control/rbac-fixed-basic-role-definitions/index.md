@@ -36,9 +36,11 @@ The following tables list permissions associated with basic and fixed roles.
 The following table has the existing built-in fixed role definitions. Other fixed roles might be added by plugins installed in Grafana.
 The UUID presented here can be used as an identifier for [Terraform provisioning](../rbac-terraform-provisioning).
 
-{{% admonition type="caution" %}}
-These UUIDs might not be available if your instance was populated before Grafana v10.2.0. You can use the roles API to determine the UUIDs for the roles you need. You can learn more about this [here]({{< relref "../manage-rbac-roles" >}}).
-{{% /admonition %}}
+{{< admonition type="caution" >}}
+These UUIDs might not be available if your instance was created before Grafana v10.2.0.
+
+To learn how to use the roles API to determine the role UUIDs, refer to [Manage RBAC roles](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles/).
+{{< /admonition >}}
 
 | Fixed role                                   | UUID                                | Permissions                                                                                                                                                                                                                                                                 | Description                                                                                                                                                                                                                                                                           |
 | -------------------------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
