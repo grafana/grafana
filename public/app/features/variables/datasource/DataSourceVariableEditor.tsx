@@ -102,7 +102,7 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
 
     return (
       <DataSourceVariableForm
-        query={variable.query}
+        query={variable.query ?? ''}
         regex={variable.regex}
         multi={variable.multi}
         includeAll={variable.includeAll}

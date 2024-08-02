@@ -130,7 +130,7 @@ export interface VariableWithMultiSupport extends VariableWithOptions {
 export interface VariableWithOptions extends BaseVariableModel {
   current: VariableOption | Record<string, never>;
   options: VariableOption[];
-  query: string;
+  query?: string;
 }
 
 export interface DashboardProps {

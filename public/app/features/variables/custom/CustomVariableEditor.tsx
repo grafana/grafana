@@ -35,7 +35,7 @@ class CustomVariableEditorUnconnected extends PureComponent<Props> {
   render() {
     return (
       <CustomVariableForm
-        query={this.props.variable.query}
+        query={this.props.variable.query ?? ''}
         multi={this.props.variable.multi}
         allValue={this.props.variable.allValue}
         includeAll={this.props.variable.includeAll}

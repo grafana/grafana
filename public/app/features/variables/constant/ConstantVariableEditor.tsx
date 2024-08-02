@@ -17,6 +17,6 @@ export class ConstantVariableEditor extends PureComponent<Props> {
   };
 
   render() {
-    return <ConstantVariableForm constantValue={this.props.variable.query} onChange={this.onChange} />;
+    return <ConstantVariableForm constantValue={this.props.variable.query ?? ''} onChange={this.onChange} />;
   }
 }

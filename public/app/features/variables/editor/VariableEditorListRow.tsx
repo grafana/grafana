@@ -121,7 +121,7 @@ function getDefinition(model: TypedVariableModel): string {
       definition = model.query;
     }
   } else if (hasOptions(model)) {
-    definition = model.query;
+    definition = model.query ?? '';
   }
 
   return definition;
