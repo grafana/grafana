@@ -198,17 +198,7 @@ export function useContactPointsWithStatus({
     skip: isGrafanaAlertmanager,
   });
 
-  return isGrafanaAlertmanager
-    ? {
-        error: grafanaResponse.error,
-        isLoading: grafanaResponse.isLoading,
-        contactPoints: grafanaResponse.contactPoints,
-      }
-    : {
-        error: alertmanagerConfigResponse.error,
-        isLoading: alertmanagerConfigResponse.isLoading,
-        contactPoints: alertmanagerConfigResponse.contactPoints,
-      };
+  return isGrafanaAlertmanager ? grafanaResponse : alertmanagerConfigResponse;
 }
 
 export function useDeleteContactPoint(selectedAlertmanager: string) {

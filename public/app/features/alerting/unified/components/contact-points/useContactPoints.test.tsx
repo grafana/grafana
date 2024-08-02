@@ -39,7 +39,12 @@ const getHookResponse = async (featureToggleEnabled: boolean) => {
     expect(result.current.isLoading).toBe(false);
   });
 
-  return result.current;
+  // Only return some properties, as we don't want to compare all
+  // RTK query properties in snapshots/comparison between k8s and non-k8s implementations
+  // (would include properties like requestId, fulfilled, etc.)
+  const { contactPoints, error, isLoading } = result.current;
+
+  return { contactPoints, error, isLoading };
 };
 
 describe('useContactPoints', () => {
