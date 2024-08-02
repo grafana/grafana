@@ -85,7 +85,7 @@ Sign in to Grafana and navigate to **Administration > Authentication > Configure
 
       Use the [PKCS #8](https://en.wikipedia.org/wiki/PKCS_8) format to issue the private key.
 
-      For more information, refer to an [example on how to generate SAML credentials]({{< relref "../saml#generate-private-key-for-saml-authentication" >}}).
+      For more information, refer to an [example on how to generate SAML credentials]({{< relref "../saml#example-of-how-to-generate-saml-credentials" >}}).
 
    1. Choose which signature algorithm should be used.
 
