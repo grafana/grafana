@@ -152,11 +152,14 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 
 	for _, dep := range extractedArchive.Dependencies {
 		services.Logger.Infof("Fetching %s dependency %s...", pluginID, dep.ID)
-		return doInstallPlugin(ctx, dep.ID, dep.Version, pluginInstallOpts{
+		err = doInstallPlugin(ctx, dep.ID, dep.Version, pluginInstallOpts{
 			insecure:  o.insecure,
 			repoURL:   o.repoURL,
 			pluginDir: o.pluginDir,
 		}, installing)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -233,6 +233,12 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       name: 'Cloudflare',
       imgUrl: 'public/img/plugins/cloudflare.jpg',
     }),
+    getPhantomPlugin({
+      id: 'grafana-cockroachdb-datasource',
+      description: 'CockroachDB datasource',
+      name: 'CockroachDB',
+      imgUrl: 'public/img/plugins/cockroachdb.jpg',
+    }),
   ];
 }
 

@@ -1,11 +1,8 @@
 import { SelectableValue } from '@grafana/data';
 import { Select, SelectCommonProps, Text, Stack } from '@grafana/ui';
 
-import {
-  RECEIVER_META_KEY,
-  RECEIVER_PLUGIN_META_KEY,
-  useContactPointsWithStatus,
-} from '../contact-points/useContactPoints';
+import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY } from '../contact-points/constants';
+import { useContactPointsWithStatus } from '../contact-points/useContactPoints';
 import { ReceiverConfigWithMetadata } from '../contact-points/utils';
 
 export const ContactPointSelector = (props: SelectCommonProps<string>) => {

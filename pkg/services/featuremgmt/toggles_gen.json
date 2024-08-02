@@ -429,14 +429,18 @@
     {
       "metadata": {
         "name": "autoMigrateXYChartPanel",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-03-22T15:44:37Z"
+        "resourceVersion": "1722537244598",
+        "creationTimestamp": "2024-03-22T15:44:37Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-01 18:34:04.598082 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Migrate old XYChart panel to new XYChart2 model",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
