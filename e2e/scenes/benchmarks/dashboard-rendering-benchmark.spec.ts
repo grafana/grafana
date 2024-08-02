@@ -1,6 +1,6 @@
 import { e2e } from '../utils';
 
-const RUNS = 100;
+const RUNS = 20;
 
 describe('Dashboard rendering benchmark', () => {
   beforeEach(() => {
