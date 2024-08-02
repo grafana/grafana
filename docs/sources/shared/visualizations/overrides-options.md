@@ -6,7 +6,7 @@ comments: |
 
 Overrides allow you to customize visualization settings for specific fields or series. When you add an override rule, it targets a particular set of fields and lets you define multiple options for how that field is displayed.
 
-Choose from one the following override options:
+Choose from the following override options:
 
 | Option                         | Description                                                                                                   |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------- |
