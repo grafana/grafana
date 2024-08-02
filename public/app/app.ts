@@ -105,6 +105,7 @@ import { createQueryVariableAdapter } from './features/variables/query/adapter';
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
 import { configureStore } from './store/configureStore';
+import { DashboardBenchmarkBackend } from './core/services/echo/backends/DashboardBenchmarkBackend';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -286,7 +287,12 @@ function initExtensions() {
 }
 
 function initEchoSrv() {
-  setEchoSrv(new Echo({ debug: process.env.NODE_ENV === 'development' }));
+  const echo = new Echo({ debug: process.env.NODE_ENV === 'development' });
+
+  // TODO: Run only when performing benchmark run
+  // @ts-ignore
+  window.__grafanaEcho = echo;
+  setEchoSrv(echo);
 
   window.addEventListener('load', (e) => {
     const loadMetricName = 'frontend_boot_load_time_seconds';
@@ -303,6 +309,9 @@ function initEchoSrv() {
       reportMetricPerformanceMark(cssLoadMetricName);
     }
   });
+
+  // TODO: Run only when performing benchmark run
+  registerEchoBackend(new DashboardBenchmarkBackend({}));
 
   if (contextSrv.user.orgRole !== '') {
     registerEchoBackend(new PerformanceBackend({}));

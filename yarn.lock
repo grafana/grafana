@@ -3110,13 +3110,13 @@ __metadata:
   linkType: soft
 
 "@grafana/e2e-selectors@npm:^11.0.0":
-  version: 11.1.0
-  resolution: "@grafana/e2e-selectors@npm:11.1.0"
+  version: 11.1.3
+  resolution: "@grafana/e2e-selectors@npm:11.1.3"
   dependencies:
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
     tslib: "npm:2.6.3"
     typescript: "npm:5.4.5"
-  checksum: 10/010a32e8b562d0da83b008646b9928a96a79957096eed713aa67b227d8ad6055d22cc0ec26f87fd9839cfb28344d0012f49c3c823defc6e91f4ab05ed7d8c465
+  checksum: 10/0e9588bf6ab9c8747bb29831e8276c0ea0df0aa376d336347ad57e6eb9e1d8f0d07025897f4e06a026145f090b40bee60c3a64bbc6570c1686270fb2ba2c6537
   languageName: node
   linkType: hard
 
@@ -3581,9 +3581,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:5.7.2":
-  version: 5.7.2
-  resolution: "@grafana/scenes@npm:5.7.2"
+"@grafana/scenes@npm:5.7.4--canary.858.10213075790.0":
+  version: 5.7.4--canary.858.10213075790.0
+  resolution: "@grafana/scenes@npm:5.7.4--canary.858.10213075790.0"
   dependencies:
     "@grafana/e2e-selectors": "npm:^11.0.0"
     "@leeoniya/ufuzzy": "npm:^1.0.14"
@@ -3598,7 +3598,7 @@ __metadata:
     "@grafana/ui": ">=10.4"
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/8e52cb6761e1e0a4ad21f5961d775c3e3c960b7921d2ae901aeac8bfd16ad5bd648c25243e6976cb352e2b2c7c65885ef21fc3408cc2b0bdfc734a63162233a6
+  checksum: 10/fefa02543d41a7fa36209a7929d152bd3ae1042cecf06173b3f5eacb71d8f11673915ee2c8267b38956b116df20f41e7bb368242ee42e1ff6cac0093f578375c
   languageName: node
   linkType: hard
 
@@ -17195,7 +17195,7 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:5.7.2"
+    "@grafana/scenes": "npm:5.7.4--canary.858.10213075790.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"

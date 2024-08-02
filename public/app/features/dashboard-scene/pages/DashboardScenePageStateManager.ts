@@ -1,5 +1,6 @@
 import { locationUtil } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { sceneGraph } from '@grafana/scenes';
 import { defaultDashboard } from '@grafana/schema';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { default as localStorageStore } from 'app/core/store';
@@ -191,7 +192,10 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
       this.setState({ dashboard: dashboard, isLoading: false });
       const measure = stopMeasure(LOAD_SCENE_MEASUREMENT);
+      const queryController = sceneGraph.getQueryController(dashboard);
+
       trackDashboardSceneLoaded(dashboard, measure?.duration);
+      queryController?.startProfile(dashboard);
 
       if (options.route !== DashboardRoutes.New) {
         emitDashboardViewEvent({
