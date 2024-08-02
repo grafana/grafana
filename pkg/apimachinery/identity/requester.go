@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	authnlib "github.com/grafana/authlib/authn"
 	"k8s.io/apiserver/pkg/authentication/user"
 )
 
@@ -77,6 +78,8 @@ type Requester interface {
 	// GetIDToken returns a signed token representing the identity that can be forwarded to plugins and external services.
 	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
 	GetIDToken() string
+	// GetIDClaims returns the claims of the ID token.
+	GetIDClaims() *authnlib.Claims[authnlib.IDTokenClaims]
 }
 
 // IntIdentifier converts a string identifier to an int64.

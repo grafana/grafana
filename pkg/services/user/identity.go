@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	authnlib "github.com/grafana/authlib/authn"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -40,9 +42,11 @@ type SignedInUser struct {
 	Teams            []int64
 	// Permissions grouped by orgID and actions
 	Permissions map[int64]map[string][]string `json:"-"`
+
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
-	IDToken string `json:"-" xorm:"-"`
+	IDToken       string                                   `json:"-" xorm:"-"`
+	IDTokenClaims *authnlib.Claims[authnlib.IDTokenClaims] `json:"-" xorm:"-"`
 
 	// When other settings are not deterministic, this value is used
 	FallbackType identity.IdentityType
@@ -308,4 +312,8 @@ func (u *SignedInUser) GetDisplayName() string {
 
 func (u *SignedInUser) GetIDToken() string {
 	return u.IDToken
+}
+
+func (u *SignedInUser) GetIDClaims() *authnlib.Claims[authnlib.IDTokenClaims] {
+	return u.IDTokenClaims
 }

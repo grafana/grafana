@@ -1,6 +1,10 @@
 package identity
 
-import "fmt"
+import (
+	"fmt"
+
+	authnlib "github.com/grafana/authlib/authn"
+)
 
 var _ Requester = &StaticRequester{}
 
@@ -25,9 +29,10 @@ type StaticRequester struct {
 	AllowedKubernetesNamespace string
 	IsGrafanaAdmin             bool
 	// Permissions grouped by orgID and actions
-	Permissions map[int64]map[string][]string
-	IDToken     string
-	CacheKey    string
+	Permissions   map[int64]map[string][]string
+	IDToken       string
+	IDTokenClaims *authnlib.Claims[authnlib.IDTokenClaims]
+	CacheKey      string
 }
 
 // GetRawIdentifier implements Requester.
@@ -207,4 +212,8 @@ func (u *StaticRequester) GetDisplayName() string {
 
 func (u *StaticRequester) GetIDToken() string {
 	return u.IDToken
+}
+
+func (u *StaticRequester) GetIDClaims() *authnlib.Claims[authnlib.IDTokenClaims] {
+	return u.IDTokenClaims
 }
