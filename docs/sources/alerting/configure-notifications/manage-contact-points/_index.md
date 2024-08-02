@@ -164,6 +164,7 @@ The following table lists the contact point integrations supported by Grafana.
 | Google Chat                  | `googlechat`              |
 | [Grafana Oncall](ref:oncall) | `oncall`                  |
 | Kafka REST Proxy             | `kafka`                   |
+| MQTT                         | `mqtt`                    |
 | Line                         | `line`                    |
 | [Microsoft Teams](ref:teams) | `teams`                   |
 | [Opsgenie](ref:opsgenie)     | `opsgenie`                |

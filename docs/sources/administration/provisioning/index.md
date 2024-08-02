@@ -504,6 +504,17 @@ The following sections detail the supported settings and secure settings for eac
 | ----- | -------------- |
 | token | yes            |
 
+#### Alert notification `MQTT`
+
+| Name               | Secure setting |
+| ------------------ | -------------- |
+| brokerUrl          |                |
+| clientId           |                |
+| topic              |                |
+| username           |                |
+| password           | yes            |
+| insecureSkipVerify |                |
+
 #### Alert notification `pagerduty`
 
 | Name           | Secure setting |
