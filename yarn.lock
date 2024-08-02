@@ -3357,7 +3357,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-web-sdk@npm:1.9.0, @grafana/faro-web-sdk@npm:^1.3.6, @grafana/faro-web-sdk@npm:^1.8.2":
+"@grafana/faro-web-sdk@npm:1.9.0, @grafana/faro-web-sdk@npm:^1.3.6, @grafana/faro-web-sdk@npm:^1.9.0":
   version: 1.9.0
   resolution: "@grafana/faro-web-sdk@npm:1.9.0"
   dependencies:
@@ -3369,10 +3369,10 @@ __metadata:
   linkType: hard
 
 "@grafana/faro-web-tracing@npm:^1.8.2":
-  version: 1.8.2
-  resolution: "@grafana/faro-web-tracing@npm:1.8.2"
+  version: 1.9.0
+  resolution: "@grafana/faro-web-tracing@npm:1.9.0"
   dependencies:
-    "@grafana/faro-web-sdk": "npm:^1.8.2"
+    "@grafana/faro-web-sdk": "npm:^1.9.0"
     "@opentelemetry/api": "npm:^1.9.0"
     "@opentelemetry/context-zone": "npm:1.21.0"
     "@opentelemetry/core": "npm:^1.25.0"
@@ -3384,7 +3384,7 @@ __metadata:
     "@opentelemetry/resources": "npm:^1.25.0"
     "@opentelemetry/sdk-trace-web": "npm:^1.25.0"
     "@opentelemetry/semantic-conventions": "npm:^1.25.0"
-  checksum: 10/6dd5d07b887de71f37176d01c68602677ebfb9fd9dbc4d6aa2456ec95fd9ceda7556ca71571f4cbaa59b126baebb8424cf34f977c6f3c10cbb3afab1692ebfc4
+  checksum: 10/53aa9105c5bff80025c4d0aca0f4be90338b03143615a11207237a543bbfe14e9573d3617b52ef777dd32826bcdf80ba9dd96db0742caf9d30b0764c6d5781ca
   languageName: node
   linkType: hard
 
