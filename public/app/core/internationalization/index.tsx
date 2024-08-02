@@ -1,5 +1,6 @@
 import i18n, { InitOptions, TFunction } from 'i18next';
 import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetector';
+import { ReactElement } from 'react';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
 import { DEFAULT_LANGUAGE, VALID_LANGUAGES, NAMESPACES } from './constants';
@@ -56,8 +57,15 @@ export function changeLanguage(locale: string) {
   return i18n.changeLanguage(validLocale);
 }
 
-export const Trans: typeof I18NextTrans = (props) => {
-  return <I18NextTrans shouldUnescape {...props} />;
+type I18NextTransType = typeof I18NextTrans;
+type I18NextTransProps = Parameters<I18NextTransType>[0];
+
+interface TransProps extends I18NextTransProps {
+  i18nKey: string;
+}
+
+export const Trans = (props: TransProps): ReactElement => {
+  return <I18NextTrans shouldUnescape ns={NAMESPACES} {...props} />;
 };
 
 // Wrap t() to provide default namespaces and enforce a consistent API

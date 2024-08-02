@@ -1,6 +1,5 @@
 {
   "_comment": "Ŧĥę čőđę įş ŧĥę şőūřčę őƒ ŧřūŧĥ ƒőř Ēŉģľįşĥ pĥřäşęş. Ŧĥęy şĥőūľđ þę ūpđäŧęđ įŉ ŧĥę čőmpőŉęŉŧş đįřęčŧľy, äŉđ äđđįŧįőŉäľ pľūřäľş şpęčįƒįęđ įŉ ŧĥįş ƒįľę.",
-  "{unit}": "{ūŉįŧ}",
   "access-control": {
     "add-permission": {
       "role-label": "Ŗőľę",
@@ -669,7 +668,6 @@
       "message": "Ńő đäŧä şőūřčęş ƒőūŉđ"
     }
   },
-  "Description": "Đęşčřįpŧįőŉ",
   "explore": {
     "add-to-dashboard": "Åđđ ŧő đäşĥþőäřđ",
     "add-to-library-modal": {
@@ -940,7 +938,6 @@
       "refresh": "Ŗęƒřęşĥ"
     }
   },
-  "Labels": "Ŀäþęľş",
   "library-panel": {
     "add-modal": {
       "cancel": "Cäŉčęľ",
@@ -1541,7 +1538,6 @@
     },
     "title": "Ŀäŧęşŧ ƒřőm ŧĥę þľőģ"
   },
-  "No description available": "Ńő đęşčřįpŧįőŉ äväįľäþľę",
   "notifications": {
     "empty-state": {
       "description": "Ńőŧįƒįčäŧįőŉş yőū ĥävę řęčęįvęđ ŵįľľ äppęäř ĥęřę",
@@ -2233,15 +2229,22 @@
       "select-search-input": "Ŧypę ŧő şęäřčĥ (čőūŉŧřy, čįŧy, äþþřęvįäŧįőŉ)"
     }
   },
+  "trails": {
+    "metric-overview": {
+      "description-label": "Đęşčřįpŧįőŉ",
+      "labels-label": "Ŀäþęľş",
+      "no-description": "Ńő đęşčřįpŧįőŉ äväįľäþľę",
+      "type-label": "Ŧypę",
+      "unit-label": "Ůŉįŧ",
+      "unknown-type": "Ůŉĸŉőŵŉ"
+    }
+  },
   "transformations": {
     "empty": {
       "add-transformation-body": "Ŧřäŉşƒőřmäŧįőŉş äľľőŵ đäŧä ŧő þę čĥäŉģęđ įŉ väřįőūş ŵäyş þęƒőřę yőūř vįşūäľįžäŧįőŉ įş şĥőŵŉ.<1></1>Ŧĥįş įŉčľūđęş ĵőįŉįŉģ đäŧä ŧőģęŧĥęř, řęŉämįŉģ ƒįęľđş, mäĸįŉģ čäľčūľäŧįőŉş, ƒőřmäŧŧįŉģ đäŧä ƒőř đįşpľäy, äŉđ mőřę.",
       "add-transformation-header": "Ŝŧäřŧ ŧřäŉşƒőřmįŉģ đäŧä"
     }
   },
-  "Type": "Ŧypę",
-  "Unit": "Ůŉįŧ",
-  "Unknown": "Ůŉĸŉőŵŉ",
   "user-orgs": {
     "current-org-button": "Cūřřęŉŧ",
     "name-column": "Ńämę",
