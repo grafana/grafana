@@ -44,6 +44,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
+  shared-dashboards:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/dashboards-public/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/shared-dashboards/
 ---
 
 # Share dashboards and panels
@@ -70,8 +75,7 @@ As of Grafana 8.0, anonymous access permission is not available in Grafana Cloud
 You can share dashboards in the following ways:
 
 - [Internally with a link](#share-internally)
-- [Externally by email (to specific people)](#share-externally-with-specific-people)
-- [Externally with a link (to anyone)](#share-externally-to-anyone-with-a-link)
+- [Externally with anyone or specific people](#share-externally)
 - [As a report](#schedule-a-report)
 - [As a snapshot](#share-a-snapshot)
 - [As a PDF export](#export-a-dashboard-as-pdf)
@@ -104,11 +108,11 @@ Once you have a customized internal link, you can share it quickly by following 
 
 This link has any customizations like time range locking or theme you've previously set.
 
-### Share externally with specific people
+### Share externally
 
-### Share externally to anyone with a link
+Externally shared dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to make your dashboard available to the world without requiring access to your Grafana organization.
 
-#### Update access to an external dashboard link
+Learn how to configure and manage externally shared dashboards in [Externally shared dashboards](ref:shared-dashboards).
 
 ### Schedule a report
 
