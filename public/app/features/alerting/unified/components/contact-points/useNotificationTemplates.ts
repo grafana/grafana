@@ -110,4 +110,29 @@ export function useUpdateNotificationTemplate(amSourceName?: string) {
   };
 }
 
-export function useDeleteNotificationTemplate(amSourceName?: string) {}
+export function useDeleteNotificationTemplate(amSourceName?: string) {
+  const dispatch = useDispatch();
+  const [fetchAmConfig] = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useLazyQuery();
+
+  return async (templateName: string) => {
+    if (!amSourceName) {
+      return Promise.reject(new Error('Alertmanager source name is required.'));
+    }
+
+    const amConfig = await fetchAmConfig(amSourceName).unwrap();
+
+    const updatedConfig = produce(amConfig, (draft) => {
+      delete draft.template_files[templateName];
+      draft.alertmanager_config.templates = draft.alertmanager_config.templates?.filter((t) => t !== templateName);
+    });
+
+    return dispatch(
+      updateAlertManagerConfigAction({
+        alertManagerSourceName: amSourceName,
+        newConfig: updatedConfig,
+        oldConfig: amConfig,
+        successMessage: 'Template deleted.',
+      })
+    ).unwrap();
+  };
+}

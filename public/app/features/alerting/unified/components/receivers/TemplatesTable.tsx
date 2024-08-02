@@ -1,17 +1,15 @@
 import { Fragment, useState } from 'react';
 
 import { ConfirmModal, useStyles2 } from '@grafana/ui';
-import { useDispatch } from 'app/types';
 
 import { Authorize } from '../../components/Authorize';
 import { AlertmanagerAction } from '../../hooks/useAbilities';
-import { deleteTemplateAction } from '../../state/actions';
 import { getAlertTableStyles } from '../../styles/table';
 import { makeAMLink } from '../../utils/misc';
 import { CollapseToggle } from '../CollapseToggle';
 import { DetailsField } from '../DetailsField';
 import { ProvisioningBadge } from '../Provisioning';
-import { NotificationTemplate } from '../contact-points/useNotificationTemplates';
+import { NotificationTemplate, useDeleteNotificationTemplate } from '../contact-points/useNotificationTemplates';
 import { ActionIcon } from '../rules/ActionIcon';
 
 import { TemplateEditor } from './TemplateEditor';
@@ -22,15 +20,16 @@ interface Props {
 }
 
 export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
-  const dispatch = useDispatch();
+  const deleteTemplate = useDeleteNotificationTemplate(alertManagerName);
+
   const [expandedTemplates, setExpandedTemplates] = useState<Record<string, boolean>>({});
   const tableStyles = useStyles2(getAlertTableStyles);
 
   const [templateToDelete, setTemplateToDelete] = useState<string>();
 
-  const deleteTemplate = () => {
+  const onDeleteTemplate = async () => {
     if (templateToDelete) {
-      dispatch(deleteTemplateAction(templateToDelete, alertManagerName));
+      await deleteTemplate(templateToDelete);
     }
     setTemplateToDelete(undefined);
   };
@@ -154,7 +153,7 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
           title="Delete template"
           body={`Are you sure you want to delete template "${templateToDelete}"?`}
           confirmText="Yes, delete"
-          onConfirm={deleteTemplate}
+          onConfirm={onDeleteTemplate}
           onDismiss={() => setTemplateToDelete(undefined)}
         />
       )}

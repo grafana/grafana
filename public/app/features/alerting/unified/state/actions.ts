@@ -519,6 +519,7 @@ export const deleteReceiverAction = (receiverName: string, alertManagerSourceNam
   };
 };
 
+// TODO Should be no longer necessary
 export const deleteTemplateAction = (templateName: string, alertManagerSourceName: string): ThunkResult<void> => {
   return async (dispatch) => {
     const config = await dispatch(
