@@ -115,51 +115,11 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
   });
 
   const submit = (values: TemplateFormValues) => {
-    // wrap content in "define" if it's not already wrapped, in case user did not do it/
-    // it's not obvious that this is needed for template to work
-    // const content = ensureDefine(values.name, values.content);
-
-    // // add new template to template map
-    // const template_files = {
-    //   ...config.template_files,
-    //   [values.name]: content,
-    // };
-
     if (!existing) {
       return createNewTemplate(values);
     }
 
     return updateTemplate(existing.name, values);
-
-    // delete existing one (if name changed, otherwise it was overwritten in previous step)
-    // if (existing && existing.name !== values.name) {
-    //   delete template_files[existing.name];
-    // }
-
-    // // make sure name for the template is configured on the alertmanager config object
-    // const templates = [
-    //   ...(config.alertmanager_config.templates ?? []).filter((name) => name !== existing?.name),
-    //   values.name,
-    // ];
-
-    // const newConfig: AlertManagerCortexConfig = {
-    //   template_files,
-    //   alertmanager_config: {
-    //     ...config.alertmanager_config,
-    //     templates,
-    //   },
-    // };
-
-    // return dispatch(
-    //   updateAlertManagerConfigAction({
-    //     alertManagerSourceName,
-    //     newConfig,
-    //     oldConfig: config,
-    //     successMessage: 'Template saved.',
-    //     redirectPath: '/alerting/notifications',
-    //     redirectSearch: `tab=${ContactPointsActiveTabs.NotificationTemplates}`,
-    //   })
-    // ).unwrap();
   };
 
   const formApi = useForm<TemplateFormValues>({
