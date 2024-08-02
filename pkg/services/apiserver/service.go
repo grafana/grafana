@@ -288,6 +288,7 @@ func (s *service) start(ctx context.Context) error {
 		}
 
 		// Create a client instance
+		// TODO(drclau): differentiate based on grpc_mode (e.g. on-prem vs. cloud)
 		client, err := resource.NewResourceStoreClientGRPC(conn)
 		if err != nil {
 			return err

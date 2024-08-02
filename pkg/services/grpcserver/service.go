@@ -6,6 +6,8 @@ import (
 	"net"
 	"time"
 
+	authnlib "github.com/grafana/authlib/authn"
+	authzlib "github.com/grafana/authlib/authz"
 	"github.com/grafana/dskit/instrument"
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -70,12 +72,21 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 
 	var opts []grpc.ServerOption
 
+	namespaceFmt := authnlib.OnPremNamespaceFormatter
+	// TODO(drclau): check the actual mode setting here
+	if cfg.StackID != "" {
+		namespaceFmt = authnlib.CloudNamespaceFormatter
+	}
+	namespaceChecker := authzlib.NewNamespaceAccessChecker(namespaceFmt)
+	stackIdExtractor := authzlib.MetadataStackIDExtractor(authzlib.DefaultStackIDMetadataKey)
+
 	// Default auth is admin token check, but this can be overridden by
 	// services which implement ServiceAuthFuncOverride interface.
 	// See https://github.com/grpc-ecosystem/go-grpc-middleware/blob/main/interceptors/auth/auth.go#L30.
 	opts = append(opts, []grpc.ServerOption{
 		grpc.ChainUnaryInterceptor(
 			grpcAuth.UnaryServerInterceptor(authenticator.Authenticate),
+			authzlib.UnaryNamespaceAccessInterceptor(namespaceChecker, stackIdExtractor),
 			interceptors.TracingUnaryInterceptor(tracer),
 			interceptors.LoggingUnaryInterceptor(s.cfg, s.logger), // needs to be registered after tracing interceptor to get trace id
 			middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration),
@@ -83,6 +94,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 		grpc.ChainStreamInterceptor(
 			interceptors.TracingStreamInterceptor(tracer),
 			grpcAuth.StreamServerInterceptor(authenticator.Authenticate),
+			authzlib.StreamNamespaceAccessInterceptor(namespaceChecker, stackIdExtractor),
 			middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
 		),
 	}...)

@@ -19,6 +19,7 @@ const (
 	StorageTypeLegacy      StorageType = "legacy"
 	StorageTypeUnified     StorageType = "unified"
 	StorageTypeUnifiedGrpc StorageType = "unified-grpc"
+	// TODO(drclau): add StorageTypeUnifiedCloud?
 )
 
 type StorageOptions struct {

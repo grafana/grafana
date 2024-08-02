@@ -3,6 +3,7 @@ package sql
 import (
 	"context"
 
+	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -11,12 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
 
 var (
@@ -62,7 +63,38 @@ func ProvideService(
 		return nil, err
 	}
 
-	authn := &grpc.Authenticator{}
+	authCfg, err := grpcutils.ReadGprcServerConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	grpcAuthCfg := authnlib.GrpcAuthenticatorConfig{
+		KeyRetrieverConfig: authnlib.KeyRetrieverConfig{
+			SigningKeysURL: authCfg.SigningKeysURL,
+		},
+		VerifierConfig: authnlib.VerifierConfig{
+			AllowedAudiences: authCfg.AllowedAudiences,
+		},
+	}
+
+	grpcOpts := []authnlib.GrpcAuthenticatorOption{}
+	switch authCfg.Mode {
+	case grpcutils.ModeInProc:
+		// NOOP: IDTokenClaims are added to ctx client-side
+		// TODO(drclau): do we need orgId?
+	case grpcutils.ModeGRPC:
+		grpcOpts = append(grpcOpts,
+			authnlib.WithDisableAccessTokenAuthOption(),
+			authnlib.WithIDTokenAuthOption(true),
+		)
+	case grpcutils.ModeCloud:
+		grpcOpts = append(grpcOpts, authnlib.WithIDTokenAuthOption(true))
+	}
+
+	authn, err := authnlib.NewGrpcAuthenticator(
+		&grpcAuthCfg,
+		grpcOpts...,
+	)
 
 	s := &service{
 		cfg:           cfg,
