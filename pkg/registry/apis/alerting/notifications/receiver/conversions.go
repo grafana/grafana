@@ -94,7 +94,7 @@ func convertToDomainModel(receiver *model.Receiver) (definitions.GettableApiRece
 			Type:         integration.Type,
 			Settings:     definitions.RawMessage(data),
 			SecureFields: integration.SecureFields,
-			Provenance:   "",
+			Provenance:   definitions.Provenance(models.ProvenanceNone),
 		}
 		if integration.Uid != nil {
 			grafanaIntegration.UID = *integration.Uid
