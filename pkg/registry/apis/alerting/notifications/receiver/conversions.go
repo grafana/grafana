@@ -87,7 +87,7 @@ func convertToDomainModel(receiver *model.Receiver) (definitions.GettableApiRece
 	for _, integration := range receiver.Spec.Integrations {
 		data, err := integration.Settings.MarshalJSON()
 		if err != nil {
-			return definitions.GettableApiReceiver{}, fmt.Errorf("integration '%s' of reciever '%s' is invalid: failed to convert unstructured data to bytes: %w", integration.Type, receiver.Name, err)
+			return definitions.GettableApiReceiver{}, fmt.Errorf("integration '%s' of receiver '%s' is invalid: failed to convert unstructured data to bytes: %w", integration.Type, receiver.Name, err)
 		}
 		grafanaIntegration := definitions.GettableGrafanaReceiver{
 			Name:         receiver.Spec.Title,
