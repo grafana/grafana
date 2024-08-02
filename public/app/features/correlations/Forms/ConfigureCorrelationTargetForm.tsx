@@ -17,7 +17,7 @@ export const ConfigureCorrelationTargetForm = () => {
   const { correlation } = useCorrelationsFormContext();
   const targetUID: string | undefined = useWatch({ name: 'targetUID' }) || correlation?.targetUID;
   const configType: CorrelationConfigType | undefined = useWatch({ name: 'config.type' }) || correlation?.config?.type;
-
+  console.log(CORR_CONFIG_TYPES);
   return (
     <>
       <FieldSet label={t('correlations.target-form.title', 'Setup the target for the correlation (Step 2 of 3)')}>
@@ -35,7 +35,7 @@ export const ConfigureCorrelationTargetForm = () => {
           }}
           render={({ field: { onChange, value, ...field } }) => (
             <Field
-              label={t('correlations.target-form.target-label', 'Target')}
+              label={t('correlations.target-form.type-label', 'Type')}
               description={t('correlations.target-form.target-type-description', 'Specify the type of correlation')}
               htmlFor="corrType"
               invalid={!!formState.errors.config?.type}
@@ -64,7 +64,10 @@ export const ConfigureCorrelationTargetForm = () => {
               render={({ field: { onChange, value } }) => (
                 <Field
                   label={t('correlations.target-form.target-label', 'Target')}
-                  description={CORR_CONFIG_TYPES[configType].targetDescription}
+                  description={t(
+                    'correlations.target-form.target-description-query',
+                    'Specify which data source is queried when the link is clicked'
+                  )}
                   htmlFor="target"
                   invalid={!!formState.errors.targetUID}
                   error={formState.errors.targetUID?.message}
@@ -102,10 +105,10 @@ export const ConfigureCorrelationTargetForm = () => {
               }}
               render={({ field: { onChange, value } }) => (
                 <Field
-                  label={t('correlations.target-form.type-label', 'Type')}
+                  label={t('correlations.target-form.target-label', 'Target')}
                   description={t(
-                    'correlations.target-form.target-description',
-                    'Specify which data source is queried when the link is clicked'
+                    'correlations.target-form.target-description-external',
+                    'Specify the URL that will open when the link is clicked'
                   )}
                   htmlFor="target"
                   invalid={!!formState.errors.targetUID}
