@@ -8,6 +8,7 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { getVariableUsageInfo } from '../../explore/utils/links';
+import { CORR_CONFIG_TYPES } from '../types';
 
 import { TransformationsEditor } from './TransformationsEditor';
 import { useCorrelationsFormContext } from './correlationsFormContext';
@@ -53,11 +54,18 @@ export const ConfigureCorrelationSourceForm = () => {
   return (
     <>
       <FieldSet
-        label={t(
-          'correlations.source-form.title',
-          'Configure the data source that will link to {{dataSourceName}} (Step 3 of 3)',
-          { dataSourceName }
-        )}
+        label={
+          correlation?.config.type === CORR_CONFIG_TYPES.query.value
+            ? t(
+                'correlations.source-form.query-title',
+                'Configure the data source that will link to {{dataSourceName}} (Step 3 of 3)',
+                { dataSourceName }
+              )
+            : t(
+                'correlations.source-form.external-title',
+                'Configure the data source that will use the URL (Step 3 of 3)'
+              )
+        }
       >
         <Trans i18nKey="correlations.source-form.sub-text">
           <p>

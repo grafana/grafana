@@ -1,3 +1,5 @@
+import { t } from 'i18next';
+
 import { DataLinkTransformationConfig } from '@grafana/data';
 
 export interface AddCorrelationResponse {
@@ -30,8 +32,7 @@ type ConfigType = {
   value: string;
   label: string;
   description: string;
-  targetDescriptionKey: string;
-  targetDescriptionFallback: string;
+  targetDescription: string;
 };
 
 export const CORR_CONFIG_TYPES: Record<string, ConfigType> = {
@@ -39,15 +40,19 @@ export const CORR_CONFIG_TYPES: Record<string, ConfigType> = {
     value: 'query',
     label: 'Query',
     description: 'Open a query',
-    targetDescriptionKey: 'correlations.target-form.target-query-description',
-    targetDescriptionFallback: 'Specify which data source is queried when the link is clicked',
+    targetDescription: t(
+      'correlations.target-form.target-query-description',
+      'Specify which data source is queried when the link is clicked'
+    ),
   },
   external: {
     value: 'external',
     label: 'External',
     description: 'Open an external URL',
-    targetDescriptionKey: 'correlations.target-form.target-external-description',
-    targetDescriptionFallback: 'Specify the URL that will open when the link is clicked',
+    targetDescription: t(
+      'correlations.target-form.target-external-description',
+      'Specify the URL that will open when the link is clicked'
+    ),
   },
 };
 

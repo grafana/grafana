@@ -23,8 +23,8 @@ export const ConfigureCorrelationTargetForm = () => {
       <FieldSet label={t('correlations.target-form.title', 'Setup the target for the correlation (Step 2 of 3)')}>
         <Trans i18nKey="correlations.target-form.sub-text">
           <p>
-            Define what data source the correlation will link to, and what query will run when the correlation is
-            clicked.
+            Define what the correlation will link to. With the query type, a query will run when the correlation is
+            clicked. With the external type, clicking the correlation will open a URL.
           </p>
         </Trans>
         <Controller
@@ -35,8 +35,8 @@ export const ConfigureCorrelationTargetForm = () => {
           }}
           render={({ field: { onChange, value, ...field } }) => (
             <Field
-              label={t('correlations.target-form.target-label', 'Correlation Type')}
-              description={t('correlations.target-form.target-description', 'Specify the type of correlation')}
+              label={t('correlations.target-form.target-label', 'Target')}
+              description={t('correlations.target-form.target-type-description', 'Specify the type of correlation')}
               htmlFor="corrType"
               invalid={!!formState.errors.config?.type}
             >
@@ -64,10 +64,7 @@ export const ConfigureCorrelationTargetForm = () => {
               render={({ field: { onChange, value } }) => (
                 <Field
                   label={t('correlations.target-form.target-label', 'Target')}
-                  description={t(
-                    CORR_CONFIG_TYPES[configType].targetDescriptionKey,
-                    'Specify which data source is queried when the link is clicked'
-                  )}
+                  description={CORR_CONFIG_TYPES[configType].targetDescription}
                   htmlFor="target"
                   invalid={!!formState.errors.targetUID}
                   error={formState.errors.targetUID?.message}
@@ -105,7 +102,7 @@ export const ConfigureCorrelationTargetForm = () => {
               }}
               render={({ field: { onChange, value } }) => (
                 <Field
-                  label={t('correlations.target-form.target-label', 'Target')}
+                  label={t('correlations.target-form.type-label', 'Type')}
                   description={t(
                     'correlations.target-form.target-description',
                     'Specify which data source is queried when the link is clicked'
