@@ -25,11 +25,36 @@ Node graphs can visualize directed graphs or networks. They use a directed force
 
 ![Node graph visualization](/static/img/docs/node-graph/node-graph-8-0.png 'Node graph')
 
+## Configure a pie chart visualization
+
 The following video provides beginner steps for creating node panel visualizations. You'll learn the data requirements and caveats, special customizations, and much more:
 
 {{< youtube id="VrvsMkRwoKw" >}}
 
 {{< docs/play title="Node graph panel" url="https://play.grafana.org/d/bdodfbi3d57uoe/" >}}
+
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Nodes options
+
+The Nodes options section provides configurations to node behaviors.
+
+- **Main stat unit** choose which unit the main stat displays in the graph's nodes.
+- **Secondary stat unit** choose which unit the secondary stat displays in the graph's nodes.
+- **Arc sections** adds multiple configurations to what fields will provide the data field used to create the color circle around the node and define the color for each field. You can add multiple fields.
+
+{{% admonition type="note" %}}
+Defining Arc sections will override the automatic detection of `arc__*` and `color` fields described in the _Optional fields_ section of [Nodes data frame structure](#nodes-data-frame-structure).
+{{% /admonition %}}
+
+## Edges options
+
+The Edges options section provides configurations to node edges behaviors.
+
+- **Main stat unit** choose which unit the main stat displays in the graph's edges.
+- **Secondary stat unit** choose which unit the secondary stat displays in the graph's edges.
 
 ## Data requirements
 
