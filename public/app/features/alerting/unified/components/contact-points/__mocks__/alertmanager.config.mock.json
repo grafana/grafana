@@ -1,6 +1,11 @@
 {
   "template_files": {
-    "some template": "{{ define 'some template' }}  something {{ end }}"
+    "slack-template": "{{ define 'some template' }} Custom slack template {{ end }}",
+    "custom-email": "{{ define 'custom-email' }}  Custom email template {{ end }}",
+    "provisioned-template": "{{ define 'provisioned-template' }}  Custom provisioned template {{ end }}"
+  },
+  "template-file-provenances": {
+    "provisioned-template": "api"
   },
   "alertmanager_config": {
     "route": {
@@ -89,6 +94,7 @@
           }
         ]
       }
-    ]
+    ],
+    "templates": ["slack-template", "custom-email", "provisioned-template"]
   }
 }
