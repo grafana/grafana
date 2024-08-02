@@ -14,7 +14,7 @@ For details about the differences between Grafana-managed and data source-manage
 
 ## Grafana-managed endpoints
 
-Note that the JSON format from most of the following endpoints is not fully compatible with [provisioning via configuration files](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning/).
+Note that the JSON format from most of the following endpoints is not fully compatible with [provisioning via configuration JSON files](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning/).
 
 ### Alert rules
 
