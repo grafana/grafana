@@ -106,59 +106,9 @@ This link has any customizations like time range locking or theme you've previou
 
 ### Share externally with specific people
 
-{{< admonition type="note" >}}
-This feature is only available in Grafana Enterprise and Grafana Cloud.
-{{< /admonition >}}
-
-To share with specific external users, you can send them a link by email. Use this option when you only want to share your dashboard with specific people instead of anyone who navigates to the link. Sharing a link by email creates a 30-day token.
-
-When you share a dashboard with an email link, your organization is billed per user for the duration of the 30-day token, regardless of how many dashboards are shared. Billing stops after 30 days unless you renew the token.
-
-1. Click **Dashboards** in the main menu.
-1. Click the dashboard you want to share.
-1. Click the **Share** drop-down in the top-right corner and select **Share externally**.
-1. In the **Link access** drop-down, select **Anyone with the link**.
-1. Click the checkbox confirming that you understand payment is required to add users.
-1. Click **Accept**.
-1. In the **Invite** field, enter the email address of the person you want to invite and click **Invite**.
-
-   You can only invite one person at a time.
-
-1. (Optional) Set the following options:
-   - **Enable time range** - Allow people accessing the link to change the time range. This configuration screen shows the default time range of the dashboard.
-   - **Display annotations** - Allow people accessing the link to view the dashboard annotations.
-1. Click **Copy external link**.
-1. Send the copied URL to any external user.
-1. Click the **X** at the top-right corner to close the share drawer.
-
 ### Share externally to anyone with a link
 
-To share your dashboard so that anyone with the link can access it, follow these steps.
-
-1. Click **Dashboards** in the main menu.
-1. Click the dashboard you want to share.
-1. Click the **Share** drop-down in the top-right corner and select **Share externally**.
-1. In the **Link access** drop-down, select **Anyone with the link**.
-1. Click the checkbox confirming that you understand the entire dashboard will be public.
-1. Click **Accept**.
-1. (Optional) Set the following options:
-   - **Enable time range** - Allow people accessing the link to change the time range. This configuration screen shows the default time range of the dashboard.
-   - **Display annotations** - Allow people accessing the link to view the dashboard annotations.
-1. Each recipient will receive an email with link to the dashboard that's valid until you revoke access to the dashboard.
-1. Click the **X** at the top-right corner to close the share drawer.
-
 #### Update access to an external dashboard link
-
-You can update the access to externally shared dashboard links by following these steps:
-
-1. Click **Dashboards** in the main menu.
-1. Click the dashboard you want to share.
-1. Click the **Share** drop-down in the top-right corner and select **Share externally**.
-1. Do one of the following:
-   - Click **Pause access** so that people can't access the dashboard, but the link is maintained.
-   - Click **Resume access** so that people can access the dashboard again.
-   - Click **Revoke access** so that people can't access the dashboard unless a new external link is generated. Confirm that you want to revoke the link.
-1. Click the **X** at the top-right corner to close the share drawer.
 
 ### Schedule a report
 
