@@ -4,7 +4,13 @@ import { Provider } from 'react-redux';
 import { Router, Redirect, Switch, RouteComponentProps } from 'react-router-dom';
 import { CompatRouter, CompatRoute } from 'react-router-dom-v5-compat';
 
-import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
+import {
+  config,
+  locationService,
+  LocationServiceProvider,
+  navigationLogger,
+  reportInteraction,
+} from '@grafana/runtime';
 import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, PortalContainer, Stack } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
@@ -104,29 +110,31 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                 options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
               >
                 <Router history={locationService.getHistory()}>
-                  <CompatRouter>
-                    <ModalsContextProvider>
-                      <GlobalStyles />
-                      <div className="grafana-app">
-                        <AppChrome>
-                          <AngularRoot />
-                          <AppNotificationList />
-                          <Stack gap={0} grow={1} direction="column">
-                            {pageBanners.map((Banner, index) => (
-                              <Banner key={index.toString()} />
+                  <LocationServiceProvider service={locationService}>
+                    <CompatRouter>
+                      <ModalsContextProvider>
+                        <GlobalStyles />
+                        <div className="grafana-app">
+                          <AppChrome>
+                            <AngularRoot />
+                            <AppNotificationList />
+                            <Stack gap={0} grow={1} direction="column">
+                              {pageBanners.map((Banner, index) => (
+                                <Banner key={index.toString()} />
+                              ))}
+                              {ready && this.renderRoutes()}
+                            </Stack>
+                            {bodyRenderHooks.map((Hook, index) => (
+                              <Hook key={index.toString()} />
                             ))}
-                            {ready && this.renderRoutes()}
-                          </Stack>
-                          {bodyRenderHooks.map((Hook, index) => (
-                            <Hook key={index.toString()} />
-                          ))}
-                        </AppChrome>
-                      </div>
-                      <LiveConnectionWarning />
-                      <ModalRoot />
-                      <PortalContainer />
-                    </ModalsContextProvider>
-                  </CompatRouter>
+                          </AppChrome>
+                        </div>
+                        <LiveConnectionWarning />
+                        <ModalRoot />
+                        <PortalContainer />
+                      </ModalsContextProvider>
+                    </CompatRouter>
+                  </LocationServiceProvider>
                 </Router>
               </KBarProvider>
             </ThemeProvider>

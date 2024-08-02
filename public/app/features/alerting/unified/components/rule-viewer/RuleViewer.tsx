@@ -25,7 +25,7 @@ import {
   isGrafanaRulerRulePaused,
   isRecordingRule,
 } from '../../utils/rules';
-import { createUrl } from '../../utils/url';
+import { createRelativeUrl } from '../../utils/url';
 import { AlertLabels } from '../AlertLabels';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
@@ -222,7 +222,7 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
 // TODO move somewhere else
 export const createListFilterLink = (values: Array<[string, string]>) => {
   const params = new URLSearchParams([['search', values.map(([key, value]) => `${key}:"${value}"`).join(' ')]]);
-  return createUrl(`/alerting/list?` + params.toString());
+  return createRelativeUrl(`/alerting/list`, params);
 };
 
 interface TitleProps {

@@ -123,15 +123,16 @@ var (
 		Status:     "bad-request",
 	}
 
-	ErrFolderNotFound          = errors.New("folder not found")
-	ErrFolderVersionMismatch   = errors.New("the folder has been changed by someone else")
-	ErrFolderTitleEmpty        = errors.New("folder title cannot be empty")
-	ErrFolderWithSameUIDExists = errors.New("a folder/dashboard with the same uid already exists")
-	ErrFolderInvalidUID        = errors.New("invalid uid for folder provided")
-	ErrFolderSameNameExists    = errors.New("a folder with the same name already exists in the current location")
-	ErrFolderAccessDenied      = errors.New("access denied to folder")
-	ErrMoveAccessDenied        = errutil.Forbidden("folders.forbiddenMove", errutil.WithPublicMessage("Access denied to the destination folder"))
-	ErrFolderAccessEscalation  = errutil.Forbidden("folders.accessEscalation", errutil.WithPublicMessage("Cannot move a folder to a folder where you have higher permissions"))
+	ErrFolderNotFound             = errors.New("folder not found")
+	ErrFolderVersionMismatch      = errors.New("the folder has been changed by someone else")
+	ErrFolderTitleEmpty           = errors.New("folder title cannot be empty")
+	ErrFolderWithSameUIDExists    = errors.New("a folder/dashboard with the same uid already exists")
+	ErrFolderInvalidUID           = errors.New("invalid uid for folder provided")
+	ErrFolderSameNameExists       = errors.New("a folder with the same name already exists in the current location")
+	ErrFolderAccessDenied         = errors.New("access denied to folder")
+	ErrMoveAccessDenied           = errutil.Forbidden("folders.forbiddenMove", errutil.WithPublicMessage("Access denied to the destination folder"))
+	ErrFolderAccessEscalation     = errutil.Forbidden("folders.accessEscalation", errutil.WithPublicMessage("Cannot move a folder to a folder where you have higher permissions"))
+	ErrFolderCreationAccessDenied = errutil.Forbidden("folders.forbiddenCreation", errutil.WithPublicMessage("not enough permissions to create a folder in the selected location"))
 )
 
 // DashboardErr represents a dashboard error.

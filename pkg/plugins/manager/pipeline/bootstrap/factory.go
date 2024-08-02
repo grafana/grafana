@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 )
 
-type pluginFactoryFunc func(p plugins.FoundPlugin, pluginClass plugins.Class, sig plugins.Signature) (*plugins.Plugin, error)
+type pluginFactoryFunc func(p *plugins.FoundBundle, pluginClass plugins.Class, sig plugins.Signature) (*plugins.Plugin, error)
 
 // DefaultPluginFactory is the default plugin factory used by the Construct step of the Bootstrap stage.
 //
@@ -23,8 +23,31 @@ func NewDefaultPluginFactory(assetPath *assetpath.Service) *DefaultPluginFactory
 	return &DefaultPluginFactory{assetPath: assetPath}
 }
 
-func (f *DefaultPluginFactory) createPlugin(p plugins.FoundPlugin, class plugins.Class,
+func (f *DefaultPluginFactory) createPlugin(bundle *plugins.FoundBundle, class plugins.Class,
 	sig plugins.Signature) (*plugins.Plugin, error) {
+	plugin, err := f.newPlugin(bundle.Primary, class, sig)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(bundle.Children) == 0 {
+		return plugin, nil
+	}
+
+	plugin.Children = make([]*plugins.Plugin, 0, len(bundle.Children))
+	for _, child := range bundle.Children {
+		cp, err := f.newPlugin(*child, class, sig)
+		if err != nil {
+			return nil, err
+		}
+		cp.Parent = plugin
+		plugin.Children = append(plugin.Children, cp)
+	}
+
+	return plugin, nil
+}
+
+func (f *DefaultPluginFactory) newPlugin(p plugins.FoundPlugin, class plugins.Class, sig plugins.Signature) (*plugins.Plugin, error) {
 	info := assetpath.NewPluginInfo(p.JSONData, class, p.FS)
 	baseURL, err := f.assetPath.Base(info)
 	if err != nil {
@@ -49,7 +72,6 @@ func (f *DefaultPluginFactory) createPlugin(p plugins.FoundPlugin, class plugins
 	if err = setImages(plugin, f.assetPath); err != nil {
 		return nil, err
 	}
-
 	return plugin, nil
 }
 

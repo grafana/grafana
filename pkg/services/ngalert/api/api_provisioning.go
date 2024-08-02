@@ -47,7 +47,7 @@ type ContactPointService interface {
 type TemplateService interface {
 	GetTemplates(ctx context.Context, orgID int64) ([]definitions.NotificationTemplate, error)
 	SetTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error)
-	DeleteTemplate(ctx context.Context, orgID int64, name string) error
+	DeleteTemplate(ctx context.Context, orgID int64, name string, provenance definitions.Provenance) error
 }
 
 type NotificationPolicyService interface {
@@ -138,11 +138,9 @@ func (srv *ProvisioningSrv) RouteGetContactPoints(c *contextmodel.ReqContext) re
 	}
 	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q, c.SignedInUser)
 	if err != nil {
-		if errors.Is(err, provisioning.ErrPermissionDenied) {
-			return ErrResp(http.StatusForbidden, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
+
 	return response.JSON(http.StatusOK, cps)
 }
 
@@ -154,10 +152,7 @@ func (srv *ProvisioningSrv) RouteGetContactPointsExport(c *contextmodel.ReqConte
 	}
 	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q, c.SignedInUser)
 	if err != nil {
-		if errors.Is(err, provisioning.ErrPermissionDenied) {
-			return ErrResp(http.StatusForbidden, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 
 	e, err := AlertingFileExportFromEmbeddedContactPoints(c.SignedInUser.GetOrgID(), cps)
@@ -242,7 +237,7 @@ func (srv *ProvisioningSrv) RoutePutTemplate(c *contextmodel.ReqContext, body de
 }
 
 func (srv *ProvisioningSrv) RouteDeleteTemplate(c *contextmodel.ReqContext, name string) response.Response {
-	err := srv.templates.DeleteTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), name)
+	err := srv.templates.DeleteTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), name, determineProvenance(c))
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -298,7 +293,14 @@ func (srv *ProvisioningSrv) RoutePostMuteTiming(c *contextmodel.ReqContext, mt d
 }
 
 func (srv *ProvisioningSrv) RoutePutMuteTiming(c *contextmodel.ReqContext, mt definitions.MuteTimeInterval, name string) response.Response {
-	mt.Name = name
+	// if body does not specify name, assume that the path contains the name
+	if mt.Name == "" {
+		mt.Name = name
+	}
+	// if body contains a name, and it's different from the one in the path, assume the latter to be UID
+	if mt.Name != name {
+		mt.UID = name
+	}
 	mt.Provenance = determineProvenance(c)
 	updated, err := srv.muteTimings.UpdateMuteTiming(c.Req.Context(), mt, c.SignedInUser.GetOrgID())
 	if err != nil {

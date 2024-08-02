@@ -188,8 +188,6 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 	permissions := []accesscontrol.Permission{
 		{
 			Action: dashboards.ActionFoldersCreate,
-		}, {
-			Action: dashboards.ActionFoldersWrite,
 			Scope:  dashboards.ScopeFoldersAll,
 		},
 	}
