@@ -2,11 +2,14 @@ import i18n, { InitOptions, TFunction } from 'i18next';
 import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetector';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
-import { DEFAULT_LANGUAGE, NAMESPACES, VALID_LANGUAGES } from './constants';
+import { i18n as runTimei18n } from '@grafana/runtime';
+
 import { loadTranslations } from './loadTranslations';
 
 let tFunc: TFunction<string[], undefined> | undefined;
 let i18nInstance: typeof i18n;
+
+const { DEFAULT_LANGUAGE, VALID_LANGUAGES, NAMESPACES } = runTimei18n;
 
 export async function initializeI18n(language: string): Promise<{ language: string | undefined }> {
   // This is a placeholder so we can put a 'comment' in the message json files.
@@ -96,3 +99,7 @@ export function getI18next() {
 
   return i18nInstance || i18n;
 }
+
+export const getTFunction = () => {
+  return tFunc as TFunction<string[], undefined>;
+};

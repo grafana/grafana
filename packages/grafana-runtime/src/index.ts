@@ -54,4 +54,11 @@ export { setReturnToPreviousHook, useReturnToPrevious } from './utils/returnToPr
 export { setChromeHeaderHeightHook, useChromeHeaderHeight } from './utils/chromeHeaderHeight';
 export { type EmbeddedDashboardProps, EmbeddedDashboard, setEmbeddedDashboard } from './components/EmbeddedDashboard';
 export { hasPermission, hasPermissionInMetadata, hasAllPermissions, hasAnyPermission } from './utils/rbac';
-export * from './services/i18n';
+
+import * as i18nConstants from './services/internationalization/constants';
+import * as servieI18n from './services/internationalization/i18n';
+
+export const i18n = {
+  ...servieI18n,
+  ...i18nConstants,
+};

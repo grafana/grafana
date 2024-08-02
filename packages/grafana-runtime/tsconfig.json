@@ -5,7 +5,8 @@
     "declarationDir": "./compiled",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
-    "rootDirs": ["."]
+    "rootDirs": ["."],
+    "resolveJsonModule": true
   },
   "exclude": ["dist/**/*"],
   "extends": "@grafana/tsconfig",
