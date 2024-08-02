@@ -43,7 +43,7 @@ The Nodes options section provides configurations to node behaviors.
 
 - **Main stat unit** choose which unit the main stat displays in the graph's nodes.
 - **Secondary stat unit** choose which unit the secondary stat displays in the graph's nodes.
-- **Arc sections** adds multiple configurations to what fields will provide the data field used to create the color circle around the node and define the color for each field. You can add multiple fields.
+- **Arc sections** configures what fields define the size of the colored circle around the node and to select a color for each. You can add multiple fields.
 
 {{% admonition type="note" %}}
 Defining Arc sections will override the automatic detection of `arc__*` and `color` fields described in the _Optional fields_ section of [Nodes data frame structure](#nodes-data-frame-structure).
