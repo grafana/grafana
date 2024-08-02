@@ -16,12 +16,13 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.Collection":     schema_pkg_apis_collection_v0alpha1_Collection(ref),
-		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.CollectionList": schema_pkg_apis_collection_v0alpha1_CollectionList(ref),
-		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.CollectionSpec": schema_pkg_apis_collection_v0alpha1_CollectionSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.ResourceRef":    schema_pkg_apis_collection_v0alpha1_ResourceRef(ref),
-		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.UserStars":      schema_pkg_apis_collection_v0alpha1_UserStars(ref),
-		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.UserStarsList":  schema_pkg_apis_collection_v0alpha1_UserStarsList(ref),
+		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.Collection":       schema_pkg_apis_collection_v0alpha1_Collection(ref),
+		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.CollectionList":   schema_pkg_apis_collection_v0alpha1_CollectionList(ref),
+		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.CollectionSpec":   schema_pkg_apis_collection_v0alpha1_CollectionSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.ModifyCollection": schema_pkg_apis_collection_v0alpha1_ModifyCollection(ref),
+		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.ResourceRef":      schema_pkg_apis_collection_v0alpha1_ResourceRef(ref),
+		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.UserStars":        schema_pkg_apis_collection_v0alpha1_UserStars(ref),
+		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.UserStarsList":    schema_pkg_apis_collection_v0alpha1_UserStarsList(ref),
 	}
 }
 
@@ -157,6 +158,62 @@ func schema_pkg_apis_collection_v0alpha1_CollectionSpec(ref common.ReferenceCall
 					},
 				},
 				Required: []string{"values"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_collection_v0alpha1_ModifyCollection(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"add": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Add resource to the collection",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"remove": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Remove resource from the collection",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}

@@ -51,3 +51,14 @@ type CollectionSpec struct {
 	// The group/resource+names for stared items
 	Values map[ResourceRefString]ResourceNames `json:"values"`
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type ModifyCollection struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// Add resource to the collection
+	Add []ResourceRefString `json:"add,omitempty"`
+
+	// Remove resource from the collection
+	Remove []ResourceRefString `json:"remove,omitempty"`
+}

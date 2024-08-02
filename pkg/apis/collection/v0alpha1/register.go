@@ -47,6 +47,7 @@ func AddKnownTypes(scheme *runtime.Scheme, version string) error {
 		&UserStarsList{},
 		&Collection{},
 		&CollectionList{},
+		&ModifyCollection{},
 	)
 	return nil
 }

@@ -19,6 +19,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 )
 
 var _ builder.APIGroupBuilder = (*CollectionsAPIBuilder)(nil)
@@ -99,6 +100,7 @@ func (b *CollectionsAPIBuilder) GetAPIGroupInfo(
 				}, nil
 			},
 		)}
+	storage[info.StoragePath("modify")] = &subAddREST{}
 
 	if true {
 		info = collection.CollectionResourceInfo
@@ -139,6 +141,10 @@ func (b *CollectionsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinit
 }
 
 func (b *CollectionsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	defs := collection.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
+	modifySchema := defs["github.com/grafana/grafana/pkg/apis/collection/v0alpha1.ModifyCollection"].Schema
+	starsSchema := defs["github.com/grafana/grafana/pkg/apis/collection/v0alpha1.UserStars"].Schema
+
 	// The plugin description
 	oas.Info.Description = "Collections"
 
@@ -150,5 +156,87 @@ func (b *CollectionsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.O
 	if sub != nil && sub.Get != nil {
 		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
 	}
+
+	// Add query parameters to the rest.Connector
+	sub = oas.Paths.Paths[root+"namespaces/{namespace}/userstars/{name}/modify"]
+	if sub != nil && sub.Post != nil {
+		refA := collection.ResourceRef{
+			Group:    "dashboard.grafana.app",
+			Resource: "dashboards",
+			Name:     "A",
+		}
+		refB := collection.ResourceRef{
+			Group:    "dashboard.grafana.app",
+			Resource: "dashboards",
+			Name:     "A",
+		}
+
+		sub.Post.Description = "Add/Remove items from the collection"
+		sub.Post.RequestBody = &spec3.RequestBody{
+			RequestBodyProps: spec3.RequestBodyProps{
+				Content: map[string]*spec3.MediaType{
+					"application/json": {
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema: &modifySchema,
+							//	Example: basicTemplateSpec,
+							Examples: map[string]*spec3.Example{
+								"test": {
+									ExampleProps: spec3.ExampleProps{
+										Summary: "Add dashboards A and B",
+										Value: collection.ModifyCollection{
+											Add: []string{
+												refA.String(),
+												refB.String(),
+											},
+										},
+									},
+								},
+								"test2": {
+									ExampleProps: spec3.ExampleProps{
+										Summary: "Remove dashboards A",
+										Value: collection.ModifyCollection{
+											Remove: []string{
+												refA.String(),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		sub.Post.Responses = &spec3.Responses{
+			ResponsesProps: spec3.ResponsesProps{
+				StatusCodeResponses: map[int]*spec3.Response{
+					200: {
+						ResponseProps: spec3.ResponseProps{
+							Description: "OK",
+							Content: map[string]*spec3.MediaType{
+								"application/json": {
+									MediaTypeProps: spec3.MediaTypeProps{
+										Schema: &starsSchema,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		// sub.Post.Parameters = []*spec3.Parameter{
+		// 	{
+		// 		ParameterProps: spec3.ParameterProps{
+		// 			Name:        "parent",
+		// 			In:          "query",
+		// 			Description: "The parent scope node",
+		// 		},
+		// 	},
+		// }
+		// delete(oas.Paths.Paths, root+"namespaces/{namespace}/scope_node_children/{name}")
+		// oas.Paths.Paths[root+"namespaces/{namespace}/find/scope_node_children"] = sub
+	}
+
 	return oas, nil
 }
