@@ -354,6 +354,7 @@
     "rc-tree": "5.8.8",
     "re-resizable": "6.9.17",
     "react": "18.2.0",
+    "react-data-grid": "7.0.0-beta.44",
     "react-diff-viewer": "^3.1.1",
     "react-dom": "18.2.0",
     "react-draggable": "4.4.6",

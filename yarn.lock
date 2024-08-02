@@ -17721,6 +17721,7 @@ __metadata:
     rc-tree: "npm:5.8.8"
     re-resizable: "npm:6.9.17"
     react: "npm:18.2.0"
+    react-data-grid: "npm:7.0.0-beta.44"
     react-diff-viewer: "npm:^3.1.1"
     react-dom: "npm:18.2.0"
     react-draggable: "npm:4.4.6"
@@ -25514,6 +25515,18 @@ __metadata:
     react: ^0.14.0 || ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
     react-dom: ^0.14.0 || ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
   checksum: 10/4e5e67032a254c6fbfc2157c8c9b28b4285a41372d458a41fa6756777e224f692ae842488e51cb089b55b83625809aed0eb403026b8a8122a7dcf667637b21fd
+  languageName: node
+  linkType: hard
+
+"react-data-grid@npm:7.0.0-beta.44":
+  version: 7.0.0-beta.44
+  resolution: "react-data-grid@npm:7.0.0-beta.44"
+  dependencies:
+    clsx: "npm:^2.0.0"
+  peerDependencies:
+    react: ^18.0
+    react-dom: ^18.0
+  checksum: 10/16f2c15f563a89ede62058e69423c00067b3f74bf6b1a7d6af4fc5814f43439d00c22ee06d27ce7e70504b17d457648362345b6922cf34a8774018e2880f4200
   languageName: node
   linkType: hard
 
