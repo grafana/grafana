@@ -211,19 +211,15 @@ func (s *server) Stop(ctx context.Context) error {
 }
 
 // Old value indicates an update -- otherwise a create
-func (s *server) newEvent(ctx context.Context, key *ResourceKey, value, oldValue []byte) (*WriteEvent, error) {
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, ErrUserNotFoundInContext
-	}
+func (s *server) newEvent(ctx context.Context, user identity.Requester, key *ResourceKey, value, oldValue []byte) (*WriteEvent, *ErrorResult) {
 	tmp := &unstructured.Unstructured{}
-	err = tmp.UnmarshalJSON(value)
+	err := tmp.UnmarshalJSON(value)
 	if err != nil {
-		return nil, err
+		return nil, AsErrorResult(err)
 	}
 	obj, err := utils.MetaAccessor(tmp)
 	if err != nil {
-		return nil, err
+		return nil, AsErrorResult(err)
 	}
 
 	event := &WriteEvent{
@@ -239,27 +235,27 @@ func (s *server) newEvent(ctx context.Context, key *ResourceKey, value, oldValue
 		temp := &unstructured.Unstructured{}
 		err = temp.UnmarshalJSON(oldValue)
 		if err != nil {
-			return nil, err
+			return nil, AsErrorResult(err)
 		}
 		event.ObjectOld, err = utils.MetaAccessor(temp)
 		if err != nil {
-			return nil, err
+			return nil, AsErrorResult(err)
 		}
 	}
 
 	if key.Namespace != obj.GetNamespace() {
-		return nil, apierrors.NewBadRequest("key/namespace do not match")
+		return nil, NewBadRequestError("key/namespace do not match")
 	}
 
 	gvk := obj.GetGroupVersionKind()
 	if gvk.Kind == "" {
-		return nil, apierrors.NewBadRequest("expecting resources with a kind in the body")
+		return nil, NewBadRequestError("expecting resources with a kind in the body")
 	}
 	if gvk.Version == "" {
-		return nil, apierrors.NewBadRequest("expecting resources with an apiVersion")
+		return nil, NewBadRequestError("expecting resources with an apiVersion")
 	}
 	if gvk.Group != "" && gvk.Group != key.Group {
-		return nil, apierrors.NewBadRequest(
+		return nil, NewBadRequestError(
 			fmt.Sprintf("group in key does not match group in the body (%s != %s)", key.Group, gvk.Group),
 		)
 	}
@@ -267,15 +263,14 @@ func (s *server) newEvent(ctx context.Context, key *ResourceKey, value, oldValue
 	// This needs to be a create function
 	if key.Name == "" {
 		if obj.GetName() == "" {
-			return nil, apierrors.NewBadRequest("missing name")
+			return nil, NewBadRequestError("missing name")
 		}
 		key.Name = obj.GetName()
 	} else if key.Name != obj.GetName() {
-		return nil, apierrors.NewBadRequest(
+		return nil, NewBadRequestError(
 			fmt.Sprintf("key/name do not match (key: %s, name: %s)", key.Name, obj.GetName()))
 	}
-	err = validateName(obj.GetName())
-	if err != nil {
+	if err := validateName(obj.GetName()); err != nil {
 		return nil, err
 	}
 
@@ -283,17 +278,17 @@ func (s *server) newEvent(ctx context.Context, key *ResourceKey, value, oldValue
 	if folder != "" {
 		err = s.access.CanWriteFolder(ctx, user, folder)
 		if err != nil {
-			return nil, err
+			return nil, AsErrorResult(err)
 		}
 	}
 	origin, err := obj.GetOriginInfo()
 	if err != nil {
-		return nil, apierrors.NewBadRequest("invalid origin info")
+		return nil, NewBadRequestError("invalid origin info")
 	}
 	if origin != nil {
 		err = s.access.CanWriteOrigin(ctx, user, origin.Name)
 		if err != nil {
-			return nil, err
+			return nil, AsErrorResult(err)
 		}
 	}
 	return event, nil
@@ -308,6 +303,15 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	}
 
 	rsp := &CreateResponse{}
+	user, err := identity.GetRequester(ctx)
+	if err != nil || user == nil {
+		rsp.Error = &ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}
+		return rsp, nil
+	}
+
 	found := s.backend.ReadResource(ctx, &ReadRequest{Key: req.Key})
 	if found != nil && len(found.Value) > 0 {
 		rsp.Error = &ErrorResult{
@@ -317,9 +321,9 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 		return rsp, nil
 	}
 
-	event, err := s.newEvent(ctx, req.Key, req.Value, nil)
-	if err != nil {
-		rsp.Error = AsErrorResult(err)
+	event, e := s.newEvent(ctx, user, req.Key, req.Value, nil)
+	if e != nil {
+		rsp.Error = e
 		return rsp, nil
 	}
 
@@ -339,6 +343,14 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 	}
 
 	rsp := &UpdateResponse{}
+	user, err := identity.GetRequester(ctx)
+	if err != nil || user == nil {
+		rsp.Error = &ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}
+		return rsp, nil
+	}
 	if req.ResourceVersion < 0 {
 		rsp.Error = AsErrorResult(apierrors.NewBadRequest("update must include the previous version"))
 		return rsp, nil
@@ -359,9 +371,9 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 		return nil, ErrOptimisticLockingFailed
 	}
 
-	event, err := s.newEvent(ctx, req.Key, req.Value, latest.Value)
-	if err != nil {
-		rsp.Error = AsErrorResult(err)
+	event, e := s.newEvent(ctx, user, req.Key, req.Value, latest.Value)
+	if e != nil {
+		rsp.Error = e
 		return rsp, err
 	}
 
