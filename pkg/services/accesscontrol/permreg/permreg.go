@@ -131,7 +131,6 @@ func (pr *permissionRegistry) RegisterPermission(action, scope string) {
 	kind := strings.Split(scope, ":")[0]
 	scopePrefix, ok := pr.kindScopePrefix[kind]
 	if !ok {
-		// TODO (gamab) should we register the scope prefix anyway?
 		pr.logger.Warn("unknown scope prefix", "scope", scope)
 		return
 	}
