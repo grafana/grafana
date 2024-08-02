@@ -5,8 +5,7 @@
 import { Trans as I18NextTrans } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
 import { getTFunction } from '../../../../../public/app/core/internationalization';
-
-import { NAMESPACES } from './constants';
+import { NAMESPACES } from '../../../../../public/app/core/internationalization/constants';
 
 export const SuccessfullySynced = () => {
   return 'You are successfully linked to your local grafana/grafana runtime';

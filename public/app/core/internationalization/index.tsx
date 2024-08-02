@@ -2,14 +2,11 @@ import i18n, { InitOptions, TFunction } from 'i18next';
 import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetector';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
-import { i18n as runTimei18n } from '@grafana/runtime';
-
+import { DEFAULT_LANGUAGE, VALID_LANGUAGES, NAMESPACES } from './constants';
 import { loadTranslations } from './loadTranslations';
 
 let tFunc: TFunction<string[], undefined> | undefined;
 let i18nInstance: typeof i18n;
-
-const { DEFAULT_LANGUAGE, VALID_LANGUAGES, NAMESPACES } = runTimei18n;
 
 export async function initializeI18n(language: string): Promise<{ language: string | undefined }> {
   // This is a placeholder so we can put a 'comment' in the message json files.
@@ -60,7 +57,7 @@ export function changeLanguage(locale: string) {
 }
 
 export const Trans: typeof I18NextTrans = (props) => {
-  return <I18NextTrans shouldUnescape ns={NAMESPACES} {...props} />;
+  return <I18NextTrans shouldUnescape {...props} />;
 };
 
 // Wrap t() to provide default namespaces and enforce a consistent API

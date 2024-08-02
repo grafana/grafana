@@ -55,10 +55,8 @@ export { setChromeHeaderHeightHook, useChromeHeaderHeight } from './utils/chrome
 export { type EmbeddedDashboardProps, EmbeddedDashboard, setEmbeddedDashboard } from './components/EmbeddedDashboard';
 export { hasPermission, hasPermissionInMetadata, hasAllPermissions, hasAnyPermission } from './utils/rbac';
 
-import * as i18nConstants from './services/internationalization/constants';
 import * as servieI18n from './services/internationalization/i18n';
 
 export const i18n = {
   ...servieI18n,
-  ...i18nConstants,
 };
