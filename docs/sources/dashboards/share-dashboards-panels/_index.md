@@ -46,7 +46,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
   shared-dashboards:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/dashboards-public/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/shared-dashboards/
 ---
