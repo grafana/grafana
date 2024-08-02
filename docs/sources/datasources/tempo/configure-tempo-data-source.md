@@ -74,7 +74,7 @@ To configure basic settings for the Tempo data source, complete the following st
     | **Name**       | Sets the name you use to refer to the data source in panels and queries. |
     | **Default**    | Sets the data source that's pre-selected for new panels.                 |
     | **URL**        | Sets the URL of the Tempo instance, such as `http://tempo`.              |
-    | **Basic Auth** | Enables basic authentication to the Tempo data source.                   |
+    | **Basic Auth** | Enables authentication to the Tempo data source.                   |
     | **User**       | Sets the user name for basic authentication.                             |
     | **Password**   | Sets the password for basic authentication.                              |
 
@@ -88,14 +88,14 @@ This video explains how to add data sources, including Loki, Tempo, and Mimir, t
 
 <!-- The traceQLStreaming toggle will be deprecated in Grafana 11.2 and removed in 11.3. -->
 
-Streaming enables TraceQL query results to be displayed as they become available. Without streaming, no results are displayed until all results have returned. 
+Streaming enables TraceQL query results to be displayed as they become available. Without streaming, no results are displayed until all results have returned.
 
 
 ### Requirements
 
 To use streaming, you need to:
 
-- Be running Tempo version 2.2 or newer, or Grafana Enterprise Traces (GET) version 2.2 or newer, or be using Grafana Cloud Traces. 
+- Be running Tempo version 2.2 or newer, or Grafana Enterprise Traces (GET) version 2.2 or newer, or be using Grafana Cloud Traces.
 - For self-managed Tempo or GET instances: If your Tempo or GET instance is behind a load balancer or proxy that doesn't supporting gRPC or HTTP2, streaming may not work and should be disabled.
 
 For streaming to work for a particular Tempo data source, set your Grafana's `traceQLStreaming` [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) to true and set **Streaming** to enabled in your Tempo data source configuration.
@@ -110,7 +110,7 @@ To enable streaming for a specific Tempo data source in your Grafana:
 
 1. Set the `traceQLStreaming` feature toggle to `true` in your Grafana configuration file.
 
-- If you are using Grafana Cloud, the `traceQLStreaming` feature toggle is already set to `true` by default. 
+- If you are using Grafana Cloud, the `traceQLStreaming` feature toggle is already set to `true` by default.
 
 1. Select the **Queries** toggle on your Tempo data source settings page.
 
