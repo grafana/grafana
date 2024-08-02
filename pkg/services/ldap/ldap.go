@@ -172,7 +172,10 @@ func dialTLSWithTimeout(network, addr string, config *tls.Config, timeout time.D
 // Dial() sets the connection with the server for this Struct. Therefore, we require a
 // call to Dial() before being able to execute this function.
 func (server *Server) Close() {
-	server.Connection.Close()
+	err := server.Connection.Close()
+	if err != nil {
+		server.log.Error("failed to close the LDAP connection", "err", err)
+	}
 }
 
 // Login the user.
