@@ -56,11 +56,11 @@ func RegisterAPIService(
 	return builder
 }
 
-func (t NotificationsAPIBuilder) GetGroupVersion() schema.GroupVersion {
+func (t *NotificationsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return t.gv
 }
 
-func (t NotificationsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+func (t *NotificationsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	err := notificationsModels.AddToScheme(scheme)
 	if err != nil {
 		return err
@@ -68,7 +68,7 @@ func (t NotificationsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(notificationsModels.SchemeGroupVersion)
 }
 
-func (t NotificationsAPIBuilder) GetAPIGroupInfo(
+func (t *NotificationsAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory,
 	optsGetter generic.RESTOptionsGetter,
@@ -93,21 +93,21 @@ func (t NotificationsAPIBuilder) GetAPIGroupInfo(
 	return &apiGroupInfo, nil
 }
 
-func (t NotificationsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
+func (t *NotificationsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return notificationsModels.GetOpenAPIDefinitions
 }
 
-func (t NotificationsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+func (t *NotificationsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil
 }
 
 // PostProcessOpenAPI is a hook to alter OpenAPI3 specification of the API server.
-func (b *NotificationsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+func (t *NotificationsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	// The plugin description
 	oas.Info.Description = "Grafana Alerting Notification resources"
 
 	// The root api URL
-	root := "/apis/" + b.GetGroupVersion().String() + "/"
+	root := "/apis/" + t.GetGroupVersion().String() + "/"
 
 	// Hide the ability to list or watch across all tenants
 	delete(oas.Paths.Paths, root+notificationsModels.ReceiverResourceInfo.GroupResource().Resource)
@@ -121,7 +121,7 @@ func (b *NotificationsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3
 	return oas, nil
 }
 
-func (t NotificationsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+func (t *NotificationsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 			switch a.GetResource() {
