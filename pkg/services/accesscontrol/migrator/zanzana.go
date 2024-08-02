@@ -54,7 +54,7 @@ func (z *ZanzanaSynchroniser) Sync(ctx context.Context) error {
 	}
 
 	for key, tuples := range tuplesMap {
-		if err := batch(len(tuples), 100, func(start, end int) error {
+		if err := batch(len(tuples), 1, func(start, end int) error {
 			return z.client.Write(ctx, &openfgav1.WriteRequest{
 				Writes: &openfgav1.WriteRequestWrites{
 					TupleKeys: tuples[start:end],
@@ -111,9 +111,9 @@ func managedPermissionsCollector(store db.DB) TupleCollector {
 		for _, p := range permissions {
 			var subject string
 			if len(p.UserUID) > 0 {
-				subject = zanzana.NewObject(zanzana.TypeUser, p.UserUID)
+				subject = zanzana.NewObject(zanzana.TypeUser, p.UserUID, "")
 			} else if len(p.TeamUID) > 0 {
-				subject = zanzana.NewObject(zanzana.TypeTeam, p.TeamUID)
+				subject = zanzana.NewObject(zanzana.TypeTeam, p.TeamUID, "member")
 			} else {
 				// FIXME(kalleep): Unsuported role binding (org role). We need to have basic roles in place
 				continue
@@ -161,8 +161,8 @@ func teamMembershipCollector(store db.DB) TupleCollector {
 
 		for _, m := range memberships {
 			tuple := &openfgav1.TupleKey{
-				User:   zanzana.NewObject(zanzana.TypeUser, m.UserUID),
-				Object: zanzana.NewObject(zanzana.TypeTeam, m.TeamUID),
+				User:   zanzana.NewObject(zanzana.TypeUser, m.UserUID, ""),
+				Object: zanzana.NewObject(zanzana.TypeTeam, m.TeamUID, ""),
 			}
 
 			// Admin permission is 4 and member 0

@@ -17,12 +17,16 @@ const (
 	RelationTeamAdmin  string = "admin"
 )
 
-func NewObject(typ, id string) string {
-	return fmt.Sprintf("%s:%s", typ, id)
+func NewObject(typ, id, relation string) string {
+	obj := fmt.Sprintf("%s:%s", typ, id)
+	if relation != "" {
+		obj = fmt.Sprintf("%s#%s", obj, relation)
+	}
+	return obj
 }
 
-func NewScopedObject(typ, id, scope string) string {
-	return NewObject(typ, fmt.Sprintf("%s-%s", scope, id))
+func NewScopedObject(typ, id, relation, scope string) string {
+	return NewObject(typ, fmt.Sprintf("%s-%s", scope, id), "")
 }
 
 func TranslateToTuple(user string, action, kind, identifier string, orgID int64) (*openfgav1.TupleKey, bool) {
@@ -45,9 +49,9 @@ func TranslateToTuple(user string, action, kind, identifier string, orgID int64)
 
 	// Some uid:s in grafana are not guarantee to be unique across orgs so we need to scope them.
 	if t.orgScoped {
-		tuple.Object = NewScopedObject(t.typ, identifier, strconv.FormatInt(orgID, 10))
+		tuple.Object = NewScopedObject(t.typ, identifier, "", strconv.FormatInt(orgID, 10))
 	} else {
-		tuple.Object = NewObject(t.typ, identifier)
+		tuple.Object = NewObject(t.typ, identifier, "")
 	}
 
 	return tuple, true

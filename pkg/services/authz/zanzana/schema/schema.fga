@@ -11,6 +11,14 @@ type org
     define member: [user]
     define viewer: [user]
 
+    # team management
+    define team_read: [role#assignee]
+    define team_create: [role#assignee]
+    define team_write: [role#assignee] or team_create
+    define team_delete: [role#assignee] or team_write
+    define team_permissions_write: [role#assignee]
+    define team_permissions_read: [role#assignee] or team_permissions_write
+
     define folder_admin: [role#assignee]
     define folder_edit: [role#assignee] or folder_admin
     define folder_view: [role#assignee] or folder_edit
@@ -48,6 +56,12 @@ type team
     define admin: [user]
     define member: [user] or admin
 
+    define read: [role#assignee] or member or team_read from org
+    define write: [role#assignee] or admin or team_write from org
+    define delete: [role#assignee] or admin or team_delete from org
+    define permissions_read: [role#assignee] or admin or team_permissions_read from org
+    define permissions_write: [role#assignee] or admin or team_permissions_write from org
+
 type folder
     relations
       define parent: [folder]
@@ -56,12 +70,12 @@ type folder
       define edit: [user, team#member, role#assignee] or admin or edit from parent or folder_edit from org
       define view: [user, team#member, role#assignee] or edit or view from parent or folder_view from org
 
-      define permissions_write: [role#assignee] or admin or folder_permissions_write from org
-      define permissions_read: [role#assignee] or admin or folder_permissions_read from org
-      define write: [role#assignee] or edit or folder_write from org
-      define read: [role#assignee] or view or folder_read from org
-      define delete: [role#assignee] or admin or folder_delete from org
-      define create: [role#assignee] or admin or folder_create from org
+      define permissions_write: [user, team#member, role#assignee] or admin or folder_permissions_write from org
+      define permissions_read: [user, team#member, role#assignee] or admin or folder_permissions_read from org
+      define write: [user, team#member, role#assignee] or edit or folder_write from org
+      define read: [user, team#member, role#assignee] or view or folder_read from org
+      define delete: [user, team#member, role#assignee] or admin or folder_delete from org
+      define create: [user, team#member, role#assignee] or admin or folder_create from org
 
       define dashboard_admin: [user, team#member, role#assignee] or dashboard_admin from parent or dashboard_admin from org
       define dashboard_create: [user, team#member, role#assignee] or dashboard_create from parent or dashboard_create from org
