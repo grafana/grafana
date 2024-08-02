@@ -31,13 +31,18 @@ Note that the JSON format from most of the following endpoints is not fully comp
 | GET    | /api/v1/provisioning/alert-rules                                 | [route get alert rules](#route-get-alert-rules)                         | Get all the alert rules.                                              |
 | GET    | /api/v1/provisioning/alert-rules/export                          | [route get alert rules export](#route-get-alert-rules-export)           | Export all alert rules in provisioning file format.                   |
 
-#### Example alert rules template
+**Example Request for new alert rule:**
 
-```json
+```http
+POST /api/v1/provisioning/alert-rules
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
 {
   "title": "TEST-API_1",
   "ruleGroup": "API",
-  "folderUID": "FOLDER",
+  "folderUID": "SET_FOLDER_UID",
   "noDataState": "OK",
   "execErrState": "OK",
   "for": "5m",
@@ -58,7 +63,7 @@ Note that the JSON format from most of the following endpoints is not fully comp
         "from": 600,
         "to": 0
       },
-      "datasourceUid": " XXXXXXXXX-XXXXXXXXX-XXXXXXXXXX",
+      "datasourceUid": "XXXXXXXXX-XXXXXXXXX-XXXXXXXXXX",
       "model": {
         "expr": "up",
         "hide": false,
@@ -108,6 +113,99 @@ Note that the JSON format from most of the following endpoints is not fully comp
     }
   ]
 }
+
+```
+
+#### Example Response:
+
+```http
+HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "id": 1,
+  "uid": "XXXXXXXXX",
+  "orgID": 1,
+  "folderUID": "SET_FOLDER_UID",
+  "ruleGroup": "API3",
+  "title": "TEST-API_1",
+  "condition": "B",
+  "data": [
+    {
+      "refId": "A",
+      "queryType": "",
+      "relativeTimeRange": {
+        "from": 600,
+        "to": 0
+      },
+      "datasourceUid": "XXXXXXXXX-XXXXXXXXX-XXXXXXXXXX",
+      "model": {
+        "expr": "up",
+        "hide": false,
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "A"
+      }
+    },
+    {
+      "refId": "B",
+      "queryType": "",
+      "relativeTimeRange": {
+        "from": 0,
+        "to": 0
+      },
+      "datasourceUid": "-100",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                6
+              ],
+              "type": "gt"
+            },
+            "operator": {
+              "type": "and"
+            },
+            "query": {
+              "params": [
+                "A"
+              ]
+            },
+            "reducer": {
+              "params": [],
+              "type": "last"
+            },
+            "type": "query"
+          }
+        ],
+        "datasource": {
+          "type": "__expr__",
+          "uid": "-100"
+        },
+        "hide": false,
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "B",
+        "type": "classic_conditions"
+      }
+    }
+  ],
+  "updated": "2024-08-02T13:19:32.609640048Z",
+  "noDataState": "OK",
+  "execErrState": "OK",
+  "for": "5m",
+  "annotations": {
+    "summary": "test_api_1"
+  },
+  "labels": {
+    "API": "test1"
+  },
+  "provenance": "api",
+  "isPaused": false,
+  "notification_settings": null,
+  "record": null
+}
 ```
 
 ### Contact points
@@ -120,6 +218,34 @@ Note that the JSON format from most of the following endpoints is not fully comp
 | PUT    | /api/v1/provisioning/contact-points/:uid   | [route put contactpoint](#route-put-contactpoint)                 | Update an existing contact point.                      |
 | GET    | /api/v1/provisioning/contact-points/export | [route get contactpoints export](#route-get-contactpoints-export) | Export all contact points in provisioning file format. |
 
+**Example Request for all the contact points:**
+
+```http
+GET /api/v1/provisioning/contact-points
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+[
+  {
+    "uid": "",
+    "name": "email receiver",
+    "type": "email",
+    "settings": {
+      "addresses": "<example@email.com>"
+    },
+    "disableResolveMessage": false
+  }
+]
+```
+
 ### Notification policies
 
 | Method | URI                                  | Name                                                          | Summary                                                          |
@@ -128,6 +254,38 @@ Note that the JSON format from most of the following endpoints is not fully comp
 | GET    | /api/v1/provisioning/policies        | [route get policy tree](#route-get-policy-tree)               | Get the notification policy tree.                                |
 | PUT    | /api/v1/provisioning/policies        | [route put policy tree](#route-put-policy-tree)               | Sets the notification policy tree.                               |
 | GET    | /api/v1/provisioning/policies/export | [route get policy tree export](#route-get-policy-tree-export) | Export the notification policy tree in provisioning file format. |
+
+**Example Request for exporting the notification policy tree in YAML format:**
+
+```http
+GET /api/v1/provisioning/policies/export?format=yaml
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: text/yaml
+
+apiVersion: 1
+policies:
+    - orgId: 1
+      receiver: My Contact Email Point
+      group_by:
+        - grafana_folder
+        - alertname
+      routes:
+        - receiver: My Contact Email Point
+          object_matchers:
+            - - monitor
+              - =
+              - testdata
+          mute_time_intervals:
+            - weekends
+```
 
 ### Mute timings
 
@@ -141,6 +299,38 @@ Note that the JSON format from most of the following endpoints is not fully comp
 | GET    | /api/v1/provisioning/mute-timings/export       | [route get mute timings export](#route-get-mute-timings-export) | Export all mute timings in provisioning file format. |
 | GET    | /api/v1/provisioning/mute-timings/:name/export | [route get mute timing export](#route-get-mute-timing-export)   | Export a mute timing in provisioning file format.    |
 
+**Example Request for all mute timings:**
+
+```http
+GET /api/v1/provisioning/mute-timings
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+[
+  {
+    "name": "weekends",
+    "time_intervals": [
+      {
+        "weekdays": [
+          "saturday",
+          "sunday"
+        ]
+      }
+    ],
+    "version": "",
+    "provenance": "file"
+  }
+]
+```
+
 ### Templates
 
 | Method | URI                                  | Name                                            | Summary                                   |
@@ -149,6 +339,35 @@ Note that the JSON format from most of the following endpoints is not fully comp
 | GET    | /api/v1/provisioning/templates/:name | [route get template](#route-get-template)       | Get a notification template.              |
 | GET    | /api/v1/provisioning/templates       | [route get templates](#route-get-templates)     | Get all notification templates.           |
 | PUT    | /api/v1/provisioning/templates/:name | [route put template](#route-put-template)       | Create or update a notification template. |
+
+**Example Request for all notification templates:**
+
+```http
+GET /api/v1/provisioning/templates
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+[
+  {
+    "name": "custom_email.message",
+    "template": "{{ define \"custom_email.message\" }}\n  Custom alert!\n{{ end }}",
+    "provenance": "file"
+  },
+  {
+    "name": "custom_email.subject",
+    "template": "{{ define \"custom_email.subject\" }}\n{{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s)\n{{ end }}",
+    "provenance": "file"
+  }
+]
+```
 
 ### Edit resources in the Grafana UI
 
