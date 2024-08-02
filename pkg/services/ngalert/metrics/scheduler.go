@@ -127,7 +127,7 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Namespace: Namespace,
 				Subsystem: Subsystem,
 				Name:      "rule_group_rules",
-				Help:      "The number of alert rules that are scheduled, both active and paused.",
+				Help:      "The number of alert rules that are scheduled, by type and state.",
 			},
 			[]string{"org", "type", "state"},
 		),

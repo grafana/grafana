@@ -122,7 +122,7 @@ func TestProcessTicks(t *testing.T) {
 
 	t.Run("after 1st tick rule metrics should report one active alert rule", func(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
-			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type and state.
         	            	# TYPE grafana_alerting_rule_group_rules gauge
         	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active",type="alerting"} 1
 				`, alertRule1.OrgID)
@@ -149,7 +149,7 @@ func TestProcessTicks(t *testing.T) {
 
 	t.Run("after 2nd tick rule metrics should report two active alert rules", func(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
-			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type and state.
         	            	# TYPE grafana_alerting_rule_group_rules gauge
         	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active",type="alerting"} 2
 				`, alertRule1.OrgID)
@@ -204,7 +204,7 @@ func TestProcessTicks(t *testing.T) {
 
 	t.Run("after 5th tick rule metrics should report one active and one paused alert rules", func(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
-			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type and state.
         	            	# TYPE grafana_alerting_rule_group_rules gauge
         	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active",type="alerting"} 1
         	            	grafana_alerting_rule_group_rules{org="%[1]d",state="paused",type="alerting"} 1
@@ -237,7 +237,7 @@ func TestProcessTicks(t *testing.T) {
 
 	t.Run("after 6th tick rule metrics should report two paused alert rules", func(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
-			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type and state.
         	            	# TYPE grafana_alerting_rule_group_rules gauge
         	            	grafana_alerting_rule_group_rules{org="%[1]d",state="paused",type="alerting"} 2
 				`, alertRule1.OrgID)
@@ -264,7 +264,7 @@ func TestProcessTicks(t *testing.T) {
 
 	t.Run("after 7th tick rule metrics should report two active alert rules", func(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
-			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type and state.
         	            	# TYPE grafana_alerting_rule_group_rules gauge
         	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active",type="alerting"} 2
 				`, alertRule1.OrgID)
@@ -290,7 +290,7 @@ func TestProcessTicks(t *testing.T) {
 
 	t.Run("after 8th tick rule metrics should report one active alert rule", func(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
-			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type and state.
         	            	# TYPE grafana_alerting_rule_group_rules gauge
         	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active",type="alerting"} 1
 				`, alertRule1.OrgID)
