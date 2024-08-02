@@ -6,11 +6,11 @@ labels:
 title: 'Alerting Provisioning HTTP API '
 ---
 
-The Alerting provisioning API can be used to create, modify, and delete resources relevant to [Grafana-managed alerts]({{< relref "/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule" >}}). It is the one used by our [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+The Alerting Provisioning HTTP API can be used to create, modify, and delete resources relevant to Grafana-managed alerts. This API is the one used by our [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
 
-To manage resources related to [data source-managed alerts]({{< relref "/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule" >}}), including recording rules, use the [Mimir tool](https://grafana.com/docs/mimir/latest/manage/tools/mimirtool/) and [Cortex tool](https://github.com/grafana/cortex-tools#cortextool).
+For details about the differences between Grafana-managed and data source-managed alerts, refer to the [Introduction to alert rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/).
 
-## All endpoints
+## Grafana-managed endpoints
 
 ### Alert rules
 
@@ -146,7 +146,7 @@ To manage resources related to [data source-managed alerts]({{< relref "/docs/gr
 | GET    | /api/v1/provisioning/templates       | [route get templates](#route-get-templates)     | Get all notification templates.           |
 | PUT    | /api/v1/provisioning/templates/:name | [route put template](#route-put-template)       | Create or update a notification template. |
 
-## Edit resources in the Grafana UI
+### Edit resources in the Grafana UI
 
 By default, you cannot edit API-provisioned alerting resources in Grafana. To enable editing these resources in the Grafana UI, add the `X-Disable-Provenance` header to the following requests in the API:
 
@@ -158,6 +158,14 @@ By default, you cannot edit API-provisioned alerting resources in Grafana. To en
 - `PUT /api/v1/provisioning/templates/{name}`
 
 To reset the notification policy tree to the default and unlock it for editing in the Grafana UI, use the `DELETE /api/v1/provisioning/policies` endpoint.
+
+## Data source-managed resources
+
+To manage resources related to [data source-managed alerts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-rule/), you can use:
+
+- [mimirtool](https://grafana.com/docs/mimir/<GRAFANA_VERSION>/manage/tools/mimirtool/): to interact with the Mimir alertmanager and ruler configuration.
+- [cortex-tools](https://github.com/grafana/cortex-tools#cortextool): to interact with the Cortex alertmanager and ruler configuration.
+- [lokitool](https://grafana.com/docs/loki/<GRAFANA_VERSION>/alert/#lokitool): to interact with the Loki Ruler.
 
 ## Paths
 
