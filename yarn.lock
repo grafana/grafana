@@ -12764,10 +12764,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"commander@npm:~11.1.0":
-  version: 11.1.0
-  resolution: "commander@npm:11.1.0"
-  checksum: 10/66bd2d8a0547f6cb1d34022efb25f348e433b0e04ad76a65279b1b09da108f59a4d3001ca539c60a7a46ea38bcf399fc17d91adad76a8cf43845d8dcbaf5cda1
+"commander@npm:~12.1.0":
+  version: 12.1.0
+  resolution: "commander@npm:12.1.0"
+  checksum: 10/cdaeb672d979816853a4eed7f1310a9319e8b976172485c2a6b437ed0db0a389a44cfb222bfbde772781efa9f215bdd1b936f80d6b249485b465c6cb906e1f93
   languageName: node
   linkType: hard
 
@@ -14183,13 +14183,6 @@ __metadata:
   version: 1.11.7
   resolution: "dayjs@npm:1.11.7"
   checksum: 10/341d7dc917a4ddc79c836684f7632a769ad8ae3c56506e62b97c27d7bb8a379b52b5589180b80f514eca9beb0b8789303bd32ce3107ba62055078800f9871e38
-  languageName: node
-  linkType: hard
-
-"de-indent@npm:^1.0.2":
-  version: 1.0.2
-  resolution: "de-indent@npm:1.0.2"
-  checksum: 10/30bf43744dca005f9252dbb34ed95dcb3c30dfe52bfed84973b89c29eccff04e27769f222a34c61a93354acf47457785e9032e6184be390ed1d324fb9ab3f427
   languageName: node
   linkType: hard
 
@@ -17664,7 +17657,7 @@ __metadata:
     http-server: "npm:14.1.1"
     i18next: "npm:^23.0.0"
     i18next-browser-languagedetector: "npm:^7.0.2"
-    i18next-parser: "npm:8.13.0"
+    i18next-parser: "npm:9.0.1"
     immer: "npm:10.1.1"
     immutable: "npm:4.3.7"
     jest: "npm:29.7.0"
@@ -18494,15 +18487,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"i18next-parser@npm:8.13.0":
-  version: 8.13.0
-  resolution: "i18next-parser@npm:8.13.0"
+"i18next-parser@npm:9.0.1":
+  version: 9.0.1
+  resolution: "i18next-parser@npm:9.0.1"
   dependencies:
     "@babel/runtime": "npm:^7.23.2"
     broccoli-plugin: "npm:^4.0.7"
     cheerio: "npm:^1.0.0-rc.2"
     colors: "npm:1.4.0"
-    commander: "npm:~11.1.0"
+    commander: "npm:~12.1.0"
     eol: "npm:^0.9.1"
     esbuild: "npm:^0.20.1"
     fs-extra: "npm:^11.1.0"
@@ -18515,10 +18508,9 @@ __metadata:
     typescript: "npm:^5.0.4"
     vinyl: "npm:~3.0.0"
     vinyl-fs: "npm:^4.0.0"
-    vue-template-compiler: "npm:^2.6.11"
   bin:
     i18next: bin/cli.js
-  checksum: 10/dcdb34f0418df7c969162f4c58b1f751e0245769a5748d127dcefd3d0986b45622f6b41d598920cf6fbda6972564fc48c8a5e934dc334ed46651294f98835bda
+  checksum: 10/d6f13c6cdc98f853b5cc433fb0853a996e9a88f83e9fe26974b4b6649a01713ec09f567869c57f21e57a7efcb731d50f296373f9647deef7a73d0d76fda63388
   languageName: node
   linkType: hard
 
@@ -30523,16 +30515,6 @@ __metadata:
   version: 3.17.5
   resolution: "vscode-languageserver-types@npm:3.17.5"
   checksum: 10/900d0b81df5bef8d90933e75be089142f6989cc70fdb2d5a3a5f11fa20feb396aaea23ccffc8fbcc83a2f0e1b13c6ee48ff8151f236cbd6e61a4f856efac1a58
-  languageName: node
-  linkType: hard
-
-"vue-template-compiler@npm:^2.6.11":
-  version: 2.7.10
-  resolution: "vue-template-compiler@npm:2.7.10"
-  dependencies:
-    de-indent: "npm:^1.0.2"
-    he: "npm:^1.2.0"
-  checksum: 10/9990ea1ae1f46648e366dcca6f4f164748f131ebf0588378c7427318eac02e8993780b9e0b03a510236287b02028759cc75e5bd655cb8f3cd86b4ea705f97122
   languageName: node
   linkType: hard
 
