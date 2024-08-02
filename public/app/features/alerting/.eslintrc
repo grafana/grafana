@@ -1,5 +1,8 @@
 {
   "plugins": ["testing-library"],
+  "rules": {
+    "prefer-const": "error",
+  },
   "overrides": [
     {
       "files": ["**/__tests__/**/*.[jt]s?(x)", "**/?(*.)+(spec|test).[jt]s?(x)"],
