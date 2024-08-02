@@ -29,4 +29,4 @@ openssl x509 -req -days 365 -in data/grafana-aggregator/server.csr -CA data/graf
 
 # Apply broad permissions to certificates/keys so that containers passing these around for
 # tests don't run into permission related errors
-chmod 755 data/aggregator/*.*
+chmod 755 data/grafana-aggregator/*.*
