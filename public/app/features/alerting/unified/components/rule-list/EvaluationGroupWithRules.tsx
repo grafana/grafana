@@ -46,7 +46,7 @@ export const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroup
               evaluationInterval={group.interval}
               instancesCount={isAlertingPromRule ? size(promRule.alerts) : undefined}
               href={createViewLink(rulesSource, rule)}
-              summary={annotations?.['summary']}
+              summary={annotations?.summary}
             />
           );
         }
@@ -84,7 +84,7 @@ export const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroup
               evaluationInterval={group.interval}
               instancesCount={isAlertingPromRule ? size(promRule.alerts) : undefined}
               href={createViewLink(rulesSource, rule)}
-              summary={rule.annotations?.['summary']}
+              summary={rule.annotations?.summary}
               isProvisioned={Boolean(rulerRule.grafana_alert.provenance)}
               contactPoint={contactPoint}
             />
