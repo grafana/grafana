@@ -170,8 +170,8 @@ export const getFieldLinksForExplore = (options: {
         return linkModel;
       } else {
         let internalLinkSpecificVars: ScopedVars = {};
-        if (link.internal?.transformations) {
-          link.internal?.transformations.forEach((transformation) => {
+        if (link.meta?.transformations) {
+          link.meta?.transformations.forEach((transformation) => {
             let fieldValue;
             if (transformation.field) {
               const transformField = dataFrame?.fields.find((field) => field.name === transformation.field);

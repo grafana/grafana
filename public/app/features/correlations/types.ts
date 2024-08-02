@@ -61,7 +61,7 @@ export interface CorrelationConfig {
 export interface Correlation {
   uid: string;
   sourceUID: string;
-  targetUID: string;
+  targetUID?: string;
   label?: string;
   description?: string;
   provisioned: boolean;
