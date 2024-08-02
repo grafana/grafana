@@ -111,7 +111,7 @@ func (ss *SQLStore) withDbSession(ctx context.Context, engine *xorm.Engine, call
 	defer span.End()
 
 	if err != nil {
-		return tracing.Errorf(span, "start session failed", err)
+		return tracing.Errorf(span, "start session failed: %s", err)
 	}
 
 	if isNew {
