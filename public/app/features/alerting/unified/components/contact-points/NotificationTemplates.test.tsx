@@ -1,6 +1,4 @@
-import { screen, waitForElementToBeRemoved, within } from '@testing-library/react';
-import { render } from 'test/test-utils';
-import { byText } from 'testing-library-selector';
+import { render, screen, within } from 'test/test-utils';
 
 import { AccessControlAction } from 'app/types';
 
@@ -9,10 +7,6 @@ import { grantUserPermissions } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 
 import { NotificationTemplates } from './NotificationTemplates';
-
-const ui = {
-  loadingPlaceholder: byText('Loading notification templates'),
-};
 
 const renderWithProvider = () => {
   render(
@@ -24,7 +18,7 @@ const renderWithProvider = () => {
 
 setupMswServer();
 
-describe('TemplatesTable', () => {
+describe('NotificationTemplates', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     grantUserPermissions([
@@ -37,24 +31,21 @@ describe('TemplatesTable', () => {
 
   it('Should render templates table with the correct rows', async () => {
     renderWithProvider();
-    await waitForElementToBeRemoved(ui.loadingPlaceholder.query());
 
-    const slackRow = screen.getByRole('row', { name: /slack-template/i });
+    const slackRow = await screen.findByRole('row', { name: /slack-template/i });
     expect(within(slackRow).getByRole('cell', { name: /slack-template/i })).toBeInTheDocument();
 
-    const emailRow = screen.getByRole('row', { name: /custom-email/i });
+    const emailRow = await screen.findByRole('row', { name: /custom-email/i });
     expect(within(emailRow).getByRole('cell', { name: /custom-email/i })).toBeInTheDocument();
 
-    const provisionedRow = screen.getByRole('row', { name: /provisioned-template/i });
+    const provisionedRow = await screen.findByRole('row', { name: /provisioned-template/i });
     expect(within(provisionedRow).getByRole('cell', { name: /provisioned-template/i })).toBeInTheDocument();
   });
 
   it('Should render duplicate template button when having permissions', async () => {
     renderWithProvider();
 
-    await waitForElementToBeRemoved(ui.loadingPlaceholder.query());
-
-    const slackRow = screen.getByRole('row', { name: /slack-template/i });
+    const slackRow = await screen.findByRole('row', { name: /slack-template/i });
     expect(within(slackRow).getByRole('cell', { name: /Copy/i })).toBeInTheDocument();
   });
 
@@ -66,12 +57,17 @@ describe('TemplatesTable', () => {
 
     renderWithProvider();
 
-    await waitForElementToBeRemoved(ui.loadingPlaceholder.query());
-
-    const slackRow = screen.getByRole('row', { name: /slack-template/i });
+    const slackRow = await screen.findByRole('row', { name: /slack-template/i });
     expect(within(slackRow).queryByRole('cell', { name: /Copy/i })).not.toBeInTheDocument();
 
-    const emailRow = screen.getByRole('row', { name: /custom-email/i });
+    const emailRow = await screen.findByRole('row', { name: /custom-email/i });
     expect(within(emailRow).queryByRole('cell', { name: /Copy/i })).not.toBeInTheDocument();
+  });
+
+  it('shows provisioned badge appropriately', async () => {
+    renderWithProvider();
+
+    const provisionedRow = await screen.findByRole('row', { name: /provisioned-template/i });
+    expect(within(provisionedRow).getByText('Provisioned')).toBeInTheDocument();
   });
 });

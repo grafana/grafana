@@ -21,7 +21,7 @@ describe('Templates routes', () => {
   it('allows duplication of template with spaces in name', async () => {
     render(<Templates />, {
       historyOptions: {
-        initialEntries: ['/alerting/notifications/templates/some%20template/duplicate?alertmanager=grafana'],
+        initialEntries: ['/alerting/notifications/templates/template%20with%20spaces/duplicate?alertmanager=grafana'],
       },
     });
 
