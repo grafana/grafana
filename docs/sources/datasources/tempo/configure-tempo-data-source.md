@@ -58,7 +58,7 @@ refs:
 
 # Configure the Tempo data source
 
-The Tempo data source sets how your Tempo data connects to Grafana and lets you configure features and integrations with other telemetry signals.
+The Tempo data source sets how Grafana connects to your Tempo database and lets you configure features and integrations with other telemetry signals.
 
 To configure basic settings for the Tempo data source, complete the following steps:
 
@@ -88,7 +88,7 @@ This video explains how to add data sources, including Loki, Tempo, and Mimir, t
 
 <!-- The traceQLStreaming toggle will be deprecated in Grafana 11.2 and removed in 11.3. -->
 
-Streaming provides immediate visibility of incoming traces on the results table for a TraceQL query.
+Streaming enables TraceQL query results to be displayed as they become available. Without streaming, no results are displayed until all results have returned. 
 
 
 ### Requirements
