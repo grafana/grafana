@@ -1,8 +1,8 @@
 resource "grafana_mute_timing" "mute_timing_1" {
-  name = "interval"
+  name = "interval-1"
 }
 resource "grafana_mute_timing" "mute_timing_2" {
-  name = "full-interval"
+  name = "interval-2"
 
   intervals {
 
