@@ -1,0 +1,4 @@
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/collection/v0alpha1,ResourceRef,Group
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/collection/v0alpha1,ResourceRef,Name
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/collection/v0alpha1,ResourceRef,Namespace
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/collection/v0alpha1,ResourceRef,Resource

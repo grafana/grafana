@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications"
+	"github.com/grafana/grafana/pkg/registry/apis/collection"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
@@ -35,6 +36,7 @@ func ProvideRegistryServiceSink(
 	_ *peakq.PeakQAPIBuilder,
 	_ *identity.IdentityAPIBuilder,
 	_ *scope.ScopeAPIBuilder,
+	_ *collection.CollectionsAPIBuilder,
 	_ *query.QueryAPIBuilder,
 	_ *notifications.NotificationsAPIBuilder,
 ) *Service {
