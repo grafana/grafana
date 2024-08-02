@@ -29,6 +29,7 @@ import AddPanelButton from 'app/features/dashboard/components/AddPanelButton/Add
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { KioskMode, StoreState } from 'app/types';
@@ -126,6 +127,7 @@ export const DashNav = memo<Props>((props) => {
   };
 
   const onStarDashboard = () => {
+    DashboardInteractions.toolbarFavoritesClick();
     const dashboardSrv = getDashboardSrv();
     const { dashboard, navIndex, removeNavIndex, setStarred, updateNavIndex } = props;
 
@@ -153,6 +155,7 @@ export const DashNav = memo<Props>((props) => {
   };
 
   const onOpenSettings = () => {
+    DashboardInteractions.toolbarSettingsClick();
     locationService.partial({ editview: 'settings' });
   };
 
@@ -330,7 +333,13 @@ export const DashNav = memo<Props>((props) => {
     }
 
     if (canEdit && !isFullscreen) {
-      buttons.push(<AddPanelButton dashboard={dashboard} key="panel-add-dropdown" />);
+      buttons.push(
+        <AddPanelButton
+          onToolbarAddMenuOpen={DashboardInteractions.toolbarAddClick}
+          dashboard={dashboard}
+          key="panel-add-dropdown"
+        />
+      );
     }
 
     if (canShare) {

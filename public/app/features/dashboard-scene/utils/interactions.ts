@@ -18,6 +18,20 @@ export const DashboardInteractions = {
     reportDashboardInteraction('panelheader_cancelquery_clicked', properties);
   },
 
+  // Dashboard interactions from toolbar
+  toolbarFavoritesClick: () => {
+    reportDashboardInteraction('toolbar_actions_clicked', { item: 'favorites' });
+  },
+  toolbarSettingsClick: () => {
+    reportDashboardInteraction('toolbar_actions_clicked', { item: 'settings' });
+  },
+  toolbarShareClick: () => {
+    reportDashboardInteraction('toolbar_actions_clicked', { item: 'share' });
+  },
+  toolbarAddClick: () => {
+    reportDashboardInteraction('toolbar_actions_clicked', { item: 'add' });
+  },
+
   // Sharing interactions:
   sharingCategoryClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('sharing_category_clicked', properties);

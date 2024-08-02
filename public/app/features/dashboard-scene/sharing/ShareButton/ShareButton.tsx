@@ -7,6 +7,7 @@ import { Button, ButtonGroup, Dropdown } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardScene } from '../../scene/DashboardScene';
+import { DashboardInteractions } from '../../utils/interactions';
 
 import ShareMenu from './ShareMenu';
 import { buildShareUrl } from './utils';
@@ -21,6 +22,9 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
   }, [dashboard]);
 
   const onMenuClick = useCallback((isOpen: boolean) => {
+    if (isOpen) {
+      DashboardInteractions.toolbarShareClick();
+    }
     setIsOpen(isOpen);
   }, []);
 

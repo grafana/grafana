@@ -89,6 +89,7 @@ export function ToolbarActions({ dashboard }: Props) {
           key="star-dashboard-button"
           data-testid={selectors.components.NavToolbar.markAsFavorite}
           onClick={() => {
+            DashboardInteractions.toolbarFavoritesClick();
             dashboard.onStarDashboard();
           }}
         />
@@ -155,6 +156,7 @@ export function ToolbarActions({ dashboard }: Props) {
         key="add-panel-dropdown"
         onVisibleChange={(isOpen) => {
           setIsAddPanelMenuOpen(isOpen);
+          DashboardInteractions.toolbarAddClick();
         }}
         overlay={() => (
           <Menu>
@@ -311,6 +313,7 @@ export function ToolbarActions({ dashboard }: Props) {
         className={styles.buttonWithExtraMargin}
         fill="outline"
         onClick={() => {
+          DashboardInteractions.toolbarShareClick();
           dashboard.showModal(new ShareModal({}));
         }}
         data-testid={selectors.components.NavToolbar.shareDashboard}
