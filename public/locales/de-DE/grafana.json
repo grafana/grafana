@@ -1,6 +1,5 @@
 {
   "_comment": "",
-  "{unit}": "",
   "access-control": {
     "add-permission": {
       "role-label": "Rolle",
@@ -669,7 +668,6 @@
       "message": "Keine Datenquellen gefunden"
     }
   },
-  "Description": "",
   "explore": {
     "add-to-dashboard": "Zum Dashboard hinzufügen",
     "add-to-library-modal": {
@@ -940,7 +938,6 @@
       "refresh": "Aktualisieren"
     }
   },
-  "Labels": "",
   "library-panel": {
     "add-modal": {
       "cancel": "Abbrechen",
@@ -1541,7 +1538,6 @@
     },
     "title": "Das Neueste aus dem Blog"
   },
-  "No description available": "",
   "notifications": {
     "empty-state": {
       "description": "",
@@ -2233,15 +2229,22 @@
       "select-search-input": "Suchbegriff eingeben (Land, Stadt, Abkürzung)"
     }
   },
+  "trails": {
+    "metric-overview": {
+      "description-label": "",
+      "labels-label": "",
+      "no-description": "",
+      "type-label": "",
+      "unit-label": "",
+      "unknown-type": ""
+    }
+  },
   "transformations": {
     "empty": {
       "add-transformation-body": "Mithilfe von Transformationen können Daten auf verschiedene Arten geändert werden, bevor Ihre Visualisierung angezeigt wird.<1></1>Dies beinhaltet die Verknüpfung von Daten, das Umbenennen von Feldern, die Erstellung von Berechnungen, das Formatieren von Daten für die Anzeige und mehr.",
       "add-transformation-header": "Daten transformieren beginnen"
     }
   },
-  "Type": "",
-  "Unit": "",
-  "Unknown": "",
   "user-orgs": {
     "current-org-button": "Aktuell",
     "name-column": "Name",
