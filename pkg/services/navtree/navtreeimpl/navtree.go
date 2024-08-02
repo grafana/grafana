@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -30,6 +31,7 @@ type ServiceImpl struct {
 	log                  log.Logger
 	accessControl        ac.AccessControl
 	authnService         authn.Service
+	permRegistry         permreg.PermissionRegistry
 	pluginStore          pluginstore.Store
 	pluginSettings       pluginsettings.Service
 	starService          star.Service
@@ -54,12 +56,13 @@ type NavigationAppConfig struct {
 
 func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service,
 	features featuremgmt.FeatureToggles, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service,
-	license licensing.Licensing, authnService authn.Service) navtree.Service {
+	license licensing.Licensing, authnService authn.Service, permRegistry permreg.PermissionRegistry) navtree.Service {
 	service := &ServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("navtree service"),
 		accessControl:        accessControl,
 		authnService:         authnService,
+		permRegistry:         permRegistry,
 		pluginStore:          pluginStore,
 		pluginSettings:       pluginSettings,
 		starService:          starService,

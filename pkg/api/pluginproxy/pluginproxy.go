@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pluginac "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
@@ -30,6 +31,7 @@ type PluginProxy struct {
 	pluginRoutes   []*plugins.Route
 	ctx            *contextmodel.ReqContext
 	proxyPath      string
+	permRegistry   permreg.PermissionRegistry
 	matchedRoute   *plugins.Route
 	cfg            *setting.Cfg
 	secretsService secrets.Service
@@ -40,7 +42,7 @@ type PluginProxy struct {
 
 // NewPluginProxy creates a plugin proxy.
 func NewPluginProxy(ps *pluginsettings.DTO, routes []*plugins.Route, ctx *contextmodel.ReqContext,
-	proxyPath string, cfg *setting.Cfg, secretsService secrets.Service, tracer tracing.Tracer,
+	proxyPath string, permRegistry permreg.PermissionRegistry, cfg *setting.Cfg, secretsService secrets.Service, tracer tracing.Tracer,
 	transport *http.Transport, accessControl ac.AccessControl, features featuremgmt.FeatureToggles) (*PluginProxy, error) {
 	return &PluginProxy{
 		accessControl:  accessControl,
@@ -48,6 +50,7 @@ func NewPluginProxy(ps *pluginsettings.DTO, routes []*plugins.Route, ctx *contex
 		pluginRoutes:   routes,
 		ctx:            ctx,
 		proxyPath:      proxyPath,
+		permRegistry:   permRegistry,
 		cfg:            cfg,
 		secretsService: secretsService,
 		tracer:         tracer,
@@ -131,7 +134,7 @@ func (proxy *PluginProxy) HandleRequest() {
 func (proxy *PluginProxy) hasAccessToRoute(route *plugins.Route) bool {
 	useRBAC := proxy.features.IsEnabled(proxy.ctx.Req.Context(), featuremgmt.FlagAccessControlOnCall) && route.ReqAction != ""
 	if useRBAC {
-		routeEval := pluginac.GetPluginRouteEvaluator(proxy.ps.PluginID, route.ReqAction)
+		routeEval := pluginac.GetPluginRouteEvaluator(proxy.permRegistry, proxy.ctx.Logger, proxy.ps.PluginID, route.ReqAction)
 		hasAccess := ac.HasAccess(proxy.accessControl, proxy.ctx)(routeEval)
 		if !hasAccess {
 			proxy.ctx.Logger.Debug("plugin route is covered by RBAC, user doesn't have access", "route", proxy.ctx.Req.URL.Path)

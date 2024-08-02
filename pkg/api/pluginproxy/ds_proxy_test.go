@@ -31,6 +31,7 @@ import (
 	pluginfakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	testreg "github.com/grafana/grafana/pkg/services/accesscontrol/permreg/test"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -115,6 +116,10 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			{
 				Path:      "api/rbac-restricted",
 				ReqAction: "test-app.settings:read",
+			},
+			{
+				Path:      "api/rbac-invalid",
+				ReqAction: "folders:read",
 			},
 		}
 
@@ -299,6 +304,18 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			// Has access but to another app
 			ctx.SignedInUser.Permissions = map[int64]map[string][]string{1: {"datasources:read": {"datasources:uid:notTheDsUID"}}}
 			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-home")
+			require.NoError(t, err)
+			err = proxy.validateRequest()
+			require.Error(t, err)
+		})
+
+		t.Run("plugin route with invalid RBAC protection", func(t *testing.T) {
+			ctx, _ := setUp()
+			ctx.SignedInUser.OrgID = int64(1)
+			ctx.SignedInUser.OrgRole = identity.RoleNone
+			// Has access but this is an invalid protection for a route
+			ctx.SignedInUser.Permissions = map[int64]map[string][]string{1: {"folders:read": {"folders:*"}}}
+			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-invalid")
 			require.NoError(t, err)
 			err = proxy.validateRequest()
 			require.Error(t, err)
@@ -903,7 +920,7 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *contextmodel.ReqContext, cfg
 		&actest.FakePermissionsService{}, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
 		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
 	require.NoError(t, err)
-	proxy, err := NewDataSourceProxy(ds, routes, ctx, "", cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, features)
+	proxy, err := NewDataSourceProxy(ds, routes, ctx, "", testreg.ProvidePermissionRegistry(), cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, features)
 	require.NoError(t, err)
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 	require.NoError(t, err)
@@ -1025,7 +1042,7 @@ func runDatasourceAuthTest(t *testing.T, secretsService secrets.Service, secrets
 		&actest.FakePermissionsService{}, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
 		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
 	require.NoError(t, err)
-	proxy, err := NewDataSourceProxy(test.datasource, routes, ctx, "", &setting.Cfg{}, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, features)
+	proxy, err := NewDataSourceProxy(test.datasource, routes, ctx, "", testreg.ProvidePermissionRegistry(), &setting.Cfg{}, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, features)
 	require.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
@@ -1083,8 +1100,9 @@ func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasource
 	require.NoError(t, err)
 
 	tracer := tracing.InitializeTracerForTest()
+	permRegistry := testreg.ProvidePermissionRegistry()
 
-	proxy, err := NewDataSourceProxy(ds, routes, ctx, path, cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, features)
+	proxy, err := NewDataSourceProxy(ds, routes, ctx, path, permRegistry, cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, features)
 	if err != nil {
 		return nil, err
 	}

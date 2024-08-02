@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -25,13 +26,14 @@ import (
 )
 
 func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator validations.PluginRequestValidator,
-	pluginStore pluginstore.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
+	pluginStore pluginstore.Store, permRegistry permreg.PermissionRegistry, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
 	oauthTokenService *oauthtoken.Service, dsService datasources.DataSourceService,
 	tracer tracing.Tracer, secretsService secrets.Service, features featuremgmt.FeatureToggles) *DataSourceProxyService {
 	return &DataSourceProxyService{
 		DataSourceCache:        dataSourceCache,
 		PluginRequestValidator: plugReqValidator,
 		pluginStore:            pluginStore,
+		permRegistry:           permRegistry,
 		Cfg:                    cfg,
 		HTTPClientProvider:     httpClientProvider,
 		OAuthTokenService:      oauthTokenService,
@@ -46,6 +48,7 @@ type DataSourceProxyService struct {
 	DataSourceCache        datasources.CacheService
 	PluginRequestValidator validations.PluginRequestValidator
 	pluginStore            pluginstore.Store
+	permRegistry           permreg.PermissionRegistry
 	Cfg                    *setting.Cfg
 	HTTPClientProvider     httpclient.Provider
 	OAuthTokenService      *oauthtoken.Service
@@ -122,7 +125,7 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqConte
 	}
 
 	proxyPath := getProxyPath(c)
-	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin.Routes, c, proxyPath, p.Cfg, p.HTTPClientProvider,
+	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin.Routes, c, proxyPath, p.permRegistry, p.Cfg, p.HTTPClientProvider,
 		p.OAuthTokenService, p.DataSourcesService, p.tracer, p.features)
 	if err != nil {
 		var urlValidationError datasource.URLValidationError
