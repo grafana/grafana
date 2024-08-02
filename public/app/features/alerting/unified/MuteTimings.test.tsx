@@ -14,7 +14,7 @@ import { MOCK_DATASOURCE_EXTERNAL_VANILLA_ALERTMANAGER_UID } from 'app/features/
 import {
   TIME_INTERVAL_UID_HAPPY_PATH,
   TIME_INTERVAL_UID_FILE_PROVISIONED,
-} from 'app/features/alerting/unified/mocks/server/handlers/timeIntervals.k8s';
+} from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';

@@ -40,6 +40,11 @@ func TestContactPointService(t *testing.T) {
 			accesscontrol.ActionAlertingProvisioningRead: nil,
 		},
 	}}
+	decryptedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingProvisioningReadSecrets: nil,
+		},
+	}}
 
 	t.Run("service gets contact points from AM config", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
@@ -264,6 +269,52 @@ func TestContactPointService(t *testing.T) {
 
 		intercepted := fakeConfigStore.LastSaveCommand
 		require.Equal(t, expectedConcurrencyToken, intercepted.FetchedConfigurationHash)
+	})
+
+	t.Run("secrets are parsed in a case-insensitive way", func(t *testing.T) {
+		// JSON unmarshalling is case-insensitive. This means we can have
+		// a setting named "TOKEN" instead of "token". This test ensures that
+		// we handle such cases correctly and the token value is properly parsed,
+		// even if the setting key does not match the JSON key exactly.
+		tests := []struct {
+			settingsJSON  string
+			expectedValue string
+			name          string
+		}{
+			{
+				settingsJSON:  `{"recipient":"value_recipient","TOKEN":"some-other-token"}`,
+				expectedValue: "some-other-token",
+				name:          "token key is uppercased",
+			},
+
+			// This test checks that if multiple token keys are present in the settings,
+			// the key with the exact matching name is used.
+			{
+				settingsJSON:  `{"recipient":"value_recipient","TOKEN":"some-other-token", "token": "second-token"}`,
+				expectedValue: "second-token",
+				name:          "multiple token keys",
+			},
+		}
+
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				sut := createContactPointServiceSut(t, secretsService)
+
+				newCp := createTestContactPoint()
+				settings, _ := simplejson.NewJson([]byte(tc.settingsJSON))
+				newCp.Settings = settings
+
+				_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+				require.NoError(t, err)
+
+				q := cpsQueryWithName(1, newCp.Name)
+				q.Decrypt = true
+				cps, err := sut.GetContactPoints(context.Background(), q, decryptedUser)
+				require.NoError(t, err)
+				require.Len(t, cps, 1)
+				require.Equal(t, tc.expectedValue, cps[0].Settings.Get("token").MustString())
+			})
+		}
 	})
 }
 
