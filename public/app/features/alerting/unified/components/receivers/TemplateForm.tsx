@@ -21,6 +21,7 @@ import {
   InlineField,
   Box,
 } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { AlertManagerCortexConfig, TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
@@ -28,7 +29,7 @@ import { AlertManagerCortexConfig, TestTemplateAlert } from 'app/plugins/datasou
 import { AppChromeUpdate } from '../../../../../core/components/AppChrome/AppChromeUpdate';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { makeAMLink } from '../../utils/misc';
+import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHeader';
@@ -84,6 +85,8 @@ export const isDuplicating = (location: Location) => location.pathname.endsWith(
 export const TemplateForm = ({ existing, alertManagerSourceName, config, provenance }: Props) => {
   const styles = useStyles2(getStyles);
 
+  const appNotification = useAppNotification();
+
   const createNewTemplate = useCreateNotificationTemplate(alertManagerSourceName);
   const updateTemplate = useUpdateNotificationTemplate(alertManagerSourceName);
 
@@ -114,14 +117,6 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
     dragPosition: 'middle',
   });
 
-  const submit = (values: TemplateFormValues) => {
-    if (!existing) {
-      return createNewTemplate(values);
-    }
-
-    return updateTemplate(existing.name, values);
-  };
-
   const formApi = useForm<TemplateFormValues>({
     mode: 'onSubmit',
     defaultValues: existing ?? defaults,
@@ -134,6 +129,18 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
     setValue,
     watch,
   } = formApi;
+
+  const submit = async (values: TemplateFormValues) => {
+    try {
+      if (!existing) {
+        await createNewTemplate(values);
+      } else {
+        await updateTemplate(existing.name, values);
+      }
+    } catch (error) {
+      appNotification.error('Error saving template', stringifyErrorLike(error));
+    }
+  };
 
   const validateNameIsUnique: Validate<string, TemplateFormValues> = (name: string) => {
     return !config.template_files[name] || existing?.name === name
@@ -163,7 +170,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
     <>
       <FormProvider {...formApi}>
         <AppChromeUpdate actions={actionButtons} />
-        <form onSubmit={handleSubmit(submit)} ref={formRef} className={styles.form}>
+        <form onSubmit={handleSubmit(submit, (e) => console.log('ziemniak', e))} ref={formRef} className={styles.form}>
           {/* error message */}
           {error && (
             <Alert severity="error" title="Error saving template">
