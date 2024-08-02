@@ -357,6 +357,8 @@ settings:
   # <string, required>
   topic: grafana/alerts
   # <string>
+  messageFormat: json
+  # <string>
   username: grafana
   # <string>
   password: password1

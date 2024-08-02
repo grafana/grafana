@@ -76,6 +76,9 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager/
+  mqtt:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-mqtt/
 ---
 
 # Configure contact points
@@ -164,7 +167,7 @@ The following table lists the contact point integrations supported by Grafana.
 | Google Chat                  | `googlechat`              |
 | [Grafana Oncall](ref:oncall) | `oncall`                  |
 | Kafka REST Proxy             | `kafka`                   |
-| MQTT                         | `mqtt`                    |
+| [MQTT](ref:mqtt)             | `mqtt`                    |
 | Line                         | `line`                    |
 | [Microsoft Teams](ref:teams) | `teams`                   |
 | [Opsgenie](ref:opsgenie)     | `opsgenie`                |

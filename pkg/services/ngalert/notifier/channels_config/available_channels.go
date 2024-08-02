@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	alertingMqtt "github.com/grafana/alerting/receivers/mqtt"
 	alertingOpsgenie "github.com/grafana/alerting/receivers/opsgenie"
 	alertingPagerduty "github.com/grafana/alerting/receivers/pagerduty"
 	alertingTemplates "github.com/grafana/alerting/templates"
@@ -1269,6 +1270,25 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Description:  "The topic to which the message will be sent.",
 					PropertyName: "topic",
 					Required:     true,
+				},
+				{
+					Label:   "Message format",
+					Element: ElementTypeSelect,
+					SelectOptions: []SelectOption{
+						{
+							Value: alertingMqtt.MessageFormatJSON,
+							Label: "json",
+						},
+						{
+							Value: alertingMqtt.MessageFormatText,
+							Label: "text",
+						},
+					},
+					InputType:    InputTypeText,
+					Placeholder:  "json",
+					Description:  "The format of the message to be sent. If set to 'json', the message will be sent as a JSON object. If set to 'text', the message will be sent as a plain text string. By default json is used.",
+					PropertyName: "messageFormat",
+					Required:     false,
 				},
 				{
 					Label:        "Client ID",

@@ -511,6 +511,7 @@ The following sections detail the supported settings and secure settings for eac
 | brokerUrl          |                |
 | clientId           |                |
 | topic              |                |
+| messageFormat      |
 | username           |                |
 | password           | yes            |
 | insecureSkipVerify |                |

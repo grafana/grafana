@@ -92,6 +92,7 @@ type MqttIntegration struct {
 	ClientID           *string `json:"clientId,omitempty" yaml:"clientId,omitempty" hcl:"client_id"`
 	Topic              *string `json:"topic,omitempty" yaml:"topic,omitempty" hcl:"topic"`
 	Message            *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+	MessageFormat      *string `json:"messageFormat,omitempty" yaml:"messageFormat,omitempty" hcl:"message_format"`
 	Username           *string `json:"username,omitempty" yaml:"username,omitempty" hcl:"username"`
 	Password           *Secret `json:"password,omitempty" yaml:"password,omitempty" hcl:"password"`
 	InsecureSkipVerify *bool   `json:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" hcl:"insecure_skip_verify"`
