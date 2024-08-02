@@ -64,7 +64,7 @@ type SearchService struct {
 }
 
 func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.HitList, error) {
-	ctx, span := tracer.Start(ctx, "searchService.SearchHandler")
+	ctx, span := tracer.Start(ctx, "search.SearchHandler")
 	defer span.End()
 
 	starredQuery := star.GetUserStarsQuery{
