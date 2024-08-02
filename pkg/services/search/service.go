@@ -15,7 +15,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlstore db.DB, starService star.Service, dashboardService dashboards.DashboardService, tracer tracing.Tracer) *SearchService {
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/search")
+
+func ProvideService(cfg *setting.Cfg, sqlstore db.DB, starService star.Service, dashboardService dashboards.DashboardService) *SearchService {
 	s := &SearchService{
 		Cfg: cfg,
 		sortOptions: map[string]model.SortOption{
