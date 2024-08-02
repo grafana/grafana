@@ -291,8 +291,6 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			Permissions: map[int64]map[string][]string{u.OrgID: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersCreate,
-				}, {
-					Action: dashboards.ActionFoldersWrite,
 					Scope:  dashboards.ScopeFoldersAll,
 				}}),
 			},

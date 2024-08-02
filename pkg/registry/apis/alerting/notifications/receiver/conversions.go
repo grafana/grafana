@@ -3,7 +3,6 @@ package receiver
 import (
 	"encoding/json"
 	"fmt"
-	"hash/fnv"
 
 	"github.com/prometheus/alertmanager/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,12 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 )
 
 func getUID(t definitions.GettableApiReceiver) string {
-	sum := fnv.New64()
-	_, _ = sum.Write([]byte(t.Name))
-	return fmt.Sprintf("%016x", sum.Sum64())
+	return legacy_storage.NameToUid(t.Name)
 }
 
 func convertToK8sResources(orgID int64, receivers []definitions.GettableApiReceiver, namespacer request.NamespaceMapper) (*model.ReceiverList, error) {

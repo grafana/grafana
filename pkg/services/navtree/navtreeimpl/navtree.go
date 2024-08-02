@@ -163,6 +163,11 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		return nil, err
 	}
 
+	// remove user access if empty. Happens if grafana-auth-app is not injected
+	if sec := treeRoot.FindById(navtree.NavIDCfgAccess); sec != nil && (sec.Children == nil || len(sec.Children) == 0) {
+		treeRoot.RemoveSectionByID(navtree.NavIDCfgAccess)
+	}
+
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPinNavItems) {
 		bookmarks := s.buildBookmarksNavLinks(prefs, treeRoot)
 
@@ -292,7 +297,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*navtree.NavLink, error) {
 	starredItemsChildNavs := []*navtree.NavLink{}
 
-	userID, _ := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	userID, _ := identity.UserIdentifier(c.SignedInUser.GetTypedID())
 	query := star.GetUserStarsQuery{
 		UserID: userID,
 	}
@@ -333,11 +338,11 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*
 func (s *ServiceImpl) buildBookmarksNavLinks(prefs *pref.Preference, treeRoot *navtree.NavTreeRoot) []*navtree.NavLink {
 	bookmarksChildNavs := []*navtree.NavLink{}
 
-	bookmarkIds := prefs.JSONData.Navbar.BookmarkIds
+	bookmarkUrls := prefs.JSONData.Navbar.BookmarkUrls
 
-	if len(bookmarkIds) > 0 {
-		for _, id := range bookmarkIds {
-			item := treeRoot.FindById(id)
+	if len(bookmarkUrls) > 0 {
+		for _, url := range bookmarkUrls {
+			item := treeRoot.FindByURL(url)
 			if item != nil {
 				bookmarksChildNavs = append(bookmarksChildNavs, &navtree.NavLink{
 					Id:             item.Id,
