@@ -77,7 +77,6 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 
 		token, refreshErr := s.service.TryTokenRefresh(updateCtx, identity)
 		if refreshErr != nil {
-
 			if errors.Is(refreshErr, context.Canceled) {
 				return nil, nil
 			}
@@ -125,5 +124,5 @@ func getOAuthTokenCacheTTL(token *oauth2.Token) time.Duration {
 		}
 	}
 
-	return ttl
+	return ttl - oauthtoken.ExpiryDelta
 }
