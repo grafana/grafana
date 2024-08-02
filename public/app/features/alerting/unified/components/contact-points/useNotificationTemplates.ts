@@ -1,6 +1,5 @@
 import { produce } from 'immer';
 
-import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { useDispatch } from 'app/types';
 
 import { AlertManagerCortexConfig } from '../../../../../plugins/datasource/alertmanager/types';
@@ -65,8 +64,6 @@ export function useCreateNotificationTemplate({ alertmanager }: BaseAlertmanager
         newConfig: updatedConfig,
         oldConfig: amConfig,
         successMessage: 'Template saved.',
-        redirectPath: '/alerting/notifications',
-        redirectSearch: `tab=${ContactPointsActiveTabs.NotificationTemplates}`,
       })
     ).unwrap();
   };
@@ -103,8 +100,6 @@ export function useUpdateNotificationTemplate({ alertmanager }: BaseAlertmanager
         newConfig: updatedConfig,
         oldConfig: amConfig,
         successMessage: 'Template saved.',
-        redirectPath: '/alerting/notifications',
-        redirectSearch: `tab=${ContactPointsActiveTabs.NotificationTemplates}`,
       })
     ).unwrap();
   };

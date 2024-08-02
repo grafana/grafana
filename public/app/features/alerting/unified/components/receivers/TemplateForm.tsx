@@ -7,7 +7,7 @@ import { useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { isFetchError } from '@grafana/runtime';
+import { isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
   Button,
@@ -131,12 +131,17 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
   } = formApi;
 
   const submit = async (values: TemplateFormValues) => {
+    const returnLink = makeAMLink('alerting/notifications', alertManagerSourceName, {
+      tab: ContactPointsActiveTabs.NotificationTemplates,
+    });
+
     try {
       if (!existing) {
         await createNewTemplate({ template: values });
       } else {
         await updateTemplate({ originalName: existing.name, template: values });
       }
+      locationService.push(returnLink);
     } catch (error) {
       appNotification.error('Error saving template', stringifyErrorLike(error));
     }
