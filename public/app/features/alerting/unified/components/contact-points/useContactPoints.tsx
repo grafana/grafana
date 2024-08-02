@@ -18,7 +18,6 @@ import { getNamespace, shouldUseK8sApi } from 'app/features/alerting/unified/uti
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { onCallApi } from '../../api/onCallApi';
 import { usePluginBridge } from '../../hooks/usePluginBridge';
-import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { SupportedPlugin } from '../../types/pluginBridges';
 
 import { enhanceContactPointsWithMetadata } from './utils';
@@ -98,6 +97,17 @@ const useGetGrafanaContactPoints = ({ skip }: { skip?: boolean } = {}) => {
   return useK8sApi ? k8sResponse : grafanaResponse;
 };
 
+type GrafanaFetchOptions = {
+  /**
+   * Should we fetch and include status information about each contact point?
+   */
+  fetchStatuses?: boolean;
+  /**
+   * Should we fetch and include the number of notification policies that reference each contact point?
+   */
+  fetchPolicies?: boolean;
+};
+
 /**
  * Fetch contact points from separate endpoint (i.e. not the Alertmanager config) and combine with
  * OnCall integrations and any additional metadata from list of notifiers
@@ -107,15 +117,7 @@ export const useGrafanaContactPoints = ({
   fetchStatuses,
   fetchPolicies,
   skip,
-}: {
-  /**
-   * Should we fetch and include status information about each contact point?
-   */
-  fetchStatuses?: boolean;
-  /**
-   * Should we fetch and include the number of notification policies that reference each contact point?
-   */
-  fetchPolicies?: boolean;
+}: GrafanaFetchOptions & {
   /**
    * Should we skip requests altogether?
    * Useful for cases where we want to conditionally call grafana or external alertmanager endpoints
@@ -169,16 +171,19 @@ export const useGrafanaContactPoints = ({
   ]);
 };
 
-export function useContactPointsWithStatus() {
-  const { selectedAlertmanager, isGrafanaAlertmanager } = useAlertmanager();
-
+export function useContactPointsWithStatus({
+  alertmanager,
+  fetchStatuses,
+  fetchPolicies,
+}: GrafanaFetchOptions & { alertmanager: string }) {
+  const isGrafanaAlertmanager = alertmanager === GRAFANA_RULES_SOURCE_NAME;
   const grafanaResponse = useGrafanaContactPoints({
     skip: !isGrafanaAlertmanager,
-    fetchStatuses: true,
-    fetchPolicies: true,
+    fetchStatuses,
+    fetchPolicies,
   });
 
-  const alertmanagerConfigResponse = useGetAlertmanagerConfigurationQuery(selectedAlertmanager!, {
+  const alertmanagerConfigResponse = useGetAlertmanagerConfigurationQuery(alertmanager, {
     ...defaultOptions,
     selectFromResult: (result) => ({
       ...result,

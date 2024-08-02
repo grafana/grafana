@@ -42,7 +42,11 @@ const ContactPointsTab = () => {
   const { selectedAlertmanager } = useAlertmanager();
   const [queryParams] = useURLSearchParams();
 
-  let { isLoading, error, contactPoints } = useContactPointsWithStatus();
+  let { isLoading, error, contactPoints } = useContactPointsWithStatus({
+    alertmanager: selectedAlertmanager!,
+    fetchPolicies: true,
+    fetchStatuses: true,
+  });
   const { deleteTrigger, updateAlertmanagerState } = useDeleteContactPoint(selectedAlertmanager!);
   const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.CreateContactPoint
@@ -160,7 +164,9 @@ const ContactPointsPageContents = () => {
   const { selectedAlertmanager } = useAlertmanager();
   const [activeTab, setActiveTab] = useTabQueryParam();
 
-  let { contactPoints } = useContactPointsWithStatus();
+  let { contactPoints } = useContactPointsWithStatus({
+    alertmanager: selectedAlertmanager!,
+  });
 
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
   const showNotificationTemplates = activeTab === ActiveTab.NotificationTemplates;

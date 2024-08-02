@@ -6,32 +6,34 @@ import { config } from '@grafana/runtime';
 import { disablePlugin } from 'app/features/alerting/unified/mocks/server/configure';
 import { setOnCallIntegrations } from 'app/features/alerting/unified/mocks/server/handlers/plugins/configure-plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { AccessControlAction } from 'app/types';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
-import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 
 import { useContactPointsWithStatus } from './useContactPoints';
 
 const wrapper = ({ children }: { children: ReactNode }) => {
   const ProviderWrapper = getWrapper({ renderWithRouter: true });
-  return (
-    <ProviderWrapper>
-      <AlertmanagerProvider accessType="notification" alertmanagerSourceName="grafana">
-        {children}
-      </AlertmanagerProvider>
-    </ProviderWrapper>
-  );
+  return <ProviderWrapper>{children}</ProviderWrapper>;
 };
 
 setupMswServer();
 
 const getHookResponse = async (featureToggleEnabled: boolean) => {
   config.featureToggles.alertingApiServer = featureToggleEnabled;
-  const { result } = renderHook(() => useContactPointsWithStatus(), {
-    wrapper,
-  });
+  const { result } = renderHook(
+    () =>
+      useContactPointsWithStatus({
+        alertmanager: GRAFANA_RULES_SOURCE_NAME,
+        fetchPolicies: true,
+        fetchStatuses: true,
+      }),
+    {
+      wrapper,
+    }
+  );
 
   await waitFor(() => {
     expect(result.current.isLoading).toBe(false);
