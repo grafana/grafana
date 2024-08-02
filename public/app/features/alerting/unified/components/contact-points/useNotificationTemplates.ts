@@ -9,10 +9,20 @@ import { updateAlertManagerConfigAction } from '../../state/actions';
 import { ensureDefine } from '../../utils/templates';
 import { TemplateFormValues } from '../receivers/TemplateForm';
 
-// TODO Check the issue with useAlertmanagerConfig hook
-export function useNotificationTemplates(amSourceName?: string) {
-  const templatesRequestState = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(amSourceName || '', {
-    skip: !amSourceName,
+interface BaseAlertmanagerArgs {
+  alertmanager: string;
+}
+
+export interface NotificationTemplate {
+  name: string;
+  template: string;
+  provenance?: string;
+}
+export function useNotificationTemplates({ alertmanager }: BaseAlertmanagerArgs) {
+  const { useGetAlertmanagerConfigurationQuery } = alertmanagerApi;
+
+  const templatesRequestState = useGetAlertmanagerConfigurationQuery(alertmanager, {
+    skip: !alertmanager,
     selectFromResult: (state) => ({
       ...state,
       data: state.data ? amConfigToTemplates(state.data) : undefined,
@@ -23,12 +33,6 @@ export function useNotificationTemplates(amSourceName?: string) {
   return templatesRequestState;
 }
 
-export interface NotificationTemplate {
-  name: string;
-  template: string;
-  provenance?: string;
-}
-
 function amConfigToTemplates(config: AlertManagerCortexConfig): NotificationTemplate[] {
   return Object.entries(config.template_files).map(([name, template]) => ({
     name,
@@ -37,29 +41,27 @@ function amConfigToTemplates(config: AlertManagerCortexConfig): NotificationTemp
   }));
 }
 
-export function useCreateNotificationTemplate(amSourceName?: string) {
+export function useCreateNotificationTemplate({ alertmanager }: BaseAlertmanagerArgs) {
   const dispatch = useDispatch();
-  const [fetchAmConfig] = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useLazyQuery();
+  const { useLazyGetAlertmanagerConfigurationQuery } = alertmanagerApi;
 
-  return async (templateValues: TemplateFormValues) => {
-    if (!amSourceName) {
-      return Promise.reject(new Error('Alertmanager source name is required.'));
-    }
+  const [fetchAmConfig] = useLazyGetAlertmanagerConfigurationQuery();
 
-    const amConfig = await fetchAmConfig(amSourceName).unwrap();
+  return async ({ template }: { template: TemplateFormValues }) => {
+    const amConfig = await fetchAmConfig(alertmanager).unwrap();
     // wrap content in "define" if it's not already wrapped, in case user did not do it/
     // it's not obvious that this is needed for template to work
-    const content = ensureDefine(templateValues.name, templateValues.content);
+    const content = ensureDefine(template.name, template.content);
 
     // TODO Check we're NOT overriding an existing template
     const updatedConfig = produce(amConfig, (draft) => {
-      draft.template_files[templateValues.name] = content;
-      draft.alertmanager_config.templates = [...(draft.alertmanager_config.templates ?? []), templateValues.name];
+      draft.template_files[template.name] = content;
+      draft.alertmanager_config.templates = [...(draft.alertmanager_config.templates ?? []), template.name];
     });
 
     return dispatch(
       updateAlertManagerConfigAction({
-        alertManagerSourceName: amSourceName,
+        alertManagerSourceName: alertmanager,
         newConfig: updatedConfig,
         oldConfig: amConfig,
         successMessage: 'Template saved.',
@@ -70,36 +72,34 @@ export function useCreateNotificationTemplate(amSourceName?: string) {
   };
 }
 
-export function useUpdateNotificationTemplate(amSourceName?: string) {
+export function useUpdateNotificationTemplate({ alertmanager }: BaseAlertmanagerArgs) {
   const dispatch = useDispatch();
-  const [fetchAmConfig] = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useLazyQuery();
+  const { useLazyGetAlertmanagerConfigurationQuery } = alertmanagerApi;
 
-  return async (oldTemplateName: string, newTemplate: TemplateFormValues) => {
-    if (!amSourceName) {
-      return Promise.reject(new Error('Alertmanager source name is required.'));
-    }
+  const [fetchAmConfig] = useLazyGetAlertmanagerConfigurationQuery();
 
-    const amConfig = await fetchAmConfig(amSourceName).unwrap();
+  return async ({ originalName, template }: { originalName: string; template: TemplateFormValues }) => {
+    const amConfig = await fetchAmConfig(alertmanager).unwrap();
     // wrap content in "define" if it's not already wrapped, in case user did not do it/
     // it's not obvious that this is needed for template to work
-    const content = ensureDefine(newTemplate.name, newTemplate.content);
+    const content = ensureDefine(template.name, template.content);
 
-    const nameChanged = oldTemplateName !== newTemplate.name;
+    const nameChanged = originalName !== template.name;
 
     // TODO Maybe we could simplify or extract this logic
     const updatedConfig = produce(amConfig, (draft) => {
       if (nameChanged) {
-        delete draft.template_files[oldTemplateName];
-        draft.alertmanager_config.templates = draft.alertmanager_config.templates?.filter((t) => t !== oldTemplateName);
+        delete draft.template_files[originalName];
+        draft.alertmanager_config.templates = draft.alertmanager_config.templates?.filter((t) => t !== originalName);
       }
 
-      draft.template_files[newTemplate.name] = content;
-      draft.alertmanager_config.templates = [...(draft.alertmanager_config.templates ?? []), newTemplate.name];
+      draft.template_files[template.name] = content;
+      draft.alertmanager_config.templates = [...(draft.alertmanager_config.templates ?? []), template.name];
     });
 
     return dispatch(
       updateAlertManagerConfigAction({
-        alertManagerSourceName: amSourceName,
+        alertManagerSourceName: alertmanager,
         newConfig: updatedConfig,
         oldConfig: amConfig,
         successMessage: 'Template saved.',
@@ -110,25 +110,23 @@ export function useUpdateNotificationTemplate(amSourceName?: string) {
   };
 }
 
-export function useDeleteNotificationTemplate(amSourceName?: string) {
+export function useDeleteNotificationTemplate({ alertmanager }: BaseAlertmanagerArgs) {
   const dispatch = useDispatch();
-  const [fetchAmConfig] = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useLazyQuery();
+  const { useLazyGetAlertmanagerConfigurationQuery } = alertmanagerApi;
 
-  return async (templateName: string) => {
-    if (!amSourceName) {
-      return Promise.reject(new Error('Alertmanager source name is required.'));
-    }
+  const [fetchAmConfig] = useLazyGetAlertmanagerConfigurationQuery();
 
-    const amConfig = await fetchAmConfig(amSourceName).unwrap();
+  return async ({ name }: { name: string }) => {
+    const amConfig = await fetchAmConfig(alertmanager).unwrap();
 
     const updatedConfig = produce(amConfig, (draft) => {
-      delete draft.template_files[templateName];
-      draft.alertmanager_config.templates = draft.alertmanager_config.templates?.filter((t) => t !== templateName);
+      delete draft.template_files[name];
+      draft.alertmanager_config.templates = draft.alertmanager_config.templates?.filter((t) => t !== name);
     });
 
     return dispatch(
       updateAlertManagerConfigAction({
-        alertManagerSourceName: amSourceName,
+        alertManagerSourceName: alertmanager,
         newConfig: updatedConfig,
         oldConfig: amConfig,
         successMessage: 'Template deleted.',

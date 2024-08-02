@@ -20,7 +20,7 @@ interface Props {
 }
 
 export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
-  const deleteTemplate = useDeleteNotificationTemplate(alertManagerName);
+  const deleteTemplate = useDeleteNotificationTemplate({ alertmanager: alertManagerName });
 
   const [expandedTemplates, setExpandedTemplates] = useState<Record<string, boolean>>({});
   const tableStyles = useStyles2(getAlertTableStyles);
@@ -29,7 +29,7 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
 
   const onDeleteTemplate = async () => {
     if (templateToDelete) {
-      await deleteTemplate(templateToDelete);
+      await deleteTemplate({ name: templateToDelete });
     }
     setTemplateToDelete(undefined);
   };

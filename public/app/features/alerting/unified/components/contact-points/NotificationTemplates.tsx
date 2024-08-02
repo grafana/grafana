@@ -8,7 +8,7 @@ import { useNotificationTemplates } from './useNotificationTemplates';
 
 export const NotificationTemplates = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  const { data: templates, isLoading, error } = useNotificationTemplates(selectedAlertmanager);
+  const { data: templates, isLoading, error } = useNotificationTemplates({ alertmanager: selectedAlertmanager ?? '' });
 
   if (error) {
     return <Alert title="Failed to fetch notification templates">{stringifyErrorLike(error)}</Alert>;

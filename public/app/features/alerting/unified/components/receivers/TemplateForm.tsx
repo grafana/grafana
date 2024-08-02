@@ -87,8 +87,8 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
 
   const appNotification = useAppNotification();
 
-  const createNewTemplate = useCreateNotificationTemplate(alertManagerSourceName);
-  const updateTemplate = useUpdateNotificationTemplate(alertManagerSourceName);
+  const createNewTemplate = useCreateNotificationTemplate({ alertmanager: alertManagerSourceName });
+  const updateTemplate = useUpdateNotificationTemplate({ alertmanager: alertManagerSourceName });
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
   const formRef = useRef<HTMLFormElement>(null);
@@ -133,9 +133,9 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
   const submit = async (values: TemplateFormValues) => {
     try {
       if (!existing) {
-        await createNewTemplate(values);
+        await createNewTemplate({ template: values });
       } else {
-        await updateTemplate(existing.name, values);
+        await updateTemplate({ originalName: existing.name, template: values });
       }
     } catch (error) {
       appNotification.error('Error saving template', stringifyErrorLike(error));
