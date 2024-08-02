@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -28,7 +27,6 @@ func ProvideService(cfg *setting.Cfg, sqlstore db.DB, starService star.Service, 
 		sqlstore:         sqlstore,
 		starService:      starService,
 		dashboardService: dashboardService,
-		tracer:           tracer,
 	}
 	return s
 }
@@ -63,11 +61,10 @@ type SearchService struct {
 	sqlstore         db.DB
 	starService      star.Service
 	dashboardService dashboards.DashboardService
-	tracer           tracing.Tracer
 }
 
 func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.HitList, error) {
-	ctx, span := s.tracer.Start(ctx, "searchService.SearchHandler")
+	ctx, span := tracer.Start(ctx, "searchService.SearchHandler")
 	defer span.End()
 
 	starredQuery := star.GetUserStarsQuery{
