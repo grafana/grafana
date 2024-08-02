@@ -20,6 +20,9 @@
 {%- macro to_go_attr_type(type, val) -%}
 {{keyval_method(type)}}({% if type == "string" %}"{{val}}"{% else %}{{val}}{% endif %})
 {%- endmacro -%}
+{%- macro to_private_go_name(fqn) -%}
+{{fqn | replace(".", "_") |  replace(" ", "") | to_camelcase }}
+{%- endmacro -%}
 {%- macro to_go_name(fqn) -%}
 {{fqn | replace(".", " ") | replace("_", " ") | title | replace(" ", "")}}
 {%- endmacro -%}
@@ -74,7 +77,7 @@ Deprecated: {{ attr.brief | replace("Deprecated, ", "") }}
 // {{ to_go_name(attr.fqn) }} returns an attribute KeyValue conforming to the "{{ attr.fqn }}" semantic conventions. {{ it_reps(attr.brief) }}
 {%- endif %}
 {%- endmacro -%}
-{%- macro to_go_func(type, name) -%}
+{%- macro to_go_func(type, name, keyname) -%}
 {%- if type == "string" -%}
 func {{name}}(val string) attribute.KeyValue {
 {%- elif type == "string[]" -%}
@@ -92,7 +95,7 @@ func {{name}}(val bool) attribute.KeyValue {
 {%- elif type == "boolean[]" -%}
 func {{name}}(val ...bool) attribute.KeyValue {
 {%- endif -%}
-	return {{name}}Key.{{keyval_method(type)}}(val)
+	return {{keyname}}Key.{{keyval_method(type)}}(val)
 }
 {%- endmacro -%}
 {%- macro sentence_case(text) -%}
@@ -111,7 +114,7 @@ const (
 {%- for attr in semconvs[semconv].attributes if attr.is_local and not attr.ref and not attr.deprecated %}
 	// {{ keydoc(attr) | wordwrap(72, break_long_words=false, break_on_hyphens=false, wrapstring="\n\t// ") }}
 	// {{ keydetails(attr) | wordwrap(72, break_long_words=false, break_on_hyphens=false, wrapstring="\n\t// ") }}
-	{{to_go_name(attr.fqn)}}Key = attribute.Key("{{attr.fqn}}")
+	{{to_private_go_name(attr.fqn)}}Key = attribute.Key("{{attr.fqn}}")
 {% endfor -%}
 )
 {%- for attr in semconvs[semconv].attributes if attr.is_local and not attr.ref and not attr.deprecated -%}
@@ -124,7 +127,7 @@ var (
     //
     // Deprecated: {{ attr.brief | replace("Deprecated, ", "") | wordwrap(76, break_long_words=false, break_on_hyphens=false, wrapstring="\n// ") }}
 {%- endif %}
-    {{to_go_name("{}.{}".format(attr.fqn, val.member_id))}} = {{to_go_name(attr.fqn)}}Key.{{to_go_attr_type(attr.attr_type.enum_type, val.value)}}
+    {{to_go_name("{}.{}".format(attr.fqn, val.member_id))}} = {{to_private_go_name(attr.fqn)}}Key.{{to_go_attr_type(attr.attr_type.enum_type, val.value)}}
 {%- endfor %}
 )
 {%- endif -%}
@@ -133,7 +136,7 @@ var (
 {%- if attr.attr_type is string %}
 
 {{ fndoc(attr) | wordwrap(76, break_long_words=false, break_on_hyphens=false, wrapstring="\n// ") }}
-{{to_go_func(attr.attr_type, to_go_name(attr.fqn))}}
+{{to_go_func(attr.attr_type, to_go_name(attr.fqn), to_private_go_name(attr.fqn))}}
 {%- endif -%}
 {%- endfor %}
 
