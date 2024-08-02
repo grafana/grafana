@@ -575,14 +575,19 @@
     {
       "metadata": {
         "name": "cloudRBACRoles",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-01-10T13:19:01Z"
+        "resourceVersion": "1721984527957",
+        "creationTimestamp": "2024-01-10T13:19:01Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-07-26 09:02:07.957377 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enabled grafana cloud specific RBAC roles",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/identity-access-team",
         "requiresRestart": true,
+        "allowSelfServe": true,
+        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
