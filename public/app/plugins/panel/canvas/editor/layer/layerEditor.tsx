@@ -1,6 +1,7 @@
 import { get as lodashGet } from 'lodash';
 
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
+import { FormElementTypeEditor } from 'app/features/canvas/elements/form/elements/FormElementTypeEditor';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene } from 'app/features/canvas/runtime/scene';
@@ -73,6 +74,14 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
         path: 'root',
         name: 'Elements',
         editor: TreeNavigationEditor,
+        settings: { scene, layer: scene.currentLayer, selected },
+      });
+
+      builder.addCustomEditor({
+        id: 'formElementEditor',
+        path: 'config.type',
+        name: 'Type',
+        editor: FormElementTypeEditor,
         settings: { scene, layer: scene.currentLayer, selected },
       });
 
