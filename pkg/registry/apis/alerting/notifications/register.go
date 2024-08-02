@@ -13,6 +13,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	notificationsModels "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -55,11 +56,11 @@ func RegisterAPIService(
 	return builder
 }
 
-func (t NotificationsAPIBuilder) GetGroupVersion() schema.GroupVersion {
+func (t *NotificationsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return t.gv
 }
 
-func (t NotificationsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+func (t *NotificationsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	err := notificationsModels.AddToScheme(scheme)
 	if err != nil {
 		return err
@@ -67,7 +68,7 @@ func (t NotificationsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(notificationsModels.SchemeGroupVersion)
 }
 
-func (t NotificationsAPIBuilder) GetAPIGroupInfo(
+func (t *NotificationsAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory,
 	optsGetter generic.RESTOptionsGetter,
@@ -92,15 +93,35 @@ func (t NotificationsAPIBuilder) GetAPIGroupInfo(
 	return &apiGroupInfo, nil
 }
 
-func (t NotificationsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
+func (t *NotificationsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return notificationsModels.GetOpenAPIDefinitions
 }
 
-func (t NotificationsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+func (t *NotificationsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil
 }
 
-func (t NotificationsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+// PostProcessOpenAPI is a hook to alter OpenAPI3 specification of the API server.
+func (t *NotificationsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	// The plugin description
+	oas.Info.Description = "Grafana Alerting Notification resources"
+
+	// The root api URL
+	root := "/apis/" + t.GetGroupVersion().String() + "/"
+
+	// Hide the ability to list or watch across all tenants
+	delete(oas.Paths.Paths, root+notificationsModels.ReceiverResourceInfo.GroupResource().Resource)
+	delete(oas.Paths.Paths, root+notificationsModels.TimeIntervalResourceInfo.GroupResource().Resource)
+
+	// The root API discovery list
+	sub := oas.Paths.Paths[root]
+	if sub != nil && sub.Get != nil {
+		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
+	}
+	return oas, nil
+}
+
+func (t *NotificationsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 			switch a.GetResource() {
