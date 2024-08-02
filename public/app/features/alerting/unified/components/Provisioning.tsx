@@ -41,7 +41,7 @@ export const ProvisioningBadge = ({
 
   if (tooltip) {
     const provenanceTooltip = (
-      <Trans i18nKey="alerting.provisioning.badge-tooltip-provenance" provenance={provenance}>
+      <Trans i18nKey="alerting.provisioning.badge-tooltip-provenance" values={{ provenance }}>
         This resource has been provisioned via {{ provenance }} and cannot be edited through the UI
       </Trans>
     );
