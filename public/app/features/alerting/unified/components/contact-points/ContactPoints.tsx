@@ -42,7 +42,7 @@ const ContactPointsTab = () => {
   const { selectedAlertmanager } = useAlertmanager();
   const [queryParams] = useURLSearchParams();
 
-  let { isLoading, error, contactPoints } = useContactPointsWithStatus({
+  const { isLoading, error, contactPoints } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager!,
     fetchPolicies: true,
     fetchStatuses: true,
@@ -164,7 +164,7 @@ const ContactPointsPageContents = () => {
   const { selectedAlertmanager } = useAlertmanager();
   const [activeTab, setActiveTab] = useTabQueryParam();
 
-  let { contactPoints } = useContactPointsWithStatus({
+  const { contactPoints } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager!,
   });
 
