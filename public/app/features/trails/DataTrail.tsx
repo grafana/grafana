@@ -259,7 +259,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
           });
         } else {
           // there are already otel filters so we load the regular filters
-          const excludedFilters = getExcludedOtelFilters(otelResourcesVariable);
+          const excludedFilters = getOtelFilterKeys(otelResourcesVariable);
           const resources = await getOtelResources(datasourceUid, timeRange, excludedFilters);
           if (resources.length === 0) {
             return;
@@ -295,7 +295,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     if (timeRange) {
       // get the data source UID for making calls to the DS
       const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
-      const excludedFilters = getExcludedOtelFilters(otelResourcesVariable);
+      const excludedFilters = getOtelFilterKeys(otelResourcesVariable);
       // get a list of labels for target info
       const resources = await getOtelResources(datasourceUid, timeRange, excludedFilters);
 
@@ -316,7 +316,14 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
     useEffect(() => {
-      model.checkOtelStandardization();
+      const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, model);
+      const noOtelFilters = getOtelFilterKeys(otelResourcesVariable).length === 0;
+
+      if (noOtelFilters) {
+        model.checkOtelStandardization();
+      } else {
+        model.loadOtelResources();
+      }
     }, [model]);
 
     const { controls, topScene, history, settings, metric } = model.useState();
@@ -420,7 +427,7 @@ function getBaseFiltersForMetric(metric?: string): AdHocVariableFilter[] {
   return [];
 }
 
-function getExcludedOtelFilters(variable: SceneVariable<SceneVariableState> | null) {
+function getOtelFilterKeys(variable: SceneVariable<SceneVariableState> | null) {
   if (!variable) {
     return [];
   }
