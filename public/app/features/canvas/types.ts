@@ -41,6 +41,14 @@ export interface TextConfig {
   valign: VAlign;
 }
 
+export interface VizElementConfig extends TextConfig {
+  vizType?: string;
+}
+
+export interface VizElementData extends TextData {
+  vizType?: string;
+}
+
 export interface CanvasElementConfig extends TextConfig {
   backgroundColor?: ColorDimensionConfig;
   backgroundImage?: ResourceDimensionConfig;

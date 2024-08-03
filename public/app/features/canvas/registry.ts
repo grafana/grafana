@@ -14,6 +14,7 @@ import { rectangleItem } from './elements/rectangle';
 import { serverItem } from './elements/server/server';
 import { textItem } from './elements/text';
 import { triangleItem } from './elements/triangle';
+import { visualizationItem } from './elements/visualization';
 import { windTurbineItem } from './elements/windTurbine';
 
 export const DEFAULT_CANVAS_ELEMENT_CONFIG: CanvasElementOptions = {
@@ -33,6 +34,7 @@ export const defaultElementItems = [
   triangleItem,
   cloudItem,
   parallelogramItem,
+  visualizationItem,
 ];
 
 export const advancedElementItems = [buttonItem, windTurbineItem, droneTopItem, droneFrontItem, droneSideItem];
