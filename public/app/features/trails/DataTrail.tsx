@@ -129,7 +129,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         this.datasourceHelper.reset();
         this.checkOtelStandardization();
       }
-      // if the variable is the otel environment filter with no other filters
+      // if the variable is the otel deployment_environment
+      // filter with no other filters
       // then we load all the other resources
       const value = variable.getValue()?.toLocaleString();
       // additional filters will be a comma separated list
@@ -248,10 +249,32 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
       if (isStandard) {
         // @ts-ignore this is to update defaultKeys which exists but ts says it doesn't
-        otelResourcesVariable?.setState({
-          defaultKeys: [{ text: 'deployment_environment' }],
-          hide: VariableHide.hideLabel,
-        });
+        if (otelResourcesVariable?.state.filters.length === 0) {
+          // load the first var, deployment_environment
+          otelResourcesVariable?.setState({
+            // @ts-ignore this is to update defaultKeys which exists but ts says it doesn't
+            defaultKeys: [{ text: 'deployment_environment' }],
+            hide: VariableHide.hideLabel,
+          });
+        } else {
+          // there are already otel filters so we load the regular filters
+          const resources = await getOtelResources(datasourceUid, timeRange);
+          if (resources.length === 0) {
+            return;
+          }
+
+          const otelLabels = resources.map((resource) => {
+            return { text: resource };
+          });
+
+          this.setState({ otelResources: resources });
+
+          otelResourcesVariable?.setState({
+            // @ts-ignore this is to update defaultKeys which exists but ts says it doesn't
+            defaultKeys: otelLabels,
+            hide: VariableHide.hideLabel,
+          });
+        }
       } else {
         // @ts-ignore this is to update defaultKeys which exists but ts says it doesn't
         otelResourcesVariable?.setState({ defaultKeys: [], hide: VariableHide.hideVariable });
