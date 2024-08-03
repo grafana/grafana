@@ -159,9 +159,39 @@ export const getFieldLinksForExplore = (options: {
     });
 
     const fieldLinks = links.map((link) => {
+      let internalLinkSpecificVars: ScopedVars = {};
+      if (link.meta?.transformations) {
+        link.meta?.transformations.forEach((transformation) => {
+          let fieldValue;
+          if (transformation.field) {
+            const transformField = dataFrame?.fields.find((field) => field.name === transformation.field);
+            fieldValue = transformField?.values[rowIndex];
+          } else {
+            fieldValue = field.values[rowIndex];
+          }
+
+          internalLinkSpecificVars = {
+            ...internalLinkSpecificVars,
+            ...getTransformationVars(transformation, fieldValue, field.name),
+          };
+        });
+      }
+
+      const allVars = { ...scopedVars, ...internalLinkSpecificVars };
+      const variableData = getVariableUsageInfo(link, allVars);
+      let variables: VariableInterpolation[] = [];
+
+      // if the link has no variables (static link), add it with the right key but an empty value so we know what field the static link is associated with
+      if (variableData.variables.length === 0) {
+        const fieldName = field.name.toString();
+        variables.push({ variableName: fieldName, value: '', match: '' });
+      } else {
+        variables = variableData.variables;
+      }
+
       if (!link.internal) {
         const replace: InterpolateFunction = (value, vars) =>
-          getTemplateSrv().replace(value, { ...vars, ...scopedVars });
+          getTemplateSrv().replace(value, { ...vars, ...allVars, ...scopedVars });
 
         const linkModel = getLinkSrv().getDataLinkUIModel(link, replace, field);
         if (!linkModel.title) {
@@ -169,36 +199,6 @@ export const getFieldLinksForExplore = (options: {
         }
         return linkModel;
       } else {
-        let internalLinkSpecificVars: ScopedVars = {};
-        if (link.meta?.transformations) {
-          link.meta?.transformations.forEach((transformation) => {
-            let fieldValue;
-            if (transformation.field) {
-              const transformField = dataFrame?.fields.find((field) => field.name === transformation.field);
-              fieldValue = transformField?.values[rowIndex];
-            } else {
-              fieldValue = field.values[rowIndex];
-            }
-
-            internalLinkSpecificVars = {
-              ...internalLinkSpecificVars,
-              ...getTransformationVars(transformation, fieldValue, field.name),
-            };
-          });
-        }
-
-        const allVars = { ...scopedVars, ...internalLinkSpecificVars };
-        const variableData = getVariableUsageInfo(link, allVars);
-        let variables: VariableInterpolation[] = [];
-
-        // if the link has no variables (static link), add it with the right key but an empty value so we know what field the static link is associated with
-        if (variableData.variables.length === 0) {
-          const fieldName = field.name.toString();
-          variables.push({ variableName: fieldName, value: '', match: '' });
-        } else {
-          variables = variableData.variables;
-        }
-
         const splitFnWithTracking = (options?: SplitOpenOptions<DataQuery>) => {
           reportInteraction(DATA_LINK_USAGE_KEY, {
             origin: link.origin || DataLinkConfigOrigin.Datasource,
