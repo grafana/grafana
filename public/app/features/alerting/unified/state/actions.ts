@@ -52,7 +52,7 @@ import { discoverFeatures } from '../api/buildInfo';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import { FetchRulerRulesFilter, deleteRulerRulesGroup, fetchRulerRules, setRulerRuleGroup } from '../api/ruler';
 import { RuleFormValues } from '../types/rule-form';
-import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
+import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager';
 import {
   GRAFANA_RULES_SOURCE_NAME,
   getAllRulesSourceNames,
