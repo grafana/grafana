@@ -6,6 +6,7 @@ import { OtelResponse, LabelResponse } from './types';
 
 /** This ensures we can join on a single series target*/
 const OTEL_TARGET_INFO_QUERY = 'count(target_info{}) by (job, instance)';
+const OTEL_RESOURCE_EXCLUDED_FILTERS = ['__name__', 'deployment_environment'];
 
 /**
  * Query the DS for target_info matching job and instance.
@@ -17,8 +18,10 @@ const OTEL_TARGET_INFO_QUERY = 'count(target_info{}) by (job, instance)';
 export async function getOtelResources(
   dataSourceUid: string,
   timeRange: RawTimeRange,
-  expr?: string
+  excludeFilters?: string[]
 ): Promise<string[]> {
+  const allExcludedFilters = (excludeFilters ?? []).concat(OTEL_RESOURCE_EXCLUDED_FILTERS);
+
   const start = getPrometheusTime(timeRange.from, false);
   const end = getPrometheusTime(timeRange.to, true);
 
@@ -31,10 +34,8 @@ export async function getOtelResources(
 
   const response = await getBackendSrv().get<LabelResponse>(url, params, 'explore-metrics-otel-resources');
 
-  // don't include __name__ or deployment_environment
-  const resources = response.data
-    ?.filter((resource) => resource !== '__name__' && resource !== 'deployment_environment')
-    .map((el: string) => el);
+  // exclude __name__ or deployment_environment or previously chosen filters
+  const resources = response.data?.filter((resource) => !allExcludedFilters.includes(resource)).map((el: string) => el);
 
   return resources;
 }

@@ -21,6 +21,7 @@ import {
   sceneUtils,
   SceneVariable,
   SceneVariableSet,
+  SceneVariableState,
   VariableDependencyConfig,
   VariableValueSelectors,
 } from '@grafana/scenes';
@@ -134,7 +135,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       // then we load all the other resources
       const value = variable.getValue()?.toLocaleString();
       // additional filters will be a comma separated list
-      const isDeploymentEnvironment = !value?.includes(',');
+      const isDeploymentEnvironment = value?.includes('deployment_environment');
       if (name === VAR_OTEL_RESOURCES && isDeploymentEnvironment) {
         this.loadOtelResources();
       }
@@ -258,7 +259,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
           });
         } else {
           // there are already otel filters so we load the regular filters
-          const resources = await getOtelResources(datasourceUid, timeRange);
+          const excludedFilters = getExcludedOtelFilters(otelResourcesVariable);
+          const resources = await getOtelResources(datasourceUid, timeRange, excludedFilters);
           if (resources.length === 0) {
             return;
           }
@@ -293,8 +295,9 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     if (timeRange) {
       // get the data source UID for making calls to the DS
       const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
+      const excludedFilters = getExcludedOtelFilters(otelResourcesVariable);
       // get a list of labels for target info
-      const resources = await getOtelResources(datasourceUid, timeRange);
+      const resources = await getOtelResources(datasourceUid, timeRange, excludedFilters);
 
       if (resources.length === 0) {
         return;
@@ -415,4 +418,12 @@ function getBaseFiltersForMetric(metric?: string): AdHocVariableFilter[] {
     return [{ key: '__name__', operator: '=', value: metric }];
   }
   return [];
+}
+
+function getExcludedOtelFilters(variable: SceneVariable<SceneVariableState> | null) {
+  if (!variable) {
+    return [];
+  }
+  // @ts-ignore
+  return variable?.state.filters.map((f) => f.key);
 }
