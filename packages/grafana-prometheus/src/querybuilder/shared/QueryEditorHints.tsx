@@ -22,21 +22,7 @@ export function QueryEditorHints(props: PromQueryEditorProps) {
           {hints.map((hint) => {
             return (
               <Tooltip content={`${hint.label} ${hint.fix?.label}`} key={hint.type}>
-                <Button
-                  onClick={() => {
-                    reportInteraction('grafana_query_builder_hints_clicked', {
-                      hint: hint.type,
-                      datasourceType: props.datasource.type,
-                    });
-
-                    if (hint.fix?.action) {
-                      const newQuery = props.datasource.modifyQuery(props.query, hint.fix.action);
-                      return props.onChange(newQuery);
-                    }
-                  }}
-                  fill="outline"
-                  size="sm"
-                >
+                <Button onClick={() => onHintButtonClick(hint, props)} fill="outline" size="sm">
                   hint: {hint.fix?.title || hint.fix?.action?.type.toLowerCase().replace('_', ' ')}
                 </Button>
               </Tooltip>
@@ -46,4 +32,16 @@ export function QueryEditorHints(props: PromQueryEditorProps) {
       )}
     </>
   );
+}
+
+function onHintButtonClick(hint: QueryHint, props: PromQueryEditorProps) {
+  reportInteraction('grafana_query_builder_hints_clicked', {
+    hint: hint.type,
+    datasourceType: props.datasource.type,
+  });
+
+  if (hint.fix?.action) {
+    const newQuery = props.datasource.modifyQuery(props.query, hint.fix.action);
+    return props.onChange(newQuery);
+  }
 }
