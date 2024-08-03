@@ -2336,6 +2336,8 @@ github.com/grafana/gomemcache v0.0.0-20240802032810-8f21fdbcb39d h1:f6+eE8zygAcj
 github.com/grafana/gomemcache v0.0.0-20240802032810-8f21fdbcb39d/go.mod h1:IGRj8oOoxwJbHBYl1+OhS9UjQR0dv6SQOep7HqmtyFU=
 github.com/grafana/gomemcache v0.0.0-20240802041632-201cbbb2bceb h1:+ZqYDh5tQqppvqvmi+u4A+H/1tgXacV7MeEijPqPSj4=
 github.com/grafana/gomemcache v0.0.0-20240802041632-201cbbb2bceb/go.mod h1:IGRj8oOoxwJbHBYl1+OhS9UjQR0dv6SQOep7HqmtyFU=
+github.com/grafana/gomemcache v0.0.0-20240803024453-e764d08ea2ed h1:tVRLkqWy0qJOpZRwdwqDpKoJyH3uTnJ4w3JwrVX5Ac4=
+github.com/grafana/gomemcache v0.0.0-20240803024453-e764d08ea2ed/go.mod h1:IGRj8oOoxwJbHBYl1+OhS9UjQR0dv6SQOep7HqmtyFU=
 github.com/grafana/grafana-aws-sdk v0.30.0 h1:6IIetM4s2NbvPOI4/fefsyN84BIb0/T09lHGF/pywo8=
 github.com/grafana/grafana-aws-sdk v0.30.0/go.mod h1:ZSVPU7IIJSi5lEg+K3Js+EUpZLXxUaBdaQWH+As1ihI=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.0 h1:lajVqTWaE96MpbjZToj7EshvqgRWOfYNkD4MbIZizaY=
