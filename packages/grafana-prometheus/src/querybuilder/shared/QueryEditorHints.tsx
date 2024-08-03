@@ -47,5 +47,3 @@ export function QueryEditorHints(props: PromQueryEditorProps) {
     </>
   );
 }
-
-QueryEditorHints.displayName = 'QueryEditorHints';
