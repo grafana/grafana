@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useEffect } from 'react';
 
 import { AdHocVariableFilter, GrafanaTheme2, PageLayoutType, RawTimeRange, VariableHide, urlUtil } from '@grafana/data';
 import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
@@ -34,7 +35,7 @@ import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { reportChangeInLabelFilters } from './interactions';
-import { getOtelTargets } from './otel/api';
+import { getOtelResources, isOtelStandardization } from './otel/api';
 import { OtelTargetType } from './otel/types';
 import {
   MetricSelectedEvent,
@@ -120,11 +121,21 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   protected _variableDependency = new VariableDependencyConfig(this, {
-    variableNames: [VAR_DATASOURCE],
+    variableNames: [VAR_DATASOURCE, VAR_OTEL_RESOURCES],
     onReferencedVariableValueChanged: async (variable: SceneVariable) => {
       const { name } = variable.state;
+
       if (name === VAR_DATASOURCE) {
         this.datasourceHelper.reset();
+        this.checkOtelStandardization();
+      }
+      // if the variable is the otel environment filter with no other filters
+      // then we load all the other resources
+      const value = variable.getValue()?.toLocaleString();
+      // additional filters will be a comma separated list
+      const isDeploymentEnvironment = !value?.includes(',');
+      if (name === VAR_OTEL_RESOURCES && isDeploymentEnvironment) {
+        this.loadOtelResources();
       }
     },
   });
@@ -222,82 +233,66 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     this.setState(stateUpdate);
   }
 
-  checkOtelResources() {
+  public async checkOtelStandardization() {
     // call up in to the parent trail
     const trail = getTrailFor(this);
+
+    const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, this);
+
     // get the time range
     const timeRange: RawTimeRange | undefined = trail.state.$timeRange?.state;
+
+    if (timeRange) {
+      const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
+      const isStandard = await isOtelStandardization(datasourceUid, timeRange);
+
+      if (isStandard) {
+        // @ts-ignore this is to update defaultKeys which exists but ts says it doesn't
+        otelResourcesVariable?.setState({
+          defaultKeys: [{ text: 'deployment_environment' }],
+          hide: VariableHide.hideLabel,
+        });
+      } else {
+        // @ts-ignore this is to update defaultKeys which exists but ts says it doesn't
+        otelResourcesVariable?.setState({ defaultKeys: [], hide: VariableHide.hideVariable });
+      }
+    }
+  }
+
+  public async loadOtelResources() {
+    // call up in to the parent trail
+    const trail = getTrailFor(this);
+    // get the otel resources variable
+    const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, this);
+    // get the time range
+    const timeRange: RawTimeRange | undefined = trail.state.$timeRange?.state;
+
     if (timeRange) {
       // get the data source UID for making calls to the DS
       const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
+      // get a list of labels for target info
+      const resources = await getOtelResources(datasourceUid, timeRange);
 
-      getOtelTargets(datasourceUid, timeRange)
-        .then((targets: OtelTargetType[]) => {
-          // Store these: these are the single series targets
-          this.setState({ otelTargets: targets });
-          // create a list of unique targets
-          let targetLabels: { job: string[]; instance: string[] } = {
-            job: [],
-            instance: [],
-          };
+      if (resources.length === 0) {
+        return;
+      }
 
-          targets.forEach((target: OtelTargetType) => {
-            const job = target.job ?? '';
-            const instance = target.instance ?? '';
+      const otelLabels = resources.map((resource) => {
+        return { text: resource };
+      });
 
-            if (job && instance) {
-              targetLabels.job.push(job);
-              targetLabels.instance.push(instance);
-            }
-          });
+      this.setState({ otelResources: resources });
 
-          if (targetLabels.job.length > 0 && targetLabels.instance.length > 0) {
-            // build the new query to get all the labels
-            const expr = `target_info{job=~"${targetLabels.job.join('|')}",instance=~"${targetLabels.instance.join('|')}"}`;
-            // pass it a new query expr
-            return getOtelTargets(datasourceUid, timeRange, expr);
-          } else {
-            throw new Error('Data source missing otel resources');
-          }
-        })
-        .then((targets) => {
-          // we now have a list of the single series target_info metric with all labels
-          // iterate through the labels to build a collection
-          let otelResources: string[] = [];
-          targets.forEach((target) => {
-            Object.keys(target).forEach((resource) => {
-              // ignore __name__, job, and instance
-              if (resource === '__name__' || resource === 'job' || resource === 'instance') {
-                return;
-              }
-
-              if (!otelResources.includes(resource)) {
-                otelResources.push(resource);
-              }
-            });
-          });
-          // store the labels for single series
-          // update state that data source has otel resources
-          this.setState({ otelResources });
-          // build the label options for otel variables
-          const otellabels = otelResources.map((resource) => {
-            return { text: resource };
-          });
-
-          this.setState({ otelResources });
-          // update the default keys on the OTEL label variable selector
-          const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, this);
-          // @ts-ignore this is to update defaultKeys which exists but ts says it doesn't
-          otelResourcesVariable?.setState({ defaultKeys: otellabels });
-        })
-        .catch((err) => {
-          console.log(err);
-        });
+      // @ts-ignore this is to update defaultKeys which exists but ts says it doesn't
+      otelResourcesVariable?.setState({ defaultKeys: otelLabels, hide: VariableHide.hideLabel });
     }
   }
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    model.checkOtelResources();
+    useEffect(() => {
+      model.checkOtelStandardization();
+    }, [model]);
+
     const { controls, topScene, history, settings, metric } = model.useState();
     const chromeHeaderHeight = useChromeHeaderHeight();
     const styles = useStyles2(getStyles, chromeHeaderHeight ?? 0);
@@ -354,7 +349,7 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
         name: VAR_OTEL_RESOURCES,
         addFilterButtonText: 'Otel resources',
         datasource: trailDS,
-        hide: VariableHide.hideLabel,
+        hide: VariableHide.hideVariable,
         layout: 'vertical',
         filters: initialFilters ?? [],
         defaultKeys: [],
