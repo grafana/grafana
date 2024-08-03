@@ -35,8 +35,6 @@ import { StatusWrapper } from '../StatusWrapper';
 import { Node, Parser } from '../groop/parser';
 import { getMetricDescription } from '../helpers/MetricDatasourceHelper';
 import { reportExploreMetrics } from '../interactions';
-import { getOtelTargets } from '../otel/api';
-import { OtelTargetType } from '../otel/types';
 import {
   getVariablesWithMetricConstant,
   MetricSelectedEvent,
@@ -64,8 +62,6 @@ interface MetricPanel {
 export interface MetricSelectSceneState extends SceneObjectState {
   body: SceneFlexLayout | SceneCSSGridLayout;
   rootGroup?: Node;
-  otelResources?: OtelTargetType[];
-  otelResource?: string;
   metricPrefix?: string;
   showPreviews?: boolean;
   metricNames?: string[];
@@ -77,13 +73,11 @@ export interface MetricSelectSceneState extends SceneObjectState {
 const ROW_PREVIEW_HEIGHT = '175px';
 const ROW_CARD_HEIGHT = '64px';
 const METRIC_PREFIX_ALL = 'all';
-const OTEL_DEFAULT = 'none';
 
 const MAX_METRIC_NAMES = 20000;
 
 const viewByTooltip =
   'View by the metric prefix. A metric prefix is a single word at the beginning of the metric name, relevant to the domain the metric belongs to.';
-const otelTooltip = 'Select an OTel target to filter metrics.';
 
 export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> implements SceneObjectWithUrlSync {
   private previewCache: Record<string, MetricPanel> = {};
@@ -95,7 +89,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       showPreviews: true,
       $variables: state.$variables,
       metricPrefix: state.metricPrefix ?? METRIC_PREFIX_ALL,
-      otelResource: state.otelResource ?? OTEL_DEFAULT,
       body:
         state.body ??
         new SceneCSSGridLayout({
@@ -214,14 +207,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       matchTerms.push(`__name__=~"${metricSearchRegex}"`);
     }
 
-    // add OTEL job and instance labels to filter metrics
-    const selectedOtelResource = this.state.otelResource ?? '';
-    if (selectedOtelResource && selectedOtelResource !== 'none') {
-      const otelResource = JSON.parse(selectedOtelResource);
-      matchTerms.push(`job="${otelResource.job}"`);
-      matchTerms.push(`instance="${otelResource.instance}"`);
-    }
-
     const match = `{${matchTerms.join(',')}}`;
     const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
     this.setState({ metricNamesLoading: true, metricNamesError: undefined, metricNamesWarning: undefined });
@@ -242,12 +227,9 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       let bodyLayout = this.state.body;
       const rootGroupNode = await this.generateGroups(metricNames);
 
-      const otelResources = await this.generateOtelResources();
-
       this.setState({
         metricNames,
         rootGroup: rootGroupNode,
-        otelResources: otelResources,
         body: bodyLayout,
         metricNamesLoading: false,
         metricNamesWarning,
@@ -277,29 +259,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     };
     const { root: rootGroupNode } = groopParser.parse(metricNames);
     return rootGroupNode;
-  }
-
-  /**
-   * This calls the Prometheus data source with a query to get OTEL resources
-   * @returns OtelResourcesType[], a collection of job&instance pairs on the `target_info` metric
-   */
-  private async generateOtelResources() {
-    // call up in to the parent trail
-    const trail = getTrailFor(this);
-    // get the time range
-    const timeRange: RawTimeRange | undefined = trail.state.$timeRange?.state;
-    if (!timeRange) {
-      return [];
-    }
-    // get the data source UID for making calls to the DS
-    const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
-
-    // call the DS to get the list
-    // query the datasource with a variable query for metrics
-    // get list of matching job and instance on target_info
-    const resources = await getOtelTargets(datasourceUid, timeRange);
-
-    return resources;
   }
 
   private onMetricNamesChanged() {
@@ -460,12 +419,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     this.buildLayout();
   };
 
-  public onOtelFilterChange = (val: SelectableValue) => {
-    this.setState({ otelResource: val.value });
-    // do not debounce this because we are not typing
-    this._refreshMetricNames();
-  };
-
   public reportPrefixFilterInteraction = (isMenuOpen: boolean) => {
     const trail = getTrailFor(this);
     const { steps, currentStep } = trail.state.history.state;
@@ -493,8 +446,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       metricNamesWarning,
       rootGroup,
       metricPrefix,
-      otelResources,
-      otelResource,
     } = model.useState();
     const { children } = body.useState();
     const trail = getTrailFor(model);
@@ -527,8 +478,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
         <Icon className={styles.warningIcon} name="exclamation-triangle" />
       </Tooltip>
     ) : undefined;
-
-    const otelOptions = otelResources?.map((r) => ({ label: JSON.stringify(r), value: JSON.stringify(r) })) ?? [];
 
     return (
       <div className={styles.container}>
@@ -565,36 +514,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
               ]}
             />
           </Field>
-          {/* Only show OTEL if the job&instance pairs exist in the DS on target_info */}
-          {otelOptions.length > 0 && (
-            <Field
-              label={
-                <div className={styles.displayOptionTooltip}>
-                  <Trans>OTel filter</Trans>
-                  <IconButton name={'info-circle'} size="sm" variant={'secondary'} tooltip={otelTooltip} />
-                </div>
-              }
-              className={styles.displayOption}
-            >
-              <Select
-                value={otelResource ?? 'none'}
-                onChange={model.onOtelFilterChange}
-                onOpenMenu={() => {
-                  /* REPORT INTERACTION FOR OTEL */
-                }}
-                onCloseMenu={() => {
-                  /* REPORT INTERACTION FOR OTEL */
-                }}
-                options={[
-                  {
-                    label: 'None',
-                    value: OTEL_DEFAULT,
-                  },
-                  ...otelOptions,
-                ]}
-              />
-            </Field>
-          )}
           <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} />
         </div>
         {metricNamesError && (
