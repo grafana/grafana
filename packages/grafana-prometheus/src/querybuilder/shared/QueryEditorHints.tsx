@@ -8,12 +8,15 @@ import { PromQueryEditorProps } from '../../components/types';
 
 export function QueryEditorHints(props: PromQueryEditorProps) {
   const [hints, setHints] = useState<QueryHint[]>([]);
+  const { query, data, datasource } = props;
 
   useEffect(() => {
-    const query = { expr: props.query.expr, refId: props.query.refId };
-    const hints = props.datasource.getQueryHints(query, props.data?.series || []).filter((hint) => hint.fix?.action);
+    const promQuery = { expr: props.query.expr, refId: props.query.refId };
+    const hints = props.datasource
+      .getQueryHints(promQuery, props.data?.series || [])
+      .filter((hint) => hint.fix?.action);
     setHints(hints);
-  }, [props.datasource, props.data, props.query]);
+  }, [datasource, data, query]);
 
   return (
     <>
