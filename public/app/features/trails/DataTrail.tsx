@@ -128,6 +128,14 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
       if (name === VAR_DATASOURCE) {
         this.datasourceHelper.reset();
+        // clear filters on restting the data source
+        const adhocVariable = sceneGraph.lookupVariable(VAR_FILTERS, this);
+        const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, this);
+        if (adhocVariable instanceof AdHocFiltersVariable && otelResourcesVariable instanceof AdHocFiltersVariable) {
+          adhocVariable?.setState({ filters: [] });
+          otelResourcesVariable?.setState({ filters: [] });
+        }
+        // check if new data source is stadardized for otel
         this.checkOtelStandardization();
       }
       // if the variable is the otel deployment_environment

@@ -6,7 +6,7 @@ import { OtelResponse, LabelResponse } from './types';
 
 /** This ensures we can join on a single series target*/
 const OTEL_TARGET_INFO_QUERY = 'count(target_info{}) by (job, instance)';
-const OTEL_RESOURCE_EXCLUDED_FILTERS = ['__name__', 'deployment_environment'];
+const OTEL_RESOURCE_EXCLUDED_FILTERS = ['__name__']; // name is handled by metric search metrics bar
 
 /**
  * Query the DS for target_info matching job and instance.
