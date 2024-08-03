@@ -11,6 +11,13 @@ export type OtelResponse = {
   warnings?: string[];
 };
 
+export type LabelResponse = {
+  data: string[];
+  status: 'success' | 'error';
+  error?: 'string';
+  warnings?: string[];
+};
+
 export type OtelTargetType = {
   job: string;
   instance: string;
