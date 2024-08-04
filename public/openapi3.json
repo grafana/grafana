@@ -7055,6 +7055,7 @@
           "status": {
             "enum": [
               "OK",
+              "WARNING",
               "ERROR",
               "PENDING",
               "UNKNOWN"
