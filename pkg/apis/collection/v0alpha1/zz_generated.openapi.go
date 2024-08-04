@@ -21,8 +21,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.CollectionSpec":   schema_pkg_apis_collection_v0alpha1_CollectionSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.ModifyCollection": schema_pkg_apis_collection_v0alpha1_ModifyCollection(ref),
 		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.ResourceRef":      schema_pkg_apis_collection_v0alpha1_ResourceRef(ref),
-		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.UserStars":        schema_pkg_apis_collection_v0alpha1_UserStars(ref),
-		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.UserStarsList":    schema_pkg_apis_collection_v0alpha1_UserStarsList(ref),
+		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.Stars":            schema_pkg_apis_collection_v0alpha1_Stars(ref),
+		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.StarsList":        schema_pkg_apis_collection_v0alpha1_StarsList(ref),
 	}
 }
 
@@ -99,7 +99,7 @@ func schema_pkg_apis_collection_v0alpha1_CollectionList(ref common.ReferenceCall
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/collection/v0alpha1.UserStars"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/collection/v0alpha1.Collection"),
 									},
 								},
 							},
@@ -109,7 +109,7 @@ func schema_pkg_apis_collection_v0alpha1_CollectionList(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.UserStars", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.Collection", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -264,11 +264,12 @@ func schema_pkg_apis_collection_v0alpha1_ResourceRef(ref common.ReferenceCallbac
 	}
 }
 
-func schema_pkg_apis_collection_v0alpha1_UserStars(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_collection_v0alpha1_Stars(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "The Stars kubernets name will match user uid/name eg: `namespaces/<namespace>/stars/u-<uid>`",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
@@ -304,7 +305,7 @@ func schema_pkg_apis_collection_v0alpha1_UserStars(ref common.ReferenceCallback)
 	}
 }
 
-func schema_pkg_apis_collection_v0alpha1_UserStarsList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_collection_v0alpha1_StarsList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -337,7 +338,7 @@ func schema_pkg_apis_collection_v0alpha1_UserStarsList(ref common.ReferenceCallb
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/collection/v0alpha1.UserStars"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/collection/v0alpha1.Stars"),
 									},
 								},
 							},
@@ -347,6 +348,6 @@ func schema_pkg_apis_collection_v0alpha1_UserStarsList(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.UserStars", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.Stars", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }

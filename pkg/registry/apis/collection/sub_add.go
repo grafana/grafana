@@ -35,7 +35,7 @@ func (r *subAddREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *subAddREST) ProducesObject(verb string) interface{} {
-	return &collection.UserStars{}
+	return &collection.Stars{}
 }
 
 func (r *subAddREST) NewConnectOptions() (runtime.Object, bool, string) {
@@ -55,6 +55,6 @@ func (r *subAddREST) Connect(ctx context.Context, name string, opts runtime.Obje
 		// 	return
 		// }
 
-		responder.Object(http.StatusOK, &collection.UserStars{})
+		responder.Object(http.StatusOK, &collection.Stars{})
 	}), nil
 }

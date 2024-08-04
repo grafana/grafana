@@ -89,7 +89,7 @@ func (b *CollectionsAPIBuilder) GetAPIGroupInfo(
 				{Name: "Created At", Type: "date"},
 			},
 			func(obj any) ([]interface{}, error) {
-				m, ok := obj.(*collection.UserStars)
+				m, ok := obj.(*collection.Stars)
 				if !ok {
 					return nil, fmt.Errorf("expected query template")
 				}
@@ -158,7 +158,7 @@ func (b *CollectionsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.O
 	}
 
 	// Add query parameters to the rest.Connector
-	sub = oas.Paths.Paths[root+"namespaces/{namespace}/userstars/{name}/modify"]
+	sub = oas.Paths.Paths[root+"namespaces/{namespace}/stars/{name}/modify"]
 	if sub != nil && sub.Post != nil {
 		refA := collection.ResourceRef{
 			Group:    "dashboard.grafana.app",

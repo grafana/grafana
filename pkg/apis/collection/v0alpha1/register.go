@@ -12,12 +12,6 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
-var UserStarsResourceInfo = common.NewResourceInfo(GROUP, VERSION,
-	"userstars", "userstars", "UserStars",
-	func() runtime.Object { return &UserStars{} },
-	func() runtime.Object { return &UserStarsList{} },
-)
-
 var CollectionResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	"collections", "collection", "Collection",
 	func() runtime.Object { return &Collection{} },
@@ -43,11 +37,8 @@ func init() {
 // Adds the list of known types to the given scheme.
 func AddKnownTypes(scheme *runtime.Scheme, version string) error {
 	scheme.AddKnownTypes(schema.GroupVersion{Group: GROUP, Version: version},
-		&UserStars{},
-		&UserStarsList{},
 		&Collection{},
 		&CollectionList{},
-		&ModifyCollection{},
 	)
 	return nil
 }

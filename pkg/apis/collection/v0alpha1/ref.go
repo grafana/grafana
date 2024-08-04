@@ -1,21 +1,20 @@
 package v0alpha1
 
 import (
-	"encoding/json"
 	"errors"
 	"strings"
 )
 
 type ResourceRef struct {
 	// The referenced resource API Group
-	Group string
+	Group string `json:"group,omitempty"`
 	// The referenced resource type
-	Resource string
+	Resource string `json:"resource,omitempty"`
 	// When not specified on a non-cluster scope resource type,
 	// the namespace will default to the same as the reference object
-	Namespace string
+	Namespace string `json:"namespace,omitempty"`
 	// The resource identifier
-	Name string
+	Name string `json:"name,omitempty"`
 }
 
 func (r *ResourceRef) Valid() bool {
@@ -42,23 +41,23 @@ func (r *ResourceRef) String() string {
 	return buf.String()
 }
 
-// MarshalJSON serializes the given reference into its JSON representation.
-func (r ResourceRef) MarshalJSON() ([]byte, error) {
-	return json.Marshal(r.String())
-}
+// // MarshalJSON serializes the given reference into its JSON representation.
+// func (r ResourceRef) MarshalJSON() ([]byte, error) {
+// 	return json.Marshal(r.String())
+// }
 
-// UnmarshalJSON reads a reference from its JSON representation.
-func (r *ResourceRef) UnmarshalJSON(b []byte) error {
-	if len(b) == 0 {
-		*r = ResourceRef{}
-		return nil
-	}
-	v, err := ParseResourceRef(string(b))
-	if err == nil {
-		*r = v
-	}
-	return err
-}
+// // UnmarshalJSON reads a reference from its JSON representation.
+// func (r *ResourceRef) UnmarshalJSON(b []byte) error {
+// 	if len(b) == 0 {
+// 		*r = ResourceRef{}
+// 		return nil
+// 	}
+// 	v, err := ParseResourceRef(string(b))
+// 	if err == nil {
+// 		*r = v
+// 	}
+// 	return err
+// }
 
 var (
 	ErrInvalidResourceRef = errors.New("expecting <group>(/namespaces/<namespace>)/<resource>/<name>")

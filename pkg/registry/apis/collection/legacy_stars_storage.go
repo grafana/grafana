@@ -78,7 +78,7 @@ func (s *legacyStarsStorage) Create(ctx context.Context,
 	createValidation rest.ValidateObjectFunc,
 	options *metav1.CreateOptions,
 ) (runtime.Object, error) {
-	p, ok := obj.(*collection.UserStars)
+	p, ok := obj.(*collection.Stars)
 	if !ok {
 		return nil, fmt.Errorf("expected folder?")
 	}
@@ -116,11 +116,11 @@ func (s *legacyStarsStorage) Update(ctx context.Context,
 	if err != nil {
 		return oldObj, created, err
 	}
-	f, ok := obj.(*collection.UserStars)
+	f, ok := obj.(*collection.Stars)
 	if !ok {
 		return nil, created, fmt.Errorf("expected folder after update")
 	}
-	old, ok := oldObj.(*collection.UserStars)
+	old, ok := oldObj.(*collection.Stars)
 	if !ok {
 		return nil, created, fmt.Errorf("expected old object to be a folder also")
 	}
@@ -144,7 +144,7 @@ func (s *legacyStarsStorage) Delete(ctx context.Context, name string, deleteVali
 	if err != nil {
 		return nil, false, err
 	}
-	p, ok := v.(*collection.UserStars)
+	p, ok := v.(*collection.Stars)
 	if !ok {
 		return v, false, fmt.Errorf("expected a folder response from Get")
 	}
