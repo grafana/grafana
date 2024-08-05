@@ -1,6 +1,7 @@
 {
   "plugins": ["testing-library"],
   "rules": {
+    "prefer-const": "error",
     "react/no-unused-prop-types": "error",
   },
   "overrides": [

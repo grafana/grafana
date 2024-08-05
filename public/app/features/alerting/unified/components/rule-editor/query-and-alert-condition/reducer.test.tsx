@@ -123,11 +123,11 @@ describe('Query and expressions reducer', () => {
       queries: [alertQuery, expressionQuery],
     };
 
-    let stateWithoutB = queriesAndExpressionsReducer(initialState, removeExpression('B'));
+    const stateWithoutB = queriesAndExpressionsReducer(initialState, removeExpression('B'));
     expect(stateWithoutB.queries).toHaveLength(1);
     expect(stateWithoutB).toMatchSnapshot();
 
-    let stateWithoutAOrB = queriesAndExpressionsReducer(stateWithoutB, removeExpression('A'));
+    const stateWithoutAOrB = queriesAndExpressionsReducer(stateWithoutB, removeExpression('A'));
     expect(stateWithoutAOrB.queries).toHaveLength(0);
   });
 

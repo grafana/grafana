@@ -99,7 +99,7 @@ export function applyFiltersToQuery(
     }
   });
 
-  let newQueryExpressions: string[] = [];
+  const newQueryExpressions: string[] = [];
 
   // Apply filters from filterState in the same order as they appear in the search query
   // This allows to remain the order of filters in the search input during changes
@@ -136,7 +136,7 @@ export function applyFiltersToQuery(
 function traverseNodeTree(query: string, supportedTerms: FilterSupportedTerm[], visit: (node: SyntaxNode) => void) {
   const dialect = supportedTerms.join(' ');
   const parsed = parser.configure({ dialect }).parse(query);
-  let cursor = parsed.cursor();
+  const cursor = parsed.cursor();
   do {
     visit(cursor.node);
   } while (cursor.next());

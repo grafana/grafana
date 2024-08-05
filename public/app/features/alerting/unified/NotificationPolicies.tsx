@@ -322,7 +322,7 @@ export const findRoutesMatchingFilters = (rootRoute: RouteWithID, filters: Route
   //
   // [contactPointMatches, labelMatcherMatches] -> [[{ a: [], b: [] }], [{ a: [], c: [] }]]
   // later we'll use intersection to find results in all sets of filter matchers
-  let matchedRoutes: RouteWithID[][] = [];
+  const matchedRoutes: RouteWithID[][] = [];
 
   // compute fully inherited tree so all policies have their inherited receiver
   const fullRoute = computeInheritedTree(rootRoute);

@@ -41,7 +41,7 @@ interface SerializedRequest {
  * @deprecated Try not to use this 🙏 instead aim to assert against UI side effects
  */
 export async function captureRequests(): Promise<Request[]> {
-  let requests: Request[] = [];
+  const requests: Request[] = [];
 
   server.events.on('request:start', ({ request }) => {
     requests.push(request);

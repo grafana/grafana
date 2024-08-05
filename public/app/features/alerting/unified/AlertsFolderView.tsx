@@ -170,7 +170,7 @@ function filterAndSortRules(
   sortOrder: SortOrder
 ) {
   const matchers = parsePromQLStyleMatcherLooseSafe(labelFilter);
-  let rules = originalRules.filter(
+  const rules = originalRules.filter(
     (rule) => rule.name.toLowerCase().includes(nameFilter.toLowerCase()) && labelsMatchMatchers(rule.labels, matchers)
   );
 
