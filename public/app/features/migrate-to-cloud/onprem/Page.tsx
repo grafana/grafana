@@ -355,6 +355,7 @@ function getError(props: GetErrorProps): ErrorDescription | undefined {
   if (snapshot?.status === 'FINISHED' && errorCount + warningCount > 0) {
     let msgBody = '';
 
+    // If there are any errors, that's the most pressing info. If there are no errors but warnings, show the warning text instead.
     if (errorCount > 0) {
       msgBody =
         'The migration has completed, but some items could not be migrated to the cloud stack. Check the failed resources for more details';
