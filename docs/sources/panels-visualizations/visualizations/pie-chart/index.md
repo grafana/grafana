@@ -96,10 +96,6 @@ The following example shows a pie chart with **Name** and **Percent** labels dis
 
 ![Pie chart labels](/static/img/docs/pie-chart-panel/pie-chart-labels-7-5.png)
 
-## Standard options
-
-{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
 ## Tooltip options
 
 {{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
@@ -136,6 +132,10 @@ Select values to display in the legend. You can select more than one.
 
 - **Percent:** The percentage of the whole.
 - **Value:** The raw numerical value.
+
+## Standard options
+
+{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Data links
 
