@@ -54,7 +54,7 @@ func (z *ZanzanaSynchroniser) Sync(ctx context.Context) error {
 	}
 
 	for key, tuples := range tuplesMap {
-		if err := batch(len(tuples), 1, func(start, end int) error {
+		if err := batch(len(tuples), 100, func(start, end int) error {
 			return z.client.Write(ctx, &openfgav1.WriteRequest{
 				Writes: &openfgav1.WriteRequestWrites{
 					TupleKeys: tuples[start:end],
