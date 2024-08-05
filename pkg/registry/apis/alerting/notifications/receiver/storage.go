@@ -1,19 +1,14 @@
 package receiver
 
 import (
-	"fmt"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	model "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
 var _ grafanarest.Storage = (*storage)(nil)
@@ -35,25 +30,9 @@ func NewStorage(
 	dualWriteBuilder grafanarest.DualWriteBuilder,
 ) (rest.Storage, error) {
 	legacyStore := &legacyStorage{
-		service:    legacySvc,
-		namespacer: namespacer,
-		tableConverter: utils.NewTableConverter(
-			resourceInfo.GroupResource(),
-			[]metav1.TableColumnDefinition{
-				{Name: "Name", Type: "string", Format: "name"},
-				{Name: "Title", Type: "string", Format: "string", Description: "The receiver name"}, // TODO: Add integration types.
-			},
-			func(obj any) ([]interface{}, error) {
-				r, ok := obj.(*model.Receiver)
-				if ok {
-					return []interface{}{
-						r.Name,
-						r.Spec.Title,
-						// r.Spec, //TODO implement formatting for Spec, same as UI?
-					}, nil
-				}
-				return nil, fmt.Errorf("expected resource or info")
-			}),
+		service:        legacySvc,
+		namespacer:     namespacer,
+		tableConverter: resourceInfo.TableConverter(),
 	}
 	if optsGetter != nil && dualWriteBuilder != nil {
 		strategy := grafanaregistry.NewStrategy(scheme)
