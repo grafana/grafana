@@ -143,6 +143,13 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/browse-dashboards/BrowseDashboardsPage')
       ),
     },
+    config.featureToggles.newNewBrowseDashboards && {
+      path: '/new-dashboards',
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "NewDashboardListPage"*/ 'app/features/browse-dashboards/NewBrowseDashboardsPage')
+      ),
+    },
     {
       path: '/dashboards/f/:uid/:slug',
       component: SafeDynamicImport(
