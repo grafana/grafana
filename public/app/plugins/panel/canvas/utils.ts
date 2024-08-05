@@ -1,21 +1,21 @@
-import {isNumber, isString} from 'lodash';
+import { isNumber, isString } from 'lodash';
 
-import {AppEvents, PluginState, SelectableValue} from '@grafana/data';
+import { AppEvents, PluginState, SelectableValue } from '@grafana/data';
 import appEvents from 'app/core/app_events';
-import {config, hasAlphaPanels} from 'app/core/config';
+import { config, hasAlphaPanels } from 'app/core/config';
 import {
   CanvasConnection,
   CanvasElementItem,
   CanvasElementOptions,
   ConnectionDirection,
 } from 'app/features/canvas/element';
-import {notFoundItem} from 'app/features/canvas/elements/notFound';
-import {advancedElementItems, canvasElementRegistry, defaultElementItems} from 'app/features/canvas/registry';
-import {ElementState} from 'app/features/canvas/runtime/element';
-import {FrameState} from 'app/features/canvas/runtime/frame';
-import {Scene, SelectionParams} from 'app/features/canvas/runtime/scene';
+import { notFoundItem } from 'app/features/canvas/elements/notFound';
+import { advancedElementItems, canvasElementRegistry, defaultElementItems } from 'app/features/canvas/registry';
+import { ElementState } from 'app/features/canvas/runtime/element';
+import { FrameState } from 'app/features/canvas/runtime/frame';
+import { Scene, SelectionParams } from 'app/features/canvas/runtime/scene';
 
-import {AnchorPoint, ConnectionState, LineStyle, StrokeDasharray} from './types';
+import { AnchorPoint, ConnectionState, LineStyle, StrokeDasharray } from './types';
 
 export function doSelect(scene: Scene, element: ElementState | FrameState) {
   try {
@@ -316,4 +316,4 @@ export const onGenerateVisualization = (selectedElements: ElementState[], layer:
   });
 
   onAddItem(visualizationSelection, layer, undefined, selectedFields);
-}
+};

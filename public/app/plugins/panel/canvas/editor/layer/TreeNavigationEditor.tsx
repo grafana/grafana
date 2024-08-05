@@ -1,23 +1,23 @@
-import {css} from '@emotion/css';
-import {Global} from '@emotion/react';
-import Tree, {TreeNodeProps} from 'rc-tree';
-import {Key, useEffect, useMemo, useState} from 'react';
+import { css } from '@emotion/css';
+import { Global } from '@emotion/react';
+import Tree, { TreeNodeProps } from 'rc-tree';
+import { Key, useEffect, useMemo, useState } from 'react';
 
-import {GrafanaTheme2, StandardEditorProps} from '@grafana/data';
-import {config} from '@grafana/runtime';
-import {Button, Icon, Stack, useStyles2, useTheme2} from '@grafana/ui';
-import {AddLayerButton} from 'app/core/components/Layers/AddLayerButton';
-import {ElementState} from 'app/features/canvas/runtime/element';
-import {frameSelection, reorderElements} from 'app/features/canvas/runtime/sceneElementManagement';
+import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { Button, Icon, Stack, useStyles2, useTheme2 } from '@grafana/ui';
+import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
+import { ElementState } from 'app/features/canvas/runtime/element';
+import { frameSelection, reorderElements } from 'app/features/canvas/runtime/sceneElementManagement';
 
-import {getGlobalStyles} from '../../globalStyles';
-import {Options} from '../../panelcfg.gen';
-import {DragNode, DropNode} from '../../types';
-import { doSelect, onGenerateVisualization, getElementTypes, onAddItem } from '../../utils';
-import {TreeViewEditorProps} from '../element/elementEditor';
+import { getGlobalStyles } from '../../globalStyles';
+import { Options } from '../../panelcfg.gen';
+import { DragNode, DropNode } from '../../types';
+import { doSelect, getElementTypes, onAddItem, onGenerateVisualization } from '../../utils';
+import { TreeViewEditorProps } from '../element/elementEditor';
 
-import {TreeNodeTitle} from './TreeNodeTitle';
-import {getTreeData, onNodeDrop, TreeElement} from './tree';
+import { TreeNodeTitle } from './TreeNodeTitle';
+import { getTreeData, onNodeDrop, TreeElement } from './tree';
 
 let allowSelection = true;
 

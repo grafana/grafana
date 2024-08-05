@@ -2,14 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { DataFrame } from '@grafana/data/';
-import {
-  EmbeddedScene,
-  PanelBuilders,
-  SceneDataQuery,
-  SceneFlexItem,
-  SceneFlexLayout,
-  SceneQueryRunner,
-} from '@grafana/scenes';
+import { EmbeddedScene, PanelBuilders, SceneDataNode, SceneFlexItem, SceneFlexLayout } from '@grafana/scenes';
 import { stylesFactory, usePanelContext } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions/context';
@@ -51,31 +44,7 @@ const VisualizationDisplay = (props: CanvasElementProps<VizElementConfig, VizEle
     fields: frame.fields.filter((field) => !elementConfig.fields?.includes(field.name)),
   }));
 
-  // @TODO: Update refId
-  const getQueries = () => {
-    const queries: SceneDataQuery[] = [];
-    selectedFrames?.forEach((frame, index) => {
-      queries.push({
-        refId: `A${index}`,
-      });
-    });
-
-    return queries;
-  };
-
-  // TODO data needs to be tied to element options and come from dashboard dataframes
-  const panelData = new SceneQueryRunner({
-    data: {
-      ...scene?.data,
-      series: selectedFrames,
-    },
-    datasource: {
-      type: 'grafana-testdata-datasource',
-    },
-    queries: getQueries(),
-  });
-
-  panelToEmbed.setData(panelData);
+  panelToEmbed.setData(new SceneDataNode({ data: data!.data }));
   const panel = panelToEmbed.build();
 
   const embeddedPanel = new EmbeddedScene({
@@ -139,19 +108,32 @@ export const visualizationItem: CanvasElementItem<VizElementConfig, VizElementDa
 
   // Called when data changes
   prepareData: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<VizElementConfig>) => {
-    const textConfig = elementOptions.config;
+    const vizConfig = elementOptions.config;
+    let panelData = dimensionContext.getPanelData();
+
+    if (vizConfig?.fields && vizConfig.fields.length > 1 && panelData) {
+      let frames = panelData?.series;
+      let selectedFrames =
+        frames?.filter((frame) => frame.fields.filter((field) => vizConfig.fields!.includes(field.name)).length > 0) ??
+        [];
+      panelData = {
+        ...panelData,
+        series: selectedFrames,
+      };
+    }
 
     const data: VizElementData = {
-      text: textConfig?.text ? dimensionContext.getText(textConfig.text).value() : '',
-      field: textConfig?.text?.field,
-      align: textConfig?.align ?? Align.Center,
-      valign: textConfig?.valign ?? VAlign.Middle,
-      size: textConfig?.size,
-      vizType: textConfig?.vizType,
+      text: vizConfig?.text ? dimensionContext.getText(vizConfig.text).value() : '',
+      field: vizConfig?.text?.field,
+      align: vizConfig?.align ?? Align.Center,
+      valign: vizConfig?.valign ?? VAlign.Middle,
+      size: vizConfig?.size,
+      vizType: vizConfig?.vizType,
+      data: panelData,
     };
 
-    if (textConfig?.color) {
-      data.color = dimensionContext.getColor(textConfig.color).value();
+    if (vizConfig?.color) {
+      data.color = dimensionContext.getColor(vizConfig.color).value();
     }
 
     return data;

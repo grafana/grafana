@@ -1,6 +1,6 @@
-import {LinkModel} from '@grafana/data/src';
-import {ColorDimensionConfig, ResourceDimensionConfig, TextDimensionConfig} from '@grafana/schema';
-import {BackgroundImageSize} from 'app/plugins/panel/canvas/panelcfg.gen';
+import { LinkModel, PanelData } from '@grafana/data/src';
+import { ColorDimensionConfig, ResourceDimensionConfig, TextDimensionConfig } from '@grafana/schema';
+import { BackgroundImageSize } from 'app/plugins/panel/canvas/panelcfg.gen';
 
 export enum QuickPlacement {
   Top = 'top',
@@ -48,6 +48,7 @@ export interface VizElementConfig extends TextConfig {
 
 export interface VizElementData extends TextData {
   vizType?: string;
+  data?: PanelData;
 }
 
 export interface CanvasElementConfig extends TextConfig {
