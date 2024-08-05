@@ -412,7 +412,7 @@ func (ng *AlertNG) init() error {
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store)
 	receiverService := notifier.NewReceiverService(
-		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true), // TODO: Remove provisioning actions from regular API.
+		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, false),
 		configStore,
 		ng.store,
 		ng.SecretsService,

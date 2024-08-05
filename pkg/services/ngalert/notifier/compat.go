@@ -48,48 +48,52 @@ func PostableApiAlertingConfigToApiReceivers(c apimodels.PostableApiAlertingConf
 
 type DecryptFn = func(value string) string
 
-func PostableToGettableGrafanaReceiver(r *apimodels.PostableGrafanaReceiver, provenance *models.Provenance, decryptFn DecryptFn, listOnly bool) (apimodels.GettableGrafanaReceiver, error) {
+func PostableToGettableGrafanaReceiver(r *apimodels.PostableGrafanaReceiver, provenance *models.Provenance, decryptFn DecryptFn) (apimodels.GettableGrafanaReceiver, error) {
 	out := apimodels.GettableGrafanaReceiver{
-		UID:  r.UID,
-		Name: r.Name,
-		Type: r.Type,
+		UID:                   r.UID,
+		Name:                  r.Name,
+		Type:                  r.Type,
+		DisableResolveMessage: r.DisableResolveMessage,
+		SecureFields:          make(map[string]bool, len(r.SecureSettings)),
 	}
 	if provenance != nil {
 		out.Provenance = apimodels.Provenance(*provenance)
 	}
 
-	// if we aren't only listing, include the settings in the output
-	if !listOnly {
-		secureFields := make(map[string]bool, len(r.SecureSettings))
-		settings, err := simplejson.NewJson([]byte(r.Settings))
-		if err != nil {
-			return apimodels.GettableGrafanaReceiver{}, err
-		}
-
-		for k, v := range r.SecureSettings {
-			decryptedValue := decryptFn(v)
-			if decryptedValue == "" {
-				continue
-			} else {
-				settings.Set(k, decryptedValue)
-			}
-			secureFields[k] = true
-		}
-
-		jsonBytes, err := settings.MarshalJSON()
-		if err != nil {
-			return apimodels.GettableGrafanaReceiver{}, err
-		}
-
-		out.Settings = jsonBytes
-		out.SecureFields = secureFields
-		out.DisableResolveMessage = r.DisableResolveMessage
+	if r.Settings == nil && r.SecureSettings == nil {
+		return out, nil
 	}
+
+	settings := simplejson.New()
+	if r.Settings != nil {
+		var err error
+		settings, err = simplejson.NewJson(r.Settings)
+		if err != nil {
+			return apimodels.GettableGrafanaReceiver{}, err
+		}
+	}
+
+	for k, v := range r.SecureSettings {
+		decryptedValue := decryptFn(v)
+		if decryptedValue == "" {
+			continue
+		} else {
+			settings.Set(k, decryptedValue)
+		}
+		out.SecureFields[k] = true
+	}
+
+	jsonBytes, err := settings.MarshalJSON()
+	if err != nil {
+		return apimodels.GettableGrafanaReceiver{}, err
+	}
+
+	out.Settings = jsonBytes
 
 	return out, nil
 }
 
-func PostableToGettableApiReceiver(r *apimodels.PostableApiReceiver, provenances map[string]models.Provenance, decryptFn DecryptFn, listOnly bool) (apimodels.GettableApiReceiver, error) {
+func PostableToGettableApiReceiver(r *apimodels.PostableApiReceiver, provenances map[string]models.Provenance, decryptFn DecryptFn) (apimodels.GettableApiReceiver, error) {
 	out := apimodels.GettableApiReceiver{
 		Receiver: config.Receiver{
 			Name: r.Receiver.Name,
@@ -102,7 +106,7 @@ func PostableToGettableApiReceiver(r *apimodels.PostableApiReceiver, provenances
 			prov = &p
 		}
 
-		gettable, err := PostableToGettableGrafanaReceiver(gr, prov, decryptFn, listOnly)
+		gettable, err := PostableToGettableGrafanaReceiver(gr, prov, decryptFn)
 		if err != nil {
 			return apimodels.GettableApiReceiver{}, err
 		}
