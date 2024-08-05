@@ -13,7 +13,7 @@ import {frameSelection, reorderElements} from 'app/features/canvas/runtime/scene
 import {getGlobalStyles} from '../../globalStyles';
 import {Options} from '../../panelcfg.gen';
 import {DragNode, DropNode} from '../../types';
-import {doSelect, getElementTypes, onAddItem} from '../../utils';
+import { doSelect, onGenerateVisualization, getElementTypes, onAddItem } from '../../utils';
 import {TreeViewEditorProps} from '../element/elementEditor';
 
 import {TreeNodeTitle} from './TreeNodeTitle';
@@ -125,20 +125,9 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
     }
   };
 
-  const onGenerateVisualization = () => {
-    const visualizationSelection = {
-      label: 'Visualization',
-      value: 'visualization',
-      description: 'Visualization',
-    };
-
-    let selectedFields: string[] = [];
+  const onGenerateViz = () => {
     const selectedElements = [...settings.selected];
-    selectedElements.map((selectedElement) => {
-      selectedFields.push(selectedElement?.data.field);
-    });
-
-    onAddItem(visualizationSelection, layer, undefined, selectedFields);
+    onGenerateVisualization(selectedElements, layer);
   };
 
   const typeOptions = getElementTypes(settings.scene.shouldShowAdvancedTypes).options;
@@ -182,7 +171,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
       <Stack justifyContent="space-between" direction="row">
         {selection.length > 1 && (
           <div className={styles.generateVizWrapper}>
-            <Button size="sm" variant="secondary" onClick={onGenerateVisualization}>
+            <Button size="sm" variant="secondary" onClick={onGenerateViz}>
               Generate visualization
             </Button>
           </div>

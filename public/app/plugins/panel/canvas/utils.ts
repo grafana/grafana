@@ -302,3 +302,18 @@ export const getParent = (scene: Scene) => {
   }
   return scene.div;
 };
+
+export const onGenerateVisualization = (selectedElements: ElementState[], layer: FrameState) => {
+  const visualizationSelection = {
+    label: 'Visualization',
+    value: 'visualization',
+    description: 'Visualization',
+  };
+
+  let selectedFields: string[] = [];
+  selectedElements.map((selectedElement) => {
+    selectedFields.push(selectedElement?.data.field);
+  });
+
+  onAddItem(visualizationSelection, layer, undefined, selectedFields);
+}

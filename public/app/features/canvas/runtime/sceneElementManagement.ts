@@ -168,3 +168,18 @@ const generateFrameContainer = (elements: ElementState[]): Placement => {
     height: maxBottom - minTop,
   };
 };
+
+export const getSelectedElements = (scene: Scene) => {
+  const selectedElements = scene.selecto?.getSelectedTargets();
+
+  const elements: ElementState[] = [];
+
+  selectedElements?.forEach((element) => {
+    const elementState = findElementByTarget(element, scene.root.elements);
+    if (elementState) {
+      elements.push(elementState);
+    }
+  })
+
+  return elements;
+};
