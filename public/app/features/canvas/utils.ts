@@ -11,9 +11,9 @@ import {
   ScopedVars,
   ValueLinkConfig,
 } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+import {BackendSrvRequest, getBackendSrv} from '@grafana/runtime';
 
-import { appEvents } from '../../core/core';
+import {appEvents} from '../../core/core';
 
 export const getActionsSupplier =
   (
@@ -54,7 +54,7 @@ export const getActionsSupplier =
           onClick: (evt: MouseEvent, origin: Field) => {
             action.onClick!({
               origin: origin ?? field,
-              e: evt,
+              clickEvent: evt,
               replaceVariables: boundReplaceVariables,
             });
           },

@@ -1,23 +1,19 @@
-import { capitalize, get as lodashGet } from 'lodash';
+import {capitalize, get as lodashGet} from 'lodash';
 
-import { OneClickMode } from '@grafana/data';
-import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
-import { config } from '@grafana/runtime';
-import { CanvasElementOptions } from 'app/features/canvas/element';
-import {
-  DEFAULT_CANVAS_ELEMENT_CONFIG,
-  canvasElementRegistry,
-  defaultElementItems,
-} from 'app/features/canvas/registry';
-import { ElementState } from 'app/features/canvas/runtime/element';
-import { FrameState } from 'app/features/canvas/runtime/frame';
-import { Scene } from 'app/features/canvas/runtime/scene';
-import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
+import {OneClickMode} from '@grafana/data';
+import {NestedPanelOptions, NestedValueAccess} from '@grafana/data/src/utils/OptionsUIBuilders';
+import {config} from '@grafana/runtime';
+import {CanvasElementOptions} from 'app/features/canvas/element';
+import {canvasElementRegistry, DEFAULT_CANVAS_ELEMENT_CONFIG, defaultElementItems,} from 'app/features/canvas/registry';
+import {ElementState} from 'app/features/canvas/runtime/element';
+import {FrameState} from 'app/features/canvas/runtime/frame';
+import {Scene} from 'app/features/canvas/runtime/scene';
+import {setOptionImmutably} from 'app/features/dashboard/components/PanelEditor/utils';
 
-import { getElementTypes } from '../../utils';
-import { optionBuilder } from '../options';
+import {getElementTypes} from '../../utils';
+import {optionBuilder} from '../options';
 
-import { PlacementEditor } from './PlacementEditor';
+import {PlacementEditor} from './PlacementEditor';
 
 export interface CanvasEditorOptions {
   element: ElementState;
@@ -128,15 +124,20 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
         { value: OneClickMode.Link, label: capitalize(OneClickMode.Link) },
       ];
 
+      let oneClickCategory = 'Data links';
+      let oneClickDescription = 'When enabled, a single click opens the first link';
+
       if (actionsEnabled) {
         oneClickModeOptions.push({ value: OneClickMode.Action, label: capitalize(OneClickMode.Action) });
+        oneClickCategory += ' and actions';
+        oneClickDescription += ' or action';
       }
 
       builder.addRadio({
-        category: actionsEnabled ? ['Data links and actions'] : ['Data links'],
+        category: [oneClickCategory],
         path: 'oneClickMode',
         name: 'One-click',
-        description: 'When enabled, a single click opens the first link' + actionsEnabled ? ' or action' : '',
+        description: oneClickDescription,
         settings: {
           options: oneClickModeOptions,
         },

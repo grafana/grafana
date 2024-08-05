@@ -1,11 +1,12 @@
-import { ActionModel, Field } from '@grafana/data';
+import {ActionModel, Field} from '@grafana/data';
 
-import { ButtonProps, Button } from '../Button';
+import {Button, ButtonProps} from '../Button';
 
 type ActionButtonProps = {
   action: ActionModel<Field>;
   buttonProps?: ButtonProps;
 };
+
 /**
  * @internal
  */

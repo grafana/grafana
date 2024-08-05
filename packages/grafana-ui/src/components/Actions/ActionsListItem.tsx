@@ -1,11 +1,11 @@
-import { css, cx } from '@emotion/css';
-import { Draggable } from '@hello-pangea/dnd';
+import {css, cx} from '@emotion/css';
+import {Draggable} from '@hello-pangea/dnd';
 
-import { DataFrame, Action, GrafanaTheme2 } from '@grafana/data';
+import {Action, DataFrame, GrafanaTheme2} from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
-import { Icon } from '../Icon/Icon';
-import { IconButton } from '../IconButton/IconButton';
+import {useStyles2} from '../../themes';
+import {Icon} from '../Icon/Icon';
+import {IconButton} from '../IconButton/IconButton';
 
 export interface ActionsListItemProps {
   index: number;
@@ -23,7 +23,6 @@ export const ActionListItem = ({ action, onEdit, onRemove, index, itemKey }: Act
   const { title = '' } = action;
 
   const hasTitle = title.trim() !== '';
-  const hasUrl = true; //url.trim() !== '';
 
   return (
     <Draggable key={itemKey} draggableId={itemKey} index={index}>
@@ -40,7 +39,7 @@ export const ActionListItem = ({ action, onEdit, onRemove, index, itemKey }: Act
             </div>
 
             <div className={styles.linkDetails}>
-              <div className={cx(styles.url, !hasUrl && styles.notConfigured)}>
+              <div className={cx(styles.url, !hasTitle && styles.notConfigured)}>
                 {hasTitle ? title : 'Action title not provided'}
               </div>
             </div>
