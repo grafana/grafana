@@ -1,6 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useCallback, useEffect, useState } from 'react';
 
+import { config } from '@grafana/runtime';
 import { AlertVariant, Box, Stack, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
@@ -22,6 +23,7 @@ import { EmptyState } from './EmptyState/EmptyState';
 import { MigrationSummary } from './MigrationSummary';
 import { ResourcesTable } from './ResourcesTable';
 import { BuildSnapshotCTA, CreatingSnapshotCTA } from './SnapshotCTAs';
+import { SupportedTypesDisclosure } from './SupportedTypesDisclosure';
 
 /**
  * Here's how migrations work:
@@ -62,8 +64,6 @@ const SNAPSHOT_REBUILD_STATUSES: Array<SnapshotDto['status']> = ['PENDING_UPLOAD
 const SNAPSHOT_BUILDING_STATUSES: Array<SnapshotDto['status']> = ['INITIALIZING', 'CREATING'];
 const SNAPSHOT_UPLOADING_STATUSES: Array<SnapshotDto['status']> = ['UPLOADING', 'PENDING_PROCESSING', 'PROCESSING'];
 
-const STATUS_POLL_INTERVAL = 5 * 1000;
-
 const PAGE_SIZE = 50;
 
 function useGetLatestSnapshot(sessionUid?: string, page = 1) {
@@ -78,7 +78,7 @@ function useGetLatestSnapshot(sessionUid?: string, page = 1) {
       : skipToken;
 
   const snapshotResult = useGetSnapshotQuery(getSnapshotQueryArgs, {
-    pollingInterval: shouldPoll ? STATUS_POLL_INTERVAL : 0,
+    pollingInterval: shouldPoll ? config.cloudMigrationPollIntervalMs : 0,
     skipPollingIfUnfocused: true,
   });
 
@@ -232,12 +232,15 @@ export const Page = () => {
         )}
 
         {snapshot.data?.results && snapshot.data.results.length > 0 && (
-          <ResourcesTable
-            resources={snapshot.data.results}
-            onChangePage={setPage}
-            numberOfPages={Math.ceil((snapshot?.data?.stats?.total || 0) / PAGE_SIZE)}
-            page={page}
-          />
+          <Stack gap={4} direction="column">
+            <ResourcesTable
+              resources={snapshot.data.results}
+              onChangePage={setPage}
+              numberOfPages={Math.ceil((snapshot?.data?.stats?.total || 0) / PAGE_SIZE)}
+              page={page}
+            />
+            <SupportedTypesDisclosure />
+          </Stack>
         )}
       </Stack>
 

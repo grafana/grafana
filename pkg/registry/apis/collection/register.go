@@ -19,7 +19,6 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/kube-openapi/pkg/validation/spec"
 )
 
 var _ builder.APIGroupBuilder = (*CollectionsAPIBuilder)(nil)
@@ -79,53 +78,28 @@ func (b *CollectionsAPIBuilder) GetAPIGroupInfo(
 	var err error
 	storage := map[string]rest.Storage{}
 
-	info := collection.UserStarsResourceInfo
-	storage[info.StoragePath()] = &legacyStarsStorage{
-		tableConverter: gapiutil.NewTableConverter(
-			info.GroupResource(),
-			[]metav1.TableColumnDefinition{
-				{Name: "Name", Type: "string", Format: "name"},
-				{Name: "Title", Type: "string"},
-				{Name: "Created At", Type: "date"},
-			},
-			func(obj any) ([]interface{}, error) {
-				m, ok := obj.(*collection.Stars)
-				if !ok {
-					return nil, fmt.Errorf("expected query template")
-				}
-				return []interface{}{
-					m.Name,
-					m.Spec.Title,
-					m.CreationTimestamp.UTC().Format(time.RFC3339),
-				}, nil
-			},
-		)}
-	storage[info.StoragePath("modify")] = &subAddREST{}
-
-	if true {
-		info = collection.CollectionResourceInfo
-		storage[info.StoragePath()], err = newStorage(scheme, &info, gapiutil.NewTableConverter(
-			info.GroupResource(),
-			[]metav1.TableColumnDefinition{
-				{Name: "Name", Type: "string", Format: "name"},
-				{Name: "Title", Type: "string"},
-				{Name: "Created At", Type: "date"},
-			},
-			func(obj any) ([]interface{}, error) {
-				m, ok := obj.(*collection.Collection)
-				if !ok {
-					return nil, fmt.Errorf("expected query template")
-				}
-				return []interface{}{
-					m.Name,
-					m.Spec.Title,
-					m.CreationTimestamp.UTC().Format(time.RFC3339),
-				}, nil
-			},
-		), optsGetter)
-		if err != nil {
-			return nil, err
-		}
+	info := collection.CollectionResourceInfo
+	storage[info.StoragePath()], err = newStorage(scheme, &info, gapiutil.NewTableConverter(
+		info.GroupResource(),
+		[]metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Title", Type: "string"},
+			{Name: "Created At", Type: "date"},
+		},
+		func(obj any) ([]interface{}, error) {
+			m, ok := obj.(*collection.Collection)
+			if !ok {
+				return nil, fmt.Errorf("expected query template")
+			}
+			return []interface{}{
+				m.Name,
+				m.Spec.Title,
+				m.CreationTimestamp.UTC().Format(time.RFC3339),
+			}, nil
+		},
+	), optsGetter)
+	if err != nil {
+		return nil, err
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[collection.VERSION] = storage
@@ -141,9 +115,9 @@ func (b *CollectionsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinit
 }
 
 func (b *CollectionsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
-	defs := collection.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
-	modifySchema := defs["github.com/grafana/grafana/pkg/apis/collection/v0alpha1.ModifyCollection"].Schema
-	starsSchema := defs["github.com/grafana/grafana/pkg/apis/collection/v0alpha1.UserStars"].Schema
+	//defs := collection.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
+	// modifySchema := defs["github.com/grafana/grafana/pkg/apis/collection/v0alpha1.ModifyCollection"].Schema
+	// starsSchema := defs["github.com/grafana/grafana/pkg/apis/collection/v0alpha1.UserStars"].Schema
 
 	// The plugin description
 	oas.Info.Description = "Collections"
@@ -160,71 +134,71 @@ func (b *CollectionsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.O
 	// Add query parameters to the rest.Connector
 	sub = oas.Paths.Paths[root+"namespaces/{namespace}/stars/{name}/modify"]
 	if sub != nil && sub.Post != nil {
-		refA := collection.ResourceRef{
-			Group:    "dashboard.grafana.app",
-			Resource: "dashboards",
-			Name:     "A",
-		}
-		refB := collection.ResourceRef{
-			Group:    "dashboard.grafana.app",
-			Resource: "dashboards",
-			Name:     "A",
-		}
+		// refA := collection.ResourceRef{
+		// 	Group:    "dashboard.grafana.app",
+		// 	Resource: "dashboards",
+		// 	Name:     "A",
+		// }
+		// refB := collection.ResourceRef{
+		// 	Group:    "dashboard.grafana.app",
+		// 	Resource: "dashboards",
+		// 	Name:     "A",
+		// }
 
 		sub.Post.Description = "Add/Remove items from the collection"
-		sub.Post.RequestBody = &spec3.RequestBody{
-			RequestBodyProps: spec3.RequestBodyProps{
-				Content: map[string]*spec3.MediaType{
-					"application/json": {
-						MediaTypeProps: spec3.MediaTypeProps{
-							Schema: &modifySchema,
-							//	Example: basicTemplateSpec,
-							Examples: map[string]*spec3.Example{
-								"test": {
-									ExampleProps: spec3.ExampleProps{
-										Summary: "Add dashboards A and B",
-										Value: collection.ModifyCollection{
-											Add: []string{
-												refA.String(),
-												refB.String(),
-											},
-										},
-									},
-								},
-								"test2": {
-									ExampleProps: spec3.ExampleProps{
-										Summary: "Remove dashboards A",
-										Value: collection.ModifyCollection{
-											Remove: []string{
-												refA.String(),
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		}
-		sub.Post.Responses = &spec3.Responses{
-			ResponsesProps: spec3.ResponsesProps{
-				StatusCodeResponses: map[int]*spec3.Response{
-					200: {
-						ResponseProps: spec3.ResponseProps{
-							Description: "OK",
-							Content: map[string]*spec3.MediaType{
-								"application/json": {
-									MediaTypeProps: spec3.MediaTypeProps{
-										Schema: &starsSchema,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		}
+		// sub.Post.RequestBody = &spec3.RequestBody{
+		// 	RequestBodyProps: spec3.RequestBodyProps{
+		// 		Content: map[string]*spec3.MediaType{
+		// 			"application/json": {
+		// 				MediaTypeProps: spec3.MediaTypeProps{
+		// 					Schema: &modifySchema,
+		// 					//	Example: basicTemplateSpec,
+		// 					Examples: map[string]*spec3.Example{
+		// 						"test": {
+		// 							ExampleProps: spec3.ExampleProps{
+		// 								Summary: "Add dashboards A and B",
+		// 								Value: collection.ModifyCollection{
+		// 									Add: []string{
+		// 										refA.String(),
+		// 										refB.String(),
+		// 									},
+		// 								},
+		// 							},
+		// 						},
+		// 						"test2": {
+		// 							ExampleProps: spec3.ExampleProps{
+		// 								Summary: "Remove dashboards A",
+		// 								Value: collection.ModifyCollection{
+		// 									Remove: []string{
+		// 										refA.String(),
+		// 									},
+		// 								},
+		// 							},
+		// 						},
+		// 					},
+		// 				},
+		// 			},
+		// 		},
+		// 	},
+		// }
+		// sub.Post.Responses = &spec3.Responses{
+		// 	ResponsesProps: spec3.ResponsesProps{
+		// 		StatusCodeResponses: map[int]*spec3.Response{
+		// 			200: {
+		// 				ResponseProps: spec3.ResponseProps{
+		// 					Description: "OK",
+		// 					Content: map[string]*spec3.MediaType{
+		// 						"application/json": {
+		// 							MediaTypeProps: spec3.MediaTypeProps{
+		// 								Schema: &starsSchema,
+		// 							},
+		// 						},
+		// 					},
+		// 				},
+		// 			},
+		// 		},
+		// 	},
+		// }
 		// sub.Post.Parameters = []*spec3.Parameter{
 		// 	{
 		// 		ParameterProps: spec3.ParameterProps{

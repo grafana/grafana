@@ -16,13 +16,10 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.Collection":       schema_pkg_apis_collection_v0alpha1_Collection(ref),
-		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.CollectionList":   schema_pkg_apis_collection_v0alpha1_CollectionList(ref),
-		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.CollectionSpec":   schema_pkg_apis_collection_v0alpha1_CollectionSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.ModifyCollection": schema_pkg_apis_collection_v0alpha1_ModifyCollection(ref),
-		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.ResourceRef":      schema_pkg_apis_collection_v0alpha1_ResourceRef(ref),
-		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.Stars":            schema_pkg_apis_collection_v0alpha1_Stars(ref),
-		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.StarsList":        schema_pkg_apis_collection_v0alpha1_StarsList(ref),
+		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.Collection":     schema_pkg_apis_collection_v0alpha1_Collection(ref),
+		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.CollectionList": schema_pkg_apis_collection_v0alpha1_CollectionList(ref),
+		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.CollectionSpec": schema_pkg_apis_collection_v0alpha1_CollectionSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.ResourceRef":    schema_pkg_apis_collection_v0alpha1_ResourceRef(ref),
 	}
 }
 
@@ -136,21 +133,12 @@ func schema_pkg_apis_collection_v0alpha1_CollectionSpec(ref common.ReferenceCall
 					"values": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The group/resource+names for stared items",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type: []string{"array"},
-										Items: &spec.SchemaOrArray{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Default: "",
-													Type:    []string{"string"},
-													Format:  "",
-												},
-											},
-										},
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/collection/v0alpha1.ResourceRef"),
 									},
 								},
 							},
@@ -160,62 +148,8 @@ func schema_pkg_apis_collection_v0alpha1_CollectionSpec(ref common.ReferenceCall
 				Required: []string{"values"},
 			},
 		},
-	}
-}
-
-func schema_pkg_apis_collection_v0alpha1_ModifyCollection(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"add": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Add resource to the collection",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"remove": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Remove resource from the collection",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.ResourceRef"},
 	}
 }
 
@@ -225,129 +159,36 @@ func schema_pkg_apis_collection_v0alpha1_ResourceRef(ref common.ReferenceCallbac
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"Group": {
+					"group": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The referenced resource API Group",
-							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"Resource": {
+					"resource": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The referenced resource type",
-							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"Namespace": {
+					"namespace": {
 						SchemaProps: spec.SchemaProps{
 							Description: "When not specified on a non-cluster scope resource type, the namespace will default to the same as the reference object",
-							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"Name": {
+					"name": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The resource identifier",
-							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 				},
-				Required: []string{"Group", "Resource", "Namespace", "Name"},
 			},
 		},
-	}
-}
-
-func schema_pkg_apis_collection_v0alpha1_Stars(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "The Stars kubernets name will match user uid/name eg: `namespaces/<namespace>/stars/u-<uid>`",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
-						},
-					},
-					"spec": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/collection/v0alpha1.CollectionSpec"),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.CollectionSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
-	}
-}
-
-func schema_pkg_apis_collection_v0alpha1_StarsList(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
-						},
-					},
-					"items": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/collection/v0alpha1.Stars"),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/collection/v0alpha1.Stars", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }

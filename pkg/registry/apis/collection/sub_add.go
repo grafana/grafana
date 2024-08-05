@@ -2,6 +2,7 @@ package collection
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -20,7 +21,7 @@ var (
 )
 
 func (r *subAddREST) New() runtime.Object {
-	return &collection.ModifyCollection{}
+	return &collection.Collection{}
 }
 
 func (r *subAddREST) Destroy() {
@@ -35,7 +36,7 @@ func (r *subAddREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *subAddREST) ProducesObject(verb string) interface{} {
-	return &collection.Stars{}
+	return &collection.Collection{}
 }
 
 func (r *subAddREST) NewConnectOptions() (runtime.Object, bool, string) {
@@ -55,6 +56,14 @@ func (r *subAddREST) Connect(ctx context.Context, name string, opts runtime.Obje
 		// 	return
 		// }
 
-		responder.Object(http.StatusOK, &collection.Stars{})
+		v := req.URL.Query()
+		for _, add := range v["add"] {
+			fmt.Printf("ADD: %s\n", add)
+		}
+		for _, remove := range v["remove"] {
+			fmt.Printf("ADD: %s\n", remove)
+		}
+
+		responder.Object(http.StatusOK, &collection.Collection{})
 	}), nil
 }
