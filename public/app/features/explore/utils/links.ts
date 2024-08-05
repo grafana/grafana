@@ -49,7 +49,7 @@ const DATA_LINK_FILTERS: DataLinkFilter[] = [dataLinkHasRequiredPermissionsFilte
  * for internal links and undefined for non-internal links
  */
 export interface ExploreFieldLinkModel extends LinkModel<Field> {
-  variables?: VariableInterpolation[];
+  variables: VariableInterpolation[];
 }
 
 const DATA_LINK_USAGE_KEY = 'grafana_data_link_clicked';
@@ -190,14 +190,18 @@ export const getFieldLinksForExplore = (options: {
       }
 
       if (!link.internal) {
-        const replace: InterpolateFunction = (value, vars) =>
-          getTemplateSrv().replace(value, { ...vars, ...allVars, ...scopedVars });
+        if (variableData.allVariablesDefined) {
+          const replace: InterpolateFunction = (value, vars) =>
+            getTemplateSrv().replace(value, { ...vars, ...allVars, ...scopedVars });
 
-        const linkModel = getLinkSrv().getDataLinkUIModel(link, replace, field);
-        if (!linkModel.title) {
-          linkModel.title = getTitleFromHref(linkModel.href);
+          const linkModel = getLinkSrv().getDataLinkUIModel(link, replace, field);
+          if (!linkModel.title) {
+            linkModel.title = getTitleFromHref(linkModel.href);
+          }
+          return { ...linkModel, variables: variables };
+        } else {
+          return undefined;
         }
-        return linkModel;
       } else {
         const splitFnWithTracking = (options?: SplitOpenOptions<DataQuery>) => {
           reportInteraction(DATA_LINK_USAGE_KEY, {

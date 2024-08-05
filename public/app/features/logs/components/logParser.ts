@@ -35,22 +35,34 @@ export const getAllFields = (
 export const createLogLineLinks = (hiddenFieldsWithLinks: FieldDef[]): FieldDef[] => {
   let fieldsWithLinksFromVariableMap: FieldDef[] = [];
   hiddenFieldsWithLinks.forEach((linkField) => {
-    linkField.links?.forEach((link: ExploreFieldLinkModel) => {
-      if (link.variables) {
-        const variableKeys = link.variables.map((variable) => {
-          const varName = variable.variableName;
-          const fieldPath = variable.fieldPath ? `.${variable.fieldPath}` : '';
-          return `${varName}${fieldPath}`;
-        });
-        const variableValues = link.variables.map((variable) => (variable.found ? variable.value : ''));
-        fieldsWithLinksFromVariableMap.push({
-          keys: variableKeys,
-          values: variableValues,
-          links: [link],
-          fieldIndex: linkField.fieldIndex,
-        });
+    if (linkField.links !== undefined) {
+      for (let i = 0; i < linkField.links.length; i++) {
+        const link = linkField.links[i];
+        if ('variables' in link) {
+          if (link.variables.length > 0) {
+            const fieldDefFromLink: LinkModel = {
+              href: link.href,
+              title: link.title,
+              origin: link.origin,
+              onClick: link.onClick,
+              target: link.target,
+            };
+            const variableKeys = link.variables.map((variable) => {
+              const varName = variable.variableName;
+              const fieldPath = variable.fieldPath ? `.${variable.fieldPath}` : '';
+              return `${varName}${fieldPath}`;
+            });
+            const variableValues = link.variables.map((variable) => (variable.found ? variable.value : ''));
+            fieldsWithLinksFromVariableMap.push({
+              keys: variableKeys,
+              values: variableValues,
+              links: [fieldDefFromLink],
+              fieldIndex: linkField.fieldIndex,
+            });
+          }
+        }
       }
-    });
+    }
   });
   return fieldsWithLinksFromVariableMap;
 };
