@@ -7,6 +7,7 @@ import alertingReducers from 'app/features/alerting/state/reducers';
 import apiKeysReducers from 'app/features/api-keys/state/reducers';
 import authConfigReducers from 'app/features/auth-config/state/reducers';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { newBrowseDashboardsAPI } from 'app/features/browse-dashboards/new-api';
 import browseDashboardsReducers from 'app/features/browse-dashboards/state/slice';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import panelEditorReducers from 'app/features/dashboard/components/PanelEditor/state/reducers';
@@ -59,6 +60,7 @@ const rootReducers = {
   [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,
   [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
   [cloudMigrationAPI.reducerPath]: cloudMigrationAPI.reducer,
+  [newBrowseDashboardsAPI.reducerPath]: newBrowseDashboardsAPI.reducer,
   [queryLibraryApi.reducerPath]: queryLibraryApi.reducer,
   [userPreferencesAPI.reducerPath]: userPreferencesAPI.reducer,
 };

@@ -3,6 +3,7 @@ import { setupListeners } from '@reduxjs/toolkit/query';
 import { Middleware } from 'redux';
 
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { newBrowseDashboardsAPI } from 'app/features/browse-dashboards/new-api';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import { cloudMigrationAPI } from 'app/features/migrate-to-cloud/api';
 import { userPreferencesAPI } from 'app/features/preferences/api';
@@ -38,6 +39,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
         alertingApi.middleware,
         publicDashboardApi.middleware,
         browseDashboardsAPI.middleware,
+        newBrowseDashboardsAPI.middleware,
         cloudMigrationAPI.middleware,
         queryLibraryApi.middleware,
         userPreferencesAPI.middleware,

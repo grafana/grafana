@@ -8,6 +8,12 @@ const config: ConfigFile = {
   exportName: 'generatedAPI',
 
   outputFiles: {
+    '../public/app/features/browse-dashboards/new-api/endpoints.gen.ts': {
+      apiFile: '../public/app/features/browse-dashboards/new-api/baseAPI.ts',
+      apiImport: 'baseAPI',
+      filterEndpoints: ['getFolders', 'search'],
+    },
+
     '../public/app/features/migrate-to-cloud/api/endpoints.gen.ts': {
       apiFile: '../public/app/features/migrate-to-cloud/api/baseAPI.ts',
       apiImport: 'baseAPI',

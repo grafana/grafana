@@ -3,6 +3,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Page } from 'app/core/components/Page/Page';
 
+import { useGetFoldersQuery } from './new-api';
+
 interface NewBrowseDashboardsPageProps {}
 
 interface APIItem {
@@ -19,7 +21,10 @@ interface PretendAPI {
 }
 
 export default function NewBrowseDashboardsPage(props: NewBrowseDashboardsPageProps) {
+  const resp = useGetFoldersQuery({});
   const { fetchNextPage, isLoading, pages } = useAPI();
+
+  console.log(resp);
 
   const hasNextPage = pages.length < 5;
   const allRows = pages.flat();
