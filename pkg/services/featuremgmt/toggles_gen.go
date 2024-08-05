@@ -766,4 +766,8 @@ const (
 	// FlagExploreLogsLimitedTimeRange
 	// Used in Explore Logs to limit the time range
 	FlagExploreLogsLimitedTimeRange = "exploreLogsLimitedTimeRange"
+
+	// FlagNewNewBrowseDashboards
+	// Experimental new browse dashboards, using window-scrolling virtualization
+	FlagNewNewBrowseDashboards = "newNewBrowseDashboards"
 )

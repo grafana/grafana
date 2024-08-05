@@ -1910,6 +1910,24 @@
     },
     {
       "metadata": {
+        "name": "newNewBrowseDashboards",
+        "resourceVersion": "1722864776498",
+        "creationTimestamp": "2024-08-05T13:14:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-05 13:32:56.498634584 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Experimental new browse dashboards, using window-scrolling virtualization",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "newPDFRendering",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-02-08T12:09:34Z"
