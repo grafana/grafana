@@ -4,21 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"hash/fnv"
 	"net"
 	"net/http"
-	"os"
 	"strconv"
-	"strings"
 	"time"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
-	"github.com/grafana/dskit/dns"
 	"github.com/grafana/dskit/kv"
-	"github.com/grafana/dskit/kv/codec"
 	"github.com/grafana/dskit/kv/memberlist"
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
@@ -35,193 +28,74 @@ var (
 	httpPort = "3011"
 )
 
-func ProvideService(cfg *setting.Cfg) (*Cache, error) {
-	memberlistConfig := memberlist.KVConfig{}
-	memberlistConfig.Codecs = []codec.Codec{ring.GetCodec()}
-	memberlistConfig.TCPTransport = memberlist.TCPTransportConfig{
-		BindPort:  ringPort,
-		BindAddrs: []string{cfg.HTTPAddr},
-	}
-	memberlistConfig.JoinMembers = cfg.Cache.JoinMembers
+func ProvideService(cfg *setting.Cfg, reg prometheus.Registerer) (*Cache, error) {
+	// TODO: adatapt to grafana logger?
+	logger := glog.New("cache")
+	memberlistsvc, client, err := newMemberlistService(memberlistConfig{
+		Addr:        cfg.HTTPAddr,
+		Port:        ringPort,
+		JoinMembers: cfg.Cache.JoinMembers,
+	}, logger, reg)
 
-	fmt.Printf("Join Members: %s\n", strings.Join(cfg.Cache.JoinMembers, ","))
-
-	logger := log.With(log.NewLogfmtLogger(os.Stdout), level.AllowDebug())
-	resolver := dns.NewProvider(log.With(logger, "component", "dns"), prometheus.NewPedanticRegistry(), dns.GolangResolverType)
-
-	memberlistConfig.NodeName = cfg.HTTPAddr
-	memberlistConfig.StreamTimeout = 5 * time.Second
-
-	memberlistsvc := memberlist.NewKVInitService(
-		&memberlistConfig,
-		log.With(logger, "component", "memberlist"),
-		resolver,
-		prometheus.NewPedanticRegistry(),
+	ring, lfc, err := newRing(
+		ringConfig{Addr: cfg.HTTPAddr, Port: strconv.Itoa(ringPort)},
+		logger,
+		client,
 	)
-
-	ctx := context.Background()
-	if err := services.StartAndAwaitRunning(ctx, memberlistsvc); err != nil {
-		return nil, fmt.Errorf("failed to start kv service: %w", err)
-	}
-
-	store, err := memberlistsvc.GetMemberlistKV()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create kv: %w", err)
-	}
-
-	client, err := memberlist.NewClient(store, ring.GetCodec())
-	if err != nil {
-		return nil, fmt.Errorf("failed to create kv client: %w", err)
-	}
-
-	ring, err := newRing(logger, client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ring: %w", err)
 	}
 
-	if err := services.StartAndAwaitRunning(ctx, ring); err != nil {
-		return nil, fmt.Errorf("failed to start ring: %w", err)
-	}
-
-	lfc, err := newRingLifecycler(cfg, logger, client)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create lfc: %w", err)
-	}
-
-	if err := services.StartAndAwaitRunning(ctx, lfc); err != nil {
-		return nil, fmt.Errorf("failed to start lfc: %w", err)
-	}
-
-	listener, err := net.Listen("tcp", net.JoinHostPort(cfg.HTTPAddr, httpPort))
-	if err != nil {
-		return nil, err
-	}
-
 	c := &Cache{
 		id:     cfg.HTTPAddr,
+		lfc:    lfc,
 		kv:     client,
 		ring:   ring,
+		mlist:  memberlistsvc,
 		store:  gocache.New(5*time.Minute, 10*time.Minute),
 		logger: glog.New("cache"),
 	}
 
-	mux := http.NewServeMux()
-	mux.Handle("/ring", lfc)
-	mux.Handle("/kv", memberlistsvc)
-
-	mux.HandleFunc("GET /cache/{key}", func(w http.ResponseWriter, r *http.Request) {
-		key := r.PathValue("key")
-		c.logger.Info("get cached item", "key", key)
-		value, err := c.Get(r.Context(), key)
-		if err != nil {
-			if errors.Is(err, remotecache.ErrCacheItemNotFound) {
-				w.WriteHeader(http.StatusNotFound)
-				return
-			}
-			c.logger.Error("failed to get item", "err", err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-		w.Header().Add("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(&getResponse{Value: value})
-	})
-
-	mux.HandleFunc("POST /cache/internal", func(w http.ResponseWriter, r *http.Request) {
-		c.logger.Info("set new item internal")
-		var req setRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			c.logger.Error("failed to parse request internal", "err", err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		if err := c.Set(r.Context(), req.Key, req.Value, req.Expr); err != nil {
-			c.logger.Error("failed to set item internal", "err", err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-
-		}
-		w.WriteHeader(http.StatusOK)
-	})
-
-	mux.HandleFunc("POST /cache", func(w http.ResponseWriter, r *http.Request) {
-		c.logger.Info("set new item")
-		type request struct {
-			Key   string `json:"key"`
-			Value string `json:"value"`
-		}
-		var req request
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			c.logger.Error("failed to parse request", "err", err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		if err := c.Set(r.Context(), req.Key, []byte(req.Value), 1*time.Hour); err != nil {
-			c.logger.Error("failed to set item", "err", err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-
-		}
-		w.WriteHeader(http.StatusOK)
-	})
-
-	go func() {
-		panic(http.Serve(listener, mux))
-	}()
+	if err := registerRoutes(cfg, c); err != nil {
+		return nil, err
+	}
 
 	return c, nil
 }
 
-func newRingLifecycler(cfg *setting.Cfg, logger log.Logger, client kv.Client) (*ring.BasicLifecycler, error) {
-	var config ring.BasicLifecyclerConfig
-	config.ID = cfg.HTTPAddr
-	config.Addr = net.JoinHostPort(cfg.HTTPAddr, strconv.Itoa(ringPort))
-
-	var delegate ring.BasicLifecyclerDelegate
-
-	delegate = ring.NewInstanceRegisterDelegate(ring.ACTIVE, 128)
-	delegate = ring.NewLeaveOnStoppingDelegate(delegate, logger)
-	delegate = ring.NewAutoForgetDelegate(1*time.Minute, delegate, logger)
-
-	return ring.NewBasicLifecycler(
-		config,
-		"local",
-		"collectors/ring",
-		client,
-		delegate,
-		log.With(logger, "component", "lifecycler"),
-		prometheus.NewPedanticRegistry(),
-	)
-}
-
-func newRing(logger log.Logger, client kv.Client) (*ring.Ring, error) {
-	var ringConfig ring.Config
-	ringConfig.ReplicationFactor = 1
-	return ring.NewWithStoreClientAndStrategy(
-		ringConfig,
-		"local",           // ring name
-		"collectors/ring", // prefix key where peers are stored
-		client,
-		ring.NewDefaultReplicationStrategy(),
-		prometheus.NewPedanticRegistry(),
-		log.With(logger, "component", "ring"),
-	)
-}
-
 type Cache struct {
 	id     string
-	ring   *ring.Ring
-	kv     kv.Client
 	store  *gocache.Cache
 	logger glog.Logger
+
+	kv    kv.Client
+	lfc   *ring.BasicLifecycler
+	ring  *ring.Ring
+	mlist *memberlist.KVInitService
 }
 
 func (c *Cache) Run(ctx context.Context) error {
-	fmt.Println("RUNNING cache service")
-	return nil
+	if err := services.StartAndAwaitRunning(ctx, c.mlist); err != nil {
+		return fmt.Errorf("failed to start kv service: %w", err)
+	}
+
+	stopCtx := context.Background()
+	defer services.StopAndAwaitTerminated(stopCtx, c.mlist)
+
+	if err := services.StartAndAwaitRunning(ctx, c.ring); err != nil {
+		return fmt.Errorf("failed to start ring: %w", err)
+	}
+
+	defer services.StopAndAwaitTerminated(stopCtx, c.ring)
+
+	if err := services.StartAndAwaitRunning(ctx, c.lfc); err != nil {
+		return fmt.Errorf("failed to start lfc: %w", err)
+	}
+
+	defer services.StopAndAwaitTerminated(stopCtx, c.lfc)
+
+	<-ctx.Done()
+	return ctx.Err()
 }
 
 func (c *Cache) Set(ctx context.Context, key string, value []byte, expr time.Duration) error {
