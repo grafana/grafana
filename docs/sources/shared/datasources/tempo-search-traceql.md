@@ -161,7 +161,9 @@ Queries can take a little while to return results. The results appear in a table
 The Tempo data source supports streaming responses to TraceQL queries so you can see partial query results as they come in without waiting for the whole query to finish.
 
 {{% admonition type="note" %}}
-To use this experimental feature, enable the `traceQLStreaming` feature toggle. When active, all configured Tempo data sources will attempt to use streaming. You can control which Tempo datasources do and don't attempt to stream results at the per-datasource level using the **Streaming** section of the Tempo datasource configuration. 
+To use this public preview feature, enable the `traceQLStreaming` feature toggle.
+When active, all configured Tempo data sources will attempt to use streaming.
+You can control which Tempo data sources do and don't attempt to stream results at the per-data source level using the **Streaming** section of the Tempo data source configuration.
 
 {{% /admonition %}}
 
