@@ -1,0 +1,60 @@
+import { Button, Modal, Stack, Text } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
+
+import { prettyTypeName } from './TypeCell';
+import { ResourceTableItem } from './types';
+
+interface ResourceDetailsModalProps {
+  resource: ResourceTableItem | undefined;
+  onClose: () => void;
+}
+
+export function ResourceDetailsModal(props: ResourceDetailsModalProps) {
+  const { resource, onClose } = props;
+
+  const refId = resource?.refId;
+  const typeName = resource && prettyTypeName(resource.type);
+
+  let title = 'Resource migration details';
+  if (resource?.status === 'ERROR') {
+    title = 'Unable to migrate this resource';
+  } else if (resource?.status === 'WARNING') {
+    title = 'Resource migrated with a warning';
+  }
+
+  return (
+    <Modal title={t('migrate-to-cloud.resource-details.title', title)} isOpen={Boolean(resource)} onDismiss={onClose}>
+      {resource && (
+        <Stack direction="column" gap={2} alignItems="flex-start">
+          <Text element="p" weight="bold">
+            <Trans i18nKey="migrate-to-cloud.resource-details.resource-summary">
+              {{ refId }} ({{ typeName }})
+            </Trans>
+          </Text>
+
+          {resource.error ? (
+            <>
+              <Text element="p">
+                <Trans i18nKey="migrate-to-cloud.resource-details.specific-message-title">
+                  The specific error was:
+                </Trans>
+              </Text>
+
+              <Text element="p" weight="bold">
+                <Trans i18nKey="migrate-to-cloud.resource-details.specific-message-body">{resource.error}</Trans>
+              </Text>
+            </>
+          ) : (
+            <Text element="p">
+              <Trans i18nKey="migrate-to-cloud.resource-details.unknown-error">An unknown error occurred.</Trans>
+            </Text>
+          )}
+
+          <Button onClick={onClose}>
+            <Trans i18nKey="migrate-to-cloud.resource-details.dismiss-button">OK</Trans>
+          </Button>
+        </Stack>
+      )}
+    </Modal>
+  );
+}
