@@ -37,16 +37,18 @@ The following video guides you through the creation steps and common customizati
 
 ## Supported data formats
 
-It is recommended to use only one data frame, in case multiple are present the panel will display as configured in the [Value options](#value-options) section. #########and it must have at least one string field that will be used as the category for an X or Y axis and one or more numerical fields.
+The pie chart panel requires a data set with at least one row with numeric values to be added up. If the first row contains column titles it will be used to display and identify the values in the pie chart. Cells with non-numeric values will not be displayed inside of the pie chart.
 
 Example:
 
-| Browser | Market share |
-| ------- | ------------ |
-| Chrome  | 50           |
-| IE      | 17.5         |
+| Description   | Internet Explorer | Chrome |
+| ------------- | ----------------- | ------ |
+| Other Users   | 1.5               | 7      |
+| English Users | 17.5              | 50     |
 
-If you have more than one numerical field the visualization will show grouped bars.
+If the data set contains multiple rows the panel will display the last row by default, but multiple rows can be configured as described in the [Value options](#value-options) section. If you configure multiple rows to be displayed the panel will concatenate the text fields of each row with the numeric column titles.
+
+It is recommended to use only one data set with the pie chart, if multiple data sets are present the numeric values configured in the _Value options_ section will be added up and displayed from all the data sets.
 
 ## Panel options
 
