@@ -131,7 +131,7 @@ Notification templates represent the alternative approach to templating designed
 Here is an example of a notification template:
 
 ```go
-{ define "alerts.message" -}}
+{{ define "alerts.message" -}}
 {{ if .Alerts.Firing -}}
 {{ len .Alerts.Firing }} firing alert(s)
 {{ template "alerts.summarize" .Alerts.Firing }}
