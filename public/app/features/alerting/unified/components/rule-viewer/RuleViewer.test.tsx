@@ -2,8 +2,7 @@ import { within } from '@testing-library/react';
 import { render, waitFor, screen, userEvent } from 'test/test-utils';
 import { byText, byRole } from 'testing-library-selector';
 
-import { setBackendSrv, setPluginExtensionsHook } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { setPluginExtensionsHook } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
@@ -95,7 +94,6 @@ beforeAll(() => {
     AccessControlAction.AlertingRuleDelete,
     AccessControlAction.AlertingInstanceCreate,
   ]);
-  setBackendSrv(backendSrv);
 });
 
 describe('RuleViewer', () => {
@@ -172,10 +170,8 @@ describe('RuleViewer', () => {
       }
 
       // actions
-      await waitFor(() => {
-        expect(ELEMENTS.actions.edit.get()).toBeInTheDocument();
-        expect(ELEMENTS.actions.more.button.get()).toBeInTheDocument();
-      });
+      expect(await ELEMENTS.actions.edit.find()).toBeInTheDocument();
+      expect(ELEMENTS.actions.more.button.get()).toBeInTheDocument();
 
       // check the "more actions" button
       await userEvent.click(ELEMENTS.actions.more.button.get());

@@ -3,11 +3,30 @@ package gmsclient
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_buildBasePath(t *testing.T) {
 	t.Parallel()
+
+	// Domain is required
+	_, err := NewGMSClient(&setting.Cfg{
+		CloudMigration: setting.CloudMigrationSettings{
+			GMSDomain: "",
+		},
+	})
+	require.Error(t, err)
+
+	// Domain is required
+	c, err := NewGMSClient(&setting.Cfg{
+		CloudMigration: setting.CloudMigrationSettings{
+			GMSDomain: "non-empty",
+		},
+	})
+	require.NoError(t, err)
+	client := c.(*gmsClientImpl)
 
 	tests := []struct {
 		description string
@@ -30,7 +49,8 @@ func Test_buildBasePath(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
-			assert.Equal(t, tt.expected, buildBasePath(tt.domain, tt.clusterSlug))
+			client.cfg.CloudMigration.GMSDomain = tt.domain
+			assert.Equal(t, tt.expected, client.buildBasePath(tt.clusterSlug))
 		})
 	}
 }

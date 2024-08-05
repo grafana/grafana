@@ -51,6 +51,7 @@ export interface DataLink<T extends DataQuery = any> {
   internal?: InternalDataLink<T>;
 
   origin?: DataLinkConfigOrigin;
+  sortIndex?: number;
 }
 
 /**
@@ -127,4 +128,9 @@ export interface VariableSuggestion {
 
 export enum VariableSuggestionsScope {
   Values = 'values',
+}
+
+export enum OneClickMode {
+  Link = 'link',
+  Off = 'off',
 }

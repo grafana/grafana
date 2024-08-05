@@ -7,6 +7,7 @@ import {
   EmbeddedScene,
   IntervalVariable,
   QueryVariable,
+  SafeSerializableSceneObject,
   SceneCanvasText,
   SceneVariableSet,
   TestVariable,
@@ -30,12 +31,16 @@ variableAdapters.setInit(() => [
 ]);
 
 const interpolateMock = jest.fn();
+const timeRangeMock = jest.fn().mockReturnValue({
+  state: { value: { from: dateTime(1594671549254), to: dateTime(1594671549254), raw: { from: '12', to: '14' } } },
+});
 
 jest.mock('@grafana/scenes', () => ({
   ...jest.requireActual('@grafana/scenes'),
   sceneGraph: {
     ...jest.requireActual('@grafana/scenes').sceneGraph,
     interpolate: (...args: unknown[]) => interpolateMock(...args),
+    getTimeRange: (...args: unknown[]) => timeRangeMock(...args),
   },
 }));
 
@@ -840,6 +845,16 @@ describe('templateSrv', () => {
       expect(interpolateMock.mock.calls[0][1]).toEqual('test ${test}');
     });
 
+    it('should use scene interpolator when scoped var provided via SafeSerializableSceneObject', () => {
+      const variable = new TestVariable({});
+      const serializable = new SafeSerializableSceneObject(variable);
+      _templateSrv.replace('test ${test}', { __sceneObject: serializable });
+
+      expect(interpolateMock).toHaveBeenCalledTimes(1);
+      expect(interpolateMock.mock.calls[0][0]).toEqual(variable);
+      expect(interpolateMock.mock.calls[0][1]).toEqual('test ${test}');
+    });
+
     it('should use scene interpolator global __grafanaSceneContext is active', () => {
       window.__grafanaSceneContext = new EmbeddedScene({
         $variables: new SceneVariableSet({
@@ -860,8 +875,8 @@ describe('templateSrv', () => {
       window.__grafanaSceneContext = new EmbeddedScene({
         $variables: new SceneVariableSet({
           variables: [
-            new QueryVariable({ name: 'server', value: 'serverA', text: 'Server A' }),
-            new QueryVariable({ name: 'pods', value: ['pA', 'pB'], text: ['podA', 'podB'] }),
+            new QueryVariable({ name: 'server', value: 'serverA', text: 'Server A', query: { refId: 'A' } }),
+            new QueryVariable({ name: 'pods', value: ['pA', 'pB'], text: ['podA', 'podB'], query: { refId: 'A' } }),
             new DataSourceVariable({ name: 'ds', value: 'dsA', text: 'dsA', pluginId: 'prometheus' }),
             new CustomVariable({ name: 'custom', value: 'A', text: 'A', query: 'A, B, C' }),
             new IntervalVariable({ name: 'interval', value: '1m', intervals: ['1m', '2m'] }),
@@ -888,6 +903,28 @@ describe('templateSrv', () => {
       expect(podVar.type).toBe('query');
       expect(podVar.current.value).toEqual(['pA', 'pB']);
       expect(podVar.current.text).toEqual(['podA', 'podB']);
+    });
+
+    it('Should return timeRange from scenes context', () => {
+      window.__grafanaSceneContext = new EmbeddedScene({
+        body: new SceneCanvasText({ text: 'hello' }),
+      });
+      _templateSrv.updateTimeRange({
+        from: dateTime(1594671549254),
+        to: dateTime(1594671549254),
+        raw: { from: '10', to: '10' },
+      });
+
+      const deactivate = window.__grafanaSceneContext.activate();
+
+      expect(_templateSrv.timeRange).not.toBeNull();
+      expect(_templateSrv.timeRange).not.toBeUndefined();
+      expect(_templateSrv.timeRange!.raw).toEqual({ from: '12', to: '14' });
+      expect(timeRangeMock).toHaveBeenCalled();
+
+      deactivate();
+
+      expect(_templateSrv.timeRange!.raw).toEqual({ from: '10', to: '10' });
     });
   });
 });

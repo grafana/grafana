@@ -427,10 +427,6 @@ const (
 	// Enables Team LBAC for datasources to apply team headers to the client requests
 	FlagTeamHttpHeaders = "teamHttpHeaders"
 
-	// FlagAwsDatasourcesNewFormStyling
-	// Applies new form styling for configuration and query editors in AWS plugins
-	FlagAwsDatasourcesNewFormStyling = "awsDatasourcesNewFormStyling"
-
 	// FlagCachingOptimizeSerializationMemoryUsage
 	// If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
 	FlagCachingOptimizeSerializationMemoryUsage = "cachingOptimizeSerializationMemoryUsage"
@@ -507,10 +503,6 @@ const (
 	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
 	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
 
-	// FlagFlameGraphItemCollapsing
-	// Allow collapsing of flame graph items
-	FlagFlameGraphItemCollapsing = "flameGraphItemCollapsing"
-
 	// FlagExploreMetrics
 	// Enables the new Explore Metrics core app
 	FlagExploreMetrics = "exploreMetrics"
@@ -560,7 +552,7 @@ const (
 	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"
 
 	// FlagOnPremToCloudMigrations
-	// In-development feature that will allow users to easily migrate their on-prem Grafana instances to Grafana Cloud.
+	// Enable the Grafana Migration Assistant, which helps you easily migrate on-prem dashboards, folders, and data source configurations to your Grafana Cloud stack.
 	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
 
 	// FlagAlertingSaveStatePeriodic
@@ -736,6 +728,10 @@ const (
 	FlagBodyScrolling = "bodyScrolling"
 
 	// FlagCloudwatchMetricInsightsCrossAccount
-	// Enables cross account observability for Cloudwatch Metric Insights
+	// Enables cross account observability for Cloudwatch Metric Insights query builder
 	FlagCloudwatchMetricInsightsCrossAccount = "cloudwatchMetricInsightsCrossAccount"
+
+	// FlagPrometheusAzureOverrideAudience
+	// Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.
+	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
 )

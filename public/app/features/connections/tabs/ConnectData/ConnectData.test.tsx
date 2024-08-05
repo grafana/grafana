@@ -12,6 +12,11 @@ import { AddNewConnection } from './ConnectData';
 
 jest.mock('app/features/datasources/api');
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  useChromeHeaderHeight: jest.fn(),
+}));
+
 const renderPage = (plugins: CatalogPlugin[] = []): RenderResult => {
   return render(
     <TestProvider storeState={{ plugins: getPluginsStateMock(plugins) }}>
@@ -110,5 +115,12 @@ describe('Add new connection', () => {
     // Should show the modal if the user has no permissions
     await userEvent.click(await screen.findByText('Sample data source'));
     expect(screen.queryByText(new RegExp(exampleSentenceInModal))).toBeInTheDocument();
+  });
+
+  test('Show request data source and roadmap links', async () => {
+    renderPage([getCatalogPluginMock(), mockCatalogDataSourcePlugin]);
+
+    expect(await screen.findByText('Request a new data source')).toBeInTheDocument();
+    expect(await screen.findByText('View roadmap')).toBeInTheDocument();
   });
 });

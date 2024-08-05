@@ -1,8 +1,6 @@
 package options
 
 import (
-	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	filestorage "github.com/grafana/grafana/pkg/apiserver/storage/file"
 	"github.com/spf13/pflag"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -15,6 +13,9 @@ import (
 	apiregistrationv1beta1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1beta1"
 	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
 	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
+
+	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
 // AggregatorServerOptions contains the state for the aggregator apiserver
@@ -51,7 +52,7 @@ func (o *AggregatorServerOptions) Validate() []error {
 	return nil
 }
 
-func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.Config, etcdOpts *options.EtcdOptions, dataPath string) error {
+func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.Config, etcdOpts *options.EtcdOptions) error {
 	genericConfig := aggregatorConfig.GenericConfig
 
 	genericConfig.PostStartHooks = map[string]genericapiserver.PostStartHookConfigEntry{}
@@ -79,11 +80,8 @@ func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.
 	if err := etcdOptions.ApplyTo(&genericConfig.Config); err != nil {
 		return err
 	}
-	// override the RESTOptionsGetter to use the file storage options getter
-	restOptionsGetter, err := filestorage.NewRESTOptionsGetter(dataPath, etcdOptions.StorageConfig,
-		"/group/apiregistration.k8s.io/resource/apiservices",
-		"/group/service.grafana.app/resource/externalnames",
-	)
+	// override the RESTOptionsGetter to use the in memory storage options
+	restOptionsGetter, err := apistore.NewRESTOptionsGetterMemory(etcdOptions.StorageConfig)
 	if err != nil {
 		return err
 	}

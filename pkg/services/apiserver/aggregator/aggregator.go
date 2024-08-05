@@ -134,7 +134,7 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 		},
 	}
 
-	if err := commandOptions.AggregatorOptions.ApplyTo(aggregatorConfig, commandOptions.RecommendedOptions.Etcd, commandOptions.StorageOptions.DataPath); err != nil {
+	if err := commandOptions.AggregatorOptions.ApplyTo(aggregatorConfig, commandOptions.RecommendedOptions.Etcd); err != nil {
 		return nil, err
 	}
 

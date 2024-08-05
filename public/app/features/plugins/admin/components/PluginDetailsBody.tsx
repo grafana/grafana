@@ -136,9 +136,11 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    height: '100%',
-  }),
+  container: config.featureToggles.bodyScrolling
+    ? css({})
+    : css({
+        height: '100%',
+      }),
   readme: css({
     '& img': {
       maxWidth: '100%',

@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	grafanarequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/org"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
 var _ authorizer.Authorizer = &orgIDAuthorizer{}
@@ -56,7 +55,8 @@ func (auth orgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attribut
 	}
 
 	// Check if the user has access to the specified org
-	userId, err := signedInUser.GetID().UserID()
+	// nolint:staticcheck
+	userId, err := signedInUser.GetInternalID()
 	if err != nil {
 		return authorizer.DecisionDeny, "unable to get userId", err
 	}

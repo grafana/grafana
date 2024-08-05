@@ -22,12 +22,13 @@ import {
   mapStateWithReasonToReason,
 } from 'app/types/unified-alerting-dto';
 
+import { trackUseCentralHistoryFilterByClicking, trackUseCentralHistoryMaxEventsReached } from '../../../Analytics';
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { usePagination } from '../../../hooks/usePagination';
 import { combineMatcherStrings, labelsMatchMatchers } from '../../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
-import { createUrl } from '../../../utils/url';
+import { createRelativeUrl } from '../../../utils/url';
 import { AlertLabels } from '../../AlertLabels';
 import { CollapseToggle } from '../../CollapseToggle';
 import { LogRecord } from '../state-history/common';
@@ -88,6 +89,9 @@ export const HistoryEventsList = ({
   }
 
   const maximumEventsReached = !isLoading && stateHistory?.data?.values?.[0]?.length === LIMIT_EVENTS;
+  if (maximumEventsReached) {
+    trackUseCentralHistoryMaxEventsReached({ from, to });
+  }
 
   return (
     <>
@@ -228,7 +232,7 @@ function AlertRuleName({ labels, ruleUID }: AlertRuleNameProps) {
   const styles = useStyles2(getStyles);
   const { pathname, search } = useLocation();
   const returnTo = `${pathname}${search}`;
-  const alertRuleName = labels['alertname'];
+  const alertRuleName = labels.alertname;
   if (!ruleUID) {
     return (
       <Text>
@@ -236,7 +240,7 @@ function AlertRuleName({ labels, ruleUID }: AlertRuleNameProps) {
       </Text>
     );
   }
-  const ruleViewUrl = createUrl(`/alerting/${GRAFANA_RULES_SOURCE_NAME}/${ruleUID}/view`, {
+  const ruleViewUrl = createRelativeUrl(`/alerting/${GRAFANA_RULES_SOURCE_NAME}/${ruleUID}/view`, {
     tab: 'history',
     returnTo,
   });
@@ -515,14 +519,15 @@ export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<H
 
   const addFilter = (key: string, value: string, type: FilterType) => {
     const newFilterToAdd = `${key}=${value}`;
+    trackUseCentralHistoryFilterByClicking({ type, key, value });
     if (type === 'stateTo') {
       stateToFilterVariable.changeValueTo(value);
     }
     if (type === 'stateFrom') {
       stateFromFilterVariable.changeValueTo(value);
     }
+    const finalFilter = combineMatcherStrings(valueInfilterTextBox.toString(), newFilterToAdd);
     if (type === 'label') {
-      const finalFilter = combineMatcherStrings(valueInfilterTextBox.toString(), newFilterToAdd);
       labelsFiltersVariable.setValue(finalFilter);
     }
   };

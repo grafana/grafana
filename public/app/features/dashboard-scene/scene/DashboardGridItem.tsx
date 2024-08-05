@@ -163,18 +163,30 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       return;
     }
 
-    // Needed to calculate item height
-    const prevRepeatCount = this._prevRepeatValues?.length ?? values.length;
     this._prevRepeatValues = values;
     const panelToRepeat = this.state.body instanceof LibraryVizPanel ? this.state.body.state.panel! : this.state.body;
     const repeatedPanels: VizPanel[] = [];
 
+    // when variable has no options (due to error or similar) it will not render any panels at all
+    //  adding a placeholder in this case so that there is at least empty panel that can display error
+    const emptyVariablePlaceholderOption = {
+      values: [''],
+      texts: variable.hasAllValue() ? ['All'] : ['None'],
+    };
+
+    const variableValues = values.length ? values : emptyVariablePlaceholderOption.values;
+    const variableTexts = texts.length ? texts : emptyVariablePlaceholderOption.texts;
+
     // Loop through variable values and create repeats
-    for (let index = 0; index < values.length; index++) {
+    for (let index = 0; index < variableValues.length; index++) {
       const cloneState: Partial<VizPanelState> = {
         $variables: new SceneVariableSet({
           variables: [
-            new LocalValueVariable({ name: variable.state.name, value: values[index], text: String(texts[index]) }),
+            new LocalValueVariable({
+              name: variable.state.name,
+              value: variableValues[index],
+              text: String(variableTexts[index]),
+            }),
           ],
         }),
         key: `${panelToRepeat.state.key}-clone-${index}`,
@@ -190,15 +202,16 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
 
     const direction = this.getRepeatDirection();
     const stateChange: Partial<DashboardGridItemState> = { repeatedPanels: repeatedPanels };
-    const prevHeight = this.state.height ?? 0;
-    const maxPerRow = direction === 'h' ? this.getMaxPerRow() : 1;
-    const prevRowCount = Math.ceil(prevRepeatCount / maxPerRow);
-    const newRowCount = Math.ceil(repeatedPanels.length / maxPerRow);
+    const itemHeight = this.state.itemHeight ?? 10;
+    const prevHeight = this.state.height;
+    const maxPerRow = this.getMaxPerRow();
 
-    // If item height is not defined, calculate based on total height and row count
-    const itemHeight = this.state.itemHeight ?? prevHeight / prevRowCount;
-    stateChange.itemHeight = itemHeight;
-    stateChange.height = Math.ceil(newRowCount * itemHeight);
+    if (direction === 'h') {
+      const rowCount = Math.ceil(repeatedPanels.length / maxPerRow);
+      stateChange.height = rowCount * itemHeight;
+    } else {
+      stateChange.height = repeatedPanels.length * itemHeight;
+    }
 
     this.setState(stateChange);
 

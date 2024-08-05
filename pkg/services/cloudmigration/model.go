@@ -37,8 +37,7 @@ type CloudMigrationSnapshot struct {
 	UID            string `xorm:"uid"`
 	SessionUID     string `xorm:"session_uid"`
 	Status         SnapshotStatus
-	EncryptionKey  string `xorm:"encryption_key"` // stored in the unified secrets table
-	UploadURL      string `xorm:"upload_url"`
+	EncryptionKey  []byte `xorm:"-"` // stored in the unified secrets table
 	LocalDir       string `xorm:"local_directory"`
 	GMSSnapshotUID string `xorm:"gms_snapshot_uid"`
 	ErrorString    string `xorm:"error_string"`
@@ -55,25 +54,24 @@ type CloudMigrationSnapshot struct {
 type SnapshotStatus string
 
 const (
-	SnapshotStatusInitializing      = "initializing"
-	SnapshotStatusCreating          = "creating"
-	SnapshotStatusPendingUpload     = "pending_upload"
-	SnapshotStatusUploading         = "uploading"
-	SnapshotStatusPendingProcessing = "pending_processing"
-	SnapshotStatusProcessing        = "processing"
-	SnapshotStatusFinished          = "finished"
-	SnapshotStatusError             = "error"
-	SnapshotStatusUnknown           = "unknown"
+	SnapshotStatusCreating          SnapshotStatus = "creating"
+	SnapshotStatusPendingUpload     SnapshotStatus = "pending_upload"
+	SnapshotStatusUploading         SnapshotStatus = "uploading"
+	SnapshotStatusPendingProcessing SnapshotStatus = "pending_processing"
+	SnapshotStatusProcessing        SnapshotStatus = "processing"
+	SnapshotStatusFinished          SnapshotStatus = "finished"
+	SnapshotStatusCanceled          SnapshotStatus = "canceled"
+	SnapshotStatusError             SnapshotStatus = "error"
 )
 
 type CloudMigrationResource struct {
 	ID  int64  `xorm:"pk autoincr 'id'"`
 	UID string `xorm:"uid"`
 
-	Type   MigrateDataType `xorm:"resource_type"`
-	RefID  string          `xorm:"resource_uid"`
-	Status ItemStatus      `xorm:"status"`
-	Error  string          `xorm:"error_string"`
+	Type   MigrateDataType `xorm:"resource_type" json:"type"`
+	RefID  string          `xorm:"resource_uid" json:"refId"`
+	Status ItemStatus      `xorm:"status" json:"status"`
+	Error  string          `xorm:"error_string" json:"error"`
 
 	SnapshotUID string `xorm:"snapshot_uid"`
 }
@@ -92,12 +90,12 @@ const (
 	ItemStatusOK      ItemStatus = "OK"
 	ItemStatusError   ItemStatus = "ERROR"
 	ItemStatusPending ItemStatus = "PENDING"
-	ItemStatusUnknown ItemStatus = "UNKNOWN"
 )
 
 type SnapshotResourceStats struct {
 	CountsByType   map[MigrateDataType]int
 	CountsByStatus map[ItemStatus]int
+	Total          int
 }
 
 // Deprecated, use GetSnapshotResult for the async workflow
@@ -147,6 +145,7 @@ type ListSnapshotsQuery struct {
 
 type UpdateSnapshotCmd struct {
 	UID       string
+	SessionID string
 	Status    SnapshotStatus
 	Resources []CloudMigrationResource
 }
@@ -209,6 +208,23 @@ type StartSnapshotResponse struct {
 	SnapshotID           string `json:"snapshotID"`
 	MaxItemsPerPartition uint32 `json:"maxItemsPerPartition"`
 	Algo                 string `json:"algo"`
-	UploadURL            string `json:"uploadURL"`
-	EncryptionKey        string `json:"encryptionKey"`
+	EncryptionKey        []byte `json:"encryptionKey"`
+	Metadata             []byte `json:"metadata"`
 }
+
+// Based on Grafana Migration Service DTOs
+type GetSnapshotStatusResponse struct {
+	State   SnapshotState            `json:"state"`
+	Results []CloudMigrationResource `json:"results"`
+}
+
+type SnapshotState string
+
+const (
+	SnapshotStateInitialized SnapshotState = "INITIALIZED"
+	SnapshotStateProcessing  SnapshotState = "PROCESSING"
+	SnapshotStateFinished    SnapshotState = "FINISHED"
+	SnapshotStateCanceled    SnapshotState = "CANCELED"
+	SnapshotStateError       SnapshotState = "ERROR"
+	SnapshotStateUnknown     SnapshotState = "UNKNOWN"
+)

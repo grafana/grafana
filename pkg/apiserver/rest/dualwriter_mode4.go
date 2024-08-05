@@ -2,25 +2,31 @@ package rest
 
 import (
 	"context"
+	"time"
 
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 )
 
 type DualWriterMode4 struct {
-	Legacy  LegacyStorage
-	Storage Storage
+	Legacy   LegacyStorage
+	Storage  Storage
+	watchImp rest.Watcher // watch is only available in mode 3 and 4
 	*dualWriterMetrics
-	Log klog.Logger
+	kind string
+	Log  klog.Logger
 }
+
+const mode4Str = "4"
 
 // newDualWriterMode4 returns a new DualWriter in mode 4.
 // Mode 4 represents writing and reading from Storage.
-func newDualWriterMode4(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics) *DualWriterMode4 {
-	return &DualWriterMode4{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode4"), dualWriterMetrics: dwm}
+func newDualWriterMode4(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics, kind string) *DualWriterMode4 {
+	return &DualWriterMode4{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode4").WithValues("mode", mode4Str, "kind", kind), dualWriterMetrics: dwm}
 }
 
 // Mode returns the mode of the dual writer.
@@ -32,32 +38,96 @@ func (d *DualWriterMode4) Mode() DualWriterMode {
 
 // Create overrides the behavior of the generic DualWriter and writes only to Storage.
 func (d *DualWriterMode4) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	return d.Storage.Create(ctx, obj, createValidation, options)
+	var method = "create"
+	log := d.Log.WithValues("method", method)
+	ctx = klog.NewContext(ctx, log)
+
+	startStorage := time.Now()
+	res, err := d.Storage.Create(ctx, obj, createValidation, options)
+	if err != nil {
+		log.Error(err, "unable to create object in storage")
+	}
+	d.recordStorageDuration(err != nil, mode4Str, d.kind, method, startStorage)
+	return res, err
 }
 
 // Get overrides the behavior of the generic DualWriter and retrieves an object from Storage.
 func (d *DualWriterMode4) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	return d.Storage.Get(ctx, name, &metav1.GetOptions{})
+	var method = "get"
+	log := d.Log.WithValues("method", method)
+	ctx = klog.NewContext(ctx, log)
+
+	startStorage := time.Now()
+	res, err := d.Storage.Get(ctx, name, options)
+	if err != nil {
+		log.Error(err, "unable to create object in storage")
+	}
+	d.recordStorageDuration(err != nil, mode4Str, d.kind, method, startStorage)
+	return res, err
 }
 
 func (d *DualWriterMode4) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return d.Storage.Delete(ctx, name, deleteValidation, options)
+	var method = "delete"
+	log := d.Log.WithValues("name", name, "method", method)
+	ctx = klog.NewContext(ctx, log)
+
+	startStorage := time.Now()
+	res, async, err := d.Storage.Delete(ctx, name, deleteValidation, options)
+	if err != nil {
+		log.Error(err, "unable to delete object in storage")
+	}
+	d.recordStorageDuration(err != nil, mode4Str, d.kind, method, startStorage)
+	return res, async, err
 }
 
 // DeleteCollection overrides the behavior of the generic DualWriter and deletes only from Storage.
 func (d *DualWriterMode4) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
-	return d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	var method = "delete-collection"
+	log := d.Log.WithValues("resourceVersion", listOptions.ResourceVersion, "method", method, "mode", mode4Str)
+	ctx = klog.NewContext(ctx, log)
+
+	startStorage := time.Now()
+	res, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	if err != nil {
+		log.Error(err, "unable to delete collection in storage")
+	}
+	d.recordStorageDuration(err != nil, mode4Str, d.kind, method, startStorage)
+	return res, err
 }
 
 // Update overrides the generic behavior of the Storage and writes only to US.
 func (d *DualWriterMode4) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	var method = "update"
+	log := d.Log.WithValues("name", name, "kind", d.kind, "method", method)
+	ctx = klog.NewContext(ctx, log)
+
+	startStorage := time.Now()
+	res, async, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	if err != nil {
+		log.Error(err, "unable to update object in storage")
+	}
+	d.recordStorageDuration(err != nil, mode4Str, d.kind, method, startStorage)
+	return res, async, err
 }
 
 func (d *DualWriterMode4) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
-	//TODO: implement List
-	klog.Error("List not implemented")
-	return nil, nil
+	var method = "list"
+	log := d.Log.WithValues("resourceVersion", options.ResourceVersion, "method", method)
+	ctx = klog.NewContext(ctx, log)
+
+	startStorage := time.Now()
+	res, err := d.Storage.List(ctx, options)
+	if err != nil {
+		log.Error(err, "unable to list objects in storage")
+	}
+	d.recordStorageDuration(err != nil, mode4Str, d.kind, method, startStorage)
+	return res, err
+}
+
+func (d *DualWriterMode4) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
+	var method = "watch"
+	d.Log.WithValues("method", method, "mode", mode4Str).Info("starting to watch")
+	return d.watchImp.Watch(ctx, options)
 }
 
 func (d *DualWriterMode4) Destroy() {
