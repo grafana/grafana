@@ -65,9 +65,9 @@ interface EvaluationBehaviorSummaryProps {
 
 const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => {
   let forDuration: string | undefined;
-  let every = rule.group.interval;
-  let lastEvaluation = rule.promRule?.lastEvaluation;
-  let lastEvaluationDuration = rule.promRule?.evaluationTime;
+  const every = rule.group.interval;
+  const lastEvaluation = rule.promRule?.lastEvaluation;
+  const lastEvaluationDuration = rule.promRule?.evaluationTime;
   const metric = isGrafanaRecordingRule(rule.rulerRule) ? rule.rulerRule?.grafana_alert.record?.metric : undefined;
 
   // recording rules don't have a for duration

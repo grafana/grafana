@@ -62,7 +62,7 @@ function statsFromNamespaces(namespaces: CombinedRuleNamespace[]): AlertGroupTot
   namespaces.forEach(({ groups }) => {
     groups.forEach((group) => {
       const groupTotals = omitBy(group.totals, isUndefined);
-      for (let key in groupTotals) {
+      for (const key in groupTotals) {
         // @ts-ignore
         stats[key] += groupTotals[key];
       }

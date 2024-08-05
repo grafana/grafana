@@ -384,7 +384,7 @@ describe('RuleList', () => {
     const table = await ui.rulesTable.find(groups[1]);
 
     // check that rule rows are rendered properly
-    let ruleRows = ui.ruleRow.getAll(table);
+    const ruleRows = ui.ruleRow.getAll(table);
     expect(ruleRows).toHaveLength(4);
 
     expect(ruleRows[0]).toHaveTextContent('Recording rule');
