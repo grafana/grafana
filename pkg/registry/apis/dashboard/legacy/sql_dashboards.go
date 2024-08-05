@@ -75,9 +75,9 @@ func (a *dashboardSqlAccess) currentRV(ctx context.Context) (int64, error) {
 	max := ""
 	err := a.sess.Get(ctx, &max, "SELECT MAX(updated) FROM dashboard")
 	if err == nil && max != "" {
-		t, err = time.Parse(time.DateTime, max)
+		t, _ = time.Parse(time.DateTime, max)
 	}
-	return t.UnixMilli(), err
+	return t.UnixMilli(), nil
 }
 
 const selector = `SELECT
@@ -90,7 +90,7 @@ const selector = `SELECT
 	dashboard_provisioning.external_id as origin_path,
 	dashboard_provisioning.check_sum as origin_key,
 	dashboard_provisioning.updated as origin_ts,
-	dashboard.version, '', dashboard.data
+	dashboard.version, '' as message, dashboard.data
   FROM dashboard
   LEFT OUTER JOIN dashboard_provisioning ON dashboard.id = dashboard_provisioning.dashboard_id
   LEFT OUTER JOIN user AS CreatedUSER ON dashboard.created_by = CreatedUSER.id
