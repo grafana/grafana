@@ -72,7 +72,7 @@ func (f *Authenticator) decodeMetadata(ctx context.Context, meta metadata.MD) (i
 		return nil, fmt.Errorf("no login found in grpc metadata")
 	}
 
-	// The namespaced verisons have a "-" in the key
+	// The namespaced versions have a "-" in the key
 	// TODO, remove after this has been deployed to unified storage
 	if getter(mdUserID) == "" {
 		var err error
