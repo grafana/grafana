@@ -38,6 +38,7 @@ export const createLogLineLinks = (hiddenFieldsWithLinks: FieldDef[]): FieldDef[
     linkField.links?.forEach((link: LinkModel | ExploreFieldLinkModel) => {
       if ('variables' in link) {
         if (link.variables.length > 0) {
+          // convert ExploreFieldLinkModel to LinkModel by omitting variables field
           const fieldDefFromLink: LinkModel = {
             href: link.href,
             title: link.title,

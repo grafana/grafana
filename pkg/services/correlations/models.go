@@ -36,11 +36,11 @@ type Transformation struct {
 }
 
 // the type of correlation configuration, either query for containing query information, or external for containing an external URL
-//+enum
+// +enum
 type CorrelationConfigType string
 
 const (
-	query CorrelationConfigType = "query"
+	query    CorrelationConfigType = "query"
 	external CorrelationConfigType = "external"
 )
 
