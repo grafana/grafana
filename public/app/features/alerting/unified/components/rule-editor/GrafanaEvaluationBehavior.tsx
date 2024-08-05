@@ -146,7 +146,7 @@ function FolderGroupAndEvaluationInterval({
               <Stack direction="column" gap={1}>
                 {getValues('group') && getValues('evaluateEvery') && (
                   <span>
-                    <Trans i18nKey="alert-rule-form.evaluation-behaviour-group.text" evaluateEvery={evaluateEvery}>
+                    <Trans i18nKey="alert-rule-form.evaluation-behaviour-group.text" values={{ evaluateEvery }}>
                       All rules in the selected group are evaluated every {{ evaluateEvery }}.
                     </Trans>
                     {!isNewGroup && (
