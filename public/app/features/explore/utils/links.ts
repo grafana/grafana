@@ -198,6 +198,7 @@ export const getFieldLinksForExplore = (options: {
           if (!linkModel.title) {
             linkModel.title = getTitleFromHref(linkModel.href);
           }
+          linkModel.target = '_blank';
           return { ...linkModel, variables: variables };
         } else {
           return undefined;
