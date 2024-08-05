@@ -316,4 +316,4 @@ export const onGenerateVisualization = (selectedElements: ElementState[], layer:
   });
 
   onAddItem(visualizationSelection, layer, undefined, selectedFields);
-}
+};

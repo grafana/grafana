@@ -13,7 +13,7 @@ import {frameSelection, reorderElements} from 'app/features/canvas/runtime/scene
 import {getGlobalStyles} from '../../globalStyles';
 import {Options} from '../../panelcfg.gen';
 import {DragNode, DropNode} from '../../types';
-import { doSelect, onGenerateVisualization, getElementTypes, onAddItem } from '../../utils';
+import {doSelect, getElementTypes, onAddItem, onGenerateVisualization} from '../../utils';
 import {TreeViewEditorProps} from '../element/elementEditor';
 
 import {TreeNodeTitle} from './TreeNodeTitle';
