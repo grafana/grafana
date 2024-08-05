@@ -31,7 +31,7 @@ Note that the JSON format from most of the following endpoints is not fully comp
 | GET    | /api/v1/provisioning/alert-rules                                 | [route get alert rules](#route-get-alert-rules)                         | Get all the alert rules.                                              |
 | GET    | /api/v1/provisioning/alert-rules/export                          | [route get alert rules export](#route-get-alert-rules-export)           | Export all alert rules in provisioning file format.                   |
 
-**Example Request for new alert rule:**
+**Example request for new alert rule:**
 
 ```http
 POST /api/v1/provisioning/alert-rules
