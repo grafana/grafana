@@ -1,4 +1,3 @@
-// TODO license copy headers ADD HEADERS
 package utils
 
 import (
