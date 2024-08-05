@@ -89,9 +89,14 @@ const useK8sContactPoints = (...[hookParams, queryOptions]: Parameters<typeof us
   });
 };
 
-const useGetGrafanaContactPoints = ({ skip }: Skippable = {}) => {
+/**
+ * Fetch contact points for Grafana Alertmanager, either from the k8s API,
+ * or the `/notifications/receivers` endpoint
+ */
+const useFetchGrafanaContactPoints = ({ skip }: Skippable = {}) => {
   const namespace = getNamespace();
   const useK8sApi = shouldUseK8sApi(GRAFANA_RULES_SOURCE_NAME);
+
   const grafanaResponse = useGetContactPointsListQuery(undefined, { skip: skip || useK8sApi });
   const k8sResponse = useK8sContactPoints({ namespace }, { skip: skip || !useK8sApi });
 
@@ -119,9 +124,10 @@ export const useGrafanaContactPoints = ({
   fetchPolicies,
   skip,
 }: GrafanaFetchOptions & Skippable = {}) => {
-  const onCallResponse = useOnCallIntegrations({ skip });
-  const alertNotifiers = useGrafanaNotifiersQuery(undefined, { skip });
-  const contactPointsListResponse = useGetGrafanaContactPoints({ skip });
+  const potentiallySkip = { skip };
+  const onCallResponse = useOnCallIntegrations(potentiallySkip);
+  const alertNotifiers = useGrafanaNotifiersQuery(undefined, potentiallySkip);
+  const contactPointsListResponse = useFetchGrafanaContactPoints(potentiallySkip);
   const contactPointsStatusResponse = useGetContactPointsStatusQuery(undefined, {
     ...defaultOptions,
     pollingInterval: RECEIVER_STATUS_POLLING_INTERVAL,
