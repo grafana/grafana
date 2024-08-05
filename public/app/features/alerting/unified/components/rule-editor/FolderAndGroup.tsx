@@ -236,7 +236,7 @@ export function FolderAndGroup({
                   getOptionLabel={(option: SelectableValue<string>) => (
                     <div>
                       <span>{option.label}</span>
-                      {option['isProvisioned'] && (
+                      {option.isProvisioned && (
                         <>
                           {' '}
                           <ProvisioningBadge />

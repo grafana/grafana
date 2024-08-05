@@ -288,11 +288,11 @@ export function calculateRuleTotals(rule: Pick<AlertingRule, 'alerts' | 'totals'
   }
 
   return {
-    alerting: result[AlertInstanceTotalState.Alerting] || result['firing'],
+    alerting: result[AlertInstanceTotalState.Alerting] || result.firing,
     pending: result[AlertInstanceTotalState.Pending],
     inactive: result[AlertInstanceTotalState.Normal],
     nodata: result[AlertInstanceTotalState.NoData],
-    error: result[AlertInstanceTotalState.Error] || result['err'] || undefined, // Prometheus uses "err" instead of "error"
+    error: result[AlertInstanceTotalState.Error] || result.err || undefined, // Prometheus uses "err" instead of "error"
   };
 }
 

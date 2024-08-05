@@ -43,7 +43,7 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
 
   const existing = Boolean(ruleForm); // always should be true
   const notifyApp = useAppNotification();
-  const returnTo = !queryParams['returnTo'] ? '/alerting/list' : String(queryParams['returnTo']);
+  const returnTo = !queryParams.returnTo ? '/alerting/list' : String(queryParams.returnTo);
 
   const [exportData, setExportData] = useState<RuleFormValues | undefined>(undefined);
 

@@ -83,7 +83,7 @@ export function ChannelSubForm<R extends ChannelValues>({
         name === fieldName('settings.integration_type') &&
         value === OnCallIntegrationType.ExistingIntegration
       ) {
-        setValue(fieldName('settings.url'), initialValues.settings['url']);
+        setValue(fieldName('settings.url'), initialValues.settings.url);
       }
     });
 
