@@ -83,8 +83,8 @@ func (a *dashboardSqlAccess) currentRV(ctx context.Context) (int64, error) {
 const selector = `SELECT
 	dashboard.org_id, dashboard.id,
 	dashboard.uid, dashboard.folder_uid,
-	dashboard.created,CreatedUSER.uid as created_by,
-	dashboard.updated,UpdatedUSER.uid as updated_by,
+	dashboard.created,created_user.uid as created_by,
+	dashboard.updated,updated_user.uid as updated_by,
 	dashboard.deleted, plugin_id,
 	dashboard_provisioning.name as origin_name,
 	dashboard_provisioning.external_id as origin_path,
@@ -93,15 +93,15 @@ const selector = `SELECT
 	dashboard.version, '' as message, dashboard.data
   FROM dashboard
   LEFT OUTER JOIN dashboard_provisioning ON dashboard.id = dashboard_provisioning.dashboard_id
-  LEFT OUTER JOIN user AS CreatedUSER ON dashboard.created_by = CreatedUSER.id
-  LEFT OUTER JOIN user AS UpdatedUSER ON dashboard.updated_by = UpdatedUSER.id
+  LEFT OUTER JOIN user AS created_user ON dashboard.created_by = created_user.id
+  LEFT OUTER JOIN user AS updated_user ON dashboard.updated_by = updated_user.id
   WHERE dashboard.is_folder = false`
 
 const history = `SELECT
 	dashboard.org_id, dashboard.id,
 	dashboard.uid, dashboard.folder_uid,
-	dashboard.created,CreatedUSER.uid as created_by,
-	dashboard_version.created,UpdatedUSER.uid as updated_by,
+	dashboard.created,created_user.uid as created_by,
+	dashboard_version.created,updated_user.uid as updated_by,
 	NULL, plugin_id,
 	dashboard_provisioning.name as origin_name,
 	dashboard_provisioning.external_id as origin_path,
@@ -111,8 +111,8 @@ const history = `SELECT
   FROM dashboard
   LEFT OUTER JOIN dashboard_provisioning ON dashboard.id = dashboard_provisioning.dashboard_id
   LEFT OUTER JOIN dashboard_version  ON dashboard.id = dashboard_version.dashboard_id
-  LEFT OUTER JOIN user AS CreatedUSER ON dashboard.created_by = CreatedUSER.id
-  LEFT OUTER JOIN user AS UpdatedUSER ON dashboard_version.created_by = UpdatedUSER.id
+  LEFT OUTER JOIN user AS created_user ON dashboard.created_by = created_user.id
+  LEFT OUTER JOIN user AS updated_user ON dashboard_version.created_by = updated_user.id
   WHERE dashboard.is_folder = false`
 
 func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery) (*rowsWrapper, error) {
