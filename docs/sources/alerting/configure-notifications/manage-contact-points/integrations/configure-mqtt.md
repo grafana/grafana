@@ -95,9 +95,7 @@ There are two formats for the MQTT notifier integration:
 }
 ```
 
-## Message fields
-
-### Body
+### Payload fields
 
 | Key               | Type                      | Description                                                                     |
 | ----------------- | ------------------------- | ------------------------------------------------------------------------------- |
@@ -113,7 +111,9 @@ There are two formats for the MQTT notifier integration:
 | groupKey          | string                    | Key that is used for grouping                                                   |
 | message           | string                    | Rendered message of the alerts                                                  |
 
-### Alert
+### Alert fields
+
+Each alert in the `alerts` array has the following fields:
 
 | Key          | Type   | Description                                                                        |
 | ------------ | ------ | ---------------------------------------------------------------------------------- |
