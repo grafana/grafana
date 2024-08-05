@@ -1,9 +1,6 @@
 package playlist
 
 import (
-	"fmt"
-	"time"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -21,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -94,27 +90,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 		service:    b.service,
 		namespacer: b.namespacer,
 	}
-	legacyStore.tableConverter = gapiutil.NewTableConverter(
-		resource.GroupResource(),
-		[]metav1.TableColumnDefinition{
-			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Title", Type: "string", Format: "string", Description: "The playlist name"},
-			{Name: "Interval", Type: "string", Format: "string", Description: "How often the playlist will update"},
-			{Name: "Created At", Type: "date"},
-		},
-		func(obj any) ([]interface{}, error) {
-			m, ok := obj.(*playlist.Playlist)
-			if !ok {
-				return nil, fmt.Errorf("expected playlist")
-			}
-			return []interface{}{
-				m.Name,
-				m.Spec.Title,
-				m.Spec.Interval,
-				m.CreationTimestamp.UTC().Format(time.RFC3339),
-			}, nil
-		},
-	)
+	legacyStore.tableConverter = resource.TableConverter()
 	storage[resource.StoragePath()] = legacyStore
 
 	// enable dual writes if a RESTOptionsGetter is provided

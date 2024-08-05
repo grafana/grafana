@@ -585,7 +585,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 				// }
 				// TODO: return values that match either the old or the new
 
-				srv.Send(&WatchEvent{
+				if err := srv.Send(&WatchEvent{
 					Timestamp: event.Timestamp,
 					Type:      event.Type,
 					Resource: &WatchEvent_Resource{
@@ -593,7 +593,9 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 						Version: event.ResourceVersion,
 					},
 					// TODO... previous???
-				})
+				}); err != nil {
+					return err
+				}
 			}
 		}
 	}

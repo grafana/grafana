@@ -1,9 +1,6 @@
 package dashboard
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -67,28 +63,9 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		accessControl:    accessControl,
 
 		legacy: &dashboardStorage{
-			resource: dashboard.DashboardResourceInfo,
-			access:   legacy.NewDashboardAccess(sql, namespacer, dashStore, provisioning),
-			tableConverter: gapiutil.NewTableConverter(
-				dashboard.DashboardResourceInfo.GroupResource(),
-				[]metav1.TableColumnDefinition{
-					{Name: "Name", Type: "string", Format: "name"},
-					{Name: "Title", Type: "string", Format: "string", Description: "The dashboard name"},
-					{Name: "Created At", Type: "date"},
-				},
-				func(obj any) ([]interface{}, error) {
-					dash, ok := obj.(*dashboard.Dashboard)
-					if ok {
-						if dash != nil {
-							return []interface{}{
-								dash.Name,
-								dash.Spec.GetNestedString("title"),
-								dash.CreationTimestamp.UTC().Format(time.RFC3339),
-							}, nil
-						}
-					}
-					return nil, fmt.Errorf("expected dashboard or summary")
-				}),
+			resource:       dashboard.DashboardResourceInfo,
+			access:         legacy.NewDashboardAccess(sql, namespacer, dashStore, provisioning),
+			tableConverter: dashboard.DashboardResourceInfo.TableConverter(),
 		},
 	}
 	apiregistration.RegisterAPI(builder)
