@@ -820,16 +820,13 @@ func (hs *HTTPServer) readCertificates() (*tls.Certificate, error) {
 		return nil, fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
 	}
 
-	var tlsCert tls.Certificate
-
 	if hs.Cfg.CertPassword != "" {
 		return handleEncryptedCertificates(hs.Cfg)
-	} else {
-		var err error
-		tlsCert, err = tls.LoadX509KeyPair(hs.Cfg.CertFile, hs.Cfg.KeyFile)
-		if err != nil {
-			return nil, fmt.Errorf("could not load SSL certificate: %w", err)
-		}
+	}
+	// previous implementation
+	tlsCert, err := tls.LoadX509KeyPair(hs.Cfg.CertFile, hs.Cfg.KeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("could not load SSL certificate: %w", err)
 	}
 	return &tlsCert, nil
 }
