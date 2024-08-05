@@ -1,7 +1,12 @@
 package v0alpha1
 
 import (
+	"fmt"
+	"time"
+
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -16,6 +21,24 @@ var CollectionResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	"collections", "collection", "Collection",
 	func() runtime.Object { return &Collection{} },
 	func() runtime.Object { return &CollectionList{} },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Title", Type: "string"},
+			{Name: "Created At", Type: "date"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			m, ok := obj.(*Collection)
+			if !ok {
+				return nil, fmt.Errorf("expected collection")
+			}
+			return []interface{}{
+				m.Name,
+				m.Spec.Title,
+				m.CreationTimestamp.UTC().Format(time.RFC3339),
+			}, nil
+		},
+	},
 )
 
 var (

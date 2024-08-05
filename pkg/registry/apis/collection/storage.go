@@ -7,7 +7,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
-	"k8s.io/apiserver/pkg/registry/rest"
 )
 
 var _ grafanarest.Storage = (*storage)(nil)
@@ -16,7 +15,7 @@ type storage struct {
 	*genericregistry.Store
 }
 
-func newStorage(scheme *runtime.Scheme, resourceInfo *common.ResourceInfo, table rest.TableConvertor, optsGetter generic.RESTOptionsGetter) (*storage, error) {
+func newStorage(scheme *runtime.Scheme, resourceInfo *common.ResourceInfo, optsGetter generic.RESTOptionsGetter) (*storage, error) {
 	strategy := grafanaregistry.NewStrategy(scheme)
 
 	store := &genericregistry.Store{
@@ -27,7 +26,7 @@ func newStorage(scheme *runtime.Scheme, resourceInfo *common.ResourceInfo, table
 		PredicateFunc:             grafanaregistry.Matcher,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
-		TableConvertor:            table,
+		TableConvertor:            resourceInfo.TableConverter(),
 		CreateStrategy:            strategy,
 		UpdateStrategy:            strategy,
 		DeleteStrategy:            strategy,

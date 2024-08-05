@@ -1,13 +1,9 @@
 package collection
 
 import (
-	"fmt"
-	"time"
-
 	collection "github.com/grafana/grafana/pkg/apis/collection/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -79,25 +75,7 @@ func (b *CollectionsAPIBuilder) GetAPIGroupInfo(
 	storage := map[string]rest.Storage{}
 
 	info := collection.CollectionResourceInfo
-	storage[info.StoragePath()], err = newStorage(scheme, &info, gapiutil.NewTableConverter(
-		info.GroupResource(),
-		[]metav1.TableColumnDefinition{
-			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Title", Type: "string"},
-			{Name: "Created At", Type: "date"},
-		},
-		func(obj any) ([]interface{}, error) {
-			m, ok := obj.(*collection.Collection)
-			if !ok {
-				return nil, fmt.Errorf("expected query template")
-			}
-			return []interface{}{
-				m.Name,
-				m.Spec.Title,
-				m.CreationTimestamp.UTC().Format(time.RFC3339),
-			}, nil
-		},
-	), optsGetter)
+	storage[info.StoragePath()], err = newStorage(scheme, &info, optsGetter)
 	if err != nil {
 		return nil, err
 	}
