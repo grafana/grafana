@@ -47,6 +47,7 @@ const ContactPointsTab = () => {
     fetchPolicies: true,
     fetchStatuses: true,
   });
+
   const { deleteTrigger, updateAlertmanagerState } = useDeleteContactPoint(selectedAlertmanager!);
   const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.CreateContactPoint

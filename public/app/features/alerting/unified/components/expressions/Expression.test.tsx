@@ -94,8 +94,8 @@ describe('getGroupedByStateAndSeriesCount', () => {
 
     const { groupedByState, seriesCount } = getGroupedByStateAndSeriesCount(series);
 
-    expect(groupedByState['firing']).toEqual([series[0], series[3]]);
-    expect(groupedByState['inactive']).toEqual([series[2]]);
+    expect(groupedByState.firing).toEqual([series[0], series[3]]);
+    expect(groupedByState.inactive).toEqual([series[2]]);
     expect(seriesCount).toEqual(3);
   });
 
@@ -119,8 +119,8 @@ describe('getGroupedByStateAndSeriesCount', () => {
 
     const { groupedByState, seriesCount } = getGroupedByStateAndSeriesCount(series);
 
-    expect(groupedByState['firing']).toEqual([]);
-    expect(groupedByState['inactive']).toEqual([]);
+    expect(groupedByState.firing).toEqual([]);
+    expect(groupedByState.inactive).toEqual([]);
     expect(seriesCount).toEqual(0);
   });
 
@@ -133,8 +133,8 @@ describe('getGroupedByStateAndSeriesCount', () => {
 
     const { groupedByState, seriesCount } = getGroupedByStateAndSeriesCount(series);
 
-    expect(groupedByState['firing']).toEqual([]);
-    expect(groupedByState['inactive']).toEqual(series);
+    expect(groupedByState.firing).toEqual([]);
+    expect(groupedByState.inactive).toEqual(series);
     expect(seriesCount).toEqual(series.length);
   });
 
@@ -147,8 +147,8 @@ describe('getGroupedByStateAndSeriesCount', () => {
 
     const { groupedByState, seriesCount } = getGroupedByStateAndSeriesCount(series);
 
-    expect(groupedByState['firing']).toEqual(series);
-    expect(groupedByState['inactive']).toEqual([]);
+    expect(groupedByState.firing).toEqual(series);
+    expect(groupedByState.inactive).toEqual([]);
     expect(seriesCount).toEqual(series.length);
   });
 });

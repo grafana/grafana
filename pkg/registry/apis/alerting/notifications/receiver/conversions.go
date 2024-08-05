@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	model "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -43,11 +44,16 @@ func convertToK8sResource(orgID int64, receiver definitions.GettableApiReceiver,
 			return nil, fmt.Errorf("all integrations must have the same provenance")
 		}
 		provenance = integration.Provenance
+		unstruct := common.Unstructured{}
+		err := json.Unmarshal(integration.Settings, &unstruct)
+		if err != nil {
+			return nil, fmt.Errorf("integration '%s' of receiver '%s' has settings that cannot be parsed as JSON: %w", integration.Type, receiver.Name, err)
+		}
 		spec.Integrations = append(spec.Integrations, model.Integration{
 			Uid:                   &integration.UID,
 			Type:                  integration.Type,
 			DisableResolveMessage: &integration.DisableResolveMessage,
-			Settings:              json.RawMessage(integration.Settings),
+			Settings:              unstruct,
 			SecureFields:          integration.SecureFields,
 		})
 	}
@@ -79,12 +85,16 @@ func convertToDomainModel(receiver *model.Receiver) (definitions.GettableApiRece
 	}
 
 	for _, integration := range receiver.Spec.Integrations {
+		data, err := integration.Settings.MarshalJSON()
+		if err != nil {
+			return definitions.GettableApiReceiver{}, fmt.Errorf("integration '%s' of receiver '%s' is invalid: failed to convert unstructured data to bytes: %w", integration.Type, receiver.Name, err)
+		}
 		grafanaIntegration := definitions.GettableGrafanaReceiver{
 			Name:         receiver.Spec.Title,
 			Type:         integration.Type,
-			Settings:     definitions.RawMessage(integration.Settings),
+			Settings:     definitions.RawMessage(data),
 			SecureFields: integration.SecureFields,
-			//Provenance:   "", //TODO: Convert provenance?
+			Provenance:   definitions.Provenance(models.ProvenanceNone),
 		}
 		if integration.Uid != nil {
 			grafanaIntegration.UID = *integration.Uid

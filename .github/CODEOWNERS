@@ -74,6 +74,7 @@
 /apps/alerting/ @grafana/alerting-backend
 /pkg/api/ @grafana/grafana-backend-group
 /pkg/apis/ @grafana/grafana-app-platform-squad
+/pkg/apis/alerting_notifications @grafana/grafana-app-platform-squad @grafana/alerting-backend @grafana/alerting-frontend
 /pkg/bus/ @grafana/grafana-search-and-storage
 /pkg/cmd/ @grafana/grafana-backend-group
 /pkg/cmd/grafana/apiserver @grafana/grafana-app-platform-squad
@@ -150,6 +151,7 @@
 /pkg/setting/ @grafana/grafana-backend-services-squad
 /pkg/tests/ @grafana/grafana-backend-services-squad
 /pkg/tests/apis/ @grafana/grafana-app-platform-squad
+/pkg/tests/apis/alerting @grafana/grafana-app-platform-squad @grafana/alerting-backend
 /pkg/tests/api/correlations/ @grafana/explore-squad
 /pkg/tsdb/grafanads/ @grafana/grafana-backend-group
 /pkg/tsdb/opentsdb/ @grafana/partner-datasources
@@ -651,6 +653,7 @@ embed.go @grafana/grafana-as-code
 /pkg/kinds/ @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
 /pkg/registry/apis/ @grafana/grafana-app-platform-squad
+/pkg/registry/apis/alerting @grafana/grafana-app-platform-squad @grafana/alerting-backend
 /pkg/codegen/ @grafana/grafana-as-code
 /pkg/codegen/generators @grafana/grafana-as-code
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code
