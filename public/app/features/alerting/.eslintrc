@@ -1,5 +1,8 @@
 {
   "plugins": ["testing-library"],
+  "rules": {
+    "react/no-unused-prop-types": "error",
+  },
   "overrides": [
     {
       "files": ["**/__tests__/**/*.[jt]s?(x)", "**/?(*.)+(spec|test).[jt]s?(x)"],

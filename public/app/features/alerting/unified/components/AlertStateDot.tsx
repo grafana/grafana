@@ -8,8 +8,8 @@ interface DotStylesProps {
   includeState?: boolean;
 }
 
-const AlertStateDot = (props: DotStylesProps) => {
-  const styles = useStyles2(getDotStyles, props);
+const AlertStateDot = ({ color, includeState }: DotStylesProps) => {
+  const styles = useStyles2(getDotStyles, { color, includeState });
 
   return (
     <Stack direction="row" gap={0.5}>

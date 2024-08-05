@@ -23,7 +23,6 @@ interface Props {
   handleDuplicateRule: (identifier: RuleIdentifier) => void;
   onPauseChange?: () => void;
   buttonSize?: ComponentSize;
-  hideLabels?: boolean;
 }
 
 /**
