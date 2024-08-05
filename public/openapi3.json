@@ -7046,7 +7046,7 @@
       },
       "MigrateDataResponseItemDTO": {
         "properties": {
-          "error": {
+          "message": {
             "type": "string"
           },
           "refId": {

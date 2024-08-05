@@ -154,7 +154,7 @@ export type CreateSnapshotResponseDto = {
   uid?: string;
 };
 export type MigrateDataResponseItemDto = {
-  error?: string;
+  message?: string;
   refId: string;
   status: 'OK' | 'WARNING' | 'ERROR' | 'PENDING' | 'UNKNOWN';
   type: 'DASHBOARD' | 'DATASOURCE' | 'FOLDER';
