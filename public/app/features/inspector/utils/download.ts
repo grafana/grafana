@@ -3,6 +3,7 @@ import saveAs from 'file-saver';
 import {
   CSVConfig,
   DataFrame,
+  DataFrameView,
   DataTransformerID,
   dateTimeFormat,
   LogsModel,
@@ -112,4 +113,41 @@ export function downloadTraceAsJson(frame: DataFrame, title: string): string {
     }
   }
   return traceFormat;
+}
+
+export function exportTraceAsMermaid(frame: DataFrame): string {
+  const view = new DataFrameView(frame);
+
+  const spans: Array<{
+    startTime: number;
+    duration: number;
+    operationName: string;
+    serviceName: string;
+  }> = [];
+  for (const [_, e] of view.entries()) {
+    spans.push({
+      ...e,
+    });
+  }
+  const sorted = spans.sort((a, b) => a.startTime - b.startTime);
+  let currentSection = '';
+  let out = `gantt
+title Example Trace
+dateFormat x
+axisFormat %S.%L
+`;
+
+  // working around unique section names by abusing non breaking spaces
+  const nbsp = ' ';
+  let idx = 0;
+  for (const e of sorted) {
+    if (e.serviceName != currentSection) {
+      out += `section ${e.serviceName}${nbsp.repeat(idx)}\n`;
+      currentSection = e.serviceName;
+    }
+    out += `${e.operationName} :${Math.round(e.startTime)},${Math.max(Math.round(e.duration), 1)}ms\n`;
+    idx += 1;
+  }
+
+  return out;
 }
