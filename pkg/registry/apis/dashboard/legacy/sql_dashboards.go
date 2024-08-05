@@ -211,6 +211,9 @@ type rowsWrapper struct {
 }
 
 func (r *rowsWrapper) Close() error {
+	if r.rows == nil {
+		return nil
+	}
 	return r.rows.Close()
 }
 
