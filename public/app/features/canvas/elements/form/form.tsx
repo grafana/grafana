@@ -1,15 +1,12 @@
 import { css } from '@emotion/css';
-import { useObservable } from 'react-use';
 
 import { GrafanaTheme2, OneClickMode } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
-import { activePanelSubject } from 'app/plugins/panel/canvas/CanvasPanel';
 
 import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultThemeTextColor } from '../../element';
-import { FrameState } from '../../runtime/frame';
 import { Align, TextConfig, TextData, VAlign } from '../../types';
 
 import { FormElementTypeEditor } from './elements/FormElementTypeEditor';
@@ -45,17 +42,11 @@ const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
   const { data, config } = props;
   const styles = useStyles2(getStyles(data));
 
-  //   const instanceState = activePanel?.panel.context?.instanceState;
-
-  //   console.log('instanceState', instanceState);
-
-  //   const rootLayer: FrameState | undefined = instanceState?.layer;
-
-  console.log({ data, config });
+  console.log('Form', data, config);
 
   return (
     <div className={styles.container}>
-      <h3>Form</h3>
+      <span className={styles.span}>{data?.text}</span>
     </div>
   );
 };
@@ -64,7 +55,7 @@ const getStyles = (data: FormData | undefined) => (theme: GrafanaTheme2) => ({
   container: css({
     height: '100%',
     width: '100%',
-    display: 'flex',
+    display: 'table',
     border: `1px solid ${theme.colors.border.strong}`,
   }),
   inlineEditorContainer: css({
@@ -141,21 +132,6 @@ export const formItem: CanvasElementItem<FormConfig, FormData> = {
   registerOptionsUI: (builder) => {
     const category = ['Form'];
     builder
-      //   .addSelect({
-      //     category,
-      //     path: 'config.type',
-      //     name: 'Element type',
-      //     settings: {
-      //       options: [
-      //         { value: FormElementType.Checkbox, label: 'Checkbox' },
-      //         { value: FormElementType.Radio, label: 'Radio' },
-      //         { value: FormElementType.Select, label: 'Select' },
-      //         { value: FormElementType.TextInput, label: 'Text input' },
-      //         { value: FormElementType.DateRangePicker, label: 'Date range picker' },
-      //       ],
-      //     },
-      //     defaultValue: FormElementType.TextInput,
-      //   })
       .addCustomEditor({
         category,
         id: 'formElementEditor',
@@ -191,7 +167,7 @@ export const formItem: CanvasElementItem<FormConfig, FormData> = {
             { value: Align.Right, label: 'Right' },
           ],
         },
-        defaultValue: Align.Left,
+        defaultValue: Align.Center,
       })
       .addRadio({
         category,
@@ -204,7 +180,7 @@ export const formItem: CanvasElementItem<FormConfig, FormData> = {
             { value: VAlign.Bottom, label: 'Bottom' },
           ],
         },
-        defaultValue: VAlign.Middle,
+        defaultValue: VAlign.Top,
       })
       .addNumberInput({
         category,
