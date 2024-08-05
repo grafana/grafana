@@ -19,14 +19,31 @@ weight: 80
 
 # Configure the MQTT notifier for Alerting
 
-The MQTT notifier integration allows you to send alert notifications to an MQTT broker.
+Use the Grafana Alerting - MQTT integration to send notifications to an MQTT broker when your alerts are firing.
 
-There are two formats for the MQTT notifier integration:
+## Procedure
+
+To configure the MQTT integration for Alerting, complete the following steps.
+
+1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
+1. On the **Contact Points** tab, click **+ Add contact point**.
+1. Enter a descriptive name for the contact point.
+1. From the Integration list, select **MQTT**.
+1. Enter your broker URL in the **Broker URL** field. The URL must start with either `tcp` or `ssl`. For example: `tcp://127.0.0.1:1883`.
+1. Enter the MQTT topic name in the **Topic** field.
+1. In **Optional MQTT settings**, specify additional settings for the MQTT integration if needed.
+1. Click **Test** to check that your integration works.
+   A test alert notification should be sent to the MQTT broker.
+1. Click **Save** contact point.
+
+The integration sends data in JSON format by default. You can change that using **Message format** field in the **Optional MQTT settings** section. There are two supported formats:
 
 - **JSON**: Sends the alert notification in JSON format.
 - **Text**: Sends the rendered alert notification message in plain text format.
 
 ## MQTT JSON payload
+
+If the JSON message format is selected in **Optional MQTT settings**, the payload will be sent in the following structure:
 
 ```json
 {
@@ -97,23 +114,23 @@ There are two formats for the MQTT notifier integration:
 
 ### Payload fields
 
-| Key               | Type                      | Description                                                                     |
-| ----------------- | ------------------------- | ------------------------------------------------------------------------------- |
-| receiver          | string                    | Name of the contact point                                                       |
-| status            | string                    | Current status of the alert, `firing` or `resolved`                             |
-| orgId             | number                    | ID of the organization related to the payload                                   |
-| alerts            | array of [alerts](#alert) | Alerts that are triggering                                                      |
-| groupLabels       | object                    | Labels that are used for grouping, map of string keys to string values          |
-| commonLabels      | object                    | Labels that all alarms have in common, map of string keys to string values      |
-| commonAnnotations | object                    | Annotations that all alarms have in common, map of string keys to string values |
-| externalURL       | string                    | External URL to the Grafana instance sending this webhook                       |
-| version           | string                    | Version of the payload                                                          |
-| groupKey          | string                    | Key that is used for grouping                                                   |
-| message           | string                    | Rendered message of the alerts                                                  |
+| Key               | Type                                        | Description                                                                     |
+| ----------------- | ------------------------------------------- | ------------------------------------------------------------------------------- |
+| receiver          | string                                      | Name of the contact point                                                       |
+| status            | string                                      | Current status of the alert, `firing` or `resolved`                             |
+| orgId             | number                                      | ID of the organization related to the payload                                   |
+| alerts            | array of [alert instances](#alert-instance) | Alerts that are triggering                                                      |
+| groupLabels       | object                                      | Labels that are used for grouping, map of string keys to string values          |
+| commonLabels      | object                                      | Labels that all alarms have in common, map of string keys to string values      |
+| commonAnnotations | object                                      | Annotations that all alarms have in common, map of string keys to string values |
+| externalURL       | string                                      | External URL to the Grafana instance sending this webhook                       |
+| version           | string                                      | Version of the payload                                                          |
+| groupKey          | string                                      | Key that is used for grouping                                                   |
+| message           | string                                      | Rendered message of the alerts                                                  |
 
-### Alert
+### Alert instance
 
-Each alert in the `alerts` array has the following fields:
+Each alert instance in the `alerts` array has the following fields:
 
 | Key          | Type   | Description                                                                        |
 | ------------ | ------ | ---------------------------------------------------------------------------------- |
@@ -126,10 +143,10 @@ Each alert in the `alerts` array has the following fields:
 | generatorURL | string | URL of the alert rule in the Grafana UI                                            |
 | fingerprint  | string | The labels fingerprint, alarms with the same labels will have the same fingerprint |
 | silenceURL   | string | URL to silence the alert rule in the Grafana UI                                    |
-| dashboardURL | string | **Will be deprecated soon**                                                        |
-| panelURL     | string | **Will be deprecated soon**                                                        |
+| dashboardURL | string | **Deprecated. It will be removed in a future release.**                            |
+| panelURL     | string | **Deprecated. It will be removed in a future release.**                            |
 | imageURL     | string | URL of a screenshot of a panel assigned to the rule that created this notification |
 
 {{< admonition type="note" >}}
-Alert rules are not coupled to dashboards anymore.  The fields related to dashboards `dashboardId` and `panelId` have been removed.
+Alert rules are not coupled to dashboards anymore. The fields related to dashboards `dashboardId` and `panelId` have been removed.
 {{< /admonition >}}
