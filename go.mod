@@ -82,7 +82,7 @@ require (
 	github.com/grafana/dataplane/sdata v0.0.9 // @grafana/observability-metrics
 	github.com/grafana/dskit v0.0.0-20240311184239-73feada6c0d7 // @grafana/grafana-backend-group
 	github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana/sharing-squad
-	github.com/grafana/gomemcache v0.0.0-20240229205252-cd6a66d6fb56 // @grafana/grafana-operator-experience-squad
+	github.com/grafana/gomemcache v0.0.0-20240805133030-fdaf6a95408e // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-aws-sdk v0.30.0 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-cloud-migration-snapshot v1.2.0 // @grafana/grafana-operator-experience-squad
