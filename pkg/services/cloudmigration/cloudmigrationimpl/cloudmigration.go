@@ -795,7 +795,9 @@ func (s *Service) getResourcesWithPluginWarnings(ctx context.Context, results []
 
 		if r.Type == cloudmigration.DatasourceDataType &&
 			r.Error == "" { // any error returned by GMS takes priority
-			ds, err := s.dsService.GetDataSource(ctx, &datasources.GetDataSourceQuery{})
+			ds, err := s.dsService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+				UID: r.RefID,
+			})
 			if err != nil {
 				return nil, fmt.Errorf("getting data souce with uid %s: %w", r.RefID, err)
 			}
