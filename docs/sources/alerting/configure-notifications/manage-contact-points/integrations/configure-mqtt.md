@@ -111,7 +111,7 @@ There are two formats for the MQTT notifier integration:
 | groupKey          | string                    | Key that is used for grouping                                                   |
 | message           | string                    | Rendered message of the alerts                                                  |
 
-### Alert fields
+### Alert
 
 Each alert in the `alerts` array has the following fields:
 
