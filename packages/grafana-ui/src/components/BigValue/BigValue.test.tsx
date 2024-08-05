@@ -36,7 +36,7 @@ describe('BigValue', () => {
       render(
         <BigValue
           {...getProps({
-            value: { ...valueObject, percentChange: 0.5 },
+            value: { ...valueObject, percentChange: 50 },
           })}
         />
       );
