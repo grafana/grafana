@@ -846,14 +846,7 @@ func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, or
 				attribute.Int64("lastID", lastID),
 			))
 
-			var rows []*dashboardQueryResult
-			if dashboardUID != "" { // only expecting a single result
-				// xorm will append if there is more than one
-				rows = make([]*dashboardQueryResult, 0, 1)
-			} else {
-				// start with an arbitrary but reasonable number of dashboards
-				rows = make([]*dashboardQueryResult, 0, 1000)
-			}
+			rows := make([]*dashboardQueryResult, 0, limit)
 			err := l.sql.WithDbSession(dashboardQueryCtx, func(sess *db.Session) error {
 				sess.Table("dashboard").
 					Where("org_id = ?", orgID).
