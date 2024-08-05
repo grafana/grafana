@@ -9,9 +9,6 @@ import (
 	"sync"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardsV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
@@ -21,8 +18,11 @@ import (
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 var (
@@ -50,6 +50,7 @@ type dashboardSqlAccess struct {
 	namespacer   request.NamespaceMapper
 	dashStore    dashboards.Store
 	provisioning provisioning.ProvisioningService
+	currentRV    func(ctx context.Context) (int64, error)
 
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
@@ -61,23 +62,33 @@ func NewDashboardAccess(sql db.DB,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
 ) DashboardAccess {
+	sess := sql.GetSqlxSession()
+	currentRV := func(ctx context.Context) (int64, error) {
+		t := time.Now()
+		max := ""
+		err := sess.Get(ctx, &max, "SELECT MAX(updated) FROM dashboard")
+		if err == nil && max != "" {
+			t, err = time.Parse(time.DateTime, max)
+		}
+		return t.UnixMilli(), err
+	}
+
+	if sql.GetDBType() == migrator.Postgres {
+		currentRV = func(ctx context.Context) (int64, error) {
+			max := time.Now()
+			err := sess.Get(ctx, &max, "SELECT MAX(updated) FROM dashboard")
+			return max.UnixMilli(), err
+		}
+	}
+
 	return &dashboardSqlAccess{
 		sql:          sql,
-		sess:         sql.GetSqlxSession(),
+		sess:         sess,
 		namespacer:   namespacer,
 		dashStore:    dashStore,
 		provisioning: provisioning,
+		currentRV:    currentRV,
 	}
-}
-
-func (a *dashboardSqlAccess) currentRV(ctx context.Context) (int64, error) {
-	t := time.Now()
-	max := ""
-	err := a.sess.Get(ctx, &max, "SELECT MAX(updated) FROM dashboard")
-	if err == nil && max != "" {
-		t, _ = time.Parse(time.DateTime, max)
-	}
-	return t.UnixMilli(), nil
 }
 
 const selector = `SELECT
@@ -93,8 +104,8 @@ const selector = `SELECT
 	dashboard.version, '' as message, dashboard.data
   FROM dashboard
   LEFT OUTER JOIN dashboard_provisioning ON dashboard.id = dashboard_provisioning.dashboard_id
-  LEFT OUTER JOIN user AS created_user ON dashboard.created_by = created_user.id
-  LEFT OUTER JOIN user AS updated_user ON dashboard.updated_by = updated_user.id
+  LEFT OUTER JOIN "user" AS created_user ON dashboard.created_by = created_user.id
+  LEFT OUTER JOIN "user" AS updated_user ON dashboard.updated_by = updated_user.id
   WHERE dashboard.is_folder = false`
 
 const history = `SELECT
@@ -111,8 +122,8 @@ const history = `SELECT
   FROM dashboard
   LEFT OUTER JOIN dashboard_provisioning ON dashboard.id = dashboard_provisioning.dashboard_id
   LEFT OUTER JOIN dashboard_version  ON dashboard.id = dashboard_version.dashboard_id
-  LEFT OUTER JOIN user AS created_user ON dashboard.created_by = created_user.id
-  LEFT OUTER JOIN user AS updated_user ON dashboard_version.created_by = updated_user.id
+  LEFT OUTER JOIN "user" AS created_user ON dashboard.created_by = created_user.id
+  LEFT OUTER JOIN "user" AS updated_user ON dashboard_version.created_by = updated_user.id
   WHERE dashboard.is_folder = false`
 
 func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery) (*rowsWrapper, error) {
