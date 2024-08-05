@@ -963,6 +963,13 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "message",
 					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 				},
+				{ // New!!!
+					Label:        "JSON Payload",
+					Description:  "Custom JSON payload, takes precedence over Title and Message.",
+					Element:      ElementTypeTextArea,
+					PropertyName: "json",
+					Placeholder:  "",
+				},
 			},
 		},
 		{

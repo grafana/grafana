@@ -308,7 +308,7 @@ export function WrapWithTemplateSelection({
   const { getValues } = useFormContext();
   const value = getValues(name) ?? '';
   // if the placeholder does not contain a template, we don't need to show the template picker
-  if (!option.placeholder.includes('{{ template ') || typeof value !== 'string') {
+  if ((!option.placeholder.includes('{{ template ') && option.propertyName !== 'json') || typeof value !== 'string') {
     return <>{children}</>;
   }
   // Otherwise, we can use templates on this field
@@ -337,7 +337,7 @@ export function WrapWithTemplateSelection({
       </div>
     );
   }
-  // custom template  field
+  // custom template field
   return (
     <div className={styles.inputContainer}>
       <Stack direction="row" gap={1} alignItems="center">

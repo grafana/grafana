@@ -101,7 +101,7 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
     [unregister, name]
   );
 
-  const useTemplates = option.placeholder.includes('{{ template');
+  const useTemplates = option.placeholder.includes('{{ template') || option.propertyName == 'json';
 
   function onSelectTemplate(template: string) {
     setValue(name, template);
