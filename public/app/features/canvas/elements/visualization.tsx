@@ -28,10 +28,11 @@ const VisualizationDisplay = (props: CanvasElementProps<VizElementConfig, VizEle
   const { data, config: elementConfig } = props;
   const styles = getStyles(config.theme2, data, scene);
 
-  let panelToEmbed = PanelBuilders.timeseries().setTitle(data?.text ?? 'Visualization');
+  const panelTitle = data?.text ? data?.text : 'Visualization';
+  let panelToEmbed = PanelBuilders.timeseries().setTitle(panelTitle);
   if (data?.vizType) {
     // TODO make this better
-    panelToEmbed = PanelBuilders[data.vizType as keyof typeof PanelBuilders]().setTitle(data?.text ?? 'Visualization');
+    panelToEmbed = PanelBuilders[data.vizType as keyof typeof PanelBuilders]().setTitle(panelTitle);
   }
 
   // @TODO: Cleanup?
