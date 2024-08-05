@@ -137,6 +137,10 @@ Select values to display in the legend. You can select more than one.
 - **Percent:** The percentage of the whole.
 - **Value:** The raw numerical value.
 
+## Data links
+
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
