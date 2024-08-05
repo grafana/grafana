@@ -1,14 +1,14 @@
-import {css, cx} from '@emotion/css';
-import React, {CSSProperties, ReactNode, useEffect, useRef, useState} from 'react';
+import { css, cx } from '@emotion/css';
+import React, { CSSProperties, ReactNode, useEffect, useRef, useState } from 'react';
 
-import {GrafanaTheme2} from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import {useStyles2} from '../../themes';
-import {InlineToast} from '../InlineToast/InlineToast';
-import {Tooltip} from '../Tooltip';
+import { useStyles2 } from '../../themes';
+import { InlineToast } from '../InlineToast/InlineToast';
+import { Tooltip } from '../Tooltip';
 
-import {ColorIndicatorPosition, VizTooltipColorIndicator} from './VizTooltipColorIndicator';
-import {ColorPlacement, VizTooltipItem} from './types';
+import { ColorIndicatorPosition, VizTooltipColorIndicator } from './VizTooltipColorIndicator';
+import { ColorPlacement, VizTooltipItem } from './types';
 
 interface VizTooltipRowProps extends Omit<VizTooltipItem, 'value'> {
   value: string | number | null | ReactNode;
@@ -47,7 +47,7 @@ export const VizTooltipRow = ({
         maxHeight: 55,
         whiteSpace: 'wrap',
         wordBreak: 'break-word',
-      overflowY: 'auto',
+        overflowY: 'auto',
       }
     : {
         whiteSpace: 'wrap',
