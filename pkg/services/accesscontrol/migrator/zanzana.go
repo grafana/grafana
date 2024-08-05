@@ -35,6 +35,7 @@ func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...Tu
 		teamMembershipCollector(store),
 		managedPermissionsCollector(store),
 		folderParentCollector(store),
+		dashboardFolderCollector(store),
 	)
 
 	return &ZanzanaSynchroniser{
@@ -186,7 +187,7 @@ func folderParentCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "folder"
 		const query = `
-			SELECT uid, parent_uid, org_id FROM folder WHERE parent_uid IS NOT NULL;
+			SELECT uid, parent_uid, org_id FROM folder WHERE parent_uid IS NOT NULL
 		`
 		type folder struct {
 			OrgID     int64  `xorm:"org_id"`
@@ -207,6 +208,42 @@ func folderParentCollector(store db.DB) TupleCollector {
 			tuple := &openfgav1.TupleKey{
 				User:     zanzana.NewScopedObject(zanzana.TypeFolder, f.ParentUID, "", strconv.FormatInt(f.OrgID, 10)),
 				Object:   zanzana.NewScopedObject(zanzana.TypeFolder, f.FolderUID, "", strconv.FormatInt(f.OrgID, 10)),
+				Relation: zanzana.RelationParent,
+			}
+
+			tuples[collectorID] = append(tuples[collectorID], tuple)
+		}
+
+		return nil
+	}
+}
+
+// dashboardFolderCollector collects information about dashboards parent folders
+func dashboardFolderCollector(store db.DB) TupleCollector {
+	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+		const collectorID = "folder"
+		const query = `
+			SELECT org_id, uid, folder_uid, is_folder FROM dashboard WHERE is_folder = 0 AND folder_uid IS NOT NULL
+		`
+		type dashboard struct {
+			OrgID     int64  `xorm:"org_id"`
+			UID       string `xorm:"uid"`
+			ParentUID string `xorm:"folder_uid"`
+		}
+
+		var dashboards []dashboard
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(query).Find(&dashboards)
+		})
+
+		if err != nil {
+			return err
+		}
+
+		for _, d := range dashboards {
+			tuple := &openfgav1.TupleKey{
+				User:     zanzana.NewScopedObject(zanzana.TypeFolder, d.ParentUID, "", strconv.FormatInt(d.OrgID, 10)),
+				Object:   zanzana.NewScopedObject(zanzana.TypeDashboard, d.UID, "", strconv.FormatInt(d.OrgID, 10)),
 				Relation: zanzana.RelationParent,
 			}
 
