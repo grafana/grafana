@@ -15,15 +15,19 @@ export function ResourceDetailsModal(props: ResourceDetailsModalProps) {
   const refId = resource?.refId;
   const typeName = resource && prettyTypeName(resource.type);
 
-  let title = 'Resource migration details';
+  let msgTitle = 'Resource migration details:';
   if (resource?.status === 'ERROR') {
-    title = 'Unable to migrate this resource';
+    msgTitle = 'Unable to migrate this resource:';
   } else if (resource?.status === 'WARNING') {
-    title = 'Resource migrated with a warning';
+    msgTitle = 'Resource migrated with a warning:';
   }
 
   return (
-    <Modal title={t('migrate-to-cloud.resource-details.title', title)} isOpen={Boolean(resource)} onDismiss={onClose}>
+    <Modal
+      title={t('migrate-to-cloud.resource-details.title', 'Migration resource details')}
+      isOpen={Boolean(resource)}
+      onDismiss={onClose}
+    >
       {resource && (
         <Stack direction="column" gap={2} alignItems="flex-start">
           <Text element="p" weight="bold">
@@ -32,21 +36,19 @@ export function ResourceDetailsModal(props: ResourceDetailsModalProps) {
             </Trans>
           </Text>
 
-          {resource.error ? (
+          {resource.message ? (
             <>
               <Text element="p">
-                <Trans i18nKey="migrate-to-cloud.resource-details.specific-message-title">
-                  The specific error was:
-                </Trans>
+                <Trans i18nKey="migrate-to-cloud.resource-details.specific-message-title">{msgTitle}</Trans>
               </Text>
 
               <Text element="p" weight="bold">
-                <Trans i18nKey="migrate-to-cloud.resource-details.specific-message-body">{resource.error}</Trans>
+                <Trans i18nKey="migrate-to-cloud.resource-details.specific-message-body">{resource.message}</Trans>
               </Text>
             </>
           ) : (
             <Text element="p">
-              <Trans i18nKey="migrate-to-cloud.resource-details.unknown-error">An unknown error occurred.</Trans>
+              <Trans i18nKey="migrate-to-cloud.resource-details.missing-message">No message provided.</Trans>
             </Text>
           )}
 

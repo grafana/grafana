@@ -27,7 +27,7 @@ function ErrorCell({ item }: { item: ResourceTableItem }) {
     <Stack alignItems="center">
       <Text color="error">{t('migrate-to-cloud.resource-status.failed', 'Error')}</Text>
 
-      {item.error && (
+      {item.message && (
         <Button size="sm" variant="secondary" onClick={() => item.showDetails(item)}>
           {t('migrate-to-cloud.resource-status.error-details-button', 'Details')}
         </Button>
@@ -39,9 +39,9 @@ function ErrorCell({ item }: { item: ResourceTableItem }) {
 function WarningCell({ item }: { item: ResourceTableItem }) {
   return (
     <Stack alignItems="center">
-      <Text color="warning">{t('migrate-to-cloud.resource-status.warning', 'Completed with warning')}</Text>
+      <Text color="warning">{t('migrate-to-cloud.resource-status.warning', 'Uploaded with warning')}</Text>
 
-      {item.error && (
+      {item.message && (
         <Button size="sm" variant="secondary" onClick={() => item.showDetails(item)}>
           {t('migrate-to-cloud.resource-status.warning-details-button', 'Details')}
         </Button>
