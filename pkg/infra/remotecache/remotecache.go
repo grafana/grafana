@@ -6,10 +6,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/remotecache/ring"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -28,7 +30,7 @@ const (
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, usageStats usagestats.Service,
 	secretsService secrets.Service) (*RemoteCache, error) {
-	client, err := createClient(cfg.RemoteCacheOptions, sqlStore, secretsService)
+	client, err := createClient(cfg, sqlStore, secretsService)
 	if err != nil {
 		return nil, err
 	}
@@ -109,25 +111,32 @@ func (ds *RemoteCache) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func createClient(opts *setting.RemoteCacheOptions, sqlstore db.DB, secretsService secrets.Service) (cache CacheStorage, err error) {
-	switch opts.Name {
+func createClient(cfg *setting.Cfg, sqlstore db.DB, secretsService secrets.Service) (cache CacheStorage, err error) {
+	switch cfg.RemoteCacheOptions.Name {
 	case redisCacheType:
-		cache, err = newRedisStorage(opts)
+		cache, err = newRedisStorage(cfg.RemoteCacheOptions)
 	case memcachedCacheType:
-		cache = newMemcachedStorage(opts)
+		cache = newMemcachedStorage(cfg.RemoteCacheOptions)
 	case databaseCacheType:
 		cache = newDatabaseCache(sqlstore)
+	case ring.CacheType:
+		var err error
+		cache, err = ring.NewCache(cfg, prometheus.DefaultRegisterer)
+		if err != nil {
+			return nil, err
+		}
+
 	default:
 		return nil, ErrInvalidCacheType
 	}
 	if err != nil {
 		return cache, err
 	}
-	if opts.Prefix != "" {
-		cache = &prefixCacheStorage{cache: cache, prefix: opts.Prefix}
+	if cfg.RemoteCacheOptions.Prefix != "" {
+		cache = &prefixCacheStorage{cache: cache, prefix: cfg.RemoteCacheOptions.Prefix}
 	}
 
-	if opts.Encryption {
+	if cfg.RemoteCacheOptions.Encryption {
 		cache = &encryptedCacheStorage{cache: cache, secretsService: secretsService}
 	}
 	return cache, nil

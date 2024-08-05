@@ -1,13 +1,11 @@
-package cache
+package ring
 
 import (
 	"encoding/json"
-	"errors"
 	"net"
 	"net/http"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -31,10 +29,6 @@ func registerRoutes(cfg *setting.Cfg, c *Cache) error {
 		c.logger.Info("get cached item", "key", key)
 		value, err := c.Get(r.Context(), key)
 		if err != nil {
-			if errors.Is(err, remotecache.ErrCacheItemNotFound) {
-				w.WriteHeader(http.StatusNotFound)
-				return
-			}
 			c.logger.Error("failed to get item", "err", err)
 			w.WriteHeader(http.StatusBadRequest)
 			return

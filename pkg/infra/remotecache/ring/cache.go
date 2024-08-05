@@ -1,4 +1,4 @@
-package cache
+package ring
 
 import (
 	"context"
@@ -13,17 +13,20 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+const CacheType = "ring"
 
 var (
 	ringPort = 3010
 	httpPort = "3011"
 )
 
-func ProvideService(cfg *setting.Cfg, reg prometheus.Registerer) (*Cache, error) {
-	logger := glog.New("cache")
+func NewCache(cfg *setting.Cfg, reg prometheus.Registerer) (*Cache, error) {
+	logger := log.New("cache")
 	memberlistsvc, client, err := newMemberlistService(memberlistConfig{
 		Addr:        cfg.HTTPAddr,
 		Port:        ringPort,
@@ -141,7 +144,6 @@ func (c *Cache) getBackend(key string, op ring.Operation) (Backend, error) {
 	inst := set.Instances[0]
 	if inst.GetId() == c.id {
 		return c.local, nil
-
 	}
 
 	// TODO: cache remote clients?

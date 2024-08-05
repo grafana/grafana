@@ -1,4 +1,4 @@
-package cache
+package ring
 
 import (
 	"bytes"
@@ -12,10 +12,13 @@ import (
 	gocache "github.com/patrickmn/go-cache"
 
 	"github.com/grafana/dskit/ring"
-	"github.com/grafana/grafana/pkg/infra/remotecache"
 )
 
-type Backend remotecache.CacheStorage
+type Backend interface {
+	Get(ctx context.Context, key string) ([]byte, error)
+	Set(ctx context.Context, key string, value []byte, expire time.Duration) error
+	Delete(ctx context.Context, key string) error
+}
 
 func newLocalBackend() *localBackend {
 	return &localBackend{
@@ -30,7 +33,7 @@ type localBackend struct {
 func (b *localBackend) Get(ctx context.Context, key string) ([]byte, error) {
 	data, ok := b.store.Get(key)
 	if !ok {
-		return nil, remotecache.ErrCacheItemNotFound
+		return nil, fmt.Errorf("no item")
 	}
 
 	return data.([]byte), nil
@@ -45,10 +48,6 @@ func (b *localBackend) Set(ctx context.Context, key string, value []byte, expire
 func (b *localBackend) Delete(ctx context.Context, key string) error {
 	b.store.Delete(key)
 	return nil
-}
-
-func (b *localBackend) Count(ctx context.Context, prefix string) (int64, error) {
-	return 0, nil
 }
 
 func newRemoteBackend(inst *ring.InstanceDesc) *remoteBackend {
@@ -89,9 +88,6 @@ func (b *remoteBackend) Get(ctx context.Context, key string) ([]byte, error) {
 	}
 
 	if res.StatusCode != http.StatusOK {
-		if res.StatusCode == http.StatusNotFound {
-			return nil, remotecache.ErrCacheItemNotFound
-		}
 		return nil, fmt.Errorf("failed to delegate get cache: %s", res.Status)
 	}
 
@@ -144,10 +140,6 @@ func (b *remoteBackend) Delete(ctx context.Context, key string) error {
 	}
 
 	return nil
-}
-
-func (b *remoteBackend) Count(ctx context.Context, prefix string) (int64, error) {
-	return 0, nil
 }
 
 func getInstanceURL(inst *ring.InstanceDesc) string {

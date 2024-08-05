@@ -2,7 +2,6 @@ package backgroundsvcs
 
 import (
 	"github.com/grafana/grafana/pkg/api"
-	"github.com/grafana/grafana/pkg/infra/cache"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -72,7 +71,7 @@ func ProvideBackgroundServiceRegistry(
 	_ *plugindashboardsservice.DashboardUpdater, _ *sanitizer.Provider,
 	_ *grpcserver.HealthService, _ authz.Client, _ *grpcserver.ReflectionService,
 	_ *ldapapi.Service, _ *apiregistry.Service, _ auth.IDService, _ *teamapi.TeamAPI, _ ssosettings.Service,
-	_ cloudmigration.Service, _ authnimpl.Registration, cache *cache.Cache,
+	_ cloudmigration.Service, _ authnimpl.Registration,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,
@@ -109,7 +108,6 @@ func ProvideBackgroundServiceRegistry(
 		ssoSettings,
 		pluginExternal,
 		pluginInstaller,
-		cache,
 	)
 }
 
