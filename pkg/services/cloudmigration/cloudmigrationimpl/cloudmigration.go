@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/cloudmigration/api"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/gmsclient"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/objectstorage"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -790,13 +791,15 @@ func (s *Service) getLocalEventId(ctx context.Context) (string, error) {
 
 // getResourcesWithPluginWarnings iterates through each resource and, if a non-core datasource, applies a warning that we only support core
 func (s *Service) getResourcesWithPluginWarnings(ctx context.Context, results []cloudmigration.CloudMigrationResource) ([]cloudmigration.CloudMigrationResource, error) {
+	reqCtx := contexthandler.FromContext(ctx)
 	for i := 0; i < len(results); i++ {
 		r := results[i]
 
 		if r.Type == cloudmigration.DatasourceDataType &&
 			r.Error == "" { // any error returned by GMS takes priority
 			ds, err := s.dsService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
-				UID: r.RefID,
+				UID:   r.RefID,
+				OrgID: reqCtx.SignedInUser.OrgID,
 			})
 			if err != nil {
 				return nil, fmt.Errorf("getting data souce with uid %s: %w", r.RefID, err)

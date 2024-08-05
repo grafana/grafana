@@ -482,7 +482,7 @@ func Test_NonCoreDataSourcesHaveWarning(t *testing.T) {
 	}
 
 	// Retrieve the snapshot with results
-	snapshot, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
+	snapshot, err := s.GetSnapshot(ctxWithSignedInUser(), cloudmigration.GetSnapshotsQuery{
 		SnapshotUID: snapshotUid,
 		SessionUID:  sess.UID,
 		ResultPage:  1,
