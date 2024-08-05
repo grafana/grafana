@@ -210,7 +210,7 @@ func (f *ProvisioningApiHandler) RoutePutMuteTiming(ctx *contextmodel.ReqContext
 }
 func (f *ProvisioningApiHandler) RoutePutPolicyTree(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Request Body
-	conf := apimodels.Route{}
+	conf := apimodels.RoutingTree{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}

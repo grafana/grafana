@@ -51,9 +51,9 @@ type TemplateService interface {
 }
 
 type NotificationPolicyService interface {
-	GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error)
-	UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p alerting_models.Provenance) error
-	ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error)
+	GetPolicyTree(ctx context.Context, orgID int64) (definitions.RoutingTree, error)
+	UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.RoutingTree) error
+	ResetPolicyTree(ctx context.Context, orgID int64) (definitions.RoutingTree, error)
 }
 
 type MuteTimingService interface {
@@ -99,7 +99,7 @@ func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext)
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	e, err := AlertingFileExportFromRoute(c.SignedInUser.GetOrgID(), policies)
+	e, err := AlertingFileExportFromRoute(c.SignedInUser.GetOrgID(), policies.Route)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
 	}
@@ -107,9 +107,10 @@ func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext)
 	return exportResponse(c, e)
 }
 
-func (srv *ProvisioningSrv) RoutePutPolicyTree(c *contextmodel.ReqContext, tree definitions.Route) response.Response {
-	provenance := determineProvenance(c)
-	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID(), tree, alerting_models.Provenance(provenance))
+func (srv *ProvisioningSrv) RoutePutPolicyTree(c *contextmodel.ReqContext, tree definitions.RoutingTree) response.Response {
+	tree.Provenance = determineProvenance(c)
+
+	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID(), tree)
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 		return ErrResp(http.StatusNotFound, err, "")
 	}
@@ -117,7 +118,7 @@ func (srv *ProvisioningSrv) RoutePutPolicyTree(c *contextmodel.ReqContext, tree 
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "policies updated"})

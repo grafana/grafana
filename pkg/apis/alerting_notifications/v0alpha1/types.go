@@ -175,7 +175,6 @@ type ReceiverList struct {
 
 // region Templates
 
-// +genclient
 // +k8s:openapi-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type TemplateGroup struct {
@@ -255,3 +254,15 @@ type TemplateGroupList struct {
 }
 
 // endregion
+
+// region Routes
+
+// +k8s:openapi-gen=true
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type Route struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata"`
+	Spec              RouteSpec `json:"spec"`
+}
+
+// endregion Routes

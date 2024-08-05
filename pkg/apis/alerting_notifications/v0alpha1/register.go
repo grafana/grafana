@@ -2,7 +2,11 @@ package v0alpha1
 
 import (
 	"fmt"
+	"slices"
+	"strconv"
+	"strings"
 
+	"golang.org/x/exp/maps"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -53,15 +57,46 @@ var (
 		utils.TableColumns{
 			Definition: []metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
-				{Name: "Title", Type: "string", Format: "string", Description: "The receiver name"}, // TODO: Add integration types.
+				{Name: "Title", Type: "string", Format: "string", Description: "The receiver name"},
+				{Name: "Integrations", Type: "string", Format: "string", Description: "Unique list of integrations used in this receiver. If integration used more than once, it is followed by a number of usages in parenthesis"},
+				// TODO add date of last notification and last error
 			},
 			Reader: func(obj any) ([]interface{}, error) {
 				r, ok := obj.(*Receiver)
 				if ok {
+					types := map[string]int{}
+					strLength := 0
+					for _, integration := range r.Spec.Integrations {
+						qty, ok := types[integration.Type]
+						if !ok {
+							strLength += len(integration.Type)
+						}
+						qty++
+						if qty == 2 {
+							strLength += 3 // (2)
+						}
+						types[integration.Type] = qty
+					}
+					keys := maps.Keys(types)
+					slices.Sort(keys)
+					b := strings.Builder{}
+					b.Grow(strLength)
+					for idx, key := range keys {
+						if idx > 0 {
+							b.WriteRune(',')
+						}
+						qty := types[key]
+						b.WriteString(key)
+						if qty > 1 {
+							b.WriteRune('(')
+							b.WriteString(strconv.Itoa(qty))
+							b.WriteRune(')')
+						}
+					}
 					return []interface{}{
 						r.Name,
 						r.Spec.Title,
-						// r.Spec, //TODO implement formatting for Spec, same as UI?
+						b.String(),
 					}, nil
 				}
 				return nil, fmt.Errorf("expected resource or info")
@@ -79,6 +114,27 @@ var (
 			},
 			Reader: func(obj any) ([]interface{}, error) {
 				r, ok := obj.(*TemplateGroup)
+				if !ok {
+					return nil, fmt.Errorf("expected resource or info")
+				}
+				return []interface{}{
+					r.Name,
+					// r.Spec, //TODO implement formatting for Spec, same as UI?
+				}, nil
+			},
+		},
+	)
+	RouteResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+		"route", "route", "Route",
+		func() runtime.Object { return &Route{} },
+		func() runtime.Object { return &Route{} },
+		utils.TableColumns{
+			Definition: []metav1.TableColumnDefinition{
+				{Name: "Name", Type: "string", Format: "name"},
+				// {Name: "Intervals", Type: "string", Format: "string", Description: "The display name"},
+			},
+			Reader: func(obj any) ([]interface{}, error) {
+				r, ok := obj.(*Route)
 				if !ok {
 					return nil, fmt.Errorf("expected resource or info")
 				}
@@ -111,6 +167,7 @@ func AddKnownTypesGroup(scheme *runtime.Scheme, g schema.GroupVersion) error {
 		&ReceiverList{},
 		&TemplateGroup{},
 		&TemplateGroupList{},
+		&Route{},
 	)
 	metav1.AddToGroupVersion(scheme, g)
 

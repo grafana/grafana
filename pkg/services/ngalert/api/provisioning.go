@@ -24,7 +24,7 @@ func (f *ProvisioningApiHandler) handleRouteGetPolicyTreeExport(ctx *contextmode
 	return f.svc.RouteGetPolicyTreeExport(ctx)
 }
 
-func (f *ProvisioningApiHandler) handleRoutePutPolicyTree(ctx *contextmodel.ReqContext, route apimodels.Route) response.Response {
+func (f *ProvisioningApiHandler) handleRoutePutPolicyTree(ctx *contextmodel.ReqContext, route apimodels.RoutingTree) response.Response {
 	return f.svc.RoutePutPolicyTree(ctx, route)
 }
 

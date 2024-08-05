@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/alerting/definition"
+
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
@@ -31,8 +34,12 @@ func (c *defaultNotificationPolicyProvisioner) Provision(ctx context.Context,
 	files []*AlertingFile) error {
 	for _, file := range files {
 		for _, np := range file.Policies {
-			err := c.notificationPolicyService.UpdatePolicyTree(ctx, np.OrgID,
-				np.Policy, models.ProvenanceFile)
+			tree := definitions.RoutingTree{
+				Route:   np.Policy,
+				Version: "",
+			}
+			tree.Provenance = definition.Provenance(models.ProvenanceFile)
+			err := c.notificationPolicyService.UpdatePolicyTree(ctx, np.OrgID, tree)
 			if err != nil {
 				return fmt.Errorf("%s: %w", file.Filename, err)
 			}
