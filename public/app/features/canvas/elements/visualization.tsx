@@ -1,13 +1,13 @@
-import {css} from '@emotion/css';
+import { css } from '@emotion/css';
 
-import {GrafanaTheme2, SelectableValue} from '@grafana/data';
-import {DataFrame} from '@grafana/data/';
-import {EmbeddedScene, PanelBuilders, SceneDataNode, SceneFlexItem, SceneFlexLayout} from '@grafana/scenes';
-import {stylesFactory, usePanelContext} from '@grafana/ui';
-import {config} from 'app/core/config';
-import {DimensionContext} from 'app/features/dimensions/context';
-import {ColorDimensionEditor} from 'app/features/dimensions/editors/ColorDimensionEditor';
-import {TextDimensionEditor} from 'app/features/dimensions/editors/TextDimensionEditor';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { DataFrame, Field } from '@grafana/data/';
+import { EmbeddedScene, PanelBuilders, SceneDataNode, SceneFlexItem, SceneFlexLayout } from '@grafana/scenes';
+import { stylesFactory } from '@grafana/ui';
+import { config } from 'app/core/config';
+import { DimensionContext } from 'app/features/dimensions/context';
+import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
+import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 
 import {
   CanvasElementItem,
@@ -16,17 +16,14 @@ import {
   defaultBgColor,
   defaultTextColor,
 } from '../element';
-import {Align, VAlign, VizElementConfig, VizElementData} from '../types';
+import { Align, VAlign, VizElementConfig, VizElementData } from '../types';
 
 const panelTypes: Array<SelectableValue<string>> = Object.keys(PanelBuilders).map((type) => {
   return { label: type, value: type };
 });
 
 const VisualizationDisplay = (props: CanvasElementProps<VizElementConfig, VizElementData>) => {
-  const context = usePanelContext();
-  const scene = context.instanceState?.scene;
-
-  const { data, config: elementConfig } = props;
+  const { data } = props;
   const styles = getStyles(config.theme2, data);
 
   let panelToEmbed = PanelBuilders.timeseries().setTitle('Embedded Panel');
@@ -34,16 +31,6 @@ const VisualizationDisplay = (props: CanvasElementProps<VizElementConfig, VizEle
     // TODO make this better
     panelToEmbed = PanelBuilders[data.vizType as keyof typeof PanelBuilders]().setTitle('Embedded Panel');
   }
-
-  // @TODO: Cleanup?
-  let frames = scene?.data?.series as DataFrame[];
-  let selectedFrames = frames?.filter(
-    (frame) => frame.fields.filter((field) => elementConfig.fields?.includes(field.name)).length > 0
-  );
-  selectedFrames = selectedFrames?.map((frame) => ({
-    ...frame,
-    fields: frame.fields.filter((field) => !elementConfig.fields?.includes(field.name)),
-  }));
 
   panelToEmbed.setData(new SceneDataNode({ data: data!.data }));
   const panel = panelToEmbed.build();
@@ -121,11 +108,28 @@ export const visualizationItem: CanvasElementItem<VizElementConfig, VizElementDa
     const vizConfig = elementOptions.config;
     let panelData = dimensionContext.getPanelData();
 
+    const getMatchingFields = (frame: DataFrame) => {
+      let fields: Field[] = [];
+      frame.fields.forEach((field) => {
+        if (field.type === 'time' || vizConfig?.fields?.includes(field.name)) {
+          fields.push(field);
+        }
+      });
+
+      return fields;
+    };
+
     if (vizConfig?.fields && vizConfig.fields.length > 1 && panelData) {
       let frames = panelData?.series;
       let selectedFrames =
         frames?.filter((frame) => frame.fields.filter((field) => vizConfig.fields!.includes(field.name)).length > 0) ??
         [];
+
+      selectedFrames = selectedFrames?.map((frame) => ({
+        ...frame,
+        fields: getMatchingFields(frame),
+      }));
+
       panelData = {
         ...panelData,
         series: selectedFrames,
