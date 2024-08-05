@@ -26,7 +26,7 @@ const VisualizationDisplay = (props: CanvasElementProps<VizElementConfig, VizEle
   const scene = context.instanceState?.scene;
 
   const { data, config: elementConfig } = props;
-  const styles = getStyles(config.theme2, data);
+  const styles = getStyles(config.theme2, data, scene);
 
   let panelToEmbed = PanelBuilders.timeseries().setTitle(data?.text ?? 'Visualization');
   if (data?.vizType) {
@@ -66,12 +66,13 @@ const VisualizationDisplay = (props: CanvasElementProps<VizElementConfig, VizEle
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, data) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2, data, scene) => ({
   container: css({
     position: 'absolute',
     height: '100%',
     width: '100%',
     display: 'table',
+    pointerEvents: scene?.isEditingEnabled ? 'none' : 'auto',
   }),
 }));
 
