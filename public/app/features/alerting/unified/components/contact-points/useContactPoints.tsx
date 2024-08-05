@@ -11,6 +11,7 @@ import {
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver,
   generatedReceiversApi,
 } from 'app/features/alerting/unified/openapi/receiversApi.gen';
+import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
 import { cloudNotifierTypes } from 'app/features/alerting/unified/utils/cloud-alertmanager-notifier-types';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { getNamespace, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
@@ -53,7 +54,7 @@ const defaultOptions = {
  *
  * Otherwise, returns no data
  */
-const useOnCallIntegrations = ({ skip }: { skip?: boolean } = {}) => {
+const useOnCallIntegrations = ({ skip }: Skippable = {}) => {
   const { installed, loading } = usePluginBridge(SupportedPlugin.OnCall);
   const oncallIntegrationsResponse = useGrafanaOnCallIntegrationsQuery(undefined, { skip: skip || !installed });
 
@@ -88,7 +89,7 @@ const useK8sContactPoints = (...[hookParams, queryOptions]: Parameters<typeof us
   });
 };
 
-const useGetGrafanaContactPoints = ({ skip }: { skip?: boolean } = {}) => {
+const useGetGrafanaContactPoints = ({ skip }: Skippable = {}) => {
   const namespace = getNamespace();
   const useK8sApi = shouldUseK8sApi(GRAFANA_RULES_SOURCE_NAME);
   const grafanaResponse = useGetContactPointsListQuery(undefined, { skip: skip || useK8sApi });
@@ -117,17 +118,12 @@ export const useGrafanaContactPoints = ({
   fetchStatuses,
   fetchPolicies,
   skip,
-}: GrafanaFetchOptions & {
-  /**
-   * Should we skip requests altogether?
-   * Useful for cases where we want to conditionally call grafana or external alertmanager endpoints
-   */
-  skip?: boolean;
-} = {}) => {
+}: GrafanaFetchOptions & Skippable = {}) => {
   const onCallResponse = useOnCallIntegrations({ skip });
   const alertNotifiers = useGrafanaNotifiersQuery(undefined, { skip });
   const contactPointsListResponse = useGetGrafanaContactPoints({ skip });
   const contactPointsStatusResponse = useGetContactPointsStatusQuery(undefined, {
+    ...defaultOptions,
     pollingInterval: RECEIVER_STATUS_POLLING_INTERVAL,
     skip: skip || !fetchStatuses,
   });
@@ -175,7 +171,7 @@ export function useContactPointsWithStatus({
   alertmanager,
   fetchStatuses,
   fetchPolicies,
-}: GrafanaFetchOptions & { alertmanager: string }) {
+}: GrafanaFetchOptions & BaseAlertmanagerArgs) {
   const isGrafanaAlertmanager = alertmanager === GRAFANA_RULES_SOURCE_NAME;
   const grafanaResponse = useGrafanaContactPoints({
     skip: !isGrafanaAlertmanager,
