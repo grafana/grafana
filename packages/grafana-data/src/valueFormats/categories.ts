@@ -79,7 +79,9 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Area',
     formats: [
+      { name: 'Square Millimeter (mm²)', id: 'areaMM2', fn: SIPrefix('m²', -1) },
       { name: 'Square Meters (m²)', id: 'areaM2', fn: toFixedUnit('m²') },
+      { name: 'Square Millimeter (km²)', id: 'areaKM2', fn: SIPrefix('m²', 1) },
       { name: 'Square Feet (ft²)', id: 'areaF2', fn: toFixedUnit('ft²') },
       { name: 'Square Miles (mi²)', id: 'areaMI2', fn: toFixedUnit('mi²') },
       { name: 'Acres (ac)', id: 'acres', fn: toFixedUnit('ac') },
@@ -308,6 +310,7 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Length',
     formats: [
+      { name: 'micrometer (μm)', id: 'lengthμm', fn: SIPrefix('m', -2) },
       { name: 'millimeter (mm)', id: 'lengthmm', fn: SIPrefix('m', -1) },
       { name: 'inch (in)', id: 'lengthin', fn: toFixedUnit('in') },
       { name: 'feet (ft)', id: 'lengthft', fn: toFixedUnit('ft') },
@@ -371,6 +374,9 @@ export const getCategories = (): ValueFormatCategory[] => [
     name: 'Time',
     formats: [
       { name: 'Hertz (1/s)', id: 'hertz', fn: SIPrefix('Hz') },
+      { name: 'Kilohertz (1e3/s)', id: 'kHz', fn: SIPrefix('Hz', 1) },
+      { name: 'Megahertz (1e6/s)', id: 'MHz', fn: SIPrefix('Hz', 2) },
+      { name: 'Gigahertz (1e9/s)', id: 'GHz', fn: SIPrefix('Hz', 3) },
       { name: 'nanoseconds (ns)', id: 'ns', fn: toNanoSeconds },
       { name: 'microseconds (µs)', id: 'µs', fn: toMicroSeconds },
       { name: 'milliseconds (ms)', id: 'ms', fn: toMilliSeconds },
@@ -414,7 +420,8 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Velocity',
     formats: [
-      { name: 'meters/second (m/s)', id: 'velocityms', fn: toFixedUnit('m/s') },
+      { name: 'millimeters/second (mm/s)', id: 'velocitymms', fn: SIPrefix('m/s', -1) },
+      { name: 'meters/second (m/s)', id: 'velocityms', fn: SIPrefix('m/s') },
       { name: 'kilometers/hour (km/h)', id: 'velocitykmh', fn: toFixedUnit('km/h') },
       { name: 'miles/hour (mph)', id: 'velocitymph', fn: toFixedUnit('mph') },
       { name: 'knot (kn)', id: 'velocityknot', fn: toFixedUnit('kn') },
