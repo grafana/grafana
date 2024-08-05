@@ -200,6 +200,15 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, snapshots, 1)
 		require.Equal(t, *snapshot, snapshots[0])
+
+		// delete snapshot
+		err = s.DeleteSnapshot(ctx, snapshotUid)
+		require.NoError(t, err)
+
+		// now we expect not to find the snapshot
+		snapshot, err = s.GetSnapshotByUID(ctx, sessionUid, snapshotUid, 0, 0)
+		require.ErrorIs(t, err, cloudmigration.ErrSnapshotNotFound)
+		require.Nil(t, snapshot)
 	})
 }
 

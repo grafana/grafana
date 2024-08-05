@@ -468,8 +468,24 @@ func (s *Service) GetMigrationRunList(ctx context.Context, migUID string) (*clou
 	return runList, nil
 }
 
-func (s *Service) DeleteSession(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
-	c, err := s.store.DeleteMigrationSessionByUID(ctx, uid)
+func (s *Service) DeleteSession(ctx context.Context, sessionUID string) (*cloudmigration.CloudMigrationSession, error) {
+	// first we try to delete all the associate information to the session
+	snapshots, err := s.store.GetMigrationStatusList(ctx, sessionUID)
+	if err != nil {
+		return nil, fmt.Errorf("getting migration snapshots from db: %w", err)
+	}
+	for _, snapshot := range snapshots {
+		err := s.store.DeleteSnapshotResources(ctx, snapshot.UID)
+		if err != nil {
+			return nil, fmt.Errorf("deleting snapshot resource from db: %w", err)
+		}
+		err = s.store.DeleteSnapshot(ctx, snapshot.UID)
+		if err != nil {
+			return nil, fmt.Errorf("deleting snapshot from db: %w", err)
+		}
+	}
+	// and then we delete the migration sessions
+	c, err := s.store.DeleteMigrationSessionByUID(ctx, sessionUID)
 	if err != nil {
 		return c, fmt.Errorf("deleting migration from db: %w", err)
 	}

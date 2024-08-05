@@ -222,6 +222,15 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 	return err
 }
 
+func (ss *sqlStore) DeleteSnapshot(ctx context.Context, snapshotUid string) error {
+	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		_, err := sess.Delete(cloudmigration.CloudMigrationSnapshot{
+			UID: snapshotUid,
+		})
+		return err
+	})
+}
+
 func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, sessionUid, uid string, resultPage int, resultLimit int) (*cloudmigration.CloudMigrationSnapshot, error) {
 	var snapshot cloudmigration.CloudMigrationSnapshot
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
