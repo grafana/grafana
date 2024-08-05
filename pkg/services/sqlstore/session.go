@@ -10,6 +10,7 @@ import (
 	"github.com/mattn/go-sqlite3"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -49,7 +50,7 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 		sess.Session = sess.Session.Context(ctx)
 
 		// This is a noop span to simplify later operations. purposefully not using existing context
-		span := trace.SpanFromContext(context.Background())
+		_, span := noop.NewTracerProvider().Tracer("integrationtests").Start(ctx, "sqlstore.startSessionOrUseExisting")
 
 		return sess, false, span, nil
 	}
