@@ -20,6 +20,8 @@ export interface PromQuery extends GenPromQuery, DataQuery {
   disableTextWrap?: boolean;
   fullMetaSearch?: boolean;
   includeNullMetadata?: boolean;
+  // resource limits
+  seriesLimit?: string;
 }
 
 export enum PrometheusCacheLevel {

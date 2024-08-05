@@ -35,6 +35,7 @@ export interface BrowserProps {
   storeLastUsedLabels: (labels: string[]) => void;
   deleteLastUsedLabels: () => void;
   timeRange?: TimeRange;
+  seriesLimit?: string;
 }
 
 interface BrowserState {
@@ -419,7 +420,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
       this.updateLabelState(lastFacetted, { loading: true }, `Facetting labels for ${selector}`);
     }
     try {
-      const possibleLabels = await languageProvider.fetchSeriesLabels(selector, true);
+      const possibleLabels = await languageProvider.fetchSeriesLabels(selector, true, this.props.seriesLimit);
       // If selector changed, clear loading state and discard result by returning early
       if (selector !== buildSelector(this.state.labels)) {
         if (lastFacetted) {

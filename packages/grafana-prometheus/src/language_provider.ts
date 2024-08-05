@@ -22,6 +22,7 @@ import {
   toPromLikeQuery,
 } from './language_utils';
 import PromqlSyntax from './promql';
+import { DEFAULT_SERIES_LIMIT } from './querybuilder/components/PromQueryBuilderOptions';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { PrometheusCacheLevel, PromMetricsMetadata, PromQuery } from './types';
 
@@ -29,6 +30,13 @@ const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
 // Max number of items (metrics, labels, values) that we display as suggestions. Prevents from running out of memory.
 export const SUGGESTIONS_LIMIT = 10000;
+
+type UrlParamsType = {
+  start?: string;
+  end?: string;
+  'match[]'?: string;
+  limit?: string;
+};
 
 const buildCacheHeaders = (durationInSeconds: number) => {
   return {
@@ -335,13 +343,22 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * @param name
    * @param withName
    */
-  fetchSeriesLabels = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
+  fetchSeriesLabels = async (
+    name: string,
+    withName?: boolean,
+    withLimit?: string
+  ): Promise<Record<string, string[]>> => {
     const interpolatedName = this.datasource.interpolateString(name);
     const range = this.datasource.getAdjustedInterval(this.timeRange);
-    const urlParams = {
+    let urlParams: UrlParamsType = {
       ...range,
       'match[]': interpolatedName,
     };
+
+    if (withLimit !== 'none') {
+      urlParams = { ...urlParams, limit: withLimit ?? DEFAULT_SERIES_LIMIT };
+    }
+
     const url = `/api/v1/series`;
 
     const data = await this.request(url, [], urlParams, this.getDefaultCacheHeaders());

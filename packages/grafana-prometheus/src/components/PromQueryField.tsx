@@ -261,6 +261,7 @@ class PromQueryFieldClass extends PureComponent<PromQueryFieldProps, PromQueryFi
                     storeLastUsedLabels={onLastUsedLabelsSave}
                     deleteLastUsedLabels={onLastUsedLabelsDelete}
                     timeRange={this.props.range}
+                    seriesLimit={query.seriesLimit}
                   />
                 </div>
               )}
