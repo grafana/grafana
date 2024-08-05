@@ -35,6 +35,19 @@ The following video guides you through the creation steps and common customizati
 
 {{< docs/play title="Grafana Bar Charts and Pie Charts" url="https://play.grafana.org/d/ktMs4D6Mk/" >}}
 
+## Supported data formats
+
+It is recommended to use only one data frame, in case multiple are present the panel will display as configured in the [Value options](#value-options) section. #########and it must have at least one string field that will be used as the category for an X or Y axis and one or more numerical fields.
+
+Example:
+
+| Browser | Market share |
+| ------- | ------------ |
+| Chrome  | 50           |
+| IE      | 17.5         |
+
+If you have more than one numerical field the visualization will show grouped bars.
+
 ## Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
