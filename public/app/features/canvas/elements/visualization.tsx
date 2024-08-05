@@ -1,13 +1,20 @@
-import { css } from '@emotion/css';
-import { PureComponent } from 'react';
+import {css} from '@emotion/css';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { EmbeddedScene, PanelBuilders, SceneFlexItem, SceneFlexLayout, SceneQueryRunner } from '@grafana/scenes';
-import { stylesFactory } from '@grafana/ui';
-import { config } from 'app/core/config';
-import { DimensionContext } from 'app/features/dimensions/context';
-import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
-import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
+import {GrafanaTheme2, SelectableValue} from '@grafana/data';
+import {DataFrame} from '@grafana/data/';
+import {
+  EmbeddedScene,
+  PanelBuilders,
+  SceneDataQuery,
+  SceneFlexItem,
+  SceneFlexLayout,
+  SceneQueryRunner,
+} from '@grafana/scenes';
+import {stylesFactory, usePanelContext} from '@grafana/ui';
+import {config} from 'app/core/config';
+import {DimensionContext} from 'app/features/dimensions/context';
+import {ColorDimensionEditor} from 'app/features/dimensions/editors/ColorDimensionEditor';
+import {TextDimensionEditor} from 'app/features/dimensions/editors/TextDimensionEditor';
 
 import {
   CanvasElementItem,
@@ -16,57 +23,82 @@ import {
   defaultBgColor,
   defaultTextColor,
 } from '../element';
-import { Align, VAlign, VizElementConfig, VizElementData } from '../types';
+import {Align, VAlign, VizElementConfig, VizElementData} from '../types';
 
 const panelTypes: Array<SelectableValue<string>> = Object.keys(PanelBuilders).map((type) => {
   return { label: type, value: type };
 });
-class VisualizationDisplay extends PureComponent<CanvasElementProps<VizElementConfig, VizElementData>> {
-  render() {
-    const { data } = this.props;
-    const styles = getStyles(config.theme2, data);
 
-    let panelToEmbed = PanelBuilders.timeseries().setTitle('Embedded Panel');
-    if (data?.vizType) {
-      // TODO make this better
-      panelToEmbed = PanelBuilders[data.vizType as keyof typeof PanelBuilders]().setTitle('Embedded Panel');
-    }
+const VisualizationDisplay = (props: CanvasElementProps<VizElementConfig, VizElementData>) => {
+  const context = usePanelContext();
+  const scene = context.instanceState?.scene;
 
-    // TODO data needs to be tied to element options and come from dashboard dataframes
-    const panelData = new SceneQueryRunner({
-      datasource: {
-        type: 'grafana-testdata-datasource',
-      },
-      queries: [
-        {
-          refId: 'A',
-        },
-      ],
-    });
-    panelToEmbed.setData(panelData);
-    const panel = panelToEmbed.build();
+  const {data, config: elementConfig} = props;
+  const styles = getStyles(config.theme2, data);
 
-    const embeddedPanel = new EmbeddedScene({
-      body: new SceneFlexLayout({
-        children: [
-          new SceneFlexItem({
-            width: '100%',
-            height: '100%',
-            body: panel,
-          }),
-        ],
-      }),
-    });
-
-    return (
-      <div className={styles.container}>
-        <span className={styles.span}>
-          <embeddedPanel.Component model={embeddedPanel} />
-        </span>
-      </div>
-    );
+  let panelToEmbed = PanelBuilders.timeseries().setTitle('Embedded Panel');
+  if (data?.vizType) {
+    // TODO make this better
+    panelToEmbed = PanelBuilders[data.vizType as keyof typeof PanelBuilders]().setTitle('Embedded Panel');
   }
-}
+
+  // @TODO: Cleanup?
+  let frames = scene?.data?.series as DataFrame[];
+  let selectedFrames = frames?.filter(
+    (frame) => frame.fields.filter((field) => elementConfig.fields?.includes(field.name)).length > 0
+  );
+  selectedFrames = selectedFrames?.map((frame) => ({
+    ...frame,
+    fields: frame.fields.filter((field) => !elementConfig.fields?.includes(field.name)),
+  }));
+
+  // @TODO: Update refId
+  const getQueries = () => {
+    const queries: SceneDataQuery[] = [];
+    selectedFrames?.forEach((frame, index) => {
+      queries.push({
+        refId: `A${index}`,
+      });
+    });
+
+    return queries;
+  };
+
+  // TODO data needs to be tied to element options and come from dashboard dataframes
+  const panelData = new SceneQueryRunner({
+    data: {
+      ...scene?.data,
+      series: selectedFrames,
+    },
+    datasource: {
+      type: 'grafana-testdata-datasource',
+    },
+    queries: getQueries(),
+  });
+
+  panelToEmbed.setData(panelData);
+  const panel = panelToEmbed.build();
+
+  const embeddedPanel = new EmbeddedScene({
+    body: new SceneFlexLayout({
+      children: [
+        new SceneFlexItem({
+          width: '100%',
+          height: '100%',
+          body: panel,
+        }),
+      ],
+    }),
+  });
+
+  return (
+    <div className={styles.container}>
+      <span className={styles.span}>
+        <embeddedPanel.Component model={embeddedPanel}/>
+      </span>
+    </div>
+  );
+};
 
 const getStyles = stylesFactory((theme: GrafanaTheme2, data) => ({
   container: css({
@@ -105,6 +137,7 @@ export const visualizationItem: CanvasElementItem<VizElementConfig, VizElementDa
         fixed: defaultTextColor,
       },
       vizType: 'timeseries',
+      fields: options?.fields ?? [],
     },
     background: {
       color: {

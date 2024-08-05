@@ -1,23 +1,23 @@
-import { css } from '@emotion/css';
-import { Global } from '@emotion/react';
-import Tree, { TreeNodeProps } from 'rc-tree';
-import { Key, useEffect, useMemo, useState } from 'react';
+import {css} from '@emotion/css';
+import {Global} from '@emotion/react';
+import Tree, {TreeNodeProps} from 'rc-tree';
+import {Key, useEffect, useMemo, useState} from 'react';
 
-import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { Button, Icon, Stack, useStyles2, useTheme2 } from '@grafana/ui';
-import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
-import { ElementState } from 'app/features/canvas/runtime/element';
-import { frameSelection, reorderElements } from 'app/features/canvas/runtime/sceneElementManagement';
+import {GrafanaTheme2, StandardEditorProps} from '@grafana/data';
+import {config} from '@grafana/runtime';
+import {Button, Icon, Stack, useStyles2, useTheme2} from '@grafana/ui';
+import {AddLayerButton} from 'app/core/components/Layers/AddLayerButton';
+import {ElementState} from 'app/features/canvas/runtime/element';
+import {frameSelection, reorderElements} from 'app/features/canvas/runtime/sceneElementManagement';
 
-import { getGlobalStyles } from '../../globalStyles';
-import { Options } from '../../panelcfg.gen';
-import { DragNode, DropNode } from '../../types';
-import { doSelect, getElementTypes, onAddItem } from '../../utils';
-import { TreeViewEditorProps } from '../element/elementEditor';
+import {getGlobalStyles} from '../../globalStyles';
+import {Options} from '../../panelcfg.gen';
+import {DragNode, DropNode} from '../../types';
+import {doSelect, getElementTypes, onAddItem} from '../../utils';
+import {TreeViewEditorProps} from '../element/elementEditor';
 
-import { TreeNodeTitle } from './TreeNodeTitle';
-import { getTreeData, onNodeDrop, TreeElement } from './tree';
+import {TreeNodeTitle} from './TreeNodeTitle';
+import {getTreeData, onNodeDrop, TreeElement} from './tree';
 
 let allowSelection = true;
 
@@ -125,6 +125,22 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
     }
   };
 
+  const onGenerateVisualization = () => {
+    const visualizationSelection = {
+      label: 'Visualization',
+      value: 'visualization',
+      description: 'Visualization',
+    };
+
+    let selectedFields: string[] = [];
+    const selectedElements = [...settings.selected];
+    selectedElements.map((selectedElement) => {
+      selectedFields.push(selectedElement?.data.field);
+    });
+
+    onAddItem(visualizationSelection, layer, undefined, selectedFields);
+  };
+
   const typeOptions = getElementTypes(settings.scene.shouldShowAdvancedTypes).options;
 
   return (
@@ -163,6 +179,15 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
           </Button>
         )}
       </Stack>
+      <Stack justifyContent="space-between" direction="row">
+        {selection.length > 1 && (
+          <div className={styles.generateVizWrapper}>
+            <Button size="sm" variant="secondary" onClick={onGenerateVisualization}>
+              Generate visualization
+            </Button>
+          </div>
+        )}
+      </Stack>
     </>
   );
 };
@@ -171,5 +196,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   addLayerButton: css({
     marginLeft: '18px',
     minWidth: '150px',
+  }),
+  generateVizWrapper: css({
+    marginLeft: '18px',
+    paddingTop: '16px',
   }),
 });
