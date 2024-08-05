@@ -13,6 +13,7 @@ import {
   ReadNamespacedTimeIntervalApiResponse,
 } from 'app/features/alerting/unified/openapi/timeIntervalsApi.gen';
 import { deleteMuteTimingAction, updateAlertManagerConfigAction } from 'app/features/alerting/unified/state/actions';
+import { BaseAlertmanagerArgs } from 'app/features/alerting/unified/types/hooks';
 import { renameMuteTimings } from 'app/features/alerting/unified/utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
@@ -26,15 +27,6 @@ const {
   useReplaceNamespacedTimeIntervalMutation,
   useDeleteNamespacedTimeIntervalMutation,
 } = timeIntervalsApi;
-
-type BaseAlertmanagerArgs = {
-  /**
-   * Name of alertmanager being used for mute timings management.
-   *
-   * Hooks will behave differently depending on whether this is `grafana` or an external alertmanager
-   */
-  alertmanager: string;
-};
 
 /**
  * Alertmanager mute time interval, with optional additional metadata

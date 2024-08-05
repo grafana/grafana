@@ -1,5 +1,10 @@
 {
   "plugins": ["testing-library"],
+  "rules": {
+    "dot-notation": "error",
+    "prefer-const": "error",
+    "react/no-unused-prop-types": "error",
+  },
   "overrides": [
     {
       "files": ["**/__tests__/**/*.[jt]s?(x)", "**/?(*.)+(spec|test).[jt]s?(x)"],
