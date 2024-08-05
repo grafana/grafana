@@ -29,7 +29,7 @@ function $folder(children: MockFolder['children'] = []): MockFolder {
   return {
     kind: 'folder',
     uid: chance.guid(),
-    title: chance.sentence({ words: chance.integer({ min: 1, max: 3 }) }),
+    title: chance.company(),
     children: children,
   };
 }
@@ -38,8 +38,8 @@ function $dash(): MockDashboard {
   return {
     kind: 'dashboard',
     uid: chance.guid(),
-    title: chance.sentence({ words: chance.integer({ min: 1, max: 3 }) }),
+    title: chance.name({ middle_initial: true }),
   };
 }
 
-export const folderLayout = [...arrayOf(1234, (index) => $folder()), ...arrayOf(123, (index) => $dash())];
+export const folderLayout = [...arrayOf(123, (index) => $folder()), ...arrayOf(123, (index) => $dash())];

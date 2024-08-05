@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Page } from 'app/core/components/Page/Page';
 
 import { useGetFoldersQuery } from './new-api';
+import { useNewAPIBlahBlah } from './new-api/useBlahBlah';
 
 interface NewBrowseDashboardsPageProps {}
 
@@ -21,13 +22,9 @@ interface PretendAPI {
 }
 
 export default function NewBrowseDashboardsPage(props: NewBrowseDashboardsPageProps) {
-  const resp = useGetFoldersQuery({});
-  const { fetchNextPage, isLoading, pages } = useAPI();
+  const { items: allRows, isLoading, hasNextPage, requestNextPage } = useNewAPIBlahBlah();
 
-  console.log(resp);
-
-  const hasNextPage = pages.length < 5;
-  const allRows = pages.flat();
+  const pageCountRef = useRef(0);
 
   const listRef = useRef<HTMLDivElement | null>(null);
 
@@ -47,9 +44,13 @@ export default function NewBrowseDashboardsPage(props: NewBrowseDashboardsPagePr
     }
 
     if (lastItem.index >= allRows.length - 1 && hasNextPage && !isLoading) {
-      fetchNextPage();
+      requestNextPage({
+        page: pageCountRef.current,
+        limit: PAGE_SIZE,
+      });
+      pageCountRef.current += 1;
     }
-  }, [isLoading, hasNextPage, fetchNextPage, allRows.length, virtualItems]);
+  }, [isLoading, hasNextPage, allRows.length, virtualItems, requestNextPage]);
 
   return (
     <Page navId="dashboards/browse">
@@ -61,22 +62,26 @@ export default function NewBrowseDashboardsPage(props: NewBrowseDashboardsPagePr
             position: 'relative',
           }}
         >
-          {virtualItems.map((item) => (
-            <div
-              key={item.key}
-              className={item.index % 2 ? 'ListItemOdd' : 'ListItemEven'}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: `${item.size}px`,
-                transform: `translateY(${item.start - virtualizer.options.scrollMargin}px)`,
-              }}
-            >
-              Row {item.index}
-            </div>
-          ))}
+          {virtualItems.map((item) => {
+            const folder = allRows[item.index];
+
+            return (
+              <div
+                key={item.key}
+                className={item.index % 2 ? 'ListItemOdd' : 'ListItemEven'}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: `${item.size}px`,
+                  transform: `translateY(${item.start - virtualizer.options.scrollMargin}px)`,
+                }}
+              >
+                Row {item.index} / {folder?.title}
+              </div>
+            );
+          })}
         </div>
       </div>
 

@@ -8,6 +8,7 @@
     "strict": true,
     "resolveJsonModule": true,
     "useUnknownInCatchVariables": true,
+    "lib": ["es2023"],
     "incremental": true,
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
     "paths": {
