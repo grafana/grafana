@@ -1,6 +1,6 @@
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
 
-import { getDatasourceAPIUid } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from '../utils/datasource';
 
 import { rulerUrlBuilder } from './ruler';
 
@@ -102,5 +102,71 @@ describe('rulerUrlBuilder', () => {
 
     // Assert
     expect(rules.params).toMatchObject({ dashboard_uid: 'dashboard-uid', panel_id: '1234', subtype: 'mimir' });
+  });
+
+  describe('When slash in namespace or group', () => {
+    it('Should use QUERY_NAMESPACE and QUERY_GROUP path placeholders and include names in query string params', () => {
+      // Arrange
+      const config: RulerDataSourceConfig = {
+        dataSourceName: 'Mimir-cloud',
+        apiVersion: 'config',
+      };
+
+      mocks.getDatasourceAPIUId.mockReturnValue('ds-uid');
+
+      // Act
+      const builder = rulerUrlBuilder(config);
+
+      const namespace = builder.namespace('test/ns');
+      const group = builder.namespaceGroup('test/ns', 'test/gr');
+
+      // Assert
+      expect(namespace.path).toBe('/api/ruler/ds-uid/api/v1/rules/QUERY_NAMESPACE');
+      expect(namespace.params).toMatchObject({ subtype: 'mimir', namespace: 'test/ns' });
+
+      expect(group.path).toBe('/api/ruler/ds-uid/api/v1/rules/QUERY_NAMESPACE/QUERY_GROUP');
+      expect(group.params).toMatchObject({ subtype: 'mimir', namespace: 'test/ns', group: 'test/gr' });
+    });
+
+    it('Should use the tag replacement only when the slash is present', () => {
+      // Arrange
+      const config: RulerDataSourceConfig = {
+        dataSourceName: 'Mimir-cloud',
+        apiVersion: 'config',
+      };
+
+      mocks.getDatasourceAPIUId.mockReturnValue('ds-uid');
+
+      // Act
+      const builder = rulerUrlBuilder(config);
+
+      const group = builder.namespaceGroup('test-ns', 'test/gr');
+
+      // Assert
+      expect(group.path).toBe('/api/ruler/ds-uid/api/v1/rules/test-ns/QUERY_GROUP');
+      expect(group.params).toMatchObject({ subtype: 'mimir', group: 'test/gr' });
+    });
+
+    it('Should only use the tag replacement for external datasources', () => {
+      // Arrange
+      const config: RulerDataSourceConfig = {
+        dataSourceName: GRAFANA_RULES_SOURCE_NAME,
+        apiVersion: 'legacy',
+      };
+
+      mocks.getDatasourceAPIUId.mockReturnValue(GRAFANA_RULES_SOURCE_NAME);
+
+      // Act
+      const builder = rulerUrlBuilder(config);
+
+      const group = builder.namespaceGroup('test/ns', 'test/gr');
+
+      // Assert
+      expect(group.path).toBe(
+        `/api/ruler/grafana/api/v1/rules/${encodeURIComponent('test/ns')}/${encodeURIComponent('test/gr')}`
+      );
+      expect(group.params).not.toHaveProperty('namespace');
+      expect(group.params).not.toHaveProperty('group');
+    });
   });
 });

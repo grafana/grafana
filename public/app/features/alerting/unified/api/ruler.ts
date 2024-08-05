@@ -8,7 +8,7 @@ import { PostableRulerRuleGroupDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } fro
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
-import { prepareRulesFilterQueryParams } from './prometheus';
+import { getRulesFilterSearchParams } from './prometheus';
 
 interface ErrorResponseMessage {
   message?: string;
@@ -20,32 +20,94 @@ export interface RulerRequestUrl {
   params?: Record<string, string>;
 }
 
+const QUERY_NAMESPACE_TAG = 'QUERY_NAMESPACE';
+const QUERY_GROUP_TAG = 'QUERY_GROUP';
+
 export function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
-  const grafanaServerPath = `/api/ruler/${getDatasourceAPIUid(rulerConfig.dataSourceName)}`;
+  const rulerPath = getRulerPath(rulerConfig);
+  const queryDetailsProvider = getQueryDetailsProvider(rulerConfig);
 
-  const rulerPath = `${grafanaServerPath}/api/v1/rules`;
-  const rulerSearchParams = new URLSearchParams();
-
-  rulerSearchParams.set('subtype', rulerConfig.apiVersion === 'legacy' ? 'cortex' : 'mimir');
+  const subtype = rulerConfig.apiVersion === 'legacy' ? 'cortex' : 'mimir';
 
   return {
-    rules: (filter?: FetchRulerRulesFilter): RulerRequestUrl => {
-      const params = prepareRulesFilterQueryParams(rulerSearchParams, filter);
+    rules: (filter?: FetchRulerRulesFilter): RulerRequestUrl => ({
+      path: rulerPath,
+      params: { subtype, ...getRulesFilterSearchParams(filter) },
+    }),
+
+    namespace: (namespace: string): RulerRequestUrl => {
+      // To handle slashes we need to convert namespace to a query parameter
+      const { namespace: finalNs, searchParams: nsParams } = queryDetailsProvider.namespace(namespace);
 
       return {
-        path: `${rulerPath}`,
-        params: params,
+        path: `${rulerPath}/${encodeURIComponent(finalNs)}`,
+        params: { subtype, ...nsParams },
       };
     },
-    namespace: (namespace: string): RulerRequestUrl => ({
-      path: `${rulerPath}/${encodeURIComponent(namespace)}`,
-      params: Object.fromEntries(rulerSearchParams),
-    }),
-    namespaceGroup: (namespaceUID: string, group: string): RulerRequestUrl => ({
-      path: `${rulerPath}/${encodeURIComponent(namespaceUID)}/${encodeURIComponent(group)}`,
-      params: Object.fromEntries(rulerSearchParams),
-    }),
+
+    namespaceGroup: (namespaceUID: string, group: string): RulerRequestUrl => {
+      const { namespace: finalNs, searchParams: nsParams } = queryDetailsProvider.namespace(namespaceUID);
+      const { group: finalGroup, searchParams: groupParams } = queryDetailsProvider.group(group);
+
+      return {
+        path: `${rulerPath}/${encodeURIComponent(finalNs)}/${encodeURIComponent(finalGroup)}`,
+        params: { subtype, ...nsParams, ...groupParams },
+      };
+    },
   };
+}
+
+interface NamespaceUrlParams {
+  namespace: string;
+  searchParams: Record<string, string>;
+}
+
+interface GroupUrlParams {
+  group: string;
+  searchParams: Record<string, string>;
+}
+
+interface RulerQueryDetailsProvider {
+  namespace: (namespace: string) => NamespaceUrlParams;
+  group: (group: string) => GroupUrlParams;
+}
+
+function getQueryDetailsProvider(rulerConfig: RulerDataSourceConfig): RulerQueryDetailsProvider {
+  const isGrafanaDatasource = rulerConfig.dataSourceName === GRAFANA_RULES_SOURCE_NAME;
+
+  const externalRulerSearchParams = {
+    subtype: rulerConfig.apiVersion === 'legacy' ? 'cortex' : 'mimir',
+  };
+
+  // For Grafana we only proxy namespace and group parameters. No need to deal with slashes
+  if (isGrafanaDatasource) {
+    return {
+      namespace: (namespace: string) => ({ namespace, searchParams: {} }),
+      group: (group: string) => ({ group, searchParams: {} }),
+    };
+  }
+
+  return {
+    namespace: (namespace: string) => {
+      const containsSlash = namespace.includes('/');
+      if (containsSlash) {
+        return { namespace: QUERY_NAMESPACE_TAG, searchParams: { ...externalRulerSearchParams, namespace } };
+      }
+      return { namespace, searchParams: externalRulerSearchParams };
+    },
+    group: (group: string) => {
+      const containsSlash = group.includes('/');
+      if (containsSlash) {
+        return { group: QUERY_GROUP_TAG, searchParams: { ...externalRulerSearchParams, group } };
+      }
+      return { group, searchParams: externalRulerSearchParams };
+    },
+  };
+}
+
+function getRulerPath(rulerConfig: RulerDataSourceConfig) {
+  const grafanaServerPath = `/api/ruler/${getDatasourceAPIUid(rulerConfig.dataSourceName)}`;
+  return `${grafanaServerPath}/api/v1/rules`;
 }
 
 // upsert a rule group. use this to update rule
