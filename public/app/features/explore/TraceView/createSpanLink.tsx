@@ -110,6 +110,7 @@ export function createSpanLinkFactory({
             content: <Icon name="link" title={link.title || 'Link'} />,
             field: link.origin,
             type: shouldCreatePyroscopeLink ? SpanLinkType.Profiles : SpanLinkType.Unknown,
+            target: link.target,
           };
         });
 

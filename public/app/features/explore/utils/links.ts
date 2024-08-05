@@ -65,7 +65,7 @@ export const exploreDataLinkPostProcessorFactory = (
     const { field, dataLinkScopedVars: vars, frame: dataFrame, link, linkModel } = options;
     const { valueRowIndex: rowIndex } = options.config;
 
-    if (!link.internal || rowIndex === undefined) {
+    if (rowIndex === undefined) {
       return linkModel;
     }
 
