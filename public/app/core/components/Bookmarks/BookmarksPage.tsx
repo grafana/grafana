@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -10,11 +9,7 @@ import { usePinnedItems } from '../AppChrome/MegaMenu/hooks';
 import { findByUrl } from '../AppChrome/MegaMenu/utils';
 import { NavLandingPageCard } from '../NavLandingPage/NavLandingPageCard';
 
-interface Props {
-  header?: React.ReactNode;
-}
-
-export function BookmarksPage({}: Props) {
+export function BookmarksPage() {
   const styles = useStyles2(getStyles);
   const pinnedItems = usePinnedItems();
   const navTree = useSelector((state) => state.navBarTree);
