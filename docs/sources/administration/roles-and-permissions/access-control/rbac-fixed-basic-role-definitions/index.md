@@ -37,7 +37,7 @@ The following table has the existing built-in fixed role definitions. Other fixe
 The UUID presented here can be used as an identifier for [Terraform provisioning](../rbac-terraform-provisioning).
 
 {{< admonition type="caution" >}}
-These UUIDs might not be available if your instance was created before Grafana v10.2.0.
+These UUIDs won't be available if your instance was created before Grafana v10.2.0.
 
 To learn how to use the roles API to determine the role UUIDs, refer to [Manage RBAC roles](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles/).
 {{< /admonition >}}
