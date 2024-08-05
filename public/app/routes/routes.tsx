@@ -219,9 +219,8 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/users',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "UsersListPage" */ 'app/features/users/UsersListPage')
-      ),
+      // Org users page has been combined with admin users
+      component: () => <Redirect to={'/admin/users'} />,
     },
     {
       path: '/org/users/invite',
