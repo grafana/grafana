@@ -11,6 +11,16 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+type getResponse struct {
+	Value []byte `json:"value"`
+}
+
+type setRequest struct {
+	Key   string        `json:"key"`
+	Value []byte        `json:"value"`
+	Expr  time.Duration `json:"expr"`
+}
+
 func registerRoutes(cfg *setting.Cfg, c *Cache) error {
 	mux := http.NewServeMux()
 	mux.Handle("/ring", c.lfc)
@@ -33,6 +43,19 @@ func registerRoutes(cfg *setting.Cfg, c *Cache) error {
 		w.WriteHeader(http.StatusOK)
 		w.Header().Add("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(&getResponse{Value: value})
+	})
+
+	mux.HandleFunc("DELETE /cache/{key}", func(w http.ResponseWriter, r *http.Request) {
+		key := r.PathValue("key")
+		c.logger.Info("delete cached item", "key", key)
+		err := c.Delete(r.Context(), key)
+		if err != nil {
+			c.logger.Error("failed to delete item", "err", err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
 	})
 
 	mux.HandleFunc("POST /cache/internal", func(w http.ResponseWriter, r *http.Request) {
