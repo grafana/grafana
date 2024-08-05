@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
@@ -28,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -135,25 +133,7 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 		namespacer: b.namespacer,
 		options:    b.options,
 	}
-	legacyStore.tableConverter = gapiutil.NewTableConverter(
-		resourceInfo.GroupResource(),
-		[]metav1.TableColumnDefinition{
-			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Title", Type: "string", Format: "string", Description: "The snapshot name"},
-			{Name: "Created At", Type: "date"},
-		},
-		func(obj any) ([]interface{}, error) {
-			m, ok := obj.(*dashboardsnapshot.DashboardSnapshot)
-			if ok {
-				return []interface{}{
-					m.Name,
-					m.Spec.Title,
-					m.CreationTimestamp.UTC().Format(time.RFC3339),
-				}, nil
-			}
-			return nil, fmt.Errorf("expected snapshot")
-		},
-	)
+	legacyStore.tableConverter = resourceInfo.TableConverter()
 	storage[resourceInfo.StoragePath()] = legacyStore
 	storage[resourceInfo.StoragePath("body")] = &subBodyREST{
 		service:    b.service,

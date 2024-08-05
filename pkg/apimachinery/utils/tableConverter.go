@@ -11,70 +11,74 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/apiserver/pkg/registry/rest"
 )
+
+type TableColumns struct {
+	Definition []metav1.TableColumnDefinition
+	Reader     func(obj any) ([]interface{}, error)
+}
+
+type TableConvertor interface {
+	ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error)
+}
 
 // Based on https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apiserver/pkg/registry/rest/table.go
 type customTableConvertor struct {
 	gr      schema.GroupResource
-	columns []metav1.TableColumnDefinition
-	reader  func(obj any) ([]interface{}, error)
+	columns TableColumns
 }
 
-func NewTableConverter(gr schema.GroupResource, columns []metav1.TableColumnDefinition, reader func(obj any) ([]interface{}, error)) rest.TableConvertor {
-	converter := customTableConvertor{
-		gr:      gr,
-		columns: columns,
-		reader:  reader,
+func NewTableConverter(gr schema.GroupResource, columns TableColumns) TableConvertor {
+	if columns.Reader == nil {
+		columns = TableColumns{
+			Definition: []metav1.TableColumnDefinition{
+				{Name: "Name", Type: "string", Format: "name"},
+				{Name: "Created At", Type: "date"},
+			},
+			Reader: func(obj any) ([]interface{}, error) {
+				v, err := meta.Accessor(obj)
+				if err == nil && v != nil {
+					return []interface{}{
+						v.GetName(),
+						v.GetCreationTimestamp().UTC().Format(time.RFC3339),
+					}, nil
+				}
+
+				r := reflect.ValueOf(obj).Elem()
+				n := r.FieldByName("Name").String()
+				if n != "" {
+					return []interface{}{
+						n,
+						"",
+					}, nil
+				}
+
+				return []interface{}{
+					fmt.Sprintf("%v", obj),
+					"",
+				}, nil
+			},
+		}
 	}
+
 	// Replace the description on standard columns with the global values
-	for idx, column := range converter.columns {
+	for idx, column := range columns.Definition {
 		if column.Description == "" {
 			switch column.Name {
 			case "Name":
-				converter.columns[idx].Description = swaggerMetadataDescriptions["name"]
+				columns.Definition[idx].Description = swaggerMetadataDescriptions["name"]
 			case "Created At":
-				converter.columns[idx].Description = swaggerMetadataDescriptions["creationTimestamp"]
+				columns.Definition[idx].Description = swaggerMetadataDescriptions["creationTimestamp"]
 			}
 		}
 	}
-	return converter
+	return customTableConvertor{
+		gr:      gr,
+		columns: columns,
+	}
 }
 
-func NewDefaultTableConverter(gr schema.GroupResource) rest.TableConvertor {
-	return NewTableConverter(gr,
-		[]metav1.TableColumnDefinition{
-			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Created At", Type: "date"},
-		},
-		func(obj any) ([]interface{}, error) {
-			v, err := meta.Accessor(obj)
-			if err == nil && v != nil {
-				return []interface{}{
-					v.GetName(),
-					v.GetCreationTimestamp().UTC().Format(time.RFC3339),
-				}, nil
-			}
-
-			r := reflect.ValueOf(obj).Elem()
-			n := r.FieldByName("Name").String()
-			if n != "" {
-				return []interface{}{
-					n,
-					"",
-				}, nil
-			}
-
-			return []interface{}{
-				fmt.Sprintf("%v", obj),
-				"",
-			}, nil
-		},
-	)
-}
-
-var _ rest.TableConvertor = &customTableConvertor{}
+var _ TableConvertor = &customTableConvertor{}
 var swaggerMetadataDescriptions = metav1.ObjectMeta{}.SwaggerDoc()
 
 func (c customTableConvertor) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -85,12 +89,9 @@ func (c customTableConvertor) ConvertToTable(ctx context.Context, object runtime
 		table = &metav1.Table{}
 	}
 	fn := func(obj runtime.Object) error {
-		cells, err := c.reader(obj)
+		cells, err := c.columns.Reader(obj)
 		if err != nil {
 			resource := c.gr
-			if info, ok := request.RequestInfoFrom(ctx); ok {
-				resource = schema.GroupResource{Group: info.APIGroup, Resource: info.Resource}
-			}
 			return errNotAcceptable{resource: resource}
 		}
 		table.Rows = append(table.Rows, metav1.TableRow{
@@ -119,7 +120,7 @@ func (c customTableConvertor) ConvertToTable(ctx context.Context, object runtime
 		}
 	}
 	if opt, ok := tableOptions.(*metav1.TableOptions); !ok || !opt.NoHeaders {
-		table.ColumnDefinitions = c.columns
+		table.ColumnDefinitions = c.columns.Definition
 	}
 	return table, nil
 }

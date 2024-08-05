@@ -1,10 +1,14 @@
 package v0alpha1
 
 import (
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	"fmt"
+	"time"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const (
@@ -17,18 +21,84 @@ var ScopeResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	"scopes", "scope", "Scope",
 	func() runtime.Object { return &Scope{} },
 	func() runtime.Object { return &ScopeList{} },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Created At", Type: "date"},
+			{Name: "Title", Type: "string"},
+			{Name: "Filters", Type: "array"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			m, ok := obj.(*Scope)
+			if !ok {
+				return nil, fmt.Errorf("expected scope")
+			}
+			return []interface{}{
+				m.Name,
+				m.CreationTimestamp.UTC().Format(time.RFC3339),
+				m.Spec.Title,
+				m.Spec.Filters,
+			}, nil
+		},
+	}, // default table converter
 )
 
 var ScopeDashboardBindingResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	"scopedashboardbindings", "scopedashboardbinding", "ScopeDashboardBinding",
 	func() runtime.Object { return &ScopeDashboardBinding{} },
 	func() runtime.Object { return &ScopeDashboardBindingList{} },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Created At", Type: "date"},
+			{Name: "Dashboard", Type: "string"},
+			{Name: "Scope", Type: "string"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			m, ok := obj.(*ScopeDashboardBinding)
+			if !ok {
+				return nil, fmt.Errorf("expected scope dashboard binding")
+			}
+			return []interface{}{
+				m.Name,
+				m.CreationTimestamp.UTC().Format(time.RFC3339),
+				m.Spec.Dashboard,
+				m.Spec.Scope,
+			}, nil
+		},
+	},
 )
 
 var ScopeNodeResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	"scopenodes", "scopenode", "ScopeNode",
 	func() runtime.Object { return &ScopeNode{} },
 	func() runtime.Object { return &ScopeNodeList{} },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Created At", Type: "date"},
+			{Name: "Title", Type: "string"},
+			{Name: "Parent Name", Type: "string"},
+			{Name: "Node Type", Type: "string"},
+			{Name: "Link Type", Type: "string"},
+			{Name: "Link ID", Type: "string"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			m, ok := obj.(*ScopeNode)
+			if !ok {
+				return nil, fmt.Errorf("expected scope node")
+			}
+			return []interface{}{
+				m.Name,
+				m.CreationTimestamp.UTC().Format(time.RFC3339),
+				m.Spec.Title,
+				m.Spec.ParentName,
+				m.Spec.NodeType,
+				m.Spec.LinkType,
+				m.Spec.LinkID,
+			}, nil
+		},
+	}, // default table converter
 )
 
 var (

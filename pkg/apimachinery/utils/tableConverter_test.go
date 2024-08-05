@@ -7,33 +7,34 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
 func TestTableConverter(t *testing.T) {
 	// dummy converter
 	converter := utils.NewTableConverter(
 		schema.GroupResource{Group: "x", Resource: "y"},
-		[]metav1.TableColumnDefinition{
-			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Dummy", Type: "string", Format: "string", Description: "Something here"},
-			{Name: "Created At", Type: "date"},
-		},
-		func(obj any) ([]interface{}, error) {
-			m, ok := obj.(*metav1.APIGroup)
-			if !ok {
-				return nil, fmt.Errorf("expected status")
-			}
-			ts := metav1.NewTime(time.UnixMilli(10000000))
-			return []interface{}{
-				m.Name,
-				"dummy",
-				ts.Time.UTC().Format(time.RFC3339),
-			}, nil
+		utils.TableColumns{
+			Definition: []metav1.TableColumnDefinition{
+				{Name: "Name", Type: "string", Format: "name"},
+				{Name: "Dummy", Type: "string", Format: "string", Description: "Something here"},
+				{Name: "Created At", Type: "date"},
+			},
+			Reader: func(obj any) ([]interface{}, error) {
+				m, ok := obj.(*metav1.APIGroup)
+				if !ok {
+					return nil, fmt.Errorf("expected status")
+				}
+				ts := metav1.NewTime(time.UnixMilli(10000000))
+				return []interface{}{
+					m.Name,
+					"dummy",
+					ts.Time.UTC().Format(time.RFC3339),
+				}, nil
+			},
 		},
 	)
 
@@ -97,7 +98,7 @@ func TestTableConverter(t *testing.T) {
 
 	// Default table converter
 	// Convert a single table
-	converter = utils.NewDefaultTableConverter(schema.GroupResource{Group: "x", Resource: "y"})
+	converter = utils.NewTableConverter(schema.GroupResource{Group: "x", Resource: "y"}, utils.TableColumns{})
 	table, err = converter.ConvertToTable(context.Background(), &metav1.APIGroup{
 		Name: "hello",
 	}, nil)

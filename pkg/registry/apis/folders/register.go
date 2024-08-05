@@ -2,7 +2,6 @@ package folders
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,13 +16,11 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -107,27 +104,9 @@ func (b *FolderAPIBuilder) GetAPIGroupInfo(
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 
 	legacyStore := &legacyStorage{
-		service:    b.folderSvc,
-		namespacer: b.namespacer,
-		tableConverter: gapiutil.NewTableConverter(
-			resourceInfo.GroupResource(),
-			[]metav1.TableColumnDefinition{
-				{Name: "Name", Type: "string", Format: "name"},
-				{Name: "Title", Type: "string", Format: "string", Description: "The display name"},
-				{Name: "Parent", Type: "string", Format: "string", Description: "Parent folder UID"},
-			},
-			func(obj any) ([]interface{}, error) {
-				r, ok := obj.(*v0alpha1.Folder)
-				if ok {
-					accessor, _ := utils.MetaAccessor(r)
-					return []interface{}{
-						r.Name,
-						r.Spec.Title,
-						accessor.GetFolder(),
-					}, nil
-				}
-				return nil, fmt.Errorf("expected resource or info")
-			}),
+		service:        b.folderSvc,
+		namespacer:     b.namespacer,
+		tableConverter: resourceInfo.TableConverter(),
 	}
 
 	storage := map[string]rest.Storage{}
