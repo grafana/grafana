@@ -8,13 +8,16 @@ import (
 )
 
 const (
-	TypeUser string = "user"
-	TypeTeam string = "team"
+	TypeUser      string = "user"
+	TypeTeam      string = "team"
+	TypeFolder    string = "folder"
+	TypeDashboard string = "dashboard"
 )
 
 const (
 	RelationTeamMember string = "member"
 	RelationTeamAdmin  string = "admin"
+	RelationParent     string = "parent"
 )
 
 func NewObject(typ, id, relation string) string {

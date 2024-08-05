@@ -3,6 +3,7 @@ package migrator
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -33,6 +34,7 @@ func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...Tu
 		collectors,
 		teamMembershipCollector(store),
 		managedPermissionsCollector(store),
+		folderParentCollector(store),
 	)
 
 	return &ZanzanaSynchroniser{
@@ -170,6 +172,42 @@ func teamMembershipCollector(store db.DB) TupleCollector {
 				tuple.Relation = zanzana.RelationTeamAdmin
 			} else {
 				tuple.Relation = zanzana.RelationTeamMember
+			}
+
+			tuples[collectorID] = append(tuples[collectorID], tuple)
+		}
+
+		return nil
+	}
+}
+
+// folderParentCollector collects folder tree structure and writes it as relation tuples
+func folderParentCollector(store db.DB) TupleCollector {
+	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+		const collectorID = "folder"
+		const query = `
+			SELECT uid, parent_uid, org_id FROM folder WHERE parent_uid IS NOT NULL;
+		`
+		type folder struct {
+			OrgID     int64  `xorm:"org_id"`
+			FolderUID string `xorm:"uid"`
+			ParentUID string `xorm:"parent_uid"`
+		}
+
+		var folders []folder
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(query).Find(&folders)
+		})
+
+		if err != nil {
+			return err
+		}
+
+		for _, f := range folders {
+			tuple := &openfgav1.TupleKey{
+				User:     zanzana.NewScopedObject(zanzana.TypeFolder, f.ParentUID, "", strconv.FormatInt(f.OrgID, 10)),
+				Object:   zanzana.NewScopedObject(zanzana.TypeFolder, f.FolderUID, "", strconv.FormatInt(f.OrgID, 10)),
+				Relation: zanzana.RelationParent,
 			}
 
 			tuples[collectorID] = append(tuples[collectorID], tuple)
