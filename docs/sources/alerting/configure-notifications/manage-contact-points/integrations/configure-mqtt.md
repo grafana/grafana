@@ -24,7 +24,7 @@ The MQTT notifier integration allows you to send alert notifications to an MQTT 
 There are two formats for the MQTT notifier integration:
 
 - **JSON**: Sends the alert notification in JSON format.
-- **Text**: Sends the rendered alert notification message in a plain text format.
+- **Text**: Sends the rendered alert notification message in plain text format.
 
 ## MQTT JSON payload
 
@@ -131,5 +131,5 @@ Each alert in the `alerts` array has the following fields:
 | imageURL     | string | URL of a screenshot of a panel assigned to the rule that created this notification |
 
 {{< admonition type="note" >}}
-Alert rules are not coupled to dashboards anymore therefore the fields related to dashboards `dashboardId` and `panelId` have been removed.
+Alert rules are not coupled to dashboards anymore.  The fields related to dashboards `dashboardId` and `panelId` have been removed.
 {{< /admonition >}}
