@@ -12,7 +12,6 @@ import (
 // Package-level errors.
 var (
 	ErrOptimisticLockingFailed = errors.New("optimistic locking failed")
-	ErrUserNotFoundInContext   = errors.New("user not found in context")
 	ErrNotImplementedYet       = errors.New("not implemented yet")
 )
 
