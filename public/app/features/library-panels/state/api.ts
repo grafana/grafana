@@ -173,15 +173,16 @@ export function libraryVizPanelToSaveModel(vizPanel: VizPanel) {
       gridItem
     ),
     kind: LibraryElementKind.Panel,
+    version: _loadedPanel?.version || 0,
   };
   return saveModel;
 }
 
 export async function updateLibraryVizPanel(vizPanel: VizPanel): Promise<LibraryPanel> {
-  const { uid, folderUID, name, model, version, kind } = libraryVizPanelToSaveModel(vizPanel);
+  const { uid, folderUid, name, model, version, kind } = libraryVizPanelToSaveModel(vizPanel);
 
   const { result } = await getBackendSrv().patch(`/api/library-elements/${uid}`, {
-    folderUID,
+    folderUid,
     name,
     model,
     version,

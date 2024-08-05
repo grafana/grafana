@@ -70,7 +70,6 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     }
 
     const libPanelModel = new PanelModel(libPanel.model);
-    console.log(libPanelModel);
 
     const vizPanelState: VizPanelState = {
       title: libPanelModel.title,

@@ -421,7 +421,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     key: getVizPanelKeyForPanelId(panel.id),
     title: panel.title,
     description: panel.description,
-    pluginId: panel.type,
+    pluginId: panel.type ?? 'timeseries',
     options: panel.options ?? {},
     fieldConfig: panel.fieldConfig,
     pluginVersion: panel.pluginVersion,
