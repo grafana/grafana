@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { css, cx } from '@emotion/css';
+import { reference } from '@popperjs/core';
 import * as React from 'react';
 
 import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
@@ -136,6 +137,11 @@ type ReferenceItemProps = {
 export function References(props: ReferenceItemProps) {
   const { data, createFocusSpanLink, openedItems, onItemToggle, interactive } = props;
   const styles = useStyles2(getStyles);
+
+  data.map((ref) => {
+    console.log('ref.span', ref.span);
+    console.log({ ref });
+  });
 
   return (
     <div className={styles.AccordianReferencesContent}>

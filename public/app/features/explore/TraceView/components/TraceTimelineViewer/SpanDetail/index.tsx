@@ -157,6 +157,8 @@ export type SpanDetailProps = {
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
+  const [metricProcess, setMetricProcess] = React.useState(false);
+
   const {
     detailState,
     linksGetter,
@@ -332,6 +334,8 @@ export default function SpanDetail(props: SpanDetailProps) {
     }
   }
 
+  // console.log({ references });
+
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
   return (
     <div data-testid="span-detail-component">
@@ -366,6 +370,14 @@ export default function SpanDetail(props: SpanDetailProps) {
               onToggle={() => processToggle(spanID)}
             />
           )}
+          {/* <AccordianReferences
+            data={references}
+            isOpen={referencesState.isOpen}
+            openedItems={referencesState.openedItems}
+            onToggle={() => referencesToggle(spanID)}
+            onItemToggle={(reference) => referenceItemToggle(spanID, reference)}
+            createFocusSpanLink={createFocusSpanLink}
+          /> */}
         </div>
         {logs && logs.length > 0 && (
           <AccordianLogs

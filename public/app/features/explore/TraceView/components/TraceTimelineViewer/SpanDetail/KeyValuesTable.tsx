@@ -131,7 +131,7 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
               valueMarkup = (
                 <div>
                   <LinkValue href={links[0].url} title={links[0].text}>
-                    {jsonTable}
+                    {jsonTable} hello world
                   </LinkValue>
                 </div>
               );

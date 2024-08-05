@@ -17,6 +17,7 @@ interface Props {
 export function TraceViewContainer(props: Props) {
   // At this point we only show single trace
   const frame = props.dataFrames[0];
+
   const { dataFrames, splitOpenFn, exploreId, scrollElement } = props;
   const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
   const datasource = useSelector(
@@ -26,6 +27,8 @@ export function TraceViewContainer(props: Props) {
   if (!traceProp) {
     return null;
   }
+
+  console.log({ traceProp });
 
   return (
     <PanelChrome padding="none" title="Trace">

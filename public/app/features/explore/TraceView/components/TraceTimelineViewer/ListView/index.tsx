@@ -499,6 +499,9 @@ export default class ListView extends React.Component<TListViewProps> {
       position: 'relative' as const,
       height: this._yPositions.getEstimatedHeight(),
     };
+
+    console.log({ items });
+
     return (
       <div {...wrapperProps} data-testid="ListView">
         <div style={scrollerStyle}>

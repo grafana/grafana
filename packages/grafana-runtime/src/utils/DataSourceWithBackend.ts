@@ -244,7 +244,8 @@ class DataSourceWithBackend<
     if (request.skipQueryCache) {
       headers[PluginRequestHeaders.SkipQueryCache] = 'true';
     }
-    return getBackendSrv()
+
+    const result = getBackendSrv()
       .fetch<BackendDataSourceResponse>({
         url,
         method: 'POST',
@@ -266,6 +267,8 @@ class DataSourceWithBackend<
           return of(toDataQueryResponse(err));
         })
       );
+
+    return result;
   }
 
   /** Get request headers with plugin ID+UID set */

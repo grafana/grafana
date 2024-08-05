@@ -498,6 +498,8 @@ export class Explore extends PureComponent<Props, ExploreState> {
     const { queryResponse, exploreId } = this.props;
     const dataFrames = queryResponse.series.filter((series) => series.meta?.preferredVisualisationType === 'trace');
 
+    console.log({ dataFrames });
+
     return (
       // If there is no data (like 404) we show a separate error so no need to show anything here
       dataFrames.length && (

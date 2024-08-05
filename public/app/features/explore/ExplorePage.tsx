@@ -63,6 +63,8 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   const showCorrelationEditorBar = config.featureToggles.correlations && (correlationDetails?.editorMode || false);
   const [queryToAdd, setQueryToAdd] = useState<DataQuery | undefined>();
 
+  console.log({ queryToAdd });
+
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
     //We should probably abstract this out at some point

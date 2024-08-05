@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { RefObject, useMemo, useState } from 'react';
+import { RefObject, useEffect, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import {
@@ -170,6 +170,10 @@ export function TraceView(props: Props) {
     : document.getElementsByClassName(props.scrollElementClass ?? '')[0];
 
   const criticalPath = memoizedTraceCriticalPath(traceProp);
+
+  useEffect(() => {
+    collapseAll(traceProp.spans);
+  }, []);
 
   return (
     <>

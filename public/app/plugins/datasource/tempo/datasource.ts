@@ -128,6 +128,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   ) {
     super(instanceSettings);
 
+    console.log('hello am i here');
+
     this.tracesToLogs = instanceSettings.jsonData.tracesToLogs;
     this.serviceMap = instanceSettings.jsonData.serviceMap;
     this.search = instanceSettings.jsonData.search;
@@ -285,6 +287,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
+    console.log({ options });
     const subQueries: Array<Observable<DataQueryResponse>> = [];
     const filteredTargets = options.targets.filter((target) => !target.hide);
     const targets: { [type: string]: TempoQuery[] } = groupBy(filteredTargets, (t) => t.queryType || 'traceql');
@@ -612,6 +615,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         if (response.error) {
           return response;
         }
+        console.log({ response });
+        console.log('hello trasnfor me:', transformTrace(response, this.instanceSettings, this.nodeGraph?.enabled));
         return transformTrace(response, this.instanceSettings, this.nodeGraph?.enabled);
       })
     );

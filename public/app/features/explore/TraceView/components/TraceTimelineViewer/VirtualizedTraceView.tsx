@@ -137,6 +137,7 @@ function generateRowStates(
   if (!spans) {
     return [];
   }
+
   if (showSpanFilterMatchesOnly && findMatchesIDs) {
     spans = spans.filter((span) => findMatchesIDs.has(span.spanID));
   }
@@ -177,6 +178,9 @@ function generateRowStates(
       });
     }
   }
+
+  console.log({ rowStates });
+
   return rowStates;
 }
 
@@ -531,6 +535,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
   renderSpanDetailRow(span: TraceSpan, key: string, style: React.CSSProperties, attrs: {}, visibleSpanIds: string[]) {
     const { spanID } = span;
+
     const { serviceName } = span.process;
     const {
       detailLogItemToggle,
