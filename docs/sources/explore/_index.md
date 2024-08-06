@@ -14,12 +14,12 @@ menuTitle: Explore
 title: Explore
 weight: 90
 hero:
- title: Explore
- level: 1
- width: 110
- height: 110
- description: >-
-   Use Explore to query, collect, and analyze data for detailed real-time data analysis.
+  title: Explore
+  level: 1
+  width: 110
+  height: 110
+  description: >-
+    Use Explore to query, collect, and analyze data for detailed real-time data analysis.
 cards:
   title_class: pt-0 lh-1
   items:
@@ -49,7 +49,6 @@ cards:
       height: 24
 ---
 
-
 {{< docs/hero-simple key="hero" >}}
 
 ---
@@ -57,8 +56,6 @@ cards:
 ## Overview
 
 Explore is your starting point for querying, analyzing, and aggregating data in Grafana. You can quickly begin creating queries to start analyzing data without having to create a dashboard or visualization.
-
-
 
 ## Explore
 
