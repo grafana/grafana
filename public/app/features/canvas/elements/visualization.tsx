@@ -115,7 +115,7 @@ export const visualizationItem: CanvasElementItem<VizElementConfig, VizElementDa
       return fields;
     };
 
-    if (vizConfig?.fields && vizConfig.fields.length > 1 && panelData) {
+    if (vizConfig?.fields && vizConfig.fields.length >= 1 && panelData) {
       let frames = panelData?.series;
       let selectedFrames =
         frames?.filter((frame) => frame.fields.filter((field) => vizConfig.fields!.includes(field.name)).length > 0) ??

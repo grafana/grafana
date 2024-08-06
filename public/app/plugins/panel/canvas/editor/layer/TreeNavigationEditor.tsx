@@ -13,7 +13,7 @@ import { frameSelection, reorderElements } from 'app/features/canvas/runtime/sce
 import { getGlobalStyles } from '../../globalStyles';
 import { Options } from '../../panelcfg.gen';
 import { DragNode, DropNode } from '../../types';
-import { doSelect, getElementTypes, onAddItem, onGenerateVisualization } from '../../utils';
+import { doSelectMultiple, getElementTypes, onAddItem, onGenerateVisualization } from '../../utils';
 import { TreeViewEditorProps } from '../element/elementEditor';
 
 import { TreeNodeTitle } from './TreeNodeTitle';
@@ -58,9 +58,12 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
     return <div>Missing layer?</div>;
   }
 
-  const onSelect = (selectedKeys: Key[], info: { node: { dataRef: ElementState } }) => {
+  const onSelect = (keys: Key[], info: { node: { dataRef: ElementState }; selectedNodes: TreeElement[] }) => {
+    const selectedElements = info.selectedNodes.map((selectedNode) => selectedNode.dataRef);
+    setSelectedKeys(keys);
+
     if (allowSelection && item.settings?.scene) {
-      doSelect(item.settings.scene, info.node.dataRef);
+      doSelectMultiple(item.settings.scene, selectedElements);
     }
   };
 

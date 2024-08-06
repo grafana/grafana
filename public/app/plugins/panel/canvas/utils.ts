@@ -36,6 +36,24 @@ export function doSelect(scene: Scene, element: ElementState | FrameState) {
   }
 }
 
+// @TODO update^ for frame selection
+export function doSelectMultiple(scene: Scene, elements: ElementState[] | FrameState[]) {
+  const selectedTargets = elements.map((element) => element.div!) || [];
+
+  if (selectedTargets.length > 0) {
+    try {
+      let selection: SelectionParams = { targets: selectedTargets };
+      scene.currentLayer = elements[0].parent;
+      selection.targets = selectedTargets;
+      scene.select(selection);
+    } catch (error) {
+      appEvents.emit(AppEvents.alertError, ['Unable to select element, try selecting element in panel instead']);
+    }
+  } else {
+    scene.clearCurrentSelection();
+  }
+}
+
 export function getElementTypes(shouldShowAdvancedTypes: boolean | undefined, current?: string): RegistrySelectInfo {
   if (shouldShowAdvancedTypes) {
     return getElementTypesOptions([...defaultElementItems, ...advancedElementItems], current);
