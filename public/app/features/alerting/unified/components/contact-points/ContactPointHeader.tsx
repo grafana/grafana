@@ -8,7 +8,7 @@ import ConditionalWrap from 'app/features/alerting/unified/components/Conditiona
 import { useExportContactPoint } from 'app/features/alerting/unified/components/contact-points/useExportContactPoint';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
-import { createUrl } from '../../utils/url';
+import { createRelativeUrl } from '../../utils/url';
 import MoreButton from '../MoreButton';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
@@ -96,7 +96,7 @@ export const ContactPointHeader = (props: ContactPointHeaderProps) => {
         </Stack>
         {isReferencedByAnyPolicy && (
           <TextLink
-            href={createUrl('/alerting/routes', { contactPoint: name })}
+            href={createRelativeUrl('/alerting/routes', { contactPoint: name })}
             variant="bodySmall"
             color="primary"
             inline={false}

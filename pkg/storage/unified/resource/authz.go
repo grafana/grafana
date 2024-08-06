@@ -7,9 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-// Quickly check if an resource (in a folder) should be seen
-// returns true when the item should be excluded from list results
-type ResourceReadFilter func(namespace, name, folder string) bool
+// Checks access while iterating within a resource
+type AccessChecker func(namespace string, name string) bool
 
 // Authorizer checks if a user is able to access a resource
 // Functions return an ErrorResult when not accessible so that access details
@@ -34,7 +33,7 @@ type Authorizer interface {
 	// Return an authz filter for a list request
 	// NOTE the key must include a resource, but will likely not include a name
 	// This will return an error if not allowed to read anything
-	ListFilter(ctx context.Context, id identity.Requester, key *ResourceKey) (ResourceReadFilter, *ErrorResult)
+	Compile(ctx context.Context, id identity.Requester, key *ResourceKey) (AccessChecker, *ErrorResult)
 }
 
 func NewAlwaysAuthorizer() Authorizer {
@@ -94,8 +93,8 @@ func (c *constantAuthorizer) CanUpdate(ctx context.Context, id identity.Requeste
 }
 
 // ListFilter implements Authorizer.
-func (c *constantAuthorizer) ListFilter(ctx context.Context, id identity.Requester, key *ResourceKey) (ResourceReadFilter, *ErrorResult) {
-	return func(namespace, name, folder string) bool { return !c.result }, nil
+func (c *constantAuthorizer) Compile(ctx context.Context, id identity.Requester, key *ResourceKey) (AccessChecker, *ErrorResult) {
+	return func(namespace, name string) bool { return c.result }, nil
 }
 
 // CanWriteOrigin implements Authorizer.

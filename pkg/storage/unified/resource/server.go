@@ -273,15 +273,14 @@ func (s *server) newEvent(ctx context.Context, user identity.Requester, key *Res
 		return nil, NewBadRequestError(
 			fmt.Sprintf("key/name do not match (key: %s, name: %s)", key.Name, obj.GetName()))
 	}
-	e := validateName(obj.GetName())
-	if e != nil {
-		return nil, e
+	if err := validateName(obj.GetName()); err != nil {
+		return nil, err
 	}
 
 	folder := obj.GetFolder()
 	if folder != "" {
 		e := s.authz.CanWriteToFolder(ctx, user, key.Resource, folder)
-		if err != nil {
+		if e != nil {
 			return nil, e
 		}
 	}
@@ -290,7 +289,7 @@ func (s *server) newEvent(ctx context.Context, user identity.Requester, key *Res
 		return nil, NewBadRequestError("invalid origin info")
 	}
 	if origin != nil {
-		e = s.authz.CanWriteOrigin(ctx, user, origin.Name)
+		e := s.authz.CanWriteOrigin(ctx, user, origin.Name)
 		if e != nil {
 			return nil, e
 		}
@@ -516,7 +515,7 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 		return rsp, nil
 	}
 
-	filter, e := s.authz.ListFilter(ctx, user, req.Options.Key)
+	access, e := s.authz.Compile(ctx, user, req.Options.Key)
 	if e != nil {
 		rsp.Error = e
 		return rsp, nil
@@ -528,9 +527,12 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 				return err
 			}
 
-			if filter(iter.Namespace(), iter.Name(), "") { // TODO folder support from backend
+			if !access(iter.Namespace(), iter.Name()) { // TODO folder support from backend
 				continue
 			}
+			// if iter.Folder() {
+			// TODO...
+			// }
 
 			item := &ResourceWrapper{
 				ResourceVersion: iter.ResourceVersion(),
@@ -626,7 +628,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 				// }
 				// TODO: return values that match either the old or the new
 
-				srv.Send(&WatchEvent{
+				if err := srv.Send(&WatchEvent{
 					Timestamp: event.Timestamp,
 					Type:      event.Type,
 					Resource: &WatchEvent_Resource{
@@ -634,7 +636,9 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 						Version: event.ResourceVersion,
 					},
 					// TODO... previous???
-				})
+				}); err != nil {
+					return err
+				}
 			}
 		}
 	}

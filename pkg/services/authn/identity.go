@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/authlib/authn"
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -69,7 +70,8 @@ type Identity struct {
 	Permissions map[int64]map[string][]string
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
-	IDToken string
+	IDToken       string
+	IDTokenClaims *authn.Claims[authn.IDTokenClaims]
 }
 
 // GetRawIdentifier implements Requester.
@@ -89,7 +91,14 @@ func (i *Identity) GetIdentityType() identity.IdentityType {
 
 // GetExtra implements identity.Requester.
 func (i *Identity) GetExtra() map[string][]string {
-	return map[string][]string{}
+	extra := map[string][]string{}
+	if i.IDToken != "" {
+		extra["id-token"] = []string{i.IDToken}
+	}
+	if i.GetOrgRole().IsValid() {
+		extra["user-instance-role"] = []string{string(i.GetOrgRole())}
+	}
+	return extra
 }
 
 // GetGroups implements identity.Requester.
@@ -147,6 +156,10 @@ func (i *Identity) IsEmailVerified() bool {
 
 func (i *Identity) GetIDToken() string {
 	return i.IDToken
+}
+
+func (i *Identity) GetIDClaims() *authn.Claims[authn.IDTokenClaims] {
+	return i.IDTokenClaims
 }
 
 func (i *Identity) GetIsGrafanaAdmin() bool {

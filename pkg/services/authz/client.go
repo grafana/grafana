@@ -104,6 +104,7 @@ func newInProcLegacyClient(server *legacyServer) (authzlib.MultiTenantClient, er
 	return authzlib.NewLegacyClient(
 		&authzlib.MultiTenantClientConfig{},
 		authzlib.WithGrpcConnectionLCOption(channel),
+		authzlib.WithNamespaceFormatterLCOption(authnlib.OnPremNamespaceFormatter),
 		authzlib.WithDisableAccessTokenLCOption(),
 	)
 }
@@ -126,6 +127,7 @@ func newGrpcLegacyClient(address string) (authzlib.MultiTenantClient, error) {
 			grpc.WithUnaryInterceptor(clientInterceptor.UnaryClientInterceptor),
 			grpc.WithStreamInterceptor(clientInterceptor.StreamClientInterceptor),
 		),
+		authzlib.WithNamespaceFormatterLCOption(authnlib.OnPremNamespaceFormatter),
 		// TODO(drclau): remove this once we have access token support on-prem
 		authzlib.WithDisableAccessTokenLCOption(),
 	)
