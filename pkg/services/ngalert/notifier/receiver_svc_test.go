@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -15,9 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -31,7 +33,7 @@ func TestReceiverService_GetReceiver(t *testing.T) {
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
-			accesscontrol.ActionAlertingProvisioningRead: nil,
+			accesscontrol.ActionAlertingNotificationsRead: nil,
 		},
 	}}
 
@@ -49,7 +51,7 @@ func TestReceiverService_GetReceiver(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
 
 		_, err := sut.GetReceiver(context.Background(), singleQ(1, "nonexistent"), redactedUser)
-		require.ErrorIs(t, err, ErrNotFound)
+		require.ErrorIs(t, err, ErrReceiverNotFound.Errorf(""))
 	})
 }
 
@@ -59,7 +61,7 @@ func TestReceiverService_GetReceivers(t *testing.T) {
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
-			accesscontrol.ActionAlertingProvisioningRead: nil,
+			accesscontrol.ActionAlertingNotificationsRead: nil,
 		},
 	}}
 
@@ -92,7 +94,7 @@ func TestReceiverService_DecryptRedact(t *testing.T) {
 	readUser := &user.SignedInUser{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
-			1: {accesscontrol.ActionAlertingProvisioningRead: nil},
+			1: {accesscontrol.ActionAlertingNotificationsRead: nil},
 		},
 	}
 
@@ -100,8 +102,8 @@ func TestReceiverService_DecryptRedact(t *testing.T) {
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
 			1: {
-				accesscontrol.ActionAlertingProvisioningRead:        nil,
-				accesscontrol.ActionAlertingProvisioningReadSecrets: nil,
+				accesscontrol.ActionAlertingNotificationsRead:    nil,
+				accesscontrol.ActionAlertingReceiversReadSecrets: nil,
 			},
 		},
 	}
@@ -109,32 +111,32 @@ func TestReceiverService_DecryptRedact(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
 		decrypt bool
-		user    *user.SignedInUser
-		err     error
+		user    identity.Requester
+		err     string
 	}{
 		{
 			name:    "service redacts receivers by default",
 			decrypt: false,
 			user:    readUser,
-			err:     nil,
+			err:     "",
 		},
 		{
 			name:    "service returns error when trying to decrypt without permission",
 			decrypt: true,
 			user:    readUser,
-			err:     ErrPermissionDenied,
+			err:     "[alerting.unauthorized] user is not authorized to read decrypted receiver",
 		},
 		{
 			name:    "service returns error if user is nil and decrypt is true",
 			decrypt: true,
 			user:    nil,
-			err:     ErrPermissionDenied,
+			err:     "[alerting.unauthorized] user is not authorized to read decrypted receiver",
 		},
 		{
 			name:    "service decrypts receivers with permission",
 			decrypt: true,
 			user:    secretUser,
-			err:     nil,
+			err:     "",
 		},
 	} {
 		for _, method := range getMethods {
@@ -152,14 +154,18 @@ func TestReceiverService_DecryptRedact(t *testing.T) {
 					q.Decrypt = tc.decrypt
 					var multiRes []definitions.GettableApiReceiver
 					multiRes, err = sut.GetReceivers(context.Background(), q, tc.user)
-					if tc.err == nil {
+					if tc.err == "" {
 						require.Len(t, multiRes, 1)
 						res = multiRes[0]
 					}
 				}
-				require.ErrorIs(t, err, tc.err)
+				if tc.err == "" {
+					require.NoError(t, err)
+				} else {
+					require.ErrorContains(t, err, tc.err)
+				}
 
-				if tc.err == nil {
+				if tc.err == "" {
 					require.Equal(t, "slack receiver", res.Name)
 					require.Len(t, res.GrafanaManagedReceivers, 1)
 					require.Equal(t, "UID2", res.GrafanaManagedReceivers[0].UID)
@@ -183,15 +189,14 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secrets.Service) *Receive
 	xact := newNopTransactionManager()
 	provisioningStore := fakes.NewFakeProvisioningStore()
 
-	return &ReceiverService{
-		ac:                acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
-		provisioningStore: provisioningStore,
-		cfgStore:          store,
-		encryptionService: encryptSvc,
-		xact:              xact,
-		log:               log.NewNopLogger(),
-		validator:         validation.ValidateProvenanceRelaxed,
-	}
+	return NewReceiverService(
+		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), false),
+		legacy_storage.NewAlertmanagerConfigStore(store),
+		provisioningStore,
+		encryptSvc,
+		xact,
+		log.NewNopLogger(),
+	)
 }
 
 func createEncryptedConfig(t *testing.T, secretService secrets.Service) string {

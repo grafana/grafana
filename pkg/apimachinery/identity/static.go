@@ -1,6 +1,10 @@
 package identity
 
-import "fmt"
+import (
+	"fmt"
+
+	authnlib "github.com/grafana/authlib/authn"
+)
 
 var _ Requester = &StaticRequester{}
 
@@ -25,9 +29,45 @@ type StaticRequester struct {
 	AllowedKubernetesNamespace string
 	IsGrafanaAdmin             bool
 	// Permissions grouped by orgID and actions
-	Permissions map[int64]map[string][]string
-	IDToken     string
-	CacheKey    string
+	Permissions   map[int64]map[string][]string
+	IDToken       string
+	IDTokenClaims *authnlib.Claims[authnlib.IDTokenClaims]
+	CacheKey      string
+}
+
+// GetRawIdentifier implements Requester.
+func (u *StaticRequester) GetUID() string {
+	return fmt.Sprintf("%s:%s", u.Type, u.UserUID)
+}
+
+// GetRawIdentifier implements Requester.
+func (u *StaticRequester) GetRawIdentifier() string {
+	return u.UserUID
+}
+
+// GetInternalID implements Requester.
+func (u *StaticRequester) GetInternalID() (int64, error) {
+	return u.UserID, nil
+}
+
+// GetIdentityType implements Requester.
+func (u *StaticRequester) GetIdentityType() IdentityType {
+	return u.Type
+}
+
+// GetExtra implements Requester.
+func (u *StaticRequester) GetExtra() map[string][]string {
+	return map[string][]string{}
+}
+
+// GetGroups implements Requester.
+func (u *StaticRequester) GetGroups() []string {
+	return []string{}
+}
+
+// GetName implements Requester.
+func (u *StaticRequester) GetName() string {
+	return u.DisplayName
 }
 
 func (u *StaticRequester) HasRole(role RoleType) bool {
@@ -109,11 +149,6 @@ func (u *StaticRequester) GetID() TypedID {
 	return NewTypedIDString(u.Type, fmt.Sprintf("%d", u.UserID))
 }
 
-// GetUID returns namespaced uid for the entity
-func (u *StaticRequester) GetUID() TypedID {
-	return NewTypedIDString(u.Type, u.UserUID)
-}
-
 // GetTypedID returns the namespace and ID of the active entity
 // The namespace is one of the constants defined in pkg/apimachinery/identity
 func (u *StaticRequester) GetTypedID() (IdentityType, string) {
@@ -177,4 +212,8 @@ func (u *StaticRequester) GetDisplayName() string {
 
 func (u *StaticRequester) GetIDToken() string {
 	return u.IDToken
+}
+
+func (u *StaticRequester) GetIDClaims() *authnlib.Claims[authnlib.IDTokenClaims] {
+	return u.IDTokenClaims
 }

@@ -205,6 +205,23 @@ The following list contains role-based access control actions used by Grafana On
 | `grafana-oncall-app.other-settings:read`         | n/a              | Read OnCall settings.                             |
 | `grafana-oncall-app.other-settings:write`        | n/a              | Edit OnCall settings.                             |
 
+### Grafana Adaptive Metrics action definitions
+
+The following list contains role-based access control actions used by Grafana Adaptive Metrics.
+
+| Action                                               | Applicable scope | Description                                           |
+| ---------------------------------------------------- | ---------------- | ----------------------------------------------------- |
+| `grafana‑adaptive‑metrics‑app.plugin:access`         | n/a              | Access the Adaptive Metrics plugin in Grafana Cloud.  |
+| `grafana‑adaptive‑metrics‑app.config:read`           | n/a              | Read the Adaptive Metrics app configuration.          |
+| `grafana‑adaptive‑metrics‑app.config:write`          | n/a              | Update the Adaptive Metrics app configuration.        |
+| `grafana‑adaptive‑metrics‑app.recommendations:read`  | n/a              | Read aggregation recommendations.                     |
+| `grafana‑adaptive‑metrics‑app.recommendations:apply` | n/a              | Apply aggregation recommendations.                    |
+| `grafana‑adaptive‑metrics‑app.rules:read`            | n/a              | Read aggregation rules.                               |
+| `grafana‑adaptive‑metrics‑app.rules:write`           | n/a              | Create aggregation rules.                             |
+| `grafana‑adaptive‑metrics‑app.rules:delete`          | n/a              | Delete aggregation rules.                             |
+| `grafana‑adaptive‑metrics‑app.exemptions:read`       | n/a              | Read recommendation exemptions.                       |
+| `grafana‑adaptive‑metrics‑app.exemptions:write`      | n/a              | Create, update, and delete recommendation exemptions. |
+
 ## Scope definitions
 
 The following list contains role-based access control scopes.

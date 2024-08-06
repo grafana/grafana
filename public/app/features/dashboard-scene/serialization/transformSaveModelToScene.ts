@@ -480,9 +480,6 @@ function registerPanelInteractionsReporter(scene: DashboardScene) {
       case 'panel-cancel-query-clicked':
         DashboardInteractions.panelCancelQueryClicked();
         break;
-      case 'panel-menu-shown':
-        DashboardInteractions.panelMenuShown();
-        break;
     }
   });
 }

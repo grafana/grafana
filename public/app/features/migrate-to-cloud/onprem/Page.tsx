@@ -1,11 +1,12 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { isFetchError } from '@grafana/runtime';
-import { Alert, Box, Stack, Text } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { AlertVariant, Box, Stack, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import {
+  GetSnapshotResponseDto,
   SnapshotDto,
   useCancelSnapshotMutation,
   useCreateSnapshotMutation,
@@ -15,12 +16,14 @@ import {
   useGetSnapshotQuery,
   useUploadSnapshotMutation,
 } from '../api';
+import { AlertWithTraceID } from '../shared/AlertWithTraceID';
 
 import { DisconnectModal } from './DisconnectModal';
 import { EmptyState } from './EmptyState/EmptyState';
 import { MigrationSummary } from './MigrationSummary';
 import { ResourcesTable } from './ResourcesTable';
 import { BuildSnapshotCTA, CreatingSnapshotCTA } from './SnapshotCTAs';
+import { SupportedTypesDisclosure } from './SupportedTypesDisclosure';
 
 /**
  * Here's how migrations work:
@@ -57,40 +60,50 @@ const SHOULD_POLL_STATUSES: Array<SnapshotDto['status']> = [
   'PROCESSING',
 ];
 
-const SNAPSHOT_REBUILD_STATUSES: Array<SnapshotDto['status']> = ['FINISHED', 'ERROR', 'UNKNOWN'];
-
+const SNAPSHOT_REBUILD_STATUSES: Array<SnapshotDto['status']> = ['PENDING_UPLOAD', 'FINISHED', 'ERROR', 'UNKNOWN'];
 const SNAPSHOT_BUILDING_STATUSES: Array<SnapshotDto['status']> = ['INITIALIZING', 'CREATING'];
-
 const SNAPSHOT_UPLOADING_STATUSES: Array<SnapshotDto['status']> = ['UPLOADING', 'PENDING_PROCESSING', 'PROCESSING'];
 
-const STATUS_POLL_INTERVAL = 5 * 1000;
+const PAGE_SIZE = 50;
 
-function useGetLatestSnapshot(sessionUid?: string) {
+function useGetLatestSnapshot(sessionUid?: string, page = 1) {
   const [shouldPoll, setShouldPoll] = useState(false);
 
   const listResult = useGetShapshotListQuery(sessionUid ? { uid: sessionUid } : skipToken);
-  const lastItem = listResult.data?.snapshots?.at(0);
+  const lastItem = listResult.currentData?.snapshots?.at(0);
 
-  const getSnapshotQueryArgs = sessionUid && lastItem?.uid ? { uid: sessionUid, snapshotUid: lastItem.uid } : skipToken;
+  const getSnapshotQueryArgs =
+    sessionUid && lastItem?.uid
+      ? { uid: sessionUid, snapshotUid: lastItem.uid, resultLimit: PAGE_SIZE, resultPage: page }
+      : skipToken;
 
   const snapshotResult = useGetSnapshotQuery(getSnapshotQueryArgs, {
-    pollingInterval: shouldPoll ? STATUS_POLL_INTERVAL : 0,
+    pollingInterval: shouldPoll ? config.cloudMigrationPollIntervalMs : 0,
     skipPollingIfUnfocused: true,
   });
 
+  const isError = listResult.isError || snapshotResult.isError;
+
   useEffect(() => {
-    const shouldPoll = SHOULD_POLL_STATUSES.includes(snapshotResult.data?.status);
+    const shouldPoll = !isError && SHOULD_POLL_STATUSES.includes(snapshotResult.data?.status);
     setShouldPoll(shouldPoll);
-  }, [snapshotResult?.data?.status]);
+  }, [snapshotResult?.data?.status, isError]);
 
   return {
     ...snapshotResult,
+
+    // RTK Query will retain old data if a new request has been skipped.
+    // This meant that if you loaded a snapshot, disconnected, and then reconnected, we would
+    // show the old snapshot.
+    // This ensures that if the query has been skipped (because GetSessionList returned nothing)
+    // we don't return stale data
+    data: getSnapshotQueryArgs === skipToken ? undefined : snapshotResult.data,
 
     error: listResult.error || snapshotResult.error,
 
     // isSuccess and isUninitialised should always be from snapshotResult
     // as only the 'final' values from those are important
-    isError: listResult.isError || snapshotResult.isError,
+    isError,
     isLoading: listResult.isLoading || snapshotResult.isLoading,
     isFetching: listResult.isFetching || snapshotResult.isFetching,
   };
@@ -99,7 +112,8 @@ function useGetLatestSnapshot(sessionUid?: string) {
 export const Page = () => {
   const [disconnectModalOpen, setDisconnectModalOpen] = useState(false);
   const session = useGetLatestSession();
-  const snapshot = useGetLatestSnapshot(session.data?.uid);
+  const [page, setPage] = useState(1);
+  const snapshot = useGetLatestSnapshot(session.data?.uid, page);
   const [performCreateSnapshot, createSnapshotResult] = useCreateSnapshotMutation();
   const [performUploadSnapshot, uploadSnapshotResult] = useUploadSnapshotMutation();
   const [performCancelSnapshot, cancelSnapshotResult] = useCancelSnapshotMutation();
@@ -120,10 +134,21 @@ export const Page = () => {
     snapshot.isLoading ||
     disconnectResult.isLoading;
 
-  const showBuildSnapshot = !snapshot.isLoading && !snapshot.data;
+  const showBuildSnapshot = !snapshot.isError && !snapshot.isLoading && !snapshot.data;
   const showBuildingSnapshot = SNAPSHOT_BUILDING_STATUSES.includes(status);
-  const showUploadSnapshot = status === 'PENDING_UPLOAD' || SNAPSHOT_UPLOADING_STATUSES.includes(status);
+  const showUploadSnapshot =
+    !snapshot.isError && (status === 'PENDING_UPLOAD' || SNAPSHOT_UPLOADING_STATUSES.includes(status));
   const showRebuildSnapshot = SNAPSHOT_REBUILD_STATUSES.includes(status);
+
+  const error = getError({
+    snapshot: snapshot.data,
+    getSnapshotError: snapshot.error,
+    getSessionError: session.error,
+    createSnapshotError: createSnapshotResult.error,
+    uploadSnapshotError: uploadSnapshotResult.error,
+    cancelSnapshotError: cancelSnapshotResult.error,
+    disconnectSnapshotError: disconnectResult.error,
+  });
 
   const handleDisconnect = useCallback(async () => {
     if (sessionUid) {
@@ -162,39 +187,7 @@ export const Page = () => {
 
   return (
     <>
-      <Stack direction="column" gap={4}>
-        {/* TODO: show errors from all mutation's in a... modal? */}
-
-        {createSnapshotResult.isError && (
-          <Alert
-            severity="error"
-            title={t('migrate-to-cloud.summary.run-migration-error-title', 'Error creating snapshot')}
-          >
-            <Text element="p">
-              <Trans i18nKey="migrate-to-cloud.summary.run-migration-error-description">
-                See the Grafana server logs for more details
-              </Trans>
-            </Text>
-
-            {maybeGetTraceID(createSnapshotResult.error) && (
-              // Deliberately don't want to translate 'Trace ID'
-              // eslint-disable-next-line @grafana/no-untranslated-strings
-              <Text element="p">Trace ID: {maybeGetTraceID(createSnapshotResult.error)}</Text>
-            )}
-          </Alert>
-        )}
-
-        {disconnectResult.isError && (
-          <Alert
-            severity="error"
-            title={t('migrate-to-cloud.summary.disconnect-error-title', 'There was an error disconnecting')}
-          >
-            <Trans i18nKey="migrate-to-cloud.summary.disconnect-error-description">
-              See the Grafana server logs for more details
-            </Trans>
-          </Alert>
-        )}
-
+      <Stack direction="column" gap={2}>
         {session.data && (
           <MigrationSummary
             session={session.data}
@@ -210,6 +203,12 @@ export const Page = () => {
             onUploadSnapshot={handleUploadSnapshot}
             showRebuildSnapshot={showRebuildSnapshot}
           />
+        )}
+
+        {error && (
+          <AlertWithTraceID severity={error.severity} title={error.title} error={error.error}>
+            <Text element="p">{error.body}</Text>
+          </AlertWithTraceID>
         )}
 
         {(showBuildSnapshot || showBuildingSnapshot) && (
@@ -233,7 +232,15 @@ export const Page = () => {
         )}
 
         {snapshot.data?.results && snapshot.data.results.length > 0 && (
-          <ResourcesTable resources={snapshot.data.results} />
+          <Stack gap={4} direction="column">
+            <ResourcesTable
+              resources={snapshot.data.results}
+              onChangePage={setPage}
+              numberOfPages={Math.ceil((snapshot?.data?.stats?.total || 0) / PAGE_SIZE)}
+              page={page}
+            />
+            <SupportedTypesDisclosure />
+          </Stack>
         )}
       </Stack>
 
@@ -248,11 +255,111 @@ export const Page = () => {
   );
 };
 
-function maybeGetTraceID(err: unknown) {
-  const data = isFetchError<unknown>(err) ? err.data : undefined;
+interface GetErrorProps {
+  snapshot: GetSnapshotResponseDto | undefined;
+  getSessionError: unknown; // From getLatestSessionQuery
+  getSnapshotError: unknown; // From getLatestSnapshotQuery
+  createSnapshotError: unknown; // From createSnapshotMutation
+  uploadSnapshotError: unknown; // From uploadSnapshotMutation
+  cancelSnapshotError: unknown; // From cancelSnapshotMutation
+  disconnectSnapshotError: unknown; // From disconnectMutation
+}
 
-  if (typeof data === 'object' && data && 'traceID' in data && typeof data.traceID === 'string') {
-    return data.traceID;
+interface ErrorDescription {
+  title: string;
+  body: string;
+  severity: AlertVariant;
+  error?: unknown;
+}
+
+function getError(props: GetErrorProps): ErrorDescription | undefined {
+  const {
+    snapshot,
+    getSnapshotError,
+    getSessionError,
+    createSnapshotError,
+    uploadSnapshotError,
+    cancelSnapshotError,
+    disconnectSnapshotError,
+  } = props;
+
+  const seeLogs = t('migrate-to-cloud.onprem.error-see-server-logs', 'See the Grafana server logs for more details');
+
+  if (getSessionError) {
+    return {
+      severity: 'error',
+      title: t('migrate-to-cloud.onprem.get-session-error-title', 'Error loading migration configuration'),
+      body: seeLogs,
+      error: getSessionError,
+    };
+  }
+
+  if (getSnapshotError) {
+    return {
+      severity: 'error',
+      title: t('migrate-to-cloud.onprem.get-snapshot-error-title', 'Error loading snapshot'),
+      body: seeLogs,
+      error: getSnapshotError,
+    };
+  }
+
+  if (disconnectSnapshotError) {
+    return {
+      severity: 'warning',
+      title: t('migrate-to-cloud.onprem.disconnect-error-title', 'Error disconnecting'),
+      body: seeLogs,
+      error: disconnectSnapshotError,
+    };
+  }
+
+  if (createSnapshotError) {
+    return {
+      severity: 'warning',
+      title: t('migrate-to-cloud.onprem.create-snapshot-error-title', 'Error creating snapshot'),
+      body: seeLogs,
+      error: createSnapshotError,
+    };
+  }
+
+  if (uploadSnapshotError) {
+    return {
+      severity: 'warning',
+      title: t('migrate-to-cloud.onprem.upload-snapshot-error-title', 'Error uploading snapshot'),
+      body: seeLogs,
+      error: uploadSnapshotError,
+    };
+  }
+
+  if (cancelSnapshotError) {
+    return {
+      severity: 'warning',
+      title: t('migrate-to-cloud.onprem.cancel-snapshot-error-title', 'Error cancelling creating snapshot'),
+      body: seeLogs,
+      error: cancelSnapshotError,
+    };
+  }
+
+  if (snapshot?.status === 'ERROR') {
+    return {
+      severity: 'warning',
+      title: t('migrate-to-cloud.onprem.snapshot-error-status-title', 'Error migrating resources'),
+      body: t(
+        'migrate-to-cloud.onprem.snapshot-error-status-body',
+        'There was an error creating the snapshot or starting the migration process. See the Grafana server logs for more details'
+      ),
+    };
+  }
+
+  const errorCount = snapshot?.stats?.statuses?.['ERROR'] ?? 0;
+  if (snapshot?.status === 'FINISHED' && errorCount > 0) {
+    return {
+      severity: 'warning',
+      title: t('migrate-to-cloud.onprem.some-resources-errored-title', 'Resource migration complete'),
+      body: t(
+        'migrate-to-cloud.onprem.some-resources-errored-body',
+        'The migration has completed, but some items could not be migrated to the cloud stack. Check the failed resources for more details'
+      ),
+    };
   }
 
   return undefined;

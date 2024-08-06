@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 
@@ -37,7 +38,7 @@ type AWSError struct {
 }
 
 func (e *AWSError) Error() string {
-	return fmt.Sprintf("%s: %s", e.Code, e.Message)
+	return fmt.Sprintf("CloudWatch error: %s: %s", e.Code, e.Message)
 }
 
 func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -58,7 +59,7 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 			dataframe, err := e.executeLogAction(ectx, logsQuery, query, req.PluginContext)
 			if err != nil {
 				resultChan <- backend.Responses{
-					query.RefID: backend.DataResponse{Frames: data.Frames{}, Error: err},
+					query.RefID: errorsource.Response(err),
 				}
 				return nil
 			}
@@ -84,6 +85,7 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 			respD := resp.Responses[refID]
 			respD.Frames = response.Frames
 			respD.Error = response.Error
+			respD.ErrorSource = response.ErrorSource
 			resp.Responses[refID] = respD
 		}
 	}
@@ -138,12 +140,12 @@ func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 	}
 
 	if logsQuery.LogGroupName == "" {
-		return nil, fmt.Errorf("Error: Parameter 'logGroupName' is required")
+		return nil, errorsource.DownstreamError(fmt.Errorf("Error: Parameter 'logGroupName' is required"), false)
 	}
 	queryRequest.SetLogGroupName(logsQuery.LogGroupName)
 
 	if logsQuery.LogStreamName == "" {
-		return nil, fmt.Errorf("Error: Parameter 'logStreamName' is required")
+		return nil, errorsource.DownstreamError(fmt.Errorf("Error: Parameter 'logStreamName' is required"), false)
 	}
 	queryRequest.SetLogStreamName(logsQuery.LogStreamName)
 
@@ -157,7 +159,7 @@ func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 
 	logEvents, err := logsClient.GetLogEventsWithContext(ctx, queryRequest)
 	if err != nil {
-		return nil, err
+		return nil, errorsource.DownstreamError(err, false)
 	}
 
 	messages := make([]*string, 0)
@@ -186,7 +188,7 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 	endTime := timeRange.To
 
 	if !startTime.Before(endTime) {
-		return nil, fmt.Errorf("invalid time range: start time must be before end time")
+		return nil, errorsource.DownstreamError(fmt.Errorf("invalid time range: start time must be before end time"), false)
 	}
 
 	// The fields @log and @logStream are always included in the results of a user's query
@@ -225,18 +227,22 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 	}
 
 	e.logger.FromContext(ctx).Debug("Calling startquery with context with input", "input", startQueryInput)
-	return logsClient.StartQueryWithContext(ctx, startQueryInput)
+	resp, err := logsClient.StartQueryWithContext(ctx, startQueryInput)
+	if err != nil {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == "LimitExceededException" {
+			e.logger.FromContext(ctx).Debug("ExecuteStartQuery limit exceeded", "err", awsErr)
+			err = &AWSError{Code: limitExceededException, Message: err.Error()}
+		}
+		err = errorsource.DownstreamError(err, false)
+	}
+	return resp, err
 }
 
 func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
 	logsQuery models.LogsQuery, timeRange backend.TimeRange, refID string) (*data.Frame, error) {
 	startQueryResponse, err := e.executeStartQuery(ctx, logsClient, logsQuery, timeRange)
 	if err != nil {
-		var awsErr awserr.Error
-		if errors.As(err, &awsErr) && awsErr.Code() == "LimitExceededException" {
-			e.logger.FromContext(ctx).Debug("ExecuteStartQuery limit exceeded", "err", awsErr)
-			return nil, &AWSError{Code: limitExceededException, Message: err.Error()}
-		}
 		return nil, err
 	}
 
@@ -272,6 +278,8 @@ func (e *cloudWatchExecutor) executeStopQuery(ctx context.Context, logsClient cl
 		if errors.As(err, &awsErr) && awsErr.Code() == "InvalidParameterException" {
 			response = &cloudwatchlogs.StopQueryOutput{Success: aws.Bool(false)}
 			err = nil
+		} else {
+			err = errorsource.DownstreamError(err, false)
 		}
 	}
 
@@ -299,8 +307,9 @@ func (e *cloudWatchExecutor) executeGetQueryResults(ctx context.Context, logsCli
 	if err != nil {
 		var awsErr awserr.Error
 		if errors.As(err, &awsErr) {
-			return getQueryResultsResponse, &AWSError{Code: awsErr.Code(), Message: err.Error()}
+			err = &AWSError{Code: awsErr.Code(), Message: err.Error()}
 		}
+		err = errorsource.DownstreamError(err, false)
 	}
 	return getQueryResultsResponse, err
 }
