@@ -1,5 +1,5 @@
-import {css} from '@emotion/css';
-import {ChangeEvent, memo} from 'react';
+import { css } from '@emotion/css';
+import { ChangeEvent, memo } from 'react';
 
 import {
   Action,
@@ -12,18 +12,18 @@ import {
   VariableSuggestion,
 } from '@grafana/data';
 
-import {useStyles2} from '../../themes';
-import {Field} from '../Forms/Field';
-import {InlineField} from '../Forms/InlineField';
-import {InlineFieldRow} from '../Forms/InlineFieldRow';
-import {Label} from '../Forms/Label';
-import {RadioButtonGroup} from '../Forms/RadioButtonGroup/RadioButtonGroup';
-import {Input} from '../Input/Input';
-import {JSONFormatter} from '../JSONFormatter/JSONFormatter';
-import {Select} from '../Select/Select';
+import { useStyles2 } from '../../themes';
+import { Field } from '../Forms/Field';
+import { InlineField } from '../Forms/InlineField';
+import { InlineFieldRow } from '../Forms/InlineFieldRow';
+import { Label } from '../Forms/Label';
+import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
+import { Input } from '../Input/Input';
+import { JSONFormatter } from '../JSONFormatter/JSONFormatter';
+import { Select } from '../Select/Select';
 
-import {ParamsEditor} from './ParamsEditor';
-import {HTMLElementType, SuggestionsInput} from './SuggestionsInput';
+import { ParamsEditor } from './ParamsEditor';
+import { HTMLElementType, SuggestionsInput } from './SuggestionsInput';
 
 interface ActionEditorProps {
   index: number;

@@ -1,12 +1,12 @@
 import * as React from 'react';
-import {CSSProperties} from 'react';
-import {OnDrag, OnResize, OnRotate} from 'react-moveable/declaration/types';
+import { CSSProperties } from 'react';
+import { OnDrag, OnResize, OnRotate } from 'react-moveable/declaration/types';
 
-import {FieldType, getLinksSupplier, LinkModel, OneClickMode, ValueLinkConfig} from '@grafana/data';
-import {ActionModel} from '@grafana/data/src/types/action';
-import {LayerElement} from 'app/core/components/Layers/types';
-import {notFoundItem} from 'app/features/canvas/elements/notFound';
-import {DimensionContext} from 'app/features/dimensions';
+import { FieldType, getLinksSupplier, LinkModel, OneClickMode, ValueLinkConfig } from '@grafana/data';
+import { ActionModel } from '@grafana/data/src/types/action';
+import { LayerElement } from 'app/core/components/Layers/types';
+import { notFoundItem } from 'app/features/canvas/elements/notFound';
+import { DimensionContext } from 'app/features/dimensions';
 import {
   BackgroundImageSize,
   Constraint,
@@ -14,15 +14,15 @@ import {
   Placement,
   VerticalConstraint,
 } from 'app/plugins/panel/canvas/panelcfg.gen';
-import {getConnectionsByTarget, getRowIndex, isConnectionTarget} from 'app/plugins/panel/canvas/utils';
+import { getConnectionsByTarget, getRowIndex, isConnectionTarget } from 'app/plugins/panel/canvas/utils';
 
-import {CanvasElementItem, CanvasElementOptions} from '../element';
-import {canvasElementRegistry} from '../registry';
-import {getActionsSupplier} from '../utils';
+import { CanvasElementItem, CanvasElementOptions } from '../element';
+import { canvasElementRegistry } from '../registry';
+import { getActionsSupplier } from '../utils';
 
-import {FrameState} from './frame';
-import {RootElement} from './root';
-import {Scene} from './scene';
+import { FrameState } from './frame';
+import { RootElement } from './root';
+import { Scene } from './scene';
 
 let counter = 0;
 

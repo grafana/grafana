@@ -1,5 +1,5 @@
-import {InterpolateFunction} from './panel';
-import {SelectableValue} from './select';
+import { InterpolateFunction } from './panel';
+import { SelectableValue } from './select';
 
 export interface Action<T = any> {
   title: string;

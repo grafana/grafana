@@ -1,11 +1,11 @@
-import {useState} from 'react';
+import { useState } from 'react';
 
-import {Action, DataFrame, VariableSuggestion} from '@grafana/data';
+import { Action, DataFrame, VariableSuggestion } from '@grafana/data';
 
-import {Button} from '../Button';
-import {Modal} from '../Modal/Modal';
+import { Button } from '../Button';
+import { Modal } from '../Modal/Modal';
 
-import {ActionEditor} from './ActionEditor';
+import { ActionEditor } from './ActionEditor';
 
 interface ActionEditorModalContentProps {
   action: Action;
