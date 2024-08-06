@@ -41,7 +41,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
     }
 
     // Build groups of queries to run in parallel
-    const sets: { [key: string]: DataQuery[] } = groupBy(queries, 'datasource.uid');
+    const sets: { [key: string]: DataQuery[] } = groupBy(queries, (item) => item.datasource?.uid || item.datasource);
     const batches: BatchedQueries[] = [];
 
     for (const key in sets) {
@@ -67,7 +67,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
     // Using the templateSrv.replace function here with a custom formatter as that is the cleanest way
     // to access the raw value or value array of a variable.
     const datasourceUid = getTemplateSrv().replace(
-      dsRef?.uid,
+      typeof dsRef?.uid === 'string' ? dsRef.uid : typeof dsRef === 'string' ? dsRef : undefined,
       request.scopedVars,
       (value: string | string[], variable: CustomFormatterVariable) => {
         // If it's not a data source variable, or single value

@@ -93,6 +93,50 @@ describe('MixedDatasource', () => {
     });
   });
 
+  describe('with datasources as string', () => {
+    it('direct query should return results', async () => {
+      const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+      const requestMixed = getQueryOptions({
+        targets: [
+          // @ts-ignore
+          { refId: 'QA', datasource: 'A' }, // 1
+          // @ts-ignore
+          { refId: 'QB', datasource: 'B' }, // 2
+        ],
+      });
+
+      await expect(ds.query(requestMixed)).toEmitValuesWith((results) => {
+        expect(results.length).toBe(2);
+        expect(results[0].data).toEqual(['AAAA']);
+        expect(results[0].state).toEqual(LoadingState.Loading);
+        expect(results[1].data).toEqual(['BBBB']);
+        expect(results[1].state).toEqual(LoadingState.Done);
+      });
+    });
+
+    it('should return both query results from the same data source with mixed strings and objects', async () => {
+      const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+      const request = {
+        targets: [
+          { refId: 'A', datasource: { uid: 'Loki' } },
+          // @ts-ignore
+          { refId: 'B', datasource: 'Loki' },
+          // @ts-ignore
+          { refId: 'C', datasource: 'A' },
+        ],
+      } as DataQueryRequest;
+
+      await expect(ds.query(request)).toEmitValuesWith((results) => {
+        expect(results).toHaveLength(3);
+        expect(results[0].key).toBe('mixed-0-A');
+        expect(results[1].key).toBe('mixed-0-B');
+        expect(results[1].state).toBe(LoadingState.Loading);
+        expect(results[2].key).toBe('mixed-1-');
+        expect(results[2].state).toBe(LoadingState.Done);
+      });
+    });
+  });
+
   describe('with multi template variable', () => {
     beforeAll(() => {
       setDataSourceSrv({
