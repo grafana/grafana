@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2, CoreApp, DataFrame } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Icon, Modal, useTheme2 } from '@grafana/ui';
+import { Button, Dropdown, Icon, Menu, Modal, useTheme2 } from '@grafana/ui';
 
 import { config } from '../../../../../../core/config';
 import { downloadTraceAsJson, exportTraceAsMermaid } from '../../../../../inspector/utils/download';
@@ -67,6 +67,12 @@ export default function TracePageActions(props: TracePageActionsProps) {
     setMermaidDiagramCode(exportTraceAsMermaid(data));
     setExportModalOpen(true);
   };
+  const exportMenu = (
+    <Menu>
+      <Menu.Item label="Native Download" onClick={exportTrace} />
+      <Menu.Item label="Mermaid" onClick={exportMermaid} />
+    </Menu>
+  );
 
   return (
     <div className={styles.TracePageActions}>
@@ -86,7 +92,11 @@ export default function TracePageActions(props: TracePageActionsProps) {
         label={copyTraceIdClicked ? 'Copied!' : 'Trace ID'}
         icon={'copy'}
       />
-      <ActionButton onClick={exportTrace} ariaLabel={'Export Trace'} label={'Export'} icon={'save'} />
+      <Dropdown overlay={exportMenu}>
+        <Button size="sm" variant="secondary" fill={'outline'} type="button" icon={'save'}>
+          Export
+        </Button>
+      </Dropdown>
       <ActionButton onClick={exportMermaid} ariaLabel={'Export Mermaid'} label={'Export Mermaid'} icon={'chart-line'} />
       <Modal isOpen={exportModalOpen} onDismiss={() => setExportModalOpen(false)} title={'Mermaid Export'}>
         <pre>{mermaidDiagramCode}</pre>
