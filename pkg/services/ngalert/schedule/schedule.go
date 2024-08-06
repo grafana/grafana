@@ -49,7 +49,7 @@ type RulesStore interface {
 }
 
 type RecordingWriter interface {
-	Write(ctx context.Context, name string, t time.Time, frames data.Frames, extraLabels map[string]string) error
+	Write(ctx context.Context, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error
 }
 
 type schedule struct {

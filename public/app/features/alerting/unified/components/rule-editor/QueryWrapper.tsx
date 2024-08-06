@@ -165,14 +165,7 @@ export const QueryWrapper = ({
           hideHideQueryButton={true}
         />
       </div>
-      {showVizualisation && (
-        <VizWrapper
-          data={data}
-          thresholds={thresholds}
-          thresholdsType={thresholdsType}
-          onThresholdsChange={onChangeThreshold ? (thresholds) => onChangeThreshold(thresholds, index) : undefined}
-        />
-      )}
+      {showVizualisation && <VizWrapper data={data} thresholds={thresholds} thresholdsType={thresholdsType} />}
     </Stack>
   );
 };

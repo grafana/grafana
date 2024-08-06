@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { compact } from 'lodash';
 import { useMemo } from 'react';
-import { FormProvider, RegisterOptions, useForm, useFormContext } from 'react-hook-form';
+import { FieldValues, FormProvider, RegisterOptions, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Badge, Button, Field, Input, Label, LinkButton, Modal, Stack, useStyles2 } from '@grafana/ui';
@@ -135,7 +135,7 @@ interface FormValues {
   groupInterval: string;
 }
 
-export const evaluateEveryValidationOptions = (rules: RulerRuleDTO[]): RegisterOptions => ({
+export const evaluateEveryValidationOptions = <T extends FieldValues>(rules: RulerRuleDTO[]): RegisterOptions<T> => ({
   required: {
     value: true,
     message: 'Required.',
