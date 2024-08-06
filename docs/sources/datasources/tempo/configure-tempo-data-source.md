@@ -58,6 +58,8 @@ refs:
 
 # Configure the Tempo data source
 
+The Tempo data source sets how Grafana connects to your Tempo database and lets you configure features and integrations with other telemetry signals.
+
 To configure basic settings for the Tempo data source, complete the following steps:
 
 1.  Click **Connections** in the left-side menu.
@@ -72,7 +74,7 @@ To configure basic settings for the Tempo data source, complete the following st
     | **Name**       | Sets the name you use to refer to the data source in panels and queries. |
     | **Default**    | Sets the data source that's pre-selected for new panels.                 |
     | **URL**        | Sets the URL of the Tempo instance, such as `http://tempo`.              |
-    | **Basic Auth** | Enables basic authentication to the Tempo data source.                   |
+    | **Basic Auth** | Enables authentication to the Tempo data source.                         |
     | **User**       | Sets the user name for basic authentication.                             |
     | **Password**   | Sets the password for basic authentication.                              |
 
@@ -81,6 +83,33 @@ You can also configure settings specific to the Tempo data source.
 This video explains how to add data sources, including Loki, Tempo, and Mimir, to Grafana and Grafana Cloud. Tempo data source set up starts at 4:58 in the video.
 
 {{< youtube id="cqHO0oYW6Ic" start="298" >}}
+
+## Streaming
+
+<!-- The traceQLStreaming toggle will be deprecated in Grafana 11.2 and removed in 11.3. -->
+
+Streaming enables TraceQL query results to be displayed as they become available. Without streaming, no results are displayed until all results have returned.
+
+{{< docs/public-preview product="TraceQL streaming results" >}}
+
+### Requirements
+
+To use streaming, you need to:
+
+- Be running Tempo version 2.2 or newer, or Grafana Enterprise Traces (GET) version 2.2 or newer, or be using Grafana Cloud Traces.
+- For self-managed Tempo or GET instances: If your Tempo or GET instance is behind a load balancer or proxy that doesn't supporting gRPC or HTTP2, streaming may not work and should be disabled.
+
+### Activate streaming
+
+For streaming to work for a particular Tempo data source, set your Grafana's `traceQLStreaming` [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) to true and set **Streaming** to enabled in your Tempo data source configuration.
+
+![Streaming section in Tempo data source](/media/docs/grafana/data-sources/tempo-data-source-streaming-v11.2.png)
+
+If you are using Grafana Cloud, the `traceQLStreaming` feature toggle is already set to `true` by default.
+
+If the Tempo data source is set to allow streaming but the `traceQLStreaming` feature toggle is set to `false` in Grafana, no streaming will occur.
+
+If the data source has streaming disabled and `traceQLStreaming` is set to `true`, no streaming will happen for that data source.
 
 ## Trace to logs
 
@@ -208,7 +237,8 @@ To use custom queries with the configuration, follow these steps:
 
 ## Custom query variables
 
-To use a variable in your trace to logs, metrics or profiles you need to wrap it in `${}`. For example, `${__span.name}`.
+To use a variable in your trace to logs, metrics, or profiles, you need to wrap it in `${}`.
+For example, `${__span.name}`.
 
 | Variable name          | Description                                                                                                                                                                                                                                                                                                                              |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
