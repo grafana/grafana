@@ -79,10 +79,8 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
     const dataSourceName = rulesSourceToDataSourceName(namespace.rulesSource);
 
     const ruleGroupIdentifier: RuleGroupIdentifier = { namespaceName, groupName, dataSourceName };
-    try {
-      await deleteRuleGroup.execute(ruleGroupIdentifier);
-      setIsDeletingGroup(false);
-    } catch (_err) {}
+    await deleteRuleGroup.execute(ruleGroupIdentifier);
+    setIsDeletingGroup(false);
   };
 
   const actionIcons: React.ReactNode[] = [];
