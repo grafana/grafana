@@ -1,5 +1,5 @@
 import { BaseQueryFn, createApi, defaultSerializeQueryArgs } from '@reduxjs/toolkit/query/react';
-import { defaultsDeep, omit } from 'lodash';
+import { omit } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
 import { AppEvents } from '@grafana/data';
@@ -9,6 +9,16 @@ import appEvents from 'app/core/app_events';
 import { logMeasurement } from '../Analytics';
 
 export type ExtendedBackendSrvRequest = BackendSrvRequest & {
+  /**
+   * Data to send with a request. Maps to the `data` property on a `BackendSrvRequest`
+   *
+   * This is done to allow us to more easily consume code-gen APIs that expect/send a `body` property
+   * to endpoints.
+   */
+  body?: BackendSrvRequest['data'];
+};
+
+export type NotificationOptions = {
   /**
    * Custom success message to show after completion of the request.
    *
@@ -23,34 +33,33 @@ export type ExtendedBackendSrvRequest = BackendSrvRequest & {
    * will not be shown
    */
   errorMessage?: string;
+
   /**
-   * Data to send with a request. Maps to the `data` property on a `BackendSrvRequest`
-   *
-   * This is done to allow us to more easily consume code-gen APIs that expect/send a `body` property
-   * to endpoints.
+   * Set to false an success application alert box will not be shown for successful PUT, DELETE, POST requests
    */
-  body?: BackendSrvRequest['data'];
+  showSuccessAlert?: boolean;
+
+  /**
+   * Set to false to not show an application alert box for request errors
+   */
+  showErrorAlert?: boolean;
 };
 
 // utility type for passing request options to endpoints
 export type WithNotificationOptions<T> = T & {
-  notificationOptions?: Partial<ExtendedBackendSrvRequest>;
+  notificationOptions?: NotificationOptions;
 };
 
-export function withNotificationOptions(
-  options: BackendSrvRequest,
-  notificationOptions: Partial<ExtendedBackendSrvRequest> = {},
-  defaults: Partial<ExtendedBackendSrvRequest> = {}
-): ExtendedBackendSrvRequest {
-  return {
-    ...options,
-    ...defaultsDeep(notificationOptions, defaults),
-  };
-}
+// we'll use this type to prevent any consumer of the API from passing "showSuccessAlert" or "showErrorAlert" to the request options
+export type BaseQueryFnArgs = WithNotificationOptions<
+  Omit<ExtendedBackendSrvRequest, 'showSuccessAlert' | 'showErrorAlert'>
+>;
 
 export const backendSrvBaseQuery =
-  (): BaseQueryFn<ExtendedBackendSrvRequest> =>
-  async ({ successMessage, errorMessage, body, ...requestOptions }) => {
+  (): BaseQueryFn<BaseQueryFnArgs> =>
+  async ({ body, notificationOptions = {}, ...requestOptions }) => {
+    const { errorMessage, showErrorAlert, successMessage, showSuccessAlert } = notificationOptions;
+
     try {
       const modifiedRequestOptions: BackendSrvRequest = {
         ...requestOptions,
@@ -75,12 +84,12 @@ export const backendSrvBaseQuery =
         }
       );
 
-      if (successMessage && requestOptions.showSuccessAlert !== false) {
+      if (successMessage && showSuccessAlert !== false) {
         appEvents.emit(AppEvents.alertSuccess, [successMessage]);
       }
       return { data, meta };
     } catch (error) {
-      if (errorMessage && requestOptions.showErrorAlert !== false) {
+      if (errorMessage && showErrorAlert !== false) {
         appEvents.emit(AppEvents.alertError, [errorMessage]);
       }
       return { error };
@@ -93,7 +102,7 @@ export const alertingApi = createApi({
   // The `BasyQueryFn`` passes all args to `getBackendSrv().fetch()` and that includes configuration options for controlling
   // when to show a "toast".
   //
-  // By passing "requestOptions" such as "successMessage" etc those also get included in the cache key because
+  // By passing "notificationOptions" such as "successMessage" etc those also get included in the cache key because
   // those args are eventually passed in to the baseQueryFn where the cache key gets computed.
   //
   // @TODO
