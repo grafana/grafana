@@ -15,7 +15,7 @@ import (
 func NewFakeStore(t *testing.T) *RemoteCache {
 	t.Helper()
 
-	opts := &setting.RemoteCacheOptions{
+	opts := &setting.RemoteCacheSettings{
 		Name:    "database",
 		ConnStr: "",
 	}
@@ -23,7 +23,7 @@ func NewFakeStore(t *testing.T) *RemoteCache {
 	sqlStore := db.InitTestDB(t)
 
 	dc, err := ProvideService(&setting.Cfg{
-		RemoteCacheOptions: opts,
+		RemoteCache: opts,
 	}, sqlStore, &usagestats.UsageStatsMock{}, fakes.NewFakeSecretsService())
 	require.NoError(t, err, "Failed to init remote cache for test")
 

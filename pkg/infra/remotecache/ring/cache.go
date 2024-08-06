@@ -30,7 +30,7 @@ func NewCache(cfg *setting.Cfg, reg prometheus.Registerer) (*Cache, error) {
 	memberlistsvc, client, err := newMemberlistService(memberlistConfig{
 		Addr:        cfg.HTTPAddr,
 		Port:        ringPort,
-		JoinMembers: cfg.Cache.JoinMembers,
+		JoinMembers: cfg.RemoteCache.Ring.JoinMembers,
 	}, logger, reg)
 
 	ring, lfc, err := newRing(
