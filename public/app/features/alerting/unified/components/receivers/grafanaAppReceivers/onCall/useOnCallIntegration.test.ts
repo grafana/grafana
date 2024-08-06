@@ -58,7 +58,7 @@ describe('useOnCallIntegration', () => {
         OnCallIntegrationType.ExistingIntegration
       );
       expect(receiverConfig.settings[OnCallIntegrationSetting.IntegrationName]).toBeUndefined();
-      expect(receiverConfig.settings['url']).toBe('https://oncall-endpoint.example.com');
+      expect(receiverConfig.settings.url).toBe('https://oncall-endpoint.example.com');
     });
 
     it('createOnCallIntegrations should provide integration name and url validators', async () => {

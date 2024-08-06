@@ -1,6 +1,7 @@
 package v0alpha1
 
 import (
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -18,12 +19,13 @@ type ResourceInfo struct {
 	kind         string
 	newObj       func() runtime.Object
 	newList      func() runtime.Object
+	columns      utils.TableColumns
 }
 
 func NewResourceInfo(group, version, resourceName, singularName, kind string,
-	newObj func() runtime.Object, newList func() runtime.Object) ResourceInfo {
+	newObj func() runtime.Object, newList func() runtime.Object, columns utils.TableColumns) ResourceInfo {
 	shortName := "" // an optional alias helpful in kubectl eg ("sa" for serviceaccounts)
-	return ResourceInfo{group, version, resourceName, singularName, shortName, kind, newObj, newList}
+	return ResourceInfo{group, version, resourceName, singularName, shortName, kind, newObj, newList, columns}
 }
 
 func (info *ResourceInfo) WithGroupAndShortName(group string, shortName string) ResourceInfo {
@@ -36,6 +38,7 @@ func (info *ResourceInfo) WithGroupAndShortName(group string, shortName string) 
 		shortName:    shortName,
 		newObj:       info.newObj,
 		newList:      info.newList,
+		columns:      info.columns,
 	}
 }
 
@@ -111,6 +114,10 @@ func (info *ResourceInfo) NewFunc() runtime.Object {
 
 func (info *ResourceInfo) NewListFunc() runtime.Object {
 	return info.newList()
+}
+
+func (info *ResourceInfo) TableConverter() utils.TableConvertor {
+	return utils.NewTableConverter(info.GroupResource(), info.columns)
 }
 
 func (info *ResourceInfo) NewNotFound(name string) *errors.StatusError {

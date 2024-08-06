@@ -1,4 +1,5 @@
 import * as H from 'history';
+import React, { useContext } from 'react';
 
 import { deprecationWarning, UrlQueryMap, urlUtil } from '@grafana/data';
 import { attachDebugger, createLogger } from '@grafana/ui';
@@ -162,3 +163,21 @@ export const navigationLogger = navigationLog.logger;
 
 // For debugging purposes the location service is attached to global _debug variable
 attachDebugger('location', locationService, navigationLog);
+
+// Simple context so the location service can be used without being a singleton
+const LocationServiceContext = React.createContext<LocationService | undefined>(undefined);
+
+export function useLocationService(): LocationService {
+  const service = useContext(LocationServiceContext);
+  if (!service) {
+    throw new Error('useLocationService must be used within a LocationServiceProvider');
+  }
+  return service;
+}
+
+export const LocationServiceProvider: React.FC<{ service: LocationService; children: React.ReactNode }> = ({
+  service,
+  children,
+}) => {
+  return <LocationServiceContext.Provider value={service}>{children}</LocationServiceContext.Provider>;
+};
