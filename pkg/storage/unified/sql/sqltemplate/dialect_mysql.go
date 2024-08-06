@@ -1,5 +1,7 @@
 package sqltemplate
 
+import "strings"
+
 // MySQL is the default implementation of Dialect for the MySQL DMBS, currently
 // supporting MySQL-8.x. It relies on having ANSI_QUOTES SQL Mode enabled. For
 // more information about ANSI_QUOTES and SQL Modes see:
@@ -14,8 +16,24 @@ var MySQL = mysql{
 var _ Dialect = MySQL
 
 type mysql struct {
-	standardIdent
+	backtickIdent
 	rowLockingClauseMap
 	argPlaceholderFunc
 	name
+}
+
+// standardIdent provides standard SQL escaping of identifiers.
+type backtickIdent struct{}
+
+func (backtickIdent) Ident(s string) (string, error) {
+	switch s {
+	// Internal identifiers require backticks to work properly
+	case "user":
+		return "`" + s + "`", nil
+	}
+	if s == "" {
+		return "", ErrEmptyIdent
+	}
+	// standard
+	return `"` + strings.ReplaceAll(s, `"`, `""`) + `"`, nil
 }

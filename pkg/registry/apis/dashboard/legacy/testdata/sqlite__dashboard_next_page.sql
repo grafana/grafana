@@ -11,18 +11,14 @@ SELECT
     dashboard.version, '' as message, dashboard.data
     FROM dashboard
     LEFT OUTER JOIN dashboard_provisioning ON dashboard.id = dashboard_provisioning.dashboard_id
-    LEFT OUTER JOIN {{ .Ident "user" }} AS created_user ON dashboard.created_by = created_user.id
-    LEFT OUTER JOIN {{ .Ident "user" }} AS updated_user ON dashboard.updated_by = updated_user.id
+    LEFT OUTER JOIN "user" AS created_user ON dashboard.created_by = created_user.id
+    LEFT OUTER JOIN "user" AS updated_user ON dashboard.updated_by = updated_user.id
     WHERE dashboard.is_folder = false
-	  AND dashboard.org_id = {{ .Arg .Query.OrgID }}
-    {{ if .Query.UID }}
-      AND dashboard.uid = {{ .Arg .Query.UID }}
-    {{ else if .Query.LastID }}
-      AND dashboard.id > {{ .Arg .Query.LastID }}
-    {{ end }}
-    {{ if .Query.GetTrash }}
-      AND dashboard.deleted IS NOT NULL
-    {{ else if .Query.LastID }}
+	  AND dashboard.org_id = ?
+    
+      AND dashboard.id > ?
+    
+    
       AND dashboard.deleted IS NULL
-    {{ end }}
+    
     ORDER BY dashboard.id DESC

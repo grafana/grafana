@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 )
@@ -46,6 +47,7 @@ type dashboardRow struct {
 
 type dashboardSqlAccess struct {
 	sql          db.DB
+	dialect      sqltemplate.Dialect
 	sess         *session.SessionDB
 	namespacer   request.NamespaceMapper
 	dashStore    dashboards.Store
@@ -62,6 +64,13 @@ func NewDashboardAccess(sql db.DB,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
 ) DashboardAccess {
+	dialect := sqltemplate.DialectForDriver(string(sql.GetDBType()))
+	if dialect == nil {
+		// panic?
+		// fmt.Errorf("no dialect for driver %q", driverName)
+		fmt.Printf("ERROR: NO DIALECT")
+	}
+
 	sess := sql.GetSqlxSession()
 	currentRV := func(ctx context.Context) (int64, error) {
 		t := time.Now()
@@ -84,6 +93,7 @@ func NewDashboardAccess(sql db.DB,
 	return &dashboardSqlAccess{
 		sql:          sql,
 		sess:         sess,
+		dialect:      dialect,
 		namespacer:   namespacer,
 		dashStore:    dashStore,
 		provisioning: provisioning,
@@ -100,102 +110,35 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 		// }
 	}
 
-	var sqlcmd string
-	args := []any{query.OrgID}
-	usertable := a.sql.GetDialect().Quote("user")
+	req := sqlQuery{
+		SQLTemplate: sqltemplate.New(a.dialect),
+		Query:       query,
+	}
 
+	tmpl := sqlQueryDashboards
 	if query.GetHistory || query.Version > 0 {
 		if query.GetTrash {
 			return nil, fmt.Errorf("trash not included in history table")
 		}
-
-		sqlcmd = `SELECT
-			dashboard.org_id, dashboard.id,
-			dashboard.uid, dashboard.folder_uid,
-			dashboard.created,created_user.uid as created_by,
-			dashboard_version.created,updated_user.uid as updated_by,
-			NULL, plugin_id,
-			dashboard_provisioning.name as origin_name,
-			dashboard_provisioning.external_id as origin_path,
-			dashboard_provisioning.check_sum as origin_key,
-			dashboard_provisioning.updated as origin_ts,
-			dashboard_version.version, dashboard_version.message, dashboard_version.data
-		FROM dashboard
-		LEFT OUTER JOIN dashboard_provisioning ON dashboard.id = dashboard_provisioning.dashboard_id
-		LEFT OUTER JOIN dashboard_version  ON dashboard.id = dashboard_version.dashboard_id
-		LEFT OUTER JOIN ` + usertable + ` AS created_user ON dashboard.created_by = created_user.id
-		LEFT OUTER JOIN ` + usertable + ` AS updated_user ON dashboard_version.created_by = updated_user.id
-		WHERE dashboard.is_folder = false
-			AND dashboard.org_id=?$1`
-
-		if query.UID == "" {
-			return nil, fmt.Errorf("history query must have a UID")
-		}
-
-		args = append(args, query.UID)
-		sqlcmd = fmt.Sprintf("%s AND dashboard.uid=?$%d", sqlcmd, len(args))
-
-		if query.Version > 0 {
-			args = append(args, query.Version)
-			sqlcmd = fmt.Sprintf("%s AND dashboard_version.version=?$%d", sqlcmd, len(args))
-		} else if query.LastID > 0 {
-			args = append(args, query.LastID)
-			sqlcmd = fmt.Sprintf("%s AND dashboard_version.version<?$%d", sqlcmd, len(args))
-		}
-
-		sqlcmd = fmt.Sprintf("%s\n   ORDER BY dashboard_version.version desc", sqlcmd)
-	} else {
-		sqlcmd = `SELECT
-			dashboard.org_id, dashboard.id,
-			dashboard.uid, dashboard.folder_uid,
-			dashboard.created,created_user.uid as created_by,
-			dashboard.updated,updated_user.uid as updated_by,
-			dashboard.deleted, plugin_id,
-			dashboard_provisioning.name as origin_name,
-			dashboard_provisioning.external_id as origin_path,
-			dashboard_provisioning.check_sum as origin_key,
-			dashboard_provisioning.updated as origin_ts,
-			dashboard.version, '' as message, dashboard.data
-		FROM dashboard
-		LEFT OUTER JOIN dashboard_provisioning ON dashboard.id = dashboard_provisioning.dashboard_id
-		LEFT OUTER JOIN ` + usertable + ` AS created_user ON dashboard.created_by = created_user.id
-		LEFT OUTER JOIN ` + usertable + ` AS updated_user ON dashboard.updated_by = updated_user.id
-		WHERE dashboard.is_folder = false
-		  AND dashboard.org_id=?$1`
-
-		if query.UID != "" {
-			args = append(args, query.UID)
-			sqlcmd = fmt.Sprintf("%s AND dashboard.uid=?$%d", sqlcmd, len(args))
-		} else if query.LastID > 0 {
-			args = append(args, query.LastID)
-			sqlcmd = fmt.Sprintf("%s AND dashboard.id>?$%d", sqlcmd, len(args))
-		}
-		if query.GetTrash {
-			sqlcmd = sqlcmd + " AND dashboard.deleted IS NOT NULL"
-		} else {
-			sqlcmd = sqlcmd + " AND dashboard.deleted IS NULL"
-		}
-
-		sqlcmd = fmt.Sprintf("%s\n   ORDER BY dashboard.id asc", sqlcmd)
+		tmpl = sqlQueryHistory
 	}
-	// fmt.Printf("%s // %v\n", sqlcmd, args)
 
-	rows, err := a.doQuery(ctx, sqlcmd, args...)
+	rawQuery, err := sqltemplate.Execute(tmpl, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", tmpl.Name(), err)
+	}
+
+	fmt.Printf(">>%s [%+v]", rawQuery, req.GetArgs())
+
+	q := sqltemplate.FormatSQL(rawQuery)
+
+	rows, err := a.sess.Query(ctx, q, req.GetArgs()...)
 	if err != nil {
 		if rows != nil {
 			_ = rows.Close()
 		}
 		rows = nil
 	}
-	return rows, err
-}
-
-func (a *dashboardSqlAccess) doQuery(ctx context.Context, query string, args ...any) (*rowsWrapper, error) {
-	_, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := a.sess.Query(ctx, query, args...)
 	return &rowsWrapper{
 		rows: rows,
 		a:    a,
