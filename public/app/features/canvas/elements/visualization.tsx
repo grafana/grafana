@@ -8,13 +8,7 @@ import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 
-import {
-  CanvasElementItem,
-  CanvasElementOptions,
-  CanvasElementProps,
-  defaultBgColor,
-  defaultTextColor,
-} from '../element';
+import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultTextColor } from '../element';
 import { Align, VAlign, VizElementConfig, VizElementData } from '../types';
 
 const panelTypes: Array<SelectableValue<string>> = Object.keys(PanelBuilders).map((type) => {
@@ -46,6 +40,7 @@ const VisualizationDisplay = (props: CanvasElementProps<VizElementConfig, VizEle
   }));
 
   panelToEmbed.setData(new SceneDataNode({ data: data!.data }));
+  panelToEmbed.setDisplayMode('transparent');
   const panel = panelToEmbed.build();
 
   const embeddedPanel = new EmbeddedScene({
@@ -102,7 +97,7 @@ export const visualizationItem: CanvasElementItem<VizElementConfig, VizElementDa
     },
     background: {
       color: {
-        fixed: defaultBgColor,
+        fixed: config.theme2.colors.background.canvas,
       },
     },
     links: options?.links ?? [],
