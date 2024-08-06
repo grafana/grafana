@@ -41,7 +41,7 @@ export function ResourceDetailsModal(props: ResourceDetailsModalProps) {
               <Text element="p">{msgTitle}</Text>
 
               <Text element="p" weight="bold">
-                <Trans i18nKey="migrate-to-cloud.resource-details.specific-message-body">{resource.message}</Trans>
+                {resource.message}
               </Text>
             </>
           ) : (

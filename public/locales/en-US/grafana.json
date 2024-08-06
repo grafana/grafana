@@ -1143,7 +1143,6 @@
       "generic-title": "Resource migration details:",
       "missing-message": "No message provided.",
       "resource-summary": "{{refId}} ({{typeName}})",
-      "specific-message-body": "{resource.message}",
       "title": "Migration resource details",
       "warning-title": "Resource migrated with a warning:"
     },

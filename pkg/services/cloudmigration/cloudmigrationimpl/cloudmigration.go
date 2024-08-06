@@ -797,7 +797,7 @@ func (s *Service) getResourcesWithPluginWarnings(ctx context.Context, results []
 	}
 	dsMap := make(map[string]*datasources.DataSource, len(dsList))
 	for i := 0; i < len(dsList); i++ {
-		dsMap[dsList[i].Type] = dsList[i]
+		dsMap[dsList[i].UID] = dsList[i]
 	}
 
 	for i := 0; i < len(results); i++ {
@@ -808,7 +808,7 @@ func (s *Service) getResourcesWithPluginWarnings(ctx context.Context, results []
 
 			ds, ok := dsMap[r.RefID]
 			if !ok {
-				s.log.Error("data source with id %s was not found in data sources list")
+				s.log.Error("data source with id %s was not found in data sources list", r.RefID)
 				continue
 			}
 
