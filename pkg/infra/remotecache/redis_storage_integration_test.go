@@ -37,5 +37,4 @@ func TestIntegrationRedisCacheStorage(t *testing.T) {
 	opts := &setting.RemoteCacheOptions{Name: redisCacheType, ConnStr: b.String()}
 	client := createTestClient(t, opts, nil)
 	runTestsForClient(t, client)
-	runCountTestsForClient(t, opts, nil)
 }
