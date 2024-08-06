@@ -60,6 +60,7 @@ func TraceToFrame(td ptrace.Traces) (*data.Frame, error) {
 			data.NewField("logs", nil, []json.RawMessage{}),
 			data.NewField("references", nil, []json.RawMessage{}),
 			data.NewField("tags", nil, []json.RawMessage{}),
+			data.NewField("childrenMetrics", nil, []json.RawMessage{}),
 		},
 		Meta: &data.FrameMeta{
 			// TODO: use constant once available in the SDK
@@ -156,6 +157,8 @@ func spanToSpanRow(span ptrace.Span, libraryTags pcommon.InstrumentationScope, r
 
 	references, err := json.Marshal(spanLinksToReferences(span.Links()))
 
+	childrenMetrics, err := json.Marshal(getChildrenMetrics(span))
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal span links: %w", err)
 	}
@@ -179,6 +182,7 @@ func spanToSpanRow(span ptrace.Span, libraryTags pcommon.InstrumentationScope, r
 		json.RawMessage(logs),
 		json.RawMessage(references),
 		json.RawMessage(spanTags),
+		json.RawMessage(childrenMetrics),
 	}, nil
 }
 
@@ -309,4 +313,35 @@ func spanLinksToReferences(links ptrace.SpanLinkSlice) []*TraceReference {
 	}
 
 	return references
+}
+
+func getChildrenMetrics(span ptrace.Span) []*TraceReference {
+	childrenMetrics := make([]*TraceReference, 3)
+
+	traceID := span.TraceID()
+	traceIDHex := hex.EncodeToString(traceID[:])
+	traceIDHex = strings.TrimPrefix(traceIDHex, strings.Repeat("0", 16))
+
+	parentSpanID := span.ParentSpanID()
+	parentSpanIDHex := hex.EncodeToString(parentSpanID[:])
+
+	childrenMetrics = append(childrenMetrics, &TraceReference{
+		TraceID: traceIDHex,
+		SpanID:  parentSpanIDHex,
+		Tags:    []*KeyValue{{Key: "min", Value: "10ms"}},
+	})
+
+	childrenMetrics = append(childrenMetrics, &TraceReference{
+		TraceID: traceIDHex,
+		SpanID:  parentSpanIDHex,
+		Tags:    []*KeyValue{{Key: "max", Value: "20ms"}},
+	})
+
+	childrenMetrics = append(childrenMetrics, &TraceReference{
+		TraceID: traceIDHex,
+		SpanID:  parentSpanIDHex,
+		Tags:    []*KeyValue{{Key: "avg", Value: "15ms"}},
+	})
+	
+	return childrenMetrics
 }
