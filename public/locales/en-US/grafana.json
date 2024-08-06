@@ -1133,7 +1133,7 @@
     },
     "public-preview": {
       "button-text": "Give feedback",
-      "message": "Help us improve this feature by providing feedback and reporting any issues.",
+      "message": "No SLAs are available yet. <2>Visit our docs</2> to learn more about this feature!",
       "title": "Migrate to Grafana Cloud is in public preview"
     },
     "resource-error": {
