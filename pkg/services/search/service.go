@@ -12,7 +12,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"go.opentelemetry.io/otel"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/search")
 
 func ProvideService(cfg *setting.Cfg, sqlstore db.DB, starService star.Service, dashboardService dashboards.DashboardService) *SearchService {
 	s := &SearchService{
@@ -61,6 +64,9 @@ type SearchService struct {
 }
 
 func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.HitList, error) {
+	ctx, span := tracer.Start(ctx, "search.SearchHandler")
+	defer span.End()
+
 	starredQuery := star.GetUserStarsQuery{
 		UserID: query.SignedInUser.UserID,
 	}
