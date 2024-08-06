@@ -26,4 +26,18 @@ var actionTranslations = map[string]string{
 	"dashboards:delete":            "delete",
 	"dashboards.permissions:read":  "permissions_read",
 	"dashboards.permissions:write": "permissions_write",
+
+	"library.panels:create": "library_panel_create",
+	"library.panels:read":   "library_panel_read",
+	"library.panels:write":  "library_panel_write",
+	"library.panels:delete": "library_panel_delete",
+
+	"alert.rules:create": "alert_rule_create",
+	"alert.rules:read":   "alert_rule_read",
+	"alert.rules:write":  "alert_rule_write",
+	"alert.rules:delete": "alert_rule_delete",
+
+	"alert.silences:create": "alert_silence_create",
+	"alert.silences:read":   "alert_silence_read",
+	"alert.silences:write":  "alert_silence_write",
 }
