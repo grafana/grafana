@@ -805,7 +805,6 @@ func (s *Service) getResourcesWithPluginWarnings(ctx context.Context, results []
 
 		if r.Type == cloudmigration.DatasourceDataType &&
 			r.Error == "" { // any error returned by GMS takes priority
-
 			ds, ok := dsMap[r.RefID]
 			if !ok {
 				s.log.Error("data source with id %s was not found in data sources list", r.RefID)
