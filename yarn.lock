@@ -4847,7 +4847,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@msagl/core@npm:^1.1.19":
+"@msagl/core@npm:^1.1.19, @msagl/core@npm:^1.1.20":
   version: 1.1.20
   resolution: "@msagl/core@npm:1.1.20"
   dependencies:
@@ -4860,25 +4860,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@msagl/drawing@npm:^1.1.19":
-  version: 1.1.19
-  resolution: "@msagl/drawing@npm:1.1.19"
+"@msagl/drawing@npm:^1.1.20":
+  version: 1.1.20
+  resolution: "@msagl/drawing@npm:1.1.20"
   dependencies:
-    "@msagl/core": "npm:^1.1.19"
-  checksum: 10/b8963ab6f8dd7943a10d950abe11030996e12cd74503c6d704678dce54c1fd0f5ee1570cc893027e24150e475294d09a4ae4ac3be8f9e9f8d7382d7b7c5303a9
+    "@msagl/core": "npm:^1.1.20"
+  checksum: 10/69a18e6dbff44f7332cd4340678341b9a57580328bfcf6342e642e8372e27179b7f1b8c2869ad2e92f9e3e1aba4e06b622596e57927e58c93804715887e6ead6
   languageName: node
   linkType: hard
 
 "@msagl/parser@npm:^1.1.19":
-  version: 1.1.19
-  resolution: "@msagl/parser@npm:1.1.19"
+  version: 1.1.20
+  resolution: "@msagl/parser@npm:1.1.20"
   dependencies:
-    "@msagl/core": "npm:^1.1.19"
-    "@msagl/drawing": "npm:^1.1.19"
+    "@msagl/core": "npm:^1.1.20"
+    "@msagl/drawing": "npm:^1.1.20"
     "@types/parse-color": "npm:^1.0.1"
     dotparser: "npm:^1.1.1"
     parse-color: "npm:^1.0.0"
-  checksum: 10/349dcd57a3365628699b45172359363b86a1b27f8300b5b7fde97ba65eb512191a7433b72908a544fbbdc1d91bcaa9ca498faef345078367529820a47af38609
+  checksum: 10/1ae5a17ad537f1b247e7c05b0c936ceead3be923f283bb76af22ea42272d8fd1dcf0d075934174bb7b99e7e7aa0927bde3255874e50566e1a1ba90194aa5347d
   languageName: node
   linkType: hard
 
