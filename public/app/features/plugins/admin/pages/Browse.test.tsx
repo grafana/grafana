@@ -94,7 +94,7 @@ describe('Browse list of plugins', () => {
       expect(queryByText('Plugin 2')).not.toBeInTheDocument();
     });
 
-    it('should list installed plugins when filtering by ones with update', async () => {
+    it('should list plugins with update when filtering by update', async () => {
       const { queryByText } = renderBrowse('/plugins?filterBy=has-update', [
         getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true, hasUpdate: true }),
         getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: false }),
@@ -105,7 +105,6 @@ describe('Browse list of plugins', () => {
       await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
       expect(queryByText('Plugin 3')).toBeInTheDocument();
 
-      // Not showing not installed plugins
       expect(queryByText('Plugin 2')).not.toBeInTheDocument();
       expect(queryByText('Plugin 4')).not.toBeInTheDocument();
     });
