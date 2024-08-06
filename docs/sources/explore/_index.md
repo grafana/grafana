@@ -56,7 +56,8 @@ cards:
 
 ## Overview
 
-Explore is your gateway for querying, analyzing, and aggregating data in Grafana. It allows you to visually explore and iterate until you develop a working query or set of queries for building visualizations and conducting data analysis. If your data source supports graph and table data, there's no need to create a dashboard, as Explore can display the results in both formats. This facilitates quick, detailed, real-time data analysis.
+Explore is your starting point for querying, analyzing, and aggregating data in Grafana. You can quickly begin creating queries to start analyzing data without having to create a dashboard or visualization.
+
 
 
 ## Explore
