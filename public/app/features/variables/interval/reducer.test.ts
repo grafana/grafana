@@ -1,9 +1,10 @@
 import { cloneDeep } from 'lodash';
 
+import { IntervalVariableModel } from '@grafana/data';
+
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { getVariableTestContext } from '../state/helpers';
 import { VariablesState } from '../state/types';
-import { IntervalVariableModel } from '../types';
 import { toVariablePayload } from '../utils';
 
 import { createIntervalVariableAdapter } from './adapter';

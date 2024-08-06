@@ -8,6 +8,7 @@ import { contextSrv } from 'app/core/core';
 import { RuleNamespace } from '../../../types/unified-alerting';
 import { RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
+import { FilterType } from './components/rules/central-state-history/EventListSceneObject';
 import { getSearchFilterFromQuery, RulesFilter } from './search/rulesSearchParser';
 import { RuleFormType } from './types/rule-form';
 
@@ -24,11 +25,13 @@ export const LogMessages = {
   cancelSavingAlertRule: 'user canceled alert rule creation',
   successSavingAlertRule: 'alert rule saved successfully',
   unknownMessageFromError: 'unknown messageFromError',
+  grafanaRecording: 'creating Grafana recording rule from scratch',
+  loadedCentralAlertStateHistory: 'loaded central alert state history',
 };
 
 const { logInfo, logError, logMeasurement } = createMonitoringLogger('features.alerting', { module: 'Alerting' });
 
-export { logInfo, logError, logMeasurement };
+export { logError, logInfo, logMeasurement };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise<any>>(
@@ -78,6 +81,18 @@ export function withPromRulesMetadataLogging<TFunc extends (...args: any[]) => P
     );
     return response;
   };
+}
+
+type FormErrors = Record<string, Partial<{ message: string; type: string | number }>>;
+export function reportFormErrors(errors: FormErrors) {
+  Object.entries(errors).forEach(([field, error]) => {
+    const message = error.message ?? 'unknown error';
+    const type = String(error.type) ?? 'unknown';
+
+    const errorObject = new Error(message);
+
+    logError(errorObject, { field, type });
+  });
 }
 
 function getPromRulesMetadata(promRules: RuleNamespace[]) {
@@ -231,6 +246,27 @@ export function trackSwitchToSimplifiedRouting() {
 
 export function trackSwitchToPoliciesRouting() {
   reportInteraction('grafana_alerting_switch_to_policies_routing');
+}
+
+export function trackEditInputWithTemplate() {
+  reportInteraction('grafana_alerting_contact_point_form_edit_input_with_template');
+}
+export function trackUseCustomInputInTemplate() {
+  reportInteraction('grafana_alerting_contact_point_form_use_custom_input_in_template');
+}
+export function trackUseSingleTemplateInInput() {
+  reportInteraction('grafana_alerting_contact_point_form_use_single_template_in_input');
+}
+export function trackUseCentralHistoryFilterByClicking(payload: { type: FilterType; key: string; value: string }) {
+  reportInteraction('grafana_alerting_central_alert_state_history_filter_by_clicking', payload);
+}
+
+export function trackUseCentralHistoryExpandRow() {
+  reportInteraction('grafana_alerting_central_alert_state_history_expand_row');
+}
+
+export function trackUseCentralHistoryMaxEventsReached(payload: { from: number; to: number }) {
+  reportInteraction('grafana_alerting_central_alert_state_history_max_events_reached', payload);
 }
 
 export type AlertRuleTrackingProps = {

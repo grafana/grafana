@@ -1,9 +1,8 @@
 import { produce } from 'immer';
-import React from 'react';
 import { render, screen, userEvent } from 'test/test-utils';
-import { byLabelText } from 'testing-library-selector';
+import { byLabelText, byRole } from 'testing-library-selector';
 
-import { setPluginExtensionsHook } from '@grafana/runtime';
+import { config, setPluginExtensionsHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -24,7 +23,9 @@ jest.mock('app/core/services/context_srv');
 const mockContextSrv = jest.mocked(contextSrv);
 
 const ui = {
-  moreButton: byLabelText('more-actions'),
+  menu: byRole('menu'),
+  moreButton: byLabelText(/More/),
+  pauseButton: byRole('menuitem', { name: /Pause evaluation/ }),
 };
 
 const grantAllPermissions = () => {
@@ -57,6 +58,12 @@ setPluginExtensionsHook(() => ({
   isLoading: false,
 }));
 
+const clickCopyLink = async () => {
+  const user = userEvent.setup();
+  await user.click(await ui.moreButton.find());
+  await user.click(await screen.findByText(/copy link/i));
+};
+
 describe('RuleActionsButtons', () => {
   it('renders correct options for grafana managed rule', async () => {
     const user = userEvent.setup();
@@ -68,6 +75,19 @@ describe('RuleActionsButtons', () => {
     await user.click(await ui.moreButton.find());
 
     expect(await getMenuContents()).toMatchSnapshot();
+  });
+
+  it('should be able to pause a Grafana rule', async () => {
+    const user = userEvent.setup();
+    grantAllPermissions();
+    const mockRule = getGrafanaRule();
+
+    render(<RuleActionsButtons rule={mockRule} rulesSource="grafana" />);
+
+    await user.click(await ui.moreButton.find());
+    await user.click(await ui.pauseButton.find());
+
+    expect(ui.menu.query()).not.toBeInTheDocument();
   });
 
   it('renders correct options for Cloud rule', async () => {
@@ -122,5 +142,35 @@ describe('RuleActionsButtons', () => {
     await user.click(await ui.moreButton.find());
 
     expect(screen.queryByText(/delete/i)).not.toBeInTheDocument();
+  });
+
+  describe('copy link', () => {
+    beforeEach(() => {
+      grantAllPermissions();
+      config.appUrl = 'http://localhost:3000/';
+      config.appSubUrl = '/sub';
+    });
+
+    it('copies correct URL for grafana managed alert rule', async () => {
+      const mockRule = getGrafanaRule({ rulerRule: mockGrafanaRulerRule({ uid: 'foo', provenance: 'file' }) });
+
+      render(<RuleActionsButtons rule={mockRule} rulesSource="grafana" />);
+
+      await clickCopyLink();
+
+      expect(await navigator.clipboard.readText()).toBe('http://localhost:3000/sub/alerting/grafana/foo/view');
+    });
+
+    it('copies correct URL for cloud rule', async () => {
+      const mockRule = getCloudRule();
+
+      render(<RuleActionsButtons rule={mockRule} rulesSource="grafana" />);
+
+      await clickCopyLink();
+
+      expect(await navigator.clipboard.readText()).toBe(
+        'http://localhost:3000/sub/alerting/Prometheus-2/mockRule/find'
+      );
+    });
   });
 });

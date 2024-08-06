@@ -13,6 +13,8 @@ node_modules
 /public/lib/monaco
 /scripts/grafana-server/tmp
 vendor
+e2e/custom-plugins
+playwright-report
 
 # TS generate from cue by cuetsy
 **/*.gen.ts

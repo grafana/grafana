@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { isFetchError } from '@grafana/runtime';
@@ -65,9 +65,9 @@ export function SaveButton({ overwrite, isLoading, isValid, onSave }: SaveButton
     <Button
       disabled={!isValid || isLoading}
       icon={isLoading ? 'spinner' : undefined}
-      data-testid={selectors.pages.SaveDashboardModal.save}
       onClick={() => onSave(overwrite)}
       variant={overwrite ? 'destructive' : 'primary'}
+      data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveButton}
     >
       {isLoading ? 'Saving...' : overwrite ? 'Save and overwrite' : 'Save'}
     </Button>

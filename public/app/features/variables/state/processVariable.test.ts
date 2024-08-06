@@ -1,4 +1,4 @@
-import { UrlQueryMap } from '@grafana/data';
+import { UrlQueryMap, VariableRefresh } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -11,7 +11,6 @@ import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQu
 import { createQueryVariableAdapter } from '../query/adapter';
 import { updateVariableOptions } from '../query/reducer';
 import { customBuilder, queryBuilder } from '../shared/testing/builders';
-import { VariableRefresh } from '../types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { initDashboardTemplating, processVariable } from './actions';
@@ -152,6 +151,21 @@ describe('processVariable', () => {
           .whenAsyncActionIsDispatched(processVariable(toKeyedVariableIdentifier(custom), queryParams), true);
 
         await tester.thenDispatchedActionsShouldEqual(
+          toKeyedAction(key, variableStateFetching(toVariablePayload({ type: 'custom', id: 'custom' }))),
+          toKeyedAction(
+            key,
+            createCustomOptionsFromQuery(toVariablePayload({ type: 'custom', id: 'custom' }, 'A,B,C'))
+          ),
+          toKeyedAction(
+            key,
+            setCurrentVariableValue(
+              toVariablePayload(
+                { type: 'custom', id: 'custom' },
+                { option: { text: 'A', value: 'A', selected: false } }
+              )
+            )
+          ),
+          toKeyedAction(key, variableStateCompleted(toVariablePayload(custom))),
           toKeyedAction(
             key,
             setCurrentVariableValue(
@@ -160,8 +174,7 @@ describe('processVariable', () => {
                 { option: { text: 'B', value: 'B', selected: false } }
               )
             )
-          ),
-          toKeyedAction(key, variableStateCompleted(toVariablePayload(custom)))
+          )
         );
       });
     });

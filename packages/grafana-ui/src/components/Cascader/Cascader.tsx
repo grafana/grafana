@@ -1,10 +1,13 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
 import RCCascader from 'rc-cascader';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
+import { withTheme2 } from '../../themes';
+import { Themeable2 } from '../../types';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
 import { Input } from '../Input/Input';
@@ -12,8 +15,9 @@ import { Stack } from '../Layout/Stack/Stack';
 import { Select } from '../Select/Select';
 
 import { onChangeCascader } from './optionMappings';
+import { getCascaderStyles } from './styles';
 
-export interface CascaderProps {
+export interface CascaderProps extends Themeable2 {
   /** The separator between levels in the search */
   separator?: string;
   placeholder?: string;
@@ -81,7 +85,7 @@ const disableDivFocus = css({
 
 const DEFAULT_SEPARATOR = ' / ';
 
-export class Cascader extends PureComponent<CascaderProps, CascaderState> {
+class UnthemedCascader extends PureComponent<CascaderProps, CascaderState> {
   constructor(props: CascaderProps) {
     super(props);
     const searchableOptions = this.getSearchableOptions(props.options);
@@ -231,10 +235,12 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
       disabled,
       id,
       isClearable,
+      theme,
     } = this.props;
     const { focusCascade, isSearching, rcValue, activeLabel, inputValue } = this.state;
 
     const searchableOptions = this.getSearchableOptions(options);
+    const styles = getCascaderStyles(theme);
 
     return (
       <div>
@@ -264,6 +270,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
             expandIcon={null}
             open={this.props.alwaysOpen}
             disabled={disabled}
+            dropdownClassName={styles.dropdown}
           >
             <div className={disableDivFocus}>
               <Input
@@ -301,3 +308,5 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
     );
   }
 }
+
+export const Cascader = withTheme2(UnthemedCascader);

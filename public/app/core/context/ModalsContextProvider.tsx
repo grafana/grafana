@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
 
 import { textUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';

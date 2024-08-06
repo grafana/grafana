@@ -7,10 +7,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
+	prommodels "github.com/prometheus/common/model"
 )
 
 type RuleLimits struct {
@@ -18,12 +20,15 @@ type RuleLimits struct {
 	DefaultRuleEvaluationInterval time.Duration
 	// All intervals must be an integer multiple of this duration.
 	BaseInterval time.Duration
+	// Whether recording rules are allowed.
+	RecordingRulesAllowed bool
 }
 
-func RuleLimitsFromConfig(cfg *setting.UnifiedAlertingSettings) RuleLimits {
+func RuleLimitsFromConfig(cfg *setting.UnifiedAlertingSettings, toggles featuremgmt.FeatureToggles) RuleLimits {
 	return RuleLimits{
 		DefaultRuleEvaluationInterval: cfg.DefaultRuleEvaluationInterval,
 		BaseInterval:                  cfg.BaseInterval,
+		RecordingRulesAllowed:         toggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules),
 	}
 }
 
@@ -44,6 +49,7 @@ func validateRuleNode(
 		return nil, fmt.Errorf("not Grafana managed alert rule")
 	}
 
+	isRecordingRule := ruleNode.GrafanaManagedAlert.Record != nil
 	// if UID is specified then we can accept partial model. Therefore, some validation can be skipped as it will be patched later
 	canPatch := ruleNode.GrafanaManagedAlert.UID != ""
 
@@ -53,46 +59,6 @@ func validateRuleNode(
 
 	if len(ruleNode.GrafanaManagedAlert.Title) > store.AlertRuleMaxTitleLength {
 		return nil, fmt.Errorf("alert rule title is too long. Max length is %d", store.AlertRuleMaxTitleLength)
-	}
-
-	noDataState := ngmodels.NoData
-	if ruleNode.GrafanaManagedAlert.NoDataState == "" && canPatch {
-		noDataState = ""
-	}
-
-	if ruleNode.GrafanaManagedAlert.NoDataState != "" {
-		noDataState, err = ngmodels.NoDataStateFromString(string(ruleNode.GrafanaManagedAlert.NoDataState))
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	errorState := ngmodels.AlertingErrState
-
-	if ruleNode.GrafanaManagedAlert.ExecErrState == "" && canPatch {
-		errorState = ""
-	}
-
-	if ruleNode.GrafanaManagedAlert.ExecErrState != "" {
-		errorState, err = ngmodels.ErrStateFromString(string(ruleNode.GrafanaManagedAlert.ExecErrState))
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if len(ruleNode.GrafanaManagedAlert.Data) == 0 {
-		if canPatch {
-			if ruleNode.GrafanaManagedAlert.Condition != "" {
-				return nil, fmt.Errorf("%w: query is not specified by condition is. You must specify both query and condition to update existing alert rule", ngmodels.ErrAlertRuleFailedValidation)
-			}
-		} else {
-			return nil, fmt.Errorf("%w: no queries or expressions are found", ngmodels.ErrAlertRuleFailedValidation)
-		}
-	} else {
-		err = validateCondition(ruleNode.GrafanaManagedAlert.Condition, ruleNode.GrafanaManagedAlert.Data)
-		if err != nil {
-			return nil, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, err.Error())
-		}
 	}
 
 	queries := AlertQueriesFromApiAlertQueries(ruleNode.GrafanaManagedAlert.Data)
@@ -106,18 +72,13 @@ func validateRuleNode(
 		IntervalSeconds: intervalSeconds,
 		NamespaceUID:    namespaceUID,
 		RuleGroup:       groupName,
-		NoDataState:     noDataState,
-		ExecErrState:    errorState,
 	}
 
-	if ruleNode.GrafanaManagedAlert.NotificationSettings != nil {
-		newAlertRule.NotificationSettings, err = validateNotificationSettings(ruleNode.GrafanaManagedAlert.NotificationSettings)
-		if err != nil {
-			return nil, err
-		}
+	if isRecordingRule {
+		newAlertRule, err = validateRecordingRuleFields(ruleNode, newAlertRule, limits, canPatch)
+	} else {
+		newAlertRule, err = validateAlertingRuleFields(ruleNode, newAlertRule, canPatch)
 	}
-
-	newAlertRule.For, err = validateForInterval(ruleNode)
 	if err != nil {
 		return nil, err
 	}
@@ -138,6 +99,89 @@ func validateRuleNode(
 	return &newAlertRule, nil
 }
 
+// validateAlertingRuleFields validates only the fields on a rule that are specific to Alerting rules.
+// it will load fields that pass validation onto newRule and return the result.
+func validateAlertingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule ngmodels.AlertRule, canPatch bool) (ngmodels.AlertRule, error) {
+	var err error
+
+	if in.GrafanaManagedAlert.Record != nil {
+		return ngmodels.AlertRule{}, fmt.Errorf("%w: rule cannot be simultaneously an alerting and recording rule", ngmodels.ErrAlertRuleFailedValidation)
+	}
+
+	noDataState := ngmodels.NoData
+	if in.GrafanaManagedAlert.NoDataState == "" && canPatch {
+		noDataState = ""
+	}
+	if in.GrafanaManagedAlert.NoDataState != "" {
+		noDataState, err = ngmodels.NoDataStateFromString(string(in.GrafanaManagedAlert.NoDataState))
+		if err != nil {
+			return ngmodels.AlertRule{}, err
+		}
+	}
+	newRule.NoDataState = noDataState
+
+	errorState := ngmodels.AlertingErrState
+	if in.GrafanaManagedAlert.ExecErrState == "" && canPatch {
+		errorState = ""
+	}
+	if in.GrafanaManagedAlert.ExecErrState != "" {
+		errorState, err = ngmodels.ErrStateFromString(string(in.GrafanaManagedAlert.ExecErrState))
+		if err != nil {
+			return ngmodels.AlertRule{}, err
+		}
+	}
+	newRule.ExecErrState = errorState
+
+	err = validateCondition(in.GrafanaManagedAlert.Condition, in.GrafanaManagedAlert.Data, canPatch)
+	if err != nil {
+		return ngmodels.AlertRule{}, err
+	}
+
+	if in.GrafanaManagedAlert.NotificationSettings != nil {
+		newRule.NotificationSettings, err = validateNotificationSettings(in.GrafanaManagedAlert.NotificationSettings)
+		if err != nil {
+			return ngmodels.AlertRule{}, err
+		}
+	}
+
+	newRule.For, err = validateForInterval(in)
+	if err != nil {
+		return ngmodels.AlertRule{}, err
+	}
+
+	return newRule, nil
+}
+
+// validateRecordingRuleFields validates only the fields on a rule that are specific to Recording rules.
+// it will load fields that pass validation onto newRule and return the result.
+func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule ngmodels.AlertRule, limits RuleLimits, canPatch bool) (ngmodels.AlertRule, error) {
+	if !limits.RecordingRulesAllowed {
+		return ngmodels.AlertRule{}, fmt.Errorf("%w: recording rules cannot be created on this instance", ngmodels.ErrAlertRuleFailedValidation)
+	}
+
+	err := validateCondition(in.GrafanaManagedAlert.Record.From, in.GrafanaManagedAlert.Data, canPatch)
+	if err != nil {
+		return ngmodels.AlertRule{}, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, err.Error())
+	}
+
+	metricName := prommodels.LabelValue(in.GrafanaManagedAlert.Record.Metric)
+	if !metricName.IsValid() {
+		return ngmodels.AlertRule{}, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid utf8 string")
+	}
+	if !prommodels.IsValidMetricName(metricName) {
+		return ngmodels.AlertRule{}, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid Prometheus metric name")
+	}
+	newRule.Record = ModelRecordFromApiRecord(in.GrafanaManagedAlert.Record)
+
+	newRule.NoDataState = ""
+	newRule.ExecErrState = ""
+	newRule.Condition = ""
+	newRule.For = 0
+	newRule.NotificationSettings = nil
+
+	return newRule, nil
+}
+
 func validateLabels(l map[string]string) error {
 	for key := range l {
 		if _, ok := ngmodels.LabelsUserCannotSpecify[key]; ok {
@@ -147,20 +191,34 @@ func validateLabels(l map[string]string) error {
 	return nil
 }
 
-func validateCondition(condition string, queries []apimodels.AlertQuery) error {
+func validateCondition(condition string, queries []apimodels.AlertQuery, canPatch bool) error {
+	if canPatch {
+		// Patch requests may leave both query and condition blank. If a request supplies one, it must supply the other.
+		if len(queries) == 0 && condition == "" {
+			return nil
+		}
+		if len(queries) == 0 && condition != "" {
+			return fmt.Errorf("%w: query is not specified but condition is. You must specify both query and condition to update existing alert rule", ngmodels.ErrAlertRuleFailedValidation)
+		}
+		if len(queries) > 0 && condition == "" {
+			return fmt.Errorf("%w: condition is not specified but query is. You must specify both query and condition to update existing alert rule", ngmodels.ErrAlertRuleFailedValidation)
+		}
+	}
+
 	if condition == "" {
-		return errors.New("condition cannot be empty")
+		return fmt.Errorf("%w: condition cannot be empty", ngmodels.ErrAlertRuleFailedValidation)
 	}
 	if len(queries) == 0 {
-		return errors.New("no query/expressions specified")
+		return fmt.Errorf("%w: no queries or expressions are found", ngmodels.ErrAlertRuleFailedValidation)
 	}
+
 	refIDs := make(map[string]int, len(queries))
 	for idx, query := range queries {
 		if query.RefID == "" {
-			return fmt.Errorf("refID is not specified for data query/expression at index %d", idx)
+			return fmt.Errorf("%w: refID is not specified for data query/expression at index %d", ngmodels.ErrAlertRuleFailedValidation, idx)
 		}
 		if usedIdx, ok := refIDs[query.RefID]; ok {
-			return fmt.Errorf("refID '%s' is already used by query/expression at index %d", query.RefID, usedIdx)
+			return fmt.Errorf("%w: refID '%s' is already used by query/expression at index %d", ngmodels.ErrAlertRuleFailedValidation, query.RefID, usedIdx)
 		}
 		refIDs[query.RefID] = idx
 	}
@@ -170,7 +228,7 @@ func validateCondition(condition string, queries []apimodels.AlertQuery) error {
 			ids = append(ids, id)
 		}
 		sort.Strings(ids)
-		return fmt.Errorf("condition %s does not exist, must be one of [%s]", condition, strings.Join(ids, ","))
+		return fmt.Errorf("%w: condition %s does not exist, must be one of [%s]", ngmodels.ErrAlertRuleFailedValidation, condition, strings.Join(ids, ","))
 	}
 	return nil
 }

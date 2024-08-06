@@ -1,12 +1,13 @@
-import { get as lodashGet } from 'lodash';
+import { capitalize, get as lodashGet } from 'lodash';
 
+import { OneClickMode } from '@grafana/data';
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
+import { CanvasElementOptions } from 'app/features/canvas/element';
 import {
-  CanvasElementOptions,
-  canvasElementRegistry,
   DEFAULT_CANVAS_ELEMENT_CONFIG,
+  canvasElementRegistry,
   defaultElementItems,
-} from 'app/features/canvas';
+} from 'app/features/canvas/registry';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene } from 'app/features/canvas/runtime/scene';
@@ -71,6 +72,7 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
 
       builder.addSelect({
         path: 'type',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
         name: undefined as any, // required, but hide space
         settings: {
           options: layerTypes,
@@ -117,6 +119,22 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
       if (shouldAddBorderEditor) {
         optionBuilder.addBorder(builder, ctx);
       }
+
+      builder.addRadio({
+        category: ['Data links'],
+        path: 'oneClickMode',
+        name: 'One-click',
+        description: 'When enabled, a single click opens the first link',
+        settings: {
+          options: [
+            { value: OneClickMode.Off, label: capitalize(OneClickMode.Off) },
+            { value: OneClickMode.Link, label: capitalize(OneClickMode.Link) },
+          ],
+        },
+        defaultValue: OneClickMode.Off,
+      });
+
+      optionBuilder.addDataLinks(builder, ctx);
     },
   };
 }

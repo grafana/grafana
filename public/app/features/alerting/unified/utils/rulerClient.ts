@@ -1,4 +1,9 @@
-import { RuleIdentifier, RulerDataSourceConfig, RuleWithLocation } from 'app/types/unified-alerting';
+import {
+  GrafanaRuleIdentifier,
+  RuleIdentifier,
+  RulerDataSourceConfig,
+  RuleWithLocation,
+} from 'app/types/unified-alerting';
 import {
   PostableRuleGrafanaRuleDTO,
   PostableRulerRuleGroupDTO,
@@ -21,9 +26,16 @@ import {
 
 export interface RulerClient {
   findEditableRule(ruleIdentifier: RuleIdentifier): Promise<RuleWithLocation | null>;
+
   deleteRule(ruleWithLocation: RuleWithLocation): Promise<void>;
+
   saveLotexRule(values: RuleFormValues, evaluateEvery: string, existing?: RuleWithLocation): Promise<RuleIdentifier>;
-  saveGrafanaRule(values: RuleFormValues, evaluateEvery: string, existing?: RuleWithLocation): Promise<RuleIdentifier>;
+
+  saveGrafanaRule(
+    values: RuleFormValues,
+    evaluateEvery: string,
+    existing?: RuleWithLocation
+  ): Promise<GrafanaRuleIdentifier>;
 }
 
 export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient {
@@ -153,7 +165,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
     values: RuleFormValues,
     evaluateEvery: string,
     existingRule?: RuleWithLocation
-  ): Promise<RuleIdentifier> => {
+  ): Promise<GrafanaRuleIdentifier> => {
     const { folder, group } = values;
     if (!folder) {
       throw new Error('Folder must be specified');
@@ -190,7 +202,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
     namespaceUID: string,
     group: { name: string; interval: string },
     newRule: PostableRuleGrafanaRuleDTO
-  ): Promise<RuleIdentifier> => {
+  ): Promise<GrafanaRuleIdentifier> => {
     const existingGroup = await fetchRulerRulesGroup(rulerConfig, namespaceUID, group.name);
     if (!existingGroup) {
       throw new Error(`No group found with name "${group.name}"`);
@@ -213,7 +225,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
     group: { name: string; interval: string },
     existingRule: RuleWithLocation,
     newRule: PostableRuleGrafanaRuleDTO
-  ): Promise<RuleIdentifier> => {
+  ): Promise<GrafanaRuleIdentifier> => {
     // make sure our updated alert has the same UID as before
     // that way the rule is automatically moved to the new namespace / group name
     copyGrafanaUID(existingRule, newRule);
@@ -228,7 +240,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
     existingRule: RuleWithLocation,
     newRule: PostableRuleGrafanaRuleDTO,
     interval: string
-  ): Promise<RuleIdentifier> => {
+  ): Promise<GrafanaRuleIdentifier> => {
     // make sure our updated alert has the same UID as before
     copyGrafanaUID(existingRule, newRule);
 

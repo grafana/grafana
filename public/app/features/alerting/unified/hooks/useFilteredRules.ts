@@ -9,20 +9,45 @@ import { CombinedRuleGroup, CombinedRuleNamespace, Rule } from 'app/types/unifie
 import { isPromAlertingRuleState, PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { applySearchFilterToQuery, getSearchFilterFromQuery, RulesFilter } from '../search/rulesSearchParser';
-import { labelsMatchMatchers, matcherToMatcherField, parseMatchers } from '../utils/alertmanager';
+import { labelsMatchMatchers, matcherToMatcherField } from '../utils/alertmanager';
 import { Annotation } from '../utils/constants';
 import { isCloudRulesSource } from '../utils/datasource';
-import { parseMatcher } from '../utils/matchers';
-import { getRuleHealth, isAlertingRule, isGrafanaRulerRule, isPromRuleType } from '../utils/rules';
+import { parseMatcher, parsePromQLStyleMatcherLoose } from '../utils/matchers';
+import {
+  getRuleHealth,
+  isAlertingRule,
+  isGrafanaRulerRule,
+  isPluginProvidedRule,
+  isPromRuleType,
+} from '../utils/rules';
 
 import { calculateGroupTotals, calculateRuleFilteredTotals, calculateRuleTotals } from './useCombinedRuleNamespaces';
 import { useURLSearchParams } from './useURLSearchParams';
+
+// if the search term is longer than MAX_NEEDLE_SIZE we disable Levenshtein distance
+const MAX_NEEDLE_SIZE = 25;
+const INFO_THRESHOLD = Infinity;
+
+/**
+ * Escape query strings so that regex characters don't interfere
+ * with uFuzzy search methods.
+ *
+ * The fuzzy searching will take the query and generate a regex - but if the query
+ * contains a regex itself, then it can easily end up being split in a bad place
+ * and end up creating an invalid expression
+ */
+const escapeQueryRegex = (query: string) => {
+  // see https://stackoverflow.com/a/6969486
+  return query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
 
 export function useRulesFilter() {
   const [queryParams, updateQueryParams] = useURLSearchParams();
   const searchQuery = queryParams.get('search') ?? '';
 
-  const filterState = useMemo(() => getSearchFilterFromQuery(searchQuery), [searchQuery]);
+  const filterState = useMemo<RulesFilter>(() => {
+    return getSearchFilterFromQuery(searchQuery);
+  }, [searchQuery]);
   const hasActiveFilters = useMemo(() => Object.values(filterState).some((filter) => !isEmpty(filter)), [filterState]);
 
   const updateFilters = useCallback(
@@ -46,7 +71,7 @@ export function useRulesFilter() {
       dataSource: queryParams.get('dataSource') ?? undefined,
       alertState: queryParams.get('alertState') ?? undefined,
       ruleType: queryParams.get('ruleType') ?? undefined,
-      labels: parseMatchers(queryParams.get('queryString') ?? '').map(matcherToMatcherField),
+      labels: parsePromQLStyleMatcherLoose(queryParams.get('queryString') ?? '').map(matcherToMatcherField),
     };
 
     const hasLegacyFilters = Object.values(legacyFilters).some((legacyFilter) => !isEmpty(legacyFilter));
@@ -100,17 +125,6 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterStat
   }, [namespaces, filterState]);
 };
 
-// Options details can be found here https://github.com/leeoniya/uFuzzy#options
-// The following configuration complies with Damerau-Levenshtein distance
-// https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance
-const ufuzzy = new uFuzzy({
-  intraMode: 1,
-  intraIns: 1,
-  intraSub: 1,
-  intraTrn: 1,
-  intraDel: 1,
-});
-
 export const filterRules = (
   namespaces: CombinedRuleNamespace[],
   filterState: RulesFilter = { dataSourceNames: [], labels: [], freeFormWords: [] }
@@ -129,7 +143,15 @@ export const filterRules = (
   if (namespaceFilter) {
     const namespaceHaystack = filteredNamespaces.map((ns) => ns.name);
 
-    const [idxs, info, order] = ufuzzy.search(namespaceHaystack, namespaceFilter);
+    const escapedQuery = escapeQueryRegex(namespaceFilter);
+
+    const ufuzzy = getSearchInstance(namespaceFilter);
+    const [idxs, info, order] = ufuzzy.search(
+      namespaceHaystack,
+      escapedQuery,
+      getOutOfOrderLimit(namespaceFilter),
+      INFO_THRESHOLD
+    );
     if (info && order) {
       filteredNamespaces = order.map((idx) => filteredNamespaces[info.idx[idx]]);
     } else if (idxs) {
@@ -148,7 +170,16 @@ const reduceNamespaces = (filterState: RulesFilter) => {
 
     if (groupNameFilter) {
       const groupsHaystack = filteredGroups.map((g) => g.name);
-      const [idxs, info, order] = ufuzzy.search(groupsHaystack, groupNameFilter);
+      const ufuzzy = getSearchInstance(groupNameFilter);
+
+      const escapedQuery = escapeQueryRegex(groupNameFilter);
+
+      const [idxs, info, order] = ufuzzy.search(
+        groupsHaystack,
+        escapedQuery,
+        getOutOfOrderLimit(groupNameFilter),
+        INFO_THRESHOLD
+      );
       if (info && order) {
         filteredGroups = order.map((idx) => filteredGroups[info.idx[idx]]);
       } else if (idxs) {
@@ -178,7 +209,15 @@ const reduceGroups = (filterState: RulesFilter) => {
 
     if (ruleNameQuery) {
       const rulesHaystack = filteredRules.map((r) => r.name);
-      const [idxs, info, order] = ufuzzy.search(rulesHaystack, ruleNameQuery);
+      const ufuzzy = getSearchInstance(ruleNameQuery);
+      const escapedQuery = escapeQueryRegex(ruleNameQuery);
+
+      const [idxs, info, order] = ufuzzy.search(
+        rulesHaystack,
+        escapedQuery,
+        getOutOfOrderLimit(ruleNameQuery),
+        INFO_THRESHOLD
+      );
       if (info && order) {
         filteredRules = order.map((idx) => filteredRules[info.idx[idx]]);
       } else if (idxs) {
@@ -195,13 +234,17 @@ const reduceGroups = (filterState: RulesFilter) => {
       const matchesFilterFor = chain(filterState)
         // ⚠️ keep this list of properties we filter for here up-to-date ⚠️
         // We are ignoring predicates we've matched before we get here (like "freeFormWords")
-        .pick(['ruleType', 'dataSourceNames', 'ruleHealth', 'labels', 'ruleState', 'dashboardUid'])
+        .pick(['ruleType', 'dataSourceNames', 'ruleHealth', 'labels', 'ruleState', 'dashboardUid', 'plugins'])
         .omitBy(isEmpty)
         .mapValues(() => false)
         .value();
 
       if ('ruleType' in matchesFilterFor && filterState.ruleType === promRuleDefition?.type) {
         matchesFilterFor.ruleType = true;
+      }
+
+      if ('plugins' in matchesFilterFor && filterState.plugins === 'hide') {
+        matchesFilterFor.plugins = !isPluginProvidedRule(rule);
       }
 
       if ('dataSourceNames' in matchesFilterFor) {
@@ -275,6 +318,15 @@ const reduceGroups = (filterState: RulesFilter) => {
   };
 };
 
+// apply an outOfOrder limit which helps to limit the number of permutations to search for
+// and prevents the browser from hanging
+function getOutOfOrderLimit(searchTerm: string) {
+  const ufuzzy = getSearchInstance(searchTerm);
+
+  const termCount = ufuzzy.split(searchTerm).length;
+  return termCount < 5 ? 4 : 0;
+}
+
 function looseParseMatcher(matcherQuery: string): Matcher | undefined {
   try {
     return parseMatcher(matcherQuery);
@@ -282,6 +334,23 @@ function looseParseMatcher(matcherQuery: string): Matcher | undefined {
     // Try to createa a matcher than matches all values for a given key
     return { name: matcherQuery, value: '', isRegex: true, isEqual: true };
   }
+}
+
+// determine which search instance to use, very long search terms should match without checking for Levenshtein distance
+function getSearchInstance(searchTerm: string): uFuzzy {
+  const searchTermExeedsMaxNeedleSize = searchTerm.length > MAX_NEEDLE_SIZE;
+
+  // Options details can be found here https://github.com/leeoniya/uFuzzy#options
+  // The following configuration complies with Damerau-Levenshtein distance
+  // https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance
+  return new uFuzzy({
+    // we will disable Levenshtein distance for very long search terms – this will help with performance
+    // as it will avoid creating a very complex regular expression
+    intraMode: searchTermExeedsMaxNeedleSize ? 0 : 1,
+    // split search terms only on whitespace, this will significantly reduce the amount of regex permutations to test
+    // and is important for performance with large amount of rules and large needle
+    interSplit: '\\s+',
+  });
 }
 
 const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filterState: RulesFilter): boolean => {

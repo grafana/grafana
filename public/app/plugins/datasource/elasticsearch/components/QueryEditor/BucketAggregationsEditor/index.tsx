@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Button } from '@grafana/ui';
 
 import { useDispatch } from '../../../hooks/useStatelessReducer';

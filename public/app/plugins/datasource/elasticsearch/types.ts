@@ -139,3 +139,68 @@ export interface ElasticsearchAnnotationQuery {
 }
 
 export type RangeMap = Record<string, { from: number; to: number; format: string }>;
+
+export type ElasticsearchResponse = ElasticsearchResponseWithHits | ElasticsearchResponseWithAggregations;
+
+export type ElasticsearchResponseWithHits = {
+  responses: Array<{
+    hits: {
+      hits: ElasticsearchHits;
+    };
+  }>;
+};
+export type ElasticsearchHits = Array<Record<string, string | number | Record<string | number, string | number>>>;
+
+export type ElasticsearchResponseWithAggregations = {
+  responses: Array<{
+    aggregations: {
+      [key: string]: {
+        buckets: Array<{
+          key_as_string?: string;
+          key: string;
+          doc_count: number;
+          [key: string]: string | number | undefined;
+        }>;
+      };
+    };
+  }>;
+};
+
+export const isElasticsearchResponseWithHits = (res: unknown): res is ElasticsearchResponseWithHits => {
+  return (
+    res &&
+    typeof res === 'object' &&
+    'responses' in res &&
+    Array.isArray(res['responses']) &&
+    res['responses'].find((response: unknown) => {
+      return (
+        typeof response === 'object' &&
+        response !== null &&
+        'hits' in response &&
+        typeof response['hits'] === 'object' &&
+        response['hits'] !== null &&
+        'hits' in response['hits'] &&
+        Array.isArray(response['hits']['hits'])
+      );
+    })
+  );
+};
+
+export const isElasticsearchResponseWithAggregations = (res: unknown): res is ElasticsearchResponseWithAggregations => {
+  return (
+    res &&
+    typeof res === 'object' &&
+    'responses' in res &&
+    Array.isArray(res['responses']) &&
+    res['responses'].find((response: unknown) => {
+      return (
+        typeof response === 'object' &&
+        response !== null &&
+        'aggregations' in response &&
+        typeof response['aggregations'] === 'object' &&
+        response['aggregations'] !== null &&
+        Object.keys(response['aggregations']).length > 0
+      );
+    })
+  );
+};

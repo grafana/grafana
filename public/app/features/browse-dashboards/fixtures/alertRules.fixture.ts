@@ -44,6 +44,7 @@ export function getRulerRulesResponse(folderName: string, folderUid: string, see
               ],
               uid: random.guid(),
               namespace_uid: folderUid,
+              rule_group: 'my-group',
               no_data_state: GrafanaAlertStateDecision.NoData,
               exec_err_state: GrafanaAlertStateDecision.Error,
               is_paused: false,

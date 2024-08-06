@@ -1,7 +1,6 @@
-import { CanvasConnection } from '../../../features/canvas';
 import { ElementState } from '../../../features/canvas/runtime/element';
 
-import { ConnectionCoordinates } from './panelcfg.gen';
+import { CanvasConnection, ConnectionCoordinates } from './panelcfg.gen';
 
 export enum LayerActionID {
   Delete = 'delete',

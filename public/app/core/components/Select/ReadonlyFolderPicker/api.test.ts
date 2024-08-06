@@ -37,7 +37,7 @@ describe('getFoldersAsOptions', () => {
         const result = await getFoldersAsOptions(args);
         expect(result).toEqual([
           { value: { id: undefined, title: 'All' }, label: 'All' },
-          { value: { id: 0, title: 'General' }, label: 'General' },
+          { value: { id: 0, title: 'Dashboards' }, label: 'Dashboards' },
           { value: { id: 1, title: 'Folder 1' }, label: 'Folder 1' },
         ]);
       });
@@ -56,13 +56,13 @@ describe('getFoldersAsOptions', () => {
 
     describe('and extra folders are passed and extra folders contain query', () => {
       it('then correct extra folders should all appear first in the result', async () => {
-        const args = { query: 'er', extraFolders: [ALL_FOLDER, GENERAL_FOLDER] };
+        const args = { query: 'o', extraFolders: [ALL_FOLDER, GENERAL_FOLDER] };
         const searchHits = [{ id: 1, title: 'Folder 1' }] as DashboardSearchHit[];
         getTestContext(searchHits);
 
         const result = await getFoldersAsOptions(args);
         expect(result).toEqual([
-          { value: { id: 0, title: 'General' }, label: 'General' },
+          { value: { id: 0, title: 'Dashboards' }, label: 'Dashboards' },
           { value: { id: 1, title: 'Folder 1' }, label: 'Folder 1' },
         ]);
       });

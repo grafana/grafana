@@ -1,10 +1,9 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react';
-import React from 'react';
+import { Meta, StoryFn } from '@storybook/react';
 
 import { UsersIndicator } from './UsersIndicator';
 import mdx from './UsersIndicator.mdx';
 
-const meta: ComponentMeta<typeof UsersIndicator> = {
+const meta: Meta<typeof UsersIndicator> = {
   title: 'General/UsersIndicator',
   component: UsersIndicator,
   argTypes: { limit: { control: { type: 'number', min: 1 } } },
@@ -27,7 +26,7 @@ const meta: ComponentMeta<typeof UsersIndicator> = {
   },
 };
 
-export const Basic: ComponentStory<typeof UsersIndicator> = (args) => {
+export const Basic: StoryFn<typeof UsersIndicator> = (args) => {
   const users = [
     {
       name: 'John Doe',
@@ -50,7 +49,7 @@ Basic.args = {
   limit: 4,
 };
 
-export const WithManyUsers: ComponentStory<typeof UsersIndicator> = (args) => {
+export const WithManyUsers: StoryFn<typeof UsersIndicator> = (args) => {
   const users = [
     {
       name: 'John Doe',

@@ -31,6 +31,9 @@ import (
 // Returns a file that is easy to check for changes
 // Any changes to the file means we should refresh the frontend
 func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
+	c, span := hs.injectSpan(c, "api.GetFrontendAssets")
+	defer span.End()
+
 	hash := sha256.New()
 	keys := map[string]any{}
 
@@ -97,6 +100,9 @@ func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
 //
 //nolint:gocyclo
 func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.FrontendSettingsDTO, error) {
+	c, span := hs.injectSpan(c, "api.getFrontendSettings")
+	defer span.End()
+
 	availablePlugins, err := hs.availablePlugins(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
 		return nil, err
@@ -223,9 +229,13 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		PublicDashboardAccessToken:          c.PublicDashboardAccessToken,
 		PublicDashboardsEnabled:             hs.Cfg.PublicDashboardsEnabled,
 		CloudMigrationIsTarget:              isCloudMigrationTarget,
+		CloudMigrationFeedbackURL:           hs.Cfg.CloudMigration.FeedbackURL,
+		CloudMigrationPollIntervalMs:        int(hs.Cfg.CloudMigration.FrontendPollInterval.Milliseconds()),
 		SharedWithMeFolderUID:               folder.SharedWithMeFolderUID,
 		RootFolderUID:                       accesscontrol.GeneralFolderUID,
 		LocalFileSystemAvailable:            hs.Cfg.LocalFileSystemAvailable,
+		ReportingStaticContext:              hs.Cfg.ReportingStaticContext,
+		ExploreDefaultTimeOffset:            hs.Cfg.ExploreDefaultTimeOffset,
 
 		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
 			HideVersion:   hideVersion,
@@ -263,6 +273,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		PluginAdminEnabled:               hs.Cfg.PluginAdminEnabled,
 		PluginAdminExternalManageEnabled: hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
 		PluginCatalogHiddenPlugins:       hs.Cfg.PluginCatalogHiddenPlugins,
+		PluginCatalogManagedPlugins:      hs.managedPluginsService.ManagedPlugins(c.Req.Context()),
 		ExpressionsEnabled:               hs.Cfg.ExpressionsEnabled,
 		AwsAllowedAuthProviders:          hs.Cfg.AWSAllowedAuthProviders,
 		AwsAssumeRoleEnabled:             hs.Cfg.AWSAssumeRoleEnabled,
@@ -270,10 +281,12 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 		Azure: dtos.FrontendSettingsAzureDTO{
 			Cloud:                                  hs.Cfg.Azure.Cloud,
+			Clouds:                                 hs.Cfg.Azure.CustomClouds(),
 			ManagedIdentityEnabled:                 hs.Cfg.Azure.ManagedIdentityEnabled,
 			WorkloadIdentityEnabled:                hs.Cfg.Azure.WorkloadIdentityEnabled,
 			UserIdentityEnabled:                    hs.Cfg.Azure.UserIdentityEnabled,
 			UserIdentityFallbackCredentialsEnabled: hs.Cfg.Azure.UserIdentityFallbackCredentialsEnabled,
+			AzureEntraPasswordCredentialsEnabled:   hs.Cfg.Azure.AzureEntraPasswordCredentialsEnabled,
 		},
 
 		Caching: dtos.FrontendSettingsCachingDTO{
@@ -381,6 +394,9 @@ func getShortCommitHash(commitHash string, maxLength int) string {
 }
 
 func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlugins AvailablePlugins) (map[string]plugins.DataSourceDTO, error) {
+	c, span := hs.injectSpan(c, "api.getFSDataSources")
+	defer span.End()
+
 	orgDataSources := make([]*datasources.DataSource, 0)
 	if c.SignedInUser.GetOrgID() != 0 {
 		query := datasources.GetDataSourcesQuery{OrgID: c.SignedInUser.GetOrgID(), DataSourceLimit: hs.Cfg.DataSourceLimit}
@@ -411,14 +427,15 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 		}
 
 		dsDTO := plugins.DataSourceDTO{
-			ID:        ds.ID,
-			UID:       ds.UID,
-			Type:      ds.Type,
-			Name:      ds.Name,
-			URL:       url,
-			IsDefault: ds.IsDefault,
-			Access:    string(ds.Access),
-			ReadOnly:  ds.ReadOnly,
+			ID:         ds.ID,
+			UID:        ds.UID,
+			Type:       ds.Type,
+			Name:       ds.Name,
+			URL:        url,
+			IsDefault:  ds.IsDefault,
+			Access:     string(ds.Access),
+			ReadOnly:   ds.ReadOnly,
+			APIVersion: ds.APIVersion,
 		}
 
 		ap, exists := availablePlugins.Get(plugins.TypeDataSource, ds.Type)
@@ -612,6 +629,9 @@ func (ap AvailablePlugins) Get(pluginType plugins.Type, pluginID string) (*avail
 }
 
 func (hs *HTTPServer) availablePlugins(ctx context.Context, orgID int64) (AvailablePlugins, error) {
+	ctx, span := hs.tracer.Start(ctx, "api.availablePlugins")
+	defer span.End()
+
 	ap := make(AvailablePlugins)
 
 	pluginSettingMap, err := hs.pluginSettings(ctx, orgID)
@@ -657,6 +677,9 @@ func (hs *HTTPServer) availablePlugins(ctx context.Context, orgID int64) (Availa
 }
 
 func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[string]*pluginsettings.InfoDTO, error) {
+	ctx, span := hs.tracer.Start(ctx, "api.pluginSettings")
+	defer span.End()
+
 	pluginSettings := make(map[string]*pluginsettings.InfoDTO)
 
 	// fill settings from database

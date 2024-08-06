@@ -190,8 +190,8 @@ describe('Plugins/Helpers', () => {
         id: 'alexanderzobnin-zabbix-app',
         info: {
           logos: {
-            large: 'https://grafana.com/api/plugins/alexanderzobnin-zabbix-app/versions/4.1.5/logos/large',
-            small: 'https://grafana.com/api/plugins/alexanderzobnin-zabbix-app/versions/4.1.5/logos/small',
+            large: '/api/gnet/plugins/alexanderzobnin-zabbix-app/versions/4.1.5/logos/large',
+            small: '/api/gnet/plugins/alexanderzobnin-zabbix-app/versions/4.1.5/logos/small',
           },
           keywords: ['zabbix', 'monitoring', 'dashboard'],
         },
@@ -203,6 +203,7 @@ describe('Plugins/Helpers', () => {
         isInstalled: false,
         isDeprecated: false,
         isPublished: true,
+        isManaged: false,
         name: 'Zabbix',
         orgName: 'Alexander Zobnin',
         popularity: 0.2111,
@@ -280,6 +281,7 @@ describe('Plugins/Helpers', () => {
         isInstalled: true,
         isPublished: false,
         isDeprecated: false,
+        isManaged: false,
         name: 'Zabbix',
         orgName: 'Alexander Zobnin',
         popularity: 0,
@@ -319,8 +321,8 @@ describe('Plugins/Helpers', () => {
         id: 'alexanderzobnin-zabbix-app',
         info: {
           logos: {
-            small: 'https://grafana.com/api/plugins/alexanderzobnin-zabbix-app/versions/4.1.5/logos/small',
-            large: 'https://grafana.com/api/plugins/alexanderzobnin-zabbix-app/versions/4.1.5/logos/large',
+            small: '/api/gnet/plugins/alexanderzobnin-zabbix-app/versions/4.1.5/logos/small',
+            large: '/api/gnet/plugins/alexanderzobnin-zabbix-app/versions/4.1.5/logos/large',
           },
           keywords: ['zabbix', 'monitoring', 'dashboard'],
         },
@@ -332,6 +334,7 @@ describe('Plugins/Helpers', () => {
         isInstalled: true,
         isPublished: true,
         isDeprecated: false,
+        isManaged: false,
         name: 'Zabbix',
         orgName: 'Alexander Zobnin',
         popularity: 0.2111,

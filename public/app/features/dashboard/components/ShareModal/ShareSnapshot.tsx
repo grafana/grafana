@@ -1,14 +1,14 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 
-import { isEmptyObject, SelectableValue } from '@grafana/data';
+import { isEmptyObject, SelectableValue, VariableRefresh } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { Button, ClipboardButton, Field, Input, LinkButton, Modal, Select, Spinner } from '@grafana/ui';
+import { Button, ClipboardButton, Field, Input, LinkButton, Modal, Select, Spinner, Stack } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
-import { VariableRefresh } from '../../../variables/types';
 import { getDashboardSnapshotSrv } from '../../services/SnapshotSrv';
 
 import { ShareModalTabProps } from './types';
@@ -291,7 +291,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     const { snapshotUrl } = this.state;
 
     return (
-      <>
+      <Stack direction="column" gap={0}>
         <Field label={t('share-modal.snapshot.url-label', 'Snapshot URL')}>
           <Input
             id="snapshot-url-input"
@@ -305,13 +305,13 @@ export class ShareSnapshot extends PureComponent<Props, State> {
           />
         </Field>
 
-        <div className="pull-right" style={{ padding: '5px' }}>
+        <div style={{ alignSelf: 'flex-end', padding: '5px' }}>
           <Trans i18nKey="share-modal.snapshot.mistake-message">Did you make a mistake? </Trans>&nbsp;
           <LinkButton fill="text" target="_blank" onClick={this.deleteSnapshot}>
             <Trans i18nKey="share-modal.snapshot.delete-button">Delete snapshot.</Trans>
           </LinkButton>
         </div>
-      </>
+      </Stack>
     );
   }
 

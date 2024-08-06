@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -196,17 +197,22 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 	gen := models.RuleGen
 	t.Run("fine-grained access is enabled", func(t *testing.T) {
-		t.Run("should return rules for which user has access to data source", func(t *testing.T) {
+		t.Run("should return all rules, with or without data source access", func(t *testing.T) {
 			orgID := rand.Int63()
 			folder := randFolder()
 			ruleStore := fakes.NewRuleStore(t)
 			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 			folderGen := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder))
-			expectedRules := folderGen.GenerateManyRef(2, 6)
-			ruleStore.PutRule(context.Background(), expectedRules...)
-			ruleStore.PutRule(context.Background(), folderGen.GenerateManyRef(2, 6)...)
+			queryAccessRules := folderGen.GenerateManyRef(2, 6)
+			ruleStore.PutRule(context.Background(), queryAccessRules...)
+			noQueryAccessRules := folderGen.GenerateManyRef(2, 6)
+			ruleStore.PutRule(context.Background(), noQueryAccessRules...)
 
-			permissions := createPermissionsForRules(expectedRules, orgID)
+			allRules := make([]*models.AlertRule, 0, len(queryAccessRules)+len(noQueryAccessRules))
+			allRules = append(allRules, queryAccessRules...)
+			allRules = append(allRules, noQueryAccessRules...)
+
+			permissions := createPermissionsForRules(queryAccessRules, orgID)
 			req := createRequestContextWithPerms(orgID, permissions, nil)
 
 			response := createService(ruleStore).RouteGetNamespaceRulesConfig(req, folder.UID)
@@ -220,9 +226,9 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 				for _, group := range groups {
 				grouploop:
 					for _, actualRule := range group.Rules {
-						for i, expected := range expectedRules {
+						for i, expected := range allRules {
 							if actualRule.GrafanaManagedAlert.UID == expected.UID {
-								expectedRules = append(expectedRules[:i], expectedRules[i+1:]...)
+								allRules = append(allRules[:i], allRules[i+1:]...)
 								continue grouploop
 							}
 						}
@@ -230,7 +236,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 					}
 				}
 			}
-			assert.Emptyf(t, expectedRules, "not all expected rules were returned")
+			assert.Emptyf(t, allRules, "not all expected rules were returned")
 		})
 	})
 	t.Run("should return the provenance of the alert rules", func(t *testing.T) {
@@ -315,6 +321,57 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 				require.Fail(t, fmt.Sprintf("rules are not sorted by group index. Expected: %v. Actual: %v", expectedUIDs, actualUIDs))
 			}
 		}
+	})
+}
+
+func TestRouteGetRuleByUID(t *testing.T) {
+	t.Run("rule is successfully fetched with the correct UID", func(t *testing.T) {
+		orgID := rand.Int63()
+		folder := randFolder()
+		ruleStore := fakes.NewRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+		groupKey := models.GenerateGroupKey(orgID)
+		groupKey.NamespaceUID = folder.UID
+		gen := models.RuleGen.With(models.RuleGen.WithGroupKey(groupKey))
+
+		createdRules := gen.With(gen.WithUniqueGroupIndex(), gen.WithUniqueID()).GenerateManyRef(3)
+		require.Len(t, createdRules, 3)
+		ruleStore.PutRule(context.Background(), createdRules...)
+
+		perms := createPermissionsForRules(createdRules, orgID)
+		req := createRequestContextWithPerms(orgID, perms, nil)
+
+		expectedRule := createdRules[1]
+		response := createService(ruleStore).RouteGetRuleByUID(req, expectedRule.UID)
+
+		require.Equal(t, http.StatusOK, response.Status())
+		result := &apimodels.GettableExtendedRuleNode{}
+		require.NoError(t, json.Unmarshal(response.Body(), result))
+		require.NotNil(t, result)
+
+		require.Equal(t, expectedRule.UID, result.GrafanaManagedAlert.UID)
+		require.Equal(t, expectedRule.RuleGroup, result.GrafanaManagedAlert.RuleGroup)
+		require.Equal(t, expectedRule.Title, result.GrafanaManagedAlert.Title)
+	})
+
+	t.Run("error when fetching rule with non-existent UID", func(t *testing.T) {
+		orgID := rand.Int63()
+		folder := randFolder()
+		ruleStore := fakes.NewRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+		groupKey := models.GenerateGroupKey(orgID)
+		groupKey.NamespaceUID = folder.UID
+		gen := models.RuleGen.With(models.RuleGen.WithGroupKey(groupKey))
+
+		createdRules := gen.With(gen.WithUniqueGroupIndex(), gen.WithUniqueID()).GenerateManyRef(3)
+		require.Len(t, createdRules, 3)
+		ruleStore.PutRule(context.Background(), createdRules...)
+
+		perms := createPermissionsForRules(createdRules, orgID)
+		req := createRequestContextWithPerms(orgID, perms, nil)
+		response := createService(ruleStore).RouteGetRuleByUID(req, "foobar")
+
+		require.Equal(t, http.StatusNotFound, response.Status())
 	})
 }
 
@@ -405,45 +462,6 @@ func TestRouteGetRulesConfig(t *testing.T) {
 
 func TestRouteGetRulesGroupConfig(t *testing.T) {
 	gen := models.RuleGen
-	t.Run("fine-grained access is enabled", func(t *testing.T) {
-		t.Run("should check access to data source", func(t *testing.T) {
-			orgID := rand.Int63()
-			folder := randFolder()
-			ruleStore := fakes.NewRuleStore(t)
-			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-			groupKey := models.GenerateGroupKey(orgID)
-			groupKey.NamespaceUID = folder.UID
-
-			expectedRules := gen.With(gen.WithGroupKey(groupKey)).GenerateManyRef(2, 6)
-			ruleStore.PutRule(context.Background(), expectedRules...)
-
-			t.Run("and return Forbidden if user does not have access one of rules", func(t *testing.T) {
-				permissions := createPermissionsForRules(expectedRules[1:], orgID)
-				request := createRequestContextWithPerms(orgID, permissions, map[string]string{
-					":Namespace": folder.UID,
-					":Groupname": groupKey.RuleGroup,
-				})
-				response := createService(ruleStore).RouteGetRulesGroupConfig(request, folder.UID, groupKey.RuleGroup)
-				require.Equal(t, http.StatusForbidden, response.Status())
-			})
-
-			t.Run("and return rules if user has access to all of them", func(t *testing.T) {
-				permissions := createPermissionsForRules(expectedRules, orgID)
-				request := createRequestContextWithPerms(orgID, permissions, map[string]string{
-					":Namespace": folder.UID,
-					":Groupname": groupKey.RuleGroup,
-				})
-				response := createService(ruleStore).RouteGetRulesGroupConfig(request, folder.UID, groupKey.RuleGroup)
-
-				require.Equal(t, http.StatusAccepted, response.Status())
-				result := &apimodels.RuleGroupConfigResponse{}
-				require.NoError(t, json.Unmarshal(response.Body(), result))
-				require.NotNil(t, result)
-				require.Len(t, result.Rules, len(expectedRules))
-			})
-		})
-	})
-
 	t.Run("should return rules in group sorted by group index", func(t *testing.T) {
 		orgID := rand.Int63()
 		folder := randFolder()
@@ -632,7 +650,7 @@ func createService(store *fakes.RuleStore) *RulerSrv {
 		cfg: &setting.UnifiedAlertingSettings{
 			BaseInterval: 10 * time.Second,
 		},
-		authz:          accesscontrol.NewRuleService(acimpl.ProvideAccessControl(setting.NewCfg())),
+		authz:          accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
 		amConfigStore:  &fakeAMRefresher{},
 		amRefresher:    &fakeAMRefresher{},
 		featureManager: featuremgmt.WithFeatures(),

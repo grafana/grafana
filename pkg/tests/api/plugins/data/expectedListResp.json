@@ -360,7 +360,10 @@
       "build": {},
       "screenshots": null,
       "updated": "",
-      "keywords": null
+      "keywords": [
+        "aws",
+        "amazon"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",

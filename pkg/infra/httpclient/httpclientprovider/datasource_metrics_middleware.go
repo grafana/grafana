@@ -3,6 +3,7 @@ package httpclientprovider
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -33,10 +34,13 @@ var (
 
 	datasourceResponseHistogram = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Namespace: "grafana",
-			Name:      "datasource_response_size_bytes",
-			Help:      "histogram of data source response sizes returned to Grafana",
-			Buckets:   []float64{128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576},
+			Namespace:                       "grafana",
+			Name:                            "datasource_response_size_bytes",
+			Help:                            "histogram of data source response sizes returned to Grafana",
+			Buckets:                         []float64{128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576},
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  100,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"datasource", "datasource_type", "secure_socks_ds_proxy_enabled"},
 	)
 

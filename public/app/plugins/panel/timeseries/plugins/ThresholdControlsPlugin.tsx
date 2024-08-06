@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect, useMemo, useRef } from 'react';
+import { useState, useLayoutEffect, useMemo, useRef } from 'react';
 import uPlot from 'uplot';
 
 import { FieldConfigSource, ThresholdsConfig, getValueFormat, FieldType } from '@grafana/data';

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack, useStyles2 } from '@grafana/ui';
@@ -9,8 +8,8 @@ interface DotStylesProps {
   includeState?: boolean;
 }
 
-const AlertStateDot = (props: DotStylesProps) => {
-  const styles = useStyles2(getDotStyles, props);
+const AlertStateDot = ({ color, includeState }: DotStylesProps) => {
+  const styles = useStyles2(getDotStyles, { color, includeState });
 
   return (
     <Stack direction="row" gap={0.5}>
@@ -28,34 +27,34 @@ const getDotStyles = (theme: GrafanaTheme2, props: DotStylesProps) => {
   const warningStyle = props.color === 'warning';
 
   return {
-    dot: css`
-      width: ${size};
-      height: ${size};
+    dot: css(
+      {
+        width: size,
+        height: size,
 
-      border-radius: 100%;
+        // eslint-disable-next-line @grafana/no-border-radius-literal
+        borderRadius: '100%',
 
-      background-color: ${theme.colors.secondary.main};
-      outline: solid ${outlineSize} ${theme.colors.secondary.transparent};
-      margin: ${outlineSize};
-
-      ${successStyle &&
-      css({
-        backgroundColor: theme.colors.success.main,
-        outlineColor: theme.colors.success.transparent,
-      })}
-
-      ${warningStyle &&
-      css({
-        backgroundColor: theme.colors.warning.main,
-        outlineColor: theme.colors.warning.transparent,
-      })}
-
-      ${errorStyle &&
-      css({
-        backgroundColor: theme.colors.error.main,
-        outlineColor: theme.colors.error.transparent,
-      })}
-    `,
+        backgroundColor: theme.colors.secondary.main,
+        outline: `solid ${outlineSize} ${theme.colors.secondary.transparent}`,
+        margin: outlineSize,
+      },
+      successStyle &&
+        css({
+          backgroundColor: theme.colors.success.main,
+          outlineColor: theme.colors.success.transparent,
+        }),
+      warningStyle &&
+        css({
+          backgroundColor: theme.colors.warning.main,
+          outlineColor: theme.colors.warning.transparent,
+        }),
+      errorStyle &&
+        css({
+          backgroundColor: theme.colors.error.main,
+          outlineColor: theme.colors.error.transparent,
+        })
+    ),
   };
 };
 

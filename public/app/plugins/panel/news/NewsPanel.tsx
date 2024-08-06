@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 
 import { PanelProps } from '@grafana/data';
 import { RefreshEvent } from '@grafana/runtime';

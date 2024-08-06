@@ -75,11 +75,17 @@ function regexp(pattern: RegExp, issueMessage: string) {
 
 function countEslintErrors() {
   return new BettererFileTest(async (filePaths, fileTestResult, resolver) => {
+    // Just bail early if there's no files to test. Prevents trying to get the base config from failing
+    if (filePaths.length === 0) {
+      return;
+    }
+
     const { baseDirectory } = resolver;
     const cli = new ESLint({ cwd: baseDirectory });
 
-    const eslintConfigFiles = await glob('**/.eslintrc');
-    const eslintConfigMainPaths = eslintConfigFiles.map((file) => path.resolve(path.dirname(file)));
+    // Get the base config to set up parsing etc correctly
+    // this is by far the slowest part of this code. It takes eslint about 2 seconds just to find the config
+    const baseConfig = await cli.calculateConfigForFile(filePaths[0]);
 
     const baseRules: Partial<Linter.RulesRecord> = {
       '@emotion/syntax-preference': [2, 'object'],
@@ -99,81 +105,57 @@ function countEslintErrors() {
       ],
     };
 
-    const nonTestFilesRules: Partial<Linter.RulesRecord> = {
-      ...baseRules,
-      '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
-    };
+    const config: Linter.Config = {
+      ...baseConfig,
+      rules: baseRules,
 
-    const grafanaRules: Partial<Linter.RulesRecord> = {
-      ...nonTestFilesRules,
-      'no-barrel-files/no-barrel-files': 'error',
-    };
-
-    const testFilesAndGrafanaRules: Partial<Linter.RulesRecord> = {
-      ...baseRules,
-      'no-barrel-files/no-barrel-files': 'error',
-    };
-
-    // group files by eslint config file
-    // this will create two file groups for each eslint config file
-    // one for test files and one for non-test files
-    const fileGroups: Record<string, string[]> = {};
-
-    for (const filePath of filePaths) {
-      let configPath = eslintConfigMainPaths.find((configPath) => filePath.startsWith(configPath)) ?? '';
-      const isTestFile =
-        filePath.endsWith('.test.tsx') ||
-        filePath.endsWith('.test.ts') ||
-        filePath.includes('__mocks__') ||
-        filePath.includes('public/test/');
-      const isGrafanaFile = filePath.includes('public/app/');
-
-      if (isGrafanaFile && isTestFile) {
-        configPath += '-test-grafana';
-      } else if (isGrafanaFile) {
-        configPath += '-grafana';
-      } else if (isTestFile) {
-        configPath += '-test';
-      }
-
-      if (!fileGroups[configPath]) {
-        fileGroups[configPath] = [];
-      }
-      fileGroups[configPath].push(filePath);
-    }
-
-    for (const configPath of Object.keys(fileGroups)) {
-      let rules;
-      if (configPath.endsWith('-test-grafana')) {
-        rules = testFilesAndGrafanaRules;
-      } else if (configPath.endsWith('-test')) {
-        rules = baseRules;
-      } else if (configPath.endsWith('-grafana')) {
-        rules = grafanaRules;
-      } else {
-        rules = nonTestFilesRules;
-      }
-      // this is by far the slowest part of this code. It takes eslint about 2 seconds just to find the config
-      const linterOptions = (await cli.calculateConfigForFile(fileGroups[configPath][0])) as Linter.Config;
-      const runner = new ESLint({
-        baseConfig: {
-          ...linterOptions,
-          rules: rules,
+      // Be careful when specifying overrides for the same rules as in baseRules - it will... override
+      // the same rule, not merge them with different configurations
+      overrides: [
+        {
+          files: ['**/*.{ts,tsx}'],
+          excludedFiles: ['*.{test,spec}.{ts,tsx}', '**/__mocks__/**', '**/public/test/**'],
+          rules: {
+            '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
+          },
         },
-        useEslintrc: false,
-        cwd: baseDirectory,
-      });
-      const lintResults = await runner.lintFiles(fileGroups[configPath]);
-      lintResults
-        .filter((lintResult) => lintResult.source)
-        .forEach((lintResult) => {
-          const { messages } = lintResult;
-          const filePath = lintResult.filePath;
-          const file = fileTestResult.addFile(filePath, '');
-          messages.forEach((message, index) => {
-            file.addIssue(0, 0, message.message, `${index}`);
-          });
+
+        {
+          files: ['public/app/**/*.{ts,tsx}'],
+          rules: {
+            'no-barrel-files/no-barrel-files': 'error',
+          },
+        },
+        {
+          files: ['public/**/*.tsx', 'packages/grafana-ui/**/*.tsx'],
+          excludedFiles: [
+            'public/app/plugins/**',
+            '*.story.tsx',
+            '*.{test,spec}.{ts,tsx}',
+            '**/__mocks__/**',
+            'public/test/**',
+          ],
+          rules: {
+            '@grafana/no-untranslated-strings': 'error',
+          },
+        },
+      ],
+    };
+
+    const runner = new ESLint({
+      baseConfig: config,
+      useEslintrc: false,
+      cwd: baseDirectory,
+    });
+
+    const lintResults = await runner.lintFiles(Array.from(filePaths));
+    lintResults
+      .filter((lintResult) => lintResult.source)
+      .forEach(({ messages, filePath }) => {
+        const file = fileTestResult.addFile(filePath, '');
+        messages.forEach((message, index) => {
+          file.addIssue(0, 0, message.message, `${index}`);
         });
-    }
+      });
   });
 }

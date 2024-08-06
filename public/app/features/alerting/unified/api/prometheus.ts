@@ -2,14 +2,14 @@ import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
+import { RuleGroup, RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
 import { PromRuleGroupDTO, PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
 
 export interface FetchPromRulesFilter {
-  dashboardUID: string;
+  dashboardUID?: string;
   panelId?: number;
 }
 
@@ -102,7 +102,20 @@ export const groupRulesByFileName = (groups: PromRuleGroupDTO[], dataSourceName:
 
   return Object.values(nsMap);
 };
+export const ungroupRulesByFileName = (namespaces: RuleNamespace[] = []): PromRuleGroupDTO[] => {
+  return namespaces?.flatMap((namespace) =>
+    namespace.groups.flatMap((group) => ruleGroupToPromRuleGroupDTO(group, namespace.name))
+  );
+};
 
+function ruleGroupToPromRuleGroupDTO(group: RuleGroup, namespace: string): PromRuleGroupDTO {
+  return {
+    name: group.name,
+    file: namespace,
+    rules: group.rules,
+    interval: group.interval,
+  };
+}
 export async function fetchRules(
   dataSourceName: string,
   filter?: FetchPromRulesFilter,

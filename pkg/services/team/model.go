@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/search/model"
 )
@@ -22,6 +22,7 @@ var (
 )
 
 const MemberPermissionName = "Member"
+const AdminPermissionName = "Admin"
 
 // Team model
 type Team struct {
@@ -89,6 +90,13 @@ type SearchTeamsQuery struct {
 	HiddenUsers  map[string]struct{}
 }
 
+type ListTeamsCommand struct {
+	Limit int
+	Start int
+	OrgID int64
+	UID   string
+}
+
 type TeamDTO struct {
 	ID            int64                          `json:"id" xorm:"id"`
 	UID           string                         `json:"uid" xorm:"uid"`
@@ -131,6 +139,11 @@ type AddTeamMemberCommand struct {
 
 type UpdateTeamMemberCommand struct {
 	Permission dashboardaccess.PermissionType `json:"permission"`
+}
+
+type SetTeamMembershipsCommand struct {
+	Members []string `json:"members"`
+	Admins  []string `json:"admins"`
 }
 
 type RemoveTeamMemberCommand struct {

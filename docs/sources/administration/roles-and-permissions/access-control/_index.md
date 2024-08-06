@@ -28,7 +28,7 @@ RBAC provides a standardized way of granting, changing, and revoking access when
 ## About RBAC
 
 Role-based access control (RBAC) provides a standardized way of granting, changing, and revoking access so that users can view and modify Grafana resources, such as users and reports.
-RBAC extends Grafana basic roles that are included in Grafana OSS, and enables you more granular control of users’ actions.
+RBAC extends Grafana basic roles that are included in Grafana OSS, and enables more granular control of users’ actions.
 
 By using RBAC you can provide users with permissions that extend the permissions available with basic roles. For example, you can use RBAC to:
 
@@ -42,6 +42,8 @@ RBAC roles contain multiple permissions, each of which has an action and a scope
   - **Permission:**
     - **Action:** `datasources:read`
     - **Scope:** `datasources:*`
+
+For information on the RBAC API refer to [RBAC API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/#rbac-api).
 
 ### Basic roles
 
@@ -77,6 +79,10 @@ For example, if you modify Viewer basic role and grant additional permission, Ed
 
 For more information about the permissions associated with each basic role, refer to [Basic role definitions]({{< relref "./rbac-fixed-basic-role-definitions/#basic-role-assignments" >}}).
 To interact with the API and view or modify basic roles permissions, refer to [the table]({{< relref "./manage-rbac-roles/#basic-role-uid-mapping" >}}) that maps basic role names to the associated UID.
+
+{{% admonition type="note" %}}
+You cannot use a service account to modify basic roles via the RBAC API. To update basic roles, you must be a Grafana administrator and use basic authentication with the request.
+{{% /admonition %}}
 
 ### Fixed roles
 

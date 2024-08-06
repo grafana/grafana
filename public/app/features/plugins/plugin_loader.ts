@@ -28,12 +28,14 @@ SystemJS.addImportMap({ imports });
 
 const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototype;
 
-// This instructs SystemJS to load a plugin using fetch and eval if it returns a truthy value, otherwise it will load the plugin using a script tag.
-// We only want to fetch and eval plugins that are hosted on a CDN or are Angular plugins.
+// This instructs SystemJS to load plugin assets using fetch and eval if it returns a truthy value, otherwise
+// it will load the plugin using a script tag. We only want to fetch and eval files that are
+// hosted on a CDN, are related to Angular plugins or are not js files.
 systemJSPrototype.shouldFetch = function (url) {
   const pluginInfo = getPluginFromCache(url);
+  const jsTypeRegEx = /^[^#?]+\.(js)([?#].*)?$/;
 
-  return isHostedOnCDN(url) || Boolean(pluginInfo?.isAngular);
+  return isHostedOnCDN(url) || Boolean(pluginInfo?.isAngular) || !jsTypeRegEx.test(url);
 };
 
 const originalImport = systemJSPrototype.import;
@@ -72,7 +74,7 @@ export async function importPluginModule({
   isAngular?: boolean;
 }): Promise<System.Module> {
   if (version) {
-    registerPluginInCache({ path, version, isAngular });
+    registerPluginInCache({ pluginId, version, isAngular });
   }
 
   const builtIn = builtInPlugins[path];
@@ -96,10 +98,11 @@ export async function importPluginModule({
 }
 
 export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
+  const isAngular = meta.angular?.detected ?? meta.angularDetected;
   return importPluginModule({
     path: meta.module,
     version: meta.info?.version,
-    isAngular: meta.angular?.detected,
+    isAngular,
     pluginId: meta.id,
   }).then((pluginExports) => {
     if (pluginExports.plugin) {
@@ -124,10 +127,11 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Gene
 }
 
 export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
+  const isAngular = meta.angular?.detected ?? meta.angularDetected;
   return importPluginModule({
     path: meta.module,
     version: meta.info?.version,
-    isAngular: meta.angular?.detected,
+    isAngular,
     pluginId: meta.id,
   }).then((pluginExports) => {
     const plugin: AppPlugin = pluginExports.plugin ? pluginExports.plugin : new AppPlugin();

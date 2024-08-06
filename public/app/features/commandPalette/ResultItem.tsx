@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { ActionId, ActionImpl } from 'kbar';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';

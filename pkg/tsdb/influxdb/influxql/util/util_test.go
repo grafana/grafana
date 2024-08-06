@@ -43,6 +43,7 @@ func TestFormatFrameName(t *testing.T) {
 		{name: "[[col]] column alias", rowName: "rowName", column: "colName", tags: map[string]string{"key": "value"}, query: models.Query{Alias: "[[col]]", ResultFormat: "time_series"}, expected: "colName"},
 		{name: "$col column alias", rowName: "rowName", column: "colName", tags: map[string]string{"key": "value"}, query: models.Query{Alias: "$col", ResultFormat: "time_series"}, expected: "colName"},
 		{name: "[[tag_key]] tag alias", rowName: "rowName", column: "colName", tags: map[string]string{"key": "value"}, query: models.Query{Alias: "[[tag_key]]", ResultFormat: "time_series"}, expected: "value"},
+		{name: "[[tag_key]] tag alias with space in tag", rowName: "rowName", column: "colName", tags: map[string]string{"ke y": "value"}, query: models.Query{Alias: "[[tag_ke y]]", ResultFormat: "time_series"}, expected: "value"},
 		{name: "$tag_key tag alias", rowName: "rowName", column: "colName", tags: map[string]string{"key": "value"}, query: models.Query{Alias: "$tag_key", ResultFormat: "time_series"}, expected: "value"},
 		{name: "[[m]] with additional text", rowName: "rowName", column: "colName", tags: map[string]string{"key": "value"}, query: models.Query{Alias: "[[m]] - something", ResultFormat: "time_series"}, expected: "rowName - something"},
 		{name: "$m with additional text", rowName: "rowName", column: "colName", tags: map[string]string{"key": "value"}, query: models.Query{Alias: "$m - something", ResultFormat: "time_series"}, expected: "rowName - something"},

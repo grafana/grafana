@@ -6,11 +6,12 @@ import (
 	"testing"
 	"time"
 
-	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+
+	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -207,17 +208,19 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 
 	// First, let's try to request an Alertmanager from an org that doesn't exist.
 	{
-		_, err := mam.AlertmanagerFor(5)
-		require.EqualError(t, err, ErrNoAlertmanagerForOrg.Error())
+		_, err := mam.alertmanagerForOrg(5)
+		require.ErrorIs(t, err, ErrAlertmanagerNotFound)
 	}
 
 	// With an Alertmanager that exists, it responds correctly.
 	{
-		am, err := mam.AlertmanagerFor(2)
+		am, err := mam.alertmanagerForOrg(2)
 		require.NoError(t, err)
 		internalAm, ok := am.(*alertmanager)
 		require.True(t, ok)
-		require.Equal(t, "N/A", *am.GetStatus().VersionInfo.Version)
+		status, err := am.GetStatus(ctx)
+		require.NoError(t, err)
+		require.Equal(t, "N/A", *status.VersionInfo.Version)
 		require.Equal(t, int64(2), internalAm.orgID)
 	}
 
@@ -225,8 +228,8 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	mam.orgStore.(*FakeOrgStore).orgs = []int64{1, 3}
 	require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 	{
-		_, err := mam.AlertmanagerFor(2)
-		require.EqualError(t, err, ErrNoAlertmanagerForOrg.Error())
+		_, err := mam.alertmanagerForOrg(2)
+		require.ErrorIs(t, err, ErrAlertmanagerNotFound)
 	}
 }
 
@@ -250,8 +253,8 @@ func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration(t *testing.T) {
 	require.Equal(t, defaultConfig, cfgs[3].AlertmanagerConfiguration)
 
 	// Now let's save a new config for org 2.
-	newConfig := `{"template_files":null,"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
-	am, err := mam.AlertmanagerFor(2)
+	newConfig := `{"template_files":null,"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"}}]}]}}`
+	am, err := mam.alertmanagerForOrg(2)
 	require.NoError(t, err)
 
 	postable, err := Load([]byte(newConfig))
@@ -293,7 +296,7 @@ func TestMultiOrgAlertmanager_Silences(t *testing.T) {
 		require.Len(t, mam.alertmanagers, 3)
 	}
 
-	am, err := mam.AlertmanagerFor(1)
+	am, err := mam.alertmanagerForOrg(1)
 	require.NoError(t, err)
 
 	// Confirm no silences.
@@ -313,10 +316,11 @@ func TestMultiOrgAlertmanager_Silences(t *testing.T) {
 	require.Empty(t, v)
 
 	// Create 2 silences.
-	sid, err := mam.CreateSilence(ctx, 1, GenSilence("test"))
+	gen := models.SilenceGen(models.SilenceMuts.WithEmptyId())
+	sid, err := mam.CreateSilence(ctx, 1, gen())
 	require.NoError(t, err)
 	require.NotEmpty(t, sid)
-	sid2, err := mam.CreateSilence(ctx, 1, GenSilence("test"))
+	sid2, err := mam.CreateSilence(ctx, 1, gen())
 	require.NoError(t, err)
 	require.NotEmpty(t, sid2)
 
@@ -395,7 +399,6 @@ var defaultConfig = `
 				"alertname"
 			]
 		},
-		"templates": null,
 		"receivers": [
 			{
 				"name": "grafana-default-email",
@@ -406,8 +409,8 @@ var defaultConfig = `
 						"type": "email",
 						"disableResolveMessage": false,
 						"settings": {
-							"addresses": "\u003cexample@email.com\u003e"},
-						"secureSettings": null
+							"addresses": "\u003cexample@email.com\u003e"
+						}
 					}
 				]
 			}

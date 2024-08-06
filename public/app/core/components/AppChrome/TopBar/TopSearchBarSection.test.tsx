@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { TopSearchBarSection, TopSearchBarSectionProps } from './TopSearchBarSection';
 
@@ -14,11 +13,14 @@ const renderComponent = (options?: { props: TopSearchBarSectionProps }) => {
 
 describe('TopSearchBarSection', () => {
   it('should use a wrapper on non mobile screen', () => {
-    (window.matchMedia as jest.Mock).mockImplementation(() => ({
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      matches: true,
-    }));
+    jest.spyOn(window, 'matchMedia').mockImplementation(
+      () =>
+        ({
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+          matches: true,
+        }) as unknown as MediaQueryList
+    );
 
     const component = renderComponent();
 
@@ -27,11 +29,14 @@ describe('TopSearchBarSection', () => {
   });
 
   it('should not use a wrapper on mobile screen', () => {
-    (window.matchMedia as jest.Mock).mockImplementation(() => ({
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      matches: false,
-    }));
+    jest.spyOn(window, 'matchMedia').mockImplementation(
+      () =>
+        ({
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+          matches: false,
+        }) as unknown as MediaQueryList
+    );
 
     const component = renderComponent();
 

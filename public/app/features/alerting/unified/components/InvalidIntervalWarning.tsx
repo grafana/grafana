@@ -1,10 +1,8 @@
-import React from 'react';
-
 import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 
 const EvaluationIntervalLimitExceeded = () => (
-  <Alert severity="warning" title="Global evalutation interval limit exceeded">
+  <Alert severity="warning" title="Global evaluation interval limit exceeded">
     A minimum evaluation interval of <strong>{config.unifiedAlerting.minInterval}</strong> has been configured in
     Grafana.
     <br />

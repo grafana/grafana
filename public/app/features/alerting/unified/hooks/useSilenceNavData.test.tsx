@@ -1,5 +1,4 @@
 import { render } from '@testing-library/react';
-import React from 'react';
 import { useRouteMatch } from 'react-router-dom';
 
 import { useSilenceNavData } from './useSilenceNavData';
@@ -25,10 +24,8 @@ describe('useSilenceNavData', () => {
     (useRouteMatch as jest.Mock).mockReturnValue({ isExact: true, path: '/alerting/silence/new' });
     const { result } = setup();
 
-    expect(result).toEqual({
-      icon: 'bell-slash',
-      id: 'silence-new',
-      text: 'Add silence',
+    expect(result).toMatchObject({
+      text: 'Silence alert rule',
     });
   });
 
@@ -36,9 +33,7 @@ describe('useSilenceNavData', () => {
     (useRouteMatch as jest.Mock).mockReturnValue({ isExact: true, path: '/alerting/silence/:id/edit' });
     const { result } = setup();
 
-    expect(result).toEqual({
-      icon: 'bell-slash',
-      id: 'silence-edit',
+    expect(result).toMatchObject({
       text: 'Edit silence',
     });
   });

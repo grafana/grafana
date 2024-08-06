@@ -254,6 +254,7 @@ func (rs *RenderingService) renderUnavailableImage() *RenderResult {
 	}
 }
 
+// Render calls the grafana image renderer and returns Grafana resource as PNG or PDF
 func (rs *RenderingService) Render(ctx context.Context, renderType RenderType, opts Opts, session Session) (*RenderResult, error) {
 	startTime := time.Now()
 
@@ -264,7 +265,7 @@ func (rs *RenderingService) Render(ctx context.Context, renderType RenderType, o
 	result, err := rs.render(ctx, renderType, opts, renderKeyProvider)
 
 	elapsedTime := time.Since(startTime).Milliseconds()
-	saveMetrics(elapsedTime, err, RenderPNG)
+	saveMetrics(elapsedTime, err, renderType)
 
 	return result, err
 }
@@ -296,7 +297,7 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 		return rs.renderUnavailableImage(), nil
 	}
 
-	if renderType == RenderPDF || opts.Encoding == "pdf" {
+	if renderType == RenderPDF {
 		if !rs.features.IsEnabled(ctx, featuremgmt.FlagNewPDFRendering) {
 			return nil, fmt.Errorf("feature 'newPDFRendering' disabled")
 		}
@@ -306,7 +307,7 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 		}
 	}
 
-	rs.log.Info("Rendering", "path", opts.Path)
+	rs.log.Info("Rendering", "path", opts.Path, "userID", opts.AuthOpts.UserID)
 	if math.IsInf(opts.DeviceScaleFactor, 0) || math.IsNaN(opts.DeviceScaleFactor) || opts.DeviceScaleFactor == 0 {
 		opts.DeviceScaleFactor = 1
 	}
@@ -406,7 +407,8 @@ func (rs *RenderingService) getNewFilePath(rt RenderType) (string, error) {
 	return filepath.Abs(filepath.Join(folder, fmt.Sprintf("%s.%s", rand, ext)))
 }
 
-func (rs *RenderingService) getURL(path string) string {
+// getGrafanaCallbackURL creates a URL to send to the image rendering as callback for rendering a Grafana resource
+func (rs *RenderingService) getGrafanaCallbackURL(path string) string {
 	if rs.Cfg.RendererUrl != "" {
 		// The backend rendering service can potentially be remote.
 		// So we need to use the root_url to ensure the rendering service

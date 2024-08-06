@@ -1,6 +1,7 @@
 // Libraries
 import classNames from 'classnames';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 import { default as ReactSelect, components, MenuListProps } from 'react-select';
 import { default as ReactAsyncSelect } from 'react-select/async';
 import Creatable from 'react-select/creatable';
@@ -9,7 +10,6 @@ import Creatable from 'react-select/creatable';
 import { SelectableValue, ThemeContext } from '@grafana/data';
 
 import { CustomScrollbar } from '../../../CustomScrollbar/CustomScrollbar';
-import { SelectOptionGroup } from '../../../Select/SelectOptionGroup';
 import { SingleValue } from '../../../Select/SingleValue';
 import resetSelectStyles from '../../../Select/resetSelectStyles';
 import { SelectCommonProps, SelectAsyncProps } from '../../../Select/types';
@@ -18,6 +18,7 @@ import { Tooltip, PopoverContent } from '../../../Tooltip';
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
 import { SelectOption } from './SelectOption';
+import { SelectOptionGroup } from './SelectOptionGroup';
 
 /**
  * Changes in new selects:

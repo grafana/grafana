@@ -6,7 +6,14 @@ import {
   LoadingState,
   standardTransformersRegistry,
 } from '@grafana/data';
-import { SceneDataNode, SceneDataTransformer, SceneFlexItem, SceneFlexLayout, VizPanel } from '@grafana/scenes';
+import {
+  SafeSerializableSceneObject,
+  SceneDataNode,
+  SceneDataTransformer,
+  SceneFlexItem,
+  SceneFlexLayout,
+  VizPanel,
+} from '@grafana/scenes';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -24,6 +31,16 @@ describe('DashboardDatasource', () => {
     observable.subscribe({ next: (data) => (rsp = data) });
 
     expect(rsp?.data[0].fields[0].values).toEqual([1, 2, 3]);
+  });
+
+  it('should always set response key', async () => {
+    const { observable } = setup({ refId: 'A', panelId: 1 });
+
+    let rsp: DataQueryResponse | undefined;
+
+    observable.subscribe({ next: (data) => (rsp = data) });
+
+    expect(rsp?.key).toEqual('source-ds-provider');
   });
 
   it('Can subscribe to panel data + transforms', async () => {
@@ -83,7 +100,7 @@ function setup(query: DashboardQuery) {
     intervalMs: 0,
     range: getDefaultTimeRange(),
     scopedVars: {
-      __sceneObject: { value: scene },
+      __sceneObject: new SafeSerializableSceneObject(scene),
     },
     app: '',
     startTime: 0,

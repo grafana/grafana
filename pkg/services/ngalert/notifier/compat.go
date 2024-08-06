@@ -3,9 +3,10 @@ package notifier
 import (
 	"encoding/json"
 
+	"github.com/prometheus/alertmanager/config"
+
 	alertingNotify "github.com/grafana/alerting/notify"
 	alertingTemplates "github.com/grafana/alerting/templates"
-	"github.com/prometheus/alertmanager/config"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -47,48 +48,52 @@ func PostableApiAlertingConfigToApiReceivers(c apimodels.PostableApiAlertingConf
 
 type DecryptFn = func(value string) string
 
-func PostableToGettableGrafanaReceiver(r *apimodels.PostableGrafanaReceiver, provenance *models.Provenance, decryptFn DecryptFn, listOnly bool) (apimodels.GettableGrafanaReceiver, error) {
+func PostableToGettableGrafanaReceiver(r *apimodels.PostableGrafanaReceiver, provenance *models.Provenance, decryptFn DecryptFn) (apimodels.GettableGrafanaReceiver, error) {
 	out := apimodels.GettableGrafanaReceiver{
-		UID:  r.UID,
-		Name: r.Name,
-		Type: r.Type,
+		UID:                   r.UID,
+		Name:                  r.Name,
+		Type:                  r.Type,
+		DisableResolveMessage: r.DisableResolveMessage,
+		SecureFields:          make(map[string]bool, len(r.SecureSettings)),
 	}
 	if provenance != nil {
 		out.Provenance = apimodels.Provenance(*provenance)
 	}
 
-	// if we aren't only listing, include the settings in the output
-	if !listOnly {
-		secureFields := make(map[string]bool, len(r.SecureSettings))
-		settings, err := simplejson.NewJson([]byte(r.Settings))
-		if err != nil {
-			return apimodels.GettableGrafanaReceiver{}, err
-		}
-
-		for k, v := range r.SecureSettings {
-			decryptedValue := decryptFn(v)
-			if decryptedValue == "" {
-				continue
-			} else {
-				settings.Set(k, decryptedValue)
-			}
-			secureFields[k] = true
-		}
-
-		jsonBytes, err := settings.MarshalJSON()
-		if err != nil {
-			return apimodels.GettableGrafanaReceiver{}, err
-		}
-
-		out.Settings = jsonBytes
-		out.SecureFields = secureFields
-		out.DisableResolveMessage = r.DisableResolveMessage
+	if r.Settings == nil && r.SecureSettings == nil {
+		return out, nil
 	}
+
+	settings := simplejson.New()
+	if r.Settings != nil {
+		var err error
+		settings, err = simplejson.NewJson(r.Settings)
+		if err != nil {
+			return apimodels.GettableGrafanaReceiver{}, err
+		}
+	}
+
+	for k, v := range r.SecureSettings {
+		decryptedValue := decryptFn(v)
+		if decryptedValue == "" {
+			continue
+		} else {
+			settings.Set(k, decryptedValue)
+		}
+		out.SecureFields[k] = true
+	}
+
+	jsonBytes, err := settings.MarshalJSON()
+	if err != nil {
+		return apimodels.GettableGrafanaReceiver{}, err
+	}
+
+	out.Settings = jsonBytes
 
 	return out, nil
 }
 
-func PostableToGettableApiReceiver(r *apimodels.PostableApiReceiver, provenances map[string]models.Provenance, decryptFn DecryptFn, listOnly bool) (apimodels.GettableApiReceiver, error) {
+func PostableToGettableApiReceiver(r *apimodels.PostableApiReceiver, provenances map[string]models.Provenance, decryptFn DecryptFn) (apimodels.GettableApiReceiver, error) {
 	out := apimodels.GettableApiReceiver{
 		Receiver: config.Receiver{
 			Name: r.Receiver.Name,
@@ -101,7 +106,7 @@ func PostableToGettableApiReceiver(r *apimodels.PostableApiReceiver, provenances
 			prov = &p
 		}
 
-		gettable, err := PostableToGettableGrafanaReceiver(gr, prov, decryptFn, listOnly)
+		gettable, err := PostableToGettableGrafanaReceiver(gr, prov, decryptFn)
 		if err != nil {
 			return apimodels.GettableApiReceiver{}, err
 		}
@@ -121,4 +126,30 @@ func ToTemplateDefinitions(cfg *apimodels.PostableUserConfig) []alertingTemplate
 		})
 	}
 	return out
+}
+
+// Silence-specific compat functions to convert between grafana/alerting and model types.
+
+func GettableSilenceToSilence(s alertingNotify.GettableSilence) *models.Silence {
+	sil := models.Silence(s)
+	return &sil
+}
+
+func GettableSilencesToSilences(silences alertingNotify.GettableSilences) []*models.Silence {
+	res := make([]*models.Silence, 0, len(silences))
+	for _, sil := range silences {
+		res = append(res, GettableSilenceToSilence(*sil))
+	}
+	return res
+}
+
+func SilenceToPostableSilence(s models.Silence) *alertingNotify.PostableSilence {
+	var id string
+	if s.ID != nil {
+		id = *s.ID
+	}
+	return &alertingNotify.PostableSilence{
+		ID:      id,
+		Silence: s.Silence,
+	}
 }

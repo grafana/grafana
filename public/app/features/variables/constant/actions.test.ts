@@ -1,9 +1,11 @@
+import { ConstantVariableModel, VariableOption } from '@grafana/data';
+
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { variableAdapters } from '../adapters';
 import { getRootReducer, RootReducerType } from '../state/helpers';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
-import { ConstantVariableModel, initialVariableModelState, VariableOption } from '../types';
+import { initialVariableModelState } from '../types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { updateConstantVariableOptions } from './actions';

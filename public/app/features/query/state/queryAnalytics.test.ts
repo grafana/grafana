@@ -122,7 +122,7 @@ describe('emitDataRequestEvent', () => {
       emitDataRequestEvent(datasource)(data);
 
       expect(reportMetaAnalytics).toBeCalledTimes(1);
-      expect(reportMetaAnalytics).toBeCalledWith(
+      expect(reportMetaAnalytics).toHaveBeenCalledWith(
         expect.objectContaining({
           eventName: MetaAnalyticsEventName.DataRequest,
           datasourceName: datasource.name,
@@ -150,7 +150,7 @@ describe('emitDataRequestEvent', () => {
       emitDataRequestEvent(datasource)(data);
 
       expect(reportMetaAnalytics).toBeCalledTimes(1);
-      expect(reportMetaAnalytics).toBeCalledWith(
+      expect(reportMetaAnalytics).toHaveBeenCalledWith(
         expect.objectContaining({
           eventName: MetaAnalyticsEventName.DataRequest,
           datasourceName: datasource.name,
@@ -178,7 +178,7 @@ describe('emitDataRequestEvent', () => {
       emitDataRequestEvent(datasource)(data);
 
       expect(reportMetaAnalytics).toBeCalledTimes(1);
-      expect(reportMetaAnalytics).toBeCalledWith(
+      expect(reportMetaAnalytics).toHaveBeenCalledWith(
         expect.objectContaining({
           eventName: MetaAnalyticsEventName.DataRequest,
           datasourceName: datasource.name,
@@ -229,7 +229,7 @@ describe('emitDataRequestEvent', () => {
       emitDataRequestEvent(datasource)(data);
 
       expect(reportMetaAnalytics).toBeCalledTimes(1);
-      expect(reportMetaAnalytics).toBeCalledWith(
+      expect(reportMetaAnalytics).toHaveBeenCalledWith(
         expect.objectContaining({
           eventName: MetaAnalyticsEventName.DataRequest,
           source: CoreApp.Explore,
@@ -247,7 +247,7 @@ describe('emitDataRequestEvent', () => {
       emitDataRequestEvent(datasource)(data);
 
       expect(reportMetaAnalytics).toBeCalledTimes(1);
-      expect(reportMetaAnalytics).toBeCalledWith(expect.not.objectContaining({ error: 'test error' }));
+      expect(reportMetaAnalytics).toHaveBeenCalledWith(expect.not.objectContaining({ error: 'test error' }));
     });
   });
 
@@ -266,7 +266,7 @@ describe('emitDataRequestEvent', () => {
       emitDataRequestEvent(datasource)(data);
 
       expect(reportMetaAnalytics).toBeCalledTimes(1);
-      expect(reportMetaAnalytics).toBeCalledWith(
+      expect(reportMetaAnalytics).toHaveBeenCalledWith(
         expect.objectContaining({
           eventName: MetaAnalyticsEventName.DataRequest,
           source: CoreApp.Correlations,
@@ -284,7 +284,7 @@ describe('emitDataRequestEvent', () => {
       emitDataRequestEvent(datasource)(data);
 
       expect(reportMetaAnalytics).toBeCalledTimes(1);
-      expect(reportMetaAnalytics).toBeCalledWith(expect.not.objectContaining({ error: 'test error' }));
+      expect(reportMetaAnalytics).toHaveBeenCalledWith(expect.not.objectContaining({ error: 'test error' }));
     });
   });
 });

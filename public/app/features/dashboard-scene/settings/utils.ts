@@ -64,14 +64,6 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
     });
   }
 
-  if (dashboard.state.meta.canMakeEditable) {
-    pageNav.children!.push({
-      text: t('dashboard-settings.general.title', 'General'),
-      url: locationUtil.getUrlForPartial(location, { editview: 'settings', editIndex: null }),
-      active: currentEditView === 'settings',
-    });
-  }
-
   if (dashboard.state.id && dashboard.state.meta.canSave) {
     pageNav.children!.push({
       text: t('dashboard-settings.versions.title', 'Versions'),

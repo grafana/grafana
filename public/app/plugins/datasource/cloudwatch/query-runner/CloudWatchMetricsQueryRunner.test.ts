@@ -493,7 +493,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
             matchExact: true,
             statistic: '',
             expression: '',
-            metricQueryType: MetricQueryType.Query,
+            metricQueryType: MetricQueryType.Insights,
             metricEditorMode: MetricEditorMode.Code,
             sqlExpression: 'SELECT SUM($metric) FROM "$namespace" GROUP BY InstanceId,InstanceType LIMIT $limit',
           },
@@ -734,7 +734,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
       matchExact: true,
       statistic: '',
       expression: '',
-      metricQueryType: MetricQueryType.Query,
+      metricQueryType: MetricQueryType.Insights,
       metricEditorMode: MetricEditorMode.Code,
       sqlExpression: 'SELECT SUM($metric) FROM "$namespace" GROUP BY ${labels:raw} LIMIT $limit',
     };
@@ -968,11 +968,11 @@ describe('CloudWatchMetricsQueryRunner', () => {
       });
     });
 
-    describe('metric query queries', () => {
+    describe('metric insights queries', () => {
       beforeEach(() => {
         baseQuery = {
           ...baseQuery,
-          metricQueryType: MetricQueryType.Query,
+          metricQueryType: MetricQueryType.Insights,
           metricEditorMode: MetricEditorMode.Code,
         };
       });

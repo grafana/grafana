@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { QueryEditorProps, SelectableValue, TimeRange } from '@grafana/data';
 import { InlineField, InlineFieldRow, LoadingPlaceholder, Select } from '@grafana/ui';

@@ -18,6 +18,7 @@ import {
 import { updateNavIndex } from 'app/core/actions';
 import { appEvents, contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
+import { DatasourceAPIVersions } from 'app/features/apiserver/client';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
@@ -264,6 +265,8 @@ export function loadDataSourcePlugins(): ThunkResult<void> {
   };
 }
 
+const dsApiVersions = new DatasourceAPIVersions();
+
 export function updateDataSource(dataSource: DataSourceSettings) {
   return async (
     dispatch: (
@@ -271,13 +274,16 @@ export function updateDataSource(dataSource: DataSourceSettings) {
     ) => DataSourceSettings
   ) => {
     try {
+      if (config.featureToggles.grafanaAPIServerWithExperimentalAPIs) {
+        dataSource.apiVersion = await dsApiVersions.get(dataSource.type);
+      }
       await api.updateDataSource(dataSource);
     } catch (err) {
       const formattedError = parseHealthCheckError(err);
 
       dispatch(testDataSourceFailed(formattedError));
-
-      return Promise.reject(dataSource);
+      const errorInfo = isFetchError(err) ? err.data : { message: 'An unexpected error occurred.', traceID: '' };
+      return Promise.reject(errorInfo);
     }
 
     await getDatasourceSrv().reload();

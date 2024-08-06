@@ -1,13 +1,11 @@
-import React from 'react';
-
-import { PanelOptionsEditorBuilder } from '..';
+import { identityOverrideProcessor } from '../field/overrides/processors';
 import {
-  identityOverrideProcessor,
-  standardEditorsRegistry,
   StandardEditorsRegistryItem,
+  standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
-} from '../field';
-import { FieldConfigProperty, FieldConfigPropertyItem } from '../types';
+} from '../field/standardFieldConfigEditorRegistry';
+import { FieldConfigProperty, FieldConfigPropertyItem } from '../types/fieldOverrides';
+import { PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 
 import { PanelPlugin } from './PanelPlugin';
 

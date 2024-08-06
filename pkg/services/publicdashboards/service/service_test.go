@@ -15,8 +15,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsDB "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -27,10 +29,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var timeSettings = &TimeSettings{From: "now-12h", To: "now"}
@@ -586,7 +586,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 		service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, fakeDashboardService, nil)
 
 		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore.DB()), quotaService)
 		require.NoError(t, err)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
@@ -666,7 +666,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 			fakeDashboardService := &dashboards.FakeDashboardService{}
 			service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, fakeDashboardService, nil)
 			quotaService := quotatest.New(false, nil)
-			dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
+			dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore.DB()), quotaService)
 			require.NoError(t, err)
 			dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
 			fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
@@ -698,7 +698,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, fakeDashboardService, nil)
 		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore.DB()), quotaService)
 		require.NoError(t, err)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
@@ -725,7 +725,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, fakeDashboardService, nil)
 		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore.DB()), quotaService)
 		require.NoError(t, err)
 
 		templateVars := make([]map[string]any, 1)
@@ -791,7 +791,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, fakeDashboardService, nil)
 		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore.DB()), quotaService)
 		require.NoError(t, err)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
@@ -857,7 +857,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, fakeDashboardService, nil)
 		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore.DB()), quotaService)
 		require.NoError(t, err)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
@@ -909,7 +909,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		service, sqlStore, cfg := newPublicDashboardServiceImpl(t, publicdashboardStore, fakeDashboardService, nil)
 
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore.DB()), quotatest.New(false, nil))
 		require.NoError(t, err)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
@@ -935,7 +935,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 		service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, fakeDashboardService, nil)
 
 		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore.DB()), quotaService)
 		require.NoError(t, err)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
@@ -973,7 +973,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 	service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, fakeDashboardService, nil)
 
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore.DB()), quotaService)
 	require.NoError(t, err)
 	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
 	dashboard2 := insertTestDashboard(t, dashboardStore, "testDashie2", 1, 0, "", true, []map[string]any{}, nil)
@@ -1156,7 +1156,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, fakeDashboardService, nil)
 
 			quotaService := quotatest.New(false, nil)
-			dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
+			dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore.DB()), quotaService)
 			require.NoError(t, err)
 			dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
 			fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
@@ -1483,7 +1483,7 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 		},
 	}
 
-	ac := acimpl.ProvideAccessControl(setting.NewCfg())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {

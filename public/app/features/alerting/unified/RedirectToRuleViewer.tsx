@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { Redirect } from 'react-router-dom';
 import { useLocation } from 'react-use';
 
@@ -137,19 +137,19 @@ export function RedirectToRuleViewer(): JSX.Element | null {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    param: css`
-      font-style: italic;
-      color: ${theme.colors.text.secondary};
-    `,
-    rules: css`
-      margin-top: ${theme.spacing(2)};
-    `,
-    namespace: css`
-      margin-left: ${theme.spacing(1)};
-    `,
-    errorMessage: css`
-      white-space: pre-wrap;
-    `,
+    param: css({
+      fontStyle: 'italic',
+      color: theme.colors.text.secondary,
+    }),
+    rules: css({
+      marginTop: theme.spacing(2),
+    }),
+    namespace: css({
+      marginLeft: theme.spacing(1),
+    }),
+    errorMessage: css({
+      whiteSpace: 'pre-wrap',
+    }),
   };
 }
 

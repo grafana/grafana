@@ -1,7 +1,6 @@
-import intersect from 'fast_array_intersect';
-
-import { getTimeField, sortDataFrame } from '../../dataframe';
-import { DataFrame, Field, FieldMatcher, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types';
+import { getTimeField, sortDataFrame } from '../../dataframe/processDataFrame';
+import { DataFrame, Field, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types/dataFrame';
+import { FieldMatcher } from '../../types/transformations';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -205,7 +204,8 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
         if (frame.name) {
           if (field.name === TIME_SERIES_VALUE_FIELD_NAME) {
             name = frame.name;
-          } else {
+          } else if (labels.name == null) {
+            // add the name label from frame
             labels = { ...labels, name: frame.name };
           }
         }
@@ -213,7 +213,7 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
         fields.push({
           ...field,
           name,
-          labels, // add the name label from frame
+          labels,
         });
       }
 
@@ -256,6 +256,8 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
 
   if (options.mode === JoinMode.outerTabular) {
     joined = joinOuterTabular(allData, originalFieldsOrderByFrame, originalFields.length, nullModes);
+  } else if (options.mode === JoinMode.inner) {
+    joined = joinInner(allData);
   } else {
     joined = join(allData, nullModes, options.mode);
   }
@@ -362,6 +364,74 @@ function joinOuterTabular(
   return data;
 }
 
+/**
+ * This function performs a sql-style inner join on tabular data;
+ * it will combine records from two tables whenever there are matching
+ * values in a field common to both tables.
+ *
+ * NOTE: This function implicitly assumes that the first array in each AlignedData
+ * contains the values to join on. It doesn't explicitly specify a column field to join on,
+ * but rather uses the 0th position of the arrays (AlignedData[0]) to determine the joining keys.
+ * Then, when processing the tables, the function iterates over the values in the `xValues`
+ * (the joining keys) array and checks if the current row `currentRow` already includes the value.
+ * If a matching value is found, it joins the corresponding values from the remaining arrays `yValues`
+ * (all other non-joining key arrays) to create a new row in the joined table.
+ *
+ * @param {AlignedData[]} tables - The tables to join.
+ *
+ * @returns {Array<Array<string | number | null | undefined>>} The joined tables as an array of arrays, where each array represents a row in the joined table.
+ */
+function joinInner(tables: AlignedData[]): Array<Array<string | number | null | undefined>> {
+  const joinedTables: Array<Array<string | number | null | undefined>> = [];
+
+  // Recursive function to perform the inner join.
+  const joinTables = (
+    currentTables: AlignedData[],
+    currentIndex: number,
+    currentRow: Array<string | number | null | undefined>
+  ) => {
+    if (currentIndex === currentTables.length) {
+      // Base case: all tables have been joined, add the current row to the final result.
+      joinedTables.push(currentRow);
+      return;
+    }
+
+    const currentTable = currentTables[currentIndex];
+    const [xValues, ...yValues] = currentTable;
+
+    for (let i = 0; i < xValues.length; i++) {
+      const value = xValues[i];
+
+      if (currentIndex === 0 || currentRow.includes(value)) {
+        const newRow = [...currentRow];
+
+        if (currentIndex === 0) {
+          newRow.push(value);
+        }
+
+        for (let j = 0; j < yValues.length; j++) {
+          newRow.push(yValues[j][i]);
+        }
+
+        // Recursive call for the next table
+        joinTables(currentTables, currentIndex + 1, newRow);
+      }
+    }
+  };
+
+  // Start the recursive join process.
+  joinTables(tables, 0, []);
+
+  // Check if joinedTables is empty before transposing. No need to transpose if there are no joined tables.
+  if (joinedTables.length === 0) {
+    return [];
+  }
+
+  // Transpose the joined tables to get the desired output format.
+  // This essentially flips the rows and columns back to the stucture of the original `tables`.
+  return joinedTables[0].map((_, colIndex) => joinedTables.map((row) => row[colIndex]));
+}
+
 //--------------------------------------------------------------------------------
 // Below here is copied from uplot (MIT License)
 // https://github.com/leeoniya/uPlot/blob/master/src/utils.js#L325
@@ -412,22 +482,15 @@ function nullExpand(yVals: Array<number | null>, nullIdxs: number[], alignedLen:
 
 // nullModes is a tables-matched array indicating how to treat nulls in each series
 export function join(tables: AlignedData[], nullModes?: number[][], mode: JoinMode = JoinMode.outer) {
-  let xVals: Set<number>;
+  let xVals: Set<number> = new Set();
 
-  if (mode === JoinMode.inner) {
-    // @ts-ignore
-    xVals = new Set(intersect(tables.map((t) => t[0])));
-  } else {
-    xVals = new Set();
+  for (let ti = 0; ti < tables.length; ti++) {
+    let t = tables[ti];
+    let xs = t[0];
+    let len = xs.length;
 
-    for (let ti = 0; ti < tables.length; ti++) {
-      let t = tables[ti];
-      let xs = t[0];
-      let len = xs.length;
-
-      for (let i = 0; i < len; i++) {
-        xVals.add(xs[i]);
-      }
+    for (let i = 0; i < len; i++) {
+      xVals.add(xs[i]);
     }
   }
 

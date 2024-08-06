@@ -49,20 +49,20 @@ describe('SystemJS Loader Hooks', () => {
       const id = '/public/plugins/my-datasource/styles.css!';
       const result = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id);
 
-      expect(result).toBe('http://localhost/public/plugins/my-datasource/styles.css');
+      expect(result).toBe('http://localhost/public/plugins/my-datasource/styles.css?_cache=1234');
     });
     it('adds default js extension to resolved url', () => {
       // test against missing extension
       const id = '/public/plugins/my-plugin/traffic_light';
       const result = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id);
 
-      expect(result).toBe('http://localhost/public/plugins/my-plugin/traffic_light.js');
+      expect(result).toBe('http://localhost/public/plugins/my-plugin/traffic_light.js?_cache=1234');
 
       // test against missing extension with periods in filename
       const id2 = '/public/plugins/my-plugin/lib/flot/jquery.flot.gauge';
       const result2 = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id2);
 
-      expect(result2).toBe('http://localhost/public/plugins/my-plugin/lib/flot/jquery.flot.gauge.js');
+      expect(result2).toBe('http://localhost/public/plugins/my-plugin/lib/flot/jquery.flot.gauge.js?_cache=1234');
 
       // test against bare specifiers
       const id3 = 'package:lodash';
@@ -74,12 +74,12 @@ describe('SystemJS Loader Hooks', () => {
       const id4 = '/public/plugins/my-plugin/traffic_light.js';
       const result4 = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id4);
 
-      expect(result4).toBe('http://localhost/public/plugins/my-plugin/traffic_light.js');
+      expect(result4).toBe('http://localhost/public/plugins/my-plugin/traffic_light.js?_cache=1234');
 
       const id5 = '/public/plugins/my-plugin/traffic_light.css';
       const result5 = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id5);
 
-      expect(result5).toBe('http://localhost/public/plugins/my-plugin/traffic_light.css');
+      expect(result5).toBe('http://localhost/public/plugins/my-plugin/traffic_light.css?_cache=1234');
 
       const id6 = '/public/plugins/my-plugin/traffic_light.json';
       const result6 = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id6);
@@ -95,7 +95,7 @@ describe('SystemJS Loader Hooks', () => {
       const id = 'plugins/my-plugin/dark.css';
       const result = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id);
 
-      expect(result).toBe('/public/plugins/my-plugin/dark.css');
+      expect(result).toBe('http://localhost/public/plugins/my-plugin/dark.css?_cache=1234');
     });
     it('adds cache query param to resolved module.js url', () => {
       const id = '/public/plugins/my-plugin/module.js';

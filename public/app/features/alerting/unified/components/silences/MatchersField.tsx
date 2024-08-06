@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import { useEffect } from 'react';
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Field, Input, IconButton, useStyles2, Select } from '@grafana/ui';
+import { Button, Field, Input, IconButton, useStyles2, Select, Divider } from '@grafana/ui';
+import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
 
 import { SilenceFormFields } from '../../types/silence-form';
@@ -11,9 +12,11 @@ import { matcherFieldOptions } from '../../utils/alertmanager';
 
 interface Props {
   className?: string;
+  required: boolean;
+  ruleUid?: string;
 }
 
-const MatchersField = ({ className }: Props) => {
+const MatchersField = ({ className, required, ruleUid }: Props) => {
   const styles = useStyles2(getStyles);
   const formApi = useFormContext<SilenceFormFields>();
   const {
@@ -24,11 +27,27 @@ const MatchersField = ({ className }: Props) => {
 
   const { fields: matchers = [], append, remove } = useFieldArray<SilenceFormFields>({ name: 'matchers' });
 
+  const [getAlertRule, { data: alertRule }] = alertRuleApi.endpoints.getAlertRule.useLazyQuery();
+  useEffect(() => {
+    // If we have a UID, fetch the alert rule details so we can display the rule name
+    if (ruleUid) {
+      getAlertRule({ uid: ruleUid });
+    }
+  }, [getAlertRule, ruleUid]);
+
   return (
-    <div className={cx(className, styles.wrapper)}>
-      <Field label="Matching labels" required>
+    <div className={className}>
+      <Field label="Refine affected alerts" required={required}>
         <div>
-          <div className={styles.matchers}>
+          <div className={cx(styles.matchers, styles.indent)}>
+            {alertRule && (
+              <div>
+                <Field label="Alert rule" disabled>
+                  <Input id="alert-rule-name" defaultValue={alertRule.grafana_alert.title} disabled />
+                </Field>
+                <Divider />
+              </div>
+            )}
             {matchers.map((matcher, index) => {
               return (
                 <div className={styles.row} key={`${matcher.id}`} data-testid="matcher">
@@ -39,13 +58,14 @@ const MatchersField = ({ className }: Props) => {
                   >
                     <Input
                       {...register(`matchers.${index}.name` as const, {
-                        required: { value: true, message: 'Required.' },
+                        required: { value: required, message: 'Required.' },
                       })}
                       defaultValue={matcher.name}
                       placeholder="label"
+                      id={`matcher-${index}-label`}
                     />
                   </Field>
-                  <Field label={'Operator'}>
+                  <Field label="Operator">
                     <Controller
                       control={control}
                       render={({ field: { onChange, ref, ...field } }) => (
@@ -55,11 +75,12 @@ const MatchersField = ({ className }: Props) => {
                           className={styles.matcherOptions}
                           options={matcherFieldOptions}
                           aria-label="operator"
+                          id={`matcher-${index}-operator`}
                         />
                       )}
                       defaultValue={matcher.operator || matcherFieldOptions[0].value}
-                      name={`matchers.${index}.operator` as const}
-                      rules={{ required: { value: true, message: 'Required.' } }}
+                      name={`matchers.${index}.operator`}
+                      rules={{ required: { value: required, message: 'Required.' } }}
                     />
                   </Field>
                   <Field
@@ -69,16 +90,17 @@ const MatchersField = ({ className }: Props) => {
                   >
                     <Input
                       {...register(`matchers.${index}.value` as const, {
-                        required: { value: true, message: 'Required.' },
+                        required: { value: required, message: 'Required.' },
                       })}
                       defaultValue={matcher.value}
                       placeholder="value"
+                      id={`matcher-${index}-value`}
                     />
                   </Field>
-                  {matchers.length > 1 && (
+                  {(matchers.length > 1 || !required) && (
                     <IconButton
+                      aria-label="Remove matcher"
                       className={styles.removeButton}
-                      tooltip="Remove matcher"
                       name="trash-alt"
                       onClick={() => remove(index)}
                     >
@@ -90,6 +112,8 @@ const MatchersField = ({ className }: Props) => {
             })}
           </div>
           <Button
+            className={styles.indent}
+            tooltip="Refine which alert instances are silenced by selecting label matchers"
             type="button"
             icon="plus"
             variant="secondary"
@@ -108,31 +132,35 @@ const MatchersField = ({ className }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css`
-      margin-top: ${theme.spacing(2)};
-    `,
-    row: css`
-      display: flex;
-      align-items: flex-start;
-      flex-direction: row;
-      background-color: ${theme.colors.background.secondary};
-      padding: ${theme.spacing(1)} ${theme.spacing(1)} 0 ${theme.spacing(1)};
-      & > * + * {
-        margin-left: ${theme.spacing(2)};
-      }
-    `,
-    removeButton: css`
-      margin-left: ${theme.spacing(1)};
-      margin-top: ${theme.spacing(2.5)};
-    `,
-    matcherOptions: css`
-      min-width: 140px;
-    `,
-    matchers: css`
-      max-width: ${theme.breakpoints.values.sm}px;
-      margin: ${theme.spacing(1)} 0;
-      padding-top: ${theme.spacing(0.5)};
-    `,
+    wrapper: css({
+      marginTop: theme.spacing(2),
+    }),
+    row: css({
+      marginTop: theme.spacing(1),
+      display: 'flex',
+      alignItems: 'flex-start',
+      flexDirection: 'row',
+      backgroundColor: theme.colors.background.secondary,
+      padding: `${theme.spacing(1)} ${theme.spacing(1)} 0 ${theme.spacing(1)}`,
+      '& > * + *': {
+        marginLeft: theme.spacing(2),
+      },
+    }),
+    removeButton: css({
+      marginLeft: theme.spacing(1),
+      marginTop: theme.spacing(2.5),
+    }),
+    matcherOptions: css({
+      minWidth: '140px',
+    }),
+    matchers: css({
+      maxWidth: `${theme.breakpoints.values.sm}px`,
+      margin: `${theme.spacing(1)} 0`,
+      paddingTop: theme.spacing(0.5),
+    }),
+    indent: css({
+      marginLeft: theme.spacing(2),
+    }),
   };
 };
 

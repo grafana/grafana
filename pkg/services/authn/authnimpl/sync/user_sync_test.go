@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
@@ -47,6 +49,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 
 	userService := &usertest.FakeUserService{ExpectedUser: &user.User{
 		ID:    1,
+		UID:   "1",
 		Login: "test",
 		Name:  "test",
 		Email: "test",
@@ -54,6 +57,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 
 	userServiceMod := &usertest.FakeUserService{ExpectedUser: &user.User{
 		ID:         3,
+		UID:        "3",
 		Login:      "test",
 		Name:       "test",
 		Email:      "test",
@@ -63,6 +67,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 
 	userServiceEmailMod := &usertest.FakeUserService{ExpectedUser: &user.User{
 		ID:            3,
+		UID:           "3",
 		Login:         "test",
 		Name:          "test",
 		Email:         "test@test.com",
@@ -76,6 +81,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 		CreateFn: func(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
 			return &user.User{
 				ID:      2,
+				UID:     "2",
 				Login:   cmd.Login,
 				Name:    cmd.Name,
 				Email:   cmd.Email,
@@ -158,7 +164,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			},
 			wantErr: false,
 			wantID: &authn.Identity{
-				ID:             authn.MustParseNamespaceID("user:1"),
+				ID:             identity.MustParseTypedID("user:1"),
+				UID:            identity.MustParseTypedID("user:1"),
 				Login:          "test",
 				Name:           "test",
 				Email:          "test",
@@ -196,7 +203,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			},
 			wantErr: false,
 			wantID: &authn.Identity{
-				ID:             authn.MustParseNamespaceID("user:1"),
+				ID:             identity.MustParseTypedID("user:1"),
+				UID:            identity.MustParseTypedID("user:1"),
 				Login:          "test",
 				Name:           "test",
 				Email:          "test",
@@ -236,7 +244,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			},
 			wantErr: false,
 			wantID: &authn.Identity{
-				ID:              authn.MustParseNamespaceID("user:1"),
+				ID:              identity.MustParseTypedID("user:1"),
+				UID:             identity.MustParseTypedID("user:1"),
 				AuthID:          "2032",
 				AuthenticatedBy: "oauth",
 				Login:           "test",
@@ -307,7 +316,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			},
 			wantErr: false,
 			wantID: &authn.Identity{
-				ID:              authn.MustParseNamespaceID("user:2"),
+				ID:              identity.MustParseTypedID("user:2"),
+				UID:             identity.MustParseTypedID("user:2"),
 				Login:           "test_create",
 				Name:            "test_create",
 				Email:           "test_create",
@@ -352,7 +362,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			},
 			wantErr: false,
 			wantID: &authn.Identity{
-				ID:             authn.MustParseNamespaceID("user:3"),
+				ID:             identity.MustParseTypedID("user:3"),
+				UID:            identity.MustParseTypedID("user:3"),
 				Login:          "test_mod",
 				Name:           "test_mod",
 				Email:          "test_mod",
@@ -396,9 +407,10 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			},
 			wantErr: false,
 			wantID: &authn.Identity{
-				ID:             authn.MustParseNamespaceID("user:3"),
-				Login:          "test",
+				ID:             identity.MustParseTypedID("user:3"),
+				UID:            identity.MustParseTypedID("user:3"),
 				Name:           "test",
+				Login:          "test",
 				Email:          "test_mod@test.com",
 				IsDisabled:     false,
 				EmailVerified:  false,
@@ -416,7 +428,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := ProvideUserSync(tt.fields.userService, userProtection, tt.fields.authInfoService, tt.fields.quotaService)
+			s := ProvideUserSync(tt.fields.userService, userProtection, tt.fields.authInfoService, tt.fields.quotaService, tracing.InitializeTracerForTest())
 			err := s.SyncUserHook(tt.args.ctx, tt.args.id, nil)
 			if tt.wantErr {
 				require.Error(t, err)
@@ -446,13 +458,15 @@ func TestUserSync_FetchSyncedUserHook(t *testing.T) {
 		{
 			desc:     "should skip hook when identity is not a user",
 			req:      &authn.Request{},
-			identity: &authn.Identity{ID: authn.MustParseNamespaceID("api-key:1"), ClientParams: authn.ClientParams{FetchSyncedUser: true}},
+			identity: &authn.Identity{ID: identity.MustParseTypedID("api-key:1"), ClientParams: authn.ClientParams{FetchSyncedUser: true}},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			s := UserSync{}
+			s := UserSync{
+				tracer: tracing.InitializeTracerForTest(),
+			}
 			err := s.FetchSyncedUserHook(context.Background(), tt.identity, tt.req)
 			require.ErrorIs(t, err, tt.expectedErr)
 		})
@@ -470,7 +484,7 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 		{
 			desc: "should skip if correct flag is not set",
 			identity: &authn.Identity{
-				ID:           authn.MustNewNamespaceID(authn.NamespaceUser, 1),
+				ID:           identity.NewTypedID(identity.TypeUser, 1),
 				IsDisabled:   true,
 				ClientParams: authn.ClientParams{EnableUser: false},
 			},
@@ -479,7 +493,7 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 		{
 			desc: "should skip if identity is not a user",
 			identity: &authn.Identity{
-				ID:           authn.MustNewNamespaceID(authn.NamespaceAPIKey, 1),
+				ID:           identity.NewTypedID(identity.TypeAPIKey, 1),
 				IsDisabled:   true,
 				ClientParams: authn.ClientParams{EnableUser: true},
 			},
@@ -488,7 +502,7 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 		{
 			desc: "should enabled disabled user",
 			identity: &authn.Identity{
-				ID:           authn.MustNewNamespaceID(authn.NamespaceUser, 1),
+				ID:           identity.NewTypedID(identity.TypeUser, 1),
 				IsDisabled:   true,
 				ClientParams: authn.ClientParams{EnableUser: true},
 			},
@@ -505,7 +519,7 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 				return nil
 			}
 
-			s := UserSync{userService: userSvc}
+			s := UserSync{userService: userSvc, tracer: tracing.InitializeTracerForTest()}
 			err := s.EnableUserHook(context.Background(), tt.identity, nil)
 			require.NoError(t, err)
 			assert.Equal(t, tt.enableUser, called)

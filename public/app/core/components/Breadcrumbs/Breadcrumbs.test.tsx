@@ -1,5 +1,4 @@
 import { render, screen, within } from '@testing-library/react';
-import React from 'react';
 
 import { Breadcrumbs } from './Breadcrumbs';
 import { Breadcrumb } from './types';

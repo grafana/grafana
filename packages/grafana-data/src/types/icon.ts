@@ -37,6 +37,7 @@ export const availableIconsIndex = {
   'arrows-v': true,
   asserts: true,
   'expand-arrows': true,
+  'expand-arrows-alt': true,
   at: true,
   ai: true,
   backward: true,
@@ -75,6 +76,7 @@ export const availableIconsIndex = {
   'comment-alt-share': true,
   'comments-alt': true,
   compass: true,
+  'compress-arrows': true,
   copy: true,
   'corner-down-right-alt': true,
   'create-dashboard': true,
@@ -96,6 +98,7 @@ export const availableIconsIndex = {
   'exchange-alt': true,
   'exclamation-triangle': true,
   'exclamation-circle': true,
+  exclamation: true,
   'external-link-alt': true,
   eye: true,
   'eye-slash': true,
@@ -160,6 +163,7 @@ export const availableIconsIndex = {
   k6: true,
   'key-skeleton-alt': true,
   keyboard: true,
+  kubernetes: true,
   'layer-group': true,
   'layers-alt': true,
   'library-panel': true,
@@ -182,6 +186,7 @@ export const availableIconsIndex = {
   paragraph: true,
   'pathfinder-unite': true,
   pause: true,
+  'pause-circle': true,
   pen: true,
   percentage: true,
   play: true,
@@ -245,6 +250,8 @@ export const availableIconsIndex = {
   'wrap-text': true,
   rss: true,
   x: true,
+  'add-user': true,
+  attach: true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;

@@ -81,6 +81,7 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
   subscriptionId?: string;
   oauthPassThru?: boolean;
   azureCredentials?: AzureCredentials;
+  basicLogsEnabled?: boolean;
 
   // logs
   /** @deprecated Azure Logs credentials */

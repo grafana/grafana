@@ -113,7 +113,7 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 		}
 
 		nestedPath := path.Join("a", "b")
-		err = os.MkdirAll(path.Join(tmpDir, nestedPath), os.ModePerm)
+		err = os.MkdirAll(path.Join(tmpDir, nestedPath), 0o750)
 		if err != nil {
 			t.Fatal(err)
 		}

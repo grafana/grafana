@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"math/rand"
 	"net/http"
 	"testing"
 	"time"
@@ -13,10 +12,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -67,7 +66,10 @@ func TestSilenceCreate(t *testing.T) {
 					OrgRole: org.RoleEditor,
 					OrgID:   1,
 					Permissions: map[int64]map[string][]string{
-						1: {accesscontrol.ActionAlertingInstanceCreate: {}},
+						1: {
+							accesscontrol.ActionAlertingInstanceRead:   {},
+							accesscontrol.ActionAlertingInstanceCreate: {},
+						},
 					},
 				},
 			}
@@ -86,13 +88,13 @@ func TestSilenceCreate(t *testing.T) {
 func TestRouteCreateSilence(t *testing.T) {
 	tesCases := []struct {
 		name           string
-		silence        func() apimodels.PostableSilence
+		silence        func() ngmodels.Silence
 		permissions    map[int64]map[string][]string
 		expectedStatus int
 	}{
 		{
 			name:    "new silence, role-based access control is enabled, not authorized",
-			silence: silenceGen(withEmptyID),
+			silence: ngmodels.SilenceGen(ngmodels.SilenceMuts.WithEmptyId()),
 			permissions: map[int64]map[string][]string{
 				1: {},
 			},
@@ -100,15 +102,18 @@ func TestRouteCreateSilence(t *testing.T) {
 		},
 		{
 			name:    "new silence, role-based access control is enabled, authorized",
-			silence: silenceGen(withEmptyID),
+			silence: ngmodels.SilenceGen(ngmodels.SilenceMuts.WithEmptyId()),
 			permissions: map[int64]map[string][]string{
-				1: {accesscontrol.ActionAlertingInstanceCreate: {}},
+				1: {
+					accesscontrol.ActionAlertingInstanceRead:   {},
+					accesscontrol.ActionAlertingInstanceCreate: {},
+				},
 			},
 			expectedStatus: http.StatusAccepted,
 		},
 		{
 			name:    "update silence, role-based access control is enabled, not authorized",
-			silence: silenceGen(),
+			silence: ngmodels.SilenceGen(),
 			permissions: map[int64]map[string][]string{
 				1: {accesscontrol.ActionAlertingInstanceCreate: {}},
 			},
@@ -116,9 +121,12 @@ func TestRouteCreateSilence(t *testing.T) {
 		},
 		{
 			name:    "update silence, role-based access control is enabled, authorized",
-			silence: silenceGen(),
+			silence: ngmodels.SilenceGen(),
 			permissions: map[int64]map[string][]string{
-				1: {accesscontrol.ActionAlertingInstanceUpdate: {}},
+				1: {
+					accesscontrol.ActionAlertingInstanceRead:   {},
+					accesscontrol.ActionAlertingInstanceUpdate: {},
+				},
 			},
 			expectedStatus: http.StatusAccepted,
 		},
@@ -138,57 +146,19 @@ func TestRouteCreateSilence(t *testing.T) {
 				},
 			}
 
-			silence := tesCase.silence()
+			silence := notifier.SilenceToPostableSilence(tesCase.silence())
 
 			if silence.ID != "" {
 				alertmanagerFor, err := sut.mam.AlertmanagerFor(1)
 				require.NoError(t, err)
 				silence.ID = ""
-				newID, err := alertmanagerFor.CreateSilence(context.Background(), &silence)
+				newID, err := alertmanagerFor.CreateSilence(context.Background(), silence)
 				require.NoError(t, err)
 				silence.ID = newID
 			}
 
-			response := sut.RouteCreateSilence(&rc, silence)
+			response := sut.RouteCreateSilence(&rc, *silence)
 			require.Equal(t, tesCase.expectedStatus, response.Status())
 		})
 	}
-}
-
-func silenceGen(mutatorFuncs ...func(*apimodels.PostableSilence)) func() apimodels.PostableSilence {
-	return func() apimodels.PostableSilence {
-		testString := util.GenerateShortUID()
-		isEqual := rand.Int()%2 == 0
-		isRegex := rand.Int()%2 == 0
-		value := util.GenerateShortUID()
-		if isRegex {
-			value = ".*" + util.GenerateShortUID()
-		}
-
-		matchers := amv2.Matchers{&amv2.Matcher{Name: &testString, IsEqual: &isEqual, IsRegex: &isRegex, Value: &value}}
-		comment := util.GenerateShortUID()
-		starts := strfmt.DateTime(timeNow().Add(-time.Duration(rand.Int63n(9)+1) * time.Second))
-		ends := strfmt.DateTime(timeNow().Add(time.Duration(rand.Int63n(9)+1) * time.Second))
-		createdBy := "User-" + util.GenerateShortUID()
-		s := apimodels.PostableSilence{
-			ID: util.GenerateShortUID(),
-			Silence: amv2.Silence{
-				Comment:   &comment,
-				CreatedBy: &createdBy,
-				EndsAt:    &ends,
-				Matchers:  matchers,
-				StartsAt:  &starts,
-			},
-		}
-
-		for _, mutator := range mutatorFuncs {
-			mutator(&s)
-		}
-
-		return s
-	}
-}
-
-func withEmptyID(silence *apimodels.PostableSilence) {
-	silence.ID = ""
 }

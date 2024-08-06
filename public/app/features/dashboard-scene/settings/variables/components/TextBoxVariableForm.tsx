@@ -1,4 +1,4 @@
-import React, { FormEvent } from 'react';
+import { FormEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';

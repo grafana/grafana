@@ -1,5 +1,5 @@
-import { Meta, Story } from '@storybook/react';
-import React, { useState } from 'react';
+import { Meta, StoryFn } from '@storybook/react';
+import { useState } from 'react';
 
 import { RadioButtonGroup } from './RadioButtonGroup';
 import mdx from './RadioButtonGroup.mdx';
@@ -25,7 +25,7 @@ const meta: Meta = {
   },
 };
 
-export const RadioButtons: Story = (args) => {
+export const RadioButtons: StoryFn = (args) => {
   const [selected, setSelected] = useState('elastic');
 
   const options = [

@@ -74,9 +74,10 @@ For Grafana versions prior to v9.2, additional information might also be availab
 
 For a complete list of every change, with links to pull requests and related issues when available, see the [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
-# Grafana 11
+## Grafana 11
 
-- [What's new in 11.0-preview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11-0/)
+- [What's new in 11.1](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11-1/)
+- [What's new in 11.0](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11-0/)
 
 ## Grafana 10
 

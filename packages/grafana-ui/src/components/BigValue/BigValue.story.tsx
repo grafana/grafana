@@ -1,5 +1,4 @@
-import { Story, Meta } from '@storybook/react';
-import React from 'react';
+import { StoryFn, Meta } from '@storybook/react';
 
 import { FieldSparkline, FieldType } from '@grafana/data';
 
@@ -57,7 +56,7 @@ interface StoryProps extends Partial<Props> {
   valueText: string;
 }
 
-export const ApplyNoValue: Story<StoryProps> = ({
+export const ApplyNoValue: StoryFn<StoryProps> = ({
   valueText,
   title,
   colorMode,
@@ -101,7 +100,7 @@ export const ApplyNoValue: Story<StoryProps> = ({
   );
 };
 
-export const Basic: Story<StoryProps> = ({
+export const Basic: StoryFn<StoryProps> = ({
   valueText,
   title,
   colorMode,

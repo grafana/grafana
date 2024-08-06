@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/metrics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/resourcegraph"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/utils"
 )
 
 func ProvideService(httpClientProvider *httpclient.Provider) *Service {
@@ -36,6 +37,7 @@ func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 		azureLogAnalytics:  &loganalytics.AzureLogAnalyticsDatasource{Proxy: proxy, Logger: logger},
 		azureResourceGraph: &resourcegraph.AzureResourceGraphDatasource{Proxy: proxy, Logger: logger},
 		azureTraces:        &loganalytics.AzureLogAnalyticsDatasource{Proxy: proxy, Logger: logger},
+		traceExemplar:      &loganalytics.AzureLogAnalyticsDatasource{Proxy: proxy, Logger: logger},
 	}
 
 	im := datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider, executors, logger))
@@ -137,7 +139,7 @@ func NewInstanceSettings(clientProvider *httpclient.Provider, executors map[stri
 }
 
 type azDatasourceExecutor interface {
-	ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error)
+	ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, fromAlert bool) (*backend.QueryDataResponse, error)
 	ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error)
 }
 
@@ -172,7 +174,9 @@ func (s *Service) newQueryMux() *datasource.QueryTypeMux {
 			if !ok {
 				return nil, fmt.Errorf("missing service for %s", dst)
 			}
-			return executor.ExecuteTimeSeriesQuery(ctx, req.Queries, dsInfo, service.HTTPClient, service.URL)
+			// FromAlert header is defined in pkg/services/ngalert/models/constants.go
+			fromAlert := req.Headers["FromAlert"] == "true"
+			return executor.ExecuteTimeSeriesQuery(ctx, req.Queries, dsInfo, service.HTTPClient, service.URL, fromAlert)
 		})
 	}
 	return mux
@@ -193,8 +197,7 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 }
 
 func queryMetricHealth(ctx context.Context, dsInfo types.DatasourceInfo) (*http.Response, error) {
-	subscriptionsApiVersion := "2020-01-01"
-	url := fmt.Sprintf("%v/subscriptions?api-version=%v", dsInfo.Routes["Azure Monitor"].URL, subscriptionsApiVersion)
+	url := fmt.Sprintf("%v/subscriptions?api-version=%v", dsInfo.Routes["Azure Monitor"].URL, utils.SubscriptionsApiVersion)
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -299,7 +302,7 @@ func metricCheckHealth(ctx context.Context, dsInfo types.DatasourceInfo, logger 
 		}
 		return fmt.Sprintf("Error connecting to Azure Monitor endpoint: %s", string(body)), defaultSubscription, backend.HealthStatusError
 	}
-	subscriptions, err := parseSubscriptions(metricsRes, logger)
+	subscriptions, err := utils.ParseSubscriptions(metricsRes, logger)
 	if err != nil {
 		return err.Error(), defaultSubscription, backend.HealthStatusError
 	}
@@ -361,30 +364,6 @@ func graphLogHealthCheck(ctx context.Context, dsInfo types.DatasourceInfo, defau
 		return fmt.Sprintf("Error connecting to Azure Resource Graph endpoint: %s", string(body)), backend.HealthStatusError
 	}
 	return "Successfully connected to Azure Resource Graph endpoint.", backend.HealthStatusOk
-}
-
-func parseSubscriptions(res *http.Response, logger log.Logger) ([]string, error) {
-	var target struct {
-		Value []struct {
-			SubscriptionId string `json:"subscriptionId"`
-		}
-	}
-	err := json.NewDecoder(res.Body).Decode(&target)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			logger.Warn("Failed to close response body", "err", err)
-		}
-	}()
-
-	result := make([]string, len(target.Value))
-	for i, v := range target.Value {
-		result[i] = v.SubscriptionId
-	}
-
-	return result, nil
 }
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {

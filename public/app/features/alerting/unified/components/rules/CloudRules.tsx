@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { LinkButton, LoadingPlaceholder, Pagination, Spinner, useStyles2, Text } from '@grafana/ui';
+import { LinkButton, LoadingPlaceholder, Pagination, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
@@ -98,20 +98,20 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  loader: css`
-    margin-bottom: 0;
-  `,
-  sectionHeader: css`
-    display: flex;
-    justify-content: space-between;
-  `,
-  wrapper: css`
-    margin-bottom: ${theme.spacing(4)};
-  `,
-  spinner: css`
-    text-align: center;
-    padding: ${theme.spacing(2)};
-  `,
+  loader: css({
+    marginBottom: 0,
+  }),
+  sectionHeader: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+  }),
+  wrapper: css({
+    marginBottom: theme.spacing(4),
+  }),
+  spinner: css({
+    textAlign: 'center',
+    padding: theme.spacing(2),
+  }),
   pagination: getPaginationStyles(theme),
   headerRow: css({
     display: 'flex',
@@ -136,6 +136,7 @@ export function CreateRecordingRuleButton() {
         href={urlUtil.renderUrl(`alerting/new/recording`, {
           returnTo: location.pathname + location.search,
         })}
+        tooltip="Create new Data source-managed recording rule"
         icon="plus"
         variant="secondary"
       >

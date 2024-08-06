@@ -12,9 +12,8 @@ export default function flatten(
   let currentDepth = 1;
   const output: Record<string, unknown> = {};
 
-  function step(object: any, prev: string | null) {
-    Object.keys(object).forEach((key) => {
-      const value = object[key];
+  function step(object: object, prev: string | null) {
+    Object.entries(object).forEach(([key, value]) => {
       const isarray = opts?.safe && Array.isArray(value);
       const type = Object.prototype.toString.call(value);
       const isobject = type === '[object Object]';

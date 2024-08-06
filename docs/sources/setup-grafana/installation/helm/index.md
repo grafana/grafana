@@ -4,7 +4,6 @@ aliases:
 description: Guide for deploying Grafana using Helm Charts
 labels:
   products:
-    - enterprise
     - oss
 menuTitle: Grafana on Helm Charts
 title: Deploy Grafana using Helm Charts
@@ -20,6 +19,8 @@ This topic includes instructions for installing and running Grafana on Kubernete
 {{% admonition type="note" %}}
 The Grafana open-source community offers Helm Charts for running it on Kubernetes. Please be aware that the code is provided without any warranties. If you encounter any problems, you can report them to the [Official GitHub repository](https://github.com/grafana/helm-charts/).
 {{% /admonition %}}
+
+Watch this video to learn more about installing Grafana using Helm Charts: {{< youtube id="sgYrEleW24E">}}
 
 ## Before you begin
 
@@ -196,7 +197,7 @@ By modifying the values in the `values.yaml` file, you can tailor the deployment
 
 In order to make any configuration changes, download the `values.yaml` file from the Grafana Helm Charts repository:
 
-https://github.com/grafana/helm-charts/edit/main/charts/grafana/values.yaml
+https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
 
 {{% admonition type="note" %}}
 Depending on your use case requirements, you can use a single YAML file that contains your configuration changes or you can create multiple YAML files.

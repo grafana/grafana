@@ -1,6 +1,7 @@
 package dtos
 
 import (
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -65,11 +66,13 @@ type FrontendSettingsLicenseInfoDTO struct {
 }
 
 type FrontendSettingsAzureDTO struct {
-	Cloud                                  string `json:"cloud"`
-	ManagedIdentityEnabled                 bool   `json:"managedIdentityEnabled"`
-	WorkloadIdentityEnabled                bool   `json:"workloadIdentityEnabled"`
-	UserIdentityEnabled                    bool   `json:"userIdentityEnabled"`
-	UserIdentityFallbackCredentialsEnabled bool   `json:"userIdentityFallbackCredentialsEnabled"`
+	Cloud                                  string                      `json:"cloud,omitempty"`
+	Clouds                                 []azsettings.AzureCloudInfo `json:"clouds,omitempty"`
+	ManagedIdentityEnabled                 bool                        `json:"managedIdentityEnabled,omitempty"`
+	WorkloadIdentityEnabled                bool                        `json:"workloadIdentityEnabled,omitempty"`
+	UserIdentityEnabled                    bool                        `json:"userIdentityEnabled,omitempty"`
+	UserIdentityFallbackCredentialsEnabled bool                        `json:"userIdentityFallbackCredentialsEnabled,omitempty"`
+	AzureEntraPasswordCredentialsEnabled   bool                        `json:"azureEntraPasswordCredentialsEnabled,omitempty"`
 }
 
 type FrontendSettingsCachingDTO struct {
@@ -201,6 +204,7 @@ type FrontendSettingsDTO struct {
 	TrustedTypesDefaultPolicyEnabled    bool     `json:"trustedTypesDefaultPolicyEnabled"`
 	CSPReportOnlyEnabled                bool     `json:"cspReportOnlyEnabled"`
 	DisableFrontendSandboxForPlugins    []string `json:"disableFrontendSandboxForPlugins"`
+	ExploreDefaultTimeOffset            string   `json:"exploreDefaultTimeOffset"`
 
 	Auth FrontendSettingsAuthDTO `json:"auth"`
 
@@ -223,12 +227,14 @@ type FrontendSettingsDTO struct {
 	PluginAdminEnabled               bool                           `json:"pluginAdminEnabled"`
 	PluginAdminExternalManageEnabled bool                           `json:"pluginAdminExternalManageEnabled"`
 	PluginCatalogHiddenPlugins       []string                       `json:"pluginCatalogHiddenPlugins"`
+	PluginCatalogManagedPlugins      []string                       `json:"pluginCatalogManagedPlugins"`
 	ExpressionsEnabled               bool                           `json:"expressionsEnabled"`
 	AwsAllowedAuthProviders          []string                       `json:"awsAllowedAuthProviders"`
 	AwsAssumeRoleEnabled             bool                           `json:"awsAssumeRoleEnabled"`
 	SupportBundlesEnabled            bool                           `json:"supportBundlesEnabled"`
 	SnapshotEnabled                  bool                           `json:"snapshotEnabled"`
 	SecureSocksDSProxyEnabled        bool                           `json:"secureSocksDSProxyEnabled"`
+	ReportingStaticContext           map[string]string              `json:"reportingStaticContext"`
 
 	Azure FrontendSettingsAzureDTO `json:"azure"`
 
@@ -251,7 +257,9 @@ type FrontendSettingsDTO struct {
 	PublicDashboardAccessToken string `json:"publicDashboardAccessToken"`
 	PublicDashboardsEnabled    bool   `json:"publicDashboardsEnabled"`
 
-	CloudMigrationIsTarget bool `json:"cloudMigrationIsTarget"`
+	CloudMigrationIsTarget       bool   `json:"cloudMigrationIsTarget"`
+	CloudMigrationFeedbackURL    string `json:"cloudMigrationFeedbackURL"`
+	CloudMigrationPollIntervalMs int    `json:"cloudMigrationPollIntervalMs"`
 
 	DateFormats setting.DateFormats `json:"dateFormats,omitempty"`
 

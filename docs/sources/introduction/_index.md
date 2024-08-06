@@ -84,7 +84,9 @@ In addition to Grafana, Grafana Labs also provides the following open source pro
 
 **Grafana Beyla:** Grafana Beyla is an eBPF-based application auto-instrumentation tool for application observability. eBPF is used to automatically inspect application executables and the OS networking layer as well as capture basic trace spans related to web transactions and Rate-Errors-Duration (RED) metrics for Linux HTTP/S and gRPC services. All data capture occurs without any modifications to application code or configuration. For more information about Grafana Beyla, refer to [Grafana Beyla documentation](/docs/beyla/latest/).
 
-**Grafana Agent:** Grafana Agent is a vendor-neutral, batteries-included telemetry collector with configuration inspired by Terraform. It is designed to be flexible, performant, and compatible with multiple ecosystems such as Prometheus and OpenTelemetry. For more information about Grafana Agent, refer to [Grafana Agent documentation](/docs/agent/latest/).
+**Grafana Alloy:** Grafana Alloy is a flexible, high performance, vendor-neutral distribution of the [OpenTelemetry][] (OTel) Collector.
+It's fully compatible with the most popular open source observability standards such as OpenTelemetry (OTel) and Prometheus.
+For more information about Grafana Alloy, refer to the [Grafana Alloy documentation](https://grafana.com/docs/alloy/latest/).
 
 **Grafana k6:** Grafana k6 is an open-source load testing tool that makes performance testing easy and productive for engineering teams. For more information about Grafana k6, refer to [Grafana k6 documentation](/docs/k6/latest/).
 

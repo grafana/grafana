@@ -1,5 +1,6 @@
 import { take } from 'lodash';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
 
 import {
   DataLinkBuiltInVars,
@@ -150,7 +151,7 @@ export function DashList(props: PanelProps<Options>) {
     ];
   }, [dashboards]);
 
-  const { showStarred, showRecentlyViewed, showHeadings, showSearch } = props.options;
+  const { showStarred, showRecentlyViewed, showHeadings, showFolderNames, showSearch } = props.options;
 
   const dashboardGroups: DashboardGroup[] = [
     {
@@ -188,7 +189,7 @@ export function DashList(props: PanelProps<Options>) {
                 <a className={css.dashlistTitle} href={url}>
                   {dash.title}
                 </a>
-                {dash.folderTitle && <div className={css.dashlistFolder}>{dash.folderTitle}</div>}
+                {showFolderNames && dash.folderTitle && <div className={css.dashlistFolder}>{dash.folderTitle}</div>}
               </div>
               <IconButton
                 tooltip={dash.isStarred ? `Unmark "${dash.title}" as favorite` : `Mark "${dash.title}" as favorite`}

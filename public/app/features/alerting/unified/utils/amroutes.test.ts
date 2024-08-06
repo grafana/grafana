@@ -72,10 +72,10 @@ describe('formAmRouteToAmRoute', () => {
 
     // Assert
     expect(amRoute.matchers).toStrictEqual([
-      '"foo"="bar"',
-      '"foo"="bar\\"baz"',
-      '"foo"="bar\\\\baz"',
-      '"foo"="\\\\bar\\\\baz\\"\\\\"',
+      'foo="bar"',
+      'foo="bar\\"baz"',
+      'foo="bar\\\\baz"',
+      'foo="\\\\bar\\\\baz\\"\\\\"',
     ]);
   });
 
@@ -97,7 +97,7 @@ describe('formAmRouteToAmRoute', () => {
 
     // Assert
     expect(amRoute.matchers).toStrictEqual([
-      '"foo"="bar"',
+      'foo="bar"',
       '"foo with spaces"="bar"',
       '"foo\\\\slash"="bar"',
       '"foo\\"quote"="bar"',
@@ -116,7 +116,7 @@ describe('formAmRouteToAmRoute', () => {
     const amRoute = formAmRouteToAmRoute('mimir-am', route, { id: 'root' });
 
     // Assert
-    expect(amRoute.matchers).toStrictEqual(['"foo"=""']);
+    expect(amRoute.matchers).toStrictEqual(['foo=""']);
   });
 
   it('should allow matchers with empty values for Grafana AM', () => {

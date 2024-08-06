@@ -1,10 +1,9 @@
 import { createSelector } from '@reduxjs/toolkit';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { CoreApp } from '@grafana/data';
+import { CoreApp, getNextRefId } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { getNextRefIdChar } from 'app/core/utils/query';
 import { useDispatch, useSelector } from 'app/types';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
@@ -58,7 +57,7 @@ export const QueryRows = ({ exploreId }: Props) => {
 
   const onAddQuery = useCallback(
     (query: DataQuery) => {
-      onChange([...queries, { ...query, refId: getNextRefIdChar(queries) }]);
+      onChange([...queries, { ...query, refId: getNextRefId(queries) }]);
     },
     [onChange, queries]
   );

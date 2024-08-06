@@ -19,7 +19,22 @@
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
     "id": 209,
-    "links": [],
+    "links": [
+      {
+        "asDropdown": false,
+        "icon": "external link",
+        "includeVars": false,
+        "keepTime": false,
+        "tags": [
+          "live-tests"
+        ],
+        "targetBlank": false,
+        "title": "gdev live tests",
+        "tooltip": "",
+        "type": "dashboards",
+        "url": ""
+      }
+    ],
     "panels": [
       {
         "datasource": {
@@ -181,7 +196,7 @@
           "message": "weather,location=west,sensor=A temperature=90\nweather,location=east,sensor=A temperature=80",
           "publish": "influx"
         },
-        "title": "Panel Title",
+        "title": "Timeseries with multiple streaming queries",
         "type": "live"
       },
       {
@@ -440,7 +455,7 @@
     },
     "timepicker": {},
     "timezone": "browser",
-    "title": "live test",
+    "title": "Live publish test",
     "uid": "addoomtlivedev",
     "version": 17,
     "weekStart": ""

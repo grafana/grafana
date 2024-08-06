@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { dateTime, getDefaultRelativeTimeRange, GrafanaTheme2, RelativeTimeRange } from '@grafana/data';
 import { relativeToTimeRange } from '@grafana/data/src/datetime/rangeutil';
@@ -67,25 +67,24 @@ const getStyles = (theme: GrafanaTheme2) => {
   const clearButton = clearButtonStyles(theme);
 
   return {
-    queryOptions: css`
-      > div {
-        justify-content: space-between;
-      }
-    `,
+    queryOptions: css({
+      '> div': {
+        justifyContent: 'space-between',
+      },
+    }),
 
-    staticValues: css`
-      color: ${theme.colors.text.secondary};
-      margin-right: ${theme.spacing(1)};
-    `,
+    staticValues: css({
+      color: theme.colors.text.secondary,
+      marginRight: theme.spacing(1),
+    }),
 
-    actionLink: css`
-      ${clearButton};
-      color: ${theme.colors.text.link};
-      cursor: pointer;
+    actionLink: css(clearButton, {
+      color: theme.colors.text.link,
+      cursor: 'pointer',
 
-      &:hover {
-        text-decoration: underline;
-      }
-    `,
+      '&:hover': {
+        textDecoration: 'underline',
+      },
+    }),
   };
 };

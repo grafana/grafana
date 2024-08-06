@@ -54,7 +54,7 @@ test('visual query builder should handle time filter macro', async ({ explorePag
   await select.locator(page.getByText('createdAt')).click();
 
   // Toggle where row
-  await page.getByLabel('Filter').click();
+  await page.getByLabel('Filter').last().click();
 
   // Click add filter button
   await page.getByRole('button', { name: 'Add filter' }).click();

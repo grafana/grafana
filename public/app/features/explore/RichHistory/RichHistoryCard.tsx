@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
+import * as React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, DataSourceApi } from '@grafana/data';
 import { config, reportInteraction, getAppEvents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { TextArea, Button, IconButton, useStyles2, ToolbarButton, Dropdown, Menu } from '@grafana/ui';
+import { TextArea, Button, IconButton, useStyles2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { Trans, t } from 'app/core/internationalization';
@@ -16,11 +17,12 @@ import { changeDatasource } from 'app/features/explore/state/datasource';
 import { starHistoryItem, commentHistoryItem, deleteHistoryItem } from 'app/features/explore/state/history';
 import { setQueries } from 'app/features/explore/state/query';
 import { dispatch } from 'app/store/store';
-import { useSelector } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 import { RichHistoryQuery } from 'app/types/explore';
 
-import { isSplit, selectExploreDSMaps, selectPanesEntries } from '../state/selectors';
+import ExploreRunQueryButton from '../ExploreRunQueryButton';
+
+import { RichHistoryAddToLibrary } from './RichHistoryAddToLibrary';
 
 const mapDispatchToProps = {
   changeDatasource,
@@ -134,45 +136,15 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 export function RichHistoryCard(props: Props) {
-  const {
-    queryHistoryItem,
-    commentHistoryItem,
-    starHistoryItem,
-    deleteHistoryItem,
-    changeDatasource,
-    setQueries,
-    datasourceInstances,
-  } = props;
+  const { queryHistoryItem, commentHistoryItem, starHistoryItem, deleteHistoryItem, datasourceInstances } = props;
 
   const [activeUpdateComment, setActiveUpdateComment] = useState(false);
-  const [openRunQueryButton, setOpenRunQueryButton] = useState(false);
   const [comment, setComment] = useState<string | undefined>(queryHistoryItem.comment);
-  const panesEntries = useSelector(selectPanesEntries);
-  const exploreActiveDS = useSelector(selectExploreDSMaps);
-  const isPaneSplit = useSelector(isSplit);
-
   const styles = useStyles2(getStyles);
 
   const cardRootDatasource = datasourceInstances
     ? datasourceInstances.find((di) => di.uid === queryHistoryItem.datasourceUid)
     : undefined;
-
-  const isDifferentDatasource = (uid: string, exploreId: string) =>
-    !exploreActiveDS.dsToExplore.find((di) => di.datasource.uid === uid)?.exploreIds.includes(exploreId);
-
-  const onRunQuery = async (exploreId: string) => {
-    const queriesToRun = queryHistoryItem.queries;
-    const differentDataSource = isDifferentDatasource(queryHistoryItem.datasourceUid, exploreId);
-    if (differentDataSource) {
-      await changeDatasource({ exploreId, datasource: queryHistoryItem.datasourceUid });
-    }
-    setQueries(exploreId, queriesToRun);
-
-    reportInteraction('grafana_explore_query_history_run', {
-      queryHistoryEnabled: config.queryHistoryEnabled,
-      differentDataSource,
-    });
-  };
 
   const onCopyQuery = async () => {
     const datasources = [...queryHistoryItem.queries.map((query) => query.datasource?.type || 'unknown')];
@@ -344,68 +316,6 @@ export function RichHistoryCard(props: Props) {
     </div>
   );
 
-  // exploreId on where the query will be ran, and the datasource ID for the item's DS
-  const runQueryText = (exploreId: string, dsUid: string) => {
-    return dsUid !== undefined && exploreId !== undefined && isDifferentDatasource(dsUid, exploreId)
-      ? {
-          fallbackText: 'Switch data source and run query',
-          translation: t('explore.rich-history-card.switch-datasource-button', 'Switch data source and run query'),
-        }
-      : {
-          fallbackText: 'Run query',
-          translation: t('explore.rich-history-card.run-query-button', 'Run query'),
-        };
-  };
-
-  const runButton = () => {
-    const disabled = cardRootDatasource?.uid === undefined;
-    if (!isPaneSplit) {
-      const exploreId = exploreActiveDS.exploreToDS[0]?.exploreId; // may be undefined if explore is refreshed while the pane is up
-      const buttonText = runQueryText(exploreId, props.queryHistoryItem.datasourceUid);
-      return (
-        <Button
-          variant="secondary"
-          aria-label={buttonText.translation}
-          onClick={() => onRunQuery(exploreId)}
-          disabled={disabled || exploreId === undefined}
-        >
-          {buttonText.translation}
-        </Button>
-      );
-    } else {
-      const menu = (
-        <Menu>
-          {panesEntries.map((pane, i) => {
-            const buttonText = runQueryText(pane[0], props.queryHistoryItem.datasourceUid);
-            const paneLabel =
-              i === 0
-                ? t('explore.rich-history-card.left-pane', 'Left pane')
-                : t('explore.rich-history-card.right-pane', 'Right pane');
-            return (
-              <Menu.Item
-                key={i}
-                ariaLabel={buttonText.fallbackText}
-                onClick={() => {
-                  onRunQuery(pane[0]);
-                }}
-                label={`${paneLabel}: ${buttonText.translation}`}
-                disabled={disabled}
-              />
-            );
-          })}
-        </Menu>
-      );
-
-      return (
-        <Dropdown onVisibleChange={(state) => setOpenRunQueryButton(state)} placement="bottom-start" overlay={menu}>
-          <ToolbarButton aria-label="run query options" variant="canvas" isOpen={openRunQueryButton}>
-            {t('explore.rich-history-card.run-query-button', 'Run query')}
-          </ToolbarButton>
-        </Dropdown>
-      );
-    }
-  };
-
   return (
     <div className={styles.queryCard}>
       <div className={styles.cardRow}>
@@ -435,7 +345,12 @@ export function RichHistoryCard(props: Props) {
           )}
           {activeUpdateComment && updateComment}
         </div>
-        {!activeUpdateComment && <div className={styles.runButton}>{runButton()}</div>}
+        {!activeUpdateComment && <RichHistoryAddToLibrary query={queryHistoryItem?.queries[0]} />}
+        {!activeUpdateComment && (
+          <div className={styles.runButton}>
+            <ExploreRunQueryButton queries={queryHistoryItem.queries} rootDatasourceUid={cardRootDatasource?.uid} />
+          </div>
+        )}
       </div>
     </div>
   );

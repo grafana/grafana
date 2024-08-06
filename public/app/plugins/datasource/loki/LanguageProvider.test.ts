@@ -151,7 +151,7 @@ describe('Language completion provider', () => {
     });
   });
 
-  describe('label values', () => {
+  describe('fetchLabelValues', () => {
     it('should fetch label values if not cached', async () => {
       const datasource = setup({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
       const provider = await getLanguageProvider(datasource);
@@ -171,7 +171,7 @@ describe('Language completion provider', () => {
       const labelValues = await provider.fetchLabelValues('testkey', { streamSelector: '{foo="bar"}' });
       expect(requestSpy).toHaveBeenCalledWith('label/testkey/values', {
         end: 1560163909000,
-        query: '%7Bfoo%3D%22bar%22%7D',
+        query: '{foo="bar"}',
         start: 1560153109000,
       });
       expect(labelValues).toEqual(['label1_val1', 'label1_val2']);
@@ -237,7 +237,7 @@ describe('Language completion provider', () => {
       expect(requestSpy).toHaveBeenCalledTimes(1);
       expect(requestSpy).toHaveBeenCalledWith('label/testkey/values', {
         end: 1560163909000,
-        query: '%7Bfoo%3D%22bar%22%7D',
+        query: '{foo="bar"}',
         start: 1560153109000,
       });
       expect(labelValues).toEqual(['label1_val1', 'label1_val2']);
@@ -263,9 +263,67 @@ describe('Language completion provider', () => {
       await provider.fetchLabelValues('`\\"testkey', { streamSelector: '{foo="\\bar"}' });
 
       expect(requestSpy).toHaveBeenCalledWith(expect.any(String), {
-        query: '%7Bfoo%3D%22%5Cbar%22%7D',
+        query: '{foo="\\bar"}',
         start: expect.any(Number),
         end: expect.any(Number),
+      });
+    });
+  });
+
+  describe('fetchLabels', () => {
+    it('should return labels', async () => {
+      const datasourceWithLabels = setup({ other: [] });
+
+      const instance = new LanguageProvider(datasourceWithLabels);
+      const labels = await instance.fetchLabels();
+      expect(labels).toEqual(['other']);
+    });
+
+    it('should set labels', async () => {
+      const datasourceWithLabels = setup({ other: [] });
+
+      const instance = new LanguageProvider(datasourceWithLabels);
+      await instance.fetchLabels();
+      expect(instance.labelKeys).toEqual(['other']);
+    });
+
+    it('should return empty array', async () => {
+      const datasourceWithLabels = setup({});
+
+      const instance = new LanguageProvider(datasourceWithLabels);
+      const labels = await instance.fetchLabels();
+      expect(labels).toEqual([]);
+    });
+
+    it('should set empty array', async () => {
+      const datasourceWithLabels = setup({});
+
+      const instance = new LanguageProvider(datasourceWithLabels);
+      await instance.fetchLabels();
+      expect(instance.labelKeys).toEqual([]);
+    });
+
+    it('should use time range param', async () => {
+      const datasourceWithLabels = setup({});
+      datasourceWithLabels.languageProvider.request = jest.fn();
+
+      const instance = new LanguageProvider(datasourceWithLabels);
+      instance.request = jest.fn();
+      await instance.fetchLabels({ timeRange: mockTimeRange });
+      expect(instance.request).toHaveBeenCalledWith('labels', datasourceWithLabels.getTimeRangeParams(mockTimeRange));
+    });
+
+    it('should use series endpoint for request with stream selector', async () => {
+      const datasourceWithLabels = setup({});
+      datasourceWithLabels.languageProvider.request = jest.fn();
+
+      const instance = new LanguageProvider(datasourceWithLabels);
+      instance.request = jest.fn();
+      await instance.fetchLabels({ streamSelector: '{foo="bar"}' });
+      expect(instance.request).toHaveBeenCalledWith('series', {
+        end: 1560163909000,
+        'match[]': '{foo="bar"}',
+        start: 1560153109000,
       });
     });
   });
@@ -281,50 +339,6 @@ describe('Request URL', () => {
     instance.fetchLabels();
     const expectedUrl = 'labels';
     expect(datasourceSpy).toHaveBeenCalledWith(expectedUrl, rangeParams);
-  });
-});
-
-describe('fetchLabels', () => {
-  it('should return labels', async () => {
-    const datasourceWithLabels = setup({ other: [] });
-
-    const instance = new LanguageProvider(datasourceWithLabels);
-    const labels = await instance.fetchLabels();
-    expect(labels).toEqual(['other']);
-  });
-
-  it('should set labels', async () => {
-    const datasourceWithLabels = setup({ other: [] });
-
-    const instance = new LanguageProvider(datasourceWithLabels);
-    await instance.fetchLabels();
-    expect(instance.labelKeys).toEqual(['other']);
-  });
-
-  it('should return empty array', async () => {
-    const datasourceWithLabels = setup({});
-
-    const instance = new LanguageProvider(datasourceWithLabels);
-    const labels = await instance.fetchLabels();
-    expect(labels).toEqual([]);
-  });
-
-  it('should set empty array', async () => {
-    const datasourceWithLabels = setup({});
-
-    const instance = new LanguageProvider(datasourceWithLabels);
-    await instance.fetchLabels();
-    expect(instance.labelKeys).toEqual([]);
-  });
-
-  it('should use time range param', async () => {
-    const datasourceWithLabels = setup({});
-    datasourceWithLabels.languageProvider.request = jest.fn();
-
-    const instance = new LanguageProvider(datasourceWithLabels);
-    instance.request = jest.fn();
-    await instance.fetchLabels({ timeRange: mockTimeRange });
-    expect(instance.request).toBeCalledWith('labels', datasourceWithLabels.getTimeRangeParams(mockTimeRange));
   });
 });
 

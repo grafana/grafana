@@ -1,0 +1,22 @@
+{
+    "UserID": 3,
+    "UserUID": "fdniuj44r0zr4d",
+    "OrgID": 1,
+    "OrgName": "Main Org.",
+    "OrgRole": "Viewer",
+    "Login": "viewer",
+    "Name": "viewer",
+    "Email": "viewer",
+    "EmailVerified": false,
+    "AuthID": "",
+    "AuthenticatedBy": "",
+    "ApiKeyID": 0,
+    "IsServiceAccount": false,
+    "IsGrafanaAdmin": false,
+    "IsAnonymous": false,
+    "IsDisabled": false,
+    "HelpFlags1": 0,
+    "LastSeenAt": "2024-06-01T23:09:25-03:00",
+    "Teams": [],
+    "NamespacedID": {}
+}

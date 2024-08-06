@@ -30,7 +30,8 @@ var (
 var mtx sync.Mutex
 
 // Legacy UID pattern
-var validUIDPattern = regexp.MustCompile(`^[a-zA-Z0-9\-\_]*$`).MatchString
+var validUIDCharPattern = `a-zA-Z0-9\-\_`
+var validUIDPattern = regexp.MustCompile(`^[` + validUIDCharPattern + `]*$`).MatchString
 
 // IsValidShortUID checks if short unique identifier contains valid characters
 // NOTE: future Grafana UIDs will need conform to https://github.com/kubernetes/apimachinery/blob/master/pkg/util/validation/validation.go#L43

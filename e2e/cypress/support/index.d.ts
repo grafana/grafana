@@ -8,5 +8,6 @@ declare namespace Cypress {
     startBenchmarking(testName: string): void;
     stopBenchmarking(testName: string, appStats: Record<string, unknown>): void;
     checkHealthRetryable(fn: Function, retryCount: number): Chainable;
+    setLocalStorage(key: string, value: string);
   }
 }

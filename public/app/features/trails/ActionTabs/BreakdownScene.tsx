@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { min, max, isNumber, throttle } from 'lodash';
-import React from 'react';
 
 import { DataFrame, FieldType, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
 import {
@@ -21,6 +20,7 @@ import {
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
+import { DataQuery } from '@grafana/schema';
 import { Button, Field, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
@@ -303,6 +303,7 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
       )
       .setHeaderActions(new SelectLabelAction({ labelName: String(option.value) }))
       .setUnit(unit)
+      .setBehaviors([fixLegendForUnspecifiedLabelValueBehavior])
       .build();
 
     vizPanel.addActivationHandler(() => {
@@ -455,4 +456,28 @@ function getBreakdownSceneFor(model: SceneObject): BreakdownScene {
   }
 
   throw new Error('Unable to find breakdown scene');
+}
+
+function fixLegendForUnspecifiedLabelValueBehavior(vizPanel: VizPanel) {
+  vizPanel.state.$data?.subscribeToState((newState, prevState) => {
+    const target = newState.data?.request?.targets[0];
+    if (hasLegendFormat(target)) {
+      const { legendFormat } = target;
+      // Assume {{label}}
+      const label = legendFormat.slice(2, -2);
+
+      newState.data?.series.forEach((series) => {
+        if (!series.fields[1].labels?.[label]) {
+          const labels = series.fields[1].labels;
+          if (labels) {
+            labels[label] = `<unspecified ${label}>`;
+          }
+        }
+      });
+    }
+  });
+}
+
+function hasLegendFormat(target: DataQuery | undefined): target is DataQuery & { legendFormat: string } {
+  return target !== undefined && 'legendFormat' in target && typeof target.legendFormat === 'string';
 }

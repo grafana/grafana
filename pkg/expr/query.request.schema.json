@@ -35,13 +35,17 @@
                   "type"
                 ],
                 "properties": {
+                  "apiVersion": {
+                    "description": "The apiserver version",
+                    "type": "string"
+                  },
                   "type": {
                     "description": "The datasource plugin type",
                     "type": "string",
                     "pattern": "^__expr__$"
                   },
                   "uid": {
-                    "description": "Datasource UID",
+                    "description": "Datasource UID (NOTE: name in k8s)",
                     "type": "string"
                   }
                 },
@@ -168,13 +172,17 @@
                   "type"
                 ],
                 "properties": {
+                  "apiVersion": {
+                    "description": "The apiserver version",
+                    "type": "string"
+                  },
                   "type": {
                     "description": "The datasource plugin type",
                     "type": "string",
                     "pattern": "^__expr__$"
                   },
                   "uid": {
-                    "description": "Datasource UID",
+                    "description": "Datasource UID (NOTE: name in k8s)",
                     "type": "string"
                   }
                 },
@@ -205,7 +213,7 @@
                 "type": "string"
               },
               "reducer": {
-                "description": "The reducer\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
+                "description": "The reducer\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` \n - `\"median\"` ",
                 "type": "string",
                 "enum": [
                   "sum",
@@ -213,7 +221,8 @@
                   "min",
                   "max",
                   "count",
-                  "last"
+                  "last",
+                  "median"
                 ],
                 "x-enum-description": {}
               },
@@ -342,20 +351,24 @@
                   "type"
                 ],
                 "properties": {
+                  "apiVersion": {
+                    "description": "The apiserver version",
+                    "type": "string"
+                  },
                   "type": {
                     "description": "The datasource plugin type",
                     "type": "string",
                     "pattern": "^__expr__$"
                   },
                   "uid": {
-                    "description": "Datasource UID",
+                    "description": "Datasource UID (NOTE: name in k8s)",
                     "type": "string"
                   }
                 },
                 "additionalProperties": false
               },
               "downsampler": {
-                "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
+                "description": "The downsample function\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` \n - `\"median\"` ",
                 "type": "string",
                 "enum": [
                   "sum",
@@ -363,7 +376,8 @@
                   "min",
                   "max",
                   "count",
-                  "last"
+                  "last",
+                  "median"
                 ],
                 "x-enum-description": {}
               },
@@ -590,13 +604,17 @@
                   "type"
                 ],
                 "properties": {
+                  "apiVersion": {
+                    "description": "The apiserver version",
+                    "type": "string"
+                  },
                   "type": {
                     "description": "The datasource plugin type",
                     "type": "string",
                     "pattern": "^__expr__$"
                   },
                   "uid": {
-                    "description": "Datasource UID",
+                    "description": "Datasource UID (NOTE: name in k8s)",
                     "type": "string"
                   }
                 },
@@ -786,13 +804,17 @@
                   "type"
                 ],
                 "properties": {
+                  "apiVersion": {
+                    "description": "The apiserver version",
+                    "type": "string"
+                  },
                   "type": {
                     "description": "The datasource plugin type",
                     "type": "string",
                     "pattern": "^__expr__$"
                   },
                   "uid": {
-                    "description": "Datasource UID",
+                    "description": "Datasource UID (NOTE: name in k8s)",
                     "type": "string"
                   }
                 },
@@ -918,13 +940,17 @@
                   "type"
                 ],
                 "properties": {
+                  "apiVersion": {
+                    "description": "The apiserver version",
+                    "type": "string"
+                  },
                   "type": {
                     "description": "The datasource plugin type",
                     "type": "string",
                     "pattern": "^__expr__$"
                   },
                   "uid": {
-                    "description": "Datasource UID",
+                    "description": "Datasource UID (NOTE: name in k8s)",
                     "type": "string"
                   }
                 },

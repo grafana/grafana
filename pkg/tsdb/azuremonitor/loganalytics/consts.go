@@ -2,6 +2,8 @@ package loganalytics
 
 var Tables = []string{"availabilityResults", "dependencies", "customEvents", "exceptions", "pageViews", "requests", "traces"}
 
+var MaxHoursBasicLogs = 192 // 8 days in hours
+
 // AttributesOmit - Properties to omit when generating the attributes bag
 var AttributesOmit = map[string]string{"operationId": "operationId", "duration": "duration", "id": "id", "name": "name", "problemId": "problemId", "operation_ParentId": "operation_ParentId", "timestamp": "timestamp", "customDimensions": "customDimensions", "operation_Name": "operation_Name"}
 

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ReactElement } from 'react';
+import { ReactElement } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { SelectableValue, GrafanaTheme2, PluginType } from '@grafana/data';
@@ -13,6 +13,7 @@ import { useSelector } from 'app/types';
 
 import { HorizontalGroup } from '../components/HorizontalGroup';
 import { PluginList } from '../components/PluginList';
+import { RoadmapLinks } from '../components/RoadmapLinks';
 import { SearchField } from '../components/SearchField';
 import { Sorters } from '../helpers';
 import { useHistory } from '../hooks/useHistory';
@@ -28,7 +29,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   const history = useHistory();
   const remotePluginsAvailable = useIsRemotePluginsAvailable();
   const keyword = locationSearch.q?.toString() || '';
-  const filterBy = locationSearch.filterBy?.toString() || 'installed';
+  const filterBy = locationSearch.filterBy?.toString() || 'all';
   const filterByType = (locationSearch.filterByType as PluginType | 'all') || 'all';
   const sortBy = (locationSearch.sortBy as Sorters) || Sorters.nameAsc;
   const { isLoading, error, plugins } = useGetAll(
@@ -36,6 +37,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
       keyword,
       type: filterByType !== 'all' ? filterByType : undefined,
       isInstalled: filterBy === 'installed' ? true : undefined,
+      hasUpdate: filterBy === 'has-update' ? true : undefined,
     },
     sortBy
   );
@@ -43,6 +45,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   const filterByOptions = [
     { value: 'all', label: 'All' },
     { value: 'installed', label: 'Installed' },
+    { value: 'has-update', label: 'New Updates' },
   ];
 
   const onSortByChange = (value: SelectableValue<string>) => {
@@ -162,6 +165,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
         <div className={styles.listWrap}>
           <PluginList plugins={plugins} displayMode={displayMode} isLoading={isLoading} />
         </div>
+        <RoadmapLinks />
       </Page.Contents>
     </Page>
   );

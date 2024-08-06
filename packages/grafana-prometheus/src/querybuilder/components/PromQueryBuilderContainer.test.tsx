@@ -1,7 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilderContainer.test.tsx
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
 
@@ -20,7 +19,7 @@ describe('PromQueryBuilderContainer', () => {
 
     expect(screen.getByText('metric_test')).toBeInTheDocument();
     await addOperationInQueryBuilder('Range functions', 'Rate');
-    expect(props.onChange).toBeCalledWith({
+    expect(props.onChange).toHaveBeenCalledWith({
       expr: 'rate(metric_test{job="testjob"}[$__rate_interval])',
       refId: 'A',
     });

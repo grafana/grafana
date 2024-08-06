@@ -70,6 +70,9 @@ type FakePluginClient struct {
 	backend.CheckHealthHandlerFunc
 	backend.QueryDataHandlerFunc
 	backend.CallResourceHandlerFunc
+	backend.MutateAdmissionFunc
+	backend.ValidateAdmissionFunc
+	backend.ConvertObjectFunc
 	mutex sync.RWMutex
 
 	backendplugin.Plugin
@@ -164,6 +167,30 @@ func (pc *FakePluginClient) PublishStream(_ context.Context, _ *backend.PublishS
 
 func (pc *FakePluginClient) RunStream(_ context.Context, _ *backend.RunStreamRequest, _ *backend.StreamSender) error {
 	return plugins.ErrMethodNotImplemented
+}
+
+func (pc *FakePluginClient) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	if pc.ValidateAdmissionFunc != nil {
+		return pc.ValidateAdmissionFunc(ctx, req)
+	}
+
+	return nil, plugins.ErrMethodNotImplemented
+}
+
+func (pc *FakePluginClient) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	if pc.MutateAdmissionFunc != nil {
+		return pc.MutateAdmissionFunc(ctx, req)
+	}
+
+	return nil, plugins.ErrMethodNotImplemented
+}
+
+func (pc *FakePluginClient) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	if pc.ConvertObjectFunc != nil {
+		return pc.ConvertObjectFunc(ctx, req)
+	}
+
+	return nil, plugins.ErrMethodNotImplemented
 }
 
 type FakePluginRegistry struct {
@@ -361,6 +388,18 @@ func NewFakeRoleRegistry() *FakeRoleRegistry {
 }
 
 func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ string, _ []plugins.RoleRegistration) error {
+	return f.ExpectedErr
+}
+
+type FakeActionSetRegistry struct {
+	ExpectedErr error
+}
+
+func NewFakeActionSetRegistry() *FakeActionSetRegistry {
+	return &FakeActionSetRegistry{}
+}
+
+func (f *FakeActionSetRegistry) RegisterActionSets(_ context.Context, _ string, _ []plugins.ActionSet) error {
 	return f.ExpectedErr
 }
 

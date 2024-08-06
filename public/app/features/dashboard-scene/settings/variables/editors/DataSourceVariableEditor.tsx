@@ -1,4 +1,4 @@
-import React, { FormEvent } from 'react';
+import { FormEvent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { DataSourceVariable } from '@grafana/scenes';

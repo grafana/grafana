@@ -17,13 +17,15 @@ const forwardIDHeaderName = "X-Grafana-Id"
 func NewForwardIDMiddleware() plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &ForwardIDMiddleware{
-			next: next,
+			baseMiddleware: baseMiddleware{
+				next: next,
+			},
 		}
 	})
 }
 
 type ForwardIDMiddleware struct {
-	next plugins.Client
+	baseMiddleware
 }
 
 func (m *ForwardIDMiddleware) applyToken(ctx context.Context, pCtx backend.PluginContext, req backend.ForwardHTTPHeaders) error {
@@ -78,20 +80,4 @@ func (m *ForwardIDMiddleware) CheckHealth(ctx context.Context, req *backend.Chec
 	}
 
 	return m.next.CheckHealth(ctx, req)
-}
-
-func (m *ForwardIDMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	return m.next.CollectMetrics(ctx, req)
-}
-
-func (m *ForwardIDMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return m.next.SubscribeStream(ctx, req)
-}
-
-func (m *ForwardIDMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return m.next.PublishStream(ctx, req)
-}
-
-func (m *ForwardIDMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	return m.next.RunStream(ctx, req, sender)
 }

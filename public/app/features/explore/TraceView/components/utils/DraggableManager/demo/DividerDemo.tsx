@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
+import { PureComponent } from 'react';
 
 import TNil from '../../../types/TNil';
 import DraggableManager from '../DraggableManager';
@@ -25,7 +25,7 @@ type DividerDemoProps = {
   updateState: (update: { dividerPosition: number }) => void;
 };
 
-export default class DividerDemo extends React.PureComponent<DividerDemoProps> {
+export default class DividerDemo extends PureComponent<DividerDemoProps> {
   _dragManager: DraggableManager;
 
   _realmElm: HTMLElement | TNil;

@@ -1,11 +1,11 @@
-import React from 'react';
+import * as React from 'react';
 
-import { CoreApp, DataSourceApi, DataSourceInstanceSettings, IconName } from '@grafana/data';
+import { CoreApp, DataSourceApi, DataSourceInstanceSettings, IconName, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { SceneObjectBase, SceneComponentProps, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
-import { Button, HorizontalGroup, Tab } from '@grafana/ui';
+import { Button, Stack, Tab } from '@grafana/ui';
 import { addQuery } from 'app/core/utils/query';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { GroupActionComponents } from 'app/features/query/components/QueryActionComponent';
@@ -48,13 +48,6 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     };
 
     this._panelManager = panelManager;
-    this.addActivationHandler(this.onActivate.bind(this));
-  }
-
-  private onActivate() {
-    // This is to preserve SceneQueryRunner stays alive when switching between visualizations and table view
-    const deactivate = this._panelManager.queryRunner.activate();
-    return () => deactivate();
   }
 
   buildQueryOptions(): QueryGroupOptions {
@@ -88,8 +81,9 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
         : undefined,
       dataSource: {
         default: panelManager.state.dsSettings?.isDefault,
-        type: panelManager.state.dsSettings?.type,
-        uid: panelManager.state.dsSettings?.uid,
+        ...(panelManager.state.dsSettings
+          ? getDataSourceRef(panelManager.state.dsSettings)
+          : { type: undefined, uid: undefined }),
       },
       queries,
       maxDataPoints: queryRunner.state.maxDataPoints,
@@ -152,7 +146,9 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   onAddQuery = (query: Partial<DataQuery>) => {
     const queries = this.getQueries();
     const dsSettings = this._panelManager.state.dsSettings;
-    this.onQueriesChange(addQuery(queries, query, { type: dsSettings?.type, uid: dsSettings?.uid }));
+    this.onQueriesChange(
+      addQuery(queries, query, dsSettings ? getDataSourceRef(dsSettings) : { type: undefined, uid: undefined })
+    );
   };
 
   isExpressionsSupported(dsSettings: DataSourceInstanceSettings): boolean {
@@ -185,7 +181,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   }
 }
 
-function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
+export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
   const { datasource, dsSettings } = model.panelManager.useState();
   const { data, queries } = model.panelManager.queryRunner.useState();
 
@@ -196,7 +192,7 @@ function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQue
   const showAddButton = !isSharedDashboardQuery(dsSettings.name);
 
   return (
-    <>
+    <div data-testid={selectors.components.QueryTab.content}>
       <QueryGroupTopSection
         data={data}
         dsSettings={dsSettings}
@@ -216,7 +212,7 @@ function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQue
         onRunQueries={model.onRunQueries}
       />
 
-      <HorizontalGroup spacing="md" align="flex-start">
+      <Stack gap={2}>
         {showAddButton && (
           <Button
             icon="plus"
@@ -232,14 +228,14 @@ function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQue
             icon="plus"
             onClick={model.onAddExpressionClick}
             variant="secondary"
-            data-testid="query-tab-add-expression"
+            data-testid={selectors.components.QueryTab.addExpression}
           >
             <span>Expression&nbsp;</span>
           </Button>
         )}
         {model.renderExtraActions()}
-      </HorizontalGroup>
-    </>
+      </Stack>
+    </div>
   );
 }
 

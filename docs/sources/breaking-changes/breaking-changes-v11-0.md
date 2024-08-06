@@ -1,5 +1,5 @@
 ---
-description: Breaking changes for Grafana v11.0-preview
+description: Breaking changes for Grafana v11.0
 keywords:
   - grafana
   - breaking changes
@@ -12,16 +12,16 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Breaking changes in Grafana v11.0-preview
+title: Breaking changes in Grafana v11.0
 weight: -3
 ---
 
 <!-- vale GoogleWe = NO -->
 <!-- vale We = NO -->
 
-# Breaking changes in Grafana v11.0-preview
+# Breaking changes in Grafana v11.0
 
-Following are breaking changes that you should be aware of when upgrading to Grafana v11.0-preview.
+Following are breaking changes that you should be aware of when upgrading to Grafana v11.0.
 
 For our purposes, a breaking change is any change that requires users or operators to do something. This includes:
 
@@ -38,7 +38,7 @@ For each change, the provided information:
 - Guides you in how to mitigate for the change or migrate
 - Provides more learning resources
 
-For release highlights and deprecations, refer to our [v11.0-preview What’s new](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11-0/). For the specific steps we recommend when you upgrade to v11.0, check out our [Upgrade guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.0/).
+For release highlights and deprecations, refer to our [v11.0 What’s new](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/whatsnew/whats-new-in-v11-0/). For the specific steps we recommend when you upgrade to v11.0, check out our [Upgrade guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.0/).
 
 <!--
 ## Feature
@@ -104,7 +104,7 @@ Ensure deprecated endpoints are updated to new corresponding endpoints and depre
 
 #### Learn more
 
-The [Reporting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/reporting/) lists all supported endpoints and fields.
+The [Reporting API documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/reporting/) lists all supported endpoints and fields.
 
 ### Change custom branding public dashboard footer behavior
 
@@ -157,6 +157,8 @@ We’re also moving the call to the `datasource.filterQuery` method to the query
 
 If data is missing in panels, make sure the query editor **Hide response** button is not clicked.
 
+For data sources that extend `DataSourceWithBackend`, the filterQuery method is now called before the data source query method. If the `filterQuery` method assumes that some kind of query migration happens before this method is called, you now need to do the migration inside this method too.
+
 #### Learn more
 
 [GitHub PR](https://github.com/grafana/grafana/pull/84656)
@@ -200,6 +202,16 @@ For a complete guide, please follow our [migration docs on the developer portal]
 - Grafana v9.x to v10.x [migration guide](https://grafana.com/developers/plugin-tools/migration-guides/update-from-grafana-versions/migrate-9_x-to-10_x#update-to-react-router-v6)
 - Official react-router v5 to v6 [migration guide](https://reactrouter.com/en/main/upgrading/v5)
 - Grafana community forum [topic](https://community.grafana.com/t/migrating-app-plugins-to-use-react-router-v6/115410)
+
+### The grafana/e2e testing tool is deprecated
+
+#### Description
+
+The Cypress based grafana/e2e end-to-end testing tool is now deprecated.
+
+#### Migration/mitigation
+
+We recommend all plugin authors to migrate their end-to-end tests to use the new Playwright-based [grafana/plugin-e2e](https://www.npmjs.com/package/@grafana/plugin-e2e?activeTab=readme) package instead. Find details on how to migrate from grafana/e2e to grafana/plugin-e2e in the [migration guide](https://grafana.com/developers/plugin-tools/e2e-test-a-plugin/migrate-from-grafana-e2e).
 
 ### Chore: Taint ArrayVector with `never` to further discourage
 

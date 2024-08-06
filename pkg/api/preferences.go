@@ -6,8 +6,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/kinds/preferences"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -22,7 +22,7 @@ func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	userID, errID := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	userID, errID := identity.UserIdentifier(c.SignedInUser.GetTypedID())
 	if errID != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to set home dashboard", errID)
 	}
@@ -64,7 +64,7 @@ func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 // 401: unauthorisedError
 // 500: internalServerError
 func (hs *HTTPServer) GetUserPreferences(c *contextmodel.ReqContext) response.Response {
-	userID, errID := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	userID, errID := identity.UserIdentifier(c.SignedInUser.GetTypedID())
 	if errID != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get user preferences", errID)
 	}
@@ -89,7 +89,7 @@ func (hs *HTTPServer) UpdateUserPreferences(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	userID, errID := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	userID, errID := identity.UserIdentifier(c.SignedInUser.GetTypedID())
 	if errID != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update user preferences", errID)
 	}
@@ -113,7 +113,7 @@ func (hs *HTTPServer) PatchUserPreferences(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	userID, errID := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	userID, errID := identity.UserIdentifier(c.SignedInUser.GetTypedID())
 	if errID != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update user preferences", errID)
 	}
@@ -155,6 +155,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 		Language:          dtoCmd.Language,
 		QueryHistory:      dtoCmd.QueryHistory,
 		CookiePreferences: dtoCmd.Cookies,
+		Navbar:            dtoCmd.Navbar,
 	}
 
 	if err := hs.preferenceService.Patch(ctx, &patchCmd); err != nil {

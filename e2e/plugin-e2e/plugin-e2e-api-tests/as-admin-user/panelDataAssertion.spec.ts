@@ -1,4 +1,4 @@
-import { expect, test, DashboardPage } from '@grafana/plugin-e2e';
+import { expect, test } from '@grafana/plugin-e2e';
 
 import { formatExpectError } from '../errors';
 import { successfulDataQuery } from '../mocks/queries';
@@ -71,7 +71,7 @@ test.describe('dashboard page', () => {
   test('getting panel by id', async ({ gotoDashboardPage }) => {
     const dashboardPage = await gotoDashboardPage(REACT_TABLE_DASHBOARD);
     await dashboardPage.goto();
-    const panel = await dashboardPage.getPanelById('4');
+    const panel = await dashboardPage.getPanelByTitle('Colored background');
     await expect(panel.fieldNames, formatExpectError('Could not locate header elements in table panel')).toContainText([
       'Field',
       'Max',

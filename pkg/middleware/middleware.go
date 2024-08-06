@@ -51,7 +51,8 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
 				!strings.HasPrefix(c.Req.URL.Path, "/avatar/") &&
 				!strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") &&
 				!strings.HasPrefix(c.Req.URL.Path, "/api/reports/render/") &&
-				!strings.HasPrefix(c.Req.URL.Path, "/render/d-solo/") && !resourceCachable {
+				!strings.HasPrefix(c.Req.URL.Path, "/render/d-solo/") &&
+				!(strings.HasPrefix(c.Req.URL.Path, "/api/gnet/plugins") && strings.Contains(c.Req.URL.Path, "/logos/")) && !resourceCachable {
 				addNoCacheHeaders(c.Resp)
 			}
 

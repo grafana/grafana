@@ -17,7 +17,7 @@ export default class TableModel implements TableData {
   columns: MutableColumn[];
   rows: any[];
   type: string;
-  columnMap: any;
+  columnMap: Record<string, Column>;
   refId?: string;
   meta?: QueryResultMeta;
 
@@ -69,14 +69,14 @@ export default class TableModel implements TableData {
     }
   }
 
-  addRow(row: any[]) {
+  addRow(row: unknown[]) {
     this.rows.push(row);
   }
 }
 
 // Returns true if both rows have matching non-empty fields as well as matching
 // indexes where one field is empty and the other is not
-function areRowsMatching(columns: Column[], row: any[], otherRow: any[]) {
+function areRowsMatching(columns: Column[], row: unknown[], otherRow: unknown[]) {
   let foundFieldToMatch = false;
   for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
     if (row[columnIndex] !== undefined && otherRow[columnIndex] !== undefined) {
@@ -141,7 +141,7 @@ export function mergeTablesIntoModel(dst?: TableModel, ...tables: TableModel[]):
   }, []);
 
   // Merge rows that have same values for columns
-  const mergedRows: { [key: string]: any } = {};
+  const mergedRows: Record<number, MutableColumn[]> = {};
 
   const compactedRows = flattenedRows.reduce<MutableColumn[][]>((acc, row, rowIndex) => {
     if (!mergedRows[rowIndex]) {

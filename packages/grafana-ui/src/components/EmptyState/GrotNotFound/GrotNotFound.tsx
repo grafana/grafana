@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { SVGProps, useEffect, useRef } from 'react';
+import { SVGProps, useEffect, useRef } from 'react';
 import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -24,6 +24,11 @@ export const GrotNotFound = ({ width = 'auto', height }: Props) => {
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
+      // don't apply animation if reduced motion preference is set
+      if (window.matchMedia('(prefers-reduced-motion: reduce').matches) {
+        return;
+      }
+
       const grotArm = svgRef.current?.querySelector('#grot-not-found-arm');
       const grotMagnifier = svgRef.current?.querySelector('#grot-not-found-magnifier');
 

@@ -1,10 +1,10 @@
 import { produce } from 'immer';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, SelectableValue } from '@grafana/data';
-import { DataSourceHttpSettings, InlineField, InlineFormLabel, InlineSwitch, Select, Text } from '@grafana/ui';
+import { Box, DataSourceHttpSettings, InlineField, InlineSwitch, Select, Text } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from './types';
@@ -47,50 +47,45 @@ export const ConfigEditor = (props: Props) => {
   return (
     <>
       <h3 className="page-heading">Alertmanager</h3>
-      <div className="gf-form-group">
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <InlineFormLabel width={13}>Implementation</InlineFormLabel>
-            <Select
-              width={40}
-              options={IMPL_OPTIONS}
-              value={options.jsonData.implementation || AlertManagerImplementation.mimir}
-              onChange={(value) =>
-                onOptionsChange({
-                  ...options,
-                  jsonData: {
-                    ...options.jsonData,
-                    implementation: value.value,
-                  },
+      <Box marginBottom={5}>
+        <InlineField label="Implementation" labelWidth={26}>
+          <Select
+            width={40}
+            options={IMPL_OPTIONS}
+            value={options.jsonData.implementation || AlertManagerImplementation.mimir}
+            onChange={(value) =>
+              onOptionsChange({
+                ...options,
+                jsonData: {
+                  ...options.jsonData,
+                  implementation: value.value,
+                },
+              })
+            }
+          />
+        </InlineField>
+        <InlineField
+          label="Receive Grafana Alerts"
+          tooltip="When enabled, Grafana-managed alerts are sent to this Alertmanager."
+          labelWidth={26}
+        >
+          <InlineSwitch
+            value={options.jsonData.handleGrafanaManagedAlerts ?? false}
+            onChange={(e) => {
+              onOptionsChange(
+                produce(options, (draft) => {
+                  draft.jsonData.handleGrafanaManagedAlerts = e.currentTarget.checked;
                 })
-              }
-            />
-          </div>
-        </div>
-        <div className="gf-form-inline">
-          <InlineField
-            label="Receive Grafana Alerts"
-            tooltip="When enabled, Grafana-managed alerts are sent to this Alertmanager."
-            labelWidth={26}
-          >
-            <InlineSwitch
-              value={options.jsonData.handleGrafanaManagedAlerts ?? false}
-              onChange={(e) => {
-                onOptionsChange(
-                  produce(options, (draft) => {
-                    draft.jsonData.handleGrafanaManagedAlerts = e.currentTarget.checked;
-                  })
-                );
-              }}
-            />
-          </InlineField>
-        </div>
+              );
+            }}
+          />
+        </InlineField>
         {options.jsonData.handleGrafanaManagedAlerts && (
           <Text variant="bodySmall" color="secondary">
-            Make sure to enable the alert forwarding on the <Link to="/alerting/admin">admin page</Link>.
+            Make sure to enable the alert forwarding on the <Link to="/alerting/admin">settings page</Link>.
           </Text>
         )}
-      </div>
+      </Box>
       <DataSourceHttpSettings
         defaultUrl={''}
         dataSourceConfig={options}

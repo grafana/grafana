@@ -4,13 +4,14 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGetLibraryElement(t *testing.T) {
@@ -124,7 +125,7 @@ func TestGetLibraryElement(t *testing.T) {
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
 			// nolint:staticcheck
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID, sc.folder.UID)
+			dashInDB := createDashboard(t, sc.replStore, sc.user, &dash, sc.folder.ID, sc.folder.UID)
 			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
 

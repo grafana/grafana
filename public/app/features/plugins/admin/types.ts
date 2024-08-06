@@ -44,6 +44,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   isInstalled: boolean;
   isDisabled: boolean;
   isDeprecated: boolean;
+  isManaged: boolean; // Indicates that the plugin version is managed by Grafana
   // `isPublished` is TRUE if the plugin is published to grafana.com
   isPublished: boolean;
   name: string;
@@ -65,6 +66,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   isUninstallingFromInstance?: boolean;
   isUpdatingFromInstance?: boolean;
   iam?: IdentityAccessManagement;
+  isProvisioned?: boolean;
 }
 
 export interface CatalogPluginDetails {
@@ -288,7 +290,7 @@ export type PluginDetailsTab = {
 
 // TODO<remove `PluginsState &` when the "plugin_admin_enabled" feature flag is removed>
 export type ReducerState = PluginsState & {
-  items: EntityState<CatalogPlugin>;
+  items: EntityState<CatalogPlugin, string>;
   requests: Record<string, RequestInfo>;
   settings: {
     displayMode: PluginListDisplayMode;

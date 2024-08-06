@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { groupBy, uniqueId } from 'lodash';
-import React, { useEffect } from 'react';
+import { memo, Fragment, useEffect } from 'react';
 
 import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { Icon, TagList, useStyles2, Stack } from '@grafana/ui';
@@ -11,12 +11,15 @@ import { AlertStateTag } from '../AlertStateTag';
 
 import { LogRecord, omitLabels } from './common';
 
-interface LogRecordViewerProps {
+type LogRecordViewerProps = {
   records: LogRecord[];
   commonLabels: Array<[string, string]>;
+};
+
+type AdditionalLogRecordViewerProps = {
   onRecordsRendered?: (timestampRefs: Map<number, HTMLElement>) => void;
   onLabelClick?: (label: string) => void;
-}
+};
 
 function groupRecordsByTimestamp(records: LogRecord[]) {
   // groupBy has been replaced by the reduce to avoid back and forth conversion of timestamp from number to string
@@ -34,8 +37,13 @@ function groupRecordsByTimestamp(records: LogRecord[]) {
   return new Map([...groupedLines].sort((a, b) => b[0] - a[0]));
 }
 
-export const LogRecordViewerByTimestamp = React.memo(
-  ({ records, commonLabels, onLabelClick, onRecordsRendered }: LogRecordViewerProps) => {
+export const LogRecordViewerByTimestamp = memo(
+  ({
+    records,
+    commonLabels,
+    onLabelClick,
+    onRecordsRendered,
+  }: LogRecordViewerProps & AdditionalLogRecordViewerProps) => {
     const styles = useStyles2(getStyles);
 
     const groupedLines = groupRecordsByTimestamp(records);
@@ -59,7 +67,7 @@ export const LogRecordViewerByTimestamp = React.memo(
               <Timestamp time={key} />
               <div className={styles.logsContainer}>
                 {records.map(({ line }) => (
-                  <React.Fragment key={uniqueId()}>
+                  <Fragment key={uniqueId()}>
                     <AlertStateTag state={line.previous} size="sm" muted />
                     <Icon name="arrow-right" size="sm" />
                     <AlertStateTag state={line.current} />
@@ -74,7 +82,7 @@ export const LogRecordViewerByTimestamp = React.memo(
                         />
                       )}
                     </div>
-                  </React.Fragment>
+                  </Fragment>
                 ))}
               </div>
             </li>
@@ -142,7 +150,7 @@ const Timestamp = ({ time }: TimestampProps) => {
   );
 };
 
-const AlertInstanceValues = React.memo(({ record }: { record: Record<string, number> }) => {
+const AlertInstanceValues = memo(({ record }: { record: Record<string, number> }) => {
   const values = Object.entries(record);
 
   return (
@@ -156,33 +164,32 @@ const AlertInstanceValues = React.memo(({ record }: { record: Record<string, num
 AlertInstanceValues.displayName = 'AlertInstanceValues';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  logsContainer: css`
-    display: grid;
-    grid-template-columns: max-content max-content max-content auto max-content;
-    gap: ${theme.spacing(2, 1)};
-    align-items: center;
-  `,
-  logsScrollable: css`
-    height: 500px;
-    overflow: scroll;
+  logsContainer: css({
+    display: 'grid',
+    gridTemplateColumns: 'max-content max-content max-content auto max-content',
+    gap: theme.spacing(2, 1),
+    alignItems: 'center',
+  }),
+  logsScrollable: css({
+    height: '500px',
+    overflow: 'scroll',
 
-    flex: 1;
-  `,
-  timestampWrapper: css`
-    color: ${theme.colors.text.secondary};
-  `,
-  timestampText: css`
-    color: ${theme.colors.text.primary};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    font-weight: ${theme.typography.fontWeightBold};
-  `,
-  listItemWrapper: css`
-    background: transparent;
-    outline: 1px solid transparent;
-
-    transition:
-      background 150ms,
-      outline 150ms;
-    padding: ${theme.spacing(1)} ${theme.spacing(1.5)};
-  `,
+    flex: 1,
+  }),
+  timestampWrapper: css({
+    color: theme.colors.text.secondary,
+  }),
+  timestampText: css({
+    color: theme.colors.text.primary,
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: theme.typography.fontWeightBold,
+  }),
+  listItemWrapper: css({
+    background: 'transparent',
+    outline: '1px solid transparent',
+    padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: 'background 150ms, outline 150ms',
+    },
+  }),
 });

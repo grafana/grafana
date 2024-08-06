@@ -63,7 +63,7 @@ func CalculateChanges(ctx context.Context, ruleReader RuleReader, groupKey model
 	q := &models.ListAlertRulesQuery{
 		OrgID:         groupKey.OrgID,
 		NamespaceUIDs: []string{groupKey.NamespaceUID},
-		RuleGroup:     groupKey.RuleGroup,
+		RuleGroups:    []string{groupKey.RuleGroup},
 	}
 	existingGroupRules, err := ruleReader.ListAlertRules(ctx, q)
 	if err != nil {
@@ -203,7 +203,7 @@ func CalculateRuleUpdate(ctx context.Context, ruleReader RuleReader, rule *model
 	q := &models.ListAlertRulesQuery{
 		OrgID:         rule.OrgID,
 		NamespaceUIDs: []string{rule.NamespaceUID},
-		RuleGroup:     rule.RuleGroup,
+		RuleGroups:    []string{rule.RuleGroup},
 	}
 	existingGroupRules, err := ruleReader.ListAlertRules(ctx, q)
 	if err != nil {
@@ -232,7 +232,7 @@ func CalculateRuleGroupDelete(ctx context.Context, ruleReader RuleReader, groupK
 	q := models.ListAlertRulesQuery{
 		OrgID:         groupKey.OrgID,
 		NamespaceUIDs: []string{groupKey.NamespaceUID},
-		RuleGroup:     groupKey.RuleGroup,
+		RuleGroups:    []string{groupKey.RuleGroup},
 	}
 	ruleList, err := ruleReader.ListAlertRules(ctx, &q)
 	if err != nil {
@@ -288,7 +288,7 @@ func CalculateRuleCreate(ctx context.Context, ruleReader RuleReader, rule *model
 	q := &models.ListAlertRulesQuery{
 		OrgID:         rule.OrgID,
 		NamespaceUIDs: []string{rule.NamespaceUID},
-		RuleGroup:     rule.RuleGroup,
+		RuleGroups:    []string{rule.RuleGroup},
 	}
 	group, err := ruleReader.ListAlertRules(ctx, q)
 	if err != nil {

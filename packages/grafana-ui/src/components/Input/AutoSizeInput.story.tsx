@@ -1,5 +1,4 @@
-import { Story, Meta } from '@storybook/react';
-import React from 'react';
+import { StoryFn, Meta } from '@storybook/react';
 
 import { Button, AutoSizeInput } from '@grafana/ui';
 
@@ -10,11 +9,11 @@ import { parseAccessory } from './storyUtils';
 
 const icons: { [key: string]: string | undefined } = { ...iconOptions };
 Object.keys(icons).forEach((key) => {
-  icons[key] = `icon-${icons[key]}`;
+  icons[`icon-${key}`] = icons[key];
 });
 
 const prefixSuffixOpts = {
-  Text: '$',
+  $: 'Text',
   ...icons,
 };
 
@@ -41,26 +40,28 @@ const meta: Meta = {
     prefixVisible: {
       control: {
         type: 'select',
-        options: prefixSuffixOpts,
+        labels: prefixSuffixOpts,
       },
+      options: Object.keys(prefixSuffixOpts),
     },
     suffixVisible: {
       control: {
         type: 'select',
-        options: prefixSuffixOpts,
+        labels: prefixSuffixOpts,
       },
+      options: Object.keys(prefixSuffixOpts),
     },
     type: {
       control: {
         type: 'select',
-        options: ['text', 'number', 'password'],
       },
+      options: ['text', 'number', 'password'],
     },
     minWidth: { control: { type: 'range', min: 10, max: 200, step: 10 } },
   },
 };
 
-export const Simple: Story = (args) => {
+export const Simple: StoryFn = (args) => {
   const addonAfter = <Button variant="secondary">Load</Button>;
   const addonBefore = <div style={{ display: 'flex', alignItems: 'center', padding: '5px' }}>AutoSizeInput</div>;
   const prefix = parseAccessory(args.prefixVisible);

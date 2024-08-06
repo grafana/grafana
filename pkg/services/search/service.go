@@ -12,7 +12,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"go.opentelemetry.io/otel"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/search")
 
 func ProvideService(cfg *setting.Cfg, sqlstore db.DB, starService star.Service, dashboardService dashboards.DashboardService) *SearchService {
 	s := &SearchService{
@@ -36,6 +39,7 @@ type Query struct {
 	Limit         int64
 	Page          int64
 	IsStarred     bool
+	IsDeleted     bool
 	Type          string
 	DashboardUIDs []string
 	DashboardIds  []int64
@@ -60,6 +64,9 @@ type SearchService struct {
 }
 
 func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.HitList, error) {
+	ctx, span := tracer.Start(ctx, "search.SearchHandler")
+	defer span.End()
+
 	starredQuery := star.GetUserStarsQuery{
 		UserID: query.SignedInUser.UserID,
 	}
@@ -93,6 +100,7 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 		Limit:         query.Limit,
 		Page:          query.Page,
 		Permission:    query.Permission,
+		IsDeleted:     query.IsDeleted,
 	}
 
 	if sortOpt, exists := s.sortOptions[query.Sort]; exists {

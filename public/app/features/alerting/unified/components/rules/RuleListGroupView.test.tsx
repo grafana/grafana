@@ -1,5 +1,4 @@
 import { render, waitFor } from '@testing-library/react';
-import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { byRole } from 'testing-library-selector';

@@ -1,7 +1,7 @@
-import React, { Fragment } from 'react';
+import { Fragment } from 'react';
 
 import { textUtil } from '@grafana/data';
-import { config, useReturnToPrevious } from '@grafana/runtime';
+import { useReturnToPrevious } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 
@@ -10,7 +10,7 @@ import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
 import { Annotation } from '../../utils/constants';
 import { isCloudRulesSource } from '../../utils/datasource';
 import { createExploreLink } from '../../utils/misc';
-import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
+import { isFederatedRuleGroup, isGrafanaAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
 
 interface Props {
   rule: CombinedRule;
@@ -68,7 +68,6 @@ const RuleDetailsButtons = ({ rule, rulesSource }: Props) => {
   }
   if (rule.annotations[Annotation.dashboardUID]) {
     const dashboardUID = rule.annotations[Annotation.dashboardUID];
-    const isReturnToPreviousEnabled = config.featureToggles.returnToPrevious;
     if (dashboardUID) {
       buttons.push(
         <LinkButton
@@ -76,7 +75,6 @@ const RuleDetailsButtons = ({ rule, rulesSource }: Props) => {
           key="dashboard"
           variant="primary"
           icon="apps"
-          target={isReturnToPreviousEnabled ? undefined : '_blank'}
           href={`d/${encodeURIComponent(dashboardUID)}`}
           onClick={() => {
             setReturnToPrevious(rule.name);
@@ -93,7 +91,6 @@ const RuleDetailsButtons = ({ rule, rulesSource }: Props) => {
             key="panel"
             variant="primary"
             icon="apps"
-            target={isReturnToPreviousEnabled ? undefined : '_blank'}
             href={`d/${encodeURIComponent(dashboardUID)}?viewPanel=${encodeURIComponent(panelId)}`}
             onClick={() => {
               setReturnToPrevious(rule.name);
@@ -106,7 +103,7 @@ const RuleDetailsButtons = ({ rule, rulesSource }: Props) => {
     }
   }
 
-  if (isGrafanaRulerRule(rule.rulerRule)) {
+  if (isGrafanaAlertingRule(rule.rulerRule)) {
     buttons.push(
       <Fragment key="history">
         <Button

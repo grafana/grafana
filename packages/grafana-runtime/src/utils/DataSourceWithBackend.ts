@@ -137,7 +137,7 @@ class DataSourceWithBackend<
     let hasExpr = false;
     const pluginIDs = new Set<string>();
     const dsUIDs = new Set<string>();
-    const queries = targets.map((q) => {
+    const queries: DataQuery[] = targets.map((q) => {
       let datasource = this.getRef();
       let datasourceId = this.id;
       let shouldApplyTemplateVariables = true;
@@ -231,9 +231,9 @@ class DataSourceWithBackend<
 
     if (request.dashboardUID) {
       headers[PluginRequestHeaders.DashboardUID] = request.dashboardUID;
-    }
-    if (request.panelId) {
-      headers[PluginRequestHeaders.PanelID] = `${request.panelId}`;
+      if (request.panelId) {
+        headers[PluginRequestHeaders.PanelID] = `${request.panelId}`;
+      }
     }
     if (request.panelPluginId) {
       headers[PluginRequestHeaders.PanelPluginId] = `${request.panelPluginId}`;
@@ -255,7 +255,7 @@ class DataSourceWithBackend<
       })
       .pipe(
         switchMap((raw) => {
-          const rsp = toDataQueryResponse(raw, queries as DataQuery[]);
+          const rsp = toDataQueryResponse(raw, queries);
           // Check if any response should subscribe to a live stream
           if (rsp.data?.length && rsp.data.find((f: DataFrame) => f.meta?.channel)) {
             return toStreamingDataResponse(rsp, request, this.streamOptionsProvider);

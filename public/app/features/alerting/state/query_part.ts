@@ -24,7 +24,7 @@ export class QueryPart {
   params: any[];
   text: string;
 
-  constructor(part: any, def: any) {
+  constructor(part: any, def: QueryPartDef) {
     this.part = part;
     this.def = def;
     if (!this.def) {

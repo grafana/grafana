@@ -58,7 +58,7 @@ func (e *AzureResourceGraphDatasource) ResourceRequest(rw http.ResponseWriter, r
 // 1. builds the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
-func (e *AzureResourceGraphDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
+func (e *AzureResourceGraphDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, fromAlert bool) (*backend.QueryDataResponse, error) {
 	result := &backend.QueryDataResponse{
 		Responses: map[string]backend.DataResponse{},
 	}
@@ -88,9 +88,8 @@ type argJSONQuery struct {
 }
 
 func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery, dsInfo types.DatasourceInfo) ([]*AzureResourceGraphQuery, error) {
-	var azureResourceGraphQueries []*AzureResourceGraphQuery
-
-	for _, query := range queries {
+	azureResourceGraphQueries := make([]*AzureResourceGraphQuery, len(queries))
+	for i, query := range queries {
 		queryJSONModel := argJSONQuery{}
 		err := json.Unmarshal(query.JSON, &queryJSONModel)
 		if err != nil {
@@ -105,19 +104,18 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery,
 		}
 
 		interpolatedQuery, err := macros.KqlInterpolate(query, dsInfo, azureResourceGraphTarget.Query)
-
 		if err != nil {
 			return nil, err
 		}
 
-		azureResourceGraphQueries = append(azureResourceGraphQueries, &AzureResourceGraphQuery{
+		azureResourceGraphQueries[i] = &AzureResourceGraphQuery{
 			RefID:             query.RefID,
 			ResultFormat:      resultFormat,
 			JSON:              query.JSON,
 			InterpolatedQuery: interpolatedQuery,
 			TimeRange:         query.TimeRange,
 			QueryType:         query.QueryType,
-		})
+		}
 	}
 
 	return azureResourceGraphQueries, nil

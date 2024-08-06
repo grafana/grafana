@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"testing"
 	"time"
 
@@ -13,13 +14,16 @@ import (
 	"github.com/stretchr/testify/require"
 
 	alertingModels "github.com/grafana/alerting/models"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -27,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -45,9 +48,7 @@ func Test_FormatValues(t *testing.T) {
 			name: "with no value, it renders the evaluation string",
 			alertState: &state.State{
 				LastEvaluationString: "[ var='A' metric='vector(10) + time() % 50' labels={} value=1.1 ]",
-				Results: []state.Evaluation{
-					{Condition: "A", Values: map[string]*float64{}},
-				},
+				LatestResult:         &state.Evaluation{Condition: "A", Values: map[string]float64{}},
 			},
 			expected: "[ var='A' metric='vector(10) + time() % 50' labels={} value=1.1 ]",
 		},
@@ -55,9 +56,7 @@ func Test_FormatValues(t *testing.T) {
 			name: "with one value, it renders the single value",
 			alertState: &state.State{
 				LastEvaluationString: "[ var='A' metric='vector(10) + time() % 50' labels={} value=1.1 ]",
-				Results: []state.Evaluation{
-					{Condition: "A", Values: map[string]*float64{"A": &val1}},
-				},
+				LatestResult:         &state.Evaluation{Condition: "A", Values: map[string]float64{"A": val1}},
 			},
 			expected: "1.1e+00",
 		},
@@ -65,9 +64,7 @@ func Test_FormatValues(t *testing.T) {
 			name: "with two values, it renders the value based on their refID and position",
 			alertState: &state.State{
 				LastEvaluationString: "[ var='B0' metric='vector(10) + time() % 50' labels={} value=1.1 ], [ var='B1' metric='vector(10) + time() % 50' labels={} value=1.4 ]",
-				Results: []state.Evaluation{
-					{Condition: "B", Values: map[string]*float64{"B0": &val1, "B1": &val2}},
-				},
+				LatestResult:         &state.Evaluation{Condition: "B", Values: map[string]float64{"B0": val1, "B1": val2}},
 			},
 			expected: "B0: 1.1e+00, B1: 1.4e+00",
 		},
@@ -75,9 +72,7 @@ func Test_FormatValues(t *testing.T) {
 			name: "with a high number of values, it renders the value based on their refID and position using a natural order",
 			alertState: &state.State{
 				LastEvaluationString: "[ var='B0' metric='vector(10) + time() % 50' labels={} value=1.1 ], [ var='B1' metric='vector(10) + time() % 50' labels={} value=1.4 ]",
-				Results: []state.Evaluation{
-					{Condition: "B", Values: map[string]*float64{"B0": &val1, "B1": &val2, "B2": &val1, "B10": &val2, "B11": &val1}},
-				},
+				LatestResult:         &state.Evaluation{Condition: "B", Values: map[string]float64{"B0": val1, "B1": val2, "B2": val1, "B10": val2, "B11": val1}},
 			},
 			expected: "B0: 1.1e+00, B10: 1.4e+00, B11: 1.1e+00, B1: 1.4e+00, B2: 1.1e+00",
 		},
@@ -245,13 +240,12 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 func withAlertingState() forEachState {
 	return func(s *state.State) *state.State {
 		s.State = eval.Alerting
-		value := float64(1.1)
-		s.Results = append(s.Results, state.Evaluation{
+		s.LatestResult = &state.Evaluation{
 			EvaluationState: eval.Alerting,
 			EvaluationTime:  timeNow(),
-			Values:          map[string]*float64{"B": &value},
+			Values:          map[string]float64{"B": float64(1.1)},
 			Condition:       "B",
-		})
+		}
 		return s
 	}
 }
@@ -535,6 +529,138 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		})
 	})
 
+	t.Run("test folder, group and rule name query params", func(t *testing.T) {
+		ruleStore := fakes.NewRuleStore(t)
+		fakeAIM := NewFakeAlertInstanceManager(t)
+
+		rulesInGroup1 := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
+			RuleGroup:    "rule-group-1",
+			NamespaceUID: "folder-1",
+			OrgID:        orgID,
+		})).GenerateManyRef(1)
+
+		rulesInGroup2 := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
+			RuleGroup:    "rule-group-2",
+			NamespaceUID: "folder-2",
+			OrgID:        orgID,
+		})).GenerateManyRef(2)
+
+		rulesInGroup3 := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
+			RuleGroup:    "rule-group-3",
+			NamespaceUID: "folder-1",
+			OrgID:        orgID,
+		})).GenerateManyRef(3)
+
+		ruleStore.PutRule(context.Background(), rulesInGroup1...)
+		ruleStore.PutRule(context.Background(), rulesInGroup2...)
+		ruleStore.PutRule(context.Background(), rulesInGroup3...)
+
+		api := PrometheusSrv{
+			log:     log.NewNopLogger(),
+			manager: fakeAIM,
+			store:   ruleStore,
+			authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
+		}
+
+		permissions := createPermissionsForRules(slices.Concat(rulesInGroup1, rulesInGroup2, rulesInGroup3), orgID)
+		user := &user.SignedInUser{
+			OrgID:       orgID,
+			Permissions: permissions,
+		}
+		c := &contextmodel.ReqContext{
+			SignedInUser: user,
+		}
+		t.Run("should only return rule groups under given folder_uid", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?folder_uid=folder-1", nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			require.Len(t, result.Data.RuleGroups, 2)
+			require.Equal(t, "rule-group-1", result.Data.RuleGroups[0].Name)
+			require.Equal(t, "rule-group-3", result.Data.RuleGroups[1].Name)
+		})
+
+		t.Run("should only return rule groups under given rule_group list", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?rule_group=rule-group-1&rule_group=rule-group-2", nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			require.Len(t, result.Data.RuleGroups, 2)
+			require.True(t, true, slices.ContainsFunc(result.Data.RuleGroups, func(rg apimodels.RuleGroup) bool {
+				return rg.Name == "rule-group-1"
+			}))
+			require.True(t, true, slices.ContainsFunc(result.Data.RuleGroups, func(rg apimodels.RuleGroup) bool {
+				return rg.Name == "rule-group-2"
+			}))
+		})
+
+		t.Run("should only return rule under given rule_name list", func(t *testing.T) {
+			expectedRuleInGroup2 := rulesInGroup2[0]
+			expectedRuleInGroup3 := rulesInGroup3[0]
+
+			r, err := http.NewRequest("GET", fmt.Sprintf("/api/v1/rules?rule_name=%s&rule_name=%s", expectedRuleInGroup2.Title, expectedRuleInGroup3.Title), nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			require.Len(t, result.Data.RuleGroups, 2)
+			require.True(t, true, slices.ContainsFunc(result.Data.RuleGroups, func(rg apimodels.RuleGroup) bool {
+				return rg.Name == "rule-group-2"
+			}))
+			require.True(t, true, slices.ContainsFunc(result.Data.RuleGroups, func(rg apimodels.RuleGroup) bool {
+				return rg.Name == "rule-group-3"
+			}))
+			require.Len(t, result.Data.RuleGroups[0].Rules, 1)
+			require.Len(t, result.Data.RuleGroups[1].Rules, 1)
+
+			if result.Data.RuleGroups[0].Name == "rule-group-2" {
+				require.Equal(t, expectedRuleInGroup2.Title, result.Data.RuleGroups[0].Rules[0].Name)
+				require.Equal(t, expectedRuleInGroup3.Title, result.Data.RuleGroups[1].Rules[0].Name)
+			} else {
+				require.Equal(t, expectedRuleInGroup2.Title, result.Data.RuleGroups[1].Rules[0].Name)
+				require.Equal(t, expectedRuleInGroup3.Title, result.Data.RuleGroups[0].Rules[0].Name)
+			}
+		})
+
+		t.Run("should only return rule with given folder_uid, rule_group and rule_name", func(t *testing.T) {
+			expectedRule := rulesInGroup3[2]
+			r, err := http.NewRequest("GET", fmt.Sprintf("/api/v1/rules?folder_uid=folder-1&rule_group=rule-group-3&rule_name=%s", expectedRule.Title), nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			require.Len(t, result.Data.RuleGroups, 1)
+			folder, err := api.store.GetNamespaceByUID(context.Background(), "folder-1", orgID, user)
+			require.NoError(t, err)
+			require.Equal(t, folder.Fullpath, result.Data.RuleGroups[0].File)
+			require.Equal(t, "rule-group-3", result.Data.RuleGroups[0].Name)
+			require.Len(t, result.Data.RuleGroups[0].Rules, 1)
+			require.Equal(t, expectedRule.Title, result.Data.RuleGroups[0].Rules[0].Name)
+		})
+	})
+
 	t.Run("when fine-grained access is enabled", func(t *testing.T) {
 		t.Run("should return only rules if the user can query all data sources", func(t *testing.T) {
 			ruleStore := fakes.NewRuleStore(t)
@@ -548,7 +674,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				log:     log.NewNopLogger(),
 				manager: fakeAIM,
 				store:   ruleStore,
-				authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(setting.NewCfg())),
+				authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
 			}
 
 			c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: createPermissionsForRules(rules, orgID)}}

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, clearButtonStyles, useStyles2 } from '@grafana/ui';
@@ -32,14 +31,13 @@ const getStyles = (theme: GrafanaTheme2) => {
   const clearButton = clearButtonStyles(theme);
 
   return {
-    actionLink: css`
-      ${clearButton};
-      color: ${theme.colors.text.link};
-      cursor: pointer;
+    actionLink: css(clearButton, {
+      color: theme.colors.text.link,
+      cursor: 'pointer',
 
-      &:hover {
-        text-decoration: underline;
-      }
-    `,
+      '&:hover': {
+        textDecoration: 'underline',
+      },
+    }),
   };
 };

@@ -359,7 +359,9 @@ func setXScopeOrgIDHeader(req *http.Request, ctx context.Context) *http.Request 
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		logger.Error("Error in retrieving metadata from context. Header not set")
+		// Metadata are currently set and needed only locally for multi-tenancy, while on cloud
+		// this is set by our stack
+		logger.Debug("Metadata not present in context. Header not set")
 		return req
 	}
 

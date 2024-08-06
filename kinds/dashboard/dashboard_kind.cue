@@ -74,7 +74,7 @@ lineage: schemas: [{
 
 			// Version of the JSON schema, incremented each time a Grafana update brings
 			// changes to said schema.
-			schemaVersion: uint16 | *36
+			schemaVersion: uint16 | *39
 
 			// Version of the dashboard, incremented each time the dashboard is updated.
 			version?: uint32
@@ -99,6 +99,9 @@ lineage: schemas: [{
 
 			// Snapshot options. They are present only if the dashboard is a snapshot.
 			snapshot?: #Snapshot @grafanamaturity(NeedsExpertReview)
+
+			// When set to true, the dashboard will load all panels in the dashboard when it's loaded.
+			preload?: bool
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 		///////////////////////////////////////

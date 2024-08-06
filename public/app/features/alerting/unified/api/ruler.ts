@@ -68,7 +68,7 @@ export async function setRulerRuleGroup(
 }
 
 export interface FetchRulerRulesFilter {
-  dashboardUID: string;
+  dashboardUID?: string;
   panelId?: number;
 }
 

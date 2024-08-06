@@ -1,6 +1,7 @@
 // Libraries
 import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
+import { useCallback, useEffect, useMemo, useReducer } from 'react';
+import * as React from 'react';
 import { useLocation, useRouteMatch } from 'react-router-dom';
 
 import {

@@ -13,9 +13,12 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
-	"github.com/grafana/grafana/pkg/apiserver/builder"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -39,6 +42,7 @@ func RegisterAPIService(features *featuremgmt.FeatureManager,
 	accessControl accesscontrol.AccessControl,
 	apiregistration builder.APIRegistrar,
 	cfg *setting.Cfg,
+	registerer prometheus.Registerer,
 ) *FeatureFlagAPIBuilder {
 	builder := NewFeatureFlagAPIBuilder(features, accessControl, cfg)
 	apiregistration.RegisterAPI(builder)
@@ -82,7 +86,7 @@ func (b *FeatureFlagAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	_ generic.RESTOptionsGetter,
-	_ bool,
+	_ grafanarest.DualWriteBuilder,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -19,38 +20,45 @@ const cookieHeaderName = "Cookie"
 func NewCookiesMiddleware(skipCookiesNames []string) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &CookiesMiddleware{
-			next:             next,
+			baseMiddleware: baseMiddleware{
+				next: next,
+			},
 			skipCookiesNames: skipCookiesNames,
 		}
 	})
 }
 
 type CookiesMiddleware struct {
-	next             plugins.Client
+	baseMiddleware
 	skipCookiesNames []string
 }
 
 func (m *CookiesMiddleware) applyCookies(ctx context.Context, pCtx backend.PluginContext, req any) error {
 	reqCtx := contexthandler.FromContext(ctx)
-	// if request not for a datasource or no HTTP request context skip middleware
-	if req == nil || pCtx.DataSourceInstanceSettings == nil || reqCtx == nil || reqCtx.Req == nil {
+	allowedCookies := []string{}
+	// if no HTTP request context skip middleware
+	if req == nil || reqCtx == nil || reqCtx.Req == nil {
 		return nil
 	}
 
-	settings := pCtx.DataSourceInstanceSettings
-	jsonDataBytes, err := simplejson.NewJson(settings.JSONData)
-	if err != nil {
-		return err
+	if pCtx.DataSourceInstanceSettings != nil {
+		settings := pCtx.DataSourceInstanceSettings
+		jsonDataBytes, err := simplejson.NewJson(settings.JSONData)
+		if err != nil {
+			return err
+		}
+
+		ds := &datasources.DataSource{
+			ID:       settings.ID,
+			OrgID:    pCtx.OrgID,
+			JsonData: jsonDataBytes,
+			Updated:  settings.Updated,
+		}
+
+		allowedCookies = ds.AllowedCookies()
 	}
 
-	ds := &datasources.DataSource{
-		ID:       settings.ID,
-		OrgID:    pCtx.OrgID,
-		JsonData: jsonDataBytes,
-		Updated:  settings.Updated,
-	}
-
-	proxyutil.ClearCookieHeader(reqCtx.Req, ds.AllowedCookies(), m.skipCookiesNames)
+	proxyutil.ClearCookieHeader(reqCtx.Req, allowedCookies, m.skipCookiesNames)
 
 	cookieStr := reqCtx.Req.Header.Get(cookieHeaderName)
 	switch t := req.(type) {
@@ -114,20 +122,4 @@ func (m *CookiesMiddleware) CheckHealth(ctx context.Context, req *backend.CheckH
 	}
 
 	return m.next.CheckHealth(ctx, req)
-}
-
-func (m *CookiesMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	return m.next.CollectMetrics(ctx, req)
-}
-
-func (m *CookiesMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return m.next.SubscribeStream(ctx, req)
-}
-
-func (m *CookiesMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return m.next.PublishStream(ctx, req)
-}
-
-func (m *CookiesMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	return m.next.RunStream(ctx, req, sender)
 }

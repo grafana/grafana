@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 
@@ -30,7 +29,7 @@ export function RuleDetailsAnnotations(props: Props): JSX.Element | null {
 }
 
 const getStyles = () => ({
-  annotations: css`
-    margin-top: 46px;
-  `,
+  annotations: css({
+    marginTop: '46px',
+  }),
 });

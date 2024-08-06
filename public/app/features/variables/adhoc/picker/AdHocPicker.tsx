@@ -1,7 +1,7 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/variables/types';
+import { AdHocVariableFilter, AdHocVariableModel } from '@grafana/data';
 
 import { VariablePickerProps } from '../../pickers/types';
 import { toKeyedVariableIdentifier } from '../../utils';

@@ -1,7 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilder.test.tsx
 import { getByText, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import {
   DataSourceInstanceSettings,
@@ -90,7 +89,7 @@ describe('PromQueryBuilder', () => {
   it('tries to load metrics without labels', async () => {
     const { languageProvider, container } = setup();
     await openMetricSelect(container);
-    await waitFor(() => expect(languageProvider.getLabelValues).toBeCalledWith('__name__'));
+    await waitFor(() => expect(languageProvider.getLabelValues).toHaveBeenCalledWith('__name__'));
   });
 
   it('tries to load metrics with labels', async () => {
@@ -99,7 +98,7 @@ describe('PromQueryBuilder', () => {
       labels: [{ label: 'label_name', op: '=', value: 'label_value' }],
     });
     await openMetricSelect(container);
-    await waitFor(() => expect(languageProvider.getSeries).toBeCalledWith('{label_name="label_value"}', true));
+    await waitFor(() => expect(languageProvider.getSeries).toHaveBeenCalledWith('{label_name="label_value"}', true));
   });
 
   it('tries to load variables in metric field', async () => {
@@ -135,7 +134,9 @@ describe('PromQueryBuilder', () => {
   it('tries to load labels when metric selected', async () => {
     const { languageProvider } = setup();
     await openLabelNameSelect();
-    await waitFor(() => expect(languageProvider.fetchLabelsWithMatch).toBeCalledWith('{__name__="random_metric"}'));
+    await waitFor(() =>
+      expect(languageProvider.fetchLabelsWithMatch).toHaveBeenCalledWith('{__name__="random_metric"}')
+    );
   });
 
   it('tries to load variables in label field', async () => {
@@ -155,7 +156,7 @@ describe('PromQueryBuilder', () => {
     });
     await openLabelNameSelect(1);
     await waitFor(() =>
-      expect(languageProvider.fetchLabelsWithMatch).toBeCalledWith(
+      expect(languageProvider.fetchLabelsWithMatch).toHaveBeenCalledWith(
         '{label_name="label_value", __name__="random_metric"}'
       )
     );
@@ -180,17 +181,6 @@ describe('PromQueryBuilder', () => {
     await openMetricSelect(container);
     await userEvent.click(screen.getByText('histogram_metric_bucket'));
     await waitFor(() => expect(screen.getByText('hint: add histogram_quantile')).toBeInTheDocument());
-  });
-
-  it('shows hints for counter metrics', async () => {
-    const { container } = setup({
-      metric: 'histogram_metric_sum',
-      labels: [],
-      operations: [],
-    });
-    await openMetricSelect(container);
-    await userEvent.click(screen.getByText('histogram_metric_sum'));
-    await waitFor(() => expect(screen.getByText('hint: add rate')).toBeInTheDocument());
   });
 
   it('shows hints for counter metrics', async () => {
@@ -304,7 +294,9 @@ describe('PromQueryBuilder', () => {
       jsonData: { prometheusVersion: '2.38.1', prometheusType: PromApplication.Prometheus },
     });
     await openLabelNameSelect();
-    await waitFor(() => expect(languageProvider.fetchLabelsWithMatch).toBeCalledWith('{__name__="random_metric"}'));
+    await waitFor(() =>
+      expect(languageProvider.fetchLabelsWithMatch).toHaveBeenCalledWith('{__name__="random_metric"}')
+    );
   });
 
   it('tries to load variables in label field modern prom', async () => {
@@ -330,7 +322,7 @@ describe('PromQueryBuilder', () => {
     );
     await openLabelNameSelect(1);
     await waitFor(() =>
-      expect(languageProvider.fetchLabelsWithMatch).toBeCalledWith(
+      expect(languageProvider.fetchLabelsWithMatch).toHaveBeenCalledWith(
         '{label_name="label_value", __name__="random_metric"}'
       )
     );

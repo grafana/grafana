@@ -117,7 +117,7 @@ export class DashboardModel implements TimeModel {
     appEventsSubscription: true,
     panelsAffectedByVariableChange: true,
     lastRefresh: true,
-    timeRangeUpdatedDuringEdit: true,
+    timeRangeUpdatedDuringEditOrView: true,
     originalDashboard: true,
   };
 

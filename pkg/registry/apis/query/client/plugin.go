@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 type pluginClient struct {
@@ -59,7 +58,7 @@ func NewDataSourceRegistryFromStore(pluginStore pluginstore.Store,
 
 // ExecuteQueryData implements QueryHelper.
 func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest) (int, *backend.QueryDataResponse, error) {
-	queries, dsRef, err := legacydata.ToDataSourceQueries(req)
+	queries, dsRef, err := data.ToDataSourceQueries(req)
 	if err != nil {
 		return http.StatusBadRequest, nil, err
 	}
@@ -81,19 +80,11 @@ func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest)
 		return http.StatusBadRequest, nil, err
 	}
 
-	code := http.StatusOK
 	rsp, err := d.pluginClient.QueryData(ctx, qdr)
-	if err == nil {
-		for _, v := range rsp.Responses {
-			if v.Error != nil {
-				code = http.StatusMultiStatus
-				break
-			}
-		}
-	} else {
-		code = http.StatusInternalServerError
+	if err != nil {
+		return http.StatusInternalServerError, rsp, err
 	}
-	return code, rsp, err
+	return query.GetResponseCode(rsp), rsp, err
 }
 
 // GetDatasourceAPI implements DataSourceRegistry.

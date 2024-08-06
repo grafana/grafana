@@ -34,6 +34,7 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 	}
 
 	_, cfg := db.InitTestDBWithCfg(t)
+	cfg.HTTPPort = "3001"
 	cfg.GRPCServerNetwork = "tcp"
 	cfg.GRPCServerAddress = "localhost:10000"
 	addStorageServerToConfig(t, cfg, dbType)
@@ -51,7 +52,7 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 	time.Sleep(500 * time.Millisecond) // wait for http server to be running
 
 	client := http.Client{}
-	res, err := client.Get("http://localhost:3000/metrics")
+	res, err := client.Get("http://localhost:3001/metrics")
 	require.NoError(t, err)
 	err = res.Body.Close()
 	require.NoError(t, err)
@@ -62,7 +63,7 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 }
 
 func addStorageServerToConfig(t *testing.T, cfg *setting.Cfg, dbType string) {
-	s, err := cfg.Raw.NewSection("entity_api")
+	s, err := cfg.Raw.NewSection("resource_api")
 	require.NoError(t, err)
 	_, err = s.NewKey("db_type", dbType)
 	require.NoError(t, err)

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
@@ -63,15 +62,15 @@ export function RuleFolderPicker(props: RuleFolderPickerProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  slashNotAllowed: css`
-    color: ${theme.colors.warning.main};
-    font-size: 12px;
-    margin-bottom: 2px;
-  `,
-  infoIcon: css`
-    color: ${theme.colors.warning.main};
-    font-size: 12px;
-    margin-bottom: 2px;
-    cursor: pointer;
-  `,
+  slashNotAllowed: css({
+    color: theme.colors.warning.main,
+    fontSize: '12px',
+    marginBottom: '2px',
+  }),
+  infoIcon: css({
+    color: theme.colors.warning.main,
+    fontSize: '12px',
+    marginBottom: '2px',
+    cursor: 'pointer',
+  }),
 });

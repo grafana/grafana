@@ -177,6 +177,8 @@ func TestQuery_StartQuery(t *testing.T) {
 	}
 
 	t.Run("invalid time range", func(t *testing.T) {
+		const refID = "A"
+
 		cli = fakeCWLogsClient{
 			logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
 				LogGroupFields: []*cloudwatchlogs.LogGroupField{
@@ -210,12 +212,13 @@ func TestQuery_StartQuery(t *testing.T) {
 		})
 
 		executor := newExecutor(im, log.NewNullLogger())
-		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			},
 			Queries: []backend.DataQuery{
 				{
+					RefID:     refID,
 					TimeRange: timeRange,
 					JSON: json.RawMessage(`{
 						"type":        "logAction",
@@ -227,9 +230,9 @@ func TestQuery_StartQuery(t *testing.T) {
 				},
 			},
 		})
-		require.Error(t, err)
+		require.NoError(t, err)
 
-		assert.Contains(t, err.Error(), "invalid time range: start time must be before end time")
+		assert.Equal(t, "failed to execute log action with subtype: StartQuery: invalid time range: start time must be before end time", resp.Responses[refID].Error.Error())
 	})
 
 	t.Run("valid time range", func(t *testing.T) {

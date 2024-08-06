@@ -46,7 +46,7 @@ func TestDirAsLocalSources(t *testing.T) {
 		{
 			name:        "Directory with no subdirectories",
 			pluginsPath: filepath.Join(testdataDir, "pluginRootWithDist", "datasource"),
-			expected:    nil,
+			expected:    []*LocalSource{},
 		},
 		{
 			name:        "Directory with a symlink to a directory",

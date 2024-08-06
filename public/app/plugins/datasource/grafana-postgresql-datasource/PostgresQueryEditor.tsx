@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { QueryEditorProps } from '@grafana/data';
 import { SqlQueryEditor, SQLOptions, SQLQuery, QueryHeaderProps } from '@grafana/sql';
 

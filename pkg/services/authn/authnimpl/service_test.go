@@ -15,12 +15,12 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -44,9 +44,9 @@ func TestService_Authenticate(t *testing.T) {
 		{
 			desc: "should succeed with authentication for configured client",
 			clients: []authn.Client{
-				&authntest.FakeClient{ExpectedTest: true, ExpectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:1")}},
+				&authntest.FakeClient{ExpectedTest: true, ExpectedIdentity: &authn.Identity{ID: identity.MustParseTypedID("user:1")}},
 			},
-			expectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
+			expectedIdentity: &authn.Identity{ID: identity.MustParseTypedID("user:1")},
 		},
 		{
 			desc: "should succeed with authentication for configured client for identity with fetch permissions params",
@@ -54,7 +54,7 @@ func TestService_Authenticate(t *testing.T) {
 				&authntest.FakeClient{
 					ExpectedTest: true,
 					ExpectedIdentity: &authn.Identity{
-						ID: authn.MustParseNamespaceID("user:2"),
+						ID: identity.MustParseTypedID("user:2"),
 						ClientParams: authn.ClientParams{
 							FetchPermissionsParams: authn.FetchPermissionsParams{
 								ActionsLookup: []string{
@@ -70,7 +70,7 @@ func TestService_Authenticate(t *testing.T) {
 				},
 			},
 			expectedIdentity: &authn.Identity{
-				ID: authn.MustParseNamespaceID("user:2"),
+				ID: identity.MustParseTypedID("user:2"),
 				ClientParams: authn.ClientParams{
 					FetchPermissionsParams: authn.FetchPermissionsParams{
 						ActionsLookup: []string{
@@ -92,19 +92,19 @@ func TestService_Authenticate(t *testing.T) {
 					ExpectedName:     "2",
 					ExpectedPriority: 2,
 					ExpectedTest:     true,
-					ExpectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:2"), AuthID: "service:some-service", AuthenticatedBy: "service_auth"},
+					ExpectedIdentity: &authn.Identity{ID: identity.MustParseTypedID("user:2"), AuthID: "service:some-service", AuthenticatedBy: "service_auth"},
 				},
 			},
-			expectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:2"), AuthID: "service:some-service", AuthenticatedBy: "service_auth"},
+			expectedIdentity: &authn.Identity{ID: identity.MustParseTypedID("user:2"), AuthID: "service:some-service", AuthenticatedBy: "service_auth"},
 		},
 		{
 			desc: "should succeed with authentication for third client when error happened in first",
 			clients: []authn.Client{
 				&authntest.FakeClient{ExpectedName: "1", ExpectedPriority: 2, ExpectedTest: false},
 				&authntest.FakeClient{ExpectedName: "2", ExpectedPriority: 1, ExpectedTest: true, ExpectedErr: errors.New("some error")},
-				&authntest.FakeClient{ExpectedName: "3", ExpectedPriority: 3, ExpectedTest: true, ExpectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:3")}},
+				&authntest.FakeClient{ExpectedName: "3", ExpectedPriority: 3, ExpectedTest: true, ExpectedIdentity: &authn.Identity{ID: identity.MustParseTypedID("user:3")}},
 			},
-			expectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:3")},
+			expectedIdentity: &authn.Identity{ID: identity.MustParseTypedID("user:3")},
 		},
 		{
 			desc: "should return error when no client could authenticate the request",
@@ -315,10 +315,10 @@ func TestService_Login(t *testing.T) {
 			client:           "fake",
 			expectedClientOK: true,
 			expectedClientIdentity: &authn.Identity{
-				ID: authn.MustParseNamespaceID("user:1"),
+				ID: identity.MustParseTypedID("user:1"),
 			},
 			expectedIdentity: &authn.Identity{
-				ID:           authn.MustParseNamespaceID("user:1"),
+				ID:           identity.MustParseTypedID("user:1"),
 				SessionToken: &auth.UserToken{UserId: 1},
 			},
 		},
@@ -331,7 +331,7 @@ func TestService_Login(t *testing.T) {
 			desc:                   "should not login non user identity",
 			client:                 "fake",
 			expectedClientOK:       true,
-			expectedClientIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("api-key:1")},
+			expectedClientIdentity: &authn.Identity{ID: identity.MustParseTypedID("api-key:1")},
 			expectedErr:            authn.ErrUnsupportedIdentity,
 		},
 	}
@@ -409,7 +409,8 @@ func TestService_Logout(t *testing.T) {
 		identity     *authn.Identity
 		sessionToken *usertoken.UserToken
 
-		client authn.Client
+		client             authn.Client
+		signoutRedirectURL string
 
 		expectedErr          error
 		expectedTokenRevoked bool
@@ -419,31 +420,39 @@ func TestService_Logout(t *testing.T) {
 	tests := []TestCase{
 		{
 			desc:             "should redirect to default redirect url when identity is not a user",
-			identity:         &authn.Identity{ID: authn.MustNewNamespaceID(authn.NamespaceServiceAccount, 1)},
+			identity:         &authn.Identity{ID: identity.NewTypedID(identity.TypeServiceAccount, 1)},
 			expectedRedirect: &authn.Redirect{URL: "http://localhost:3000/login"},
 		},
 		{
 			desc:                 "should redirect to default redirect url when no external provider was used to authenticate",
-			identity:             &authn.Identity{ID: authn.MustNewNamespaceID(authn.NamespaceUser, 1)},
+			identity:             &authn.Identity{ID: identity.NewTypedID(identity.TypeUser, 1)},
 			expectedRedirect:     &authn.Redirect{URL: "http://localhost:3000/login"},
 			expectedTokenRevoked: true,
 		},
 		{
 			desc:                 "should redirect to default redirect url when client is not found",
-			identity:             &authn.Identity{ID: authn.MustNewNamespaceID(authn.NamespaceUser, 1), AuthenticatedBy: "notfound"},
+			identity:             &authn.Identity{ID: identity.NewTypedID(identity.TypeUser, 1), AuthenticatedBy: "notfound"},
 			expectedRedirect:     &authn.Redirect{URL: "http://localhost:3000/login"},
 			expectedTokenRevoked: true,
 		},
 		{
 			desc:                 "should redirect to default redirect url when client do not implement logout extension",
-			identity:             &authn.Identity{ID: authn.MustNewNamespaceID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
+			identity:             &authn.Identity{ID: identity.NewTypedID(identity.TypeUser, 1), AuthenticatedBy: "azuread"},
 			expectedRedirect:     &authn.Redirect{URL: "http://localhost:3000/login"},
 			client:               &authntest.FakeClient{ExpectedName: "auth.client.azuread"},
 			expectedTokenRevoked: true,
 		},
 		{
+			desc:                 "should use signout redirect url if configured",
+			identity:             &authn.Identity{ID: identity.NewTypedID(identity.TypeUser, 1), AuthenticatedBy: "azuread"},
+			expectedRedirect:     &authn.Redirect{URL: "some-url"},
+			client:               &authntest.FakeClient{ExpectedName: "auth.client.azuread"},
+			signoutRedirectURL:   "some-url",
+			expectedTokenRevoked: true,
+		},
+		{
 			desc:             "should redirect to client specific url",
-			identity:         &authn.Identity{ID: authn.MustNewNamespaceID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
+			identity:         &authn.Identity{ID: identity.NewTypedID(identity.TypeUser, 1), AuthenticatedBy: "azuread"},
 			expectedRedirect: &authn.Redirect{URL: "http://idp.com/logout"},
 			client: &authntest.MockClient{
 				NameFunc: func() string { return "auth.client.azuread" },
@@ -473,6 +482,10 @@ func TestService_Logout(t *testing.T) {
 						return nil
 					},
 				}
+
+				if tt.signoutRedirectURL != "" {
+					svc.cfg.SignoutRedirectUrl = tt.signoutRedirectURL
+				}
 			})
 
 			redirect, err := s.Logout(context.Background(), tt.identity, tt.sessionToken)
@@ -487,26 +500,26 @@ func TestService_Logout(t *testing.T) {
 func TestService_ResolveIdentity(t *testing.T) {
 	t.Run("should return error for for unknown namespace", func(t *testing.T) {
 		svc := setupTests(t)
-		_, err := svc.ResolveIdentity(context.Background(), 1, "some:1")
-		assert.ErrorIs(t, err, authn.ErrInvalidNamespaceID)
+		_, err := svc.ResolveIdentity(context.Background(), 1, identity.NewTypedID("some", 1))
+		assert.ErrorIs(t, err, authn.ErrUnsupportedIdentity)
 	})
 
 	t.Run("should return error for for namespace that don't have a resolver", func(t *testing.T) {
 		svc := setupTests(t)
-		_, err := svc.ResolveIdentity(context.Background(), 1, "api-key:1")
+		_, err := svc.ResolveIdentity(context.Background(), 1, identity.MustParseTypedID("api-key:1"))
 		assert.ErrorIs(t, err, authn.ErrUnsupportedIdentity)
 	})
 
 	t.Run("should resolve for user", func(t *testing.T) {
 		svc := setupTests(t)
-		identity, err := svc.ResolveIdentity(context.Background(), 1, "user:1")
+		identity, err := svc.ResolveIdentity(context.Background(), 1, identity.MustParseTypedID("user:1"))
 		assert.NoError(t, err)
 		assert.NotNil(t, identity)
 	})
 
 	t.Run("should resolve for service account", func(t *testing.T) {
 		svc := setupTests(t)
-		identity, err := svc.ResolveIdentity(context.Background(), 1, "service-account:1")
+		identity, err := svc.ResolveIdentity(context.Background(), 1, identity.MustParseTypedID("service-account:1"))
 		assert.NoError(t, err)
 		assert.NotNil(t, identity)
 	})
@@ -514,14 +527,14 @@ func TestService_ResolveIdentity(t *testing.T) {
 	t.Run("should resolve for valid namespace if client is registered", func(t *testing.T) {
 		svc := setupTests(t, func(svc *Service) {
 			svc.RegisterClient(&authntest.MockClient{
-				NamespaceFunc: func() string { return authn.NamespaceAPIKey },
-				ResolveIdentityFunc: func(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
+				IdentityTypeFunc: func() identity.IdentityType { return identity.TypeAPIKey },
+				ResolveIdentityFunc: func(ctx context.Context, orgID int64, namespaceID identity.TypedID) (*authn.Identity, error) {
 					return &authn.Identity{}, nil
 				},
 			})
 		})
 
-		identity, err := svc.ResolveIdentity(context.Background(), 1, "api-key:1")
+		identity, err := svc.ResolveIdentity(context.Background(), 1, identity.MustParseTypedID("api-key:1"))
 		assert.NoError(t, err)
 		assert.NotNil(t, identity)
 	})
@@ -548,6 +561,7 @@ func setupTests(t *testing.T, opts ...func(svc *Service)) *Service {
 		metrics:                newMetrics(nil),
 		postAuthHooks:          newQueue[authn.PostAuthHookFn](),
 		postLoginHooks:         newQueue[authn.PostLoginHookFn](),
+		preLogoutHooks:         newQueue[authn.PreLogoutHookFn](),
 	}
 
 	for _, o := range opts {

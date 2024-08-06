@@ -9,9 +9,9 @@ import (
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -188,11 +188,14 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 }
 
 func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, folder *folder.Folder) error {
+	if !hs.Cfg.RBAC.PermissionsOnCreation("folder") {
+		return nil
+	}
 	var permissions []accesscontrol.SetResourcePermissionCommand
 	var userID int64
 
-	namespace, id := user.GetNamespacedID()
-	if namespace == identity.NamespaceUser {
+	namespace, id := user.GetTypedID()
+	if namespace == identity.TypeUser {
 		var errID error
 		userID, errID = identity.IntIdentifier(namespace, id)
 		if errID != nil {

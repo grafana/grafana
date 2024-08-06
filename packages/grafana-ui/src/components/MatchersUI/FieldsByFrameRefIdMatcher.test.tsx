@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { toDataFrame, FieldType } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { RefIDPicker, Props } from './FieldsByFrameRefIdMatcher';
 
@@ -45,7 +45,7 @@ describe('RefIDPicker', () => {
     const select = await screen.findByRole('combobox');
     fireEvent.keyDown(select, { keyCode: 40 });
 
-    const selectOptions = screen.getAllByLabelText('Select option');
+    const selectOptions = screen.getAllByTestId(selectors.components.Select.option);
 
     expect(selectOptions).toHaveLength(2);
     expect(selectOptions[0]).toHaveTextContent('Query: AFrames (2): Series A, Second series');

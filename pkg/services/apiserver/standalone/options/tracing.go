@@ -109,6 +109,7 @@ func (o *TracingOptions) ApplyTo(config *genericapiserver.RecommendedConfig) err
 	tracingCfg.Sampler = o.SamplerType
 	tracingCfg.SamplerParam = o.SamplerParam
 	tracingCfg.SamplerRemoteURL = o.SamplingServiceURL
+	tracingCfg.ProfilingIntegration = true
 
 	ts, err := tracing.ProvideService(tracingCfg)
 	if err != nil {

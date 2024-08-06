@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import selectEvent from 'react-select-event';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -38,7 +37,7 @@ describe('OldFolderPicker', () => {
     const pickerContainer = screen.getByTestId(selectors.components.FolderPicker.input);
     selectEvent.openMenu(pickerContainer);
 
-    const pickerOptions = await screen.findAllByLabelText('Select option');
+    const pickerOptions = await screen.findAllByTestId(selectors.components.Select.option);
 
     expect(pickerOptions).toHaveLength(2);
     expect(pickerOptions[0]).toHaveTextContent('Dash 1');
@@ -92,7 +91,7 @@ describe('OldFolderPicker', () => {
     const pickerContainer = screen.getByTestId(selectors.components.FolderPicker.input);
     selectEvent.openMenu(pickerContainer);
 
-    const pickerOptions = await screen.findAllByLabelText('Select option');
+    const pickerOptions = await screen.findAllByTestId(selectors.components.Select.option);
 
     expect(pickerOptions[0]).toHaveTextContent('Dashboards');
   });
@@ -113,7 +112,7 @@ describe('OldFolderPicker', () => {
     const pickerContainer = screen.getByTestId(selectors.components.FolderPicker.input);
     selectEvent.openMenu(pickerContainer);
 
-    const pickerOptions = await screen.findAllByLabelText('Select option');
+    const pickerOptions = await screen.findAllByTestId(selectors.components.Select.option);
 
     expect(pickerOptions[0]).not.toHaveTextContent('Dashboards');
   });
@@ -134,7 +133,7 @@ describe('OldFolderPicker', () => {
     const pickerContainer = screen.getByTestId(selectors.components.FolderPicker.input);
     selectEvent.openMenu(pickerContainer);
 
-    const pickerOptions = await screen.findAllByLabelText('Select option');
+    const pickerOptions = await screen.findAllByTestId(selectors.components.Select.option);
 
     expect(pickerOptions[0]).not.toHaveTextContent('Dashboards');
   });

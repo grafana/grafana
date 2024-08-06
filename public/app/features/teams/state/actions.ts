@@ -60,7 +60,7 @@ export function loadTeams(initial = false): ThunkResult<void> {
 
 const loadTeamsWithDebounce = debounce((dispatch) => dispatch(loadTeams()), 500);
 
-export function loadTeam(id: number): ThunkResult<void> {
+export function loadTeam(id: number): ThunkResult<Promise<void>> {
   return async (dispatch) => {
     const response = await getBackendSrv().get(`/api/teams/${id}`, accessControlQueryParam());
     dispatch(teamLoaded(response));

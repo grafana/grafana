@@ -15,6 +15,9 @@ type Options struct {
 	RecommendedOptions *genericoptions.RecommendedOptions
 	TracingOptions     *TracingOptions
 	MetricsOptions     *MetricsOptions
+	ProfilingOptions   *ProfilingOptions
+	ServerRunOptions   *genericoptions.ServerRunOptions
+	StorageOptions     *options.StorageOptions
 }
 
 func New(logger log.Logger, codec runtime.Codec) *Options {
@@ -23,7 +26,10 @@ func New(logger log.Logger, codec runtime.Codec) *Options {
 		ExtraOptions:       options.NewExtraOptions(),
 		RecommendedOptions: options.NewRecommendedOptions(codec),
 		TracingOptions:     NewTracingOptions(logger),
-		MetricsOptions:     NewMetrcicsOptions(logger),
+		MetricsOptions:     NewMetricsOptions(logger),
+		ProfilingOptions:   NewProfilingOptions(logger),
+		ServerRunOptions:   genericoptions.NewServerRunOptions(),
+		StorageOptions:     options.NewStorageOptions(),
 	}
 }
 
@@ -33,6 +39,8 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.RecommendedOptions.AddFlags(fs)
 	o.TracingOptions.AddFlags(fs)
 	o.MetricsOptions.AddFlags(fs)
+	o.ProfilingOptions.AddFlags(fs)
+	o.ServerRunOptions.AddUniversalFlags(fs)
 }
 
 func (o *Options) Validate() []error {
@@ -49,6 +57,14 @@ func (o *Options) Validate() []error {
 	}
 
 	if errs := o.MetricsOptions.Validate(); len(errs) != 0 {
+		return errs
+	}
+
+	if errs := o.ProfilingOptions.Validate(); len(errs) != 0 {
+		return errs
+	}
+
+	if errs := o.ServerRunOptions.Validate(); len(errs) != 0 {
 		return errs
 	}
 
@@ -117,6 +133,10 @@ func (o *Options) ModifiedApplyTo(config *genericapiserver.RecommendedConfig) er
 		return err
 	}
 
+	if err := o.ServerRunOptions.ApplyTo(&config.Config); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -151,6 +171,18 @@ func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) erro
 
 	if o.MetricsOptions != nil {
 		if err := o.MetricsOptions.ApplyTo(serverConfig); err != nil {
+			return err
+		}
+	}
+
+	if o.ProfilingOptions != nil {
+		if err := o.ProfilingOptions.ApplyTo(serverConfig); err != nil {
+			return err
+		}
+	}
+
+	if o.ServerRunOptions != nil {
+		if err := o.ServerRunOptions.ApplyTo(&serverConfig.Config); err != nil {
 			return err
 		}
 	}

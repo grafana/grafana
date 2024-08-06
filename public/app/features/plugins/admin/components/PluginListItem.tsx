@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -151,6 +150,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.h4.fontSize,
       color: theme.colors.text.primary,
       margin: 0,
+      wordBreak: 'normal',
+      overflowWrap: 'anywhere',
     }),
   };
 };

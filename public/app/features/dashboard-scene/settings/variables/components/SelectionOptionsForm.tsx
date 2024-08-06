@@ -1,7 +1,7 @@
-import React, { ChangeEvent, FormEvent } from 'react';
+import { ChangeEvent, FormEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { VerticalGroup } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
 import { VariableCheckboxField } from 'app/features/dashboard-scene/settings/variables/components/VariableCheckboxField';
 import { VariableTextField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextField';
 
@@ -23,7 +23,7 @@ export function SelectionOptionsForm({
   onAllValueChange,
 }: SelectionOptionsFormProps) {
   return (
-    <VerticalGroup spacing="md" height="inherit">
+    <Stack direction="column" gap={2} height="inherit" alignItems="start">
       <VariableCheckboxField
         value={multi}
         name="Multi-value"
@@ -47,6 +47,6 @@ export function SelectionOptionsForm({
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput}
         />
       )}
-    </VerticalGroup>
+    </Stack>
   );
 }

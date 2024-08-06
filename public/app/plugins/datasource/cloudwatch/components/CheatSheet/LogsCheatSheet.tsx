@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { stripIndent, stripIndents } from 'common-tags';
 import Prism from 'prismjs';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
-import { Collapse } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Collapse, useStyles2 } from '@grafana/ui';
 import { flattenTokens } from '@grafana/ui/src/slate-plugins/slate-prism';
 
 import tokenizer from '../../language/cloudwatch-logs/syntax';
@@ -350,14 +351,6 @@ function renderHighlightedMarkup(code: string, keyPrefix: string) {
   return <div className="slate-query-field">{spans}</div>;
 }
 
-const exampleCategory = css`
-  margin-top: 5px;
-`;
-
-const link = css`
-  text-decoration: underline;
-`;
-
 type Props = {
   onClickExample: (query: CloudWatchQuery) => void;
   query: CloudWatchQuery;
@@ -366,6 +359,7 @@ type Props = {
 const LogsCheatSheet = (props: Props) => {
   const [isCommandsOpen, setIsCommandsOpen] = useState(false);
   const [isQueriesOpen, setIsQueriesOpen] = useState(false);
+  const styles = useStyles2(getStyles);
 
   return (
     <div>
@@ -385,7 +379,7 @@ const LogsCheatSheet = (props: Props) => {
                   <p>{item.description}</p>
                   <button
                     type="button"
-                    className="cheat-sheet-item__example"
+                    className={styles.cheatSheetExample}
                     key={item.expr}
                     onClick={() =>
                       props.onClickExample({
@@ -415,13 +409,13 @@ const LogsCheatSheet = (props: Props) => {
       >
         {QUERIES.map((cat, i) => (
           <div key={`cat-${i}`}>
-            <div className={`cheat-sheet-item__title ${cx(exampleCategory)}`}>{cat.category}</div>
+            <div className={cx(styles.cheatSheetItemTitle, styles.exampleCategory)}>{cat.category}</div>
             {cat.examples.map((item, j) => (
-              <div className="cheat-sheet-item" key={`item-${j}`}>
+              <div className={styles.cheatSheetItem} key={`item-${j}`}>
                 <h4>{item.title}</h4>
                 <button
                   type="button"
-                  className="cheat-sheet-item__example"
+                  className={styles.cheatSheetExample}
                   key={item.expr}
                   onClick={() =>
                     props.onClickExample({
@@ -445,7 +439,7 @@ const LogsCheatSheet = (props: Props) => {
       <div>
         Note: If you are seeing masked data, you may have CloudWatch logs data protection enabled.{' '}
         <a
-          className={cx(link)}
+          className={styles.link}
           href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/#cloudwatch-logs-data-protection"
           target="_blank"
           rel="noreferrer"
@@ -459,3 +453,26 @@ const LogsCheatSheet = (props: Props) => {
 };
 
 export default LogsCheatSheet;
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  exampleCategory: css({
+    marginTop: '5px',
+  }),
+  link: css({
+    textDecoration: 'underline',
+  }),
+  cheatSheetItem: css({
+    margin: theme.spacing(3, 0),
+  }),
+  cheatSheetItemTitle: css({
+    fontSize: theme.typography.h3.fontSize,
+  }),
+  cheatSheetExample: css({
+    margin: theme.spacing(0.5, 0),
+    // element is interactive, clear button styles
+    textAlign: 'left',
+    border: 'none',
+    background: 'transparent',
+    display: 'block',
+  }),
+});

@@ -14,11 +14,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -32,7 +34,7 @@ func TestIntegrationCreate(t *testing.T) {
 	}
 
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, cfg)
+	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
 
@@ -152,7 +154,7 @@ func TestIntegrationDelete(t *testing.T) {
 	}
 
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, cfg)
+	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
 
@@ -199,7 +201,7 @@ func TestIntegrationUpdate(t *testing.T) {
 	}
 
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, cfg)
+	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
 
@@ -374,7 +376,7 @@ func TestIntegrationGet(t *testing.T) {
 	}
 
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, cfg)
+	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
 
@@ -491,7 +493,7 @@ func TestIntegrationGetParents(t *testing.T) {
 	}
 
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, cfg)
+	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
 
@@ -559,7 +561,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 	}
 
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, cfg)
+	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
 
@@ -731,6 +733,68 @@ func TestIntegrationGetChildren(t *testing.T) {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 	})
+
+	t.Run("should hide k6-app folder for users but not for service accounts", func(t *testing.T) {
+		_, err = folderStore.Create(context.Background(), folder.CreateFolderCommand{
+			Title: "k6-app-folder",
+			OrgID: orgID,
+			UID:   accesscontrol.K6FolderUID,
+		})
+		require.NoError(t, err)
+
+		children, err := folderStore.GetChildren(context.Background(), folder.GetChildrenQuery{
+			OrgID:        orgID,
+			SignedInUser: usr,
+		})
+		require.NoError(t, err)
+		require.Equal(t, 1, len(children))
+		assert.Equal(t, parent.UID, children[0].UID)
+
+		// Service account should be able to list k6 folder
+		children, err = folderStore.GetChildren(context.Background(), folder.GetChildrenQuery{
+			OrgID:        orgID,
+			SignedInUser: &user.SignedInUser{UserID: 2, OrgID: orgID, IsServiceAccount: true},
+		})
+		require.NoError(t, err)
+		require.Equal(t, 2, len(children))
+		childrenUIDs := make([]string, 0, len(children))
+		for _, child := range children {
+			childrenUIDs = append(childrenUIDs, child.UID)
+		}
+		assert.EqualValues(t, []string{parent.UID, accesscontrol.K6FolderUID}, childrenUIDs)
+	})
+
+	t.Run("pagination works if k6-app folder is hidden", func(t *testing.T) {
+		for i := 0; i < 4; i++ {
+			_, err = folderStore.Create(context.Background(), folder.CreateFolderCommand{
+				Title: fmt.Sprintf("root-%d", i),
+				OrgID: orgID,
+				UID:   fmt.Sprintf("root-%d", i),
+			})
+			require.NoError(t, err)
+		}
+
+		// Should skip k6-app folder but get parent folder and two more folders
+		children, err := folderStore.GetChildren(context.Background(), folder.GetChildrenQuery{
+			OrgID:        orgID,
+			SignedInUser: usr,
+			Limit:        3,
+		})
+		require.NoError(t, err)
+		require.Equal(t, 3, len(children))
+		assert.EqualValues(t, []string{parent.UID, "root-0", "root-1"}, []string{children[0].UID, children[1].UID, children[2].UID})
+
+		// Should get the two remaining folders
+		children, err = folderStore.GetChildren(context.Background(), folder.GetChildrenQuery{
+			OrgID:        orgID,
+			SignedInUser: usr,
+			Page:         2,
+			Limit:        3,
+		})
+		require.NoError(t, err)
+		require.Equal(t, 2, len(children))
+		assert.EqualValues(t, []string{"root-2", "root-3"}, []string{children[0].UID, children[1].UID})
+	})
 }
 
 func TestIntegrationGetHeight(t *testing.T) {
@@ -739,7 +803,7 @@ func TestIntegrationGetHeight(t *testing.T) {
 	}
 
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, cfg)
+	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
 
@@ -772,7 +836,7 @@ func TestIntegrationGetFolders(t *testing.T) {
 
 	foldersNum := 10
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, cfg)
+	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
 

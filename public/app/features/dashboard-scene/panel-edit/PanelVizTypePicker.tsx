@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
@@ -73,7 +73,7 @@ export function PanelVizTypePicker({ vizManager, data, onChange }: Props) {
       <Field className={styles.customFieldMargin}>
         <RadioButtonGroup options={radioOptions} value={listMode} onChange={setListMode} fullWidth />
       </Field>
-      <CustomScrollbar autoHeightMin="100%">
+      <CustomScrollbar>
         {listMode === VisualizationSelectPaneTab.Visualizations && (
           <VizTypePicker pluginId={panel.state.pluginId} searchQuery={searchQuery} onChange={onVizTypeChange} />
         )}

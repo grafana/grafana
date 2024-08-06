@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { TagList, useStyles2 } from '@grafana/ui';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
@@ -21,7 +20,7 @@ export const Matchers = ({ matchers }: MatchersProps) => {
 };
 
 const getStyles = () => ({
-  tags: css`
-    justify-content: flex-start;
-  `,
+  tags: css({
+    justifyContent: 'flex-start',
+  }),
 });

@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -563,8 +564,7 @@ func seedResourcePermissions(
 
 func setupTestEnv(t testing.TB) (*store, db.DB, *setting.Cfg) {
 	sql, cfg := db.InitTestDBWithCfg(t)
-	asService := NewActionSetService()
-	return NewStore(sql, featuremgmt.WithFeatures(), &asService), sql, cfg
+	return NewStore(cfg, sql, featuremgmt.WithFeatures()), sql, cfg
 }
 
 func TestStore_IsInherited(t *testing.T) {
@@ -759,49 +759,346 @@ func retrievePermissionsHelper(store *store, t *testing.T) []orgPermission {
 	return permissions
 }
 
-func TestStore_ResourcePermissionsActionSets(t *testing.T) {
+func TestStore_StoreActionSet(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
 	type actionSetTest struct {
-		desc      string
-		orgID     int64
-		actionSet ActionSet
+		desc     string
+		resource string
+		action   string
+		actions  []string
 	}
 
 	tests := []actionSetTest{
 		{
-			desc:  "should be able to store actionset",
-			orgID: 1,
-			actionSet: ActionSet{
-				Actions: []string{"folders:read", "folders:write"},
+			desc:     "should be able to store action set",
+			resource: "folders",
+			action:   "edit",
+			actions:  []string{"folders:read", "folders:write"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			asService := NewActionSetService(featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets))
+			asService.StoreActionSet(GetActionSetName(tt.resource, tt.action), tt.actions)
+
+			actionSetName := GetActionSetName(tt.resource, tt.action)
+			actionSet := asService.ResolveActionSet(actionSetName)
+			require.Equal(t, append(tt.actions, "folders:create"), actionSet)
+		})
+	}
+}
+
+func TestStore_RegisterActionSet(t *testing.T) {
+	type actionSetTest struct {
+		desc               string
+		features           featuremgmt.FeatureToggles
+		pluginID           string
+		pluginActions      []plugins.ActionSet
+		coreActionSets     []ActionSet
+		expectedErr        bool
+		expectedActionSets []ActionSet
+	}
+
+	tests := []actionSetTest{
+		{
+			desc:     "should be able to register a plugin action set if the right feature toggles are enabled",
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets, featuremgmt.FlagAccessControlOnCall),
+			pluginID: "test-app",
+			pluginActions: []plugins.ActionSet{
+				{
+					Action:  "folders:view",
+					Actions: []string{"test-app.resource:read"},
+				},
+			},
+			expectedActionSets: []ActionSet{
+				{
+					Action:  "folders:view",
+					Actions: []string{"test-app.resource:read"},
+				},
+			},
+		},
+		{
+			desc:     "should not register plugin action set if feature toggles are missing",
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall),
+			pluginID: "test-app",
+			pluginActions: []plugins.ActionSet{
+				{
+					Action:  "folders:view",
+					Actions: []string{"test-app.resource:read"},
+				},
+			},
+			expectedActionSets: []ActionSet{},
+		},
+		{
+			desc:     "should be able to register multiple plugin action sets",
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets, featuremgmt.FlagAccessControlOnCall),
+			pluginID: "test-app",
+			pluginActions: []plugins.ActionSet{
+				{
+					Action:  "folders:view",
+					Actions: []string{"test-app.resource:read"},
+				},
+				{
+					Action:  "folders:edit",
+					Actions: []string{"test-app.resource:write", "test-app.resource:delete"},
+				},
+			},
+			expectedActionSets: []ActionSet{
+				{
+					Action:  "folders:view",
+					Actions: []string{"test-app.resource:read"},
+				},
+				{
+					Action:  "folders:edit",
+					Actions: []string{"test-app.resource:write", "test-app.resource:delete"},
+				},
+			},
+		},
+		{
+			desc:     "action set actions should be added not replaced",
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets, featuremgmt.FlagAccessControlOnCall),
+			pluginID: "test-app",
+			pluginActions: []plugins.ActionSet{
+				{
+					Action:  "folders:view",
+					Actions: []string{"test-app.resource:read"},
+				},
+				{
+					Action:  "folders:edit",
+					Actions: []string{"test-app.resource:write", "test-app.resource:delete"},
+				},
+			},
+			coreActionSets: []ActionSet{
+				{
+					Action:  "folders:view",
+					Actions: []string{"folders:read"},
+				},
+				{
+					Action:  "folders:edit",
+					Actions: []string{"folders:write", "folders:delete"},
+				},
+				{
+					Action:  "folders:admin",
+					Actions: []string{"folders.permissions:read"},
+				},
+			},
+			expectedActionSets: []ActionSet{
+				{
+					Action:  "folders:view",
+					Actions: []string{"folders:read", "test-app.resource:read"},
+				},
+				{
+					Action:  "folders:edit",
+					Actions: []string{"folders:write", "test-app.resource:write", "folders:delete", "test-app.resource:delete"},
+				},
+				{
+					Action:  "folders:admin",
+					Actions: []string{"folders.permissions:read"},
+				},
+			},
+		},
+		{
+			desc:     "should not be able to register an action that doesn't have a plugin prefix",
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets, featuremgmt.FlagAccessControlOnCall),
+			pluginID: "test-app",
+			pluginActions: []plugins.ActionSet{
+				{
+					Action:  "folders:view",
+					Actions: []string{"test-app.resource:read"},
+				},
+				{
+					Action:  "folders:edit",
+					Actions: []string{"users:read", "test-app.resource:delete"},
+				},
+			},
+			expectedErr: true,
+		},
+		{
+			desc:     "should not be able to register action set that is not in the allow list",
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets, featuremgmt.FlagAccessControlOnCall),
+			pluginID: "test-app",
+			pluginActions: []plugins.ActionSet{
+				{
+					Action:  "folders:super-admin",
+					Actions: []string{"test-app.resource:read"},
+				},
+			},
+			expectedErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			asService := NewActionSetService(tt.features)
+
+			err := asService.RegisterActionSets(context.Background(), tt.pluginID, tt.pluginActions)
+			if tt.expectedErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			for _, set := range tt.coreActionSets {
+				asService.StoreActionSet(set.Action, set.Actions)
+			}
+
+			for _, expected := range tt.expectedActionSets {
+				actions := asService.ResolveActionSet(expected.Action)
+				if expected.Action == "folders:edit" || expected.Action == "folders:admin" {
+					expected.Actions = append(expected.Actions, "folders:create")
+				}
+				assert.ElementsMatch(t, expected.Actions, actions)
+			}
+
+			if len(tt.expectedActionSets) == 0 {
+				for _, set := range tt.pluginActions {
+					registeredActions := asService.ResolveActionSet(set.Action)
+					assert.Empty(t, registeredActions, "no actions from plugin action sets should have been registered")
+				}
+			}
+		})
+	}
+}
+
+func TestStore_ResolveActionSet(t *testing.T) {
+	actionSetService := NewActionSetService(featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets))
+	actionSetService.StoreActionSet("folders:edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
+	actionSetService.StoreActionSet("folders:view", []string{"folders:read", "dashboards:read"})
+	actionSetService.StoreActionSet("dashboards:view", []string{"dashboards:read"})
+
+	type actionSetTest struct {
+		desc               string
+		action             string
+		expectedActionSets []string
+	}
+
+	tests := []actionSetTest{
+		{
+			desc:               "should return empty list for an action that is not a part of any action sets",
+			action:             "datasources:query",
+			expectedActionSets: []string{},
+		},
+		{
+			desc:               "should be able to resolve one action set for the resource of the same type",
+			action:             "folders:write",
+			expectedActionSets: []string{"folders:edit"},
+		},
+		{
+			desc:               "should be able to resolve multiple action sets for the resource of the same type",
+			action:             "folders:read",
+			expectedActionSets: []string{"folders:view", "folders:edit"},
+		},
+		{
+			desc:               "should be able to resolve multiple action sets for the resource of a different type",
+			action:             "dashboards:read",
+			expectedActionSets: []string{"folders:view", "folders:edit", "dashboards:view"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			actionSets := actionSetService.ResolveAction(tt.action)
+			require.ElementsMatch(t, tt.expectedActionSets, actionSets)
+		})
+	}
+}
+
+func TestStore_ExpandActions(t *testing.T) {
+	actionSetService := NewActionSetService(featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets))
+	actionSetService.StoreActionSet("folders:edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
+	actionSetService.StoreActionSet("folders:view", []string{"folders:read", "dashboards:read"})
+	actionSetService.StoreActionSet("dashboards:view", []string{"dashboards:read"})
+
+	type actionSetTest struct {
+		desc                string
+		permissions         []accesscontrol.Permission
+		expectedPermissions []accesscontrol.Permission
+	}
+
+	tests := []actionSetTest{
+		{
+			desc:                "should return empty list if no permissions are passed in",
+			permissions:         []accesscontrol.Permission{},
+			expectedPermissions: []accesscontrol.Permission{},
+		},
+		{
+			desc: "should return unchanged permissions if none of actions are part of any action sets",
+			permissions: []accesscontrol.Permission{
+				{
+					Action: "datasources:create",
+				},
+				{
+					Action: "users:read",
+					Scope:  "users:*",
+				},
+			},
+			expectedPermissions: []accesscontrol.Permission{
+				{
+					Action: "datasources:create",
+				},
+				{
+					Action: "users:read",
+					Scope:  "users:*",
+				},
+			},
+		},
+		{
+			desc: "should return unchanged permissions if none of actions are part of any action sets",
+			permissions: []accesscontrol.Permission{
+				{
+					Action: "datasources:create",
+				},
+				{
+					Action: "users:read",
+					Scope:  "users:*",
+				},
+			},
+			expectedPermissions: []accesscontrol.Permission{
+				{
+					Action: "datasources:create",
+				},
+				{
+					Action: "users:read",
+					Scope:  "users:*",
+				},
+			},
+		},
+		{
+			desc: "should be able to expand one permission and leave others unchanged",
+			permissions: []accesscontrol.Permission{
+				{
+					Action: "folders:view",
+					Scope:  "folders:uid:1",
+				},
+				{
+					Action: "users:read",
+					Scope:  "users:*",
+				},
+			},
+			expectedPermissions: []accesscontrol.Permission{
+				{
+					Action: "folders:read",
+					Scope:  "folders:uid:1",
+				},
+				{
+					Action: "dashboards:read",
+					Scope:  "folders:uid:1",
+				},
+				{
+					Action: "users:read",
+					Scope:  "users:*",
+				},
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store, _, _ := setupTestEnv(t)
-			store.features = featuremgmt.WithFeatures([]any{featuremgmt.FlagAccessActionSets})
-
-			_, err := store.SetResourcePermissions(context.Background(), 1, []SetResourcePermissionsCommand{
-				{
-					User: accesscontrol.User{ID: 1},
-					SetResourcePermissionCommand: SetResourcePermissionCommand{
-						Actions:           tt.actionSet.Actions,
-						Resource:          "folders",
-						Permission:        "edit",
-						ResourceID:        "1",
-						ResourceAttribute: "uid",
-					},
-				},
-			}, ResourceHooks{})
-			require.NoError(t, err)
-
-			actionname := fmt.Sprintf("%s:%s", "folders", "edit")
-			actionSet := store.actionSetService.GetActionSet(actionname)
-			require.Equal(t, tt.actionSet.Actions, actionSet)
+			permissions := actionSetService.ExpandActionSets(tt.permissions)
+			require.ElementsMatch(t, tt.expectedPermissions, permissions)
 		})
 	}
 }

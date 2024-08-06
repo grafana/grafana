@@ -12,7 +12,7 @@ import {
   useKBar,
   ActionImpl,
 } from 'kbar';
-import React, { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -121,7 +121,11 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
   const showEmptyState = !isFetchingSearchResults && items.length === 0;
 
   return showEmptyState ? (
-    <EmptyState variant="not-found" message={t('command-palette.empty-state.message', 'No results found')} />
+    <EmptyState
+      variant="not-found"
+      role="alert"
+      message={t('command-palette.empty-state.message', 'No results found')}
+    />
   ) : (
     <KBarResults
       items={items}

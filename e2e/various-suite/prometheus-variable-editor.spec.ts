@@ -118,5 +118,5 @@ describe('Prometheus variable query editor', () => {
 });
 
 function selectOption(option: string) {
-  cy.get("[aria-label='Select option']").contains(option).should('be.visible').click();
+  e2e.components.Select.option().contains(option).should('be.visible').click();
 }

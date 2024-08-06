@@ -107,8 +107,12 @@ export function prepSeries(
       if (x != null) {
         // match y fields and create series
         onlyNumFields.forEach((field) => {
-          // don't reuse already-mapped fields
-          if (field === x || field === color || field === size) {
+          if (field === x) {
+            return;
+          }
+
+          // in auto mode don't reuse already-mapped fields
+          if (mapping === SeriesMapping.Auto && (field === color || field === size)) {
             return;
           }
 
@@ -129,11 +133,14 @@ export function prepSeries(
               },
 
               showPoints: y.config.custom.show === XYShowMode.Lines ? VisibilityMode.Never : VisibilityMode.Always,
+              pointShape: y.config.custom.pointShape,
+              pointStrokeWidth: y.config.custom.pointStrokeWidth,
+              fillOpacity: y.config.custom.fillOpacity,
 
               showLine: y.config.custom.show !== XYShowMode.Points,
               lineWidth: y.config.custom.lineWidth ?? 2,
               lineStyle: y.config.custom.lineStyle,
-              // lineColor: () => seriesColor,
+
               x: {
                 field: x!,
               },

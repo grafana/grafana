@@ -14,6 +14,7 @@ const filterTokenToTypeMap: Record<number, string> = {
   [terms.TypeToken]: 'type',
   [terms.HealthToken]: 'health',
   [terms.DashboardToken]: 'dashboard',
+  [terms.PluginsToken]: 'plugins',
 };
 
 // This enum allows to configure parser behavior
@@ -29,6 +30,7 @@ export enum FilterSupportedTerm {
   type = 'typeFilter',
   health = 'healthFilter',
   dashboard = 'dashboardFilter',
+  plugins = 'pluginsFilter',
 }
 
 export type QueryFilterMapper = Record<number, (filter: string) => void>;
@@ -97,7 +99,7 @@ export function applyFiltersToQuery(
     }
   });
 
-  let newQueryExpressions: string[] = [];
+  const newQueryExpressions: string[] = [];
 
   // Apply filters from filterState in the same order as they appear in the search query
   // This allows to remain the order of filters in the search input during changes
@@ -134,7 +136,7 @@ export function applyFiltersToQuery(
 function traverseNodeTree(query: string, supportedTerms: FilterSupportedTerm[], visit: (node: SyntaxNode) => void) {
   const dialect = supportedTerms.join(' ');
   const parsed = parser.configure({ dialect }).parse(query);
-  let cursor = parsed.cursor();
+  const cursor = parsed.cursor();
   do {
     visit(cursor.node);
   } while (cursor.next());

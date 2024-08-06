@@ -18,11 +18,32 @@ labels:
     - oss
 title: Grafana Pyroscope
 weight: 1150
+refs:
+  flame-graph:
+    - pattern: /docs/grafana/
+      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/
+    - pattern: /docs/grafana-cloud/
+      destination: https://grafana.com/docs/grafana-cloud/visualizations/panels-visualizations/visualizations/flame-graph/
+  configure-tempo-data-source:
+    - pattern: /docs/grafana/
+      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/
+    - pattern: /docs/grafana-cloud/
+      destination: https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/tempo/configure-tempo-data-source/
+  explore:
+    - pattern: /docs/grafana/
+      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/
+    - pattern: /docs/grafana-cloud/
+      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/
+  provisioning-data-sources:
+    - pattern: /docs/grafana/
+      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
+    - pattern: /docs/grafana-cloud/
+      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
 ---
 
 # Grafana Pyroscope data source
 
-Grafana Pyroscope is a horizontally scalable, highly available, multi-tenant, OSS, continuous profiling aggregation system. Add it as a data source, and you are ready to query your profiles in [Explore][explore].
+Grafana Pyroscope is a horizontally scalable, highly available, multi-tenant, OSS, continuous profiling aggregation system. Add it as a data source, and you are ready to query your profiles in [Explore](ref:explore).
 
 Refer to [Introduction to Pyroscope](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/introduction/) to understand profiling and Pyroscope.
 
@@ -48,14 +69,14 @@ Combined traces and profiles let you see granular line-level detail when availab
 
 ![trace-profiler-view](https://grafana.com/static/img/pyroscope/pyroscope-trace-profiler-view-2023-11-30.png)
 
-For more information, refer to the [Traces to profile section][configure-tempo-data-source] and [Link tracing and profiling with span profiles](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/trace-span-profiles/).
+For more information, refer to the [Traces to profile section](ref:configure-tempo-data-source) and [Link tracing and profiling with span profiles](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/trace-span-profiles/).
 
 {{< youtube id="AG8VzfFMLxo" >}}
 
-## Provision the Grafana Pyroscope data source
+## Provision the Pyroscope data source
 
-You can modify the Grafana configuration files to provision the Grafana Pyroscope data source.
-To learn more, and to view the available provisioning settings, refer to [provisioning documentation][provisioning-data-sources].
+You can modify the Grafana configuration files to provision the Pyroscope data source.
+To learn more, and to view the available provisioning settings, refer to [provisioning documentation](ref:provisioning-data-sources).
 
 Here is an example configuration:
 
@@ -69,17 +90,3 @@ datasources:
     jsonData:
       minStep: '15s'
 ```
-
-{{% docs/reference %}}
-[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-
-[flame-graph]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/flame-graph"
-[flame-graph]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/flame-graph"
-
-[provisioning-data-sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#datasources"
-[provisioning-data-sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#datasources"
-
-[configure-tempo-data-source]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/tempo/configure-tempo-data-source"
-[configure-tempo-data-source]: "/docs/grafana-cloud/ -> docs/grafana-cloud/connect-externally-hosted/data-sources/tempo/configure-tempo-data-source"
-{{% /docs/reference %}}

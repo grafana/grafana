@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { PanelPlugin } from '@grafana/data';
 import { TagsInput } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
@@ -41,6 +39,11 @@ export const plugin = new PanelPlugin<Options>(DashList)
         path: 'showHeadings',
         name: 'Show headings',
         defaultValue: defaultOptions.showHeadings,
+      })
+      .addBooleanSwitch({
+        path: 'showFolderNames',
+        name: 'Show folder names',
+        defaultValue: defaultOptions.showFolderNames,
       })
       .addNumberInput({
         path: 'maxItems',

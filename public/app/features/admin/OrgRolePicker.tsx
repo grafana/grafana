@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { OrgRole } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
@@ -22,7 +20,7 @@ export function OrgRolePicker({ value, onChange, 'aria-label': ariaLabel, inputI
       inputId={inputId}
       value={value}
       options={options}
-      onChange={(val) => onChange(val.value as OrgRole)}
+      onChange={(val) => onChange(val.value ?? OrgRole.None)}
       placeholder="Choose role..."
       aria-label={ariaLabel}
       autoFocus={autoFocus}

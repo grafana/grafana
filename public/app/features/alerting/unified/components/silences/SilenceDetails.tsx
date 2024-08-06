@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { dateMath, GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -26,25 +25,30 @@ export const SilenceDetails = ({ silence }: Props) => {
       <div className={styles.title}>Schedule</div>
       <div>{`${startsAtDate?.format(dateDisplayFormat)} - ${endsAtDate?.format(dateDisplayFormat)}`}</div>
       <div className={styles.title}>Duration</div>
-      <div> {duration}</div>
+      <div>{duration}</div>
       <div className={styles.title}>Created by</div>
-      <div> {createdBy}</div>
-      <div className={styles.title}>Affected alerts</div>
-      <SilencedAlertsTable silencedAlerts={silencedAlerts} />
+      <div>{createdBy}</div>
+      {Array.isArray(silencedAlerts) && (
+        <>
+          <div className={styles.title}>Affected alerts</div>
+          <SilencedAlertsTable silencedAlerts={silencedAlerts} />
+        </>
+      )}
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    display: grid;
-    grid-template-columns: 1fr 9fr;
-    grid-row-gap: 1rem;
-  `,
-  title: css`
-    color: ${theme.colors.text.primary};
-  `,
-  row: css`
-    margin: ${theme.spacing(1, 0)};
-  `,
+  container: css({
+    display: 'grid',
+    gridTemplateColumns: '1fr 9fr',
+    gridRowGap: '1rem',
+    paddingBottom: theme.spacing(2),
+  }),
+  title: css({
+    color: theme.colors.text.primary,
+  }),
+  row: css({
+    margin: theme.spacing(1, 0),
+  }),
 });

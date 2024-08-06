@@ -14,13 +14,19 @@ labels:
     - enterprise
     - oss
 title: Public Dashboard HTTP API
+refs:
+  role-based-access-control-permissions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
 ---
 
 # Public Dashboard API
 
 {{% admonition type="note" %}}
 
-If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions][] for more information.
+If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions](ref:role-based-access-control-permissions) for more information.
 
 {{% /admonition %}}
 
@@ -319,8 +325,3 @@ Content-Type: application/json
     "perPage": 2
 }
 ```
-
-{{% docs/reference %}}
-[Role-based access control permissions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes"
-[Role-based access control permissions]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes"
-{{% /docs/reference %}}

@@ -55,6 +55,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
       [AzureQueryType.AzureMonitor]: this.azureMonitorDatasource,
       [AzureQueryType.LogAnalytics]: this.azureLogAnalyticsDatasource,
       [AzureQueryType.AzureResourceGraph]: this.azureResourceGraphDatasource,
+      [AzureQueryType.AzureTraces]: this.azureLogAnalyticsDatasource,
     };
 
     this.variables = new VariableSupport(this);
@@ -107,7 +108,11 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     }
 
     const observables: Array<Observable<DataQueryResponse>> = Array.from(byType.entries()).map(([queryType, req]) => {
-      const mappedQueryType = queryType === AzureQueryType.AzureTraces ? AzureQueryType.LogAnalytics : queryType;
+      let mappedQueryType = queryType;
+      if (queryType === AzureQueryType.AzureTraces || queryType === AzureQueryType.TraceExemplar) {
+        mappedQueryType = AzureQueryType.LogAnalytics;
+      }
+
       const ds = this.pseudoDatasource[mappedQueryType];
       if (!ds) {
         throw new Error('Data source not created for query type ' + queryType);
@@ -164,7 +169,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   getMetricNamespaces(subscriptionId: string, resourceGroup?: string) {
     let url = `/subscriptions/${subscriptionId}`;
     if (resourceGroup) {
-      url += `/resourceGroups/${resourceGroup};`;
+      url += `/resourceGroups/${resourceGroup}`;
     }
     return this.azureMonitorDatasource.getMetricNamespaces({ resourceUri: url }, true);
   }
@@ -250,6 +255,7 @@ function hasQueryForType(query: AzureMonitorQuery): boolean {
       return !!query.azureResourceGraph;
 
     case AzureQueryType.AzureTraces:
+    case AzureQueryType.TraceExemplar:
       return !!query.azureTraces;
 
     case AzureQueryType.GrafanaTemplateVariableFn:

@@ -1,5 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import * as React from 'react';
 
 import { InlineField, Switch, InlineSwitch } from '@grafana/ui';
 
@@ -33,8 +34,8 @@ export const Controlled: StoryFn<typeof Switch> = (args) => {
       </div>
       <div style={{ marginBottom: '32px' }}>
         <InlineFieldRow>
-          <InlineField label="My switch" invalid={args.invalid}>
-            <InlineSwitch value={args.value} disabled={args.disabled} />
+          <InlineField label="My switch" invalid={args.invalid} disabled={args.disabled}>
+            <InlineSwitch value={args.value} />
           </InlineField>
         </InlineFieldRow>
       </div>

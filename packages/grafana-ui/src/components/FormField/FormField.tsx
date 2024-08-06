@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { InputHTMLAttributes } from 'react';
+import { InputHTMLAttributes } from 'react';
+import * as React from 'react';
 
 import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { Field } from '../Forms/Field';
@@ -17,11 +18,6 @@ export interface Props extends InputHTMLAttributes<HTMLInputElement> {
   interactive?: boolean;
 }
 
-const defaultProps = {
-  labelWidth: 6,
-  inputWidth: 12,
-};
-
 /**
  * Default form field including label used in Grafana UI. Default input element is simple <input />. You can also pass
  * custom inputEl if required in which case inputWidth and inputProps are ignored.
@@ -31,8 +27,8 @@ const defaultProps = {
 export const FormField = ({
   label,
   tooltip,
-  labelWidth,
-  inputWidth,
+  labelWidth = 6,
+  inputWidth = 12,
   inputEl,
   className,
   interactive,
@@ -57,7 +53,6 @@ export const FormField = ({
 };
 
 FormField.displayName = 'FormField';
-FormField.defaultProps = defaultProps;
 
 const getStyles = () => {
   return {

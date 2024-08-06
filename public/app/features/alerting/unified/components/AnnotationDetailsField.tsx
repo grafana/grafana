@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { TextLink, Tooltip, useStyles2 } from '@grafana/ui';
@@ -67,7 +66,7 @@ const AnnotationValue = ({ annotationKey, value, valueLink }: Props) => {
 };
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  well: css`
-    word-break: break-word;
-  `,
+  well: css({
+    wordBreak: 'break-word',
+  }),
 });

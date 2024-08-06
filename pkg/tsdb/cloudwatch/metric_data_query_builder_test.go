@@ -472,7 +472,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			Namespace:  "AWS/EC2",
 			MetricName: "CPUUtilization",
 			Dimensions: map[string][]string{
-				"lb4": {`lb4""`},
+				"lb4": {`lb4's""'`},
 			},
 			Period:     300,
 			Expression: "",
@@ -480,7 +480,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		}
 		res := buildSearchExpression(query, "Average")
 
-		assert.Contains(t, res, `lb4\"\"`, "Expected escape double quotes")
+		assert.Contains(t, res, `lb4\'s\"\"\'`, "Expected escaped quotes")
 	})
 }
 

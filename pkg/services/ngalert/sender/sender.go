@@ -80,8 +80,7 @@ func (cfg *ExternalAMcfg) headerString() string {
 	return result.String()
 }
 
-func NewExternalAlertmanagerSender(opts ...Option) *ExternalAlertmanager {
-	l := log.New("ngalert.sender.external-alertmanager")
+func NewExternalAlertmanagerSender(l log.Logger, reg prometheus.Registerer, opts ...Option) (*ExternalAlertmanager, error) {
 	sdCtx, sdCancel := context.WithCancel(context.Background())
 	s := &ExternalAlertmanager{
 		logger:   l,
@@ -91,17 +90,25 @@ func NewExternalAlertmanagerSender(opts ...Option) *ExternalAlertmanager {
 	s.manager = NewManager(
 		// Injecting a new registry here means these metrics are not exported.
 		// Once we fix the individual Alertmanager metrics we should fix this scenario too.
-		&Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: prometheus.NewRegistry()},
+		&Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: reg},
 		s.logger,
 	)
+	sdMetrics, err := discovery.CreateAndRegisterSDMetrics(prometheus.NewRegistry())
+	if err != nil {
+		s.logger.Error("failed to register service discovery metrics", "error", err)
+		return nil, err
+	}
+	s.sdManager = discovery.NewManager(sdCtx, s.logger, prometheus.NewRegistry(), sdMetrics)
 
-	s.sdManager = discovery.NewManager(sdCtx, s.logger)
+	if s.sdManager == nil {
+		return nil, errors.New("failed to create new discovery manager")
+	}
 
 	for _, opt := range opts {
 		opt(s)
 	}
 
-	return s
+	return s, nil
 }
 
 // ApplyConfig syncs a configuration with the sender.

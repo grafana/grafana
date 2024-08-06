@@ -22,7 +22,7 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
     options.config.mode === GraphThresholdsStyleMode.Dashed ||
     options.config.mode === GraphThresholdsStyleMode.DashedAndArea
       ? [10, 10]
-      : null;
+      : [];
 
   function addLines(u: uPlot, yScaleKey: string, steps: Threshold[], theme: GrafanaTheme2) {
     let ctx = u.ctx;
@@ -39,10 +39,7 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
     }
 
     ctx.lineWidth = 2;
-
-    if (dashSegments) {
-      ctx.setLineDash(dashSegments);
-    }
+    ctx.setLineDash(dashSegments);
 
     // Ignore the base -Infinity threshold by always starting on index 1
     for (let idx = 1; idx < steps.length; idx++) {

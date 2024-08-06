@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import debounce from 'debounce-promise';
-import React, { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';

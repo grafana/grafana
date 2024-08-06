@@ -1,4 +1,4 @@
-import { createDataFrame } from '../dataframe';
+import { createDataFrame } from '../dataframe/processDataFrame';
 import { dateTime } from '../datetime/moment_wrapper';
 import { TimeRange } from '../types/time';
 

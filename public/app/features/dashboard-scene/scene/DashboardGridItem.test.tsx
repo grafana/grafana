@@ -4,7 +4,7 @@ import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
 
-import { DashboardGridItem } from './DashboardGridItem';
+import { DashboardGridItem, DashboardGridItemState } from './DashboardGridItem';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -40,6 +40,54 @@ describe('PanelRepeaterGridItem', () => {
     expect(repeater.state.repeatedPanels?.length).toBe(5);
   });
 
+  it('Should display a panel when there are no options', async () => {
+    const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 1, numberOfOptions: 0 });
+
+    activateFullSceneTree(scene);
+
+    expect(repeater.state.repeatedPanels?.length).toBe(0);
+
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(repeater.state.repeatedPanels?.length).toBe(1);
+  });
+
+  it('Should display a panel when there are variable errors', () => {
+    const { scene, repeater } = buildPanelRepeaterScene({
+      variableQueryTime: 0,
+      numberOfOptions: 0,
+      throwError: 'Error',
+    });
+
+    // we expect console.error when variable encounters an error
+    const origError = console.error;
+    console.error = jest.fn();
+
+    activateFullSceneTree(scene);
+
+    expect(repeater.state.repeatedPanels?.length).toBe(1);
+    console.error = origError;
+  });
+
+  it('Should display a panel when there are variable errors async query', async () => {
+    const { scene, repeater } = buildPanelRepeaterScene({
+      variableQueryTime: 1,
+      numberOfOptions: 0,
+      throwError: 'Error',
+    });
+
+    // we expect console.error when variable encounters an error
+    const origError = console.error;
+    console.error = jest.fn();
+
+    activateFullSceneTree(scene);
+
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(repeater.state.repeatedPanels?.length).toBe(1);
+    console.error = origError;
+  });
+
   it('Should adjust container height to fit panels direction is horizontal', async () => {
     const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 0, maxPerRow: 2, itemHeight: 10 });
 
@@ -61,6 +109,18 @@ describe('PanelRepeaterGridItem', () => {
 
     // In vertical direction height itemCount * itemHeight
     expect(repeater.state.height).toBe(50);
+  });
+
+  it('Should skip repeat when variable values are the same ', async () => {
+    const { scene, repeater, variable } = buildPanelRepeaterScene({ variableQueryTime: 0, itemHeight: 10 });
+    const stateUpdates: DashboardGridItemState[] = [];
+    repeater.subscribeToState((state) => stateUpdates.push(state));
+
+    activateFullSceneTree(scene);
+
+    expect(stateUpdates.length).toBe(1);
+    repeater.variableDependency?.variableUpdateCompleted(variable, true);
+    expect(stateUpdates.length).toBe(1);
   });
 
   it('Should adjust itemHeight when container is resized, direction horizontal', async () => {

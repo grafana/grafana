@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
-import React, { PureComponent, useEffect, useState } from 'react';
+import { PureComponent, useEffect, useState } from 'react';
+import * as React from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import {
   CoreApp,
   DataSourceApi,
   DataSourceInstanceSettings,
+  getDataSourceRef,
   getDefaultTimeRange,
   LoadingState,
   PanelData,
@@ -148,8 +150,7 @@ export class QueryGroup extends PureComponent<Props, State> {
       dataSource: {
         name: newSettings.name,
         uid: newSettings.uid,
-        type: newSettings.meta.id,
-        default: newSettings.isDefault,
+        ...getDataSourceRef(newSettings),
       },
     });
 
@@ -173,11 +174,16 @@ export class QueryGroup extends PureComponent<Props, State> {
   newQuery(): Partial<DataQuery> {
     const { dsSettings, defaultDataSource } = this.state;
 
-    const ds = !dsSettings?.meta.mixed ? dsSettings : defaultDataSource;
+    const ds =
+      dsSettings && !dsSettings.meta.mixed
+        ? getDataSourceRef(dsSettings)
+        : defaultDataSource
+          ? defaultDataSource.getRef()
+          : { type: undefined, uid: undefined };
 
     return {
       ...this.state.dataSource?.getDefaultQuery?.(CoreApp.PanelEditor),
-      datasource: { uid: ds?.uid, type: ds?.type },
+      datasource: ds,
     };
   }
 
@@ -240,7 +246,9 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onAddQuery = (query: Partial<DataQuery>) => {
     const { dsSettings, queries } = this.state;
-    this.onQueriesChange(addQuery(queries, query, { type: dsSettings?.type, uid: dsSettings?.uid }));
+    this.onQueriesChange(
+      addQuery(queries, query, dsSettings ? getDataSourceRef(dsSettings) : { type: undefined, uid: undefined })
+    );
     this.onScrollBottom();
   };
 
@@ -398,7 +406,7 @@ export function QueryGroupTopSection({
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   return (
     <>
-      <div>
+      <div data-testid={selectors.components.QueryTab.queryGroupTopSection}>
         <div className={styles.dataSourceRow}>
           <InlineFormLabel htmlFor="data-source-picker" width={'auto'}>
             Data source

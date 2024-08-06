@@ -55,8 +55,9 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
                 : distr === ScaleDistribution.Ordinal
                   ? 2
                   : 1,
-          log: distr === ScaleDistribution.Log || distr === ScaleDistribution.Symlog ? this.props.log ?? 2 : undefined,
-          asinh: distr === ScaleDistribution.Symlog ? this.props.linearThreshold ?? 1 : undefined,
+          log:
+            distr === ScaleDistribution.Log || distr === ScaleDistribution.Symlog ? (this.props.log ?? 2) : undefined,
+          asinh: distr === ScaleDistribution.Symlog ? (this.props.linearThreshold ?? 1) : undefined,
         }
       : {};
 
@@ -155,11 +156,6 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       const scale = u.scales[scaleKey];
 
       let minMax: uPlot.Range.MinMax = [dataMin, dataMax];
-
-      // don't pad numeric x scales
-      if (scaleKey === 'x' && !isTime && distr === ScaleDistribution.Linear) {
-        return minMax;
-      }
 
       // happens when all series on a scale are `show: false`, re-returning nulls will auto-disable axis
       if (!hasFixedRange && dataMin == null && dataMax == null) {

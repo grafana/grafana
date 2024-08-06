@@ -1,7 +1,8 @@
 // Libraries
 import { isNumber } from 'lodash';
 
-import { NullValueMode, Field, FieldCalcs, FieldType } from '../types/index';
+import { NullValueMode } from '../types/data';
+import { Field, FieldCalcs, FieldType } from '../types/dataFrame';
 import { Registry, RegistryItem } from '../utils/Registry';
 
 export enum ReducerID {
@@ -13,6 +14,7 @@ export enum ReducerID {
   variance = 'variance',
   stdDev = 'stdDev',
   last = 'last',
+  median = 'median',
   first = 'first',
   count = 'count',
   range = 'range',
@@ -275,6 +277,14 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'Average Value',
     standard: true,
     aliasIds: ['avg'],
+    preservesUnits: true,
+  },
+  {
+    id: ReducerID.median,
+    name: 'Median',
+    description: 'Median Value',
+    standard: true,
+    aliasIds: ['median'],
     preservesUnits: true,
   },
   {

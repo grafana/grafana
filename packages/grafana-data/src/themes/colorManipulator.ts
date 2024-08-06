@@ -371,3 +371,20 @@ interface DecomposeColor {
   values: any;
   colorSpace?: string;
 }
+
+export const colorManipulator = {
+  clamp,
+  hexToRgb,
+  rgbToHex,
+  asHexString,
+  asRgbString,
+  hslToRgb,
+  decomposeColor,
+  recomposeColor,
+  getContrastRatio,
+  getLuminance,
+  emphasize,
+  alpha,
+  darken,
+  lighten,
+};

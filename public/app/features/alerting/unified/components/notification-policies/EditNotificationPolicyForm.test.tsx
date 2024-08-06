@@ -1,7 +1,6 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
-import React from 'react';
 import { byRole } from 'testing-library-selector';
 
 import { Button } from '@grafana/ui';
@@ -99,7 +98,7 @@ describe('EditNotificationPolicyForm', function () {
     await user.click(ui.submitBtn.get());
 
     expect(ui.error.getAll()).toHaveLength(1);
-    expect(ui.error.get().textContent).toBe('Repeat interval should be higher or equal to Group interval');
+    expect(ui.error.get()).toHaveTextContent('Repeat interval should be higher or equal to Group interval');
     expect(onSubmit).not.toHaveBeenCalled();
   });
 

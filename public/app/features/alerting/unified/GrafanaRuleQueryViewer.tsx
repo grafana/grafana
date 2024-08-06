@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { keyBy, startCase } from 'lodash';
-import React from 'react';
+import * as React from 'react';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
 import { secondsToHms } from '@grafana/data/src/datetime/rangeutil';
@@ -58,7 +58,6 @@ export function GrafanaRuleQueryViewer({ rule, queries, condition, evalDataByQue
                 rule={rule}
                 key={index}
                 refId={refId}
-                isAlertCondition={condition === refId}
                 model={model}
                 relativeTimeRange={relativeTimeRange}
                 dataSource={dataSource}
@@ -72,8 +71,6 @@ export function GrafanaRuleQueryViewer({ rule, queries, condition, evalDataByQue
       <div className={styles.maxWidthContainer}>
         <Stack gap={1} wrap="wrap" data-testid="expressions-container">
           {expressions.map(({ model, refId, datasourceUid }, index) => {
-            const dataSource = dsByUid[datasourceUid];
-
             return (
               isExpressionQuery(model) && (
                 <ExpressionPreview
@@ -81,7 +78,6 @@ export function GrafanaRuleQueryViewer({ rule, queries, condition, evalDataByQue
                   refId={refId}
                   isAlertCondition={condition === refId}
                   model={model}
-                  dataSource={dataSource}
                   evalData={evalDataByQuery[refId]}
                 />
               )
@@ -95,7 +91,6 @@ export function GrafanaRuleQueryViewer({ rule, queries, condition, evalDataByQue
 
 interface QueryPreviewProps extends Pick<AlertQuery, 'refId' | 'relativeTimeRange' | 'model'> {
   rule: CombinedRule;
-  isAlertCondition: boolean;
   dataSource?: DataSourceInstanceSettings;
   queryData?: PanelData;
   thresholds?: ThresholdDefinition;
@@ -187,15 +182,15 @@ function DataSourceBadge({ name, imgUrl }: DataSourceBadgeProps) {
 }
 
 const getQueryPreviewStyles = (theme: GrafanaTheme2) => ({
-  queryPreviewWrapper: css`
-    margin: ${theme.spacing(1)};
-  `,
-  contentBox: css`
-    flex: 1 0 100%;
-  `,
-  visualization: css`
-    padding: ${theme.spacing(1)};
-  `,
+  queryPreviewWrapper: css({
+    margin: theme.spacing(1),
+  }),
+  contentBox: css({
+    flex: '1 0 100%',
+  }),
+  visualization: css({
+    padding: theme.spacing(1),
+  }),
   dataSource: css({
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
@@ -209,7 +204,6 @@ const getQueryPreviewStyles = (theme: GrafanaTheme2) => ({
 interface ExpressionPreviewProps extends Pick<AlertQuery, 'refId'> {
   isAlertCondition: boolean;
   model: ExpressionQuery;
-  dataSource: DataSourceInstanceSettings;
   evalData?: PanelData;
 }
 
@@ -297,13 +291,13 @@ const getQueryBoxStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
   }),
-  header: css`
-    display: flex;
-    align-items: center;
-    gap: ${theme.spacing(1)};
-    padding: ${theme.spacing(1)};
-    background-color: ${theme.colors.background.secondary};
-  `,
+  header: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    padding: theme.spacing(1),
+    backgroundColor: theme.colors.background.secondary,
+  }),
   textBlock: css({
     border: `1px solid ${theme.colors.border.weak}`,
     padding: theme.spacing(0.5, 1),
@@ -350,12 +344,12 @@ function ClassicConditionViewer({ model }: { model: ExpressionQuery }) {
 }
 
 const getClassicConditionViewerStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    padding: ${theme.spacing(1)};
-    display: grid;
-    grid-template-columns: max-content max-content max-content max-content max-content max-content;
-    gap: ${theme.spacing(0, 1)};
-  `,
+  container: css({
+    padding: theme.spacing(1),
+    display: 'grid',
+    gridTemplateColumns: 'repeat(6, max-content)',
+    gap: theme.spacing(0, 1),
+  }),
   ...getCommonQueryStyles(theme),
 });
 
@@ -383,17 +377,17 @@ function ReduceConditionViewer({ model }: { model: ExpressionQuery }) {
 }
 
 const getReduceConditionViewerStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    padding: ${theme.spacing(1)};
-    display: grid;
-    gap: ${theme.spacing(0.5)};
-    grid-template-rows: 1fr 1fr;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
+  container: css({
+    padding: theme.spacing(1),
+    display: 'grid',
+    gap: theme.spacing(0.5),
+    gridTemplateRows: '1fr 1fr',
+    gridTemplateColumns: 'repeat(4, 1fr)',
 
-    > :nth-child(6) {
-      grid-column: span 3;
-    }
-  `,
+    '> :nth-child(6)': {
+      gridColumn: 'span 3',
+    },
+  }),
   ...getCommonQueryStyles(theme),
 });
 
@@ -422,13 +416,13 @@ function ResampleExpressionViewer({ model }: { model: ExpressionQuery }) {
 }
 
 const getResampleExpressionViewerStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    padding: ${theme.spacing(1)};
-    display: grid;
-    gap: ${theme.spacing(0.5)};
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-  `,
+  container: css({
+    padding: theme.spacing(1),
+    display: 'grid',
+    gap: theme.spacing(0.5),
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gridTemplateRows: '1fr 1fr',
+  }),
   ...getCommonQueryStyles(theme),
 });
 
@@ -488,22 +482,16 @@ const getExpressionViewerStyles = (theme: GrafanaTheme2) => {
 
   return {
     ...common,
-    maxWidthContainer: css`
-      max-width: 100%;
-    `,
-    container: css`
-      padding: ${theme.spacing(1)};
-      display: flex;
-      gap: ${theme.spacing(0.5)};
-    `,
-    blue: css`
-      ${blue};
-      margin: auto 0;
-    `,
-    bold: css`
-      ${bold};
-      margin: auto 0;
-    `,
+    maxWidthContainer: css({
+      maxWidth: '100%',
+    }),
+    container: css({
+      padding: theme.spacing(1),
+      display: 'flex',
+      gap: theme.spacing(0.5),
+    }),
+    blue: css(blue, { margin: 'auto 0' }),
+    bold: css(bold, { margin: 'auto 0' }),
   };
 };
 
@@ -521,27 +509,27 @@ function MathExpressionViewer({ model }: { model: ExpressionQuery }) {
 }
 
 const getCommonQueryStyles = (theme: GrafanaTheme2) => ({
-  blue: css`
-    color: ${theme.colors.text.link};
-  `,
-  bold: css`
-    font-weight: ${theme.typography.fontWeightBold};
-  `,
-  label: css`
-    display: flex;
-    align-items: center;
-    padding: ${theme.spacing(0.5, 1)};
-    background-color: ${theme.colors.background.secondary};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    line-height: ${theme.typography.bodySmall.lineHeight};
-    font-weight: ${theme.typography.fontWeightBold};
-    border-radius: ${theme.shape.radius.default};
-  `,
-  value: css`
-    padding: ${theme.spacing(0.5, 1)};
-    border: 1px solid ${theme.colors.border.weak};
-    border-radius: ${theme.shape.radius.default};
-  `,
+  blue: css({
+    color: theme.colors.text.link,
+  }),
+  bold: css({
+    fontWeight: theme.typography.fontWeightBold,
+  }),
+  label: css({
+    display: 'flex',
+    alignItems: 'center',
+    padding: theme.spacing(0.5, 1),
+    backgroundColor: theme.colors.background.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
+    lineHeight: theme.typography.bodySmall.lineHeight,
+    fontWeight: theme.typography.fontWeightBold,
+    borderRadius: theme.shape.radius.default,
+  }),
+  value: css({
+    padding: theme.spacing(0.5, 1),
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
+  }),
 });
 
 function isRangeEvaluator(evaluator: { params: number[]; type: EvalFunction }) {

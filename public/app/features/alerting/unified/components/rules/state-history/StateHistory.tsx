@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { groupBy } from 'lodash';
-import React, { FormEvent, useCallback, useState } from 'react';
+import { FormEvent, useCallback, useState } from 'react';
+import * as React from 'react';
 
 import { AlertState, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { Alert, Field, Icon, Input, Label, LoadingPlaceholder, Tooltip, useStyles2, Stack } from '@grafana/ui';
@@ -82,7 +83,7 @@ const StateHistory = ({ alertId }: Props) => {
         <Field
           label={
             <Label>
-              <Stack gap={0.5}>
+              <Stack gap={0.5} alignItems="center">
                 <span>Filter group</span>
                 <Tooltip
                   content={
@@ -184,22 +185,22 @@ const LabelsWrapper = ({ children }: React.PropsWithChildren<{}>) => {
   return <div className={wrapper}>{children}</div>;
 };
 
-const TimestampStyle = css`
-  display: flex;
-  align-items: flex-end;
-  flex-direction: column;
-`;
+const TimestampStyle = css({
+  display: 'flex',
+  alignItems: 'flex-end',
+  flexDirection: 'column',
+});
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    & > * {
-      margin-right: ${theme.spacing(1)};
-    }
-  `,
-  tableGroupKey: css`
-    margin-top: ${theme.spacing(2)};
-    margin-bottom: ${theme.spacing(2)};
-  `,
+  wrapper: css({
+    '& > *': {
+      marginRight: theme.spacing(1),
+    },
+  }),
+  tableGroupKey: css({
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(2),
+  }),
   goupKeyText: css({
     overflowX: 'auto',
     textOverflow: 'ellipsis',

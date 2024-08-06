@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -68,9 +68,9 @@ function getStyles(theme: GrafanaTheme2) {
   const size = theme.spacing(2);
 
   return {
-    dataSourceIcon: css`
-      width: ${size};
-      height: ${size};
-    `,
+    dataSourceIcon: css({
+      width: size,
+      height: size,
+    }),
   };
 }

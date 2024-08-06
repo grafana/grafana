@@ -41,8 +41,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keystore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/loader"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginexternal"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -120,6 +122,8 @@ var WireSet = wire.NewSet(
 	renderer.ProvideService,
 	wire.Bind(new(rendering.PluginManager), new(*renderer.Manager)),
 	pluginexternal.ProvideService,
+	plugincontext.ProvideBaseService,
+	wire.Bind(new(plugincontext.BasePluginContextProvider), new(*plugincontext.BaseProvider)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
@@ -129,10 +133,12 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(plugins.BackendFactoryProvider), new(*provider.Service)),
 	signature.ProvideOSSAuthorizer,
 	wire.Bind(new(plugins.PluginLoaderAuthorizer), new(*signature.UnsignedPluginAuthorizer)),
-	wire.Bind(new(finder.Finder), new(*finder.Local)),
 	finder.ProvideLocalFinder,
+	wire.Bind(new(finder.Finder), new(*finder.Local)),
 	ProvideClientDecorator,
 	wire.Bind(new(plugins.Client), new(*client.Decorator)),
+	managedplugins.NewNoop,
+	wire.Bind(new(managedplugins.Manager), new(*managedplugins.Noop)),
 )
 
 func ProvideClientDecorator(

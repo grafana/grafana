@@ -253,6 +253,101 @@ Status Codes:
 - **403** – Access denied
 - **404** – Not found
 
+## Hard delete dashboard by uid
+
+{{% admonition type="note" %}}
+This feature is currently in private preview and behind the `dashboardRestore` feature toggle.
+{{% /admonition %}}
+
+`DELETE /api/dashboards/uid/:uid/trash`
+
+Will delete permanently the dashboard given the specified unique identifier (uid).
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+
+| Action              | Scope                         |
+| ------------------- | ----------------------------- |
+| `dashboards:delete` | `dashboards:*`<br>`folders:*` |
+
+**Example Request**:
+
+```http
+DELETE /api/dashboards/uid/cIBgcSjkk/trash HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "title": "Production Overview",
+  "message": "Dashboard Production Overview deleted",
+  "uid": "cIBgcSjkk"
+}
+```
+
+Status Codes:
+
+- **200** – Deleted
+- **401** – Unauthorized
+- **403** – Access denied
+- **404** – Not found
+
+## Restore deleted dashboard by uid
+
+{{% admonition type="note" %}}
+This feature is currently in private preview and behind the `dashboardRestore` feature toggle.
+{{% /admonition %}}
+
+`PATCH /api/dashboards/uid/:uid/trash`
+
+Will restore a deleted dashboard given the specified unique identifier (uid).
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+
+| Action              | Scope                         |
+| ------------------- | ----------------------------- |
+| `dashboards:create` | `dashboards:*`<br>`folders:*` |
+
+**Example Request**:
+
+```http
+PATCH /api/dashboards/uid/cIBgcSjkk/trash HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "title": "Production Overview",
+  "message": "Dashboard Production Overview restored",
+  "uid": "cIBgcSjkk"
+}
+```
+
+Status Codes:
+
+- **200** – Deleted
+- **401** – Unauthorized
+- **403** – Access denied
+- **404** – Not found
+-
+
 ## Gets the home dashboard
 
 `GET /api/dashboards/home`

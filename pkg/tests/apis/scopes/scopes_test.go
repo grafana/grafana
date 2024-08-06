@@ -1,4 +1,4 @@
-package playlist
+package scopes
 
 import (
 	"context"
@@ -40,6 +40,7 @@ func TestIntegrationScopes(t *testing.T) {
 
 		v1Disco, err := json.MarshalIndent(resources, "", "  ")
 		require.NoError(t, err)
+		//fmt.Printf("%s", string(v1Disco))
 
 		require.JSONEq(t, `{
 			"kind": "APIResourceList",
@@ -47,10 +48,44 @@ func TestIntegrationScopes(t *testing.T) {
 			"groupVersion": "scope.grafana.app/v0alpha1",
 			"resources": [
 			  {
+				"name": "scope_dashboard_bindings",
+				"singularName": "FindScopeDashboardsResult",
+				"namespaced": true,
+				"kind": "FindScopeDashboardBindingsResults",
+				"verbs": [
+				  "get"
+				]
+			  },
+			  {
+				"name": "scope_node_children",
+				"singularName": "FindScopeNodeChildrenResults",
+				"namespaced": true,
+				"kind": "FindScopeNodeChildrenResults",
+				"verbs": [
+				  "get"
+				]
+			  },
+			  {
 				"name": "scopedashboardbindings",
 				"singularName": "scopedashboardbinding",
 				"namespaced": true,
 				"kind": "ScopeDashboardBinding",
+				"verbs": [
+				  "create",
+				  "delete",
+				  "deletecollection",
+				  "get",
+				  "list",
+				  "patch",
+				  "update",
+				  "watch"
+				]
+			  },
+			  {
+				"name": "scopenodes",
+				"singularName": "scopenode",
+				"namespaced": true,
+				"kind": "ScopeNode",
 				"verbs": [
 				  "create",
 				  "delete",
@@ -115,7 +150,7 @@ func TestIntegrationScopes(t *testing.T) {
 
 		// Field Selector test
 		found, err := scopeClient.Resource.List(ctx, metav1.ListOptions{
-			FieldSelector: "spec.category=fun",
+			FieldSelector: "spec.title=foo-scope",
 		})
 		require.NoError(t, err)
 		require.Len(t, found.Items, 1)

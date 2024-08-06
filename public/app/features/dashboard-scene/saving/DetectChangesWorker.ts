@@ -1,3 +1,5 @@
+import { Dashboard } from '@grafana/schema';
+
 import { getDashboardChanges } from './getDashboardChanges';
 
 function _debounce<T>(f: (...args: T[]) => void, timeout: number) {
@@ -10,7 +12,7 @@ function _debounce<T>(f: (...args: T[]) => void, timeout: number) {
   };
 }
 
-self.onmessage = _debounce((e: MessageEvent<{ initial: any; changed: any }>) => {
+self.onmessage = _debounce((e: MessageEvent<{ initial: Dashboard; changed: Dashboard }>) => {
   const result = getDashboardChanges(e.data.initial, e.data.changed, false, false, false);
   self.postMessage(result);
 }, 500);

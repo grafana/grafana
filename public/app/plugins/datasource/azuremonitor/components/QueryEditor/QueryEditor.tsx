@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { CoreApp, QueryEditorProps } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -55,13 +55,16 @@ const QueryEditor = ({
   const query = usePreparedQuery(baseQuery, onQueryChange);
 
   const subscriptionId = query.subscription || datasource.azureMonitorDatasource.defaultSubscriptionId;
+  const basicLogsEnabled =
+    datasource.azureMonitorDatasource.basicLogsEnabled &&
+    app !== CoreApp.UnifiedAlerting &&
+    app !== CoreApp.CloudAlerting;
   const variableOptionGroup = {
     label: 'Template Variables',
     options: datasource.getVariables().map((v) => ({ label: v, value: v })),
   };
 
   const isAzureAuthenticated = config.bootData.user.authenticatedBy === 'oauth_azuread';
-
   if (datasource.currentUserAuth) {
     if (
       app === CoreApp.UnifiedAlerting &&
@@ -105,6 +108,7 @@ const QueryEditor = ({
       <EditorForQueryType
         data={data}
         subscriptionId={subscriptionId}
+        basicLogsEnabled={basicLogsEnabled ?? false}
         query={query}
         datasource={datasource}
         onChange={onQueryChange}
@@ -127,6 +131,7 @@ const QueryEditor = ({
 
 interface EditorForQueryTypeProps extends Omit<AzureMonitorQueryEditorProps, 'onRunQuery'> {
   subscriptionId?: string;
+  basicLogsEnabled: boolean;
   variableOptionGroup: { label: string; options: AzureMonitorOption[] };
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
 }
@@ -134,6 +139,7 @@ interface EditorForQueryTypeProps extends Omit<AzureMonitorQueryEditorProps, 'on
 const EditorForQueryType = ({
   data,
   subscriptionId,
+  basicLogsEnabled,
   query,
   datasource,
   variableOptionGroup,
@@ -159,6 +165,7 @@ const EditorForQueryType = ({
         <LogsQueryEditor
           data={data}
           subscriptionId={subscriptionId}
+          basicLogsEnabled={basicLogsEnabled}
           query={query}
           datasource={datasource}
           onChange={onChange}
@@ -181,6 +188,7 @@ const EditorForQueryType = ({
       );
 
     case AzureQueryType.AzureTraces:
+    case AzureQueryType.TraceExemplar:
       return (
         <TracesQueryEditor
           subscriptionId={subscriptionId}

@@ -1,12 +1,14 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
+import * as React from 'react';
 import { ReplaySubject, Subscription } from 'rxjs';
 
 import { PanelProps } from '@grafana/data';
 import { locationService } from '@grafana/runtime/src';
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
-import { CanvasFrameOptions } from 'app/features/canvas';
+import { CanvasFrameOptions } from 'app/features/canvas/frame';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
 import { SetBackground } from './components/SetBackground';
@@ -61,11 +63,16 @@ export class CanvasPanel extends Component<Props, State> {
       moveableAction: false,
     };
 
+    // TODO: Will need to update this approach for dashboard scenes
+    // migration (new dashboard edit experience)
+    const dashboard = getDashboardSrv().getCurrent();
+    const allowEditing = this.props.options.inlineEditing && dashboard?.editable;
+
     // Only the initial options are ever used.
     // later changes are all controlled by the scene
     this.scene = new Scene(
       this.props.options.root,
-      this.props.options.inlineEditing,
+      allowEditing,
       this.props.options.showAdvancedTypes,
       this.props.options.panZoom,
       this.props.options.infinitePan,

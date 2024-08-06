@@ -95,6 +95,10 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 			m[azsettings.AzureCloud] = azureSettings.Cloud
 		}
 
+		if len(azureSettings.CustomCloudListJSON) > 0 {
+			m[azsettings.AzureCustomCloudsConfig] = azureSettings.CustomCloudListJSON
+		}
+
 		if azureSettings.ManagedIdentityEnabled {
 			m[azsettings.ManagedIdentityEnabled] = "true"
 
@@ -138,6 +142,8 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 				}
 			}
 		}
+
+		m[azsettings.AzureEntraPasswordCredentialsEnabled] = strconv.FormatBool(azureSettings.AzureEntraPasswordCredentialsEnabled)
 	}
 
 	if s.cfg.UserFacingDefaultError != "" {

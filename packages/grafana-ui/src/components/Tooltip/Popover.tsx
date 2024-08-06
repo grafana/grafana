@@ -8,7 +8,8 @@
   useFloating,
   useTransitionStyles,
 } from '@floating-ui/react';
-import React, { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
+import * as React from 'react';
 
 import { useTheme2 } from '../../themes';
 import { getPlacement } from '../../utils/tooltipUtils';
