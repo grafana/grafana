@@ -161,6 +161,7 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 
 	result := definitions.GettableUserConfig{
 		TemplateFiles: cfg.TemplateFiles,
+		JsonTemplates: cfg.JSONTemplates,
 		AlertmanagerConfig: definitions.GettableApiAlertingConfig{
 			Config: cfg.AlertmanagerConfig.Config,
 		},

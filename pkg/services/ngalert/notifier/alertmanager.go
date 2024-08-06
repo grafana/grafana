@@ -341,6 +341,7 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, er
 		muteTimeIntervals:        cfg.AlertmanagerConfig.MuteTimeIntervals,
 		timeIntervals:            cfg.AlertmanagerConfig.TimeIntervals,
 		templates:                ToTemplateDefinitions(cfg),
+		jsonTemplates:            cfg.JSONTemplates,
 		receivers:                PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig),
 		receiverIntegrationsFunc: am.buildReceiverIntegrations,
 	})

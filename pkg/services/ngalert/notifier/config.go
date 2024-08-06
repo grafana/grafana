@@ -28,6 +28,7 @@ type AlertingConfiguration struct {
 	muteTimeIntervals     []alertingNotify.MuteTimeInterval
 	timeIntervals         []alertingNotify.TimeInterval
 	templates             []alertingTemplates.TemplateDefinition
+	jsonTemplates         map[string]string
 	rawAlertmanagerConfig []byte
 	configHash            [16]byte
 
@@ -67,6 +68,11 @@ func (a AlertingConfiguration) RoutingTree() *alertingNotify.Route {
 
 func (a AlertingConfiguration) Templates() []alertingTemplates.TemplateDefinition {
 	return a.templates
+}
+
+// Note: we need to get rid of these getters... why don't we simply use a struct?
+func (a AlertingConfiguration) JsonTemplates() map[string]string {
+	return a.jsonTemplates
 }
 
 func (a AlertingConfiguration) Hash() [16]byte {

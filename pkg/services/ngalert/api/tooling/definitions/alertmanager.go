@@ -624,6 +624,7 @@ type DatasourceUIDReference struct {
 // swagger:model
 type PostableUserConfig struct {
 	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
+	JSONTemplates      map[string]string         `yaml:"json_templates" json:"json_templates"`
 	AlertmanagerConfig PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
 	amSimple           map[string]interface{}    `yaml:"-" json:"-"`
 }
@@ -721,10 +722,12 @@ func (c *PostableUserConfig) MarshalYAML() (interface{}, error) {
 	}
 	// cortex/loki actually pass the AM config as a string.
 	cortexPostableUserConfig := struct {
+		JSONTemplates      map[string]string `yaml:"json_templates" json:"json_templates"`
 		TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
 		AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
 	}{
 		TemplateFiles:      c.TemplateFiles,
+		JSONTemplates:      c.JSONTemplates,
 		AlertmanagerConfig: string(yml),
 	}
 	return cortexPostableUserConfig, nil
@@ -733,6 +736,7 @@ func (c *PostableUserConfig) MarshalYAML() (interface{}, error) {
 func (c *PostableUserConfig) UnmarshalYAML(value *yaml.Node) error {
 	// cortex/loki actually pass the AM config as a string.
 	type cortexPostableUserConfig struct {
+		JSONTemplates      map[string]string `yaml:"json_templates" json:"json_templates"`
 		TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
 		AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
 	}
@@ -748,14 +752,18 @@ func (c *PostableUserConfig) UnmarshalYAML(value *yaml.Node) error {
 	}
 
 	c.TemplateFiles = tmp.TemplateFiles
+	c.JSONTemplates = tmp.JSONTemplates
 	return nil
 }
 
 // swagger:model
 type GettableUserConfig struct {
-	TemplateFiles           map[string]string         `yaml:"template_files" json:"template_files"`
-	TemplateFileProvenances map[string]Provenance     `yaml:"template_file_provenances,omitempty" json:"template_file_provenances,omitempty"`
-	AlertmanagerConfig      GettableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+	TemplateFiles           map[string]string     `yaml:"template_files" json:"template_files"`
+	TemplateFileProvenances map[string]Provenance `yaml:"template_file_provenances,omitempty" json:"template_file_provenances,omitempty"`
+
+	// TODO: provenance?
+	JsonTemplates      map[string]string         `yaml:"json_templates" json:"json_templates"`
+	AlertmanagerConfig GettableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
 
 	// amSimple stores a map[string]interface of the decoded alertmanager config.
 	// This enables circumventing the underlying alertmanager secret type
@@ -766,6 +774,7 @@ type GettableUserConfig struct {
 func (c *GettableUserConfig) UnmarshalYAML(value *yaml.Node) error {
 	// cortex/loki actually pass the AM config as a string.
 	type cortexGettableUserConfig struct {
+		JsonTemplates      map[string]string `yaml:"json_templates" json:"json_templates"`
 		TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
 		AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
 	}
@@ -785,16 +794,19 @@ func (c *GettableUserConfig) UnmarshalYAML(value *yaml.Node) error {
 	}
 
 	c.TemplateFiles = tmp.TemplateFiles
+	c.JsonTemplates = tmp.JsonTemplates
 	return nil
 }
 
 func (c *GettableUserConfig) MarshalJSON() ([]byte, error) {
 	type plain struct {
+		JsonTemplates      map[string]string      `yaml:"json_templates" json:"json_templates"`
 		TemplateFiles      map[string]string      `yaml:"template_files" json:"template_files"`
 		AlertmanagerConfig map[string]interface{} `yaml:"alertmanager_config" json:"alertmanager_config"`
 	}
 
 	tmp := plain{
+		JsonTemplates:      c.JsonTemplates,
 		TemplateFiles:      c.TemplateFiles,
 		AlertmanagerConfig: c.amSimple,
 	}
