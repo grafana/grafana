@@ -60,6 +60,7 @@ COPY pkg/apimachinery/go.* pkg/apimachinery/
 COPY pkg/build/go.* pkg/build/
 COPY pkg/build/wire/go.* pkg/build/wire/
 COPY pkg/promlib/go.* pkg/promlib/
+COPY pkg/semconv/go.* pkg/semconv/
 COPY pkg/storage/unified/resource/go.* pkg/storage/unified/resource/
 
 RUN go mod download
