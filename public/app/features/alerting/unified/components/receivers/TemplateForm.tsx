@@ -121,10 +121,6 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
     let content = values.content;
     if (!isJSON) {
       content = ensureDefine(values.name, values.content);
-    } else {
-      if (!values.content.startsWith('#json')) {
-        content = '#json ' + values.name + '\n' + values.content;
-      }
     }
 
     // add new template to template map
