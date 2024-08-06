@@ -64,7 +64,7 @@ export default function TracePageActions(props: TracePageActionsProps) {
   };
 
   const exportMermaid = () => {
-    setMermaidDiagramCode(exportTraceAsMermaid(data));
+    setMermaidDiagramCode(exportTraceAsMermaid(data, traceId));
     setExportModalOpen(true);
   };
   const exportMenu = (

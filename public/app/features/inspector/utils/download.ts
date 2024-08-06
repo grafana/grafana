@@ -115,7 +115,7 @@ export function downloadTraceAsJson(frame: DataFrame, title: string): string {
   return traceFormat;
 }
 
-export function exportTraceAsMermaid(frame: DataFrame): string {
+export function exportTraceAsMermaid(frame: DataFrame, title: string): string {
   const view = new DataFrameView(frame);
 
   const spans: Array<{
@@ -132,7 +132,7 @@ export function exportTraceAsMermaid(frame: DataFrame): string {
   const sorted = spans.sort((a, b) => a.startTime - b.startTime);
   let currentSection = '';
   let out = `gantt
-title Example Trace
+title Trace ${title}
 dateFormat x
 axisFormat %S.%L
 `;
@@ -145,7 +145,7 @@ axisFormat %S.%L
       out += `section ${e.serviceName}${nbsp.repeat(idx)}\n`;
       currentSection = e.serviceName;
     }
-    out += `${e.operationName} :${Math.round(e.startTime)},${Math.max(Math.round(e.duration), 1)}ms\n`;
+    out += `${e.operationName} [${e.duration}ms] :${Math.round(e.startTime)},${Math.max(Math.round(e.duration), 1)}ms\n`;
     idx += 1;
   }
 
