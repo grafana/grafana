@@ -1,5 +1,6 @@
 {
-  "plugins": ["testing-library"],
+  "plugins": ["testing-library", "jest-dom"],
+  "extends": ["plugin:jest-dom/recommended"],
   "rules": {
     "dot-notation": "error",
     "prefer-const": "error",
