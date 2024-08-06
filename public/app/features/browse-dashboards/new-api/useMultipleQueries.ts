@@ -3,9 +3,11 @@ import {
   ApiEndpointQuery,
   EndpointDefinitions,
   QueryActionCreatorResult,
+  QueryArgFrom,
   QueryDefinition,
+  QueryResultSelectorResult,
 } from '@reduxjs/toolkit/query';
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { RootState } from 'app/store/configureStore';
 import { useDispatch, useSelector } from 'app/types/store';
@@ -55,27 +57,26 @@ const getAllQueriesSelector = createSelector(
   }
 );
 
+interface ImmutableRefObject<T> {
+  readonly current: T;
+}
+
 export function useMultipleQueries<
   Def extends QueryDefinition<any, any, any, any, any>,
   Defs extends EndpointDefinitions,
-  Endpoint extends ApiEndpointQuery<Def, Defs>,
 >(
-  endpoint: Endpoint
-): [
-  Array<ReturnType<ReturnType<Endpoint['select']>>>,
-  (args: Parameters<Endpoint['initiate']>[0]) => ReturnType<ReturnType<Endpoint['initiate']>>,
-] {
-  // ): [Array<QueryResultSelectorResult<Def>>, (args: QueryArgFrom<Def>) => QueryActionCreatorResult<Def>] {
-
+  endpoint: ApiEndpointQuery<Def, Defs>
+): [Array<QueryResultSelectorResult<Def>>, (args: QueryArgFrom<Def>) => QueryActionCreatorResult<Def>] {
   const dispatch = useDispatch();
-  const requestsRef = useRef<Array<QueryActionCreatorResult<Def>>>([]);
+
+  const requestsRef: ImmutableRefObject<Array<QueryActionCreatorResult<Def>>> = useRef([]);
 
   const queries = useSelector((rootState: RootState) => {
     return getAllQueriesSelector(rootState, endpoint, requestsRef.current);
   });
 
   const dispatchRequest = useCallback(
-    (args: Parameters<Endpoint['initiate']>[0]) => {
+    (args: QueryArgFrom<Def>) => {
       const queryRequestAction = endpoint.initiate(args);
       const queryRequest = dispatch(queryRequestAction);
       requestsRef.current.push(queryRequest);
@@ -84,6 +85,16 @@ export function useMultipleQueries<
     },
     [dispatch, endpoint]
   );
+
+  // Unsubscribe from all requests when the component is unmounted
+  useEffect(() => {
+    const requests = requestsRef.current;
+    return () => {
+      for (const req of requests) {
+        req.unsubscribe();
+      }
+    };
+  }, []);
 
   return [queries, dispatchRequest] as const;
 }
