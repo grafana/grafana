@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { DataFrame } from '@grafana/data/';
@@ -27,28 +27,37 @@ const VisualizationDisplay = (props: CanvasElementProps<VizElementConfig, VizEle
   const { data } = props;
   const styles = getStyles(config.theme2, data, scene);
 
+  const vizType = (data?.vizType ?? 'timeseries') as keyof typeof PanelBuilders;
   const panelTitle = data?.text ?? '';
-  let panelToEmbed = PanelBuilders.timeseries().setTitle(panelTitle);
-  if (data?.vizType) {
-    // TODO make this better
-    panelToEmbed = PanelBuilders[data.vizType as keyof typeof PanelBuilders]().setTitle(panelTitle);
-  }
 
-  panelToEmbed.setData(new SceneDataNode({ data: data!.data }));
-  panelToEmbed.setDisplayMode('transparent');
-  const panel = panelToEmbed.build();
+  // TODO: only re-init this when data has different schema (not on each data change)
+  // use compareDataFrameStructures() or probably diff data.data.structureRev
+  const embeddedPanel = useMemo(
+    () => {
+      // TODO make this better
+      let panelToEmbed = PanelBuilders[vizType]().setTitle(panelTitle);
 
-  const embeddedPanel = new EmbeddedScene({
-    body: new SceneFlexLayout({
-      children: [
-        new SceneFlexItem({
-          width: '100%',
-          height: '100%',
-          body: panel,
+      panelToEmbed.setData(new SceneDataNode({ data: data?.data }));
+      panelToEmbed.setDisplayMode('transparent');
+      panelToEmbed.setColor({ mode: 'palette-classic' });
+      // why this no work? series color still by thresholds?
+      const panel = panelToEmbed.build();
+
+      return new EmbeddedScene({
+        body: new SceneFlexLayout({
+          children: [
+            new SceneFlexItem({
+              width: '100%',
+              height: '100%',
+              body: panel,
+            }),
+          ],
         }),
-      ],
-    }),
-  });
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [vizType, panelTitle, data?.data]
+  );
 
   return (
     <div className={styles.container}>
