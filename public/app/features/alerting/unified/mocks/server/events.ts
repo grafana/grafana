@@ -42,8 +42,9 @@ interface SerializedRequest {
  *
  * @deprecated Try not to use this 🙏 instead aim to assert against UI side effects
  */
+
 export async function captureRequests(predicateFn: PredicateFn = () => true): Promise<Request[]> {
-  let requests: Request[] = [];
+  const requests: Request[] = [];
 
   server.events.on('request:start', ({ request }) => {
     if (predicateFn(request)) {

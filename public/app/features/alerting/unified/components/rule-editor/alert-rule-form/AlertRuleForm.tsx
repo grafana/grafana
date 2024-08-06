@@ -81,7 +81,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
   const uidFromParams = routeParams.id;
 
-  const returnTo = !queryParams['returnTo'] ? '/alerting/list' : String(queryParams['returnTo']);
+  const returnTo = !queryParams.returnTo ? '/alerting/list' : String(queryParams.returnTo);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
   const defaultValues: RuleFormValues = useMemo(() => {
@@ -93,8 +93,8 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       return formValuesFromPrefill(prefill);
     }
 
-    if (typeof queryParams['defaults'] === 'string') {
-      return formValuesFromQueryParams(queryParams['defaults'], ruleType);
+    if (typeof queryParams.defaults === 'string') {
+      return formValuesFromQueryParams(queryParams.defaults, ruleType);
     }
 
     return {

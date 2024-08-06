@@ -36,8 +36,9 @@ export function ResourcesTable({ resources, numberOfPages = 0, onChangePage, pag
 
   return (
     <>
-      <InteractiveTable columns={columns} data={data} getRowId={(r) => r.refId} />
-      <Stack justifyContent={'flex-end'}>
+      <Stack alignItems="flex-end" direction="column">
+        <InteractiveTable columns={columns} data={data} getRowId={(r) => r.refId} />
+
         <Pagination numberOfPages={numberOfPages} currentPage={page} onNavigate={onChangePage} />
       </Stack>
 

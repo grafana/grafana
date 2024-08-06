@@ -31,14 +31,18 @@
     {
       "metadata": {
         "name": "addFieldFromCalculationStatFunctions",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-11-03T14:39:58Z"
+        "resourceVersion": "1722289107837",
+        "creationTimestamp": "2023-11-03T14:39:58Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-07-29 21:38:27.837976 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Add cumulative and window functions to the add field from calculation transformation",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
@@ -425,14 +429,18 @@
     {
       "metadata": {
         "name": "autoMigrateXYChartPanel",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-03-22T15:44:37Z"
+        "resourceVersion": "1722537244598",
+        "creationTimestamp": "2024-03-22T15:44:37Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-01 18:34:04.598082 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Migrate old XYChart panel to new XYChart2 model",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
@@ -567,14 +575,19 @@
     {
       "metadata": {
         "name": "cloudRBACRoles",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-01-10T13:19:01Z"
+        "resourceVersion": "1721984527957",
+        "creationTimestamp": "2024-01-10T13:19:01Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-07-26 09:02:07.957377 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enabled grafana cloud specific RBAC roles",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/identity-access-team",
         "requiresRestart": true,
+        "allowSelfServe": true,
+        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -1143,14 +1156,18 @@
     {
       "metadata": {
         "name": "formatString",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-10-13T18:17:12Z"
+        "resourceVersion": "1722290290367",
+        "creationTimestamp": "2023-10-13T18:17:12Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-07-29 21:58:10.367328 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable format string transformer",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
@@ -2491,14 +2508,17 @@
     {
       "metadata": {
         "name": "tlsMemcached",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-05-09T19:12:08Z"
+        "resourceVersion": "1722608472573",
+        "creationTimestamp": "2024-05-09T19:12:08Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-02 14:21:12.57399 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use TLS-enabled memcached in the enterprise caching feature",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-operator-experience-squad",
-        "hideFromDocs": true
+        "expression": "true"
       }
     },
     {
