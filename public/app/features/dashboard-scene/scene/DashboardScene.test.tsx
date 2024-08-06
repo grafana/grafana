@@ -344,22 +344,22 @@ describe('DashboardScene', () => {
         expect(restoredDashboardGridItem.state.variableName).toBe(prevValue);
       });
 
-      //TODO V FIX THIS TEST
-      // it.only('A change to any LibraryVizPanel name should set isDirty true', () => {
-      //   const libraryVizPanel = sceneGraph.findObject(scene, (p) => p instanceof LibraryVizPanel) as LibraryVizPanel;
-      //   const prevValue = libraryVizPanel.state.name;
+      it('A change to any library panel name should set isDirty true', () => {
+        const libraryVizPanel = ((scene.state.body as SceneGridLayout).state.children[4] as DashboardGridItem).state
+          .body;
+        const behavior = libraryVizPanel.state.$behaviors![0] as LibraryPanelBehavior;
+        const prevValue = behavior.state.name;
 
-      //   libraryVizPanel.setState({ name: 'new name' });
+        behavior.setState({ name: 'new name' });
 
-      //   expect(scene.state.isDirty).toBe(true);
+        expect(scene.state.isDirty).toBe(true);
 
-      //   scene.exitEditMode({ skipConfirm: true });
-      //   const restoredLibraryVizPanel = sceneGraph.findObject(
-      //     scene,
-      //     (p) => p instanceof LibraryVizPanel
-      //   ) as LibraryVizPanel;
-      //   expect(restoredLibraryVizPanel.state.name).toBe(prevValue);
-      // });
+        scene.exitEditMode({ skipConfirm: true });
+        const restoredLibraryVizPanel = ((scene.state.body as SceneGridLayout).state.children[4] as DashboardGridItem)
+          .state.body;
+        const restoredBehavior = restoredLibraryVizPanel.state.$behaviors![0] as LibraryPanelBehavior;
+        expect(restoredBehavior.state.name).toBe(prevValue);
+      });
 
       it('A change to any PanelTimeRange state should set isDirty true', () => {
         const panelTimeRange = sceneGraph.findObject(scene, (p) => p instanceof PanelTimeRange) as PanelTimeRange;
