@@ -435,10 +435,10 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 	dtoResults := make([]MigrateDataResponseItemDTO, len(results))
 	for i := 0; i < len(results); i++ {
 		dtoResults[i] = MigrateDataResponseItemDTO{
-			Type:   MigrateDataType(results[i].Type),
-			RefID:  results[i].RefID,
-			Status: ItemStatus(results[i].Status),
-			Error:  results[i].Error,
+			Type:    MigrateDataType(results[i].Type),
+			RefID:   results[i].RefID,
+			Status:  ItemStatus(results[i].Status),
+			Message: results[i].Error,
 		}
 	}
 

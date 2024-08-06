@@ -7046,7 +7046,7 @@
       },
       "MigrateDataResponseItemDTO": {
         "properties": {
-          "error": {
+          "message": {
             "type": "string"
           },
           "refId": {
@@ -7055,6 +7055,7 @@
           "status": {
             "enum": [
               "OK",
+              "WARNING",
               "ERROR",
               "PENDING",
               "UNKNOWN"

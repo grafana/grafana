@@ -1115,10 +1115,11 @@
       "error-see-server-logs": "Ŝęę ŧĥę Ğřäƒäŉä şęřvęř ľőģş ƒőř mőřę đęŧäįľş",
       "get-session-error-title": "Ēřřőř ľőäđįŉģ mįģřäŧįőŉ čőŉƒįģūřäŧįőŉ",
       "get-snapshot-error-title": "Ēřřőř ľőäđįŉģ şŉäpşĥőŧ",
+      "migration-finished-with-caveat-title": "Ŗęşőūřčę mįģřäŧįőŉ čőmpľęŧę",
+      "migration-finished-with-errors-body": "Ŧĥę mįģřäŧįőŉ ĥäş čőmpľęŧęđ, þūŧ şőmę įŧęmş čőūľđ ŉőŧ þę mįģřäŧęđ ŧő ŧĥę čľőūđ şŧäčĸ. Cĥęčĸ ŧĥę ƒäįľęđ řęşőūřčęş ƒőř mőřę đęŧäįľş",
+      "migration-finished-with-warnings-body": "Ŧĥę mįģřäŧįőŉ ĥäş čőmpľęŧęđ ŵįŧĥ şőmę ŵäřŉįŉģş. Cĥęčĸ įŉđįvįđūäľ řęşőūřčęş ƒőř mőřę đęŧäįľş",
       "snapshot-error-status-body": "Ŧĥęřę ŵäş äŉ ęřřőř čřęäŧįŉģ ŧĥę şŉäpşĥőŧ őř şŧäřŧįŉģ ŧĥę mįģřäŧįőŉ přőčęşş. Ŝęę ŧĥę Ğřäƒäŉä şęřvęř ľőģş ƒőř mőřę đęŧäįľş",
       "snapshot-error-status-title": "Ēřřőř mįģřäŧįŉģ řęşőūřčęş",
-      "some-resources-errored-body": "Ŧĥę mįģřäŧįőŉ ĥäş čőmpľęŧęđ, þūŧ şőmę įŧęmş čőūľđ ŉőŧ þę mįģřäŧęđ ŧő ŧĥę čľőūđ şŧäčĸ. Cĥęčĸ ŧĥę ƒäįľęđ řęşőūřčęş ƒőř mőřę đęŧäįľş",
-      "some-resources-errored-title": "Ŗęşőūřčę mįģřäŧįőŉ čőmpľęŧę",
       "upload-snapshot-error-title": "Ēřřőř ūpľőäđįŉģ şŉäpşĥőŧ"
     },
     "pdc": {
@@ -1136,12 +1137,14 @@
       "message": "Ńő ŜĿÅş äřę äväįľäþľę yęŧ. <2>Vįşįŧ őūř đőčş</2> ŧő ľęäřŉ mőřę äþőūŧ ŧĥįş ƒęäŧūřę!",
       "title": "Mįģřäŧę ŧő Ğřäƒäŉä Cľőūđ įş įŉ pūþľįč přęvįęŵ"
     },
-    "resource-error": {
+    "resource-details": {
       "dismiss-button": "ØĶ",
+      "error-title": "Ůŉäþľę ŧő mįģřäŧę ŧĥįş řęşőūřčę:",
+      "generic-title": "Ŗęşőūřčę mįģřäŧįőŉ đęŧäįľş:",
+      "missing-message": "Ńő męşşäģę přővįđęđ.",
       "resource-summary": "{{refId}} ({{typeName}})",
-      "specific-error": "Ŧĥę şpęčįƒįč ęřřőř ŵäş:",
-      "title": "Ůŉäþľę ŧő mįģřäŧę ŧĥįş řęşőūřčę",
-      "unknown-error": "Åŉ ūŉĸŉőŵŉ ęřřőř őččūřřęđ."
+      "title": "Mįģřäŧįőŉ řęşőūřčę đęŧäįľş",
+      "warning-title": "Ŗęşőūřčę mįģřäŧęđ ŵįŧĥ ä ŵäřŉįŉģ:"
     },
     "resource-status": {
       "error-details-button": "Đęŧäįľş",
@@ -1149,7 +1152,9 @@
       "migrated": "Ůpľőäđęđ ŧő čľőūđ",
       "migrating": "Ůpľőäđįŉģ...",
       "not-migrated": "Ńőŧ yęŧ ūpľőäđęđ",
-      "unknown": "Ůŉĸŉőŵŉ"
+      "unknown": "Ůŉĸŉőŵŉ",
+      "warning": "Ůpľőäđęđ ŵįŧĥ ŵäřŉįŉģ",
+      "warning-details-button": "Đęŧäįľş"
     },
     "resource-table": {
       "unknown-datasource-title": "Đäŧä şőūřčę {{datasourceUID}}",
