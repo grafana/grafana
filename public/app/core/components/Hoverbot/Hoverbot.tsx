@@ -61,31 +61,49 @@ export const Hoverbot = () => {
 
     setLoading(true);
 
-    html2canvas(element).then((canvas) => {
+    html2canvas(element, { allowTaint: true }).then((canvas) => {
       ask(canvas.toDataURL('image/png', 0.5));
     });
   }, [ask, enabled]);
+
+  const handleClick = useCallback(() => {
+    if (!highlighted) {
+      return;
+    }
+    document.removeEventListener('mouseover', handleMouseOver);
+    document.removeEventListener('click', handleClick);
+    if (highlighted) {
+      highlighted.style.outline = '';
+      highlighted.style.boxShadow = '';
+      helpMe(highlighted);
+      highlighted = undefined;
+    }
+    setSelecting(false);
+  }, [helpMe]);
 
   const selectRegion = useCallback(() => {
     setSelecting(true);
     document.addEventListener('mouseover', handleMouseOver);
     document.addEventListener('click', handleClick);
+  }, [handleClick]);
 
-    function handleClick() {
-      if (!highlighted) {
-        return;
+  useEffect(() => {
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        document.removeEventListener('mouseover', handleMouseOver);
+        document.removeEventListener('click', handleClick);
+        setSelecting(false);
+        if (highlighted) {
+          highlighted.style.outline = '';
+          highlighted.style.boxShadow = '';
+          highlighted = undefined;
+        }
       }
-      document.removeEventListener('mouseover', handleMouseOver);
-      document.removeEventListener('click', handleClick);
-      if (highlighted) {
-        highlighted.style.outline = '';
-        highlighted.style.boxShadow = '';
-        helpMe(highlighted);
-        highlighted = undefined;
-      }
-      setSelecting(false);
     }
-  }, [helpMe]);
+
+    document.addEventListener('keyup', handleEscape);
+    return () => document.removeEventListener('keyup', handleEscape);
+  }, [handleClick]);
 
   return (
     <div>
