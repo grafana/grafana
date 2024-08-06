@@ -34,7 +34,7 @@ func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...Tu
 		collectors,
 		teamMembershipCollector(store),
 		managedPermissionsCollector(store),
-		folderParentCollector(store),
+		folderTreeCollector(store),
 		dashboardFolderCollector(store),
 	)
 
@@ -114,9 +114,9 @@ func managedPermissionsCollector(store db.DB) TupleCollector {
 		for _, p := range permissions {
 			var subject string
 			if len(p.UserUID) > 0 {
-				subject = zanzana.NewObject(zanzana.TypeUser, p.UserUID, "")
+				subject = zanzana.NewTupleEntry(zanzana.TypeUser, p.UserUID, "")
 			} else if len(p.TeamUID) > 0 {
-				subject = zanzana.NewObject(zanzana.TypeTeam, p.TeamUID, "member")
+				subject = zanzana.NewTupleEntry(zanzana.TypeTeam, p.TeamUID, "member")
 			} else {
 				// FIXME(kalleep): Unsuported role binding (org role). We need to have basic roles in place
 				continue
@@ -164,8 +164,8 @@ func teamMembershipCollector(store db.DB) TupleCollector {
 
 		for _, m := range memberships {
 			tuple := &openfgav1.TupleKey{
-				User:   zanzana.NewObject(zanzana.TypeUser, m.UserUID, ""),
-				Object: zanzana.NewObject(zanzana.TypeTeam, m.TeamUID, ""),
+				User:   zanzana.NewTupleEntry(zanzana.TypeUser, m.UserUID, ""),
+				Object: zanzana.NewTupleEntry(zanzana.TypeTeam, m.TeamUID, ""),
 			}
 
 			// Admin permission is 4 and member 0
@@ -182,8 +182,8 @@ func teamMembershipCollector(store db.DB) TupleCollector {
 	}
 }
 
-// folderParentCollector collects folder tree structure and writes it as relation tuples
-func folderParentCollector(store db.DB) TupleCollector {
+// folderTreeCollector collects folder tree structure and writes it as relation tuples
+func folderTreeCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "folder"
 		const query = `
@@ -206,8 +206,8 @@ func folderParentCollector(store db.DB) TupleCollector {
 
 		for _, f := range folders {
 			tuple := &openfgav1.TupleKey{
-				User:     zanzana.NewScopedObject(zanzana.TypeFolder, f.ParentUID, "", strconv.FormatInt(f.OrgID, 10)),
-				Object:   zanzana.NewScopedObject(zanzana.TypeFolder, f.FolderUID, "", strconv.FormatInt(f.OrgID, 10)),
+				User:     zanzana.NewScopedTupleEntry(zanzana.TypeFolder, f.ParentUID, "", strconv.FormatInt(f.OrgID, 10)),
+				Object:   zanzana.NewScopedTupleEntry(zanzana.TypeFolder, f.FolderUID, "", strconv.FormatInt(f.OrgID, 10)),
 				Relation: zanzana.RelationParent,
 			}
 
@@ -242,8 +242,8 @@ func dashboardFolderCollector(store db.DB) TupleCollector {
 
 		for _, d := range dashboards {
 			tuple := &openfgav1.TupleKey{
-				User:     zanzana.NewScopedObject(zanzana.TypeFolder, d.ParentUID, "", strconv.FormatInt(d.OrgID, 10)),
-				Object:   zanzana.NewScopedObject(zanzana.TypeDashboard, d.UID, "", strconv.FormatInt(d.OrgID, 10)),
+				User:     zanzana.NewScopedTupleEntry(zanzana.TypeFolder, d.ParentUID, "", strconv.FormatInt(d.OrgID, 10)),
+				Object:   zanzana.NewScopedTupleEntry(zanzana.TypeDashboard, d.UID, "", strconv.FormatInt(d.OrgID, 10)),
 				Relation: zanzana.RelationParent,
 			}
 
