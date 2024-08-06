@@ -82,7 +82,7 @@ require (
 	github.com/grafana/dataplane/sdata v0.0.9 // @grafana/observability-metrics
 	github.com/grafana/dskit v0.0.0-20240311184239-73feada6c0d7 // @grafana/grafana-backend-group
 	github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana/sharing-squad
-	github.com/grafana/gomemcache v0.0.0-20240229205252-cd6a66d6fb56 // @grafana/grafana-operator-experience-squad
+	github.com/grafana/gomemcache v0.0.0-20240805133030-fdaf6a95408e // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-aws-sdk v0.30.0 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-cloud-migration-snapshot v1.2.0 // @grafana/grafana-operator-experience-squad
@@ -472,7 +472,10 @@ require (
 
 require github.com/phpdave11/gofpdi v1.0.13 // @grafana/sharing-squad
 
-require github.com/google/go-querystring v1.1.0 // indirect
+require (
+	github.com/google/go-querystring v1.1.0 // indirect; @grafana/observability-metrics
+	github.com/grafana/e2e v0.1.1 // indirect; @grafana-app-platform-squad
+)
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240523142256-cc370b98af7c

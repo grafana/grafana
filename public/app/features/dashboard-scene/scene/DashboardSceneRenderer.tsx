@@ -4,6 +4,7 @@ import { useMedia } from 'react-use';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { CustomScrollbar, useStyles2, useTheme2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -93,18 +94,24 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    pageContainer: css({
-      display: 'grid',
-      gridTemplateAreas: `
-        "panels"`,
-      gridTemplateColumns: `1fr`,
-      gridTemplateRows: '1fr',
-      height: '100%',
-      [theme.breakpoints.down('sm')]: {
-        display: 'flex',
-        flexDirection: 'column',
+    pageContainer: css(
+      {
+        display: 'grid',
+        gridTemplateAreas: `
+  "panels"`,
+        gridTemplateColumns: `1fr`,
+        gridTemplateRows: '1fr',
+        height: '100%',
+        [theme.breakpoints.down('sm')]: {
+          display: 'flex',
+          flexDirection: 'column',
+        },
       },
-    }),
+      config.featureToggles.bodyScrolling && {
+        position: 'absolute',
+        width: '100%',
+      }
+    ),
     pageContainerWithControls: css({
       gridTemplateAreas: `
         "controls"
