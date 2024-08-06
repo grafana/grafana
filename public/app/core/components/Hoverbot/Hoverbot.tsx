@@ -102,14 +102,25 @@ let highlighted: HTMLDivElement | undefined;
 
 function handleMouseOver(e: MouseEvent) {
   if (e.target instanceof HTMLDivElement) {
-    const rect = e.target.getBoundingClientRect();
-    if (rect.height < 50 || rect.width < 50) {
+    const target = getEventTarget(e.target);
+    if (!target) {
       return;
     }
-    e.target.style.outline = 'solid 1px red';
+    target.style.outline = 'solid 1px red';
     if (highlighted) {
       highlighted.style.outline = '';
     }
-    highlighted = e.target;
+    highlighted = target;
   }
+}
+
+function getEventTarget(element: HTMLDivElement, bubbled = 2) {
+  const rect = element.getBoundingClientRect();
+  if (rect.height < 50 || rect.width < 50) {
+    if ((bubbled-1) >= 0 && element.parentElement instanceof HTMLDivElement) {
+      return getEventTarget(element.parentElement, bubbled-1);
+    }
+    return;
+  }
+  return element;
 }
