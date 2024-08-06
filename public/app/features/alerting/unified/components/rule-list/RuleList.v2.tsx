@@ -101,7 +101,7 @@ const RuleList = withErrorBoundary(
       // We show separate indicators for Grafana-managed and Cloud rules
       <AlertingPageWrapper navId="alert-list" isLoading={false} actions={hasAlertRulesCreated && <CreateAlertButton />}>
         <RuleListErrors />
-        <RulesFilter onFilterCleared={onFilterCleared} />
+        <RulesFilter onClear={onFilterCleared} />
         {hasAlertRulesCreated && (
           <>
             <div className={styles.break} />
