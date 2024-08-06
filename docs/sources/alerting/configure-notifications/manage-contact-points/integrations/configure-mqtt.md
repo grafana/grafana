@@ -114,6 +114,8 @@ If the JSON message format is selected in **Optional MQTT settings**, the payloa
 
 ### Payload fields
 
+Each notification payload contains the following fields.
+
 | Key               | Type                                        | Description                                                                     |
 | ----------------- | ------------------------------------------- | ------------------------------------------------------------------------------- |
 | receiver          | string                                      | Name of the contact point                                                       |
