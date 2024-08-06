@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/cloudmigration/api"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/gmsclient"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/objectstorage"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -598,7 +597,8 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 		// For 11.2 we only support core data sources. Apply a warning for any non-core ones before storing.
 		resources, err := s.getResourcesWithPluginWarnings(ctx, snapshotMeta.Results)
 		if err != nil {
-			return nil, fmt.Errorf("applying plugin warnings to data sources: %w", err)
+			// treat this as non-fatal since the migration still succeeded
+			s.log.Error("error applying plugin warnings, please open a bug report: %w", err)
 		}
 
 		// We need to update the snapshot in our db before reporting anything
@@ -791,18 +791,25 @@ func (s *Service) getLocalEventId(ctx context.Context) (string, error) {
 
 // getResourcesWithPluginWarnings iterates through each resource and, if a non-core datasource, applies a warning that we only support core
 func (s *Service) getResourcesWithPluginWarnings(ctx context.Context, results []cloudmigration.CloudMigrationResource) ([]cloudmigration.CloudMigrationResource, error) {
-	reqCtx := contexthandler.FromContext(ctx)
+	dsList, err := s.dsService.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
+	if err != nil {
+		return nil, fmt.Errorf("getting all data sources: %w", err)
+	}
+	dsMap := make(map[string]*datasources.DataSource, len(dsList))
+	for i := 0; i < len(dsList); i++ {
+		dsMap[dsList[i].Type] = dsList[i]
+	}
+
 	for i := 0; i < len(results); i++ {
 		r := results[i]
 
 		if r.Type == cloudmigration.DatasourceDataType &&
 			r.Error == "" { // any error returned by GMS takes priority
-			ds, err := s.dsService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
-				UID:   r.RefID,
-				OrgID: reqCtx.SignedInUser.OrgID,
-			})
-			if err != nil {
-				return nil, fmt.Errorf("getting data souce with uid %s: %w", r.RefID, err)
+
+			ds, ok := dsMap[r.RefID]
+			if !ok {
+				s.log.Error("data source with id %s was not found in data sources list")
+				continue
 			}
 
 			p, found := s.pluginStore.Plugin(ctx, ds.Type)
