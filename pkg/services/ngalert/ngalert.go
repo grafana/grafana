@@ -487,13 +487,13 @@ func (ng *AlertNG) init() error {
 }
 
 func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleStore) {
-	// if folder title is changed or the folder is moved, we update all alert rules in that folder to make sure that all peers (in HA mode) will update folder title and
+	// if full path to the folder is changed, we update all alert rules in that folder to make sure that all peers (in HA mode) will update folder title and
 	// clean up the current state
 	bus.AddEventListener(func(ctx context.Context, evt *events.FolderFullPathUpdated) error {
-		logger.Info("Got folder title updated event. updating rules in the folder", "folderUID", evt.UID)
-		_, err := dbStore.IncreaseVersionForAllRulesInNamespace(ctx, evt.OrgID, evt.UID)
+		logger.Info("Got folder full path updated event. updating rules in the folders", "folderUIDs", evt.UIDs)
+		_, err := dbStore.IncreaseVersionForAllRulesInNamespaces(ctx, evt.OrgID, evt.UIDs)
 		if err != nil {
-			logger.Error("Failed to update alert rules in the folder after its full path was changed", "error", err, "folderUid", evt.UID)
+			logger.Error("Failed to update alert rules in the folders after their full paths were changed", "error", err, "folderUIDs", evt.UIDs, "orgID", evt.OrgID)
 			return err
 		}
 		return nil
