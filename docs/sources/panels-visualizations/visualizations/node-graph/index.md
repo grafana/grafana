@@ -39,7 +39,7 @@ The following video provides beginner steps for creating node panel visualizatio
 
 ## Nodes options
 
-The Nodes options section provides configurations to node behaviors.
+The **Nodes** options section provides configurations for node behaviors.
 
 - **Main stat unit** choose which unit the main stat displays in the graph's nodes.
 - **Secondary stat unit** choose which unit the secondary stat displays in the graph's nodes.
