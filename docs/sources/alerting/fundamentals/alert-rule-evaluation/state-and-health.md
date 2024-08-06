@@ -86,7 +86,7 @@ Occasionally, an alert instance may be in a state that isn't immediately clear t
 - If "no data" handling is configured to transition to a state other than `NoData`.
 - If "error" handling is configured to transition to a state other than `Error`.
 
-In these cases, it is useful to understand the reason for transitioning to that state.
+In these situations, the evaluation state may differ from the alert state, and it might be necessary to understand the reason for being in that state when receiving the notification.
 
 The `grafana_state_reason` annotation is included in these situations, providing the reason in the notifications that explain why the alert instance transitioned to its current state. For example:
 
