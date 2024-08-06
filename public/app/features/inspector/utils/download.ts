@@ -115,12 +115,13 @@ export function downloadTraceAsJson(frame: DataFrame, title: string): string {
   return traceFormat;
 }
 
-export function exportTraceAsMermaid(frame: DataFrame, title: string): string {
+export function exportTraceAsMermaid(frame: DataFrame, title: string, highlights: string[]): string {
   const view = new DataFrameView(frame);
 
   const spans: Array<{
     startTime: number;
     duration: number;
+    spanID: string;
     operationName: string;
     serviceName: string;
   }> = [];
@@ -145,7 +146,7 @@ axisFormat %S.%L
       out += `section ${e.serviceName}${nbsp.repeat(idx)}\n`;
       currentSection = e.serviceName;
     }
-    out += `${e.operationName} [${e.duration}ms] :${Math.round(e.startTime)},${Math.max(Math.round(e.duration), 1)}ms\n`;
+    out += `${e.operationName} [${e.duration}ms] :${highlights.includes(e.spanID) ? 'active,' : ''}${e.spanID},${Math.round(e.startTime)},${Math.max(Math.round(e.duration), 1)}ms\n`;
     idx += 1;
   }
 

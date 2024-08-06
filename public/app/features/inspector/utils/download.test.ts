@@ -151,6 +151,7 @@ describe('exportTraceAsMermaid', () => {
       name: '00abcdefg',
       fields: [
         { name: 'startTime', type: FieldType.number, values: [1, 3, 5] },
+        { name: 'spanID', type: FieldType.string, values: ['a', 'b', 'c'] },
         { name: 'duration', type: FieldType.number, values: [2, 2, 2] },
         { name: 'operationName', type: FieldType.string, values: ['op1', 'op2', 'op3'] },
         { name: 'serviceName', type: FieldType.string, values: ['serviceA', 'serviceB', 'serviceA'] },
@@ -162,14 +163,14 @@ title Trace abcdefg
 dateFormat x
 axisFormat %S.%L
 section serviceA
-op1 [2ms] :1,2ms
+op1 [2ms] :a,1,2ms
 section serviceB 
-op2 [2ms] :3,2ms
+op2 [2ms] :active,b,3,2ms
 section serviceA  
-op3 [2ms] :5,2ms
+op3 [2ms] :c,5,2ms
 `;
 
-    const output = exportTraceAsMermaid(mockDataFrame, 'abcdefg');
+    const output = exportTraceAsMermaid(mockDataFrame, 'abcdefg', ['b']);
 
     expect(output).toBe(expectedOutput);
   });
