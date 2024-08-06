@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 
-	"github.com/grafana/alerting/notify"
-
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -91,7 +89,10 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 	if err != nil {
 		return nil, err
 	}
-	rcv := PostableApiReceiverToReceiver(postable, getReceiverProvenance(storedProvenances, postable))
+	rcv, err := PostableApiReceiverToReceiver(postable, getReceiverProvenance(storedProvenances, postable))
+	if err != nil {
+		return nil, err
+	}
 
 	auth := rs.authz.AuthorizeReadDecrypted
 	if !q.Decrypt {
@@ -124,7 +125,10 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	if err != nil {
 		return nil, err
 	}
-	receivers := PostableApiReceiversToReceivers(postables, storedProvenances)
+	receivers, err := PostableApiReceiversToReceivers(postables, storedProvenances)
+	if err != nil {
+		return nil, err
+	}
 
 	filterFn := rs.authz.FilterReadDecrypted
 	if !q.Decrypt {
@@ -168,7 +172,10 @@ func (rs *ReceiverService) ListReceivers(ctx context.Context, q models.ListRecei
 	if err != nil {
 		return nil, err
 	}
-	receivers := PostableApiReceiversToReceivers(postables, storedProvenances)
+	receivers, err := PostableApiReceiversToReceivers(postables, storedProvenances)
+	if err != nil {
+		return nil, err
+	}
 
 	if !listAccess {
 		var err error
@@ -182,7 +189,7 @@ func (rs *ReceiverService) ListReceivers(ctx context.Context, q models.ListRecei
 	for _, r := range receivers {
 		for _, integration := range r.Integrations {
 			integration.Settings = nil
-			integration.SecureSettings = nil
+			integration.SecureFields = nil
 			integration.DisableResolveMessage = false
 		}
 	}
@@ -207,7 +214,10 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, orgID
 	if err != nil {
 		return err
 	}
-	existing := PostableApiReceiverToReceiver(postable, getReceiverProvenance(storedProvenances, postable))
+	existing, err := PostableApiReceiverToReceiver(postable, getReceiverProvenance(storedProvenances, postable))
+	if err != nil {
+		return err
+	}
 
 	// TODO: Implement + check optimistic concurrency.
 
@@ -251,7 +261,7 @@ func (rs *ReceiverService) UsedByRules(ctx context.Context, orgID int64, uid str
 	return []models.AlertRuleKey{}, nil
 }
 
-func (rs *ReceiverService) deleteProvenances(ctx context.Context, orgID int64, integrations []*notify.GrafanaIntegrationConfig) error {
+func (rs *ReceiverService) deleteProvenances(ctx context.Context, orgID int64, integrations []*models.Integration) error {
 	// Delete provenance for all integrations.
 	for _, integration := range integrations {
 		target := definitions.EmbeddedContactPoint{UID: integration.UID}
@@ -268,13 +278,29 @@ func (rs *ReceiverService) decryptOrRedactSecureSettings(ctx context.Context, re
 		decryptOrRedact = rs.decryptor(ctx)
 	}
 	for _, r := range recv.Integrations {
-		for field, val := range r.SecureSettings {
-			newVal, err := decryptOrRedact(val)
+		for field, isSecure := range r.SecureFields {
+			if !isSecure {
+				// This should not happen as we only use the value true, but if it does happen we should skip.
+				continue
+			}
+			val, ok := r.Settings[field]
+			if !ok {
+				continue
+			}
+
+			// We only support encryption of string values.
+			secureVal, isString := val.(string)
+			if !isString {
+				rs.log.Warn("setting marked as secure is not a string", "name", recv.Name, "field", field)
+				continue
+			}
+			newVal, err := decryptOrRedact(secureVal)
 			if err != nil {
 				newVal = ""
-				rs.log.Warn("failed to decrypt secure setting", "name", recv.Name, "error", err)
+				rs.log.Warn("failed to decrypt secure setting", "name", recv.Name, "field", field, "error", err)
 			}
-			r.SecureSettings[field] = newVal
+
+			r.Settings[field] = newVal
 		}
 	}
 }

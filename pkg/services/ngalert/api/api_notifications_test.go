@@ -11,8 +11,6 @@ import (
 	"strings"
 	"testing"
 
-	alertingNotify "github.com/grafana/alerting/notify"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
@@ -36,7 +34,7 @@ func TestRouteGetReceiver(t *testing.T) {
 	t.Run("returns expected model", func(t *testing.T) {
 		expected := &models.Receiver{
 			Name: "receiver1",
-			Integrations: []*alertingNotify.GrafanaIntegrationConfig{
+			Integrations: []*models.Integration{
 				{
 					UID:  "uid1",
 					Name: "receiver1",
@@ -106,7 +104,7 @@ func TestRouteGetReceivers(t *testing.T) {
 		expected := []*models.Receiver{
 			{
 				Name: "receiver1",
-				Integrations: []*alertingNotify.GrafanaIntegrationConfig{
+				Integrations: []*models.Integration{
 					{
 						UID:  "uid1",
 						Name: "receiver1",
@@ -195,7 +193,7 @@ func TestRouteGetReceiversResponses(t *testing.T) {
 		})
 
 		t.Run("json body content is as expected", func(t *testing.T) {
-			expectedListResponse := `[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b","name":"grafana-default-email","type":"email","disableResolveMessage":false,"secureFields":{}}]},{"name":"multiple integrations","grafana_managed_receiver_configs":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","name":"multiple integrations","type":"prometheus-alertmanager","disableResolveMessage":false,"secureFields":{}},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","name":"multiple integrations","type":"discord","disableResolveMessage":false,"secureFields":{}}]},{"name":"pagerduty test","grafana_managed_receiver_configs":[{"uid":"b9bf06f8-bde2-4438-9d4a-bba0522dcd4d","name":"pagerduty test","type":"pagerduty","disableResolveMessage":false,"secureFields":{}}]},{"name":"slack test","grafana_managed_receiver_configs":[{"uid":"cbfd0976-8228-4126-b672-4419f30a9e50","name":"slack test","type":"slack","disableResolveMessage":false,"secureFields":{}}]}]`
+			expectedListResponse := `[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b","name":"grafana-default-email","type":"email","disableResolveMessage":false,"secureFields":null}]},{"name":"multiple integrations","grafana_managed_receiver_configs":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","name":"multiple integrations","type":"prometheus-alertmanager","disableResolveMessage":false,"secureFields":null},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","name":"multiple integrations","type":"discord","disableResolveMessage":false,"secureFields":null}]},{"name":"pagerduty test","grafana_managed_receiver_configs":[{"uid":"b9bf06f8-bde2-4438-9d4a-bba0522dcd4d","name":"pagerduty test","type":"pagerduty","disableResolveMessage":false,"secureFields":null}]},{"name":"slack test","grafana_managed_receiver_configs":[{"uid":"cbfd0976-8228-4126-b672-4419f30a9e50","name":"slack test","type":"slack","disableResolveMessage":false,"secureFields":null}]}]`
 			t.Run("limit offset", func(t *testing.T) {
 				env := createTestEnv(t, testContactPointConfig)
 				sut := createNotificationSrvSutFromEnv(t, &env)

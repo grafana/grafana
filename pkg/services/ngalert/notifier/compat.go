@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"encoding/json"
+	"fmt"
 
 	alertingNotify "github.com/grafana/alerting/notify"
 	alertingTemplates "github.com/grafana/alerting/templates"
@@ -11,22 +12,69 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 )
 
-func PostableApiReceiversToReceivers(postables []*apimodels.PostableApiReceiver, storedProvenances map[string]models.Provenance) []*models.Receiver {
+func PostableApiReceiversToReceivers(postables []*apimodels.PostableApiReceiver, storedProvenances map[string]models.Provenance) ([]*models.Receiver, error) {
 	receivers := make([]*models.Receiver, 0, len(postables))
 	for _, postable := range postables {
-		receivers = append(receivers, PostableApiReceiverToReceiver(postable, getReceiverProvenance(storedProvenances, postable)))
+		r, err := PostableApiReceiverToReceiver(postable, getReceiverProvenance(storedProvenances, postable))
+		if err != nil {
+			return nil, err
+		}
+		receivers = append(receivers, r)
 	}
-	return receivers
+	return receivers, nil
 }
 
-func PostableApiReceiverToReceiver(postable *apimodels.PostableApiReceiver, provenance models.Provenance) *models.Receiver {
-	apireceiver := PostableApiReceiverToApiReceiver(postable)
+func PostableApiReceiverToReceiver(postable *apimodels.PostableApiReceiver, provenance models.Provenance) (*models.Receiver, error) {
+	integrations, err := PostableGrafanaReceiversToIntegrations(postable.GrafanaManagedReceivers)
+	if err != nil {
+		return nil, err
+
+	}
 	return &models.Receiver{
 		UID:          legacy_storage.NameToUid(postable.GetName()), // TODO replace with stable UID.
 		Name:         postable.GetName(),
-		Integrations: apireceiver.Integrations,
+		Integrations: integrations,
 		Provenance:   provenance,
+	}, nil
+}
+
+func PostableGrafanaReceiversToIntegrations(postables []*apimodels.PostableGrafanaReceiver) ([]*models.Integration, error) {
+	integrations := make([]*models.Integration, 0, len(postables))
+	for _, cfg := range postables {
+		integration, err := PostableGrafanaReceiverToIntegration(cfg)
+		if err != nil {
+			return nil, err
+		}
+		integrations = append(integrations, integration)
 	}
+
+	return integrations, nil
+}
+
+func PostableGrafanaReceiverToIntegration(p *apimodels.PostableGrafanaReceiver) (*models.Integration, error) {
+	integration := &models.Integration{
+		UID:                   p.UID,
+		Name:                  p.Name,
+		Type:                  p.Type,
+		DisableResolveMessage: p.DisableResolveMessage,
+		Settings:              make(map[string]any, len(p.Settings)),
+		SecureFields:          make(map[string]bool, len(p.SecureSettings)),
+	}
+
+	if p.Settings != nil {
+		if err := json.Unmarshal(p.Settings, &integration.Settings); err != nil {
+			return nil, fmt.Errorf("integration '%s' of receiver '%s' has settings that cannot be parsed as JSON: %w", integration.Type, p.Name, err)
+		}
+	}
+
+	for k, v := range p.SecureSettings {
+		if v != "" {
+			integration.Settings[k] = v
+			integration.SecureFields[k] = true
+		}
+	}
+
+	return integration, nil
 }
 
 // getReceiverProvenance determines the provenance of a definitions.PostableApiReceiver based on the provenance of its integrations.

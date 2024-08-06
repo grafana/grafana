@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -170,17 +169,11 @@ func TestReceiverService_DecryptRedact(t *testing.T) {
 					require.Len(t, res.Integrations, 1)
 					require.Equal(t, "UID2", res.Integrations[0].UID)
 
-					testedSecureSettings := res.Integrations[0].SecureSettings
-					if tc.decrypt {
-						require.Equal(t, "secure url", testedSecureSettings["url"])
-					} else {
-						require.Equal(t, definitions.RedactedValue, testedSecureSettings["url"])
-					}
-
-					testedSettings, err := simplejson.NewJson(res.Integrations[0].Settings)
 					require.NoError(t, err)
-					if _, ok := testedSettings.CheckGet("secure url"); ok {
-						t.Fatalf("expected secure url to not be present in normal settings, got %v", testedSettings.Get("secure url"))
+					if tc.decrypt {
+						require.Equal(t, "secure url", res.Integrations[0].Settings["url"])
+					} else {
+						require.Equal(t, definitions.RedactedValue, res.Integrations[0].Settings["url"])
 					}
 				}
 			})

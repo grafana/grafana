@@ -3,9 +3,9 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"maps"
 	"time"
 
-	alertingNotify "github.com/grafana/alerting/notify"
 	jsoniter "github.com/json-iterator/go"
 	amConfig "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
@@ -489,42 +489,24 @@ func ApiRecordFromModelRecord(r *models.Record) *definitions.Record {
 	}
 }
 
-func GettableGrafanaReceiverFromReceiver(r *alertingNotify.GrafanaIntegrationConfig, provenance models.Provenance) (definitions.GettableGrafanaReceiver, error) {
+func GettableGrafanaReceiverFromReceiver(r *models.Integration, provenance models.Provenance) (definitions.GettableGrafanaReceiver, error) {
 	out := definitions.GettableGrafanaReceiver{
 		UID:                   r.UID,
 		Name:                  r.Name,
 		Type:                  r.Type,
 		Provenance:            definitions.Provenance(provenance),
 		DisableResolveMessage: r.DisableResolveMessage,
-		SecureFields:          make(map[string]bool, len(r.SecureSettings)),
+		SecureFields:          maps.Clone(r.SecureFields),
 	}
 
-	if r.Settings == nil && r.SecureSettings == nil {
+	if len(r.Settings) == 0 {
 		return out, nil
 	}
 
-	settings := simplejson.New()
-	if r.Settings != nil {
-		var err error
-		settings, err = simplejson.NewJson(r.Settings)
-		if err != nil {
-			return definitions.GettableGrafanaReceiver{}, err
-		}
-	}
-
-	for k, v := range r.SecureSettings {
-		if v == "" {
-			continue
-		}
-		settings.Set(k, v)
-		out.SecureFields[k] = true
-	}
-
-	jsonBytes, err := settings.MarshalJSON()
+	jsonBytes, err := simplejson.NewFromAny(r.Settings).MarshalJSON()
 	if err != nil {
 		return definitions.GettableGrafanaReceiver{}, err
 	}
-
 	out.Settings = jsonBytes
 
 	return out, nil
