@@ -5,6 +5,7 @@ import { ConfirmModal, useStyles2 } from '@grafana/ui';
 import { Authorize } from '../../components/Authorize';
 import { AlertmanagerAction } from '../../hooks/useAbilities';
 import { getAlertTableStyles } from '../../styles/table';
+import { PROVENANCE_NONE } from '../../utils/k8s/constants';
 import { makeAMLink } from '../../utils/misc';
 import { CollapseToggle } from '../CollapseToggle';
 import { DetailsField } from '../DetailsField';
@@ -64,6 +65,7 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
             </tr>
           )}
           {templates.map(({ name, template, provenance }, idx) => {
+            const isProvisioned = provenance !== PROVENANCE_NONE;
             const isExpanded = expandedTemplates[name];
             return (
               <Fragment key={name}>
@@ -75,10 +77,10 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
                     />
                   </td>
                   <td>
-                    {name} {provenance && <ProvisioningBadge />}
+                    {name} {isProvisioned && <ProvisioningBadge />}
                   </td>
                   <td className={tableStyles.actionsCell}>
-                    {provenance && (
+                    {isProvisioned && (
                       <ActionIcon
                         to={makeAMLink(
                           `/alerting/notifications/templates/${encodeURIComponent(name)}/edit`,
@@ -88,7 +90,7 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
                         icon="file-alt"
                       />
                     )}
-                    {!provenance && (
+                    {!isProvisioned && (
                       <Authorize actions={[AlertmanagerAction.UpdateNotificationTemplate]}>
                         <ActionIcon
                           to={makeAMLink(
@@ -110,7 +112,7 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
                         icon="copy"
                       />
                     </Authorize>
-                    {!provenance && (
+                    {!isProvisioned && (
                       <Authorize actions={[AlertmanagerAction.DeleteNotificationTemplate]}>
                         <ActionIcon
                           onClick={() => setTemplateToDelete(name)}

@@ -131,7 +131,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
   } = formApi;
 
   const submit = async (values: TemplateFormValues) => {
-    const returnLink = makeAMLink('alerting/notifications', alertManagerSourceName, {
+    const returnLink = makeAMLink('/alerting/notifications', alertManagerSourceName, {
       tab: ContactPointsActiveTabs.NotificationTemplates,
     });
 
@@ -175,7 +175,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
     <>
       <FormProvider {...formApi}>
         <AppChromeUpdate actions={actionButtons} />
-        <form onSubmit={handleSubmit(submit, (e) => console.log('ziemniak', e))} ref={formRef} className={styles.form}>
+        <form onSubmit={handleSubmit(submit)} ref={formRef} className={styles.form}>
           {/* error message */}
           {error && (
             <Alert severity="error" title="Error saving template">
@@ -183,7 +183,11 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
             </Alert>
           )}
           {/* warning about provisioned template */}
-          {provenance && <ProvisioningAlert resource={ProvisionedResource.Template} />}
+          {provenance && (
+            <Box grow={0}>
+              <ProvisioningAlert resource={ProvisionedResource.Template} />
+            </Box>
+          )}
 
           {/* name field for the template */}
           <FieldSet disabled={Boolean(provenance)} className={styles.fieldset}>

@@ -5,6 +5,7 @@ import { useDispatch } from 'app/types';
 import { AlertManagerCortexConfig } from '../../../../../plugins/datasource/alertmanager/types';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { updateAlertManagerConfigAction } from '../../state/actions';
+import { PROVENANCE_NONE } from '../../utils/k8s/constants';
 import { ensureDefine } from '../../utils/templates';
 import { TemplateFormValues } from '../receivers/TemplateForm';
 
@@ -15,7 +16,7 @@ interface BaseAlertmanagerArgs {
 export interface NotificationTemplate {
   name: string;
   template: string;
-  provenance?: string;
+  provenance: string;
 }
 export function useNotificationTemplates({ alertmanager }: BaseAlertmanagerArgs) {
   const { useGetAlertmanagerConfigurationQuery } = alertmanagerApi;
@@ -36,7 +37,7 @@ function amConfigToTemplates(config: AlertManagerCortexConfig): NotificationTemp
   return Object.entries(config.template_files).map(([name, template]) => ({
     name,
     template,
-    provenance: (config.template_file_provenances ?? {})[name],
+    provenance: (config.template_file_provenances ?? {})[name] ?? PROVENANCE_NONE,
   }));
 }
 
