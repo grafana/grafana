@@ -9,6 +9,7 @@ import {
   ALL_MUTE_TIMINGS,
   useExportMuteTimingsDrawer,
 } from 'app/features/alerting/unified/components/mute-timings/useExportMuteTimingsDrawer';
+import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/constants';
 
 import { Authorize } from '../../components/Authorize';
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
@@ -18,7 +19,7 @@ import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 
-import { MuteTiming, PROVENANCE_ANNOTATION, useMuteTimings } from './useMuteTimings';
+import { MuteTiming, useMuteTimings } from './useMuteTimings';
 import { renderTimeIntervals } from './util';
 
 interface MuteTimingsTableProps {

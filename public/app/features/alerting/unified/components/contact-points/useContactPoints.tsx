@@ -14,7 +14,7 @@ import {
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
 import { cloudNotifierTypes } from 'app/features/alerting/unified/utils/cloud-alertmanager-notifier-types';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { getNamespace, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
+import { getK8sNamespace, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { onCallApi } from '../../api/onCallApi';
@@ -94,7 +94,7 @@ const useK8sContactPoints = (...[hookParams, queryOptions]: Parameters<typeof us
  * or the `/notifications/receivers` endpoint
  */
 const useFetchGrafanaContactPoints = ({ skip }: Skippable = {}) => {
-  const namespace = getNamespace();
+  const namespace = getK8sNamespace();
   const useK8sApi = shouldUseK8sApi(GRAFANA_RULES_SOURCE_NAME);
 
   const grafanaResponse = useGetContactPointsListQuery(undefined, { skip: skip || useK8sApi });
