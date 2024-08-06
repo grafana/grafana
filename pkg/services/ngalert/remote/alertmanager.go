@@ -569,7 +569,15 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 }
 
 func (am *Alertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
-	return &notifier.TestTemplatesResults{}, nil
+	for _, alert := range c.Alerts {
+		notifier.AddDefaultLabelsAndAnnotations(alert)
+	}
+
+	return am.mimirClient.TestTemplate(ctx, alertingNotify.TestTemplatesConfigBodyParams{
+		Alerts:   c.Alerts,
+		Template: c.Template,
+		Name:     c.Name,
+	})
 }
 
 // StopAndWait is called when the grafana server is instructed to shut down or an org is deleted.

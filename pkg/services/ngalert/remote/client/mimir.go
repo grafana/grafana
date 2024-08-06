@@ -30,6 +30,7 @@ type MimirClient interface {
 	CreateGrafanaAlertmanagerConfig(ctx context.Context, configuration *apimodels.PostableUserConfig, hash string, createdAt int64, isDefault bool) error
 	DeleteGrafanaAlertmanagerConfig(ctx context.Context) error
 
+	TestTemplate(ctx context.Context, c alertingNotify.TestTemplatesConfigBodyParams) (*alertingNotify.TestTemplatesResults, error)
 	TestReceivers(ctx context.Context, c alertingNotify.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, error)
 
 	ShouldPromoteConfig() bool
@@ -206,18 +207,27 @@ func (mc *Mimir) TestReceivers(ctx context.Context, c alertingNotify.TestReceive
 	}
 
 	trResult := &alertingNotify.TestReceiversResult{}
-	response := successResponse{
-		Data: trResult,
-	}
 
-	_, err = mc.do(ctx, "api/v1/grafana/receivers/test", http.MethodPost, bytes.NewBuffer(payload), &response)
+	_, err = mc.do(ctx, "api/v1/grafana/receivers/test", http.MethodPost, bytes.NewBuffer(payload), &trResult)
 	if err != nil {
 		return nil, err
 	}
 
-	if response.Status != "success" {
-		return nil, fmt.Errorf("returned non-success `status` from the MimirAPI: %s", response.Status)
+	return trResult, nil
+}
+
+func (mc *Mimir) TestTemplate(ctx context.Context, c alertingNotify.TestTemplatesConfigBodyParams) (*alertingNotify.TestTemplatesResults, error) {
+	payload, err := json.Marshal(c)
+	if err != nil {
+		return nil, err
 	}
 
-	return trResult, nil
+	ttResult := &alertingNotify.TestTemplatesResults{}
+
+	_, err = mc.do(ctx, "api/v1/grafana/templates/test", http.MethodPost, bytes.NewBuffer(payload), &ttResult)
+	if err != nil {
+		return nil, err
+	}
+
+	return ttResult, nil
 }
