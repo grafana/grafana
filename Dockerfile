@@ -61,6 +61,7 @@ COPY pkg/build/go.* pkg/build/
 COPY pkg/build/wire/go.* pkg/build/wire/
 COPY pkg/promlib/go.* pkg/promlib/
 COPY pkg/storage/unified/resource/go.* pkg/storage/unified/resource/
+COPY pkg/semconv/go.* pkg/semconv/
 
 RUN go mod download
 RUN if [[ "$BINGO" = "true" ]]; then \
