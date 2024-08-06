@@ -15,11 +15,11 @@ export function ResourceDetailsModal(props: ResourceDetailsModalProps) {
   const refId = resource?.refId;
   const typeName = resource && prettyTypeName(resource.type);
 
-  let msgTitle = 'Resource migration details:';
+  let msgTitle = t('migrate-to-cloud.resource-details.generic-title', 'Resource migration details:');
   if (resource?.status === 'ERROR') {
-    msgTitle = 'Unable to migrate this resource:';
+    msgTitle = t('migrate-to-cloud.resource-details.error-title', 'Unable to migrate this resource:');
   } else if (resource?.status === 'WARNING') {
-    msgTitle = 'Resource migrated with a warning:';
+    msgTitle = t('migrate-to-cloud.resource-details.warning-title', 'Resource migrated with a warning:');
   }
 
   return (
@@ -38,9 +38,7 @@ export function ResourceDetailsModal(props: ResourceDetailsModalProps) {
 
           {resource.message ? (
             <>
-              <Text element="p">
-                <Trans i18nKey="migrate-to-cloud.resource-details.specific-message-title">{msgTitle}</Trans>
-              </Text>
+              <Text element="p">{msgTitle}</Text>
 
               <Text element="p" weight="bold">
                 <Trans i18nKey="migrate-to-cloud.resource-details.specific-message-body">{resource.message}</Trans>

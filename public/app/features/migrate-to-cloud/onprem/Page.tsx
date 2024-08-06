@@ -357,16 +357,21 @@ function getError(props: GetErrorProps): ErrorDescription | undefined {
 
     // If there are any errors, that's the most pressing info. If there are no errors but warnings, show the warning text instead.
     if (errorCount > 0) {
-      msgBody =
-        'The migration has completed, but some items could not be migrated to the cloud stack. Check the failed resources for more details';
+      msgBody = t(
+        'migrate-to-cloud.onprem.migration-finished-with-errors-body',
+        'The migration has completed, but some items could not be migrated to the cloud stack. Check the failed resources for more details'
+      );
     } else if (warningCount > 0) {
-      msgBody = 'The migration has completed with some warnings. Check individual resources for more details';
+      msgBody = t(
+        'migrate-to-cloud.onprem.migration-finished-with-warnings-body',
+        'The migration has completed with some warnings. Check individual resources for more details'
+      );
     }
 
     return {
       severity: 'warning',
       title: t('migrate-to-cloud.onprem.migration-finished-with-caveat-title', 'Resource migration complete'),
-      body: t('migrate-to-cloud.onprem.migration-finished-with-caveat-body', msgBody),
+      body: msgBody,
     };
   }
 
