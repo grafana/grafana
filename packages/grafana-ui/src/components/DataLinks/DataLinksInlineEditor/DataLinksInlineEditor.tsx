@@ -166,11 +166,14 @@ export const DataLinksInlineEditor = ({
 const getDataLinksInlineEditorStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     marginBottom: theme.spacing(2),
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 16,
   }),
   oneClickOverlay: css({
     height: 'auto',
+    minHeight: 69,
     border: `1px dashed ${theme.colors.border.medium}`,
-    paddingBottom: 10,
     fontSize: 10,
     color: theme.colors.text.link,
   }),
