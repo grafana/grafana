@@ -582,7 +582,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
   }
 
   if (isNumber(calcs.firstNotNull) && isNumber(calcs.diff)) {
-    calcs.diffperc = (calcs.diff / calcs.firstNotNull) * 100;
+    calcs.diffperc = calcs.diff / calcs.firstNotNull;
   }
   return calcs;
 }

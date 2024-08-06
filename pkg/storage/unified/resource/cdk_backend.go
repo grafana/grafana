@@ -3,6 +3,7 @@ package resource
 import (
 	"bytes"
 	context "context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -141,7 +142,7 @@ func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *ReadRe
 		iter := s.bucket.List(&blob.ListOptions{Prefix: path + "/", Delimiter: "/"})
 		for {
 			obj, err := iter.Next(ctx)
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				break
 			}
 			if strings.HasSuffix(obj.Key, ".json") {
@@ -325,7 +326,7 @@ func buildTree(ctx context.Context, s *cdkBackend, key *ResourceKey) (*cdkListIt
 	iter := s.bucket.List(&blob.ListOptions{Prefix: path, Delimiter: ""}) // "" is recursive
 	for {
 		obj, err := iter.Next(ctx)
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if strings.HasSuffix(obj.Key, ".json") {

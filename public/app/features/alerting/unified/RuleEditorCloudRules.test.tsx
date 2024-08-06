@@ -123,7 +123,7 @@ describe('RuleEditor cloud', () => {
 
     const switchToCloudButton = screen.getByText('Data source-managed');
     expect(switchToCloudButton).toBeInTheDocument();
-    expect(switchToCloudButton).not.toBeDisabled();
+    expect(switchToCloudButton).toBeEnabled();
 
     await user.click(switchToCloudButton);
 
