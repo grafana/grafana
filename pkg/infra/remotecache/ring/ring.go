@@ -10,21 +10,26 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+const (
+	ringName = "cache_ring"
+	ringKey  = "cache/ring"
+)
+
 type ringConfig struct {
 	Addr string
 	Port string
 }
 
-func newRing(cfg ringConfig, logger log.Logger, client kv.Client) (*ring.Ring, *ring.BasicLifecycler, error) {
+func newRing(cfg ringConfig, logger log.Logger, client kv.Client, reg prometheus.Registerer) (*ring.Ring, *ring.BasicLifecycler, error) {
 	var ringConfig ring.Config
 	ringConfig.ReplicationFactor = 1
 	hring, err := ring.NewWithStoreClientAndStrategy(
 		ringConfig,
-		"local",           // ring name
-		"collectors/ring", // prefix key where peers are stored
+		ringName,
+		ringKey,
 		client,
 		ring.NewDefaultReplicationStrategy(),
-		prometheus.NewPedanticRegistry(),
+		reg,
 		log.With(logger, "component", "ring"),
 	)
 
@@ -43,12 +48,12 @@ func newRing(cfg ringConfig, logger log.Logger, client kv.Client) (*ring.Ring, *
 
 	lfc, err := ring.NewBasicLifecycler(
 		config,
-		"local",
-		"collectors/ring",
+		ringName,
+		ringKey,
 		client,
 		delegate,
 		log.With(logger, "component", "lifecycler"),
-		prometheus.NewPedanticRegistry(),
+		reg,
 	)
 
 	if err != nil {

@@ -33,7 +33,7 @@ func newMemberlistService(cfg memberlistConfig, logger log.Logger, reg prometheu
 	svc := memberlist.NewKVInitService(
 		&config,
 		log.With(logger, "component", "memberlist"),
-		dns.NewProvider(log.With(logger, "component", "dns"), prometheus.NewPedanticRegistry(), dns.GolangResolverType),
+		dns.NewProvider(log.With(logger, "component", "dns"), reg, dns.GolangResolverType),
 		reg,
 	)
 

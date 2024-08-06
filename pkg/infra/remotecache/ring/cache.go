@@ -37,12 +37,14 @@ func NewCache(cfg *setting.Cfg, reg prometheus.Registerer) (*Cache, error) {
 		ringConfig{Addr: cfg.HTTPAddr, Port: strconv.Itoa(ringPort)},
 		logger,
 		client,
+		reg,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ring: %w", err)
 	}
 
 	c := &Cache{
+		// TODO: Fix addr for nodes
 		id:     cfg.HTTPAddr,
 		lfc:    lfc,
 		kv:     client,
