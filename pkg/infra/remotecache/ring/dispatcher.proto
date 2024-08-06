@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package ring;
+
+option go_package = "github.com/grafana/grafana/pkg/infra/remotecache/ring";
+
+service Dispatcher {
+  rpc Get(GetRequest) returns (GetResponse) {};
+  rpc Set(SetRequest) returns (SetResponse) {};
+  rpc Delete(DeleteRequest) returns (DeleteResponse) {};
+}
+
+message GetRequest {
+  string key = 1;
+}
+
+message GetResponse {
+  bytes value = 1;
+}
+
+message SetRequest {
+  string key = 1;
+  bytes value = 2;
+}
+
+message SetResponse {}
+
+message DeleteRequest {
+  string key = 1;
+}
+
+message DeleteResponse {
+  bytes value = 1;
+}

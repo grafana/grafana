@@ -50,9 +50,9 @@ func (b *localBackend) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
-func newRemoteBackend(inst *ring.InstanceDesc) *remoteBackend {
+func newRemoteBackend(inst *ring.InstanceDesc) *dispatchBackend {
 	url := getInstanceURL(inst)
-	return &remoteBackend{
+	return &dispatchBackend{
 		url,
 		&http.Client{
 			Transport: &http.Transport{
@@ -71,12 +71,12 @@ func newRemoteBackend(inst *ring.InstanceDesc) *remoteBackend {
 	}
 }
 
-type remoteBackend struct {
+type dispatchBackend struct {
 	url    string
 	client *http.Client
 }
 
-func (b *remoteBackend) Get(ctx context.Context, key string) ([]byte, error) {
+func (b *dispatchBackend) Get(ctx context.Context, key string) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, b.url+"/cache/"+key, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to delegate get cache: %w", err)
@@ -99,7 +99,7 @@ func (b *remoteBackend) Get(ctx context.Context, key string) ([]byte, error) {
 
 }
 
-func (b *remoteBackend) Set(ctx context.Context, key string, value []byte, expr time.Duration) error {
+func (b *dispatchBackend) Set(ctx context.Context, key string, value []byte, expr time.Duration) error {
 	buf := &bytes.Buffer{}
 	if err := json.NewEncoder(buf).Encode(&setRequest{key, value, expr}); err != nil {
 		return fmt.Errorf("failed to delegate set cache: %w", err)
@@ -123,7 +123,7 @@ func (b *remoteBackend) Set(ctx context.Context, key string, value []byte, expr 
 	return nil
 }
 
-func (b *remoteBackend) Delete(ctx context.Context, key string) error {
+func (b *dispatchBackend) Delete(ctx context.Context, key string) error {
 	// TODO: url encode key
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, b.url+"/cache/"+key, nil)
 	if err != nil {
