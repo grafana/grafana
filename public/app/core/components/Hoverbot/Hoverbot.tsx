@@ -79,6 +79,7 @@ export const Hoverbot = () => {
       document.removeEventListener('click', handleClick);
       if (highlighted) {
         highlighted.style.outline = '';
+        highlighted.style.boxShadow = '';
         helpMe(highlighted);
         highlighted = undefined;
       }
@@ -106,9 +107,11 @@ function handleMouseOver(e: MouseEvent) {
     if (!target) {
       return;
     }
-    target.style.outline = 'solid 1px red';
+    target.style.outline = 'solid 1px orange';
+    target.style.boxShadow = '0 0 10px 5px rgba(255, 0, 0, 0.5)'
     if (highlighted) {
       highlighted.style.outline = '';
+      highlighted.style.boxShadow = '';
     }
     highlighted = target;
   }
@@ -116,7 +119,7 @@ function handleMouseOver(e: MouseEvent) {
 
 function getEventTarget(element: HTMLDivElement, bubbled = 2) {
   const rect = element.getBoundingClientRect();
-  if (rect.height < 50 || rect.width < 50) {
+  if (rect.height < 39 || rect.width < 39) {
     if ((bubbled-1) >= 0 && element.parentElement instanceof HTMLDivElement) {
       return getEventTarget(element.parentElement, bubbled-1);
     }
