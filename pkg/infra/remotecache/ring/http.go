@@ -11,9 +11,8 @@ func buildMux(c *Cache) *http.ServeMux {
 	mux.Handle("/remote_cache/ring/status", c.lfc)
 	mux.Handle("/remote_cache/ring/kv", c.mlist)
 
-	mux.HandleFunc("GET /remote_cache/{key}", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /remote_cache/ring/get/{key}", func(w http.ResponseWriter, r *http.Request) {
 		key := r.PathValue("key")
-		c.logger.Info("get cached item", "key", key)
 		value, err := c.Get(r.Context(), key)
 		if err != nil {
 			c.logger.Error("failed to get item", "err", err)
@@ -30,21 +29,7 @@ func buildMux(c *Cache) *http.ServeMux {
 		_ = json.NewEncoder(w).Encode(&response{Value: value})
 	})
 
-	mux.HandleFunc("DELETE /remote_cache/{key}", func(w http.ResponseWriter, r *http.Request) {
-		key := r.PathValue("key")
-		c.logger.Info("delete cached item", "key", key)
-		err := c.Delete(r.Context(), key)
-		if err != nil {
-			c.logger.Error("failed to delete item", "err", err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-	})
-
-	mux.HandleFunc("POST /remote_cache", func(w http.ResponseWriter, r *http.Request) {
-		c.logger.Info("set new item")
+	mux.HandleFunc("POST /remote_cache/ring/add", func(w http.ResponseWriter, r *http.Request) {
 		type request struct {
 			Key   string `json:"key"`
 			Value string `json:"value"`
@@ -62,6 +47,18 @@ func buildMux(c *Cache) *http.ServeMux {
 			return
 
 		}
+		w.WriteHeader(http.StatusOK)
+	})
+
+	mux.HandleFunc("DELETE /remote_cache/ring/delete/{key}", func(w http.ResponseWriter, r *http.Request) {
+		key := r.PathValue("key")
+		err := c.Delete(r.Context(), key)
+		if err != nil {
+			c.logger.Error("failed to delete item", "err", err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
 		w.WriteHeader(http.StatusOK)
 	})
 
