@@ -5,6 +5,7 @@ import { AdHocVariableFilter, GrafanaTheme2, PageLayoutType, RawTimeRange, Varia
 import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
+  CustomVariable,
   DataSourceVariable,
   getUrlSyncManager,
   SceneComponentProps,
@@ -43,6 +44,7 @@ import {
   trailDS,
   VAR_DATASOURCE,
   VAR_DATASOURCE_EXPR,
+  VAR_EXPERIENCE,
   VAR_FILTERS,
   VAR_OTEL_RESOURCES,
 } from './shared';
@@ -122,7 +124,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   protected _variableDependency = new VariableDependencyConfig(this, {
-    variableNames: [VAR_DATASOURCE, VAR_OTEL_RESOURCES],
+    variableNames: [VAR_DATASOURCE, VAR_OTEL_RESOURCES, VAR_EXPERIENCE],
     onReferencedVariableValueChanged: async (variable: SceneVariable) => {
       const { name } = variable.state;
 
@@ -146,6 +148,23 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       const isDeploymentEnvironment = value?.includes('deployment_environment');
       if (name === VAR_OTEL_RESOURCES && isDeploymentEnvironment) {
         this.loadOtelResources();
+      }
+
+      if (name === VAR_EXPERIENCE) {
+        // if it is otel, check resources
+        const experienceVariableValue = sceneGraph.lookupVariable(VAR_EXPERIENCE, this)?.getValue();
+
+        if (experienceVariableValue === 'OTel') {
+          this.checkOtelStandardization();
+        } else if (experienceVariableValue === 'Prometheus') {
+          // clear filters on restting the data source
+          const adhocVariable = sceneGraph.lookupVariable(VAR_FILTERS, this);
+          const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, this);
+          if (adhocVariable instanceof AdHocFiltersVariable && otelResourcesVariable instanceof AdHocFiltersVariable) {
+            adhocVariable?.setState({ filters: [] });
+            otelResourcesVariable?.setState({ filters: [], hide: VariableHide.hideVariable });
+          }
+        }
       }
     },
   });
@@ -325,12 +344,19 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
     useEffect(() => {
       const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, model);
-      const noOtelFilters = getOtelFilterKeys(otelResourcesVariable).length === 0;
+      const experienceVariable = sceneGraph.lookupVariable(VAR_EXPERIENCE, model);
 
-      if (noOtelFilters) {
-        model.checkOtelStandardization();
+      const noOtelFilters = getOtelFilterKeys(otelResourcesVariable).length === 0;
+      if (experienceVariable?.getValue() === 'OTel') {
+        if (noOtelFilters) {
+          model.checkOtelStandardization();
+        } else {
+          model.loadOtelResources();
+        }
       } else {
-        model.loadOtelResources();
+        if (otelResourcesVariable instanceof AdHocFiltersVariable) {
+          otelResourcesVariable?.setState({ filters: [], hide: VariableHide.hideVariable });
+        }
       }
     }, [model]);
 
@@ -377,14 +403,20 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
         value: initialDS,
         pluginId: 'prometheus',
       }),
-      new AdHocFiltersVariable({
-        name: VAR_FILTERS,
-        addFilterButtonText: 'Add label',
-        datasource: trailDS,
-        hide: VariableHide.hideLabel,
-        layout: 'vertical',
-        filters: initialFilters ?? [],
-        baseFilters: getBaseFiltersForMetric(metric),
+      new CustomVariable({
+        query: 'Prometheus,OTel,',
+        name: VAR_EXPERIENCE,
+        options: [
+          { value: 'OTel', label: 'OTel-experience' },
+          { value: 'Prometheus', label: 'Prometheus-experience' },
+        ],
+        isMulti: false,
+        includeAll: false,
+        defaultToAll: false,
+        placeholder: 'Select experience',
+        maxVisibleValues: 2,
+        noValueOnClear: false,
+        isReadOnly: false,
       }),
       new AdHocFiltersVariable({
         name: VAR_OTEL_RESOURCES,
@@ -394,6 +426,15 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
         layout: 'vertical',
         filters: initialFilters ?? [],
         defaultKeys: [],
+      }),
+      new AdHocFiltersVariable({
+        name: VAR_FILTERS,
+        addFilterButtonText: 'Add label',
+        datasource: trailDS,
+        hide: VariableHide.hideLabel,
+        layout: 'vertical',
+        filters: initialFilters ?? [],
+        baseFilters: getBaseFiltersForMetric(metric),
       }),
     ],
   });
