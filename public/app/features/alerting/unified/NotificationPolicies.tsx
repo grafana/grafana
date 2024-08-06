@@ -322,7 +322,7 @@ export const findRoutesMatchingFilters = (rootRoute: RouteWithID, filters: Route
   //
   // [contactPointMatches, labelMatcherMatches] -> [[{ a: [], b: [] }], [{ a: [], c: [] }]]
   // later we'll use intersection to find results in all sets of filter matchers
-  let matchedRoutes: RouteWithID[][] = [];
+  const matchedRoutes: RouteWithID[][] = [];
 
   // compute fully inherited tree so all policies have their inherited receiver
   const fullRoute = computeInheritedTree(rootRoute);
@@ -392,11 +392,11 @@ interface QueryParamValues {
 function getActiveTabFromUrl(queryParams: UrlQueryMap): QueryParamValues {
   let tab = ActiveTab.NotificationPolicies; // default tab
 
-  if (queryParams['tab'] === ActiveTab.NotificationPolicies) {
+  if (queryParams.tab === ActiveTab.NotificationPolicies) {
     tab = ActiveTab.NotificationPolicies;
   }
 
-  if (queryParams['tab'] === ActiveTab.MuteTimings) {
+  if (queryParams.tab === ActiveTab.MuteTimings) {
     tab = ActiveTab.MuteTimings;
   }
 

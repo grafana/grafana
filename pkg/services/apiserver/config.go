@@ -35,7 +35,6 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	host := net.JoinHostPort(cfg.HTTPAddr, strconv.Itoa(port))
 
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
-	unifiedStorageModeCfg := cfg.SectionWithEnvOverrides("unified_storage_mode")
 
 	o.RecommendedOptions.Etcd.StorageConfig.Transport.ServerList = apiserverCfg.Key("etcd_servers").Strings(",")
 
@@ -57,7 +56,8 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	o.StorageOptions.DataPath = apiserverCfg.Key("storage_path").MustString(filepath.Join(cfg.DataPath, "grafana-apiserver"))
 	o.StorageOptions.Address = apiserverCfg.Key("address").MustString(o.StorageOptions.Address)
 	o.StorageOptions.DualWriterDesiredModes = map[string]grafanarest.DualWriterMode{
-		playlist.GROUPRESOURCE: grafanarest.DualWriterMode(unifiedStorageModeCfg.Key(playlist.GROUPRESOURCE).MustInt(0)),
+		// TODO: use the new config from HGAPI after https://github.com/grafana/hosted-grafana/pull/5707
+		playlist.GROUPRESOURCE: 2,
 	}
 
 	// TODO: ensure backwards compatibility with production

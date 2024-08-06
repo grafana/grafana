@@ -82,7 +82,7 @@ func dashboardGuardianResponse(err error) response.Response {
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response {
-	ctx, span := hs.tracer.Start(c.Req.Context(), "httpserver.GetDashboard")
+	ctx, span := hs.tracer.Start(c.Req.Context(), "api.GetDashboard")
 	defer span.End()
 
 	uid := web.Params(c.Req)[":uid"]
@@ -262,6 +262,9 @@ func (hs *HTTPServer) getUserLogin(ctx context.Context, userID int64) string {
 }
 
 func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id int64, uid string) (*dashboards.Dashboard, response.Response) {
+	ctx, span := hs.tracer.Start(ctx, "api.getDashboardHelper")
+	defer span.End()
+
 	var query dashboards.GetDashboardQuery
 
 	if len(uid) > 0 {
