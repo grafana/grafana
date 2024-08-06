@@ -15,7 +15,7 @@ export const Hoverbot = () => {
     openai.enabled().then(setEnabled);
   }, []);
 
-  const ask = useCallback((image: string) => {
+  const ask = useCallback((image: string, element: HTMLDivElement) => {
     // Stream the completions. Each element is the next stream chunk.
     const stream = openai
       .streamChatCompletions({
@@ -26,7 +26,7 @@ export const Hoverbot = () => {
           { role: 'user', content: [
             {
               "type": "text",
-              "text": scrapContext(),
+              "text": scrapContext(element),
             },
             {
               "type": "image_url",
@@ -62,7 +62,7 @@ export const Hoverbot = () => {
     setLoading(true);
 
     html2canvas(element, { allowTaint: true }).then((canvas) => {
-      ask(canvas.toDataURL('image/png', 0.5));
+      ask(canvas.toDataURL('image/png', 0.5), element);
     });
   }, [ask, enabled]);
 
@@ -146,12 +146,15 @@ function getEventTarget(element: HTMLDivElement, bubbled = 2) {
   return element;
 }
 
-function scrapContext(): string {
-  if (document.title.includes('Explore')) {
+function scrapContext(element: HTMLDivElement): string {
+  if (document.title.startsWith('Explore')) {
     return scrapExploreContext();
   }
+  if (document.title.includes('Dashboards')) {
+    return scrapDashboardContext(element);
+  }
 
-  return 'Help me understand the following observability data from logs:';
+  return 'Help me understand the following observability data:';
 }
 
 function scrapExploreContext() {
@@ -177,6 +180,22 @@ function scrapExploreContext() {
   });
 
   context += "Please help me interpret the following image from Grafana.";
+
+  console.log(context);
+
+  return context;
+}
+
+function scrapDashboardContext(element: HTMLDivElement) {
+  let context = "I'm looking at a Grafana dashboard. ";
+
+  context += `${getTimeRangeContext()}. `;
+
+  if ($(element).parents('section').find('h2[title]').length) {
+    context += `The graph title is ${$(element).parents('section').find('h2[title]').text()}. `;
+  } else if ($(element).find('h2[title]').length) {
+    context += `The graph title is ${$(element).find('h2[title]').text()}. `;
+  }
 
   console.log(context);
 
