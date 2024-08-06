@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { DataFrame } from '@grafana/data/';
 import { EmbeddedScene, PanelBuilders, SceneDataNode, SceneFlexItem, SceneFlexLayout } from '@grafana/scenes';
+import { TextDimensionMode } from '@grafana/schema/dist/esm/index';
 import { stylesFactory, usePanelContext } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions/context';
@@ -15,6 +16,8 @@ const panelTypes: Array<SelectableValue<string>> = Object.keys(PanelBuilders).ma
   return { label: type, value: type };
 });
 
+const defaultPanelTitle = 'New Visualization';
+
 const VisualizationDisplay = (props: CanvasElementProps<VizElementConfig, VizElementData>) => {
   const context = usePanelContext();
   const scene = context.instanceState?.scene;
@@ -22,7 +25,7 @@ const VisualizationDisplay = (props: CanvasElementProps<VizElementConfig, VizEle
   const { data, config: elementConfig } = props;
   const styles = getStyles(config.theme2, data, scene);
 
-  const panelTitle = data?.text ? data?.text : 'Visualization';
+  const panelTitle = data?.text ?? '';
   let panelToEmbed = PanelBuilders.timeseries().setTitle(panelTitle);
   if (data?.vizType) {
     // TODO make this better
@@ -94,6 +97,7 @@ export const visualizationItem: CanvasElementItem<VizElementConfig, VizElementDa
       },
       vizType: 'timeseries',
       fields: options?.fields ?? [],
+      text: { mode: TextDimensionMode.Fixed, fixed: defaultPanelTitle },
     },
     background: {
       color: {
