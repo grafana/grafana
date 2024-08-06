@@ -240,6 +240,7 @@ type Cfg struct {
 	IDResponseHeaderEnabled       bool
 	IDResponseHeaderPrefix        string
 	IDResponseHeaderNamespaces    map[string]struct{}
+	PasswordlessAuth              bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders   []string

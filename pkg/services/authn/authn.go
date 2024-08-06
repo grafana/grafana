@@ -17,16 +17,17 @@ import (
 )
 
 const (
-	ClientAPIKey      = "auth.client.api-key" // #nosec G101
-	ClientAnonymous   = "auth.client.anonymous"
-	ClientBasic       = "auth.client.basic"
-	ClientJWT         = "auth.client.jwt"
-	ClientExtendedJWT = "auth.client.extended-jwt"
-	ClientRender      = "auth.client.render"
-	ClientSession     = "auth.client.session"
-	ClientForm        = "auth.client.form"
-	ClientProxy       = "auth.client.proxy"
-	ClientSAML        = "auth.client.saml"
+	ClientAPIKey       = "auth.client.api-key" // #nosec G101
+	ClientAnonymous    = "auth.client.anonymous"
+	ClientBasic        = "auth.client.basic"
+	ClientJWT          = "auth.client.jwt"
+	ClientExtendedJWT  = "auth.client.extended-jwt"
+	ClientRender       = "auth.client.render"
+	ClientSession      = "auth.client.session"
+	ClientForm         = "auth.client.form"
+	ClientProxy        = "auth.client.proxy"
+	ClientSAML         = "auth.client.saml"
+	ClientPasswordless = "auth.client.passwordless"
 )
 
 const (
@@ -162,6 +163,11 @@ type LogoutClient interface {
 
 type PasswordClient interface {
 	AuthenticatePassword(ctx context.Context, r *Request, username, password string) (*Identity, error)
+}
+
+type PasswordlessClient interface {
+	StartPasswordless(ctx context.Context, r *Request, email string) error
+	AuthenticatePasswordless(ctx context.Context, r *Request, email, code string) (*Identity, error)
 }
 
 type ProxyClient interface {
