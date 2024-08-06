@@ -1,11 +1,11 @@
-import {css, cx} from '@emotion/css';
-import {Draggable} from '@hello-pangea/dnd';
+import { css, cx } from '@emotion/css';
+import { Draggable } from '@hello-pangea/dnd';
 
-import {Action, DataFrame, GrafanaTheme2} from '@grafana/data';
+import { Action, DataFrame, GrafanaTheme2 } from '@grafana/data';
 
-import {useStyles2} from '../../themes';
-import {Icon} from '../Icon/Icon';
-import {IconButton} from '../IconButton/IconButton';
+import { useStyles2 } from '../../themes';
+import { Icon } from '../Icon/Icon';
+import { IconButton } from '../IconButton/IconButton';
 
 export interface ActionsListItemProps {
   index: number;
@@ -34,18 +34,17 @@ export const ActionListItem = ({ action, onEdit, onRemove, index, itemKey }: Act
             {...provided.draggableProps}
             key={index}
           >
-            <div className={cx(styles.dragHandle, styles.icons)} {...provided.dragHandleProps}>
-              <Icon name="draggabledots" size="lg" />
-            </div>
-
             <div className={styles.linkDetails}>
               <div className={cx(styles.url, !hasTitle && styles.notConfigured)}>
                 {hasTitle ? title : 'Action title not provided'}
               </div>
             </div>
-            <div>
-              <IconButton name="pen" onClick={onEdit} tooltip="Edit action title" />
-              <IconButton name="times" onClick={onRemove} tooltip="Remove action title" />
+            <div className={styles.icons}>
+              <IconButton name="pen" onClick={onEdit} className={styles.icon} tooltip="Edit action title" />
+              <IconButton name="times" onClick={onRemove} className={styles.icon} tooltip="Remove action title" />
+              <div className={styles.dragIcon} {...provided.dragHandleProps}>
+                <Icon name="draggabledots" size="lg" />
+              </div>
             </div>
           </div>
         </>
@@ -62,11 +61,10 @@ const getActionListItemStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       justifyContent: 'space-between',
       width: '100%',
-      marginBottom: theme.spacing(2),
-      padding: '10px 0 0 10px',
-      '&:last-child': {
-        marginBottom: 0,
-      },
+      padding: '5px 0 5px 10px',
+      borderRadius: theme.shape.radius.default,
+      background: theme.colors.background.secondary,
+      gap: 8,
     }),
     linkDetails: css({
       display: 'flex',
@@ -91,7 +89,15 @@ const getActionListItemStyles = (theme: GrafanaTheme2) => {
       whiteSpace: 'nowrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
-      maxWidth: '90%',
+      maxWidth: `calc(100% - 100px)`,
+    }),
+    dragIcon: css({
+      cursor: 'grab',
+      color: theme.colors.text.secondary,
+      margin: theme.spacing(0, 0.5),
+    }),
+    icon: css({
+      color: theme.colors.text.secondary,
     }),
     dragRow: css({
       position: 'relative',
@@ -101,21 +107,6 @@ const getActionListItemStyles = (theme: GrafanaTheme2) => {
       padding: 6,
       alignItems: 'center',
       gap: 8,
-    }),
-    dragHandle: css({
-      cursor: 'grab',
-      // create focus ring around the whole row when the drag handle is tab-focused
-      // needs position: relative on the drag row to work correctly
-      '&:focus-visible&:after': {
-        bottom: 0,
-        content: '""',
-        left: 0,
-        position: 'absolute',
-        right: 0,
-        top: 0,
-        outline: `2px solid ${theme.colors.primary.main}`,
-        outlineOffset: '-2px',
-      },
     }),
   };
 };
