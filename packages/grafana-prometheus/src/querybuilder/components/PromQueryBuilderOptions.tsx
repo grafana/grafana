@@ -15,8 +15,6 @@ import { QueryOptionGroup } from '../shared/QueryOptionGroup';
 import { FORMAT_OPTIONS, INTERVAL_FACTOR_OPTIONS } from './PromQueryEditorSelector';
 import { getLegendModeLabel, PromQueryLegendEditor } from './PromQueryLegendEditor';
 
-export const DEFAULT_SERIES_LIMIT = '40000';
-
 export interface UIOptions {
   exemplars: boolean;
   type: boolean;
@@ -24,7 +22,6 @@ export interface UIOptions {
   minStep: boolean;
   legend: boolean;
   resolution: boolean;
-  seriesLimit: string;
 }
 
 export interface PromQueryBuilderOptionsProps {
@@ -44,10 +41,6 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
     const onChangeStep = (evt: React.FormEvent<HTMLInputElement>) => {
       onChange({ ...query, interval: evt.currentTarget.value.trim() });
       onRunQuery();
-    };
-
-    const onChangeSeriesLimit = (evt: React.FormEvent<HTMLInputElement>) => {
-      onChange({ ...query, seriesLimit: evt.currentTarget.value });
     };
 
     const queryTypeOptions = getQueryTypeOptions(
@@ -134,25 +127,6 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
                 />
               </EditorField>
             )}
-            <EditorField
-              label="Series resource limit"
-              tooltip={
-                <>
-                  Set the limit parameter for the <code>/api/v1/series</code> endpoint. Enter &lsquo;none&lsquo; to
-                  remove the limit. Default is set to 40,000.
-                </>
-              }
-            >
-              <AutoSizeInput
-                type="text"
-                aria-label="Set a limit on calls to the series endpoint"
-                placeholder={'Set to "none" or enter a limit. Default is 40,000'}
-                minWidth={10}
-                onCommitChange={onChangeSeriesLimit}
-                defaultValue={query.seriesLimit ?? DEFAULT_SERIES_LIMIT}
-                id={selectors.components.DataSource.Prometheus.queryEditor.step}
-              />
-            </EditorField>
           </QueryOptionGroup>
         </div>
       </EditorRow>
@@ -187,8 +161,6 @@ function getCollapsedInfo(query: PromQuery, formatOption: string, queryType: str
       items.push(`Exemplars: false`);
     }
   }
-
-  items.push(`Series resource limit: ${query.seriesLimit ?? DEFAULT_SERIES_LIMIT}`);
   return items;
 }
 

@@ -90,7 +90,6 @@ export const Components = {
         step: 'prometheus-step', // id for autosize component
         type: 'data-testid prometheus type', //wrapper for radio button group
         exemplars: 'prometheus-exemplars', // id for editor switch component
-        seriesLimit: 'prometheus-series-limit',
         builder: {
           // see QueryBuilder below for commented selectors
           // labelSelect: 'data-testid Select label',

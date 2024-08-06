@@ -35,7 +35,6 @@ export interface BrowserProps {
   storeLastUsedLabels: (labels: string[]) => void;
   deleteLastUsedLabels: () => void;
   timeRange?: TimeRange;
-  seriesLimit?: string;
 }
 
 interface BrowserState {
@@ -46,7 +45,10 @@ interface BrowserState {
   error: string;
   validationStatus: string;
   valueSearchTerm: string;
+  seriesLimit?: string;
 }
+
+export const DEFAULT_SERIES_LIMIT = '40000';
 
 interface FacettableValue {
   name: string;
@@ -420,7 +422,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
       this.updateLabelState(lastFacetted, { loading: true }, `Facetting labels for ${selector}`);
     }
     try {
-      const possibleLabels = await languageProvider.fetchSeriesLabels(selector, true, this.props.seriesLimit);
+      const possibleLabels = await languageProvider.fetchSeriesLabels(selector, true, this.state.seriesLimit);
       // If selector changed, clear loading state and discard result by returning early
       if (selector !== buildSelector(this.state.labels)) {
         if (lastFacetted) {
