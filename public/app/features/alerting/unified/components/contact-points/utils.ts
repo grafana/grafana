@@ -102,6 +102,14 @@ export interface ContactPointWithMetadata extends GrafanaManagedContactPoint {
   grafana_managed_receiver_configs: ReceiverConfigWithMetadata[];
 }
 
+type EnhanceContactPointsArgs = {
+  status?: ReceiversStateDTO[];
+  notifiers?: NotifierDTO[];
+  onCallIntegrations?: OnCallIntegrationDTO[] | undefined | null;
+  contactPoints: Receiver[];
+  alertmanagerConfiguration?: AlertManagerCortexConfig;
+};
+
 /**
  * This function adds the status information for each of the integrations (contact point types) in a contact point
  * 1. we iterate over all contact points
@@ -110,13 +118,13 @@ export interface ContactPointWithMetadata extends GrafanaManagedContactPoint {
  * alertmanagerConfiguration: optional as is passed when we need to get number of policies for each contact point
  * and we prefer using the data from the read-only endpoint.
  */
-export function enhanceContactPointsWithMetadata(
-  status: ReceiversStateDTO[] = [],
-  notifiers: NotifierDTO[] = [],
-  onCallIntegrations: OnCallIntegrationDTO[] | undefined | null,
-  contactPoints: Receiver[],
-  alertmanagerConfiguration?: AlertManagerCortexConfig
-): ContactPointWithMetadata[] {
+export function enhanceContactPointsWithMetadata({
+  status = [],
+  notifiers = [],
+  onCallIntegrations,
+  contactPoints,
+  alertmanagerConfiguration,
+}: EnhanceContactPointsArgs): ContactPointWithMetadata[] {
   // compute the entire inherited tree before finding what notification policies are using a particular contact point
   const fullyInheritedTree = computeInheritedTree(alertmanagerConfiguration?.alertmanager_config?.route ?? {});
   const usedContactPoints = getUsedContactPoints(fullyInheritedTree);

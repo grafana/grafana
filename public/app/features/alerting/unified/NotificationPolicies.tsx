@@ -392,11 +392,11 @@ interface QueryParamValues {
 function getActiveTabFromUrl(queryParams: UrlQueryMap): QueryParamValues {
   let tab = ActiveTab.NotificationPolicies; // default tab
 
-  if (queryParams['tab'] === ActiveTab.NotificationPolicies) {
+  if (queryParams.tab === ActiveTab.NotificationPolicies) {
     tab = ActiveTab.NotificationPolicies;
   }
 
-  if (queryParams['tab'] === ActiveTab.MuteTimings) {
+  if (queryParams.tab === ActiveTab.MuteTimings) {
     tab = ActiveTab.MuteTimings;
   }
 
