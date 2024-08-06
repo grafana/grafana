@@ -62,7 +62,7 @@ export const Hoverbot = () => {
     setLoading(true);
 
     html2canvas(element).then((canvas) => {
-      ask(canvas.toDataURL());
+      ask(canvas.toDataURL('image/png', 0.5));
     });
   }, [ask, enabled]);
 
@@ -145,7 +145,7 @@ function scrapExploreContext() {
         query += span.innerHTML;
     });
     if (query) {
-      queries.push(query);
+      queries.push(query.replaceAll('&nbsp;', ' '));
     }
   });
 
