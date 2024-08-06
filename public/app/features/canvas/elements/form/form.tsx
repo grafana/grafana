@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, OneClickMode } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
@@ -44,6 +44,9 @@ const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
   const { data, config } = props;
   const styles = useStyles2(getStyles(data));
 
+  const context = usePanelContext();
+  const scene = context.instanceState?.scene;
+
   const onCurrentOptionChange = (newParams: [string, string], id: string) => {
     // find child with id and update the currentOption
     const child = config.formElements?.find((child) => child.id === id);
@@ -51,6 +54,38 @@ const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
     if (child) {
       child.currentOption = newParams;
     }
+
+    updateAPIPayload();
+    // TODO: figure out why this is not updating the editor
+    // it's updating the save model but
+    // see layoutEditor
+    scene.moved.next(Date.now());
+  };
+
+  const updateAPIPayload = () => {
+    const submitElement = config.formElements?.find((child) => {
+      if (child.type === 'Submit') {
+        return true;
+      }
+      return false;
+    });
+
+    if (!submitElement) {
+      return;
+    }
+
+    const payload = config.formElements?.reduce<Record<string, any>>((acc, child) => {
+      if (child.type !== 'Submit' && child.currentOption) {
+        // Ensure currentOption is an array with at least two elements
+        const [key, value] = child.currentOption;
+        if (typeof key === 'string') {
+          acc[key] = value;
+        }
+      }
+      return acc;
+    }, {});
+
+    submitElement.api!.data = JSON.stringify(payload);
   };
 
   const children = config.formElements?.map((child) => {
@@ -64,7 +99,7 @@ const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
           />
         );
       case 'Submit':
-        return <Submit />;
+        return <Submit formItem={child} />;
       default:
         return null;
     }
@@ -73,7 +108,7 @@ const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
   return (
     <div className={styles.container}>
       <span className={styles.span}>{data?.text}</span>
-      <div className={styles.itemsContainer}>{children}</div>
+      <div className={styles.itemsContainer}>{children?.map((child, i) => <div key={i}>{child}</div>)}</div>
     </div>
   );
 };
@@ -90,6 +125,7 @@ const getStyles = (data: FormData | undefined) => (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     padding: theme.spacing(1),
+    gap: theme.spacing(1),
   }),
   inlineEditorContainer: css({
     height: '100%',

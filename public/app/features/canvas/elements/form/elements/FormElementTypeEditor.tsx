@@ -1,9 +1,11 @@
 import { uniqueId } from 'lodash';
-import { useCallback } from 'react';
+import { Fragment, useCallback } from 'react';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
+import { APIEditor, APIEditorConfig } from 'app/plugins/panel/canvas/editor/element/APIEditor';
 
+import { defaultApiConfig } from '../../button';
 import { FormElementType } from '../form';
 
 import { SelectionEditor } from './SelectionEditor';
@@ -13,6 +15,7 @@ export interface FormChild {
   type: string;
   options?: Array<[string, string]>;
   currentOption?: [string, string];
+  api?: APIEditorConfig;
 }
 
 type Props = StandardEditorProps<FormChild[]>;
@@ -29,16 +32,24 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
 
   const onChangeElementType = useCallback(
     (sel: SelectableValue<string>) => {
+      // allow only one submit button per form
+      if (sel.value === 'Submit' && value.some((child) => child.type === 'Submit')) {
+        console.warn('Only one submit button allowed per form');
+        return;
+      }
+
       const id = uniqueId('form-element-');
+      let newFormElement: FormChild = { id, type: sel.value ?? '' };
+      if (sel.value === 'Submit') {
+        newFormElement = { ...newFormElement, api: defaultApiConfig };
+      }
       onChange([...value, { id, type: sel.value ?? '' }]);
     },
     [onChange, value]
   );
 
-  // onOptionsChange
   const onOptionsChange = useCallback(
     (newParams: Array<[string, string]>, id: string) => {
-      // find the element with the id and update the options
       const newElements = value.map((child) => {
         if (child.id === id) {
           return { ...child, options: newParams };
@@ -50,7 +61,20 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
     [onChange, value]
   );
 
-  const children = value.map((child) => {
+  const onAPIConfigChange = useCallback(
+    (newApiConfig: APIEditorConfig, id: string) => {
+      const newElements = value.map((child) => {
+        if (child.id === id) {
+          return { ...child, api: newApiConfig };
+        }
+        return child;
+      });
+      onChange(newElements);
+    },
+    [onChange, value]
+  );
+
+  const children = value.map((child, i) => {
     switch (child.type) {
       case 'Select':
         return (
@@ -60,7 +84,14 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
           />
         );
       case 'Submit':
-        return <button>TODO Submit Editor</button>;
+        return (
+          <APIEditor
+            item={item}
+            value={value[i].api!}
+            context={context}
+            onChange={(apiConfig) => onAPIConfigChange(apiConfig!, child.id)}
+          />
+        );
       default:
         return null;
     }
@@ -69,7 +100,9 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
   return (
     <>
       <AddLayerButton onChange={onChangeElementType} options={typeOptions} label={'Add element type'} />
-      {children}
+      {children.map((child, i) => (
+        <Fragment key={i}>{child}</Fragment>
+      ))}
     </>
   );
 };
