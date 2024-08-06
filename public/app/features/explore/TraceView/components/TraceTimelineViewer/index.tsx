@@ -114,6 +114,7 @@ export type TProps = {
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   redrawListView: {};
   setRedrawListView: (redraw: {}) => void;
+  childrenMetrics: any;
 };
 
 type State = {

@@ -51,4 +51,11 @@ export interface TraceSpanRow {
 
   // Specify custom color of the error icon
   errorIconColor?: string;
+  childrenMetrics?: Array<{
+    span?: any;
+    refType?: string;
+    traceID: string;
+    spanID: string;
+    tags: Array<{ key: string; value: string }>;
+  }>;
 }

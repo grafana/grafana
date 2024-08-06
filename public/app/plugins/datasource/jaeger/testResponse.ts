@@ -20,6 +20,7 @@ export const testResponse: TraceResponse = {
       processID: 'p1',
       warnings: null,
       flags: 0,
+      childrenMetrics: [],
     },
     {
       traceID: '3fa414edcef6ad90',
@@ -36,6 +37,7 @@ export const testResponse: TraceResponse = {
       processID: 'p1',
       warnings: null,
       flags: 0,
+      childrenMetrics: [{ refType: 'CHILD_OF', traceID: '3fa414edcef6ad90', spanID: '3fa414edcef6ad90', tags: [] }],
     },
   ],
   processes: {

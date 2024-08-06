@@ -58,6 +58,7 @@ export const singleSpanResponse: TraceResponse = {
       processID: 'p1',
       warnings: null,
       flags: 0,
+      childrenMetrics: [],
     },
   ],
   processes: {
@@ -90,6 +91,7 @@ export const missingSpanResponse: TraceResponse = {
       processID: 'p1',
       warnings: null,
       flags: 0,
+      childrenMetrics: [{ tags: [], refType: 'CHILD_OF', traceID: '3fa414edcef6ad90', spanID: '3fa414edcef6ad90' }],
     },
     {
       traceID: '3fa414edcef6ad90',
@@ -106,6 +108,7 @@ export const missingSpanResponse: TraceResponse = {
       processID: 'p1',
       warnings: null,
       flags: 0,
+      childrenMetrics: [],
     },
   ],
   processes: {

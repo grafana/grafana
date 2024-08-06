@@ -22,7 +22,7 @@ import { autoColor } from '../../Theme';
 import { TraceSpanReference } from '../../types/trace';
 import ReferenceLink from '../../url/ReferenceLink';
 
-import AccordianKeyValues from './AccordianKeyValues';
+// import AccordianKeyValues from './AccordianKeyValues';
 
 import { alignIcon } from '.';
 
@@ -34,8 +34,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     AccordianKeyValues: css`
       margin-left: 10px;
     `,
-    AccordianReferences: css`
-      label: AccordianReferences;
+    AccordianMetricRef: css`
+      label: AccordianMetricRef;
       border: 1px solid ${autoColor(theme, '#d8d8d8')};
       position: relative;
       margin-bottom: 0.25rem;
@@ -114,7 +114,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 export type AccordianReferencesProps = {
-  data: TraceSpanReference[];
+  data: any[];
   highContrast?: boolean;
   interactive?: boolean;
   isOpen: boolean;
@@ -125,7 +125,7 @@ export type AccordianReferencesProps = {
 };
 
 type ReferenceItemProps = {
-  data: TraceSpanReference[];
+  data: any[];
   interactive?: boolean;
   openedItems?: Set<TraceSpanReference>;
   onItemToggle?: (reference: TraceSpanReference) => void;
@@ -134,7 +134,8 @@ type ReferenceItemProps = {
 
 // export for test
 export function References(props: ReferenceItemProps) {
-  const { data, createFocusSpanLink, openedItems, onItemToggle, interactive } = props;
+  // const { data, createFocusSpanLink, openedItems, onItemToggle, interactive } = props;
+  const { data, createFocusSpanLink } = props;
   const styles = useStyles2(getStyles);
 
   data.map((ref) => {
@@ -152,7 +153,7 @@ export function References(props: ReferenceItemProps) {
                 {reference.span ? (
                   <span>
                     <span className={cx('span-svc-name', styles.serviceName)}>
-                      {reference.span.process.serviceName}
+                      {reference.span.process ? reference.span.process.serviceName : reference.span.serviceName}
                     </span>
                     <small className="endpoint-name">{reference.span.operationName}</small>
                   </span>
@@ -162,17 +163,27 @@ export function References(props: ReferenceItemProps) {
                   </span>
                 )}
                 <small className={styles.debugInfo}>
-                  <span className={styles.debugLabel} data-label="TraceID:">
-                    {reference.traceID}
+                  <span className={styles.debugLabel}>
+                    {reference.tags[0].key}: {reference.tags[0].value}
                   </span>
+                  {/* <span className={styles.debugLabel} data-label="TraceID:">
+                    {reference.traceID}
+                  </span> */}
                   <span className={styles.debugLabel} data-label="SpanID:">
                     {reference.spanID}
                   </span>
                 </small>
+                {/* {reference.tags.map((tag: { key: string; value: string }) => {
+                  return (
+                    <div key={tag.key}>
+                      {tag.key}: {tag.value}
+                    </div>
+                  );
+                })} */}
               </span>
             </ReferenceLink>
           </div>
-          {!!reference.tags?.length && (
+          {/* {!!reference.tags?.length && (
             <div className={styles.AccordianKeyValues}>
               <AccordianKeyValues
                 className={i < data.length - 1 ? styles.AccordianKeyValuesItem : null}
@@ -185,14 +196,14 @@ export function References(props: ReferenceItemProps) {
                 onToggle={interactive && onItemToggle ? () => onItemToggle(reference) : null}
               />
             </div>
-          )}
+          )} */}
         </div>
       ))}
     </div>
   );
 }
 
-const AccordianReferences = ({
+const AccordianMetricRef = ({
   data,
   interactive = true,
   isOpen,
@@ -221,11 +232,11 @@ const AccordianReferences = ({
 
   const styles = useStyles2(getStyles);
   return (
-    <div className={styles.AccordianReferences}>
+    <div className={styles.AccordianMetricRef}>
       <HeaderComponent className={styles.AccordianReferencesHeader} {...headerProps}>
         {arrow}
         <strong>
-          <span>References</span>
+          <span>Children Metrics</span>
         </strong>{' '}
         ({data.length})
       </HeaderComponent>
@@ -242,4 +253,4 @@ const AccordianReferences = ({
   );
 };
 
-export default React.memo(AccordianReferences);
+export default React.memo(AccordianMetricRef);

@@ -35,6 +35,7 @@ import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
 import AccordianLogs from './AccordianLogs';
+import AccordianMetricRef from './AccordianMetricRef';
 import AccordianReferences from './AccordianReferences';
 import AccordianText from './AccordianText';
 import DetailState from './DetailState';
@@ -157,8 +158,6 @@ export type SpanDetailProps = {
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
-  const [metricProcess, setMetricProcess] = React.useState(false);
-
   const {
     detailState,
     linksGetter,
@@ -203,6 +202,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     warnings,
     references,
     stackTraces,
+    childrenMetrics,
   } = span;
   const { timeZone } = props;
   let overviewItems = [
@@ -334,9 +334,14 @@ export default function SpanDetail(props: SpanDetailProps) {
     }
   }
 
-  // console.log({ references });
-
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
+
+  console.log({ childrenMetrics });
+
+  if (!childrenMetrics) {
+    return null;
+  }
+
   return (
     <div data-testid="span-detail-component">
       <div className={styles.header}>
@@ -370,14 +375,14 @@ export default function SpanDetail(props: SpanDetailProps) {
               onToggle={() => processToggle(spanID)}
             />
           )}
-          {/* <AccordianReferences
-            data={references}
+          <AccordianMetricRef
+            data={childrenMetrics}
             isOpen={referencesState.isOpen}
             openedItems={referencesState.openedItems}
             onToggle={() => referencesToggle(spanID)}
             onItemToggle={(reference) => referenceItemToggle(spanID, reference)}
             createFocusSpanLink={createFocusSpanLink}
-          /> */}
+          />
         </div>
         {logs && logs.length > 0 && (
           <AccordianLogs

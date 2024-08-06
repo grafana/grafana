@@ -41,6 +41,12 @@ export type Span = {
   warnings?: string[] | null;
   stackTraces?: string[];
   flags: number;
+  childrenMetrics: Array<{
+    refType: 'CHILD_OF' | 'FOLLOWS_FROM';
+    traceID: string;
+    spanID: string;
+    tags: Array<{ key: string; value: string }>;
+  }>;
 };
 
 export type TraceResponse = {

@@ -343,10 +343,13 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
   };
 
   _detailToggle = () => {
+    console.log('hello clicked for toggle detail');
     this.props.onDetailToggled(this.props.span.spanID);
   };
 
+  // Controls the expand
   _childrenToggle = () => {
+    console.log('hello clicked for toggle expand');
     this.props.onChildrenToggled(this.props.span.spanID);
   };
 

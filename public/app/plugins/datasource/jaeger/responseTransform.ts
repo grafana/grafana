@@ -27,6 +27,7 @@ export function createTraceFrame(data: TraceResponse): DataFrame {
       { name: 'tags', type: FieldType.other },
       { name: 'warnings', type: FieldType.other },
       { name: 'stackTraces', type: FieldType.other },
+      { name: 'childrenMetrics', type: FieldType.other },
     ],
     meta: {
       preferredVisualisationType: 'trace',
@@ -173,6 +174,16 @@ export function transformToJaeger(data: MutableDataFrame): JaegerResponse {
       startTime: span.startTime * 1000,
       tags: span.tags,
       warnings: span.warnings ? span.warnings : null,
+      childrenMetrics: span.parentSpanID
+        ? [
+            {
+              refType: 'CHILD_OF',
+              tags: span.tags,
+              spanID: span.parentSpanID,
+              traceID: span.traceID,
+            },
+          ]
+        : [],
     });
   }
 

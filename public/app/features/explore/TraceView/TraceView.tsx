@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { RefObject, useEffect, useMemo, useState } from 'react';
+import { RefObject, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import {
@@ -103,6 +103,7 @@ export function TraceView(props: Props) {
   const [headerHeight, setHeaderHeight] = useState(100);
   const [traceFlameGraphs, setTraceFlameGraphs] = useState<TraceFlameGraphs>({});
   const [redrawListView, setRedrawListView] = useState({});
+  const childrenMetrics = props.dataFrames[0].fields[17];
 
   const styles = useStyles2(getStyles);
 
@@ -170,10 +171,6 @@ export function TraceView(props: Props) {
     : document.getElementsByClassName(props.scrollElementClass ?? '')[0];
 
   const criticalPath = memoizedTraceCriticalPath(traceProp);
-
-  useEffect(() => {
-    collapseAll(traceProp.spans);
-  }, []);
 
   return (
     <>
@@ -246,6 +243,7 @@ export function TraceView(props: Props) {
             setTraceFlameGraphs={setTraceFlameGraphs}
             redrawListView={redrawListView}
             setRedrawListView={setRedrawListView}
+            childrenMetrics={childrenMetrics}
           />
         </>
       ) : (

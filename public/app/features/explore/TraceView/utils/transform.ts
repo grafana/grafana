@@ -1,11 +1,13 @@
 import { DataFrame, DataFrameView, TraceSpanRow } from '@grafana/data';
 
 import { Trace, TraceProcess, TraceResponse, transformTraceData } from '../components';
+import { TraceSpanData } from '../components/types/trace';
 
 export function transformDataFrames(frame?: DataFrame): Trace | null {
   if (!frame) {
     return null;
   }
+
   let data: TraceResponse | null =
     frame.fields.length === 1
       ? // For backward compatibility when we sent whole json response in a single field/value
@@ -20,12 +22,16 @@ export function transformDataFrames(frame?: DataFrame): Trace | null {
 
 export function transformTraceDataFrame(frame: DataFrame): TraceResponse | null {
   const view = new DataFrameView<TraceSpanRow>(frame);
+
   const processes: Record<string, TraceProcess> = {};
+
   for (let i = 0; i < view.length; i++) {
     const span = view.get(i);
+
     if (!span.spanID) {
       return null;
     }
+
     if (!processes[span.spanID]) {
       processes[span.spanID] = {
         serviceName: span.serviceName,
@@ -38,13 +44,32 @@ export function transformTraceDataFrame(frame: DataFrame): TraceResponse | null 
     traceID: view.get(0).traceID,
     processes,
     spans: view.toArray().map((s, index) => {
-      const references = [];
+      const references: any[] = [];
+      const childrenMetrics = [];
+
+      const lastElement = s.childrenMetrics && s.childrenMetrics[s.childrenMetrics.length - 1];
+      const lastElementTag = lastElement && lastElement.tags;
+      const lastElementSpanID = lastElement && lastElement.spanID;
+      const lastElementTraceID = lastElement && lastElement.traceID;
+
       if (s.parentSpanID) {
         references.push({ refType: 'CHILD_OF' as const, spanID: s.parentSpanID, traceID: s.traceID });
+        console.log({ references });
+        console.log({ s });
+
+        childrenMetrics.push({
+          refType: 'CHILD_OF' as const,
+          spanID: lastElementSpanID,
+          span: lastElementSpanID !== '0000000000000000' && s,
+          traceID: lastElementTraceID,
+          tags: lastElementTag,
+        });
       }
       if (s.references) {
         references.push(...s.references.map((reference) => ({ refType: 'FOLLOWS_FROM' as const, ...reference })));
+        childrenMetrics.push(...s.references.map((reference) => ({ refType: 'FOLLOWS_FROM' as const, ...reference })));
       }
+
       return {
         ...s,
         duration: s.duration * 1000,
@@ -54,7 +79,8 @@ export function transformTraceDataFrame(frame: DataFrame): TraceResponse | null 
         references,
         logs: s.logs?.map((l) => ({ ...l, timestamp: l.timestamp * 1000 })) || [],
         dataFrameRowIndex: index,
-      };
+        childrenMetrics,
+      } as unknown as TraceSpanData;
     }),
   };
 }

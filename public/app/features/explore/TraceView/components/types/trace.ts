@@ -70,6 +70,13 @@ export type TraceSpanData = {
   errorIconColor?: string;
   dataFrameRowIndex?: number;
   childSpanIds?: string[];
+  childrenMetrics?: Array<{
+    span: any;
+    refType: string;
+    traceID: string;
+    spanID: string;
+    tags: Array<{ key: string; value: string }>;
+  }>;
 };
 
 export type TraceSpan = TraceSpanData & {
