@@ -208,6 +208,8 @@ func (mc *Mimir) TestReceivers(ctx context.Context, c alertingNotify.TestReceive
 
 	trResult := &alertingNotify.TestReceiversResult{}
 
+	// nolint:bodyclose
+	// closed within `do`
 	_, err = mc.do(ctx, "api/v1/grafana/receivers/test", http.MethodPost, bytes.NewBuffer(payload), &trResult)
 	if err != nil {
 		return nil, err
@@ -224,6 +226,8 @@ func (mc *Mimir) TestTemplate(ctx context.Context, c alertingNotify.TestTemplate
 
 	ttResult := &alertingNotify.TestTemplatesResults{}
 
+	// nolint:bodyclose
+	// closed within `do`
 	_, err = mc.do(ctx, "api/v1/grafana/templates/test", http.MethodPost, bytes.NewBuffer(payload), &ttResult)
 	if err != nil {
 		return nil, err
