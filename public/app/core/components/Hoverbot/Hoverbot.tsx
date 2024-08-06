@@ -26,7 +26,7 @@ export const Hoverbot = () => {
           { role: 'user', content: [
             {
               "type": "text",
-              "text": "Help me understand the following observability data from logs:"
+              "text": scrapContext(),
             },
             {
               "type": "image_url",
@@ -123,4 +123,46 @@ function getEventTarget(element: HTMLDivElement, bubbled = 2) {
     return;
   }
   return element;
+}
+
+function scrapContext(): string {
+  if (document.title.includes('Explore')) {
+    return scrapExploreContext();
+  }
+
+  return 'Help me understand the following observability data from logs:';
+}
+
+function scrapExploreContext() {
+  let context = "I'm in Grafana Explore. ";
+
+  context += `${getTimeRangeContext()}. `;
+  
+  const queries: string[] = [];
+  document.querySelectorAll('[data-testid="data-testid Query field"]').forEach((queryField) => {
+    let query = '';
+    queryField.querySelectorAll('.view-line span > span').forEach((span) => {
+        query += span.innerHTML;
+    });
+    if (query) {
+      queries.push(query);
+    }
+  });
+
+  context += `I'm running the following ${queries.length === 1 ? 'query' : 'queries'}:`;
+
+  queries.forEach(query => {
+    context+= "\n\n````\n"+query+"\n```\n\n";
+  });
+
+  context += "Please help me interpret the following image from Grafana.";
+
+  console.log(context);
+
+  return context;
+}
+
+function getTimeRangeContext() {
+  const picker = document.querySelector('[data-testid="data-testid TimePicker Open Button"]')
+  return picker?.getAttribute('aria-label') ?? '';
 }
