@@ -1,23 +1,27 @@
-import { dispatch, getState } from 'app/store/store';
+import { dispatch } from 'app/store/store';
 import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
-import {
-  fetchPromAndRulerRulesAction,
-  fetchRulesSourceBuildInfoAction,
-  getDataSourceRulerConfig,
-} from '../../state/actions';
+import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
+import { fetchPromAndRulerRulesAction } from '../../state/actions';
 import { useAsync } from '../useAsync';
 
+import { RulerNotSupportedError } from './useProduceNewRuleGroup';
+
+const { useDeleteRuleGroupFromNamespaceMutation } = alertRuleApi;
+const { useLazyDiscoverDsFeaturesQuery } = featureDiscoveryApi;
+
 export function useDeleteRuleGroup() {
-  const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation();
+  const [deleteRuleGroup] = useDeleteRuleGroupFromNamespaceMutation();
+  const [discoverDataSourceFeature] = useLazyDiscoverDsFeaturesQuery();
 
   return useAsync(async (ruleGroupIdentifier: RuleGroupIdentifier) => {
     const { dataSourceName, namespaceName, groupName } = ruleGroupIdentifier;
 
-    // @TODO get rid of getState, *sigh*
-    await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: dataSourceName }));
-    const rulerConfig = getDataSourceRulerConfig(getState, dataSourceName);
+    const { rulerConfig } = await discoverDataSourceFeature({ rulesSourceName: dataSourceName }).unwrap();
+    if (!rulerConfig) {
+      throw RulerNotSupportedError(dataSourceName);
+    }
 
     const result = await deleteRuleGroup({ rulerConfig, namespace: namespaceName, group: groupName }).unwrap();
 

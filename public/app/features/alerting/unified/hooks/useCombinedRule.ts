@@ -1,18 +1,12 @@
 import { useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import {
-  CombinedRule,
-  RuleIdentifier,
-  RulerDataSourceConfig,
-  RulesSource,
-  RuleWithLocation,
-} from 'app/types/unified-alerting';
+import { CombinedRule, RuleIdentifier, RulesSource, RuleWithLocation } from 'app/types/unified-alerting';
 import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
-import { getDataSourceByName, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
+import { getDataSourceByName } from '../utils/datasource';
 import * as ruleId from '../utils/rule-id';
 import { isCloudRuleIdentifier, isGrafanaRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
 
@@ -310,29 +304,9 @@ export function useRuleWithLocation({
   };
 }
 
-export const grafanaRulerConfig: RulerDataSourceConfig = {
-  dataSourceName: GRAFANA_RULES_SOURCE_NAME,
-  apiVersion: 'legacy',
-};
-
-const grafanaDsFeatures = {
-  rulerConfig: grafanaRulerConfig,
-};
-
 export function useDataSourceFeatures(dataSourceName: string) {
-  const isGrafanaDs = isGrafanaRulesSource(dataSourceName);
-
   const { currentData: dsFeatures, isLoading: isLoadingDsFeatures } =
-    featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery(
-      {
-        rulesSourceName: dataSourceName,
-      },
-      { skip: isGrafanaDs }
-    );
-
-  if (isGrafanaDs) {
-    return { isLoadingDsFeatures: false, dsFeatures: grafanaDsFeatures };
-  }
+    featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery({ rulesSourceName: dataSourceName });
 
   return { isLoadingDsFeatures, dsFeatures };
 }
