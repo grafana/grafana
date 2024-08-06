@@ -39,8 +39,8 @@ const VisualizationDisplay = (props: CanvasElementProps<VizElementConfig, VizEle
 
       panelToEmbed.setData(new SceneDataNode({ data: data?.data }));
       panelToEmbed.setDisplayMode('transparent');
-      panelToEmbed.setColor({ mode: 'palette-classic' });
       // why this no work? series color still by thresholds?
+      panelToEmbed.setColor({ mode: 'palette-classic' });
       const panel = panelToEmbed.build();
 
       return new EmbeddedScene({
