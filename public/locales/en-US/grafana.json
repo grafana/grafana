@@ -1115,10 +1115,11 @@
       "error-see-server-logs": "See the Grafana server logs for more details",
       "get-session-error-title": "Error loading migration configuration",
       "get-snapshot-error-title": "Error loading snapshot",
+      "migration-finished-with-caveat-title": "Resource migration complete",
+      "migration-finished-with-errors-body": "The migration has completed, but some items could not be migrated to the cloud stack. Check the failed resources for more details",
+      "migration-finished-with-warnings-body": "The migration has completed with some warnings. Check individual resources for more details",
       "snapshot-error-status-body": "There was an error creating the snapshot or starting the migration process. See the Grafana server logs for more details",
       "snapshot-error-status-title": "Error migrating resources",
-      "some-resources-errored-body": "The migration has completed, but some items could not be migrated to the cloud stack. Check the failed resources for more details",
-      "some-resources-errored-title": "Resource migration complete",
       "upload-snapshot-error-title": "Error uploading snapshot"
     },
     "pdc": {
@@ -1136,12 +1137,14 @@
       "message": "No SLAs are available yet. <2>Visit our docs</2> to learn more about this feature!",
       "title": "Migrate to Grafana Cloud is in public preview"
     },
-    "resource-error": {
+    "resource-details": {
       "dismiss-button": "OK",
+      "error-title": "Unable to migrate this resource:",
+      "generic-title": "Resource migration details:",
+      "missing-message": "No message provided.",
       "resource-summary": "{{refId}} ({{typeName}})",
-      "specific-error": "The specific error was:",
-      "title": "Unable to migrate this resource",
-      "unknown-error": "An unknown error occurred."
+      "title": "Migration resource details",
+      "warning-title": "Resource migrated with a warning:"
     },
     "resource-status": {
       "error-details-button": "Details",
@@ -1149,7 +1152,9 @@
       "migrated": "Uploaded to cloud",
       "migrating": "Uploading...",
       "not-migrated": "Not yet uploaded",
-      "unknown": "Unknown"
+      "unknown": "Unknown",
+      "warning": "Uploaded with warning",
+      "warning-details-button": "Details"
     },
     "resource-table": {
       "unknown-datasource-title": "Data source {{datasourceUID}}",
