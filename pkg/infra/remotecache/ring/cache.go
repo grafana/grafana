@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"hash/fnv"
+	"net"
 	"strconv"
 	"time"
 
@@ -23,17 +24,22 @@ const CacheType = "ring"
 const httpPort = "3011"
 
 func NewCache(cfg *setting.Cfg, reg prometheus.Registerer, provider grpcserver.Provider) (*Cache, error) {
-	fmt.Println("Init ring cache")
 	logger := log.New("remotecache.ring")
 
+	addr, _, err := net.SplitHostPort(cfg.GRPCServerAddress)
+	if err != nil {
+		return nil, err
+	}
+
 	memberlistsvc, client, err := newMemberlistService(memberlistConfig{
-		Addr:        cfg.HTTPAddr,
+		Addr:        addr,
 		Port:        cfg.RemoteCache.Ring.Port,
 		JoinMembers: cfg.RemoteCache.Ring.JoinMembers,
 	}, logger, reg)
 
 	ring, lfc, err := newRing(
-		ringConfig{Addr: cfg.HTTPAddr, Port: strconv.Itoa(cfg.RemoteCache.Ring.Port)},
+		cfg.GRPCServerAddress,
+		ringConfig{Addr: addr, Port: strconv.Itoa(cfg.RemoteCache.Ring.Port)},
 		logger,
 		client,
 		reg,

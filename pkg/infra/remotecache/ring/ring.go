@@ -20,7 +20,7 @@ type ringConfig struct {
 	Port string
 }
 
-func newRing(cfg ringConfig, logger log.Logger, client kv.Client, reg prometheus.Registerer) (*ring.Ring, *ring.BasicLifecycler, error) {
+func newRing(id string, cfg ringConfig, logger log.Logger, client kv.Client, reg prometheus.Registerer) (*ring.Ring, *ring.BasicLifecycler, error) {
 	var ringConfig ring.Config
 	ringConfig.ReplicationFactor = 1
 	hring, err := ring.NewWithStoreClientAndStrategy(
@@ -38,7 +38,7 @@ func newRing(cfg ringConfig, logger log.Logger, client kv.Client, reg prometheus
 	}
 
 	var config ring.BasicLifecyclerConfig
-	config.ID = cfg.Addr
+	config.ID = id
 	config.Addr = net.JoinHostPort(cfg.Addr, cfg.Port)
 
 	var delegate ring.BasicLifecyclerDelegate
