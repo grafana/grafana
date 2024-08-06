@@ -92,6 +92,7 @@ type Cfg struct {
 	// HTTP Server Settings
 	CertFile          string
 	KeyFile           string
+	CertPassword      string
 	CertWatchInterval time.Duration
 	HTTPAddr          string
 	HTTPPort          string
@@ -1874,11 +1875,13 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 		cfg.Protocol = HTTPSScheme
 		cfg.CertFile = server.Key("cert_file").String()
 		cfg.KeyFile = server.Key("cert_key").String()
+		cfg.CertPassword = server.Key("cert_pass").String()
 	}
 	if protocolStr == "h2" {
 		cfg.Protocol = HTTP2Scheme
 		cfg.CertFile = server.Key("cert_file").String()
 		cfg.KeyFile = server.Key("cert_key").String()
+		cfg.CertPassword = server.Key("cert_pass").String()
 	}
 	if protocolStr == "socket" {
 		cfg.Protocol = SocketScheme
