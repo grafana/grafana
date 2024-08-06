@@ -69,7 +69,6 @@ func NewCache(cfg *setting.Cfg, reg prometheus.Registerer, provider grpcserver.P
 
 type Cache struct {
 	UnimplementedDispatcherServer
-	id       string
 	logger   glog.Logger
 	provider grpcserver.Provider
 
@@ -82,9 +81,6 @@ type Cache struct {
 }
 
 func (c *Cache) Run(ctx context.Context) error {
-	// TODO: Fix addr for nodes
-	c.id = c.provider.GetAddress()
-
 	if err := services.StartAndAwaitRunning(ctx, c.mlist); err != nil {
 		return fmt.Errorf("failed to start kv service: %w", err)
 	}
@@ -95,13 +91,11 @@ func (c *Cache) Run(ctx context.Context) error {
 	if err := services.StartAndAwaitRunning(ctx, c.ring); err != nil {
 		return fmt.Errorf("failed to start ring: %w", err)
 	}
-
 	defer services.StopAndAwaitTerminated(stopCtx, c.ring)
 
 	if err := services.StartAndAwaitRunning(ctx, c.lfc); err != nil {
 		return fmt.Errorf("failed to start lfc: %w", err)
 	}
-
 	defer services.StopAndAwaitTerminated(stopCtx, c.lfc)
 
 	<-ctx.Done()
@@ -141,7 +135,8 @@ func (c *Cache) Count(_ context.Context, _ string) (int64, error) {
 }
 
 func (c *Cache) DispatchGet(ctx context.Context, r *GetRequest) (*GetResponse, error) {
-	value, err := c.Get(ctx, r.Key)
+	c.logger.Debug("Dispatched get", "key", r.GetKey())
+	value, err := c.Get(ctx, r.GetKey())
 	if err != nil {
 		return nil, err
 	}
@@ -149,17 +144,24 @@ func (c *Cache) DispatchGet(ctx context.Context, r *GetRequest) (*GetResponse, e
 }
 
 func (c *Cache) DispatchSet(ctx context.Context, r *SetRequest) (*SetResponse, error) {
-	if err := c.Set(ctx, r.Key, r.Value, time.Duration(r.Expr)); err != nil {
+	c.logger.Debug("Dispatched set", "key", r.GetKey())
+	if err := c.Set(ctx, r.GetKey(), r.GetValue(), time.Duration(r.GetExpr())); err != nil {
 		return nil, err
 	}
 	return &SetResponse{}, nil
 }
 
 func (c *Cache) DispatchDelete(ctx context.Context, r *DeleteRequest) (*DeleteResponse, error) {
-	if err := c.Delete(ctx, r.Key); err != nil {
+	c.logger.Debug("Dispatched delete", "key", r.GetKey())
+	if err := c.Delete(ctx, r.GetKey()); err != nil {
 		return nil, err
 	}
 	return &DeleteResponse{}, nil
+}
+
+// AuthFuncOverride is used to disable auth for now
+func (c *Cache) AuthFuncOverride(ctx context.Context, fullMethodName string) (context.Context, error) {
+	return ctx, nil
 }
 
 func (c *Cache) getBackend(key string, op ring.Operation) (Backend, error) {
@@ -176,7 +178,7 @@ func (c *Cache) getBackend(key string, op ring.Operation) (Backend, error) {
 	}
 
 	inst := set.Instances[0]
-	if inst.GetId() == c.id {
+	if inst.GetId() == c.lfc.GetInstanceID() {
 		return c.local, nil
 	}
 
