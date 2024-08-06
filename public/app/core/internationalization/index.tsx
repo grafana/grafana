@@ -139,17 +139,19 @@ function constructPluginLoader(plugin: AppPluginConfig, locale: string): Languag
   return {
     [plugin.id]: async () => {
       try {
-        const file = await fetch(`/public/plugins/${plugin.id}/locales/${locale}.json`).then((response) => {
-          if (response.ok) {
-            return response.json();
-          } else {
-            throw new Error(`Failed to load translation for plugin ${plugin.id} and locale ${locale}`);
+        const file = await fetch(`/public/plugins/${plugin.id}/locales/${locale}/${plugin.id}.json`).then(
+          (response) => {
+            if (response.ok) {
+              return response.json();
+            } else {
+              throw new Error(`Failed to load translation for plugin ${plugin.id} and locale ${locale}`);
+            }
           }
-        });
+        );
 
         return file;
       } catch (error) {
-        // swallow error
+        // swallow error and do nothing
       }
     },
   };
