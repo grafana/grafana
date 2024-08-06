@@ -33,7 +33,7 @@ export default function MigrateToCloud() {
           >
             Visit our docs
           </a>{' '}
-          to learn more about the feature!
+          to learn more about this feature!
         </Trans>
       </Alert>
       {config.cloudMigrationIsTarget ? <CloudPage /> : <OnPremPage />}
