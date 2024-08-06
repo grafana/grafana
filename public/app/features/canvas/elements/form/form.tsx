@@ -7,9 +7,11 @@ import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimen
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 
 import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultThemeTextColor } from '../../element';
-import { Align, TextConfig, TextData, VAlign } from '../../types';
+import { Align, TextConfig, TextData } from '../../types';
 
-import { FormElementTypeEditor } from './elements/FormElementTypeEditor';
+import { FormChild, FormElementTypeEditor } from './elements/FormElementTypeEditor';
+import { SelectDisplay } from './elements/Select';
+import { Submit } from './elements/Submit';
 
 /**
  * Form Element - each of these would have options
@@ -30,23 +32,48 @@ export enum FormElementType {
   // table
 }
 
-interface FormData extends TextData {
-  type: FormElementType;
+interface FormData extends Omit<TextData, 'valign'> {
+  formElements?: FormChild[];
 }
 
-export interface FormConfig extends TextConfig {
-  type: FormElementType;
+export interface FormConfig extends Omit<TextConfig, 'valign'> {
+  formElements?: FormChild[];
 }
 
 const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
   const { data, config } = props;
   const styles = useStyles2(getStyles(data));
 
-  console.log('Form', data, config);
+  const onCurrentOptionChange = (newParams: [string, string], id: string) => {
+    // find child with id and update the currentOption
+    const child = config.formElements?.find((child) => child.id === id);
+
+    if (child) {
+      child.currentOption = newParams;
+    }
+  };
+
+  const children = config.formElements?.map((child) => {
+    switch (child.type) {
+      case 'Select':
+        return (
+          <SelectDisplay
+            options={child.options ?? []}
+            currentOption={child.currentOption}
+            onChange={(newParams) => onCurrentOptionChange(newParams, child.id)}
+          />
+        );
+      case 'Submit':
+        return <Submit />;
+      default:
+        return null;
+    }
+  });
 
   return (
     <div className={styles.container}>
       <span className={styles.span}>{data?.text}</span>
+      <div className={styles.itemsContainer}>{children}</div>
     </div>
   );
 };
@@ -55,8 +82,14 @@ const getStyles = (data: FormData | undefined) => (theme: GrafanaTheme2) => ({
   container: css({
     height: '100%',
     width: '100%',
-    display: 'table',
+    display: 'flex',
     border: `1px solid ${theme.colors.border.strong}`,
+    flexDirection: 'column',
+  }),
+  itemsContainer: css({
+    display: 'flex',
+    flexDirection: 'column',
+    padding: theme.spacing(1),
   }),
   inlineEditorContainer: css({
     height: '100%',
@@ -67,7 +100,6 @@ const getStyles = (data: FormData | undefined) => (theme: GrafanaTheme2) => ({
   }),
   span: css({
     display: 'table-cell',
-    verticalAlign: data?.valign,
     textAlign: data?.align,
     fontSize: `${data?.size}px`,
     color: data?.color,
@@ -92,12 +124,11 @@ export const formItem: CanvasElementItem<FormConfig, FormData> = {
     ...options,
     config: {
       align: Align.Center,
-      valign: VAlign.Middle,
       color: {
         fixed: defaultThemeTextColor,
       },
       size: 16,
-      type: FormElementType.TextInput,
+      formElements: options?.config.formElements ?? [],
     },
     placement: {
       width: options?.placement?.width ?? 100,
@@ -117,9 +148,8 @@ export const formItem: CanvasElementItem<FormConfig, FormData> = {
       text: formConfig?.text ? dimensionContext.getText(formConfig.text).value() : '',
       field: formConfig?.text?.field,
       align: formConfig?.align ?? Align.Center,
-      valign: formConfig?.valign ?? VAlign.Middle,
       size: formConfig?.size,
-      type: formConfig?.type ?? FormElementType.TextInput,
+      formElements: formConfig?.formElements,
     };
 
     if (formConfig?.color) {
@@ -135,10 +165,9 @@ export const formItem: CanvasElementItem<FormConfig, FormData> = {
       .addCustomEditor({
         category,
         id: 'formElementEditor',
-        path: 'config.type',
-        name: 'Type',
+        path: 'config.formElements',
+        name: 'Form elements',
         editor: FormElementTypeEditor,
-        settings: { blah: 'blah' },
       })
       .addCustomEditor({
         category,
@@ -168,19 +197,6 @@ export const formItem: CanvasElementItem<FormConfig, FormData> = {
           ],
         },
         defaultValue: Align.Center,
-      })
-      .addRadio({
-        category,
-        path: 'config.valign',
-        name: 'Vertical align',
-        settings: {
-          options: [
-            { value: VAlign.Top, label: 'Top' },
-            { value: VAlign.Middle, label: 'Middle' },
-            { value: VAlign.Bottom, label: 'Bottom' },
-          ],
-        },
-        defaultValue: VAlign.Top,
       })
       .addNumberInput({
         category,

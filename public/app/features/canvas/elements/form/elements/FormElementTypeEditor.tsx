@@ -1,11 +1,21 @@
+import { uniqueId } from 'lodash';
+import { useCallback } from 'react';
+
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
-import { onAddItem } from 'app/plugins/panel/canvas/utils';
-import { getLayerEditor } from 'app/plugins/panel/geomap/editor/layerEditor';
 
-import { FormConfig, FormElementType, formItem } from '../form';
+import { FormElementType } from '../form';
 
-type Props = StandardEditorProps<FormConfig>;
+import { SelectionEditor } from './SelectionEditor';
+
+export interface FormChild {
+  id: string;
+  type: string;
+  options?: Array<[string, string]>;
+  currentOption?: [string, string];
+}
+
+type Props = StandardEditorProps<FormChild[]>;
 
 export const FormElementTypeEditor = ({ value, context, onChange, item }: Props) => {
   const typeOptions = [
@@ -14,35 +24,52 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
     { value: FormElementType.Select, label: 'Select' },
     { value: FormElementType.TextInput, label: 'Text input' },
     { value: FormElementType.DateRangePicker, label: 'Date range picker' },
+    { value: 'Submit', label: 'Submit' },
   ];
 
-  const { settings } = item;
-  const layer = settings.layer;
-  //   console.log('item', item);
-  //   console.log('layer', layer);
+  const onChangeElementType = useCallback(
+    (sel: SelectableValue<string>) => {
+      const id = uniqueId('form-element-');
+      onChange([...value, { id, type: sel.value ?? '' }]);
+    },
+    [onChange, value]
+  );
 
-  //   const activePanel = useObservable(activePanelSubject);
-  //   const instanceState = activePanel?.panel.context?.instanceState;
+  // onOptionsChange
+  const onOptionsChange = useCallback(
+    (newParams: Array<[string, string]>, id: string) => {
+      // find the element with the id and update the options
+      const newElements = value.map((child) => {
+        if (child.id === id) {
+          return { ...child, options: newParams };
+        }
+        return child;
+      });
+      onChange(newElements);
+    },
+    [onChange, value]
+  );
 
-  //   console.log('instanceState', instanceState);
-
-  //   const rootLayer: FrameState | undefined = instanceState?.layer;
-
-  //   if (!layer) {
-  //     return <div>Missing layer?</div>;
-  //   }
-
-  const onElementTypeChange = (sel: SelectableValue<string>) => {
-    onChange({ ...value, type: sel.value! as FormElementType });
-
-    // const layer = getLayerEditor(item)
-
-    // return element types
-    onAddItem(sel, layer);
-  };
+  const children = value.map((child) => {
+    switch (child.type) {
+      case 'Select':
+        return (
+          <SelectionEditor
+            options={child.options ?? []}
+            onChange={(newParams) => onOptionsChange(newParams, child.id)}
+          />
+        );
+      case 'Submit':
+        return <button>TODO Submit Editor</button>;
+      default:
+        return null;
+    }
+  });
 
   return (
-    <AddLayerButton onChange={(sel) => onElementTypeChange(sel)} options={typeOptions} label={'Add element type'} />
-    // data, label, value
+    <>
+      <AddLayerButton onChange={onChangeElementType} options={typeOptions} label={'Add element type'} />
+      {children}
+    </>
   );
 };
