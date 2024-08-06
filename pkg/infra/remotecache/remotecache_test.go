@@ -27,7 +27,7 @@ func createTestClient(t *testing.T, opts *setting.RemoteCacheSettings, sqlstore 
 	cfg := &setting.Cfg{
 		RemoteCache: opts,
 	}
-	dc, err := ProvideService(cfg, sqlstore, &usagestats.UsageStatsMock{}, fakes.NewFakeSecretsService())
+	dc, err := ProvideService(cfg, sqlstore, &usagestats.UsageStatsMock{}, fakes.NewFakeSecretsService(), nil)
 	require.Nil(t, err, "Failed to init client for test")
 
 	return dc
@@ -45,7 +45,10 @@ func TestCachedBasedOnConfig(t *testing.T) {
 }
 
 func TestInvalidCacheTypeReturnsError(t *testing.T) {
-	_, err := createClient(&setting.RemoteCacheSettings{Name: "invalid"}, nil, nil)
+	cfg := setting.NewCfg()
+	cfg.RemoteCache = &setting.RemoteCacheSettings{Name: "invalid"}
+
+	_, err := createClient(cfg, nil, nil, nil)
 	assert.Equal(t, err, ErrInvalidCacheType)
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache/ring"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
@@ -24,13 +25,11 @@ var (
 	defaultMaxCacheExpiration = time.Hour * 24
 )
 
-const (
-	ServiceName = "RemoteCache"
-)
-
-func ProvideService(cfg *setting.Cfg, sqlStore db.DB, usageStats usagestats.Service,
-	secretsService secrets.Service) (*RemoteCache, error) {
-	client, err := createClient(cfg, sqlStore, secretsService)
+func ProvideService(
+	cfg *setting.Cfg, sqlStore db.DB, usageStats usagestats.Service,
+	secretsService secrets.Service, grpcProvider grpcserver.Provider,
+) (*RemoteCache, error) {
+	client, err := createClient(cfg, sqlStore, secretsService, grpcProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +110,10 @@ func (ds *RemoteCache) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func createClient(cfg *setting.Cfg, sqlstore db.DB, secretsService secrets.Service) (cache CacheStorage, err error) {
+func createClient(
+	cfg *setting.Cfg, sqlstore db.DB,
+	secretsService secrets.Service, grpcProvider grpcserver.Provider,
+) (cache CacheStorage, err error) {
 	switch cfg.RemoteCache.Name {
 	case redisCacheType:
 		cache, err = newRedisStorage(cfg.RemoteCache)
@@ -121,7 +123,7 @@ func createClient(cfg *setting.Cfg, sqlstore db.DB, secretsService secrets.Servi
 		cache = newDatabaseCache(sqlstore)
 	case ring.CacheType:
 		var err error
-		cache, err = ring.NewCache(cfg, prometheus.DefaultRegisterer)
+		cache, err = ring.NewCache(cfg, prometheus.DefaultRegisterer, grpcProvider)
 		if err != nil {
 			return nil, err
 		}

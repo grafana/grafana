@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	glog "github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -25,7 +26,7 @@ var (
 	httpPort = "3011"
 )
 
-func NewCache(cfg *setting.Cfg, reg prometheus.Registerer) (*Cache, error) {
+func NewCache(cfg *setting.Cfg, reg prometheus.Registerer, _ grpcserver.Provider) (*Cache, error) {
 	logger := log.New("cache")
 	memberlistsvc, client, err := newMemberlistService(memberlistConfig{
 		Addr:        cfg.HTTPAddr,
