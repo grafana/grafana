@@ -31,6 +31,9 @@ import (
 // Returns a file that is easy to check for changes
 // Any changes to the file means we should refresh the frontend
 func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
+	c, span := hs.injectSpan(c, "api.GetFrontendAssets")
+	defer span.End()
+
 	hash := sha256.New()
 	keys := map[string]any{}
 
@@ -97,6 +100,9 @@ func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
 //
 //nolint:gocyclo
 func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.FrontendSettingsDTO, error) {
+	c, span := hs.injectSpan(c, "api.getFrontendSettings")
+	defer span.End()
+
 	availablePlugins, err := hs.availablePlugins(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
 		return nil, err
@@ -388,6 +394,9 @@ func getShortCommitHash(commitHash string, maxLength int) string {
 }
 
 func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlugins AvailablePlugins) (map[string]plugins.DataSourceDTO, error) {
+	c, span := hs.injectSpan(c, "api.getFSDataSources")
+	defer span.End()
+
 	orgDataSources := make([]*datasources.DataSource, 0)
 	if c.SignedInUser.GetOrgID() != 0 {
 		query := datasources.GetDataSourcesQuery{OrgID: c.SignedInUser.GetOrgID(), DataSourceLimit: hs.Cfg.DataSourceLimit}
@@ -620,6 +629,9 @@ func (ap AvailablePlugins) Get(pluginType plugins.Type, pluginID string) (*avail
 }
 
 func (hs *HTTPServer) availablePlugins(ctx context.Context, orgID int64) (AvailablePlugins, error) {
+	ctx, span := hs.tracer.Start(ctx, "api.availablePlugins")
+	defer span.End()
+
 	ap := make(AvailablePlugins)
 
 	pluginSettingMap, err := hs.pluginSettings(ctx, orgID)
@@ -665,6 +677,9 @@ func (hs *HTTPServer) availablePlugins(ctx context.Context, orgID int64) (Availa
 }
 
 func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[string]*pluginsettings.InfoDTO, error) {
+	ctx, span := hs.tracer.Start(ctx, "api.pluginSettings")
+	defer span.End()
+
 	pluginSettings := make(map[string]*pluginsettings.InfoDTO)
 
 	// fill settings from database
