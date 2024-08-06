@@ -8,11 +8,11 @@ import { ContextMenu, MenuItem, MenuItemProps } from '@grafana/ui';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene } from 'app/features/canvas/runtime/scene';
-import { findElementByTarget } from 'app/features/canvas/runtime/sceneElementManagement';
+import { findElementByTarget, getSelectedElements } from 'app/features/canvas/runtime/sceneElementManagement';
 
 import { CanvasPanel } from '../CanvasPanel';
 import { AnchorPoint, LayerActionID } from '../types';
-import { getElementTypes, onAddItem } from '../utils';
+import { onGenerateVisualization, getElementTypes, onAddItem } from '../utils';
 
 type Props = {
   scene: Scene;
@@ -201,6 +201,14 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
             className={styles.menuItem}
           />
           {openCloseEditorMenuItem}
+          <MenuItem
+            label="Generate visualization"
+            onClick={() => {
+              onGenerateVisualization(getSelectedElements(scene), scene.currentLayer!);
+              closeContextMenu();
+            }}
+            className={styles.menuItem}
+          />
         </>
       );
     } else {

@@ -1,4 +1,4 @@
-import { LinkModel } from '@grafana/data/src';
+import { LinkModel, PanelData } from '@grafana/data/src';
 import { ColorDimensionConfig, ResourceDimensionConfig, TextDimensionConfig } from '@grafana/schema';
 import { BackgroundImageSize } from 'app/plugins/panel/canvas/panelcfg.gen';
 
@@ -39,6 +39,16 @@ export interface TextConfig {
   size?: number; // 0 or missing will "auto size"
   align: Align;
   valign: VAlign;
+}
+
+export interface VizElementConfig extends TextConfig {
+  vizType?: string;
+  fields?: string[];
+}
+
+export interface VizElementData extends TextData {
+  vizType?: string;
+  data?: PanelData;
 }
 
 export interface CanvasElementConfig extends TextConfig {

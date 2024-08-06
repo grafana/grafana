@@ -13,7 +13,7 @@ import { frameSelection, reorderElements } from 'app/features/canvas/runtime/sce
 import { getGlobalStyles } from '../../globalStyles';
 import { Options } from '../../panelcfg.gen';
 import { DragNode, DropNode } from '../../types';
-import { doSelect, getElementTypes, onAddItem } from '../../utils';
+import { doSelect, getElementTypes, onAddItem, onGenerateVisualization } from '../../utils';
 import { TreeViewEditorProps } from '../element/elementEditor';
 
 import { TreeNodeTitle } from './TreeNodeTitle';
@@ -125,6 +125,11 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
     }
   };
 
+  const onGenerateViz = () => {
+    const selectedElements = [...settings.selected];
+    onGenerateVisualization(selectedElements, layer);
+  };
+
   const typeOptions = getElementTypes(settings.scene.shouldShowAdvancedTypes).options;
 
   return (
@@ -163,6 +168,15 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
           </Button>
         )}
       </Stack>
+      <Stack justifyContent="space-between" direction="row">
+        {selection.length > 1 && (
+          <div className={styles.generateVizWrapper}>
+            <Button size="sm" variant="secondary" onClick={onGenerateViz}>
+              Generate visualization
+            </Button>
+          </div>
+        )}
+      </Stack>
     </>
   );
 };
@@ -171,5 +185,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   addLayerButton: css({
     marginLeft: '18px',
     minWidth: '150px',
+  }),
+  generateVizWrapper: css({
+    marginLeft: '18px',
+    paddingTop: '16px',
   }),
 });

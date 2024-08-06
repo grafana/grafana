@@ -2,7 +2,7 @@ import { isNumber, isString } from 'lodash';
 
 import { AppEvents, PluginState, SelectableValue } from '@grafana/data';
 import appEvents from 'app/core/app_events';
-import { hasAlphaPanels, config } from 'app/core/config';
+import { config, hasAlphaPanels } from 'app/core/config';
 import {
   CanvasConnection,
   CanvasElementItem,
@@ -77,13 +77,22 @@ export function getElementTypesOptions(items: CanvasElementItem[], current: stri
   return selectables;
 }
 
-export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | undefined, anchorPoint?: AnchorPoint) {
+export function onAddItem(
+  sel: SelectableValue<string>,
+  rootLayer: FrameState | undefined,
+  anchorPoint?: AnchorPoint,
+  selectedFields?: string[]
+) {
   const newItem = canvasElementRegistry.getIfExists(sel.value) ?? notFoundItem;
   const newElementOptions: CanvasElementOptions = {
     ...newItem.getNewOptions(),
     type: newItem.id,
     name: '',
   };
+
+  if (newItem.id === 'visualization') {
+    newElementOptions.config.fields = selectedFields;
+  }
 
   if (anchorPoint) {
     newElementOptions.placement = { ...newElementOptions.placement, top: anchorPoint.y, left: anchorPoint.x };
@@ -292,4 +301,19 @@ export const getParent = (scene: Scene) => {
     return scene.transformComponentRef?.current?.instance.contentComponent;
   }
   return scene.div;
+};
+
+export const onGenerateVisualization = (selectedElements: ElementState[], layer: FrameState) => {
+  const visualizationSelection = {
+    label: 'Visualization',
+    value: 'visualization',
+    description: 'Visualization',
+  };
+
+  let selectedFields: string[] = [];
+  selectedElements.map((selectedElement) => {
+    selectedFields.push(selectedElement?.data.field);
+  });
+
+  onAddItem(visualizationSelection, layer, undefined, selectedFields);
 };
