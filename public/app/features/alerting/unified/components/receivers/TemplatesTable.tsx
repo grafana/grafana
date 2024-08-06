@@ -19,15 +19,21 @@ import { TemplateEditor } from './TemplateEditor';
 interface Props {
   config: AlertManagerCortexConfig;
   alertManagerName: string;
+  isJSON?: boolean;
 }
 
-export const TemplatesTable = ({ config, alertManagerName }: Props) => {
+export const TemplatesTable = ({ config, alertManagerName, isJSON }: Props) => {
   const dispatch = useDispatch();
   const [expandedTemplates, setExpandedTemplates] = useState<Record<string, boolean>>({});
   const tableStyles = useStyles2(getAlertTableStyles);
 
   const templateRows = useMemo(() => {
-    const templates = Object.entries(config.template_files);
+    let templates;
+    if (isJSON) {
+      templates = Object.entries(config.json_templates);
+    } else {
+      templates = Object.entries(config.template_files);
+    }
 
     return templates.map(([name, template]) => ({
       name,

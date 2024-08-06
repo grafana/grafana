@@ -15,7 +15,7 @@ export const JSONTemplates = () => {
   }
 
   if (data) {
-    return <TemplatesTable config={data} alertManagerName={selectedAlertmanager!} />;
+    return <TemplatesTable isJSON={true} config={data} alertManagerName={selectedAlertmanager!} />;
   }
 
   return null;

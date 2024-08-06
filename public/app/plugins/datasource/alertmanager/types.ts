@@ -2,6 +2,7 @@
 import { DataSourceJsonData, WithAccessControlMetadata } from '@grafana/data';
 
 export type AlertManagerCortexConfig = {
+  json_templates: Record<string, string>;
   template_files: Record<string, string>;
   alertmanager_config: AlertmanagerConfig;
   /** { [name]: provenance } */

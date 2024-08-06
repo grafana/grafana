@@ -32,6 +32,9 @@ export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig
   if (!config.template_files) {
     config.template_files = {};
   }
+  if (!config.json_templates) {
+    config.json_templates = {};
+  }
   return config;
 }
 
