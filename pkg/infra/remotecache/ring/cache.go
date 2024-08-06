@@ -20,22 +20,20 @@ import (
 )
 
 const CacheType = "ring"
+const httpPort = "3011"
 
-var (
-	ringPort = 3010
-	httpPort = "3011"
-)
+func NewCache(cfg *setting.Cfg, reg prometheus.Registerer, provider grpcserver.Provider) (*Cache, error) {
+	fmt.Println("Init ring cache")
+	logger := log.New("remotecache.ring")
 
-func NewCache(cfg *setting.Cfg, reg prometheus.Registerer, _ grpcserver.Provider) (*Cache, error) {
-	logger := log.New("cache")
 	memberlistsvc, client, err := newMemberlistService(memberlistConfig{
 		Addr:        cfg.HTTPAddr,
-		Port:        ringPort,
+		Port:        cfg.RemoteCache.Ring.Port,
 		JoinMembers: cfg.RemoteCache.Ring.JoinMembers,
 	}, logger, reg)
 
 	ring, lfc, err := newRing(
-		ringConfig{Addr: cfg.HTTPAddr, Port: strconv.Itoa(ringPort)},
+		ringConfig{Addr: cfg.HTTPAddr, Port: strconv.Itoa(cfg.RemoteCache.Ring.Port)},
 		logger,
 		client,
 		reg,
@@ -45,16 +43,16 @@ func NewCache(cfg *setting.Cfg, reg prometheus.Registerer, _ grpcserver.Provider
 	}
 
 	c := &Cache{
-		// TODO: Fix addr for nodes
-		id:     cfg.HTTPAddr,
-		lfc:    lfc,
-		kv:     client,
-		ring:   ring,
-		mlist:  memberlistsvc,
-		logger: glog.New("cache"),
-
-		local: newLocalBackend(),
+		lfc:      lfc,
+		kv:       client,
+		ring:     ring,
+		mlist:    memberlistsvc,
+		logger:   logger,
+		provider: provider,
+		local:    newLocalBackend(),
 	}
+
+	RegisterDispatcherServer(c.provider.GetServer(), c)
 
 	if err := registerRoutes(cfg, c); err != nil {
 		return nil, err
@@ -64,8 +62,10 @@ func NewCache(cfg *setting.Cfg, reg prometheus.Registerer, _ grpcserver.Provider
 }
 
 type Cache struct {
-	id     string
-	logger glog.Logger
+	UnimplementedDispatcherServer
+	id       string
+	logger   glog.Logger
+	provider grpcserver.Provider
 
 	local *localBackend
 
@@ -76,6 +76,9 @@ type Cache struct {
 }
 
 func (c *Cache) Run(ctx context.Context) error {
+	// TODO: Fix addr for nodes
+	c.id = c.provider.GetAddress()
+
 	if err := services.StartAndAwaitRunning(ctx, c.mlist); err != nil {
 		return fmt.Errorf("failed to start kv service: %w", err)
 	}
@@ -131,6 +134,28 @@ func (c *Cache) Count(_ context.Context, _ string) (int64, error) {
 	return 0, nil
 }
 
+func (c *Cache) DispatchGet(ctx context.Context, r *GetRequest) (*GetResponse, error) {
+	value, err := c.Get(ctx, r.Key)
+	if err != nil {
+		return nil, err
+	}
+	return &GetResponse{Value: value}, nil
+}
+
+func (c *Cache) DispatchSet(ctx context.Context, r *SetRequest) (*SetResponse, error) {
+	if err := c.Set(ctx, r.Key, r.Value, time.Duration(r.Expr)); err != nil {
+		return nil, err
+	}
+	return &SetResponse{}, nil
+}
+
+func (c *Cache) DispatchDelete(ctx context.Context, r *DeleteRequest) (*DeleteResponse, error) {
+	if err := c.Delete(ctx, r.Key); err != nil {
+		return nil, err
+	}
+	return &DeleteResponse{}, nil
+}
+
 func (c *Cache) getBackend(key string, op ring.Operation) (Backend, error) {
 	hasher := fnv.New32()
 	_, _ = hasher.Write([]byte(key))
@@ -150,5 +175,5 @@ func (c *Cache) getBackend(key string, op ring.Operation) (Backend, error) {
 	}
 
 	// TODO: cache remote clients?
-	return newRemoteBackend(&inst), nil
+	return newRemoteBackend(&inst)
 }

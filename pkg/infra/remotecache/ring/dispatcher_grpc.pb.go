@@ -19,18 +19,18 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	Dispatcher_Get_FullMethodName    = "/ring.Dispatcher/Get"
-	Dispatcher_Set_FullMethodName    = "/ring.Dispatcher/Set"
-	Dispatcher_Delete_FullMethodName = "/ring.Dispatcher/Delete"
+	Dispatcher_DispatchGet_FullMethodName    = "/ring.Dispatcher/DispatchGet"
+	Dispatcher_DispatchSet_FullMethodName    = "/ring.Dispatcher/DispatchSet"
+	Dispatcher_DispatchDelete_FullMethodName = "/ring.Dispatcher/DispatchDelete"
 )
 
 // DispatcherClient is the client API for Dispatcher service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DispatcherClient interface {
-	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
-	Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetResponse, error)
-	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	DispatchGet(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	DispatchSet(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetResponse, error)
+	DispatchDelete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 }
 
 type dispatcherClient struct {
@@ -41,30 +41,30 @@ func NewDispatcherClient(cc grpc.ClientConnInterface) DispatcherClient {
 	return &dispatcherClient{cc}
 }
 
-func (c *dispatcherClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
+func (c *dispatcherClient) DispatchGet(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetResponse)
-	err := c.cc.Invoke(ctx, Dispatcher_Get_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Dispatcher_DispatchGet_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *dispatcherClient) Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetResponse, error) {
+func (c *dispatcherClient) DispatchSet(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SetResponse)
-	err := c.cc.Invoke(ctx, Dispatcher_Set_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Dispatcher_DispatchSet_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *dispatcherClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
+func (c *dispatcherClient) DispatchDelete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteResponse)
-	err := c.cc.Invoke(ctx, Dispatcher_Delete_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Dispatcher_DispatchDelete_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -75,23 +75,23 @@ func (c *dispatcherClient) Delete(ctx context.Context, in *DeleteRequest, opts .
 // All implementations should embed UnimplementedDispatcherServer
 // for forward compatibility
 type DispatcherServer interface {
-	Get(context.Context, *GetRequest) (*GetResponse, error)
-	Set(context.Context, *SetRequest) (*SetResponse, error)
-	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	DispatchGet(context.Context, *GetRequest) (*GetResponse, error)
+	DispatchSet(context.Context, *SetRequest) (*SetResponse, error)
+	DispatchDelete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 }
 
 // UnimplementedDispatcherServer should be embedded to have forward compatible implementations.
 type UnimplementedDispatcherServer struct {
 }
 
-func (UnimplementedDispatcherServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+func (UnimplementedDispatcherServer) DispatchGet(context.Context, *GetRequest) (*GetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DispatchGet not implemented")
 }
-func (UnimplementedDispatcherServer) Set(context.Context, *SetRequest) (*SetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Set not implemented")
+func (UnimplementedDispatcherServer) DispatchSet(context.Context, *SetRequest) (*SetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DispatchSet not implemented")
 }
-func (UnimplementedDispatcherServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+func (UnimplementedDispatcherServer) DispatchDelete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DispatchDelete not implemented")
 }
 
 // UnsafeDispatcherServer may be embedded to opt out of forward compatibility for this service.
@@ -105,56 +105,56 @@ func RegisterDispatcherServer(s grpc.ServiceRegistrar, srv DispatcherServer) {
 	s.RegisterService(&Dispatcher_ServiceDesc, srv)
 }
 
-func _Dispatcher_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Dispatcher_DispatchGet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DispatcherServer).Get(ctx, in)
+		return srv.(DispatcherServer).DispatchGet(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Dispatcher_Get_FullMethodName,
+		FullMethod: Dispatcher_DispatchGet_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DispatcherServer).Get(ctx, req.(*GetRequest))
+		return srv.(DispatcherServer).DispatchGet(ctx, req.(*GetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Dispatcher_Set_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Dispatcher_DispatchSet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DispatcherServer).Set(ctx, in)
+		return srv.(DispatcherServer).DispatchSet(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Dispatcher_Set_FullMethodName,
+		FullMethod: Dispatcher_DispatchSet_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DispatcherServer).Set(ctx, req.(*SetRequest))
+		return srv.(DispatcherServer).DispatchSet(ctx, req.(*SetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Dispatcher_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Dispatcher_DispatchDelete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DispatcherServer).Delete(ctx, in)
+		return srv.(DispatcherServer).DispatchDelete(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Dispatcher_Delete_FullMethodName,
+		FullMethod: Dispatcher_DispatchDelete_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DispatcherServer).Delete(ctx, req.(*DeleteRequest))
+		return srv.(DispatcherServer).DispatchDelete(ctx, req.(*DeleteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -167,16 +167,16 @@ var Dispatcher_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*DispatcherServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Get",
-			Handler:    _Dispatcher_Get_Handler,
+			MethodName: "DispatchGet",
+			Handler:    _Dispatcher_DispatchGet_Handler,
 		},
 		{
-			MethodName: "Set",
-			Handler:    _Dispatcher_Set_Handler,
+			MethodName: "DispatchSet",
+			Handler:    _Dispatcher_DispatchSet_Handler,
 		},
 		{
-			MethodName: "Delete",
-			Handler:    _Dispatcher_Delete_Handler,
+			MethodName: "DispatchDelete",
+			Handler:    _Dispatcher_DispatchDelete_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -52,24 +52,6 @@ func registerRoutes(cfg *setting.Cfg, c *Cache) error {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	mux.HandleFunc("POST /cache/internal", func(w http.ResponseWriter, r *http.Request) {
-		c.logger.Info("set new item internal")
-		var req setRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			c.logger.Error("failed to parse request internal", "err", err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		if err := c.Set(r.Context(), req.Key, req.Value, req.Expr); err != nil {
-			c.logger.Error("failed to set item internal", "err", err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-
-		}
-		w.WriteHeader(http.StatusOK)
-	})
-
 	mux.HandleFunc("POST /cache", func(w http.ResponseWriter, r *http.Request) {
 		c.logger.Info("set new item")
 		type request struct {

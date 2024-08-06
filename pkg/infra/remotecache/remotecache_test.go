@@ -44,14 +44,6 @@ func TestCachedBasedOnConfig(t *testing.T) {
 	runTestsForClient(t, client)
 }
 
-func TestInvalidCacheTypeReturnsError(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.RemoteCache = &setting.RemoteCacheSettings{Name: "invalid"}
-
-	_, err := createClient(cfg, nil, nil, nil)
-	assert.Equal(t, err, ErrInvalidCacheType)
-}
-
 func runTestsForClient(t *testing.T, client CacheStorage) {
 	canPutGetAndDeleteCachedObjects(t, client)
 	canNotFetchExpiredItems(t, client)

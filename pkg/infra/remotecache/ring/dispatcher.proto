@@ -5,9 +5,9 @@ package ring;
 option go_package = "github.com/grafana/grafana/pkg/infra/remotecache/ring";
 
 service Dispatcher {
-  rpc Get(GetRequest) returns (GetResponse) {};
-  rpc Set(SetRequest) returns (SetResponse) {};
-  rpc Delete(DeleteRequest) returns (DeleteResponse) {};
+  rpc DispatchGet(GetRequest) returns (GetResponse) {};
+  rpc DispatchSet(SetRequest) returns (SetResponse) {};
+  rpc DispatchDelete(DeleteRequest) returns (DeleteResponse) {};
 }
 
 message GetRequest {
@@ -21,6 +21,7 @@ message GetResponse {
 message SetRequest {
   string key = 1;
   bytes value = 2;
+  int64 expr = 3;
 }
 
 message SetResponse {}

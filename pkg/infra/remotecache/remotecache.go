@@ -19,9 +19,6 @@ var (
 	// ErrCacheItemNotFound is returned if cache does not exist
 	ErrCacheItemNotFound = errors.New("cache item not found")
 
-	// ErrInvalidCacheType is returned if the type is invalid
-	ErrInvalidCacheType = errors.New("invalid remote cache name")
-
 	defaultMaxCacheExpiration = time.Hour * 24
 )
 
@@ -119,21 +116,21 @@ func createClient(
 		cache, err = newRedisStorage(cfg.RemoteCache)
 	case memcachedCacheType:
 		cache = newMemcachedStorage(cfg.RemoteCache)
-	case databaseCacheType:
-		cache = newDatabaseCache(sqlstore)
 	case ring.CacheType:
-		var err error
-		cache, err = ring.NewCache(cfg, prometheus.DefaultRegisterer, grpcProvider)
-		if err != nil {
-			return nil, err
+		if !grpcProvider.IsDisabled() {
+			cache, err = ring.NewCache(cfg, prometheus.DefaultRegisterer, grpcProvider)
+		} else {
+			// FIXME: warning log
+			cache = newDatabaseCache(sqlstore)
 		}
-
 	default:
-		return nil, ErrInvalidCacheType
+		cache = newDatabaseCache(sqlstore)
 	}
+
 	if err != nil {
-		return cache, err
+		return nil, err
 	}
+
 	if cfg.RemoteCache.Prefix != "" {
 		cache = &prefixCacheStorage{cache: cache, prefix: cfg.RemoteCache.Prefix}
 	}
