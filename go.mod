@@ -472,7 +472,10 @@ require (
 
 require github.com/phpdave11/gofpdi v1.0.13 // @grafana/sharing-squad
 
-require github.com/google/go-querystring v1.1.0 // indirect
+require (
+	github.com/google/go-querystring v1.1.0 // indirect; @grafana/observability-metrics
+	github.com/grafana/e2e v0.1.1 // indirect; @grafana-app-platform-squad
+)
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240523142256-cc370b98af7c
