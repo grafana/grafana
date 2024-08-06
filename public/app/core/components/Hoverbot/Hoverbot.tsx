@@ -8,6 +8,7 @@ import { Button } from '@grafana/ui';
 export const Hoverbot = () => {
   const [enabled, setEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [selecting, setSelecting] = useState(false);
   const [reply, setReply] = useState('');
 
   useEffect(() => {
@@ -52,7 +53,7 @@ export const Hoverbot = () => {
     });
   }, [])
 
-  const helpMe = useCallback(() => {
+  const helpMe = useCallback((element: HTMLDivElement) => {
     if (!enabled) {
       console.error('LLM Disabled');
       return;
@@ -60,14 +61,34 @@ export const Hoverbot = () => {
 
     setLoading(true);
 
-    html2canvas(document.querySelector('section')!).then((canvas) => {
+    html2canvas(element).then((canvas) => {
       ask(canvas.toDataURL());
     });
   }, [ask, enabled]);
 
+  const selectRegion = useCallback(() => {
+    setSelecting(true);
+    document.addEventListener('mouseover', handleMouseOver);
+    document.addEventListener('click', handleClick);
+
+    function handleClick() {
+      if (!highlighted) {
+        return;
+      }
+      document.removeEventListener('mouseover', handleMouseOver);
+      document.removeEventListener('click', handleClick);
+      if (highlighted) {
+        highlighted.style.outline = '';
+        helpMe(highlighted);
+        highlighted = undefined;
+      }
+      setSelecting(false);
+    }
+  }, [helpMe]);
+
   return (
     <div>
-      <Button type="submit" onClick={helpMe} disabled={loading}>
+      <Button type="submit" onClick={selectRegion} disabled={loading || selecting || !enabled}>
         Help me
       </Button>
       {reply !== '' && (
@@ -75,4 +96,20 @@ export const Hoverbot = () => {
       )}
     </div>
   );
+}
+
+let highlighted: HTMLDivElement | undefined;
+
+function handleMouseOver(e: MouseEvent) {
+  if (e.target instanceof HTMLDivElement) {
+    const rect = e.target.getBoundingClientRect();
+    if (rect.height < 50 || rect.width < 50) {
+      return;
+    }
+    e.target.style.outline = 'solid 1px red';
+    if (highlighted) {
+      highlighted.style.outline = '';
+    }
+    highlighted = e.target;
+  }
 }
