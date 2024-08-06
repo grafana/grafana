@@ -37,6 +37,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
       keyword,
       type: filterByType !== 'all' ? filterByType : undefined,
       isInstalled: filterBy === 'installed' ? true : undefined,
+      hasUpdate: filterBy === 'has-update' ? true : undefined,
     },
     sortBy
   );
@@ -44,6 +45,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   const filterByOptions = [
     { value: 'all', label: 'All' },
     { value: 'installed', label: 'Installed' },
+    { value: 'has-update', label: 'New Updates' },
   ];
 
   const onSortByChange = (value: SelectableValue<string>) => {

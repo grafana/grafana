@@ -29,6 +29,9 @@ export type PluginFilters = {
 
   // (Optional, only applied if set)
   isEnterprise?: boolean;
+
+  // (Optional, only applied if set)
+  hasUpdate?: boolean;
 };
 
 export const selectPlugins = (filters: PluginFilters) =>
@@ -57,6 +60,10 @@ export const selectPlugins = (filters: PluginFilters) =>
       }
 
       if (filters.isEnterprise !== undefined && plugin.isEnterprise !== filters.isEnterprise) {
+        return false;
+      }
+
+      if (filters.hasUpdate !== undefined && plugin.hasUpdate !== filters.hasUpdate) {
         return false;
       }
 
