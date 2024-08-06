@@ -114,14 +114,10 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
     dragPosition: 'middle',
   });
 
-  const submit = (values: TemplateFormValues, isJSON: boolean) => {
-    console.log('JSON?', isJSON);
+  const submit = (values: TemplateFormValues) => {
     // wrap content in "define" if it's not already wrapped, in case user did not do it/
     // it's not obvious that this is needed for template to work
-    let content = values.content;
-    if (!isJSON) {
-      content = ensureDefine(values.name, values.content);
-    }
+    const content = ensureDefine(values.name, values.content);
 
     // add new template to template map
     const template_files = {
@@ -141,11 +137,45 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
     ];
 
     const newConfig: AlertManagerCortexConfig = {
+      json_templates: config.json_templates,
       template_files,
       alertmanager_config: {
         ...config.alertmanager_config,
         templates,
       },
+    };
+    dispatch(
+      updateAlertManagerConfigAction({
+        alertManagerSourceName,
+        newConfig,
+        oldConfig: config,
+        successMessage: 'Template saved.',
+        redirectPath: '/alerting/notifications',
+        redirectSearch: `tab=${ContactPointsActiveTabs.NotificationTemplates}`,
+      })
+    );
+  };
+
+  const submitJSON = (values: TemplateFormValues) => {
+    // wrap content in "define" if it's not already wrapped, in case user did not do it/
+    // it's not obvious that this is needed for template to work
+    let content = values.content;
+
+    // add new template to template map
+    const json_templates = {
+      ...config.json_templates,
+      [values.name]: content,
+    };
+
+    // delete existing one (if name changed, otherwise it was overwritten in previous step)
+    if (existing && existing.name !== values.name) {
+      delete json_templates[existing.name];
+    }
+
+    const newConfig: AlertManagerCortexConfig = {
+      json_templates,
+      template_files: config.template_files,
+      alertmanager_config: config.alertmanager_config,
     };
     dispatch(
       updateAlertManagerConfigAction({
@@ -200,7 +230,11 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
     <>
       <FormProvider {...formApi}>
         <AppChromeUpdate actions={actionButtons} />
-        <form onSubmit={handleSubmit((e) => submit(e, templateType == 'json'))} ref={formRef} className={styles.form}>
+        <form
+          onSubmit={handleSubmit((e) => (templateType === 'json' ? submitJSON(e) : submit(e)))}
+          ref={formRef}
+          className={styles.form}
+        >
           {/* error message */}
           {error && (
             <Alert severity="error" title="Error saving template">
