@@ -5,7 +5,7 @@ import { Field, FieldSet, Input, Select } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { CORR_CONFIG_TYPES, CorrelationConfigType, ExternalTypeTarget } from '../types';
+import { CORR_CONFIG_TYPES, CorrelationConfigType } from '../types';
 
 import { QueryEditorField } from './QueryEditorField';
 import { useCorrelationsFormContext } from './correlationsFormContext';

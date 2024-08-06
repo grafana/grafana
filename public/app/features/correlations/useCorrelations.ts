@@ -6,6 +6,7 @@ import { getDataSourceSrv, FetchResponse } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import {
+  CORR_CONFIG_TYPES,
   Correlation,
   CreateCorrelationParams,
   CreateCorrelationResponse,
@@ -51,7 +52,12 @@ const toEnrichedCorrelationData = ({
     correlationsLogger.logWarning('Invalid correlation config: Missing org id.');
   }
 
-  if (sourceDatasource && sourceDatasource?.uid !== undefined) {
+  if (
+    sourceDatasource &&
+    sourceDatasource?.uid !== undefined &&
+    (targetDatasource?.uid !== undefined ||
+      (targetDatasource?.uid === undefined && correlation.config.type === CORR_CONFIG_TYPES.external.value))
+  ) {
     return {
       ...correlation,
       source: sourceDatasource,

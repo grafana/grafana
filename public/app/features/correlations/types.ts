@@ -54,7 +54,7 @@ export type ExternalTypeTarget = { url: string };
 export interface CorrelationConfig {
   field: string;
   target: object | ExternalTypeTarget; // for queries, this contains anything that would go in the query editor, so any extension off DataQuery a datasource would have, and needs to be generic. For external, it simply contains a URL
-  type: CorrelationConfigType; //I give up
+  type: CorrelationConfigType;
   transformations?: DataLinkTransformationConfig[];
 }
 
