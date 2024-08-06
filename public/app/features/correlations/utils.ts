@@ -70,8 +70,8 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
             },
           });
         } else if (correlation.config.type === CORR_CONFIG_TYPES.external.value) {
-          const externalTarget = correlation.config.target as ExternalTypeTarget;
-          if (externalTarget.url !== undefined) {
+          const externalTarget = correlation.config.target;
+          if ('url' in externalTarget && externalTarget.url !== undefined) {
             field.config.links!.push({
               url: externalTarget.url,
               title: correlation.label || 'External URL',

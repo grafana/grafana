@@ -17,7 +17,8 @@ export const ConfigureCorrelationTargetForm = () => {
   const { correlation } = useCorrelationsFormContext();
   const targetUID: string | undefined = useWatch({ name: 'targetUID' }) || correlation?.targetUID;
   const configType: CorrelationConfigType | undefined = useWatch({ name: 'config.type' }) || correlation?.config?.type;
-  console.log(CORR_CONFIG_TYPES);
+  const configTarget = useWatch({ name: 'config.target' }) || correlation?.config?.target;
+
   return (
     <>
       <FieldSet label={t('correlations.target-form.title', 'Setup the target for the correlation (Step 2 of 3)')}>
@@ -92,7 +93,7 @@ export const ConfigureCorrelationTargetForm = () => {
             />
           </>
         )}
-        {configType === CORR_CONFIG_TYPES.external.value && (
+        {configType === CORR_CONFIG_TYPES.external.value && 'url' in configTarget && (
           <>
             <Controller
               control={control}
@@ -103,25 +104,29 @@ export const ConfigureCorrelationTargetForm = () => {
                   message: t('correlations.target-form.control-rules', 'This field is required.'),
                 },
               }}
-              render={({ field: { onChange, value } }) => (
-                <Field
-                  label={t('correlations.target-form.target-label', 'Target')}
-                  description={t(
-                    'correlations.target-form.target-description-external',
-                    'Specify the URL that will open when the link is clicked'
-                  )}
-                  htmlFor="target"
-                  invalid={!!formState.errors.targetUID}
-                  error={formState.errors.targetUID?.message}
-                >
-                  <Input
-                    value={(value as ExternalTypeTarget).url || ''}
-                    onChange={(e) => {
-                      onChange({ url: e.currentTarget.value });
-                    }}
-                  />
-                </Field>
-              )}
+              render={({ field: { onChange, value } }) => {
+                return 'url' in value ? (
+                  <Field
+                    label={t('correlations.target-form.target-label', 'Target')}
+                    description={t(
+                      'correlations.target-form.target-description-external',
+                      'Specify the URL that will open when the link is clicked'
+                    )}
+                    htmlFor="target"
+                    invalid={!!formState.errors.targetUID}
+                    error={formState.errors.targetUID?.message}
+                  >
+                    <Input
+                      value={value.url || ''}
+                      onChange={(e) => {
+                        onChange({ url: e.currentTarget.value });
+                      }}
+                    />
+                  </Field>
+                ) : (
+                  <></>
+                );
+              }}
             />
           </>
         )}
