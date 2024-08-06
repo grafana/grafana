@@ -137,11 +137,11 @@ dateFormat x
 axisFormat %S.%L
 `;
 
-  // working around unique section names by abusing non breaking spaces
-  const nbsp = ' ';
+  // working around unique section names by abusing non-breaking spaces
+  const nbsp = ' ';
   let idx = 0;
   for (const e of sorted) {
-    if (e.serviceName != currentSection) {
+    if (e.serviceName !== currentSection) {
       out += `section ${e.serviceName}${nbsp.repeat(idx)}\n`;
       currentSection = e.serviceName;
     }

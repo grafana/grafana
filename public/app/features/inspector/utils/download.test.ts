@@ -1,8 +1,18 @@
 import saveAs from 'file-saver';
 
-import { dataFrameFromJSON, DataFrameJSON, dateTimeFormat, FieldType, LogRowModel, LogsMetaKind } from '@grafana/data';
+import {
+  DataFrame,
+  dataFrameFromJSON,
+  DataFrameJSON,
+  dateTimeFormat,
+  FieldType,
+  LogRowModel,
+  LogsMetaKind,
+  toDataFrame
+} from '@grafana/data';
 
-import { downloadAsJson, downloadDataFrameAsCsv, downloadLogsModelAsTxt } from './download';
+import {downloadAsJson, downloadDataFrameAsCsv, downloadLogsModelAsTxt, exportTraceAsMermaid} from './download';
+
 
 jest.mock('file-saver', () => jest.fn());
 
@@ -135,3 +145,34 @@ async function hasBOM(blob: Blob) {
     reader.readAsArrayBuffer(blob.slice(0, 3)); // Read only the first 3 bytes
   });
 }
+
+describe('exportTraceAsMermaid', () => {
+  it('should convert trace data to Mermaid Gantt chart format', () => {
+
+    const mockDataFrame: DataFrame = toDataFrame({
+      name: 'example',
+      fields: [
+        {name: 'startTime', type: FieldType.number, values: [1, 3, 5]},
+        {name: 'duration', type: FieldType.number, values: [2, 2, 2]},
+        {name: 'operationName', type: FieldType.string, values: ['op1', 'op2', 'op3']},
+        {name: 'serviceName', type: FieldType.string, values: ['serviceA', 'serviceB', 'serviceA']},
+      ],
+    });
+
+    const expectedOutput = `gantt
+title Example Trace
+dateFormat x
+axisFormat %S.%L
+section serviceA
+op1 :1,2ms
+section serviceB 
+op2 :3,2ms
+section serviceA  
+op3 :5,2ms
+`;
+
+    const output = exportTraceAsMermaid(mockDataFrame);
+
+    expect(output).toBe(expectedOutput);
+  });
+});
