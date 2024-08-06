@@ -1,4 +1,5 @@
 import { produce } from 'immer';
+import { isEqual } from 'lodash';
 
 import { t } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
@@ -49,14 +50,27 @@ export function useAddRuleToRuleGroup() {
  */
 export function useUpdateRuleInRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
+  const [_moveRuleState, moveRuleToGroup] = useMoveRuleToRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
 
   const successMessage = t('alerting.rules.update-rule.success', 'Rule updated successfully');
 
   return useAsync(
-    async (ruleGroup: RuleGroupIdentifier, ruleIdentifier: EditableRuleIdentifier, ruleDefinition: PostableRuleDTO) => {
+    async (
+      ruleGroup: RuleGroupIdentifier,
+      ruleIdentifier: EditableRuleIdentifier,
+      ruleDefinition: PostableRuleDTO,
+      targetRuleGroup?: RuleGroupIdentifier
+    ) => {
       const { namespaceName } = ruleGroup;
       const finalRuleDefinition = copyGrafanaUID(ruleIdentifier, ruleDefinition);
+
+      // check if the existing rule and the form values have the same rule group identifier
+      const sameTargetRuleGroup = isEqual(ruleGroup, targetRuleGroup);
+      if (targetRuleGroup && !sameTargetRuleGroup) {
+        const result = moveRuleToGroup.execute(ruleGroup, targetRuleGroup, ruleIdentifier, ruleDefinition);
+        return result;
+      }
 
       const action = updateRuleAction({ identifier: ruleIdentifier, rule: finalRuleDefinition });
       const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { isEqual } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-hook-form';
 import { Link, useParams } from 'react-router-dom';
@@ -30,11 +29,7 @@ import {
   trackAlertRuleFormSaved,
 } from '../../../Analytics';
 import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
-import {
-  useAddRuleToRuleGroup,
-  useMoveRuleToRuleGroup,
-  useUpdateRuleInRuleGroup,
-} from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
+import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import {
   DEFAULT_GROUP_EVALUATION_INTERVAL,
@@ -74,7 +69,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const [_deleteRuleState, deleteRuleFromGroup] = useDeleteRuleFromGroup();
   const [_addRuleState, addRuleToRuleGroup] = useAddRuleToRuleGroup();
   const [_updateRuleState, updateRuleInRuleGroup] = useUpdateRuleInRuleGroup();
-  const [_moveRuleState, moveRuleToRuleGroup] = useMoveRuleToRuleGroup();
 
   const routeParams = useParams<{ type: string; id: string }>();
   const ruleType = translateRouteParamToRuleType(routeParams.type);
@@ -163,22 +157,12 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
       const targetRuleGroupIdentifier = getRuleGroupLocationFromFormValues(values);
 
-      // check if the existing rule and the form values have the same rule group identifier
-      const sameTargetRuleGroup = isEqual(ruleGroupIdentifier, targetRuleGroupIdentifier);
-
-      if (sameTargetRuleGroup) {
-        await updateRuleInRuleGroup.execute(ruleGroupIdentifier, ruleIdentifier, ruleDefinition);
-      } else {
-        await moveRuleToRuleGroup.execute(
-          ruleGroupIdentifier,
-          targetRuleGroupIdentifier,
-          ruleIdentifier,
-          ruleDefinition
-        );
-
-        // since we can't be sure that the rule has been deployed instantly we redirect to the list view instead
-        locationService.push('/alerting/list');
-      }
+      await updateRuleInRuleGroup.execute(
+        ruleGroupIdentifier,
+        ruleIdentifier,
+        ruleDefinition,
+        targetRuleGroupIdentifier
+      );
     }
 
     if (exitOnSave && returnTo) {
