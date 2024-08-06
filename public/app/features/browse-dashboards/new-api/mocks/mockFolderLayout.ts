@@ -25,21 +25,28 @@ function arrayOf<T>(length: number, mapFn: (index: number) => T): T[] {
   return arr.map((_, index) => mapFn(index));
 }
 
-function $folder(children: MockFolder['children'] = []): MockFolder {
+function $folder(title?: string, children: MockFolder['children'] = []): MockFolder {
+  const randomTitle = chance.company();
+
   return {
     kind: 'folder',
-    uid: chance.guid(),
-    title: chance.company(),
+    uid: chance.bb_pin(),
+    title: title ? `${title} ${randomTitle}` : randomTitle,
     children: children,
   };
 }
 
-function $dash(): MockDashboard {
+function $dash(title?: string): MockDashboard {
+  const randomTitle = chance.name({ middle_initial: true });
+
   return {
     kind: 'dashboard',
-    uid: chance.guid(),
-    title: chance.name({ middle_initial: true }),
+    uid: chance.bb_pin(),
+    title: title ? `${title} ${randomTitle}` : randomTitle,
   };
 }
 
-export const folderLayout = [...arrayOf(123, (index) => $folder()), ...arrayOf(123, (index) => $dash())];
+export const folderLayout = [
+  ...arrayOf(123, (index) => $folder(index.toString())),
+  ...arrayOf(123, (index) => $dash(index.toString())),
+];

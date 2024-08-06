@@ -20,6 +20,9 @@ function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryF
           url: baseURL + requestOptions.url,
           showErrorAlert: false,
           data: requestOptions.body,
+          headers: {
+            'msw-mock': true,
+          },
         })
       );
       return { data: responseData, meta };
