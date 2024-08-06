@@ -854,7 +854,7 @@ func handleEncryptedCertificates(cfg *setting.Cfg) (*tls.Certificate, error) {
 		// nolint:staticcheck
 		keyBytes, err = x509.DecryptPEMBlock(keyPemBlock, []byte(certKeyFilePassword))
 		if err != nil {
-			return nil, fmt.Errorf("error decryting x509 PemBlock: %w", err)
+			return nil, fmt.Errorf("error decrypting PEM block: %w", err)
 		}
 	} else if strings.Contains(keyPemBlock.Type, "ENCRYPTED") {
 		// The pkcs8 package only handles the PKCS #5 v2.0 scheme.
