@@ -179,7 +179,7 @@ export const getSelectedElements = (scene: Scene) => {
     if (elementState) {
       elements.push(elementState);
     }
-  })
+  });
 
   return elements;
 };
