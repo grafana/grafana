@@ -37,7 +37,8 @@ function amConfigToTemplates(config: AlertManagerCortexConfig): NotificationTemp
   return Object.entries(config.template_files).map(([name, template]) => ({
     name,
     template,
-    provenance: (config.template_file_provenances ?? {})[name] ?? PROVENANCE_NONE,
+    // Undefined, null or empty string should be converted to PROVENANCE_NONE
+    provenance: (config.template_file_provenances ?? {})[name] || PROVENANCE_NONE,
   }));
 }
 
