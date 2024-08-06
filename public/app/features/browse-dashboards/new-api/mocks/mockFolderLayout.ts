@@ -1,12 +1,12 @@
 import Chance from 'chance';
 
-interface MockDashboard {
+export interface MockDashboard {
   kind: 'dashboard';
   uid: string;
   title: string;
 }
 
-interface MockFolder {
+export interface MockFolder {
   kind: 'folder';
   uid: string;
   title: string;
@@ -46,7 +46,14 @@ function $dash(title?: string): MockDashboard {
   };
 }
 
+const joinNumbers = (...numbers: number[]) => numbers.join('.');
+
 export const folderLayout = [
-  ...arrayOf(123, (index) => $folder(index.toString())),
+  ...arrayOf(123, (index) =>
+    $folder(index.toString(), [
+      ...arrayOf(63, (index2) => $folder(joinNumbers(index, index2))),
+      ...arrayOf(123, (index2) => $dash(joinNumbers(index, index2))),
+    ])
+  ),
   ...arrayOf(123, (index) => $dash(index.toString())),
 ];

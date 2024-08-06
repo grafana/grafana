@@ -2,7 +2,24 @@ import { HttpResponse, delay, http, passthrough } from 'msw';
 
 import { GetFoldersApiResponse, SearchApiResponse } from '../endpoints.gen';
 
-import { folderLayout } from './mockFolderLayout';
+import { MockDashboard, MockFolder, folderLayout } from './mockFolderLayout';
+
+function getFolderChildren(uid: string): Array<MockDashboard | MockFolder> | undefined {
+  for (const item of folderLayout) {
+    if (item.kind !== 'folder') {
+      continue;
+    }
+
+    if (item.uid === uid) {
+      return item.children;
+    }
+
+    const children = getFolderChildren(uid);
+    if (children) {
+      return children;
+    }
+  }
+}
 
 export const listFoldersHandler = () =>
   http.get(`/api/folders`, async ({ request }) => {
@@ -15,8 +32,19 @@ export const listFoldersHandler = () =>
 
     const pageParam = parseInt(url.searchParams.get('page') ?? '1', 10);
     const limit = parseInt(url.searchParams.get('limit') ?? '50', 10);
+    const parentUid = url.searchParams.get('parentUid');
 
-    const layoutItems = folderLayout.filter((item) => item.kind === 'folder');
+    const children = parentUid ? getFolderChildren(parentUid) : folderLayout;
+    if (!children) {
+      return HttpResponse.json(
+        {
+          error: 'folder not found',
+        },
+        { status: 404 }
+      );
+    }
+
+    const layoutItems = children.filter((item) => item.kind === 'folder');
 
     const startIndex = (pageParam - 1) * limit;
     const endIndex = startIndex + limit;
@@ -25,6 +53,7 @@ export const listFoldersHandler = () =>
       return {
         uid: item.uid,
         title: item.title,
+        parentUid: parentUid ?? undefined,
       };
     });
 

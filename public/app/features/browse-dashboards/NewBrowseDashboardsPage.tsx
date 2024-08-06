@@ -1,14 +1,34 @@
 /* eslint-disable no-console */
 import { useWindowVirtualizer, Virtualizer, VirtualItem } from '@tanstack/react-virtual';
-import { ReactNode, useEffect, useRef } from 'react';
+import { ReactNode, useCallback, useEffect, useReducer, useRef } from 'react';
 
+import { Text, Stack, Icon, IconButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { NewBrowseItem, useNewAPIBlahBlah } from './new-api/useBlahBlah';
 
 interface NewBrowseDashboardsPageProps {}
 
+function folderStateReducer(state: Record<string, boolean>, action: { isOpen: boolean; uid: string }) {
+  return {
+    ...state,
+    [action.uid]: action.isOpen,
+  };
+}
+
 export default function NewBrowseDashboardsPage(props: NewBrowseDashboardsPageProps) {
+  const [openFolders, setOpenFolders] = useReducer(folderStateReducer, {});
+
+  /*
+    TODO: here's how we load stuff properly:
+     - Give openFolders to the API hook.
+     - API hook should return placeholder items for incomplete folders (including root)
+     - The item loader hook should:
+       - Find the first placeholder in the virtual items
+       - Check it's parentUID (which folder it belongs to)
+       - Give that parentUID to requestNextPage to load more of that folder
+  */
+
   const { items: allRows, isLoading, hasNextPage, requestNextPage } = useNewAPIBlahBlah();
 
   const listRef = useRef<HTMLDivElement | null>(null);
@@ -20,6 +40,7 @@ export default function NewBrowseDashboardsPage(props: NewBrowseDashboardsPagePr
   });
   const virtualItems = virtualizer.getVirtualItems();
 
+  // item loader hook
   useEffect(() => {
     const [lastItem] = [...virtualItems].reverse();
 
@@ -28,9 +49,14 @@ export default function NewBrowseDashboardsPage(props: NewBrowseDashboardsPagePr
     }
 
     if (lastItem.index >= allRows.length - 1 && hasNextPage && !isLoading) {
+      // Should pass in the root folder UID (undefined on root page)
       requestNextPage();
     }
   }, [isLoading, hasNextPage, allRows.length, virtualItems, requestNextPage]);
+
+  const handleFolderButtonClick = useCallback((item: NewBrowseItem, isOpen: boolean) => {
+    setOpenFolders({ isOpen, uid: item.uid });
+  }, []);
 
   return (
     <Page navId="dashboards/browse">
@@ -44,6 +70,7 @@ export default function NewBrowseDashboardsPage(props: NewBrowseDashboardsPagePr
         >
           {virtualItems.map((item) => {
             const browseItem = allRows[item.index] as NewBrowseItem | undefined;
+            const isOpen = openFolders[browseItem?.uid ?? ''] ?? false;
 
             if (!browseItem) {
               return (
@@ -55,7 +82,20 @@ export default function NewBrowseDashboardsPage(props: NewBrowseDashboardsPagePr
 
             return (
               <VirtualRow key={item.key} virtualItem={item} virtualizer={virtualizer}>
-                Row {item.index} / {browseItem.type} / {browseItem.title}
+                <Stack gap={3} alignItems={'center'}>
+                  {browseItem.type === 'dashboard' ? (
+                    <Icon name="dashboard" />
+                  ) : (
+                    <IconButton
+                      onClick={() => browseItem && handleFolderButtonClick(browseItem, !isOpen)}
+                      tooltip={isOpen ? 'Close' : 'Open'}
+                      name={isOpen ? 'folder-open' : 'folder'}
+                    />
+                  )}
+                  <Text tabular>Row {item.index}</Text>
+                  <Text tabular>{browseItem.title}</Text>
+                  <Text tabular>{browseItem.uid}</Text>
+                </Stack>
               </VirtualRow>
             );
           })}

@@ -10,12 +10,14 @@ interface NewBrowseItemDashboard {
   type: 'dashboard';
   title: string;
   uid: string;
+  parentUid?: string;
 }
 
 interface NewBrowseItemFolder {
   type: 'folder';
   title: string;
   uid: string;
+  parentUid?: string;
 }
 
 export type NewBrowseItem = NewBrowseItemDashboard | NewBrowseItemFolder;
@@ -39,16 +41,38 @@ export function useNewAPIBlahBlah(): UseNewAPIBlahBlahPayload {
   const [folderPages, requestFolderPage] = useMultipleQueries(newBrowseDashboardsAPI.endpoints.getFolders);
   const [dashPages, requestDashPage] = useMultipleQueries(newBrowseDashboardsAPI.endpoints.search);
 
+  // type FolderPage = (typeof folderPages)[number];
+  // type DashPage = (typeof folderPages)[number];
+
+  // const pagesByFolderUid = useMemo(() => {
+  //   const byFolderUid: Record<string, Array<FolderPage | DashPage>> = {};
+
+  //   for (const page of folderPages) {
+  //     const parentUid = page.originalArgs?.parentUid ?? 'general';
+  //     byFolderUid[parentUid] = byFolderUid[parentUid] ?? [];
+  //     byFolderUid[parentUid].push(page);
+  //   }
+
+  //   for (const page of dashPages) {
+  //     const parentUid = (page.originalArgs?.folderUiDs ?? ['general'])[0];
+
+  //     byFolderUid[parentUid] = byFolderUid[parentUid] ?? [];
+  //     byFolderUid[parentUid].push(page);
+  //   }
+
+  //   return byFolderUid;
+  // }, [folderPages, dashPages]);
+
   const isLoading = folderPages.some((page) => page.isLoading) || dashPages.some((page) => page.isLoading);
 
   const allItems = useMemo(() => {
     const allFolders: NewBrowseItemFolder[] = folderPages
       .flatMap((page) => page.data ?? [])
-      .map((v) => ({ type: 'folder' as const, uid: v.uid!, title: v.title! }));
+      .map((v) => ({ type: 'folder' as const, uid: v.uid!, title: v.title!, parentUid: v.parentUid }));
 
     const allDashboards: NewBrowseItemDashboard[] = dashPages
       .flatMap((page) => page.data ?? [])
-      .map((v) => ({ type: 'dashboard' as const, uid: v.uid!, title: v.title! }));
+      .map((v) => ({ type: 'dashboard' as const, uid: v.uid!, title: v.title!, parentUid: v.folderUid }));
 
     return [...allFolders, ...allDashboards];
   }, [folderPages, dashPages]);
@@ -62,15 +86,11 @@ export function useNewAPIBlahBlah(): UseNewAPIBlahBlahPayload {
   const requestNextPage = useCallback(() => {
     if (!lastFolderPageIsEmpty) {
       const lastPageNumber = lastLoadedFolderPage?.originalArgs?.page ?? 0;
-      console.log('requesting folder page', lastPageNumber + 1);
       requestFolderPage({ page: lastPageNumber + 1, limit: PAGE_SIZE });
     } else if (!lastDashPageIsEmpty) {
-      // The last folder page must be empty, so request dashboards
       const lastPageNumber = lastLoadedDashPage?.originalArgs?.page ?? 0;
-      console.log('requesting dash page', lastPageNumber + 1);
       requestDashPage({ page: lastPageNumber + 1, limit: PAGE_SIZE, type: 'dash-db', folderUiDs: ['general'] });
     } else {
-      // Both are empty - this request should never have been made!
       console.warn('Both folder and dash pages are empty');
     }
   }, [
