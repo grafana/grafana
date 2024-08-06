@@ -98,7 +98,7 @@ describe('EditNotificationPolicyForm', function () {
     await user.click(ui.submitBtn.get());
 
     expect(ui.error.getAll()).toHaveLength(1);
-    expect(ui.error.get().textContent).toBe('Repeat interval should be higher or equal to Group interval');
+    expect(ui.error.get()).toHaveTextContent('Repeat interval should be higher or equal to Group interval');
     expect(onSubmit).not.toHaveBeenCalled();
   });
 

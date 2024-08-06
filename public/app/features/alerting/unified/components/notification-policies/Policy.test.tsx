@@ -78,7 +78,7 @@ describe('Policy', () => {
     // should be editable
     const editDefaultPolicy = screen.getByRole('menuitem', { name: 'Edit' });
     expect(editDefaultPolicy).toBeInTheDocument();
-    expect(editDefaultPolicy).not.toBeDisabled();
+    expect(editDefaultPolicy).toBeEnabled();
     await user.click(editDefaultPolicy);
     expect(onEditPolicy).toHaveBeenCalledWith(routeTree, true);
 
@@ -118,8 +118,8 @@ describe('Policy', () => {
 
       // click "more actions" and check if we can delete
       await user.click(policy.getByTestId('more-actions'));
-      expect(screen.queryByRole('menuitem', { name: 'Edit' })).not.toBeDisabled();
-      expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeDisabled();
+      expect(screen.queryByRole('menuitem', { name: 'Edit' })).toBeEnabled();
+      expect(screen.queryByRole('menuitem', { name: 'Delete' })).toBeEnabled();
 
       await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
       expect(onDeletePolicy).toHaveBeenCalled();

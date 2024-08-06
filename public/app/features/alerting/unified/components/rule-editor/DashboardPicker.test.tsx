@@ -71,7 +71,7 @@ describe('DashboardPicker', () => {
     expect(panels).toHaveLength(3);
 
     panels.forEach((panel) => {
-      expect(panel).not.toBeDisabled();
+      expect(panel).toBeEnabled();
     });
   });
 });

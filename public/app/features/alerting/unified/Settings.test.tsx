@@ -95,7 +95,7 @@ describe('Alerting settings', () => {
     expect(ui.saveConfigurationButton.get()).toBeDisabled();
 
     await waitFor(() => {
-      expect(ui.saveConfigurationButton.get()).not.toBeDisabled();
+      expect(ui.saveConfigurationButton.get()).toBeEnabled();
     });
   });
 
