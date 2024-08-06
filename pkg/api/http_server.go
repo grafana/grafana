@@ -847,16 +847,8 @@ func handleEncryptedCertificates(cfg *setting.Cfg) (*tls.Certificate, error) {
 	keyPemBlock, _ := pem.Decode(keyData)
 
 	var keyBytes []byte
-	// Process the X.509-encrypted or PKCS-encrypted PEM block.
-	// nolint:staticcheck
-	if x509.IsEncryptedPEMBlock(keyPemBlock) {
-		// Only covers encrypted PEM data with a DEK-Info header.
-		// nolint:staticcheck
-		keyBytes, err = x509.DecryptPEMBlock(keyPemBlock, []byte(certKeyFilePassword))
-		if err != nil {
-			return nil, fmt.Errorf("error decrypting PEM block: %w", err)
-		}
-	} else if strings.Contains(keyPemBlock.Type, "ENCRYPTED") {
+	// Process the PKCS-encrypted PEM block.
+	if strings.Contains(keyPemBlock.Type, "ENCRYPTED") {
 		// The pkcs8 package only handles the PKCS #5 v2.0 scheme.
 		decrypted, err := pkcs8.ParsePKCS8PrivateKey(keyPemBlock.Bytes, []byte(certKeyFilePassword))
 		if err != nil {
@@ -867,7 +859,6 @@ func handleEncryptedCertificates(cfg *setting.Cfg) (*tls.Certificate, error) {
 			return nil, fmt.Errorf("error marshaling PKCS8 Private key: %w", err)
 		}
 	} else {
-		// in this case, the password was provided but the key is not encrypted or is not supported
 		return nil, fmt.Errorf("password provided but Private key is not encrypted or not supported")
 	}
 
@@ -877,7 +868,6 @@ func handleEncryptedCertificates(cfg *setting.Cfg) (*tls.Certificate, error) {
 		return nil, fmt.Errorf("error encoding pem file: %w", err)
 	}
 
-	// create the decrypted cert to return
 	cert, err := tls.X509KeyPair(certData, encodedKey.Bytes())
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse X509 key pair: %w", err)
