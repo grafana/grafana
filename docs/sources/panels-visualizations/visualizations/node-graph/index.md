@@ -53,8 +53,8 @@ Defining arc sections overrides the automatic detection of `arc__*` and `color` 
 
 The **Edges** options section provides configurations for node edges behaviors.
 
-- **Main stat unit** choose which unit the main stat displays in the graph's edges.
-- **Secondary stat unit** choose which unit the secondary stat displays in the graph's edges.
+- **Main stat unit** - Choose which unit the main stat displays in the graph's edges.
+- **Secondary stat unit** - Choose which unit the secondary stat displays in the graph's edges.
 
 ## Data requirements
 
