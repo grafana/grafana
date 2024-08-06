@@ -1096,9 +1096,8 @@ func (db *postgres) GetTables() ([]*core.Table, error) {
 }
 
 func getIndexColName(indexdef string) []string {
-	var colNames []string
-
 	cs := strings.Split(indexdef, "(")
+	colNames := make([]string, 0, len(strings.Split(strings.Split(cs[1], ")")[0], ",")))
 	for _, v := range strings.Split(strings.Split(cs[1], ")")[0], ",") {
 		colNames = append(colNames, strings.Split(strings.TrimLeft(v, " "), " ")[0])
 	}
