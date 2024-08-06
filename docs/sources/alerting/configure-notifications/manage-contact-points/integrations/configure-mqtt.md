@@ -43,7 +43,7 @@ The integration sends data in JSON format by default. You can change that using 
 
 ## MQTT JSON payload
 
-If the JSON message format is selected in **Optional MQTT settings**, the payload will be sent in the following structure:
+If the JSON message format is selected in **Optional MQTT settings**, the payload is sent in the following structure.
 
 ```json
 {
@@ -130,7 +130,7 @@ If the JSON message format is selected in **Optional MQTT settings**, the payloa
 
 ### Alert instance
 
-Each alert instance in the `alerts` array has the following fields:
+Each alert instance in the `alerts` array has the following fields.
 
 | Key          | Type   | Description                                                                        |
 | ------------ | ------ | ---------------------------------------------------------------------------------- |
