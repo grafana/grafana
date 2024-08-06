@@ -6,7 +6,7 @@ import { ExploreItemState } from 'app/types';
 
 import { formatValueName } from '../explore/PrometheusListView/ItemLabels';
 
-import { CORR_CONFIG_TYPES, CreateCorrelationParams, CreateCorrelationResponse, ExternalTypeTarget } from './types';
+import { CORR_CONFIG_TYPES, CreateCorrelationParams, CreateCorrelationResponse } from './types';
 import {
   CorrelationData,
   CorrelationsData,

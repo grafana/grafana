@@ -42,7 +42,6 @@ export const ConfigureCorrelationTargetForm = () => {
               invalid={!!formState.errors.config?.type}
             >
               <Select
-                {...field}
                 value={configType}
                 onChange={(value) => onChange(value.value)}
                 options={Object.values(CORR_CONFIG_TYPES)}
