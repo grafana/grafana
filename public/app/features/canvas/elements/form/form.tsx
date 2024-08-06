@@ -1,10 +1,7 @@
 import { css } from '@emotion/css';
-import { cond } from 'lodash';
-import { useCallback } from 'react';
 
 import { GrafanaTheme2, OneClickMode } from '@grafana/data';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
-import { conf } from 'app/features/alerting/unified/components/receivers/editor/language';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
@@ -49,10 +46,6 @@ const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
 
   const context = usePanelContext();
   const scene = context.instanceState?.scene;
-
-  console.log(scene);
-
-  console.log({ data, config });
 
   const onCurrentOptionChange = (newParams: [string, string], id: string) => {
     // find child with id and update the currentOption

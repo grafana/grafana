@@ -1,5 +1,5 @@
 import { uniqueId } from 'lodash';
-import { useCallback } from 'react';
+import { Fragment, useCallback } from 'react';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
@@ -32,6 +32,12 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
 
   const onChangeElementType = useCallback(
     (sel: SelectableValue<string>) => {
+      // allow only one submit button per form
+      if (sel.value === 'Submit' && value.some((child) => child.type === 'Submit')) {
+        console.warn('Only one submit button allowed per form');
+        return;
+      }
+
       const id = uniqueId('form-element-');
       let newFormElement: FormChild = { id, type: sel.value ?? '' };
       if (sel.value === 'Submit') {
@@ -94,7 +100,9 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
   return (
     <>
       <AddLayerButton onChange={onChangeElementType} options={typeOptions} label={'Add element type'} />
-      {children}
+      {children.map((child, i) => (
+        <Fragment key={i}>{child}</Fragment>
+      ))}
     </>
   );
 };
