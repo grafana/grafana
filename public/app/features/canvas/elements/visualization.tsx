@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
+import { useCallback } from 'react';
 
-import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Field, GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { DataFrame } from '@grafana/data/';
 import { EmbeddedScene, PanelBuilders, SceneDataNode, SceneFlexItem, SceneFlexLayout } from '@grafana/scenes';
 import { TextDimensionMode } from '@grafana/schema/dist/esm/index';
-import { stylesFactory, usePanelContext } from '@grafana/ui';
+import { MultiSelect, stylesFactory, usePanelContext } from '@grafana/ui';
+import { frameHasName, useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
 import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
@@ -159,6 +161,14 @@ export const visualizationItem: CanvasElementItem<VizElementConfig, VizElementDa
           options: panelTypes,
         },
       })
+      // data source, maybe refid(s), frame(s), field(s)
+      .addCustomEditor({
+        category,
+        id: 'fields',
+        path: 'config.fields',
+        name: 'Fields',
+        editor: FieldsPickerEditor,
+      })
       .addCustomEditor({
         category,
         id: 'textSelector',
@@ -167,4 +177,32 @@ export const visualizationItem: CanvasElementItem<VizElementConfig, VizElementDa
         editor: TextDimensionEditor,
       });
   },
+};
+
+type FieldsPickerEditorProps = StandardEditorProps<string[], any>;
+
+export const FieldsPickerEditor = ({ value, context, onChange: onChangeFromProps }: FieldsPickerEditorProps) => {
+  const names = useFieldDisplayNames(context.data);
+  const selectOptions = useSelectOptions(names, undefined);
+
+  const onChange = useCallback(
+    (selections: Array<SelectableValue<string>>) => {
+      if (!Array.isArray(selections)) {
+        return;
+      }
+
+      return onChangeFromProps(
+        selections.reduce((all: string[], current) => {
+          if (!frameHasName(current.value, names)) {
+            return all;
+          }
+          all.push(current.value!);
+          return all;
+        }, [])
+      );
+    },
+    [names, onChangeFromProps]
+  );
+
+  return <MultiSelect value={value} options={selectOptions} onChange={onChange} />;
 };

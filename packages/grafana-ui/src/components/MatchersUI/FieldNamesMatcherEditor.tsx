@@ -41,7 +41,7 @@ export const FieldNamesMatcherEditor = memo<MatcherUIProps<ByNamesMatcherOptions
 
   return <MultiSelect value={options.names} options={selectOptions} onChange={onChange} />;
 });
-FieldNamesMatcherEditor.displayName = 'FieldNameMatcherEditor';
+FieldNamesMatcherEditor.displayName = 'FieldNamesMatcherEditor';
 
 export const fieldNamesMatcherItem: FieldMatcherUIRegistryItem<ByNamesMatcherOptions> = {
   id: FieldMatcherID.byNames,
