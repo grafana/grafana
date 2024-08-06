@@ -2,27 +2,14 @@ package ring
 
 import (
 	"encoding/json"
-	"net"
 	"net/http"
 	"time"
-
-	"github.com/grafana/grafana/pkg/setting"
 )
 
-type getResponse struct {
-	Value []byte `json:"value"`
-}
-
-type setRequest struct {
-	Key   string        `json:"key"`
-	Value []byte        `json:"value"`
-	Expr  time.Duration `json:"expr"`
-}
-
-func registerRoutes(cfg *setting.Cfg, c *Cache) error {
+func buildMux(c *Cache) *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.Handle("/ring", c.lfc)
-	mux.Handle("/kv", c.mlist)
+	mux.Handle("/remote_cache/ring", c.lfc)
+	mux.Handle("/remote_cache/kv", c.mlist)
 
 	mux.HandleFunc("GET /cache/{key}", func(w http.ResponseWriter, r *http.Request) {
 		key := r.PathValue("key")
@@ -36,7 +23,11 @@ func registerRoutes(cfg *setting.Cfg, c *Cache) error {
 
 		w.WriteHeader(http.StatusOK)
 		w.Header().Add("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(&getResponse{Value: value})
+
+		type response struct {
+			Value []byte `json:"value"`
+		}
+		_ = json.NewEncoder(w).Encode(&response{Value: value})
 	})
 
 	mux.HandleFunc("DELETE /cache/{key}", func(w http.ResponseWriter, r *http.Request) {
@@ -74,14 +65,5 @@ func registerRoutes(cfg *setting.Cfg, c *Cache) error {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	listener, err := net.Listen("tcp", net.JoinHostPort(cfg.HTTPAddr, httpPort))
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		panic(http.Serve(listener, mux))
-	}()
-
-	return nil
+	return mux
 }

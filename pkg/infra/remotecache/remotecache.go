@@ -3,6 +3,7 @@ package remotecache
 import (
 	"context"
 	"errors"
+	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -105,6 +106,22 @@ func (ds *RemoteCache) Run(ctx context.Context) error {
 
 	<-ctx.Done()
 	return ctx.Err()
+}
+
+// ServeHTTP is used to expose debug endpoints for remote cache
+func (ds *RemoteCache) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if ds.Cfg.Env != setting.Dev {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	handler, ok := ds.client.(http.Handler)
+	if !ok {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	handler.ServeHTTP(w, r)
 }
 
 func createClient(

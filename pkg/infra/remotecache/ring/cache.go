@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"net"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -21,7 +22,6 @@ import (
 )
 
 const CacheType = "ring"
-const httpPort = "3011"
 
 func NewCache(cfg *setting.Cfg, reg prometheus.Registerer, provider grpcserver.Provider) (*Cache, error) {
 	logger := log.New("remotecache.ring")
@@ -58,12 +58,9 @@ func NewCache(cfg *setting.Cfg, reg prometheus.Registerer, provider grpcserver.P
 		local:    newLocalBackend(),
 	}
 
+	c.mux = buildMux(c)
+
 	RegisterDispatcherServer(c.provider.GetServer(), c)
-
-	if err := registerRoutes(cfg, c); err != nil {
-		return nil, err
-	}
-
 	return c, nil
 }
 
@@ -72,6 +69,7 @@ type Cache struct {
 	logger   glog.Logger
 	provider grpcserver.Provider
 
+	mux   *http.ServeMux
 	local *localBackend
 
 	kv    kv.Client
@@ -162,6 +160,10 @@ func (c *Cache) DispatchDelete(ctx context.Context, r *DeleteRequest) (*DeleteRe
 // AuthFuncOverride is used to disable auth for now
 func (c *Cache) AuthFuncOverride(ctx context.Context, fullMethodName string) (context.Context, error) {
 	return ctx, nil
+}
+
+func (c *Cache) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	c.mux.ServeHTTP(w, r)
 }
 
 func (c *Cache) getBackend(key string, op ring.Operation) (Backend, error) {
