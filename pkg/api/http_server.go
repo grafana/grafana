@@ -880,7 +880,7 @@ func handleEncryptedCertificates(cfg *setting.Cfg) (*tls.Certificate, error) {
 	// create the decrypted cert to return
 	cert, err := tls.X509KeyPair(certData, encodedKey.Bytes())
 	if err != nil {
-		return nil, fmt.Errorf("failed tls X509KeyPair parse: %w", err)
+		return nil, fmt.Errorf("failed to parse X509 key pair: %w", err)
 	}
 	return &cert, nil
 }
