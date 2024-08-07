@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { CSSProperties } from 'react';
 import { OnDrag, OnResize, OnRotate } from 'react-moveable/declaration/types';
+import tinycolor from 'tinycolor2';
 
 import { FieldType, getLinksSupplier, LinkModel, OneClickMode, ValueLinkConfig } from '@grafana/data';
 import { LayerElement } from 'app/core/components/Layers/types';
@@ -403,7 +404,14 @@ export class ElementState implements LayerElement {
     if (background) {
       if (background.color) {
         const color = ctx.getColor(background.color);
-        css.backgroundColor = color.value();
+        // If a field driven background color is present, apply alpha
+        if (background.color.field) {
+          css.backgroundColor = tinycolor(color.value())
+            .setAlpha(background.opacity ?? 1)
+            .toString();
+        } else {
+          css.backgroundColor = color.value();
+        }
       }
       if (background.image) {
         const image = ctx.getResource(background.image);
