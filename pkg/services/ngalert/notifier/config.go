@@ -33,12 +33,12 @@ type AlertingConfiguration struct {
 	configHash            [16]byte
 
 	receivers                []*alertingNotify.APIReceiver
-	receiverIntegrationsFunc func(r *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error)
+	receiverIntegrationsFunc func(r *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template, jsontemplates map[string]string) ([]*alertingNotify.Integration, error)
 }
 
-func (a AlertingConfiguration) BuildReceiverIntegrationsFunc() func(next *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error) {
-	return func(next *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error) {
-		return a.receiverIntegrationsFunc(next, tmpl)
+func (a AlertingConfiguration) BuildReceiverIntegrationsFunc() func(next *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template, jsonTemplates map[string]string) ([]*alertingNotify.Integration, error) {
+	return func(next *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template, jsonTemplates map[string]string) ([]*alertingNotify.Integration, error) {
+		return a.receiverIntegrationsFunc(next, tmpl, jsonTemplates)
 	}
 }
 

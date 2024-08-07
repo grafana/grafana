@@ -518,7 +518,8 @@ func ValidateContactPoint(ctx context.Context, e apimodels.EmbeddedContactPoint,
 		GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
 			Integrations: []*alertingNotify.GrafanaIntegrationConfig{&integration},
 		},
-	}, decryptFunc)
+		// TODO: add json templates...
+	}, decryptFunc, map[string]string{})
 	if err != nil {
 		return err
 	}
