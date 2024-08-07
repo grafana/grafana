@@ -3207,7 +3207,7 @@ __metadata:
     history: "npm:4.10.1"
     lodash: "npm:4.17.21"
     marked: "npm:12.0.2"
-    marked-mangle: "npm:1.1.8"
+    marked-mangle: "npm:1.1.9"
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.45"
     ol: "npm:7.4.0"
@@ -3617,7 +3617,7 @@ __metadata:
     lodash: "npm:4.17.21"
     lru-cache: "npm:10.2.2"
     marked: "npm:12.0.2"
-    marked-mangle: "npm:1.1.8"
+    marked-mangle: "npm:1.1.9"
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.45"
     monaco-promql: "npm:1.7.4"
@@ -21474,12 +21474,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked-mangle@npm:1.1.8":
-  version: 1.1.8
-  resolution: "marked-mangle@npm:1.1.8"
+"marked-mangle@npm:1.1.9":
+  version: 1.1.9
+  resolution: "marked-mangle@npm:1.1.9"
   peerDependencies:
-    marked: ">=4 <14"
-  checksum: 10/3e5c67c639888bc8838ac56eea4e1a51a18b633c19b41b48bb796104a47e3aa86e9801882adddd27a87ddfefcf69a073d3db50cbd75246d9bef81a2140dc77f2
+    marked: ">=4 <15"
+  checksum: 10/745e44bea9b52bc9c52e41f5d2b146eb21072a92ddf85b4b2f210b091da93fcbf2f5447b02f849fd19e79224bdca385462a42b96882493778d1d0ff0a3da9a8c
   languageName: node
   linkType: hard
 
