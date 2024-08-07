@@ -510,7 +510,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
                   data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.selectMetric}
                 />
               </div>
-              <Label description="Set to 'none' to remove limit and show all labels for a selected metric.">
+              <Label description="Set to 'none' to remove limit and show all labels for a selected metric. Removing the limit may cause performance issues.">
                 Series limit
               </Label>
               <div>
