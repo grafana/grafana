@@ -13,8 +13,12 @@ const { execSync } = require('child_process');
  * @returns {string} - The extracted package name, or an empty string if no match is found.
  */
 function getPackage(location) {
-  const match = location.match(/\/(@[^@]+)@/);
-  return match ? match[1] : '';
+  const match = location.match(/\/(grafana-[^/]+)\/dist/);
+  if (match) {
+    const packageName = match[1];
+    return `@${packageName.replace('-', '/')}`;
+  }
+  return '';
 }
 
 const PANEL_URL = 'https://ops.grafana-ops.net/d/dmb2o0xnz/imported-property-details?orgId=1';
@@ -62,6 +66,10 @@ function makeQuery(section) {
     })
     .filter((item) => item !== undefined)
     .join(' OR ');
+
+  if (!whereClause) {
+    return '';
+  }
 
   return `
     SELECT
@@ -113,6 +121,10 @@ function printAffectedPluginsSection(data) {
 
   try {
     const sqlQuery = makeQuery([...removals, ...changes]);
+    if (!sqlQuery) {
+      throw new Error("Couldn't generate SQL query");
+    }
+
     const cmd = `bq query --nouse_legacy_sql "${sqlQuery}"`;
     const stdout = execSync(cmd, { encoding: 'utf-8' });
 
