@@ -44,11 +44,13 @@ export interface TextConfig {
 export interface VizElementConfig extends TextConfig {
   vizType?: string;
   fields?: string[];
+  customOptions?: Array<[string, string]>; // hacky just to get it working
 }
 
 export interface VizElementData extends TextData {
   vizType?: string;
   data?: PanelData;
+  customOptions?: Array<[string, string]>; // hacky just to get it working
 }
 
 export interface CanvasElementConfig extends TextConfig {
