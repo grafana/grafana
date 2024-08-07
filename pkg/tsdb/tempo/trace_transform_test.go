@@ -32,7 +32,7 @@ func TestTraceToFrame(t *testing.T) {
 		origSpan := findSpan(otTrace, "7198307df9748606")
 		origSpan.Events().At(0).SetName("test event")
 
-		frame, err := TraceToFrame(otTrace)
+		frame, err := TraceToFrame(otTrace, 0)
 		require.NoError(t, err)
 
 		require.Equal(t, 30, frame.Rows())
@@ -85,7 +85,7 @@ func TestTraceToFrame(t *testing.T) {
 			})
 			return false
 		})
-		frame, err := TraceToFrame(otTrace)
+		frame, err := TraceToFrame(otTrace, 0)
 		require.NoError(t, err)
 		bFrame := &BetterFrame{frame}
 

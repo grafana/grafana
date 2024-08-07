@@ -106,26 +106,14 @@ func TraceToFrame(td ptrace.Traces, limit int) (*data.Frame, error) {
 
 				children, ok := parentToChildrenMetrics[parentSpanIDKey]
 				// newly recorded parent
-				if !ok {
-					metrics := ChildrenMetrics{
-						Name:      span.Name(),
-						Count:     1,
-						Min:       durationInt,
-						Max:       durationInt,
-						StdDev:    0,
-						MinSpanID: spanID,
-						MaxSpanID: spanID,
-						Durations: []float64{float64(durationInt)},
-					}
-					parentToChildrenMetrics[parentSpanIDKey] = Children{metrics}
-				} else {
+				if ok {
 					// update existing parent
 
 					// find the child with the same name
-					child, err := findChildrenByName(children, span.Name())
+					childIndex := findChildrenByName(children, span.Name())
 					// if the child does not exist, create a new one
-					if err != nil {
-						metrics := ChildrenMetrics{
+					if childIndex == -1 {
+						child := ChildrenMetrics{
 							Name:      span.Name(),
 							Count:     1,
 							Min:       durationInt,
@@ -135,10 +123,11 @@ func TraceToFrame(td ptrace.Traces, limit int) (*data.Frame, error) {
 							MaxSpanID: spanID,
 							Durations: []float64{float64(durationInt)},
 						}
-						children = append(children, metrics)
+						children = append(children, child)
 						parentToChildrenMetrics[parentSpanIDKey] = children
 					} else {
 						// update existing child
+						child := children[childIndex]
 						child.Count++
 						child.Durations = append(child.Durations, float64(durationInt))
 						if durationInt < child.Min {
@@ -149,7 +138,19 @@ func TraceToFrame(td ptrace.Traces, limit int) (*data.Frame, error) {
 							child.Max = durationInt
 							child.MaxSpanID = spanID
 						}
+						children[childIndex] = child
 					}
+				} else {
+					child := ChildrenMetrics{
+						Name:      span.Name(),
+						Count:     1,
+						Min:       durationInt,
+						Max:       durationInt,
+						MinSpanID: spanID,
+						MaxSpanID: spanID,
+						Durations: []float64{float64(durationInt)},
+					}
+					parentToChildrenMetrics[parentSpanIDKey] = Children{child}
 				}
 
 			}
@@ -419,7 +420,7 @@ func getChildrenMetrics(traceIDHex string, children Children, limit int) []*Trac
 	if numChildren == 0 {
 		return nil
 	}
-	childrenMetrics := make([]*TraceReference, numChildren*4)
+	childrenMetrics := make([]*TraceReference, numChildren*5)
 
 	for _, child := range children {
 		if child.Count > limit {
@@ -436,41 +437,50 @@ func getChildrenMetrics(traceIDHex string, children Children, limit int) []*Trac
 			nilSpanID := pcommon.SpanID{0}
 			nilSpanIDHex := hex.EncodeToString(nilSpanID[:])
 
-			childrenMetrics = append(childrenMetrics, &TraceReference{
+			childrenMetrics[0] = &TraceReference{
+				TraceID: traceIDHex,
+				SpanID:  minSpanIDHex,
+				Tags: []*KeyValue{
+					{Key: "count", Value: child.Count},
+					{Key: "name", Value: child.Name},
+				},
+			}
+
+			childrenMetrics[1] = &TraceReference{
 				TraceID: traceIDHex,
 				SpanID:  minSpanIDHex,
 				Tags: []*KeyValue{
 					{Key: "min", Value: printStringDuration(minDuration)},
 					{Key: "name", Value: child.Name},
 				},
-			})
+			}
 
-			childrenMetrics = append(childrenMetrics, &TraceReference{
+			childrenMetrics[2] = &TraceReference{
 				TraceID: traceIDHex,
 				SpanID:  maxSpanIDHex,
 				Tags: []*KeyValue{
 					{Key: "max", Value: printStringDuration(maxDuration)},
 					{Key: "name", Value: child.Name},
 				},
-			})
+			}
 
-			childrenMetrics = append(childrenMetrics, &TraceReference{
+			childrenMetrics[3] = &TraceReference{
 				TraceID: traceIDHex,
 				SpanID:  nilSpanIDHex,
 				Tags: []*KeyValue{
 					{Key: "avg", Value: printStringDuration(int(avg))},
 					{Key: "name", Value: child.Name},
 				},
-			})
+			}
 
-			childrenMetrics = append(childrenMetrics, &TraceReference{
+			childrenMetrics[4] = &TraceReference{
 				TraceID: traceIDHex,
 				SpanID:  nilSpanIDHex,
 				Tags: []*KeyValue{
 					{Key: "stdev", Value: printStringDuration(int(stdDev))},
 					{Key: "name", Value: child.Name},
 				},
-			})
+			}
 		}
 	}
 
@@ -483,13 +493,13 @@ func tokenForSpanID(b []byte) uint32 {
 	return h.Sum32()
 }
 
-func findChildrenByName(children Children, name string) (*ChildrenMetrics, error) {
-	for _, child := range children {
+func findChildrenByName(children Children, name string) int {
+	for i, child := range children {
 		if child.Name == name {
-			return &child, nil
+			return i
 		}
 	}
-	return nil, fmt.Errorf("no child with name %s found", name)
+	return -1
 }
 
 func parentIndex(id uint32, parentsOrder []uint32) int {
