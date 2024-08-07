@@ -14,7 +14,7 @@ SELECT
     LEFT OUTER JOIN "user" AS created_user ON dashboard.created_by = created_user.id
     LEFT OUTER JOIN "user" AS updated_user ON dashboard.updated_by = updated_user.id
     WHERE dashboard.is_folder = false
-	  AND dashboard.org_id = $1
+	    AND dashboard.org_id = $1
     
     
     ORDER BY dashboard.id DESC

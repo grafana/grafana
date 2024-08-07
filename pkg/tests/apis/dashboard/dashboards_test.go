@@ -89,6 +89,15 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, created, obj.GetName())
 
+		// Commented out because the dynamic client does not like lists as sub-resource
+		// // Check that it now appears in the history
+		// sub, err := client.Resource.Get(ctx, created, metav1.GetOptions{}, "history")
+		// require.NoError(t, err)
+		// history, err := sub.ToList()
+		// require.NoError(t, err)
+		// require.Len(t, history.Items, 1)
+		// require.Equal(t, created, history.Items[0].GetName())
+
 		// Delete the object
 		err = client.Resource.Delete(ctx, created, metav1.DeleteOptions{})
 		require.NoError(t, err)

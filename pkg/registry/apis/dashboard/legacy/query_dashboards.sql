@@ -14,7 +14,7 @@ SELECT
     LEFT OUTER JOIN {{ .Ident "user" }} AS created_user ON dashboard.created_by = created_user.id
     LEFT OUTER JOIN {{ .Ident "user" }} AS updated_user ON dashboard.updated_by = updated_user.id
     WHERE dashboard.is_folder = false
-	  AND dashboard.org_id = {{ .Arg .Query.OrgID }}
+	    AND dashboard.org_id = {{ .Arg .Query.OrgID }}
     {{ if .Query.UID }}
       AND dashboard.uid = {{ .Arg .Query.UID }}
     {{ else if .Query.LastID }}

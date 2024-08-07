@@ -77,16 +77,21 @@ func NewDashboardAccess(sql db.DB,
 		max := ""
 		err := sess.Get(ctx, &max, "SELECT MAX(updated) FROM dashboard")
 		if err == nil && max != "" {
-			t, err = time.Parse(time.DateTime, max)
+			t, _ = time.Parse(time.DateTime, max) // ignore null errors
 		}
-		return t.UnixMilli(), err
+		return t.UnixMilli(), nil
 	}
-
 	if sql.GetDBType() == migrator.Postgres {
 		currentRV = func(ctx context.Context) (int64, error) {
 			max := time.Now()
-			err := sess.Get(ctx, &max, "SELECT MAX(updated) FROM dashboard")
-			return max.UnixMilli(), err
+			_ = sess.Get(ctx, &max, "SELECT MAX(updated) FROM dashboard")
+			return max.UnixMilli(), nil
+		}
+	} else if sql.GetDBType() == migrator.MySQL {
+		currentRV = func(ctx context.Context) (int64, error) {
+			max := time.Now().UnixMilli()
+			_ = sess.Get(ctx, &max, "SELECT UNIX_TIMESTAMP(MAX(updated)) FROM dashboard;")
+			return max, nil
 		}
 	}
 
