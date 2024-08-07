@@ -66,7 +66,7 @@ module.exports = {
     new CorsWorkerPlugin(),
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
-    }),
+    })
   ],
   module: {
     rules: [

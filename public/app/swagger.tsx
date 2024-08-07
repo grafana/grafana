@@ -15,13 +15,25 @@ if (window.nonce) {
   __webpack_nonce__ = window.nonce;
 }
 
-// This is an indication to the window.onLoad failure check that the app bundle has loaded.
-window.__grafana_app_bundle_loaded = true;
-
-
-import SwaggerUI from "swagger-ui-react"
 import "swagger-ui-react/swagger-ui.css"
 
-export default function App() {
-  return <SwaggerUI url="https://petstore.swagger.io/v2/swagger.json" />;
+import { createRoot } from 'react-dom/client';
+
+import {Page} from './swagger/SwaggerPage';
+
+window.onload = () => { 
+  // the trailing slash breaks relative URL loading
+  if (window.location.pathname.endsWith('/')) {
+    const idx = window.location.href.lastIndexOf('/');
+    window.location.href = window.location.href.substring(0, idx);
+    return;
+  }
+
+  const rootElement = document.getElementById('root');
+  if (!rootElement) {
+    alert("unable to find root element");
+    return
+  }
+  const root = createRoot(rootElement);
+  root.render(<Page />);
 }

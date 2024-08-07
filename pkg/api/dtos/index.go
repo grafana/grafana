@@ -41,6 +41,7 @@ type EntryPointAssets struct {
 	JSFiles            []EntryPointAsset `json:"jsFiles"`
 	Dark               string            `json:"dark"`
 	Light              string            `json:"light"`
+	Swagger            []EntryPointAsset `json:"swagger"`
 }
 
 type EntryPointAsset struct {
