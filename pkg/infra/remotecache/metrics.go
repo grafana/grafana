@@ -15,7 +15,6 @@ const (
 var cacheStatuses = []string{cacheHit, cacheMiss, cacheError}
 
 const (
-	metricsSubSystem = "remote_cache"
 	metricsNamespace = "grafana"
 )
 
@@ -25,7 +24,6 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 			Name:      "remote_cache_usage",
 			Help:      "remote cache hit/miss",
 			Namespace: metricsNamespace,
-			Subsystem: metricsSubSystem,
 		}, []string{"status"}, map[string][]string{"status": cacheStatuses}),
 	}
 
