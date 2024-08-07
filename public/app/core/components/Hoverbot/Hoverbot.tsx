@@ -1,15 +1,22 @@
+import { css } from '@emotion/css';
 import html2canvas from 'html2canvas';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, DragEvent, useRef } from 'react';
+import SVG from 'react-inlinesvg';
 import Markdown from 'react-markdown';
 
 import { openai } from '@grafana/llm';
-import { Button, CustomScrollbar, Toggletip } from '@grafana/ui';
+import { CustomScrollbar, Toggletip } from '@grafana/ui';
+
+import grot from './grot.svg';
 
 export const Hoverbot = () => {
   const [enabled, setEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selecting, setSelecting] = useState(false);
   const [reply, setReply] = useState('');
+  const [[x, y], setPosition] = useState([0, 0]);
+  const posRef = useRef({ x: 0, y: 0});
+  const oldPosRef = useRef({ x, y });
 
   useEffect(() => {
     openai.enabled().then(setEnabled);
@@ -122,39 +129,81 @@ export const Hoverbot = () => {
     return () => document.removeEventListener('keyup', handleEscape);
   }, [cancel, handleClick]);
 
+  const handleDragStart = useCallback((event: DragEvent<HTMLDivElement>) => {
+    cancel();
+    
+    oldPosRef.current.x = x;
+    oldPosRef.current.y = y;
+    if (event.target instanceof Element) {
+      posRef.current.x = event.clientX;
+      posRef.current.y = event.clientY;
+    }
+  }, [cancel, x, y]);
+
+  const handleDrag = useCallback((event: DragEvent<HTMLDivElement>) => {
+    const newX = event.clientX - posRef.current.x;
+    const newY = posRef.current.y - event.clientY;
+    
+    setPosition([oldPosRef.current.x + newX, oldPosRef.current.y + newY]);
+  }, []);
+
+  const handleDragEnd = useCallback((event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+
+    const newX = event.clientX - posRef.current.x;
+    const newY = posRef.current.y - event.clientY;
+
+    setPosition([oldPosRef.current.x + newX, oldPosRef.current.y + newY]);
+  }, []);
+
   if (loading || selecting || reply) {
     return (
-      <Toggletip
-        content={
-          <CustomScrollbar autoHeightMax="500px">
-            {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
-            <div tabIndex={0}>
-              {selecting && <p>Click on an element in the screen to get assistance.</p>}
-              {loading && <p>Asking Grot...</p>}
-              {reply !== '' && <Markdown>{reply}</Markdown>}
-            </div>
-          </CustomScrollbar>
-        }
-        onClose={() => {
-          setReply('');
-          cancel();
-        }}
-        show={true}
-      >
-        <Button type="submit" onClick={selectRegion} disabled={loading || selecting || !enabled}>
-          Help me
-        </Button>
-      </Toggletip>
+      <div className={styles.grotContainer} style={{ bottom: y, left: x }}>
+        <Toggletip
+          content={
+            <CustomScrollbar autoHeightMax="500px">
+              {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+              <div tabIndex={0}>
+                {selecting && <p>Click on an element in the screen to get assistance.</p>}
+                {loading && <p>Asking Grot...</p>}
+                {reply !== '' && <Markdown>{reply}</Markdown>}
+              </div>
+            </CustomScrollbar>
+          }
+          onClose={() => {
+            setReply('');
+            cancel();
+          }}
+          show={true}
+        >
+          <button className={styles.invisibleButton}>
+            <SVG src={grot} width={250} height={250} />
+          </button>
+        </Toggletip>
+      </div>
     );
   }
 
   return (
-    <div>
-      <Button type="submit" onClick={selectRegion} disabled={loading || selecting || !enabled}>
-        Help me
-      </Button>
+    <div className={styles.grotContainer} style={{ bottom: y, left: x }} draggable="true" onDrag={handleDrag} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <SVG src={grot} width={250} height={250} onClick={selectRegion} />
     </div>
   );
+};
+
+const styles = {
+  grotContainer: css({
+    position: 'fixed',
+    bottom: 0,
+    left: 0,
+    zIndex: 99999,
+  }),
+  invisibleButton: css({
+    border: 'none',
+    background: 'transparent',
+    margin: 0,
+    padding: 0,
+  })
 };
 
 let highlighted: HTMLDivElement | undefined;
