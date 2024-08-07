@@ -142,10 +142,15 @@ axisFormat %S.%L
   const nbsp = ' ';
   let idx = 0;
   for (const e of sorted) {
+    if (isNaN(e.startTime)) {
+      throw new Error(`Invalid startTime: ${e.startTime} for spanID: ${e.spanID}`);
+    }
+
     if (e.serviceName !== currentSection) {
       out += `section ${e.serviceName}${nbsp.repeat(idx)}\n`;
       currentSection = e.serviceName;
     }
+
     out += `${e.operationName} [${e.duration}ms] :${highlights.includes(e.spanID) ? 'active,' : ''}${e.spanID},${Math.round(e.startTime)},${Math.max(Math.round(e.duration), 1)}ms\n`;
     idx += 1;
   }

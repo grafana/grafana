@@ -146,7 +146,45 @@ async function hasBOM(blob: Blob) {
 }
 
 describe('exportTraceAsMermaid', () => {
-  it('should convert trace data to Mermaid Gantt chart format', () => {
+  it('Throws an error when not all spans have numeric startTime', () => {
+      const mockDataFrame: DataFrame = toDataFrame({
+        name: "someName",
+        fields: [
+          { name: 'spanID', type: FieldType.string, values: ['span1', 'span2'] },
+          { name: 'startTime', type: FieldType.number, values: [1] },
+          { name: 'duration', type: FieldType.number, values: [2, 2] },
+        ],
+      });
+
+    expect(() => {
+      exportTraceAsMermaid(mockDataFrame, 'Test Title', []);
+    }).toThrow('Invalid startTime: undefined for spanID: span2');
+  });
+    }
+  )
+  it('Converts minimum trace data to a valid Mermaid Gantt chart', () => {
+      const mockDataFrame: DataFrame = toDataFrame({
+        name: "someName",
+        fields: [
+          { name: 'startTime', type: FieldType.number, values: [1, 3, 5] },],
+      });
+
+      const expectedOutput = `gantt
+title Trace someName
+dateFormat x
+axisFormat %S.%L
+section undefined
+undefined [undefinedms] :undefined,1,NaNms
+undefined [undefinedms] :undefined,3,NaNms
+undefined [undefinedms] :undefined,5,NaNms
+`;
+
+      const output = exportTraceAsMermaid(mockDataFrame, 'someName', ['b']);
+
+      expect(output).toBe(expectedOutput);
+    }
+  )
+  it('Converts trace data to Mermaid Gantt chart format', () => {
     const mockDataFrame: DataFrame = toDataFrame({
       name: '00abcdefg',
       fields: [
@@ -174,4 +212,3 @@ op3 [2ms] :c,5,2ms
 
     expect(output).toBe(expectedOutput);
   });
-});
