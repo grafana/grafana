@@ -46,7 +46,7 @@ Example:
 | Other users   | 1.5               | 7      |
 | English users | 17.5              | 50     |
 
-If the data set contains multiple rows the panel will display the last row by default, but multiple rows can be configured as described in the [Value options](#value-options) section. If you configure multiple rows to be displayed the panel will concatenate the text fields of each row with the numeric column titles.
+If the dataset contains multiple rows, the visualization displays the last row by default, but multiple rows can be configured as described in the [Value options](#value-options) section. If you configure multiple rows to be displayed, the panel concatenates the text fields of each row with the numeric column titles.
 
 It is recommended to use only one data set with the pie chart, if multiple data sets are present the numeric values configured in the _Value options_ section will be added up and displayed from all the data sets.
 
