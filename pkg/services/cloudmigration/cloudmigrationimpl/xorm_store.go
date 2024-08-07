@@ -294,11 +294,6 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 // CreateUpdateSnapshotResources either updates a migration resource for a snapshot, or creates it if it does not exist
 // If the uid is not known, it uses snapshot_uid + resource_uid as a lookup
 func (ss *sqlStore) CreateUpdateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
-	// ensure snapshot_uids are consistent so that we can use them to query when uid isn't known
-	for i := 0; i < len(resources); i++ {
-		resources[i].SnapshotUID = snapshotUid
-	}
-
 	return ss.db.InTransaction(ctx, func(ctx context.Context) error {
 		sql := "UPDATE cloud_migration_resource SET status=?, error_string=? WHERE uid=? OR (snapshot_uid=? AND resource_uid=?)"
 		err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -314,6 +309,8 @@ func (ss *sqlStore) CreateUpdateSnapshotResources(ctx context.Context, snapshotU
 					return err
 				} else if n == 0 {
 					r.UID = util.GenerateShortUID()
+					// ensure snapshot_uids are consistent so that we can use them to query when uid isn't known
+					r.SnapshotUID = snapshotUid
 					_, err := sess.Insert(r)
 					if err != nil {
 						return err
