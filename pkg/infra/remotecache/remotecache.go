@@ -6,14 +6,16 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache/ring"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -27,14 +29,17 @@ func ProvideService(
 	cfg *setting.Cfg, sqlStore db.DB, usageStats usagestats.Service,
 	secretsService secrets.Service, grpcProvider grpcserver.Provider,
 ) (*RemoteCache, error) {
-	client, err := createClient(cfg, sqlStore, secretsService, grpcProvider)
+
+	logger := log.New("remote-cache")
+	client, err := createClient(cfg, sqlStore, logger, secretsService, grpcProvider)
 	if err != nil {
 		return nil, err
 	}
+
 	s := &RemoteCache{
-		SQLStore: sqlStore,
-		Cfg:      cfg,
-		client:   client,
+		cfg:    cfg,
+		client: client,
+		logger: logger,
 	}
 
 	usageStats.RegisterMetricsFunc(s.getUsageStats)
@@ -44,9 +49,9 @@ func ProvideService(
 
 func (ds *RemoteCache) getUsageStats(ctx context.Context) (map[string]any, error) {
 	stats := map[string]any{}
-	stats["stats.remote_cache."+ds.Cfg.RemoteCache.Name+".count"] = 1
+	stats["stats.remote_cache."+ds.cfg.RemoteCache.Name+".count"] = 1
 	encryptVal := 0
-	if ds.Cfg.RemoteCache.Encryption {
+	if ds.cfg.RemoteCache.Encryption {
 		encryptVal = 1
 	}
 
@@ -72,9 +77,9 @@ type CacheStorage interface {
 
 // RemoteCache allows Grafana to cache data outside its own process
 type RemoteCache struct {
-	client   CacheStorage
-	SQLStore db.DB
-	Cfg      *setting.Cfg
+	client CacheStorage
+	cfg    *setting.Cfg
+	logger log.Logger
 }
 
 // Get returns the cached value as an byte array
@@ -110,7 +115,7 @@ func (ds *RemoteCache) Run(ctx context.Context) error {
 
 // ServeHTTP is used to expose debug endpoints for remote cache
 func (ds *RemoteCache) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if ds.Cfg.Env != setting.Dev {
+	if ds.cfg.Env != setting.Dev {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -125,7 +130,7 @@ func (ds *RemoteCache) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func createClient(
-	cfg *setting.Cfg, sqlstore db.DB,
+	cfg *setting.Cfg, sqlstore db.DB, logger log.Logger,
 	secretsService secrets.Service, grpcProvider grpcserver.Provider,
 ) (cache CacheStorage, err error) {
 	switch cfg.RemoteCache.Name {
@@ -137,7 +142,7 @@ func createClient(
 		if !grpcProvider.IsDisabled() {
 			cache, err = ring.NewCache(cfg, prometheus.DefaultRegisterer, grpcProvider)
 		} else {
-			// FIXME: warning log
+			logger.Warn("grpcServer feature toggle needs to be enabled when using ring cache, falling back to database")
 			cache = newDatabaseCache(sqlstore)
 		}
 	default:

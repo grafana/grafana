@@ -91,9 +91,7 @@ func TestCollectUsageStats(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.RemoteCache = &setting.RemoteCacheSettings{Name: redisCacheType, Encryption: true}
 
-	remoteCache := &RemoteCache{
-		Cfg: cfg,
-	}
+	remoteCache := &RemoteCache{cfg: cfg}
 
 	stats, err := remoteCache.getUsageStats(context.Background())
 	require.NoError(t, err)
