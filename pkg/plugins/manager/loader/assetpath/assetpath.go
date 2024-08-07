@@ -104,7 +104,7 @@ func (s *Service) RelativeURL(n PluginInfo, pathStr string) (string, error) {
 	if strings.HasPrefix(pathStr, baseURL) {
 		return pathStr, nil
 	}
-	return path.Join(baseURL, n.relPath, pathStr), nil
+	return path.Join(baseURL, pathStr), nil
 }
 
 // DefaultLogoPath returns the default logo path for the specified plugin type.
