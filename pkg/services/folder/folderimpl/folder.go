@@ -568,7 +568,8 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		dashFolder.FolderUID = cmd.ParentUID
 	}
 
-	if cmd.ParentUID == "" {
+	// we introduced folders:create to allow creating folders under the root level and subfolders
+	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) && cmd.ParentUID == "" {
 		evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
 		hasAccess, evalErr := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator)
 		if evalErr != nil {
