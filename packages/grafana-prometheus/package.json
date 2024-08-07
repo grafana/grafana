@@ -58,7 +58,7 @@
     "lodash": "4.17.21",
     "lru-cache": "10.2.2",
     "marked": "12.0.2",
-    "marked-mangle": "1.1.8",
+    "marked-mangle": "1.1.9",
     "moment": "2.30.1",
     "moment-timezone": "0.5.45",
     "monaco-promql": "1.7.4",
