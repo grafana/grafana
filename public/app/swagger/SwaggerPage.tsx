@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useAsync } from 'react-use';
+//import {SwaggerUI as xxx} from 'swagger-ui';
 import SwaggerUI from 'swagger-ui-react';
 
 import { createTheme, SelectableValue } from '@grafana/data';
 import { Stack, Select } from '@grafana/ui';
 import { ThemeProvider } from 'app/core/utils/ConfigProvider';
+
+import { WrappedPlugins } from './wrapped';
 
 export const Page = () => {
   const theme = createTheme({ colors: { mode: 'light' } });
@@ -40,6 +43,15 @@ export const Page = () => {
     return urls;
   });
 
+  const onComplete = (system: any) => {
+    console.log("COMPLETE:", { system });
+  };
+
+  const responseInterceptor = (res: any): any => {
+    console.log('RESPONSE', res);
+    return res;
+  };
+
   return (
     <div>
       <ThemeProvider value={theme}>
@@ -61,7 +73,18 @@ export const Page = () => {
           </Stack>
         </div>
 
-        {url?.value && <SwaggerUI url={url.value} deepLinking={true} tryItOutEnabled={true} />}
+        {url?.value && (
+          <SwaggerUI
+            url={url.value}
+            presets={[
+              WrappedPlugins,
+            ]}
+            deepLinking={true}
+            tryItOutEnabled={true}
+            onComplete={onComplete}
+            responseInterceptor={responseInterceptor}
+          />
+        )}
       </ThemeProvider>
     </div>
   );
