@@ -44,7 +44,7 @@ Example:
 | Description   | Internet Explorer | Chrome |
 | ------------- | ----------------- | ------ |
 | Other users   | 1.5               | 7      |
-| English Users | 17.5              | 50     |
+| English users | 17.5              | 50     |
 
 If the data set contains multiple rows the panel will display the last row by default, but multiple rows can be configured as described in the [Value options](#value-options) section. If you configure multiple rows to be displayed the panel will concatenate the text fields of each row with the numeric column titles.
 
