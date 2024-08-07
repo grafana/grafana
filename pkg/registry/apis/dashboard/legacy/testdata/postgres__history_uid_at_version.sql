@@ -2,11 +2,11 @@ SELECT
     dashboard.org_id, dashboard.id,
     dashboard.uid, dashboard.folder_uid,
     dashboard.deleted, plugin_id,
-    dashboard_provisioning.name as origin_name,
-    dashboard_provisioning.external_id as origin_path,
-    dashboard_provisioning.check_sum as origin_key,
-    dashboard_provisioning.updated as origin_ts,
-    dashboard.created, created_user.uid as created_by, dashboard.created_by as created_by_id,
+    dashboard_provisioning.name         as origin_name,
+    dashboard_provisioning.external_id  as origin_path,
+    dashboard_provisioning.check_sum    as origin_key,
+    dashboard_provisioning.updated      as origin_ts,
+    dashboard.created, created_user.uid as created_by, dashboard.created_by   as created_by_id,
     dashboard_version.created, updated_user.uid as updated_by,updated_user.id as created_by_id,
     dashboard_version.version, dashboard_version.message, dashboard_version.data
     FROM dashboard
