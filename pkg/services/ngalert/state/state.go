@@ -141,25 +141,38 @@ func (a *State) Maintain(interval int64, evaluatedAt time.Time) {
 	a.EndsAt = nextEndsTime(interval, evaluatedAt)
 }
 
-// AddErrorAnnotations adds annotations to the state to indicate that an error occurred.
-func (a *State) AddErrorAnnotations(err error, rule *models.AlertRule) {
+// AddErrorInformation adds annotations to the state to indicate that an error occurred.
+// If addDatasourceInfoToLabels is true, the ref_id and datasource_uid are added to the labels,
+// otherwise, they are added to the annotations.
+func (a *State) AddErrorInformation(err error, rule *models.AlertRule, addDatasourceInfoToLabels bool) {
 	if err == nil {
 		return
 	}
 
 	a.Annotations["Error"] = err.Error()
+
 	// If the evaluation failed because a query returned an error then add the Ref ID and
-	// Datasource UID as labels
+	// Datasource UID as labels or annotations
 	var utilError errutil.Error
 	if errors.As(a.Error, &utilError) &&
 		(errors.Is(a.Error, expr.QueryError) || errors.Is(a.Error, expr.ConversionError)) {
 		for _, next := range rule.Data {
 			if next.RefID == utilError.PublicPayload["refId"].(string) {
-				a.Labels["ref_id"] = next.RefID
-				a.Labels["datasource_uid"] = next.DatasourceUID
+				if addDatasourceInfoToLabels {
+					a.Labels["ref_id"] = next.RefID
+					a.Labels["datasource_uid"] = next.DatasourceUID
+				} else {
+					a.Annotations["ref_id"] = next.RefID
+					a.Annotations["datasource_uid"] = next.DatasourceUID
+				}
 				break
 			}
 		}
+	} else {
+		// Remove the ref_id and datasource_uid from the annotations if they are present.
+		// It can happen if the alert state hasn't changed, but the error is different now.
+		delete(a.Annotations, "ref_id")
+		delete(a.Annotations, "datasource_uid")
 	}
 }
 
@@ -334,12 +347,12 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 		resultAlerting(state, rule, result, logger, models.StateReasonError)
 		// This is a special case where Alerting and Pending should also have an error and reason
 		state.Error = result.Error
-		state.AddErrorAnnotations(result.Error, rule)
+		state.AddErrorInformation(result.Error, rule, false)
 	case models.ErrorErrState:
 		if state.State == eval.Error {
 			prevEndsAt := state.EndsAt
 			state.Error = result.Error
-			state.AddErrorAnnotations(result.Error, rule)
+			state.AddErrorInformation(result.Error, rule, true)
 			state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
 			logger.Debug("Keeping state",
 				"state",
@@ -361,7 +374,7 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 				"next_ends_at",
 				nextEndsAt)
 			state.SetError(result.Error, result.EvaluatedAt, nextEndsAt)
-			state.AddErrorAnnotations(result.Error, rule)
+			state.AddErrorInformation(result.Error, rule, true)
 		}
 	case models.OkErrState:
 		logger.Debug("Execution error state is Normal", "handler", "resultNormal", "previous_handler", handlerStr)

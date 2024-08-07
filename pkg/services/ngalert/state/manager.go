@@ -463,7 +463,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	//
 	// This is temporary change to make sure that the labels are not persistent in the state after it was in Error state
 	// TODO yuri. Remove it when correct Error result with labels is provided
-	if (currentState.State == eval.Error || currentState.State == eval.Alerting) && result.State != eval.Error {
+	if currentState.State == eval.Error && result.State != eval.Error {
 		// This is possible because state was updated after the CacheID was calculated.
 		_, curOk := currentState.Labels["ref_id"]
 		_, resOk := result.Instance["ref_id"]
