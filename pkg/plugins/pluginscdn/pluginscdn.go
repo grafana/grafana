@@ -5,7 +5,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 )
 
@@ -65,10 +64,6 @@ func (s *Service) AssetURL(pluginID, pluginVersion, assetPath string) (string, e
 	return s.NewCDNURLConstructor(pluginID, pluginVersion).StringPath(assetPath)
 }
 
-func BaseURLFromPluginFS(fs plugins.FS) string {
-	return fs.Base()
-}
-
-func AssetURLFromPluginFS(fs plugins.FS, assetPath string) (string, error) {
-	return url.JoinPath(fs.Base(), assetPath)
+func JoinPath(base string, assetPath ...string) (string, error) {
+	return url.JoinPath(base, assetPath...)
 }

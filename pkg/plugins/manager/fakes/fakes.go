@@ -423,6 +423,10 @@ func (f *FakePluginFiles) Open(name string) (fs.File, error) {
 	return nil, nil
 }
 
+func (f *FakePluginFiles) Rel(_ string) (string, error) {
+	return "", nil
+}
+
 func (f *FakePluginFiles) Base() string {
 	return f.base
 }
