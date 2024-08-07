@@ -347,3 +347,7 @@ func (db *PostgresDialect) GetDBName(dsn string) (string, error) {
 	}
 	return string(submatch[1]), nil
 }
+
+func (db *PostgresDialect) CreateJSONParse(column string, field string) string {
+	return fmt.Sprintf("json_extract(%s, '$.%s')", column, field)
+}

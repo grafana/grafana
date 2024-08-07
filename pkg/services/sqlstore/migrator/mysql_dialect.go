@@ -309,3 +309,7 @@ func (db *MySQLDialect) GetDBName(dsn string) (string, error) {
 
 	return cfg.DBName, nil
 }
+
+func (db *MySQLDialect) CreateJSONParse(column string, field string) string {
+	return fmt.Sprintf("%s::json->'%s')", column, field)
+}

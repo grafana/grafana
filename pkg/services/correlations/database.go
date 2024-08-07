@@ -254,9 +254,11 @@ func (s CorrelationsService) getCorrelations(ctx context.Context, cmd GetCorrela
 	err := s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
 		offset := cmd.Limit * (cmd.Page - 1)
 
+		configTypeExtract := s.SQLStore.GetDialect().CreateJSONParse("config", "type")
+
 		// Correlations created before the fix #72498 may have org_id = 0, but it's deprecated and will be removed in #72325
 		// there will always be a source datasource UID, but only some correlations have a target UID
-		q := session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and (correlation.org_id = 0 or dss.org_id = correlation.org_id) and dss.org_id = ? ", cmd.OrgId).Join("LEFT OUTER", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ?", cmd.OrgId)
+		q := session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and (correlation.org_id = 0 or dss.org_id = correlation.org_id) and dss.org_id = ? ", cmd.OrgId).Join("LEFT OUTER", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ? AND (? = 'external' AND target_uid IS NULL) OR target_uid IS NOT NULL", cmd.OrgId, configTypeExtract)
 
 		if len(cmd.SourceUIDs) > 0 {
 			q.In("dss.uid", cmd.SourceUIDs)
