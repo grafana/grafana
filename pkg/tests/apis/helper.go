@@ -437,6 +437,7 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 		Password:       user.Password(name),
 		Login:          fmt.Sprintf("%s-%d", name, orgId),
 		OrgID:          orgId,
+		IsAdmin:        basicRole == identity.RoleAdmin && orgId == 1, // make org1 admins grafana admins
 	})
 	require.NoError(c.t, err)
 	require.Equal(c.t, orgId, u.OrgID)
