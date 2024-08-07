@@ -14,9 +14,12 @@ import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensi
 import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultTextColor } from '../element';
 import { Align, VAlign, VizElementConfig, VizElementData } from '../types';
 
-const panelTypes: Array<SelectableValue<string>> = Object.keys(PanelBuilders).map((type) => {
-  return { label: type, value: type };
-});
+const panelTypeExcludes = ['datagrid', 'logs', 'news'];
+const panelTypes: Array<SelectableValue<string>> = Object.keys(PanelBuilders)
+  .filter((type) => !panelTypeExcludes.includes(type))
+  .map((type) => {
+    return { label: type, value: type };
+  });
 
 const defaultPanelTitle = 'New Visualization';
 
