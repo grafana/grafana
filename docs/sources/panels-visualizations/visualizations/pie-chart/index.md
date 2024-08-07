@@ -37,7 +37,7 @@ The following video guides you through the creation steps and common customizati
 
 ## Supported data formats
 
-The pie chart panel requires a data set with at least one row with numeric values to be added up. If the first row contains column titles it will be used to display and identify the values in the pie chart. Cells with non-numeric values will not be displayed inside of the pie chart.
+The pie chart visualization requires a dataset with at least one row of numeric values to be added together. If the first row contains column titles, it's used to display and identify the values in the pie chart. Cells with non-numeric values are not displayed in the pie chart.
 
 Example:
 
