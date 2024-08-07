@@ -26,7 +26,7 @@ export interface ScopesDashboardsSceneState extends SceneObjectState {
   searchQuery: string;
 }
 
-export const getBaseDashboardsState: () => Omit<ScopesDashboardsSceneState, 'filters'> = () => ({
+export const getInitialDashboardsState: () => Omit<ScopesDashboardsSceneState, 'filters'> = () => ({
   dashboards: [],
   filteredDashboards: [],
   forScopeNames: [],
@@ -43,7 +43,7 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
   constructor() {
     super({
       filters: null,
-      ...getBaseDashboardsState(),
+      ...getInitialDashboardsState(),
     });
 
     this.addActivationHandler(() => {

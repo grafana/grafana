@@ -6,9 +6,6 @@ import { disableScopes, enableScopes, enterScopesReadOnly, exitScopesReadOnly, g
 interface ScopesFacadeState extends SceneObjectState {
   // A callback that will be executed when new scopes are set
   handler?: (facade: ScopesFacade) => void;
-
-  // Prevent rendering the selector by default
-  disabled?: boolean;
 }
 
 export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> {
@@ -19,9 +16,7 @@ export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> {
   }
 
   private _activationHandler = () => {
-    if (!this.state.disabled) {
-      this.enable();
-    }
+    this.enable();
 
     this._subs.add(
       scopesFiltersScene?.subscribeToState((newState, prevState) => {

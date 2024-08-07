@@ -34,7 +34,7 @@ export interface ScopesFiltersSceneState extends SceneObjectState {
   isEnabled: boolean;
 }
 
-export const baseFiltersState: Omit<ScopesFiltersSceneState, 'dashboards'> = {
+export const initialFiltersState: Omit<ScopesFiltersSceneState, 'dashboards'> = {
   nodes: {
     '': {
       name: '',
@@ -67,7 +67,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   constructor() {
     super({
       dashboards: null,
-      ...baseFiltersState,
+      ...initialFiltersState,
     });
 
     this.addActivationHandler(() => {
