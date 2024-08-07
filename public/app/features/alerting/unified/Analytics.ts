@@ -31,6 +31,10 @@ export function logError(error: Error, context?: Record<string, string>) {
   alertingLogger.logError(error, context);
 }
 
+export function logWarning(message: string, context?: Record<string, string>) {
+  alertingLogger.logWarning(message, context);
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise<any>>(
   func: TFunc,
