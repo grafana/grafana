@@ -198,11 +198,33 @@ export const Hoverbot = () => {
   }
 
   return (
-    <div className={styles.grotContainer} style={{ bottom: y, left: x }} draggable="true" onDrag={handleDrag} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <div  className={`${styles.grotContainer} ${subtleMove}`} style={{ bottom: y, left: x }} draggable="true" onDrag={handleDrag} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <SVG src={grot} width={250} height={250} onClick={selectRegion} />
     </div>
   );
 };
+
+const subtleMove = css`
+  @keyframes subtleMove {
+    0% {
+      transform: translateY(0) rotate(0deg);
+    }
+    25% {
+      transform: translateY(-2px) rotate(-1deg);
+    }
+    50% {
+      transform: translateY(0) rotate(0deg);
+    }
+    75% {
+      transform: translateY(2px) rotate(1deg);
+    }
+    100% {
+      transform: translateY(0) rotate(0deg);
+    }
+  }
+
+  animation: subtleMove 6s ease-in-out infinite;
+`;
 
 const styles = {
   grotContainer: css({
@@ -216,7 +238,7 @@ const styles = {
     background: 'transparent',
     margin: 0,
     padding: 0,
-  })
+  }),
 };
 
 let highlighted: HTMLDivElement | undefined;
