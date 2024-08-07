@@ -5,7 +5,7 @@ import { DataFrame } from '@grafana/data';
 import { Alert, Modal } from '@grafana/ui';
 import { exportTraceAsMermaid } from 'app/features/inspector/utils/download';
 
-import MermaidRenderer from './MermaidRenderer';
+import { MermaidRenderer } from './MermaidRenderer';
 
 export const MermaidExportModal = ({
   isOpen,
