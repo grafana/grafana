@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"hash/fnv"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -11,6 +12,8 @@ import (
 	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+
+	"gonum.org/v1/gonum/stat"
 )
 
 type KeyValue struct {
@@ -30,7 +33,21 @@ type TraceReference struct {
 	Tags    []*KeyValue `json:"tags"`
 }
 
-func TraceToFrame(td ptrace.Traces) (*data.Frame, error) {
+type Children []ChildrenMetrics
+
+type ChildrenMetrics struct {
+	Name      string
+	Count     int
+	Min       int
+	Max       int
+	Avg       int
+	StdDev    int
+	MinSpanID pcommon.SpanID
+	MaxSpanID pcommon.SpanID
+	Durations []float64
+}
+
+func TraceToFrame(td ptrace.Traces, limit int) (*data.Frame, error) {
 	// In open telemetry format the spans are grouped first by resource/service they originated in and inside that
 	// resource they are grouped by the instrumentation library which created them.
 
@@ -68,9 +85,80 @@ func TraceToFrame(td ptrace.Traces) (*data.Frame, error) {
 		},
 	}
 
+	parentToChildrenMetrics := map[uint32]Children{}
+
+	// generate children metrics
 	for i := 0; i < resourceSpans.Len(); i++ {
 		rs := resourceSpans.At(i)
-		rows, err := resourceSpansToRows(rs)
+		ilss := rs.ScopeSpans()
+		for j := 0; j < ilss.Len(); j++ {
+			ils := ilss.At(j)
+			spans := ils.Spans()
+			for k := 0; k < spans.Len(); k++ {
+				span := spans.At(k)
+				spanID := span.SpanID()
+				parentSpanID := span.ParentSpanID()
+				parentSpanIDKey := tokenForSpanID(parentSpanID[:])
+				durationInt := int(span.EndTimestamp() - span.StartTimestamp())
+				if len(parentSpanID) == 0 {
+					continue
+				}
+
+				children, ok := parentToChildrenMetrics[parentSpanIDKey]
+				// newly recorded parent
+				if !ok {
+					metrics := ChildrenMetrics{
+						Name:      span.Name(),
+						Count:     1,
+						Min:       durationInt,
+						Max:       durationInt,
+						StdDev:    0,
+						MinSpanID: spanID,
+						MaxSpanID: spanID,
+						Durations: []float64{float64(durationInt)},
+					}
+					parentToChildrenMetrics[parentSpanIDKey] = Children{metrics}
+				} else {
+					// update existing parent
+
+					// find the child with the same name
+					child, err := findChildrenByName(children, span.Name())
+					// if the child does not exist, create a new one
+					if err != nil {
+						metrics := ChildrenMetrics{
+							Name:      span.Name(),
+							Count:     1,
+							Min:       durationInt,
+							Max:       durationInt,
+							StdDev:    0,
+							MinSpanID: spanID,
+							MaxSpanID: spanID,
+							Durations: []float64{float64(durationInt)},
+						}
+						children = append(children, metrics)
+						parentToChildrenMetrics[parentSpanIDKey] = children
+					} else {
+						// update existing child
+						child.Count++
+						child.Durations = append(child.Durations, float64(durationInt))
+						if durationInt < child.Min {
+							child.Min = durationInt
+							child.MinSpanID = spanID
+						}
+						if durationInt > child.Max {
+							child.Max = durationInt
+							child.MaxSpanID = spanID
+						}
+					}
+				}
+
+			}
+		}
+	}
+
+	for i := 0; i < resourceSpans.Len(); i++ {
+		rs := resourceSpans.At(i)
+		rows, err := resourceSpansToRows(rs, limit, parentToChildrenMetrics)
 		if err != nil {
 			return nil, err
 		}
@@ -84,7 +172,7 @@ func TraceToFrame(td ptrace.Traces) (*data.Frame, error) {
 }
 
 // resourceSpansToRows processes all the spans for a particular resource/service
-func resourceSpansToRows(rs ptrace.ResourceSpans) ([][]any, error) {
+func resourceSpansToRows(rs ptrace.ResourceSpans, limit int, parentToChildrenMetrics map[uint32]Children) ([][]any, error) {
 	resource := rs.Resource()
 	ilss := rs.ScopeSpans()
 
@@ -104,7 +192,13 @@ func resourceSpansToRows(rs ptrace.ResourceSpans) ([][]any, error) {
 
 		for j := 0; j < spans.Len(); j++ {
 			span := spans.At(j)
-			row, err := spanToSpanRow(span, ils.Scope(), resource)
+			spanID := span.SpanID()
+			// check for children metrics
+			childrenMetrics, ok := parentToChildrenMetrics[tokenForSpanID(spanID[:])]
+			if !ok {
+				childrenMetrics = nil
+			}
+			row, err := spanToSpanRow(span, ils.Scope(), resource, childrenMetrics, limit)
 			if err != nil {
 				return nil, err
 			}
@@ -117,7 +211,7 @@ func resourceSpansToRows(rs ptrace.ResourceSpans) ([][]any, error) {
 	return rows, nil
 }
 
-func spanToSpanRow(span ptrace.Span, libraryTags pcommon.InstrumentationScope, resource pcommon.Resource) ([]any, error) {
+func spanToSpanRow(span ptrace.Span, libraryTags pcommon.InstrumentationScope, resource pcommon.Resource, children Children, childrenLimit int) ([]any, error) {
 	// If the id representation changed from hexstring to something else we need to change the transformBase64IDToHexString in the frontend code
 	traceID := span.TraceID()
 	traceIDHex := hex.EncodeToString(traceID[:])
@@ -157,7 +251,7 @@ func spanToSpanRow(span ptrace.Span, libraryTags pcommon.InstrumentationScope, r
 
 	references, err := json.Marshal(spanLinksToReferences(span.Links()))
 
-	childrenMetrics, err := json.Marshal(getChildrenMetrics(span))
+	childrenMetrics, err := json.Marshal(getChildrenMetrics(traceIDHex, children, childrenLimit))
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal span links: %w", err)
@@ -315,33 +409,107 @@ func spanLinksToReferences(links ptrace.SpanLinkSlice) []*TraceReference {
 	return references
 }
 
-func getChildrenMetrics(span ptrace.Span) []*TraceReference {
-	childrenMetrics := make([]*TraceReference, 3)
+func getChildrenMetrics(traceIDHex string, children Children, limit int) []*TraceReference {
+	numChildren := 0
+	for _, child := range children {
+		if child.Count > limit {
+			numChildren++
+		}
+	}
+	if numChildren == 0 {
+		return nil
+	}
+	childrenMetrics := make([]*TraceReference, numChildren*4)
 
-	traceID := span.TraceID()
-	traceIDHex := hex.EncodeToString(traceID[:])
-	traceIDHex = strings.TrimPrefix(traceIDHex, strings.Repeat("0", 16))
+	for _, child := range children {
+		if child.Count > limit {
+			// get avg and std dev
+			avg := stat.Mean(child.Durations, nil)
+			stdDev := stat.StdDev(child.Durations, nil)
+			minDuration := child.Min
+			maxDuration := child.Max
 
-	parentSpanID := span.ParentSpanID()
-	parentSpanIDHex := hex.EncodeToString(parentSpanID[:])
+			minSpanID := child.MinSpanID
+			minSpanIDHex := hex.EncodeToString(minSpanID[:])
+			maxSpanID := child.MaxSpanID
+			maxSpanIDHex := hex.EncodeToString(maxSpanID[:])
+			nilSpanID := pcommon.SpanID{0}
+			nilSpanIDHex := hex.EncodeToString(nilSpanID[:])
 
-	childrenMetrics = append(childrenMetrics, &TraceReference{
-		TraceID: traceIDHex,
-		SpanID:  parentSpanIDHex,
-		Tags:    []*KeyValue{{Key: "min", Value: "10ms"}},
-	})
+			childrenMetrics = append(childrenMetrics, &TraceReference{
+				TraceID: traceIDHex,
+				SpanID:  minSpanIDHex,
+				Tags: []*KeyValue{
+					{Key: "min", Value: printStringDuration(minDuration)},
+					{Key: "name", Value: child.Name},
+				},
+			})
 
-	childrenMetrics = append(childrenMetrics, &TraceReference{
-		TraceID: traceIDHex,
-		SpanID:  parentSpanIDHex,
-		Tags:    []*KeyValue{{Key: "max", Value: "20ms"}},
-	})
+			childrenMetrics = append(childrenMetrics, &TraceReference{
+				TraceID: traceIDHex,
+				SpanID:  maxSpanIDHex,
+				Tags: []*KeyValue{
+					{Key: "max", Value: printStringDuration(maxDuration)},
+					{Key: "name", Value: child.Name},
+				},
+			})
 
-	childrenMetrics = append(childrenMetrics, &TraceReference{
-		TraceID: traceIDHex,
-		SpanID:  parentSpanIDHex,
-		Tags:    []*KeyValue{{Key: "avg", Value: "15ms"}},
-	})
-	
+			childrenMetrics = append(childrenMetrics, &TraceReference{
+				TraceID: traceIDHex,
+				SpanID:  nilSpanIDHex,
+				Tags: []*KeyValue{
+					{Key: "avg", Value: printStringDuration(int(avg))},
+					{Key: "name", Value: child.Name},
+				},
+			})
+
+			childrenMetrics = append(childrenMetrics, &TraceReference{
+				TraceID: traceIDHex,
+				SpanID:  nilSpanIDHex,
+				Tags: []*KeyValue{
+					{Key: "stdev", Value: printStringDuration(int(stdDev))},
+					{Key: "name", Value: child.Name},
+				},
+			})
+		}
+	}
+
 	return childrenMetrics
+}
+
+func tokenForSpanID(b []byte) uint32 {
+	h := fnv.New32()
+	_, _ = h.Write(b)
+	return h.Sum32()
+}
+
+func findChildrenByName(children Children, name string) (*ChildrenMetrics, error) {
+	for _, child := range children {
+		if child.Name == name {
+			return &child, nil
+		}
+	}
+	return nil, fmt.Errorf("no child with name %s found", name)
+}
+
+func parentIndex(id uint32, parentsOrder []uint32) int {
+	for i, parent := range parentsOrder {
+		if parent == id {
+			return i
+		}
+	}
+	return -1
+}
+
+func printStringDuration(durationNano int) string {
+	if durationNano < 1_000 {
+		return fmt.Sprintf("%dns", durationNano)
+	}
+	if durationNano < 1_000_000 {
+		return fmt.Sprintf("%dµs", durationNano/1_000)
+	}
+	if durationNano < 1_000_000_000 {
+		return fmt.Sprintf("%dms", durationNano/1_000_000)
+	}
+	return fmt.Sprintf("%ds", durationNano/1_000_000_000)
 }

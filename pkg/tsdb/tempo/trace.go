@@ -94,7 +94,8 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 		return &backend.DataResponse{}, fmt.Errorf("failed to convert tempo response to Otlp: %w", err)
 	}
 
-	frame, err := TraceToFrame(otTrace)
+	limit := 10
+	frame, err := TraceToFrame(otTrace, limit)
 	if err != nil {
 		ctxLogger.Error("Failed to transform trace to data frame", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
