@@ -569,7 +569,12 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	}
 
 	if cmd.ParentUID == "" {
-		evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
+		evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)
+		if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
+			evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate,
+				dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
+		}
+
 		hasAccess, evalErr := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator)
 		if evalErr != nil {
 			return nil, evalErr
