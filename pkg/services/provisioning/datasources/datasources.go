@@ -199,6 +199,7 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 		Description: correlation["description"].(string),
 		OrgId:       OrgId,
 		Provisioned: true,
+		Type: correlation["type"].(correlations.CorrelationType) ,
 	}
 
 	targetUID, ok := correlation["targetUID"].(string)
@@ -221,13 +222,15 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 			return correlations.CreateCorrelationCommand{}, err
 		}
 
-		createCommand.Config = config
-	} else {
-		// when provisioning correlations without config we default to type="query"
-		createCommand.Config = correlations.CorrelationConfig{
-			Type: correlations.ConfigTypeQuery,
+		if (correlation["type"] == nil && config.Type != nil) {
+			createCommand.Type = config.Type
+		} else if (correlation["type"] == nil && config.Type == nil) {
+						createCommand.Type = correlations.TypeQuery
 		}
-	}
+
+
+		createCommand.Config = config
+	} 
 	if err := createCommand.Validate(); err != nil {
 		return correlations.CreateCorrelationCommand{}, err
 	}
