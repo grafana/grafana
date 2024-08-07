@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, LoadingPlaceholder, Stack, useStyles2 } from '@grafana/ui';
+import { Trans } from '@grafana/ui/src/utils/i18n';
 
 import { IrmCardConfiguration } from './ConfigureIRM';
 import { ProgressBar, StepsStatus } from './ProgressBar';
@@ -32,7 +33,7 @@ export function ConfigCard({ config, handleActionClick, isLoading = false }: Con
               <div className="fs-unmask">
                 <Stack direction="row" gap={0.5}>
                   <StepsStatus stepsDone={config.stepsDone} totalStepsToDo={config.totalStepsToDo} />
-                  complete
+                  <Trans>complete</Trans>
                 </Stack>
               </div>
             )}
