@@ -30,11 +30,7 @@ export async function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
   return result;
 }
 
-export function buildPluginSectionNav(
-  pluginNavSection: NavModelItem,
-  pluginNav: NavModel | null,
-  currentUrl: string
-): NavModel | undefined {
+export function buildPluginSectionNav(pluginNavSection: NavModelItem, currentUrl: string): NavModel | undefined {
   // shallow clone as we set active flag
   const MAX_RECURSION_DEPTH = 10;
   let copiedPluginNavSection = { ...pluginNavSection };

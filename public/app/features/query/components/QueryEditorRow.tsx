@@ -24,8 +24,14 @@ import {
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AngularComponent, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { Badge, ErrorBoundaryAlert } from '@grafana/ui';
+import {
+  AngularComponent,
+  getAngularLoader,
+  getDataSourceSrv,
+  reportInteraction,
+  PluginLinksProvider,
+} from '@grafana/runtime';
+import { Badge, ErrorBoundaryAlert, IconButton } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
   QueryOperationAction,
@@ -480,6 +486,28 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           />
         )}
         {this.renderExtraActions()}
+        <PluginLinksProvider options={{ extensionPointId: 'grafana/query-editor-row/actions' }}>
+          {(result) => {
+            if (result.isLoading || result.links.length === 0) {
+              return null;
+            }
+            return (
+              <>
+                {result.links.map((link) => {
+                  return (
+                    <IconButton
+                      key={link.id}
+                      name={link.icon!}
+                      tooltip={link.title}
+                      onClick={link.onClick}
+                      type="button"
+                    />
+                  );
+                })}
+              </>
+            );
+          }}
+        </PluginLinksProvider>
         <QueryOperationAction
           title={t('query-operation.header.duplicate-query', 'Duplicate query')}
           icon="copy"

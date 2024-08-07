@@ -83,7 +83,7 @@ import { PanelDataErrorView } from './features/panel/components/PanelDataErrorVi
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { getCoreExtensionConfigurations } from './features/plugins/extensions/getCoreExtensionConfigurations';
-import { createPluginExtensionsGetter } from './features/plugins/extensions/getPluginExtensions';
+import { createPluginExtensionsGetter, getSidecarHelpers } from './features/plugins/extensions/getPluginExtensions';
 import { ReactivePluginExtensionsRegistry } from './features/plugins/extensions/reactivePluginExtensionRegistry';
 import { createUsePluginComponent } from './features/plugins/extensions/usePluginComponent';
 import { createUsePluginExtensions } from './features/plugins/extensions/usePluginExtensions';
@@ -158,7 +158,7 @@ export class GrafanaApp {
 
       // Important that extension reducers are initialized before store
       addExtensionReducers();
-      configureStore();
+      const store = configureStore();
       initExtensions();
 
       initAlerting();
@@ -225,7 +225,14 @@ export class GrafanaApp {
         await preloadPlugins(awaitedAppPlugins, extensionsRegistry, 'frontend_awaited_plugins_preload');
       }
 
-      setPluginExtensionGetter(createPluginExtensionsGetter(extensionsRegistry));
+      // Accessing this as a singleton will create some problems to URL handling for sidecar. Right now it's ok
+      // because we use the URl just to get some pseudo app IDs for core functionality.
+      setPluginExtensionGetter(
+        createPluginExtensionsGetter(
+          extensionsRegistry,
+          getSidecarHelpers(store.dispatch, () => store.getState().appSidecar.appId, locationService)
+        )
+      );
       setPluginExtensionsHook(createUsePluginExtensions(extensionsRegistry));
       setPluginComponentHook(createUsePluginComponent(extensionsRegistry));
 

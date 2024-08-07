@@ -61,7 +61,10 @@ export type PluginExtensionLinkConfig<Context extends object = object> = {
   extensionPointId: string;
 
   // (Optional) A function that can be used to configure the extension dynamically based on the extension point's context
-  configure?: (context?: Readonly<Context>) =>
+  configure?: (
+    context: Readonly<Context> | undefined,
+    helpers: PluginExtensionHelpers
+  ) =>
     | Partial<{
         title: string;
         description: string;
@@ -108,11 +111,17 @@ export type PluginExtensionOpenModalOptions = {
   height?: string | number;
 };
 
+type PluginExtensionHelpers = {
+  isAppOpened: () => boolean;
+};
+
 export type PluginExtensionEventHelpers<Context extends object = object> = {
   context?: Readonly<Context>;
   // Opens a modal dialog and renders the provided React component inside it
   openModal: (options: PluginExtensionOpenModalOptions) => void;
-};
+  openApp: (context?: unknown) => void;
+  closeApp: () => void;
+} & PluginExtensionHelpers;
 
 // Extension Points & Contexts
 // --------------------------------------------------------

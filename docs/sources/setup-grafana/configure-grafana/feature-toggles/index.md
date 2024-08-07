@@ -190,6 +190,7 @@ Experimental features might be changed or removed without prior notice.
 | `databaseReadReplica`                       | Use a read replica for some database queries.                                                                                                                                                                                                                                     |
 | `alertingApiServer`                         | Register Alerting APIs with the K8s API server                                                                                                                                                                                                                                    |
 | `dashboardRestoreUI`                        | Enables the frontend to be able to restore a recently deleted dashboard                                                                                                                                                                                                           |
+| `appSidecar`                                | Enable the app sidecar feature that allows rendering 2 apps at the same time                                                                                                                                                                                                      |
 
 ## Development feature toggles
 

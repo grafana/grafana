@@ -7,8 +7,12 @@ import {
   type PluginExtensionLinkConfig,
   type PluginExtensionComponent,
   urlUtil,
+  PluginExtensionEventHelpers,
 } from '@grafana/data';
-import { GetPluginExtensions, reportInteraction } from '@grafana/runtime';
+import { config, GetPluginExtensions, LocationService, reportInteraction } from '@grafana/runtime';
+
+import appSidecarSlice from '../../../core/reducers/appSidecar';
+import { AppDispatch } from '../../../store/configureStore';
 
 import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
 import type { PluginExtensionRegistry } from './types';
@@ -17,9 +21,9 @@ import {
   getReadOnlyProxy,
   logWarning,
   generateExtensionId,
-  getEventHelpers,
   isPluginExtensionComponentConfig,
   wrapWithPluginContext,
+  createOpenModalFunction,
 } from './utils';
 import {
   assertIsReactComponent,
@@ -28,6 +32,12 @@ import {
   assertStringProps,
   isPromise,
 } from './validators';
+
+export type SidecarHelpers = {
+  openApp: (appId: string) => void;
+  closeApp: (appId: string) => void;
+  getOpenedApps: () => string[];
+};
 
 type GetExtensions = ({
   context,
@@ -39,9 +49,12 @@ type GetExtensions = ({
   extensionPointId: string;
   limitPerPlugin?: number;
   registry: PluginExtensionRegistry;
-}) => { extensions: PluginExtension[] };
+} & SidecarHelpers) => { extensions: PluginExtension[] };
 
-export function createPluginExtensionsGetter(extensionRegistry: ReactivePluginExtensionsRegistry): GetPluginExtensions {
+export function createPluginExtensionsGetter(
+  extensionRegistry: ReactivePluginExtensionsRegistry,
+  sidecarHelpers: SidecarHelpers
+): GetPluginExtensions {
   let registry: PluginExtensionRegistry = { id: '', extensions: {} };
 
   // Create a subscription to keep an copy of the registry state for use in the non-async
@@ -50,11 +63,19 @@ export function createPluginExtensionsGetter(extensionRegistry: ReactivePluginEx
     registry = r;
   });
 
-  return (options) => getPluginExtensions({ ...options, registry });
+  return (options) => getPluginExtensions({ ...options, registry, ...sidecarHelpers });
 }
 
 // Returns with a list of plugin extensions for the given extension point
-export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, limitPerPlugin, registry }) => {
+export const getPluginExtensions: GetExtensions = ({
+  context,
+  extensionPointId,
+  limitPerPlugin,
+  registry,
+  openApp,
+  closeApp,
+  getOpenedApps,
+}) => {
   const frozenContext = context ? getReadOnlyProxy(context) : {};
   const registryItems = registry.extensions[extensionPointId] ?? [];
   // We don't return the extensions separated by type, because in that case it would be much harder to define a sort-order for them.
@@ -65,6 +86,10 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
     try {
       const extensionConfig = registryItem.config;
       const { pluginId } = registryItem;
+
+      const isAppOpenedFunc = () => getOpenedApps().includes(pluginId);
+      const openAppFunc = () => openApp(pluginId);
+      const closeAppFunc = () => closeApp(pluginId);
 
       // Only limit if the `limitPerPlugin` is set
       if (limitPerPlugin && extensionsByPlugin[pluginId] >= limitPerPlugin) {
@@ -77,8 +102,8 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
 
       // LINK
       if (isPluginExtensionLinkConfig(extensionConfig)) {
-        // Run the configure() function with the current context, and apply the ovverides
-        const overrides = getLinkExtensionOverrides(pluginId, extensionConfig, frozenContext);
+        // Run the configure() function with the current context, and apply the overrides
+        const overrides = getLinkExtensionOverrides(pluginId, extensionConfig, isAppOpenedFunc, frozenContext);
 
         // configure() returned an `undefined` -> hide the extension
         if (extensionConfig.configure && overrides === undefined) {
@@ -90,7 +115,14 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
           id: generateExtensionId(pluginId, extensionConfig),
           type: PluginExtensionTypes.link,
           pluginId: pluginId,
-          onClick: getLinkExtensionOnClick(pluginId, extensionConfig, frozenContext),
+          onClick: getLinkExtensionOnClick(
+            pluginId,
+            extensionConfig,
+            isAppOpenedFunc,
+            openAppFunc,
+            closeAppFunc,
+            frozenContext
+          ),
 
           // Configurable properties
           icon: overrides?.icon || extensionConfig.icon,
@@ -115,6 +147,7 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
 
           title: extensionConfig.title,
           description: extensionConfig.description,
+          // TODO: add openApp and closeApp to plugin context inside
           component: wrapWithPluginContext(pluginId, extensionConfig.component),
         };
 
@@ -131,9 +164,14 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
   return { extensions };
 };
 
-function getLinkExtensionOverrides(pluginId: string, config: PluginExtensionLinkConfig, context?: object) {
+function getLinkExtensionOverrides(
+  pluginId: string,
+  config: PluginExtensionLinkConfig,
+  isAppOpened: () => boolean,
+  context?: object
+) {
   try {
-    const overrides = config.configure?.(context);
+    const overrides = config.configure?.(context, { isAppOpened });
 
     // Hiding the extension
     if (overrides === undefined) {
@@ -186,6 +224,9 @@ function getLinkExtensionOverrides(pluginId: string, config: PluginExtensionLink
 function getLinkExtensionOnClick(
   pluginId: string,
   config: PluginExtensionLinkConfig,
+  isAppOpened: () => boolean,
+  openApp: () => void,
+  closeApp: () => void,
   context?: object
 ): ((event?: React.MouseEvent) => void) | undefined {
   const { onClick } = config;
@@ -203,7 +244,15 @@ function getLinkExtensionOnClick(
         category: config.category,
       });
 
-      const result = onClick(event, getEventHelpers(pluginId, context));
+      const helpers: PluginExtensionEventHelpers = {
+        context,
+        openModal: createOpenModalFunction(pluginId),
+        isAppOpened,
+        openApp,
+        closeApp,
+      };
+
+      const result = onClick(event, helpers);
 
       if (isPromise(result)) {
         result.catch((e) => {
@@ -228,4 +277,61 @@ function getLinkExtensionPathWithTracking(pluginId: string, path: string, config
       uel_epid: config.extensionPointId,
     })
   );
+}
+
+export function getSidecarHelpers(
+  dispatch: AppDispatch,
+  getSidecarAppId: () => string | undefined,
+  locationService: LocationService
+): SidecarHelpers {
+  const closeApp = (appId: string) => {
+    if (!config.featureToggles.appSidecar) {
+      console.warn('App sidecar feature toggle is not enabled, doing nothing');
+      return;
+    }
+    dispatch(appSidecarSlice.actions.closeApp({ appId }));
+  };
+
+  const openApp = (appId: string) => {
+    if (!config.featureToggles.appSidecar) {
+      console.warn('App sidecar feature toggle is not enabled, doing nothing');
+      return;
+    }
+    dispatch(appSidecarSlice.actions.openApp({ appId }));
+  };
+
+  const getOpenedApps = () => {
+    if (!config.featureToggles.appSidecar) {
+      console.warn('App sidecar feature toggle is not enabled, doing nothing');
+      return [];
+    }
+
+    const openedApps = [];
+    openedApps.push(getMainAppId(locationService.getLocation().pathname));
+    const sidecarAppId = getSidecarAppId();
+    if (sidecarAppId) {
+      openedApps.push(sidecarAppId);
+    }
+    return openedApps;
+  };
+
+  return {
+    openApp,
+    closeApp,
+    getOpenedApps,
+  };
+}
+
+function getMainAppId(pathname: string) {
+  // A naive way to sort of simulate core features being an app and having an appID
+  let mainApp = pathname.match(/\/a\/([^/]+)/)?.[1];
+  if (!mainApp && pathname.match(/\/explore/)) {
+    mainApp = 'explore';
+  }
+
+  if (!mainApp && pathname.match(/\/d\//)) {
+    mainApp = 'dashboards';
+  }
+
+  return mainApp || 'unknown';
 }

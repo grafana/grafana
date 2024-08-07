@@ -39,6 +39,17 @@ export function usePluginLinks(options: GetPluginExtensionsOptions): {
   }, [extensions, isLoading]);
 }
 
+export function PluginLinksProvider({
+  children,
+  options,
+}: {
+  children: (result: ReturnType<typeof usePluginLinks>) => React.ReactNode;
+  options: GetPluginExtensionsOptions;
+}) {
+  const result = usePluginLinks(options);
+  return children(result);
+}
+
 export function usePluginComponents<Props = {}>(
   options: GetPluginExtensionsOptions
 ): { components: Array<React.ComponentType<Props>>; isLoading: boolean } {
@@ -53,6 +64,17 @@ export function usePluginComponents<Props = {}>(
     }),
     [extensions, isLoading]
   );
+}
+
+export function PluginComponentsProvider<Props = {}>({
+  children,
+  options,
+}: {
+  children: (result: ReturnType<typeof usePluginComponents<Props>>) => React.ReactNode;
+  options: GetPluginExtensionsOptions;
+}) {
+  const result = usePluginComponents<Props>(options);
+  return children(result);
 }
 
 /**

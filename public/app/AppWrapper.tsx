@@ -1,3 +1,4 @@
+import * as H from 'history';
 import { Action, KBarProvider } from 'kbar';
 import { Component, ComponentType } from 'react';
 import { Provider } from 'react-redux';
@@ -6,12 +7,13 @@ import { CompatRouter, CompatRoute } from 'react-router-dom-v5-compat';
 
 import {
   config,
+  HistoryWrapper,
   locationService,
   LocationServiceProvider,
   navigationLogger,
   reportInteraction,
 } from '@grafana/runtime';
-import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, PortalContainer, Stack } from '@grafana/ui';
+import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, PortalContainer, Stack, IconButton } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
@@ -19,14 +21,19 @@ import { AngularRoot } from './angular/AngularRoot';
 import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabled';
 import { GrafanaApp } from './app';
 import { AppChrome } from './core/components/AppChrome/AppChrome';
+import { TOP_BAR_LEVEL_HEIGHT } from './core/components/AppChrome/types';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
+import { SplitPaneWrapper } from './core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { GrafanaContext } from './core/context/GrafanaContext';
 import { ModalsContextProvider } from './core/context/ModalsContextProvider';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
+import appSidecar from './core/reducers/appSidecar';
 import { contextSrv } from './core/services/context_srv';
 import { ThemeProvider } from './core/utils/ConfigProvider';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
+import AppRootPage from './features/plugins/components/AppRootPage';
+import { useDispatch, useSelector } from './types';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -109,33 +116,11 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                 actions={[]}
                 options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
               >
-                <Router history={locationService.getHistory()}>
-                  <LocationServiceProvider service={locationService}>
-                    <CompatRouter>
-                      <ModalsContextProvider>
-                        <GlobalStyles />
-                        <div className="grafana-app">
-                          <AppChrome>
-                            <AngularRoot />
-                            <AppNotificationList />
-                            <Stack gap={0} grow={1} direction="column">
-                              {pageBanners.map((Banner, index) => (
-                                <Banner key={index.toString()} />
-                              ))}
-                              {ready && this.renderRoutes()}
-                            </Stack>
-                            {bodyRenderHooks.map((Hook, index) => (
-                              <Hook key={index.toString()} />
-                            ))}
-                          </AppChrome>
-                        </div>
-                        <LiveConnectionWarning />
-                        <ModalRoot />
-                        <PortalContainer />
-                      </ModalsContextProvider>
-                    </CompatRouter>
-                  </LocationServiceProvider>
-                </Router>
+                {config.featureToggles.appSidecar ? (
+                  <ExperimentalSplitPaneTree routes={ready && this.renderRoutes()} />
+                ) : (
+                  <RouterTree routes={ready && this.renderRoutes()} />
+                )}
               </KBarProvider>
             </ThemeProvider>
           </GrafanaContext.Provider>
@@ -143,4 +128,119 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
       </Provider>
     );
   }
+}
+
+function RouterTree(props: { routes?: JSX.Element | false }) {
+  return (
+    <Router history={locationService.getHistory()}>
+      <LocationServiceProvider service={locationService}>
+        <CompatRouter>
+          <ModalsContextProvider>
+            <GlobalStyles />
+            <div className="grafana-app">
+              <AppChrome>
+                <AngularRoot />
+                <AppNotificationList />
+                <Stack gap={0} grow={1} direction="column">
+                  {pageBanners.map((Banner, index) => (
+                    <Banner key={index.toString()} />
+                  ))}
+                  {props.routes}
+                </Stack>
+                {bodyRenderHooks.map((Hook, index) => (
+                  <Hook key={index.toString()} />
+                ))}
+              </AppChrome>
+            </div>
+            <LiveConnectionWarning />
+            <ModalRoot />
+            <PortalContainer />
+          </ModalsContextProvider>
+        </CompatRouter>
+      </LocationServiceProvider>
+    </Router>
+  );
+}
+
+function ExperimentalSplitPaneTree(props: { routes?: JSX.Element | false }) {
+  const appId = useSelector((state) => state.appSidecar.appId);
+  const dispatch = useDispatch();
+
+  const memoryLocationService = new HistoryWrapper(H.createMemoryHistory({ initialEntries: ['/'] }));
+
+  return (
+    <div className="grafana-app">
+      <SplitPaneWrapper
+        splitOrientation="vertical"
+        paneSize={0.25}
+        minSize={200}
+        maxSize={200 * -1}
+        primary="second"
+        splitVisible={!!appId}
+        paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
+      >
+        {/* very similar to RouterTree but #grafana-app div is moved and it's easier to isolate any changes like this
+         so hopefully less chance of introducing any error */}
+        <Router history={locationService.getHistory()}>
+          <LocationServiceProvider service={locationService}>
+            <CompatRouter>
+              <ModalsContextProvider>
+                <GlobalStyles />
+                <AppChrome>
+                  <AngularRoot />
+                  <AppNotificationList />
+                  <Stack gap={0} grow={1} direction="column">
+                    {pageBanners.map((Banner, index) => (
+                      <Banner key={index.toString()} />
+                    ))}
+                    {props.routes}
+                  </Stack>
+                  {bodyRenderHooks.map((Hook, index) => (
+                    <Hook key={index.toString()} />
+                  ))}
+                </AppChrome>
+                <LiveConnectionWarning />
+                <ModalRoot />
+                <PortalContainer />
+              </ModalsContextProvider>
+            </CompatRouter>
+          </LocationServiceProvider>
+        </Router>
+
+        {appId && (
+          <Router history={memoryLocationService.getHistory()}>
+            <LocationServiceProvider service={memoryLocationService}>
+              <CompatRouter>
+                <ModalsContextProvider>
+                  <GlobalStyles />
+                  <div
+                    style={{
+                      display: 'flex',
+                      height: '100%',
+                      paddingTop: TOP_BAR_LEVEL_HEIGHT,
+                      flexGrow: 1,
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <IconButton
+                        size={'lg'}
+                        style={{ margin: '8px' }}
+                        name={'times'}
+                        aria-label={'close'}
+                        onClick={() => {
+                          dispatch(appSidecar.actions.closeApp({ appId }));
+                        }}
+                      />
+                    </div>
+                    <AppRootPage pluginId={appId} />
+                  </div>
+                </ModalsContextProvider>
+              </CompatRouter>
+            </LocationServiceProvider>
+          </Router>
+        )}
+      </SplitPaneWrapper>
+    </div>
+  );
 }
