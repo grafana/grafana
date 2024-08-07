@@ -107,7 +107,7 @@ func (f *RulerApiHandler) RoutePostNameGrafanaRulesConfig(ctx *contextmodel.ReqC
 	// Parse Request Body
 	conf := apimodels.PostableRuleGroupConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return ErrResp(http.StatusBadRequest, err, "bad request data")
 	}
 	return f.handleRoutePostNameGrafanaRulesConfig(ctx, conf, namespaceParam)
 }
@@ -118,7 +118,7 @@ func (f *RulerApiHandler) RoutePostNameRulesConfig(ctx *contextmodel.ReqContext)
 	// Parse Request Body
 	conf := apimodels.PostableRuleGroupConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return ErrResp(http.StatusBadRequest, err, "bad request data")
 	}
 	return f.handleRoutePostNameRulesConfig(ctx, conf, datasourceUIDParam, namespaceParam)
 }
@@ -128,7 +128,7 @@ func (f *RulerApiHandler) RoutePostRulesGroupForExport(ctx *contextmodel.ReqCont
 	// Parse Request Body
 	conf := apimodels.PostableRuleGroupConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return ErrResp(http.StatusBadRequest, err, "bad request data")
 	}
 	return f.handleRoutePostRulesGroupForExport(ctx, conf, namespaceParam)
 }

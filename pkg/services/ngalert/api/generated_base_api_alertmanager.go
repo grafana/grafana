@@ -52,7 +52,7 @@ func (f *AlertmanagerApiHandler) RouteCreateGrafanaSilence(ctx *contextmodel.Req
 	// Parse Request Body
 	conf := apimodels.PostableSilence{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return ErrResp(http.StatusBadRequest, err, "bad request data")
 	}
 	return f.handleRouteCreateGrafanaSilence(ctx, conf)
 }
@@ -62,7 +62,7 @@ func (f *AlertmanagerApiHandler) RouteCreateSilence(ctx *contextmodel.ReqContext
 	// Parse Request Body
 	conf := apimodels.PostableSilence{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return ErrResp(http.StatusBadRequest, err, "bad request data")
 	}
 	return f.handleRouteCreateSilence(ctx, conf, datasourceUIDParam)
 }
@@ -148,7 +148,7 @@ func (f *AlertmanagerApiHandler) RoutePostAMAlerts(ctx *contextmodel.ReqContext)
 	// Parse Request Body
 	conf := apimodels.PostableAlerts{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return ErrResp(http.StatusBadRequest, err, "bad request data")
 	}
 	return f.handleRoutePostAMAlerts(ctx, conf, datasourceUIDParam)
 }
@@ -158,7 +158,7 @@ func (f *AlertmanagerApiHandler) RoutePostAlertingConfig(ctx *contextmodel.ReqCo
 	// Parse Request Body
 	conf := apimodels.PostableUserConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return ErrResp(http.StatusBadRequest, err, "bad request data")
 	}
 	return f.handleRoutePostAlertingConfig(ctx, conf, datasourceUIDParam)
 }
@@ -166,7 +166,7 @@ func (f *AlertmanagerApiHandler) RoutePostGrafanaAlertingConfig(ctx *contextmode
 	// Parse Request Body
 	conf := apimodels.PostableUserConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return ErrResp(http.StatusBadRequest, err, "bad request data")
 	}
 	return f.handleRoutePostGrafanaAlertingConfig(ctx, conf)
 }
@@ -179,7 +179,7 @@ func (f *AlertmanagerApiHandler) RoutePostTestGrafanaReceivers(ctx *contextmodel
 	// Parse Request Body
 	conf := apimodels.TestReceiversConfigBodyParams{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return ErrResp(http.StatusBadRequest, err, "bad request data")
 	}
 	return f.handleRoutePostTestGrafanaReceivers(ctx, conf)
 }
@@ -187,7 +187,7 @@ func (f *AlertmanagerApiHandler) RoutePostTestGrafanaTemplates(ctx *contextmodel
 	// Parse Request Body
 	conf := apimodels.TestTemplatesConfigBodyParams{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return ErrResp(http.StatusBadRequest, err, "bad request data")
 	}
 	return f.handleRoutePostTestGrafanaTemplates(ctx, conf)
 }
