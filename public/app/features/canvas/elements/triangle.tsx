@@ -122,7 +122,6 @@ export const triangleItem: CanvasElementItem = {
     }
 
     const { background, border } = elementOptions;
-    data.backgroundColor = background?.color ? dimensionContext.getColor(background.color).value() : defaultBgColor;
     // TODO consolidate these calcs at the element level
     if (background?.color?.field) {
       const color = dimensionContext.getColor(background.color);
@@ -133,6 +132,7 @@ export const triangleItem: CanvasElementItem = {
     } else {
       data.backgroundColor = background?.color ? dimensionContext.getColor(background.color).value() : defaultBgColor;
     }
+    data.borderColor = border?.color ? dimensionContext.getColor(border.color).value() : defaultBgColor;
     data.borderWidth = border?.width ?? 0;
 
     data.backgroundImage = background?.image ? dimensionContext.getResource(background.image).value() : undefined;
