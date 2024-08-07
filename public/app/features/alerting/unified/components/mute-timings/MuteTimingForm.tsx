@@ -61,8 +61,8 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provisioned, editMode 
   const { selectedAlertmanager } = useAlertmanager();
   const hookArgs = { alertmanager: selectedAlertmanager! };
 
-  const [_createTimeIntervalRequestState, createTimeInterval] = useCreateMuteTiming(hookArgs);
-  const [_updateTimeIntervalRequestState, updateTimeInterval] = useUpdateMuteTiming(hookArgs);
+  const [createTimeInterval] = useCreateMuteTiming(hookArgs);
+  const [updateTimeInterval] = useUpdateMuteTiming(hookArgs);
   const validateMuteTiming = useValidateMuteTiming(hookArgs);
 
   /**

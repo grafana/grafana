@@ -19,7 +19,7 @@ interface MuteTimingActionsButtonsProps {
 }
 
 export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }: MuteTimingActionsButtonsProps) => {
-  const [deleteMuteTimingRequestState, deleteMuteTiming] = useDeleteMuteTiming({
+  const [deleteMuteTiming, deleteMuteTimingRequestState] = useDeleteMuteTiming({
     alertmanager: alertManagerSourceName!,
   });
   const [showDeleteDrawer, setShowDeleteDrawer] = useState(false);
