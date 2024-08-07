@@ -32,7 +32,7 @@ export function ConfigCard({ config, handleActionClick, isLoading = false }: Con
               <div className="fs-unmask">
                 <Stack direction="row" gap={0.5}>
                   <StepsStatus stepsDone={config.stepsDone} totalStepsToDo={config.totalStepsToDo} />
-                  complete
+                  {' complete'}
                 </Stack>
               </div>
             )}
