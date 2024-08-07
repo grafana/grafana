@@ -164,7 +164,7 @@ Please refer to our documentation on how to set up an Azure AD registered applic
 
 <!-- #proj-grafana-sso-config -->
 
-_Available in public preview all editions of Grafana_
+_Available in public preview in all editions of Grafana_
 
 [The SSO settings API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/sso-settings/) has been updated to include support for LDAP settings. This feature is experimental behind the feature flag **ssoSettingsLDAP**.
 
