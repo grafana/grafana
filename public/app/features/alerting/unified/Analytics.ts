@@ -26,9 +26,11 @@ export const LogMessages = {
   unknownMessageFromError: 'unknown messageFromError',
 };
 
-const { logInfo, logError, logMeasurement } = createMonitoringLogger('features.alerting', { module: 'Alerting' });
+const { logInfo, logError, logMeasurement, logWarning } = createMonitoringLogger('features.alerting', {
+  module: 'Alerting',
+});
 
-export { logInfo, logError, logMeasurement };
+export { logInfo, logError, logMeasurement, logWarning };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise<any>>(
