@@ -3,7 +3,14 @@ import { useCallback, useMemo } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { DataFrame } from '@grafana/data/';
-import { EmbeddedScene, PanelBuilders, SceneDataNode, SceneFlexItem, SceneFlexLayout } from '@grafana/scenes';
+import {
+  EmbeddedScene,
+  PanelBuilders,
+  SceneDataNode,
+  SceneFlexItem,
+  SceneFlexLayout,
+  SceneTimeRange,
+} from '@grafana/scenes';
 import { TextDimensionMode } from '@grafana/schema/dist/esm/index';
 import { MultiSelect, stylesFactory, usePanelContext } from '@grafana/ui';
 import { frameHasName, useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
@@ -19,6 +26,8 @@ const panelTypes: Array<SelectableValue<string>> = Object.keys(PanelBuilders).ma
 });
 
 const defaultPanelTitle = 'New Visualization';
+
+export const CANVAS_EMBEDDED_SCENE_KEY = 'canvas-embedded-scene';
 
 const VisualizationDisplay = (props: CanvasElementProps<VizElementConfig, VizElementData>) => {
   const context = usePanelContext();
@@ -43,7 +52,14 @@ const VisualizationDisplay = (props: CanvasElementProps<VizElementConfig, VizEle
       panelToEmbed.setColor({ mode: 'palette-classic' });
       const panel = panelToEmbed.build();
 
+      // const timeRange = new SceneTimeRange({
+      //   from: context.timeRange.from,
+      //   to: context.timeRange.to,
+      // });
+
       return new EmbeddedScene({
+        key: CANVAS_EMBEDDED_SCENE_KEY,
+        // $timeRange: context.timeRange,
         body: new SceneFlexLayout({
           children: [
             new SceneFlexItem({
