@@ -141,6 +141,7 @@ axisFormat %S.%L
   // working around unique section names by abusing non-breaking spaces
   const nbsp = ' ';
   let idx = 0;
+  const timeDelta = sorted[0].startTime;
   for (const e of sorted) {
     if (isNaN(e.startTime)) {
       throw new Error(`Invalid startTime: ${e.startTime} for spanID: ${e.spanID}`);
@@ -150,8 +151,9 @@ axisFormat %S.%L
       out += `section ${e.serviceName}${nbsp.repeat(idx)}\n`;
       currentSection = e.serviceName;
     }
+    const startTime= e.startTime-timeDelta;
 
-    out += `${e.operationName} [${e.duration}ms] :${highlights.includes(e.spanID) ? 'active,' : ''}${e.spanID},${Math.round(e.startTime)},${Math.max(Math.round(e.duration), 1)}ms\n`;
+    out += `${e.operationName} [${e.duration}ms] :${highlights.includes(e.spanID) ? 'active,' : ''}${e.spanID},${Math.round(startTime)},${Math.max(Math.round(e.duration), 1)}ms\n`;
     idx += 1;
   }
 

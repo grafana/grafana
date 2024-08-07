@@ -146,69 +146,99 @@ async function hasBOM(blob: Blob) {
 }
 
 describe('exportTraceAsMermaid', () => {
-  it('Throws an error when not all spans have numeric startTime', () => {
+    it('Throws an error when not all spans have numeric startTime', () => {
       const mockDataFrame: DataFrame = toDataFrame({
         name: "someName",
         fields: [
           { name: 'spanID', type: FieldType.string, values: ['span1', 'span2'] },
-          { name: 'startTime', type: FieldType.number, values: [1] },
+          { name: 'startTime', type: FieldType.number, values: [0] },
           { name: 'duration', type: FieldType.number, values: [2, 2] },
         ],
       });
 
-    expect(() => {
-      exportTraceAsMermaid(mockDataFrame, 'Test Title', []);
-    }).toThrow('Invalid startTime: undefined for spanID: span2');
-  });
-    }
-  )
-  it('Converts minimum trace data to a valid Mermaid Gantt chart', () => {
-      const mockDataFrame: DataFrame = toDataFrame({
-        name: "someName",
-        fields: [
-          { name: 'startTime', type: FieldType.number, values: [1, 3, 5] },],
-      });
+      expect(() => {
+        exportTraceAsMermaid(mockDataFrame, 'Test Title', []);
+      }).toThrow('Invalid startTime: undefined for spanID: span2');
+    });
 
-      const expectedOutput = `gantt
+    it('Converts minimum trace data to a valid Mermaid Gantt chart', () => {
+        const mockDataFrame: DataFrame = toDataFrame({
+          name: "someName",
+          fields: [
+            { name: 'startTime', type: FieldType.number, values: [0, 3, 5] },],
+        });
+
+        const expectedOutput = `gantt
 title Trace someName
 dateFormat x
 axisFormat %S.%L
 section undefined
-undefined [undefinedms] :undefined,1,NaNms
+undefined [undefinedms] :undefined,0,NaNms
 undefined [undefinedms] :undefined,3,NaNms
 undefined [undefinedms] :undefined,5,NaNms
 `;
 
-      const output = exportTraceAsMermaid(mockDataFrame, 'someName', ['b']);
+        const output = exportTraceAsMermaid(mockDataFrame, 'someName', ['b']);
 
-      expect(output).toBe(expectedOutput);
-    }
-  )
-  it('Converts trace data to Mermaid Gantt chart format', () => {
-    const mockDataFrame: DataFrame = toDataFrame({
-      name: '00abcdefg',
-      fields: [
-        { name: 'startTime', type: FieldType.number, values: [1, 3, 5] },
-        { name: 'spanID', type: FieldType.string, values: ['a', 'b', 'c'] },
-        { name: 'duration', type: FieldType.number, values: [2, 2, 2] },
-        { name: 'operationName', type: FieldType.string, values: ['op1', 'op2', 'op3'] },
-        { name: 'serviceName', type: FieldType.string, values: ['serviceA', 'serviceB', 'serviceA'] },
-      ],
-    });
+        expect(output).toBe(expectedOutput);
+      }
+    )
+    it('Converts trace data to Mermaid Gantt chart format', () => {
+      const mockDataFrame: DataFrame = toDataFrame({
+        name: '00Title',
+        fields: [
+          { name: 'startTime', type: FieldType.number, values: [0, 3, 5] },
+          { name: 'spanID', type: FieldType.string, values: ['a', 'b', 'c'] },
+          { name: 'duration', type: FieldType.number, values: [2, 2, 2] },
+          { name: 'operationName', type: FieldType.string, values: ['op1', 'op2', 'op3'] },
+          { name: 'serviceName', type: FieldType.string, values: ['serviceA', 'serviceB', 'serviceA'] },
+        ],
+      });
 
-    const expectedOutput = `gantt
-title Trace abcdefg
+      const expectedOutput = `gantt
+title Trace Title
 dateFormat x
 axisFormat %S.%L
 section serviceA
-op1 [2ms] :a,1,2ms
+op1 [2ms] :a,0,2ms
 section serviceB 
 op2 [2ms] :active,b,3,2ms
 section serviceA  
 op3 [2ms] :c,5,2ms
 `;
 
-    const output = exportTraceAsMermaid(mockDataFrame, 'abcdefg', ['b']);
+      const output = exportTraceAsMermaid(mockDataFrame, 'Title', ['b']);
 
-    expect(output).toBe(expectedOutput);
-  });
+      expect(output).toBe(expectedOutput);
+    })
+
+    it('Converts trace data to Mermaid Gantt chart format, starting time from zero', () => {
+      const mockDataFrame: DataFrame = toDataFrame({
+        name: '00Title',
+        fields: [
+          { name: 'startTime', type: FieldType.number, values: [10, 13, 15] },
+          { name: 'spanID', type: FieldType.string, values: ['a', 'b', 'c'] },
+          { name: 'duration', type: FieldType.number, values: [2, 2, 2] },
+          { name: 'operationName', type: FieldType.string, values: ['op1', 'op2', 'op3'] },
+          { name: 'serviceName', type: FieldType.string, values: ['serviceA', 'serviceB', 'serviceA'] },
+        ],
+      });
+
+      const expectedOutput = `gantt
+title Trace Title
+dateFormat x
+axisFormat %S.%L
+section serviceA
+op1 [2ms] :a,0,2ms
+section serviceB 
+op2 [2ms] :active,b,3,2ms
+section serviceA  
+op3 [2ms] :c,5,2ms
+`;
+
+      const output = exportTraceAsMermaid(mockDataFrame, 'Title', ['b']);
+
+      expect(output).toBe(expectedOutput);
+    });
+  }
+)
