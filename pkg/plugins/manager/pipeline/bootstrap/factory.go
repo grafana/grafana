@@ -42,7 +42,6 @@ func (f *DefaultPluginFactory) createPlugin(bundle *plugins.FoundBundle, class p
 			return nil, err
 		}
 		info = assetpath.NewPluginInfo(plugin.JSONData, class, plugin.FS.Base(), relPath)
-
 		cp, err := f.newPlugin(*child, class, sig, info)
 		if err != nil {
 			return nil, err

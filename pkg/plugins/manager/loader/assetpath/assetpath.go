@@ -28,7 +28,7 @@ type PluginInfo struct {
 	pluginJSON plugins.JSONData
 	class      plugins.Class
 	basePath   string
-	relPath    string
+	relPath    string // relative path to the asset from the plugin root (used for nested plugin paths)
 }
 
 func NewPluginInfo(pluginJSON plugins.JSONData, class plugins.Class, basePath, relPath string) PluginInfo {
