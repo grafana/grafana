@@ -74,7 +74,6 @@ const QueryResults = ({ rule }: Props) => {
                     dataSource={Object.values(config.datasources).find((ds) => ds.uid === query.datasourceUid)}
                     queryData={data[query.refId]}
                     relativeTimeRange={query.relativeTimeRange}
-                    isAlertCondition={false}
                   />
                 );
               })}
