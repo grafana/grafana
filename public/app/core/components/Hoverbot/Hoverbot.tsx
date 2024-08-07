@@ -14,7 +14,7 @@ export const Hoverbot = () => {
   const [loading, setLoading] = useState(false);
   const [selecting, setSelecting] = useState(false);
   const [reply, setReply] = useState('');
-  const [[x, y], setPosition] = useState([0, 0]);
+  const [[x, y], setPosition] = useState([Number(sessionStorage.getItem('hoverbot.x')) || 0, Number(sessionStorage.getItem('hoverbot.y')) || 0]);
   const posRef = useRef({ x: 0, y: 0});
   const oldPosRef = useRef({ x, y });
 
@@ -150,11 +150,24 @@ export const Hoverbot = () => {
   const handleDragEnd = useCallback((event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
 
-    const newX = event.clientX - posRef.current.x;
-    const newY = posRef.current.y - event.clientY;
+    const newX = oldPosRef.current.x + (event.clientX - posRef.current.x);
+    const newY = oldPosRef.current.y + (posRef.current.y - event.clientY);
 
-    setPosition([oldPosRef.current.x + newX, oldPosRef.current.y + newY]);
+    setPosition([newX, newY]);
+
+    if (newX < 0 || newY < 0) {
+      console.warn('Disabling hoverbot');
+      setEnabled(false);
+    } else {
+      sessionStorage.setItem('hoverbot.x', newX.toString());
+      sessionStorage.setItem('hoverbot.y', newY.toString());
+    }
   }, []);
+
+  if (!enabled) {
+    console.warn('Hoverbot disabled');
+    return null;
+  }
 
   if (loading || selecting || reply) {
     return (
