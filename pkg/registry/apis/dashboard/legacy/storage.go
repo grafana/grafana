@@ -147,13 +147,13 @@ func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.Rea
 		rsp.Error = &resource.ErrorResult{
 			Code: http.StatusNotFound,
 		}
+	} else {
+		rsp.Value, err = json.Marshal(dash)
+		if err != nil {
+			rsp.Error = resource.AsErrorResult(err)
+		}
 	}
-
 	rsp.ResourceVersion = rv
-	rsp.Value, err = json.Marshal(dash)
-	if err != nil {
-		rsp.Error = resource.AsErrorResult(err)
-	}
 	return rsp
 }
 
@@ -177,11 +177,10 @@ func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.Lis
 	}
 
 	query := &DashboardQuery{
-		OrgID:    info.OrgID,
-		Limit:    int(req.Limit),
-		MaxBytes: 2 * 1024 * 1024, // 2MB,
-		LastID:   token.id,
-		Labels:   req.Options.Labels,
+		OrgID:  info.OrgID,
+		Limit:  int(req.Limit),
+		LastID: token.id,
+		Labels: req.Options.Labels,
 	}
 
 	listRV, err := a.currentRV(ctx)
@@ -194,7 +193,7 @@ func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.Lis
 			_ = rows.Close()
 		}()
 	}
-	if err != nil {
+	if err == nil {
 		err = cb(rows)
 	}
 	return listRV, err
@@ -253,13 +252,15 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 	if token.orgId > 0 && token.orgId != info.OrgID {
 		return nil, fmt.Errorf("token and orgID mismatch")
 	}
-
+	limit := int(req.Limit)
+	if limit < 1 {
+		limit = 15
+	}
 	query := &DashboardQuery{
-		OrgID:    info.OrgID,
-		Limit:    int(req.Limit),
-		MaxBytes: 2 * 1024 * 1024, // 2MB,
-		LastID:   token.id,
-		UID:      req.Key.Name,
+		OrgID:  info.OrgID,
+		Limit:  limit + 1,
+		LastID: token.id,
+		UID:    req.Key.Name,
 	}
 	if req.ShowDeleted {
 		query.GetTrash = true
@@ -273,7 +274,6 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 	}
 	defer func() { _ = rows.Close() }()
 
-	totalSize := 0
 	list := &resource.HistoryResponse{}
 	for rows.Next() {
 		if rows.err != nil || rows.row == nil {
@@ -291,8 +291,7 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 			return list, err
 		}
 
-		totalSize += len(rows.Value())
-		if len(list.Items) > 0 && (totalSize > query.MaxBytes || len(list.Items) >= query.Limit) {
+		if len(list.Items) >= limit {
 			// if query.Requirements.Folder != nil {
 			// 	row.token.folder = *query.Requirements.Folder
 			// }

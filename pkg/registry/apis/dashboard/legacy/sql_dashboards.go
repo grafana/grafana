@@ -9,9 +9,6 @@ import (
 	"sync"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardsV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
@@ -21,8 +18,12 @@ import (
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 var (
@@ -46,10 +47,12 @@ type dashboardRow struct {
 
 type dashboardSqlAccess struct {
 	sql          db.DB
+	dialect      sqltemplate.Dialect
 	sess         *session.SessionDB
 	namespacer   request.NamespaceMapper
 	dashStore    dashboards.Store
 	provisioning provisioning.ProvisioningService
+	currentRV    func(ctx context.Context) (int64, error)
 
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
@@ -61,131 +64,82 @@ func NewDashboardAccess(sql db.DB,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
 ) DashboardAccess {
+	dialect := sqltemplate.DialectForDriver(string(sql.GetDBType()))
+	if dialect == nil {
+		// panic?
+		// fmt.Errorf("no dialect for driver %q", driverName)
+		fmt.Printf("ERROR: NO DIALECT")
+	}
+
+	sess := sql.GetSqlxSession()
+	currentRV := func(ctx context.Context) (int64, error) {
+		t := time.Now()
+		max := ""
+		err := sess.Get(ctx, &max, "SELECT MAX(updated) FROM dashboard")
+		if err == nil && max != "" {
+			t, _ = time.Parse(time.DateTime, max) // ignore null errors
+		}
+		return t.UnixMilli(), nil
+	}
+	if sql.GetDBType() == migrator.Postgres {
+		currentRV = func(ctx context.Context) (int64, error) {
+			max := time.Now()
+			_ = sess.Get(ctx, &max, "SELECT MAX(updated) FROM dashboard")
+			return max.UnixMilli(), nil
+		}
+	} else if sql.GetDBType() == migrator.MySQL {
+		currentRV = func(ctx context.Context) (int64, error) {
+			max := time.Now().UnixMilli()
+			_ = sess.Get(ctx, &max, "SELECT UNIX_TIMESTAMP(MAX(updated)) FROM dashboard;")
+			return max, nil
+		}
+	}
+
 	return &dashboardSqlAccess{
 		sql:          sql,
-		sess:         sql.GetSqlxSession(),
+		sess:         sess,
+		dialect:      dialect,
 		namespacer:   namespacer,
 		dashStore:    dashStore,
 		provisioning: provisioning,
+		currentRV:    currentRV,
 	}
 }
-
-func (a *dashboardSqlAccess) currentRV(ctx context.Context) (int64, error) {
-	t := time.Now()
-	max := ""
-	err := a.sess.Get(ctx, &max, "SELECT MAX(updated) FROM dashboard")
-	if err == nil && max != "" {
-		t, err = time.Parse(time.DateTime, max)
-	}
-	return t.UnixMilli(), err
-}
-
-const selector = `SELECT
-	dashboard.org_id, dashboard.id,
-	dashboard.uid, dashboard.folder_uid,
-	dashboard.created,CreatedUSER.uid as created_by,
-	dashboard.updated,UpdatedUSER.uid as updated_by,
-	dashboard.deleted, plugin_id,
-	dashboard_provisioning.name as origin_name,
-	dashboard_provisioning.external_id as origin_path,
-	dashboard_provisioning.check_sum as origin_key,
-	dashboard_provisioning.updated as origin_ts,
-	dashboard.version, '', dashboard.data
-  FROM dashboard
-  LEFT OUTER JOIN dashboard_provisioning ON dashboard.id = dashboard_provisioning.dashboard_id
-  LEFT OUTER JOIN user AS CreatedUSER ON dashboard.created_by = CreatedUSER.id
-  LEFT OUTER JOIN user AS UpdatedUSER ON dashboard.updated_by = UpdatedUSER.id
-  WHERE dashboard.is_folder = false`
-
-const history = `SELECT
-	dashboard.org_id, dashboard.id,
-	dashboard.uid, dashboard.folder_uid,
-	dashboard.created,CreatedUSER.uid as created_by,
-	dashboard_version.created,UpdatedUSER.uid as updated_by,
-	NULL, plugin_id,
-	dashboard_provisioning.name as origin_name,
-	dashboard_provisioning.external_id as origin_path,
-	dashboard_provisioning.check_sum as origin_key,
-	dashboard_provisioning.updated as origin_ts,
-	dashboard_version.version, dashboard_version.message, dashboard_version.data
-  FROM dashboard
-  LEFT OUTER JOIN dashboard_provisioning ON dashboard.id = dashboard_provisioning.dashboard_id
-  LEFT OUTER JOIN dashboard_version  ON dashboard.id = dashboard_version.dashboard_id
-  LEFT OUTER JOIN user AS CreatedUSER ON dashboard.created_by = CreatedUSER.id
-  LEFT OUTER JOIN user AS UpdatedUSER ON dashboard_version.created_by = UpdatedUSER.id
-  WHERE dashboard.is_folder = false`
 
 func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery) (*rowsWrapper, error) {
 	if len(query.Labels) > 0 {
 		return nil, fmt.Errorf("labels not yet supported")
 		// if query.Requirements.Folder != nil {
 		// 	args = append(args, *query.Requirements.Folder)
-		// 	sqlcmd = fmt.Sprintf("%s AND dashboard.folder_uid=$%d", sqlcmd, len(args))
+		// 	sqlcmd = fmt.Sprintf("%s AND dashboard.folder_uid=?$%d", sqlcmd, len(args))
 		// }
 	}
 
-	var sqlcmd string
-	args := []any{query.OrgID}
-
-	if query.GetHistory || query.Version > 0 {
-		if query.GetTrash {
-			return nil, fmt.Errorf("trash not included in history table")
-		}
-
-		sqlcmd = fmt.Sprintf("%s AND dashboard.org_id=$%d\n  ", history, len(args))
-
-		if query.UID == "" {
-			return nil, fmt.Errorf("history query must have a UID")
-		}
-
-		args = append(args, query.UID)
-		sqlcmd = fmt.Sprintf("%s AND dashboard.uid=$%d", sqlcmd, len(args))
-
-		if query.Version > 0 {
-			args = append(args, query.Version)
-			sqlcmd = fmt.Sprintf("%s AND dashboard_version.version=$%d", sqlcmd, len(args))
-		} else if query.LastID > 0 {
-			args = append(args, query.LastID)
-			sqlcmd = fmt.Sprintf("%s AND dashboard_version.version<$%d", sqlcmd, len(args))
-		}
-
-		sqlcmd = fmt.Sprintf("%s\n   ORDER BY dashboard_version.version desc", sqlcmd)
-	} else {
-		sqlcmd = fmt.Sprintf("%s AND dashboard.org_id=$%d\n  ", selector, len(args))
-
-		if query.UID != "" {
-			args = append(args, query.UID)
-			sqlcmd = fmt.Sprintf("%s AND dashboard.uid=$%d", sqlcmd, len(args))
-		} else if query.LastID > 0 {
-			args = append(args, query.LastID)
-			sqlcmd = fmt.Sprintf("%s AND dashboard.id>$%d", sqlcmd, len(args))
-		}
-		if query.GetTrash {
-			sqlcmd = sqlcmd + " AND dashboard.deleted IS NOT NULL"
-		} else {
-			sqlcmd = sqlcmd + " AND dashboard.deleted IS NULL"
-		}
-
-		sqlcmd = fmt.Sprintf("%s\n   ORDER BY dashboard.id asc", sqlcmd)
+	req := sqlQuery{
+		SQLTemplate: sqltemplate.New(a.dialect),
+		Query:       query,
 	}
-	// fmt.Printf("%s // %v\n", sqlcmd, args)
 
-	rows, err := a.doQuery(ctx, sqlcmd, args...)
+	tmpl := sqlQueryDashboards
+	if query.UseHistoryTable() && query.GetTrash {
+		return nil, fmt.Errorf("trash not included in history table")
+	}
+
+	rawQuery, err := sqltemplate.Execute(tmpl, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", tmpl.Name(), err)
+	}
+	q := rawQuery
+	// q = sqltemplate.RemoveEmptyLines(rawQuery)
+	// fmt.Printf(">>%s [%+v]", q, req.GetArgs())
+
+	rows, err := a.sess.Query(ctx, q, req.GetArgs()...)
 	if err != nil {
 		if rows != nil {
 			_ = rows.Close()
 		}
 		rows = nil
 	}
-	return rows, err
-}
-
-func (a *dashboardSqlAccess) doQuery(ctx context.Context, query string, args ...any) (*rowsWrapper, error) {
-	_, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := a.sess.Query(ctx, query, args...)
 	return &rowsWrapper{
 		rows: rows,
 		a:    a,
@@ -211,6 +165,9 @@ type rowsWrapper struct {
 }
 
 func (r *rowsWrapper) Close() error {
+	if r.rows == nil {
+		return nil
+	}
 	return r.rows.Close()
 }
 
@@ -291,10 +248,12 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	var folder_uid sql.NullString
 	var updated time.Time
 	var updatedBy sql.NullString
+	var updatedByID sql.NullInt64
 	var deleted sql.NullTime
 
 	var created time.Time
 	var createdBy sql.NullString
+	var createdByID sql.NullInt64
 	var message sql.NullString
 
 	var plugin_id string
@@ -306,10 +265,10 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	var version int64
 
 	err := rows.Scan(&orgId, &dashboard_id, &dash.Name, &folder_uid,
-		&created, &createdBy,
-		&updated, &updatedBy,
 		&deleted, &plugin_id,
 		&origin_name, &origin_path, &origin_hash, &origin_ts,
+		&created, &createdBy, &createdByID,
+		&updated, &updatedBy, &updatedByID,
 		&version, &message, &data,
 	)
 
@@ -325,8 +284,8 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 			return nil, err
 		}
 		meta.SetUpdatedTimestamp(&updated)
-		meta.SetCreatedBy(getUserID(createdBy))
-		meta.SetUpdatedBy(getUserID(updatedBy))
+		meta.SetCreatedBy(getUserID(createdBy, createdByID))
+		meta.SetUpdatedBy(getUserID(updatedBy, updatedByID))
 
 		if deleted.Valid {
 			meta.SetDeletionTimestamp(ptr.To(metav1.NewTime(deleted.Time)))
@@ -377,11 +336,14 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	return row, err
 }
 
-func getUserID(v sql.NullString) string {
-	if v.String == "" {
+func getUserID(v sql.NullString, id sql.NullInt64) string {
+	if v.Valid && v.String != "" {
+		return identity.NewTypedIDString(identity.TypeUser, v.String).String()
+	}
+	if id.Valid && id.Int64 == -1 {
 		return identity.NewTypedIDString(identity.TypeProvisioning, "").String()
 	}
-	return identity.NewTypedIDString(identity.TypeUser, v.String).String()
+	return ""
 }
 
 // DeleteDashboard implements DashboardAccess.
