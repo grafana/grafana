@@ -217,6 +217,10 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
     this.setState({ metricSearchTerm: event.target.value });
   };
 
+  onChangeSeriesLimit = (event: ChangeEvent<HTMLInputElement>) => {
+    this.setState({ seriesLimit: event.target.value });
+  };
+
   onChangeValueSearch = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({ valueSearchTerm: event.target.value });
   };
@@ -495,13 +499,26 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
         <Stack gap={3}>
           <div>
             <div className={styles.section}>
-              <Label description="Once a metric is selected only possible labels are shown.">1. Select a metric</Label>
+              <Label description="Once a metric is selected only possible labels are shown. Labels are limited by the series limit below.">
+                1. Select a metric
+              </Label>
               <div>
                 <Input
                   onChange={this.onChangeMetricSearch}
                   aria-label="Filter expression for metric"
                   value={metricSearchTerm}
                   data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.selectMetric}
+                />
+              </div>
+              <Label description="Set to 'none' to remove limit and show all labels for a selected metric.">
+                Series limit
+              </Label>
+              <div>
+                <Input
+                  onChange={this.onChangeSeriesLimit}
+                  aria-label="Limit results from series endpoint"
+                  value={this.state.seriesLimit ?? DEFAULT_SERIES_LIMIT}
+                  data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.seriesLimit}
                 />
               </div>
               <div
