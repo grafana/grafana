@@ -148,7 +148,7 @@ export function getRulePluginOrigin(rule: CombinedRule): RulePluginOrigin | unde
     return undefined;
   }
 
-  const pluginId = match.groups['pluginId'];
+  const pluginId = match.groups.pluginId;
   const pluginInstalled = isPluginInstalled(pluginId);
 
   if (!pluginInstalled) {

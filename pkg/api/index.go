@@ -23,6 +23,9 @@ import (
 )
 
 func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexViewData, error) {
+	c, span := hs.injectSpan(c, "api.setIndexViewData")
+	defer span.End()
+
 	settings, err := hs.getFrontendSettings(c)
 	if err != nil {
 		return nil, err
@@ -215,6 +218,9 @@ func hashUserIdentifier(identifier string, secret string) string {
 }
 
 func (hs *HTTPServer) Index(c *contextmodel.ReqContext) {
+	c, span := hs.injectSpan(c, "api.Index")
+	defer span.End()
+
 	data, err := hs.setIndexViewData(c)
 	if err != nil {
 		c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to get settings", err)

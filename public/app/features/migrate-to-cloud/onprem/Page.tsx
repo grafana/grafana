@@ -23,6 +23,7 @@ import { EmptyState } from './EmptyState/EmptyState';
 import { MigrationSummary } from './MigrationSummary';
 import { ResourcesTable } from './ResourcesTable';
 import { BuildSnapshotCTA, CreatingSnapshotCTA } from './SnapshotCTAs';
+import { SupportedTypesDisclosure } from './SupportedTypesDisclosure';
 
 /**
  * Here's how migrations work:
@@ -231,12 +232,15 @@ export const Page = () => {
         )}
 
         {snapshot.data?.results && snapshot.data.results.length > 0 && (
-          <ResourcesTable
-            resources={snapshot.data.results}
-            onChangePage={setPage}
-            numberOfPages={Math.ceil((snapshot?.data?.stats?.total || 0) / PAGE_SIZE)}
-            page={page}
-          />
+          <Stack gap={4} direction="column">
+            <ResourcesTable
+              resources={snapshot.data.results}
+              onChangePage={setPage}
+              numberOfPages={Math.ceil((snapshot?.data?.stats?.total || 0) / PAGE_SIZE)}
+              page={page}
+            />
+            <SupportedTypesDisclosure />
+          </Stack>
         )}
       </Stack>
 
@@ -347,14 +351,27 @@ function getError(props: GetErrorProps): ErrorDescription | undefined {
   }
 
   const errorCount = snapshot?.stats?.statuses?.['ERROR'] ?? 0;
-  if (snapshot?.status === 'FINISHED' && errorCount > 0) {
+  const warningCount = snapshot?.stats?.statuses?.['WARNING'] ?? 0;
+  if (snapshot?.status === 'FINISHED' && errorCount + warningCount > 0) {
+    let msgBody = '';
+
+    // If there are any errors, that's the most pressing info. If there are no errors but warnings, show the warning text instead.
+    if (errorCount > 0) {
+      msgBody = t(
+        'migrate-to-cloud.onprem.migration-finished-with-errors-body',
+        'The migration has completed, but some items could not be migrated to the cloud stack. Check the failed resources for more details'
+      );
+    } else if (warningCount > 0) {
+      msgBody = t(
+        'migrate-to-cloud.onprem.migration-finished-with-warnings-body',
+        'The migration has completed with some warnings. Check individual resources for more details'
+      );
+    }
+
     return {
       severity: 'warning',
-      title: t('migrate-to-cloud.onprem.some-resources-errored-title', 'Resource migration complete'),
-      body: t(
-        'migrate-to-cloud.onprem.some-resources-errored-body',
-        'The migration has completed, but some items could not be migrated to the cloud stack. Check the failed resources for more details'
-      ),
+      title: t('migrate-to-cloud.onprem.migration-finished-with-caveat-title', 'Resource migration complete'),
+      body: msgBody,
     };
   }
 
