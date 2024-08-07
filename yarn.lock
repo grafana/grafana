@@ -3357,6 +3357,7 @@ __metadata:
     "@types/semver": "npm:7.5.8"
     "@types/uuid": "npm:9.0.8"
     buffer: "npm:6.0.3"
+    css-loader: "npm:7.1.2"
     events: "npm:3.3.0"
     glob: "npm:11.0.0"
     i18next: "npm:^23.0.0"
