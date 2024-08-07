@@ -13,15 +13,14 @@ import {
   trackRulesListViewChange,
   trackRulesSearchComponentInteraction,
   trackRulesSearchInputInteraction,
-} from '../../Analytics';
-import { useRulesFilter } from '../../hooks/useFilteredRules';
-import { useURLSearchParams } from '../../hooks/useURLSearchParams';
-import { useAlertingHomePageExtensions } from '../../plugins/useAlertingHomePageExtensions';
-import { RuleHealth } from '../../search/rulesSearchParser';
-import { alertStateToReadable } from '../../utils/rules';
-import { PopupCard } from '../HoverCard';
-
-import { MultipleDataSourcePicker } from './MultipleDataSourcePicker';
+} from '../../../Analytics';
+import { useRulesFilter } from '../../../hooks/useFilteredRules';
+import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
+import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
+import { RuleHealth } from '../../../search/rulesSearchParser';
+import { alertStateToReadable } from '../../../utils/rules';
+import { PopupCard } from '../../HoverCard';
+import { MultipleDataSourcePicker } from '../MultipleDataSourcePicker';
 
 const ViewOptions: SelectableValue[] = [
   {

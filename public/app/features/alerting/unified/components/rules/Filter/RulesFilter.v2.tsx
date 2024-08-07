@@ -22,12 +22,12 @@ import { PopupCard } from '../../HoverCard';
 import MoreButton from '../../MoreButton';
 
 type RulesFilterProps = {
-  onClear: () => void;
+  onClear?: () => void;
 };
 
 type ActiveTab = 'custom' | 'saved';
 
-export default function RulesFilter({ onClear }: RulesFilterProps) {
+export default function RulesFilter({ onClear = () => {} }: RulesFilterProps) {
   const styles = useStyles2(getStyles);
   const [activeTab, setActiveTab] = useState<ActiveTab>('custom');
 

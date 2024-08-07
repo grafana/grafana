@@ -17,7 +17,7 @@ import { fetchAllPromAndRulerRulesAction } from '../../state/actions';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../../utils/constants';
 import { getAllRulesSourceNames } from '../../utils/datasource';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
-import RulesFilter from '../rules/Filter/RulesFilter.v2';
+import RulesFilter from '../rules/Filter/RulesFilter';
 import { NoRulesSplash } from '../rules/NoRulesCTA';
 import { INSTANCES_DISPLAY_LIMIT } from '../rules/RuleDetails';
 import { RuleListErrors } from '../rules/RuleListErrors';

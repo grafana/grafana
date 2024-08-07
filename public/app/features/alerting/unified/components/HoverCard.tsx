@@ -63,7 +63,7 @@ export const PopupCard = ({
         };
 
         const blurFocusProps = {
-          // onBlur: hidePopper,
+          onBlur: hidePopper,
           onFocus: showPopper,
         };
 
@@ -90,7 +90,7 @@ export const PopupCard = ({
               onBlur: hidePopper,
               tabIndex: 0,
               // make sure we pass the correct interaction handlers here to the element we want to interact with
-              // ...(showOnHover ? onHoverProps : {}),
+              ...(showOnHover ? onHoverProps : {}),
               ...(showOnClick ? onClickProps : {}),
             })}
           </>
