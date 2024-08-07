@@ -74,7 +74,7 @@ func TestQueries(t *testing.T) {
 	// data will actually flow to and from a real database. In this tests we
 	// only care about producing the correct SQL.
 	testCases := map[*template.Template][]*testCase{
-		sqlQueryHistory: {
+		sqlQueryDashboards: {
 			{
 				Name: "history_uid",
 				Data: &sqlQuery{
@@ -107,8 +107,6 @@ func TestQueries(t *testing.T) {
 					},
 				},
 			},
-		},
-		sqlQueryDashboards: {
 			{
 				Name: "dashboard",
 				Data: &sqlQuery{
@@ -155,7 +153,7 @@ func TestQueries(t *testing.T) {
 							got, err := sqltemplate.Execute(tmpl, tc.Data)
 							require.NoError(t, err)
 
-							// = sqltemplate.FormatSQL(got)
+							got = sqltemplate.RemoveEmptyLines(got)
 							if diff := cmp.Diff(expectedQuery, got); diff != "" {
 								writeTestData(filename, got)
 								t.Errorf("%s: %s", tc.Name, diff)

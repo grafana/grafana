@@ -25,7 +25,6 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlQueryHistory    = mustTemplate("query_history.sql")
 	sqlQueryDashboards = mustTemplate("query_dashboards.sql")
 )
 

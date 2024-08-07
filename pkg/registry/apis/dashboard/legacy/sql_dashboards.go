@@ -121,21 +121,17 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 	}
 
 	tmpl := sqlQueryDashboards
-	if query.GetHistory || query.Version > 0 {
-		if query.GetTrash {
-			return nil, fmt.Errorf("trash not included in history table")
-		}
-		tmpl = sqlQueryHistory
+	if query.UseHistoryTable() && query.GetTrash {
+		return nil, fmt.Errorf("trash not included in history table")
 	}
 
 	rawQuery, err := sqltemplate.Execute(tmpl, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", tmpl.Name(), err)
 	}
-
-	fmt.Printf(">>%s [%+v]", rawQuery, req.GetArgs())
-
-	q := sqltemplate.FormatSQL(rawQuery)
+	q := rawQuery
+	// q = sqltemplate.RemoveEmptyLines(rawQuery)
+	// fmt.Printf(">>%s [%+v]", q, req.GetArgs())
 
 	rows, err := a.sess.Query(ctx, q, req.GetArgs()...)
 	if err != nil {
@@ -252,10 +248,12 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	var folder_uid sql.NullString
 	var updated time.Time
 	var updatedBy sql.NullString
+	var updatedByID sql.NullInt64
 	var deleted sql.NullTime
 
 	var created time.Time
 	var createdBy sql.NullString
+	var createdByID sql.NullInt64
 	var message sql.NullString
 
 	var plugin_id string
@@ -267,10 +265,10 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	var version int64
 
 	err := rows.Scan(&orgId, &dashboard_id, &dash.Name, &folder_uid,
-		&created, &createdBy,
-		&updated, &updatedBy,
 		&deleted, &plugin_id,
 		&origin_name, &origin_path, &origin_hash, &origin_ts,
+		&created, &createdBy, &createdByID,
+		&updated, &updatedBy, &updatedByID,
 		&version, &message, &data,
 	)
 
@@ -286,8 +284,8 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 			return nil, err
 		}
 		meta.SetUpdatedTimestamp(&updated)
-		meta.SetCreatedBy(getUserID(createdBy))
-		meta.SetUpdatedBy(getUserID(updatedBy))
+		meta.SetCreatedBy(getUserID(createdBy, createdByID))
+		meta.SetUpdatedBy(getUserID(updatedBy, updatedByID))
 
 		if deleted.Valid {
 			meta.SetDeletionTimestamp(ptr.To(metav1.NewTime(deleted.Time)))
@@ -338,11 +336,14 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	return row, err
 }
 
-func getUserID(v sql.NullString) string {
-	if v.String == "" {
+func getUserID(v sql.NullString, id sql.NullInt64) string {
+	if v.Valid && v.String != "" {
+		return identity.NewTypedIDString(identity.TypeUser, v.String).String()
+	}
+	if id.Valid && id.Int64 == -1 {
 		return identity.NewTypedIDString(identity.TypeProvisioning, "").String()
 	}
-	return identity.NewTypedIDString(identity.TypeUser, v.String).String()
+	return ""
 }
 
 // DeleteDashboard implements DashboardAccess.

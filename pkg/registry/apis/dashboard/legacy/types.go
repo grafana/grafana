@@ -29,6 +29,10 @@ type DashboardQuery struct {
 	Labels []*resource.Requirement
 }
 
+func (r *DashboardQuery) UseHistoryTable() bool {
+	return r.GetHistory || r.Version > 0
+}
+
 type DashboardAccess interface {
 	resource.StorageBackend
 	resource.ResourceIndexServer
