@@ -18,6 +18,8 @@ import {
   RuleIdentifier,
   RuleNamespace,
   RuleWithLocation,
+  RulesSource,
+  EditableRuleIdentifier,
 } from 'app/types/unified-alerting';
 import {
   GrafanaAlertState,
@@ -36,7 +38,7 @@ import {
 import { CombinedRuleNamespace } from '../../../../types/unified-alerting';
 import { State } from '../components/StateTag';
 import { RuleHealth } from '../search/rulesSearchParser';
-import { RuleFormType } from '../types/rule-form';
+import { RuleFormType, RuleFormValues } from '../types/rule-form';
 
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
 import { getRulesSourceName, isGrafanaRulesSource } from './datasource';
@@ -113,6 +115,10 @@ export function isPromRuleType(ruleType: string): ruleType is PromRuleType {
 
 export function isPrometheusRuleIdentifier(identifier: RuleIdentifier): identifier is PrometheusRuleIdentifier {
   return 'ruleHash' in identifier;
+}
+
+export function isEditableRuleIdentifier(identifier: RuleIdentifier): identifier is EditableRuleIdentifier {
+  return isGrafanaRuleIdentifier(identifier) || isCloudRuleIdentifier(identifier);
 }
 
 export function getRuleHealth(health: string): RuleHealth | undefined {
@@ -348,6 +354,26 @@ export function getRuleGroupLocationFromRuleWithLocation(rule: RuleWithLocation)
     namespaceName,
     groupName,
   };
+}
+
+export function getRuleGroupLocationFromFormValues(values: RuleFormValues): RuleGroupIdentifier {
+  const dataSourceName = values.dataSourceName;
+  const namespaceName = values.folder?.uid ?? values.namespace;
+  const groupName = values.group;
+
+  if (!dataSourceName) {
+    throw new Error('no datasource name in form values');
+  }
+
+  return {
+    dataSourceName,
+    namespaceName,
+    groupName,
+  };
+}
+
+export function rulesSourceToDataSourceName(rulesSource: RulesSource): string {
+  return isGrafanaRulesSource(rulesSource) ? rulesSource : rulesSource.name;
 }
 
 export function isGrafanaAlertingRuleByType(type?: RuleFormType) {

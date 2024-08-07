@@ -22,6 +22,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
+import { GRAFANA_RULER_CONFIG } from '../api/featureDiscoveryApi';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import {
   getAllRulesSources,
@@ -38,7 +39,6 @@ import {
   isRecordingRulerRule,
 } from '../utils/rules';
 
-import { grafanaRulerConfig } from './useCombinedRule';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
 export interface CacheValue {
@@ -499,7 +499,7 @@ export function useCombinedRules(
     error: rulerRulesError,
   } = alertRuleApi.endpoints.rulerRules.useQuery(
     {
-      rulerConfig: grafanaRulerConfig,
+      rulerConfig: GRAFANA_RULER_CONFIG,
       filter: { dashboardUID: dashboardUID ?? undefined, panelId },
     },
     {
