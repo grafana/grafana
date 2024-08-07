@@ -7,9 +7,9 @@ import { initReactI18next } from 'react-i18next';
 
 import getEnvConfig from '../../scripts/webpack/env-util';
 
-const config = getEnvConfig() as Record<string, string>;
-
 import { matchers } from './matchers';
+
+const config = getEnvConfig() as Record<string, string | boolean>;
 
 if (config.frontend_dev_fail_tests_on_console || process.env.CI) {
   failOnConsole({
