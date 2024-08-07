@@ -148,7 +148,7 @@
     "@types/uuid": "9.0.8",
     "@types/webpack-assets-manifest": "^5",
     "@types/webpack-env": "^1.18.4",
-    "@types/yargs": "17.0.32",
+    "@types/yargs": "17.0.33",
     "@typescript-eslint/eslint-plugin": "6.21.0",
     "@typescript-eslint/parser": "6.21.0",
     "autoprefixer": "10.4.20",

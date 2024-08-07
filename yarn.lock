@@ -9740,12 +9740,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/yargs@npm:17.0.32, @types/yargs@npm:^17.0.8":
-  version: 17.0.32
-  resolution: "@types/yargs@npm:17.0.32"
+"@types/yargs@npm:17.0.33, @types/yargs@npm:^17.0.8":
+  version: 17.0.33
+  resolution: "@types/yargs@npm:17.0.33"
   dependencies:
     "@types/yargs-parser": "npm:*"
-  checksum: 10/1e2b2673847011ce43607df690d392f137d95a2d6ea85aa319403eadda2ef4277365efd4982354d8843f2611ef3846c88599660aaeb537fa9ccddae83c2a89de
+  checksum: 10/16f6681bf4d99fb671bf56029141ed01db2862e3db9df7fc92d8bea494359ac96a1b4b1c35a836d1e95e665fb18ad753ab2015fc0db663454e8fd4e5d5e2ef91
   languageName: node
   linkType: hard
 
@@ -17603,7 +17603,7 @@ __metadata:
     "@types/uuid": "npm:9.0.8"
     "@types/webpack-assets-manifest": "npm:^5"
     "@types/webpack-env": "npm:^1.18.4"
-    "@types/yargs": "npm:17.0.32"
+    "@types/yargs": "npm:17.0.33"
     "@typescript-eslint/eslint-plugin": "npm:6.21.0"
     "@typescript-eslint/parser": "npm:6.21.0"
     "@visx/event": "npm:3.3.0"
