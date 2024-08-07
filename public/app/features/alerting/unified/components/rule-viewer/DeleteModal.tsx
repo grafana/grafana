@@ -13,7 +13,7 @@ type DeleteModalHook = [JSX.Element, (rule: CombinedRule) => void, () => void];
 
 export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule | undefined>();
-  const [_deleteState, deleteRuleFromGroup] = useDeleteRuleFromGroup();
+  const [deleteRuleFromGroup] = useDeleteRuleFromGroup();
 
   const dismissModal = useCallback(() => {
     setRuleToDelete(undefined);
