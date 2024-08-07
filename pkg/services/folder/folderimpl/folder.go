@@ -570,9 +570,11 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 
 	if cmd.ParentUID == "" {
 		evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)
+		newEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersCreate,
+			dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
+		evaluator = accesscontrol.EvalAny(evaluator, newEvaluator)
 		if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-			evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate,
-				dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
+			evaluator = newEvaluator
 		}
 
 		hasAccess, evalErr := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator)
