@@ -52,14 +52,15 @@ const VisualizationDisplay = (props: CanvasElementProps<VizElementConfig, VizEle
       panelToEmbed.setColor({ mode: 'palette-classic' });
       const panel = panelToEmbed.build();
 
-      // const timeRange = new SceneTimeRange({
-      //   from: context.timeRange.from,
-      //   to: context.timeRange.to,
-      // });
+      const timeRange = data?.data?.timeRange;
+      const sceneTimeRange = new SceneTimeRange({
+        from: timeRange?.raw.from.toString(),
+        to: timeRange?.raw.to.toString(),
+      });
 
       return new EmbeddedScene({
+        $timeRange: sceneTimeRange,
         key: CANVAS_EMBEDDED_SCENE_KEY,
-        // $timeRange: context.timeRange,
         body: new SceneFlexLayout({
           children: [
             new SceneFlexItem({

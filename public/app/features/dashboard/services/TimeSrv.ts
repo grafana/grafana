@@ -345,12 +345,11 @@ export class TimeSrv {
   timeRange(): TimeRange {
     // Scenes can set this global object to the current time range.
     // This is a patch to support data sources that rely on TimeSrv.getTimeRange()
-    console.log('window.__grafanaSceneContext', window.__grafanaSceneContext);
-
     if (
       window.__grafanaSceneContext &&
       window.__grafanaSceneContext.isActive &&
-      window.__grafanaSceneContext.key !== CANVAS_EMBEDDED_SCENE_KEY
+      // Canvas is using EmbdeddedScene but we don't want to modify dashboard core's time range
+      window.__grafanaSceneContext.state.key !== CANVAS_EMBEDDED_SCENE_KEY
     ) {
       return sceneGraph.getTimeRange(window.__grafanaSceneContext).state.value;
     }
