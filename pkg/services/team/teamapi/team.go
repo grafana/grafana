@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/sortopts"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
 // swagger:route POST /teams teams createTeam
@@ -136,8 +137,66 @@ func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Respons
 	return response.Success("Team deleted")
 }
 
-// swagger:route GET /teams/search teams searchTeams
+// swagger:route GET /teams/searchzanzana teams searchTeamsZanzana
 //
+// Team Search With Paging.
+//
+// Responses:
+// 200: searchTeamsResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (tapi *TeamAPI) searchTeamsZanzana(c *contextmodel.ReqContext) response.Response {
+	// Determine the search strategy
+	searchStrategy := c.Query("strategy")
+	if searchStrategy == "" {
+		searchStrategy = "option1" // Default strategy
+	}
+
+	switch searchStrategy {
+	case "option1":
+		return tapi.searchThenCheck(c)
+	// case "option2":
+	// 	return tapi.buildIndexAndSearch(c)
+	// case "option3":
+	// 	return tapi.listIDsThenSearch(c)
+	default:
+		return response.Error(http.StatusBadRequest, "Invalid search strategy", nil)
+	}
+}
+
+// Option 1: Search, Then Check
+func (tapi *TeamAPI) searchThenCheck(c *contextmodel.ReqContext) response.Response {
+	// Perform the database search prefiltering
+	queryResult, err := tapi.teamService.SearchTeams(c.Req.Context(), &team.SearchTeamsQuery{
+		OrgID: c.SignedInUser.GetOrgID(),
+		Query: c.Query("query"),
+		Name:  c.Query("name"),
+		Limit: 100,
+	})
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to search Teams", err)
+	}
+
+	// Check permissions in parallel
+	filteredTeams := []*team.TeamDTO{}
+	for _, team := range queryResult.Teams {
+		checkResp, err := tapi.zanzanaClient.Check(c.Req.Context(), &openfgav1.CheckRequest{
+			TupleKey: &openfgav1.CheckRequestTupleKey{
+				Object:   "teams:" + strconv.FormatInt(team.ID, 10),
+				Relation: "view",
+				User:     strconv.FormatInt(c.SignedInUser.UserID, 10),
+			},
+		})
+		if err == nil && checkResp.Allowed {
+			filteredTeams = append(filteredTeams, team)
+		}
+	}
+
+	queryResult.Teams = filteredTeams
+	return response.JSON(http.StatusOK, queryResult)
+}
+
 // Team Search With Paging.
 //
 // Responses:

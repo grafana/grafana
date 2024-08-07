@@ -65,6 +65,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 	default:
 		return nil, fmt.Errorf("unsupported zanzana mode: %s", cfg.Zanzana.Mode)
 	}
+	logger.Info("Initialized zanzana client")
 
 	return client, nil
 }
