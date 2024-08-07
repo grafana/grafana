@@ -60,6 +60,7 @@ func NewCache(cfg *setting.Cfg, reg prometheus.Registerer, provider grpcserver.P
 		mlist:    memberlistsvc,
 		logger:   logger,
 		provider: provider,
+		metrics:  newMetrics(reg),
 		// FIXME: remove instances that has left
 		backends: make(map[string]Backend),
 	}
@@ -78,10 +79,11 @@ type Cache struct {
 
 	mux *http.ServeMux
 
-	kv    kv.Client
-	lfc   *ring.BasicLifecycler
-	ring  *ring.Ring
-	mlist *memberlist.KVInitService
+	kv      kv.Client
+	lfc     *ring.BasicLifecycler
+	ring    *ring.Ring
+	mlist   *memberlist.KVInitService
+	metrics *metrics
 
 	backendsRW sync.RWMutex
 	backends   map[string]Backend
@@ -137,7 +139,6 @@ func (c *Cache) Delete(ctx context.Context, key string) error {
 }
 
 func (c *Cache) DispatchGet(ctx context.Context, r *GetRequest) (*GetResponse, error) {
-	c.logger.Info("Dispatched get", "key", r.GetKey())
 	value, err := c.Get(ctx, r.GetKey())
 	if err != nil {
 		if errors.Is(err, common.ErrCacheItemNotFound) {
@@ -188,6 +189,8 @@ func (c *Cache) getBackend(key string, op ring.Operation) (Backend, error) {
 	}
 
 	inst := set.Instances[0]
+
+	c.metrics.cacheUsage.WithLabelValues(inst.GetId()).Inc()
 
 	c.backendsRW.RLock()
 	cached, ok := c.backends[inst.GetId()]
