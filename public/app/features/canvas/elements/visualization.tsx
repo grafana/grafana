@@ -17,6 +17,7 @@ import { frameHasName, useFieldDisplayNames, useSelectOptions } from '@grafana/u
 import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
+import { ParamsEditor } from 'app/plugins/panel/canvas/editor/element/ParamsEditor';
 
 import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultTextColor } from '../element';
 import { Align, VAlign, VizElementConfig, VizElementData } from '../types';
@@ -40,6 +41,7 @@ const VisualizationDisplay = (props: CanvasElementProps<VizElementConfig, VizEle
   const styles = getStyles(config.theme2, data, scene);
 
   const vizType = (data?.vizType ?? 'timeseries') as keyof typeof PanelBuilders;
+  const customOptions = data?.customOptions;
   const panelTitle = data?.text ?? '';
 
   // TODO: only re-init this when data has different schema (not on each data change)
@@ -48,6 +50,13 @@ const VisualizationDisplay = (props: CanvasElementProps<VizElementConfig, VizEle
     () => {
       // TODO make this better
       let panelToEmbed = PanelBuilders[vizType]().setTitle(panelTitle);
+      if (customOptions) {
+        customOptions.map((value) => {
+          // Trying both for now to keep it generic and easy to customize
+          panelToEmbed.setOption(value[0], value[1]);
+          panelToEmbed.setCustomFieldConfig(value[0], value[1]);
+        });
+      }
 
       panelToEmbed.setData(new SceneDataNode({ data: data?.data }));
       panelToEmbed.setDisplayMode('transparent');
@@ -168,6 +177,7 @@ export const visualizationItem: CanvasElementItem<VizElementConfig, VizElementDa
       valign: vizConfig?.valign ?? VAlign.Middle,
       size: vizConfig?.size,
       vizType: vizConfig?.vizType,
+      customOptions: vizConfig?.customOptions,
       data: panelData,
     };
 
@@ -204,6 +214,13 @@ export const visualizationItem: CanvasElementItem<VizElementConfig, VizElementDa
         path: 'config.text',
         name: 'Panel Title',
         editor: TextDimensionEditor,
+      })
+      .addCustomEditor({
+        category,
+        id: 'customOptionsEditor',
+        path: 'config.customOptions',
+        name: 'Custom Options',
+        editor: OptionsEditor,
       });
   },
 };
@@ -234,4 +251,12 @@ export const FieldsPickerEditor = ({ value, context, onChange: onChangeFromProps
   );
 
   return <MultiSelect value={value} options={selectOptions} onChange={onChange} />;
+};
+
+interface OptionsEditorProps {
+  value: Array<[string, string]>;
+  onChange: (v: Array<[string, string]>) => void;
+}
+export const OptionsEditor = ({ value, onChange }: OptionsEditorProps) => {
+  return <ParamsEditor value={value ?? []} onChange={onChange} />;
 };
