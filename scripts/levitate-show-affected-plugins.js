@@ -5,6 +5,7 @@
  */
 
 const { execSync } = require('child_process');
+const fs = require('fs');
 
 /**
  * Extracts the package name from a given location string.
@@ -13,10 +14,16 @@ const { execSync } = require('child_process');
  * @returns {string} - The extracted package name, or an empty string if no match is found.
  */
 function getPackage(location) {
-  const match = location.match(/\/(grafana-[^/]+)\/dist/);
+  const match = location.match(/(.+\/)dist\//);
   if (match) {
-    const packageName = match[1];
-    return `@${packageName.replace('-', '/')}`;
+    const packageJsonPath = match[1] + 'package.json';
+    const data = fs.readFileSync(packageJsonPath, 'utf8');
+
+    if (!data) {
+      return '';
+    }
+
+    return JSON.parse(data)?.name || '';
   }
   return '';
 }
