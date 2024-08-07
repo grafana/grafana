@@ -80,7 +80,7 @@
     "@grafana/plugin-e2e": "1.6.1",
     "@grafana/tsconfig": "^1.3.0-rc1",
     "@manypkg/get-packages": "^2.2.0",
-    "@playwright/test": "1.45.3",
+    "@playwright/test": "1.46.0",
     "@pmmmwh/react-refresh-webpack-plugin": "0.5.15",
     "@react-types/button": "3.9.6",
     "@react-types/menu": "3.9.11",
