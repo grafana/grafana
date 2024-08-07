@@ -16,9 +16,9 @@ export function ProgressBar({ stepsDone, totalStepsToDo }: { stepsDone: number; 
 }
 export function StepsStatus({ stepsDone, totalStepsToDo }: { stepsDone: number; totalStepsToDo: number }) {
   return (
-    <div>
+    <span>
       <Text color="success">{stepsDone}</Text> of {totalStepsToDo}
-    </div>
+    </span>
   );
 }
 

@@ -325,6 +325,7 @@
     },
     "save": "Save"
   },
+  "complete": "complete",
   "connections": {
     "connect-data": {
       "category-header-label": "Data sources",
