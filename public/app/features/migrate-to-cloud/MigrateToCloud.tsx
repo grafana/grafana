@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { Alert } from '@grafana/ui';
+import { Alert, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { Trans, t } from '../../core/internationalization';
@@ -25,14 +25,12 @@ export default function MigrateToCloud() {
       >
         <Trans i18nKey="migrate-to-cloud.public-preview.message">
           No SLAs are available yet.{' '}
-          <a
+          <TextLink
             href="https://grafana.com/docs/grafana-cloud/account-management/migration-guide/#grafana-cloud-migration-assistant"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="external-link"
+            external
           >
             Visit our docs
-          </a>{' '}
+          </TextLink>{' '}
           to learn more about this feature!
         </Trans>
       </Alert>
