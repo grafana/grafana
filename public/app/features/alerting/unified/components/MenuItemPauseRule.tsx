@@ -25,7 +25,7 @@ interface Props {
  */
 const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
   const notifyApp = useAppNotification();
-  const [updateState, pauseRule] = usePauseRuleInGroup();
+  const [pauseRule, updateState] = usePauseRuleInGroup();
 
   const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
   const icon = isPaused ? 'play' : 'pause';
