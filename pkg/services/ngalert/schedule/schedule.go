@@ -49,7 +49,7 @@ type RulesStore interface {
 }
 
 type RecordingWriter interface {
-	Write(ctx context.Context, name string, t time.Time, frames data.Frames, extraLabels map[string]string) error
+	Write(ctx context.Context, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error
 }
 
 type schedule struct {
@@ -309,7 +309,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		}
 
 		if isReadyToRun {
-			logger.Debug("Rule is ready to run on the current tick", "tick", tickNum, "frequency", itemFrequency, "offset", offset)
+			logger.Debug("Rule is ready to run on the current tick", "tick", tick, "frequency", itemFrequency, "offset", offset)
 			readyToRun = append(readyToRun, readyToRunItem{ruleRoutine: ruleRoutine, Evaluation: Evaluation{
 				scheduledAt: tick,
 				rule:        item,
@@ -358,7 +358,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 				return
 			}
 			if dropped != nil {
-				sch.log.Warn("Tick dropped because alert rule evaluation is too slow", append(key.LogContext(), "time", tick)...)
+				sch.log.Warn("Tick dropped because alert rule evaluation is too slow", append(key.LogContext(), "time", tick, "droppedTick", dropped.scheduledAt)...)
 				orgID := fmt.Sprint(key.OrgID)
 				sch.metrics.EvaluationMissed.WithLabelValues(orgID, item.rule.Title).Inc()
 			}
