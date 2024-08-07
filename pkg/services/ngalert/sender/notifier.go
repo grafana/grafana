@@ -540,7 +540,7 @@ func postPath(pre string, v config.AlertmanagerAPIVersion) string {
 // AlertmanagerFromGroup extracts a list of alertmanagers from a target group
 // and an associated AlertmanagerConfig.
 func AlertmanagerFromGroup(tg *targetgroup.Group, cfg *config.AlertmanagerConfig) ([]alertmanager, []alertmanager, error) {
-	var res []alertmanager
+	res := make([]alertmanager, 0, len(tg.Targets))
 	var droppedAlertManagers []alertmanager
 
 	for _, tlset := range tg.Targets {

@@ -866,7 +866,7 @@ func (statement *Statement) genUniqueSQL() []string {
 }
 
 func (statement *Statement) genDelIndexSQL() []string {
-	var sqls []string
+	sqls := make([]string, 0, len(statement.RefTable.Indexes))
 	tbName := statement.TableName()
 	idxPrefixName := strings.Replace(tbName, `"`, "", -1)
 	idxPrefixName = strings.Replace(idxPrefixName, `.`, "_", -1)
