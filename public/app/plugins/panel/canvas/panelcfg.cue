@@ -48,9 +48,10 @@ composableKinds: PanelCfg: {
 
 				BackgroundImageSize: "original" | "contain" | "cover" | "fill" | "tile" @cuetsy(kind="enum", memberNames="Original|Contain|Cover|Fill|Tile")
 				BackgroundConfig: {
-					color?: ui.ColorDimensionConfig
-					image?: ui.ResourceDimensionConfig
-					size?:  BackgroundImageSize
+					color?:   ui.ColorDimensionConfig
+					image?:   ui.ResourceDimensionConfig
+					size?:    BackgroundImageSize
+					opacity?: float64
 				} @cuetsy(kind="interface")
 
 				LineConfig: {

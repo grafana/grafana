@@ -47,6 +47,23 @@ export const optionBuilder: OptionSuppliers = {
           fixed: '',
         },
       })
+      .addSliderInput({
+        category,
+        path: 'background.opacity',
+        name: 'Opacity',
+        defaultValue: 1,
+        settings: {
+          min: 0,
+          max: 1,
+          step: 0.1,
+        },
+        showIf: () => {
+          if (context.options?.background?.color?.field) {
+            return true;
+          }
+          return false;
+        },
+      })
       .addCustomEditor({
         category,
         id: 'background.image',
