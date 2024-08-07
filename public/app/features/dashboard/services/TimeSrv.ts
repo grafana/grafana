@@ -20,6 +20,7 @@ import appEvents from 'app/core/app_events';
 import { config } from 'app/core/config';
 import { AutoRefreshInterval, contextSrv, ContextSrv } from 'app/core/services/context_srv';
 import { getCopiedTimeRange, getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
+import { CANVAS_EMBEDDED_SCENE_KEY } from 'app/features/canvas/elements/visualization';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
 import {
@@ -344,7 +345,12 @@ export class TimeSrv {
   timeRange(): TimeRange {
     // Scenes can set this global object to the current time range.
     // This is a patch to support data sources that rely on TimeSrv.getTimeRange()
-    if (window.__grafanaSceneContext && window.__grafanaSceneContext.isActive) {
+    if (
+      window.__grafanaSceneContext &&
+      window.__grafanaSceneContext.isActive &&
+      // Canvas is using EmbdeddedScene but we don't want to modify dashboard core's time range
+      window.__grafanaSceneContext.state.key !== CANVAS_EMBEDDED_SCENE_KEY
+    ) {
       return sceneGraph.getTimeRange(window.__grafanaSceneContext).state.value;
     }
 
