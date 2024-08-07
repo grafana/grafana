@@ -2,14 +2,15 @@
 import { useWindowVirtualizer, Virtualizer, VirtualItem } from '@tanstack/react-virtual';
 import { ReactNode, useCallback, useEffect, useReducer, useRef } from 'react';
 
-import { Text, Stack, Icon, IconButton } from '@grafana/ui';
+import { Text, Stack, Icon, IconButton, Spinner } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
-import { NewBrowseItem, useNewAPIBlahBlah } from './new-api/useBlahBlah';
+import { useNewAPIBlahBlah } from './new-api/useBlahBlah';
+import { NewBrowseItem, OpenFolders } from './newTypes';
 
 interface NewBrowseDashboardsPageProps {}
 
-function folderStateReducer(state: Record<string, boolean>, action: { isOpen: boolean; uid: string }) {
+function folderStateReducer(state: OpenFolders, action: { isOpen: boolean; uid: string }) {
   return {
     ...state,
     [action.uid]: action.isOpen,
@@ -21,7 +22,7 @@ export default function NewBrowseDashboardsPage(props: NewBrowseDashboardsPagePr
 
   /*
     TODO: here's how we load stuff properly:
-     - Give openFolders to the API hook.
+     - Give openFolders to the API hook. ✔️
      - API hook should return placeholder items for incomplete folders (including root)
      - The item loader hook should:
        - Find the first placeholder in the virtual items
@@ -29,7 +30,7 @@ export default function NewBrowseDashboardsPage(props: NewBrowseDashboardsPagePr
        - Give that parentUID to requestNextPage to load more of that folder
   */
 
-  const { items: allRows, isLoading, hasNextPage, requestNextPage } = useNewAPIBlahBlah();
+  const { items: allRows, isLoading, hasNextPage, requestNextPage } = useNewAPIBlahBlah(openFolders);
 
   const listRef = useRef<HTMLDivElement | null>(null);
   const virtualizer = useWindowVirtualizer({
@@ -76,6 +77,14 @@ export default function NewBrowseDashboardsPage(props: NewBrowseDashboardsPagePr
               return (
                 <VirtualRow key={item.key} virtualItem={item} virtualizer={virtualizer}>
                   Fake loading row...
+                </VirtualRow>
+              );
+            }
+
+            if (browseItem.type === 'loading-placeholder') {
+              return (
+                <VirtualRow key={item.key} virtualItem={item} virtualizer={virtualizer}>
+                  Loading placeholder...
                 </VirtualRow>
               );
             }
