@@ -1,11 +1,9 @@
-import { render } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
+import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { Button } from '@grafana/ui';
 
-import { TestProvider } from '../../../../../../test/helpers/TestProvider';
 import { RouteWithID } from '../../../../../plugins/datasource/alertmanager/types';
 import * as grafanaApp from '../../components/receivers/grafanaAppReceivers/grafanaApp';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
@@ -44,10 +42,8 @@ describe('EditNotificationPolicyForm', function () {
     });
 
     it('should allow submitting valid prometheus duration strings', async function () {
-      const user = userEvent.setup();
-
       const onSubmit = jest.fn();
-      renderRouteForm(
+      const { user } = renderRouteForm(
         {
           id: '1',
           receiver: 'default',
@@ -77,10 +73,8 @@ describe('EditNotificationPolicyForm', function () {
   });
 
   it('should show an error if repeat interval is lower than group interval', async function () {
-    const user = userEvent.setup();
-
     const onSubmit = jest.fn();
-    renderRouteForm(
+    const { user } = renderRouteForm(
       {
         id: '1',
         receiver: 'default',
@@ -103,10 +97,8 @@ describe('EditNotificationPolicyForm', function () {
   });
 
   it('should allow resetting existing timing options', async function () {
-    const user = userEvent.setup();
-
     const onSubmit = jest.fn();
-    renderRouteForm(
+    const { user } = renderRouteForm(
       {
         id: '0',
         receiver: 'default',
@@ -141,7 +133,7 @@ function renderRouteForm(
   receivers: AmRouteReceiver[] = [],
   onSubmit: (route: Partial<FormAmRoute>) => void = noop
 ) {
-  render(
+  return render(
     <AlertmanagerProvider accessType="instance">
       <AmRoutesExpandedForm
         actionButtons={<Button type="submit">Update default policy</Button>}
@@ -149,7 +141,6 @@ function renderRouteForm(
         receivers={receivers}
         route={route}
       />
-    </AlertmanagerProvider>,
-    { wrapper: TestProvider }
+    </AlertmanagerProvider>
   );
 }
