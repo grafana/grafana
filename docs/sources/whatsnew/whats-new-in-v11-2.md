@@ -26,11 +26,17 @@ For even more detail about all the changes in this release, refer to the [change
 
 ## Dashboards and visualizations
 
-### Data link improvements in canvas visualizations
+### Improvements in canvas visualizations
 
 <!-- Adela Almasan, Nathan Marrs, #grafana-dataviz -->
 
 _Generally available in all editions of Grafana_
+
+### Standardized tooltips
+
+As a continuation of our efforts to standardize tooltips across visualizations, we've updated canvas visualization tooltips to be supported for all elements tied to data. Besides the element name and data, the tooltip now also displays the timestamp. This is a step forward from the previous implementation where tooltips were shown only if data links were configured.
+
+### Data link improvements
 
 We've updated canvas visualizations so that you can add data links to canvas elements without using an override. The **Selected element** configuration now includes a **Data links** section where you can add data links to elements using the same steps as in other visualizations.
 
@@ -43,6 +49,36 @@ As part of this improvement, we've also added the ability to control the order i
 In future releases, we'll add one-click functionality to data links in other Grafana visualizations.
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#data-links)
+
+### Transformation updates
+
+<!-- Nathan Marrs; #grafana-dataviz -->
+
+_Generally available in all editions of Grafana_
+
+We've made a number of exciting updates to transformations!
+
+**You can now use variables in some transformations**
+
+Template variables are now supported for the **Limit**, **Sort by**, **Filter data by values**, **Heatmap**, and **Histogram** transformations. This enables dynamic transformation configurations based on panel data and dashboard variables.
+
+**Group to nested tables is now generally available**
+
+We're excited to announce that the **Group to nested tables** transformation is now generally available! Easily group your table data by specified fields and perform calculations on each group. With this transformation, you can enhance the depth and utility of your table visualizations.
+
+See [the documentation for more information](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#group-to-nested-tables).
+
+{{< video-embed src="/media/docs/grafana/screen-recording-10-4-table-group-to-nested-table-transformation.mp4" caption="Group to nested tables transformation" >}}
+
+**Format string is now generally available**
+
+The **Format string** transformation is now generally available! Use this transformation to customize the output of a string field. From formatting your string data to upper, lower, title case, and more, this transformation provides a convenient way to standardize and tailor the presentation of string data for better visualization and analysis. See [the documentation for more information](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#format-string).
+
+**New cumulative and window calculations available in Add field from calculation**
+
+The **Add field from calculation** transformation now supports both cumulative and window calculations. The cumulative function calculates on the current row and all preceding rows. You can calculate the total or the mean of your data up to and including the current row. With the window function you can calculate the mean, standard deviation, or variance on a specified set (window) of your data. The window can either be trailing or centered. With a trailing window the current row will be the last row in the window. With a centered window the window will be centered on the current row.
+
+See [the documentation for more information](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation).
 
 ## Alerting
 
@@ -123,3 +159,13 @@ With Grafana 11.2, we offer a mechanism for setting up an application as a Servi
 Please refer to our documentation on how to set up an Azure AD registered application for this setup.
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/#configure-a-graph-api-application-in-azure-ad)
+
+### API support for LDAP configuration
+
+<!-- #proj-grafana-sso-config -->
+
+_Available in public preview all editions of Grafana_
+
+[The SSO settings API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/sso-settings/) has been updated to include support for LDAP settings. This feature is experimental behind the feature flag **ssoSettingsLDAP**.
+
+You will soon be able to configure LDAP from the UI and Terraform.
