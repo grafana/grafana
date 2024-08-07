@@ -1,8 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+/**
+ * A state for the "sidecar" feature which allows to open a second app so 2 apps can be rendered in the same time. At
+ * this moment what is rendered in a sidecar is controlled fully in this state and there is no URL support for now.
+ */
 type AppSidecarState = {
-  // Right now this only supports opening second app in a context of memory router so we have to explicitly say
-  // what to open. Later this would make sense to get from the URL
   appId: string | undefined;
 };
 

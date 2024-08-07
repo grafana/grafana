@@ -162,6 +162,12 @@ function RouterTree(props: { routes?: JSX.Element | false }) {
   );
 }
 
+/**
+ * Renders both the main app tree and a secondary sidecar app tree to show 2 apps at the same time in a resizable split
+ * view.
+ * @param props
+ * @constructor
+ */
 function ExperimentalSplitPaneTree(props: { routes?: JSX.Element | false }) {
   const appId = useSelector((state) => state.appSidecar.appId);
   const dispatch = useDispatch();

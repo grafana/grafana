@@ -35,6 +35,9 @@ export function createUsePluginExtensions(extensionsRegistry: ReactivePluginExte
         registry,
         ...sidecarHelpers,
       });
+      // Doing the deps like this instead of just `option` because there is low chance users will also memoize the
+      // options object. This way we don't have to count on it and just check the simple values.
+      // The context though still has to be memoized though and not mutated.
     }, [options.extensionPointId, options.context, options.limitPerPlugin, registry, sidecarHelpers]);
 
     return {

@@ -119,7 +119,9 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
   context?: Readonly<Context>;
   // Opens a modal dialog and renders the provided React component inside it
   openModal: (options: PluginExtensionOpenModalOptions) => void;
+  // Open an app in a sidecar meaning both main app and this app will be opened at the same time.
   openApp: (context?: unknown) => void;
+  // Close this app if it's opened.
   closeApp: () => void;
 } & PluginExtensionHelpers;
 
