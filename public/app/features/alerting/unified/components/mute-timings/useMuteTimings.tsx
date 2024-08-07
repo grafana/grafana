@@ -140,13 +140,15 @@ export const useMuteTimings = ({ alertmanager }: BaseAlertmanagerArgs) => {
  *
  * Otherwise, creates the new timing in `time_intervals` via AM config API
  */
+type CreateMuteTimingArgs = { interval: MuteTimeInterval };
+
 export const useCreateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
   const useK8sApi = shouldUseK8sApi(alertmanager);
 
   const [createGrafanaTimeInterval] = useCreateNamespacedTimeIntervalMutation();
   const [updateConfiguration] = useProduceNewAlertmanagerConfiguration();
 
-  const addToK8sAPI = useAsync((interval: MuteTimeInterval) => {
+  const addToK8sAPI = useAsync(({ interval }: CreateMuteTimingArgs) => {
     const namespace = getK8sNamespace();
 
     return createGrafanaTimeInterval({
@@ -155,7 +157,7 @@ export const useCreateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
     }).unwrap();
   });
 
-  const addToAlertmanagerConfiguration = useAsync((interval: MuteTimeInterval) => {
+  const addToAlertmanagerConfiguration = useAsync(({ interval }: CreateMuteTimingArgs) => {
     const action = addMuteTimingAction({ interval });
     return updateConfiguration(action);
   });
@@ -257,18 +259,19 @@ export const useUpdateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
 /**
  * Delete a mute timing interval
  */
+type DeleteMuteTimingArgs = { name: string };
 export const useDeleteMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
   const useK8sApi = shouldUseK8sApi(alertmanager);
 
   const [updateConfiguration, _updateConfigurationRequestState] = useProduceNewAlertmanagerConfiguration();
   const [deleteGrafanaTimeInterval] = useDeleteNamespacedTimeIntervalMutation();
 
-  const deleteFromAlertmangerAPI = useAsync(async (name: string) => {
+  const deleteFromAlertmanagerAPI = useAsync(async ({ name }: DeleteMuteTimingArgs) => {
     const action = deleteMuteTimingAction({ name });
     return updateConfiguration(action);
   });
 
-  const deleteFromK8sAPI = useAsync(async (name: string) => {
+  const deleteFromK8sAPI = useAsync(async ({ name }: DeleteMuteTimingArgs) => {
     const namespace = getK8sNamespace();
     await deleteGrafanaTimeInterval({
       name,
@@ -277,7 +280,7 @@ export const useDeleteMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
     }).unwrap();
   });
 
-  return useK8sApi ? deleteFromK8sAPI : deleteFromAlertmangerAPI;
+  return useK8sApi ? deleteFromK8sAPI : deleteFromAlertmanagerAPI;
 };
 
 export const useValidateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {

@@ -87,7 +87,7 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provisioned, editMode 
       if (editMode) {
         return updateTimeInterval.execute({ interval, originalName: muteTiming?.metadata?.name || muteTiming!.name });
       }
-      return createTimeInterval.execute(interval);
+      return createTimeInterval.execute({ interval });
     };
 
     return updateOrCreate().then(() => {

@@ -88,7 +88,9 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
         body={`Are you sure you would like to delete "${muteTiming.name}"?`}
         confirmText={t('alerting.common.delete', 'Delete')}
         onConfirm={async () => {
-          await deleteMuteTiming.execute(muteTiming?.metadata?.name || muteTiming.name);
+          await deleteMuteTiming.execute({
+            name: muteTiming?.metadata?.name ?? muteTiming.name,
+          });
 
           closeDeleteModal();
         }}
