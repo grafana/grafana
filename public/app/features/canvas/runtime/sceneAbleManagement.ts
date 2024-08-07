@@ -34,11 +34,12 @@ const enableCustomables = (moveable: Moveable) => {
 };
 
 /* 
-  Helper function that determines if the selected target is currently selected
+  Helper function that determines if the selected DOM target is currently selected in selecto state.
 
   For context canvas elements each have a different level of nesting.
   Given this, we need to traverse up the DOM tree from the selected target to find
-  the element's selecto div to determine if the selected target is already selected in selecto state.
+  the element's registered selecto div to determine if the selected target is already selected in selecto state.
+  See `initMoveable` and `generateTargetElements` for more context.
 */
 const isTargetAlreadySelected = (selectedTarget: HTMLElement, scene: Scene) => {
   let selectedTargetParent = selectedTarget.parentElement;
