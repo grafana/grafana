@@ -575,14 +575,19 @@
     {
       "metadata": {
         "name": "cloudRBACRoles",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-01-10T13:19:01Z"
+        "resourceVersion": "1721984527957",
+        "creationTimestamp": "2024-01-10T13:19:01Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-07-26 09:02:07.957377 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enabled grafana cloud specific RBAC roles",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/identity-access-team",
         "requiresRestart": true,
+        "allowSelfServe": true,
+        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -2503,14 +2508,17 @@
     {
       "metadata": {
         "name": "tlsMemcached",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-05-09T19:12:08Z"
+        "resourceVersion": "1722608472573",
+        "creationTimestamp": "2024-05-09T19:12:08Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-02 14:21:12.57399 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use TLS-enabled memcached in the enterprise caching feature",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-operator-experience-squad",
-        "hideFromDocs": true
+        "expression": "true"
       }
     },
     {

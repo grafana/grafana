@@ -236,7 +236,7 @@ export function FolderAndGroup({
                   getOptionLabel={(option: SelectableValue<string>) => (
                     <div>
                       <span>{option.label}</span>
-                      {option['isProvisioned'] && (
+                      {option.isProvisioned && (
                         <>
                           {' '}
                           <ProvisioningBadge />
@@ -431,7 +431,10 @@ function EvaluationGroupCreationModal({
                 className={styles.formInput}
                 id={evaluateEveryId}
                 placeholder={DEFAULT_GROUP_EVALUATION_INTERVAL}
-                {...register('evaluateEvery', evaluateEveryValidationOptions(groupRules))}
+                {...register(
+                  'evaluateEvery',
+                  evaluateEveryValidationOptions<{ group: string; evaluateEvery: string }>(groupRules)
+                )}
               />
               <Stack direction="row" alignItems="flex-end">
                 <EvaluationGroupQuickPick currentInterval={evaluationInterval} onSelect={setEvaluationInterval} />

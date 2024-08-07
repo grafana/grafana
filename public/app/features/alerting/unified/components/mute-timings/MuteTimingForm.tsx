@@ -11,7 +11,7 @@ import {
   useUpdateMuteTiming,
   useValidateMuteTiming,
 } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
-import { shouldUseK8sApi } from 'app/features/alerting/unified/components/mute-timings/util';
+import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { MuteTimingFields } from '../../types/mute-timing-form';
