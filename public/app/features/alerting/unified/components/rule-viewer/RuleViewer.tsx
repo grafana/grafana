@@ -12,6 +12,7 @@ import { AlertInstanceTotalState, CombinedRule, RuleHealth, RuleIdentifier } fro
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { defaultPageNav } from '../../RuleViewer';
+import { useReturnTo } from '../../hooks/useReturnTo';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
 import { makeDashboardLink, makePanelLink } from '../../utils/misc';
@@ -237,9 +238,9 @@ interface TitleProps {
 
 export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigin }: TitleProps) => {
   const styles = useStyles2(getStyles);
-  const [queryParams] = useQueryParams();
   const isRecordingRule = ruleType === PromRuleType.Recording;
-  const returnTo = queryParams.returnTo ? String(queryParams.returnTo) : '/alerting/list';
+
+  const { returnTo } = useReturnTo('/alerting/list');
 
   return (
     <div className={styles.title}>

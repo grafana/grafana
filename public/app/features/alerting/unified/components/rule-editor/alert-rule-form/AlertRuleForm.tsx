@@ -30,6 +30,7 @@ import {
   trackAlertRuleFormSaved,
 } from '../../../Analytics';
 import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
+import { useReturnTo } from '../../../hooks/useReturnTo';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { saveRuleFormAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
@@ -72,7 +73,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const ruleType = translateRouteParamToRuleType(routeParams.type);
   const uidFromParams = routeParams.id;
 
-  const returnTo = !queryParams.returnTo ? '/alerting/list' : String(queryParams.returnTo);
+  const { returnTo } = useReturnTo('/alerting/list');
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
   const defaultValues: RuleFormValues = useMemo(() => {
@@ -163,7 +164,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       const ruleGroupIdentifier = getRuleGroupLocationFromRuleWithLocation(existing);
 
       await deleteRuleFromGroup.execute(ruleGroupIdentifier, existing.rule);
-      locationService.replace(returnTo);
+      locationService.replace(returnTo ?? '/alerting/list');
     }
   };
 
@@ -210,7 +211,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
         Save rule and exit
       </Button>
-      <Link to={returnTo}>
+      <Link to={returnTo ?? '/alerting/list'}>
         <Button variant="secondary" disabled={submitState.loading} type="button" onClick={cancelRuleCreation} size="sm">
           Cancel
         </Button>
