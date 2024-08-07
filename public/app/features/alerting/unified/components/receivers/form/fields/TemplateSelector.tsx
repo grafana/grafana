@@ -335,7 +335,7 @@ function JSONTemplateSelector({ onSelect, onClose, option, valueInForm }: JSONTe
 
   useEffect(() => {
     if (template) {
-      setInputToUpdate(getUseTemplateText(template.name));
+      setInputToUpdate(template.name);
     }
   }, [template]);
 
@@ -410,7 +410,7 @@ function JSONTemplateSelector({ onSelect, onClose, option, valueInForm }: JSONTe
               />
               <IconButton
                 tooltip="Copy selected template to clipboard. You can use it in the custom tab."
-                onClick={() => copyToClipboard(getUseTemplateText(template?.name ?? ''))}
+                onClick={() => copyToClipboard(template?.content ?? '')}
                 name="copy"
               />
             </Stack>
@@ -489,11 +489,13 @@ export function WrapWithTemplateSelection({
     );
   }
   const onlyOneTemplate = value ? matchesOnlyOneTemplate(value) : false;
-  if (onlyOneTemplate) {
+  if (onlyOneTemplate || option.propertyName === 'json') {
     return (
       <div className={styles.inputContainer}>
         <Stack direction="row" gap={1} alignItems="center">
-          <Text variant="bodySmall">{`Template: ${getTemplateName(value)}`}</Text>
+          <Text variant="bodySmall">
+            {option.propertyName == 'json' ? `Template: ${value}` : `Template: ${getTemplateName(value)}`}
+          </Text>
           {useTemplates && (
             <TemplatesPicker onSelect={onSelectTemplate} option={option} valueInForm={getValues(name) ?? ''} />
           )}
