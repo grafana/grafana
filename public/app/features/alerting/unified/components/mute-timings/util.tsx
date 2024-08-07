@@ -1,9 +1,7 @@
 import moment from 'moment';
 import { Fragment } from 'react';
 
-import { config } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { AlertmanagerConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
 import {
@@ -84,19 +82,3 @@ export function renderTimeIntervals(muteTiming: MuteTimeInterval) {
     </Stack>
   );
 }
-
-/**
- * Get the correct namespace to use when using the K8S API.
- */
-export const getK8sNamespace = () => config.namespace;
-
-/**
- * Should we call the kubernetes-style API for managing the time intervals?
- *
- * Requires the alertmanager referenced being the Grafana AM,
- * and the `alertingApiServer` feature toggle being enabled
- */
-export const shouldUseK8sApi = (alertmanager?: string) => {
-  const featureToggleEnabled = config.featureToggles.alertingApiServer;
-  return featureToggleEnabled && alertmanager === GRAFANA_RULES_SOURCE_NAME;
-};

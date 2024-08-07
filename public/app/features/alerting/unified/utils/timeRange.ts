@@ -45,8 +45,8 @@ const getReferencedIdsForClassicCondition = (model: ExpressionQuery) => {
 };
 
 const getTimeRanges = (referencedRefIds: string[], queries: AlertQuery[]) => {
-  let from: number[] = [];
-  let to = [FALL_BACK_TIME_RANGE.to];
+  const from: number[] = [];
+  const to = [FALL_BACK_TIME_RANGE.to];
   for (const referencedRefIdsKey of referencedRefIds) {
     const query = queries.find((query) => query.refId === referencedRefIdsKey);
 

@@ -111,5 +111,3 @@ To access the State history view, complete the following steps.
    The value shown for each instance is for each part of the expression that was evaluated.
 
 1. Click the labels to filter and narrow down the results.
-
-   {{< figure src="/media/docs/alerting/state-history.png" max-width="750px" >}}

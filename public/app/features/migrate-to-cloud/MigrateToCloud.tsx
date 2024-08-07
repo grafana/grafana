@@ -24,7 +24,16 @@ export default function MigrateToCloud() {
         }
       >
         <Trans i18nKey="migrate-to-cloud.public-preview.message">
-          Help us improve this feature by providing feedback and reporting any issues.
+          No SLAs are available yet.{' '}
+          <a
+            href="https://grafana.com/docs/grafana-cloud/account-management/migration-guide/#grafana-cloud-migration-assistant"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="external-link"
+          >
+            Visit our docs
+          </a>{' '}
+          to learn more about this feature!
         </Trans>
       </Alert>
       {config.cloudMigrationIsTarget ? <CloudPage /> : <OnPremPage />}
