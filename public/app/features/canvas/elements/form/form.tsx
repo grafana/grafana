@@ -12,6 +12,8 @@ import { Align, TextConfig, TextData } from '../../types';
 import { FormChild, FormElementTypeEditor } from './elements/FormElementTypeEditor';
 import { SelectDisplay } from './elements/Select';
 import { Submit } from './elements/Submit';
+import { TextInput } from './elements/TextInput';
+import { updateAPIPayload } from './elements/utils';
 
 /**
  * Form Element - each of these would have options
@@ -55,37 +57,21 @@ const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
       child.currentOption = newParams;
     }
 
-    updateAPIPayload();
+    updateAPIPayload(config.formElements!);
     // TODO: figure out why this is not updating the editor
     // it's updating the save model but
     // see layoutEditor
     scene.moved.next(Date.now());
   };
 
-  const updateAPIPayload = () => {
-    const submitElement = config.formElements?.find((child) => {
-      if (child.type === 'Submit') {
-        return true;
-      }
-      return false;
-    });
+  const onTextInputChange = (value: string, id: string) => {
+    const child = config.formElements?.find((child) => child.id === id);
 
-    if (!submitElement) {
-      return;
+    if (child) {
+      child.currentOption = [child.title, value];
     }
 
-    const payload = config.formElements?.reduce<Record<string, any>>((acc, child) => {
-      if (child.type !== 'Submit' && child.currentOption) {
-        // Ensure currentOption is an array with at least two elements
-        const [key, value] = child.currentOption;
-        if (typeof key === 'string') {
-          acc[key] = value;
-        }
-      }
-      return acc;
-    }, {});
-
-    submitElement.api!.data = JSON.stringify(payload);
+    updateAPIPayload(config.formElements!);
   };
 
   const children = config.formElements?.map((child) => {
@@ -93,9 +79,18 @@ const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
       case 'Select':
         return (
           <SelectDisplay
+            title={child.title}
             options={child.options ?? []}
             currentOption={child.currentOption}
             onChange={(newParams) => onCurrentOptionChange(newParams, child.id)}
+          />
+        );
+      case FormElementType.TextInput:
+        return (
+          <TextInput
+            title={child.title}
+            currentOption={child.currentOption}
+            onChange={(v) => onTextInputChange(v, child.id)}
           />
         );
       case 'Submit':
@@ -209,7 +204,7 @@ export const formItem: CanvasElementItem<FormConfig, FormData> = {
         category,
         id: 'textSelector',
         path: 'config.text',
-        name: 'Text',
+        name: 'Form title',
         editor: TextDimensionEditor,
       })
       .addCustomEditor({

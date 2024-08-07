@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Select } from '@grafana/ui';
+import { Field, Select } from '@grafana/ui';
 
 import { FormChild } from './FormElementTypeEditor';
 
@@ -9,17 +9,19 @@ interface Props extends Omit<FormChild, 'id' | 'type'> {
   onChange: (newParams: [string, string]) => void;
 }
 
-export const SelectDisplay = ({ options, currentOption, onChange }: Props) => {
+export const SelectDisplay = ({ options, currentOption, onChange, title }: Props) => {
   const [value, setValue] = useState(currentOption?.[1]);
 
   return (
-    <Select
-      options={options.map((option) => ({ label: option[0], value: option[1] }))}
-      value={value}
-      onChange={(option) => {
-        setValue(option.value);
-        onChange([option.label ?? '', option.value ?? '']);
-      }}
-    />
+    <Field label={title} style={{ marginBottom: '2px' }}>
+      <Select
+        options={options.map((option) => ({ label: option[0], value: option[1] }))}
+        value={value}
+        onChange={(option) => {
+          setValue(option.value);
+          onChange([option.label ?? '', option.value ?? '']);
+        }}
+      />
+    </Field>
   );
 };

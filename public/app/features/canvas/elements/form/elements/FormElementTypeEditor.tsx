@@ -1,18 +1,22 @@
 import { uniqueId } from 'lodash';
-import { Fragment, useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
+import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { APIEditor, APIEditorConfig } from 'app/plugins/panel/canvas/editor/element/APIEditor';
 
 import { defaultApiConfig } from '../../button';
 import { FormElementType } from '../form';
 
 import { SelectionEditor } from './SelectionEditor';
+import { TextInputEditor } from './TextInputEditor';
+import { updateAPIPayload } from './utils';
 
 export interface FormChild {
   id: string;
   type: string;
+  title: string;
   options?: Array<[string, string]>;
   currentOption?: [string, string];
   api?: APIEditorConfig;
@@ -39,7 +43,7 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
       }
 
       const id = uniqueId('form-element-');
-      let newFormElement: FormChild = { id, type: sel.value ?? '' };
+      let newFormElement: FormChild = { id, type: sel.value ?? '', title: id };
       if (sel.value === 'Submit') {
         newFormElement = { ...newFormElement, api: defaultApiConfig };
         onChange([...value, newFormElement]);
@@ -84,17 +88,67 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
     [onChange, value]
   );
 
+  const onTextInputOptionsChange = useCallback(
+    (newValue: string, id: string) => {
+      const newElements: FormChild[] = value.map((child) => {
+        if (child.id === id) {
+          return { ...child, title: newValue, currentOption: [newValue, child.currentOption?.[1]!] };
+        }
+        return child;
+      });
+      onChange(newElements);
+      updateAPIPayload(newElements);
+    },
+    [onChange, value]
+  );
+
+  const onSelectionItemTitleChange = useCallback(
+    (newTitle: string, id: string) => {
+      const newElements = value.map((child) => {
+        if (child.id === id) {
+          return { ...child, title: newTitle };
+        }
+        return child;
+      });
+
+      onChange(newElements);
+    },
+    [onChange, value]
+  );
+
   const children = value.map((child, i) => {
+    let element;
+
     switch (child.type) {
       case 'Select':
-        return (
+        element = (
           <SelectionEditor
+            title={child.title}
             options={child.options ?? []}
-            onChange={(newParams) => onOptionsChange(newParams, child.id)}
+            onParamsChange={(newParams) => onOptionsChange(newParams, child.id)}
+            onTitleChange={(v) => onSelectionItemTitleChange(v, child.id)}
           />
         );
+        return {
+          element,
+          properties: child,
+        };
+
+      case FormElementType.TextInput:
+        element = (
+          <TextInputEditor
+            title={child.title}
+            onChange={(newValue) => onTextInputOptionsChange(newValue, child.id)}
+            currentOption={child.currentOption}
+          />
+        );
+        return {
+          element,
+          properties: child,
+        };
+
       case 'Submit':
-        return (
+        element = (
           <APIEditor
             item={item}
             value={value[i].api!}
@@ -102,8 +156,16 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
             onChange={(apiConfig) => onAPIConfigChange(apiConfig!, child.id)}
           />
         );
+        return {
+          element,
+          properties: child,
+        };
+
       default:
-        return null;
+        return {
+          element: null,
+          properties: child,
+        };
     }
   });
 
@@ -111,7 +173,13 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
     <>
       <AddLayerButton onChange={onChangeElementType} options={typeOptions} label={'Add element type'} />
       {children.map((child, i) => (
-        <Fragment key={i}>{child}</Fragment>
+        <OptionsPaneCategory
+          id={i.toString()}
+          key={i}
+          title={child.properties.type !== 'Submit' ? child.properties.title : 'Submit'}
+        >
+          {child.element}
+        </OptionsPaneCategory>
       ))}
     </>
   );
