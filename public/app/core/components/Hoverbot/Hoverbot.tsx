@@ -1,8 +1,9 @@
 import html2canvas from 'html2canvas';
 import { useCallback, useEffect, useState } from 'react';
+import Markdown from 'react-markdown';
 
 import { openai } from '@grafana/llm';
-import { Button } from '@grafana/ui';
+import { Button, CustomScrollbar, Toggletip } from '@grafana/ui';
 
 export const Hoverbot = () => {
   const [enabled, setEnabled] = useState(false);
@@ -99,30 +100,59 @@ export const Hoverbot = () => {
     document.addEventListener('click', handleClick);
   }, [handleClick]);
 
+  const cancel = useCallback(() => {
+    document.removeEventListener('mouseover', handleMouseOver);
+    document.removeEventListener('click', handleClick);
+    setSelecting(false);
+    if (highlighted) {
+      highlighted.style.outline = '';
+      highlighted.style.boxShadow = '';
+      highlighted = undefined;
+    }
+  }, [handleClick]);
+
   useEffect(() => {
     function handleEscape(e: KeyboardEvent) {
       if (e.key === 'Escape') {
-        document.removeEventListener('mouseover', handleMouseOver);
-        document.removeEventListener('click', handleClick);
-        setSelecting(false);
-        if (highlighted) {
-          highlighted.style.outline = '';
-          highlighted.style.boxShadow = '';
-          highlighted = undefined;
-        }
+        cancel();
       }
     }
 
     document.addEventListener('keyup', handleEscape);
     return () => document.removeEventListener('keyup', handleEscape);
-  }, [handleClick]);
+  }, [cancel, handleClick]);
+
+  if (loading || selecting || reply) {
+    return (
+      <Toggletip
+        content={
+          <CustomScrollbar autoHeightMax="500px">
+            {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+            <div tabIndex={0}>
+              {selecting && <p>Click on an element in the screen to get assistance.</p>}
+              {loading && <p>Asking Grot...</p>}
+              {reply !== '' && <Markdown>{reply}</Markdown>}
+            </div>
+          </CustomScrollbar>
+        }
+        onClose={() => {
+          setReply('');
+          cancel();
+        }}
+        show={true}
+      >
+        <Button type="submit" onClick={selectRegion} disabled={loading || selecting || !enabled}>
+          Help me
+        </Button>
+      </Toggletip>
+    );
+  }
 
   return (
     <div>
       <Button type="submit" onClick={selectRegion} disabled={loading || selecting || !enabled}>
         Help me
       </Button>
-      {reply !== '' && <p>{reply}</p>}
     </div>
   );
 };
@@ -136,7 +166,7 @@ function handleMouseOver(e: MouseEvent) {
       return;
     }
     target.style.outline = 'solid 1px orange';
-    target.style.boxShadow = '0 0 10px 5px rgba(255, 0, 0, 0.5)';
+    target.style.boxShadow = 'inset 0 0 10px 5px rgba(255, 0, 0, 0.8);';
     if (highlighted) {
       highlighted.style.outline = '';
       highlighted.style.boxShadow = '';
@@ -237,7 +267,7 @@ async function upload(blob: Blob): Promise<string> {
           return;
         }
         console.error('Missing url');
-        resolve ('');
+        resolve('');
       })
       .catch((error) => {
         console.error(error);
