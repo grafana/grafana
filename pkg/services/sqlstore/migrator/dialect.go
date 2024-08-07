@@ -96,8 +96,6 @@ type Dialect interface {
 	// Implementations are not expected to quote the arguments
 	// therefore any callers should take care to quote arguments as necessary
 	Concat(...string) string
-
-	CreateJSONParse(column string, field string) string
 }
 
 type LockCfg struct {
@@ -462,8 +460,4 @@ func (b *BaseDialect) Update(ctx context.Context, tx *session.SessionTx, tableNa
 
 func (b *BaseDialect) Concat(strs ...string) string {
 	return fmt.Sprintf("CONCAT(%s)", strings.Join(strs, ", "))
-}
-
-func (b *BaseDialect) CreateJSONParse(column string, field string) string {
-	return b.dialect.CreateJSONParse(column, field)
 }

@@ -217,7 +217,3 @@ func (db *SQLite3) UpsertMultipleSQL(tableName string, keyCols, updateCols []str
 func (db *SQLite3) Concat(strs ...string) string {
 	return strings.Join(strs, " || ")
 }
-
-func (db *SQLite3) CreateJSONParse(column string, field string) string {
-	return fmt.Sprintf("json_extract(%s, '$.%s')", column, field)
-}
