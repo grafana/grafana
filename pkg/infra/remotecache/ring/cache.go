@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/grafana/dskit/kv"
@@ -59,9 +60,11 @@ func NewCache(cfg *setting.Cfg, reg prometheus.Registerer, provider grpcserver.P
 		mlist:    memberlistsvc,
 		logger:   logger,
 		provider: provider,
-		local:    newLocalBackend(),
+		// FIXME: remove instances that has left
+		backends: make(map[string]Backend),
 	}
 
+	c.backends[c.lfc.GetInstanceID()] = newLocalBackend()
 	c.mux = buildMux(c)
 
 	RegisterDispatcherServer(c.provider.GetServer(), c)
@@ -73,13 +76,15 @@ type Cache struct {
 	logger   glog.Logger
 	provider grpcserver.Provider
 
-	mux   *http.ServeMux
-	local *localBackend
+	mux *http.ServeMux
 
 	kv    kv.Client
 	lfc   *ring.BasicLifecycler
 	ring  *ring.Ring
 	mlist *memberlist.KVInitService
+
+	backendsRW sync.RWMutex
+	backends   map[string]Backend
 }
 
 func (c *Cache) Run(ctx context.Context) error {
@@ -183,10 +188,22 @@ func (c *Cache) getBackend(key string, op ring.Operation) (Backend, error) {
 	}
 
 	inst := set.Instances[0]
-	if inst.GetId() == c.lfc.GetInstanceID() {
-		return c.local, nil
+
+	c.backendsRW.RLock()
+	cached, ok := c.backends[inst.GetId()]
+	c.backendsRW.RUnlock()
+	if ok {
+		return cached, nil
 	}
 
-	// TODO: cache remote clients?
-	return newRemoteBackend(&inst)
+	c.backendsRW.Lock()
+	defer c.backendsRW.Unlock()
+
+	backend, err := newRemoteBackend(&inst)
+	if err != nil {
+		return nil, err
+	}
+
+	c.backends[inst.GetId()] = backend
+	return backend, nil
 }
