@@ -80,19 +80,14 @@ func (st DBstore) IncreaseVersionForAllRulesInNamespaces(ctx context.Context, or
 	var keys []ngmodels.AlertRuleKeyWithVersion
 	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		now := TimeNow()
-
-		placeholders := make([]string, len(namespaceUIDs))
-		for i := range placeholders {
-			placeholders[i] = "?"
-		}
-		uidsPlaceholders := fmt.Sprintf("(%s)", strings.Join(placeholders, ","))
-		sql := fmt.Sprintf("UPDATE alert_rule SET version = version + 1, updated = ? WHERE org_id = ? AND namespace_uid IN %s", uidsPlaceholders)
-
-		args := make([]interface{}, 0, len(namespaceUIDs)+3)
+		namespaceUIDsArgs, in := getINSubQueryArgs(namespaceUIDs)
+		sql := fmt.Sprintf(
+			"UPDATE alert_rule SET version = version + 1, updated = ? WHERE org_id = ? AND namespace_uid IN (%s)",
+			strings.Join(in, ","),
+		)
+		args := make([]interface{}, 0, 3+len(namespaceUIDsArgs))
 		args = append(args, sql, now, orgID)
-		for _, namespaceUID := range namespaceUIDs {
-			args = append(args, namespaceUID)
-		}
+		args = append(args, namespaceUIDsArgs...)
 
 		_, err := sess.Exec(args...)
 		if err != nil {
