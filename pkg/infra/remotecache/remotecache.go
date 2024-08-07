@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache/common"
 	"github.com/grafana/grafana/pkg/infra/remotecache/ring"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry"
@@ -20,26 +21,27 @@ import (
 
 var (
 	// ErrCacheItemNotFound is returned if cache does not exist
-	ErrCacheItemNotFound = errors.New("cache item not found")
+	ErrCacheItemNotFound = common.ErrCacheItemNotFound
 
 	defaultMaxCacheExpiration = time.Hour * 24
 )
 
 func ProvideService(
 	cfg *setting.Cfg, sqlStore db.DB, usageStats usagestats.Service,
-	secretsService secrets.Service, grpcProvider grpcserver.Provider,
+	secretsService secrets.Service, grpcProvider grpcserver.Provider, reg prometheus.Registerer,
 ) (*RemoteCache, error) {
 
 	logger := log.New("remote-cache")
-	client, err := createClient(cfg, sqlStore, logger, secretsService, grpcProvider)
+	client, err := createClient(cfg, sqlStore, logger, secretsService, grpcProvider, reg)
 	if err != nil {
 		return nil, err
 	}
 
 	s := &RemoteCache{
-		cfg:    cfg,
-		client: client,
-		logger: logger,
+		cfg:     cfg,
+		client:  client,
+		logger:  logger,
+		metrics: newMetrics(reg),
 	}
 
 	usageStats.RegisterMetricsFunc(s.getUsageStats)
@@ -77,14 +79,26 @@ type CacheStorage interface {
 
 // RemoteCache allows Grafana to cache data outside its own process
 type RemoteCache struct {
-	client CacheStorage
-	cfg    *setting.Cfg
-	logger log.Logger
+	client  CacheStorage
+	cfg     *setting.Cfg
+	logger  log.Logger
+	metrics *metrics
 }
 
 // Get returns the cached value as an byte array
 func (ds *RemoteCache) Get(ctx context.Context, key string) ([]byte, error) {
-	return ds.client.Get(ctx, key)
+	value, err := ds.client.Get(ctx, key)
+	if err != nil {
+		if errors.Is(err, ErrCacheItemNotFound) {
+			ds.metrics.cacheUsage.WithLabelValues(cacheMiss).Inc()
+		} else {
+			ds.metrics.cacheUsage.WithLabelValues(cacheError).Inc()
+		}
+		return nil, err
+	}
+
+	ds.metrics.cacheUsage.WithLabelValues(cacheHit).Inc()
+	return value, nil
 }
 
 // Set stored the byte array in the cache
@@ -131,7 +145,7 @@ func (ds *RemoteCache) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func createClient(
 	cfg *setting.Cfg, sqlstore db.DB, logger log.Logger,
-	secretsService secrets.Service, grpcProvider grpcserver.Provider,
+	secretsService secrets.Service, grpcProvider grpcserver.Provider, reg prometheus.Registerer,
 ) (cache CacheStorage, err error) {
 	switch cfg.RemoteCache.Name {
 	case redisCacheType:
@@ -140,7 +154,7 @@ func createClient(
 		cache = newMemcachedStorage(cfg.RemoteCache)
 	case ring.CacheType:
 		if !grpcProvider.IsDisabled() {
-			cache, err = ring.NewCache(cfg, prometheus.DefaultRegisterer, grpcProvider)
+			cache, err = ring.NewCache(cfg, reg, grpcProvider)
 		} else {
 			logger.Warn("grpcServer feature toggle needs to be enabled when using ring cache, falling back to database")
 			cache = newDatabaseCache(sqlstore)

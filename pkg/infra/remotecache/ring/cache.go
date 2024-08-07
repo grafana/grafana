@@ -2,6 +2,7 @@ package ring
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"net"
@@ -14,9 +15,12 @@ import (
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	glog "github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache/common"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -127,15 +131,14 @@ func (c *Cache) Delete(ctx context.Context, key string) error {
 	return backend.Delete(ctx, key)
 }
 
-// not implemented
-func (c *Cache) Count(_ context.Context, _ string) (int64, error) {
-	return 0, nil
-}
-
 func (c *Cache) DispatchGet(ctx context.Context, r *GetRequest) (*GetResponse, error) {
-	c.logger.Debug("Dispatched get", "key", r.GetKey())
+	c.logger.Info("Dispatched get", "key", r.GetKey())
 	value, err := c.Get(ctx, r.GetKey())
 	if err != nil {
+		if errors.Is(err, common.ErrCacheItemNotFound) {
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
+
 		return nil, err
 	}
 	return &GetResponse{Value: value}, nil

@@ -27,7 +27,7 @@ func createTestClient(t *testing.T, opts *setting.RemoteCacheSettings, sqlstore 
 	cfg := &setting.Cfg{
 		RemoteCache: opts,
 	}
-	dc, err := ProvideService(cfg, sqlstore, &usagestats.UsageStatsMock{}, fakes.NewFakeSecretsService(), nil)
+	dc, err := ProvideService(cfg, sqlstore, &usagestats.UsageStatsMock{}, fakes.NewFakeSecretsService(), nil, nil)
 	require.Nil(t, err, "Failed to init client for test")
 
 	return dc

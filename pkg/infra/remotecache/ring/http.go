@@ -2,8 +2,11 @@ package ring
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
+
+	"github.com/grafana/grafana/pkg/infra/remotecache/common"
 )
 
 func buildMux(c *Cache) *http.ServeMux {
@@ -15,6 +18,11 @@ func buildMux(c *Cache) *http.ServeMux {
 		key := r.PathValue("key")
 		value, err := c.Get(r.Context(), key)
 		if err != nil {
+			if errors.Is(err, common.ErrCacheItemNotFound) {
+				w.WriteHeader(http.StatusNotFound)
+				return
+			}
+
 			c.logger.Error("failed to get item", "err", err)
 			w.WriteHeader(http.StatusBadRequest)
 			return

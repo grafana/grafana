@@ -24,7 +24,7 @@ func NewFakeStore(t *testing.T) *RemoteCache {
 
 	dc, err := ProvideService(&setting.Cfg{
 		RemoteCache: opts,
-	}, sqlStore, &usagestats.UsageStatsMock{}, fakes.NewFakeSecretsService(), nil)
+	}, sqlStore, &usagestats.UsageStatsMock{}, fakes.NewFakeSecretsService(), nil, nil)
 	require.NoError(t, err, "Failed to init remote cache for test")
 
 	return dc

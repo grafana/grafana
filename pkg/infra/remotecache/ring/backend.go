@@ -7,9 +7,12 @@ import (
 
 	gocache "github.com/patrickmn/go-cache"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 
 	"github.com/grafana/dskit/ring"
+	"github.com/grafana/grafana/pkg/infra/remotecache/common"
 )
 
 type Backend interface {
@@ -31,7 +34,7 @@ type localBackend struct {
 func (b *localBackend) Get(ctx context.Context, key string) ([]byte, error) {
 	data, ok := b.store.Get(key)
 	if !ok {
-		return nil, fmt.Errorf("no item")
+		return nil, common.ErrCacheItemNotFound
 	}
 
 	return data.([]byte), nil
@@ -65,6 +68,11 @@ type dispatchBackend struct {
 func (b *dispatchBackend) Get(ctx context.Context, key string) ([]byte, error) {
 	res, err := b.client.DispatchGet(ctx, &GetRequest{Key: key})
 	if err != nil {
+		st, ok := status.FromError(err)
+		if ok && st.Code() == codes.NotFound {
+			return nil, common.ErrCacheItemNotFound
+		}
+
 		return nil, fmt.Errorf("failed to dipatch get request: %w", err)
 	}
 	return res.Value, nil
