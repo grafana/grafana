@@ -42,8 +42,18 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
       let newFormElement: FormChild = { id, type: sel.value ?? '' };
       if (sel.value === 'Submit') {
         newFormElement = { ...newFormElement, api: defaultApiConfig };
+        onChange([...value, newFormElement]);
+      } else {
+        // insert newFormElement just before the submit button
+        const submitIndex = value.findIndex((child) => child.type === 'Submit');
+        if (submitIndex === -1) {
+          onChange([...value, newFormElement]);
+        } else {
+          const newElements = [...value];
+          newElements.splice(submitIndex, 0, newFormElement);
+          onChange(newElements);
+        }
       }
-      onChange([...value, { id, type: sel.value ?? '' }]);
     },
     [onChange, value]
   );
