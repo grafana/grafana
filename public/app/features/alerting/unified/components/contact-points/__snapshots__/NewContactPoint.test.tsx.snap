@@ -152,10 +152,21 @@ exports[`should be able to test and save a receiver 2`] = `
           },
         ],
       },
+      "templates": [
+        "slack-template",
+        "custom-email",
+        "provisioned-template",
+        "template with spaces",
+      ],
     },
-    "template_file_provenances": {},
+    "template_file_provenances": {
+      "provisioned-template": "api",
+    },
     "template_files": {
-      "some template": "{{ define 'some template' }}  something {{ end }}",
+      "custom-email": "{{ define 'custom-email' }}  Custom email template {{ end }}",
+      "provisioned-template": "{{ define 'provisioned-template' }}  Custom provisioned template {{ end }}",
+      "slack-template": "{{ define 'slack-template' }} Custom slack template {{ end }}",
+      "template with spaces": "{{ define 'template with spaces' }}  Custom template with spaces in the name {{ end }}",
     },
   },
 ]

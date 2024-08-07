@@ -519,39 +519,6 @@ export const deleteReceiverAction = (receiverName: string, alertManagerSourceNam
   };
 };
 
-export const deleteTemplateAction = (templateName: string, alertManagerSourceName: string): ThunkResult<void> => {
-  return async (dispatch) => {
-    const config = await dispatch(
-      alertmanagerApi.endpoints.getAlertmanagerConfiguration.initiate(alertManagerSourceName)
-    ).unwrap();
-
-    if (!config) {
-      throw new Error(`Config for ${alertManagerSourceName} not found`);
-    }
-    if (typeof config.template_files?.[templateName] !== 'string') {
-      throw new Error(`Cannot delete template ${templateName}: not found in config.`);
-    }
-    const newTemplates = { ...config.template_files };
-    delete newTemplates[templateName];
-    const newConfig: AlertManagerCortexConfig = {
-      ...config,
-      alertmanager_config: {
-        ...config.alertmanager_config,
-        templates: config.alertmanager_config.templates?.filter((existing) => existing !== templateName),
-      },
-      template_files: newTemplates,
-    };
-    return dispatch(
-      updateAlertManagerConfigAction({
-        newConfig,
-        oldConfig: config,
-        alertManagerSourceName,
-        successMessage: 'Template deleted.',
-      })
-    );
-  };
-};
-
 export const fetchFolderAction = createAsyncThunk(
   'unifiedalerting/fetchFolder',
   (uid: string): Promise<FolderDTO> => withSerializedError(backendSrv.getFolderByUid(uid, { withAccessControl: true }))
