@@ -119,7 +119,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 		})
 	} else {
 		for _, q := range req.Queries {
-			r := s.handleQuery(ctx, q, fromAlert, hasPromQLScopeFeatureFlag, hasPrometheusDataplaneFeatureFlag, hasPrometheusRunQueriesInParallel)
+			r := s.handleQuery(ctx, q, fromAlert, hasPromQLScopeFeatureFlag, hasPrometheusDataplaneFeatureFlag, false)
 			if r != nil {
 				result.Responses[q.RefID] = *r
 			}
