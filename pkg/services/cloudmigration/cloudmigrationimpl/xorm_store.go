@@ -268,11 +268,14 @@ func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, sessionUid, uid string
 }
 
 // GetSnapshotList returns snapshots without resources included. Use GetSnapshotByUID to get individual snapshot results.
+// passing a limit of -1 will return all the elements regardless of the page
 func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.ListSnapshotsQuery) ([]cloudmigration.CloudMigrationSnapshot, error) {
 	var snapshots = make([]cloudmigration.CloudMigrationSnapshot, 0)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		offset := (query.Page - 1) * query.Limit
-		sess.Limit(query.Limit, offset)
+		if query.Limit > 0 {
+			offset := (query.Page - 1) * query.Limit
+			sess.Limit(query.Limit, offset)
+		}
 		sess.OrderBy("created DESC")
 		return sess.Find(&snapshots, &cloudmigration.CloudMigrationSnapshot{
 			SessionUID: query.SessionUID,

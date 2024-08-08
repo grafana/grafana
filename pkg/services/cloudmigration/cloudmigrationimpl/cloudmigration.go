@@ -471,7 +471,13 @@ func (s *Service) GetMigrationRunList(ctx context.Context, migUID string) (*clou
 
 func (s *Service) DeleteSession(ctx context.Context, sessionUID string) (*cloudmigration.CloudMigrationSession, error) {
 	// first we try to delete all the associated information to the session
-	snapshots, err := s.store.GetMigrationStatusList(ctx, sessionUID)
+	q := cloudmigration.ListSnapshotsQuery{
+		SessionUID: sessionUID,
+		Page:       1,
+		// passing -1 will return all the elements
+		Limit: -1,
+	}
+	snapshots, err := s.store.GetSnapshotList(ctx, q)
 	if err != nil {
 		return nil, fmt.Errorf("getting migration snapshots from db: %w", err)
 	}
