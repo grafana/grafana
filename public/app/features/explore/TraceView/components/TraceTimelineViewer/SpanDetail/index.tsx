@@ -338,10 +338,6 @@ export default function SpanDetail(props: SpanDetailProps) {
 
   console.log({ childrenMetrics });
 
-  if (!childrenMetrics) {
-    return null;
-  }
-
   return (
     <div data-testid="span-detail-component">
       <div className={styles.header}>
@@ -375,14 +371,16 @@ export default function SpanDetail(props: SpanDetailProps) {
               onToggle={() => processToggle(spanID)}
             />
           )}
-          <AccordianMetricRef
-            data={childrenMetrics}
-            isOpen={referencesState.isOpen}
-            openedItems={referencesState.openedItems}
-            onToggle={() => referencesToggle(spanID)}
-            onItemToggle={(reference) => referenceItemToggle(spanID, reference)}
-            createFocusSpanLink={createFocusSpanLink}
-          />
+          {childrenMetrics && childrenMetrics.length > 0 && (
+            <AccordianMetricRef
+              data={childrenMetrics}
+              isOpen={referencesState.isOpen}
+              openedItems={referencesState.openedItems}
+              onToggle={() => referencesToggle(spanID)}
+              onItemToggle={(reference) => referenceItemToggle(spanID, reference)}
+              createFocusSpanLink={createFocusSpanLink}
+            />
+          )}
         </div>
         {logs && logs.length > 0 && (
           <AccordianLogs

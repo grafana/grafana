@@ -149,9 +149,10 @@ export function ChildrenMetrics(props: ReferenceItemProps) {
     <div className={styles.AccordianReferencesContent}>
       {names.map((name, i) => (
         <>
-          <span className={styles.debugLabel}>
+          <span className={styles.item}>
             {name}
           </span>
+          <span className={styles.debugLabel}> </span>
           <MetricsRow key={i} data={data} name={name} createFocusSpanLink={createFocusSpanLink} />
         </>
       ))}
@@ -178,9 +179,11 @@ const MetricsRow = (props: MetricRowProps) => {
               <span className={styles.itemContent}>
                 <small className={styles.debugInfo}>
                   <span className={styles.debugLabel}>
-                    {reference.tags[0].key}: {reference.tags[0].value}
+                    {reference.tags[0].key}: 
                   </span>
-                  <span className={styles.debugLabel} />
+                  <span className={styles.debugLabel}>
+                    {reference.tags[0].value}
+                  </span>
                   <span className={styles.debugLabel}>
                     <MetricLink reference={reference} createFocusSpanLink={createFocusSpanLink} />
                   </span>
