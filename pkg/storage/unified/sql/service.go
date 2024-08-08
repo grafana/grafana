@@ -2,6 +2,8 @@ package sql
 
 import (
 	"context"
+	"crypto/tls"
+	"net/http"
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
@@ -72,10 +74,16 @@ func ProvideService(
 		KeyRetrieverConfig: authnlib.KeyRetrieverConfig{
 			SigningKeysURL: authCfg.SigningKeysURL,
 		},
-		VerifierConfig: authnlib.VerifierConfig{
-			AllowedAudiences: authCfg.AllowedAudiences,
-		},
+		// TODO(drclau): for ID tokens audience is the tenant
+		// VerifierConfig: authnlib.VerifierConfig{
+		// 	AllowedAudiences: authCfg.AllowedAudiences,
+		// },
 	}
+
+	// TODO(drclau): only allow insecure connections when app_mode = development
+	tr := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+	client := &http.Client{Transport: tr}
+	keyRetriever := authnlib.NewKeyRetriever(grpcAuthCfg.KeyRetrieverConfig, authnlib.WithHTTPClientKeyRetrieverOpt(client))
 
 	grpcOpts := []authnlib.GrpcAuthenticatorOption{}
 	switch authCfg.Mode {
@@ -86,6 +94,7 @@ func ProvideService(
 		grpcOpts = append(grpcOpts,
 			authnlib.WithDisableAccessTokenAuthOption(),
 			authnlib.WithIDTokenAuthOption(true),
+			authnlib.WithKeyRetrieverOption(keyRetriever),
 		)
 	case grpcutils.ModeCloud:
 		grpcOpts = append(grpcOpts, authnlib.WithIDTokenAuthOption(true))

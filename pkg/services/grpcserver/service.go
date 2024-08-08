@@ -6,11 +6,14 @@ import (
 	"net"
 	"time"
 
+	authnlib "github.com/grafana/authlib/authn"
+	authzlib "github.com/grafana/authlib/authz"
 	"github.com/grafana/dskit/instrument"
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
@@ -75,7 +78,12 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 	if cfg.StackID != "" {
 		namespaceFmt = authnlib.CloudNamespaceFormatter
 	}
-	namespaceChecker := authzlib.NewNamespaceAccessChecker(namespaceFmt)
+	namespaceChecker := authzlib.NewNamespaceAccessChecker(
+		namespaceFmt,
+		// TODO(drclau): are the following opts required/correct for on-prem?
+		authzlib.WithDisableAccessTokenNamespaceAccessCheckerOption(),
+		authzlib.WithIDTokenNamespaceAccessCheckerOption(true),
+	)
 	stackIdExtractor := authzlib.MetadataStackIDExtractor(authzlib.DefaultStackIDMetadataKey)
 
 	// Default auth is admin token check, but this can be overridden by

@@ -24,7 +24,6 @@ func NewLocalResourceStoreClient(server ResourceStoreServer) ResourceStoreClient
 	channel := &inprocgrpc.Channel{}
 
 	auth := &grpcUtils.InProcAuthenticator{}
-
 	channel.RegisterService(
 		grpchan.InterceptServer(
 			&ResourceStore_ServiceDesc,
