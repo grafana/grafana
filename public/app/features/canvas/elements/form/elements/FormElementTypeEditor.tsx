@@ -1,6 +1,8 @@
 import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import { useCallback } from 'react';
+import { useObservable } from 'react-use';
+import { Subject } from 'rxjs';
 
 import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -38,6 +40,11 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
     { value: FormElementType.NumberInput, label: 'Number input' },
     { value: FormElementType.Submit, label: 'Submit' },
   ];
+
+  const scene = context.instanceState?.scene;
+
+  // Will force a rerender whenever the subject changes
+  useObservable(scene ? scene.moved : new Subject());
 
   const styles = useStyles2(getStyles);
 
@@ -91,9 +98,9 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
         return child;
       });
       onChange(newElements);
-      updateAPIPayload(newElements);
+      updateAPIPayload(newElements, scene);
     },
-    [onChange, value]
+    [onChange, value, scene]
   );
 
   const onTextInputOptionsChange = useCallback(
@@ -106,9 +113,9 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
         return child;
       });
       onChange(newElements);
-      updateAPIPayload(newElements);
+      updateAPIPayload(newElements, scene);
     },
-    [onChange, value]
+    [onChange, value, scene]
   );
 
   const onSelectionItemTitleChange = useCallback(
@@ -136,9 +143,9 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
       });
 
       onChange(newElements);
-      updateAPIPayload(newElements);
+      updateAPIPayload(newElements, scene);
     },
-    [onChange, value]
+    [onChange, value, scene]
   );
 
   const onCheckboxParamsChange = useCallback(
@@ -154,9 +161,9 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
         return child;
       });
       onChange(newElements);
-      updateAPIPayload(newElements);
+      updateAPIPayload(newElements, scene);
     },
-    [onChange, value]
+    [onChange, value, scene]
   );
 
   const onCheckBoxTitleChange = useCallback(

@@ -1,6 +1,6 @@
 import { FormChild } from './FormElementTypeEditor';
 
-export const updateAPIPayload = (formElements: FormChild[]) => {
+export const updateAPIPayload = (formElements: FormChild[], scene: any) => {
   const submitElement = formElements?.find((child) => {
     if (child.type === 'Submit') {
       return true;
@@ -25,4 +25,6 @@ export const updateAPIPayload = (formElements: FormChild[]) => {
   }, {});
 
   submitElement.api!.data = JSON.stringify(payload);
+  // need so the FormElementTypeEditor rerenders and payload
+  scene.moved.next(Date.now());
 };
