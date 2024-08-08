@@ -179,6 +179,7 @@ const getStyles = (data: FormData | undefined) => (theme: GrafanaTheme2) => ({
     display: 'flex',
     border: `1px solid ${theme.colors.border.strong}`,
     flexDirection: 'column',
+    overflow: 'auto',
   }),
   itemsContainer: css({
     display: 'flex',
