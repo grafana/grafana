@@ -59,4 +59,7 @@ func (a *EntryPointAssets) SetContentDeliveryURL(prefix string) {
 	for i, p := range a.JSFiles {
 		a.JSFiles[i].FilePath = prefix + p.FilePath
 	}
+	for i, p := range a.Swagger {
+		a.Swagger[i].FilePath = prefix + p.FilePath
+	}
 }
