@@ -1,4 +1,4 @@
-import type { PluginExtensionConfig } from '@grafana/data';
+import type { PluginExposedComponent, PluginExtensionConfig } from '@grafana/data';
 import type { AppPluginConfig } from '@grafana/runtime';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
@@ -10,6 +10,8 @@ export type PluginPreloadResult = {
   pluginId: string;
   error?: unknown;
   extensionConfigs: PluginExtensionConfig[];
+  //TODO: this prop should be required
+  exposedComponents?: PluginExposedComponent[];
 };
 
 export async function preloadPlugins(
