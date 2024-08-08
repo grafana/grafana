@@ -199,6 +199,7 @@ require (
 	xorm.io/builder v0.3.6 // @grafana/grafana-backend-group
 	xorm.io/core v0.7.3 // @grafana/grafana-backend-group
 	xorm.io/xorm v0.8.2 // @grafana/alerting-backend
+	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // @grafana/grafana-operator-experience-squad
 )
 
 require (
@@ -473,7 +474,6 @@ require (
 	github.com/grafana/e2e v0.1.1 // @grafana-app-platform-squad
 )
 
-require github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d
 
 require (
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
