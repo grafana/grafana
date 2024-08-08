@@ -89,13 +89,19 @@ const VisualizationDisplay = (props: CanvasElementProps<VizElementConfig, VizEle
   );
 
   return (
-    <div className={styles.container}>
-      <embeddedPanel.Component model={embeddedPanel} />
+    <div className={styles.outerContainer}>
+      <div className={styles.container}>
+        <embeddedPanel.Component model={embeddedPanel} />
+      </div>
     </div>
   );
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme2, data, scene) => ({
+  outerContainer: css({
+    height: '100%',
+    width: '100%',
+  }),
   container: css({
     position: 'absolute',
     height: '100%',
