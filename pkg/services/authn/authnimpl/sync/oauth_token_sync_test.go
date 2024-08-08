@@ -61,7 +61,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 		},
 		{
 			desc:                        "should refresh the token successfully",
-			identity:                    &authn.Identity{ID: identity.MustParseTypedID("user:1")("user:1"), SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
+			identity:                    &authn.Identity{ID: identity.MustParseTypedID("user:1"), SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
 			expectTryRefreshTokenCalled: true,
 			expectRevokeTokenCalled:     false,
 		},
@@ -84,7 +84,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			)
 
 			service := &oauthtokentest.MockOauthTokenService{
-				TryTokenRefreshFunc: func(ctx context.Context, usr authn.Requester) (*oauth2.Token, error) {
+				TryTokenRefreshFunc: func(ctx context.Context, usr identity.Requester) (*oauth2.Token, error) {
 					tryRefreshCalled = true
 					return nil, tt.expectedTryRefreshErr
 				},
