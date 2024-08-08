@@ -22,17 +22,19 @@ export interface QueriesAndExpressionsState {
   queries: AlertQuery[];
 }
 
-const findDataSourceFromExpression = (queries: AlertQuery[], refId: string): AlertQuery | null | undefined => {
+const findDataSourceFromExpression = (queries: AlertQuery[], refId: string): AlertQuery | undefined => {
   const dag = createDagFromQueries(queries);
   const dataSource = getOriginOfRefId(refId, dag)[0];
+  if (!dataSource) {
+    return;
+  }
 
   const originQuery = queries.find((query) => query.refId === dataSource);
-
   if (originQuery && 'relativeTimeRange' in originQuery) {
     return originQuery;
   }
 
-  return null;
+  return;
 };
 
 const initialState: QueriesAndExpressionsState = {
@@ -142,15 +144,15 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
     })
     .addCase(updateExpression, (state, { payload }) => {
       const queryToUpdate = state.queries.find((query) => query.refId === payload.refId);
-
       if (!queryToUpdate) {
         return;
       }
 
       queryToUpdate.model = payload;
 
+      // the resample expression needs to also know what the relative time range is to work with, this means we have to copy it from the source node (data source query)
       if (payload.type === ExpressionQueryType.resample && payload.expression) {
-        // findDataSourceFromExpression uses memoization and doesn't work with proxies
+        // findDataSourceFromExpression uses memoization and it doesn't always work with proxies when the proxy has been revoked
         const originalQueries = original(state)?.queries ?? [];
         const dataSourceAlertQuery = findDataSourceFromExpression(originalQueries, payload.expression);
 
