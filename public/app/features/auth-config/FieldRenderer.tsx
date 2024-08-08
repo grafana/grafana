@@ -63,7 +63,6 @@ export const FieldRenderer = ({
     required: !!fieldData.validation?.required,
     invalid: !!errors[name],
     error: fieldData.validation?.message,
-    key: name,
     description: fieldData.description,
     defaultValue: fieldData.defaultValue?.value,
   };
@@ -71,13 +70,13 @@ export const FieldRenderer = ({
   switch (fieldData.type) {
     case 'text':
       return (
-        <Field {...fieldProps}>
+        <Field key={name} {...fieldProps}>
           <Input {...register(name, fieldData.validation)} type={fieldData.type} id={name} autoComplete={'off'} />
         </Field>
       );
     case 'secret':
       return (
-        <Field {...fieldProps} htmlFor={name}>
+        <Field key={name} {...fieldProps} htmlFor={name}>
           <Controller
             name={name}
             control={control}
@@ -105,7 +104,7 @@ export const FieldRenderer = ({
         options = isSelectableValue(watchOptions) ? watchOptions : [];
       }
       return (
-        <Field {...fieldProps} htmlFor={name}>
+        <Field key={name} {...fieldProps} htmlFor={name}>
           <Controller
             rules={fieldData.validation}
             name={name}
@@ -134,13 +133,19 @@ export const FieldRenderer = ({
       );
     case 'switch':
       return (
-        <Field {...fieldProps}>
+        <Field key={name} {...fieldProps}>
           <Switch {...register(name)} id={name} />
         </Field>
       );
     case 'checkbox':
       return (
-        <Checkbox {...register(name)} id={name} {...fieldProps} className={css({ marginBottom: theme.spacing(2) })} />
+        <Checkbox
+          key={name}
+          {...register(name)}
+          id={name}
+          {...fieldProps}
+          className={css({ marginBottom: theme.spacing(2) })}
+        />
       );
     default:
       console.error(`Unknown field type: ${fieldData.type}`);

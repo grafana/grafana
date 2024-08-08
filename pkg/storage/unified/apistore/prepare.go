@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/storage"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -26,6 +27,9 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if obj.GetName() == "" {
 		return nil, fmt.Errorf("new object must have a name")
 	}
+	if obj.GetResourceVersion() != "" {
+		return nil, storage.ErrResourceVersionSetOnCreate
+	}
 	obj.SetGenerateName("") // Clear the random name field
 	obj.SetResourceVersion("")
 	obj.SetSelfLink("")
@@ -38,7 +42,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetOriginInfo(origin)
 	obj.SetUpdatedBy("")
 	obj.SetUpdatedTimestamp(nil)
-	obj.SetCreatedBy(user.GetUID().String())
+	obj.SetCreatedBy(user.GetUID())
 
 	var buf bytes.Buffer
 	err = s.codec.Encode(newObject, &buf)
@@ -77,7 +81,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		return nil, err
 	}
 	obj.SetOriginInfo(origin)
-	obj.SetUpdatedBy(user.GetUID().String())
+	obj.SetUpdatedBy(user.GetUID())
 	obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
 
 	var buf bytes.Buffer

@@ -8,7 +8,7 @@ import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { HistoryWrapper, setLocationService } from '@grafana/runtime';
+import { HistoryWrapper, LocationServiceProvider, setLocationService } from '@grafana/runtime';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { ModalsContextProvider } from 'app/core/context/ModalsContextProvider';
 import { configureStore } from 'app/store/configureStore';
@@ -74,7 +74,9 @@ const getWrapper = ({
       <Provider store={reduxStore}>
         <GrafanaContext.Provider value={context}>
           <PotentialRouter history={history}>
-            <ModalsContextProvider>{children}</ModalsContextProvider>
+            <LocationServiceProvider service={locationService}>
+              <ModalsContextProvider>{children}</ModalsContextProvider>
+            </LocationServiceProvider>
           </PotentialRouter>
         </GrafanaContext.Provider>
       </Provider>
@@ -91,11 +93,14 @@ const customRender = (
   ui: React.ReactElement,
   { renderWithRouter = true, ...renderOptions }: ExtendedRenderOptions = {}
 ) => {
+  const user = userEvent.setup();
   const store = renderOptions.preloadedState ? configureStore(renderOptions?.preloadedState) : undefined;
   const AllTheProviders = renderOptions.wrapper || getWrapper({ store, renderWithRouter, ...renderOptions });
 
   return {
     ...render(ui, { wrapper: AllTheProviders, ...renderOptions }),
+    /** Instance of `userEvent.setup()` ready for use to interact with rendered component */
+    user,
     store,
   };
 };

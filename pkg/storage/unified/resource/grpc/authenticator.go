@@ -72,11 +72,11 @@ func (f *Authenticator) decodeMetadata(ctx context.Context, meta metadata.MD) (i
 		return nil, fmt.Errorf("no login found in grpc metadata")
 	}
 
-	// The namespaced verisons have a "-" in the key
+	// The namespaced versions have a "-" in the key
 	// TODO, remove after this has been deployed to unified storage
 	if getter(mdUserID) == "" {
 		var err error
-		user.Namespace = identity.NamespaceUser
+		user.Type = identity.TypeUser
 		user.UserID, err = strconv.ParseInt(getter("grafana-userid"), 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("invalid user id: %w", err)
@@ -88,17 +88,17 @@ func (f *Authenticator) decodeMetadata(ctx context.Context, meta metadata.MD) (i
 		return user, nil
 	}
 
-	ns, err := identity.ParseNamespaceID(getter(mdUserID))
+	ns, err := identity.ParseTypedID(getter(mdUserID))
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
-	user.Namespace = ns.Namespace()
+	user.Type = ns.Type()
 	user.UserID, err = ns.ParseInt()
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
 
-	ns, err = identity.ParseNamespaceID(getter(mdUserUID))
+	ns, err = identity.ParseTypedID(getter(mdUserUID))
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
@@ -150,7 +150,7 @@ func encodeIdentityInMetadata(user identity.Requester) metadata.MD {
 
 		// Or we can create it directly
 		mdUserID, user.GetID().String(),
-		mdUserUID, user.GetUID().String(),
+		mdUserUID, user.GetUID(),
 		mdOrgName, user.GetOrgName(),
 		mdOrgID, strconv.FormatInt(user.GetOrgID(), 10),
 		mdOrgRole, string(user.GetOrgRole()),
@@ -158,6 +158,6 @@ func encodeIdentityInMetadata(user identity.Requester) metadata.MD {
 
 		// TODO, Remove after this is deployed to unified storage
 		"grafana-userid", user.GetID().ID(),
-		"grafana-useruid", user.GetUID().ID(),
+		"grafana-useruid", user.GetRawIdentifier(),
 	)
 }

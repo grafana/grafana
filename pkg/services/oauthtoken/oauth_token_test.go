@@ -182,13 +182,13 @@ func TestService_TryTokenRefresh(t *testing.T) {
 		{
 			desc: "should skip sync when identity is not a user",
 			setup: func(env *environment) {
-				env.identity = &authn.Identity{ID: authn.MustParseNamespaceID("service-account:1")}
+				env.identity = &authn.Identity{ID: identity.MustParseTypedID("service-account:1")}
 			},
 		},
 		{
 			desc: "should skip token refresh and return nil if namespace and id cannot be converted to user ID",
 			setup: func(env *environment) {
-				env.identity = &authn.Identity{ID: authn.MustParseNamespaceID("user:invalidIdentifierFormat")}
+				env.identity = &authn.Identity{ID: identity.MustParseTypedID("user:invalidIdentifierFormat")}
 			},
 		},
 		{
@@ -211,21 +211,21 @@ func TestService_TryTokenRefresh(t *testing.T) {
 
 				env.identity = &authn.Identity{
 					AuthenticatedBy: login.GenericOAuthModule,
-					ID:              authn.MustParseNamespaceID("user:1234"),
+					ID:              identity.MustParseTypedID("user:1234"),
 				}
 			},
 		},
 		{
 			desc: "should skip token refresh if there's an unexpected error while looking up the user oauth entry, additionally, no error should be returned",
 			setup: func(env *environment) {
-				env.identity = &authn.Identity{ID: authn.MustParseNamespaceID("user:1234")}
+				env.identity = &authn.Identity{ID: identity.MustParseTypedID("user:1234")}
 				env.authInfoService.ExpectedError = errors.New("some error")
 			},
 		},
 		{
 			desc: "should skip token refresh if the user doesn't have an oauth entry",
 			setup: func(env *environment) {
-				env.identity = &authn.Identity{ID: authn.MustParseNamespaceID("user:1234")}
+				env.identity = &authn.Identity{ID: identity.MustParseTypedID("user:1234")}
 				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
 					AuthModule: login.SAMLAuthModule,
 				}
@@ -234,7 +234,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 		{
 			desc: "should do token refresh if access token or id token have not expired yet",
 			setup: func(env *environment) {
-				env.identity = &authn.Identity{ID: authn.MustParseNamespaceID("user:1234")}
+				env.identity = &authn.Identity{ID: identity.MustParseTypedID("user:1234")}
 				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
 					AuthModule: login.GenericOAuthModule,
 				}
@@ -243,7 +243,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 		{
 			desc: "should skip token refresh when no oauth provider was found",
 			setup: func(env *environment) {
-				env.identity = &authn.Identity{ID: authn.MustParseNamespaceID("user:1234")}
+				env.identity = &authn.Identity{ID: identity.MustParseTypedID("user:1234")}
 				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
 					AuthModule:   login.GenericOAuthModule,
 					OAuthIdToken: EXPIRED_JWT,
@@ -253,7 +253,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 		{
 			desc: "should skip token refresh when oauth provider token handling is disabled (UseRefreshToken is false)",
 			setup: func(env *environment) {
-				env.identity = &authn.Identity{ID: authn.MustParseNamespaceID("user:1234")}
+				env.identity = &authn.Identity{ID: identity.MustParseTypedID("user:1234")}
 				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
 					AuthModule:   login.GenericOAuthModule,
 					OAuthIdToken: EXPIRED_JWT,
@@ -266,7 +266,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 		{
 			desc: "should skip token refresh when there is no refresh token",
 			setup: func(env *environment) {
-				env.identity = &authn.Identity{ID: authn.MustParseNamespaceID("user:1234")}
+				env.identity = &authn.Identity{ID: identity.MustParseTypedID("user:1234")}
 				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
 					AuthModule:        login.GenericOAuthModule,
 					OAuthIdToken:      EXPIRED_JWT,
@@ -286,7 +286,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 					Expiry:       time.Now().Add(-time.Hour),
 					TokenType:    "Bearer",
 				}
-				env.identity = &authn.Identity{ID: authn.MustParseNamespaceID("user:1234")}
+				env.identity = &authn.Identity{ID: identity.MustParseTypedID("user:1234")}
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: true,
 				}
@@ -311,7 +311,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 					Expiry:       time.Now().Add(time.Hour),
 					TokenType:    "Bearer",
 				}
-				env.identity = &authn.Identity{ID: authn.MustParseNamespaceID("user:1234")}
+				env.identity = &authn.Identity{ID: identity.MustParseTypedID("user:1234")}
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: true,
 				}

@@ -22,7 +22,7 @@ func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	userID, errID := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	userID, errID := identity.UserIdentifier(c.SignedInUser.GetTypedID())
 	if errID != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to set home dashboard", errID)
 	}
@@ -64,7 +64,7 @@ func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 // 401: unauthorisedError
 // 500: internalServerError
 func (hs *HTTPServer) GetUserPreferences(c *contextmodel.ReqContext) response.Response {
-	userID, errID := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	userID, errID := identity.UserIdentifier(c.SignedInUser.GetTypedID())
 	if errID != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get user preferences", errID)
 	}
@@ -89,7 +89,7 @@ func (hs *HTTPServer) UpdateUserPreferences(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	userID, errID := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	userID, errID := identity.UserIdentifier(c.SignedInUser.GetTypedID())
 	if errID != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update user preferences", errID)
 	}
@@ -113,7 +113,7 @@ func (hs *HTTPServer) PatchUserPreferences(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	userID, errID := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	userID, errID := identity.UserIdentifier(c.SignedInUser.GetTypedID())
 	if errID != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update user preferences", errID)
 	}

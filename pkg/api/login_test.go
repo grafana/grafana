@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -331,7 +332,7 @@ func TestLoginPostRedirect(t *testing.T) {
 		HooksService: &hooks.HooksService{},
 		License:      &licensing.OSSLicensingService{},
 		authnService: &authntest.FakeService{
-			ExpectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:42"), SessionToken: &usertoken.UserToken{}},
+			ExpectedIdentity: &authn.Identity{ID: identity.MustParseTypedID("user:42"), SessionToken: &usertoken.UserToken{}},
 		},
 		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 		Features:         featuremgmt.WithFeatures(),

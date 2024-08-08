@@ -1,8 +1,8 @@
-import { screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
+import { screen, waitFor, waitForElementToBeRemoved } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -12,8 +12,8 @@ import { searchFolders } from '../../manage-dashboards/state/actions';
 
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { mockApi, mockFeatureDiscoveryApi, setupMswServer } from './mockApi';
-import { grantUserPermissions, labelsPluginMetaMock, mockDataSource } from './mocks';
+import { mockFeatureDiscoveryApi, setupMswServer } from './mockApi';
+import { grantUserPermissions, mockDataSource } from './mocks';
 import { emptyExternalAlertmanagersResponse, mockAlertmanagersResponse } from './mocks/alertmanagerApi';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import { setupDataSources } from './testSetup/datasources';
@@ -51,7 +51,6 @@ const server = setupMswServer();
 
 mockFeatureDiscoveryApi(server).discoverDsFeatures(dataSources.default, buildInfoResponse.mimir);
 mockAlertmanagersResponse(server, emptyExternalAlertmanagersResponse);
-mockApi(server).plugins.getPluginSettings({ ...labelsPluginMetaMock, enabled: false });
 
 // these tests are rather slow because we have to wait for various API calls and mocks to be called
 // and wait for the UI to be in particular states, drone seems to time out quite often so
@@ -114,17 +113,17 @@ describe('RuleEditor cloud', () => {
     const user = userEvent.setup();
 
     renderRuleEditor();
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+    await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
 
     const removeExpressionsButtons = screen.getAllByLabelText('Remove expression');
     expect(removeExpressionsButtons).toHaveLength(2);
 
     // Needs to wait for featrue discovery API call to finish - Check if ruler enabled
-    await waitFor(() => expect(screen.getByText('Data source-managed')).toBeInTheDocument());
+    expect(await screen.findByText('Data source-managed')).toBeInTheDocument();
 
     const switchToCloudButton = screen.getByText('Data source-managed');
     expect(switchToCloudButton).toBeInTheDocument();
-    expect(switchToCloudButton).not.toBeDisabled();
+    expect(switchToCloudButton).toBeEnabled();
 
     await user.click(switchToCloudButton);
 

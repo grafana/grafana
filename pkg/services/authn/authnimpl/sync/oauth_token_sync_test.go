@@ -10,6 +10,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -41,17 +42,17 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 	tests := []testCase{
 		{
 			desc:                        "should skip sync when identity is not a user",
-			identity:                    &authn.Identity{ID: authn.MustParseNamespaceID("service-account:1")},
+			identity:                    &authn.Identity{ID: identity.MustParseTypedID("service-account:1")},
 			expectTryRefreshTokenCalled: false,
 		},
 		{
 			desc:                        "should skip sync when identity is a user but is not authenticated with session token",
-			identity:                    &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
+			identity:                    &authn.Identity{ID: identity.MustParseTypedID("user:1")},
 			expectTryRefreshTokenCalled: false,
 		},
 		{
 			desc:                        "should invalidate access token and session token if token refresh fails",
-			identity:                    &authn.Identity{ID: authn.MustParseNamespaceID("user:1"), SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
+			identity:                    &authn.Identity{ID: identity.MustParseTypedID("user:1"), SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
 			expectedTryRefreshErr:       errors.New("some err"),
 			expectTryRefreshTokenCalled: true,
 			expectRevokeTokenCalled:     true,
@@ -60,13 +61,13 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 		},
 		{
 			desc:                        "should refresh the token successfully",
-			identity:                    &authn.Identity{ID: authn.MustParseNamespaceID("user:1"), SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
+			identity:                    &authn.Identity{ID: identity.MustParseTypedID("user:1")("user:1"), SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
 			expectTryRefreshTokenCalled: true,
 			expectRevokeTokenCalled:     false,
 		},
 		{
 			desc:                        "should not invalidate the token if the token has already been refreshed by another request (singleflight)",
-			identity:                    &authn.Identity{ID: authn.MustParseNamespaceID("user:1"), SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
+			identity:                    &authn.Identity{ID: identity.MustParseTypedID("user:1"), SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
 			expectTryRefreshTokenCalled: true,
 			expectRevokeTokenCalled:     false,
 			expectToken:                 &login.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute)},

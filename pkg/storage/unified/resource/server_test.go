@@ -19,7 +19,7 @@ import (
 
 func TestSimpleServer(t *testing.T) {
 	testUserA := &identity.StaticRequester{
-		Namespace:      identity.NamespaceUser,
+		Type:           identity.TypeUser,
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
@@ -116,7 +116,7 @@ func TestSimpleServer(t *testing.T) {
 		require.NoError(t, err)
 		obj.SetAnnotation("test", "hello")
 		obj.SetUpdatedTimestampMillis(now)
-		obj.SetUpdatedBy(testUserA.GetUID().String())
+		obj.SetUpdatedBy(testUserA.GetUID())
 		raw, err = json.Marshal(tmp)
 		require.NoError(t, err)
 

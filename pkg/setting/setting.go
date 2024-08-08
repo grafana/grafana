@@ -92,6 +92,7 @@ type Cfg struct {
 	// HTTP Server Settings
 	CertFile          string
 	KeyFile           string
+	CertPassword      string
 	CertWatchInterval time.Duration
 	HTTPAddr          string
 	HTTPPort          string
@@ -322,9 +323,6 @@ type Cfg struct {
 	// GrafanaJavascriptAgent config
 	GrafanaJavascriptAgent GrafanaJavascriptAgent
 
-	// accessactionsets
-	OnlyStoreAccessActionSets bool
-
 	// Data sources
 	DataSourceLimit int
 	// Number of queries to be executed concurrently. Only for the datasource supports concurrency.
@@ -345,8 +343,6 @@ type Cfg struct {
 	ExternalSnapshotUrl  string
 	ExternalSnapshotName string
 	ExternalEnabled      bool
-	// Deprecated: setting this to false adds deprecation warnings at runtime
-	SnapShotRemoveExpired bool
 
 	// Only used in https://snapshots.raintank.io/
 	SnapshotPublicMode bool
@@ -467,14 +463,7 @@ type Cfg struct {
 	OAuth2ServerGeneratedKeyTypeForClient string
 	OAuth2ServerAccessTokenLifespan       time.Duration
 
-	// Access Control
-	RBACPermissionCache bool
-	// Enable Permission validation during role creation and provisioning
-	RBACPermissionValidationEnabled bool
-	// Reset basic roles permissions on start-up
-	RBACResetBasicRoles bool
-	// RBAC single organization. This configuration option is subject to change.
-	RBACSingleOrganization bool
+	RBAC RBACSettings
 
 	Zanzana ZanzanaSettings
 
@@ -1116,7 +1105,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	readOAuth2ServerSettings(cfg)
 
-	readAccessControlSettings(iniFile, cfg)
+	cfg.readRBACSettings()
 
 	cfg.readZanzanaSettings()
 
@@ -1657,15 +1646,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	return nil
 }
 
-func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
-	rbac := iniFile.Section("rbac")
-	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
-	cfg.RBACPermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
-	cfg.RBACResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
-	cfg.RBACSingleOrganization = rbac.Key("single_organization").MustBool(false)
-	cfg.OnlyStoreAccessActionSets = rbac.Key("only_store_access_action_sets").MustBool(false)
-}
-
 func readOAuth2ServerSettings(cfg *Cfg) {
 	oauth2Srv := cfg.SectionWithEnvOverrides("oauth2_server")
 	cfg.OAuth2ServerEnabled = oauth2Srv.Key("enabled").MustBool(false)
@@ -1870,7 +1850,6 @@ func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 	cfg.ExternalSnapshotName = valueAsString(snapshots, "external_snapshot_name", "")
 
 	cfg.ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
-	cfg.SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
 	cfg.SnapshotPublicMode = snapshots.Key("public_mode").MustBool(false)
 
 	return nil
@@ -1896,11 +1875,13 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 		cfg.Protocol = HTTPSScheme
 		cfg.CertFile = server.Key("cert_file").String()
 		cfg.KeyFile = server.Key("cert_key").String()
+		cfg.CertPassword = server.Key("cert_pass").String()
 	}
 	if protocolStr == "h2" {
 		cfg.Protocol = HTTP2Scheme
 		cfg.CertFile = server.Key("cert_file").String()
 		cfg.KeyFile = server.Key("cert_key").String()
+		cfg.CertPassword = server.Key("cert_pass").String()
 	}
 	if protocolStr == "socket" {
 		cfg.Protocol = SocketScheme
