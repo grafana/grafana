@@ -43,7 +43,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
         iamApi.middleware,
         ...extraMiddleware
       ),
-    devTools: import.meta.env.MODE !== 'production',
+    devTools: process.env.NODE_ENV !== 'production',
     preloadedState: {
       navIndex: buildInitialState(),
       ...initialState,
