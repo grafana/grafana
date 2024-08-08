@@ -1,9 +1,5 @@
-import { css, cx, keyframes } from '@emotion/css';
-import * as React from 'react';
-import { useCallback, useEffect, useState } from 'react';
 import { useCallback, useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
-import { useFormContext, Controller } from 'react-hook-form';
 
 import { SelectableValue } from '@grafana/data';
 import { ActionMeta, Field, FieldValidationMessage, Stack, TextLink } from '@grafana/ui';
