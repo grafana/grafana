@@ -172,7 +172,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
         )}
       </Stack>
       <Stack justifyContent="space-between" direction="row">
-        {selection.length > 1 && (
+        {selection.length > 0 && (
           <div className={styles.generateVizWrapper}>
             <Button size="sm" variant="secondary" onClick={onGenerateViz}>
               Generate visualization
