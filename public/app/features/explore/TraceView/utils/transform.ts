@@ -45,29 +45,12 @@ export function transformTraceDataFrame(frame: DataFrame): TraceResponse | null 
     processes,
     spans: view.toArray().map((s, index) => {
       const references: any[] = [];
-      const childrenMetrics = [];
-
-      const lastElement = s.childrenMetrics && s.childrenMetrics[s.childrenMetrics.length - 1];
-      const lastElementTag = lastElement && lastElement.tags;
-      const lastElementSpanID = lastElement && lastElement.spanID;
-      const lastElementTraceID = lastElement && lastElement.traceID;
 
       if (s.parentSpanID) {
         references.push({ refType: 'CHILD_OF' as const, spanID: s.parentSpanID, traceID: s.traceID });
-        console.log({ references });
-        console.log({ s });
-
-        childrenMetrics.push({
-          refType: 'CHILD_OF' as const,
-          spanID: lastElementSpanID,
-          span: lastElementSpanID !== '0000000000000000' && s,
-          traceID: lastElementTraceID,
-          tags: lastElementTag,
-        });
       }
       if (s.references) {
         references.push(...s.references.map((reference) => ({ refType: 'FOLLOWS_FROM' as const, ...reference })));
-        childrenMetrics.push(...s.references.map((reference) => ({ refType: 'FOLLOWS_FROM' as const, ...reference })));
       }
 
       return {
@@ -79,7 +62,6 @@ export function transformTraceDataFrame(frame: DataFrame): TraceResponse | null 
         references,
         logs: s.logs?.map((l) => ({ ...l, timestamp: l.timestamp * 1000 })) || [],
         dataFrameRowIndex: index,
-        childrenMetrics,
       } as unknown as TraceSpanData;
     }),
   };

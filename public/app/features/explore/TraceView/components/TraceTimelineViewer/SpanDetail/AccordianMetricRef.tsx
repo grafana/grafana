@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
@@ -20,7 +20,7 @@ import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import { TraceSpanReference } from '../../types/trace';
-import ReferenceLink from '../../url/ReferenceLink';
+import MetricLink from '../../url/MetricLink';
 
 // import AccordianKeyValues from './AccordianKeyValues';
 
@@ -126,6 +126,7 @@ export type AccordianReferencesProps = {
 
 type ReferenceItemProps = {
   data: any[];
+  names: string[];
   interactive?: boolean;
   openedItems?: Set<TraceSpanReference>;
   onItemToggle?: (reference: TraceSpanReference) => void;
@@ -133,9 +134,9 @@ type ReferenceItemProps = {
 };
 
 // export for test
-export function References(props: ReferenceItemProps) {
+export function ChildrenMetrics(props: ReferenceItemProps) {
   // const { data, createFocusSpanLink, openedItems, onItemToggle, interactive } = props;
-  const { data, createFocusSpanLink } = props;
+  const { data, createFocusSpanLink, names } = props;
   const styles = useStyles2(getStyles);
 
   data.map((ref) => {
@@ -143,64 +144,56 @@ export function References(props: ReferenceItemProps) {
     console.log({ ref });
   });
 
+
   return (
     <div className={styles.AccordianReferencesContent}>
+      {names.map((name, i) => (
+        <>
+          <span className={styles.debugLabel}>
+            {name}
+          </span>
+          <MetricsRow key={i} data={data} name={name} createFocusSpanLink={createFocusSpanLink} />
+        </>
+      ))}
+    </div>
+  );
+}
+
+type MetricRowProps = {
+  data: any[];
+  name: string;
+  createFocusSpanLink: (traceId: string, spanId: string) => LinkModel<Field>;
+};
+
+const MetricsRow = (props: MetricRowProps) => {
+  const { data, createFocusSpanLink, name } = props;
+  const styles = useStyles2(getStyles)
+
+  return (
+    <>
       {data.map((reference, i) => (
-        <div className={i < data.length - 1 ? styles.AccordianReferenceItem : undefined} key={i}>
-          <div className={styles.item} key={`${reference.spanID}`}>
-            <ReferenceLink reference={reference} createFocusSpanLink={createFocusSpanLink}>
+        (reference.tags[1].value === name) ? (
+          <div className={i < data.length - 1 ? styles.AccordianReferenceItem : undefined} key={i}>
+            <div className={styles.item} key={`${reference.spanID}`}>
               <span className={styles.itemContent}>
-                {reference.span ? (
-                  <span>
-                    <span className={cx('span-svc-name', styles.serviceName)}>
-                      {reference.span.process ? reference.span.process.serviceName : reference.span.serviceName}
-                    </span>
-                    <small className="endpoint-name">{reference.span.operationName}</small>
-                  </span>
-                ) : (
-                  <span className={cx('span-svc-name', styles.title)}>
-                    View Linked Span <Icon name="external-link-alt" />
-                  </span>
-                )}
                 <small className={styles.debugInfo}>
                   <span className={styles.debugLabel}>
                     {reference.tags[0].key}: {reference.tags[0].value}
                   </span>
-                  {/* <span className={styles.debugLabel} data-label="TraceID:">
-                    {reference.traceID}
-                  </span> */}
-                  <span className={styles.debugLabel} data-label="SpanID:">
-                    {reference.spanID}
+                  <span className={styles.debugLabel} />
+                  <span className={styles.debugLabel}>
+                    <MetricLink reference={reference} createFocusSpanLink={createFocusSpanLink} />
                   </span>
                 </small>
-                {/* {reference.tags.map((tag: { key: string; value: string }) => {
-                  return (
-                    <div key={tag.key}>
-                      {tag.key}: {tag.value}
-                    </div>
-                  );
-                })} */}
               </span>
-            </ReferenceLink>
-          </div>
-          {/* {!!reference.tags?.length && (
-            <div className={styles.AccordianKeyValues}>
-              <AccordianKeyValues
-                className={i < data.length - 1 ? styles.AccordianKeyValuesItem : null}
-                data={reference.tags || []}
-                highContrast
-                interactive={interactive}
-                isOpen={openedItems ? openedItems.has(reference) : false}
-                label={'attributes'}
-                linksGetter={null}
-                onToggle={interactive && onItemToggle ? () => onItemToggle(reference) : null}
-              />
             </div>
-          )} */}
-        </div>
+          </div>
+        ) : (null
+        )
       ))}
-    </div>
-  );
+    </>
+  )
+
 }
 
 const AccordianMetricRef = ({
@@ -230,6 +223,16 @@ const AccordianMetricRef = ({
     };
   }
 
+  let names = []
+
+  for (let i = 0; i < data.length; i++) {
+    for (let j = 0; j < data[i].tags.length; j++) {
+      if (data[i].tags[j].key === "name" && names.indexOf(data[i].tags[j].value) === -1) {
+        names.push(data[i].tags[j].value)
+      }
+    }
+  }
+
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.AccordianMetricRef}>
@@ -238,11 +241,12 @@ const AccordianMetricRef = ({
         <strong>
           <span>Children Metrics</span>
         </strong>{' '}
-        ({data.length})
+        ({names.length})
       </HeaderComponent>
       {isOpen && (
-        <References
+        <ChildrenMetrics
           data={data}
+          names={names}
           openedItems={openedItems}
           createFocusSpanLink={createFocusSpanLink}
           onItemToggle={onItemToggle}
