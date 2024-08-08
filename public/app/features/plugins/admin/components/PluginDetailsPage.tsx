@@ -77,7 +77,7 @@ export function PluginDetailsPage({
 
   return (
     <Page navId={navId} pageNav={navModel} actions={actions} subTitle={subtitle} {...conditionalProps}>
-      <Stack gap={4} justifyContent="space-between" direction={{ xs: 'column-reverse', sm: 'row' }} grow={8}>
+      <Stack gap={4} justifyContent="space-between" direction={{ xs: 'column-reverse', sm: 'row' }}>
         <Page.Contents>
           <TabContent className={styles.tabContent}>
             {plugin.angularDetected && (

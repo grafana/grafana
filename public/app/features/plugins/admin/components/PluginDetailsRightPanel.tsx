@@ -14,22 +14,20 @@ export function PluginDetailsRightPanel(props: Props): React.ReactElement | null
   const { info, plugin } = props;
 
   return (
-    <Stack direction="column" gap={2} grow={3}>
+    <Stack direction="column" gap={2} grow={0} shrink={0}>
       {info.map((infoItem, index) => {
         return (
           <Stack key={index}>
-            <Trans i18nKey="plugins.details.labels.info">
-              <Text color="secondary">{infoItem.label}: </Text>
-            </Trans>
+            <Text color="secondary">{infoItem.label + ':'}</Text>
             <div>{infoItem.value}</div>
           </Stack>
         );
       })}
 
       <div>
-        <Trans i18nKey="plugins.details.labels.updatedAt">
-          <Text color="secondary">Last updated: </Text>{' '}
-        </Trans>
+        <Text color="secondary">
+          <Trans i18nKey="plugins.details.labels.updatedAt">Last updated: </Trans>
+        </Text>{' '}
         <Text>{formatDate(new Date(plugin.updatedAt))}</Text>
       </div>
 
@@ -37,21 +35,17 @@ export function PluginDetailsRightPanel(props: Props): React.ReactElement | null
         <Stack direction="column" gap={2}>
           {plugin.details.links.map((link, index) => (
             <div key={index}>
-              <Trans i18nKey="plugins.details.labels.links">
-                <TextLink href={link.url} external>
-                  {link.name}
-                </TextLink>
-              </Trans>
+              <TextLink href={link.url} external>
+                {link.name}
+              </TextLink>
             </div>
           ))}
         </Stack>
       )}
 
-      <Trans i18nKey="plugins.details.labels.reportAbuse">
-        <TextLink href="mailto:integrations@grafana.com" external>
-          Report Abuse
-        </TextLink>
-      </Trans>
+      <TextLink href="mailto:integrations@grafana.com" external>
+        <Trans i18nKey="plugins.details.labels.reportAbuse">Report Abuse</Trans>
+      </TextLink>
     </Stack>
   );
 }
