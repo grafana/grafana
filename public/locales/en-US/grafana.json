@@ -1090,6 +1090,11 @@
       "link-title": "View the full migration guide",
       "title": "Let us help you migrate to this stack"
     },
+    "migrated-counts": {
+      "dashboards": "dashboards",
+      "datasources": "data sources",
+      "folders": "folders"
+    },
     "migration-token": {
       "delete-button": "Delete token",
       "delete-modal-body": "If you've already used this token with a self-managed installation, that installation will no longer be able to upload content.",
@@ -1121,6 +1126,8 @@
       "migration-finished-with-warnings-body": "The migration has completed with some warnings. Check individual resources for more details",
       "snapshot-error-status-body": "There was an error creating the snapshot or starting the migration process. See the Grafana server logs for more details",
       "snapshot-error-status-title": "Error migrating resources",
+      "success-message": "Successfully migrated {{successCount}} {{types, list}} to your Grafana Cloud instance.",
+      "success-title": "Migration completed!",
       "upload-snapshot-error-title": "Error uploading snapshot"
     },
     "pdc": {

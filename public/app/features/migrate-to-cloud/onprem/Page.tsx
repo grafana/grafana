@@ -24,6 +24,7 @@ import { MigrationSummary } from './MigrationSummary';
 import { ResourcesTable } from './ResourcesTable';
 import { BuildSnapshotCTA, CreatingSnapshotCTA } from './SnapshotCTAs';
 import { SupportedTypesDisclosure } from './SupportedTypesDisclosure';
+import { useNotifySuccessful } from './useNotifyOnSuccess';
 
 /**
  * Here's how migrations work:
@@ -118,6 +119,8 @@ export const Page = () => {
   const [performUploadSnapshot, uploadSnapshotResult] = useUploadSnapshotMutation();
   const [performCancelSnapshot, cancelSnapshotResult] = useCancelSnapshotMutation();
   const [performDisconnect, disconnectResult] = useDeleteSessionMutation();
+
+  useNotifySuccessful(snapshot.data);
 
   const sessionUid = session.data?.uid;
   const snapshotUid = snapshot.data?.uid;
