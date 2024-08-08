@@ -31,24 +31,31 @@ const CacheType = "ring"
 func NewCache(cfg *setting.Cfg, reg prometheus.Registerer, provider grpcserver.Provider) (*Cache, error) {
 	logger := log.New("remotecache.ring")
 
-	addr, _, err := net.SplitHostPort(cfg.GRPCServerAddress)
+	grpcAddr, grpcPort, err := net.SplitHostPort(cfg.GRPCServerAddress)
 	if err != nil {
 		return nil, err
 	}
 
 	memberlistsvc, client, err := newMemberlistService(memberlistConfig{
-		Addr:        addr,
+		// FIXME(kalleep): This a local address that we listen on. It is convinient to use the same address
+		// that we use for our grpc server but with a different port.
+		Addr:        grpcAddr,
 		Port:        cfg.RemoteCache.Ring.Port,
 		JoinMembers: cfg.RemoteCache.Ring.JoinMembers,
 	}, logger, reg)
 
 	ring, lfc, err := newRing(
-		cfg.GRPCServerAddress,
+		// FIXME(kalleep): As the id of the node we store how we can reach the cache from another node.
+		// The cache is using our shared grpc server so this should be the grpc port and a external address to our node.
+		// We should clean this up.
+		net.JoinHostPort(cfg.RemoteCache.Ring.Addr, grpcPort),
 		ringConfig{
-			Addr:             addr,
+			// FIXME(kalleep): This should be the same address as above but we need to advertise with the port
+			// our kv is listening on.
+			Addr:             cfg.RemoteCache.Ring.Addr,
 			Port:             strconv.Itoa(cfg.RemoteCache.Ring.Port),
-			HeartbeatTimeout: cfg.RemoteCache.Ring.HeartbeatTimeout,
 			HeartbeatPeriod:  cfg.RemoteCache.Ring.HeartbeatPeriod,
+			HeartbeatTimeout: cfg.RemoteCache.Ring.HeartbeatTimeout,
 		},
 		logger,
 		client,
@@ -195,6 +202,7 @@ func (c *Cache) getBackend(key string, op ring.Operation) (Backend, error) {
 
 	inst := set.Instances[0]
 
+	fmt.Println("Node Address ", inst.GetAddr())
 	c.metrics.cacheUsage.WithLabelValues(inst.GetId()).Inc()
 
 	c.backendsRW.RLock()

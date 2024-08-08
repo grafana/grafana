@@ -108,6 +108,7 @@ func (s *gPRCServerService) Run(ctx context.Context) error {
 	s.logger.Info("Running GRPC server", "address", s.cfg.GRPCServerAddress, "network", s.cfg.GRPCServerNetwork, "tls", s.cfg.GRPCServerTLSConfig != nil, "max_recv_msg_size", s.cfg.GRPCServerMaxRecvMsgSize, "max_send_msg_size", s.cfg.GRPCServerMaxSendMsgSize)
 
 	listener, err := net.Listen(s.cfg.GRPCServerNetwork, s.cfg.GRPCServerAddress)
+
 	if err != nil {
 		return fmt.Errorf("GRPC server: failed to listen: %w", err)
 	}

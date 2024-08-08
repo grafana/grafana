@@ -24,6 +24,10 @@ type ringConfig struct {
 
 func newRing(id string, cfg ringConfig, logger log.Logger, client kv.Client, reg prometheus.Registerer) (*ring.Ring, *ring.BasicLifecycler, error) {
 
+	// 1. what interface to bind it to e.g. 127.0.0.1, 0.0.0.0
+	// 2. how other nodes can reach me mynamespace.mypod (ring)
+	// 3. how other nodes can reach me mynamespace.mypod (cache)
+
 	var ringConfig ring.Config
 	ringConfig.ReplicationFactor = 1
 	ringConfig.HeartbeatTimeout = cfg.HeartbeatTimeout
