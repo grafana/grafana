@@ -185,7 +185,7 @@ function ExperimentalSplitPaneTree(props: { routes?: JSX.Element | false }) {
         splitVisible={!!appId}
         paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
       >
-        {/* very similar to RouterTree but #grafana-app div is moved and it's easier to isolate any changes like this
+        {/* very similar to RouterTree but .grafana-app div is moved and it's easier to isolate any changes like this
          so hopefully less chance of introducing any error */}
         <Router history={locationService.getHistory()}>
           <LocationServiceProvider service={locationService}>
