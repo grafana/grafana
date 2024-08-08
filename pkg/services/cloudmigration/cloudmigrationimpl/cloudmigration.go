@@ -490,8 +490,8 @@ func (s *Service) DeleteSession(ctx context.Context, sessionUID string) (*cloudm
 		if err != nil {
 			return nil, fmt.Errorf("deleting snapshot from db: %w", err)
 		}
-		// now we remove the local files
-		err = os.RemoveAll(snapshot.LocalDir)
+
+		err = deleteLocalFiles(snapshot)
 		if err != nil {
 			// TODO LND Show we actually return an error in this case? or just log it?
 			return nil, fmt.Errorf("deleting snapshot from filesystem: %w", err)
@@ -506,6 +506,11 @@ func (s *Service) DeleteSession(ctx context.Context, sessionUID string) (*cloudm
 	s.report(ctx, c, gmsclient.EventDisconnect, 0, nil)
 
 	return c, nil
+}
+
+func deleteLocalFiles(s cloudmigration.CloudMigrationSnapshot) error {
+	// now we remove the local files re
+	return os.RemoveAll(s.LocalDir)
 }
 
 func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedInUser, sessionUid string) (*cloudmigration.CloudMigrationSnapshot, error) {
