@@ -176,7 +176,7 @@ export const Hoverbot = () => {
           content={
             <CustomScrollbar autoHeightMax="500px">
               {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
-              <div tabIndex={0}>
+              <div tabIndex={0} className={styles.grotWrapper}>
                 {selecting && <p>Click on an element in the screen to get assistance.</p>}
                 {loading && <p>Asking Grot...</p>}
                 {reply !== '' && <Markdown>{reply}</Markdown>}
@@ -185,6 +185,7 @@ export const Hoverbot = () => {
           }
           onClose={() => {
             setReply('');
+            setLoading(false);
             cancel();
           }}
           show={true}
@@ -239,6 +240,9 @@ const styles = {
     margin: 0,
     padding: 0,
   }),
+  grotWrapper: css({
+    paddingTop: 12,
+  })
 };
 
 let highlighted: HTMLDivElement | undefined;
