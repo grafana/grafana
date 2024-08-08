@@ -439,7 +439,7 @@ func getChildrenMetrics(traceIDHex string, children Children, limit int) []*Trac
 
 			childrenMetrics[0] = &TraceReference{
 				TraceID: traceIDHex,
-				SpanID:  minSpanIDHex,
+				SpanID:  nilSpanIDHex,
 				Tags: []*KeyValue{
 					{Key: "count", Value: child.Count},
 					{Key: "name", Value: child.Name},
