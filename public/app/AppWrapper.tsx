@@ -116,11 +116,13 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                 actions={[]}
                 options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
               >
-                {config.featureToggles.appSidecar ? (
-                  <ExperimentalSplitPaneTree routes={ready && this.renderRoutes()} />
-                ) : (
-                  <RouterTree routes={ready && this.renderRoutes()} />
-                )}
+                <div className="grafana-app">
+                  {config.featureToggles.appSidecar ? (
+                    <ExperimentalSplitPaneTree routes={ready && this.renderRoutes()} />
+                  ) : (
+                    <RouterTree routes={ready && this.renderRoutes()} />
+                  )}
+                </div>
               </KBarProvider>
             </ThemeProvider>
           </GrafanaContext.Provider>
@@ -137,21 +139,19 @@ function RouterTree(props: { routes?: JSX.Element | false }) {
         <CompatRouter>
           <ModalsContextProvider>
             <GlobalStyles />
-            <div className="grafana-app">
-              <AppChrome>
-                <AngularRoot />
-                <AppNotificationList />
-                <Stack gap={0} grow={1} direction="column">
-                  {pageBanners.map((Banner, index) => (
-                    <Banner key={index.toString()} />
-                  ))}
-                  {props.routes}
-                </Stack>
-                {bodyRenderHooks.map((Hook, index) => (
-                  <Hook key={index.toString()} />
+            <AppChrome>
+              <AngularRoot />
+              <AppNotificationList />
+              <Stack gap={0} grow={1} direction="column">
+                {pageBanners.map((Banner, index) => (
+                  <Banner key={index.toString()} />
                 ))}
-              </AppChrome>
-            </div>
+                {props.routes}
+              </Stack>
+              {bodyRenderHooks.map((Hook, index) => (
+                <Hook key={index.toString()} />
+              ))}
+            </AppChrome>
             <LiveConnectionWarning />
             <ModalRoot />
             <PortalContainer />
@@ -175,78 +175,49 @@ function ExperimentalSplitPaneTree(props: { routes?: JSX.Element | false }) {
   const memoryLocationService = new HistoryWrapper(H.createMemoryHistory({ initialEntries: ['/'] }));
 
   return (
-    <div className="grafana-app">
-      <SplitPaneWrapper
-        splitOrientation="vertical"
-        paneSize={0.25}
-        minSize={200}
-        maxSize={200 * -1}
-        primary="second"
-        splitVisible={!!appId}
-        paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
-      >
-        {/* very similar to RouterTree but .grafana-app div is moved and it's easier to isolate any changes like this
-         so hopefully less chance of introducing any error */}
-        <Router history={locationService.getHistory()}>
-          <LocationServiceProvider service={locationService}>
+    <SplitPaneWrapper
+      splitOrientation="vertical"
+      paneSize={0.25}
+      minSize={200}
+      maxSize={200 * -1}
+      primary="second"
+      splitVisible={!!appId}
+      paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
+    >
+      <RouterTree routes={props.routes} />
+      {appId && (
+        <Router history={memoryLocationService.getHistory()}>
+          <LocationServiceProvider service={memoryLocationService}>
             <CompatRouter>
               <ModalsContextProvider>
                 <GlobalStyles />
-                <AppChrome>
-                  <AngularRoot />
-                  <AppNotificationList />
-                  <Stack gap={0} grow={1} direction="column">
-                    {pageBanners.map((Banner, index) => (
-                      <Banner key={index.toString()} />
-                    ))}
-                    {props.routes}
-                  </Stack>
-                  {bodyRenderHooks.map((Hook, index) => (
-                    <Hook key={index.toString()} />
-                  ))}
-                </AppChrome>
-                <LiveConnectionWarning />
-                <ModalRoot />
-                <PortalContainer />
+                <div
+                  style={{
+                    display: 'flex',
+                    height: '100%',
+                    paddingTop: TOP_BAR_LEVEL_HEIGHT,
+                    flexGrow: 1,
+                    flexDirection: 'column',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <IconButton
+                      size={'lg'}
+                      style={{ margin: '8px' }}
+                      name={'times'}
+                      aria-label={'close'}
+                      onClick={() => {
+                        dispatch(appSidecar.actions.closeApp({ appId }));
+                      }}
+                    />
+                  </div>
+                  <AppRootPage pluginId={appId} />
+                </div>
               </ModalsContextProvider>
             </CompatRouter>
           </LocationServiceProvider>
         </Router>
-
-        {appId && (
-          <Router history={memoryLocationService.getHistory()}>
-            <LocationServiceProvider service={memoryLocationService}>
-              <CompatRouter>
-                <ModalsContextProvider>
-                  <GlobalStyles />
-                  <div
-                    style={{
-                      display: 'flex',
-                      height: '100%',
-                      paddingTop: TOP_BAR_LEVEL_HEIGHT,
-                      flexGrow: 1,
-                      flexDirection: 'column',
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                      <IconButton
-                        size={'lg'}
-                        style={{ margin: '8px' }}
-                        name={'times'}
-                        aria-label={'close'}
-                        onClick={() => {
-                          dispatch(appSidecar.actions.closeApp({ appId }));
-                        }}
-                      />
-                    </div>
-                    <AppRootPage pluginId={appId} />
-                  </div>
-                </ModalsContextProvider>
-              </CompatRouter>
-            </LocationServiceProvider>
-          </Router>
-        )}
-      </SplitPaneWrapper>
-    </div>
+      )}
+    </SplitPaneWrapper>
   );
 }
