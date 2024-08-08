@@ -40,7 +40,7 @@ require (
 	golang.org/x/crypto v0.24.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/mod v0.18.0 // @grafana/grafana-backend-group
 	golang.org/x/net v0.26.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
-	golang.org/x/oauth2 v0.20.0 // @grafana/identity-access-team
+	golang.org/x/oauth2 v0.21.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.7.0 // indirect; @grafana/alerting-backend
 	golang.org/x/text v0.16.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/time v0.5.0 // indirect; @grafana/grafana-backend-group
@@ -121,8 +121,6 @@ require (
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240523142256-cc370b98af7c
-
-// replace github.com/google/cel-go => github.com/google/cel-go v0.16.1
 
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.

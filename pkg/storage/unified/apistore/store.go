@@ -683,6 +683,7 @@ func (s *Storage) GuaranteedUpdate(
 }
 
 // Count returns number of different entries under the key (generally being path prefix).
+// TODO: Implement count.
 func (s *Storage) Count(key string) (int64, error) {
 	return 0, nil
 }
@@ -701,6 +702,12 @@ func (s *Storage) Count(key string) (int64, error) {
 // TODO: Remove when storage.Interface will be separate from etc3.store.
 // Deprecated: Added temporarily to simplify exposing RequestProgress for watch cache.
 func (s *Storage) RequestWatchProgress(_ context.Context) error {
+	return nil
+}
+
+// ReadinessCheck checks if the storage is ready for accepting requests.
+// TODO: Implement readiness check.
+func (s *Storage) ReadinessCheck() error {
 	return nil
 }
 

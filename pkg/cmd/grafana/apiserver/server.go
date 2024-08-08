@@ -155,7 +155,7 @@ func (o *APIServerOptions) Complete() error {
 	return nil
 }
 
-func (o *APIServerOptions) RunAPIServer(config *genericapiserver.RecommendedConfig, stopCh <-chan struct{}) error {
+func (o *APIServerOptions) RunAPIServer(ctx context.Context, config *genericapiserver.RecommendedConfig) error {
 	delegationTarget := genericapiserver.NewEmptyDelegate()
 	completedConfig := config.Complete()
 
@@ -187,7 +187,7 @@ func (o *APIServerOptions) RunAPIServer(config *genericapiserver.RecommendedConf
 		deltaProfiling{}.Install(server.Handler.NonGoRestfulMux)
 	}
 
-	return server.PrepareRun().Run(stopCh)
+	return server.PrepareRun().RunWithContext(ctx)
 }
 
 // deltaProfiling adds godeltapprof handlers for pprof under /debug/pprof.

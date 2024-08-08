@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 )
 
-func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}) *cobra.Command {
+func newCommandStartStandaloneAPIServer(o *APIServerOptions, stopCh <-chan struct{}) *cobra.Command {
 	devAcknowledgementNotice := "The apiserver command is in heavy development. The entire setup is subject to change without notice"
 	runtimeConfig := ""
 
@@ -87,7 +87,7 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 
 			defer o.factory.Shutdown()
 
-			if err := o.RunAPIServer(config, stopCh); err != nil {
+			if err := o.RunAPIServer(ctx, config); err != nil {
 				return err
 			}
 
@@ -108,7 +108,7 @@ func RunCLI(opts commands.ServerOptions) int {
 	commands.SetBuildInfo(opts)
 
 	options := newAPIServerOptions(os.Stdout, os.Stderr)
-	cmd := newCommandStartExampleAPIServer(options, stopCh)
+	cmd := newCommandStartStandaloneAPIServer(options, stopCh)
 
 	return cli.Run(cmd)
 }

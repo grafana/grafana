@@ -341,12 +341,12 @@ func (s *service) start(ctx context.Context) error {
 
 	var runningServer *genericapiserver.GenericAPIServer
 	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-		runningServer, err = s.startAggregator(transport, serverConfig, server, s.metrics)
+		runningServer, err = s.startAggregator(ctx, transport, serverConfig, server, s.metrics)
 		if err != nil {
 			return err
 		}
 	} else {
-		runningServer, err = s.startCoreServer(transport, serverConfig, server)
+		runningServer, err = s.startCoreServer(ctx, transport, server)
 		if err != nil {
 			return err
 		}
@@ -368,8 +368,8 @@ func (s *service) start(ctx context.Context) error {
 }
 
 func (s *service) startCoreServer(
+	ctx context.Context,
 	transport *roundTripperFunc,
-	serverConfig *genericapiserver.RecommendedConfig,
 	server *genericapiserver.GenericAPIServer,
 ) (*genericapiserver.GenericAPIServer, error) {
 	// setup the loopback transport and signal that it's ready.
@@ -381,13 +381,14 @@ func (s *service) startCoreServer(
 
 	prepared := server.PrepareRun()
 	go func() {
-		s.stoppedCh <- prepared.Run(s.stopCh)
+		s.stoppedCh <- prepared.RunWithContext(ctx)
 	}()
 
 	return server, nil
 }
 
 func (s *service) startAggregator(
+	ctx context.Context,
 	transport *roundTripperFunc,
 	serverConfig *genericapiserver.RecommendedConfig,
 	server *genericapiserver.GenericAPIServer,
@@ -418,7 +419,7 @@ func (s *service) startAggregator(
 	}
 
 	go func() {
-		s.stoppedCh <- prepared.Run(s.stopCh)
+		s.stoppedCh <- prepared.Run(ctx)
 	}()
 
 	return aggregatorServer.GenericAPIServer, nil
@@ -449,7 +450,7 @@ func (s *service) running(ctx context.Context) error {
 			return err
 		}
 	case <-ctx.Done():
-		close(s.stopCh)
+		return ctx.Err()
 	}
 	return nil
 }
