@@ -14,11 +14,12 @@ export const updateAPIPayload = (formElements: FormChild[]) => {
 
   const payload = formElements?.reduce<Record<string, string | number>>((acc, child) => {
     if (child.type !== 'Submit' && child.currentOption) {
-      // Ensure currentOption is an array with at least two elements
-      const [key, value] = child.currentOption;
-      if (typeof key === 'string') {
-        acc[key] = value;
-      }
+      child.currentOption.forEach((option) => {
+        for (const key in option) {
+          const value = option[key];
+          acc[key] = value;
+        }
+      });
     }
     return acc;
   }, {});

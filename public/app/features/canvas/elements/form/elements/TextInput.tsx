@@ -9,7 +9,8 @@ export interface TextInputProps extends Omit<FormChild, 'id' | 'type'> {
 }
 
 export const TextInput = ({ title, onChange, currentOption }: TextInputProps) => {
-  const [value, setValue] = useState(currentOption?.[1]);
+  const key = Object.keys(currentOption?.[0] ?? {})[0];
+  const [value, setValue] = useState(currentOption?.[0][key]);
 
   return (
     <Field label={title}>

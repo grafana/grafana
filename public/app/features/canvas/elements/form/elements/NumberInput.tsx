@@ -12,7 +12,8 @@ interface NumberInputProps extends Omit<FormChild, 'id' | 'type'> {
 }
 
 export const NumberInput = ({ title, onChange, min, max, placeholder, currentOption }: NumberInputProps) => {
-  const [value, setValue] = useState(currentOption?.[1]!);
+  const key = Object.keys(currentOption?.[1] ?? {})[0];
+  const [value, setValue] = useState(currentOption?.[1][key]);
 
   return (
     <Field label={title}>
