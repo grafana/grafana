@@ -470,6 +470,8 @@ func (s *Service) GetMigrationRunList(ctx context.Context, migUID string) (*clou
 }
 
 func (s *Service) DeleteSession(ctx context.Context, sessionUID string) (*cloudmigration.CloudMigrationSession, error) {
+	// Improvements: Move this into a transaction. This needs to be move into the store, and within a WithDbSession()
+
 	// first we try to delete all the associated information to the session
 	q := cloudmigration.ListSnapshotsQuery{
 		SessionUID: sessionUID,
