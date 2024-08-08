@@ -13,7 +13,7 @@ require (
 	gocloud.dev v0.25.0
 	google.golang.org/grpc v1.64.0
 	google.golang.org/protobuf v1.34.1
-	k8s.io/apimachinery v0.29.3
+	k8s.io/apimachinery v0.31.0-rc.1
 )
 
 require (
