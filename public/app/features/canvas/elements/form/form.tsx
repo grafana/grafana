@@ -10,6 +10,7 @@ import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultThe
 import { Align, TextConfig, TextData } from '../../types';
 
 import { FormChild, FormElementTypeEditor } from './elements/FormElementTypeEditor';
+import { NumberInput } from './elements/NumberInput';
 import { SelectDisplay } from './elements/Select';
 import { Submit } from './elements/Submit';
 import { TextInput } from './elements/TextInput';
@@ -31,6 +32,8 @@ export enum FormElementType {
   Select = 'Select',
   TextInput = 'TextInput',
   DateRangePicker = 'DateRangePicker',
+  NumberInput = 'NumberInput',
+  Submit = 'Submit',
   // table
 }
 
@@ -74,9 +77,19 @@ const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
     updateAPIPayload(config.formElements!);
   };
 
+  const onNumberInputChange = (value: string, id: string) => {
+    const child = config.formElements?.find((child) => child.id === id);
+
+    if (child) {
+      child.currentOption = [child.title, value];
+    }
+
+    updateAPIPayload(config.formElements!);
+  };
+
   const children = config.formElements?.map((child) => {
     switch (child.type) {
-      case 'Select':
+      case FormElementType.Select:
         return (
           <SelectDisplay
             title={child.title}
@@ -93,7 +106,15 @@ const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
             onChange={(v) => onTextInputChange(v, child.id)}
           />
         );
-      case 'Submit':
+      case FormElementType.NumberInput:
+        return (
+          <NumberInput
+            title={child.title}
+            currentOption={child.currentOption}
+            onChange={(v) => onNumberInputChange(v, child.id)}
+          />
+        );
+      case FormElementType.Submit:
         return <Submit formItem={child} />;
       default:
         return null;

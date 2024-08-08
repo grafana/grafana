@@ -1,7 +1,9 @@
+import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import { useCallback } from 'react';
 
-import { SelectableValue, StandardEditorProps } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { APIEditor, APIEditorConfig } from 'app/plugins/panel/canvas/editor/element/APIEditor';
@@ -9,6 +11,7 @@ import { APIEditor, APIEditorConfig } from 'app/plugins/panel/canvas/editor/elem
 import { defaultApiConfig } from '../../button';
 import { FormElementType } from '../form';
 
+import { NumberInputEditor } from './NumberInputEditor';
 import { SelectionEditor } from './SelectionEditor';
 import { TextInputEditor } from './TextInputEditor';
 import { updateAPIPayload } from './utils';
@@ -31,8 +34,11 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
     { value: FormElementType.Select, label: 'Select' },
     { value: FormElementType.TextInput, label: 'Text input' },
     { value: FormElementType.DateRangePicker, label: 'Date range picker' },
-    { value: 'Submit', label: 'Submit' },
+    { value: FormElementType.NumberInput, label: 'Number input' },
+    { value: FormElementType.Submit, label: 'Submit' },
   ];
+
+  const styles = useStyles2(getStyles);
 
   const onChangeElementType = useCallback(
     (sel: SelectableValue<string>) => {
@@ -84,6 +90,7 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
         return child;
       });
       onChange(newElements);
+      updateAPIPayload(newElements);
     },
     [onChange, value]
   );
@@ -116,11 +123,26 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
     [onChange, value]
   );
 
+  const onNumberInputTitleChange = useCallback(
+    (newTitle: string, id: string) => {
+      const newElements: FormChild[] = value.map((child) => {
+        if (child.id === id) {
+          return { ...child, title: newTitle, currentOption: [newTitle, child.currentOption?.[1]!] };
+        }
+        return child;
+      });
+
+      onChange(newElements);
+      updateAPIPayload(newElements);
+    },
+    [onChange, value]
+  );
+
   const children = value.map((child, i) => {
     let element;
 
     switch (child.type) {
-      case 'Select':
+      case FormElementType.Select:
         element = (
           <SelectionEditor
             title={child.title}
@@ -146,8 +168,19 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
           element,
           properties: child,
         };
-
-      case 'Submit':
+      case FormElementType.NumberInput:
+        element = (
+          <NumberInputEditor
+            title={child.title}
+            onChange={(newValue) => onNumberInputTitleChange(newValue, child.id)}
+            currentOption={child.currentOption}
+          />
+        );
+        return {
+          element,
+          properties: child,
+        };
+      case FormElementType.Submit:
         element = (
           <APIEditor
             item={item}
@@ -164,7 +197,7 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
       default:
         return {
           element: null,
-          properties: child,
+          properties: null,
         };
     }
   });
@@ -172,15 +205,23 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
   return (
     <>
       <AddLayerButton onChange={onChangeElementType} options={typeOptions} label={'Add element type'} />
-      {children.map((child, i) => (
-        <OptionsPaneCategory
-          id={i.toString()}
-          key={i}
-          title={child.properties.type !== 'Submit' ? child.properties.title : 'Submit'}
-        >
-          {child.element}
-        </OptionsPaneCategory>
-      ))}
+      <div className={styles.optionsContainer}>
+        {children.map((child, i) => (
+          <OptionsPaneCategory
+            id={i.toString()}
+            key={i}
+            title={child.properties?.type !== 'Submit' ? child.properties?.title : 'Submit'}
+          >
+            {child.element}
+          </OptionsPaneCategory>
+        ))}
+      </div>
     </>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  optionsContainer: css({
+    marginTop: theme.spacing(1),
+  }),
+});

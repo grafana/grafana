@@ -4,11 +4,11 @@ import { Field, Input } from '@grafana/ui';
 
 import { TextInputProps } from './TextInput';
 
-export const TextInputEditor = ({ onChange, currentOption }: TextInputProps) => {
+export const NumberInputEditor = ({ onChange, currentOption }: TextInputProps) => {
   const [value, setValue] = useState(currentOption?.[0]);
 
   return (
-    <Field label="Text input title">
+    <Field label="Number input title">
       <Input
         defaultValue={value}
         onBlur={(event) => {

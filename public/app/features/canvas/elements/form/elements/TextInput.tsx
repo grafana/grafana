@@ -14,8 +14,8 @@ export const TextInput = ({ title, onChange, currentOption }: TextInputProps) =>
   return (
     <Field label={title}>
       <Input
-        value={value}
-        onChange={(event) => {
+        defaultValue={value}
+        onBlur={(event) => {
           setValue(event.currentTarget.value);
           onChange(event.currentTarget.value);
         }}
