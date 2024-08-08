@@ -264,3 +264,14 @@ func newReplStore(primary *SQLStore, readReplicas ...*SQLStore) *ReplStore {
 	ret.repls = readReplicas
 	return ret
 }
+
+// FakeReplStoreFromStore returns a ReplStore with the given primary
+// SQLStore and no read replicas. This is a bare-minimum wrapper for testing,
+// and should be removed when all services are using ReplStore in favor of
+// InitTestReplDB.
+func FakeReplStoreFromStore(primary *SQLStore) *ReplStore {
+	return &ReplStore{
+		SQLStore: primary,
+		next:     0,
+	}
+}

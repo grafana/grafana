@@ -20,7 +20,7 @@ func TestIntegrationQuotaDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	ss := db.InitTestDB(t)
+	ss := db.InitTestReplDB(t)
 	quotaStore := sqlStore{
 		db: ss,
 	}

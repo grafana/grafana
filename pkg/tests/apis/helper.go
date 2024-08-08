@@ -19,13 +19,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
-
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
@@ -399,7 +399,7 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 		c.env.Cfg.AutoAssignOrgId = 1 // the default
 	}()
 
-	quotaService := quotaimpl.ProvideService(store, c.env.Cfg)
+	quotaService := quotaimpl.ProvideService(db.FakeReplDBFromDB(store), c.env.Cfg)
 
 	orgService, err := orgimpl.ProvideService(store, c.env.Cfg, quotaService)
 	require.NoError(c.t, err)
