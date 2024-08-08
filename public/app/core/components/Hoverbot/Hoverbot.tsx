@@ -179,6 +179,7 @@ export const Hoverbot = () => {
     return (
       <div className={styles.grotContainer} style={{ bottom: y, left: x }}>
         <Toggletip
+          closeButton={!loading}
           content={
             <CustomScrollbar autoHeightMax="500px">
               {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
