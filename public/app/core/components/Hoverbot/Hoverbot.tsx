@@ -205,11 +205,15 @@ export const Hoverbot = () => {
               </div>
             </CustomScrollbar>
           }
-          onClose={() => {
-            setReply('');
-            setLoading(false);
-            cancel();
-          }}
+          onClose={
+            !loading
+              ? () => {
+                  setReply('');
+                  setLoading(false);
+                  cancel();
+                }
+              : undefined
+          }
           show={true}
         >
           <button className={`${styles.invisibleButton} ${subtleMove}`}>
@@ -271,6 +275,7 @@ const styles = {
   }),
   grotWrapper: css({
     paddingTop: 12,
+    fontSize: 14,
   }),
   actions: css({
     display: 'flex',

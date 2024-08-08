@@ -86,9 +86,6 @@ export function AppChrome({ children }: Props) {
     >
       {!state.chromeless && (
         <>
-          <LinkButton className={styles.skipLink} href="#pageContent">
-            Skip to main content
-          </LinkButton>
           <header className={cx(styles.topNav)}>
             {!searchBarHidden && <TopSearchBar />}
             <NavToolbar
