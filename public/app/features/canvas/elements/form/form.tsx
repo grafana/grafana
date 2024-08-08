@@ -76,11 +76,7 @@ const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
       child.currentOption = [{ [newParams[0]]: newParams[1] }];
     }
 
-    updateAPIPayload(config.formElements!);
-    // TODO: figure out why this is not updating the editor
-    // it's updating the save model but
-    // see layoutEditor
-    scene.moved.next(Date.now());
+    updateAPIPayload(config.formElements!, scene);
   };
 
   const onTextInputChange = (value: string, id: string) => {
@@ -90,7 +86,7 @@ const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
       child.currentOption = [{ [child.title]: value }];
     }
 
-    updateAPIPayload(config.formElements!);
+    updateAPIPayload(config.formElements!, scene);
   };
 
   const onNumberInputChange = (value: string, id: string) => {
@@ -100,7 +96,7 @@ const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
       child.currentOption = [{ [child.title]: value }];
     }
 
-    updateAPIPayload(config.formElements!);
+    updateAPIPayload(config.formElements!, scene);
   };
 
   const onCheckboxOptionsChange = (value: [string, string], index: number, id: string) => {
@@ -119,7 +115,7 @@ const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
       child.currentOption = updatedCheckboxes;
     }
 
-    updateAPIPayload(config.formElements!);
+    updateAPIPayload(config.formElements!, scene);
   };
 
   const children = config.formElements?.map((child) => {
