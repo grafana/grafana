@@ -503,7 +503,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/test/helpers/alertingRuleEditor.tsx @grafana/alerting-frontend
 /public/views/ @grafana/grafana-frontend-platform
 /public/views/swagger.html @grafana/grafana-app-platform-squad
-/public/app/swagger/ @grafana/grafana-app-platform-squad
+/public/swagger/ @grafana/grafana-app-platform-squad
 
 /public/app/features/explore/Logs/ @grafana/observability-logs
 
