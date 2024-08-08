@@ -13,6 +13,7 @@ import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 export interface OptionsPaneCategoryProps {
   id: string;
   title?: string;
+  headerItems?: ReactNode;
   renderTitle?: (isExpanded: boolean) => React.ReactNode;
   isOpenDefault?: boolean;
   itemsCount?: number;
@@ -29,6 +30,7 @@ export const OptionsPaneCategory = React.memo(
   ({
     id,
     title,
+    headerItems,
     children,
     forceOpen,
     isOpenDefault = true,
@@ -134,6 +136,7 @@ export const OptionsPaneCategory = React.memo(
           <h6 id={`button-${id}`} className={styles.title}>
             {renderTitle(isExpanded)}
           </h6>
+          {headerItems}
         </div>
         {isExpanded && (
           <div className={bodyStyles} id={id} aria-labelledby={`button-${id}`}>
