@@ -226,7 +226,7 @@
     "terser-webpack-plugin": "5.3.10",
     "testing-library-selector": "0.3.1",
     "tracelib": "1.0.1",
-    "ts-jest": "29.1.4",
+    "ts-jest": "29.2.4",
     "ts-node": "10.9.2",
     "typescript": "5.4.5",
     "webpack": "5.91.0",
