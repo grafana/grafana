@@ -24,12 +24,14 @@ export function PluginDetailsRightPanel(props: Props): React.ReactElement | null
         );
       })}
 
-      <div>
-        <Text color="secondary">
-          <Trans i18nKey="plugins.details.labels.updatedAt">Last updated: </Trans>
-        </Text>{' '}
-        <Text>{formatDate(new Date(plugin.updatedAt))}</Text>
-      </div>
+      {plugin.updatedAt && (
+        <div>
+          <Text color="secondary">
+            <Trans i18nKey="plugins.details.labels.updatedAt">Last updated: </Trans>
+          </Text>{' '}
+          <Text>{formatDate(new Date(plugin.updatedAt))}</Text>
+        </div>
+      )}
 
       {plugin?.details?.links && plugin.details?.links?.length > 0 && (
         <Stack direction="column" gap={2}>
