@@ -113,7 +113,7 @@ export function getFormElementStyles(theme: GrafanaTheme2) {
       '&--xs-view-flex-column': {
         flexDirection: 'row',
         flexWrap: 'nowrap',
-        [theme.breakpoints.down('xs')]: {
+        [theme.breakpoints.down('sm')]: {
           flexDirection: 'column',
         },
       },
