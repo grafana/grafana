@@ -44,7 +44,12 @@ func NewCache(cfg *setting.Cfg, reg prometheus.Registerer, provider grpcserver.P
 
 	ring, lfc, err := newRing(
 		cfg.GRPCServerAddress,
-		ringConfig{Addr: addr, Port: strconv.Itoa(cfg.RemoteCache.Ring.Port)},
+		ringConfig{
+			Addr:             addr,
+			Port:             strconv.Itoa(cfg.RemoteCache.Ring.Port),
+			HeartbeatTimeout: cfg.RemoteCache.Ring.HeartbeatTimeout,
+			HeartbeatPeriod:  cfg.RemoteCache.Ring.HeartbeatPeriod,
+		},
 		logger,
 		client,
 		reg,

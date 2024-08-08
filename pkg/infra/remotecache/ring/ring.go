@@ -16,13 +16,17 @@ const (
 )
 
 type ringConfig struct {
-	Addr string
-	Port string
+	Addr             string
+	Port             string
+	HeartbeatPeriod  time.Duration
+	HeartbeatTimeout time.Duration
 }
 
 func newRing(id string, cfg ringConfig, logger log.Logger, client kv.Client, reg prometheus.Registerer) (*ring.Ring, *ring.BasicLifecycler, error) {
+
 	var ringConfig ring.Config
 	ringConfig.ReplicationFactor = 1
+	ringConfig.HeartbeatTimeout = cfg.HeartbeatTimeout
 	hring, err := ring.NewWithStoreClientAndStrategy(
 		ringConfig,
 		ringName,
@@ -39,6 +43,8 @@ func newRing(id string, cfg ringConfig, logger log.Logger, client kv.Client, reg
 
 	var config ring.BasicLifecyclerConfig
 	config.ID = id
+	config.HeartbeatPeriod = cfg.HeartbeatPeriod
+	config.HeartbeatTimeout = cfg.HeartbeatTimeout
 	config.Addr = net.JoinHostPort(cfg.Addr, cfg.Port)
 
 	var delegate ring.BasicLifecyclerDelegate
