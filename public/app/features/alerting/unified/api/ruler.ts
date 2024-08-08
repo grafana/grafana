@@ -5,6 +5,7 @@ import { FetchResponse, getBackendSrv } from '@grafana/runtime';
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
 import { PostableRulerRuleGroupDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
+import { checkForPathSeparator } from '../components/rule-editor/util';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
@@ -76,8 +77,7 @@ function getQueryDetailsProvider(rulerConfig: RulerDataSourceConfig): RulerQuery
   const isGrafanaDatasource = rulerConfig.dataSourceName === GRAFANA_RULES_SOURCE_NAME;
 
   const groupParamRewrite = (group: string): GroupUrlParams => {
-    const containsSlash = group.includes('/');
-    if (containsSlash) {
+    if (checkForPathSeparator(group) !== true) {
       return { group: QUERY_GROUP_TAG, searchParams: { group } };
     }
     return { group, searchParams: {} };
@@ -93,9 +93,8 @@ function getQueryDetailsProvider(rulerConfig: RulerDataSourceConfig): RulerQuery
 
   return {
     namespace: (namespace: string): NamespaceUrlParams => {
-      const containsSlash = namespace.includes('/');
-      if (containsSlash) {
-        return { namespace: QUERY_NAMESPACE_TAG, searchParams: { namespace: 'foo' } };
+      if (checkForPathSeparator(namespace) !== true) {
+        return { namespace: QUERY_NAMESPACE_TAG, searchParams: { namespace } };
       }
       return { namespace, searchParams: {} };
     },
