@@ -56,6 +56,12 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
         return;
       }
 
+      // don't allow DateRangePicker yet
+      if (sel.value === FormElementType.DateRangePicker) {
+        console.warn('DateRangePicker is not supported yet');
+        return;
+      }
+
       const id = uniqueId(`form-${sel.value}-element-`);
       let newFormElement: FormChild = { id, type: sel.value ?? '', title: id };
       if (sel.value === 'Submit') {
