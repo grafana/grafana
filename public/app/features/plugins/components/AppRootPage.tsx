@@ -53,7 +53,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
   const currentUrl = config.appSubUrl + location.pathname + location.search;
   const { plugin, loading, loadingError, pluginNav } = state;
-  const navModel = pluginNavSection ? buildPluginSectionNav(pluginNavSection, currentUrl) : undefined;
+  const navModel = buildPluginSectionNav(currentUrl, pluginNavSection);
   const queryParams = useMemo(() => locationSearchToObject(location.search), [location.search]);
   const context = useMemo(() => buildPluginPageContext(navModel), [navModel]);
   const grafanaContext = useGrafana();
