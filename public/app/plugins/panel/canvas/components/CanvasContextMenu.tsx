@@ -93,11 +93,17 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
 
     const generateVisualizationMenuItem = () => {
       if (selectedElements) {
-        const isVisualization =
-          selectedElements.length === 1 &&
-          findElementByTarget(selectedElements[0], scene.root.elements)?.options.type === 'visualization';
+        let skipVizMenuItem = false;
 
-        if (!isVisualization) {
+        if (selectedElements.length === 1) {
+          const element = findElementByTarget(selectedElements[0], scene.root.elements);
+          skipVizMenuItem =
+            element?.options.type === 'visualization' ||
+            element?.data.field === undefined ||
+            element?.data.field === '';
+        }
+
+        if (!skipVizMenuItem) {
           return (
             <MenuItem
               label="Generate visualization"
