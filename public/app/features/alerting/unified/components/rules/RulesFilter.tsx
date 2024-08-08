@@ -239,19 +239,25 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
           {canRenderContactPointSelector && (
             <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME}>
               <Stack direction="column" gap={0}>
-                <Text variant="bodySmall">
-                  <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
-                </Text>
-                <ContactPointSelector
-                  selectedContactPointName={filterState.contactPoint}
-                  selectProps={{
-                    width: 40,
-                    onChange: (selectValue) => {
-                      handleContactPointChange(selectValue?.value?.name!);
-                    },
-                    isClearable: true,
-                  }}
-                />
+                <Field
+                  label={
+                    <Label htmlFor="contactPointFilter">
+                      <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
+                    </Label>
+                  }
+                >
+                  <ContactPointSelector
+                    selectedContactPointName={filterState.contactPoint}
+                    selectProps={{
+                      inputId: 'contactPointFilter',
+                      width: 40,
+                      onChange: (selectValue) => {
+                        handleContactPointChange(selectValue?.value?.name!);
+                      },
+                      isClearable: true,
+                    }}
+                  />
+                </Field>
               </Stack>
             </AlertmanagerProvider>
           )}
