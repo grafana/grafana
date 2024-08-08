@@ -33,7 +33,8 @@ import { buildPluginPageContext, PluginPageContext } from './PluginPageContext';
 interface Props {
   // The ID of the plugin we would like to load and display
   pluginId: string;
-  // The root navModelItem for the plugin (root = lives directly under 'home')
+  // The root navModelItem for the plugin (root = lives directly under 'home'). In case app does not need a nva model,
+  // for example it's in some way embedded or shown in a sideview this can be undefined.
   pluginNavSection?: NavModelItem;
 }
 
