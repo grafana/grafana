@@ -1904,16 +1904,7 @@
     "dismissable-button": "Close"
   },
   "scopes": {
-    "filters": {
-      "apply": "Apply",
-      "cancel": "Cancel",
-      "input": {
-        "placeholder": "Select scopes...",
-        "removeAll": "Remove all scopes"
-      },
-      "title": "Select scopes"
-    },
-    "suggestedDashboards": {
+    "dashboards": {
       "loading": "Loading dashboards",
       "noResultsForFilter": "No results found for your query",
       "noResultsForFilterClear": "Clear search",
@@ -1925,6 +1916,15 @@
         "disabled": "Suggested dashboards list is disabled due to read only mode",
         "expand": "Expand suggested dashboards list"
       }
+    },
+    "selector": {
+      "apply": "Apply",
+      "cancel": "Cancel",
+      "input": {
+        "placeholder": "Select scopes...",
+        "removeAll": "Remove all scopes"
+      },
+      "title": "Select scopes"
     },
     "tree": {
       "collapse": "Collapse",

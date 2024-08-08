@@ -91,15 +91,16 @@ export function ScopesInput({
     () => (
       <Input
         readOnly
-        placeholder={t('scopes.filters.input.placeholder', 'Select scopes...')}
+        placeholder={t('scopes.selector.input.placeholder', 'Select scopes...')}
+        disabled={isDisabled}
         loading={isLoading}
         value={scopesTitles}
-        aria-label={t('scopes.filters.input.placeholder', 'Select scopes...')}
-        data-testid="scopes-filters-input"
+        aria-label={t('scopes.selector.input.placeholder', 'Select scopes...')}
+        data-testid="scopes-selector-input"
         suffix={
           scopes.length > 0 && !isDisabled ? (
             <IconButton
-              aria-label={t('scopes.filters.input.removeAll', 'Remove all scopes')}
+              aria-label={t('scopes.selector.input.removeAll', 'Remove all scopes')}
               name="times"
               onClick={() => onRemoveAllClick()}
             />

@@ -1,6 +1,6 @@
 import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 
-import { scopesFiltersScene } from './instance';
+import { scopesSelectorScene } from './instance';
 import { disableScopes, enableScopes, enterScopesReadOnly, exitScopesReadOnly, getSelectedScopes } from './utils';
 
 interface ScopesFacadeState extends SceneObjectState {
@@ -19,7 +19,7 @@ export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> {
     this.enable();
 
     this._subs.add(
-      scopesFiltersScene?.subscribeToState((newState, prevState) => {
+      scopesSelectorScene?.subscribeToState((newState, prevState) => {
         if (!newState.isLoadingScopes && (prevState.isLoadingScopes || newState.scopes !== prevState.scopes)) {
           this.state.handler?.(this);
         }

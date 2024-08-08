@@ -2,11 +2,11 @@ import { Scope } from '@grafana/data';
 import { sceneGraph, SceneObject } from '@grafana/scenes';
 
 import { ScopesFacade } from './ScopesFacadeScene';
-import { scopesDashboardsScene, scopesFiltersScene } from './instance';
+import { scopesDashboardsScene, scopesSelectorScene } from './instance';
 import { getScopesFromSelectedScopes } from './internal/utils';
 
 export function getSelectedScopes(): Scope[] {
-  return getScopesFromSelectedScopes(scopesFiltersScene?.state.scopes ?? []);
+  return getScopesFromSelectedScopes(scopesSelectorScene?.state.scopes ?? []);
 }
 
 export function getSelectedScopesNames(): string[] {
@@ -14,22 +14,22 @@ export function getSelectedScopesNames(): string[] {
 }
 
 export function enableScopes() {
-  scopesFiltersScene?.enable();
+  scopesSelectorScene?.enable();
   scopesDashboardsScene?.enable();
 }
 
 export function disableScopes() {
-  scopesFiltersScene?.disable();
+  scopesSelectorScene?.disable();
   scopesDashboardsScene?.disable();
 }
 
 export function exitScopesReadOnly() {
-  scopesFiltersScene?.exitReadOnly();
+  scopesSelectorScene?.exitReadOnly();
   scopesDashboardsScene?.enable();
 }
 
 export function enterScopesReadOnly() {
-  scopesFiltersScene?.enterReadOnly();
+  scopesSelectorScene?.enterReadOnly();
   scopesDashboardsScene?.disable();
 }
 

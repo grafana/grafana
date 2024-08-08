@@ -7,7 +7,7 @@ import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { ScopesFilters } from 'app/features/scopes';
+import { ScopesSelector } from 'app/features/scopes';
 import { useSelector } from 'app/types';
 
 import { Branding } from '../../Branding/Branding';
@@ -43,7 +43,7 @@ export const TopSearchBar = memo(function TopSearchBar() {
           <Branding.MenuLogo className={styles.img} />
         </a>
         <OrganizationSwitcher />
-        <ScopesFilters />
+        <ScopesSelector />
       </TopSearchBarSection>
 
       <TopSearchBarSection>

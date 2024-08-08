@@ -2,7 +2,7 @@ export { initializeScopes } from './instance';
 export { ScopesDashboards } from './ScopesDashboards';
 /* eslint-disable */
 export { ScopesFacade } from './ScopesFacadeScene';
-export { ScopesFilters } from './ScopesFilters';
+export { ScopesSelector } from './ScopesSelector';
 export {
   disableScopes,
   enableScopes,

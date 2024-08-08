@@ -22,7 +22,7 @@ import { fetchNodes, fetchScope, fetchSelectedScopes } from './api';
 import { NodeReason, NodesMap, SelectedScope, TreeScope } from './types';
 import { getBasicScope, getScopeNamesFromSelectedScopes, getTreeScopesFromSelectedScopes } from './utils';
 
-export interface ScopesFiltersSceneState extends SceneObjectState {
+export interface ScopesSelectorSceneState extends SceneObjectState {
   dashboards: SceneObjectRef<ScopesDashboardsScene> | null;
   nodes: NodesMap;
   loadingNodeName: string | undefined;
@@ -34,7 +34,7 @@ export interface ScopesFiltersSceneState extends SceneObjectState {
   isEnabled: boolean;
 }
 
-export const initialFiltersState: Omit<ScopesFiltersSceneState, 'dashboards'> = {
+export const initialSelectorState: Omit<ScopesSelectorSceneState, 'dashboards'> = {
   nodes: {
     '': {
       name: '',
@@ -57,8 +57,8 @@ export const initialFiltersState: Omit<ScopesFiltersSceneState, 'dashboards'> = 
   isEnabled: false,
 };
 
-export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState> implements SceneObjectWithUrlSync {
-  static Component = ScopesFiltersSceneRenderer;
+export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneState> implements SceneObjectWithUrlSync {
+  static Component = ScopesSelectorSceneRenderer;
 
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['scopes'] });
 
@@ -67,7 +67,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   constructor() {
     super({
       dashboards: null,
-      ...initialFiltersState,
+      ...initialSelectorState,
     });
 
     this.addActivationHandler(() => {
@@ -276,7 +276,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   }
 }
 
-export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<ScopesFiltersScene>) {
+export function ScopesSelectorSceneRenderer({ model }: SceneComponentProps<ScopesSelectorScene>) {
   const styles = useStyles2(getStyles);
   const {
     dashboards: dashboardsRef,
@@ -299,10 +299,10 @@ export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<Scopes
   }
 
   const dashboardsIconLabel = isReadOnly
-    ? t('scopes.suggestedDashboards.toggle.disabled', 'Suggested dashboards list is disabled due to read only mode')
+    ? t('scopes.dashboards.toggle.disabled', 'Suggested dashboards list is disabled due to read only mode')
     : isDashboardsPanelOpened
-      ? t('scopes.suggestedDashboards.toggle.collapse', 'Collapse suggested dashboards list')
-      : t('scopes.suggestedDashboards.toggle..expand', 'Expand suggested dashboards list');
+      ? t('scopes.dashboards.toggle.collapse', 'Collapse suggested dashboards list')
+      : t('scopes.dashboards.toggle..expand', 'Expand suggested dashboards list');
 
   return (
     <div className={styles.container}>
@@ -327,7 +327,7 @@ export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<Scopes
 
       {isPickerOpened && (
         <Drawer
-          title={t('scopes.filters.title', 'Select scopes')}
+          title={t('scopes.selector.title', 'Select scopes')}
           size="sm"
           onClose={() => {
             model.closePicker();
@@ -335,7 +335,7 @@ export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<Scopes
           }}
         >
           {isLoadingScopes ? (
-            <Spinner data-testid="scopes-filters-loading" />
+            <Spinner data-testid="scopes-selector-loading" />
           ) : (
             <ScopesTree
               nodes={nodes}
@@ -349,23 +349,23 @@ export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<Scopes
           <div className={styles.buttonGroup}>
             <Button
               variant="primary"
-              data-testid="scopes-filters-apply"
+              data-testid="scopes-selector-apply"
               onClick={() => {
                 model.closePicker();
                 model.updateScopes();
               }}
             >
-              <Trans i18nKey="scopes.filters.apply">Apply</Trans>
+              <Trans i18nKey="scopes.selector.apply">Apply</Trans>
             </Button>
             <Button
               variant="secondary"
-              data-testid="scopes-filters-cancel"
+              data-testid="scopes-selector-cancel"
               onClick={() => {
                 model.closePicker();
                 model.resetDirtyScopeNames();
               }}
             >
-              <Trans i18nKey="scopes.filters.cancel">Cancel</Trans>
+              <Trans i18nKey="scopes.selector.cancel">Cancel</Trans>
             </Button>
           </div>
         </Drawer>

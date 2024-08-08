@@ -22,9 +22,9 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { configureStore } from 'app/store/configureStore';
 
 import { ScopesFacade } from './ScopesFacadeScene';
-import { scopesDashboardsScene, scopesFiltersScene } from './instance';
+import { scopesDashboardsScene, scopesSelectorScene } from './instance';
 import { getInitialDashboardsState } from './internal/ScopesDashboardsScene';
-import { initialFiltersState } from './internal/ScopesFiltersScene';
+import { initialSelectorState } from './internal/ScopesSelectorScene';
 import * as api from './internal/api';
 import { DASHBOARDS_OPENED_KEY } from './internal/const';
 
@@ -331,12 +331,12 @@ const selectors = {
     expand: (nodeId: string, type: 'result' | 'persisted') => `scopes-tree-${type}-${nodeId}-expand`,
     title: (nodeId: string, type: 'result' | 'persisted') => `scopes-tree-${type}-${nodeId}-title`,
   },
-  filters: {
-    input: 'scopes-filters-input',
-    container: 'scopes-filters-container',
-    loading: 'scopes-filters-loading',
-    apply: 'scopes-filters-apply',
-    cancel: 'scopes-filters-cancel',
+  selector: {
+    input: 'scopes-selector-input',
+    container: 'scopes-selector-container',
+    loading: 'scopes-selector-loading',
+    apply: 'scopes-selector-apply',
+    cancel: 'scopes-selector-cancel',
   },
   dashboards: {
     expand: 'scopes-dashboards-expand',
@@ -351,10 +351,10 @@ const selectors = {
   },
 };
 
-export const getFiltersInput = () => screen.getByTestId<HTMLInputElement>(selectors.filters.input);
-export const queryFiltersApply = () => screen.queryByTestId(selectors.filters.apply);
-export const getFiltersApply = () => screen.getByTestId(selectors.filters.apply);
-export const getFiltersCancel = () => screen.getByTestId(selectors.filters.cancel);
+export const getSelectorInput = () => screen.getByTestId<HTMLInputElement>(selectors.selector.input);
+export const querySelectorApply = () => screen.queryByTestId(selectors.selector.apply);
+export const getSelectorApply = () => screen.getByTestId(selectors.selector.apply);
+export const getSelectorCancel = () => screen.getByTestId(selectors.selector.cancel);
 
 export const getDashboardsExpand = () => screen.getByTestId(selectors.dashboards.expand);
 export const queryDashboardsContainer = () => screen.queryByTestId(selectors.dashboards.container);
@@ -486,7 +486,7 @@ export function renderDashboard(dashboardScene: DashboardScene) {
 }
 
 export function resetScenes() {
-  scopesFiltersScene?.setState(initialFiltersState);
+  scopesSelectorScene?.setState(initialSelectorState);
 
   localStorage.removeItem(DASHBOARDS_OPENED_KEY);
 

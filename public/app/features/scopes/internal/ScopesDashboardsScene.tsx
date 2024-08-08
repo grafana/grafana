@@ -8,14 +8,14 @@ import { Button, CustomScrollbar, FilterInput, LoadingPlaceholder, useStyles2 } 
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { t, Trans } from 'app/core/internationalization';
 
-import { ScopesFiltersScene } from './ScopesFiltersScene';
+import { ScopesSelectorScene } from './ScopesSelectorScene';
 import { fetchSuggestedDashboards } from './api';
 import { DASHBOARDS_OPENED_KEY } from './const';
 import { SuggestedDashboard } from './types';
 import { getScopeNamesFromSelectedScopes } from './utils';
 
 export interface ScopesDashboardsSceneState extends SceneObjectState {
-  filters: SceneObjectRef<ScopesFiltersScene> | null;
+  selector: SceneObjectRef<ScopesSelectorScene> | null;
   dashboards: SuggestedDashboard[];
   filteredDashboards: SuggestedDashboard[];
   forScopeNames: string[];
@@ -26,7 +26,7 @@ export interface ScopesDashboardsSceneState extends SceneObjectState {
   searchQuery: string;
 }
 
-export const getInitialDashboardsState: () => Omit<ScopesDashboardsSceneState, 'filters'> = () => ({
+export const getInitialDashboardsState: () => Omit<ScopesDashboardsSceneState, 'selector'> = () => ({
   dashboards: [],
   filteredDashboards: [],
   forScopeNames: [],
@@ -42,7 +42,7 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
 
   constructor() {
     super({
-      filters: null,
+      selector: null,
       ...getInitialDashboardsState(),
     });
 
@@ -51,11 +51,11 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
         this.fetchDashboards();
       }
 
-      const resolvedFilters = this.state.filters?.resolve();
+      const resolvedSelector = this.state.selector?.resolve();
 
-      if (resolvedFilters) {
+      if (resolvedSelector) {
         this._subs.add(
-          resolvedFilters.subscribeToState((newState, prevState) => {
+          resolvedSelector.subscribeToState((newState, prevState) => {
             if (
               this.state.isPanelOpened &&
               !newState.isLoadingScopes &&
@@ -70,7 +70,7 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
   }
 
   public async fetchDashboards() {
-    const scopeNames = getScopeNamesFromSelectedScopes(this.state.filters?.resolve().state.scopes ?? []);
+    const scopeNames = getScopeNamesFromSelectedScopes(this.state.selector?.resolve().state.scopes ?? []);
 
     if (isEqual(scopeNames, this.state.forScopeNames)) {
       return;
@@ -160,7 +160,7 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
           className={cx(styles.container, styles.noResultsContainer)}
           data-testid="scopes-dashboards-notFoundNoScopes"
         >
-          <Trans i18nKey="scopes.suggestedDashboards.noResultsNoScopes">No scopes selected</Trans>
+          <Trans i18nKey="scopes.dashboards.noResultsNoScopes">No scopes selected</Trans>
         </div>
       );
     } else if (dashboards.length === 0) {
@@ -169,9 +169,7 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
           className={cx(styles.container, styles.noResultsContainer)}
           data-testid="scopes-dashboards-notFoundForScope"
         >
-          <Trans i18nKey="scopes.suggestedDashboards.noResultsForScopes">
-            No dashboards found for the selected scopes
-          </Trans>
+          <Trans i18nKey="scopes.dashboards.noResultsForScopes">No dashboards found for the selected scopes</Trans>
         </div>
       );
     }
@@ -182,7 +180,7 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
       <div className={styles.searchInputContainer}>
         <FilterInput
           disabled={isLoading}
-          placeholder={t('scopes.suggestedDashboards.search', 'Search')}
+          placeholder={t('scopes.dashboards.search', 'Search')}
           value={searchQuery}
           data-testid="scopes-dashboards-search"
           onChange={(value) => model.changeSearchQuery(value)}
@@ -192,7 +190,7 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
       {isLoading ? (
         <LoadingPlaceholder
           className={styles.loadingIndicator}
-          text={t('scopes.suggestedDashboards.loading', 'Loading dashboards')}
+          text={t('scopes.dashboards.loading', 'Loading dashboards')}
           data-testid="scopes-dashboards-loading"
         />
       ) : filteredDashboards.length > 0 ? (
@@ -210,14 +208,14 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
         </CustomScrollbar>
       ) : (
         <p className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundForFilter">
-          <Trans i18nKey="scopes.suggestedDashboards.noResultsForFilter">No results found for your query</Trans>
+          <Trans i18nKey="scopes.dashboards.noResultsForFilter">No results found for your query</Trans>
 
           <Button
             variant="secondary"
             onClick={() => model.changeSearchQuery('')}
             data-testid="scopes-dashboards-notFoundForFilter-clear"
           >
-            <Trans i18nKey="scopes.suggestedDashboards.noResultsForFilterClear">Clear search</Trans>
+            <Trans i18nKey="scopes.dashboards.noResultsForFilterClear">Clear search</Trans>
           </Button>
         </p>
       )}
