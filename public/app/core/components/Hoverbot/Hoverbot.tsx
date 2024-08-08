@@ -14,8 +14,11 @@ export const Hoverbot = () => {
   const [loading, setLoading] = useState(false);
   const [selecting, setSelecting] = useState(false);
   const [reply, setReply] = useState('');
-  const [[x, y], setPosition] = useState([Number(sessionStorage.getItem('hoverbot.x')) || 0, Number(sessionStorage.getItem('hoverbot.y')) || 0]);
-  const posRef = useRef({ x: 0, y: 0});
+  const [[x, y], setPosition] = useState([
+    Number(sessionStorage.getItem('hoverbot.x')) || 0,
+    Number(sessionStorage.getItem('hoverbot.y')) || 0,
+  ]);
+  const posRef = useRef({ x: 0, y: 0 });
   const oldPosRef = useRef({ x, y });
 
   useEffect(() => {
@@ -129,21 +132,24 @@ export const Hoverbot = () => {
     return () => document.removeEventListener('keyup', handleEscape);
   }, [cancel, handleClick]);
 
-  const handleDragStart = useCallback((event: DragEvent<HTMLDivElement>) => {
-    cancel();
-    
-    oldPosRef.current.x = x;
-    oldPosRef.current.y = y;
-    if (event.target instanceof Element) {
-      posRef.current.x = event.clientX;
-      posRef.current.y = event.clientY;
-    }
-  }, [cancel, x, y]);
+  const handleDragStart = useCallback(
+    (event: DragEvent<HTMLDivElement>) => {
+      cancel();
+
+      oldPosRef.current.x = x;
+      oldPosRef.current.y = y;
+      if (event.target instanceof Element) {
+        posRef.current.x = event.clientX;
+        posRef.current.y = event.clientY;
+      }
+    },
+    [cancel, x, y]
+  );
 
   const handleDrag = useCallback((event: DragEvent<HTMLDivElement>) => {
     const newX = event.clientX - posRef.current.x;
     const newY = posRef.current.y - event.clientY;
-    
+
     setPosition([oldPosRef.current.x + newX, oldPosRef.current.y + newY]);
   }, []);
 
@@ -199,7 +205,14 @@ export const Hoverbot = () => {
   }
 
   return (
-    <div  className={`${styles.grotContainer} ${subtleMove}`} style={{ bottom: y, left: x }} draggable="true" onDrag={handleDrag} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <div
+      className={`${styles.grotContainer} ${subtleMove}`}
+      style={{ bottom: y, left: x }}
+      draggable="true"
+      onDrag={handleDrag}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
       <SVG src={grot} width={250} height={250} onClick={selectRegion} />
     </div>
   );
@@ -242,7 +255,7 @@ const styles = {
   }),
   grotWrapper: css({
     paddingTop: 12,
-  })
+  }),
 };
 
 let highlighted: HTMLDivElement | undefined;
@@ -280,6 +293,9 @@ function scrapContext(element: HTMLDivElement): string {
   }
   if (document.title.includes('Dashboards')) {
     return scrapDashboardContext(element);
+  }
+  if (window.location.pathname === '/a/grafana-lokiexplore-app/explore') {
+    return scrapLogsAppContext();
   }
 
   return 'Help me understand the following observability data:';
@@ -333,6 +349,20 @@ function scrapDashboardContext(element: HTMLDivElement) {
 function getTimeRangeContext() {
   const picker = document.querySelector('[data-testid="data-testid TimePicker Open Button"]');
   return picker?.getAttribute('aria-label') ?? '';
+}
+
+function scrapLogsAppContext() {
+  let context = '';
+
+  if (window.location.pathname === '/a/grafana-lokiexplore-app/explore') {
+    context =
+      "I'm in the service selection page of the Grafana Logs App. I need to understand what I'm looking at and select a service of interest to investigate or diagnose using logging data.";
+  }
+
+  context += `${getTimeRangeContext()}. `;
+  console.log(context);
+
+  return context;
 }
 
 async function upload(blob: Blob): Promise<string> {
