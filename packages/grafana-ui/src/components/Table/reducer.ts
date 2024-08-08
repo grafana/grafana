@@ -15,12 +15,12 @@ export function useTableStateReducer({ onColumnResize, onSortByChange, data }: P
       switch (action.type) {
         case 'columnDoneResizing':
           if (onColumnResize) {
-            const info = (newState.columnResizing.headerIdWidths as any)[0];
-            const columnIdString = info[0];
+            const info = (newState.columnResizing?.headerIdWidths as any)?.[0];
+            const columnIdString = info?.[0];
             const fieldIndex = parseInt(columnIdString, 10);
-            const width = Math.round(newState.columnResizing.columnWidths[columnIdString]);
+            const width = Math.round(newState.columnResizing.columnWidths?.[columnIdString]);
 
-            const field = data.fields[fieldIndex];
+            const field = data.fields?.[fieldIndex];
             if (!field) {
               return newState;
             }

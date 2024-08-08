@@ -2,9 +2,12 @@ package accesscontrol
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry"
@@ -12,9 +15,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol")
@@ -83,8 +83,8 @@ type SearchOptions struct {
 	Action       string
 	ActionSets   []string
 	Scope        string
-	NamespacedID string    // ID of the identity (ex: user:3, service-account:4)
-	wildcards    Wildcards // private field computed based on the Scope
+	TypedID      identity.TypedID // ID of the identity (ex: user:3, service-account:4)
+	wildcards    Wildcards        // private field computed based on the Scope
 	RolePrefixes []string
 }
 
@@ -104,21 +104,17 @@ func (s *SearchOptions) Wildcards() []string {
 }
 
 func (s *SearchOptions) ComputeUserID() (int64, error) {
-	if s.NamespacedID == "" {
-		return 0, errors.New("namespacedID must be set")
-	}
-
-	id, err := identity.ParseNamespaceID(s.NamespacedID)
+	id, err := s.TypedID.ParseInt()
 	if err != nil {
 		return 0, err
 	}
 
 	// Validate namespace type is user or service account
-	if id.Namespace() != identity.NamespaceUser && id.Namespace() != identity.NamespaceServiceAccount {
-		return 0, fmt.Errorf("invalid namespace: %s", id.Namespace())
+	if s.TypedID.Type() != identity.TypeUser && s.TypedID.Type() != identity.TypeServiceAccount {
+		return 0, fmt.Errorf("invalid type: %s", s.TypedID.Type())
 	}
 
-	return id.ParseInt()
+	return id, nil
 }
 
 type SyncUserRolesCommand struct {
@@ -359,6 +355,20 @@ func GetOrgRoles(user identity.Requester) []string {
 	}
 
 	return roles
+}
+
+// PermissionsForActions generate Permissions for all actions provided scoped to provided scope.
+func PermissionsForActions(actions []string, scope string) []Permission {
+	permissions := make([]Permission, len(actions))
+
+	for i, action := range actions {
+		permissions[i] = Permission{
+			Action: action,
+			Scope:  scope,
+		}
+	}
+
+	return permissions
 }
 
 func BackgroundUser(name string, orgID int64, role org.RoleType, permissions []Permission) identity.Requester {

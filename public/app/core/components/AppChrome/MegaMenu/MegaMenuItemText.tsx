@@ -3,7 +3,9 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Icon, Link, useTheme2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Icon, IconButton, Link, useTheme2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 export interface Props {
   children: React.ReactNode;
@@ -11,9 +13,11 @@ export interface Props {
   onClick?: () => void;
   target?: HTMLAnchorElement['target'];
   url: string;
+  onPin: (id?: string) => void;
+  isPinned?: boolean;
 }
 
-export function MegaMenuItemText({ children, isActive, onClick, target, url }: Props) {
+export function MegaMenuItemText({ children, isActive, onClick, target, url, onPin, isPinned }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme, isActive);
   const LinkComponent = !target && url.startsWith('/') ? Link : 'a';
@@ -30,24 +34,78 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url }: P
   );
 
   return (
-    <LinkComponent
-      data-testid={selectors.components.NavMenu.item}
-      className={cx(styles.container, {
-        [styles.containerActive]: isActive,
+    <div
+      className={cx(styles.wrapper, {
+        [styles.wrapperActive]: isActive,
+        [styles.wrapperBookmark]: config.featureToggles.pinNavItems,
       })}
-      href={url}
-      target={target}
-      onClick={onClick}
-      {...(isActive && { 'aria-current': 'page' })}
     >
-      {linkContent}
-    </LinkComponent>
+      <LinkComponent
+        data-testid={selectors.components.NavMenu.item}
+        className={styles.container}
+        href={url}
+        target={target}
+        onClick={onClick}
+        {...(isActive && { 'aria-current': 'page' })}
+      >
+        {linkContent}
+      </LinkComponent>
+      {config.featureToggles.pinNavItems && url && url !== '/bookmarks' && (
+        <IconButton
+          name="bookmark"
+          className={'pin-icon'}
+          iconType={isPinned ? 'solid' : 'default'}
+          onClick={() => onPin(url)}
+          aria-label={
+            isPinned
+              ? t('navigation.item.remove-bookmark', 'Remove from Bookmarks')
+              : t('navigation.item.add-bookmark', 'Add to Bookmarks')
+          }
+        />
+      )}
+    </div>
   );
 }
 
 MegaMenuItemText.displayName = 'MegaMenuItemText';
 
 const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
+  wrapper: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+    width: '100%',
+    height: '100%',
+  }),
+  wrapperBookmark: css({
+    '.pin-icon': {
+      display: 'none',
+    },
+    '&:hover, &:focus-within': {
+      a: {
+        width: 'calc(100% - 20px)',
+      },
+      '.pin-icon': {
+        display: 'inline-flex',
+      },
+    },
+  }),
+  wrapperActive: css({
+    backgroundColor: theme.colors.background.secondary,
+    borderTopRightRadius: theme.shape.radius.default,
+    borderBottomRightRadius: theme.shape.radius.default,
+    position: 'relative',
+
+    '&::before': {
+      backgroundImage: theme.colors.gradients.brandVertical,
+      borderRadius: theme.shape.radius.default,
+      content: '" "',
+      display: 'block',
+      height: '100%',
+      position: 'absolute',
+      transform: 'translateX(-50%)',
+      width: theme.spacing(0.5),
+    },
+  }),
   container: css({
     alignItems: 'center',
     color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
@@ -67,28 +125,12 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
       transition: 'none',
     },
   }),
-  containerActive: css({
-    backgroundColor: theme.colors.background.secondary,
-    borderTopRightRadius: theme.shape.radius.default,
-    borderBottomRightRadius: theme.shape.radius.default,
-    position: 'relative',
-
-    '&::before': {
-      backgroundImage: theme.colors.gradients.brandVertical,
-      borderRadius: theme.shape.radius.default,
-      content: '" "',
-      display: 'block',
-      height: '100%',
-      position: 'absolute',
-      transform: 'translateX(-50%)',
-      width: theme.spacing(0.5),
-    },
-  }),
   linkContent: css({
     alignItems: 'center',
     display: 'flex',
     gap: '0.5rem',
     height: '100%',
     width: '100%',
+    justifyContent: 'space-between',
   }),
 });

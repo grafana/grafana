@@ -1,6 +1,6 @@
 import { SystemDateFormatSettings } from '../datetime/formats';
 import { MapLayerOptions } from '../geo/layer';
-import { GrafanaTheme2 } from '../themes';
+import { GrafanaTheme2 } from '../themes/types';
 
 import { DataSourceInstanceSettings } from './datasource';
 import { FeatureToggles } from './featureToggles.gen';
@@ -62,6 +62,7 @@ export interface GrafanaJavascriptAgentConfig {
   errorInstrumentalizationEnabled: boolean;
   consoleInstrumentalizationEnabled: boolean;
   webVitalsInstrumentalizationEnabled: boolean;
+  tracingInstrumentalizationEnabled: boolean;
   apiKey: string;
 }
 
@@ -232,6 +233,8 @@ export interface GrafanaConfig {
   cloudMigrationIsTarget?: boolean;
   listDashboardScopesEndpoint?: string;
   listScopesEndpoint?: string;
+  reportingStaticContext?: Record<string, string>;
+  exploreDefaultTimeOffset?: string;
 
   // The namespace to use for kubernetes apiserver requests
   namespace: string;

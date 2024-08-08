@@ -154,16 +154,26 @@ export type CreateSnapshotResponseDto = {
   uid?: string;
 };
 export type MigrateDataResponseItemDto = {
-  error?: string;
+  message?: string;
   refId: string;
-  status: 'OK' | 'ERROR' | 'PENDING' | 'UNKNOWN';
+  status: 'OK' | 'WARNING' | 'ERROR' | 'PENDING' | 'UNKNOWN';
   type: 'DASHBOARD' | 'DATASOURCE' | 'FOLDER';
+};
+export type SnapshotResourceStats = {
+  statuses?: {
+    [key: string]: number;
+  };
+  total?: number;
+  types?: {
+    [key: string]: number;
+  };
 };
 export type GetSnapshotResponseDto = {
   created?: string;
   finished?: string;
   results?: MigrateDataResponseItemDto[];
   sessionUid?: string;
+  stats?: SnapshotResourceStats;
   status?:
     | 'INITIALIZING'
     | 'CREATING'
@@ -172,6 +182,7 @@ export type GetSnapshotResponseDto = {
     | 'PENDING_PROCESSING'
     | 'PROCESSING'
     | 'FINISHED'
+    | 'CANCELED'
     | 'ERROR'
     | 'UNKNOWN';
   uid?: string;
@@ -188,6 +199,7 @@ export type SnapshotDto = {
     | 'PENDING_PROCESSING'
     | 'PROCESSING'
     | 'FINISHED'
+    | 'CANCELED'
     | 'ERROR'
     | 'UNKNOWN';
   uid?: string;

@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -27,7 +26,6 @@ func TestContextHandler(t *testing.T) {
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
 			tracing.InitializeTracerForTest(),
-			featuremgmt.WithFeatures(),
 			&authntest.FakeService{ExpectedErr: errors.New("some error")},
 		)
 
@@ -45,11 +43,10 @@ func TestContextHandler(t *testing.T) {
 	})
 
 	t.Run("should set identity on successful authentication", func(t *testing.T) {
-		id := &authn.Identity{ID: authn.NewNamespaceID(authn.NamespaceUser, 1), OrgID: 1}
+		id := &authn.Identity{ID: identity.NewTypedID(identity.TypeUser, 1), OrgID: 1}
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
 			tracing.InitializeTracerForTest(),
-			featuremgmt.WithFeatures(),
 			&authntest.FakeService{ExpectedIdentity: id},
 		)
 
@@ -71,11 +68,10 @@ func TestContextHandler(t *testing.T) {
 	})
 
 	t.Run("should not set IsSignedIn on anonymous identity", func(t *testing.T) {
-		identity := &authn.Identity{ID: authn.AnonymousNamespaceID, OrgID: 1}
+		identity := &authn.Identity{ID: identity.AnonymousTypedID, OrgID: 1}
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
 			tracing.InitializeTracerForTest(),
-			featuremgmt.WithFeatures(),
 			&authntest.FakeService{ExpectedIdentity: identity},
 		)
 
@@ -97,7 +93,6 @@ func TestContextHandler(t *testing.T) {
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
 			tracing.InitializeTracerForTest(),
-			featuremgmt.WithFeatures(),
 			&authntest.FakeService{ExpectedIdentity: identity},
 		)
 
@@ -128,7 +123,6 @@ func TestContextHandler(t *testing.T) {
 		handler := contexthandler.ProvideService(
 			cfg,
 			tracing.InitializeTracerForTest(),
-			featuremgmt.WithFeatures(),
 			&authntest.FakeService{ExpectedIdentity: &authn.Identity{}},
 		)
 
@@ -154,8 +148,7 @@ func TestContextHandler(t *testing.T) {
 			handler := contexthandler.ProvideService(
 				cfg,
 				tracing.InitializeTracerForTest(),
-				featuremgmt.WithFeatures(),
-				&authntest.FakeService{ExpectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID(id)}},
+				&authntest.FakeService{ExpectedIdentity: &authn.Identity{ID: identity.MustParseTypedID(id)}},
 			)
 
 			server := webtest.NewServer(t, routing.NewRouteRegister())

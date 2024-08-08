@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -79,33 +78,18 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 		}, &fakeDatasources.FakeCacheService{}, &fakeDatasources.FakeDataSourceService{},
 			pluginSettings.ProvideService(dbtest.NewFakeDB(), secretstest.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider()),
 	)
-	serverFeatureEnabled := SetupAPITestServer(t, func(hs *HTTPServer) {
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
-		hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceQueryMultiStatus, true)
-		hs.QuotaService = quotatest.New(false, nil)
-	})
-	serverFeatureDisabled := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.queryDataService = qds
-		hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceQueryMultiStatus, false)
 		hs.QuotaService = quotatest.New(false, nil)
 	})
 
-	t.Run("Status code is 400 when data source response has an error and feature toggle is disabled", func(t *testing.T) {
-		req := serverFeatureDisabled.NewPostRequest("/api/ds/query", strings.NewReader(reqValid))
+	t.Run("Status code is 400 when data source response has an error", func(t *testing.T) {
+		req := server.NewPostRequest("/api/ds/query", strings.NewReader(reqValid))
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {datasources.ActionQuery: []string{datasources.ScopeAll}}}})
-		resp, err := serverFeatureDisabled.SendJSON(req)
+		resp, err := server.SendJSON(req)
 		require.NoError(t, err)
 		require.NoError(t, resp.Body.Close())
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	})
-
-	t.Run("Status code is 207 when data source response has an error and feature toggle is enabled", func(t *testing.T) {
-		req := serverFeatureEnabled.NewPostRequest("/api/ds/query", strings.NewReader(reqValid))
-		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {datasources.ActionQuery: []string{datasources.ScopeAll}}}})
-		resp, err := serverFeatureEnabled.SendJSON(req)
-		require.NoError(t, err)
-		require.NoError(t, resp.Body.Close())
-		require.Equal(t, http.StatusMultiStatus, resp.StatusCode)
 	})
 }
 

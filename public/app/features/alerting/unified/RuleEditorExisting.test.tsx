@@ -1,11 +1,8 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 import { Route } from 'react-router-dom';
-import { TestProvider } from 'test/helpers/TestProvider';
 import { ui } from 'test/helpers/alertingRuleEditor';
+import { render, screen, waitFor } from 'test/test-utils';
 
-import { locationService } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 
@@ -18,7 +15,7 @@ import * as ruler from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { setupMswServer } from './mockApi';
 import { grantUserPermissions, mockDataSource, mockFolder } from './mocks';
-import { grafanaRulerGroup, grafanaRulerRule } from './mocks/alertRuleApi';
+import { grafanaRulerGroup, grafanaRulerRule } from './mocks/grafanaRulerApi';
 import { setupDataSources } from './testSetup/datasources';
 import { Annotation } from './utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -53,13 +50,9 @@ const mocks = {
 setupMswServer();
 
 function renderRuleEditor(identifier?: string) {
-  locationService.push(identifier ? `/alerting/${identifier}/edit` : `/alerting/new`);
-
-  return render(
-    <TestProvider>
-      <Route path={['/alerting/new', '/alerting/:id/edit']} component={RuleEditor} />
-    </TestProvider>
-  );
+  return render(<Route path={['/alerting/new', '/alerting/:id/edit']} component={RuleEditor} />, {
+    historyOptions: { initialEntries: [identifier ? `/alerting/${identifier}/edit` : `/alerting/new`] },
+  });
 }
 
 describe('RuleEditor grafana managed rules', () => {
@@ -121,7 +114,7 @@ describe('RuleEditor grafana managed rules', () => {
     // mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
     mocks.searchFolders.mockResolvedValue([folder, slashedFolder] as DashboardSearchHit[]);
 
-    renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
+    const { user } = renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
 
     // check that it's filled in
     const nameInput = await ui.inputs.name.find();
@@ -138,18 +131,18 @@ describe('RuleEditor grafana managed rules', () => {
     //todo: move this test to a unit test in FolderAndGroup unit test
     // const folderInput = await ui.inputs.folderContainer.find();
     // expect(within(folderInput).queryByText("Folders with '/' character are not allowed.")).not.toBeInTheDocument();
-    // await userEvent.type(within(folderInput).getByRole('combobox'), 'new slashed //');
+    // await user.type(within(folderInput).getByRole('combobox'), 'new slashed //');
     // expect(within(folderInput).getByText("Folders with '/' character are not allowed.")).toBeInTheDocument();
-    // await userEvent.keyboard('{backspace} {backspace}{backspace}');
+    // await user.keyboard('{backspace} {backspace}{backspace}');
     // expect(within(folderInput).queryByText("Folders with '/' character are not allowed.")).not.toBeInTheDocument();
 
     // add an annotation
-    await userEvent.click(screen.getByText('Add custom annotation'));
-    await userEvent.type(screen.getByPlaceholderText('Enter custom annotation name...'), 'custom');
-    await userEvent.type(screen.getByPlaceholderText('Enter custom annotation content...'), 'value');
+    await user.click(screen.getByText('Add custom annotation'));
+    await user.type(screen.getByPlaceholderText('Enter custom annotation name...'), 'custom');
+    await user.type(screen.getByPlaceholderText('Enter custom annotation content...'), 'value');
 
     // save and check what was sent to backend
-    await userEvent.click(ui.buttons.save.get());
+    await user.click(ui.buttons.save.get());
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
 
     mocks.searchFolders.mockResolvedValue([] as DashboardSearchHit[]);

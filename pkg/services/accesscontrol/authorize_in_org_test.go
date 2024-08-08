@@ -9,11 +9,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -24,7 +26,7 @@ import (
 )
 
 func TestAuthorizeInOrgMiddleware(t *testing.T) {
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 
 	// Define test cases
 	testCases := []struct {
@@ -185,7 +187,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/api/endpoint", nil)
 
 			expectedIdentity := &authn.Identity{
-				ID:          authn.NewNamespaceID(authn.NamespaceUser, tc.ctxSignedInUser.UserID),
+				ID:          identity.NewTypedID(identity.TypeUser, tc.ctxSignedInUser.UserID),
 				OrgID:       tc.targetOrgId,
 				Permissions: map[int64]map[string][]string{},
 			}

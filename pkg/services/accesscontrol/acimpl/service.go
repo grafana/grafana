@@ -24,17 +24,18 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
-	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ plugins.RoleRegistry = &Service{}
+var _ pluginaccesscontrol.RoleRegistry = &Service{}
 
 const (
 	cacheTTL = 60 * time.Second
@@ -48,11 +49,11 @@ var SharedWithMeFolderPermission = accesscontrol.Permission{
 var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix}
 
 func ProvideService(
-	cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
+	cfg *setting.Cfg, db db.ReplDB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, actionResolver accesscontrol.ActionResolver,
-	features featuremgmt.FeatureToggles, tracer tracing.Tracer, zclient zanzana.Client,
+	features featuremgmt.FeatureToggles, tracer tracing.Tracer, zclient zanzana.Client, permRegistry permreg.PermissionRegistry,
 ) (*Service, error) {
-	service := ProvideOSSService(cfg, database.ProvideService(db), actionResolver, cache, features, tracer, zclient, db)
+	service := ProvideOSSService(cfg, database.ProvideService(db), actionResolver, cache, features, tracer, zclient, db.DB(), permRegistry)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
@@ -73,7 +74,7 @@ func ProvideService(
 func ProvideOSSService(
 	cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver,
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
-	zclient zanzana.Client, db db.DB,
+	zclient zanzana.Client, db db.DB, permRegistry permreg.PermissionRegistry,
 ) *Service {
 	s := &Service{
 		actionResolver: actionResolver,
@@ -85,6 +86,7 @@ func ProvideOSSService(
 		store:          store,
 		tracer:         tracer,
 		sync:           migrator.NewZanzanaSynchroniser(zclient, db),
+		permRegistry:   permRegistry,
 	}
 
 	return s
@@ -102,6 +104,7 @@ type Service struct {
 	store          accesscontrol.Store
 	tracer         tracing.Tracer
 	sync           *migrator.ZanzanaSynchroniser
+	permRegistry   permreg.PermissionRegistry
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -118,7 +121,7 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
-	if !s.cfg.RBACPermissionCache || !user.HasUniqueId() {
+	if !s.cfg.RBAC.PermissionCache || !user.HasUniqueId() {
 		return s.getUserPermissions(ctx, user, options)
 	}
 
@@ -140,7 +143,7 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 		permissions = append(permissions, SharedWithMeFolderPermission)
 	}
 
-	userID, err := identity.UserIdentifier(user.GetNamespacedID())
+	userID, err := identity.UserIdentifier(user.GetTypedID())
 	if err != nil {
 		return nil, err
 	}
@@ -208,10 +211,10 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 	ctx, span := s.tracer.Start(ctx, "authz.getUserDirectPermissions")
 	defer span.End()
 
-	namespace, identifier := user.GetNamespacedID()
+	namespace, identifier := user.GetTypedID()
 
 	var userID int64
-	if namespace == authn.NamespaceUser || namespace == authn.NamespaceServiceAccount {
+	if namespace == identity.TypeUser || namespace == identity.TypeServiceAccount {
 		var err error
 		userID, err = strconv.ParseInt(identifier, 10, 64)
 		if err != nil {
@@ -406,6 +409,10 @@ func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistrat
 			return err
 		}
 
+		for i := range r.Role.Permissions {
+			s.permRegistry.RegisterPermission(r.Role.Permissions[i].Action, r.Role.Permissions[i].Scope)
+		}
+
 		s.registrations.Append(r)
 	}
 
@@ -458,6 +465,12 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 			return err
 		}
 
+		for i := range r.Role.Permissions {
+			// Register plugin actions and their possible scopes for permission validation
+			s.permRegistry.RegisterPluginScope(r.Role.Permissions[i].Scope)
+			s.permRegistry.RegisterPermission(r.Role.Permissions[i].Action, r.Role.Permissions[i].Scope)
+		}
+
 		s.log.Debug("Registering plugin role", "role", r.Role.Name)
 		s.registrations.Append(r)
 	}
@@ -482,7 +495,7 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 
 	// Limit roles to available in OSS
 	options.RolePrefixes = OSSRolesPrefixes
-	if options.NamespacedID != "" {
+	if options.TypedID.Type() != "" {
 		userID, err := options.ComputeUserID()
 		if err != nil {
 			s.log.Error("Failed to resolve user ID", "error", err)
@@ -597,7 +610,7 @@ func (s *Service) SearchUserPermissions(ctx context.Context, orgID int64, search
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
-	if searchOptions.NamespacedID == "" {
+	if searchOptions.TypedID.Type() == "" {
 		return nil, fmt.Errorf("expected namespaced ID to be specified")
 	}
 

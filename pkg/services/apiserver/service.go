@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,11 +21,12 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
-	filestorage "github.com/grafana/grafana/pkg/apiserver/storage/file"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
@@ -35,15 +37,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
-	entitystorage "github.com/grafana/grafana/pkg/services/apiserver/storage/entity"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
-	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
 var (
@@ -113,7 +114,9 @@ type service struct {
 	tracing *tracing.TracingService
 	metrics prometheus.Registerer
 
-	authorizer *authorizer.GrafanaAuthorizer
+	authorizer        *authorizer.GrafanaAuthorizer
+	serverLockService builder.ServerLockService
+	kvStore           kvstore.KVStore
 }
 
 func ProvideService(
@@ -122,7 +125,9 @@ func ProvideService(
 	rr routing.RouteRegister,
 	orgService org.Service,
 	tracing *tracing.TracingService,
+	serverLockService *serverlock.ServerLockService,
 	db db.DB,
+	kvStore kvstore.KVStore,
 ) (*service, error) {
 	s := &service{
 		cfg:        cfg,
@@ -135,6 +140,7 @@ func ProvideService(
 		tracing:    tracing,
 		db:         db, // For Unified storage
 		metrics:    metrics.ProvideRegisterer(),
+		kvStore:    kvStore,
 	}
 
 	// This will be used when running as a dskit service
@@ -158,7 +164,7 @@ func ProvideService(
 			}
 
 			if c.SignedInUser != nil {
-				ctx := appcontext.WithUser(req.Context(), c.SignedInUser)
+				ctx := identity.WithRequester(req.Context(), c.SignedInUser)
 				req = req.WithContext(ctx)
 			}
 
@@ -199,6 +205,7 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 	s.builders = append(s.builders, b)
 }
 
+// nolint:gocyclo
 func (s *service) start(ctx context.Context) error {
 	defer close(s.startedCh)
 
@@ -263,39 +270,37 @@ func (s *service) start(ctx context.Context) error {
 			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
 
-		eDB, err := dbimpl.ProvideEntityDB(s.db, s.cfg, s.features, s.tracing)
+		server, err := sql.ProvideResourceServer(s.db, s.cfg, s.features, s.tracing)
 		if err != nil {
 			return err
 		}
-
-		storeServer, err := sqlstash.ProvideSQLEntityServer(eDB, s.tracing)
-		if err != nil {
-			return err
-		}
-
-		store := entity.NewEntityStoreClientLocal(storeServer)
-
-		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.RecommendedOptions.Etcd.StorageConfig.Codec)
+		client := resource.NewLocalResourceStoreClient(server)
+		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client,
+			o.RecommendedOptions.Etcd.StorageConfig)
 
 	case grafanaapiserveroptions.StorageTypeUnifiedGrpc:
+		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
+			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
+		}
+
+		opts := []grpc.DialOption{
+			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+		}
 		// Create a connection to the gRPC server
-		conn, err := grpc.NewClient(o.StorageOptions.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.NewClient(o.StorageOptions.Address, opts...)
 		if err != nil {
 			return err
 		}
 
-		// TODO: determine when to close the connection, we cannot defer it here
-		// defer conn.Close()
-
 		// Create a client instance
-		store := entity.NewEntityStoreClientGRPC(conn)
-
-		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.RecommendedOptions.Etcd.StorageConfig.Codec)
+		client := resource.NewResourceStoreClientGRPC(conn)
+		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client, o.RecommendedOptions.Etcd.StorageConfig)
 
 	case grafanaapiserveroptions.StorageTypeLegacy:
 		fallthrough
 	case grafanaapiserveroptions.StorageTypeFile:
-		restOptionsGetter, err := filestorage.NewRESTOptionsGetter(o.StorageOptions.DataPath, o.RecommendedOptions.Etcd.StorageConfig)
+		restOptionsGetter, err := apistore.NewRESTOptionsGetterForFile(o.StorageOptions.DataPath, o.RecommendedOptions.Etcd.StorageConfig)
 		if err != nil {
 			return err
 		}
@@ -323,7 +328,10 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	// Install the API group+version
-	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions, s.metrics)
+	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
+		// Required for the dual writer initialization
+		s.metrics, kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"), s.serverLockService,
+	)
 	if err != nil {
 		return err
 	}
@@ -421,7 +429,7 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 		Transport: &roundTripperFunc{
 			fn: func(req *http.Request) (*http.Response, error) {
 				<-s.startedCh
-				ctx := appcontext.WithUser(req.Context(), c.SignedInUser)
+				ctx := identity.WithRequester(req.Context(), c.SignedInUser)
 				wrapped := grafanaresponsewriter.WrapHandler(s.handler)
 				return wrapped(req.WithContext(ctx))
 			},

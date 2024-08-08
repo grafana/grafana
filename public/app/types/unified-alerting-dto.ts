@@ -47,9 +47,15 @@ export function mapStateWithReasonToReason(state: GrafanaAlertStateWithReason): 
   return match ? match[1] : '';
 }
 
+type StateWithReasonToBaseStateReturnType<T> = T extends GrafanaAlertStateWithReason
+  ? GrafanaAlertState
+  : T extends PromAlertingRuleState
+    ? PromAlertingRuleState
+    : never;
+
 export function mapStateWithReasonToBaseState(
   state: GrafanaAlertStateWithReason | PromAlertingRuleState
-): GrafanaAlertState | PromAlertingRuleState {
+): StateWithReasonToBaseStateReturnType<GrafanaAlertStateWithReason | PromAlertingRuleState> {
   if (isAlertStateWithReason(state)) {
     const fields = state.split(' ');
     return fields[0] as GrafanaAlertState;
@@ -216,11 +222,15 @@ export interface PostableGrafanaRuleDefinition {
   uid?: string;
   title: string;
   condition: string;
-  no_data_state: GrafanaAlertStateDecision;
-  exec_err_state: GrafanaAlertStateDecision;
+  no_data_state?: GrafanaAlertStateDecision;
+  exec_err_state?: GrafanaAlertStateDecision;
   data: AlertQuery[];
   is_paused?: boolean;
   notification_settings?: GrafanaNotificationSettings;
+  record?: {
+    metric: string;
+    from: string;
+  };
 }
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   id?: string;
@@ -232,7 +242,7 @@ export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
 
 export interface RulerGrafanaRuleDTO<T = GrafanaRuleDefinition> {
   grafana_alert: T;
-  for: string;
+  for?: string;
   annotations: Annotations;
   labels: Labels;
 }

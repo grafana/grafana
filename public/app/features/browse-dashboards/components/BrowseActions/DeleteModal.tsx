@@ -40,8 +40,8 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
               <Text element="p">
                 <Trans i18nKey="browse-dashboards.action.delete-modal-restore-dashboards-text">
                   This action will delete the selected folders immediately but the selected dashboards will be marked
-                  for deletion in 30 days. You can restore the dashboards anytime before the 30 days expires. Folders
-                  cannot be restored.
+                  for deletion in 30 days. Your organization administrator can restore the dashboards anytime before the
+                  30 days expire. Folders cannot be restored.
                 </Trans>
               </Text>
               <Space v={2} />
@@ -70,7 +70,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
           ) : null}
         </>
       }
-      confirmationText="Delete"
+      confirmationText={t('browse-dashboards.action.confirmation-text', 'Delete')}
       confirmText={
         isDeleting
           ? t('browse-dashboards.action.deleting', 'Deleting...')

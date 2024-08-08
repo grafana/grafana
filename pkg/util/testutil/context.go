@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -105,7 +105,7 @@ func (f testContextFunc) CancelCause(err error) {
 }
 
 func (f testContextFunc) WithUser(usr *user.SignedInUser) TestContext {
-	ctx := appcontext.WithUser(f, usr)
+	ctx := identity.WithRequester(f, usr)
 
 	return testContextFunc(func() (context.Context, context.CancelFunc, context.CancelCauseFunc) {
 		return ctx, f.Cancel, f.CancelCause

@@ -288,11 +288,11 @@ export function calculateRuleTotals(rule: Pick<AlertingRule, 'alerts' | 'totals'
   }
 
   return {
-    alerting: result[AlertInstanceTotalState.Alerting] || result['firing'],
+    alerting: result[AlertInstanceTotalState.Alerting] || result.firing,
     pending: result[AlertInstanceTotalState.Pending],
     inactive: result[AlertInstanceTotalState.Normal],
     nodata: result[AlertInstanceTotalState.NoData],
-    error: result[AlertInstanceTotalState.Error] || result['err'] || undefined, // Prometheus uses "err" instead of "error"
+    error: result[AlertInstanceTotalState.Error] || result.err || undefined, // Prometheus uses "err" instead of "error"
   };
 }
 
@@ -468,7 +468,7 @@ function hashQuery(query: string) {
   This hook returns combined Grafana rules. Optionally, it can filter rules by dashboard UID and panel ID.
 */
 export function useCombinedRules(
-  dashboardUID?: string,
+  dashboardUID?: string | null,
   panelId?: number,
   poll?: boolean
 ): {
@@ -483,10 +483,12 @@ export function useCombinedRules(
   } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery(
     {
       ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
-      dashboardUid: dashboardUID,
+      dashboardUid: dashboardUID ?? undefined,
       panelId,
     },
     {
+      // "null" means the dashboard isn't saved yet, as opposed to "undefined" which means we don't want to filter by dashboard UID
+      skip: dashboardUID === null,
       pollingInterval: poll ? RULE_LIST_POLL_INTERVAL_MS : undefined,
     }
   );
@@ -498,10 +500,11 @@ export function useCombinedRules(
   } = alertRuleApi.endpoints.rulerRules.useQuery(
     {
       rulerConfig: grafanaRulerConfig,
-      filter: { dashboardUID, panelId },
+      filter: { dashboardUID: dashboardUID ?? undefined, panelId },
     },
     {
       pollingInterval: poll ? RULE_LIST_POLL_INTERVAL_MS : undefined,
+      skip: dashboardUID === null,
     }
   );
 
