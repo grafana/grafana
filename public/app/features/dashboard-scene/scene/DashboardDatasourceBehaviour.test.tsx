@@ -16,7 +16,6 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
 import { VizPanelManager } from '../panel-edit/VizPanelManager';
-import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardDatasourceBehaviour } from './DashboardDatasourceBehaviour';
@@ -492,7 +491,7 @@ describe('DashboardDatasourceBehaviour', () => {
   });
 
   describe('Library panels', () => {
-    it('should wait for library panel to be loaded', async () => {
+    it('should re-run queries when library panel re-runs query', async () => {
       const libPanelBehavior = new LibraryPanelBehavior({
         isLoaded: false,
         title: 'Panel title',
@@ -552,7 +551,7 @@ describe('DashboardDatasourceBehaviour', () => {
         }),
       });
 
-      activateFullSceneTree(scene);
+      const sceneDeactivate = activateFullSceneTree(scene);
 
       // spy on runQueries
       const spy = jest.spyOn(dashboardDSPanel.state.$data as SceneQueryRunner, 'runQueries');
@@ -561,20 +560,16 @@ describe('DashboardDatasourceBehaviour', () => {
 
       expect(spy).not.toHaveBeenCalled();
 
-      libPanelBehavior.setPanelFromLibPanel({
-        uid: 'uid',
-        name: 'libraryPanelName',
-        model: vizPanelToPanel(sourcePanel),
-        type: 'panel',
-        version: 1,
-      });
+      // deactivate scene to mimic going into panel edit
+      sceneDeactivate();
 
-      // Simulate library panel being loaded
-      // sourcePanel.setState({
-      //   title: 'Panel A',
-      //   pluginId: 'table',
-      //   key: 'panel-1',
-      // });
+      // run source panel queries and update request ID
+      (sourcePanel.state.$data! as SceneQueryRunner).runQueries();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      // activate scene to mimic coming back from panel edit
+      activateFullSceneTree(scene);
 
       expect(spy).toHaveBeenCalledTimes(1);
     });
