@@ -16974,7 +16974,7 @@
         "status"
       ],
       "properties": {
-        "error": {
+        "message": {
           "type": "string"
         },
         "refId": {
@@ -16984,6 +16984,7 @@
           "type": "string",
           "enum": [
             "OK",
+            "WARNING",
             "ERROR",
             "PENDING",
             "UNKNOWN"
