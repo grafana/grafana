@@ -202,12 +202,12 @@ axisFormat %S.%L
 section serviceA
 op1 [2ms] :a,0,2ms
 section serviceB 
-op2 [2ms] :active,b,3,2ms
+op2 [2ms] :b,3,2ms
 section serviceA  
 op3 [2ms] :c,5,2ms
 `;
 
-      const output = exportTraceAsMermaid(mockDataFrame, 'Title', ['b']);
+      const output = exportTraceAsMermaid(mockDataFrame, 'Title', []);
 
       expect(output).toBe(expectedOutput);
     })
@@ -231,14 +231,42 @@ axisFormat %S.%L
 section serviceA
 op1 [2ms] :a,0,2ms
 section serviceB 
+op2 [2ms] :b,3,2ms
+section serviceA  
+op3 [2ms] :c,5,2ms
+`;
+
+      const output = exportTraceAsMermaid(mockDataFrame, 'Title', []);
+
+      expect(output).toBe(expectedOutput);
+    });
+  it('Converts trace data to Mermaid Gantt chart format, using highlights', () => {
+    const mockDataFrame: DataFrame = toDataFrame({
+      name: 'Title',
+      fields: [
+        { name: 'startTime', type: FieldType.number, values: [0, 3, 5] },
+        { name: 'spanID', type: FieldType.string, values: ['a', 'b', 'c'] },
+        { name: 'duration', type: FieldType.number, values: [2, 2, 2] },
+        { name: 'operationName', type: FieldType.string, values: ['op1', 'op2', 'op3'] },
+        { name: 'serviceName', type: FieldType.string, values: ['serviceA', 'serviceB', 'serviceA'] },
+      ],
+    });
+
+    const expectedOutput = `gantt
+title Trace Title
+dateFormat x
+axisFormat %S.%L
+section serviceA
+op1 [2ms] :a,0,2ms
+section serviceB 
 op2 [2ms] :active,b,3,2ms
 section serviceA  
 op3 [2ms] :c,5,2ms
 `;
 
-      const output = exportTraceAsMermaid(mockDataFrame, 'Title', ['b']);
+    const output = exportTraceAsMermaid(mockDataFrame, 'Title', ['b']);
 
-      expect(output).toBe(expectedOutput);
-    });
+    expect(output).toBe(expectedOutput);
+  });
   }
 )
