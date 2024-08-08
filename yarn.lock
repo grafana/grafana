@@ -3601,7 +3601,7 @@ __metadata:
     eslint: "npm:8.57.0"
     eslint-config-prettier: "npm:9.1.0"
     eslint-plugin-import: "npm:^2.26.0"
-    eslint-plugin-jest: "npm:28.7.0"
+    eslint-plugin-jest: "npm:28.8.0"
     eslint-plugin-jsdoc: "npm:48.11.0"
     eslint-plugin-jsx-a11y: "npm:6.9.0"
     eslint-plugin-lodash: "npm:7.4.0"
@@ -15610,9 +15610,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jest@npm:28.7.0":
-  version: 28.7.0
-  resolution: "eslint-plugin-jest@npm:28.7.0"
+"eslint-plugin-jest@npm:28.8.0":
+  version: 28.8.0
+  resolution: "eslint-plugin-jest@npm:28.8.0"
   dependencies:
     "@typescript-eslint/utils": "npm:^6.0.0 || ^7.0.0 || ^8.0.0"
   peerDependencies:
@@ -15624,7 +15624,7 @@ __metadata:
       optional: true
     jest:
       optional: true
-  checksum: 10/7122c4523d91f4365d601ddfe9a0f8f5761c0ce68e24dc1580e8da2e102477f31aac5c66c9c5821f4f9885d6380e84609e1bc036209eb568e3f389a847e2cb68
+  checksum: 10/0da6aba90067845ef723f70f40ab7f79fabf3465e46014b8aafee15c2cb4ce648a0f7b57c758127d770928994ee2a0f4c68dbcfbce582dd021d6a8e240f69f9d
   languageName: node
   linkType: hard
 
@@ -17648,7 +17648,7 @@ __metadata:
     eslint: "npm:8.57.0"
     eslint-config-prettier: "npm:9.1.0"
     eslint-plugin-import: "npm:^2.26.0"
-    eslint-plugin-jest: "npm:28.7.0"
+    eslint-plugin-jest: "npm:28.8.0"
     eslint-plugin-jest-dom: "npm:^5.4.0"
     eslint-plugin-jsdoc: "npm:48.11.0"
     eslint-plugin-jsx-a11y: "npm:6.9.0"
