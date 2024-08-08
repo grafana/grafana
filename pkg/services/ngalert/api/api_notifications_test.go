@@ -36,9 +36,9 @@ func TestRouteGetReceiver(t *testing.T) {
 			Name: "receiver1",
 			Integrations: []*models.Integration{
 				{
-					UID:  "uid1",
-					Name: "receiver1",
-					Type: "slack",
+					UID:    "uid1",
+					Name:   "receiver1",
+					Config: models.IntegrationConfig{Type: "slack"},
 				},
 			},
 		}
@@ -78,7 +78,7 @@ func TestRouteGetReceiver(t *testing.T) {
 
 	t.Run("should pass along not found response", func(t *testing.T) {
 		fakeReceiverSvc.GetReceiverFn = func(ctx context.Context, q models.GetReceiverQuery, u identity.Requester) (*models.Receiver, error) {
-			return nil, notifier.ErrReceiverNotFound.Errorf("")
+			return nil, legacy_storage.ErrReceiverNotFound.Errorf("")
 		}
 		handler := NewNotificationsApi(newNotificationSrv(fakeReceiverSvc))
 		rc := testReqCtx("GET")
@@ -106,9 +106,9 @@ func TestRouteGetReceivers(t *testing.T) {
 				Name: "receiver1",
 				Integrations: []*models.Integration{
 					{
-						UID:  "uid1",
-						Name: "receiver1",
-						Type: "slack",
+						UID:    "uid1",
+						Name:   "receiver1",
+						Config: models.IntegrationConfig{Type: "slack"},
 					},
 				},
 			},
@@ -193,7 +193,7 @@ func TestRouteGetReceiversResponses(t *testing.T) {
 		})
 
 		t.Run("json body content is as expected", func(t *testing.T) {
-			expectedListResponse := `[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b","name":"grafana-default-email","type":"email","disableResolveMessage":false,"secureFields":null}]},{"name":"multiple integrations","grafana_managed_receiver_configs":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","name":"multiple integrations","type":"prometheus-alertmanager","disableResolveMessage":false,"secureFields":null},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","name":"multiple integrations","type":"discord","disableResolveMessage":false,"secureFields":null}]},{"name":"pagerduty test","grafana_managed_receiver_configs":[{"uid":"b9bf06f8-bde2-4438-9d4a-bba0522dcd4d","name":"pagerduty test","type":"pagerduty","disableResolveMessage":false,"secureFields":null}]},{"name":"slack test","grafana_managed_receiver_configs":[{"uid":"cbfd0976-8228-4126-b672-4419f30a9e50","name":"slack test","type":"slack","disableResolveMessage":false,"secureFields":null}]}]`
+			expectedListResponse := `[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b","name":"grafana-default-email","type":"email","disableResolveMessage":false,"secureFields":{}}]},{"name":"multiple integrations","grafana_managed_receiver_configs":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","name":"multiple integrations","type":"prometheus-alertmanager","disableResolveMessage":false,"secureFields":{}},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","name":"multiple integrations","type":"discord","disableResolveMessage":false,"secureFields":{}}]},{"name":"pagerduty test","grafana_managed_receiver_configs":[{"uid":"b9bf06f8-bde2-4438-9d4a-bba0522dcd4d","name":"pagerduty test","type":"pagerduty","disableResolveMessage":false,"secureFields":{}}]},{"name":"slack test","grafana_managed_receiver_configs":[{"uid":"cbfd0976-8228-4126-b672-4419f30a9e50","name":"slack test","type":"slack","disableResolveMessage":false,"secureFields":{}}]}]`
 			t.Run("limit offset", func(t *testing.T) {
 				env := createTestEnv(t, testContactPointConfig)
 				sut := createNotificationSrvSutFromEnv(t, &env)
@@ -326,8 +326,8 @@ func TestRouteGetReceiversResponses(t *testing.T) {
 		})
 
 		t.Run("json body content is as expected", func(t *testing.T) {
-			expectedRedactedResponse := `{"name":"multiple integrations","grafana_managed_receiver_configs":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","name":"multiple integrations","type":"prometheus-alertmanager","disableResolveMessage":true,"settings":{"basicAuthPassword":"[REDACTED]","basicAuthUser":"test","url":"http://localhost:9093"},"secureFields":{"basicAuthPassword":true}},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","name":"multiple integrations","type":"discord","disableResolveMessage":false,"settings":{"avatar_url":"some avatar","url":"some url","use_discord_username":true},"secureFields":{}}]}`
-			expectedDecryptedResponse := `{"name":"multiple integrations","grafana_managed_receiver_configs":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","name":"multiple integrations","type":"prometheus-alertmanager","disableResolveMessage":true,"settings":{"basicAuthPassword":"testpass","basicAuthUser":"test","url":"http://localhost:9093"},"secureFields":{"basicAuthPassword":true}},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","name":"multiple integrations","type":"discord","disableResolveMessage":false,"settings":{"avatar_url":"some avatar","url":"some url","use_discord_username":true},"secureFields":{}}]}`
+			expectedRedactedResponse := `{"name":"multiple integrations","grafana_managed_receiver_configs":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","name":"multiple integrations","type":"prometheus-alertmanager","disableResolveMessage":true,"settings":{"basicAuthPassword":"[REDACTED]","basicAuthUser":"test","url":"http://localhost:9093"},"secureFields":{"basicAuthPassword":true}},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","name":"multiple integrations","type":"discord","disableResolveMessage":false,"settings":{"avatar_url":"some avatar","url":"[REDACTED]","use_discord_username":true},"secureFields":{"url":true}}]}`
+			expectedDecryptedResponse := `{"name":"multiple integrations","grafana_managed_receiver_configs":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","name":"multiple integrations","type":"prometheus-alertmanager","disableResolveMessage":true,"settings":{"basicAuthPassword":"testpass","basicAuthUser":"test","url":"http://localhost:9093"},"secureFields":{"basicAuthPassword":true}},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","name":"multiple integrations","type":"discord","disableResolveMessage":false,"settings":{"avatar_url":"some avatar","url":"some url","use_discord_username":true},"secureFields":{"url":true}}]}`
 			t.Run("decrypt false", func(t *testing.T) {
 				env := createTestEnv(t, testContactPointConfig)
 				sut := createNotificationSrvSutFromEnv(t, &env)

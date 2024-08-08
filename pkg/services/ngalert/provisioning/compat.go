@@ -52,10 +52,14 @@ func GrafanaIntegrationConfigToEmbeddedContactPoint(r *models.Integration, prove
 		settingJson = simplejson.NewFromAny(r.Settings)
 	}
 
+	// We explicitly do not copy the secure settings to the settings field. This is because the provisioning API
+	// never returns decrypted or encrypted values, only redacted values. Redacted values should already exist in the
+	// settings field.
+
 	return definitions.EmbeddedContactPoint{
 		UID:                   r.UID,
 		Name:                  r.Name,
-		Type:                  r.Type,
+		Type:                  r.Config.Type,
 		DisableResolveMessage: r.DisableResolveMessage,
 		Settings:              settingJson,
 		Provenance:            string(provenance),

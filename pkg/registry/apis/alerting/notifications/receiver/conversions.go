@@ -34,10 +34,10 @@ func convertToK8sResource(orgID int64, receiver *models.Receiver, namespacer req
 	for _, integration := range receiver.Integrations {
 		spec.Integrations = append(spec.Integrations, model.Integration{
 			Uid:                   &integration.UID,
-			Type:                  integration.Type,
+			Type:                  integration.Config.Type,
 			DisableResolveMessage: &integration.DisableResolveMessage,
 			Settings:              common.Unstructured{Object: maps.Clone(integration.Settings)},
-			SecureFields:          maps.Clone(integration.SecureFields),
+			SecureFields:          integration.SecureFields(),
 		})
 	}
 
@@ -55,20 +55,25 @@ func convertToK8sResource(orgID int64, receiver *models.Receiver, namespacer req
 	return r, nil
 }
 
-func convertToDomainModel(receiver *model.Receiver) (*models.Receiver, error) {
+func convertToDomainModel(receiver *model.Receiver) (*models.Receiver, map[string][]string, error) {
 	domain := &models.Receiver{
 		UID:          legacy_storage.NameToUid(receiver.Spec.Title),
 		Name:         receiver.Spec.Title,
 		Integrations: make([]*models.Integration, 0, len(receiver.Spec.Integrations)),
+		Provenance:   models.ProvenanceNone,
 	}
 
+	storedSecureFields := make(map[string][]string, len(receiver.Spec.Integrations))
 	for _, integration := range receiver.Spec.Integrations {
+		config, err := models.IntegrationConfigFromType(integration.Type)
+		if err != nil {
+			return nil, nil, err
+		}
 		grafanaIntegration := models.Integration{
-			Name:         receiver.Spec.Title,
-			Type:         integration.Type,
-			Settings:     maps.Clone(integration.Settings.UnstructuredContent()),
-			SecureFields: maps.Clone(integration.SecureFields),
-			//Provenance:   "", //TODO: Convert provenance?
+			Name:           receiver.Spec.Title,
+			Config:         config,
+			Settings:       maps.Clone(integration.Settings.UnstructuredContent()),
+			SecureSettings: make(map[string]string),
 		}
 		if integration.Uid != nil {
 			grafanaIntegration.UID = *integration.Uid
@@ -76,8 +81,17 @@ func convertToDomainModel(receiver *model.Receiver) (*models.Receiver, error) {
 		if integration.DisableResolveMessage != nil {
 			grafanaIntegration.DisableResolveMessage = *integration.DisableResolveMessage
 		}
+
 		domain.Integrations = append(domain.Integrations, &grafanaIntegration)
+
+		secureFields := make([]string, 0, len(integration.SecureFields))
+		for k, isSecure := range integration.SecureFields {
+			if isSecure {
+				secureFields = append(secureFields, k)
+			}
+		}
+		storedSecureFields[grafanaIntegration.UID] = secureFields
 	}
 
-	return domain, nil
+	return domain, storedSecureFields, nil
 }

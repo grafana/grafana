@@ -3,6 +3,7 @@ package notifier
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -15,8 +16,7 @@ import (
 )
 
 var (
-	ErrReceiverNotFound = errutil.NotFound("alerting.notifications.receiver.notFound")
-	ErrReceiverInUse    = errutil.Conflict("alerting.notifications.receiver.used").MustTemplate("Receiver is used by notification policies or alert rules")
+	ErrReceiverInUse = errutil.Conflict("alerting.notifications.receiver.used").MustTemplate("Receiver is used by notification policies or alert rules")
 )
 
 // ReceiverService is the service for managing alertmanager receivers.
@@ -24,10 +24,15 @@ type ReceiverService struct {
 	authz             receiverAccessControlService
 	provisioningStore provisoningStore
 	cfgStore          alertmanagerConfigStore
-	encryptionService secrets.Service
+	encryptionService secretService
 	xact              transactionManager
 	log               log.Logger
 	validator         validation.ProvenanceStatusTransitionValidator
+}
+
+type secretService interface {
+	Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error)
+	Decrypt(ctx context.Context, payload []byte) ([]byte, error)
 }
 
 // receiverAccessControlService provides access control for receivers.
@@ -58,7 +63,7 @@ func NewReceiverService(
 	authz receiverAccessControlService,
 	cfgStore alertmanagerConfigStore,
 	provisioningStore provisoningStore,
-	encryptionService secrets.Service,
+	encryptionService secretService,
 	xact transactionManager,
 	log log.Logger,
 ) *ReceiverService {
@@ -80,9 +85,9 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 	if err != nil {
 		return nil, err
 	}
-	postable := revision.GetReceiver(legacy_storage.NameToUid(q.Name))
-	if postable == nil {
-		return nil, ErrReceiverNotFound.Errorf("")
+	postable, err := revision.GetReceiver(legacy_storage.NameToUid(q.Name))
+	if err != nil {
+		return nil, err
 	}
 
 	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
@@ -189,7 +194,7 @@ func (rs *ReceiverService) ListReceivers(ctx context.Context, q models.ListRecei
 	for _, r := range receivers {
 		for _, integration := range r.Integrations {
 			integration.Settings = nil
-			integration.SecureFields = nil
+			integration.SecureSettings = nil
 			integration.DisableResolveMessage = false
 		}
 	}
@@ -205,9 +210,12 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, orgID
 	if err != nil {
 		return err
 	}
-	postable := revision.GetReceiver(uid)
-	if postable == nil {
-		return ErrReceiverNotFound.Errorf("")
+	postable, err := revision.GetReceiver(uid)
+	if err != nil {
+		if errors.Is(err, legacy_storage.ErrReceiverNotFound) {
+			return nil
+		}
+		return err
 	}
 
 	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, orgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
@@ -247,18 +255,126 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, orgID
 }
 
 func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receiver, orgID int64) (*models.Receiver, error) {
-	// TODO: Stub
-	panic("not implemented")
+	//TODO: Check create permissions.
+	revision, err := rs.cfgStore.Get(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	createdReceiver := r.Clone()
+	err = createdReceiver.Encrypt(rs.encryptor(ctx))
+	if err != nil {
+		return nil, err
+	}
+
+	err = revision.CreateReceiver(&createdReceiver)
+	if err != nil {
+		return nil, err
+	}
+
+	err = rs.xact.InTransaction(ctx, func(ctx context.Context) error {
+		err = rs.cfgStore.Save(ctx, revision, orgID)
+		if err != nil {
+			return err
+		}
+		return rs.setReceiverProvenance(ctx, orgID, &createdReceiver)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &createdReceiver, nil
 }
 
-func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receiver, orgID int64) (*models.Receiver, error) {
-	// TODO: Stub
-	panic("not implemented")
+func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receiver, storedSecureFields map[string][]string, orgID int64) (*models.Receiver, error) {
+	//TODO: Check update permissions.
+	revision, err := rs.cfgStore.Get(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+	postable, err := revision.GetReceiver(r.GetUID())
+	if err != nil {
+		return nil, err
+	}
+
+	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, orgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
+	if err != nil {
+		return nil, err
+	}
+	existing, err := PostableApiReceiverToReceiver(postable, getReceiverProvenance(storedProvenances, postable))
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Implement + check optimistic concurrency.
+
+	if err := rs.validator(existing.Provenance, r.Provenance); err != nil {
+		return nil, err
+	}
+
+	// We need to perform two important steps to process settings on an updated integration:
+	// 1. Encrypt new or updated secret fields as they will arrive in plain text.
+	// 2. For updates, callers do not re-send unchanged secure settings and instead mark them in SecureFields. We need
+	//      to load these secure settings from the existing integration.
+	updatedReceiver := r.Clone()
+	err = updatedReceiver.Encrypt(rs.encryptor(ctx))
+	if err != nil {
+		return nil, err
+	}
+	if len(storedSecureFields) > 0 {
+		updatedReceiver.WithExistingSecureFields(existing, storedSecureFields)
+	}
+
+	err = revision.UpdateReceiver(&updatedReceiver)
+	if err != nil {
+		return nil, err
+	}
+
+	err = rs.xact.InTransaction(ctx, func(ctx context.Context) error {
+		err = rs.cfgStore.Save(ctx, revision, orgID)
+		if err != nil {
+			return err
+		}
+		err = rs.deleteProvenances(ctx, orgID, removedIntegrations(existing, &updatedReceiver))
+		if err != nil {
+			return err
+		}
+
+		return rs.setReceiverProvenance(ctx, orgID, &updatedReceiver)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &updatedReceiver, nil
 }
 
 func (rs *ReceiverService) UsedByRules(ctx context.Context, orgID int64, uid string) ([]models.AlertRuleKey, error) {
 	//TODO: Implement
 	return []models.AlertRuleKey{}, nil
+}
+
+func removedIntegrations(old, new *models.Receiver) []*models.Integration {
+	updatedUIDs := make(map[string]struct{}, len(new.Integrations))
+	for _, integration := range new.Integrations {
+		updatedUIDs[integration.UID] = struct{}{}
+	}
+	removed := make([]*models.Integration, 0)
+	for _, existingIntegration := range old.Integrations {
+		if _, ok := updatedUIDs[existingIntegration.UID]; !ok {
+			removed = append(removed, existingIntegration)
+		}
+	}
+	return removed
+}
+
+func (rs *ReceiverService) setReceiverProvenance(ctx context.Context, orgID int64, receiver *models.Receiver) error {
+	// Add provenance for all integrations in the receiver.
+	for _, integration := range receiver.Integrations {
+		target := definitions.EmbeddedContactPoint{UID: integration.UID}
+		if err := rs.provisioningStore.SetProvenance(ctx, &target, orgID, receiver.Provenance); err != nil { // TODO: Should we set ProvenanceNone?
+			return err
+		}
+	}
+	return nil
 }
 
 func (rs *ReceiverService) deleteProvenances(ctx context.Context, orgID int64, integrations []*models.Integration) error {
@@ -273,40 +389,18 @@ func (rs *ReceiverService) deleteProvenances(ctx context.Context, orgID int64, i
 }
 
 func (rs *ReceiverService) decryptOrRedactSecureSettings(ctx context.Context, recv *models.Receiver, decrypt bool) {
-	decryptOrRedact := rs.redactor()
 	if decrypt {
-		decryptOrRedact = rs.decryptor(ctx)
-	}
-	for _, r := range recv.Integrations {
-		for field, isSecure := range r.SecureFields {
-			if !isSecure {
-				// This should not happen as we only use the value true, but if it does happen we should skip.
-				continue
-			}
-			val, ok := r.Settings[field]
-			if !ok {
-				continue
-			}
-
-			// We only support encryption of string values.
-			secureVal, isString := val.(string)
-			if !isString {
-				rs.log.Warn("setting marked as secure is not a string", "name", recv.Name, "field", field)
-				continue
-			}
-			newVal, err := decryptOrRedact(secureVal)
-			if err != nil {
-				newVal = ""
-				rs.log.Warn("failed to decrypt secure setting", "name", recv.Name, "field", field, "error", err)
-			}
-
-			r.Settings[field] = newVal
+		err := recv.Decrypt(rs.decryptor(ctx))
+		if err != nil {
+			rs.log.Warn("failed to decrypt secure settings", "name", recv.Name, "error", err)
 		}
+	} else {
+		recv.Redact(rs.redactor())
 	}
 }
 
-// decryptor returns a decryptFn that decrypts a secure setting. If decryption fails, the fallback value is used.
-func (rs *ReceiverService) decryptor(ctx context.Context) decryptFn {
+// decryptor returns a models.DecryptFn that decrypts a secure setting. If decryption fails, the fallback value is used.
+func (rs *ReceiverService) decryptor(ctx context.Context) models.DecryptFn {
 	return func(value string) (string, error) {
 		decoded, err := base64.StdEncoding.DecodeString(value)
 		if err != nil {
@@ -320,14 +414,23 @@ func (rs *ReceiverService) decryptor(ctx context.Context) decryptFn {
 	}
 }
 
-// redactor returns a decryptFn that redacts a secure setting.
-func (rs *ReceiverService) redactor() decryptFn {
-	return func(value string) (string, error) {
-		return definitions.RedactedValue, nil
+// redactor returns a models.RedactFn that redacts a secure setting.
+func (rs *ReceiverService) redactor() models.RedactFn {
+	return func(value string) string {
+		return definitions.RedactedValue
 	}
 }
 
-type decryptFn = func(value string) (string, error)
+// encryptor creates an encrypt function that delegates to secrets.Service and returns the base64 encoded result.
+func (rs *ReceiverService) encryptor(ctx context.Context) models.EncryptFn {
+	return func(payload string) (string, error) {
+		s, err := rs.encryptionService.Encrypt(ctx, []byte(payload), secrets.WithoutScope())
+		if err != nil {
+			return "", err
+		}
+		return base64.StdEncoding.EncodeToString(s), nil
+	}
+}
 
 // limitOffset returns a subslice of items with the given offset and limit. Returns the same underlying array, not a copy.
 func limitOffset[T any](items []T, offset, limit int) []T {

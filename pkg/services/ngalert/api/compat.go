@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"maps"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
@@ -493,21 +492,19 @@ func GettableGrafanaReceiverFromReceiver(r *models.Integration, provenance model
 	out := definitions.GettableGrafanaReceiver{
 		UID:                   r.UID,
 		Name:                  r.Name,
-		Type:                  r.Type,
+		Type:                  r.Config.Type,
 		Provenance:            definitions.Provenance(provenance),
 		DisableResolveMessage: r.DisableResolveMessage,
-		SecureFields:          maps.Clone(r.SecureFields),
+		SecureFields:          r.SecureFields(),
 	}
 
-	if len(r.Settings) == 0 {
-		return out, nil
+	if len(r.Settings) > 0 {
+		jsonBytes, err := simplejson.NewFromAny(r.Settings).MarshalJSON()
+		if err != nil {
+			return definitions.GettableGrafanaReceiver{}, err
+		}
+		out.Settings = jsonBytes
 	}
-
-	jsonBytes, err := simplejson.NewFromAny(r.Settings).MarshalJSON()
-	if err != nil {
-		return definitions.GettableGrafanaReceiver{}, err
-	}
-	out.Settings = jsonBytes
 
 	return out, nil
 }

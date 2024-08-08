@@ -52,25 +52,28 @@ func PostableGrafanaReceiversToIntegrations(postables []*apimodels.PostableGrafa
 }
 
 func PostableGrafanaReceiverToIntegration(p *apimodels.PostableGrafanaReceiver) (*models.Integration, error) {
+	config, err := models.IntegrationConfigFromType(p.Type)
+	if err != nil {
+		return nil, err
+	}
 	integration := &models.Integration{
 		UID:                   p.UID,
 		Name:                  p.Name,
-		Type:                  p.Type,
+		Config:                config,
 		DisableResolveMessage: p.DisableResolveMessage,
 		Settings:              make(map[string]any, len(p.Settings)),
-		SecureFields:          make(map[string]bool, len(p.SecureSettings)),
+		SecureSettings:        make(map[string]string, len(p.SecureSettings)),
 	}
 
 	if p.Settings != nil {
 		if err := json.Unmarshal(p.Settings, &integration.Settings); err != nil {
-			return nil, fmt.Errorf("integration '%s' of receiver '%s' has settings that cannot be parsed as JSON: %w", integration.Type, p.Name, err)
+			return nil, fmt.Errorf("integration '%s' of receiver '%s' has settings that cannot be parsed as JSON: %w", integration.Config.Type, p.Name, err)
 		}
 	}
 
 	for k, v := range p.SecureSettings {
 		if v != "" {
-			integration.Settings[k] = v
-			integration.SecureFields[k] = true
+			integration.SecureSettings[k] = v
 		}
 	}
 

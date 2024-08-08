@@ -1,9 +1,11 @@
 package legacy_storage
 
 import (
+	"errors"
 	"slices"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func (rev *ConfigRevision) DeleteReceiver(uid string) {
@@ -13,17 +15,53 @@ func (rev *ConfigRevision) DeleteReceiver(uid string) {
 	})
 }
 
+func (rev *ConfigRevision) CreateReceiver(receiver *models.Receiver) error {
+	// Check if the receiver already exists.
+	_, err := rev.GetReceiver(receiver.GetUID())
+	if err == nil {
+		return ErrReceiverExists.Errorf("")
+	}
+	if !errors.Is(err, ErrReceiverNotFound) {
+		return err
+	}
+
+	postable, err := ReceiverToPostableApiReceiver(receiver)
+	if err != nil {
+		return err
+	}
+
+	rev.Config.AlertmanagerConfig.Receivers = append(rev.Config.AlertmanagerConfig.Receivers, postable)
+	return nil
+}
+
+func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) error {
+	existing, err := rev.GetReceiver(receiver.GetUID())
+	if err != nil {
+		return err
+	}
+
+	postable, err := ReceiverToPostableApiReceiver(receiver)
+	if err != nil {
+		return err
+	}
+
+	// Update receiver in the configuration.
+	*existing = *postable
+
+	return nil
+}
+
 func (rev *ConfigRevision) ReceiverNameUsedByRoutes(name string) bool {
 	return isReceiverInUse(name, []*definitions.Route{rev.Config.AlertmanagerConfig.Route})
 }
 
-func (rev *ConfigRevision) GetReceiver(uid string) *definitions.PostableApiReceiver {
+func (rev *ConfigRevision) GetReceiver(uid string) (*definitions.PostableApiReceiver, error) {
 	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
 		if NameToUid(r.GetName()) == uid {
-			return r
+			return r, nil
 		}
 	}
-	return nil
+	return nil, ErrReceiverNotFound.Errorf("")
 }
 
 func (rev *ConfigRevision) GetReceivers(uids []string) []*definitions.PostableApiReceiver {

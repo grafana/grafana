@@ -28,7 +28,7 @@ type ReceiverService interface {
 	GetReceiver(ctx context.Context, q models.GetReceiverQuery, user identity.Requester) (*models.Receiver, error)
 	GetReceivers(ctx context.Context, q models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error)
 	CreateReceiver(ctx context.Context, r *models.Receiver, orgID int64) (*models.Receiver, error)
-	UpdateReceiver(ctx context.Context, r *models.Receiver, orgID int64) (*models.Receiver, error)
+	UpdateReceiver(ctx context.Context, r *models.Receiver, storedSecureFields map[string][]string, orgID int64) (*models.Receiver, error)
 	DeleteReceiver(ctx context.Context, name string, orgID int64, provenance definitions.Provenance, version string) error
 }
 
@@ -138,7 +138,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if p.ObjectMeta.Name != "" { // TODO remove when metadata.name can be defined by user
 		return nil, errors.NewBadRequest("object's metadata.name should be empty")
 	}
-	model, err := convertToDomainModel(p)
+	model, _, err := convertToDomainModel(p)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +179,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 	if !ok {
 		return nil, false, fmt.Errorf("expected receiver but got %s", obj.GetObjectKind().GroupVersionKind())
 	}
-	model, err := convertToDomainModel(p)
+	model, storedSecureFields, err := convertToDomainModel(p)
 	if err != nil {
 		return old, false, err
 	}
@@ -188,7 +188,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, errors.NewBadRequest("title cannot be changed. Consider creating a new resource.")
 	}
 
-	updated, err := s.service.UpdateReceiver(ctx, model, info.OrgID)
+	updated, err := s.service.UpdateReceiver(ctx, model, storedSecureFields, info.OrgID)
 	if err != nil {
 		return nil, false, err
 	}
