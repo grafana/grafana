@@ -69,6 +69,7 @@
 /.golangci.toml @grafana/grafana-backend-group
 /build.go @grafana/grafana-backend-services-squad
 /scripts/modowners/ @grafana/grafana-backend-services-squad
+/scripts/go-workspace @grafana/grafana-app-platform-squad
 /hack/ @grafana/grafana-app-platform-squad
 
 /apps/alerting/ @grafana/alerting-backend

@@ -7,10 +7,9 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-
 GO = go
 GO_VERSION = 1.22.4
-GO_FILES ?= ./pkg/... ./pkg/apiserver/... ./pkg/apimachinery/... ./pkg/promlib/... ./pkg/semconv/... ./pkg/storage/unified/resource/...
+GO_FILES ?= $(shell $(GO) run ./scripts/go-workspace/main.go list-submodules --delimiter '/... ')
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_RACE  := $(shell [ -n "$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
 GO_RACE_FLAG := $(if $(GO_RACE),-race)
@@ -172,8 +171,7 @@ gen-jsonnet:
 .PHONY: update-workspace
 update-workspace:
 	@echo "updating workspace"
-	$(GO) mod download
-	$(GO) work sync
+	bash scripts/go-workspace/update-workspace.sh
 
 .PHONY: build-go
 build-go: update-workspace gen-go ## Build all Go binaries.
