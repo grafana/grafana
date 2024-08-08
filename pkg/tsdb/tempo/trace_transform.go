@@ -45,6 +45,7 @@ type ChildrenMetrics struct {
 	MinSpanID pcommon.SpanID
 	MaxSpanID pcommon.SpanID
 	Durations []float64
+	ErrorCount int
 }
 
 func TraceToFrame(td ptrace.Traces, limit int) (*data.Frame, error) {
@@ -100,6 +101,11 @@ func TraceToFrame(td ptrace.Traces, limit int) (*data.Frame, error) {
 				parentSpanID := span.ParentSpanID()
 				parentSpanIDKey := tokenForSpanID(parentSpanID[:])
 				durationInt := int(span.EndTimestamp() - span.StartTimestamp())
+				status := span.Status()
+				errorCount := 0
+				if status.Code() != 0 {
+					errorCount = 1
+				}
 				if len(parentSpanID) == 0 {
 					continue
 				}
@@ -122,6 +128,7 @@ func TraceToFrame(td ptrace.Traces, limit int) (*data.Frame, error) {
 							MinSpanID: spanID,
 							MaxSpanID: spanID,
 							Durations: []float64{float64(durationInt)},
+							ErrorCount: errorCount,
 						}
 						children = append(children, child)
 						parentToChildrenMetrics[parentSpanIDKey] = children
@@ -130,6 +137,7 @@ func TraceToFrame(td ptrace.Traces, limit int) (*data.Frame, error) {
 						child := children[childIndex]
 						child.Count++
 						child.Durations = append(child.Durations, float64(durationInt))
+						child.ErrorCount += errorCount
 						if durationInt < child.Min {
 							child.Min = durationInt
 							child.MinSpanID = spanID
@@ -149,6 +157,7 @@ func TraceToFrame(td ptrace.Traces, limit int) (*data.Frame, error) {
 						MinSpanID: spanID,
 						MaxSpanID: spanID,
 						Durations: []float64{float64(durationInt)},
+						ErrorCount: errorCount,
 					}
 					parentToChildrenMetrics[parentSpanIDKey] = Children{child}
 				}
@@ -420,13 +429,17 @@ func getChildrenMetrics(traceIDHex string, children Children, limit int) []*Trac
 	if numChildren == 0 {
 		return nil
 	}
-	childrenMetrics := make([]*TraceReference, numChildren*5)
+	childrenMetrics := make([]*TraceReference, numChildren*6)
+	index := 0
 
 	for _, child := range children {
 		if child.Count > limit {
 			// get avg and std dev
 			avg := stat.Mean(child.Durations, nil)
 			stdDev := stat.StdDev(child.Durations, nil)
+			if (stdDev < 0) {
+				stdDev = 0
+			}
 			minDuration := child.Min
 			maxDuration := child.Max
 
@@ -437,50 +450,60 @@ func getChildrenMetrics(traceIDHex string, children Children, limit int) []*Trac
 			nilSpanID := pcommon.SpanID{0}
 			nilSpanIDHex := hex.EncodeToString(nilSpanID[:])
 
-			childrenMetrics[0] = &TraceReference{
+			childrenMetrics[index] = &TraceReference{
 				TraceID: traceIDHex,
 				SpanID:  nilSpanIDHex,
 				Tags: []*KeyValue{
-					{Key: "count", Value: child.Count},
+					{Key: "span count", Value: child.Count},
 					{Key: "name", Value: child.Name},
 				},
 			}
-
-			childrenMetrics[1] = &TraceReference{
+			index++
+			childrenMetrics[index] = &TraceReference{
 				TraceID: traceIDHex,
 				SpanID:  minSpanIDHex,
 				Tags: []*KeyValue{
-					{Key: "min", Value: printStringDuration(minDuration)},
+					{Key: "min duration", Value: printStringDuration(minDuration)},
 					{Key: "name", Value: child.Name},
 				},
 			}
-
-			childrenMetrics[2] = &TraceReference{
+			index++
+			childrenMetrics[index] = &TraceReference{
 				TraceID: traceIDHex,
 				SpanID:  maxSpanIDHex,
 				Tags: []*KeyValue{
-					{Key: "max", Value: printStringDuration(maxDuration)},
+					{Key: "max duration", Value: printStringDuration(maxDuration)},
 					{Key: "name", Value: child.Name},
 				},
 			}
-
-			childrenMetrics[3] = &TraceReference{
+			index++
+			childrenMetrics[index] = &TraceReference{
 				TraceID: traceIDHex,
 				SpanID:  nilSpanIDHex,
 				Tags: []*KeyValue{
-					{Key: "avg", Value: printStringDuration(int(avg))},
+					{Key: "avg duration", Value: printStringDuration(int(avg))},
 					{Key: "name", Value: child.Name},
 				},
 			}
-
-			childrenMetrics[4] = &TraceReference{
+			index++
+			childrenMetrics[index] = &TraceReference{
 				TraceID: traceIDHex,
 				SpanID:  nilSpanIDHex,
 				Tags: []*KeyValue{
-					{Key: "stdev", Value: printStringDuration(int(stdDev))},
+					{Key: "stdev (duration)", Value: printStringDuration(int(stdDev))},
 					{Key: "name", Value: child.Name},
 				},
 			}
+			index++
+			childrenMetrics[index] = &TraceReference{
+				TraceID: traceIDHex,
+				SpanID:  nilSpanIDHex,
+				Tags: []*KeyValue{
+					{Key: "error count", Value: child.ErrorCount},
+					{Key: "name", Value: child.Name},
+				},
+			}
+			index++
 		}
 	}
 
@@ -512,6 +535,9 @@ func parentIndex(id uint32, parentsOrder []uint32) int {
 }
 
 func printStringDuration(durationNano int) string {
+	if durationNano < 0 {
+		return fmt.Sprintf("0ns")
+	}
 	if durationNano < 1_000 {
 		return fmt.Sprintf("%dns", durationNano)
 	}
