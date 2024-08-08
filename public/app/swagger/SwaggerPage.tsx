@@ -15,8 +15,8 @@ export const Page = () => {
   const theme = createTheme({ colors: { mode: 'light' } });
   const [url, setURL] = useState<SelectableValue<string>>();
   const urls = useAsync(async () => {
-    const v2 = { label: 'Grafana API (OpenAPI v2)', value: 'public/api-merged.json' };
-    const v3 = { label: 'Grafana API (OpenAPI v3)', value: 'public/openapi3.json' };
+    const v2 = { label: 'Grafana API (OpenAPI v2)', key:'openapi2', value: 'public/api-merged.json' };
+    const v3 = { label: 'Grafana API (OpenAPI v3)', key:'openapi3', value: 'public/openapi3.json' };
     const urls: Array<SelectableValue<string>> = [v2, v3];
 
     const rsp = await fetch('openapi/v3');
@@ -25,6 +25,7 @@ export const Page = () => {
       const parts = key.split('/');
       if (parts.length === 3) {
         urls.push({
+          key: `${parts[1]}-${parts[2]}`,
           label: `${parts[1]}/${parts[2]}`,
           value: val.serverRelativeURL.substring(1), // remove initial slash
         });
@@ -36,7 +37,7 @@ export const Page = () => {
     const api = urlParams.get('api');
     if (api) {
       urls.forEach((url, i) => {
-        if (url.label === api) {
+        if (url.key === api) {
           idx = i;
         }
       });
@@ -72,8 +73,8 @@ export const Page = () => {
               onChange={(v) => {
                 const url = new URL(window.location.href);
                 url.hash = '';
-                if (v?.label) {
-                  url.searchParams.set('api', v.label);
+                if (v?.key) {
+                  url.searchParams.set('api', v.key);
                 } else {
                   url.searchParams.delete('api');
                 }
