@@ -3,11 +3,14 @@ import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { Button } from '@grafana/ui';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
+import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
+import { AccessControlAction } from 'app/types';
 
 import { RouteWithID } from '../../../../../plugins/datasource/alertmanager/types';
 import { FormAmRoute } from '../../types/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
 import { AmRootRouteForm } from './EditDefaultPolicyForm';
 
@@ -19,9 +22,15 @@ const ui = {
   groupIntervalInput: byRole('textbox', { name: /Group interval/ }),
   repeatIntervalInput: byRole('textbox', { name: /Repeat interval/ }),
 };
-
+setupMswServer();
 // TODO Default and Notification policy form should be unified so we don't need to maintain two almost identical forms
 describe('EditDefaultPolicyForm', function () {
+  beforeEach(() => {
+    grantUserPermissions([
+      AccessControlAction.AlertingNotificationsRead,
+      AccessControlAction.AlertingNotificationsWrite,
+    ]);
+  });
   describe('Timing options', function () {
     it('should render prometheus duration strings in form inputs', async function () {
       const { user } = renderRouteForm({
@@ -43,7 +52,6 @@ describe('EditDefaultPolicyForm', function () {
           id: '0',
           receiver: 'default',
         },
-        [{ value: 'default', label: 'Default' }],
         onSubmit
       );
 
@@ -74,7 +82,6 @@ describe('EditDefaultPolicyForm', function () {
         id: '0',
         receiver: 'default',
       },
-      [{ value: 'default', label: 'Default' }],
       onSubmit
     );
 
@@ -101,7 +108,6 @@ describe('EditDefaultPolicyForm', function () {
         group_interval: '2d4h30m35s',
         repeat_interval: '1w2d6h',
       },
-      [{ value: 'default', label: 'Default' }],
       onSubmit
     );
 
@@ -124,18 +130,15 @@ describe('EditDefaultPolicyForm', function () {
   });
 });
 
-function renderRouteForm(
-  route: RouteWithID,
-  receivers: AmRouteReceiver[] = [],
-  onSubmit: (route: Partial<FormAmRoute>) => void = noop
-) {
+function renderRouteForm(route: RouteWithID, onSubmit: (route: Partial<FormAmRoute>) => void = noop) {
   return render(
-    <AmRootRouteForm
-      alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
-      actionButtons={<Button type="submit">Update default policy</Button>}
-      onSubmit={onSubmit}
-      receivers={receivers}
-      route={route}
-    />
+    <AlertmanagerProvider accessType="instance">
+      <AmRootRouteForm
+        alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
+        actionButtons={<Button type="submit">Update default policy</Button>}
+        onSubmit={onSubmit}
+        route={route}
+      />
+    </AlertmanagerProvider>
   );
 }

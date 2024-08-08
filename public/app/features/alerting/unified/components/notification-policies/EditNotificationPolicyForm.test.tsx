@@ -4,11 +4,13 @@ import { byRole } from 'testing-library-selector';
 
 import { Button } from '@grafana/ui';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { AccessControlAction } from 'app/types';
 
 import { RouteWithID } from '../../../../../plugins/datasource/alertmanager/types';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { FormAmRoute } from '../../types/amroutes';
-import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
 import { AmRoutesExpandedForm } from './EditNotificationPolicyForm';
 
@@ -25,6 +27,12 @@ setupMswServer();
 
 // TODO Default and Notification policy form should be unified so we don't need to maintain two almost identical forms
 describe('EditNotificationPolicyForm', function () {
+  beforeEach(() => {
+    grantUserPermissions([
+      AccessControlAction.AlertingNotificationsRead,
+      AccessControlAction.AlertingNotificationsWrite,
+    ]);
+  });
   describe('Timing options', function () {
     it('should render prometheus duration strings in form inputs', async function () {
       renderRouteForm({
@@ -47,7 +55,6 @@ describe('EditNotificationPolicyForm', function () {
           id: '1',
           receiver: 'default',
         },
-        [{ value: 'default', label: 'Default' }],
         onSubmit
       );
 
@@ -78,7 +85,6 @@ describe('EditNotificationPolicyForm', function () {
         id: '1',
         receiver: 'default',
       },
-      [{ value: 'default', label: 'Default' }],
       onSubmit
     );
 
@@ -105,7 +111,6 @@ describe('EditNotificationPolicyForm', function () {
         group_interval: '2d4h30m35s',
         repeat_interval: '1w2d6h',
       },
-      [{ value: 'default', label: 'Default' }],
       onSubmit
     );
 
@@ -127,17 +132,12 @@ describe('EditNotificationPolicyForm', function () {
   });
 });
 
-function renderRouteForm(
-  route: RouteWithID,
-  receivers: AmRouteReceiver[] = [],
-  onSubmit: (route: Partial<FormAmRoute>) => void = noop
-) {
+function renderRouteForm(route: RouteWithID, onSubmit: (route: Partial<FormAmRoute>) => void = noop) {
   return render(
-    <AlertmanagerProvider accessType="instance">
+    <AlertmanagerProvider accessType="instance" alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME}>
       <AmRoutesExpandedForm
         actionButtons={<Button type="submit">Update default policy</Button>}
         onSubmit={onSubmit}
-        receivers={receivers}
         route={route}
       />
     </AlertmanagerProvider>

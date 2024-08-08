@@ -32,27 +32,19 @@ import {
   stringToSelectableValue,
   stringsToSelectableValues,
 } from '../../utils/amroutes';
-import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
 import { PromDurationInput } from './PromDurationInput';
 import { getFormStyles } from './formStyles';
 import { routeTimingsFields } from './routeTimingsFields';
 
 export interface AmRoutesExpandedFormProps {
-  receivers: AmRouteReceiver[];
   route?: RouteWithID;
   onSubmit: (route: Partial<FormAmRoute>) => void;
   actionButtons: ReactNode;
   defaults?: Partial<FormAmRoute>;
 }
 
-export const AmRoutesExpandedForm = ({
-  actionButtons,
-  receivers,
-  route,
-  onSubmit,
-  defaults,
-}: AmRoutesExpandedFormProps) => {
+export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults }: AmRoutesExpandedFormProps) => {
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route?.group_by));
