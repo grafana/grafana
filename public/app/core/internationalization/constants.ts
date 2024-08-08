@@ -3,6 +3,9 @@ import { uniq } from 'lodash';
 // we mock this in jest as import.meta.glob breaks things, so we don't even attempt to load enterprise translations...
 import { localeExtensionImports, type LocaleFileLoader } from './extensions';
 
+// TODO: this is just to satisfy extensions which import this type from this file.
+export type { LocaleFileLoader };
+
 export const ENGLISH_US = 'en-US';
 export const FRENCH_FRANCE = 'fr-FR';
 export const SPANISH_SPAIN = 'es-ES';
