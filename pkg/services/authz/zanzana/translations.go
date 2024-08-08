@@ -1,18 +1,13 @@
 package zanzana
 
-type kindTranslation struct {
-	typ       string
-	orgScoped bool
-}
-
-// all kinds that we can translate into a openFGA object
-var kindTranslations = map[string]kindTranslation{
-	"folders":    {typ: "folder", orgScoped: true},
-	"dashboards": {typ: "dashboard", orgScoped: true},
+type actionKindTranslation struct {
+	objectType   string
+	orgScoped    bool
+	translations map[string]string
 }
 
 // rbac action to relation translation
-var actionTranslations = map[string]string{
+var folderActions = map[string]string{
 	"folders:create":            "create",
 	"folders:read":              "read",
 	"folders:write":             "write",
@@ -20,12 +15,12 @@ var actionTranslations = map[string]string{
 	"folders.permissions:read":  "permissions_read",
 	"folders.permissions:write": "permissions_write",
 
-	"dashboards:create":            "create",
-	"dashboards:read":              "read",
-	"dashboards:write":             "write",
-	"dashboards:delete":            "delete",
-	"dashboards.permissions:read":  "permissions_read",
-	"dashboards.permissions:write": "permissions_write",
+	"dashboards:create":            "dashboard_create",
+	"dashboards:read":              "dashboard_read",
+	"dashboards:write":             "dashboard_write",
+	"dashboards:delete":            "dashboard_delete",
+	"dashboards.permissions:read":  "dashboard_permissions_read",
+	"dashboards.permissions:write": "dashboard_permissions_write",
 
 	"library.panels:create": "library_panel_create",
 	"library.panels:read":   "library_panel_read",
@@ -40,4 +35,27 @@ var actionTranslations = map[string]string{
 	"alert.silences:create": "alert_silence_create",
 	"alert.silences:read":   "alert_silence_read",
 	"alert.silences:write":  "alert_silence_write",
+}
+
+var dashboardActions = map[string]string{
+	"dashboards:create":            "create",
+	"dashboards:read":              "read",
+	"dashboards:write":             "write",
+	"dashboards:delete":            "delete",
+	"dashboards.permissions:read":  "permissions_read",
+	"dashboards.permissions:write": "permissions_write",
+}
+
+// RBAC to OpenFGA translations grouped by kind
+var actionKindTranslations = map[string]actionKindTranslation{
+	"folders": {
+		objectType:   "folder",
+		orgScoped:    true,
+		translations: folderActions,
+	},
+	"dashboards": {
+		objectType:   "dashboard",
+		orgScoped:    true,
+		translations: dashboardActions,
+	},
 }

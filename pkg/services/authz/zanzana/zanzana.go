@@ -38,12 +38,12 @@ func NewScopedTupleEntry(objectType, id, relation, scope string) string {
 }
 
 func TranslateToTuple(user string, action, kind, identifier string, orgID int64) (*openfgav1.TupleKey, bool) {
-	relation, ok := actionTranslations[action]
+	typeTranslation, ok := actionKindTranslations[kind]
 	if !ok {
 		return nil, false
 	}
 
-	t, ok := kindTranslations[kind]
+	relation, ok := typeTranslation.translations[action]
 	if !ok {
 		return nil, false
 	}
@@ -56,10 +56,10 @@ func TranslateToTuple(user string, action, kind, identifier string, orgID int64)
 	tuple.Relation = relation
 
 	// Some uid:s in grafana are not guarantee to be unique across orgs so we need to scope them.
-	if t.orgScoped {
-		tuple.Object = NewScopedTupleEntry(t.typ, identifier, "", strconv.FormatInt(orgID, 10))
+	if typeTranslation.orgScoped {
+		tuple.Object = NewScopedTupleEntry(typeTranslation.objectType, identifier, "", strconv.FormatInt(orgID, 10))
 	} else {
-		tuple.Object = NewTupleEntry(t.typ, identifier, "")
+		tuple.Object = NewTupleEntry(typeTranslation.objectType, identifier, "")
 	}
 
 	return tuple, true
