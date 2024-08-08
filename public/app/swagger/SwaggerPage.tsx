@@ -1,7 +1,6 @@
 import getDefaultMonacoLanguages from 'lib/monaco-languages';
 import { useState } from 'react';
 import { useAsync } from 'react-use';
-//import {SwaggerUI as xxx} from 'swagger-ui';
 import SwaggerUI from 'swagger-ui-react';
 
 import { createTheme, monacoLanguageRegistry, SelectableValue } from '@grafana/data';
@@ -60,20 +59,11 @@ export const Page = () => {
     return val.namespace;
   });
 
-  const onComplete = (system: any) => {
-    console.log("COMPLETE:", { system });
-  };
-
-  const responseInterceptor = (res: any): any => {
-    console.log('RESPONSE', res);
-    return res;
-  };
-
   return (
     <div>
       <ThemeProvider value={theme}>
         <NamespaceContext.Provider value={namespace.value} >
-        <div className="topbar" style={{ backgroundColor: '#000', padding: '10px' }}>
+        <div style={{ backgroundColor: '#000', padding: '10px' }}>
           <Stack justifyContent={'space-between'}>
             <img height="40" src="public/img/grafana_icon.svg" alt="Grafana" />
             <Select
@@ -104,8 +94,6 @@ export const Page = () => {
             ]}
             deepLinking={true}
             tryItOutEnabled={true}
-            onComplete={onComplete}
-            responseInterceptor={responseInterceptor}
           />
         )}
 
