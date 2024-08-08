@@ -305,7 +305,7 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
-	if userInfo.Email == "" {
+	if userInfo.Email == "" && s.info.ApiUrl != "" {
 		var err error
 		userInfo.Email, err = s.fetchPrivateEmail(ctx, client)
 		if err != nil {
