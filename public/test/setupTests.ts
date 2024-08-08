@@ -34,6 +34,9 @@ i18next.use(initReactI18next).init({
 // the factory uses import.meta.url so we can't use it in CommonJS modules.
 jest.mock('app/features/dashboard-scene/saving/createDetectChangesWorker.ts');
 
+// mock extension internationalization as it uses import.meta.glob which we can't use in CommonJS modules.
+jest.mock('app/core/internationalization/extensions.ts');
+
 // our tests are heavy in CI due to parallelisation and monaco and kusto
 // so we increase the default timeout to 2secs to avoid flakiness
 configure({ asyncUtilTimeout: 2000 });

@@ -13,10 +13,6 @@ import {
   VALID_LANGUAGES,
 } from './constants';
 
-jest.mock('./extensions.ts', () => {
-  return {};
-});
-
 describe('internationalization constants', () => {
   it('should have set the constants correctly', () => {
     expect(ENGLISH_US).toBe('en-US');
