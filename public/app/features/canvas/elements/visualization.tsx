@@ -106,7 +106,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, data, scene) => ({
     position: 'absolute',
     height: '100%',
     width: '100%',
-    display: 'table',
+    display: 'flex',
     pointerEvents: scene?.isEditingEnabled ? 'none' : 'auto',
   }),
 }));
