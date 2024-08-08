@@ -9,7 +9,7 @@ REPO_ROOT=$(dirname "${BASH_SOURCE[0]}")/../..
 for mod in $(go run scripts/go-workspace/main.go list-submodules --path "${REPO_ROOT}/go.work"); do
     pushd "${mod}"
     echo "Running go mod tidy in ${mod}"
-    go mod tidy 
+    go mod tidy || true
     popd
 done
 
