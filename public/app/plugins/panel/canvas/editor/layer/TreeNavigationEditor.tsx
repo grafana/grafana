@@ -129,7 +129,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
   };
 
   const onGenerateViz = () => {
-    const selectedElements = [...settings.selected];
+    const selectedElements = [...settings.selected].filter((element) => element.options.type !== 'visualization');
     onGenerateVisualization(selectedElements, layer);
   };
 

@@ -91,6 +91,29 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
       />
     );
 
+    const generateVisualizationMenuItem = () => {
+      if (selectedElements) {
+        const isVisualization =
+          selectedElements.length === 1 &&
+          findElementByTarget(selectedElements[0], scene.root.elements)?.options.type === 'visualization';
+
+        if (!isVisualization) {
+          return (
+            <MenuItem
+              label="Generate visualization"
+              onClick={() => {
+                onGenerateVisualization(getSelectedElements(scene), scene.currentLayer!);
+                closeContextMenu();
+              }}
+              className={styles.menuItem}
+            />
+          );
+        }
+      }
+
+      return null;
+    };
+
     const editElementMenuItem = () => {
       if (selectedElements?.length === 1) {
         const onClickEditElementMenuItem = () => {
@@ -201,14 +224,7 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
             className={styles.menuItem}
           />
           {openCloseEditorMenuItem}
-          <MenuItem
-            label="Generate visualization"
-            onClick={() => {
-              onGenerateVisualization(getSelectedElements(scene), scene.currentLayer!);
-              closeContextMenu();
-            }}
-            className={styles.menuItem}
-          />
+          {generateVisualizationMenuItem()}
         </>
       );
     } else {

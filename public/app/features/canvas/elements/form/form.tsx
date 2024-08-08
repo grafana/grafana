@@ -211,8 +211,8 @@ export const formItem: CanvasElementItem<FormConfig, FormData> = {
   hasEditMode: true,
 
   defaultSize: {
-    width: 100,
-    height: 50,
+    width: 250,
+    height: 120,
   },
 
   getNewOptions: (options) => ({
@@ -223,7 +223,7 @@ export const formItem: CanvasElementItem<FormConfig, FormData> = {
         fixed: defaultThemeTextColor,
       },
       size: 16,
-      formElements: options?.config.formElements ?? [],
+      formElements: options?.config.formElements ?? defaultFormElementsConfig,
     },
     placement: {
       width: options?.placement?.width ?? 100,
