@@ -7,7 +7,7 @@ module.exports = {
   target: 'web',
   entry: {
     app: './public/app/index.ts',
-    swagger: './public/app/swagger.tsx',
+    swagger: './public/app/swagger/index.tsx',
   },
   output: {
     clean: true,
