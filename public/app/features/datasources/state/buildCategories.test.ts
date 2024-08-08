@@ -53,7 +53,7 @@ describe('buildCategories', () => {
   it('should add enterprise phantom plugins', () => {
     const enterprisePluginsCategory = categories[3];
     expect(enterprisePluginsCategory.title).toBe('Enterprise plugins');
-    expect(enterprisePluginsCategory.plugins.length).toBe(24);
+    expect(enterprisePluginsCategory.plugins.length).toBe(25);
     expect(enterprisePluginsCategory.plugins[0].name).toBe('Adobe Analytics');
     expect(enterprisePluginsCategory.plugins[enterprisePluginsCategory.plugins.length - 1].name).toBe('Wavefront');
   });

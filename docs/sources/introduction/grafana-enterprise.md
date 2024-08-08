@@ -88,6 +88,7 @@ With a Grafana Enterprise license, you also get access to premium data sources, 
 - [Honeycomb](/grafana/plugins/grafana-honeycomb-datasource)
 - [Jira](/grafana/plugins/grafana-jira-datasource)
 - [MongoDB](/grafana/plugins/grafana-mongodb-datasource)
+- [Netlify](/grafana/plugins/grafana-netlify-datasource)
 - [New Relic](/grafana/plugins/grafana-newrelic-datasource)
 - [Oracle Database](/grafana/plugins/grafana-oracle-datasource)
 - [PagerDuty](/grafana/plugins/grafana-pagerduty-datasource)
