@@ -1,5 +1,7 @@
-import { ResourceKey } from 'i18next';
 import { uniq } from 'lodash';
+
+// we mock this in jest as import.meta.glob breaks things, so we don't even attempt to load enterprise translations...
+import { localeExtensionImports, type LocaleFileLoader } from './extensions';
 
 export const ENGLISH_US = 'en-US';
 export const FRENCH_FRANCE = 'fr-FR';
@@ -10,8 +12,6 @@ export const CHINESE_SIMPLIFIED = 'zh-Hans';
 export const PSEUDO_LOCALE = 'pseudo';
 
 export const DEFAULT_LANGUAGE = ENGLISH_US;
-
-export type LocaleFileLoader = () => Promise<ResourceKey>;
 
 export interface LanguageDefinition<Namespace extends string = string> {
   /** IETF language tag for the language e.g. en-US */
@@ -87,19 +87,7 @@ if (process.env.NODE_ENV === 'development') {
 // Optionally load enterprise locale extensions, if they are present.
 // It is important that this happens before NAMESPACES is defined so it has the correct value
 //
-// require.context doesn't work in jest, so we don't even attempt to load enterprise translations...
 if (process.env.NODE_ENV !== 'test') {
-  type LocaleExtensionExports = {
-    LOCALE_EXTENSIONS: Record<string, LocaleFileLoader | undefined>;
-    ENTERPRISE_I18N_NAMESPACE: 'string';
-  };
-
-  const localeExtensionImports: Record<string, LocaleExtensionExports> = import.meta.glob(
-    '../../app/extensions/locales/localeExtensions.ts',
-    {
-      eager: true,
-    }
-  );
   const localeExtensionExports = Object.values(localeExtensionImports);
 
   if (localeExtensionExports.length > 0) {
