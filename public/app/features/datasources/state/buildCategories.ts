@@ -243,7 +243,7 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       id: 'grafana-netlify-datasource',
       description: 'Netlify datasource',
       name: 'Netlify',
-      imgUrl: 'public/img/plugins/netlify.pvg',
+      imgUrl: 'public/img/plugins/netlify.svg',
     }),
   ];
 }
