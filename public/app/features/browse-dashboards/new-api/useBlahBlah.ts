@@ -12,7 +12,7 @@ interface UseNewAPIBlahBlahPayload {
   items: NewBrowseItem[];
   isLoading: boolean;
   hasNextPage: boolean;
-  requestNextPage: () => void;
+  requestNextPage: (parentUID?: string) => void;
 }
 
 const isFullfilled = (
@@ -81,12 +81,19 @@ export function useNewAPIBlahBlah(openFolders: OpenFolders): UseNewAPIBlahBlahPa
       flatTree.push(...browseItems);
 
       if (isLast && page.data?.length === 0) {
-        foldersFullyLoaded = true;
+        dashboardsFullyLoaded = true;
       }
     }
 
+    console.log('useNewAPIBlahBlah', {
+      foldersFullyLoaded,
+      dashboardsFullyLoaded,
+    });
+
     if (!foldersFullyLoaded || !dashboardsFullyLoaded) {
-      flatTree.push({ type: 'loading-placeholder', uid: `fake-uid-${fakeUidCounter++}` });
+      for (let i = 0; i < 10; i++) {
+        flatTree.push({ type: 'loading-placeholder', uid: `fake-uid-${fakeUidCounter++}` });
+      }
     }
 
     return flatTree;

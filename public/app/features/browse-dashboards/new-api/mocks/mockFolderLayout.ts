@@ -49,11 +49,11 @@ function $dash(title?: string): MockDashboard {
 const joinNumbers = (...numbers: number[]) => numbers.join('.');
 
 export const folderLayout = [
-  ...arrayOf(123, (index) =>
+  ...arrayOf(60, (index) =>
     $folder(index.toString(), [
-      ...arrayOf(63, (index2) => $folder(joinNumbers(index, index2))),
-      ...arrayOf(123, (index2) => $dash(joinNumbers(index, index2))),
+      ...arrayOf(60, (index2) => $folder(joinNumbers(index, index2))),
+      ...arrayOf(60, (index2) => $dash(joinNumbers(index, index2))),
     ])
   ),
-  ...arrayOf(123, (index) => $dash(index.toString())),
+  ...arrayOf(60, (index) => $dash(index.toString())),
 ];

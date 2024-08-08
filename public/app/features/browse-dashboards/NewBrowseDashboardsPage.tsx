@@ -2,7 +2,7 @@
 import { useWindowVirtualizer, Virtualizer, VirtualItem } from '@tanstack/react-virtual';
 import { ReactNode, useCallback, useEffect, useReducer, useRef } from 'react';
 
-import { Text, Stack, Icon, IconButton, Spinner } from '@grafana/ui';
+import { Text, Stack, Icon, IconButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { useNewAPIBlahBlah } from './new-api/useBlahBlah';
@@ -34,7 +34,7 @@ export default function NewBrowseDashboardsPage(props: NewBrowseDashboardsPagePr
 
   const listRef = useRef<HTMLDivElement | null>(null);
   const virtualizer = useWindowVirtualizer({
-    count: hasNextPage ? allRows.length + 1 : allRows.length,
+    count: allRows.length,
     estimateSize: () => 35,
     overscan: 5,
     scrollMargin: listRef.current?.offsetTop ?? 0,
@@ -43,19 +43,25 @@ export default function NewBrowseDashboardsPage(props: NewBrowseDashboardsPagePr
 
   // item loader hook
   useEffect(() => {
-    const [lastItem] = [...virtualItems].reverse();
-
-    if (!lastItem) {
+    if (!hasNextPage || isLoading) {
       return;
     }
 
-    if (lastItem.index >= allRows.length - 1 && hasNextPage && !isLoading) {
-      // Should pass in the root folder UID (undefined on root page)
-      requestNextPage();
+    const firstUnloaded = virtualItems.find((item) => {
+      const browseItem = allRows[item.index];
+      return browseItem.type === 'loading-placeholder';
+    });
+
+    if (firstUnloaded) {
+      const browseItem = allRows[firstUnloaded.index];
+      requestNextPage(browseItem.parentUid);
     }
-  }, [isLoading, hasNextPage, allRows.length, virtualItems, requestNextPage]);
+  }, [isLoading, hasNextPage, virtualItems, requestNextPage, allRows]);
 
   const handleFolderButtonClick = useCallback((item: NewBrowseItem, isOpen: boolean) => {
+    // When a folder is opened, we don't immediately load its contents.
+    // Instead, it's marked as open and the API hook will render placeholder items inside it.
+    // The data loader hook will then see those and trigger the loading of the folder's contents.
     setOpenFolders({ isOpen, uid: item.uid });
   }, []);
 
@@ -76,7 +82,7 @@ export default function NewBrowseDashboardsPage(props: NewBrowseDashboardsPagePr
             if (!browseItem) {
               return (
                 <VirtualRow key={item.key} virtualItem={item} virtualizer={virtualizer}>
-                  Fake loading row...
+                  Missing browse item (should not happen)
                 </VirtualRow>
               );
             }
