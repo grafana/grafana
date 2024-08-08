@@ -86,6 +86,9 @@ export function AppChrome({ children }: Props) {
     >
       {!state.chromeless && (
         <>
+          <LinkButton className={styles.skipLink} href="#pageContent">
+            Skip to main content
+          </LinkButton>
           <header className={cx(styles.topNav)}>
             {!searchBarHidden && <TopSearchBar />}
             <NavToolbar
@@ -212,12 +215,6 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
     skipLink: css({
       position: 'fixed',
       top: -1000,
-
-      ':focus': {
-        left: theme.spacing(1),
-        top: theme.spacing(1),
-        zIndex: theme.zIndex.portal,
-      },
     }),
   };
 };
