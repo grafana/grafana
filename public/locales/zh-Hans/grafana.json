@@ -319,6 +319,7 @@
     },
     "save": "保存"
   },
+  "complete": "",
   "connections": {
     "connect-data": {
       "category-header-label": "数据源",
@@ -1108,10 +1109,11 @@
       "error-see-server-logs": "",
       "get-session-error-title": "",
       "get-snapshot-error-title": "",
+      "migration-finished-with-caveat-title": "",
+      "migration-finished-with-errors-body": "",
+      "migration-finished-with-warnings-body": "",
       "snapshot-error-status-body": "",
       "snapshot-error-status-title": "",
-      "some-resources-errored-body": "",
-      "some-resources-errored-title": "",
       "upload-snapshot-error-title": ""
     },
     "pdc": {
@@ -1129,12 +1131,14 @@
       "message": "",
       "title": ""
     },
-    "resource-error": {
+    "resource-details": {
       "dismiss-button": "",
+      "error-title": "",
+      "generic-title": "",
+      "missing-message": "",
       "resource-summary": "",
-      "specific-error": "",
       "title": "",
-      "unknown-error": ""
+      "warning-title": ""
     },
     "resource-status": {
       "error-details-button": "详情",
@@ -1142,7 +1146,9 @@
       "migrated": "上传到云端",
       "migrating": "正在上传...",
       "not-migrated": "尚未上传",
-      "unknown": "未知"
+      "unknown": "未知",
+      "warning": "",
+      "warning-details-button": ""
     },
     "resource-table": {
       "unknown-datasource-title": "",
@@ -1167,6 +1173,9 @@
       "target-stack-title": "",
       "total-resource-count": "",
       "upload-migration": ""
+    },
+    "support-types-disclosure": {
+      "text": ""
     },
     "token-status": {
       "active": "令牌已创建并激活",
