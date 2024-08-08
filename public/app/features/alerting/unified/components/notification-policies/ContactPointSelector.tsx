@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Select, SelectCommonProps, Stack, Alert, IconButton, useStyles2, LoadingPlaceholder } from '@grafana/ui';
 import { ContactPointReceiverSummary } from 'app/features/alerting/unified/components/contact-points/ContactPoint';
+import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 
 import { useContactPointsWithStatus } from '../contact-points/useContactPoints';
 import { ContactPointWithMetadata } from '../contact-points/utils';
@@ -26,7 +27,10 @@ export const ContactPointSelector = ({
   showRefreshButton,
   selectedContactPointName,
 }: ContactPointSelectorProps) => {
-  const { contactPoints, isLoading, error, refetch } = useContactPointsWithStatus();
+  const { selectedAlertmanager } = useAlertmanager();
+  const { contactPoints, isLoading, error, refetch } = useContactPointsWithStatus({
+    alertmanager: selectedAlertmanager!,
+  });
   const [loaderSpinning, setLoaderSpinning] = useState(false);
   const styles = useStyles2(getStyles);
 
@@ -65,7 +69,6 @@ export const ContactPointSelector = ({
       <Select
         virtualized={options.length > MAX_CONTACT_POINTS_RENDERED}
         options={options}
-        // defaultValue={matchedContactPoint}
         value={matchedContactPoint}
         {...selectProps}
       />

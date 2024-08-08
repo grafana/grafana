@@ -2,8 +2,9 @@ import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { render, userEvent, waitFor, within } from 'test/test-utils';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
-import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { DataSourceSrv, setDataSourceSrv, setPluginExtensionsHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   AlertManagerCortexConfig,
   AlertManagerDataSourceJsonData,
@@ -44,6 +45,13 @@ const mocks = {
   },
   contextSrv: jest.mocked(contextSrv),
 };
+
+setPluginExtensionsHook(() => ({
+  extensions: [],
+  isLoading: false,
+}));
+
+setupMswServer();
 
 const renderNotificationPolicies = (alertManagerSourceName?: string) => {
   return render(<NotificationPolicies />, {
