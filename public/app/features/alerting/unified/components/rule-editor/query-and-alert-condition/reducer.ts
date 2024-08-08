@@ -15,7 +15,7 @@ import { defaultCondition } from 'app/features/expressions/utils/expressionTypes
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
-import { _createDagFromQueries, createDagFromQueries, getOriginOfRefId } from '../dag';
+import { createDagFromQueries, getOriginOfRefId } from '../dag';
 import { queriesWithUpdatedReferences, refIdExists } from '../util';
 
 export interface QueriesAndExpressionsState {
