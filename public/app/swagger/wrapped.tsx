@@ -21,7 +21,7 @@ export const WrappedPlugins = function () {
               namespaced: path[4] === 'namespaces',
             };
             if (info.namespaced) {
-              info.resource = path[7];
+              info.resource = path[6];
             }
             // console.log('NAME (in path)', path, info);
             return (
