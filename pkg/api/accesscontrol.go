@@ -442,6 +442,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			},
 		},
 		Grants: []string{"Editor"},
+		// Don't grant fixed:folders:creator to Admin
+		Exclude: []string{"Admin"},
 	}
 
 	foldersReaderRole := ac.RoleRegistration{
