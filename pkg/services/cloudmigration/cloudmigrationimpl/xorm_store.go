@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
@@ -20,6 +22,7 @@ type sqlStore struct {
 	db             db.DB
 	secretsStore   secretskv.SecretsKVStore
 	secretsService secrets.Service
+	log            *log.ConcreteLogger
 }
 
 const (
@@ -441,4 +444,46 @@ func (ss *sqlStore) decryptToken(ctx context.Context, cm *cloudmigration.CloudMi
 	cm.AuthToken = string(t)
 
 	return nil
+}
+
+func (ss *sqlStore) DeleteMigrationSessionWithRelatedElements(ctx context.Context, sessionUID string) (*cloudmigration.CloudMigrationSession, error) {
+	// first we try to delete all the associated information to the session
+	q := cloudmigration.ListSnapshotsQuery{
+		SessionUID: sessionUID,
+		Page:       1,
+		// passing -1 will return all the elements
+		Limit: -1,
+	}
+	snapshots, err := ss.GetSnapshotList(ctx, q)
+	if err != nil {
+		return nil, fmt.Errorf("getting migration snapshots from db: %w", err)
+	}
+	for _, snapshot := range snapshots {
+		err := ss.DeleteSnapshotResources(ctx, snapshot.UID)
+		if err != nil {
+			return nil, fmt.Errorf("deleting snapshot resource from db: %w", err)
+		}
+		err = ss.DeleteSnapshot(ctx, snapshot.UID)
+		if err != nil {
+			return nil, fmt.Errorf("deleting snapshot from db: %w", err)
+		}
+
+		err = deleteLocalFiles(snapshot)
+		if err != nil {
+			// in this case we only log the error, dont return it to continue with the process
+			ss.log.Error("deleting migration snapshot files", "err", err)
+		}
+	}
+	// and then we delete the migration sessions
+	c, err := ss.DeleteMigrationSessionByUID(ctx, sessionUID)
+	if err != nil {
+		return c, fmt.Errorf("deleting migration from db: %w", err)
+	}
+
+	return c, nil
+}
+
+func deleteLocalFiles(s cloudmigration.CloudMigrationSnapshot) error {
+	// now we remove the local files re
+	return os.RemoveAll(s.LocalDir)
 }

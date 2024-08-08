@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -100,9 +99,11 @@ func ProvideService(
 		return &NoopServiceImpl{}, nil
 	}
 
+	logger := log.New(LogPrefix)
+
 	s := &Service{
-		store:            &sqlStore{db: db, secretsStore: secretsStore, secretsService: secretsService},
-		log:              log.New(LogPrefix),
+		store:            &sqlStore{db: db, secretsStore: secretsStore, secretsService: secretsService, log: logger},
+		log:              logger,
 		cfg:              cfg,
 		features:         features,
 		dsService:        dsService,
@@ -470,49 +471,13 @@ func (s *Service) GetMigrationRunList(ctx context.Context, migUID string) (*clou
 }
 
 func (s *Service) DeleteSession(ctx context.Context, sessionUID string) (*cloudmigration.CloudMigrationSession, error) {
-	// Improvements: Move this into a transaction. This needs to be move into the store, and within a WithDbSession()
-
-	// first we try to delete all the associated information to the session
-	q := cloudmigration.ListSnapshotsQuery{
-		SessionUID: sessionUID,
-		Page:       1,
-		// passing -1 will return all the elements
-		Limit: -1,
-	}
-	snapshots, err := s.store.GetSnapshotList(ctx, q)
-	if err != nil {
-		return nil, fmt.Errorf("getting migration snapshots from db: %w", err)
-	}
-	for _, snapshot := range snapshots {
-		err := s.store.DeleteSnapshotResources(ctx, snapshot.UID)
-		if err != nil {
-			return nil, fmt.Errorf("deleting snapshot resource from db: %w", err)
-		}
-		err = s.store.DeleteSnapshot(ctx, snapshot.UID)
-		if err != nil {
-			return nil, fmt.Errorf("deleting snapshot from db: %w", err)
-		}
-
-		err = deleteLocalFiles(snapshot)
-		if err != nil {
-			// TODO LND Show we actually return an error in this case? or just log it?
-			return nil, fmt.Errorf("deleting snapshot from filesystem: %w", err)
-		}
-	}
-	// and then we delete the migration sessions
-	c, err := s.store.DeleteMigrationSessionByUID(ctx, sessionUID)
+	c, err := s.store.DeleteMigrationSessionWithRelatedElements(ctx, sessionUID)
 	if err != nil {
 		return c, fmt.Errorf("deleting migration from db: %w", err)
 	}
 
 	s.report(ctx, c, gmsclient.EventDisconnect, 0, nil)
-
 	return c, nil
-}
-
-func deleteLocalFiles(s cloudmigration.CloudMigrationSnapshot) error {
-	// now we remove the local files re
-	return os.RemoveAll(s.LocalDir)
 }
 
 func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedInUser, sessionUid string) (*cloudmigration.CloudMigrationSnapshot, error) {

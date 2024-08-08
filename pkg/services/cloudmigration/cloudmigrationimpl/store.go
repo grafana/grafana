@@ -12,6 +12,10 @@ type store interface {
 	GetCloudMigrationSessionList(ctx context.Context) ([]*cloudmigration.CloudMigrationSession, error)
 	DeleteMigrationSessionByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error)
 
+	// DeleteMigrationSessionWithRelatedElements deletes the migration session, and all the related snapshot and resources.
+	// the work is done in a transaction.
+	DeleteMigrationSessionWithRelatedElements(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error)
+
 	CreateMigrationRun(ctx context.Context, cmr cloudmigration.CloudMigrationSnapshot) (string, error)
 	GetMigrationStatus(ctx context.Context, cmrUID string) (*cloudmigration.CloudMigrationSnapshot, error)
 	// GetMigrationStatusList Deprecated: true -  use GetSnapshotList instead
