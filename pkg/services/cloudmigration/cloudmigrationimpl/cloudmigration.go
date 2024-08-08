@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -482,6 +483,12 @@ func (s *Service) DeleteSession(ctx context.Context, sessionUID string) (*cloudm
 		err = s.store.DeleteSnapshot(ctx, snapshot.UID)
 		if err != nil {
 			return nil, fmt.Errorf("deleting snapshot from db: %w", err)
+		}
+		// now we remove the local files
+		err = os.RemoveAll(snapshot.LocalDir)
+		if err != nil {
+			// TODO LND Show we actually return an error in this case? or just log it?
+			return nil, fmt.Errorf("deleting snapshot from filesystem: %w", err)
 		}
 	}
 	// and then we delete the migration sessions
