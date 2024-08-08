@@ -28,7 +28,7 @@
   "scripts": {
     "clean": "rimraf ./dist ./compiled ./package.tgz ./src/icons-gen",
     "generate": "yarn clean && npx @svgr/cli ./svg --silent && mv ./src/icons-gen/index.ts ./src",
-    "typecheck": "yarn generate && tsc --emitDeclarationOnly false --noEmit",
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "lint": "eslint --ext .ts,.tsx ./src",
     "prettier:check": "prettier --check --list-different=false --log-level=warn \"**/*.{ts,tsx,scss,md,mdx,json}\"",
     "build": "yarn generate && rollup -c rollup.config.ts --configPlugin esbuild"
