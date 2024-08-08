@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -26,8 +27,8 @@ const passwordlessKeyPrefix = "passwordless-%s"
 
 var _ authn.PasswordlessClient = new(Passwordless)
 
-func ProvidePasswordless(loginAttempts loginattempt.Service, userService user.Service, tempUserService tempuser.Service, cache passwordlessCache) *Passwordless {
-	return &Passwordless{loginAttempts, userService, tempUserService, cache, log.New("authn.passwordless")}
+func ProvidePasswordless(loginAttempts loginattempt.Service, userService user.Service, tempUserService tempuser.Service, notificationService notifications.Service, cache passwordlessCache) *Passwordless {
+	return &Passwordless{loginAttempts, userService, tempUserService, notificationService, cache, log.New("authn.passwordless")}
 }
 
 type passwordlessCache interface {
@@ -43,42 +44,30 @@ type PasswordlessCacheEntry struct {
 }
 
 type Passwordless struct {
-	loginAttempts   loginattempt.Service
-	userService     user.Service
-	tempUserService tempuser.Service
-	cache           passwordlessCache
-	log             log.Logger
+	loginAttempts       loginattempt.Service
+	userService         user.Service
+	tempUserService     tempuser.Service
+	notificationService notifications.Service
+	cache               passwordlessCache
+	log                 log.Logger
 }
 
 // Authenticate implements authn.Client.
 func (c *Passwordless) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
-	panic("unimplemented")
-	// var clientErrs error
-	// for _, pwlClient := range c.clients {
-	// 	identity, clientErr := pwlClient.AuthenticatePasswordless(ctx, r, email, code)
-	// 	clientErrs = errors.Join(clientErrs, clientErr)
-	// 	// we always try next client on any error
-	// 	if clientErr != nil {
-	// 		c.log.FromContext(ctx).Debug("Failed to authenticate passwordless identity", "client", pwlClient, "error", clientErr)
-	// 		continue
-	// 	}
+	// TODO: colin - confirm that this is the right way to get query params
+	// TODO: colin - do we need separate authenticate and authenticatePasswordless methods?
+	code := r.HTTPRequest.URL.Query().Get("code")
+	confirmationCode := r.HTTPRequest.URL.Query().Get("confirmationCode")
 
-	// 	return identity, nil
-	// }
-
-	// if errors.Is(clientErrs, errInvalidPasswordless) {
-	// 	_ = c.loginAttempts.Add(ctx, username, web.RemoteAddr(r.HTTPRequest))
-	// }
+	return c.AuthenticatePasswordless(ctx, r, code, confirmationCode)
 }
 
-// IsEnabled implements authn.Client.
 func (c *Passwordless) IsEnabled() bool {
-	panic("unimplemented")
+	return true
 }
 
-// Name implements authn.Client.
 func (c *Passwordless) Name() string {
-	panic("unimplemented")
+	return authn.ClientPasswordless
 }
 
 func (c *Passwordless) StartPasswordless(ctx context.Context, r *authn.Request, email string) error {
@@ -86,6 +75,10 @@ func (c *Passwordless) StartPasswordless(ctx context.Context, r *authn.Request, 
 	var existingUser *user.User
 	var tempUser []*tempuser.TempUserDTO
 	var err error
+
+	if !util.IsEmail(email) {
+		return errPasswordlessAuthFailed.Errorf("invalid email %s", email)
+	}
 
 	// TODO: colin - check passwordless cache if user has already been sent a passwordless link
 
@@ -103,9 +96,7 @@ func (c *Passwordless) StartPasswordless(ctx context.Context, r *authn.Request, 
 		if tempUser == nil {
 			return errPasswordlessAuthFailed.Errorf("no user found with email %s", email)
 		}
-	}
-
-	if existingUser != nil {
+	} else {
 		// 2. if existing user, send email with passwordless link
 		alphabet := []byte("BCDFGHJKLMNPQRSTVWXZ")
 		confirmationCode, err := util.GetRandomString(8, alphabet...)
@@ -117,7 +108,24 @@ func (c *Passwordless) StartPasswordless(ctx context.Context, r *authn.Request, 
 			return err
 		}
 
+		c.log.Info("code: ", code)
+		c.log.Info("confirmation code: ", confirmationCode)
+
 		// TODO: colin - implement send email with magic link
+		emailCmd := notifications.SendEmailCommand{
+			To:       []string{email},
+			Template: "passwordless_verify_existing_user",
+			Data: map[string]any{
+				"Email":            email,
+				"ConfirmationCode": confirmationCode,
+				"Code":             code,
+			},
+		}
+
+		err = c.notificationService.SendEmailCommandHandler(ctx, &emailCmd)
+		if err != nil {
+			return err
+		}
 
 		value := &PasswordlessCacheEntry{
 			Email:            email,

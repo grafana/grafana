@@ -240,7 +240,7 @@ type Cfg struct {
 	IDResponseHeaderEnabled       bool
 	IDResponseHeaderPrefix        string
 	IDResponseHeaderNamespaces    map[string]struct{}
-	PasswordlessAuth              bool
+	PasswordlessLoginEnabled      bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders   []string
@@ -1589,6 +1589,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	cfg.DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
+	cfg.PasswordlessLoginEnabled = auth.Key("passwordless_login_enabled").MustBool(false)
 
 	// Deprecated
 	cfg.OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)

@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -38,7 +39,7 @@ func ProvideRegistration(
 	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, settingsProviderService setting.Provider,
-	tracer tracing.Tracer, tempUserService tempuser.Service,
+	tracer tracing.Tracer, tempUserService tempuser.Service, notificationService notifications.Service,
 ) Registration {
 	logger := log.New("authn.registration")
 
@@ -51,7 +52,6 @@ func ProvideRegistration(
 
 	var proxyClients []authn.ProxyClient
 	var passwordClients []authn.PasswordClient
-	var passwordlessClients []authn.PasswordlessClient
 
 	// always register LDAP if LDAP is enabled in SSO settings
 	ssoSettingsLDAP := features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) && features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsLDAP)
@@ -79,9 +79,8 @@ func ProvideRegistration(
 		}
 	}
 
-	if cfg.PasswordlessAuth {
-		passwordless := clients.ProvidePasswordless(loginAttempts, userService, tempUserService, cache)
-		passwordlessClients = append(passwordlessClients, passwordless)
+	if cfg.PasswordlessLoginEnabled {
+		passwordless := clients.ProvidePasswordless(loginAttempts, userService, tempUserService, notificationService, cache)
 		authnSvc.RegisterClient(passwordless)
 	}
 

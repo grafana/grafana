@@ -238,7 +238,6 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.30.1 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.13 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.13 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.26.2 // indirect
 	github.com/aws/smithy-go v1.20.3 // indirect
 	github.com/axiomhq/hyperloglog v0.0.0-20191112132149-a4c4c47bc57f // indirect
@@ -474,7 +473,7 @@ require github.com/phpdave11/gofpdi v1.0.13 // @grafana/sharing-squad
 
 require (
 	github.com/google/go-querystring v1.1.0 // indirect; @grafana/observability-metrics
-	github.com/grafana/e2e v0.1.1 // indirect; @grafana-app-platform-squad
+	github.com/grafana/e2e v0.1.1 // @grafana-app-platform-squad
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream

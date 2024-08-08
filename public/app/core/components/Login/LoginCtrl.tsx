@@ -16,6 +16,10 @@ export interface FormModel {
   email: string;
 }
 
+export interface PasswordlessFormModel {
+  email: string;
+}
+
 interface Props {
   resetCode?: string;
 
@@ -25,6 +29,7 @@ interface Props {
     isChangingPassword: boolean;
     skipPasswordChange: Function;
     login: (data: FormModel) => void;
+    passwordlessLogin: (data: PasswordlessFormModel) => void;
     disableLoginForm: boolean;
     disableUserSignUp: boolean;
     isOauthEnabled: boolean;
@@ -110,6 +115,29 @@ export class LoginCtrl extends PureComponent<Props, State> {
       });
   };
 
+  passwordlessLogin = (formModel: PasswordlessFormModel) => {
+    this.setState({
+      loginErrorMessage: undefined,
+      isLoggingIn: true,
+    });
+
+    getBackendSrv()
+      .post<LoginDTO>('/login/passwordless', formModel, { showErrorAlert: false })
+      .then((result) => {
+        this.result = result;
+        // TODO: colin - redirect to passwordless code confirmation page?
+        this.toGrafana();
+        return;
+      })
+      .catch((err) => {
+        const fetchErrorMessage = isFetchError(err) ? getErrorMessage(err) : undefined;
+        this.setState({
+          isLoggingIn: false,
+          loginErrorMessage: fetchErrorMessage || t('login.error.unknown', 'Unknown error occurred'),
+        });
+      });
+  };
+
   changeView = (showDefaultPasswordWarning: boolean) => {
     this.setState({
       isChangingPassword: true,
@@ -133,7 +161,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
   render() {
     const { children } = this.props;
     const { isLoggingIn, isChangingPassword, showDefaultPasswordWarning, loginErrorMessage } = this.state;
-    const { login, toGrafana, changePassword } = this;
+    const { login, toGrafana, changePassword, passwordlessLogin } = this;
     const { loginHint, passwordHint, disableLoginForm, disableUserSignUp } = config;
 
     return (
@@ -145,6 +173,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
           disableLoginForm,
           disableUserSignUp,
           login,
+          passwordlessLogin,
           isLoggingIn,
           changePassword,
           skipPasswordChange: toGrafana,

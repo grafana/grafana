@@ -14,6 +14,7 @@ import LoginCtrl from './LoginCtrl';
 import { LoginForm } from './LoginForm';
 import { LoginLayout, InnerBox } from './LoginLayout';
 import { LoginServiceButtons } from './LoginServiceButtons';
+import { PasswordlessLoginForm } from './PasswordlessLoginForm';
 import { UserSignup } from './UserSignup';
 
 export const LoginPage = () => {
@@ -28,6 +29,7 @@ export const LoginPage = () => {
         disableLoginForm,
         disableUserSignUp,
         login,
+        passwordlessLogin,
         isLoggingIn,
         changePassword,
         skipPasswordChange,
@@ -44,7 +46,7 @@ export const LoginPage = () => {
                 </Alert>
               )}
 
-              {!disableLoginForm && (
+              {!disableLoginForm && !config.auth.passwordlessLoginEnabled && (
                 <LoginForm onSubmit={login} loginHint={loginHint} passwordHint={passwordHint} isLoggingIn={isLoggingIn}>
                   <Stack justifyContent="flex-end">
                     {!config.auth.disableLogin && (
@@ -58,6 +60,9 @@ export const LoginPage = () => {
                     )}
                   </Stack>
                 </LoginForm>
+              )}
+              {config.auth.passwordlessLoginEnabled && (
+                <PasswordlessLoginForm onSubmit={passwordlessLogin} isLoggingIn={isLoggingIn}></PasswordlessLoginForm>
               )}
               <LoginServiceButtons />
               {!disableUserSignUp && <UserSignup />}

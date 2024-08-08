@@ -13,6 +13,11 @@ export const Pages = {
     submit: 'data-testid Login button',
     skip: 'data-testid Skip change password button',
   },
+  PasswordlessLogin: {
+    url: '/login/passwordless',
+    email: 'data-testid Email input field',
+    submit: 'data-testid PasswordlessLogin button',
+  },
   Home: {
     url: '/',
   },
