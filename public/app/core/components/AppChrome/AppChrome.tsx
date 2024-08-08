@@ -114,8 +114,8 @@ export function AppChrome({ children }: Props) {
             })}
             id="pageContent"
           >
-            {children}
             <Hoverbot />
+            {children}
           </main>
         </div>
       </div>
