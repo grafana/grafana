@@ -338,6 +338,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                     <TemplatePreview
                       payload={payload}
                       templateName={watch('name')}
+                      templateType={templateType}
                       setPayloadFormatError={setPayloadFormatError}
                       payloadFormatError={payloadFormatError}
                       className={cx(styles.templatePreview, styles.minEditorSize)}

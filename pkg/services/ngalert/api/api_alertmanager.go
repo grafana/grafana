@@ -265,10 +265,19 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, bo
 	return response.JSON(statusForTestReceivers(result.Receivers), newTestReceiversResult(result))
 }
 
-func (srv AlertmanagerSrv) RoutePostTestTemplates(c *contextmodel.ReqContext, body apimodels.TestTemplatesConfigBodyParams) response.Response {
+func (srv AlertmanagerSrv) RoutePostTestTemplates(c *contextmodel.ReqContext, body apimodels.TestTemplatesConfigBodyParams, isJson bool) response.Response {
 	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
 	if errResp != nil {
 		return errResp
+	}
+
+	if isJson {
+		res, err := am.TestJSONTemplate(c.Req.Context(), body)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "", err)
+		}
+
+		return response.JSON(http.StatusOK, newTestTemplateResult(res))
 	}
 
 	res, err := am.TestTemplate(c.Req.Context(), body)

@@ -189,7 +189,8 @@ func (f *AlertmanagerApiHandler) RoutePostTestGrafanaTemplates(ctx *contextmodel
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.handleRoutePostTestGrafanaTemplates(ctx, conf)
+	t := ctx.Query("type")
+	return f.handleRoutePostTestGrafanaTemplates(ctx, conf, t == "json")
 }
 
 func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics.API) {

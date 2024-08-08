@@ -127,6 +127,10 @@ func (fam *RemotePrimaryForkedAlertmanager) TestTemplate(ctx context.Context, c 
 	// TODO: change to remote AM once it's implemented there.
 	return fam.internal.TestTemplate(ctx, c)
 }
+func (fam *RemotePrimaryForkedAlertmanager) TestJSONTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
+	// TODO: change to remote AM once it's implemented there.
+	return fam.internal.TestJSONTemplate(ctx, c)
+}
 
 func (fam *RemotePrimaryForkedAlertmanager) SilenceState(ctx context.Context) (alertingNotify.SilenceState, error) {
 	return fam.remote.SilenceState(ctx)

@@ -190,6 +190,6 @@ func (f *AlertmanagerApiHandler) handleRoutePostTestGrafanaReceivers(ctx *contex
 	return f.GrafanaSvc.RoutePostTestReceivers(ctx, conf)
 }
 
-func (f *AlertmanagerApiHandler) handleRoutePostTestGrafanaTemplates(ctx *contextmodel.ReqContext, conf apimodels.TestTemplatesConfigBodyParams) response.Response {
-	return f.GrafanaSvc.RoutePostTestTemplates(ctx, conf)
+func (f *AlertmanagerApiHandler) handleRoutePostTestGrafanaTemplates(ctx *contextmodel.ReqContext, conf apimodels.TestTemplatesConfigBodyParams, isJson bool) response.Response {
+	return f.GrafanaSvc.RoutePostTestTemplates(ctx, conf, isJson)
 }

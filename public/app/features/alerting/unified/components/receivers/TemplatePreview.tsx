@@ -17,12 +17,14 @@ import { usePreviewTemplate } from './usePreviewTemplate';
 export function TemplatePreview({
   payload,
   templateName,
+  templateType,
   payloadFormatError,
   setPayloadFormatError,
   className,
 }: {
   payload: string;
   templateName: string;
+  templateType: string;
   payloadFormatError: string | null;
   setPayloadFormatError: (value: React.SetStateAction<string | null>) => void;
   className?: string;
@@ -38,7 +40,7 @@ export function TemplatePreview({
     isLoading,
     onPreview,
     error: previewError,
-  } = usePreviewTemplate(templateContent, templateName, payload, setPayloadFormatError);
+  } = usePreviewTemplate(templateContent, templateName, payload, setPayloadFormatError, templateType);
   const previewToRender = getPreviewResults(previewError, payloadFormatError, data);
 
   return (

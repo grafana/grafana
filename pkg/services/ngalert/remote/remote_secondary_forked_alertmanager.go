@@ -166,6 +166,9 @@ func (fam *RemoteSecondaryForkedAlertmanager) TestReceivers(ctx context.Context,
 func (fam *RemoteSecondaryForkedAlertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
 	return fam.internal.TestTemplate(ctx, c)
 }
+func (fam *RemoteSecondaryForkedAlertmanager) TestJSONTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
+	return fam.internal.TestJSONTemplate(ctx, c)
+}
 
 func (fam *RemoteSecondaryForkedAlertmanager) SilenceState(ctx context.Context) (alertingNotify.SilenceState, error) {
 	return fam.internal.SilenceState(ctx)

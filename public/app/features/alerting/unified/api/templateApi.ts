@@ -32,11 +32,15 @@ export interface AlertField {
 
 export const templatesApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
-    previewTemplate: build.mutation<TemplatePreviewResponse, { template: string; alerts: AlertField[]; name: string }>({
-      query: ({ template, alerts, name }) => ({
+    previewTemplate: build.mutation<
+      TemplatePreviewResponse,
+      { template: string; alerts: AlertField[]; name: string; type: string }
+    >({
+      query: ({ template, alerts, name, type }) => ({
         url: previewTemplateUrl,
         data: { template: template, alerts: alerts, name: name },
         method: 'POST',
+        params: { type },
       }),
     }),
     getDefaultTemplates: build.query<Template[], void>({

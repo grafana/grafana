@@ -70,6 +70,7 @@ type Alertmanager interface {
 	GetReceivers(ctx context.Context) ([]apimodels.Receiver, error)
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error)
 	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error)
+	TestJSONTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error)
 
 	// Lifecycle
 	StopAndWait()
