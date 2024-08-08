@@ -1,8 +1,8 @@
-import { screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
+import { screen, waitFor, waitForElementToBeRemoved } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -113,17 +113,17 @@ describe('RuleEditor cloud', () => {
     const user = userEvent.setup();
 
     renderRuleEditor();
-    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+    await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
 
     const removeExpressionsButtons = screen.getAllByLabelText('Remove expression');
     expect(removeExpressionsButtons).toHaveLength(2);
 
     // Needs to wait for featrue discovery API call to finish - Check if ruler enabled
-    await waitFor(() => expect(screen.getByText('Data source-managed')).toBeInTheDocument());
+    expect(await screen.findByText('Data source-managed')).toBeInTheDocument();
 
     const switchToCloudButton = screen.getByText('Data source-managed');
     expect(switchToCloudButton).toBeInTheDocument();
-    expect(switchToCloudButton).not.toBeDisabled();
+    expect(switchToCloudButton).toBeEnabled();
 
     await user.click(switchToCloudButton);
 
