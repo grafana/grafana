@@ -10,10 +10,10 @@ import {
   SpecialValue,
   TransformerCategory,
 } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
-import { getTemplateSrv } from '@grafana/runtime';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 export const GroupingToMatrixTransformerEditor = ({
