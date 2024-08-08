@@ -17,6 +17,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
+import { handleContactPointSelect } from 'app/features/alerting/unified/components/notification-policies/utils';
 import { MatcherOperator, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useMuteTimingOptions } from '../../hooks/useMuteTimingOptions';
@@ -162,17 +163,7 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
               selectProps={{
                 ...field,
                 className: formStyles.input,
-                onChange: (value) => {
-                  if (value === null) {
-                    return onChange(null);
-                  }
-
-                  if (!value) {
-                    return onChange('');
-                  }
-
-                  return onChange(value.value?.name);
-                },
+                onChange: (value) => handleContactPointSelect(value, onChange),
                 isClearable: true,
               }}
               selectedContactPointName={value}
