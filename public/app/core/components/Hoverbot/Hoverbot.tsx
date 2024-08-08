@@ -5,7 +5,7 @@ import SVG from 'react-inlinesvg';
 import Markdown from 'react-markdown';
 
 import { openai } from '@grafana/llm';
-import { CustomScrollbar, Toggletip } from '@grafana/ui';
+import { Button, CustomScrollbar, Toggletip } from '@grafana/ui';
 
 import grot from './grot.svg';
 
@@ -186,6 +186,22 @@ export const Hoverbot = () => {
                 {selecting && <p>Click on an element in the screen to get assistance.</p>}
                 {loading && <p>Asking Grot...</p>}
                 {reply !== '' && <Markdown>{reply}</Markdown>}
+                {reply !== '' && (
+                  <div className={styles.actions}>
+                    <Button variant="secondary" fill="outline" size="sm">
+                      Shorter
+                    </Button>
+                    <Button variant="secondary" fill="outline" size="sm">
+                      Regenerate
+                    </Button>
+                    <Button variant="secondary" fill="outline" size="sm">
+                      More details
+                    </Button>
+                    <Button variant="secondary" fill="outline" size="sm">
+                      Next steps
+                    </Button>
+                  </div>
+                )}
               </div>
             </CustomScrollbar>
           }
@@ -196,7 +212,7 @@ export const Hoverbot = () => {
           }}
           show={true}
         >
-          <button className={styles.invisibleButton}>
+          <button className={`${styles.invisibleButton} ${subtleMove}`}>
             <SVG src={grot} width={250} height={250} />
           </button>
         </Toggletip>
@@ -255,6 +271,10 @@ const styles = {
   }),
   grotWrapper: css({
     paddingTop: 12,
+  }),
+  actions: css({
+    display: 'flex',
+    justifyContent: 'space-around',
   }),
 };
 
