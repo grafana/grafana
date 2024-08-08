@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { RefObject, useMemo, useState } from 'react';
+import { RefObject, useEffect, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import {
@@ -92,6 +92,22 @@ export function TraceView(props: Props) {
     detailStackTracesToggle,
   } = useDetailState(props.dataFrames[0]);
 
+  // console.log({ detailStates });
+
+  // useEffect(() => {
+  //   const target = traceProp.spans.find(
+  //     (span) => span.childrenMetrics && span.childrenMetrics[0].spanID === '0000000000000000'
+  //   );
+
+  //   if (target) {
+  //     toggleDetail(target.spanID);
+  //   }
+  // }, []);
+
+  // useEffect(() => {
+
+  // }, [])
+
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
@@ -106,6 +122,17 @@ export function TraceView(props: Props) {
   const childrenMetrics = props.dataFrames[0].fields[17];
 
   const styles = useStyles2(getStyles);
+
+  console.log({ childrenHiddenIDs });
+
+  useEffect(() => {
+    if (childrenHiddenIDs) {
+      childrenHiddenIDs.forEach((id) => {
+        toggleDetail(id);
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [childrenHiddenIDs]);
 
   /**
    * Keeps state of resizable name column width

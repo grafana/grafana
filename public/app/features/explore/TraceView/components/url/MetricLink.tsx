@@ -12,39 +12,45 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 import { Field, LinkModel } from '@grafana/data';
+import { Icon } from '@grafana/ui';
 
 import { TraceSpanReference } from '../types/trace';
-
-import { Icon } from '@grafana/ui';
 
 type ReferenceLinkProps = {
   reference: TraceSpanReference;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel<Field>;
+  childrenToggle?: (spanID: string) => void;
 };
 
 export default function MetricLink(props: ReferenceLinkProps) {
-  const { reference, createFocusSpanLink } = props;
-  if (reference.spanID == "0000000000000000") {
-    return null
+  const { reference, createFocusSpanLink, childrenToggle } = props;
+  if (reference.spanID === '0000000000000000') {
+    return null;
   }
   const link = createFocusSpanLink(reference.traceID, reference.spanID);
 
+  console.log({ reference, link });
+
   return (
     <a
-        href={link.href}
-        target={link.target}
-        rel="noopener noreferrer"
-        onClick={
-          link.onClick
-            ? (event) => {
-                event.preventDefault();
-                link.onClick!(event);
+      href={link.href}
+      target={link.target}
+      rel="noopener noreferrer"
+      onClick={
+        link.onClick
+          ? (event) => {
+              event.preventDefault();
+              link.onClick!(event);
+              if (childrenToggle && reference.span) {
+                childrenToggle(reference.span?.spanID);
               }
-            : undefined
-        }
-      > jump to span <Icon name="external-link-alt" />
+            }
+          : undefined
+      }
+    >
+      {' '}
+      jump to span {reference.spanID} <Icon name="external-link-alt" />
     </a>
   );
 }

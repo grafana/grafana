@@ -104,6 +104,7 @@ export type SpanDetailRowProps = {
   traceFlameGraphs: TraceFlameGraphs;
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   setRedrawListView: (redraw: {}) => void;
+  childrenToggle: (spanID: string) => void;
 };
 
 export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
@@ -147,6 +148,7 @@ export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
       traceFlameGraphs,
       setTraceFlameGraphs,
       setRedrawListView,
+      childrenToggle,
     } = this.props;
     const styles = getStyles(theme);
     return (
@@ -194,6 +196,7 @@ export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
               traceFlameGraphs={traceFlameGraphs}
               setTraceFlameGraphs={setTraceFlameGraphs}
               setRedrawListView={setRedrawListView}
+              childrenToggle={childrenToggle}
             />
           </div>
         </TimelineRow.Cell>

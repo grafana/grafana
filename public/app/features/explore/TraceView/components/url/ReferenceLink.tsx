@@ -22,10 +22,11 @@ type ReferenceLinkProps = {
   reference: TraceSpanReference;
   children: React.ReactNode;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel<Field>;
+  childrenToggle?: (spanID: string) => void;
 };
 
 export default function ReferenceLink(props: ReferenceLinkProps) {
-  const { reference, children, createFocusSpanLink } = props;
+  const { reference, children, createFocusSpanLink, childrenToggle } = props;
 
   const link = createFocusSpanLink(reference.traceID, reference.spanID);
 
@@ -39,6 +40,10 @@ export default function ReferenceLink(props: ReferenceLinkProps) {
           ? (event) => {
               event.preventDefault();
               link.onClick!(event);
+              if (childrenToggle && reference.span) {
+                console.log('hello?: ', childrenToggle, reference.span);
+                childrenToggle(reference.span.spanID);
+              }
             }
           : undefined
       }

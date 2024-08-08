@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
 import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
@@ -20,7 +20,7 @@ import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import { TraceSpanReference } from '../../types/trace';
-import MetricLink from '../../url/MetricLink';
+import ReferenceLink from '../../url/ReferenceLink';
 
 // import AccordianKeyValues from './AccordianKeyValues';
 
@@ -122,81 +122,74 @@ export type AccordianReferencesProps = {
   onItemToggle?: (reference: TraceSpanReference) => void;
   onToggle?: null | (() => void);
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel<Field>;
+  childrenToggle: (spanID: string) => void;
 };
 
 type ReferenceItemProps = {
   data: any[];
-  names: string[];
   interactive?: boolean;
   openedItems?: Set<TraceSpanReference>;
   onItemToggle?: (reference: TraceSpanReference) => void;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel<Field>;
+  childrenToggle: (spanID: string) => void;
 };
 
 // export for test
-export function ChildrenMetrics(props: ReferenceItemProps) {
+export function References(props: ReferenceItemProps) {
   // const { data, createFocusSpanLink, openedItems, onItemToggle, interactive } = props;
-  const { data, createFocusSpanLink, names } = props;
+  const { data, createFocusSpanLink, childrenToggle } = props;
   const styles = useStyles2(getStyles);
 
-  data.map((ref) => {
-    console.log('ref.span', ref.span);
-    console.log({ ref });
-  });
+  console.log({ data });
+  const minMaxObj = data
+    .map((each) => {
+      const key = each.tags[0].key;
+      if (key.includes('min')) {
+        return { min: each.spanID, value: each.tags[0].value };
+      } else if (key.includes('max')) {
+        return { max: each.spanID, value: each.tags[0].value };
+      } else {
+        return;
+      }
+    })
+    .filter((each) => each !== undefined);
 
+  console.log({ minMaxObj });
 
   return (
     <div className={styles.AccordianReferencesContent}>
-      {names.map((name, i) => (
-        <>
-          <span className={styles.item}>
-            {name}
-          </span>
-          <span className={styles.debugLabel}> </span>
-          <MetricsRow key={i} data={data} name={name} createFocusSpanLink={createFocusSpanLink} />
-        </>
-      ))}
-    </div>
-  );
-}
-
-type MetricRowProps = {
-  data: any[];
-  name: string;
-  createFocusSpanLink: (traceId: string, spanId: string) => LinkModel<Field>;
-};
-
-const MetricsRow = (props: MetricRowProps) => {
-  const { data, createFocusSpanLink, name } = props;
-  const styles = useStyles2(getStyles)
-
-  return (
-    <>
       {data.map((reference, i) => (
-        (reference.tags[1].value === name) ? (
-          <div className={i < data.length - 1 ? styles.AccordianReferenceItem : undefined} key={i}>
-            <div className={styles.item} key={`${reference.spanID}`}>
+        <div className={i < data.length - 1 ? styles.AccordianReferenceItem : undefined} key={i}>
+          <div className={styles.item} key={`${reference.spanID}`}>
+            <ReferenceLink
+              reference={reference}
+              createFocusSpanLink={createFocusSpanLink}
+              childrenToggle={childrenToggle}
+            >
               <span className={styles.itemContent}>
+                <span>
+                  <span className={cx('span-svc-name', styles.serviceName)}>
+                    {reference.span.process ? reference.span.process.serviceName : reference.span.serviceName}
+                  </span>
+                  <small className="endpoint-name">{reference.span.operationName}</small>
+                </span>
+
                 <small className={styles.debugInfo}>
                   <span className={styles.debugLabel}>
-                    {reference.tags[0].key}: 
+                    {reference.tags[0].key}: {reference.tags[0].value}
                   </span>
-                  <span className={styles.debugLabel}>
-                    {reference.tags[0].value}
-                  </span>
-                  <span className={styles.debugLabel}>
-                    <MetricLink reference={reference} createFocusSpanLink={createFocusSpanLink} />
+
+                  <span className={styles.debugLabel} data-label="SpanID:">
+                    {reference.spanID}
                   </span>
                 </small>
               </span>
-            </div>
+            </ReferenceLink>
           </div>
-        ) : (null
-        )
+        </div>
       ))}
-    </>
-  )
-
+    </div>
+  );
 }
 
 const AccordianMetricRef = ({
@@ -207,6 +200,7 @@ const AccordianMetricRef = ({
   onItemToggle,
   openedItems,
   createFocusSpanLink,
+  childrenToggle,
 }: AccordianReferencesProps) => {
   const isEmpty = !Array.isArray(data) || !data.length;
   let arrow: React.ReactNode | null = null;
@@ -226,16 +220,6 @@ const AccordianMetricRef = ({
     };
   }
 
-  let names = []
-
-  for (let i = 0; i < data.length; i++) {
-    for (let j = 0; j < data[i].tags.length; j++) {
-      if (data[i].tags[j].key === "name" && names.indexOf(data[i].tags[j].value) === -1) {
-        names.push(data[i].tags[j].value)
-      }
-    }
-  }
-
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.AccordianMetricRef}>
@@ -244,16 +228,16 @@ const AccordianMetricRef = ({
         <strong>
           <span>Children Metrics</span>
         </strong>{' '}
-        ({names.length})
+        ({data.length})
       </HeaderComponent>
       {isOpen && (
-        <ChildrenMetrics
+        <References
           data={data}
-          names={names}
           openedItems={openedItems}
           createFocusSpanLink={createFocusSpanLink}
           onItemToggle={onItemToggle}
           interactive={interactive}
+          childrenToggle={childrenToggle}
         />
       )}
     </div>

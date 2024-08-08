@@ -343,15 +343,21 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
   };
 
   _detailToggle = () => {
-    console.log('hello clicked for toggle detail');
     this.props.onDetailToggled(this.props.span.spanID);
   };
 
   // Controls the expand
   _childrenToggle = () => {
-    console.log('hello clicked for toggle expand');
     this.props.onChildrenToggled(this.props.span.spanID);
   };
+
+  componentDidMount(): void {
+    // if this we want to collapse and open summary
+    if (this.props.span.childrenMetrics && this.props.span.childrenMetrics.length > 1) {
+      this.props.onChildrenToggled(this.props.span.spanID);
+      //   // this.props.onDetailToggled(this.props.span.spanID);
+    }
+  }
 
   render() {
     const {

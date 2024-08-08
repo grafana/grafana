@@ -155,6 +155,7 @@ export type SpanDetailProps = {
   traceFlameGraphs: TraceFlameGraphs;
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   setRedrawListView: (redraw: {}) => void;
+  childrenToggle: (spanID: string) => void;
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
@@ -180,6 +181,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     setTraceFlameGraphs,
     traceToProfilesOptions,
     setRedrawListView,
+    childrenToggle,
   } = props;
   const {
     isTagsOpen,
@@ -371,7 +373,7 @@ export default function SpanDetail(props: SpanDetailProps) {
               onToggle={() => processToggle(spanID)}
             />
           )}
-          {childrenMetrics && childrenMetrics.length > 0 && (
+          {childrenMetrics && childrenMetrics.length && (
             <AccordianMetricRef
               data={childrenMetrics}
               isOpen={referencesState.isOpen}
@@ -379,6 +381,7 @@ export default function SpanDetail(props: SpanDetailProps) {
               onToggle={() => referencesToggle(spanID)}
               onItemToggle={(reference) => referenceItemToggle(spanID, reference)}
               createFocusSpanLink={createFocusSpanLink}
+              childrenToggle={childrenToggle}
             />
           )}
         </div>

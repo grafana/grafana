@@ -564,6 +564,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       traceFlameGraphs,
       setTraceFlameGraphs,
       setRedrawListView,
+      childrenToggle,
     } = this.props;
     const detailState = detailStates.get(spanID);
     if (!trace || !detailState) {
@@ -577,6 +578,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
         <SpanDetailRow
           color={color}
           columnDivision={spanNameColumnWidth}
+          childrenToggle={childrenToggle}
           onDetailToggled={detailToggle}
           detailState={detailState}
           linksGetter={linksGetter}
