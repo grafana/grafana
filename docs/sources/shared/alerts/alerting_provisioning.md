@@ -465,7 +465,7 @@ DELETE /api/v1/provisioning/mute-timings/:name
 #### All responses
 
 | Code                                 | Status     | Description                               | Has headers | Schema                                         |
-|--------------------------------------| ---------- | ----------------------------------------- | :---------: | ---------------------------------------------- |
+| ------------------------------------ | ---------- | ----------------------------------------- | :---------: | ---------------------------------------------- |
 | [204](#route-delete-mute-timing-204) | No Content | The mute timing was deleted successfully. |             | [schema](#route-delete-mute-timing-204-schema) |
 | [409](#route-delete-mute-timing-409) | Conflict   | GenericPublicError                        |             | [schema](#route-delete-mute-timing-409-schema) |
 
@@ -501,7 +501,7 @@ DELETE /api/v1/provisioning/templates/:name
 #### All responses
 
 | Code                              | Status     | Description                            | Has headers | Schema                                      |
-|-----------------------------------| ---------- | -------------------------------------- | :---------: | ------------------------------------------- |
+| --------------------------------- | ---------- | -------------------------------------- | :---------: | ------------------------------------------- |
 | [204](#route-delete-template-204) | No Content | The template was deleted successfully. |             | [schema](#route-delete-template-204-schema) |
 | [409](#route-delete-template-409) | Conflict   | GenericPublicError                     |             | [schema](#route-delete-template-409-schema) |
 
@@ -1384,7 +1384,7 @@ PUT /api/v1/provisioning/mute-timings/:name
 #### All responses
 
 | Code                              | Status      | Description        | Has headers | Schema                                      |
-|-----------------------------------| ----------- | ------------------ | :---------: | ------------------------------------------- |
+| --------------------------------- | ----------- | ------------------ | :---------: | ------------------------------------------- |
 | [200](#route-put-mute-timing-200) | OK          | MuteTimeInterval   |             | [schema](#route-put-mute-timing-200-schema) |
 | [400](#route-put-mute-timing-400) | Bad Request | ValidationError    |             | [schema](#route-put-mute-timing-400-schema) |
 | [409](#route-put-mute-timing-409) | Conflict    | GenericPublicError |             | [schema](#route-put-mute-timing-409-schema) |
@@ -1478,7 +1478,7 @@ PUT /api/v1/provisioning/templates/:name
 #### All responses
 
 | Code                           | Status      | Description          | Has headers | Schema                                   |
-|--------------------------------| ----------- | -------------------- | :---------: | ---------------------------------------- |
+| ------------------------------ | ----------- | -------------------- | :---------: | ---------------------------------------- |
 | [202](#route-put-template-202) | Accepted    | NotificationTemplate |             | [schema](#route-put-template-202-schema) |
 | [400](#route-put-template-400) | Bad Request | ValidationError      |             | [schema](#route-put-template-400-schema) |
 | [409](#route-put-template-409) | Conflict    | GenericPublicError   |             | [schema](#route-put-template-409-schema) |
