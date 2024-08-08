@@ -20,13 +20,17 @@ export const Hoverbot = () => {
   ]);
   const posRef = useRef({ x: 0, y: 0 });
   const oldPosRef = useRef({ x, y });
+  const lastImageRef = useRef('');
+  const lastElementRef = useRef<HTMLDivElement | undefined>(undefined);
 
   useEffect(() => {
     openai.enabled().then(setEnabled);
   }, []);
 
-  const ask = useCallback((image: string, element: HTMLDivElement) => {
-    // Stream the completions. Each element is the next stream chunk.
+  const ask = useCallback((image: string, element: HTMLDivElement, promptSuffix = '') => {
+    lastImageRef.current = image;
+    lastElementRef.current = element;
+
     const stream = openai
       .streamChatCompletions({
         model: openai.Model.LARGE,
@@ -38,7 +42,7 @@ export const Hoverbot = () => {
             content: [
               {
                 type: 'text',
-                text: scrapContext(element),
+                text: scrapContext(element, promptSuffix),
               },
               {
                 type: 'image_url',
@@ -170,6 +174,17 @@ export const Hoverbot = () => {
     }
   }, []);
 
+  const regenerate = useCallback(
+    (getSuffix: () => string) => {
+      if (lastImageRef.current && lastElementRef.current) {
+        setReply('');
+        setLoading(true);
+        ask(lastImageRef.current, lastElementRef.current, getSuffix());
+      }
+    },
+    [ask]
+  );
+
   if (!enabled) {
     console.warn('Hoverbot disabled');
     return null;
@@ -189,16 +204,40 @@ export const Hoverbot = () => {
                 {reply !== '' && <Markdown>{reply}</Markdown>}
                 {reply !== '' && (
                   <div className={styles.actions}>
-                    <Button variant="secondary" fill="outline" size="sm">
+                    <Button
+                      variant="secondary"
+                      fill="outline"
+                      size="sm"
+                      disabled={loading}
+                      onClick={() => regenerate(getShorterSuffix)}
+                    >
                       Shorter
                     </Button>
-                    <Button variant="secondary" fill="outline" size="sm">
-                      Regenerate
+                    <Button
+                      variant="secondary"
+                      fill="outline"
+                      size="sm"
+                      disabled={loading}
+                      onClick={() => regenerate(getSimplerSuffix)}
+                    >
+                      Simpler
                     </Button>
-                    <Button variant="secondary" fill="outline" size="sm">
+                    <Button
+                      variant="secondary"
+                      fill="outline"
+                      size="sm"
+                      disabled={loading}
+                      onClick={() => regenerate(getExtraSuffix)}
+                    >
                       More details
                     </Button>
-                    <Button variant="secondary" fill="outline" size="sm">
+                    <Button
+                      variant="secondary"
+                      fill="outline"
+                      size="sm"
+                      disabled={loading}
+                      onClick={() => regenerate(getNextStepsSuffix)}
+                    >
                       Next steps
                     </Button>
                   </div>
@@ -281,6 +320,7 @@ const styles = {
   actions: css({
     display: 'flex',
     justifyContent: 'space-around',
+    marginTop: 8,
   }),
 };
 
@@ -313,18 +353,22 @@ function getEventTarget(element: HTMLDivElement, bubbled = 2) {
   return element;
 }
 
-function scrapContext(element: HTMLDivElement): string {
+function scrapContext(element: HTMLDivElement, promptSuffix = ''): string {
+  let context = 'Help me understand the following observability data:';
+
   if (document.title.startsWith('Explore')) {
-    return scrapExploreContext();
+    context = scrapExploreContext();
   }
   if (document.title.includes('Dashboards')) {
-    return scrapDashboardContext(element);
+    context = scrapDashboardContext(element);
   }
   if (window.location.pathname === '/a/grafana-lokiexplore-app/explore') {
-    return scrapLogsAppContext();
+    context = scrapLogsAppContext();
   }
 
-  return 'Help me understand the following observability data:';
+  console.log(`${context} ${promptSuffix}`.trimEnd());
+
+  return `${context} ${promptSuffix}`.trimEnd();
 }
 
 function scrapExploreContext() {
@@ -351,8 +395,6 @@ function scrapExploreContext() {
 
   context += 'Please help me interpret the following image from Grafana.';
 
-  console.log(context);
-
   return context;
 }
 
@@ -366,8 +408,6 @@ function scrapDashboardContext(element: HTMLDivElement) {
   } else if ($(element).find('h2[title]').length) {
     context += `The graph title is ${$(element).find('h2[title]').text()}. `;
   }
-
-  console.log(context);
 
   return context;
 }
@@ -386,7 +426,6 @@ function scrapLogsAppContext() {
   }
 
   context += `${getTimeRangeContext()}. `;
-  console.log(context);
 
   return context;
 }
@@ -418,4 +457,20 @@ async function upload(blob: Blob): Promise<string> {
         reject();
       });
   });
+}
+
+function getShorterSuffix() {
+  return 'Please generate a specific but shorter explanation.';
+}
+
+function getSimplerSuffix() {
+  return 'Explain it in simple terms.';
+}
+
+function getExtraSuffix() {
+  return 'Using technical jargon, provide the most amount of details to help with my task.';
+}
+
+function getNextStepsSuffix() {
+  return 'Give me a suggestion for the next steps to continue my investigation.';
 }
