@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,8 +21,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -163,7 +164,7 @@ func ProvideService(
 			}
 
 			if c.SignedInUser != nil {
-				ctx := appcontext.WithUser(req.Context(), c.SignedInUser)
+				ctx := identity.WithRequester(req.Context(), c.SignedInUser)
 				req = req.WithContext(ctx)
 			}
 
@@ -281,8 +282,13 @@ func (s *service) start(ctx context.Context) error {
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
 			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
+
+		opts := []grpc.DialOption{
+			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+		}
 		// Create a connection to the gRPC server
-		conn, err := grpc.NewClient(o.StorageOptions.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.NewClient(o.StorageOptions.Address, opts...)
 		if err != nil {
 			return err
 		}
@@ -423,7 +429,7 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 		Transport: &roundTripperFunc{
 			fn: func(req *http.Request) (*http.Response, error) {
 				<-s.startedCh
-				ctx := appcontext.WithUser(req.Context(), c.SignedInUser)
+				ctx := identity.WithRequester(req.Context(), c.SignedInUser)
 				wrapped := grafanaresponsewriter.WrapHandler(s.handler)
 				return wrapped(req.WithContext(ctx))
 			},

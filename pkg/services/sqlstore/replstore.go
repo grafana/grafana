@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"sync/atomic"
 	"time"
@@ -84,6 +85,10 @@ func ProvideServiceWithReadReplica(primary *SQLStore, cfg *setting.Cfg,
 		return nil, err
 	}
 
+	if err := validateReplicaConfigs(primary.dbCfg, replCfgs); err != nil {
+		return nil, fmt.Errorf("failed to validate replica configurations: %w", err)
+	}
+
 	if len(replCfgs) > 0 {
 		replStore.repls = make([]*SQLStore, len(replCfgs))
 	}
@@ -94,7 +99,7 @@ func ProvideServiceWithReadReplica(primary *SQLStore, cfg *setting.Cfg,
 			replCfg.Type = WrapDatabaseReplDriverWithHooks(replCfg.Type, uint(i), tracer)
 		}
 
-		s, err := newReadOnlySQLStore(cfg, replCfg, features, bus, tracer)
+		s, err := newReadOnlySQLStore(cfg, &replCfg, features, bus, tracer)
 		if err != nil {
 			return nil, err
 		}
@@ -185,13 +190,13 @@ func (ss *SQLStore) initReadOnlyEngine(engine *xorm.Engine) error {
 }
 
 // NewRODatabaseConfig creates a new read-only database configuration.
-func NewRODatabaseConfigs(cfg *setting.Cfg, features featuremgmt.FeatureToggles) ([]*DatabaseConfig, error) {
+func NewRODatabaseConfigs(cfg *setting.Cfg, features featuremgmt.FeatureToggles) ([]DatabaseConfig, error) {
 	if cfg == nil {
 		return nil, errors.New("cfg cannot be nil")
 	}
 
-	// if only one replica is configured in the database_replicas section, use it as the default
-	defaultReplCfg := &DatabaseConfig{}
+	// If one replica is configured in the database_replicas section, use it as the default
+	defaultReplCfg := DatabaseConfig{}
 	if err := defaultReplCfg.readConfigSection(cfg, "database_replicas"); err != nil {
 		return nil, err
 	}
@@ -199,13 +204,13 @@ func NewRODatabaseConfigs(cfg *setting.Cfg, features featuremgmt.FeatureToggles)
 	if err != nil {
 		return nil, err
 	}
-	ret := []*DatabaseConfig{defaultReplCfg}
+	ret := []DatabaseConfig{defaultReplCfg}
 
-	// Check for additional replicas as children of the database_replicas section (e.g. database_replicas.one, database_replicas.cheetara)
-	repls := cfg.Raw.Section("database_replicas")
+	// Check for individual replicas in the database_replica section (e.g. database_replica.one, database_replica.cheetara)
+	repls := cfg.Raw.Section("database_replica")
 	if len(repls.ChildSections()) > 0 {
 		for _, sec := range repls.ChildSections() {
-			replCfg := &DatabaseConfig{}
+			replCfg := DatabaseConfig{}
 			if err := replCfg.parseConfigIni(sec); err != nil {
 				return nil, err
 			}

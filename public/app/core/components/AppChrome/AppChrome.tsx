@@ -141,28 +141,23 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
       paddingTop: 0,
     }),
     dockedMegaMenu: css(
+      {
+        background: theme.colors.background.primary,
+        borderRight: `1px solid ${theme.colors.border.weak}`,
+        display: 'none',
+
+        [theme.breakpoints.up('xl')]: {
+          display: 'block',
+        },
+      },
       config.featureToggles.bodyScrolling
         ? {
-            background: theme.colors.background.primary,
-            borderRight: `1px solid ${theme.colors.border.weak}`,
-            display: 'none',
             position: 'fixed',
             height: `calc(100% - ${searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
-            zIndex: theme.zIndex.navbarFixed,
-
-            [theme.breakpoints.up('xl')]: {
-              display: 'block',
-            },
+            zIndex: 1,
           }
         : {
-            background: theme.colors.background.primary,
-            borderRight: `1px solid ${theme.colors.border.weak}`,
-            display: 'none',
             zIndex: theme.zIndex.navbarFixed,
-
-            [theme.breakpoints.up('xl')]: {
-              display: 'block',
-            },
           }
     ),
     topNav: css({
@@ -175,54 +170,44 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
       flexDirection: 'column',
     }),
     panes: css(
-      config.featureToggles.bodyScrolling
-        ? {
-            display: 'flex',
-            flexDirection: 'column',
-            flexGrow: 1,
-            label: 'page-panes',
-          }
-        : {
-            label: 'page-panes',
-            display: 'flex',
-            height: '100%',
-            width: '100%',
-            flexGrow: 1,
-            minHeight: 0,
-            flexDirection: 'column',
-            [theme.breakpoints.up('md')]: {
-              flexDirection: 'row',
-            },
-          }
+      {
+        display: 'flex',
+        flexDirection: 'column',
+        flexGrow: 1,
+        label: 'page-panes',
+      },
+      !config.featureToggles.bodyScrolling && {
+        height: '100%',
+        minHeight: 0,
+        width: '100%',
+        [theme.breakpoints.up('md')]: {
+          flexDirection: 'row',
+        },
+      }
     ),
     pageContainerMenuDocked: css({
       paddingLeft: '300px',
     }),
     pageContainer: css(
-      config.featureToggles.bodyScrolling
-        ? {
-            label: 'page-container',
-            display: 'flex',
-            flexDirection: 'column',
-            flexGrow: 1,
-          }
-        : {
-            label: 'page-container',
-            display: 'flex',
-            flexDirection: 'column',
-            flexGrow: 1,
-            minHeight: 0,
-            minWidth: 0,
-            overflow: 'auto',
-            '@media print': {
-              overflow: 'visible',
-            },
-            '@page': {
-              margin: 0,
-              size: 'auto',
-              padding: 0,
-            },
-          }
+      {
+        label: 'page-container',
+        display: 'flex',
+        flexDirection: 'column',
+        flexGrow: 1,
+      },
+      !config.featureToggles.bodyScrolling && {
+        minHeight: 0,
+        minWidth: 0,
+        overflow: 'auto',
+        '@media print': {
+          overflow: 'visible',
+        },
+        '@page': {
+          margin: 0,
+          size: 'auto',
+          padding: 0,
+        },
+      }
     ),
     skipLink: css({
       position: 'fixed',
