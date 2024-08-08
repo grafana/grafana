@@ -10,7 +10,8 @@ interface Props extends Omit<FormChild, 'id' | 'type'> {
 }
 
 export const SelectDisplay = ({ options, currentOption, onChange, title }: Props) => {
-  const [value, setValue] = useState(currentOption?.[1]);
+  const key = Object.keys(currentOption?.[0] ?? {})[0];
+  const [value, setValue] = useState(currentOption?.[0][key]);
 
   return (
     <Field label={title} style={{ marginBottom: '2px' }}>

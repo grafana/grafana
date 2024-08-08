@@ -8,7 +8,9 @@ import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensi
 
 import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultThemeTextColor } from '../../element';
 import { Align, TextConfig, TextData } from '../../types';
+import { defaultApiConfig } from '../button';
 
+import { Checkbox } from './elements/Checkbox';
 import { FormChild, FormElementTypeEditor } from './elements/FormElementTypeEditor';
 import { NumberInput } from './elements/NumberInput';
 import { SelectDisplay } from './elements/Select';
@@ -45,6 +47,20 @@ export interface FormConfig extends Omit<TextConfig, 'valign'> {
   formElements?: FormChild[];
 }
 
+const defaultFormElementsConfig: FormChild[] = [
+  {
+    id: 'default-select-item-1',
+    type: FormElementType.Select,
+    title: 'Select item title',
+  },
+  {
+    id: 'default-submit-item-1',
+    type: FormElementType.Submit,
+    title: 'Submit item title',
+    api: defaultApiConfig,
+  },
+];
+
 const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
   const { data, config } = props;
   const styles = useStyles2(getStyles(data));
@@ -57,7 +73,7 @@ const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
     const child = config.formElements?.find((child) => child.id === id);
 
     if (child) {
-      child.currentOption = newParams;
+      child.currentOption = [{ [newParams[0]]: newParams[1] }];
     }
 
     updateAPIPayload(config.formElements!);
@@ -71,7 +87,7 @@ const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
     const child = config.formElements?.find((child) => child.id === id);
 
     if (child) {
-      child.currentOption = [child.title, value];
+      child.currentOption = [{ [child.title]: value }];
     }
 
     updateAPIPayload(config.formElements!);
@@ -81,7 +97,26 @@ const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
     const child = config.formElements?.find((child) => child.id === id);
 
     if (child) {
-      child.currentOption = [child.title, value];
+      child.currentOption = [{ [child.title]: value }];
+    }
+
+    updateAPIPayload(config.formElements!);
+  };
+
+  const onCheckboxOptionsChange = (value: [string, string], index: number, id: string) => {
+    const child = config.formElements?.find((child) => child.id === id);
+
+    const updatedCheckboxes = child?.currentOption?.map((option, i) => {
+      const key = Object.keys(option)[0];
+      if (i === index) {
+        return { [key]: value[1] };
+      }
+
+      return option;
+    });
+
+    if (child) {
+      child.currentOption = updatedCheckboxes;
     }
 
     updateAPIPayload(config.formElements!);
@@ -112,6 +147,14 @@ const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
             title={child.title}
             currentOption={child.currentOption}
             onChange={(v) => onNumberInputChange(v, child.id)}
+          />
+        );
+      case FormElementType.Checkbox:
+        return (
+          <Checkbox
+            title={child.title}
+            options={child.currentOption ?? []}
+            onChange={(v, i) => onCheckboxOptionsChange(v, i, child.id)}
           />
         );
       case FormElementType.Submit:

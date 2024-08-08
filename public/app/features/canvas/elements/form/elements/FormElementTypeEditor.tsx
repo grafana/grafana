@@ -11,6 +11,7 @@ import { APIEditor, APIEditorConfig } from 'app/plugins/panel/canvas/editor/elem
 import { defaultApiConfig } from '../../button';
 import { FormElementType } from '../form';
 
+import { CheckboxEditor } from './CheckboxEditor';
 import { NumberInputEditor } from './NumberInputEditor';
 import { SelectionEditor } from './SelectionEditor';
 import { TextInputEditor } from './TextInputEditor';
@@ -21,7 +22,7 @@ export interface FormChild {
   type: string;
   title: string;
   options?: Array<[string, string]>;
-  currentOption?: [string, string];
+  currentOption?: Array<{ [key: string]: string }>;
   api?: APIEditorConfig;
 }
 
@@ -48,7 +49,7 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
         return;
       }
 
-      const id = uniqueId('form-element-');
+      const id = uniqueId(`form-${sel.value}-element-`);
       let newFormElement: FormChild = { id, type: sel.value ?? '', title: id };
       if (sel.value === 'Submit') {
         newFormElement = { ...newFormElement, api: defaultApiConfig };
@@ -96,10 +97,11 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
   );
 
   const onTextInputOptionsChange = useCallback(
-    (newValue: string, id: string) => {
+    (newLabel: string, id: string) => {
       const newElements: FormChild[] = value.map((child) => {
         if (child.id === id) {
-          return { ...child, title: newValue, currentOption: [newValue, child.currentOption?.[1]!] };
+          const keys = Object.keys(child?.currentOption![0]);
+          return { ...child, title: newLabel, currentOption: [{ [newLabel]: child.currentOption![0][keys[0]] }] };
         }
         return child;
       });
@@ -126,14 +128,46 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
   const onNumberInputTitleChange = useCallback(
     (newTitle: string, id: string) => {
       const newElements: FormChild[] = value.map((child) => {
+        const key = Object.keys(child?.currentOption![0])[0];
         if (child.id === id) {
-          return { ...child, title: newTitle, currentOption: [newTitle, child.currentOption?.[1]!] };
+          return { ...child, title: newTitle, currentOption: [{ newTitle: child.currentOption![0][key] }] };
         }
         return child;
       });
 
       onChange(newElements);
       updateAPIPayload(newElements);
+    },
+    [onChange, value]
+  );
+
+  const onCheckboxParamsChange = useCallback(
+    (newParams: Array<[string, string]>, id: string) => {
+      const newElements = value.map((child) => {
+        if (child.id === id) {
+          return {
+            ...child,
+            options: newParams,
+            currentOption: newParams.map((option) => ({ [option[0]]: option[1] })),
+          };
+        }
+        return child;
+      });
+      onChange(newElements);
+      updateAPIPayload(newElements);
+    },
+    [onChange, value]
+  );
+
+  const onCheckBoxTitleChange = useCallback(
+    (newTitle: string, id: string) => {
+      const newElements = value.map((child) => {
+        if (child.id === id) {
+          return { ...child, title: newTitle };
+        }
+        return child;
+      });
+      onChange(newElements);
     },
     [onChange, value]
   );
@@ -174,6 +208,20 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
             title={child.title}
             onChange={(newValue) => onNumberInputTitleChange(newValue, child.id)}
             currentOption={child.currentOption}
+          />
+        );
+        return {
+          element,
+          properties: child,
+        };
+
+      case FormElementType.Checkbox:
+        element = (
+          <CheckboxEditor
+            title={child.title}
+            options={child.options ?? []}
+            onParamsChange={(v) => onCheckboxParamsChange(v, child.id)}
+            onTitleChange={(v) => onCheckBoxTitleChange(v, child.id)}
           />
         );
         return {
