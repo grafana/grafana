@@ -170,10 +170,8 @@ gen-jsonnet:
 
 .PHONY: update-workspace
 update-workspace:
-	@echo $(GO_FILES)
 	@echo "updating workspace"
 	bash scripts/go-workspace/update-workspace.sh
-
 
 .PHONY: build-go
 build-go: update-workspace gen-go ## Build all Go binaries.
