@@ -8,6 +8,13 @@ import { IconName } from './icon';
 import { PanelData } from './panel';
 import { RawTimeRange, TimeZone } from './time';
 
+export type PluginExportedComponent = {
+  id: string;
+  pluginId: string;
+  description: string;
+  component: React.ComponentType;
+};
+
 // Plugin Extensions types
 // ---------------------------------------
 
