@@ -1117,8 +1117,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.readZanzanaSettings()
 
-	cfg.readCacheSettings()
-
 	if err := cfg.readRenderingSettings(iniFile); err != nil {
 		return err
 	}

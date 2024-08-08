@@ -33,7 +33,7 @@ func (cfg *Cfg) readCacheSettings() {
 		Prefix:     valueAsString(cacheSec, "prefix", ""),
 		Encryption: cacheSec.Key("encryption").MustBool(false),
 		Ring: RemoteCacheRingSettings{
-			Addr:             ringCacheSec.Key("address").MustString("127.0.0.1"),
+			Addr:             ringCacheSec.Key("address").MustString(""),
 			Port:             ringCacheSec.Key("port").MustInt(0),
 			JoinMembers:      util.SplitString(ringCacheSec.Key("join_members").MustString("")),
 			HeartbeatPeriod:  gtimeWithFallback(ringCacheSec.Key("heartbeat_period").MustString("15s"), 15*time.Second),

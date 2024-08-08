@@ -13,15 +13,19 @@ import (
 )
 
 type memberlistConfig struct {
-	Addr        string
-	Port        int
-	JoinMembers []string
+	Addr          string
+	Port          int
+	AdvertiseAddr string
+	AdvertisePort int
+	JoinMembers   []string
 }
 
 func newMemberlistService(cfg memberlistConfig, logger log.Logger, reg prometheus.Registerer) (*memberlist.KVInitService, *memberlist.Client, error) {
 	config := memberlist.KVConfig{
-		NodeName: cfg.Addr,
-		Codecs:   []codec.Codec{ring.GetCodec()},
+		NodeName:      cfg.Addr,
+		AdvertiseAddr: cfg.AdvertiseAddr,
+		AdvertisePort: cfg.AdvertisePort,
+		Codecs:        []codec.Codec{ring.GetCodec()},
 		TCPTransport: memberlist.TCPTransportConfig{
 			BindPort:  cfg.Port,
 			BindAddrs: []string{cfg.Addr},
