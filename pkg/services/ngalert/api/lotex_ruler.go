@@ -31,9 +31,6 @@ const (
 	lokiPrefix       = "/api/prom/rules"
 
 	subtypeQuery = "subtype"
-
-	namespaceQueryTag = "QUERY_NAMESPACE"
-	groupQueryTag     = "QUERY_GROUP"
 )
 
 var dsTypeToRulerPrefix = map[string]string{

@@ -26,6 +26,11 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+const (
+	namespaceQueryTag = "QUERY_NAMESPACE"
+	groupQueryTag     = "QUERY_GROUP"
+)
+
 var searchRegex = regexp.MustCompile(`\{(\w+)\}`)
 
 func toMacaronPath(path string) string {
