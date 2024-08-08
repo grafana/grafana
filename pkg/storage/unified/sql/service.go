@@ -80,9 +80,11 @@ func ProvideService(
 		// },
 	}
 
-	// TODO(drclau): only allow insecure connections when app_mode = development
-	tr := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-	client := &http.Client{Transport: tr}
+	client := http.DefaultClient
+	if cfg.Env == "development" {
+		// allow insecure connections in development mode to facilitate testing
+		client = &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
+	}
 	keyRetriever := authnlib.NewKeyRetriever(grpcAuthCfg.KeyRetrieverConfig, authnlib.WithHTTPClientKeyRetrieverOpt(client))
 
 	grpcOpts := []authnlib.GrpcAuthenticatorOption{}
@@ -92,12 +94,16 @@ func ProvideService(
 		// TODO(drclau): do we need orgId?
 	case grpcutils.ModeGRPC:
 		grpcOpts = append(grpcOpts,
+			// Access token are not yet available on-prem
 			authnlib.WithDisableAccessTokenAuthOption(),
 			authnlib.WithIDTokenAuthOption(true),
 			authnlib.WithKeyRetrieverOption(keyRetriever),
 		)
 	case grpcutils.ModeCloud:
-		grpcOpts = append(grpcOpts, authnlib.WithIDTokenAuthOption(true))
+		grpcOpts = append(grpcOpts,
+			authnlib.WithIDTokenAuthOption(true),
+			authnlib.WithKeyRetrieverOption(keyRetriever),
+		)
 	}
 
 	authn, err := authnlib.NewGrpcAuthenticator(

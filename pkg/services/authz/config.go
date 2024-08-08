@@ -30,6 +30,8 @@ type Cfg struct {
 	token            string
 	tokenExchangeURL string
 	tokenNamespace   string
+
+	allowInsecure bool
 }
 
 func ReadCfg(cfg *setting.Cfg) (*Cfg, error) {
@@ -55,5 +57,6 @@ func ReadCfg(cfg *setting.Cfg) (*Cfg, error) {
 		token:            token,
 		tokenExchangeURL: tokenExchangeURL,
 		tokenNamespace:   tokenNamespace,
+		allowInsecure:    cfg.Env == "development",
 	}, nil
 }
