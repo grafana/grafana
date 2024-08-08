@@ -2,13 +2,16 @@ package teamapi
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/preference/prefapi"
@@ -147,32 +150,28 @@ func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Respons
 // 403: forbiddenError
 // 500: internalServerError
 func (tapi *TeamAPI) searchTeamsZanzana(c *contextmodel.ReqContext) response.Response {
-	// Determine the search strategy
-	searchStrategy := c.Query("strategy")
-	if searchStrategy == "" {
-		searchStrategy = "option1" // Default strategy
-	}
-
-	switch searchStrategy {
-	case "option1":
-		return tapi.searchThenCheck(c)
-	// case "option2":
-	// 	return tapi.buildIndexAndSearch(c)
-	// case "option3":
-	// 	return tapi.listIDsThenSearch(c)
-	default:
-		return response.Error(http.StatusBadRequest, "Invalid search strategy", nil)
-	}
+	start := time.Now()
+	r := tapi.searchThenCheck(c)
+	fmt.Printf("searchThenCheck took %v\n", time.Since(start))
+	start = time.Now()
+	r = tapi.buildIndexAndSearch(c)
+	fmt.Printf("buildIndexAndSearch took %v\n", time.Since(start))
+	start = time.Now()
+	r = tapi.listIDsThenSearch(c)
+	fmt.Printf("listIDsThenSearch took %v\n", time.Since(start))
+	return r
 }
 
 // Option 1: Search, Then Check
 func (tapi *TeamAPI) searchThenCheck(c *contextmodel.ReqContext) response.Response {
 	// Perform the database search prefiltering
 	queryResult, err := tapi.teamService.SearchTeams(c.Req.Context(), &team.SearchTeamsQuery{
-		OrgID: c.SignedInUser.GetOrgID(),
-		Query: c.Query("query"),
-		Name:  c.Query("name"),
-		Limit: 100,
+		OrgID:        c.SignedInUser.GetOrgID(),
+		Query:        c.Query("query"),
+		Name:         c.Query("name"),
+		SignedInUser: c.SignedInUser,
+		Page:         1,
+		Limit:        100,
 	})
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to search Teams", err)
@@ -183,12 +182,125 @@ func (tapi *TeamAPI) searchThenCheck(c *contextmodel.ReqContext) response.Respon
 	for _, team := range queryResult.Teams {
 		checkResp, err := tapi.zanzanaClient.Check(c.Req.Context(), &openfgav1.CheckRequest{
 			TupleKey: &openfgav1.CheckRequestTupleKey{
-				Object:   "teams:" + strconv.FormatInt(team.ID, 10),
-				Relation: "view",
+				Object:   zanzana.TypeTeam + ":" + strconv.FormatInt(team.ID, 10),
+				Relation: zanzana.RelationTeamMember,
 				User:     strconv.FormatInt(c.SignedInUser.UserID, 10),
 			},
 		})
 		if err == nil && checkResp.Allowed {
+			filteredTeams = append(filteredTeams, team)
+		}
+	}
+
+	queryResult.Teams = filteredTeams
+	return response.JSON(http.StatusOK, queryResult)
+}
+
+// Option 2: Build A Local Index From Changes Endpoint, Search, Then Check
+func (tapi *TeamAPI) buildIndexAndSearch(c *contextmodel.ReqContext) response.Response {
+	// Fetch changes to build local index
+	changesResp, err := tapi.zanzanaClient.ReadChanges(c.Req.Context(),
+		&openfgav1.ReadChangesRequest{
+			Type: zanzana.TypeTeam,
+			// TODO: Add pagination
+			// PageSize: PtrInt32(25),
+			// TODO: Add continuation token
+			// Once there are no more changes to retrieve, the API will return the same token as the one you sent. Save the token in persistent storage to use at a later time.
+			// ContinuationToken: "",
+		},
+	)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to fetch changes", err)
+	}
+
+	// Build local index
+	localIndex := map[string]bool{}
+	for _, change := range changesResp.Changes {
+		if change.Operation == openfgav1.TupleOperation_TUPLE_OPERATION_WRITE {
+			localIndex[change.TupleKey.Object] = true
+		} else if change.Operation == openfgav1.TupleOperation_TUPLE_OPERATION_DELETE {
+			delete(localIndex, change.TupleKey.Object)
+		}
+	}
+
+	// Perform the database search
+	queryResult, err := tapi.teamService.SearchTeams(c.Req.Context(), &team.SearchTeamsQuery{
+		OrgID:        c.SignedInUser.GetOrgID(),
+		Query:        c.Query("query"),
+		Name:         c.Query("name"),
+		SignedInUser: c.SignedInUser,
+		Page:         1,
+		Limit:        100,
+	})
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to search Teams", err)
+	}
+
+	// Filter using local index
+	intersectedTeams := []*team.TeamDTO{}
+	for _, team := range queryResult.Teams {
+		if _, exists := localIndex[zanzana.TypeTeam+":"+strconv.FormatInt(team.ID, 10)]; exists {
+			intersectedTeams = append(intersectedTeams, team)
+		}
+	}
+
+	// local index removed around
+	fmt.Printf("local index removed %d teams from the search result to not check permissions\n", len(queryResult.Teams)-len(intersectedTeams))
+
+	// Check permissions for the intersected teams
+	filteredTeams := []*team.TeamDTO{}
+	for _, team := range intersectedTeams {
+		checkResp, err := tapi.zanzanaClient.Check(c.Req.Context(), &openfgav1.CheckRequest{
+			TupleKey: &openfgav1.CheckRequestTupleKey{
+				Object:   zanzana.TypeTeam + ":" + strconv.FormatInt(team.ID, 10),
+				Relation: zanzana.RelationTeamMember,
+				User:     strconv.FormatInt(c.SignedInUser.UserID, 10),
+			},
+		})
+		if err == nil && checkResp.Allowed {
+			filteredTeams = append(filteredTeams, team)
+		}
+	}
+
+	queryResult.Teams = filteredTeams
+	return response.JSON(http.StatusOK, queryResult)
+}
+
+// Option 3: Build A List Of IDs, Then Search
+func (tapi *TeamAPI) listIDsThenSearch(c *contextmodel.ReqContext) response.Response {
+	// Get list of object IDs the user has access to
+	listResp, err := tapi.zanzanaClient.ListObjects(c.Req.Context(), &openfgav1.ListObjectsRequest{
+		Type:     zanzana.TypeTeam,
+		Relation: zanzana.RelationTeamMember,
+		User:     strconv.FormatInt(c.SignedInUser.UserID, 10),
+	})
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to list accessible teams", err)
+	}
+
+	// Convert to a set for quick lookup
+	accessibleTeamIDs := map[string]bool{}
+	for _, obj := range listResp.Objects {
+		accessibleTeamIDs[obj] = true
+	}
+
+	// Perform the database search
+	queryResult, err := tapi.teamService.SearchTeams(c.Req.Context(), &team.SearchTeamsQuery{
+		OrgID:        c.SignedInUser.GetOrgID(),
+		Query:        c.Query("query"),
+		Name:         c.Query("name"),
+		SignedInUser: c.SignedInUser,
+		Page:         1,
+		Limit:        100,
+	})
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to search Teams", err)
+	}
+
+	// Filter by the list of accessible team IDs
+	filteredTeams := []*team.TeamDTO{}
+	for _, team := range queryResult.Teams {
+		if _, exists := accessibleTeamIDs[zanzana.TypeTeam+":"+strconv.FormatInt(team.ID, 10)]; exists {
 			filteredTeams = append(filteredTeams, team)
 		}
 	}
