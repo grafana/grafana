@@ -75,33 +75,31 @@ interface RulerQueryDetailsProvider {
 function getQueryDetailsProvider(rulerConfig: RulerDataSourceConfig): RulerQueryDetailsProvider {
   const isGrafanaDatasource = rulerConfig.dataSourceName === GRAFANA_RULES_SOURCE_NAME;
 
-  const externalRulerSearchParams = {
-    subtype: rulerConfig.apiVersion === 'legacy' ? 'cortex' : 'mimir',
+  const groupParamRewrite = (group: string): GroupUrlParams => {
+    const containsSlash = group.includes('/');
+    if (containsSlash) {
+      return { group: QUERY_GROUP_TAG, searchParams: { group } };
+    }
+    return { group, searchParams: {} };
   };
 
-  // For Grafana we only proxy namespace and group parameters. No need to deal with slashes
+  // GMA uses folderUID as namespace identifiers so we need to rewrite them
   if (isGrafanaDatasource) {
     return {
       namespace: (namespace: string) => ({ namespace, searchParams: {} }),
-      group: (group: string) => ({ group, searchParams: {} }),
+      group: groupParamRewrite,
     };
   }
 
   return {
-    namespace: (namespace: string) => {
+    namespace: (namespace: string): NamespaceUrlParams => {
       const containsSlash = namespace.includes('/');
       if (containsSlash) {
-        return { namespace: QUERY_NAMESPACE_TAG, searchParams: { ...externalRulerSearchParams, namespace } };
+        return { namespace: QUERY_NAMESPACE_TAG, searchParams: { namespace: 'foo' } };
       }
-      return { namespace, searchParams: externalRulerSearchParams };
+      return { namespace, searchParams: {} };
     },
-    group: (group: string) => {
-      const containsSlash = group.includes('/');
-      if (containsSlash) {
-        return { group: QUERY_GROUP_TAG, searchParams: { ...externalRulerSearchParams, group } };
-      }
-      return { group, searchParams: externalRulerSearchParams };
-    },
+    group: groupParamRewrite,
   };
 }
 

@@ -72,10 +72,9 @@ func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *contextmodel.ReqContex
 		return ErrResp(500, err, "")
 	}
 
-	var finalNamespace = namespace
-
-	if namespace == "QUERY_NAMESPACE" {
-		finalNamespace = ctx.Query("namespace")
+	finalNamespace, err := getRulesNamespaceParam(ctx, namespace)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
 	return r.requester.withReq(
@@ -97,15 +96,14 @@ func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *contextmodel.ReqContext, na
 		return ErrResp(500, err, "")
 	}
 
-	var finalNamespace = namespace
-	var finalGroup = group
-
-	if namespace == "QUERY_NAMESPACE" {
-		finalNamespace = ctx.Query("namespace")
+	finalNamespace, err := getRulesNamespaceParam(ctx, namespace)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	if group == "QUERY_GROUP" {
-		finalGroup = ctx.Query("group")
+	finalGroup, err := getRulesGroupParam(ctx, group)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
 	return r.requester.withReq(
@@ -132,9 +130,9 @@ func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *contextmodel.ReqContext, 
 		return ErrResp(500, err, "")
 	}
 
-	var finalNamespace = namespace
-	if namespace == namespaceQueryTag {
-		finalNamespace = ctx.Query("namespace")
+	finalNamespace, err := getRulesNamespaceParam(ctx, namespace)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
 	return r.requester.withReq(
@@ -160,15 +158,14 @@ func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *contextmodel.ReqContext, name
 		return ErrResp(500, err, "")
 	}
 
-	var finalNamespace = namespace
-	var finalGroup = group
-
-	if namespace == "QUERY_NAMESPACE" {
-		finalNamespace = ctx.Query("namespace")
+	finalNamespace, err := getRulesNamespaceParam(ctx, namespace)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	if group == "QUERY_GROUP" {
-		finalGroup = ctx.Query("group")
+	finalGroup, err := getRulesGroupParam(ctx, group)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
 	return r.requester.withReq(
@@ -218,12 +215,12 @@ func (r *LotexRuler) RoutePostNameRulesConfig(ctx *contextmodel.ReqContext, conf
 		return ErrResp(500, err, "Failed marshal rule group")
 	}
 
-	var finalNamespace = ns
-	if ns == "QUERY_NAMESPACE" {
-		finalNamespace = ctx.Query("namespace")
+	finalNamespace, err := getRulesNamespaceParam(ctx, ns)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	u := withPath(*ctx.Req.URL, fmt.Sprintf("%s/%s", legacyRulerPrefix, finalNamespace))
+	u := withPath(*ctx.Req.URL, fmt.Sprintf("%s/%s", legacyRulerPrefix, url.PathEscape(finalNamespace)))
 	return r.requester.withReq(ctx, http.MethodPost, u, bytes.NewBuffer(yml), jsonExtractor(nil), nil)
 }
 
