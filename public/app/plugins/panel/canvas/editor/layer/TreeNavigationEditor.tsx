@@ -13,7 +13,13 @@ import { frameSelection, reorderElements } from 'app/features/canvas/runtime/sce
 import { getGlobalStyles } from '../../globalStyles';
 import { Options } from '../../panelcfg.gen';
 import { DragNode, DropNode } from '../../types';
-import { doSelectMultiple, getElementTypes, onAddItem, onGenerateVisualization } from '../../utils';
+import {
+  doSelectMultiple,
+  generateVisualizationExclude,
+  getElementTypes,
+  onAddItem,
+  onGenerateVisualization,
+} from '../../utils';
 import { TreeViewEditorProps } from '../element/elementEditor';
 
 import { TreeNodeTitle } from './TreeNodeTitle';
@@ -129,14 +135,18 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
   };
 
   const onGenerateViz = () => {
-    const selectedElements = [...settings.selected].filter((element) => element.options.type !== 'visualization');
+    const selectedElements = [...settings.selected].filter(
+      (element) => !generateVisualizationExclude.includes(element.options.type)
+    );
     onGenerateVisualization(selectedElements, layer);
   };
 
   const shouldShowGenerateVizButton = () => {
     if (selection.length > 0) {
-      const onlyVizSelected = settings.selected.every((element) => element.options.type === 'visualization');
-      return !onlyVizSelected;
+      const onlyExcludedVizSelected = settings.selected.every((element) =>
+        generateVisualizationExclude.includes(element.options.type)
+      );
+      return !onlyExcludedVizSelected;
     }
 
     return false;

@@ -335,3 +335,5 @@ export const onGenerateVisualization = (selectedElements: ElementState[], layer:
 
   onAddItem(visualizationSelection, layer, undefined, selectedFields);
 };
+
+export const generateVisualizationExclude = ['visualization', 'form'];
