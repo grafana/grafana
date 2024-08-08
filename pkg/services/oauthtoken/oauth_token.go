@@ -166,7 +166,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) (
 
 	lockTimeConfig := serverlock.LockTimeConfig{
 		MaxInterval: 30 * time.Second,
-		MinWait:     50 * time.Millisecond,
+		MinWait:     160 * time.Millisecond, // p95 for token refresh is ~800ms, so at least it should wait 800ms before it fails (5 retries with (at least) 160 ms)
 		MaxWait:     250 * time.Millisecond,
 	}
 
@@ -181,7 +181,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) (
 	var cmdErr error
 
 	lockErr := o.serverLock.LockExecuteAndReleaseWithRetries(ctx, lockKey, lockTimeConfig, func(ctx context.Context) {
-		ctxLogger.Debug("serverlock request for getting a new access token", "key", lockKey)
+		ctxLogger.Debug("Serverlock request for getting a new access token", "key", lockKey)
 
 		authInfo, exists, err := o.HasOAuthEntry(ctx, usr)
 		if !exists {
