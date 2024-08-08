@@ -1,10 +1,12 @@
+import getDefaultMonacoLanguages from 'lib/monaco-languages';
 import { useState } from 'react';
 import { useAsync } from 'react-use';
 //import {SwaggerUI as xxx} from 'swagger-ui';
 import SwaggerUI from 'swagger-ui-react';
 
-import { createTheme, SelectableValue } from '@grafana/data';
+import { createTheme, monacoLanguageRegistry, SelectableValue } from '@grafana/data';
 import { Stack, Select } from '@grafana/ui';
+import { setMonacoEnv } from 'app/core/monacoEnv';
 import { ThemeProvider } from 'app/core/utils/ConfigProvider';
 
 import { WrappedPlugins } from './wrapped';
@@ -39,6 +41,10 @@ export const Page = () => {
         }
       });
     }
+
+    monacoLanguageRegistry.setInit(getDefaultMonacoLanguages);
+    setMonacoEnv();
+
     setURL(urls[idx]);
     return urls;
   });
