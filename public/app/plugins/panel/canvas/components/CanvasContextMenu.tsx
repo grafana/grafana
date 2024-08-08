@@ -12,7 +12,7 @@ import { findElementByTarget, getSelectedElements } from 'app/features/canvas/ru
 
 import { CanvasPanel } from '../CanvasPanel';
 import { AnchorPoint, LayerActionID } from '../types';
-import { onGenerateVisualization, getElementTypes, onAddItem } from '../utils';
+import { onGenerateVisualization, getElementTypes, onAddItem, generateVisualizationExclude } from '../utils';
 
 type Props = {
   scene: Scene;
@@ -98,7 +98,7 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
         if (selectedElements.length === 1) {
           const element = findElementByTarget(selectedElements[0], scene.root.elements);
           skipVizMenuItem =
-            element?.options.type === 'visualization' ||
+            generateVisualizationExclude.includes(element?.options.type!) ||
             element?.data.field === undefined ||
             element?.data.field === '';
         }
