@@ -44,7 +44,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/
-  ing-data-sources:
+  provisioning-data-sources:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
     - pattern: /docs/grafana-cloud/provision
@@ -60,28 +60,79 @@ refs:
 
 The Tempo data source sets how Grafana connects to your Tempo database and lets you configure features and integrations with other telemetry signals.
 
+You can configure the data source using either the data source interface within Grafana or using a configuration file.
+This page explains how to set up and enable the data source capabilities using Grafana.
+
+If you are using your own installation of Grafana, you can provision the Tempo data source using a YAML configuration file.
+
+## Before you begin
+
+To configure a Tempo data source, you need administrator rights to your Grafana instance and a Tempo instance configured to send tracing data to Grafana.
+
+If you are provisioning a Tempo data source, then you also need administrative rights on the server hosting your Grafana instance.
+Refer to [Provision the data source](#provision-the-data-source) for next steps.
+
+## Set up the data source
+
 To configure basic settings for the Tempo data source, complete the following steps:
 
 1.  Click **Connections** in the left-side menu and select **Data sources**.
 1.  Enter `Tempo` in the search bar.
 1.  Select **Tempo**.
 
-1.  On the **Settings** tab, set the data source's basic configuration options:
+1.  On the **Settings** tab, set the data source's basic configuration options. At a minimum, you need to complete the **Name**, **Connection**, and **Authentication** sections. The other sections provide optional capabilities.
 
     | Name           | Description                                                              |
     | -------------- | ------------------------------------------------------------------------ |
     | **Name**       | Sets the name you use to refer to the data source in panels and queries. |
     | **Default**    | Sets the data source that's pre-selected for new panels.                 |
-    | **URL**        | Sets the URL of the Tempo instance, such as `http://tempo`.              |
-    | **Basic Auth** | Enables authentication to the Tempo data source.                         |
-    | **User**       | Sets the user name for basic authentication.                             |
-    | **Password**   | Sets the password for basic authentication.                              |
+    | **Connection**        | Sets the URL of the Tempo instance, such as `http://tempo`.              |
+    | **Authentication** | Enables authentication to the Tempo data source.                         |
 
-You can also configure settings specific to the Tempo data source.
-
-This video explains how to add data sources, including Loki, Tempo, and Mimir, to Grafana and Grafana Cloud. Tempo data source set up starts at 4:58 in the video.
+This video explains how to add data sources, including Loki, Tempo, and Mimir, to Grafana and Grafana Cloud.
+Tempo data source set up starts at 4:58 in the video.
 
 {{< youtube id="cqHO0oYW6Ic" start="298" >}}
+
+## Name and default
+
+**Name**
+: Enter a name to specify the data source in panels, queries, and Explore.
+
+**Default**
+: The default data source is pre-selected for new panels.
+
+### Connection
+
+The required **Connection** field provides the connection point for your Tempo instance.
+
+1. Enter the **URL** of the Grafana Tempo instance, for example, `https://example.com:4100`.
+
+1. Select **Save & test** to preserve your changes.
+
+### Authentication
+
+To set up authentication:
+
+1. Select an authentication method from the drop-down:
+  - **Basic authentication**: Authenticates your data source using a username and password
+  - **Forward OAuth identity**: Forwards the OAuth access token and the OIDC ID token, if available, of the user querying to the data source
+  - **No authentication**: No authentication is required to access the data source
+1. For **Basic authentication** only: Enter the **User** and **Password**.
+1. Optional: Complete the **TLS settings** for additional security methods.
+
+   **TLS Client Authentication**
+   : Toggle on to use client authentication. When enabled, it adds the **Server name**, **Client cert**, and **Client key** fields. The client provides a certificate that is validated by the server to establish the client's trusted identity. The client key encrypts the data between client and server. These details are encrypted and stored in the Grafana database.
+
+   **Add self-signed certificate**
+   : Activate this option to using a self-signed TLS certificate. You can add your own Certificate Authority (CA) certificate on top of one generated by the certificate authorities for additional security measure.
+
+   **Skip TLS certification validation**
+   : When activated, it bypasses TLS certificate verification. Not recommended, unless absolutely necessary for testing.
+
+1. Optional: Add **HTTP Headers**. You can pass along additional context and metadata data about the request and response. Select **Add header** to add **Header** and **Value** fields.
+
+1. Select **Save & test** to preserve your changes.
 
 ## Streaming
 
@@ -296,3 +347,67 @@ You can choose one of three options:
 | **Duration** | _(Default)_ Displays the span duration on the span bar row.                                                                      |
 | **Tag**      | Displays the span tag on the span bar row. You must also specify which tag key to use to get the tag value, such as `component`. |
 
+## Provision the data source
+
+You can define and configure the Tempo data source in YAML files as part of Grafana's provisioning system.
+Provisioning is primarily used Grafana instances that do not use Grafana Cloud.
+
+Using a configuration file lets you use version control to manage file changes.
+Any changes made to the file are tracked in your version control system, such as Git, and can be updated or rolled back as needed.
+
+For more information about provisioning and available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
+
+### Example file
+
+This example provision YAML file sets up the equivalents of the options available in the Tempo data source user interface.
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Tempo
+    type: tempo
+    uid: EbPG8fYoz
+    url: http://localhost:3200
+    access: proxy
+    basicAuth: false
+    jsonData:
+      tracesToLogsV2:
+        # Field with an internal link pointing to a logs data source in Grafana.
+        # datasourceUid value must match the uid value of the logs data source.
+        datasourceUid: 'loki'
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
+        tags: ['job', 'instance', 'pod', 'namespace']
+        filterByTraceID: false
+        filterBySpanID: false
+        customQuery: true
+        query: 'method="$${__span.tags.method}"'
+      tracesToMetrics:
+        datasourceUid: 'prom'
+        spanStartTimeShift: '1h'
+        spanEndTimeShift: '-1h'
+        tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
+        queries:
+          - name: 'Sample query'
+            query: 'sum(rate(traces_spanmetrics_latency_bucket{$$__tags}[5m]))'
+      tracesToProfiles:
+        datasourceUid: 'grafana-pyroscope-datasource'
+        tags: ['job', 'instance', 'pod', 'namespace']
+        profileTypeId: 'process_cpu:cpu:nanoseconds:cpu:nanoseconds'
+        customQuery: true
+        query: 'method="$${__span.tags.method}"'
+      serviceMap:
+        datasourceUid: 'prometheus'
+      nodeGraph:
+        enabled: true
+      search:
+        hide: false
+      traceQuery:
+        timeShiftEnabled: true
+        spanStartTimeShift: '1h'
+        spanEndTimeShift: '-1h'
+      spanBar:
+        type: 'Tag'
+        tag: 'http.path'
+```
