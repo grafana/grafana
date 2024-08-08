@@ -94,7 +94,7 @@ export const DataLinksInlineEditor = ({
     if (showOneClick) {
       return (
         <div className={styles.oneClickOverlay} key={key}>
-          <span className={styles.oneClickSpan}>One-click</span>
+          <span className={styles.oneClickSpan}>One-click link</span>
           {linkJSX}
         </div>
       );
@@ -112,16 +112,18 @@ export const DataLinksInlineEditor = ({
                 const key = `${link.title}/${idx}`;
 
                 const linkJSX = (
-                  <DataLinksListItem
-                    key={key}
-                    index={idx}
-                    link={link}
-                    onChange={onDataLinkChange}
-                    onEdit={() => setEditIndex(idx)}
-                    onRemove={() => onDataLinkRemove(idx)}
-                    data={data}
-                    itemKey={key}
-                  />
+                  <div className={styles.itemWrapper}>
+                    <DataLinksListItem
+                      key={key}
+                      index={idx}
+                      link={link}
+                      onChange={onDataLinkChange}
+                      onEdit={() => setEditIndex(idx)}
+                      onRemove={() => onDataLinkRemove(idx)}
+                      data={data}
+                      itemKey={key}
+                    />
+                  </div>
                 );
 
                 if (idx === 0) {
@@ -156,7 +158,7 @@ export const DataLinksInlineEditor = ({
         </Modal>
       )}
 
-      <Button size="sm" icon="plus" onClick={onDataLinkAdd} variant="secondary">
+      <Button size="sm" icon="plus" onClick={onDataLinkAdd} variant="secondary" className={styles.button}>
         Add link
       </Button>
     </>
@@ -168,19 +170,24 @@ const getDataLinksInlineEditorStyles = (theme: GrafanaTheme2) => ({
     marginBottom: theme.spacing(2),
     display: 'flex',
     flexDirection: 'column',
-    gap: 16,
   }),
   oneClickOverlay: css({
     height: 'auto',
-    minHeight: 69,
-    border: `1px dashed ${theme.colors.border.medium}`,
+    border: `2px dashed ${theme.colors.text.link}`,
     fontSize: 10,
-    color: theme.colors.text.link,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing(1),
   }),
   oneClickSpan: css({
     padding: 10,
     // Negates the padding on the span from moving the underlying link
     marginBottom: -10,
     display: 'inline-block',
+  }),
+  itemWrapper: css({
+    padding: '4px 8px 8px 8px',
+  }),
+  button: css({
+    marginLeft: theme.spacing(1),
   }),
 });
