@@ -45,6 +45,19 @@ export interface FormConfig extends Omit<TextConfig, 'valign'> {
   formElements?: FormChild[];
 }
 
+const defaultFormElementsConfig: FormChild[] = [
+  {
+    id: 'default-select-item-1',
+    type: FormElementType.Select,
+    title: 'Select item title',
+  },
+  {
+    id: 'default-submit-item-1',
+    type: FormElementType.Submit,
+    title: 'Submit item title',
+  },
+];
+
 const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
   const { data, config } = props;
   const styles = useStyles2(getStyles(data));
@@ -168,8 +181,8 @@ export const formItem: CanvasElementItem<FormConfig, FormData> = {
   hasEditMode: true,
 
   defaultSize: {
-    width: 100,
-    height: 50,
+    width: 250,
+    height: 120,
   },
 
   getNewOptions: (options) => ({
@@ -180,7 +193,7 @@ export const formItem: CanvasElementItem<FormConfig, FormData> = {
         fixed: defaultThemeTextColor,
       },
       size: 16,
-      formElements: options?.config.formElements ?? [],
+      formElements: options?.config.formElements ?? defaultFormElementsConfig,
     },
     placement: {
       width: options?.placement?.width ?? 100,
