@@ -45,7 +45,7 @@ export const Page = () => {
     monacoLanguageRegistry.setInit(getDefaultMonacoLanguages);
     setMonacoEnv();
 
-    setURL(urls[idx]);
+    setURL(urls[idx]); // Remove to start at the generic landing page
     return urls;
   });
 
@@ -66,10 +66,15 @@ export const Page = () => {
             <img height="40" src="public/img/grafana_icon.svg" alt="Grafana" />
             <Select
               options={urls.value}
+              isClearable={true}
               onChange={(v) => {
                 const url = new URL(window.location.href);
-                url.searchParams.set('api', v.label ?? '');
                 url.hash = '';
+                if (v?.label) {
+                  url.searchParams.set('api', v.label);
+                } else {
+                  url.searchParams.delete('api');
+                }
                 history.pushState(null, '', url);
                 setURL(v);
               }}
@@ -91,6 +96,11 @@ export const Page = () => {
             responseInterceptor={responseInterceptor}
           />
         )}
+
+        {!(url?.value) && (<div>
+          TODO... api landing page...??
+        </div>)}
+
       </ThemeProvider>
     </div>
   );

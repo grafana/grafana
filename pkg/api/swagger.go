@@ -12,33 +12,40 @@ import (
 
 func (hs *HTTPServer) registerSwaggerUI(r routing.RouteRegister) {
 	// Deprecated
+	r.Get("/swaggger", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "api", http.StatusMovedPermanently)
+	})
+	// Deprecated
 	r.Get("/swagger-ui", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "swagger", http.StatusMovedPermanently)
+		http.Redirect(w, r, "api", http.StatusMovedPermanently)
 	})
 	// Deprecated
 	r.Get("/openapi3", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "swagger?show=v3", http.StatusMovedPermanently)
+		http.Redirect(w, r, "api", http.StatusMovedPermanently)
 	})
 
-	r.Get("/swagger", func(c *contextmodel.ReqContext) {
-		ctx := c.Context.Req.Context()
-		assets, err := webassets.GetWebAssets(ctx, hs.Cfg, hs.License)
-		if err != nil {
-			errhttp.Write(ctx, err, c.Resp)
-			return
-		}
+	// The swagger based api navigator
+	r.Get("/api", hs.apiDocs)
+}
 
-		data := map[string]any{
-			"Nonce":          c.RequestNonce,
-			"Assets":         assets,
-			"FavIcon":        "public/img/fav32.png",
-			"AppleTouchIcon": "public/img/apple-touch-icon.png",
-		}
-		if hs.Cfg.CSPEnabled {
-			data["CSPEnabled"] = true
-			data["CSPContent"] = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, hs.Cfg.AppURL, c.RequestNonce)
-		}
+func (hs *HTTPServer) apiDocs(c *contextmodel.ReqContext) {
+	ctx := c.Context.Req.Context()
+	assets, err := webassets.GetWebAssets(ctx, hs.Cfg, hs.License)
+	if err != nil {
+		errhttp.Write(ctx, err, c.Resp)
+		return
+	}
 
-		c.HTML(http.StatusOK, "swagger", data)
-	})
+	data := map[string]any{
+		"Nonce":          c.RequestNonce,
+		"Assets":         assets,
+		"FavIcon":        "public/img/fav32.png",
+		"AppleTouchIcon": "public/img/apple-touch-icon.png",
+	}
+	if hs.Cfg.CSPEnabled {
+		data["CSPEnabled"] = true
+		data["CSPContent"] = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, hs.Cfg.AppURL, c.RequestNonce)
+	}
+
+	c.HTML(http.StatusOK, "swagger", data)
 }
