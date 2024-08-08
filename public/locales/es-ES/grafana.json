@@ -325,6 +325,7 @@
     },
     "save": "Guardar"
   },
+  "complete": "",
   "connections": {
     "connect-data": {
       "category-header-label": "Orígenes de datos",
@@ -1115,10 +1116,11 @@
       "error-see-server-logs": "",
       "get-session-error-title": "",
       "get-snapshot-error-title": "",
+      "migration-finished-with-caveat-title": "",
+      "migration-finished-with-errors-body": "",
+      "migration-finished-with-warnings-body": "",
       "snapshot-error-status-body": "",
       "snapshot-error-status-title": "",
-      "some-resources-errored-body": "",
-      "some-resources-errored-title": "",
       "upload-snapshot-error-title": ""
     },
     "pdc": {
@@ -1136,12 +1138,14 @@
       "message": "",
       "title": ""
     },
-    "resource-error": {
+    "resource-details": {
       "dismiss-button": "",
+      "error-title": "",
+      "generic-title": "",
+      "missing-message": "",
       "resource-summary": "",
-      "specific-error": "",
       "title": "",
-      "unknown-error": ""
+      "warning-title": ""
     },
     "resource-status": {
       "error-details-button": "Detalles",
@@ -1149,7 +1153,9 @@
       "migrated": "Se ha subido a la nube",
       "migrating": "Subiendo...",
       "not-migrated": "Aún no se ha subido",
-      "unknown": "Desconocido"
+      "unknown": "Desconocido",
+      "warning": "",
+      "warning-details-button": ""
     },
     "resource-table": {
       "unknown-datasource-title": "",
@@ -1174,6 +1180,9 @@
       "target-stack-title": "",
       "total-resource-count": "",
       "upload-migration": ""
+    },
+    "support-types-disclosure": {
+      "text": ""
     },
     "token-status": {
       "active": "Token creado y activo",
