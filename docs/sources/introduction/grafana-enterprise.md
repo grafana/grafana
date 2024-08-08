@@ -83,6 +83,7 @@ With a Grafana Enterprise license, you also get access to premium data sources, 
 - [CockroachDB](/grafana/plugins/grafana-cockroachdb-datasource)
 - [Databricks](/grafana/plugins/grafana-databricks-datasource)
 - [DataDog](/grafana/plugins/grafana-datadog-datasource)
+- [Drone](/grafana/plugins/grafana-drone-datasource)
 - [Dynatrace](/grafana/plugins/grafana-dynatrace-datasource)
 - [Gitlab](/grafana/plugins/grafana-gitlab-datasource)
 - [Honeycomb](/grafana/plugins/grafana-honeycomb-datasource)
