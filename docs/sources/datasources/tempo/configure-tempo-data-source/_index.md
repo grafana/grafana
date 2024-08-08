@@ -44,10 +44,10 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/
-  provisioning-data-sources:
+  ing-data-sources:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-    - pattern: /docs/grafana-cloud/
+    - pattern: /docs/grafana-cloud/provision
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
   explore:
     - pattern: /docs/grafana/
@@ -62,8 +62,7 @@ The Tempo data source sets how Grafana connects to your Tempo database and lets 
 
 To configure basic settings for the Tempo data source, complete the following steps:
 
-1.  Click **Connections** in the left-side menu.
-1.  Under Your connections, click **Data sources**.
+1.  Click **Connections** in the left-side menu and select **Data sources**.
 1.  Enter `Tempo` in the search bar.
 1.  Select **Tempo**.
 
@@ -92,11 +91,9 @@ Streaming enables TraceQL query results to be displayed as they become available
 
 {{< docs/public-preview product="TraceQL streaming results" >}}
 
-### Requirements
-
 To use streaming, you need to:
 
-- Be running Tempo version 2.2 or newer, or Grafana Enterprise Traces (GET) version 2.2 or newer, or be using Grafana Cloud Traces.
+- Run Tempo version 2.2 or newer, or Grafana Enterprise Traces (GET) version 2.2 or newer, or use Grafana Cloud Traces.
 - For self-managed Tempo or GET instances: If your Tempo or GET instance is behind a load balancer or proxy that doesn't supporting gRPC or HTTP2, streaming may not work and should be disabled.
 
 ### Activate streaming
@@ -114,6 +111,7 @@ If the data source has streaming disabled and `traceQLStreaming` is set to `true
 ## Trace to logs
 
 The **Trace to logs** setting configures [trace to logs](ref:explore-trace-integration) that's available when you integrate Grafana with Tempo.
+Trace to logs can also be used with other tracing data sources, such as Jaeger and Zipkin.
 
 ![Trace to logs settings](/media/docs/tempo/tempo-trace-to-logs-9-4.png)
 
@@ -233,7 +231,7 @@ To use custom queries with the configuration, follow these steps:
 
 [//]: # 'Shared content for Trace to profiles in the Tempo data source'
 
-{{< docs/shared source="grafana" lookup="datasources/tempo-traces-to-profiles.md" leveloffset="+1" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared source="grafana" lookup="datasources/tempo-traces-to-profiles.md" leveloffset="+2" version="<GRAFANA_VERSION>" >}}
 
 ## Custom query variables
 
@@ -251,6 +249,8 @@ For example, `${__span.name}`.
 | **\_\_trace.traceId**  | The ID of the trace.                                                                                                                                                                                                                                                                                                                     |
 | **\_\_trace.duration** | The duration of the trace.                                                                                                                                                                                                                                                                                                               |
 | **\_\_trace.name**     | The name of the trace.                                                                                                                                                                                                                                                                                                                   |
+
+<!-- The sections below don't appear to be in the revised content. Are these settings in another location or should they be removed? -->
 
 ## Service Graph
 
@@ -296,60 +296,3 @@ You can choose one of three options:
 | **Duration** | _(Default)_ Displays the span duration on the span bar row.                                                                      |
 | **Tag**      | Displays the span tag on the span bar row. You must also specify which tag key to use to get the tag value, such as `component`. |
 
-## Provision the data source
-
-You can define and configure the Tempo data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning and available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
-
-Example provision YAML file:
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: Tempo
-    type: tempo
-    uid: EbPG8fYoz
-    url: http://localhost:3200
-    access: proxy
-    basicAuth: false
-    jsonData:
-      tracesToLogsV2:
-        # Field with an internal link pointing to a logs data source in Grafana.
-        # datasourceUid value must match the uid value of the logs data source.
-        datasourceUid: 'loki'
-        spanStartTimeShift: '-1h'
-        spanEndTimeShift: '1h'
-        tags: ['job', 'instance', 'pod', 'namespace']
-        filterByTraceID: false
-        filterBySpanID: false
-        customQuery: true
-        query: 'method="$${__span.tags.method}"'
-      tracesToMetrics:
-        datasourceUid: 'prom'
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '-1h'
-        tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
-        queries:
-          - name: 'Sample query'
-            query: 'sum(rate(traces_spanmetrics_latency_bucket{$$__tags}[5m]))'
-      tracesToProfiles:
-        datasourceUid: 'grafana-pyroscope-datasource'
-        tags: ['job', 'instance', 'pod', 'namespace']
-        profileTypeId: 'process_cpu:cpu:nanoseconds:cpu:nanoseconds'
-        customQuery: true
-        query: 'method="$${__span.tags.method}"'
-      serviceMap:
-        datasourceUid: 'prometheus'
-      nodeGraph:
-        enabled: true
-      search:
-        hide: false
-      traceQuery:
-        timeShiftEnabled: true
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '-1h'
-      spanBar:
-        type: 'Tag'
-        tag: 'http.path'
-```
