@@ -192,9 +192,9 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
    *  2. rename the rule group, but keeping it in the same namespace
    *  3. move the rule group to a new namespace, optionally with a different group name
    */
-  const [updateRuleGroupState, updateRuleGroup] = useUpdateRuleGroupConfiguration();
-  const [renameRuleGroupState, renameRuleGroup] = useRenameRuleGroup();
-  const [moveRuleGroupState, moveRuleGroup] = useMoveRuleGroup();
+  const [updateRuleGroup, updateRuleGroupState] = useUpdateRuleGroupConfiguration();
+  const [renameRuleGroup, renameRuleGroupState] = useRenameRuleGroup();
+  const [moveRuleGroup, moveRuleGroupState] = useMoveRuleGroup();
 
   const { loading, error } = anyOfRequestState(updateRuleGroupState, moveRuleGroupState, renameRuleGroupState);
 
