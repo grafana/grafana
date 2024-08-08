@@ -9,6 +9,7 @@ import { Stack, Select } from '@grafana/ui';
 import { setMonacoEnv } from 'app/core/monacoEnv';
 import { ThemeProvider } from 'app/core/utils/ConfigProvider';
 
+import { NamespaceContext } from './context';
 import { WrappedPlugins } from './wrapped';
 
 export const Page = () => {
@@ -49,6 +50,16 @@ export const Page = () => {
     return urls;
   });
 
+  const namespace = useAsync(async () => {
+    const response = await fetch("api/frontend/settings");
+    if (!response.ok) {
+      console.warn('No settings found');
+      return '';
+    }
+    const val = await response.json();
+    return val.namespace;
+  });
+
   const onComplete = (system: any) => {
     console.log("COMPLETE:", { system });
   };
@@ -61,6 +72,7 @@ export const Page = () => {
   return (
     <div>
       <ThemeProvider value={theme}>
+        <NamespaceContext.Provider value={namespace.value} >
         <div className="topbar" style={{ backgroundColor: '#000', padding: '10px' }}>
           <Stack justifyContent={'space-between'}>
             <img height="40" src="public/img/grafana_icon.svg" alt="Grafana" />
@@ -100,7 +112,7 @@ export const Page = () => {
         {!(url?.value) && (<div>
           TODO... api landing page...??
         </div>)}
-
+        </NamespaceContext.Provider>
       </ThemeProvider>
     </div>
   );
