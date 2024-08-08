@@ -1,18 +1,25 @@
+import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import { Fragment, useCallback } from 'react';
+import { useCallback } from 'react';
 
-import { SelectableValue, StandardEditorProps } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
+import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { APIEditor, APIEditorConfig } from 'app/plugins/panel/canvas/editor/element/APIEditor';
 
 import { defaultApiConfig } from '../../button';
 import { FormElementType } from '../form';
 
+import { NumberInputEditor } from './NumberInputEditor';
 import { SelectionEditor } from './SelectionEditor';
+import { TextInputEditor } from './TextInputEditor';
+import { updateAPIPayload } from './utils';
 
 export interface FormChild {
   id: string;
   type: string;
+  title: string;
   options?: Array<[string, string]>;
   currentOption?: [string, string];
   api?: APIEditorConfig;
@@ -27,8 +34,11 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
     { value: FormElementType.Select, label: 'Select' },
     { value: FormElementType.TextInput, label: 'Text input' },
     { value: FormElementType.DateRangePicker, label: 'Date range picker' },
-    { value: 'Submit', label: 'Submit' },
+    { value: FormElementType.NumberInput, label: 'Number input' },
+    { value: FormElementType.Submit, label: 'Submit' },
   ];
+
+  const styles = useStyles2(getStyles);
 
   const onChangeElementType = useCallback(
     (sel: SelectableValue<string>) => {
@@ -39,11 +49,21 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
       }
 
       const id = uniqueId('form-element-');
-      let newFormElement: FormChild = { id, type: sel.value ?? '' };
+      let newFormElement: FormChild = { id, type: sel.value ?? '', title: id };
       if (sel.value === 'Submit') {
         newFormElement = { ...newFormElement, api: defaultApiConfig };
+        onChange([...value, newFormElement]);
+      } else {
+        // insert newFormElement just before the submit button
+        const submitIndex = value.findIndex((child) => child.type === 'Submit');
+        if (submitIndex === -1) {
+          onChange([...value, newFormElement]);
+        } else {
+          const newElements = [...value];
+          newElements.splice(submitIndex, 0, newFormElement);
+          onChange(newElements);
+        }
       }
-      onChange([...value, { id, type: sel.value ?? '' }]);
     },
     [onChange, value]
   );
@@ -70,21 +90,98 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
         return child;
       });
       onChange(newElements);
+      updateAPIPayload(newElements);
+    },
+    [onChange, value]
+  );
+
+  const onTextInputOptionsChange = useCallback(
+    (newValue: string, id: string) => {
+      const newElements: FormChild[] = value.map((child) => {
+        if (child.id === id) {
+          return { ...child, title: newValue, currentOption: [newValue, child.currentOption?.[1]!] };
+        }
+        return child;
+      });
+      onChange(newElements);
+      updateAPIPayload(newElements);
+    },
+    [onChange, value]
+  );
+
+  const onSelectionItemTitleChange = useCallback(
+    (newTitle: string, id: string) => {
+      const newElements = value.map((child) => {
+        if (child.id === id) {
+          return { ...child, title: newTitle };
+        }
+        return child;
+      });
+
+      onChange(newElements);
+    },
+    [onChange, value]
+  );
+
+  const onNumberInputTitleChange = useCallback(
+    (newTitle: string, id: string) => {
+      const newElements: FormChild[] = value.map((child) => {
+        if (child.id === id) {
+          return { ...child, title: newTitle, currentOption: [newTitle, child.currentOption?.[1]!] };
+        }
+        return child;
+      });
+
+      onChange(newElements);
+      updateAPIPayload(newElements);
     },
     [onChange, value]
   );
 
   const children = value.map((child, i) => {
+    let element;
+
     switch (child.type) {
-      case 'Select':
-        return (
+      case FormElementType.Select:
+        element = (
           <SelectionEditor
+            title={child.title}
             options={child.options ?? []}
-            onChange={(newParams) => onOptionsChange(newParams, child.id)}
+            onParamsChange={(newParams) => onOptionsChange(newParams, child.id)}
+            onTitleChange={(v) => onSelectionItemTitleChange(v, child.id)}
           />
         );
-      case 'Submit':
-        return (
+        return {
+          element,
+          properties: child,
+        };
+
+      case FormElementType.TextInput:
+        element = (
+          <TextInputEditor
+            title={child.title}
+            onChange={(newValue) => onTextInputOptionsChange(newValue, child.id)}
+            currentOption={child.currentOption}
+          />
+        );
+        return {
+          element,
+          properties: child,
+        };
+      case FormElementType.NumberInput:
+        element = (
+          <NumberInputEditor
+            title={child.title}
+            onChange={(newValue) => onNumberInputTitleChange(newValue, child.id)}
+            currentOption={child.currentOption}
+          />
+        );
+        return {
+          element,
+          properties: child,
+        };
+      case FormElementType.Submit:
+        element = (
           <APIEditor
             item={item}
             value={value[i].api!}
@@ -92,17 +189,39 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
             onChange={(apiConfig) => onAPIConfigChange(apiConfig!, child.id)}
           />
         );
+        return {
+          element,
+          properties: child,
+        };
+
       default:
-        return null;
+        return {
+          element: null,
+          properties: null,
+        };
     }
   });
 
   return (
     <>
       <AddLayerButton onChange={onChangeElementType} options={typeOptions} label={'Add element type'} />
-      {children.map((child, i) => (
-        <Fragment key={i}>{child}</Fragment>
-      ))}
+      <div className={styles.optionsContainer}>
+        {children.map((child, i) => (
+          <OptionsPaneCategory
+            id={i.toString()}
+            key={i}
+            title={child.properties?.type !== 'Submit' ? child.properties?.title : 'Submit'}
+          >
+            {child.element}
+          </OptionsPaneCategory>
+        ))}
+      </div>
     </>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  optionsContainer: css({
+    marginTop: theme.spacing(1),
+  }),
+});
