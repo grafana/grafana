@@ -133,6 +133,15 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
     onGenerateVisualization(selectedElements, layer);
   };
 
+  const shouldShowGenerateVizButton = () => {
+    if (selection.length > 0) {
+      const onlyVizSelected = settings.selected.every((element) => element.options.type === 'visualization');
+      return !onlyVizSelected;
+    }
+
+    return false;
+  };
+
   const typeOptions = getElementTypes(settings.scene.shouldShowAdvancedTypes).options;
 
   return (
@@ -172,7 +181,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
         )}
       </Stack>
       <Stack justifyContent="space-between" direction="row">
-        {selection.length > 0 && (
+        {shouldShowGenerateVizButton() && (
           <div className={styles.generateVizWrapper}>
             <Button size="sm" variant="secondary" onClick={onGenerateViz}>
               Generate visualization

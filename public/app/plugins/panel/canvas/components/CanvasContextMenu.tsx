@@ -97,7 +97,8 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
 
         if (selectedElements.length === 1) {
           const element = findElementByTarget(selectedElements[0], scene.root.elements);
-          skipVizMenuItem = element?.options.type === 'visualization' || element?.data.field === '';
+          skipVizMenuItem =
+            element?.options.type === 'visualization' || (element?.data.field && element?.data.field === '');
         }
 
         if (!skipVizMenuItem) {
