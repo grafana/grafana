@@ -1623,10 +1623,14 @@
   "plugins": {
     "details": {
       "labels": {
-        "info": "<0>{infoItem.label}: </0>",
-        "links": "<0>{link.name}</0>",
-        "reportAbuse": "<0>Report Abuse</0>",
-        "updatedAt": "<0>Last updated: </0> "
+        "dependencies": "Dependencies",
+        "downloads": "Downloads",
+        "from": "From",
+        "reportAbuse": "Report Abuse",
+        "signature": "Signature",
+        "status": "Status",
+        "updatedAt": "Last updated: ",
+        "version": "Version"
       }
     },
     "empty-state": {

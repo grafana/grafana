@@ -1623,10 +1623,14 @@
   "plugins": {
     "details": {
       "labels": {
-        "info": "<0>{įŉƒőĨŧęm.ľäþęľ}: </0>",
-        "links": "<0>{ľįŉĸ.ŉämę}</0>",
-        "reportAbuse": "<0>Ŗępőřŧ Åþūşę</0>",
-        "updatedAt": "<0>Ŀäşŧ ūpđäŧęđ: </0> "
+        "dependencies": "Đępęŉđęŉčįęş",
+        "downloads": "Đőŵŉľőäđş",
+        "from": "Fřőm",
+        "reportAbuse": "Ŗępőřŧ Åþūşę",
+        "signature": "Ŝįģŉäŧūřę",
+        "status": "Ŝŧäŧūş",
+        "updatedAt": "Ŀäşŧ ūpđäŧęđ: ",
+        "version": "Vęřşįőŉ"
       }
     },
     "empty-state": {
