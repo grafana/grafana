@@ -245,6 +245,12 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       name: 'Netlify',
       imgUrl: 'public/img/plugins/netlify.svg',
     }),
+    getPhantomPlugin({
+      id: 'grafana-drone-datasource',
+      description: 'Drone datasource',
+      name: 'Drone',
+      imgUrl: 'public/img/plugins/drone.svg',
+    }),
   ];
 }
 
