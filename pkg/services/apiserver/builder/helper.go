@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	goruntime "runtime"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -18,11 +17,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/apimachinery/pkg/version"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/util/openapi"
+	utilversion "k8s.io/apiserver/pkg/util/version"
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	k8stracing "k8s.io/component-base/tracing"
 	"k8s.io/kube-openapi/pkg/common"
@@ -126,18 +125,8 @@ func SetupConfig(
 	if err != nil {
 		return err
 	}
-	before, after, _ := strings.Cut(buildVersion, ".")
-	serverConfig.Version = &version.Info{
-		Major:        before,
-		Minor:        after,
-		GoVersion:    goruntime.Version(),
-		Platform:     fmt.Sprintf("%s/%s", goruntime.GOOS, goruntime.GOARCH),
-		Compiler:     goruntime.Compiler,
-		GitTreeState: buildBranch,
-		GitCommit:    buildCommit,
-		BuildDate:    time.Unix(buildTimestamp, 0).UTC().Format(time.DateTime),
-		GitVersion:   k8sVersion,
-	}
+	serverConfig.EffectiveVersion = utilversion.NewEffectiveVersion(k8sVersion)
+
 	return nil
 }
 
