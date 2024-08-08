@@ -5,7 +5,7 @@ import { useObservable } from 'react-use';
 import { Subject } from 'rxjs';
 
 import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { IconButton, useStyles2 } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { APIEditor, APIEditorConfig } from 'app/plugins/panel/canvas/editor/element/APIEditor';
@@ -180,6 +180,15 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
     [onChange, value]
   );
 
+  const onRemoveElement = useCallback(
+    (id: string) => {
+      const newElements = value.filter((child) => child.id !== id);
+      onChange(newElements);
+      updateAPIPayload(newElements, scene);
+    },
+    [onChange, value, scene]
+  );
+
   const children = value.map((child, i) => {
     let element;
 
@@ -280,6 +289,9 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
             id={i.toString()}
             key={i}
             title={child.properties?.type !== 'Submit' ? child.properties?.title : 'Submit'}
+            headerItems={
+              <IconButton aria-label="delete" onClick={() => onRemoveElement(child.properties?.id!)} name="trash-alt" />
+            }
           >
             {child.element}
           </OptionsPaneCategory>
