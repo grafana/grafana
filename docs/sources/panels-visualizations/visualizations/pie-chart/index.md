@@ -37,7 +37,7 @@ The following video guides you through the creation steps and common customizati
 
 ## Supported data formats
 
-The pie chart visualization requires a dataset with at least one row of numeric values to be added together. If the first row contains column titles, it's used to display and identify the values in the pie chart. Cells with non-numeric values are not displayed in the pie chart.
+The pie chart visualization requires a dataset with at least one row of numeric values to be added together to make up the complete pie. If the first row contains column titles, they're used to label the slices of the pie chart and appear in the legend. Cells with non-numeric values are not displayed in the pie chart.
 
 Example:
 
@@ -48,7 +48,7 @@ Example:
 
 If the dataset contains multiple rows, the visualization displays the last row by default, but multiple rows can be configured as described in the [Value options](#value-options) section. If you configure multiple rows to be displayed, the panel concatenates the text fields of each row with the numeric column titles.
 
-It is recommended to use only one data set with the pie chart, if multiple data sets are present the numeric values configured in the _Value options_ section will be added up and displayed from all the data sets.
+We recommend you only use one data set with the pie chart. If you have multiple datasets, the numeric values configured in the **Value options** section will be added up and displayed from all the datasets.
 
 ## Panel options
 
