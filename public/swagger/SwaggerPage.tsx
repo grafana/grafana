@@ -15,8 +15,8 @@ export const Page = () => {
   const theme = createTheme({ colors: { mode: 'light' } });
   const [url, setURL] = useState<SelectableValue<string>>();
   const urls = useAsync(async () => {
-    const v2 = { label: 'Grafana API (OpenAPI v2)', key:'openapi2', value: 'public/api-merged.json' };
-    const v3 = { label: 'Grafana API (OpenAPI v3)', key:'openapi3', value: 'public/openapi3.json' };
+    const v2 = { label: 'Grafana API (OpenAPI v2)', key: 'openapi2', value: 'public/api-merged.json' };
+    const v3 = { label: 'Grafana API (OpenAPI v3)', key: 'openapi3', value: 'public/openapi3.json' };
     const urls: Array<SelectableValue<string>> = [v2, v3];
 
     const rsp = await fetch('openapi/v3');
@@ -51,7 +51,7 @@ export const Page = () => {
   });
 
   const namespace = useAsync(async () => {
-    const response = await fetch("api/frontend/settings");
+    const response = await fetch('api/frontend/settings');
     if (!response.ok) {
       console.warn('No settings found');
       return '';
@@ -63,44 +63,35 @@ export const Page = () => {
   return (
     <div>
       <ThemeProvider value={theme}>
-        <NamespaceContext.Provider value={namespace.value} >
-        <div style={{ backgroundColor: '#000', padding: '10px' }}>
-          <Stack justifyContent={'space-between'}>
-            <img height="40" src="public/img/grafana_icon.svg" alt="Grafana" />
-            <Select
-              options={urls.value}
-              isClearable={true}
-              onChange={(v) => {
-                const url = new URL(window.location.href);
-                url.hash = '';
-                if (v?.key) {
-                  url.searchParams.set('api', v.key);
-                } else {
-                  url.searchParams.delete('api');
-                }
-                history.pushState(null, '', url);
-                setURL(v);
-              }}
-              value={url}
-              isLoading={urls.loading}
-            />
-          </Stack>
-        </div>
+        <NamespaceContext.Provider value={namespace.value}>
+          <div style={{ backgroundColor: '#000', padding: '10px' }}>
+            <Stack justifyContent={'space-between'}>
+              <img height="40" src="public/img/grafana_icon.svg" alt="Grafana" />
+              <Select
+                options={urls.value}
+                isClearable={true}
+                onChange={(v) => {
+                  const url = new URL(window.location.href);
+                  url.hash = '';
+                  if (v?.key) {
+                    url.searchParams.set('api', v.key);
+                  } else {
+                    url.searchParams.delete('api');
+                  }
+                  history.pushState(null, '', url);
+                  setURL(v);
+                }}
+                value={url}
+                isLoading={urls.loading}
+              />
+            </Stack>
+          </div>
 
-        {url?.value && (
-          <SwaggerUI
-            url={url.value}
-            presets={[
-              WrappedPlugins,
-            ]}
-            deepLinking={true}
-            tryItOutEnabled={true}
-          />
-        )}
+          {url?.value && (
+            <SwaggerUI url={url.value} presets={[WrappedPlugins]} deepLinking={true} tryItOutEnabled={true} />
+          )}
 
-        {!(url?.value) && (<div>
-          TODO... api landing page...??
-        </div>)}
+          {!url?.value && <div>TODO... api landing page...??</div>}
         </NamespaceContext.Provider>
       </ThemeProvider>
     </div>

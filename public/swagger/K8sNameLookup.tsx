@@ -32,9 +32,10 @@ export function K8sNameLookup(props: Props) {
           ? `apis/${group}/${version}/namespaces/${namespace}/${resource}`
           : `apis/${group}/${version}/${resource}`;
 
-        const response = await fetch(url+'?limit=100', {
+        const response = await fetch(url + '?limit=100', {
           headers: {
-            Accept: 'application/json;as=Table;v=v1;g=meta.k8s.io,application/json;as=Table;v=v1beta1;g=meta.k8s.io,application/jso',
+            Accept:
+              'application/json;as=Table;v=v1;g=meta.k8s.io,application/json;as=Table;v=v1beta1;g=meta.k8s.io,application/jso',
           },
         });
         if (!response.ok) {
@@ -45,10 +46,10 @@ export function K8sNameLookup(props: Props) {
         const table = await response.json();
         const options: Array<SelectableValue<string>> = [];
         table.rows.forEach((row: any) => {
-            const n = row.object?.metadata?.name;
-            if (n) {
-                options.push({label:n, value: n})
-            }
+          const n = row.object?.metadata?.name;
+          if (n) {
+            options.push({ label: n, value: n });
+          }
         });
         console.log('DO QUERY', table);
         setLoading(false);
@@ -66,7 +67,7 @@ export function K8sNameLookup(props: Props) {
             {(info) => {
               // delay avoids Cannot update a component
               setTimeout(() => {
-                console.log("INFO", info);
+                console.log('INFO', info);
                 setNamespace(namespace);
                 setGroup(info?.group);
                 setVersion(info?.version);

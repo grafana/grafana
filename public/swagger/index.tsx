@@ -15,13 +15,13 @@ if (window.nonce) {
   __webpack_nonce__ = window.nonce;
 }
 
-import "swagger-ui-react/swagger-ui.css"
+import 'swagger-ui-react/swagger-ui.css';
 
 import { createRoot } from 'react-dom/client';
 
-import {Page} from './SwaggerPage';
+import { Page } from './SwaggerPage';
 
-window.onload = () => { 
+window.onload = () => {
   // the trailing slash breaks relative URL loading
   if (window.location.pathname.endsWith('/')) {
     const idx = window.location.href.lastIndexOf('/');
@@ -31,9 +31,9 @@ window.onload = () => {
 
   const rootElement = document.getElementById('root');
   if (!rootElement) {
-    alert("unable to find root element");
-    return
+    alert('unable to find root element');
+    return;
   }
   const root = createRoot(rootElement);
   root.render(<Page />);
-}
+};
