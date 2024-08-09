@@ -6,7 +6,7 @@ import { TextInputProps } from './TextInput';
 
 export const TextInputEditor = ({ onChange, currentOption }: TextInputProps) => {
   const key = Object.keys(currentOption?.[0] ?? {})[0];
-  const [value, setValue] = useState(currentOption?.[0][key]);
+  const [value, setValue] = useState(key);
 
   return (
     <Field label="Text input title">
