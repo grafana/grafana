@@ -42,7 +42,7 @@ export class ExportedComponentRegistry extends Registry<RegistryType> {
         continue;
       }
 
-      registry[id] = config;
+      registry[id] = { ...config, pluginId };
     }
 
     return registry;
