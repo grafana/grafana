@@ -47,7 +47,7 @@ func (s *dashboardStorage) newStore(scheme *runtime.Scheme, defaultOptsGetter ge
 		defaultOpts.StorageConfig.Config,
 	)
 
-	strategy := grafanaregistry.NewStrategy(scheme)
+	strategy := NewBlobStrategy(scheme)
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
@@ -59,7 +59,8 @@ func (s *dashboardStorage) newStore(scheme *runtime.Scheme, defaultOptsGetter ge
 		CreateStrategy:            strategy,
 		UpdateStrategy:            strategy,
 		DeleteStrategy:            strategy,
-		TableConvertor:            s.tableConverter,
+		//		BeginCreate: ,
+		TableConvertor: s.tableConverter,
 	}
 
 	options := &generic.StoreOptions{RESTOptions: optsGetter}
