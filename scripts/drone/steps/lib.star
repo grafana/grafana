@@ -551,6 +551,7 @@ def test_backend_step():
         ],
         "commands": [
             "set -o pipefail",
+            "go install github.com/bazelbuild/buildtools/buildifier@latest",
             # shared-mime-info and shared-mime-info-lang is used for exactly 1 test for the
             # mime.TypeByExtension function.
             "apk add --update build-base shared-mime-info shared-mime-info-lang bash",

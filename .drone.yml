@@ -397,6 +397,7 @@ steps:
   name: wire-install
 - commands:
   - set -o pipefail
+  - go install github.com/bazelbuild/buildtools/buildifier@latest
   - apk add --update build-base shared-mime-info shared-mime-info-lang bash
   - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
     -short -covermode=atomic -timeout=5m
@@ -1788,6 +1789,7 @@ steps:
   name: wire-install
 - commands:
   - set -o pipefail
+  - go install github.com/bazelbuild/buildtools/buildifier@latest
   - apk add --update build-base shared-mime-info shared-mime-info-lang bash
   - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
     -short -covermode=atomic -timeout=5m
@@ -2994,6 +2996,7 @@ steps:
   name: wire-install
 - commands:
   - set -o pipefail
+  - go install github.com/bazelbuild/buildtools/buildifier@latest
   - apk add --update build-base shared-mime-info shared-mime-info-lang bash
   - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
     -short -covermode=atomic -timeout=5m
@@ -4388,6 +4391,7 @@ steps:
   name: wire-install
 - commands:
   - set -o pipefail
+  - go install github.com/bazelbuild/buildtools/buildifier@latest
   - apk add --update build-base shared-mime-info shared-mime-info-lang bash
   - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
     -short -covermode=atomic -timeout=5m
@@ -4812,6 +4816,7 @@ steps:
   name: wire-install
 - commands:
   - set -o pipefail
+  - go install github.com/bazelbuild/buildtools/buildifier@latest
   - apk add --update build-base shared-mime-info shared-mime-info-lang bash
   - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
     -short -covermode=atomic -timeout=5m
@@ -5239,6 +5244,7 @@ steps:
   image: golang:1.22.4-windowsservercore-1809
   name: wire-install
 - commands:
+  - go install github.com/bazelbuild/buildtools/buildifier@latest
   - go test -tags requires_buildifier -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
@@ -6117,6 +6123,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: de9f1456229cd4d17e761edfe382f85128ff981988da8cb94af88190cf5d6bdb
+hmac: 552053eafdc213f0c07824cd30249f8d4aaa1da33e5aa7008f6d25e979867aed
 
 ...
