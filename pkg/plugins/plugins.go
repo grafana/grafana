@@ -503,6 +503,7 @@ const (
 	ClassCore     Class = "core"
 	ClassBundled  Class = "bundled"
 	ClassExternal Class = "external"
+	ClassCDN      Class = "cdn"
 )
 
 func (c Class) String() string {
