@@ -85,8 +85,14 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 		"namespaceUid",
 		namespace.UID,
 	}
-	if group != "" {
-		loggerCtx = append(loggerCtx, "group", group)
+
+	finalGroup, err := getRulesGroupParam(c, group)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "")
+	}
+
+	if finalGroup != "" {
+		loggerCtx = append(loggerCtx, "group", finalGroup)
 	}
 	logger := srv.log.New(loggerCtx...)
 
@@ -97,11 +103,11 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 
 	err = srv.xactManager.InTransaction(c.Req.Context(), func(ctx context.Context) error {
 		deletionCandidates := map[ngmodels.AlertRuleGroupKey]ngmodels.RulesGroup{}
-		if group != "" {
+		if finalGroup != "" {
 			key := ngmodels.AlertRuleGroupKey{
 				OrgID:        c.SignedInUser.GetOrgID(),
 				NamespaceUID: namespace.UID,
-				RuleGroup:    group,
+				RuleGroup:    finalGroup,
 			}
 			rules, err := srv.getAuthorizedRuleGroup(ctx, c, key)
 			if err != nil {
@@ -218,9 +224,14 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 		return toNamespaceErrorResponse(err)
 	}
 
+	finalRuleGroup, err := getRulesGroupParam(c, ruleGroup)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "")
+	}
+
 	rules, err := srv.getAuthorizedRuleGroup(c.Req.Context(), c, ngmodels.AlertRuleGroupKey{
 		OrgID:        c.SignedInUser.GetOrgID(),
-		RuleGroup:    ruleGroup,
+		RuleGroup:    finalRuleGroup,
 		NamespaceUID: namespace.UID,
 	})
 	if err != nil {
@@ -234,7 +245,7 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 
 	result := apimodels.RuleGroupConfigResponse{
 		// nolint:staticcheck
-		GettableRuleGroupConfig: toGettableRuleGroupConfig(ruleGroup, rules, provenanceRecords),
+		GettableRuleGroupConfig: toGettableRuleGroupConfig(finalRuleGroup, rules, provenanceRecords),
 	}
 	return response.JSON(http.StatusAccepted, result)
 }
