@@ -128,6 +128,10 @@ func (ss *sqlStore) DeleteMigrationSessionByUID(ctx context.Context, uid string)
 		return err
 	})
 
+	if err := ss.decryptToken(ctx, &c); err != nil {
+		return &c, err
+	}
+
 	return &c, err
 }
 
