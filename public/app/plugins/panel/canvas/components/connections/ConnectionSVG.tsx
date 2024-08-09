@@ -572,14 +572,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     pointerEvents: 'none',
     width: '100%',
     height: '100%',
-    zIndex: 1000,
+    // TODO add this back in
+    // zIndex: 1000,
     display: 'none',
   }),
   connection: css({
     position: 'absolute',
     width: '100%',
     height: '100%',
-    zIndex: 1000,
+    // TODO add this back in
+    // zIndex: 1000,
     pointerEvents: 'none',
   }),
   vertex: css({
