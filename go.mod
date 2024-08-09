@@ -476,7 +476,7 @@ require (
 
 require (
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
-	github.com/grafana/authlib/claims v0.0.0-20240809095826-8eb5495c0b2a // indirect
+	github.com/grafana/authlib/claims v0.0.0-20240809095826-8eb5495c0b2a
 	github.com/x448/float16 v0.8.4 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 )
