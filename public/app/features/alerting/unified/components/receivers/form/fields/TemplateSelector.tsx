@@ -376,7 +376,7 @@ function JSONTemplateSelector({ onSelect, onClose, option, valueInForm }: JSONTe
         setTemplateOption('Custom');
       }
     }
-  }, [valueInForm, setTemplate, setTemplateOption, options]);
+  }, [valueInForm, setTemplate, setTemplateOption, options, data?.json_templates]);
 
   if (error) {
     return <div>Error loading templates</div>;
@@ -422,6 +422,7 @@ function JSONTemplateSelector({ onSelect, onClose, option, valueInForm }: JSONTe
               setPayloadFormatError={() => {}}
               className={cx(styles.templatePreview, styles.minEditorSize)}
               payloadFormatError={null}
+              isJSON={true}
             />
           </Stack>
         ) : (

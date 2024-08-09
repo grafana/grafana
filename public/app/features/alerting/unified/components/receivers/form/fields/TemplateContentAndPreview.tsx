@@ -19,6 +19,7 @@ export function TemplateContentAndPreview({
   payloadFormatError,
   setPayloadFormatError,
   className,
+  isJSON,
 }: {
   payload: string;
   templateName: string;
@@ -26,13 +27,20 @@ export function TemplateContentAndPreview({
   setPayloadFormatError: (value: React.SetStateAction<string | null>) => void;
   className?: string;
   templateContent: string;
+  isJSON?: boolean;
 }) {
   const styles = useStyles2(getStyles);
 
   const { selectedAlertmanager } = useAlertmanager();
   const isGrafanaAlertManager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
 
-  const { data, error } = usePreviewTemplate(templateContent, templateName, payload, setPayloadFormatError);
+  const { data, error } = usePreviewTemplate(
+    templateContent,
+    templateName,
+    payload,
+    setPayloadFormatError,
+    isJSON ? 'json' : undefined
+  );
   const previewToRender = getPreviewResults(error, payloadFormatError, data);
 
   return (

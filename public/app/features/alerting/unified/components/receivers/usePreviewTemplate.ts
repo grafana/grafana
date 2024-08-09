@@ -7,7 +7,7 @@ export function usePreviewTemplate(
   templateName: string,
   payload: string,
   setPayloadFormatError: (value: React.SetStateAction<string | null>) => void,
-  type: string
+  type?: 'json'
 ) {
   console.log('usePreviewTemplate called with', type);
   const [trigger, { data, error, isLoading }] = usePreviewTemplateMutation();
@@ -21,7 +21,7 @@ export function usePreviewTemplate(
     } catch (e) {
       setPayloadFormatError(e instanceof Error ? e.message : 'Invalid JSON.');
     }
-  }, [templateContent, templateName, payload, setPayloadFormatError, trigger]);
+  }, [payload, trigger, templateContent, templateName, type, setPayloadFormatError]);
 
   useEffect(() => onPreview(), [onPreview]);
 
