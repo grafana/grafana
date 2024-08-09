@@ -239,6 +239,14 @@ test-go-unit: ## Run unit tests for backend with flags.
 	printf '$(GO_TEST_FILES)' | xargs \
 	$(GO) test $(GO_RACE_FLAG) -short -covermode=atomic -timeout=30m
 
+.PHONY: test-go-unit-pretty
+test-go-unit-pretty: check-tparse
+	@if [ -z "$(FILES)" ]; then \
+		echo "Notice: FILES variable is not set. Try \"make test-go-unit-pretty FILES=./pkg/services/mysvc\""; \
+		exit 1; \
+	fi
+	$(GO) test $(GO_RACE_FLAG) -timeout=10s $(FILES) -json | tparse -all
+
 .PHONY: test-go-integration
 test-go-integration: ## Run integration tests for backend with flags.
 	@echo "test backend integration tests"
@@ -430,6 +438,12 @@ go-race-is-enabled:
 .PHONY: enable-go-race
 enable-go-race:
 	@touch .go-race-enabled-locally
+
+check-tparse:
+	@command -v tparse >/dev/null 2>&1 || { \
+		echo >&2 "Error: tparse is not installed. Refer to https://github.com/mfridman/tparse"; \
+		exit 1; \
+	}
 
 .PHONY: help
 help: ## Display this help.
