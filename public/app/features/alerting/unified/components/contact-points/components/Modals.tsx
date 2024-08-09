@@ -10,18 +10,17 @@ type ModalHook<T = undefined> = [JSX.Element, (item: T) => void, () => void];
  * This hook controls the delete modal for contact points, showing loading and error states when appropriate
  */
 export const useDeleteContactPointModal = (
-  handleDelete: (name: string) => Promise<void>,
-  isLoading: boolean
+  handleDelete: ({ name }: { name: string }) => Promise<unknown>
 ): ModalHook<string> => {
   const [showModal, setShowModal] = useState(false);
   const [contactPoint, setContactPoint] = useState<string>();
   const [error, setError] = useState<unknown | undefined>();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleDismiss = useCallback(() => {
     if (isLoading) {
       return;
     }
-
     setContactPoint(undefined);
     setShowModal(false);
     setError(undefined);
@@ -35,9 +34,13 @@ export const useDeleteContactPointModal = (
 
   const handleSubmit = useCallback(() => {
     if (contactPoint) {
-      handleDelete(contactPoint)
+      setIsLoading(true);
+      handleDelete({ name: contactPoint })
         .then(() => setShowModal(false))
-        .catch(setError);
+        .catch(setError)
+        .finally(() => {
+          setIsLoading(false);
+        });
     }
   }, [handleDelete, contactPoint]);
 

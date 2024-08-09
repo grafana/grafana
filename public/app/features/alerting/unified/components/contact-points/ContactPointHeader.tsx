@@ -18,14 +18,21 @@ import { RouteReference } from './utils';
 
 interface ContactPointHeaderProps {
   name: string;
+  id: string;
   disabled?: boolean;
   provisioned?: boolean;
   policies?: RouteReference[];
   onDelete: (name: string) => void;
 }
 
-export const ContactPointHeader = (props: ContactPointHeaderProps) => {
-  const { name, disabled = false, provisioned = false, policies = [], onDelete } = props;
+export const ContactPointHeader = ({
+  name,
+  id,
+  disabled = false,
+  provisioned = false,
+  policies = [],
+  onDelete,
+}: ContactPointHeaderProps) => {
   const styles = useStyles2(getStyles);
 
   const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportContactPoint);
@@ -76,7 +83,7 @@ export const ContactPointHeader = (props: ContactPointHeaderProps) => {
           icon="trash-alt"
           destructive
           disabled={disabled || !canDelete}
-          onClick={() => onDelete(name)}
+          onClick={() => onDelete(id)}
         />
       </ConditionalWrap>
     );
@@ -117,7 +124,7 @@ export const ContactPointHeader = (props: ContactPointHeaderProps) => {
           disabled={disabled}
           aria-label={`${canEdit ? 'edit' : 'view'}-action`}
           data-testid={`${canEdit ? 'edit' : 'view'}-action`}
-          href={`/alerting/notifications/receivers/${encodeURIComponent(name)}/edit`}
+          href={`/alerting/notifications/receivers/${encodeURIComponent(id)}/edit`}
         >
           {canEdit ? 'Edit' : 'View'}
         </LinkButton>

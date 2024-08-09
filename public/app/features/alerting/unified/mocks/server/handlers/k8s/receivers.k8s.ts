@@ -1,3 +1,4 @@
+import { camelCase } from 'lodash';
 import { HttpResponse, http } from 'msw';
 
 import alertmanagerConfig from 'app/features/alerting/unified/components/contact-points/__mocks__/alertmanager.config.mock.json';
@@ -16,7 +17,11 @@ const mappedReceivers =
         return integration.provenance;
       })?.provenance || PROVENANCE_NONE;
     return {
-      metadata: { annotations: { [PROVENANCE_ANNOTATION]: provenance } },
+      metadata: {
+        // This isn't exactly accurate, but its the cleanest way to use the same data for AM config and K8S responses
+        uid: camelCase(contactPoint.name),
+        annotations: { [PROVENANCE_ANNOTATION]: provenance },
+      },
       spec: {
         title: contactPoint.name,
         integrations: contactPoint.grafana_managed_receiver_configs || [],

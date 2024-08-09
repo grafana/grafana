@@ -21,6 +21,7 @@ import { getReceiverDescription, ReceiverConfigWithMetadata, RouteReference } fr
 
 interface ContactPointProps {
   name: string;
+  id?: string;
   disabled?: boolean;
   provisioned?: boolean;
   receivers: ReceiverConfigWithMetadata[];
@@ -30,6 +31,7 @@ interface ContactPointProps {
 
 export const ContactPoint = ({
   name,
+  id,
   disabled = false,
   provisioned = false,
   receivers,
@@ -46,6 +48,7 @@ export const ContactPoint = ({
       <Stack direction="column" gap={0}>
         <ContactPointHeader
           name={name}
+          id={id || name}
           policies={policies}
           provisioned={provisioned}
           disabled={disabled}
@@ -59,7 +62,6 @@ export const ContactPoint = ({
               const sendingResolved = !Boolean(receiver.disableResolveMessage);
               const pluginMetadata = receiver[RECEIVER_PLUGIN_META_KEY];
               const key = metadata.name + index;
-
               return (
                 <ContactPointReceiver
                   key={key}

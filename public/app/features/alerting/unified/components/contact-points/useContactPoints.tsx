@@ -7,14 +7,24 @@ import { produce } from 'immer';
 import { remove } from 'lodash';
 import { useMemo } from 'react';
 
+import { alertingApi } from 'app/features/alerting/unified/api/alertingApi';
+import { useOnCallIntegration } from 'app/features/alerting/unified/components/receivers/grafanaAppReceivers/onCall/useOnCallIntegration';
 import {
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver,
   generatedReceiversApi,
 } from 'app/features/alerting/unified/openapi/receiversApi.gen';
+import { updateAlertManagerConfigAction } from 'app/features/alerting/unified/state/actions';
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
 import { cloudNotifierTypes } from 'app/features/alerting/unified/utils/cloud-alertmanager-notifier-types';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { getK8sNamespace, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
+import {
+  getK8sNamespace,
+  isK8sEntityProvisioned,
+  shouldUseK8sApi,
+} from 'app/features/alerting/unified/utils/k8s/utils';
+import { updateConfigWithReceiver } from 'app/features/alerting/unified/utils/receiver-form';
+import { GrafanaManagedContactPoint, Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch } from 'app/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { onCallApi } from '../../api/onCallApi';
@@ -42,7 +52,13 @@ const {
   useUpdateAlertmanagerConfigurationMutation,
 } = alertmanagerApi;
 const { useGrafanaOnCallIntegrationsQuery } = onCallApi;
-const { useListNamespacedReceiverQuery } = generatedReceiversApi;
+const {
+  useListNamespacedReceiverQuery,
+  useReadNamespacedReceiverQuery,
+  useDeleteNamespacedReceiverMutation,
+  useCreateNamespacedReceiverMutation,
+  useReplaceNamespacedReceiverMutation,
+} = generatedReceiversApi;
 
 const defaultOptions = {
   refetchOnFocus: true,
@@ -71,10 +87,13 @@ const useOnCallIntegrations = ({ skip }: Skippable = {}) => {
 
 type K8sReceiver = ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver;
 
-// TODO: Make this typed as returning `GrafanaManagedContactPoint` - we can't yet do this as the schema thinks
-// its returning integration settings as a `string` rather than `Record<string, any>`
-const parseK8sReceiver = (item: K8sReceiver) => {
-  return { name: item.spec.title, grafana_managed_receiver_configs: item.spec.integrations };
+const parseK8sReceiver = (item: K8sReceiver): GrafanaManagedContactPoint => {
+  return {
+    id: item.metadata.uid,
+    name: item.spec.title,
+    provisioned: isK8sEntityProvisioned(item),
+    grafana_managed_receiver_configs: item.spec.integrations,
+  };
 };
 
 const useK8sContactPoints = (...[hookParams, queryOptions]: Parameters<typeof useListNamespacedReceiverQuery>) => {
@@ -97,7 +116,18 @@ const useFetchGrafanaContactPoints = ({ skip }: Skippable = {}) => {
   const namespace = getK8sNamespace();
   const useK8sApi = shouldUseK8sApi(GRAFANA_RULES_SOURCE_NAME);
 
-  const grafanaResponse = useGetContactPointsListQuery(undefined, { skip: skip || useK8sApi });
+  const grafanaResponse = useGetContactPointsListQuery(undefined, {
+    skip: skip || useK8sApi,
+    selectFromResult: (result) => {
+      return {
+        ...result,
+        data: result.data?.map((item) => ({
+          ...item,
+          provisioned: item.grafana_managed_receiver_configs?.some((item) => item.provenance),
+        })),
+      };
+    },
+  });
   const k8sResponse = useK8sContactPoints({ namespace }, { skip: skip || !useK8sApi });
 
   return useK8sApi ? k8sResponse : grafanaResponse;
@@ -115,7 +145,7 @@ type GrafanaFetchOptions = {
 };
 
 /**
- * Fetch contact points from separate endpoint (i.e. not the Alertmanager config) and combine with
+ * Fetch list of contact points from separate endpoint (i.e. not the Alertmanager config) and combine with
  * OnCall integrations and any additional metadata from list of notifiers
  * (e.g. hydrate with additional names/descriptions)
  */
@@ -173,6 +203,66 @@ export const useGrafanaContactPoints = ({
   ]);
 };
 
+/**
+ * Fetch single contact point via the alertmanager config
+ */
+const useGetAlertmanagerContactPoint = (
+  { alertmanager, name }: BaseAlertmanagerArgs & { name: string },
+  queryOptions?: Parameters<typeof useGetAlertmanagerConfigurationQuery>[1]
+) => {
+  return useGetAlertmanagerConfigurationQuery(alertmanager, {
+    ...queryOptions,
+    selectFromResult: (result) => {
+      const matchedContactPoint = result.data?.alertmanager_config.receivers?.find(
+        (receiver) => decodeURIComponent(receiver.name) === decodeURIComponent(name)
+      );
+      return {
+        ...result,
+        data: matchedContactPoint,
+      };
+    },
+  });
+};
+
+/**
+ * Fetch single contact point via the k8s API, or the alertmanager config
+ */
+const useGetGrafanaContactPoint = (
+  { name }: { name: string },
+  queryOptions?: Parameters<typeof useReadNamespacedReceiverQuery>[1]
+) => {
+  const namespace = getK8sNamespace();
+  const useK8sApi = shouldUseK8sApi(GRAFANA_RULES_SOURCE_NAME);
+
+  const k8sResponse = useReadNamespacedReceiverQuery(
+    { namespace, name },
+    {
+      ...queryOptions,
+      selectFromResult: (result) => ({
+        ...result,
+        data: result.data ? parseK8sReceiver(result.data) : undefined,
+      }),
+      skip: queryOptions?.skip || !useK8sApi,
+    }
+  );
+
+  const grafanaResponse = useGetAlertmanagerContactPoint(
+    { alertmanager: GRAFANA_RULES_SOURCE_NAME, name },
+    { skip: queryOptions?.skip || useK8sApi }
+  );
+
+  return useK8sApi ? k8sResponse : grafanaResponse;
+};
+
+export const useGetContactPoint = ({ alertmanager, name }: { alertmanager: string; name: string }) => {
+  const isGrafana = alertmanager === GRAFANA_RULES_SOURCE_NAME;
+
+  const grafanaResponse = useGetGrafanaContactPoint({ name }, { skip: !isGrafana });
+  const alertmanagerResponse = useGetAlertmanagerContactPoint({ alertmanager, name }, { skip: isGrafana });
+
+  return isGrafana ? grafanaResponse : alertmanagerResponse;
+};
+
 export function useContactPointsWithStatus({
   alertmanager,
   fetchStatuses,
@@ -203,30 +293,137 @@ export function useContactPointsWithStatus({
   return isGrafanaAlertmanager ? grafanaResponse : alertmanagerConfigResponse;
 }
 
-export function useDeleteContactPoint(selectedAlertmanager: string) {
+export function useDeleteContactPoint({ alertmanager }: BaseAlertmanagerArgs) {
   const [fetchAlertmanagerConfig] = useLazyGetAlertmanagerConfigurationQuery();
-  const [updateAlertManager, updateAlertmanagerState] = useUpdateAlertmanagerConfigurationMutation();
+  const [updateAlertManager] = useUpdateAlertmanagerConfigurationMutation();
+  const [deleteReceiver] = useDeleteNamespacedReceiverMutation();
 
-  const deleteTrigger = (contactPointName: string) => {
-    return fetchAlertmanagerConfig(selectedAlertmanager).then(({ data }) => {
+  const useK8sApi = shouldUseK8sApi(alertmanager);
+
+  if (useK8sApi) {
+    return async ({ name }: { name: string }) => {
+      const namespace = getK8sNamespace();
+      return deleteReceiver({
+        name,
+        namespace,
+        ioK8SApimachineryPkgApisMetaV1DeleteOptions: {},
+      }).unwrap();
+    };
+  }
+
+  return async ({ name }: { name: string }) => {
+    return fetchAlertmanagerConfig(alertmanager).then(({ data }) => {
       if (!data) {
         return;
       }
 
       const newConfig = produce(data, (draft) => {
-        remove(draft?.alertmanager_config?.receivers ?? [], (receiver) => receiver.name === contactPointName);
+        remove(draft?.alertmanager_config?.receivers ?? [], (receiver) => receiver.name === name);
         return draft;
       });
 
       return updateAlertManager({
-        selectedAlertmanager,
+        selectedAlertmanager: alertmanager,
         config: newConfig,
       }).unwrap();
     });
   };
-
-  return {
-    deleteTrigger,
-    updateAlertmanagerState,
-  };
 }
+
+type ContactPointCreateUpdateArgs = {
+  contactPoint: Receiver;
+};
+
+type CreateOrUpdateArgs = ContactPointCreateUpdateArgs & { id?: string; originalName?: string };
+
+const grafanaContactPointToK8sReceiver = (contactPoint: GrafanaManagedContactPoint, id?: string): K8sReceiver => {
+  return {
+    ...(id && {
+      metadata: {
+        name: id,
+      },
+    }),
+    spec: {
+      title: contactPoint.name,
+      integrations: contactPoint.grafana_managed_receiver_configs || [],
+    },
+  };
+};
+
+export const useCreateOrUpdateContactPoint = ({ alertmanager }: BaseAlertmanagerArgs) => {
+  const isGrafanaAlertmanager = alertmanager === GRAFANA_RULES_SOURCE_NAME;
+  const { createOnCallIntegrations } = useOnCallIntegration();
+  const useK8sApi = shouldUseK8sApi(alertmanager);
+
+  const dispatch = useDispatch();
+  const [getAlertmanagerConfig] = useLazyGetAlertmanagerConfigurationQuery();
+  const [replaceGrafanaContactPoint] = useReplaceNamespacedReceiverMutation();
+  const [createGrafanaContactPoint] = useCreateNamespacedReceiverMutation();
+  if (useK8sApi) {
+    // If we have an original name, then we're updating existing
+    return async ({ contactPoint, originalName, id }: CreateOrUpdateArgs) => {
+      const namespace = getK8sNamespace();
+      const contactPointToUse = grafanaContactPointToK8sReceiver(contactPoint, id);
+      if (!id) {
+        return createGrafanaContactPoint({
+          namespace,
+          comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver: contactPointToUse,
+        }).unwrap();
+      }
+
+      if (originalName) {
+        return replaceGrafanaContactPoint({
+          name: id,
+          namespace,
+          comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver: contactPointToUse,
+        }).unwrap();
+      }
+
+      return;
+    };
+  }
+
+  return async ({ contactPoint, originalName }: CreateOrUpdateArgs) => {
+    const receiverWithPotentialOnCall = isGrafanaAlertmanager
+      ? await createOnCallIntegrations(contactPoint)
+      : contactPoint;
+    const config = await getAlertmanagerConfig(alertmanager).unwrap();
+    const newConfig = updateConfigWithReceiver(config, receiverWithPotentialOnCall, originalName);
+
+    await dispatch(
+      updateAlertManagerConfigAction({
+        newConfig: newConfig,
+        oldConfig: config,
+        alertManagerSourceName: alertmanager,
+      })
+    ).then(() => {
+      dispatch(alertingApi.util.invalidateTags(['AlertmanagerConfiguration', 'ContactPoint', 'ContactPointsStatus']));
+      dispatch(generatedReceiversApi.util.invalidateTags(['Receiver']));
+    });
+  };
+};
+
+export const useValidateContactPoint = ({ alertmanager }: BaseAlertmanagerArgs) => {
+  const useK8sApi = shouldUseK8sApi(alertmanager);
+
+  const [getConfig] = useLazyGetAlertmanagerConfigurationQuery();
+
+  // If we're using the kubernetes API, then we let the API response handle the validation instead
+  // as we don't expect to be able to fetch the intervals via the AM config
+  if (useK8sApi) {
+    return () => undefined;
+  }
+
+  return async (value: string, skipValidation?: boolean) => {
+    if (skipValidation) {
+      return;
+    }
+    return getConfig(alertmanager)
+      .unwrap()
+      .then((config) => {
+        const { alertmanager_config } = config;
+        const duplicated = Boolean(alertmanager_config.receivers?.find((contactPoint) => contactPoint.name === value));
+        return duplicated ? `Contact point already exists with name "${value}"` : undefined;
+      });
+  };
+};

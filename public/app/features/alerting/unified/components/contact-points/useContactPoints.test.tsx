@@ -68,7 +68,17 @@ describe('useContactPoints', () => {
   it('returns matching responses with and without alertingApiServer', async () => {
     const snapshotAmConfig = await getHookResponse(false);
     const snapshotAlertingApiServer = await getHookResponse(true);
-    expect(snapshotAmConfig).toEqual(snapshotAlertingApiServer);
+
+    // k8s returns IDs, AM config will not. We want to assert that the two match, without considering this property
+    const strippedContactPoints = snapshotAlertingApiServer.contactPoints.map((receiver) => {
+      const { id, ...rest } = receiver;
+      return rest;
+    });
+
+    expect(snapshotAmConfig).toEqual({
+      ...snapshotAlertingApiServer,
+      contactPoints: strippedContactPoints,
+    });
   });
 
   describe('when having oncall plugin installed and no alert manager config data', () => {

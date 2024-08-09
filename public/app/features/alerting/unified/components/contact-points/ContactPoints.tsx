@@ -29,7 +29,7 @@ import { useDeleteContactPointModal } from './components/Modals';
 import { useContactPointsWithStatus, useDeleteContactPoint } from './useContactPoints';
 import { useContactPointsSearch } from './useContactPointsSearch';
 import { ALL_CONTACT_POINTS, useExportContactPoint } from './useExportContactPoint';
-import { ContactPointWithMetadata, isProvisioned } from './utils';
+import { ContactPointWithMetadata } from './utils';
 
 export enum ActiveTab {
   ContactPoints = 'contact_points',
@@ -48,7 +48,7 @@ const ContactPointsTab = () => {
     fetchStatuses: true,
   });
 
-  const { deleteTrigger, updateAlertmanagerState } = useDeleteContactPoint(selectedAlertmanager!);
+  const deleteTrigger = useDeleteContactPoint({ alertmanager: selectedAlertmanager! });
   const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.CreateContactPoint
   );
@@ -56,7 +56,7 @@ const ContactPointsTab = () => {
     AlertmanagerAction.ExportContactPoint
   );
 
-  const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger, updateAlertmanagerState.isLoading);
+  const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger);
   const [ExportDrawer, showExportDrawer] = useExportContactPoint();
 
   const search = queryParams.get('search');
@@ -107,7 +107,6 @@ const ContactPointsTab = () => {
         search={search}
         pageSize={DEFAULT_PAGE_SIZE}
         onDelete={(name) => showDeleteModal(name)}
-        disabled={updateAlertmanagerState.isLoading}
       />
       {/* Grafana manager Alertmanager does not support global config, Mimir and Cortex do */}
       {!isGrafanaManagedAlertmanager && <GlobalConfigAlert alertManagerName={selectedAlertmanager!} />}
@@ -221,14 +220,14 @@ const ContactPointsList = ({
   return (
     <>
       {pageItems.map((contactPoint, index) => {
-        const provisioned = isProvisioned(contactPoint);
+        const provisioned = contactPoint?.provisioned;
         const policies = contactPoint.policies ?? [];
         const key = `${contactPoint.name}-${index}`;
-
         return (
           <ContactPoint
             key={key}
             name={contactPoint.name}
+            id={contactPoint.id || contactPoint.name}
             disabled={disabled}
             onDelete={onDelete}
             receivers={contactPoint.grafana_managed_receiver_configs}

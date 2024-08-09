@@ -12,8 +12,12 @@ import { deleteMuteTimingAction, updateAlertManagerConfigAction } from 'app/feat
 import { BaseAlertmanagerArgs } from 'app/features/alerting/unified/types/hooks';
 import { renameMuteTimings } from 'app/features/alerting/unified/utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { PROVENANCE_ANNOTATION, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
-import { getK8sNamespace, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
+import { PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
+import {
+  getK8sNamespace,
+  isK8sEntityProvisioned,
+  shouldUseK8sApi,
+} from 'app/features/alerting/unified/utils/k8s/utils';
 import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
@@ -45,7 +49,7 @@ const parseK8sTimeInterval: (item: TimeIntervalV0Alpha1) => MuteTiming = (item) 
     ...spec,
     id: spec.name,
     metadata,
-    provisioned: metadata.annotations?.[PROVENANCE_ANNOTATION] !== PROVENANCE_NONE,
+    provisioned: isK8sEntityProvisioned(item),
   };
 };
 
