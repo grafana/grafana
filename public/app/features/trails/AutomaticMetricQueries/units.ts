@@ -14,6 +14,17 @@ export function getUnitFromMetric(metric: string) {
   }
 }
 
+// Get unit from recording rule (e.g. "workload:memory_working_set_bytes:sum" -> "bytes")
+export function getUnitFromRecordingRule(recordingRule: string): string | null {
+  const lowerCaseRule = recordingRule.toLowerCase();
+
+  const unit = Object.keys(UNIT_MAP).find((key) => {
+    return lowerCaseRule.includes(key);
+  });
+
+  return unit || null;
+}
+
 // Get Grafana unit for a panel (e.g. "go_gc_duration_seconds" -> "s")
 export function getUnit(metricPart: string | undefined) {
   return (metricPart && UNIT_MAP[metricPart]) || DEFAULT_UNIT;
