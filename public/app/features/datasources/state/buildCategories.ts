@@ -251,6 +251,12 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       name: 'Drone',
       imgUrl: 'public/img/plugins/drone.svg',
     }),
+    getPhantomPlugin({
+      id: 'grafana-zendesk-datasource',
+      description: 'Zendesk datasource',
+      name: 'Zendesk',
+      imgUrl: 'public/img/plugins/zendesk.svg',
+    }),
   ];
 }
 
