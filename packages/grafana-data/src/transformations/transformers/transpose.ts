@@ -6,24 +6,15 @@ import { DataTransformerInfo } from '../../types/transformations';
 import { DataTransformerID } from './ids';
 
 export interface TransposeTransformerOptions {
-  /**
-   * Add new field names to dataframe
-   */
-  addNewFields?: boolean;
-  /**
-   * Rename the first field
-   */
-  renameFirstField?: string;
+  firstFieldName?: string;
+  restFieldsName?: string;
 }
 
 export const transposeTransformer: DataTransformerInfo<TransposeTransformerOptions> = {
   id: DataTransformerID.transpose,
   name: 'Transpose',
   description: 'Transpose the data frame',
-  defaultOptions: {
-    addNewFields: false,
-    renameFirstField: '',
-  },
+  defaultOptions: {},
 
   operator: (options) => (source) =>
     source.pipe(
@@ -39,45 +30,50 @@ export const transposeTransformer: DataTransformerInfo<TransposeTransformerOptio
 function transposeDataFrame(options: TransposeTransformerOptions, data: DataFrame[]): DataFrame[] {
   return data.map((frame) => {
     const firstField = frame.fields[0];
-    const headers = options.addNewFields
-      ? ['Field', ...firstField.values.map((_, i) => `Value${i + 1}`)]
-      : [firstField.name, ...fieldValuesAsStrings(firstField, firstField.values)];
-    const rows = options.addNewFields
-      ? frame.fields.map((field) => field.name)
-      : frame.fields.map((field) => field.name).slice(1);
+    const firstName = !options.firstFieldName ? 'Field' : options.firstFieldName;
+    const restName = !options.restFieldsName ? 'Value' : options.restFieldsName;
+    const useFirstFieldAsHeaders =
+      firstField.type === FieldType.string || firstField.type === FieldType.time || firstField.type === FieldType.enum;
+    const headers = useFirstFieldAsHeaders
+      ? [firstName, ...fieldValuesAsStrings(firstField, firstField.values)]
+      : [firstName, ...firstField.values.map((_, i) => restName)];
+    const rows = useFirstFieldAsHeaders
+      ? frame.fields.map((field) => field.name).slice(1)
+      : frame.fields.map((field) => field.name);
     const fieldType = determineFieldType(
-      options.addNewFields ? frame.fields.map((field) => field.type) : frame.fields.map((field) => field.type).slice(1)
+      useFirstFieldAsHeaders
+        ? frame.fields.map((field) => field.type).slice(1)
+        : frame.fields.map((field) => field.type)
     );
 
     const newFields = headers.map((fieldName, index) => {
       if (index === 0) {
         return {
-          name: !options.renameFirstField ? fieldName : options.renameFirstField,
+          name: firstName,
           type: FieldType.string,
           config: {},
           values: rows,
         };
       }
 
+      const values = frame.fields.map((field) => {
+        if (fieldType === FieldType.string) {
+          return fieldValuesAsStrings(field, [field.values[index - 1]])[0];
+        }
+        return field.values[index - 1];
+      });
+
+      const labelName = useFirstFieldAsHeaders ? firstField.name : 'row';
+      const labelValue = useFirstFieldAsHeaders ? fieldName : index;
+
       return {
-        name: fieldName,
+        name: useFirstFieldAsHeaders ? restName : fieldName,
+        labels: {
+          [labelName]: labelValue,
+        },
         type: fieldType,
         config: {},
-        values: options.addNewFields
-          ? frame.fields.map((field) => {
-              if (fieldType === FieldType.string) {
-                return fieldValuesAsStrings(field, [field.values[index - 1]])[0];
-              }
-              return field.values[index - 1];
-            })
-          : frame.fields
-              .map((field) => {
-                if (fieldType === FieldType.string) {
-                  return fieldValuesAsStrings(field, [field.values[index - 1]])[0];
-                }
-                return field.values[index - 1];
-              })
-              .slice(1),
+        values: useFirstFieldAsHeaders ? values.slice(1) : values,
       };
     });
     return {
@@ -101,6 +97,7 @@ function fieldValuesAsStrings(field: Field, values: unknown[]) {
     case FieldType.string:
       return values.map((v) => `${v}`);
     case FieldType.enum:
+      // @ts-ignore
       return values.map((v) => field.config.type!.enum!.text![v]);
     default:
       return values.map((v) => JSON.stringify(v));

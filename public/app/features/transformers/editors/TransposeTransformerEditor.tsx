@@ -6,35 +6,34 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { TransposeTransformerOptions } from '@grafana/data/src/transformations/transformers/transpose';
-import { InlineField, InlineFieldRow, Input, RadioButtonGroup } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
 export const TransposeTransfomerEditor = ({ options, onChange }: TransformerUIProps<TransposeTransformerOptions>) => {
-  const addNewFields = [
-    { label: 'Yes', value: true },
-    { label: 'No', value: false },
-  ];
-
   return (
     <>
       <InlineFieldRow>
-        <InlineField tooltip={'Adds new header field names to data frame'} label={'Add New Fields'} labelWidth={24}>
-          <RadioButtonGroup
-            options={addNewFields}
-            value={options.addNewFields}
-            onChange={(v) => onChange({ ...options, addNewFields: v })}
+        <InlineField
+          label={'First field name'}
+          labelWidth={24}
+        >
+          <Input
+            placeholder="Field"
+            value={options.firstFieldName}
+            onChange={(e) => onChange({ ...options, firstFieldName: e.currentTarget.value })}
+            width={25}
           />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField
-          tooltip={'Rename the first element of the data frame'}
-          label={'Rename First Field'}
+          label={'Rest fields name'}
+          tooltip={'Name for value fields'}
           labelWidth={24}
         >
           <Input
-            placeholder="NewField"
-            value={options.renameFirstField}
-            onChange={(e) => onChange({ ...options, renameFirstField: e.currentTarget.value })}
+            placeholder="Value"
+            value={options.restFieldsName}
+            onChange={(e) => onChange({ ...options, restFieldsName: e.currentTarget.value })}
             width={25}
           />
         </InlineField>

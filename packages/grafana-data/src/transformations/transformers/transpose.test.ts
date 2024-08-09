@@ -31,37 +31,42 @@ describe('Transpose transformer', () => {
       const result = received[0];
       expect(result[0].fields).toEqual([
         {
-          name: 'env',
+          name: 'Field',
           type: FieldType.string,
           values: ['january', 'february', 'march'],
           config: {},
         },
         {
-          name: 'dev',
+          name: 'Value',
+          labels: { env: 'dev' },
           type: FieldType.number,
           values: [11, 6, 1],
           config: {},
         },
         {
-          name: 'prod',
+          name: 'Value',
+          labels: { env: 'prod' },
           type: FieldType.number,
           values: [12, 7, 2],
           config: {},
         },
         {
-          name: 'staging',
+          name: 'Value',
+          labels: { env: 'staging' },
           type: FieldType.number,
           values: [13, 8, 3],
           config: {},
         },
         {
-          name: 'release',
+          name: 'Value',
+          labels: { env: 'release' },
           type: FieldType.number,
           values: [14, 9, 4],
           config: {},
         },
         {
-          name: 'beta',
+          name: 'Value',
+          labels: { env: 'beta' },
           type: FieldType.number,
           values: [15, 10, 5],
           config: {},
@@ -88,37 +93,42 @@ describe('Transpose transformer', () => {
       const result = received[0];
       expect(result[0].fields).toEqual([
         {
-          name: 'env',
+          name: 'Field',
           type: FieldType.string,
           values: ['january', 'february', 'type'],
           config: {},
         },
         {
-          name: 'dev',
+          name: 'Value',
+          labels: { env: 'dev' },
           type: FieldType.string,
           values: ['11', '6', 'metricA'],
           config: {},
         },
         {
-          name: 'prod',
+          name: 'Value',
+          labels: { env: 'prod' },
           type: FieldType.string,
           values: ['12', '7', 'metricB'],
           config: {},
         },
         {
-          name: 'staging',
+          name: 'Value',
+          labels: { env: 'staging' },
           type: FieldType.string,
           values: ['13', '8', 'metricC'],
           config: {},
         },
         {
-          name: 'release',
+          name: 'Value',
+          labels: { env: 'release' },
           type: FieldType.string,
           values: ['14', '9', 'metricD'],
           config: {},
         },
         {
-          name: 'beta',
+          name: 'Value',
+          labels: { env: 'beta' },
           type: FieldType.string,
           values: ['15', '10', 'metricE'],
           config: {},
@@ -131,8 +141,7 @@ describe('Transpose transformer', () => {
     const cfgC: DataTransformerConfig<TransposeTransformerOptions> = {
       id: DataTransformerID.transpose,
       options: {
-        addNewFields: true,
-        renameFirstField: 'NewField',
+        firstFieldName: 'NewField',
       },
     };
     const seriesC = toDataFrame({
@@ -154,13 +163,15 @@ describe('Transpose transformer', () => {
           config: {},
         },
         {
-          name: 'Value1',
+          name: 'Value',
+          labels: { row: 1 },
           type: FieldType.number,
           values: [1, 2, 3, 4],
           config: {},
         },
         {
-          name: 'Value2',
+          name: 'Value',
+          labels: { row: 2 },
           type: FieldType.number,
           values: [5, 6, 7, 8],
           config: {},
@@ -173,7 +184,7 @@ describe('Transpose transformer', () => {
     const cfgD: DataTransformerConfig<TransposeTransformerOptions> = {
       id: DataTransformerID.transpose,
       options: {
-        renameFirstField: 'Field1',
+        firstFieldName: 'Field1',
       },
     };
     const seriesD = toDataFrame({
@@ -197,25 +208,29 @@ describe('Transpose transformer', () => {
           config: {},
         },
         {
-          name: '2024-06-10 08:30:00',
+          name: 'Value',
+          labels: { time: '2024-06-10 08:30:00' },
           type: FieldType.number,
           values: [1],
           config: {},
         },
         {
-          name: '2024-06-10 08:31:00',
+          name: 'Value',
+          labels: { time: '2024-06-10 08:31:00' },
           type: FieldType.number,
           values: [2],
           config: {},
         },
         {
-          name: '2024-06-10 08:32:00',
+          name: 'Value',
+          labels: { time: '2024-06-10 08:32:00' },
           type: FieldType.number,
           values: [3],
           config: {},
         },
         {
-          name: '2024-06-10 08:33:00',
+          name: 'Value',
+          labels: { time: '2024-06-10 08:33:00' },
           type: FieldType.number,
           values: [4],
           config: {},
