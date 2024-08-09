@@ -28,6 +28,8 @@ With Explore Metrics, you can:
 - view a history of user steps when navigating through metrics and their filters
 <!-- - easily pivot to other related telemetry, including logs or traces -->
 
+{{< docs/play title="Explore Metrics" url="https://play.grafana.org/explore/metrics/trail?from=now-1h&to=now&var-ds=grafanacloud-demoinfra-prom&var-filters=&refresh=&metricPrefix=all" >}}
+
 You can access Explore Metrics either as a standalone experience or as part of Grafana dashboards.
 
 ## Standalone experience
