@@ -124,15 +124,15 @@ To use streaming, you need to:
 
 ### Activate streaming
 
-For streaming to work for a particular Tempo data source, set your Grafana's `traceQLStreaming` [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) to true and set **Streaming** to enabled in your Tempo data source configuration.
+You can activate streaming by either setting the  `traceQLStreaming` [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) to true or by activating the Streaming toggle in the Tempo data source.
 
 ![Streaming section in Tempo data source](/media/docs/grafana/data-sources/tempo-data-source-streaming-v11.2.png)
 
 If you are using Grafana Cloud, the `traceQLStreaming` feature toggle is already set to `true` by default.
 
-If the Tempo data source is set to allow streaming but the `traceQLStreaming` feature toggle is set to `false` in Grafana, no streaming occurs.
+If the Tempo data source is set to allow streaming but the `traceQLStreaming` feature toggle is set to `false` in Grafana, streaming occurs.
 
-If the data source has streaming disabled and `traceQLStreaming` is set to `true`, no streaming happens for that data source.
+If the data source has streaming disabled and `traceQLStreaming` is set to `true`, streaming happens for that data source.
 
 ## Trace to logs
 
