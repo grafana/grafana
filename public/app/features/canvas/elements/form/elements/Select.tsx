@@ -16,11 +16,11 @@ export const SelectDisplay = ({ options, currentOption, onChange, title }: Props
   return (
     <Field label={title} style={{ marginBottom: '2px' }}>
       <Select
-        options={options.map((option) => ({ label: option[0], value: option[1] }))}
+        options={options.map((option) => ({ label: option[1], value: option[0] }))}
         value={value}
         onChange={(option) => {
           setValue(option.value);
-          onChange([option.label ?? '', option.value ?? '']);
+          onChange([option.value ?? '', option.label ?? '']);
         }}
       />
     </Field>

@@ -18,10 +18,10 @@ export const RadioList = ({ title, options, onChange, currentOption }: Props) =>
         <RadioButtonList
           name="default"
           value={selected}
-          options={options!.map((option) => ({ label: option[0], value: option[1] }))}
+          options={options!.map((option) => ({ label: option[1], value: option[0] }))}
           onChange={(value, label) => {
             setSelected(value);
-            onChange([label ?? '', value ?? '']);
+            onChange([value ?? '', label ?? '']);
           }}
         />
       </Stack>
