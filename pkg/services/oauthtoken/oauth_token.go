@@ -94,7 +94,7 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*l
 		return nil, false, nil
 	}
 
-	if !identity.IsIdentityType2(usr.GetID(), identity.TypeUser) {
+	if !identity.IsIdentityType(usr.GetID(), identity.TypeUser) {
 		return nil, false, nil
 	}
 
@@ -135,7 +135,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 		return nil
 	}
 
-	if !identity.IsIdentityType2(usr.GetID(), identity.TypeUser) {
+	if !identity.IsIdentityType(usr.GetID(), identity.TypeUser) {
 		ctxLogger.Warn("Can only refresh OAuth tokens for users", "id", usr.GetID())
 		return nil
 	}

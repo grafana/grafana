@@ -86,7 +86,7 @@ type Requester interface {
 // Applicable for users, service accounts, api keys and renderer service.
 // Errors if the identifier is not initialized or if type is not recognized.
 func IntIdentifier(typedID TypedID) (int64, error) {
-	if IsIdentityType2(typedID, TypeUser, TypeAPIKey, TypeServiceAccount, TypeRenderService) {
+	if IsIdentityType(typedID, TypeUser, TypeAPIKey, TypeServiceAccount, TypeRenderService) {
 		id, err := strconv.ParseInt(typedID.ID(), 10, 64)
 		if err != nil {
 			return 0, fmt.Errorf("unrecognized format for valid type %s: %w", typedID.Type(), err)
@@ -111,7 +111,7 @@ func UserIdentifier(typedID TypedID) (int64, error) {
 		return 0, err
 	}
 
-	if IsIdentityType2(typedID, TypeUser, TypeServiceAccount) {
+	if IsIdentityType(typedID, TypeUser, TypeServiceAccount) {
 		return userID, nil
 	}
 

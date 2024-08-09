@@ -43,18 +43,7 @@ func ParseType(str string) (IdentityType, error) {
 }
 
 // IsIdentityType returns true if type matches any expected identity type
-func IsIdentityType(typ IdentityType, expected ...IdentityType) bool {
-	for _, e := range expected {
-		if typ == e {
-			return true
-		}
-	}
-
-	return false
-}
-
-// IsIdentityType returns true if type matches any expected identity type
-func IsIdentityType2(typedID TypedID, expected ...IdentityType) bool {
+func IsIdentityType(typedID TypedID, expected ...IdentityType) bool {
 	for _, e := range expected {
 		if typedID.Type() == e {
 			return true
@@ -139,7 +128,7 @@ func (ni TypedID) Type() IdentityType {
 }
 
 func (ni TypedID) IsType(expected ...IdentityType) bool {
-	return IsIdentityType(ni.t, expected...)
+	return IsIdentityType(ni, expected...)
 }
 
 func (ni TypedID) String() string {

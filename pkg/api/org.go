@@ -132,7 +132,7 @@ func (hs *HTTPServer) CreateOrg(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	if !identity.IsIdentityType2(c.SignedInUser.GetID(), identity.TypeUser) {
+	if !identity.IsIdentityType(c.SignedInUser.GetID(), identity.TypeUser) {
 		return response.Error(http.StatusForbidden, "Only users can create organizations", nil)
 	}
 
