@@ -236,9 +236,6 @@ export class GrafanaApp {
 
       setPluginExtensionGetter(createPluginExtensionsGetter(extensionsRegistry));
       setPluginExtensionsHook(createUsePluginExtensions(extensionsRegistry));
-      // setPluginComponentHook(createUsePluginComponent(extensionsRegistry))
-      console.log(exportedComponentsRegistry);
-      console.log(exportedComponentsRegistry.asObservable());
       setPluginComponentHook(createUsePluginComponent(exportedComponentsRegistry));
 
       // initialize chrome service
