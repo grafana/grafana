@@ -1090,6 +1090,11 @@
       "link-title": "Gesamte Migrationsanleitung anzeigen",
       "title": ""
     },
+    "migrated-counts": {
+      "dashboards": "",
+      "datasources": "",
+      "folders": ""
+    },
     "migration-token": {
       "delete-button": "",
       "delete-modal-body": "Wenn Sie dieses Token bereits mit einer selbst verwalteten Installation verwendet haben, kann diese Installation keine Inhalte mehr hochladen.",
@@ -1121,6 +1126,8 @@
       "migration-finished-with-warnings-body": "",
       "snapshot-error-status-body": "",
       "snapshot-error-status-title": "",
+      "success-message": "",
+      "success-title": "",
       "upload-snapshot-error-title": ""
     },
     "pdc": {

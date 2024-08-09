@@ -1083,6 +1083,11 @@
       "link-title": "查看完整的迁移指南",
       "title": ""
     },
+    "migrated-counts": {
+      "dashboards": "",
+      "datasources": "",
+      "folders": ""
+    },
     "migration-token": {
       "delete-button": "",
       "delete-modal-body": "如果您已经在自己管理的安装中使用了此令牌，则该安装将无法再上传内容。",
@@ -1114,6 +1119,8 @@
       "migration-finished-with-warnings-body": "",
       "snapshot-error-status-body": "",
       "snapshot-error-status-title": "",
+      "success-message": "",
+      "success-title": "",
       "upload-snapshot-error-title": ""
     },
     "pdc": {

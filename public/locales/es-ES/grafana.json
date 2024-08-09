@@ -1090,6 +1090,11 @@
       "link-title": "Ver la guía de migración completa",
       "title": ""
     },
+    "migrated-counts": {
+      "dashboards": "",
+      "datasources": "",
+      "folders": ""
+    },
     "migration-token": {
       "delete-button": "",
       "delete-modal-body": "Si ya has utilizado este token con una instalación autogestionada, la instalación ya no podrá cargar contenido.",
@@ -1121,6 +1126,8 @@
       "migration-finished-with-warnings-body": "",
       "snapshot-error-status-body": "",
       "snapshot-error-status-title": "",
+      "success-message": "",
+      "success-title": "",
       "upload-snapshot-error-title": ""
     },
     "pdc": {
