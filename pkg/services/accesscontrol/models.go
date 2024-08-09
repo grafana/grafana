@@ -447,6 +447,9 @@ const (
 	ActionAlertingReceiversList        = "alert.notifications.receivers:list"
 	ActionAlertingReceiversRead        = "alert.notifications.receivers:read"
 	ActionAlertingReceiversReadSecrets = "alert.notifications.receivers.secrets:read"
+	ActionAlertingReceiversCreate      = "alert.notifications.receivers:create"
+	ActionAlertingReceiversUpdate      = "alert.notifications.receivers:write"
+	ActionAlertingReceiversDelete      = "alert.notifications.receivers:delete"
 
 	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingRuleExternalWrite = "alert.rules.external:write"

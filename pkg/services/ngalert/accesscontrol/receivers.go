@@ -72,11 +72,80 @@ var (
 	provisioningExtraReadDecryptedPermissions = ac.EvalAny(
 		ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets), // Global provisioning action for all AM config + secrets. Org scope.
 	)
+
+	// Create
+
+	// Asserts pre-conditions for create access to receivers. If this evaluates to false, the user cannot create any receivers.
+	createReceiversPreConditionsEval = ac.EvalAny(
+		ac.EvalPermission(ac.ActionAlertingNotificationsWrite), // Global action for all AM config. Org scope.
+		ac.EvalPermission(ac.ActionAlertingReceiversCreate),    // Action for receivers. UID scope.
+	)
+
+	// Asserts create access to all receivers.
+	createAllReceiversEval = ac.EvalAny(
+		ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+		ac.EvalPermission(ac.ActionAlertingReceiversCreate, ScopeReceiversAll),
+	)
+
+	// Asserts create access to a specific receiver.
+	createReceiverEval = func(uid string) ac.Evaluator {
+		return ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+			ac.EvalPermission(ac.ActionAlertingReceiversCreate, ScopeReceiversProvider.GetResourceScopeUID(uid)),
+		)
+	}
+
+	// Update
+
+	// Asserts pre-conditions for update access to receivers. If this evaluates to false, the user cannot update any receivers.
+	updateReceiversPreConditionsEval = ac.EvalAny(
+		ac.EvalPermission(ac.ActionAlertingNotificationsWrite), // Global action for all AM config. Org scope.
+		ac.EvalPermission(ac.ActionAlertingReceiversUpdate),    // Action for receivers. UID scope.
+	)
+
+	// Asserts update access to all receivers.
+	updateAllReceiversEval = ac.EvalAny(
+		ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+		ac.EvalPermission(ac.ActionAlertingReceiversUpdate, ScopeReceiversAll),
+	)
+
+	// Asserts update access to a specific receiver.
+	updateReceiverEval = func(uid string) ac.Evaluator {
+		return ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+			ac.EvalPermission(ac.ActionAlertingReceiversUpdate, ScopeReceiversProvider.GetResourceScopeUID(uid)),
+		)
+	}
+
+	// Delete
+
+	// Asserts pre-conditions for delete access to receivers. If this evaluates to false, the user cannot delete any receivers.
+	deleteReceiversPreConditionsEval = ac.EvalAny(
+		ac.EvalPermission(ac.ActionAlertingNotificationsWrite), // Global action for all AM config. Org scope.
+		ac.EvalPermission(ac.ActionAlertingReceiversDelete),    // Action for receivers. UID scope.
+	)
+
+	// Asserts delete access to all receivers.
+	deleteAllReceiversEval = ac.EvalAny(
+		ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+		ac.EvalPermission(ac.ActionAlertingReceiversDelete, ScopeReceiversAll),
+	)
+
+	// Asserts delete access to a specific receiver.
+	deleteReceiverEval = func(uid string) ac.Evaluator {
+		return ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+			ac.EvalPermission(ac.ActionAlertingReceiversDelete, ScopeReceiversProvider.GetResourceScopeUID(uid)),
+		)
+	}
 )
 
 type ReceiverAccess[T models.Identified] struct {
 	read          actionAccess[T]
 	readDecrypted actionAccess[T]
+	create        actionAccess[T]
+	update        actionAccess[T]
+	delete        actionAccess[models.Identified]
 }
 
 // NewReceiverAccess creates a new ReceiverAccess service. If includeProvisioningActions is true, the service will include
@@ -106,6 +175,42 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 				return readDecryptedReceiverEval(receiver.GetUID())
 			},
 			authorizeAll: readDecryptedAllReceiversEval,
+		},
+		create: actionAccess[T]{
+			genericService: genericService{
+				ac: a,
+			},
+			resource:      "receiver",
+			action:        "create",
+			authorizeSome: createReceiversPreConditionsEval,
+			authorizeOne: func(receiver T) ac.Evaluator {
+				return createReceiverEval(receiver.GetUID())
+			},
+			authorizeAll: createAllReceiversEval,
+		},
+		update: actionAccess[T]{
+			genericService: genericService{
+				ac: a,
+			},
+			resource:      "receiver",
+			action:        "update",
+			authorizeSome: updateReceiversPreConditionsEval,
+			authorizeOne: func(receiver T) ac.Evaluator {
+				return updateReceiverEval(receiver.GetUID())
+			},
+			authorizeAll: updateAllReceiversEval,
+		},
+		delete: actionAccess[models.Identified]{
+			genericService: genericService{
+				ac: a,
+			},
+			resource:      "receiver",
+			action:        "delete",
+			authorizeSome: deleteReceiversPreConditionsEval,
+			authorizeOne: func(receiver models.Identified) ac.Evaluator {
+				return deleteReceiverEval(receiver.GetUID())
+			},
+			authorizeAll: deleteAllReceiversEval,
 		},
 	}
 
@@ -163,4 +268,27 @@ func (s ReceiverAccess[T]) AuthorizeReadDecrypted(ctx context.Context, user iden
 // HasReadDecrypted checks if user has access to read a decrypted receiver. Returns false if user does not have access.
 func (s ReceiverAccess[T]) HasReadDecrypted(ctx context.Context, user identity.Requester, receiver T) (bool, error) {
 	return s.readDecrypted.Has(ctx, user, receiver)
+}
+
+// AuthorizeCreate checks if user has access to create a receiver. Returns an error if user does not have access.
+func (s ReceiverAccess[T]) AuthorizeCreate(ctx context.Context, user identity.Requester, receiver T) error {
+	return s.create.Authorize(ctx, user, receiver)
+}
+
+// AuthorizeUpdate checks if user has access to update a receiver. Returns an error if user does not have access.
+func (s ReceiverAccess[T]) AuthorizeUpdate(ctx context.Context, user identity.Requester, receiver T) error {
+	return s.update.Authorize(ctx, user, receiver)
+}
+
+type identified struct {
+	uid string
+}
+
+func (i identified) GetUID() string {
+	return i.uid
+}
+
+// AuthorizeDelete checks if user has access to delete a receiver. Returns an error if user does not have access.
+func (s ReceiverAccess[T]) AuthorizeDelete(ctx context.Context, user identity.Requester, uid string) error {
+	return s.delete.Authorize(ctx, user, identified{uid: uid})
 }

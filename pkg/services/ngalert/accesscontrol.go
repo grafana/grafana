@@ -154,6 +154,18 @@ var (
 					Action: accesscontrol.ActionAlertingNotificationsExternalWrite,
 					Scope:  datasources.ScopeAll,
 				},
+				{
+					Action: accesscontrol.ActionAlertingReceiversCreate,
+					Scope:  ac.ScopeReceiversAll,
+				},
+				{
+					Action: accesscontrol.ActionAlertingReceiversUpdate,
+					Scope:  ac.ScopeReceiversAll,
+				},
+				{
+					Action: accesscontrol.ActionAlertingReceiversDelete,
+					Scope:  ac.ScopeReceiversAll,
+				},
 			}),
 		},
 	}

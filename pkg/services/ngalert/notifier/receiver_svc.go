@@ -43,6 +43,10 @@ type receiverAccessControlService interface {
 	FilterReadDecrypted(context.Context, identity.Requester, ...*models.Receiver) ([]*models.Receiver, error)
 	AuthorizeReadDecrypted(context.Context, identity.Requester, *models.Receiver) error
 	HasList(ctx context.Context, user identity.Requester) (bool, error)
+
+	AuthorizeCreate(context.Context, identity.Requester, *models.Receiver) error
+	AuthorizeUpdate(context.Context, identity.Requester, *models.Receiver) error
+	AuthorizeDelete(context.Context, identity.Requester, string) error
 }
 
 type alertmanagerConfigStore interface {
@@ -205,8 +209,10 @@ func (rs *ReceiverService) ListReceivers(ctx context.Context, q models.ListRecei
 
 // DeleteReceiver deletes a receiver by uid.
 // UID field currently does not exist, we assume the uid is a particular hashed value of the receiver name.
-func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, orgID int64, callerProvenance definitions.Provenance, version string) error {
-	//TODO: Check delete permissions.
+func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, callerProvenance definitions.Provenance, version string, orgID int64, user identity.Requester) error {
+	if err := rs.authz.AuthorizeDelete(ctx, user, uid); err != nil {
+		return err
+	}
 	revision, err := rs.cfgStore.Get(ctx, orgID)
 	if err != nil {
 		return err
@@ -259,8 +265,11 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, orgID
 	})
 }
 
-func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receiver, orgID int64) (*models.Receiver, error) {
-	//TODO: Check create permissions.
+func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receiver, orgID int64, user identity.Requester) (*models.Receiver, error) {
+	if err := rs.authz.AuthorizeCreate(ctx, user, r); err != nil {
+		return nil, err
+	}
+
 	revision, err := rs.cfgStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -291,8 +300,11 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	return &createdReceiver, nil
 }
 
-func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receiver, storedSecureFields map[string][]string, orgID int64) (*models.Receiver, error) {
-	//TODO: Check update permissions.
+func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receiver, storedSecureFields map[string][]string, orgID int64, user identity.Requester) (*models.Receiver, error) {
+	if err := rs.authz.AuthorizeUpdate(ctx, user, r); err != nil {
+		return nil, err
+	}
+
 	revision, err := rs.cfgStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err

@@ -20,19 +20,24 @@ func Authorize(ctx context.Context, ac accesscontrol.AccessControl, attr authori
 
 	var action accesscontrol.Evaluator
 	switch attr.GetVerb() {
+	case "create":
+		action = accesscontrol.EvalAny(
+			accesscontrol.EvalPermission(accesscontrol.ActionAlertingNotificationsWrite),
+			accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversCreate),
+		)
 	case "patch":
 		fallthrough
-	case "create":
-		fallthrough // TODO: Add alert.notifications.receivers:create permission
 	case "update":
 		action = accesscontrol.EvalAny(
-			accesscontrol.EvalPermission(accesscontrol.ActionAlertingNotificationsWrite), // TODO: Add alert.notifications.receivers:write permission
+			accesscontrol.EvalPermission(accesscontrol.ActionAlertingNotificationsWrite),
+			accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversUpdate),
 		)
 	case "deletecollection":
 		fallthrough
 	case "delete":
 		action = accesscontrol.EvalAny(
-			accesscontrol.EvalPermission(accesscontrol.ActionAlertingNotificationsWrite), // TODO: Add alert.notifications.receivers:delete permission
+			accesscontrol.EvalPermission(accesscontrol.ActionAlertingNotificationsWrite),
+			accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversDelete),
 		)
 	}
 

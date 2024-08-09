@@ -27,9 +27,9 @@ var resourceInfo = notifications.ReceiverResourceInfo
 type ReceiverService interface {
 	GetReceiver(ctx context.Context, q models.GetReceiverQuery, user identity.Requester) (*models.Receiver, error)
 	GetReceivers(ctx context.Context, q models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error)
-	CreateReceiver(ctx context.Context, r *models.Receiver, orgID int64) (*models.Receiver, error)
-	UpdateReceiver(ctx context.Context, r *models.Receiver, storedSecureFields map[string][]string, orgID int64) (*models.Receiver, error)
-	DeleteReceiver(ctx context.Context, name string, orgID int64, provenance definitions.Provenance, version string) error
+	CreateReceiver(ctx context.Context, r *models.Receiver, orgID int64, user identity.Requester) (*models.Receiver, error)
+	UpdateReceiver(ctx context.Context, r *models.Receiver, storedSecureFields map[string][]string, orgID int64, user identity.Requester) (*models.Receiver, error)
+	DeleteReceiver(ctx context.Context, name string, provenance definitions.Provenance, version string, orgID int64, user identity.Requester) error
 }
 
 type legacyStorage struct {
@@ -142,7 +142,13 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	out, err := s.service.CreateReceiver(ctx, model, info.OrgID)
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	out, err := s.service.CreateReceiver(ctx, model, info.OrgID, user)
 	if err != nil {
 		return nil, err
 	}
@@ -158,6 +164,11 @@ func (s *legacyStorage) Update(ctx context.Context,
 	_ *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, false, err
 	}
@@ -188,7 +199,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, errors.NewBadRequest("title cannot be changed. Consider creating a new resource.")
 	}
 
-	updated, err := s.service.UpdateReceiver(ctx, model, storedSecureFields, info.OrgID)
+	updated, err := s.service.UpdateReceiver(ctx, model, storedSecureFields, info.OrgID, user)
 	if err != nil {
 		return nil, false, err
 	}
@@ -203,6 +214,12 @@ func (s *legacyStorage) Delete(ctx context.Context, uid string, deleteValidation
 	if err != nil {
 		return nil, false, err
 	}
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+
 	old, err := s.Get(ctx, uid, nil)
 	if err != nil {
 		return old, false, err
@@ -217,8 +234,8 @@ func (s *legacyStorage) Delete(ctx context.Context, uid string, deleteValidation
 		version = *options.Preconditions.ResourceVersion
 	}
 
-	err = s.service.DeleteReceiver(ctx, uid, info.OrgID, definitions.Provenance(models.ProvenanceNone), version) // TODO add support for dry-run option
-	return old, false, err                                                                                       // false - will be deleted async
+	err = s.service.DeleteReceiver(ctx, uid, definitions.Provenance(models.ProvenanceNone), version, info.OrgID, user) // TODO add support for dry-run option
+	return old, false, err                                                                                             // false - will be deleted async
 }
 
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
