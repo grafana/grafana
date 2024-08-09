@@ -53,6 +53,17 @@ func IsIdentityType(typ IdentityType, expected ...IdentityType) bool {
 	return false
 }
 
+// IsIdentityType returns true if type matches any expected identity type
+func IsIdentityType2(typedID TypedID, expected ...IdentityType) bool {
+	for _, e := range expected {
+		if typedID.Type() == e {
+			return true
+		}
+	}
+
+	return false
+}
+
 var AnonymousTypedID = NewTypedID(TypeAnonymous, 0)
 
 func ParseTypedID(str string) (TypedID, error) {

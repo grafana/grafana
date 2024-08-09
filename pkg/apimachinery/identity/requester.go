@@ -118,3 +118,40 @@ func UserIdentifier(kind IdentityType, identifier string) (int64, error) {
 
 	return 0, nil
 }
+
+// IntIdentifier converts a string identifier to an int64.
+// Applicable for users, service accounts, api keys and renderer service.
+// Errors if the identifier is not initialized or if namespace is not recognized.
+func IntIdentifier2(kind IdentityType, identifier string) (int64, error) {
+	if IsIdentityType(kind, TypeUser, TypeAPIKey, TypeServiceAccount, TypeRenderService) {
+		id, err := strconv.ParseInt(identifier, 10, 64)
+		if err != nil {
+			return 0, fmt.Errorf("unrecognized format for valid type %s: %w", kind, err)
+		}
+
+		if id < 1 {
+			return 0, ErrIdentifierNotInitialized
+		}
+
+		return id, nil
+	}
+
+	return 0, ErrNotIntIdentifier
+}
+
+// UserIdentifier converts a string identifier to an int64.
+// Errors if the identifier is not initialized or if namespace is not recognized.
+// Returns 0 if the namespace is not user or service account
+func UserIdentifier2(kind IdentityType, identifier string) (int64, error) {
+	userID, err := IntIdentifier(kind, identifier)
+	if err != nil {
+		// FIXME: return this error once entity namespaces are handled by stores
+		return 0, nil
+	}
+
+	if IsIdentityType(kind, TypeUser, TypeServiceAccount) {
+		return userID, nil
+	}
+
+	return 0, nil
+}
