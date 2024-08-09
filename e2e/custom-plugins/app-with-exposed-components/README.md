@@ -1,6 +1,6 @@
-# App with extension point
+# App with exposed components
 
-This app was initially copied from the [app-with-extension-point](https://github.com/grafana/grafana-plugin-examples/tree/main/examples/app-with-extension-point) example plugin. The plugin bundle is using AMD, but it's not minified and the plugin feature set is small so it should be possible to make changes in this file if necessary.
+This myorg-componentconsumer-app app uses the `usePluginComponent` hook to render a component that is exposed by the myorg-componentexposer-app app. The myorg-componentexposer-app app is nested inside the myorg-componentconsumer-app app.
 
 To test this app:
 
@@ -9,4 +9,12 @@ To test this app:
 PORT=3000 ./scripts/grafana-server/start-server
 # run Playwright tests using Playwright VSCode extension or with the following script
 yarn e2e:playwright
+```
+
+or
+
+```
+PORT=3000 ./scripts/grafana-server/start-server
+yarn start
+yarn e2e
 ```
