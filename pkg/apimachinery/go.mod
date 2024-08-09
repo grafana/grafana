@@ -3,8 +3,8 @@ module github.com/grafana/grafana/pkg/apimachinery
 go 1.22.4
 
 require (
-	github.com/grafana/authlib v0.0.0-20240809090637-9281bc7ac022
-	github.com/grafana/authlib/claims v0.0.0-20240809090637-9281bc7ac022
+	github.com/grafana/authlib v0.0.0-20240809100016-3ead871d80ac
+	github.com/grafana/authlib/claims v0.0.0-20240809100016-3ead871d80ac
 	github.com/stretchr/testify v1.9.0
 	k8s.io/apimachinery v0.31.0-rc.1
 	k8s.io/apiserver v0.31.0-rc.1

@@ -14,102 +14,102 @@ type IDClaimsWrapper struct {
 }
 
 // GetAuthenticatedBy implements claims.IdentityClaims.
-func (i *IDClaimsWrapper) GetAuthenticatedBy() string {
+func (i *IDClaimsWrapper) AuthenticatedBy() string {
 	return i.Source.GetAuthenticatedBy()
 }
 
 // GetDisplayName implements claims.IdentityClaims.
-func (i *IDClaimsWrapper) GetDisplayName() string {
+func (i *IDClaimsWrapper) DisplayName() string {
 	return i.Source.GetDisplayName()
 }
 
 // GetEmail implements claims.IdentityClaims.
-func (i *IDClaimsWrapper) GetEmail() string {
+func (i *IDClaimsWrapper) Email() string {
 	return i.Source.GetEmail()
 }
 
 // GetEmailVerified implements claims.IdentityClaims.
-func (i *IDClaimsWrapper) GetEmailVerified() bool {
+func (i *IDClaimsWrapper) EmailVerified() bool {
 	return i.Source.IsEmailVerified()
 }
 
 // GetIdentityType implements claims.IdentityClaims.
-func (i *IDClaimsWrapper) GetIdentityType() claims.IdentityType {
+func (i *IDClaimsWrapper) IdentityType() claims.IdentityType {
 	return i.Source.GetIdentityType()
 }
 
 // GetInternalID implements claims.IdentityClaims.
-func (i *IDClaimsWrapper) GetInternalID() int64 {
+func (i *IDClaimsWrapper) InternalID() int64 {
 	v, _ := i.Source.GetInternalID()
 	return v
 }
 
 // GetOrgID implements claims.IdentityClaims.
-func (i *IDClaimsWrapper) GetOrgID() int64 {
+func (i *IDClaimsWrapper) OrgID() int64 {
 	return i.Source.GetOrgID()
 }
 
 // GetRawUID implements claims.IdentityClaims.
-func (i *IDClaimsWrapper) GetRawUID() string {
+func (i *IDClaimsWrapper) RawUID() string {
 	return i.Source.GetRawIdentifier()
 }
 
 // GetUsername implements claims.IdentityClaims.
-func (i *IDClaimsWrapper) GetUsername() string {
+func (i *IDClaimsWrapper) Username() string {
 	return i.Source.GetLogin()
 }
 
 // GetAudience implements claims.AccessClaims.
-func (i *IDClaimsWrapper) GetAudience() []string {
+func (i *IDClaimsWrapper) Audience() []string {
 	return []string{}
 }
 
 // GetDelegatedPermissions implements claims.AccessClaims.
-func (i *IDClaimsWrapper) GetDelegatedPermissions() []string {
+func (i *IDClaimsWrapper) DelegatedPermissions() []string {
 	return []string{}
 }
 
 // GetExpiry implements claims.AccessClaims.
-func (i *IDClaimsWrapper) GetExpiry() *time.Time {
+func (i *IDClaimsWrapper) Expiry() *time.Time {
 	return nil
 }
 
 // GetIssuedAt implements claims.AccessClaims.
-func (i *IDClaimsWrapper) GetIssuedAt() *time.Time {
+func (i *IDClaimsWrapper) IssuedAt() *time.Time {
 	return nil
 }
 
 // GetIssuer implements claims.AccessClaims.
-func (i *IDClaimsWrapper) GetIssuer() string {
+func (i *IDClaimsWrapper) Issuer() string {
 	return ""
 }
 
 // GetJTI implements claims.AccessClaims.
-func (i *IDClaimsWrapper) GetJTI() string {
+func (i *IDClaimsWrapper) JTI() string {
 	return ""
 }
 
 // GetNamespace implements claims.AccessClaims.
-func (i *IDClaimsWrapper) GetNamespace() string {
+func (i *IDClaimsWrapper) Namespace() string {
 	return i.Source.GetAllowedKubernetesNamespace()
 }
 
 // GetNotBefore implements claims.AccessClaims.
-func (i *IDClaimsWrapper) GetNotBefore() *time.Time {
+func (i *IDClaimsWrapper) NotBefore() *time.Time {
 	return nil
 }
 
 // GetPermissions implements claims.AccessClaims.
-func (i *IDClaimsWrapper) GetPermissions() []string {
+func (i *IDClaimsWrapper) Permissions() []string {
 	return []string{}
 }
 
 // GetScopes implements claims.AccessClaims.
-func (i *IDClaimsWrapper) GetScopes() []string {
+func (i *IDClaimsWrapper) Scopes() []string {
 	return []string{}
 }
 
 // GetSubject implements claims.AccessClaims.
-func (i *IDClaimsWrapper) GetSubject() string {
+func (i *IDClaimsWrapper) Subject() string {
 	return ""
 }
