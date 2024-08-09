@@ -66,6 +66,13 @@
       "webRoot": "${workspaceFolder}"
     },
     {
+      "name": "Launch chrome",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}",
+    },
+    {
       "name": "Debug UI test",
       "type": "node",
       "request": "launch",
