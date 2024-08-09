@@ -44,7 +44,8 @@ type Service struct {
 	dashboardFolderStore folder.FolderStore
 	features             featuremgmt.FeatureToggles
 	accessControl        accesscontrol.AccessControl
-	// bus is currently used to publish event in case of title change
+	// bus is currently used to publish event in case of folder full path change.
+	// For example when a folder is moved to another folder or when a folder is renamed.
 	bus bus.Bus
 
 	mutex    sync.RWMutex
@@ -682,17 +683,9 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 		}
 
 		if cmd.NewTitle != nil {
-			namespace, id := cmd.SignedInUser.GetTypedID()
-
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-			if err := s.bus.Publish(ctx, &events.FolderTitleUpdated{
-				Timestamp: foldr.Updated,
-				Title:     foldr.Title,
-				ID:        dashFolder.ID, // nolint:staticcheck
-				UID:       dashFolder.UID,
-				OrgID:     cmd.OrgID,
-			}); err != nil {
-				s.log.ErrorContext(ctx, "failed to publish FolderTitleUpdated event", "folder", foldr.Title, "user", id, "namespace", namespace, "error", err)
+
+			if err := s.publishFolderFullPathUpdatedEvent(ctx, foldr.Updated, cmd.OrgID, cmd.UID); err != nil {
 				return err
 			}
 		}
@@ -955,11 +948,39 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 			return folder.ErrInternal.Errorf("failed to move legacy folder: %w", err)
 		}
 
+		if err := s.publishFolderFullPathUpdatedEvent(ctx, f.Updated, cmd.OrgID, cmd.UID); err != nil {
+			return err
+		}
+
 		return nil
 	}); err != nil {
 		return nil, err
 	}
 	return f, nil
+}
+
+func (s *Service) publishFolderFullPathUpdatedEvent(ctx context.Context, timestamp time.Time, orgID int64, folderUID string) error {
+	descFolders, err := s.store.GetDescendants(ctx, orgID, folderUID)
+	if err != nil {
+		s.log.ErrorContext(ctx, "failed to get descendants of the folder", "folderUID", folderUID, "orgID", orgID, "error", err)
+		return err
+	}
+	uids := make([]string, 0, len(descFolders)+1)
+	uids = append(uids, folderUID)
+	for _, f := range descFolders {
+		uids = append(uids, f.UID)
+	}
+
+	if err := s.bus.Publish(ctx, &events.FolderFullPathUpdated{
+		Timestamp: timestamp,
+		UIDs:      uids,
+		OrgID:     orgID,
+	}); err != nil {
+		s.log.ErrorContext(ctx, "Failed to publish FolderFullPathUpdated event", "folderUID", folderUID, "orgID", orgID, "descendantsUIDs", uids, "error", err)
+		return err
+	}
+
+	return nil
 }
 
 func (s *Service) canMove(ctx context.Context, cmd *folder.MoveFolderCommand) (bool, error) {

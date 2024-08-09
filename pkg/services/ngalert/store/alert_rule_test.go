@@ -1184,6 +1184,58 @@ func TestIntegrationRuleGroupsCaseSensitive(t *testing.T) {
 	})
 }
 
+func TestIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second}
+	sqlStore := db.InitTestReplDB(t)
+	store := &DBstore{
+		SQLStore:      sqlStore,
+		Cfg:           cfg.UnifiedAlerting,
+		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
+		Logger:        &logtest.Fake{},
+	}
+	orgID := int64(1)
+	gen := models.RuleGen
+	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval)).With(gen.WithOrgID(orgID))
+
+	alertRules := []*models.AlertRule{}
+	for i := 0; i < 5; i++ {
+		alertRules = append(alertRules, createRule(t, store, gen))
+	}
+	alertRuleNamespaceUIDs := make([]string, 0, len(alertRules))
+	for _, rule := range alertRules {
+		alertRuleNamespaceUIDs = append(alertRuleNamespaceUIDs, rule.NamespaceUID)
+	}
+	alertRuleInAnotherNamespace := createRule(t, store, gen)
+
+	requireAlertRuleVersion := func(t *testing.T, ruleID int64, orgID int64, expectedVersion int64) {
+		t.Helper()
+		dbrule := &models.AlertRule{}
+		err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			exist, err := sess.Table(models.AlertRule{}).ID(ruleID).Get(dbrule)
+			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", ruleID))
+			return err
+		})
+		require.NoError(t, err)
+		require.Equal(t, expectedVersion, dbrule.Version)
+	}
+
+	t.Run("should increase version for all rules", func(t *testing.T) {
+		_, err := store.IncreaseVersionForAllRulesInNamespaces(context.Background(), orgID, alertRuleNamespaceUIDs)
+		require.NoError(t, err)
+
+		for _, rule := range alertRules {
+			requireAlertRuleVersion(t, rule.ID, orgID, rule.Version+1)
+		}
+
+		// this rule's version should not be changed
+		requireAlertRuleVersion(t, alertRuleInAnotherNamespace.ID, orgID, alertRuleInAnotherNamespace.Version)
+	})
+}
+
 // createAlertRule creates an alert rule in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
 func createRule(t *testing.T, store *DBstore, generator *models.AlertRuleGenerator) *models.AlertRule {
