@@ -123,6 +123,10 @@ func AddMigration(mg *migrator.Migrator) {
 		},
 	}
 
+	mg.AddMigration("add group_mapping_id to user_role table", migrator.NewAddColumnMigration(userRoleV1, &migrator.Column{
+		Name: "group_mapping_id", Type: migrator.DB_BigInt, Nullable: true,
+	}))
+
 	mg.AddMigration("create builtin role table", migrator.NewAddTableMigration(builtinRoleV1))
 
 	//-------  indexes ------------------
