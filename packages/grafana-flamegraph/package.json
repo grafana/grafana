@@ -73,7 +73,7 @@
     "@types/react-virtualized-auto-sizer": "1.0.4",
     "@types/tinycolor2": "1.4.6",
     "babel-jest": "29.7.0",
-    "esbuild": "0.20.2",
+    "esbuild": "0.23.0",
     "jest": "^29.6.4",
     "jest-canvas-mock": "2.5.2",
     "rollup": "2.79.1",
