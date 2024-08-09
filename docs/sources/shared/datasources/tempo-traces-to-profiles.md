@@ -75,9 +75,9 @@ To use a custom query with the configuration, follow these steps:
 1.  Select a Pyroscope data source in the **Data source** drop-down.
 1.  Optional: Choose any tags to use in the query. If left blank, the default values of `service.name` and `service.namespace` are used.
 
-    These tags can be used in the custom query with `${__tags}` variable. This variable interpolates the mapped tags as list in an appropriate syntax for the data source. Only the tags that were present in the span are included. Tags that aren't present are omitted.
+    These tags can be used in the custom query with `${__tags}` variable. This variable interpolates the mapped tags as list in an appropriate syntax for the data source. Only tags present in the span are included. Tags that aren't present are omitted.
 
-    You can also configure a name for the tag. This is useful in cases where the tag has dots in the name and the target data source doesn't allow using dots in labels. For example, you can remap `service.name` to `service_name`. If you don’t map any tags here, you can still use any tag in the query, for example: `method="${__span.tags.method}"`. You can learn more about custom query variables [here](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#custom-query-variables).
+    You can also configure a name for the tag. Tag names are useful where the tag has dots in the name and the target data source doesn't allow using dots in labels. For example, you can remap `service.name` to `service_name`. If you don’t map any tags here, you can still use any tag in the query, for example: `method="${__span.tags.method}"`. Learn more about [custom query variables](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#custom-query-variables).
 
 1.  Select one or more profile types to use in the query. Select the drop-down and choose options from the menu.
 1.  Switch on **Use custom query** to enter a custom query.
