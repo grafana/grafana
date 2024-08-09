@@ -1,8 +1,16 @@
 import { css } from '@emotion/css';
 import { useEffect } from 'react';
 
-import { AdHocVariableFilter, GrafanaTheme2, PageLayoutType, RawTimeRange, VariableHide, urlUtil } from '@grafana/data';
-import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
+import {
+  AdHocVariableFilter,
+  AppEvents,
+  GrafanaTheme2,
+  PageLayoutType,
+  RawTimeRange,
+  VariableHide,
+  urlUtil,
+} from '@grafana/data';
+import { getAppEvents, locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   DataSourceVariable,
@@ -87,6 +95,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       history: state.history ?? new DataTrailHistory({}),
       settings: state.settings ?? new DataTrailSettings({}),
       createdAt: state.createdAt ?? new Date().getTime(),
+      // deafult to false or true?
       useOtelExperience: state.useOtelExperience ?? false,
       ...state,
     });
@@ -308,6 +317,14 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
           });
         }
       } else {
+        const appEvents = getAppEvents();
+        appEvents.publish({
+          type: AppEvents.alertError.name,
+          payload: [
+            'The Prometheus data source is not standardized for joining OTel resources with metrics. The data source may be standardized in the future but currently this feature is disabled for your data source.',
+          ],
+        });
+
         this.setState({ useOtelExperience: false });
         // @ts-ignore this is to update defaultKeys which exists but ts says it doesn't
         otelResourcesVariable?.setState({ defaultKeys: [], hide: VariableHide.hideVariable });
