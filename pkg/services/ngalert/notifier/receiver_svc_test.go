@@ -192,6 +192,7 @@ func TestReceiverService_Delete(t *testing.T) {
 	writer := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
 			accesscontrol.ActionAlertingNotificationsWrite: nil,
+			accesscontrol.ActionAlertingNotificationsRead:  nil,
 		},
 	}}
 
@@ -325,6 +326,7 @@ func TestReceiverService_Create(t *testing.T) {
 	writer := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
 			accesscontrol.ActionAlertingNotificationsWrite: nil,
+			accesscontrol.ActionAlertingNotificationsRead:  nil,
 		},
 	}}
 	decryptUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -407,6 +409,7 @@ func TestReceiverService_Update(t *testing.T) {
 	writer := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
 			accesscontrol.ActionAlertingNotificationsWrite: nil,
+			accesscontrol.ActionAlertingNotificationsRead:  nil,
 		},
 	}}
 	decryptUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -559,7 +562,12 @@ func TestReceiverService_Update(t *testing.T) {
 
 func TestReceiverService_UpdateReceiverName(t *testing.T) {
 	// This test is to ensure that the receiver name is updated in routes and notification settings when the name is changed.
-	writer := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionAlertingNotificationsWrite: nil}}}
+	writer := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingNotificationsWrite: nil,
+			accesscontrol.ActionAlertingNotificationsRead:  nil,
+		},
+	}}
 
 	secretsService := fake_secrets.NewFakeSecretsService()
 	sut := createReceiverServiceSut(t, &secretsService)
@@ -610,7 +618,10 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 	secretsService := fake_secrets.NewFakeSecretsService()
 
 	admin := &user.SignedInUser{OrgID: orgId, OrgRole: org.RoleAdmin, Permissions: map[int64]map[string][]string{
-		orgId: {accesscontrol.ActionAlertingNotificationsWrite: nil},
+		orgId: {
+			accesscontrol.ActionAlertingNotificationsWrite: nil,
+			accesscontrol.ActionAlertingNotificationsRead:  nil,
+		},
 	}}
 
 	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("slack"))()
@@ -741,21 +752,70 @@ func TestReceiverServiceAC_Create(t *testing.T) {
 			hasAccess:   nil,
 		},
 		{
-			name:        "global legacy permissions - create all",
+			name:        "global legacy permissions - not authorized without read",
 			permissions: map[string][]string{accesscontrol.ActionAlertingNotificationsWrite: nil},
-			hasAccess:   allReceivers(),
+			hasAccess:   nil,
 		},
 		{
-			name:        "global receivers permissions - create all",
+			name:        "global receivers permissions - not authorized without read",
 			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversCreate: {ac.ScopeReceiversAll}},
-			hasAccess:   allReceivers(),
+			hasAccess:   nil,
 		},
 		{
-			name: "single receivers permissions - create some",
+			name: "single receivers permissions - not authorized without read",
 			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversCreate: {
 				ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
 				ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
 			}},
+			hasAccess: nil,
+		},
+		{
+			name:        "global legacy permissions - create all",
+			permissions: map[string][]string{accesscontrol.ActionAlertingNotificationsWrite: nil, accesscontrol.ActionAlertingNotificationsRead: nil},
+			hasAccess:   allReceivers(),
+		},
+		{
+			name:        "global receivers permissions - create all",
+			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversCreate: {ac.ScopeReceiversAll}, accesscontrol.ActionAlertingReceiversRead: {ac.ScopeReceiversAll}},
+			hasAccess:   allReceivers(),
+		},
+		{
+			name: "single receivers permissions - create some",
+			permissions: map[string][]string{
+				accesscontrol.ActionAlertingReceiversCreate: {
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
+				},
+				accesscontrol.ActionAlertingReceiversRead: {
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
+				},
+			},
+			hasAccess: []models.Receiver{recv1, recv3},
+		},
+		{
+			name: "single receivers mixed read permissions - create some",
+			permissions: map[string][]string{
+				accesscontrol.ActionAlertingReceiversCreate: {
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
+				},
+				accesscontrol.ActionAlertingReceiversRead: {
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv2.UID),
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
+				},
+			},
+			hasAccess: []models.Receiver{recv3},
+		},
+		{
+			name: "single receivers mixed global read permissions - create some",
+			permissions: map[string][]string{
+				accesscontrol.ActionAlertingReceiversCreate: {
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
+				},
+				accesscontrol.ActionAlertingNotificationsRead: nil,
+			},
 			hasAccess: []models.Receiver{recv1, recv3},
 		},
 	}
@@ -794,7 +854,10 @@ func TestReceiverServiceAC_Update(t *testing.T) {
 	secretsService := fake_secrets.NewFakeSecretsService()
 
 	admin := &user.SignedInUser{OrgID: orgId, OrgRole: org.RoleAdmin, Permissions: map[int64]map[string][]string{
-		orgId: {accesscontrol.ActionAlertingNotificationsWrite: nil},
+		orgId: {
+			accesscontrol.ActionAlertingNotificationsWrite: nil,
+			accesscontrol.ActionAlertingNotificationsRead:  nil,
+		},
 	}}
 
 	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("slack"))()
@@ -825,23 +888,77 @@ func TestReceiverServiceAC_Update(t *testing.T) {
 			hasAccess:   nil,
 		},
 		{
-			name:        "global legacy permissions - update all",
+			name:        "global legacy permissions - not authorized without read",
 			permissions: map[string][]string{accesscontrol.ActionAlertingNotificationsWrite: nil},
+			existing:    allReceivers(),
+			hasAccess:   nil,
+		},
+		{
+			name:        "global receivers permissions - not authorized without read",
+			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversUpdate: {ac.ScopeReceiversAll}},
+			existing:    allReceivers(),
+			hasAccess:   nil,
+		},
+		{
+			name: "single receivers permissions - not authorized without read",
+			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversUpdate: {
+				ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
+				ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
+			}},
+			existing:  allReceivers(),
+			hasAccess: nil,
+		},
+		{
+			name:        "global legacy permissions - update all",
+			permissions: map[string][]string{accesscontrol.ActionAlertingNotificationsWrite: nil, accesscontrol.ActionAlertingNotificationsRead: nil},
 			existing:    allReceivers(),
 			hasAccess:   allReceivers(),
 		},
 		{
 			name:        "global receivers permissions - update all",
-			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversUpdate: {ac.ScopeReceiversAll}},
+			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversUpdate: {ac.ScopeReceiversAll}, accesscontrol.ActionAlertingReceiversRead: {ac.ScopeReceiversAll}},
 			existing:    allReceivers(),
 			hasAccess:   allReceivers(),
 		},
 		{
 			name: "single receivers permissions - update some",
-			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversUpdate: {
-				ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
-				ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
-			}},
+			permissions: map[string][]string{
+				accesscontrol.ActionAlertingReceiversUpdate: {
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
+				},
+				accesscontrol.ActionAlertingReceiversRead: {
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
+				},
+			},
+			existing:  allReceivers(),
+			hasAccess: []models.Receiver{recv1, recv3},
+		},
+		{
+			name: "single receivers mixed read permissions - update some",
+			permissions: map[string][]string{
+				accesscontrol.ActionAlertingReceiversUpdate: {
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
+				},
+				accesscontrol.ActionAlertingReceiversRead: {
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv2.UID),
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
+				},
+			},
+			existing:  allReceivers(),
+			hasAccess: []models.Receiver{recv3},
+		},
+		{
+			name: "single receivers mixed global read permissions - update some",
+			permissions: map[string][]string{
+				accesscontrol.ActionAlertingReceiversUpdate: {
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
+				},
+				accesscontrol.ActionAlertingNotificationsRead: nil,
+			},
 			existing:  allReceivers(),
 			hasAccess: []models.Receiver{recv1, recv3},
 		},
@@ -890,7 +1007,10 @@ func TestReceiverServiceAC_Delete(t *testing.T) {
 	secretsService := fake_secrets.NewFakeSecretsService()
 
 	admin := &user.SignedInUser{OrgID: orgId, OrgRole: org.RoleAdmin, Permissions: map[int64]map[string][]string{
-		orgId: {accesscontrol.ActionAlertingNotificationsWrite: nil},
+		orgId: {
+			accesscontrol.ActionAlertingNotificationsWrite: nil,
+			accesscontrol.ActionAlertingNotificationsRead:  nil,
+		},
 	}}
 
 	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("slack"))()
@@ -921,23 +1041,77 @@ func TestReceiverServiceAC_Delete(t *testing.T) {
 			hasAccess:   nil,
 		},
 		{
-			name:        "global legacy permissions - delete all",
+			name:        "global legacy permissions - not authorized without read",
 			permissions: map[string][]string{accesscontrol.ActionAlertingNotificationsWrite: nil},
+			existing:    allReceivers(),
+			hasAccess:   nil,
+		},
+		{
+			name:        "global receivers permissions - not authorized without read",
+			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversDelete: {ac.ScopeReceiversAll}},
+			existing:    allReceivers(),
+			hasAccess:   nil,
+		},
+		{
+			name: "single receivers permissions - not authorized without read",
+			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversDelete: {
+				ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
+				ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
+			}},
+			existing:  allReceivers(),
+			hasAccess: nil,
+		},
+		{
+			name:        "global legacy permissions - delete all",
+			permissions: map[string][]string{accesscontrol.ActionAlertingNotificationsWrite: nil, accesscontrol.ActionAlertingNotificationsRead: nil},
 			existing:    allReceivers(),
 			hasAccess:   allReceivers(),
 		},
 		{
 			name:        "global receivers permissions - delete all",
-			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversDelete: {ac.ScopeReceiversAll}},
+			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversDelete: {ac.ScopeReceiversAll}, accesscontrol.ActionAlertingReceiversRead: {ac.ScopeReceiversAll}},
 			existing:    allReceivers(),
 			hasAccess:   allReceivers(),
 		},
 		{
 			name: "single receivers permissions - delete some",
-			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversDelete: {
-				ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
-				ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
-			}},
+			permissions: map[string][]string{
+				accesscontrol.ActionAlertingReceiversDelete: {
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
+				},
+				accesscontrol.ActionAlertingReceiversRead: {
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
+				},
+			},
+			existing:  allReceivers(),
+			hasAccess: []models.Receiver{recv1, recv3},
+		},
+		{
+			name: "single receivers mixed read permissions - delete some",
+			permissions: map[string][]string{
+				accesscontrol.ActionAlertingReceiversDelete: {
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
+				},
+				accesscontrol.ActionAlertingReceiversRead: {
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv2.UID),
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
+				},
+			},
+			existing:  allReceivers(),
+			hasAccess: []models.Receiver{recv3},
+		},
+		{
+			name: "single receivers mixed global read permissions - delete some",
+			permissions: map[string][]string{
+				accesscontrol.ActionAlertingReceiversDelete: {
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
+					ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
+				},
+				accesscontrol.ActionAlertingNotificationsRead: nil,
+			},
 			existing:  allReceivers(),
 			hasAccess: []models.Receiver{recv1, recv3},
 		},
