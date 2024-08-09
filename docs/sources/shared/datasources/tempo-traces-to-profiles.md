@@ -59,7 +59,6 @@ To use a basic configuration, follow these steps:
 1. Select one or more profile types to use in the query. Select the drop-down and choose options from the menu.
 
    The profile type or app must be selected for the query to be valid. Grafana doesn't show any data if the profile type or app isn’t selected when a query runs.
-   ![Traces to profile configuration options in the Tempo data source](/media/docs/tempo/profiles/Tempo-data-source-profiles-Settings.png)
 
 1. Select **Save and Test**.
 
@@ -76,11 +75,13 @@ To use a custom query with the configuration, follow these steps:
 1.  Select a Pyroscope data source in the **Data source** drop-down.
 1.  Optional: Choose any tags to use in the query. If left blank, the default values of `service.name` and `service.namespace` are used.
 
-    These tags can be used in the custom query with `${__tags}` variable. This variable interpolates the mapped tags as list in an appropriate syntax for the data source. Only the tags that were present in the span are included; tags that aren't present are omitted. You can also configure a new name for the tag. This is useful in cases where the tag has dots in the name and the target data source doesn't allow using dots in labels. For example, you can remap `service.name` to `service_name`. If you don’t map any tags here, you can still use any tag in the query, for example: `method="${__span.tags.method}"`. You can learn more about custom query variables [here](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#custom-query-variables).
+    These tags can be used in the custom query with `${__tags}` variable. This variable interpolates the mapped tags as list in an appropriate syntax for the data source. Only the tags that were present in the span are included. Tags that aren't present are omitted.
+
+    You can also configure a name for the tag. This is useful in cases where the tag has dots in the name and the target data source doesn't allow using dots in labels. For example, you can remap `service.name` to `service_name`. If you don’t map any tags here, you can still use any tag in the query, for example: `method="${__span.tags.method}"`. You can learn more about custom query variables [here](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#custom-query-variables).
 
 1.  Select one or more profile types to use in the query. Select the drop-down and choose options from the menu.
 1.  Switch on **Use custom query** to enter a custom query.
-1.  Specify a custom query to be used to query profile data. You can use various variables to make that query relevant for current span. The link is shown only if all the variables are interpolated with non-empty values to prevent creating an invalid query. You can interpolate the configured tags using the `$__tags` keyword.
+1.  Specify a custom query to be used to query profile data. You can use various variables to make that query relevant for current span. The link shows only if all the variables are interpolated with non-empty values to prevent creating an invalid query. You can interpolate the configured tags using the `$__tags` keyword.
 1.  Select **Save and Test**.
 
 ## Configuration options

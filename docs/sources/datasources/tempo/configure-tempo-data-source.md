@@ -72,6 +72,8 @@ To configure a Tempo data source, you need administrator rights to your Grafana 
 If you are provisioning a Tempo data source, then you also need administrative rights on the server hosting your Grafana instance.
 Refer to [Provision the data source](#provision-the-data-source) for next steps.
 
+![Provisioned data source warning](/media/docs/grafana/data-sources/tempo/tempo-data-source-provisioned-error.png)
+
 ## Set up the data source
 
 To configure basic settings for the Tempo data source, complete the following steps:
@@ -101,7 +103,7 @@ The required **Connection** field provides the connection point for your Tempo i
 
 1. Select **Save & test** to preserve your changes.
 
-### Authentication
+## Authentication
 
 Use this section to select an authentication method to access the data source.
 
@@ -110,15 +112,13 @@ Use Transport Layer Security (TLS) for an additional layer of security when work
 For additional information on setting up TLS encryption with Tempo, refer to [Configure TLS communication](https://grafana.com/docs/tempo/<TEMPO_VERSION>/configuration/network/tls/) and [Tempo configuration](https://grafana.com/docs/tempo/<TEMPO_VERSION>/configuration/).
 {{< /admonition >}}
 
-![Authentication section showing the TLS client certificate options](/media/docs/grafana/data-sources/tempo/tempo-data-source-authentication.png)
-
 To set up authentication:
 
 1. Select an authentication method from the drop-down:
 
-- **Basic authentication**: Authenticates your data source using a username and password
-- **Forward OAuth identity**: Forwards the OAuth access token and the OIDC ID token, if available, of the user querying to the data source
-- **No authentication**: No authentication is required to access the data source
+   - **Basic authentication**: Authenticates your data source using a username and password
+   - **Forward OAuth identity**: Forwards the OAuth access token and the OIDC ID token, if available, of the user querying to the data source
+   - **No authentication**: No authentication is required to access the data source
 
 1. For **Basic authentication** only: Enter the **User** and **Password**.
 1. Optional: Complete the **TLS settings** for additional security methods.
@@ -131,6 +131,7 @@ To set up authentication:
 
    **Skip TLS certification validation**
    : When activated, it bypasses TLS certificate verification. Not recommended, unless absolutely necessary for testing.
+   ![Authentication section showing the TLS client certificate options](/media/docs/grafana/data-sources/tempo/tempo-data-source-authentication.png)
 
 1. Optional: Add **HTTP Headers**. You can pass along additional context and metadata data about the request and response. Select **Add header** to add **Header** and **Value** fields.
 
@@ -360,6 +361,18 @@ You can choose one of three options:
 | **Duration** | _(Default)_ Displays the span duration on the span bar row.                                                                      |
 | **Tag**      | Displays the span tag on the span bar row. You must also specify which tag key to use to get the tag value, such as `component`. |
 
+### Private data source connect
+
+This feature is only available in Grafana Cloud.
+
+This option lets you query data that lives within a secured network without opening the network to inbound traffic from Grafana Cloud.
+
+Use the drop-down box to select a configured private data sources.
+
+Select **Manage private data source connect** to configure and manage any private data sources you have configured.
+
+For more information, refer to [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/).
+
 ## Provision the data source
 
 You can define and configure the Tempo data source in YAML files as part of the Grafana provisioning system.
@@ -374,8 +387,6 @@ For more information about provisioning and available configuration options, ref
 You can't modify a provisioned data source using the Tempo data source settings in Grafana.
 Grafana displays a message for provisioned data sources.
 {{< /admonition >}}
-
-![Provisioned data source warning](/media/docs/grafana/data-sources/tempo/tempo-data-source-provisioned-error.png)
 
 ### Example file
 
