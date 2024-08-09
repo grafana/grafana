@@ -28,7 +28,9 @@ export const RuleListStateView = ({ namespaces }: Props) => {
     namespaces.forEach((namespace) =>
       namespace.groups.forEach((group) =>
         group.rules.forEach((rule) => {
-          if (rule.promRule && isAlertingRule(rule.promRule)) {
+          // We might hit edge cases where there type = alerting, but there is no state.
+          // In this case, we shouldn't try to group these alerts in the state view
+          if (rule.promRule && isAlertingRule(rule.promRule) && rule.promRule.state) {
             result[rule.promRule.state].push(rule);
           }
         })
