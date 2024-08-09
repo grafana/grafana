@@ -23,8 +23,9 @@ type sqlStore struct {
 }
 
 const (
-	tableName  = "cloud_migration_resource"
-	secretType = "cloudmigration-snapshot-encryption-key"
+	tableName       = "cloud_migration_resource"
+	secretType      = "cloudmigration-snapshot-encryption-key"
+	GetAllSnapshots = -1
 )
 
 func (ss *sqlStore) GetMigrationSessionByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
@@ -108,7 +109,7 @@ func (ss *sqlStore) GetCloudMigrationSessionList(ctx context.Context) ([]*cloudm
 	return migrations, nil
 }
 
-func (ss *sqlStore) DeleteMigrationSessionByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
+func (ss *sqlStore) DeleteMigrationSessionByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, []cloudmigration.CloudMigrationSnapshot, error) {
 	var c cloudmigration.CloudMigrationSession
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		exist, err := sess.Where("uid=?", uid).Get(&c)
@@ -118,17 +119,56 @@ func (ss *sqlStore) DeleteMigrationSessionByUID(ctx context.Context, uid string)
 		if !exist {
 			return cloudmigration.ErrMigrationNotFound
 		}
-		id := c.ID
-		affected, err := sess.Delete(&cloudmigration.CloudMigrationSession{
-			ID: id,
-		})
-		if affected == 0 {
-			return cloudmigration.ErrMigrationNotDeleted
+		return nil
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// first we try to delete all the associated information to the session
+	q := cloudmigration.ListSnapshotsQuery{
+		SessionUID: uid,
+		Page:       1,
+		Limit:      GetAllSnapshots,
+	}
+	snapshots, err := ss.GetSnapshotList(ctx, q)
+	if err != nil {
+		return nil, nil, fmt.Errorf("getting migration snapshots from db: %w", err)
+	}
+
+	err = ss.db.InTransaction(ctx, func(ctx context.Context) error {
+		for _, snapshot := range snapshots {
+			err := ss.DeleteSnapshotResources(ctx, snapshot.UID)
+			if err != nil {
+				return fmt.Errorf("deleting snapshot resource from db: %w", err)
+			}
+			err = ss.DeleteSnapshot(ctx, snapshot.UID)
+			if err != nil {
+				return fmt.Errorf("deleting snapshot from db: %w", err)
+			}
 		}
-		return err
+		// and then we delete the migration sessions
+		err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+			id := c.ID
+			affected, err := sess.Delete(&cloudmigration.CloudMigrationSession{
+				ID: id,
+			})
+			if affected == 0 {
+				return cloudmigration.ErrMigrationNotDeleted
+			}
+			return err
+		})
+
+		if err != nil {
+			return fmt.Errorf("deleting migration from db: %w", err)
+		}
+		return nil
 	})
 
-	return &c, err
+	if err != nil {
+		return nil, nil, err
+	}
+	return &c, snapshots, nil
 }
 
 func (ss *sqlStore) GetMigrationStatus(ctx context.Context, cmrUID string) (*cloudmigration.CloudMigrationSnapshot, error) {
@@ -222,6 +262,15 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 	return err
 }
 
+func (ss *sqlStore) DeleteSnapshot(ctx context.Context, snapshotUid string) error {
+	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		_, err := sess.Delete(cloudmigration.CloudMigrationSnapshot{
+			UID: snapshotUid,
+		})
+		return err
+	})
+}
+
 func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, sessionUid, uid string, resultPage int, resultLimit int) (*cloudmigration.CloudMigrationSnapshot, error) {
 	var snapshot cloudmigration.CloudMigrationSnapshot
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
@@ -259,11 +308,14 @@ func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, sessionUid, uid string
 }
 
 // GetSnapshotList returns snapshots without resources included. Use GetSnapshotByUID to get individual snapshot results.
+// passing GetAllSnapshots will return all the elements regardless of the page
 func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.ListSnapshotsQuery) ([]cloudmigration.CloudMigrationSnapshot, error) {
 	var snapshots = make([]cloudmigration.CloudMigrationSnapshot, 0)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		offset := (query.Page - 1) * query.Limit
-		sess.Limit(query.Limit, offset)
+		if query.Limit != GetAllSnapshots {
+			offset := (query.Page - 1) * query.Limit
+			sess.Limit(query.Limit, offset)
+		}
 		sess.OrderBy("created DESC")
 		return sess.Find(&snapshots, &cloudmigration.CloudMigrationSnapshot{
 			SessionUID: query.SessionUID,
