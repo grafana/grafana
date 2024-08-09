@@ -61,6 +61,26 @@ func GrafanaDatasourceRequestQueryCount(val int) attribute.KeyValue {
 	return grafanaDatasourceRequestQueryCountKey.Int(val)
 }
 
+// Describes Kubernetes attributes.
+const (
+	// K8sDataplaneserviceNameKey is the attribute Key conforming to the
+	// "k8s.dataplaneservice.name" semantic conventions. It represents the name
+	// of the DataPlaneService.
+	//
+	// Type: string
+	// RequirementLevel: Optional
+	// Stability: stable
+	// Examples: 'v0alpha1.prometheus.grafana.app'
+	k8sDataplaneserviceNameKey = attribute.Key("k8s.dataplaneservice.name")
+)
+
+// K8sDataplaneserviceName returns an attribute KeyValue conforming to the
+// "k8s.dataplaneservice.name" semantic conventions. It represents the name of
+// the DataPlaneService.
+func K8sDataplaneserviceName(val string) attribute.KeyValue {
+	return k8sDataplaneserviceNameKey.String(val)
+}
+
 // Describes Grafana plugin attributes.
 const (
 	// GrafanaPluginIdKey is the attribute Key conforming to the
