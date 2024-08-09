@@ -6,6 +6,7 @@ import { t } from 'app/core/internationalization';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
+import { ShareSnapshot } from '../sharing/ShareButton/share-snapshot/ShareSnapshot';
 import { ShareModal } from '../sharing/ShareModal';
 import { SharePanelInternally } from '../sharing/panel-share/SharePanelInternally';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -55,6 +56,18 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
         const drawer = new ShareDrawer({
           title: t('share-panel.drawer.share-link-title', 'Link settings'),
           body: new SharePanelInternally({ panelRef: vizPanel.getRef() }),
+        });
+
+        scene.showModal(drawer);
+      }),
+    });
+
+    keybindings.addBinding({
+      key: 'p s',
+      onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+        const drawer = new ShareDrawer({
+          title: t('share-panel.drawer.share-snapshot-title', 'Share snapshot'),
+          body: new ShareSnapshot({ dashboardRef: scene.getRef(), panelRef: vizPanel.getRef() }),
         });
 
         scene.showModal(drawer);
