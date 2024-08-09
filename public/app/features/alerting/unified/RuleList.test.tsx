@@ -151,6 +151,7 @@ const ui = {
     pause: byRole('menuitem', { name: /pause evaluation/i }),
     resume: byRole('menuitem', { name: /resume evaluation/i }),
   },
+  loadingIndicator: byText('Loading...'),
 };
 
 const server = setupMswServer();
@@ -270,6 +271,7 @@ describe('RuleList', () => {
     await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(4));
     const groups = await ui.ruleGroup.findAll();
     expect(groups).toHaveLength(5);
+    await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
     expect(groups[0]).toHaveTextContent('foofolder');
     expect(groups[1]).toHaveTextContent('default group-1');
@@ -365,6 +367,7 @@ describe('RuleList', () => {
     });
 
     await renderRuleList();
+    await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
     const groups = await ui.ruleGroup.findAll();
     expect(groups).toHaveLength(2);
@@ -541,6 +544,7 @@ describe('RuleList', () => {
     });
 
     await renderRuleList();
+    await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
     const groups = await ui.ruleGroup.findAll();
     expect(groups).toHaveLength(2);
@@ -620,6 +624,7 @@ describe('RuleList', () => {
     });
 
     renderRuleList();
+    await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
     const [firstReorderButton] = await screen.findAllByLabelText(/reorder/i);
 
@@ -863,6 +868,7 @@ describe('RuleList', () => {
         mocks.api.fetchRulerRules.mockResolvedValue({});
 
         renderRuleList();
+        await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
         await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
 
@@ -883,6 +889,8 @@ describe('RuleList', () => {
         mocks.api.fetchRulerRules.mockResolvedValue({});
 
         renderRuleList();
+
+        await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
         await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
         expect(ui.newRuleButton.get()).toBeInTheDocument();
@@ -930,6 +938,8 @@ describe('RuleList', () => {
 
         renderRuleList();
 
+        await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
         await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
         expect(ui.newRuleButton.get()).toBeInTheDocument();
       });
@@ -975,6 +985,8 @@ describe('RuleList', () => {
       mocks.api.fetchRulerRules.mockResolvedValue({});
 
       renderRuleList();
+
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
       await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
 
