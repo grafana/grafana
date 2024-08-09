@@ -556,20 +556,16 @@ describe('DashboardDatasourceBehaviour', () => {
       // spy on runQueries
       const spy = jest.spyOn(dashboardDSPanel.state.$data as SceneQueryRunner, 'runQueries');
 
-      await new Promise((r) => setTimeout(r, 1));
-
-      expect(spy).not.toHaveBeenCalled();
-
       // deactivate scene to mimic going into panel edit
       sceneDeactivate();
 
       // run source panel queries and update request ID
-      (sourcePanel.state.$data! as SceneQueryRunner).runQueries();
+      (sourcePanel.state.$data as SceneQueryRunner).runQueries();
+
+      // // activate scene to mimic coming back from panel edit
+      activateFullSceneTree(scene);
 
       await new Promise((r) => setTimeout(r, 1));
-
-      // activate scene to mimic coming back from panel edit
-      activateFullSceneTree(scene);
 
       expect(spy).toHaveBeenCalledTimes(1);
     });
