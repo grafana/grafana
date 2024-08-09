@@ -76,6 +76,7 @@ export interface FeatureToggles {
   lokiPredefinedOperations?: boolean;
   pluginsFrontendSandbox?: boolean;
   frontendSandboxMonitorOnly?: boolean;
+  pluginsDetailsRightPanel?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
   recordedQueriesMulti?: boolean;
   vizAndWidgetSplit?: boolean;
