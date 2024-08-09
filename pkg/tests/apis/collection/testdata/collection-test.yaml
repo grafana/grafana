@@ -1,0 +1,16 @@
+apiVersion: collection.grafana.app/v0alpha1
+kind: Collection
+metadata:
+  name: test # anything is ok here... except yes or true -- they become boolean!
+spec:
+  title: hello
+  description: descr
+  values:
+      - group: dashboard.grafana.app
+        resource: dashboards
+        name: edtwqpo4ibegwe
+      - group: dashboard.grafana.app
+        resource: dashboards
+        name: addoomtlivedev
+
+

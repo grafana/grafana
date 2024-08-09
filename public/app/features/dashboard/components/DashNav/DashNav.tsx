@@ -25,6 +25,7 @@ import { useBusEvent } from 'app/core/hooks/useBusEvent';
 import { t, Trans } from 'app/core/internationalization';
 import { ID_PREFIX, setStarred } from 'app/core/reducers/navBarTree';
 import { removeNavIndex } from 'app/core/reducers/navModel';
+import { StarButton } from 'app/features/collections/StarButton';
 import AddPanelButton from 'app/features/dashboard/components/AddPanelButton/AddPanelButton';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -196,17 +197,16 @@ export const DashNav = memo<Props>((props) => {
     }
 
     if (canStar) {
-      let desc = isStarred
-        ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
-        : t('dashboard.toolbar.mark-favorite', 'Mark as favorite');
       buttons.push(
-        <DashNavButton
-          tooltip={desc}
-          icon={isStarred ? 'favorite' : 'star'}
-          iconType={isStarred ? 'mono' : 'default'}
-          iconSize="lg"
-          onClick={onStarDashboard}
-          key="button-star"
+        <StarButton
+          style="navbar"
+          isStarred={isStarred}
+          onClickStar={onStarDashboard}
+          resource={{
+            group: 'dashboard.grafana.app',
+            resource: 'dashboards',
+            name: dashboard.uid,
+          }}
         />
       );
     }
