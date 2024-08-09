@@ -9,6 +9,7 @@ export interface ShareModalTabProps {
   panel?: PanelModel;
   onDismiss?(): void;
   onCreateLibraryPanel?(libPanel: LibraryPanel): void;
+  onCancelClick?(): void;
 }
 
 export interface ShareModalTabModel {
