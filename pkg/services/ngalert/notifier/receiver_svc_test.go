@@ -250,7 +250,7 @@ func TestReceiverService_Delete(t *testing.T) {
 					models.NotificationSettingsGen(models.NSMuts.WithReceiver(baseReceiver.Name))(),
 				},
 			},
-			expectedErr: makeReceiverInUseErr(true, []models.AlertRuleKey{{OrgID: 1, UID: "rule1"}}),
+			expectedErr: makeReceiverInUseErr(false, []models.AlertRuleKey{{OrgID: 1, UID: "rule1"}}),
 		},
 		{
 			name:             "delete provisioning provenance fails when caller is ProvenanceNone",

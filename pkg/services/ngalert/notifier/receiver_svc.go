@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"fmt"
+	"strings"
 
 	"golang.org/x/exp/maps"
 
@@ -18,8 +20,14 @@ import (
 )
 
 var (
-	ErrReceiverInUse           = errutil.Conflict("alerting.notifications.receiver.used").MustTemplate("Receiver is used by notification policies or alert rules")
-	ErrReceiverVersionConflict = errutil.Conflict("alerting.notifications.receiver.conflict")
+	ErrReceiverInUse = errutil.Conflict("alerting.notifications.receiver.used").MustTemplate(
+		"Receiver is used by '{{ .Public.UsedBy }}'",
+		errutil.WithPublic("Receiver is used by {{ .Public.UsedBy }}"),
+	)
+	ErrReceiverVersionConflict = errutil.Conflict("alerting.notifications.receiver.conflict").MustTemplate(
+		"Provided version '{{ .Public.Version }}' of receiver '{{ .Public.Name }}' does not match current version '{{ .Public.CurrentVersion }}'",
+		errutil.WithPublic("Provided version '{{ .Public.Version }}' of receiver '{{ .Public.Name }}' does not match current version '{{ .Public.CurrentVersion }}'"),
+	)
 )
 
 // ReceiverService is the service for managing alertmanager receivers.
@@ -484,7 +492,7 @@ func (rs *ReceiverService) encryptor(ctx context.Context) models.EncryptFn {
 // checkOptimisticConcurrency checks if the existing receiver's version matches the desired version.
 func (rs *ReceiverService) checkOptimisticConcurrency(receiver *models.Receiver, desiredVersion string) error {
 	if receiver.Version != desiredVersion {
-		return ErrReceiverVersionConflict.Errorf("provided version '%s' of receiver '%s' does not match current version '%s'", desiredVersion, receiver.Name, receiver.Version)
+		return makeErrReceiverVersionConflict(receiver, desiredVersion)
 	}
 	return nil
 }
@@ -511,16 +519,34 @@ func makeReceiverInUseErr(usedByRoutes bool, rules []models.AlertRuleKey) error 
 	for _, key := range rules {
 		uids = append(uids, key.UID)
 	}
-	data := make(map[string]any, 2)
+
+	var usedBy []string
+	data := make(map[string]any)
 	if len(uids) > 0 {
+		usedBy = append(usedBy, fmt.Sprintf("%d rule(s)", len(uids)))
 		data["UsedByRules"] = uids
 	}
 	if usedByRoutes {
+		usedBy = append(usedBy, "one or more routes")
 		data["UsedByRoutes"] = true
+	}
+	if len(usedBy) > 0 {
+		data["UsedBy"] = strings.Join(usedBy, ", ")
 	}
 
 	return ErrReceiverInUse.Build(errutil.TemplateData{
 		Public: data,
 		Error:  nil,
 	})
+}
+
+func makeErrReceiverVersionConflict(current *models.Receiver, desiredVersion string) error {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"Version":        desiredVersion,
+			"CurrentVersion": current.Version,
+			"Name":           current.Name,
+		},
+	}
+	return ErrReceiverVersionConflict.Build(data)
 }
