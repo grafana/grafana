@@ -105,6 +105,12 @@ func (c *memoryClientImpl) GetSnapshotStatus(ctx context.Context, session cloudm
 				RefID:  "folder1",
 				Status: cloudmigration.ItemStatusOK,
 			},
+			{
+				Type:   cloudmigration.DatasourceDataType,
+				RefID:  "ds2",
+				Status: cloudmigration.ItemStatusWarning,
+				Error:  "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.",
+			},
 		},
 	}
 

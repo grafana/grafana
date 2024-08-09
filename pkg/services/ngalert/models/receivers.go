@@ -18,6 +18,14 @@ type GetReceiversQuery struct {
 	Decrypt bool
 }
 
+// ListReceiversQuery represents a query for listing receiver groups.
+type ListReceiversQuery struct {
+	OrgID  int64
+	Names  []string
+	Limit  int
+	Offset int
+}
+
 // Receiver is the domain model representation of a receiver / contact point.
 type Receiver struct {
 	UID          string

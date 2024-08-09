@@ -109,6 +109,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/youmark/pkcs8"
 )
 
 type HTTPServer struct {
@@ -819,11 +820,59 @@ func (hs *HTTPServer) readCertificates() (*tls.Certificate, error) {
 		return nil, fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
 	}
 
+	if hs.Cfg.CertPassword != "" {
+		return handleEncryptedCertificates(hs.Cfg)
+	}
+	// previous implementation
 	tlsCert, err := tls.LoadX509KeyPair(hs.Cfg.CertFile, hs.Cfg.KeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("could not load SSL certificate: %w", err)
 	}
 	return &tlsCert, nil
+}
+
+func handleEncryptedCertificates(cfg *setting.Cfg) (*tls.Certificate, error) {
+	certKeyFilePassword := cfg.CertPassword
+	certData, err := os.ReadFile(cfg.CertFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read certificate file: %w", err)
+	}
+
+	keyData, err := os.ReadFile(cfg.KeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read private key file: %w", err)
+	}
+
+	// handle encrypted private key
+	keyPemBlock, _ := pem.Decode(keyData)
+
+	var keyBytes []byte
+	// Process the PKCS-encrypted PEM block.
+	if strings.Contains(keyPemBlock.Type, "ENCRYPTED") {
+		// The pkcs8 package only handles the PKCS #5 v2.0 scheme.
+		decrypted, err := pkcs8.ParsePKCS8PrivateKey(keyPemBlock.Bytes, []byte(certKeyFilePassword))
+		if err != nil {
+			return nil, fmt.Errorf("error parsing PKCS8 Private key: %w", err)
+		}
+		keyBytes, err = x509.MarshalPKCS8PrivateKey(decrypted)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling PKCS8 Private key: %w", err)
+		}
+	} else {
+		return nil, fmt.Errorf("password provided but Private key is not encrypted or not supported")
+	}
+
+	var encodedKey bytes.Buffer
+	err = pem.Encode(&encodedKey, &pem.Block{Type: keyPemBlock.Type, Bytes: keyBytes})
+	if err != nil {
+		return nil, fmt.Errorf("error encoding pem file: %w", err)
+	}
+
+	cert, err := tls.X509KeyPair(certData, encodedKey.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse X509 key pair: %w", err)
+	}
+	return &cert, nil
 }
 
 func (hs *HTTPServer) configureTLS() error {
@@ -869,7 +918,7 @@ func (hs *HTTPServer) GetCertificate(*tls.ClientHelloInfo) (*tls.Certificate, er
 	return tlsCerts, nil
 }
 
-// fsnotify module can be used to detect file changes and based on the event certs can be reloaded
+// WatchAndUpdateCerts fsnotify module can be used to detect file changes and based on the event certs can be reloaded
 // since it adds a direct dependency for the optional feature. So that is the reason periodic watching
 // of cert files is chosen. If fsnotify is added as direct dependency in future, then the implementation
 // can be revisited to align to fsnotify.

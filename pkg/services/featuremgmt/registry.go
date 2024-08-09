@@ -1073,11 +1073,12 @@ var (
 			Owner:       grafanaSharingSquad,
 		},
 		{
-			Name:         "tlsMemcached",
-			Description:  "Use TLS-enabled memcached in the enterprise caching feature",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaOperatorExperienceSquad,
-			HideFromDocs: true,
+			Name:           "tlsMemcached",
+			Description:    "Use TLS-enabled memcached in the enterprise caching feature",
+			Stage:          FeatureStageGeneralAvailability,
+			Owner:          grafanaOperatorExperienceSquad,
+			Expression:     "true",
+			AllowSelfServe: false, // the non-tls implementation is slated for removal
 		},
 		{
 			Name:            "kubernetesAggregator",
