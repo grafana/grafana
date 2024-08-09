@@ -8,7 +8,7 @@ import { IconName } from './icon';
 import { PanelData } from './panel';
 import { RawTimeRange, TimeZone } from './time';
 
-export type PluginExposedComponent = {
+export type PluginExportedComponent = {
   id: string;
   pluginId: string;
   description: string;

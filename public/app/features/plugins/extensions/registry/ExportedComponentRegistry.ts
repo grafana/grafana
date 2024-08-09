@@ -1,14 +1,14 @@
-import { PluginExposedComponent } from '@grafana/data';
+import { PluginExportedComponent } from '@grafana/data';
 
 import { PluginPreloadResult } from '../../pluginPreloader';
 
 import { Registry } from './Registry';
 
 export type RegistryType = {
-  [id: string]: PluginExposedComponent;
+  [id: string]: PluginExportedComponent;
 };
 
-export class ExposedComponentRegistry extends Registry<RegistryType> {
+export class ExportedComponentRegistry extends Registry<RegistryType> {
   constructor(initialState: RegistryType = {}) {
     super({
       initialState,
@@ -16,7 +16,7 @@ export class ExposedComponentRegistry extends Registry<RegistryType> {
   }
 
   mapToRegistry(registry: RegistryType, item: PluginPreloadResult): RegistryType {
-    const { pluginId, exposedComponents, error } = item;
+    const { pluginId, exportedComponents, error } = item;
 
     if (error) {
       console.log({
@@ -27,11 +27,11 @@ export class ExposedComponentRegistry extends Registry<RegistryType> {
       return registry;
     }
 
-    if (!exposedComponents) {
+    if (!exportedComponents) {
       return registry;
     }
 
-    for (const config of exposedComponents) {
+    for (const config of exportedComponents) {
       const { id } = config;
 
       // check if config is valid, skip and warn if invalid.
