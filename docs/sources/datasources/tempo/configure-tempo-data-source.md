@@ -82,11 +82,11 @@ To configure basic settings for the Tempo data source, complete the following st
 
 1.  On the **Settings** tab, set the data source's basic configuration options. At a minimum, you need to complete the **Name**, **Connection**, and **Authentication** sections. The other sections provide optional capabilities.
 
-    | Name           | Description                                                              |
-    | -------------- | ------------------------------------------------------------------------ |
-    | **Name**       | Sets the name you use to refer to the data source in panels and queries. |
-    | **Default**    | Sets the data source that's pre-selected for new panels.                 |
-    | **Connection**        | Sets the URL of the Tempo instance, such as `http://tempo`.              |
+    | Name               | Description                                                              |
+    | ------------------ | ------------------------------------------------------------------------ |
+    | **Name**           | Sets the name you use to refer to the data source in panels and queries. |
+    | **Default**        | Sets the data source that's pre-selected for new panels.                 |
+    | **Connection**     | Sets the URL of the Tempo instance, such as `http://tempo`.              |
     | **Authentication** | Enables authentication to the Tempo data source.                         |
 
 This video explains how to add data sources, including Loki, Tempo, and Mimir, to Grafana and Grafana Cloud.
@@ -115,9 +115,11 @@ The required **Connection** field provides the connection point for your Tempo i
 To set up authentication:
 
 1. Select an authentication method from the drop-down:
-  - **Basic authentication**: Authenticates your data source using a username and password
-  - **Forward OAuth identity**: Forwards the OAuth access token and the OIDC ID token, if available, of the user querying to the data source
-  - **No authentication**: No authentication is required to access the data source
+
+- **Basic authentication**: Authenticates your data source using a username and password
+- **Forward OAuth identity**: Forwards the OAuth access token and the OIDC ID token, if available, of the user querying to the data source
+- **No authentication**: No authentication is required to access the data source
+
 1. For **Basic authentication** only: Enter the **User** and **Password**.
 1. Optional: Complete the **TLS settings** for additional security methods.
 
@@ -301,29 +303,37 @@ For example, `${__span.name}`.
 | **\_\_trace.duration** | The duration of the trace.                                                                                                                                                                                                                                                                                                               |
 | **\_\_trace.name**     | The name of the trace.                                                                                                                                                                                                                                                                                                                   |
 
-<!-- The sections below don't appear to be in the revised content. Are these settings in another location or should they be removed? -->
+## Additional settings
 
-## Service Graph
+Use the down-arrow to expand the **Additional settings** section to view these options.
 
-The **Service Graph** setting configures the [Service Graph](/docs/tempo/latest/metrics-generator/service_graphs/enable-service-graphs/) feature.
+### Advanced HTTP settings
+
+The Grafana Proxy deletes forwarded cookies. Use the **Allowed cookies** field to specify cookies by name that should be forwarded to the data source.
+
+The **Timeout** field sets the HTTP request timeout in seconds.
+
+### Service graph
+
+The **Service graph** setting configures the [Service Graph](/docs/tempo/latest/metrics-generator/service_graphs/enable-service-graphs/) data.
 
 Configure the **Data source** setting to define in which Prometheus instance the Service Graph data is stored.
 
 To use the Service Graph, refer to the [Service Graph documentation](#use-the-service-graph).
 
-## Node Graph
+### Node graph
 
-The **Node Graph** setting enables the [node graph visualization](ref:node-graph), which is disabled by default.
+The **Node graph** setting enables the [node graph visualization](ref:node-graph), which isn't activated by default.
 
-Once enabled, Grafana displays the node graph above the trace view.
+Once activated, Grafana displays the node graph above the trace view.
 
-## Tempo search
+### Tempo search
 
 The **Search** setting configures [Tempo search](/docs/tempo/latest/configuration/#search).
 
 You can configure the **Hide search** setting to hide the search query option in **Explore** if search is not configured in the Tempo instance.
 
-## TraceID query
+### TraceID query
 
 The **TraceID query** setting modifies how TraceID queries are run. The time range can be used when there are performance issues or timeouts since it will narrow down the search to the defined range. This setting is disabled by default.
 
@@ -335,7 +345,7 @@ You can configure this setting as follows:
 | **Time shift start**  | Time shift for start of search. Default: `30m`.             |
 | **Time shift end**    | Time shift for end of search. Default: `30m`.               |
 
-## Span bar
+### Span bar
 
 The **Span bar** setting helps you display additional information in the span bar row.
 
@@ -349,11 +359,11 @@ You can choose one of three options:
 
 ## Provision the data source
 
-You can define and configure the Tempo data source in YAML files as part of Grafana's provisioning system.
-Provisioning is primarily used Grafana instances that do not use Grafana Cloud.
+You can define and configure the Tempo data source in YAML files as part of the Grafana provisioning system.
+Provisioning is primarily used Grafana instances that don't use Grafana Cloud.
 
-Using a configuration file lets you use version control to manage file changes.
-Any changes made to the file are tracked in your version control system, such as Git, and can be updated or rolled back as needed.
+You can use version control, like git, to track and manage file changes.
+Changes can be updated or rolled back as needed.
 
 For more information about provisioning and available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
 
