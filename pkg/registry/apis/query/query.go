@@ -157,8 +157,22 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 		qdr, err = b.executeConcurrentQueries(ctx, req.Requests)
 	}
 
+	var expErr error
 	if len(req.Expressions) > 0 {
-		qdr, err = b.handleExpressions(ctx, req, qdr)
+		qdr, expErr = b.handleExpressions(ctx, req, qdr)
+	}
+
+	// If we have an error in the expression engine but also an error in the
+	// handling of queries, we know that the expression error came from a failed
+	// query. So we can wrap those errors to give the caller more insights about
+	// what went wrong.
+	if err != nil && expErr != nil {
+		err = fmt.Errorf("%w: %w", expErr, err)
+	}
+
+	// If there was no error with queries, set any error of the expression handling to be returned.
+	if err == nil {
+		err = expErr
 	}
 
 	// Remove hidden results
@@ -341,6 +355,7 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 					}
 					vars[refId] = res
 				} else {
+
 					// This should error in the parsing phase
 					err := fmt.Errorf("missing variable %s for %s", refId, expression.RefID)
 					qdr.Responses[refId] = backend.DataResponse{
