@@ -90,7 +90,7 @@ type ResourceServerOptions struct {
 
 	// Check if a user has access to write folders
 	// When this is nil, no resources can have folders configured
-	WriteAccess WriteAccessHooks
+	Authorizer Authorizer
 
 	// Callbacks for startup and shutdown
 	Lifecycle LifecycleHooks
@@ -106,6 +106,9 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 
 	if opts.Backend == nil {
 		return nil, fmt.Errorf("missing Backend implementation")
+	}
+	if opts.Authorizer == nil {
+		opts.Authorizer = NewAlwaysAuthorizer()
 	}
 	if opts.Index == nil {
 		opts.Index = &noopService{}
@@ -133,7 +136,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		backend:     opts.Backend,
 		index:       opts.Index,
 		diagnostics: opts.Diagnostics,
-		access:      opts.WriteAccess,
+		authz:       opts.Authorizer,
 		lifecycle:   opts.Lifecycle,
 		now:         opts.Now,
 		ctx:         ctx,
@@ -149,7 +152,7 @@ type server struct {
 	backend     StorageBackend
 	index       ResourceIndexServer
 	diagnostics DiagnosticsServer
-	access      WriteAccessHooks
+	authz       Authorizer
 	lifecycle   LifecycleHooks
 	now         func() int64
 
@@ -276,9 +279,9 @@ func (s *server) newEvent(ctx context.Context, user identity.Requester, key *Res
 
 	folder := obj.GetFolder()
 	if folder != "" {
-		err = s.access.CanWriteFolder(ctx, user, folder)
-		if err != nil {
-			return nil, AsErrorResult(err)
+		e := s.authz.CanWriteToFolder(ctx, user, key.Resource, folder)
+		if e != nil {
+			return nil, e
 		}
 	}
 	origin, err := obj.GetOriginInfo()
@@ -286,9 +289,9 @@ func (s *server) newEvent(ctx context.Context, user identity.Requester, key *Res
 		return nil, NewBadRequestError("invalid origin info")
 	}
 	if origin != nil {
-		err = s.access.CanWriteOrigin(ctx, user, origin.Name)
-		if err != nil {
-			return nil, AsErrorResult(err)
+		e := s.authz.CanWriteOrigin(ctx, user, origin.Name)
+		if e != nil {
+			return nil, e
 		}
 	}
 	return event, nil
@@ -309,6 +312,10 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 			Message: "no user found in context",
 			Code:    http.StatusUnauthorized,
 		}
+		return rsp, nil
+	}
+	if e := s.authz.CanCreate(ctx, user, req.Key); e != nil {
+		rsp.Error = e
 		return rsp, nil
 	}
 
@@ -351,8 +358,12 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 		}
 		return rsp, nil
 	}
+	if e := s.authz.CanUpdate(ctx, user, req.Key); e != nil {
+		rsp.Error = e
+		return rsp, nil
+	}
 	if req.ResourceVersion < 0 {
-		rsp.Error = AsErrorResult(apierrors.NewBadRequest("update must include the previous version"))
+		rsp.Error = NewBadRequestError("update must include the previous version")
 		return rsp, nil
 	}
 
@@ -396,8 +407,21 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	}
 
 	rsp := &DeleteResponse{}
+	user, err := identity.GetRequester(ctx)
+	if err != nil || user == nil {
+		rsp.Error = &ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}
+		return rsp, nil
+	}
+	if e := s.authz.CanDelete(ctx, user, req.Key); e != nil {
+		rsp.Error = e
+		return rsp, nil
+	}
 	if req.ResourceVersion < 0 {
-		return nil, apierrors.NewBadRequest("update must include the previous version")
+		rsp.Error = NewBadRequestError("update must include the previous version")
+		return rsp, nil
 	}
 
 	latest := s.backend.ReadResource(ctx, &ReadRequest{
@@ -418,15 +442,14 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 		Type:       WatchEvent_DELETED,
 		PreviousRV: latest.ResourceVersion,
 	}
-	requester, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, apierrors.NewBadRequest("unable to get user")
-	}
 	marker := &DeletedMarker{}
 	err = json.Unmarshal(latest.Value, marker)
 	if err != nil {
-		return nil, apierrors.NewBadRequest(
-			fmt.Sprintf("unable to read previous object, %v", err))
+		rsp.Error = &ErrorResult{
+			Message: fmt.Sprintf("unable to read previous object, %v", err),
+			Code:    http.StatusInternalServerError,
+		}
+		return rsp, nil
 	}
 	obj, err := utils.MetaAccessor(marker)
 	if err != nil {
@@ -436,7 +459,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	obj.SetUpdatedTimestamp(&now.Time)
 	obj.SetManagedFields(nil)
 	obj.SetFinalizers(nil)
-	obj.SetUpdatedBy(requester.GetUID())
+	obj.SetUpdatedBy(user.GetUID())
 	marker.TypeMeta = metav1.TypeMeta{
 		Kind:       "DeletedMarker",
 		APIVersion: "common.grafana.app/v0alpha1", // ?? or can we stick this in common?
@@ -483,13 +506,33 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 	maxPageBytes := 1024 * 1024 * 2 // 2mb/page
 	pageBytes := 0
 	rsp := &ListResponse{}
+	user, err := identity.GetRequester(ctx)
+	if err != nil || user == nil {
+		rsp.Error = &ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}
+		return rsp, nil
+	}
+
+	access, e := s.authz.Compile(ctx, user, req.Options.Key)
+	if e != nil {
+		rsp.Error = e
+		return rsp, nil
+	}
+
 	rv, err := s.backend.ListIterator(ctx, req, func(iter ListIterator) error {
 		for iter.Next() {
 			if err := iter.Error(); err != nil {
 				return err
 			}
 
-			// TODO: add authz filters
+			if !access(iter.Namespace(), iter.Name()) { // TODO folder support from backend
+				continue
+			}
+			// if iter.Folder() {
+			// TODO...
+			// }
 
 			item := &ResourceWrapper{
 				ResourceVersion: iter.ResourceVersion(),
