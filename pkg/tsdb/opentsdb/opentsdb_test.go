@@ -57,7 +57,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			data.NewField("Time", nil, []time.Time{
 				time.Date(2014, 7, 16, 20, 55, 46, 0, time.UTC),
 			}),
-			data.NewField("test", map[string]string{"env": "prod", "app": "grafana"}, []float64{
+			data.NewField("value", map[string]string{"env": "prod", "app": "grafana"}, []float64{
 				50}),
 		)
 		testFrame.Meta = &data.FrameMeta{
@@ -99,7 +99,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			data.NewField("Time", nil, []time.Time{
 				time.Date(2014, 7, 16, 20, 55, 46, 0, time.UTC),
 			}),
-			data.NewField("test", map[string]string{"env": "prod", "app": "grafana"}, []float64{
+			data.NewField("value", map[string]string{"env": "prod", "app": "grafana"}, []float64{
 				50}),
 		)
 		testFrame.Meta = &data.FrameMeta{
