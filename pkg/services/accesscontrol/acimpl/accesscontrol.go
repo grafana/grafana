@@ -114,6 +114,7 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 			return false, errAccessNotImplemented
 		}
 
+		a.log.Debug("evaluating zanzana", "user", key.User, "relation", key.Relation, "object", key.Object)
 		res, err := a.zclient.Check(ctx, &openfgav1.CheckRequest{
 			TupleKey: &openfgav1.CheckRequestTupleKey{
 				User:     key.User,
