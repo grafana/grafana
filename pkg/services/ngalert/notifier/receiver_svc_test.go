@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -106,7 +107,7 @@ func TestReceiverService_DecryptRedact(t *testing.T) {
 		Permissions: map[int64]map[string][]string{
 			1: {
 				accesscontrol.ActionAlertingNotificationsRead:    nil,
-				accesscontrol.ActionAlertingReceiversReadSecrets: nil,
+				accesscontrol.ActionAlertingReceiversReadSecrets: {ac.ScopeReceiversAll},
 			},
 		},
 	}
@@ -306,7 +307,7 @@ func TestReceiverService_Create(t *testing.T) {
 	}}
 	decryptUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
-			accesscontrol.ActionAlertingReceiversReadSecrets: nil,
+			accesscontrol.ActionAlertingReceiversReadSecrets: {ac.ScopeReceiversAll},
 		},
 	}}
 
@@ -388,7 +389,7 @@ func TestReceiverService_Update(t *testing.T) {
 	}}
 	decryptUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
-			accesscontrol.ActionAlertingReceiversReadSecrets: nil,
+			accesscontrol.ActionAlertingReceiversReadSecrets: {ac.ScopeReceiversAll},
 		},
 	}}
 
@@ -530,6 +531,111 @@ func TestReceiverService_Update(t *testing.T) {
 			provenances, err := sut.provisioningStore.GetProvenances(context.Background(), tc.user.GetOrgID(), (&definitions.EmbeddedContactPoint{}).ResourceType())
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedProvenances, provenances)
+		})
+	}
+}
+
+func TestReceiverServiceAC_Read(t *testing.T) {
+	var orgId int64 = 1
+	secretsService := fake_secrets.NewFakeSecretsService()
+
+	admin := &user.SignedInUser{OrgID: orgId, OrgRole: org.RoleAdmin}
+
+	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("slack"))()
+	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("email"))()
+	baseReceiver := models.ReceiverGen(models.ReceiverMuts.WithIntegrations(slackIntegration, emailIntegration))()
+	recv1 := models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithName("receiver1"))
+	recv2 := models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithName("receiver2"))
+	recv3 := models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithName("receiver3"))
+	allReceivers := func() []models.Receiver {
+		return []models.Receiver{recv1, recv2, recv3}
+	}
+	testCases := []struct {
+		name        string
+		permissions map[string][]string
+		existing    []models.Receiver
+
+		visible []models.Receiver
+	}{
+		{
+			name:     "not authorized without permissions",
+			existing: allReceivers(),
+			visible:  nil,
+		},
+		{
+			name:        "not authorized without receivers scope",
+			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversRead: nil},
+			existing:    allReceivers(),
+			visible:     nil,
+		},
+		{
+			name:        "global legacy permissions - read all",
+			permissions: map[string][]string{accesscontrol.ActionAlertingNotificationsRead: nil},
+			existing:    allReceivers(),
+			visible:     allReceivers(),
+		},
+		{
+			name:        "global receivers permissions - read all",
+			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversRead: {ac.ScopeReceiversAll}},
+			existing:    allReceivers(),
+			visible:     allReceivers(),
+		},
+		{
+			name: "single receivers permissions - read some",
+			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversRead: {
+				ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
+				ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
+			}},
+			existing: allReceivers(),
+			visible:  []models.Receiver{recv1, recv3},
+		},
+		{
+			name:        "global receivers secret permissions - read all",
+			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversReadSecrets: {ac.ScopeReceiversAll}},
+			existing:    allReceivers(),
+			visible:     allReceivers(),
+		},
+		{
+			name: "single receivers secret permissions - read some",
+			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversReadSecrets: {
+				ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
+				ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
+			}},
+			existing: allReceivers(),
+			visible:  []models.Receiver{recv1, recv3},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			sut := createReceiverServiceSut(t, &secretsService)
+
+			for _, recv := range tc.existing {
+				_, err := sut.CreateReceiver(context.Background(), &recv, admin.GetOrgID())
+				require.NoError(t, err)
+			}
+
+			usr := &user.SignedInUser{OrgID: orgId, Permissions: map[int64]map[string][]string{
+				orgId: tc.permissions,
+			}}
+
+			isVisible := func(uid string) bool {
+				for _, recv := range tc.visible {
+					if recv.UID == uid {
+						return true
+					}
+				}
+				return false
+			}
+			for _, recv := range allReceivers() {
+				response, err := sut.GetReceiver(context.Background(), singleQ(orgId, recv.Name), usr)
+				if isVisible(recv.UID) {
+					require.NoErrorf(t, err, "receiver %s should be visible, but isn't", recv.Name)
+					assert.NotNil(t, response)
+				} else {
+					assert.ErrorIsf(t, err, ac.ErrAuthorizationBase, "receiver %s should not be visible, but is", recv.Name)
+				}
+			}
 		})
 	}
 }

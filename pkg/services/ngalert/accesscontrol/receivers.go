@@ -8,6 +8,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
+const (
+	ScopeReceiversRoot = "receivers"
+)
+
+var (
+	ScopeReceiversProvider = ac.NewScopeProvider(ScopeReceiversRoot)
+	ScopeReceiversAll      = ScopeReceiversProvider.GetResourceAllScope()
+)
+
 var (
 	// Asserts pre-conditions for read access to redacted receivers. If this evaluates to false, the user cannot read any redacted receivers.
 	readRedactedReceiversPreConditionsEval = ac.EvalAny(
@@ -23,23 +32,19 @@ var (
 	// Asserts read-only access to all redacted receivers.
 	readRedactedAllReceiversEval = ac.EvalAny(
 		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
-
-		// TODO: The following should be scoped, but are currently interpreted as global. Needs a db migration when scope is added.
-		ac.EvalPermission(ac.ActionAlertingReceiversRead), // TODO: Add global scope with fgac.
+		ac.EvalPermission(ac.ActionAlertingReceiversRead, ScopeReceiversAll),
 		readDecryptedAllReceiversEval,
 	)
 	// Asserts read-only access to all decrypted receivers.
 	readDecryptedAllReceiversEval = ac.EvalAny(
-		ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets), // TODO: Add global scope with fgac.
+		ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets, ScopeReceiversAll),
 	)
 
 	// Asserts read-only access to a specific redacted receiver.
 	readRedactedReceiverEval = func(uid string) ac.Evaluator {
 		return ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
-
-			// TODO: The following should be scoped, but are currently interpreted as global. Needs a db migration when scope is added.
-			ac.EvalPermission(ac.ActionAlertingReceiversRead), // TODO: Add uid scope with fgac.
+			ac.EvalPermission(ac.ActionAlertingReceiversRead, ScopeReceiversProvider.GetResourceScopeUID(uid)),
 			readDecryptedReceiverEval(uid),
 		)
 	}
@@ -47,7 +52,7 @@ var (
 	// Asserts read-only access to a specific decrypted receiver.
 	readDecryptedReceiverEval = func(uid string) ac.Evaluator {
 		return ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets), // TODO: Add uid scope with fgac.
+			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets, ScopeReceiversProvider.GetResourceScopeUID(uid)),
 		)
 	}
 
