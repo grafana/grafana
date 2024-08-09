@@ -7,6 +7,7 @@ import { getAlertingStyles } from './alerting';
 import { getAgularPanelStyles } from './angularPanelStyles';
 import { getCardStyles } from './card';
 import { getCodeStyles } from './code';
+import { getDashboardGridStyles } from './dashboardGrid';
 import { getDashDiffStyles } from './dashdiff';
 import { getElementStyles } from './elements';
 import { getExtraStyles } from './extra';
@@ -35,6 +36,7 @@ export function GlobalStyles() {
         getAlertingStyles(theme),
         getCodeStyles(theme),
         getDashDiffStyles(theme),
+        getDashboardGridStyles(theme),
         getElementStyles(theme),
         getExtraStyles(theme),
         getFilterTableStyles(theme),
