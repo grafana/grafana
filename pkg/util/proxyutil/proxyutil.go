@@ -114,8 +114,7 @@ func ApplyUserHeader(sendUserHeader bool, req *http.Request, user identity.Reque
 		return
 	}
 
-	namespace, _ := user.GetTypedID()
-	if namespace == identity.TypeUser || namespace == identity.TypeServiceAccount {
+	if identity.IsIdentityType(user.GetID(), identity.TypeUser) {
 		req.Header.Set(UserHeaderName, user.GetLogin())
 	}
 }
