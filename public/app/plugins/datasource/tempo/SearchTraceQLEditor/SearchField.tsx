@@ -59,7 +59,7 @@ const SearchField = ({
   // there's only one value selected, so we store the previous operator and value
   const [prevOperator, setPrevOperator] = useState(filter.operator);
   const [prevValue, setPrevValue] = useState(filter.value);
-  const [tagOptionsQuery, setTagOptionsQuery] = useState<string | undefined>('');
+  const [tagOptionsQuery, setTagOptionsQuery] = useState<string>('');
 
   const updateOptions = async () => {
     try {
@@ -135,7 +135,7 @@ const SearchField = ({
   };
 
   const tagOptions = useMemo(() => {
-    if (!tagOptionsQuery?.length) {
+    if (tagOptionsQuery.length === 0) {
       return formatTagOptions(tags.slice(0, 10000), filter.tag);
     }
 
