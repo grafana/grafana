@@ -454,7 +454,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 		}
 
 		if len(finalChanges.New) > 0 {
-			userID, _ := identity.UserIdentifier(c.SignedInUser.GetTypedID())
+			userID, _ := identity.UserIdentifier(c.SignedInUser.GetID())
 			limitReached, err := srv.QuotaService.CheckQuotaReached(tranCtx, ngmodels.QuotaTargetSrv, &quota.ScopeParameters{
 				OrgID:  c.SignedInUser.GetOrgID(),
 				UserID: userID,

@@ -248,10 +248,9 @@ func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redir
 func (c *OAuth) Logout(ctx context.Context, user identity.Requester) (*authn.Redirect, bool) {
 	token := c.oauthService.GetCurrentOAuthToken(ctx, user)
 
-	namespace, id := user.GetTypedID()
-	userID, err := identity.UserIdentifier(namespace, id)
+	userID, err := identity.UserIdentifier(user.GetID())
 	if err != nil {
-		c.log.FromContext(ctx).Error("Failed to parse user id", "namespace", namespace, "id", id, "error", err)
+		c.log.FromContext(ctx).Error("Failed to parse user id", "id", user.GetID(), "error", err)
 		return nil, false
 	}
 

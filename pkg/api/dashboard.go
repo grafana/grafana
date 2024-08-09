@@ -43,13 +43,11 @@ func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashI
 		return false, nil
 	}
 
-	namespaceID, userIDstr := c.SignedInUser.GetTypedID()
-
-	if namespaceID != identity.TypeUser {
+	if !identity.IsIdentityType2(c.SignedInUser.GetID(), identity.TypeUser) {
 		return false, nil
 	}
 
-	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
 	if err != nil {
 		return false, err
 	}
@@ -515,15 +513,9 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	ctx := c.Req.Context()
 	var err error
 
-	userID := int64(0)
-	namespaceID, userIDstr := c.SignedInUser.GetTypedID()
-	if namespaceID != identity.TypeUser && namespaceID != identity.TypeServiceAccount {
-		hs.log.Debug("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", userIDstr)
-	} else {
-		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
-		if err != nil {
-			hs.log.Debug("Error while parsing user ID", "namespaceID", namespaceID, "userID", userIDstr)
-		}
+	var userID int64
+	if id, err := identity.UserIdentifier(c.SignedInUser.GetID()); err == nil {
+		userID = id
 	}
 
 	cmd.OrgID = c.SignedInUser.GetOrgID()
@@ -632,16 +624,9 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 // 401: unauthorisedError
 // 500: internalServerError
 func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Response {
-	userID := int64(0)
-	var err error
-	namespaceID, userIDstr := c.SignedInUser.GetTypedID()
-	if namespaceID != identity.TypeUser && namespaceID != identity.TypeServiceAccount {
-		hs.log.Debug("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", userIDstr)
-	} else {
-		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
-		if err != nil {
-			hs.log.Debug("Error while parsing user ID", "namespaceID", namespaceID, "userID", userIDstr)
-		}
+	var userID int64
+	if id, err := identity.UserIdentifier(c.SignedInUser.GetID()); err == nil {
+		userID = id
 	}
 
 	prefsQuery := pref.GetPreferenceWithDefaultsQuery{OrgID: c.SignedInUser.GetOrgID(), UserID: userID, Teams: c.SignedInUser.GetTeams()}
@@ -1085,15 +1070,9 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 		return response.Error(http.StatusNotFound, "Dashboard version not found", nil)
 	}
 
-	userID := int64(0)
-	namespaceID, userIDstr := c.SignedInUser.GetTypedID()
-	if namespaceID != identity.TypeUser && namespaceID != identity.TypeServiceAccount {
-		hs.log.Warn("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", userIDstr)
-	} else {
-		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
-		if err != nil {
-			hs.log.Warn("Error while parsing user ID", "namespaceID", namespaceID, "userID", userIDstr)
-		}
+	var userID int64
+	if id, err := identity.UserIdentifier(c.SignedInUser.GetID()); err == nil {
+		userID = id
 	}
 
 	saveCmd := dashboards.SaveDashboardCommand{}
