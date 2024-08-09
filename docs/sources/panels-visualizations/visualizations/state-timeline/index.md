@@ -123,7 +123,7 @@ Controls how much space between rows there are. 1 = no space = 0.5 = 50% space.
 
 ### Page size (enable pagination)
 
-The **Page size** option lets you paginate the state timeline visualization to limit how many series are visible at once. This is useful when you have a lot of data. With paginated results, the x-axis remains static, but the y-axis dynamically changes to align with the visible data:
+The **Page size** option lets you paginate the state timeline visualization to limit how many series are visible at once. This is useful when you have many series. With paginated results, the visualization displays a subset of all series on each page:
 
 {{< video-embed src="/media/docs/grafana/panels-visualizations/screen-recording-grafana-11-2-state-timeline-pagination-dark.mp4" >}}
 
