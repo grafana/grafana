@@ -283,16 +283,14 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     // get the time range
     const timeRange: RawTimeRange | undefined = trail.state.$timeRange?.state;
 
-    if (timeRange) {
+    if (timeRange && otelResourcesVariable instanceof AdHocFiltersVariable) {
       const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
       const isStandard = await isOtelStandardization(datasourceUid, timeRange);
 
       if (isStandard) {
-        // @ts-ignore this is to update defaultKeys which exists but ts says it doesn't
         if (otelResourcesVariable?.state.filters.length === 0) {
           // load the first var, deployment_environment
           otelResourcesVariable?.setState({
-            // @ts-ignore this is to update defaultKeys which exists but ts says it doesn't
             defaultKeys: [{ text: 'deployment_environment' }],
             hide: VariableHide.hideLabel,
           });
@@ -311,7 +309,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
           this.setState({ otelResources: resources });
 
           otelResourcesVariable?.setState({
-            // @ts-ignore this is to update defaultKeys which exists but ts says it doesn't
             defaultKeys: otelLabels,
             hide: VariableHide.hideLabel,
           });
@@ -326,7 +323,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         });
 
         this.setState({ useOtelExperience: false });
-        // @ts-ignore this is to update defaultKeys which exists but ts says it doesn't
         otelResourcesVariable?.setState({ defaultKeys: [], hide: VariableHide.hideVariable });
       }
     }
@@ -340,7 +336,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     // get the time range
     const timeRange: RawTimeRange | undefined = trail.state.$timeRange?.state;
 
-    if (timeRange) {
+    if (timeRange && otelResourcesVariable instanceof AdHocFiltersVariable) {
       // get the data source UID for making calls to the DS
       const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
       const excludedFilters = getOtelFilterKeys(otelResourcesVariable);
@@ -357,7 +353,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
       this.setState({ otelResources: resources });
 
-      // @ts-ignore this is to update defaultKeys which exists but ts says it doesn't
       otelResourcesVariable?.setState({ defaultKeys: otelLabels, hide: VariableHide.hideLabel });
     }
   }
@@ -485,9 +480,13 @@ function getBaseFiltersForMetric(metric?: string): AdHocVariableFilter[] {
 }
 
 function getOtelFilterKeys(variable: SceneVariable<SceneVariableState> | null) {
-  if (!variable) {
+  if (!variable || variable instanceof AdHocFiltersVariable) {
     return [];
   }
-  // @ts-ignore
-  return variable?.state.filters.map((f) => f.key);
+
+  let filterKeys: string[] = [];
+  if (variable instanceof AdHocFiltersVariable) {
+    filterKeys = variable?.state.filters.map((f) => f.key);
+  }
+  return filterKeys;
 }
