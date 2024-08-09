@@ -81,8 +81,14 @@ To configure basic settings for the Tempo data source, complete the following st
 1.  Click **Connections** in the left-side menu and select **Data sources**.
 1.  Enter `Tempo` in the search bar.
 1.  Select **Tempo**.
+1.  On the **Settings** tab, complete the **Name**, **Connection**, and **Authentication** sections.
 
-1.  On the **Settings** tab, set the data source's basic configuration options. At a minimum, you need to complete the **Name**, **Connection**, and **Authentication** sections. The other sections provide optional capabilities.
+- Use the **Name** field to specify the name used for the data source in panels, queries, and Explore. Activate **Default** for the data source to be pre-selected for new panels.
+- Under **Connection**, enter the **URL** of the Tempo instance, for example, `https://example.com:4100`.
+- Complete the [**Authentication** section](#authentication).
+
+1. Optional: Configure other sections to add capabilities to your tracing data.
+1. Select **Save & test**.
 
 This video explains how to add data sources, including Loki, Tempo, and Mimir, to Grafana and Grafana Cloud.
 Tempo data source set up starts at 4:58 in the video.
