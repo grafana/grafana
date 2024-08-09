@@ -169,7 +169,7 @@ func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) w
 		}
 
 		headerName := fmt.Sprintf("%s-Identity-Id", h.Cfg.IDResponseHeaderPrefix)
-		w.Header().Add(headerName, fmt.Sprintf("%s:%s", id.Type().String(), id))
+		w.Header().Add(headerName, id.String())
 	}
 }
 
