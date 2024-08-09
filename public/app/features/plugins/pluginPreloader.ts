@@ -1,20 +1,24 @@
-import type { PluginExtensionConfig } from '@grafana/data';
+import type { PluginExposedComponent, PluginExtensionConfig } from '@grafana/data';
 import type { AppPluginConfig } from '@grafana/runtime';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
 import { ReactivePluginExtensionsRegistry } from './extensions/reactivePluginExtensionRegistry';
+import { ExportedComponentRegistry } from './extensions/registry/ExportedComponentRegistry';
 import * as pluginLoader from './plugin_loader';
 
 export type PluginPreloadResult = {
   pluginId: string;
   error?: unknown;
   extensionConfigs: PluginExtensionConfig[];
+  //TODO: this prop should be required
+  exportedComponents?: PluginExposedComponent[];
 };
 
 export async function preloadPlugins(
   apps: AppPluginConfig[] = [],
   registry: ReactivePluginExtensionsRegistry,
+  exportedComponentRegistry: ExportedComponentRegistry,
   eventName = 'frontend_plugins_preload'
 ) {
   startMeasure(eventName);
@@ -23,6 +27,7 @@ export async function preloadPlugins(
 
   for (const preloadedPlugin of preloadedPlugins) {
     registry.register(preloadedPlugin);
+    exportedComponentRegistry.register(preloadedPlugin);
   }
 
   stopMeasure(eventName);
@@ -38,16 +43,16 @@ async function preload(config: AppPluginConfig): Promise<PluginPreloadResult> {
       isAngular: config.angular.detected,
       pluginId,
     });
-    const { extensionConfigs = [] } = plugin;
+    const { extensionConfigs = [], exportedComponents = [] } = plugin;
 
     // Fetching meta-information for the preloaded app plugin and caching it for later.
     // (The function below returns a promise, but it's not awaited for a reason: we don't want to block the preload process, we would only like to cache the result for later.)
     getPluginSettings(pluginId);
 
-    return { pluginId, extensionConfigs };
+    return { pluginId, extensionConfigs, exportedComponents };
   } catch (error) {
     console.error(`[Plugins] Failed to preload plugin: ${path} (version: ${version})`, error);
-    return { pluginId, extensionConfigs: [], error };
+    return { pluginId, extensionConfigs: [], error, exportedComponents: [] };
   } finally {
     stopMeasure(`frontend_plugin_preload_${pluginId}`);
   }

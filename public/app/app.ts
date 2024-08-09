@@ -85,6 +85,7 @@ import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { getCoreExtensionConfigurations } from './features/plugins/extensions/getCoreExtensionConfigurations';
 import { createPluginExtensionsGetter } from './features/plugins/extensions/getPluginExtensions';
 import { ReactivePluginExtensionsRegistry } from './features/plugins/extensions/reactivePluginExtensionRegistry';
+import { ExportedComponentRegistry } from './features/plugins/extensions/registry/ExportedComponentRegistry';
 import { createUsePluginComponent } from './features/plugins/extensions/usePluginComponent';
 import { createUsePluginExtensions } from './features/plugins/extensions/usePluginExtensions';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
@@ -214,6 +215,8 @@ export class GrafanaApp {
         extensionConfigs: getCoreExtensionConfigurations(),
       });
 
+      const exportedComponentsRegistry = new ExportedComponentRegistry();
+
       if (contextSrv.user.orgRole !== '') {
         // The "cloud-home-app" is registering banners once it's loaded, and this can cause a rerender in the AppChrome if it's loaded after the Grafana app init.
         // TODO: remove the following exception once the issue mentioned above is fixed.
@@ -221,13 +224,18 @@ export class GrafanaApp {
         const awaitedAppPlugins = Object.values(config.apps).filter((app) => awaitedAppPluginIds.includes(app.id));
         const appPlugins = Object.values(config.apps).filter((app) => !awaitedAppPluginIds.includes(app.id));
 
-        preloadPlugins(appPlugins, extensionsRegistry);
-        await preloadPlugins(awaitedAppPlugins, extensionsRegistry, 'frontend_awaited_plugins_preload');
+        preloadPlugins(appPlugins, extensionsRegistry, exportedComponentsRegistry);
+        await preloadPlugins(
+          awaitedAppPlugins,
+          extensionsRegistry,
+          exportedComponentsRegistry,
+          'frontend_awaited_plugins_preload'
+        );
       }
 
       setPluginExtensionGetter(createPluginExtensionsGetter(extensionsRegistry));
       setPluginExtensionsHook(createUsePluginExtensions(extensionsRegistry));
-      setPluginComponentHook(createUsePluginComponent(extensionsRegistry));
+      setPluginComponentHook(createUsePluginComponent(exportedComponentsRegistry));
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();

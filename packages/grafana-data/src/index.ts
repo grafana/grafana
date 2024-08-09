@@ -554,6 +554,7 @@ export {
   type PluginExtensionDataSourceConfigContext,
   type PluginExtensionCommandPaletteContext,
   type PluginExtensionOpenModalOptions,
+  type PluginExportedComponent,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,
