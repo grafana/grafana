@@ -210,12 +210,10 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 	ctx, span := s.tracer.Start(ctx, "authz.getUserDirectPermissions")
 	defer span.End()
 
-	namespace, identifier := user.GetTypedID()
-
 	var userID int64
-	if namespace == identity.TypeUser || namespace == identity.TypeServiceAccount {
+	if identity.IsIdentityType(user.GetID(), identity.TypeUser, identity.TypeServiceAccount) {
 		var err error
-		userID, err = strconv.ParseInt(identifier, 10, 64)
+		userID, err = identity.UserIdentifier(user.GetID())
 		if err != nil {
 			return nil, err
 		}

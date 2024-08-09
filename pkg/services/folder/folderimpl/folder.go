@@ -678,8 +678,6 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 		}
 
 		if cmd.NewTitle != nil {
-			namespace, id := cmd.SignedInUser.GetTypedID()
-
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 			if err := s.bus.Publish(ctx, &events.FolderTitleUpdated{
 				Timestamp: foldr.Updated,
@@ -688,7 +686,7 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 				UID:       dashFolder.UID,
 				OrgID:     cmd.OrgID,
 			}); err != nil {
-				s.log.ErrorContext(ctx, "failed to publish FolderTitleUpdated event", "folder", foldr.Title, "user", id, "namespace", namespace, "error", err)
+				s.log.ErrorContext(ctx, "failed to publish FolderTitleUpdated event", "folder", foldr.Title, "user", cmd.SignedInUser.GetID(), "error", err)
 				return err
 			}
 		}

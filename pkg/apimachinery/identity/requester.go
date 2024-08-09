@@ -17,15 +17,9 @@ type Requester interface {
 	GetRawIdentifier() string
 	// Deprecated: use GetUID instead
 	GetInternalID() (int64, error)
-
 	// GetID returns namespaced internalID for the entity
 	// Deprecated: use GetUID instead
 	GetID() TypedID
-	// GetTypedID returns the namespace and ID of the active entity.
-	// The namespace is one of the constants defined in pkg/apimachinery/identity.
-	// Deprecated: use GetID instead
-	GetTypedID() (kind IdentityType, identifier string)
-
 	// GetDisplayName returns the display name of the active entity.
 	// The display name is the name if it is set, otherwise the login or email.
 	GetDisplayName() string

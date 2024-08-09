@@ -259,8 +259,7 @@ func (c *OAuth) Logout(ctx context.Context, user identity.Requester) (*authn.Red
 		AuthId:     user.GetAuthID(),
 		AuthModule: user.GetAuthenticatedBy(),
 	}); err != nil {
-		namespace, id := user.GetTypedID()
-		c.log.FromContext(ctx).Error("Failed to invalidate tokens", "namespace", namespace, "id", id, "error", err)
+		c.log.FromContext(ctx).Error("Failed to invalidate tokens", "id", user.GetID(), "error", err)
 	}
 
 	oauthCfg := c.socialService.GetOAuthInfoProvider(c.providerName)

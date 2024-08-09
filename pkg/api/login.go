@@ -257,8 +257,7 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 		return
 	}
 
-	_, id := c.SignedInUser.GetTypedID()
-	hs.log.Info("Successful Logout", "userID", id)
+	hs.log.Info("Successful Logout", "id", c.SignedInUser.GetID())
 	c.Redirect(redirect.URL)
 }
 
