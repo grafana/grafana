@@ -81,10 +81,11 @@ export GRAFANA_TOKEN="<SERVICE-ACCOUNT-API-KEY>""
 After installing [`detect-angular-dashboards`](https://github.com/grafana/detect-angular-dashboards) on your local machine, execute the following command to retrieve the list of Angular plugin IDs along with their number of occurrences.
 
 ```bash
-./dist/darwin_arm64/detect-angular-dashboards -j http://<GRAFANA-IP>/api | jq -r ".[].Detections[].PluginID" | sort | uniq -c | sort -nr
+./dist/darwin_arm64/detect-angular-dashboards -j http://<GRAFANA-IP-ADDRESS>/api | jq -r ".[].Detections[].PluginID" | sort | uniq -c | sort -nr
 ```
 
 Output:
+
 <img width="1274" alt="Pasted Graphic" src="https://github.com/user-attachments/assets/cb5b1e4c-1ee9-43f3-a05f-fe17348cbd83">
 
 
@@ -93,7 +94,7 @@ Output:
 As an input to our automation script, we need to supply the list of dashboard URLs. The following command will generate a list of dashboards containing Angular plugins that need to be saved for the changes to take effect.
 
 ```bash
-./dist/darwin_arm64/detect-angular-dashboards -j http://<GRAFANA-IP>/api | jq -r ".[].URL"
+./dist/darwin_arm64/detect-angular-dashboards -j http://<GRAFANA-IP-ADDRESS>/api | jq -r ".[].URL"
 ```
 
 Output:
@@ -220,7 +221,7 @@ If the number of failed dashboard saves is small, these dashboards can be saved 
 Run the same command executed in Step 1 to verify if the save operation was successful and if the changes have been reflected.
 
 ```bash
-./dist/darwin_arm64/detect-angular-dashboards -j http://<GRAFANA-IP>/api | jq -r ".[].Detections[].PluginID" | sort | uniq -c | sort -nr
+./dist/darwin_arm64/detect-angular-dashboards -j http://<GRAFANA-IP-ADDRESS>/api | jq -r ".[].Detections[].PluginID" | sort | uniq -c | sort -nr
 ```
 
 Output:
