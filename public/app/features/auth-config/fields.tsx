@@ -1,10 +1,14 @@
 import { validate as uuidValidate } from 'uuid';
 
-import { config } from '@grafana/runtime';
-import { TextLink } from '@grafana/ui';
+import { AppEvents } from '@grafana/data';
+import { config, getAppEvents } from '@grafana/runtime';
+import { Button, TextLink } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 
-import { FieldData, SSOProvider, SSOSettingsField } from './types';
+import { Trans } from '../../core/internationalization';
+
+import ServerDiscoveryModal from './components/ServerDiscoveryModal';
+import { FieldData, ServerDiscoveryFormData, SSOProvider, SSOSettingsField } from './types';
 import { isSelectableValue } from './utils/guards';
 import { isUrlValid } from './utils/url';
 
@@ -17,6 +21,8 @@ type Section = Record<
     fields: SSOSettingsField[];
   }>
 >;
+
+const appEvents = getAppEvents();
 
 export const sectionFields: Section = {
   azuread: [
@@ -67,6 +73,7 @@ export const sectionFields: Section = {
         'clientSecret',
         'authStyle',
         'scopes',
+        'serverDiscoveryUrl',
         'authUrl',
         'tokenUrl',
         'apiUrl',
@@ -619,6 +626,63 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       description:
         'If enabled, Grafana will match the Hosted Domain retrieved from the Google ID Token against the Allowed Domains list specified by the user.',
       type: 'checkbox',
+    },
+    serverDiscoveryUrl: {
+      label: 'Server discovery URL',
+      description:
+        'The .well-known/openid-configuration endpoint for your IdP. The info extracted from this URL will be used to populate the Auth URL, Token URL and API URL fields.',
+      type: 'custom',
+      content: (setValue, watch) => {
+        const modalIsOpen = watch('serverDiscoveryModal');
+        const onClose = () => setValue('serverDiscoveryModal', false);
+        const onSuccess = (data: ServerDiscoveryFormData) => {
+          fetch(data.url)
+            .then((res) => res.json())
+            .then((res) => {
+              if (!res['token_endpoint'] || !res['authorization_endpoint']) {
+                appEvents.publish({
+                  type: AppEvents.alertWarning.name,
+                  payload: ['The URL provided is not a valid .well-known/openid-configuration endpoint'],
+                });
+                return;
+              }
+
+              setValue('tokenUrl', res['token_endpoint']);
+              setValue('authUrl', res['authorization_endpoint']);
+              if (res['userinfo_endpoint']) {
+                setValue('apiUrl', res['userinfo_endpoint']);
+              }
+
+              appEvents.publish({
+                type: AppEvents.alertSuccess.name,
+                payload: ['Server discovery URL has been successfully fetched.'],
+              });
+            })
+            .catch((err) => {
+              appEvents.publish({
+                type: AppEvents.alertWarning.name,
+                payload: ['Failed to fetch URL or invalid content'],
+              });
+            });
+
+          onClose();
+        };
+        return (
+          <>
+            <Button
+              type="button"
+              fill="text"
+              variant="secondary"
+              onClick={() => {
+                setValue('serverDiscoveryModal', true);
+              }}
+            >
+              <Trans i18nKey={'oauth.form.server-discovery-action-button'}>Enter server discovery URL</Trans>
+            </Button>
+            <ServerDiscoveryModal isOpen={modalIsOpen} onClose={onClose} onSuccess={onSuccess}></ServerDiscoveryModal>
+          </>
+        );
+      },
     },
   };
 }

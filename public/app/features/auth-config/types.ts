@@ -1,5 +1,6 @@
 import { ReactElement } from 'react';
-import { Validate } from 'react-hook-form';
+import { UseFormWatch, Validate } from 'react-hook-form';
+import { UseFormSetValue } from 'react-hook-form/dist/types/form';
 
 import { IconName, SelectableValue } from '@grafana/data';
 import { Settings } from 'app/types';
@@ -72,6 +73,8 @@ export type SSOProvider = {
     allowedGroups?: string;
     scopes?: string;
     orgMapping?: string;
+    serverDiscoveryUrl?: string;
+    serverDiscoveryModal?: boolean;
   };
 };
 
@@ -83,6 +86,8 @@ export type SSOProviderDTO = Partial<SSOProviderSettingsBase> & {
   allowedGroups?: Array<SelectableValue<string>>;
   scopes?: Array<SelectableValue<string>>;
   orgMapping?: Array<SelectableValue<string>>;
+  serverDiscoveryUrl?: string;
+  serverDiscoveryModal?: boolean;
 };
 
 export interface AuthConfigState {
@@ -123,8 +128,13 @@ export type FieldData = {
   placeholder?: string;
   defaultValue?: SelectableValue<string>;
   hidden?: boolean;
+  content?: (setValue: UseFormSetValue<SSOProviderDTO>, watch: UseFormWatch<SSOProviderDTO>) => ReactElement;
 };
 
 export type SSOSettingsField =
   | keyof SSOProvider['settings']
   | { name: keyof SSOProvider['settings']; dependsOn: keyof SSOProvider['settings']; hidden?: boolean };
+
+export interface ServerDiscoveryFormData {
+  url: string;
+}

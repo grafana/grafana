@@ -1562,6 +1562,13 @@
     "starred-dashboard": "Dashboard starred",
     "unstarred-dashboard": "Dashboard unstarred"
   },
+  "oauth": {
+    "form": {
+      "server-discovery-action-button": "Enter server discovery URL",
+      "server-discovery-modal-close": "Close",
+      "server-discovery-modal-submit": "Submit"
+    }
+  },
   "panel": {
     "header-menu": {
       "copy": "Copy",

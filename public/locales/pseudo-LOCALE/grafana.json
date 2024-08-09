@@ -1562,6 +1562,13 @@
     "starred-dashboard": "Đäşĥþőäřđ şŧäřřęđ",
     "unstarred-dashboard": "Đäşĥþőäřđ ūŉşŧäřřęđ"
   },
+  "oauth": {
+    "form": {
+      "server-discovery-action-button": "Ēŉŧęř şęřvęř đįşčővęřy ŮŖĿ",
+      "server-discovery-modal-close": "Cľőşę",
+      "server-discovery-modal-submit": "Ŝūþmįŧ"
+    }
+  },
   "panel": {
     "header-menu": {
       "copy": "Cőpy",
