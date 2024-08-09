@@ -10,11 +10,9 @@ type store interface {
 	CreateMigrationSession(ctx context.Context, session cloudmigration.CloudMigrationSession) (*cloudmigration.CloudMigrationSession, error)
 	GetMigrationSessionByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error)
 	GetCloudMigrationSessionList(ctx context.Context) ([]*cloudmigration.CloudMigrationSession, error)
-	DeleteMigrationSessionByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error)
-
-	// DeleteMigrationSessionWithRelatedElements deletes the migration session, and all the related snapshot and resources.
+	// DeleteMigrationSessionByUID deletes the migration session, and all the related snapshot and resources.
 	// the work is done in a transaction.
-	DeleteMigrationSessionWithRelatedElements(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error)
+	DeleteMigrationSessionByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, []cloudmigration.CloudMigrationSnapshot, error)
 
 	CreateMigrationRun(ctx context.Context, cmr cloudmigration.CloudMigrationSnapshot) (string, error)
 	GetMigrationStatus(ctx context.Context, cmrUID string) (*cloudmigration.CloudMigrationSnapshot, error)

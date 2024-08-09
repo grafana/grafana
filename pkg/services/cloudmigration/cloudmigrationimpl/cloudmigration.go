@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -99,11 +100,9 @@ func ProvideService(
 		return &NoopServiceImpl{}, nil
 	}
 
-	logger := log.New(LogPrefix)
-
 	s := &Service{
-		store:            &sqlStore{db: db, secretsStore: secretsStore, secretsService: secretsService, log: logger},
-		log:              logger,
+		store:            &sqlStore{db: db, secretsStore: secretsStore, secretsService: secretsService},
+		log:              log.New(LogPrefix),
 		cfg:              cfg,
 		features:         features,
 		dsService:        dsService,
@@ -471,13 +470,15 @@ func (s *Service) GetMigrationRunList(ctx context.Context, migUID string) (*clou
 }
 
 func (s *Service) DeleteSession(ctx context.Context, sessionUID string) (*cloudmigration.CloudMigrationSession, error) {
-	c, err := s.store.DeleteMigrationSessionWithRelatedElements(ctx, sessionUID)
+	session, snapshots, err := s.store.DeleteMigrationSessionByUID(ctx, sessionUID)
 	if err != nil {
-		return c, fmt.Errorf("deleting migration from db: %w", err)
+		return session, fmt.Errorf("deleting migration from db: %w", err)
 	}
 
-	s.report(ctx, c, gmsclient.EventDisconnect, 0, nil)
-	return c, nil
+	s.deleteLocalFiles(snapshots)
+
+	s.report(ctx, session, gmsclient.EventDisconnect, 0, nil)
+	return session, nil
 }
 
 func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedInUser, sessionUid string) (*cloudmigration.CloudMigrationSnapshot, error) {
@@ -788,6 +789,16 @@ func (s *Service) getLocalEventId(ctx context.Context) (string, error) {
 	}
 
 	return anonId, nil
+}
+
+func (s *Service) deleteLocalFiles(snapshots []cloudmigration.CloudMigrationSnapshot) {
+	for _, snapshot := range snapshots {
+		err := os.RemoveAll(snapshot.LocalDir)
+		if err != nil {
+			// in this case we only log the error, don't return it to continue with the process
+			s.log.Error("deleting migration snapshot files", "err", err)
+		}
+	}
 }
 
 // getResourcesWithPluginWarnings iterates through each resource and, if a non-core datasource, applies a warning that we only support core
