@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import { ReactNode, useState } from 'react';
+import { ReactNode, useMemo, useState } from 'react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
   Badge,
   Button,
@@ -18,10 +18,10 @@ import {
 } from '@grafana/ui';
 import { MatcherOperator, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
-import { useMuteTimingOptions } from '../../hooks/useMuteTimingOptions';
+import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { FormAmRoute } from '../../types/amroutes';
 import { SupportedPlugin } from '../../types/pluginBridges';
-import { matcherFieldOptions } from '../../utils/alertmanager';
+import { matcherFieldOptions, timeIntervalToString } from '../../utils/alertmanager';
 import {
   amRouteToFormAmRoute,
   commonGroupByOptions,
@@ -33,6 +33,7 @@ import {
   stringToSelectableValue,
   stringsToSelectableValues,
 } from '../../utils/amroutes';
+import { useMuteTimings } from '../mute-timings/useMuteTimings';
 import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
 import { PromDurationInput } from './PromDurationInput';
@@ -56,11 +57,23 @@ export const AmRoutesExpandedForm = ({
 }: AmRoutesExpandedFormProps) => {
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
+  const { selectedAlertmanager } = useAlertmanager();
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route?.group_by));
-  const muteTimingOptions = useMuteTimingOptions();
   const emptyMatcher = [{ name: '', operator: MatcherOperator.equal, value: '' }];
+  const { data: muteTimings } = useMuteTimings({ alertmanager: selectedAlertmanager! });
 
   const receiversWithOnCallOnTop = receivers.sort(onCallFirst);
+
+  const muteTimingOptions = useMemo(() => {
+    const muteTimingsOptions: Array<SelectableValue<string>> =
+      muteTimings?.map((value) => ({
+        value: value.name,
+        label: value.name,
+        description: value.time_intervals.map((interval) => timeIntervalToString(interval)).join(', AND '),
+      })) ?? [];
+
+    return muteTimingsOptions;
+  }, [muteTimings]);
 
   const formAmRoute = {
     ...amRouteToFormAmRoute(route),
