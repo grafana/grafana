@@ -18,8 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
-// AggregatorServerOptions contains the state for the aggregator apiserver
-type AggregatorServerOptions struct {
+// KubeAggregatorOptions contains the state for the aggregator apiserver
+type KubeAggregatorOptions struct {
 	AlternateDNS           []string
 	ProxyClientCertFile    string
 	ProxyClientKeyFile     string
@@ -27,11 +27,11 @@ type AggregatorServerOptions struct {
 	APIServiceCABundleFile string
 }
 
-func NewAggregatorServerOptions() *AggregatorServerOptions {
-	return &AggregatorServerOptions{}
+func NewAggregatorServerOptions() *KubeAggregatorOptions {
+	return &KubeAggregatorOptions{}
 }
 
-func (o *AggregatorServerOptions) AddFlags(fs *pflag.FlagSet) {
+func (o *KubeAggregatorOptions) AddFlags(fs *pflag.FlagSet) {
 	if o == nil {
 		return
 	}
@@ -43,7 +43,7 @@ func (o *AggregatorServerOptions) AddFlags(fs *pflag.FlagSet) {
 		"path to proxy client key file")
 }
 
-func (o *AggregatorServerOptions) Validate() []error {
+func (o *KubeAggregatorOptions) Validate() []error {
 	if o == nil {
 		return nil
 	}
@@ -52,7 +52,7 @@ func (o *AggregatorServerOptions) Validate() []error {
 	return nil
 }
 
-func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.Config, etcdOpts *options.EtcdOptions) error {
+func (o *KubeAggregatorOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.Config, etcdOpts *options.EtcdOptions) error {
 	genericConfig := aggregatorConfig.GenericConfig
 
 	genericConfig.PostStartHooks = map[string]genericapiserver.PostStartHookConfigEntry{}
