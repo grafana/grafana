@@ -4,7 +4,7 @@ define(['@grafana/data', 'module', 'react'], function (grafanaData, amdModule, R
     title: 'Reusable component',
     description: 'A component that can be reused by other app plugins.',
     component: function ({ name }) {
-      return React.createElement('div', null, 'Hello ', name, '!');
+      return React.createElement('div', { 'data-testid': 'exposed-component' }, 'Hello ', name, '!');
     },
   });
 
