@@ -1,7 +1,7 @@
 import { debounce } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, toOption } from '@grafana/data';
 import { SegmentAsync } from '@grafana/ui';
 
 import { actions } from '../state/actions';
@@ -50,9 +50,11 @@ export function MetricSegment({ metricIndex, segment, state }: Props) {
 
   return (
     <SegmentAsync<GraphiteSegment | string>
-      value={segment.value}
+      value={segment.value ? toOption(segment.value) : undefined}
       inputMinWidth={150}
       allowCustomValue={true}
+      allowCreateWhileLoading={true}
+      createOptionPosition="first"
       loadOptions={debouncedLoadOptions}
       reloadOptionsOnChange={true}
       onChange={onSegmentChangedDebounced}

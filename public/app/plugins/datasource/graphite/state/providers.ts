@@ -56,9 +56,7 @@ async function getAltSegments(
       };
     });
 
-    if (index > 0 && altSegments.length === 0) {
-      return altSegments;
-    }
+    let extraSegments = [];
 
     // add query references
     if (index === 0) {
@@ -67,7 +65,7 @@ async function getAltSegments(
           return;
         }
 
-        altSegments.unshift({
+        extraSegments.unshift({
           type: 'series-ref',
           value: '#' + target.refId,
           expandable: false,
@@ -77,16 +75,20 @@ async function getAltSegments(
 
     // add template variables
     eachRight(state.templateSrv.getVariables(), (variable) => {
-      altSegments.unshift({
+      extraSegments.unshift({
         type: 'template',
         value: '$' + variable.name,
         expandable: true,
       });
     });
 
-    // add wildcard option and limit number of suggestions (API doesn't support limiting
+    // add wildcard option
+    extraSegments.unshift({ value: '*', expandable: true });
+    // If there's any input, put template variables and such at the end.
+    let spliceAt = !!prefix ? altSegments.length : 0;
+    altSegments.splice(spliceAt, 0, ...extraSegments);
+    // limit number of suggestions (API doesn't support limiting
     // hence we are doing it here)
-    altSegments.unshift({ value: '*', expandable: true });
     altSegments.splice(MAX_SUGGESTIONS);
 
     if (state.supportsTags && index === 0) {
