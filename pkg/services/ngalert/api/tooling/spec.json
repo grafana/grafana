@@ -3086,9 +3086,9 @@
             }
           },
           "409": {
-            "description": "GenericPublicError",
+            "description": "PublicError",
             "schema": {
-              "$ref": "#/definitions/GenericPublicError"
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -3125,9 +3125,9 @@
             "description": " The mute timing was deleted successfully."
           },
           "409": {
-            "description": "GenericPublicError",
+            "description": "PublicError",
             "schema": {
-              "$ref": "#/definitions/GenericPublicError"
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -4945,14 +4945,6 @@
       "title": "Frames is a slice of Frame pointers.",
       "items": {
         "$ref": "#/definitions/Frame"
-      }
-    },
-    "GenericPublicError": {
-      "type": "object",
-      "properties": {
-        "body": {
-          "$ref": "#/definitions/PublicError"
-        }
       }
     },
     "GettableAlertmanagers": {
@@ -8208,7 +8200,6 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "type": "object",
@@ -8370,7 +8361,6 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",

@@ -20,10 +20,3 @@ type ForbiddenError struct {
 	// in: body
 	Body errutil.PublicError `json:"body"`
 }
-
-// swagger:model
-type GenericPublicError struct {
-	// The response message
-	// in: body
-	Body errutil.PublicError `json:"body"`
-}

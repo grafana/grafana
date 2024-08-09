@@ -1315,14 +1315,6 @@
    "title": "Frames is a slice of Frame pointers.",
    "type": "array"
   },
-  "GenericPublicError": {
-   "properties": {
-    "body": {
-     "$ref": "#/definitions/PublicError"
-    }
-   },
-   "type": "object"
-  },
   "GettableAlertmanagers": {
    "properties": {
     "data": {
@@ -4575,7 +4567,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup",
     "type": "object"
@@ -4737,7 +4728,6 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert",
     "type": "object"
@@ -8124,9 +8114,9 @@
       "description": " The mute timing was deleted successfully."
      },
      "409": {
-      "description": "GenericPublicError",
+      "description": "PublicError",
       "schema": {
-       "$ref": "#/definitions/GenericPublicError"
+       "$ref": "#/definitions/PublicError"
       }
      }
     },
@@ -8202,9 +8192,9 @@
       }
      },
      "409": {
-      "description": "GenericPublicError",
+      "description": "PublicError",
       "schema": {
-       "$ref": "#/definitions/GenericPublicError"
+       "$ref": "#/definitions/PublicError"
       }
      }
     },
