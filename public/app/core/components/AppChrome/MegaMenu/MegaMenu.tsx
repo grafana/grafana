@@ -5,10 +5,9 @@ import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction, i18n } from '@grafana/runtime';
 import { CustomScrollbar, Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { t } from 'app/core/internationalization';
 import { setBookmark } from 'app/core/reducers/navBarTree';
 import { usePatchUserPreferencesMutation } from 'app/features/preferences/api/index';
 import { useDispatch, useSelector } from 'app/types';
@@ -91,7 +90,7 @@ export const MegaMenu = memo(
         <div className={styles.mobileHeader}>
           <Icon name="bars" size="xl" />
           <IconButton
-            tooltip={t('navigation.megamenu.close', 'Close menu')}
+            tooltip={i18n.t('navigation.megamenu.close', 'Close menu')}
             name="times"
             onClick={onClose}
             size="xl"
@@ -100,7 +99,7 @@ export const MegaMenu = memo(
         </div>
         <nav className={styles.content}>
           <CustomScrollbar showScrollIndicators hideHorizontalTrack>
-            <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
+            <ul className={styles.itemList} aria-label={i18n.t('navigation.megamenu.list-label', 'Navigation')}>
               {navItems.map((link, index) => (
                 <Stack key={link.text} direction={index === 0 ? 'row-reverse' : 'row'} alignItems="center">
                   {index === 0 && (
@@ -109,8 +108,8 @@ export const MegaMenu = memo(
                       className={styles.dockMenuButton}
                       tooltip={
                         state.megaMenuDocked
-                          ? t('navigation.megamenu.undock', 'Undock menu')
-                          : t('navigation.megamenu.dock', 'Dock menu')
+                          ? i18n.t('navigation.megamenu.undock', 'Undock menu')
+                          : i18n.t('navigation.megamenu.dock', 'Dock menu')
                       }
                       name="web-section-alt"
                       onClick={handleDockedMenu}
