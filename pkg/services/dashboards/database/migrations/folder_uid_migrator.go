@@ -1,8 +1,9 @@
 package migrations
 
 import (
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 type DummyMigration struct {
@@ -84,7 +85,9 @@ func (m *FolderUIDMigration) Exec(sess *xorm.Session, mgrtr *migrator.Migrator) 
 }
 
 func AddDashboardFolderMigrations(mg *migrator.Migrator) {
-	mg.AddMigration("Add folder_uid for dashboard", migrator.NewAddColumnMigration(migrator.Table{Name: "dashboard"}, &migrator.Column{
+	table := migrator.Table{Name: "dashboard"}
+
+	mg.AddMigration("Add folder_uid for dashboard", migrator.NewAddColumnMigration(table, &migrator.Column{
 		Name: "folder_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: true,
 	}))
 
@@ -92,18 +95,23 @@ func AddDashboardFolderMigrations(mg *migrator.Migrator) {
 
 	mg.AddMigration("Add unique index for dashboard_org_id_folder_uid_title", &DummyMigration{})
 
-	mg.AddMigration("Delete unique index for dashboard_org_id_folder_id_title", migrator.NewDropIndexMigration(migrator.Table{Name: "dashboard"}, &migrator.Index{
+	mg.AddMigration("Delete unique index for dashboard_org_id_folder_id_title", migrator.NewDropIndexMigration(table, &migrator.Index{
 		Cols: []string{"org_id", "folder_id", "title"}, Type: migrator.UniqueIndex,
 	}))
 
 	mg.AddMigration("Delete unique index for dashboard_org_id_folder_uid_title", &DummyMigration{})
 
-	mg.AddMigration("Add unique index for dashboard_org_id_folder_uid_title_is_folder", migrator.NewAddIndexMigration(migrator.Table{Name: "dashboard"}, &migrator.Index{
+	mg.AddMigration("Add unique index for dashboard_org_id_folder_uid_title_is_folder", migrator.NewAddIndexMigration(table, &migrator.Index{
 		Cols: []string{"org_id", "folder_uid", "title", "is_folder"}, Type: migrator.UniqueIndex,
 	}))
 
 	// Temporary index until decommisioning of folder_id in query
-	mg.AddMigration("Restore index for dashboard_org_id_folder_id_title", migrator.NewAddIndexMigration(migrator.Table{Name: "dashboard"}, &migrator.Index{
+	mg.AddMigration("Restore index for dashboard_org_id_folder_id_title", migrator.NewAddIndexMigration(table, &migrator.Index{
 		Cols: []string{"org_id", "folder_id", "title"},
+	}))
+
+	// REMOVE
+	mg.AddMigration("Drop unique name constraint within folder", migrator.NewDropIndexMigration(table, &migrator.Index{
+		Cols: []string{"org_id", "folder_uid", "title", "is_folder"}, Type: migrator.UniqueIndex,
 	}))
 }
