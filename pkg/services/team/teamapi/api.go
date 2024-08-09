@@ -5,6 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -18,6 +19,7 @@ type TeamAPI struct {
 	ac                     accesscontrol.Service
 	teamPermissionsService accesscontrol.TeamPermissionsService
 	userService            user.Service
+	zanzanaClient          zanzana.Client
 	license                licensing.Licensing
 	cfg                    *setting.Cfg
 	preferenceService      pref.Service
@@ -31,6 +33,7 @@ func ProvideTeamAPI(
 	ac accesscontrol.Service,
 	acEvaluator accesscontrol.AccessControl,
 	teamPermissionsService accesscontrol.TeamPermissionsService,
+	zanzanaClient zanzana.Client,
 	userService user.Service,
 	license licensing.Licensing,
 	cfg *setting.Cfg,
@@ -42,6 +45,7 @@ func ProvideTeamAPI(
 		ac:                     ac,
 		teamPermissionsService: teamPermissionsService,
 		userService:            userService,
+		zanzanaClient:          zanzanaClient,
 		license:                license,
 		cfg:                    cfg,
 		preferenceService:      preferenceService,
@@ -86,6 +90,8 @@ func (tapi *TeamAPI) registerRoutes(router routing.RouteRegister, ac accesscontr
 				accesscontrol.ScopeTeamsID)), routing.Wrap(tapi.getTeamByID))
 			teamsRoute.Get("/search", authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead)),
 				routing.Wrap(tapi.searchTeams))
+			teamsRoute.Get("/searchzanzana", authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead)),
+				routing.Wrap(tapi.searchTeamsZanzana))
 		}, requestmeta.SetOwner(requestmeta.TeamAuth))
 	})
 }

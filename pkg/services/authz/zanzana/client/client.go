@@ -100,6 +100,11 @@ func (c *Client) Write(ctx context.Context, in *openfgav1.WriteRequest) error {
 	return err
 }
 
+func (c *Client) ReadChanges(ctx context.Context, in *openfgav1.ReadChangesRequest) (*openfgav1.ReadChangesResponse, error) {
+	in.StoreId = c.storeID
+	return c.client.ReadChanges(ctx, in)
+}
+
 func (c *Client) getOrCreateStore(ctx context.Context, name string) (*openfgav1.Store, error) {
 	store, err := c.getStore(ctx, name)
 

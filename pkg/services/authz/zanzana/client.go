@@ -18,6 +18,7 @@ type Client interface {
 	Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error)
 	ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error)
 	Write(ctx context.Context, in *openfgav1.WriteRequest) error
+	ReadChanges(ctx context.Context, in *openfgav1.ReadChangesRequest) (*openfgav1.ReadChangesResponse, error)
 }
 
 func NewClient(ctx context.Context, cc grpc.ClientConnInterface, cfg *setting.Cfg) (*client.Client, error) {

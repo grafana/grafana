@@ -52,6 +52,7 @@ type AccessControl struct {
 }
 
 func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
+	a.log.Debug("Evaluating access control", "user", user.GetUID(), "orgID", user.GetOrgID(), "permissions", evaluator.GoString())
 	if a.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 		return a.evaluateCompare(ctx, user, evaluator)
 	}
@@ -140,6 +141,7 @@ type evalResult struct {
 
 // evaluateCompare run RBAC and zanzana checks in parallel and then compare result
 func (a *AccessControl) evaluateCompare(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
+	a.log.Debug("Evaluating compare", "user", user.GetUID(), "orgID", user.GetOrgID(), "permissions", evaluator.GoString())
 	res := make(chan evalResult, 2)
 	go func() {
 		timer := prometheus.NewTimer(a.metrics.mAccessEngineEvaluationsSeconds.WithLabelValues("zanzana"))
@@ -160,8 +162,10 @@ func (a *AccessControl) evaluateCompare(ctx context.Context, user identity.Reque
 	}()
 	first, second := <-res, <-res
 	close(res)
+	a.log.Debug("Evaluate compare result", "grafana", first.decision, "zanzana", second.decision, "grafana_ms", first.duration, "zanzana_ms", second.duration)
 
 	if second.runner == "grafana" {
+		a.log.Debug("Zanzana evaluation is correct", "grafana_ms", first.duration, "zanzana_ms", second.duration)
 		first, second = second, first
 	}
 

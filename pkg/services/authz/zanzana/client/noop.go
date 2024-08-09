@@ -23,3 +23,7 @@ func (nc NoopClient) ListObjects(ctx context.Context, in *openfgav1.ListObjectsR
 func (nc NoopClient) Write(ctx context.Context, in *openfgav1.WriteRequest) error {
 	return nil
 }
+
+func (nc NoopClient) ReadChanges(ctx context.Context, in *openfgav1.ReadChangesRequest) (*openfgav1.ReadChangesResponse, error) {
+	return nil, nil
+}
