@@ -169,7 +169,7 @@ func (u *SignedInUser) GetAllowedKubernetesNamespace() string {
 // GetCacheKey returns a unique key for the entity.
 // Add an extra prefix to avoid collisions with other caches
 func (u *SignedInUser) GetCacheKey() string {
-	namespace, id := u.GetTypedID()
+	typ, id := u.GetID().Type(), u.GetID().ID()
 	if !u.HasUniqueId() {
 		// Hack use the org role as id for identities that do not have a unique id
 		// e.g. anonymous and render key.
@@ -181,7 +181,7 @@ func (u *SignedInUser) GetCacheKey() string {
 		id = string(orgRole)
 	}
 
-	return fmt.Sprintf("%d-%s-%s", u.GetOrgID(), namespace, id)
+	return fmt.Sprintf("%d-%s-%s", u.GetOrgID(), typ, id)
 }
 
 // GetIsGrafanaAdmin returns true if the user is a server admin
@@ -245,13 +245,11 @@ func (u *SignedInUser) GetOrgRole() identity.RoleType {
 
 // GetID returns namespaced id for the entity
 func (u *SignedInUser) GetID() identity.TypedID {
-	ns, id := u.GetTypedID()
+	ns, id := u.getTypeAndID()
 	return identity.NewTypedIDString(ns, id)
 }
 
-// GetTypedID returns the namespace and ID of the active entity
-// The namespace is one of the constants defined in pkg/apimachinery/identity
-func (u *SignedInUser) GetTypedID() (identity.IdentityType, string) {
+func (u *SignedInUser) getTypeAndID() (identity.IdentityType, string) {
 	switch {
 	case u.ApiKeyID != 0:
 		return identity.TypeAPIKey, strconv.FormatInt(u.ApiKeyID, 10)

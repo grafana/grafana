@@ -149,12 +149,6 @@ func (u *StaticRequester) GetID() TypedID {
 	return NewTypedIDString(u.Type, fmt.Sprintf("%d", u.UserID))
 }
 
-// GetTypedID returns the namespace and ID of the active entity
-// The namespace is one of the constants defined in pkg/apimachinery/identity
-func (u *StaticRequester) GetTypedID() (IdentityType, string) {
-	return u.Type, fmt.Sprintf("%d", u.UserID)
-}
-
 func (u *StaticRequester) GetAuthID() string {
 	return u.AuthID
 }

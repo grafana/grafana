@@ -70,12 +70,10 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 		idClaims *auth.IDClaims
 	}
 	result, err, _ := s.si.Do(cacheKey, func() (any, error) {
-		namespace, identifier := id.GetTypedID()
-
 		cachedToken, err := s.cache.Get(ctx, cacheKey)
 		if err == nil {
 			s.metrics.tokenSigningFromCacheCounter.Inc()
-			s.logger.FromContext(ctx).Debug("Cached token found", "namespace", namespace, "id", identifier)
+			s.logger.FromContext(ctx).Debug("Cached token found", "id", id.GetID())
 
 			tokenClaims, err := s.extractTokenClaims(string(cachedToken))
 			if err != nil {
@@ -85,14 +83,14 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 		}
 
 		s.metrics.tokenSigningCounter.Inc()
-		s.logger.FromContext(ctx).Debug("Sign new id token", "namespace", namespace, "id", identifier)
+		s.logger.FromContext(ctx).Debug("Sign new id token", "id", id.GetID())
 
 		now := time.Now()
 		claims := &auth.IDClaims{
 			Claims: &jwt.Claims{
 				Issuer:   s.cfg.AppURL,
 				Audience: getAudience(id.GetOrgID()),
-				Subject:  getSubject(namespace.String(), identifier),
+				Subject:  id.GetID().String(),
 				Expiry:   jwt.NewNumericDate(now.Add(tokenTTL)),
 				IssuedAt: jwt.NewNumericDate(now),
 			},
@@ -101,7 +99,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			},
 		}
 
-		if identity.IsIdentityType(namespace, identity.TypeUser) {
+		if identity.IsIdentityType(id.GetID(), identity.TypeUser) {
 			claims.Rest.Email = id.GetEmail()
 			claims.Rest.EmailVerified = id.IsEmailVerified()
 			claims.Rest.AuthenticatedBy = id.GetAuthenticatedBy()
@@ -145,8 +143,7 @@ func (s *Service) hook(ctx context.Context, identity *authn.Identity, _ *authn.R
 	token, claims, err := s.SignIdentity(ctx, identity)
 	if err != nil {
 		if shouldLogErr(err) {
-			namespace, id := identity.GetTypedID()
-			s.logger.FromContext(ctx).Error("Failed to sign id token", "err", err, "namespace", namespace, "id", id)
+			s.logger.FromContext(ctx).Error("Failed to sign id token", "err", err, "id", identity.GetID())
 		}
 		// for now don't return error so we don't break authentication from this hook
 		return nil
@@ -177,10 +174,6 @@ func (s *Service) extractTokenClaims(token string) (*authnlib.Claims[authnlib.ID
 
 func getAudience(orgID int64) jwt.Audience {
 	return jwt.Audience{fmt.Sprintf("org:%d", orgID)}
-}
-
-func getSubject(namespace, identifier string) string {
-	return fmt.Sprintf("%s:%s", namespace, identifier)
 }
 
 func prefixCacheKey(key string) string {

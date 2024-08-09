@@ -154,22 +154,22 @@ func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) w
 			return
 		}
 
-		namespace, id := ident.GetTypedID()
+		id := ident.GetID()
 		if !identity.IsIdentityType(
-			namespace,
+			id,
 			identity.TypeUser,
 			identity.TypeServiceAccount,
 			identity.TypeAPIKey,
-		) || id == "0" {
+		) || id.ID() == "0" {
 			return
 		}
 
-		if _, ok := h.Cfg.IDResponseHeaderNamespaces[namespace.String()]; !ok {
+		if _, ok := h.Cfg.IDResponseHeaderNamespaces[id.Type().String()]; !ok {
 			return
 		}
 
 		headerName := fmt.Sprintf("%s-Identity-Id", h.Cfg.IDResponseHeaderPrefix)
-		w.Header().Add(headerName, fmt.Sprintf("%s:%s", namespace, id))
+		w.Header().Add(headerName, id.String())
 	}
 }
 
