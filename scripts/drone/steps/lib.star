@@ -553,7 +553,7 @@ def test_backend_step():
             # shared-mime-info and shared-mime-info-lang is used for exactly 1 test for the
             # mime.TypeByExtension function.
             "apk add --update build-base shared-mime-info shared-mime-info-lang",
-            "./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifer -short -covermode=atomic -timeout=5m",
+            "./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier -short -covermode=atomic -timeout=5m",
         ],
     }
 
