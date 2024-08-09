@@ -26,7 +26,7 @@ export const TransposeTransfomerEditor = ({ options, onChange }: TransformerUIPr
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField
-          label={'Rest fields name'}
+          label={'Remaining fields name'}
           tooltip={'Name for value fields'}
           labelWidth={24}
         >
