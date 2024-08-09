@@ -108,20 +108,24 @@ export default function AccordianLogs({
       </HeaderComponent>
       {isOpen && (
         <div className={styles.AccordianLogsContent}>
-          {_sortBy(logs, 'timestamp').map((log, i) => (
-            <AccordianKeyValues
-              // `i` is necessary in the key because timestamps can repeat
-              key={`${log.timestamp}-${i}`}
-              className={i < logs.length - 1 ? styles.AccordianKeyValuesItem : null}
-              data={log.fields || []}
-              highContrast
-              interactive={interactive}
-              isOpen={openedItems ? openedItems.has(log) : false}
-              label={`${formatDuration(log.timestamp - timestamp)}`}
-              linksGetter={linksGetter}
-              onToggle={interactive && onItemToggle ? () => onItemToggle(log) : null}
-            />
-          ))}
+          {_sortBy(logs, 'timestamp').map((log, i) => {
+            const formattedDuration = formatDuration(log.timestamp - timestamp);
+            const label = log.name ? `${log.name} (${formattedDuration})` : formattedDuration;
+            return (
+              <AccordianKeyValues
+                // `i` is necessary in the key because timestamps can repeat
+                key={`${log.timestamp}-${i}`}
+                className={i < logs.length - 1 ? styles.AccordianKeyValuesItem : null}
+                data={log.fields || []}
+                highContrast
+                interactive={interactive}
+                isOpen={openedItems ? openedItems.has(log) : false}
+                label={label}
+                linksGetter={linksGetter}
+                onToggle={interactive && onItemToggle ? () => onItemToggle(log) : null}
+              />
+            );
+          })}
           <small className={styles.AccordianLogsFooter}>
             Log timestamps are relative to the start time of the full trace.
           </small>
