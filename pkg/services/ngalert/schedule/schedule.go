@@ -250,6 +250,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 	readyToRun := make([]readyToRunItem, 0)
 	updatedRules := make([]ngmodels.AlertRuleKeyWithVersion, 0, len(updated)) // this is needed for tests only
+	restartedRules := make([]Rule, 0)
 	missingFolder := make(map[string][]string)
 	ruleFactory := newRuleFactory(
 		sch.appURL,
@@ -280,6 +281,14 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		}
 
 		invalidInterval := item.IntervalSeconds%int64(sch.baseInterval.Seconds()) != 0
+
+		if item.Type() != ruleRoutine.Type() {
+			// Restart rules that need it. For now we just replace them, we'll shut them down at the end of the tick.
+			logger.Debug("Rule restarted because type changed", "old", ruleRoutine.Type(), "new", item.Type())
+			restartedRules = append(restartedRules, ruleRoutine)
+			sch.registry.del(key)
+			ruleRoutine, newRoutine = sch.registry.getOrCreate(ctx, item, ruleFactory)
+		}
 
 		if newRoutine && !invalidInterval {
 			dispatcherGroup.Go(func() error {
@@ -363,6 +372,11 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 				sch.metrics.EvaluationMissed.WithLabelValues(orgID, item.rule.Title).Inc()
 			}
 		})
+	}
+
+	// Stop old routines for rules that got restarted.
+	for _, oldRoutine := range restartedRules {
+		oldRoutine.Stop(errRuleRestarted)
 	}
 
 	// unregister and stop routines of the deleted alert rules
