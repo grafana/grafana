@@ -2,13 +2,13 @@ import { VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../../shared';
 import { AutoQueryInfo } from '../types';
 import { getUnit } from '../units';
 
+import { getGeneralBaseQuery } from './common/baseQuery';
 import { generateCommonAutoQueryInfo } from './common/generator';
-import { getGeneralBaseQuery } from './common/queries';
 
-export function createSummaryQueryDefs(metricParts: string[]): AutoQueryInfo {
+export function createSummaryMetricQueryDefs(metricParts: string[]): AutoQueryInfo {
   const suffix = metricParts.at(-1);
   if (suffix !== 'sum') {
-    throw new Error('createSummaryQueryDefs is only to be used for metrics that end in "_sum"');
+    throw new Error('createSummaryMetricQueryDefs is only to be used for metrics that end in "_sum"');
   }
 
   const unitSuffix = metricParts.at(-2);

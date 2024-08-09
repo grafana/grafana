@@ -1,7 +1,8 @@
-import { VAR_GROUP_BY_EXP } from '../../../shared';
-import { AutoQueryDef, AutoQueryInfo } from '../../types';
+import { VAR_GROUP_BY_EXP } from '../../shared';
+import { AutoQueryDef, AutoQueryInfo } from '../types';
 
-import { generateQueries, getGeneralBaseQuery } from './queries';
+import { getGeneralBaseQuery } from './common/baseQuery';
+import { generateQueries } from './default';
 
 describe('generateQueries', () => {
   const agg = 'sum';
