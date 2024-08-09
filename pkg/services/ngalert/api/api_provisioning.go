@@ -46,7 +46,7 @@ type ContactPointService interface {
 type TemplateService interface {
 	GetTemplates(ctx context.Context, orgID int64) ([]definitions.NotificationTemplate, error)
 	SetTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error)
-	DeleteTemplate(ctx context.Context, orgID int64, name string, provenance definitions.Provenance) error
+	DeleteTemplate(ctx context.Context, orgID int64, name string, provenance definitions.Provenance, version string) error
 }
 
 type NotificationPolicyService interface {
@@ -221,24 +221,26 @@ func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, name st
 
 func (srv *ProvisioningSrv) RoutePutTemplate(c *contextmodel.ReqContext, body definitions.NotificationTemplateContent, name string) response.Response {
 	tmpl := definitions.NotificationTemplate{
-		Name:       name,
-		Template:   body.Template,
-		Provenance: determineProvenance(c),
+		Name:            name,
+		Template:        body.Template,
+		Provenance:      determineProvenance(c),
+		ResourceVersion: body.ResourceVersion,
 	}
 	modified, err := srv.templates.SetTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), tmpl)
 	if err != nil {
 		if errors.Is(err, provisioning.ErrValidation) {
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusAccepted, modified)
 }
 
 func (srv *ProvisioningSrv) RouteDeleteTemplate(c *contextmodel.ReqContext, name string) response.Response {
-	err := srv.templates.DeleteTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), name, determineProvenance(c))
+	version := c.Query("version")
+	err := srv.templates.DeleteTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), name, determineProvenance(c), version)
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusNoContent, nil)
 }
