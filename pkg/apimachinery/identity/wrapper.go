@@ -54,11 +54,6 @@ func (i *IDClaimsWrapper) UID() string {
 	return i.Source.GetRawIdentifier()
 }
 
-// GetRawUID implements claims.IdentityClaims.
-func (i *IDClaimsWrapper) RawUID() string {
-	return i.Source.GetRawIdentifier()
-}
-
 // GetUsername implements claims.IdentityClaims.
 func (i *IDClaimsWrapper) Username() string {
 	return i.Source.GetLogin()

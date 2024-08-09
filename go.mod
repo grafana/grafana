@@ -76,6 +76,7 @@ require (
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20240723124849-f2ab7c7b8f7d // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20240809101159-74eaccc31a06 // @grafana/identity-access-team
+	github.com/grafana/authlib/claims v0.0.0-20240809101159-74eaccc31a06 // @grafana/identity-access-team
 	github.com/grafana/codejen v0.0.3 // @grafana/dataviz-squad
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -475,8 +476,7 @@ require (
 )
 
 require (
-	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
-	github.com/grafana/authlib/claims v0.0.0-20240809095826-8eb5495c0b2a
+	github.com/fxamacker/cbor/v2 v2.7.0 // indirect; indirect0.0.0-20240809095826-8eb5495c0b2a
 	github.com/x448/float16 v0.8.4 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 )
