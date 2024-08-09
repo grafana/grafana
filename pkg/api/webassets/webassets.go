@@ -129,9 +129,9 @@ func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
 	if entryPoints.Light == nil || len(entryPoints.Light.Assets.CSS) == 0 {
 		return nil, fmt.Errorf("missing light entry")
 	}
-	if entryPoints.Swagger == nil || len(entryPoints.Swagger.Assets.JS) == 0 {
-		return nil, fmt.Errorf("missing swagger entry")
-	}
+	// if entryPoints.Swagger == nil || len(entryPoints.Swagger.Assets.JS) == 0 {
+	// 	return nil, fmt.Errorf("missing swagger entry")
+	// }
 
 	rsp := &dtos.EntryPointAssets{
 		JSFiles: make([]dtos.EntryPointAsset, 0, len(entryPoints.App.Assets.JS)),
