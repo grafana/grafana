@@ -1021,6 +1021,57 @@ def integration_benchmarks_step(name, environment = None):
 
     return integration_tests_steps("{}-benchmark".format(name), cmds, environment = environment)
 
+def e2e_apiserver_tests_step():
+    cmds = [
+        'apk add --update --no-cache build-base make git coreutils bash docker gcc libc-dev',
+        'export GRAFANA_IMAGE=grafana/grafana-enterprise-dev:$(cat $OSS_BUILD_VERSION_FILE)',
+        # tag the image to a arch-agnostic name (publish step does this in a better way, but we don't want to wait on it)
+        'docker tag grafana/grafana-enterprise-image-tags:$(cat $OSS_BUILD_VERSION_FILE)-amd64 $$GRAFANA_IMAGE',
+        'export E2E_NETWORK_NAME=e2e-$DRONE_BUILD_NUMBER-$DRONE_STAGE_NUMBER-$DRONE_STEP_NUMBER',
+        'mkdir -p $HOME/.docker',
+        'printenv GCR_CREDS > $HOME/.docker/config.json',
+        "go clean -testcache",
+        "go test -p=1 -count=1 -covermode=atomic -timeout=5m ./pkg/apiserver/apiserver_test/...",
+        # untag the image we made for this step, so that publish step can do what it does from a clean slate
+        'docker image rm $$GRAFANA_IMAGE',
+    ]
+
+    environment = {
+        "OSS_BUILD_VERSION_FILE": "./dist/grafana.version",
+        "GCR_CREDS": from_secret("gcr_credentials"),
+        "E2E_TEMP_DIR": "/tmp"
+    }
+
+    step = {
+        "name": "end-to-end-tests-apiserver-suite",
+        "image": images["go"],
+        "commands": cmds,
+        "depends_on": [
+            "export-version",
+            "rgm-build-docker",
+        ],
+        "volumes": [
+            {"name": "docker", "path": "/var/run/docker.sock"},
+            {"name": "tmpdir", "path": "/tmp/"},
+        ],
+        "environment": environment,
+        "network_mode": "host",
+    }
+
+    return step
+
+def export_version_step():
+    return {
+        "name": "export-version",
+        "image": images["build"],
+        "depends_on": [
+            "compile-build-cmd",
+        ],
+        "commands": [
+            "./bin/build export-version",
+        ],
+    }
+
 def postgres_integration_tests_steps():
     cmds = [
         "apk add --update postgresql-client",

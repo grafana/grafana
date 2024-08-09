@@ -9,7 +9,9 @@ load(
     "download_grabpl_step",
     "e2e_tests_artifacts",
     "e2e_tests_step",
+    "e2e_apiserver_tests_step",
     "enterprise_downstream_step",
+    "export_version_step",
     "frontend_metrics_step",
     "grafana_server_step",
     "identify_runner_step",
@@ -128,6 +130,8 @@ def build_e2e(trigger, ver_mode):
                     tag_format = "{{ .version_base }}-{{ .buildID }}-{{ .arch }}",
                     ubuntu_tag_format = "{{ .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}",
                 ),
+                export_version_step(),
+                e2e_apiserver_tests_step(),
                 publish_images_step(
                     docker_repo = "grafana",
                     trigger = trigger_oss,
@@ -158,6 +162,8 @@ def build_e2e(trigger, ver_mode):
                     tag_format = "{{ .version_base }}-{{ .buildID }}-{{ .arch }}",
                     ubuntu_tag_format = "{{ .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}",
                 ),
+                export_version_step(),
+                e2e_apiserver_tests_step(),
                 publish_images_step(
                     docker_repo = "grafana",
                     trigger = trigger_oss,
@@ -176,4 +182,7 @@ def build_e2e(trigger, ver_mode):
         services = [],
         steps = init_steps + build_steps,
         trigger = trigger,
+        volumes=[
+            {"name": "tmpdir", "host": {"path": "/tmp/"}},
+        ],
     )
