@@ -4148,6 +4148,9 @@
             },
             "type": "array"
           },
+          "imageOptions": {
+            "$ref": "#/components/schemas/ImageOptions"
+          },
           "message": {
             "type": "string"
           },
@@ -4156,6 +4159,9 @@
           },
           "options": {
             "$ref": "#/components/schemas/ReportOptions"
+          },
+          "pdfOptions": {
+            "$ref": "#/components/schemas/PDFOptions"
           },
           "recipients": {
             "type": "string"
@@ -6424,6 +6430,19 @@
         "title": "An IPNet represents an IP network.",
         "type": "object"
       },
+      "ImageOptions": {
+        "properties": {
+          "width": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "zoomFactor": {
+            "format": "double",
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
       "ImportDashboardInput": {
         "properties": {
           "name": {
@@ -7577,6 +7596,21 @@
             "type": "string"
           },
           "userId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PDFOptions": {
+        "properties": {
+          "layout": {
+            "type": "string"
+          },
+          "orientation": {
+            "type": "string"
+          },
+          "scaleFactor": {
             "format": "int64",
             "type": "integer"
           }
@@ -9210,6 +9244,7 @@
             "type": "array"
           },
           "enableCsv": {
+            "description": "Deprecated: use \"csv\" value in formats instead",
             "type": "boolean"
           },
           "enableDashboardUrl": {
@@ -9225,6 +9260,9 @@
             "format": "int64",
             "type": "integer"
           },
+          "imageOptions": {
+            "$ref": "#/components/schemas/ImageOptions"
+          },
           "message": {
             "type": "string"
           },
@@ -9238,6 +9276,9 @@
             "format": "int64",
             "type": "integer"
           },
+          "pdfOptions": {
+            "$ref": "#/components/schemas/PDFOptions"
+          },
           "recipients": {
             "type": "string"
           },
@@ -9245,6 +9286,7 @@
             "type": "string"
           },
           "scaleFactor": {
+            "description": "Deprecated: use pdfOptions.scaleFactor instead",
             "format": "int64",
             "type": "integer"
           },
