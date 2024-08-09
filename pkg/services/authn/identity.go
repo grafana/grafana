@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/claims"
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -72,6 +73,19 @@ type Identity struct {
 	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
 	IDToken       string
 	IDTokenClaims *authn.Claims[authn.IDTokenClaims]
+}
+
+// Access implements claims.AuthInfo.
+func (i *Identity) GetAccess() claims.AccessClaims {
+	return &identity.IDClaimsWrapper{Source: i}
+}
+
+// Identity implements claims.AuthInfo.
+func (i *Identity) GetIdentity() claims.IdentityClaims {
+	if i.IDTokenClaims != nil {
+		return authn.NewIdentityClaims(*i.IDTokenClaims)
+	}
+	return &identity.IDClaimsWrapper{Source: i}
 }
 
 // GetRawIdentifier implements Requester.
