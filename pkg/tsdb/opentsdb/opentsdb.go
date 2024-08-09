@@ -178,7 +178,7 @@ func (s *Service) parseResponse(logger log.Logger, res *http.Response, myRefID s
 		timeField := frame.Fields[0]
 		timeField.Name = data.TimeSeriesTimeFieldName
 		dataField := frame.Fields[1]
-		dataField.Name = val.Metric
+		dataField.Name = "value"
 		dataField.Labels = labels
 
 		points := val.DataPoints
