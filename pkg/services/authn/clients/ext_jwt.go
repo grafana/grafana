@@ -8,6 +8,8 @@ import (
 
 	"github.com/go-jose/go-jose/v3/jwt"
 	authlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/claims"
+	authlibclaims "github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -114,7 +116,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", accessID.String())
 	}
 
-	if !accessID.IsType(identity.TypeAccessPolicy) {
+	if !accessID.IsType(authlibclaims.TypeAccessPolicy) {
 		return nil, errExtJWTInvalid.Errorf("unexpected identity: %s", accessID.String())
 	}
 
@@ -123,7 +125,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTInvalid.Errorf("failed to parse id token subject: %w", err)
 	}
 
-	if !userID.IsType(identity.TypeUser) {
+	if !userID.IsType(claims.TypeUser) {
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", userID.String())
 	}
 
@@ -160,7 +162,7 @@ func (s *ExtendedJWT) authenticateAsService(claims *authlib.Claims[authlib.Acces
 		return nil, fmt.Errorf("failed to parse access token subject: %w", err)
 	}
 
-	if !id.IsType(identity.TypeAccessPolicy) {
+	if !id.IsType(authlibclaims.TypeAccessPolicy) {
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", id.String())
 	}
 

@@ -14,7 +14,7 @@ type Requester interface {
 	claims.AuthInfo
 
 	// GetIdentityType returns the type for the requester
-	GetIdentityType() IdentityType
+	GetIdentityType() claims.IdentityType
 	// GetRawIdentifier returns only the identifier part of the UID, excluding the type
 	GetRawIdentifier() string
 	// Deprecated: use GetUID instead
@@ -82,7 +82,7 @@ type Requester interface {
 // Applicable for users, service accounts, api keys and renderer service.
 // Errors if the identifier is not initialized or if type is not recognized.
 func IntIdentifier(typedID TypedID) (int64, error) {
-	if IsIdentityType(typedID, TypeUser, TypeAPIKey, TypeServiceAccount, TypeRenderService) {
+	if claims.IsIdentityType(typedID.t, claims.TypeUser, claims.TypeAPIKey, claims.TypeServiceAccount, claims.TypeRenderService) {
 		id, err := strconv.ParseInt(typedID.ID(), 10, 64)
 		if err != nil {
 			return 0, fmt.Errorf("unrecognized format for valid type %s: %w", typedID.Type(), err)
@@ -107,7 +107,7 @@ func UserIdentifier(typedID TypedID) (int64, error) {
 		return 0, err
 	}
 
-	if IsIdentityType(typedID, TypeUser, TypeServiceAccount) {
+	if claims.IsIdentityType(typedID.t, claims.TypeUser, claims.TypeServiceAccount) {
 		return userID, nil
 	}
 
