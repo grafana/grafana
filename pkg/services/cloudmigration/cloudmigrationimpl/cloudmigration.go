@@ -391,7 +391,7 @@ func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMig
 		return nil, fmt.Errorf("error creating migration: %w", err)
 	}
 
-	s.report(ctx, cm, gmsclient.EventConnect, 0, nil)
+	s.report(ctx, &migration, gmsclient.EventConnect, 0, nil)
 
 	return &cloudmigration.CloudMigrationSessionResponse{
 		UID:     cm.UID,

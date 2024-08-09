@@ -355,10 +355,19 @@ func (s *Service) uploadUsingPresignedURL(ctx context.Context, uploadURL, key st
 }
 
 func (s *Service) updateSnapshotWithRetries(ctx context.Context, cmd cloudmigration.UpdateSnapshotCmd) (err error) {
+	maxRetries := 10
+	retries := 0
 	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
-		err := s.store.UpdateSnapshot(ctx, cmd)
-		return retryer.FuncComplete, err
-	}, 10, time.Millisecond*100, time.Second*10); err != nil {
+		if err := s.store.UpdateSnapshot(ctx, cmd); err != nil {
+			s.log.Error("updating snapshot in retry loop", "error", err.Error())
+			retries++
+			if retries > maxRetries {
+				return retryer.FuncError, err
+			}
+			return retryer.FuncFailure, nil
+		}
+		return retryer.FuncComplete, nil
+	}, maxRetries, time.Millisecond*10, time.Second*5); err != nil {
 		s.log.Error("failed to update snapshot status", "snapshotUid", cmd.UID, "status", cmd.Status, "num_resources", len(cmd.Resources), "error", err.Error())
 		return fmt.Errorf("failed to update snapshot status: %w", err)
 	}
