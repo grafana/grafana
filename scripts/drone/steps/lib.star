@@ -553,7 +553,7 @@ def test_backend_step():
             # shared-mime-info and shared-mime-info-lang is used for exactly 1 test for the
             # mime.TypeByExtension function.
             "apk add --update build-base shared-mime-info shared-mime-info-lang",
-            "go list -f '{{.Dir}}/...' -m | xargs go test -tags requires_buildifer -short -covermode=atomic -timeout=5m",
+            "./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifer -short -covermode=atomic -timeout=5m",
         ],
     }
 
@@ -1056,7 +1056,7 @@ def mysql_integration_tests_steps(hostname, version):
 def redis_integration_tests_steps():
     cmds = [
         "go clean -testcache",
-        "go list -f '{{.Dir}}/...' -m | xargs go test -run IntegrationRedis -covermode=atomic -timeout=2m",
+        "./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationRedis -covermode=atomic -timeout=2m",
     ]
 
     environment = {
@@ -1081,7 +1081,7 @@ def remote_alertmanager_integration_tests_steps():
 def memcached_integration_tests_steps():
     cmds = [
         "go clean -testcache",
-        "go list -f '{{.Dir}}/...' -m | xargs go test -run IntegrationMemcached -covermode=atomic -timeout=2m",
+        "./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationMemcached -covermode=atomic -timeout=2m",
     ]
 
     environment = {
