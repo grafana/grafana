@@ -62,6 +62,174 @@ Automatic migration is supported for the plugins shown in the following table. E
 
 A dashboard must still be saved with the new plugin ID to persist the change.
 
+# Automate save dashboards after auto migration
+
+When dealing with a small number of dashboards, manual saving is feasible. However, for multiple organizations and thousands of dashboards, this process becomes impractical and time-consuming. Therefore, automating the process is a more efficient solution.
+
+### 1) Create a service account with an API key.
+
+Create a service account with viewer permissions in each organization and generate the corresponding API key.
+
+Set the generated API key as the value for the `GRAFANA_TOKEN` environment variable.
+
+```bash
+export GRAFANA_TOKEN="<SERVICE-ACCOUNT-API-KEY>""
+```
+
+### 2) Get the list of plugins based on type.
+
+After installing [`detect-angular-dashboards`](https://github.com/grafana/detect-angular-dashboards) on your local machine, execute the following command to retrieve the list of Angular plugin IDs along with their number of occurrences.
+
+```bash
+./dist/darwin_arm64/detect-angular-dashboards -j http://<GRAFANA-IP>/api | jq -r ".[].Detections[].PluginID" | sort | uniq -c | sort -nr
+```
+
+Output:
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/94f5b288-5607-407c-82b7-3283ebf49adb/c67e1ac7-ab0a-4cf5-99ed-b39caa93d667/Untitled.png)
+
+### 3) Get the list of dashboard URLs.
+
+As an input to our automation script, we need to supply the list of dashboard URLs. The following command will generate a list of dashboards containing Angular plugins that need to be saved for the changes to take effect.
+
+```bash
+./dist/darwin_arm64/detect-angular-dashboards -j http://<GRAFANA-IP>/api | jq -r ".[].URL"
+```
+
+Output:
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/94f5b288-5607-407c-82b7-3283ebf49adb/d6b22c0c-fe99-4197-ac0e-b7e670874d69/Untitled.png)
+
+Save the output from the above command into a file, such as `dashboards.txt`.
+
+## 4) Script to save dashboard.
+
+The Grafana HTTP API does not support saving dashboards directly. Therefore, we need to open each dashboard and manually click the save button. To automate this process of opening Grafana dashboards and clicking the save button, we can use a browser automation tool, such as Selenium for Python.
+
+### Install Selenium:
+
+Make sure you have Selenium installed. 
+
+```bash
+pip3 install selenium
+```
+
+### Install WebDriver:
+
+Install the WebDriver for your browser (e.g., ChromeDriver for Chrome)
+
+```bash
+pip3 install webdriver_manager
+```
+
+### Python Script:
+
+Below is a simple script that logs into Grafana, navigates to the dashboard list, and automates the clicking of the save button using Selenium in Python.
+
+```python
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys  # Import Keys here
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+import time
+import logging
+
+# Function to read dashboard URLs from a file
+def read_dashboard_urls(file_path):
+    with open(file_path, 'r') as file:
+        return [line.strip() for line in file if line.strip()]
+
+# Set up WebDriver
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+
+# Path to the file containing dashboard URLs
+file_path = 'dashboards.txt'
+dashboards = read_dashboard_urls(file_path)
+
+# List of dashboard URLs
+
+try:
+    # Open Grafana login page
+    driver.get('http://<GRAFANA-IP-ADDRESS>/login')
+
+    # Log in to Grafana
+    username = driver.find_element(By.NAME, 'user')
+    password = driver.find_element(By.NAME, 'password')
+    username.send_keys('<GRAFANA-USER>')
+    password.send_keys('<GRAFANA-PASSWORD>')
+    password.send_keys(Keys.RETURN)
+
+    # Wait for login to complete
+    time.sleep(5)
+
+   # Wait for login to complete
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, 'body'))
+    )
+
+    for dashboard in dashboards:
+        try:
+        # Navigate to the dashboard
+            driver.get(dashboard)
+
+            # Wait for the folder icon (save button) to be clickable and click it
+            folder_icon = WebDriverWait(driver, 15).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[aria-label="Save dashboard"]'))
+            )
+            folder_icon.click()
+
+            # Click the save button inside the dialog
+            save_button = WebDriverWait(driver, 15).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[aria-label="Dashboard settings Save Dashboard Modal Save button"]'))
+            )
+            
+            save_button.click()
+
+            # Wait a moment to ensure the save action is completed
+            WebDriverWait(driver, 15).until(
+                EC.invisibility_of_element((By.CSS_SELECTOR, 'button[aria-label="Dashboard settings Save Dashboard Modal Save button"]'))
+            )
+        except Exception as e:
+            logging.error(f"Failed to process dashboard {dashboard}: {e}")
+            continue  # Move to the next dashboard        
+
+finally:
+    # Close the browser
+    driver.quit()
+```
+
+Replace `GRAFANA-IP-ADDRESS` with the IP address or URL of your Grafana instance. Also, substitute `GRAFANA-USER` and `GRAFANA-PASSWORD` with your Grafana credentials. I have used the admin credentials here. 
+
+![grafana.gif](https://prod-files-secure.s3.us-west-2.amazonaws.com/94f5b288-5607-407c-82b7-3283ebf49adb/2a108985-8620-41a9-a638-9622458ed766/grafana.gif)
+
+In the event that the script is unable to save a dashboard such as when the save button cannot be found due to the dashboard not being editable, or if any operation times out it will skip that dashboard and proceed to the next one. The script will log the dashboards for which the saving operation failed.
+
+```bash
+ERROR:root:Failed to process dashboard http://10.15.47.221/d/kb-ONPB4k/kubernetes-persistent-volumes
+ERROR:root:Failed to process dashboard http://10.15.47.221/d/SxRYJXZMz/frontend
+ERROR:root:Failed to process dashboard http://10.15.47.221/d/iWcvUh7nz/compute-resources-pods
+```
+
+If the number of failed dashboard saves is small, these dashboards can be saved manually. Alternatively, the issue can be resolved, and the script can be re-run with only the list of dashboards that need to be updated.
+
+## 5) Confirm if the outdated panels are updated.
+
+Run the same command executed in Step 1 to verify if the save operation was successful and if the changes have been reflected.
+
+```bash
+./dist/darwin_arm64/detect-angular-dashboards -j http://<GRAFANA-IP>/api | jq -r ".[].Detections[].PluginID" | sort | uniq -c | sort -nr
+```
+
+Output:
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/94f5b288-5607-407c-82b7-3283ebf49adb/ecb3b0ee-bb19-4923-8534-c4b725a30671/Untitled.png)
+
+Ideally, you should receive an empty result. If additional plugin IDs and their occurrences are returned, locate the corresponding dashboards and repeat the steps as needed.
+
+
 # AngularJS-based plugins
 
 This table lists plugins which we have detected as having a dependency on AngularJS. For alternatives, consider included [Visualizations]({{< relref "../../panels-visualizations/visualizations" >}}) and [Data sources]({{< relref "../../datasources" >}}), as well as external plugins from the [catalog](/grafana/plugins).
