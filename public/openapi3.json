@@ -9356,6 +9356,7 @@
           },
           "endDate": {
             "format": "date-time",
+            "nullable": true,
             "type": "string"
           },
           "frequency": {
@@ -9370,6 +9371,7 @@
           },
           "startDate": {
             "format": "date-time",
+            "nullable": true,
             "type": "string"
           },
           "timeZone": {

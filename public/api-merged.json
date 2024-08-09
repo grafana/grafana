@@ -19297,7 +19297,8 @@
         },
         "endDate": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "x-nullable": true
         },
         "frequency": {
           "type": "string"
@@ -19311,7 +19312,8 @@
         },
         "startDate": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "x-nullable": true
         },
         "timeZone": {
           "type": "string"
