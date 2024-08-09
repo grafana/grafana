@@ -703,6 +703,10 @@ const (
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"
 
+	// FlagNoFrontendPermissionCache
+	// Do not use permission caching in frontend
+	FlagNoFrontendPermissionCache = "noFrontendPermissionCache"
+
 	// FlagPassScopeToDashboardApi
 	// Enables the passing of scopes to dashboards fetching in Grafana
 	FlagPassScopeToDashboardApi = "passScopeToDashboardApi"
