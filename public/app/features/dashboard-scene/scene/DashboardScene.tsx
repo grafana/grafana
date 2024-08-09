@@ -704,7 +704,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       return;
     }
 
-    panel.setState({ $behaviors: undefined });
+    gridItem.state.body.setState({ $behaviors: undefined });
   }
 
   public showModal(modal: SceneObject) {
