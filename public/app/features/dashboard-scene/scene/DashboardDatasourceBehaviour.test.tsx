@@ -21,7 +21,7 @@ import { activateFullSceneTree } from '../utils/test-utils';
 import { DashboardDatasourceBehaviour } from './DashboardDatasourceBehaviour';
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
-import { LibraryVizPanel } from './LibraryVizPanel';
+import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 
 const grafanaDs = {
   id: 1,
@@ -491,16 +491,23 @@ describe('DashboardDatasourceBehaviour', () => {
   });
 
   describe('Library panels', () => {
-    it('should wait for library panel to be loaded', async () => {
-      const sourcePanel = new LibraryVizPanel({
-        name: 'My Library Panel',
+    it('should re-run queries when library panel re-runs query', async () => {
+      const libPanelBehavior = new LibraryPanelBehavior({
+        isLoaded: false,
         title: 'Panel title',
         uid: 'fdcvggvfy2qdca',
-        panelKey: 'lib-panel',
-        panel: new VizPanel({
-          key: 'panel-1',
-          title: 'Panel A',
-          pluginId: 'table',
+        name: 'My Library Panel',
+        _loadedPanel: undefined,
+      });
+
+      const sourcePanel = new VizPanel({
+        key: 'panel-1',
+        title: 'Panel A',
+        pluginId: 'table',
+        $behaviors: [libPanelBehavior],
+        $data: new SceneQueryRunner({
+          datasource: { uid: 'grafana' },
+          queries: [{ refId: 'A', queryType: 'randomWalk' }],
         }),
       });
 
@@ -544,28 +551,21 @@ describe('DashboardDatasourceBehaviour', () => {
         }),
       });
 
-      activateFullSceneTree(scene);
+      const sceneDeactivate = activateFullSceneTree(scene);
 
       // spy on runQueries
       const spy = jest.spyOn(dashboardDSPanel.state.$data as SceneQueryRunner, 'runQueries');
 
+      // deactivate scene to mimic going into panel edit
+      sceneDeactivate();
+
+      // run source panel queries and update request ID
+      (sourcePanel.state.$data as SceneQueryRunner).runQueries();
+
+      // // activate scene to mimic coming back from panel edit
+      activateFullSceneTree(scene);
+
       await new Promise((r) => setTimeout(r, 1));
-
-      expect(spy).not.toHaveBeenCalled();
-
-      // Simulate library panel being loaded
-      sourcePanel.setState({
-        isLoaded: true,
-        panel: new VizPanel({
-          title: 'Panel A',
-          pluginId: 'table',
-          key: 'panel-1',
-          $data: new SceneQueryRunner({
-            datasource: { uid: 'grafana' },
-            queries: [{ refId: 'A', queryType: 'randomWalk' }],
-          }),
-        }),
-      });
 
       expect(spy).toHaveBeenCalledTimes(1);
     });

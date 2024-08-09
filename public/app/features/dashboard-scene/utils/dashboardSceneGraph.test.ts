@@ -6,7 +6,7 @@ import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 
 import { dashboardSceneGraph, getNextPanelId } from './dashboardSceneGraph';
@@ -129,11 +129,16 @@ describe('dashboardSceneGraph', () => {
               }),
             }),
             new DashboardGridItem({
-              body: new LibraryVizPanel({
-                uid: 'uid',
-                name: 'LibPanel',
-                title: 'Library Panel',
-                panelKey: 'panel-2',
+              body: new VizPanel({
+                title: 'Library Panel 1',
+                key: 'panel-2',
+                $behaviors: [
+                  new LibraryPanelBehavior({
+                    uid: 'uid',
+                    name: 'LibPanel',
+                    title: 'Library Panel 1',
+                  }),
+                ],
               }),
             }),
             new DashboardGridItem({
@@ -166,11 +171,16 @@ describe('dashboardSceneGraph', () => {
                   }),
                 }),
                 new DashboardGridItem({
-                  body: new LibraryVizPanel({
-                    uid: 'uid',
-                    name: 'LibPanel',
-                    title: 'Library Panel',
-                    panelKey: 'panel-3',
+                  body: new VizPanel({
+                    title: 'Library Panel 2',
+                    key: 'panel-3',
+                    $behaviors: [
+                      new LibraryPanelBehavior({
+                        uid: 'uid',
+                        name: 'LibPanel',
+                        title: 'Library Panel 2',
+                      }),
+                    ],
                   }),
                 }),
               ],

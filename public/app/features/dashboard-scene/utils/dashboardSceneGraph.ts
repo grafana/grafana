@@ -3,10 +3,9 @@ import { VizPanel, SceneGridRow, sceneGraph, SceneGridLayout, behaviors } from '
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks } from '../scene/PanelLinks';
 
-import { getPanelIdForLibraryVizPanel, getPanelIdForVizPanel } from './utils';
+import { getPanelIdForVizPanel } from './utils';
 
 function getTimePicker(scene: DashboardScene) {
   return scene.state.controls?.state.timePicker;
@@ -87,10 +86,7 @@ export function getNextPanelId(dashboard: DashboardScene): number {
       const vizPanel = child.state.body;
 
       if (vizPanel) {
-        const panelId =
-          vizPanel instanceof LibraryVizPanel
-            ? getPanelIdForLibraryVizPanel(vizPanel)
-            : getPanelIdForVizPanel(vizPanel);
+        const panelId = getPanelIdForVizPanel(vizPanel);
 
         if (panelId > max) {
           max = panelId;
@@ -111,10 +107,7 @@ export function getNextPanelId(dashboard: DashboardScene): number {
           const vizPanel = rowChild.state.body;
 
           if (vizPanel) {
-            const panelId =
-              vizPanel instanceof LibraryVizPanel
-                ? getPanelIdForLibraryVizPanel(vizPanel)
-                : getPanelIdForVizPanel(vizPanel);
+            const panelId = getPanelIdForVizPanel(vizPanel);
 
             if (panelId > max) {
               max = panelId;
@@ -127,19 +120,6 @@ export function getNextPanelId(dashboard: DashboardScene): number {
 
   return max + 1;
 }
-
-// Returns the LibraryVizPanel that corresponds to the given VizPanel if it exists
-export const getLibraryVizPanelFromVizPanel = (vizPanel: VizPanel): LibraryVizPanel | null => {
-  if (vizPanel.parent instanceof LibraryVizPanel) {
-    return vizPanel.parent;
-  }
-
-  if (vizPanel.parent instanceof DashboardGridItem && vizPanel.parent.state.body instanceof LibraryVizPanel) {
-    return vizPanel.parent.state.body;
-  }
-
-  return null;
-};
 
 export const dashboardSceneGraph = {
   getTimePicker,
