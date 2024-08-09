@@ -36,7 +36,7 @@
     "@types/testing-library__jest-dom": "5.14.9",
     "@types/uuid": "9.0.8",
     "ts-node": "10.9.2",
-    "typescript": "5.4.5",
+    "typescript": "5.5.4",
     "webpack": "5.91.0"
   },
   "peerDependencies": {

@@ -36,7 +36,7 @@
     "jest": "29.7.0",
     "style-loader": "4.0.0",
     "ts-node": "10.9.2",
-    "typescript": "5.4.5",
+    "typescript": "5.5.4",
     "webpack": "5.91.0"
   },
   "peerDependencies": {
