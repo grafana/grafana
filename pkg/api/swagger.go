@@ -12,40 +12,34 @@ import (
 
 func (hs *HTTPServer) registerSwaggerUI(r routing.RouteRegister) {
 	// Deprecated
-	r.Get("/swaggger", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "api", http.StatusMovedPermanently)
-	})
-	// Deprecated
 	r.Get("/swagger-ui", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "api", http.StatusMovedPermanently)
+		http.Redirect(w, r, "swaggger", http.StatusMovedPermanently)
 	})
 	// Deprecated
 	r.Get("/openapi3", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "api", http.StatusMovedPermanently)
+		http.Redirect(w, r, "swaggger", http.StatusMovedPermanently)
 	})
 
 	// The swagger based api navigator
-	r.Get("/api", hs.apiDocs)
-}
+	r.Get("/swaggger", func(c *contextmodel.ReqContext) {
+		ctx := c.Context.Req.Context()
+		assets, err := webassets.GetWebAssets(ctx, hs.Cfg, hs.License)
+		if err != nil {
+			errhttp.Write(ctx, err, c.Resp)
+			return
+		}
 
-func (hs *HTTPServer) apiDocs(c *contextmodel.ReqContext) {
-	ctx := c.Context.Req.Context()
-	assets, err := webassets.GetWebAssets(ctx, hs.Cfg, hs.License)
-	if err != nil {
-		errhttp.Write(ctx, err, c.Resp)
-		return
-	}
+		data := map[string]any{
+			"Nonce":          c.RequestNonce,
+			"Assets":         assets,
+			"FavIcon":        "public/img/fav32.png",
+			"AppleTouchIcon": "public/img/apple-touch-icon.png",
+		}
+		if hs.Cfg.CSPEnabled {
+			data["CSPEnabled"] = true
+			data["CSPContent"] = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, hs.Cfg.AppURL, c.RequestNonce)
+		}
 
-	data := map[string]any{
-		"Nonce":          c.RequestNonce,
-		"Assets":         assets,
-		"FavIcon":        "public/img/fav32.png",
-		"AppleTouchIcon": "public/img/apple-touch-icon.png",
-	}
-	if hs.Cfg.CSPEnabled {
-		data["CSPEnabled"] = true
-		data["CSPContent"] = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, hs.Cfg.AppURL, c.RequestNonce)
-	}
-
-	c.HTML(http.StatusOK, "swagger", data)
+		c.HTML(http.StatusOK, "swagger", data)
+	})
 }
