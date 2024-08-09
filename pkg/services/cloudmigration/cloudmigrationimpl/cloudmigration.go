@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -390,7 +391,7 @@ func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMig
 		return nil, fmt.Errorf("error creating migration: %w", err)
 	}
 
-	s.report(ctx, cm, gmsclient.EventConnect, 0, nil)
+	s.report(ctx, &migration, gmsclient.EventConnect, 0, nil)
 
 	return &cloudmigration.CloudMigrationSessionResponse{
 		UID:     cm.UID,
@@ -468,15 +469,16 @@ func (s *Service) GetMigrationRunList(ctx context.Context, migUID string) (*clou
 	return runList, nil
 }
 
-func (s *Service) DeleteSession(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
-	c, err := s.store.DeleteMigrationSessionByUID(ctx, uid)
+func (s *Service) DeleteSession(ctx context.Context, sessionUID string) (*cloudmigration.CloudMigrationSession, error) {
+	session, snapshots, err := s.store.DeleteMigrationSessionByUID(ctx, sessionUID)
 	if err != nil {
-		return c, fmt.Errorf("deleting migration from db: %w", err)
+		s.report(ctx, session, gmsclient.EventDisconnect, 0, err)
+		return nil, fmt.Errorf("deleting migration from db: %w", err)
 	}
 
-	s.report(ctx, c, gmsclient.EventDisconnect, 0, nil)
-
-	return c, nil
+	err = s.deleteLocalFiles(snapshots)
+	s.report(ctx, session, gmsclient.EventDisconnect, 0, err)
+	return session, nil
 }
 
 func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedInUser, sessionUid string) (*cloudmigration.CloudMigrationSnapshot, error) {
@@ -787,6 +789,18 @@ func (s *Service) getLocalEventId(ctx context.Context) (string, error) {
 	}
 
 	return anonId, nil
+}
+
+func (s *Service) deleteLocalFiles(snapshots []cloudmigration.CloudMigrationSnapshot) error {
+	var err error
+	for _, snapshot := range snapshots {
+		err = os.RemoveAll(snapshot.LocalDir)
+		if err != nil {
+			// in this case we only log the error, don't return it to continue with the process
+			s.log.Error("deleting migration snapshot files", "err", err)
+		}
+	}
+	return err
 }
 
 // getResourcesWithPluginWarnings iterates through each resource and, if a non-core datasource, applies a warning that we only support core
