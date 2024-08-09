@@ -28,15 +28,15 @@ type PluginInfo struct {
 	pluginJSON plugins.JSONData
 	class      plugins.Class
 	basePath   string
-	relPath    string // relative path to the asset from the plugin root (used for nested plugin paths)
+	parent     *PluginInfo
 }
 
-func NewPluginInfo(pluginJSON plugins.JSONData, class plugins.Class, basePath, relPath string) PluginInfo {
+func NewPluginInfo(pluginJSON plugins.JSONData, class plugins.Class, basePath string, parent *PluginInfo) PluginInfo {
 	return PluginInfo{
 		pluginJSON: pluginJSON,
 		class:      class,
 		basePath:   basePath,
-		relPath:    relPath,
+		parent:     parent,
 	}
 }
 
@@ -48,15 +48,21 @@ func DefaultService(cfg *config.PluginManagementCfg) *Service {
 func (s *Service) Base(n PluginInfo) (string, error) {
 	if n.class == plugins.ClassCore {
 		baseDir := getBaseDir(n.basePath)
-		return path.Join("public/app/plugins", string(n.pluginJSON.Type), baseDir, n.relPath), nil
+		return path.Join("public/app/plugins", string(n.pluginJSON.Type), baseDir), nil
 	}
 	if n.class == plugins.ClassCDN {
-		return pluginscdn.JoinPath(n.basePath, n.relPath)
+		return n.basePath, nil
 	}
 	if s.cdn.PluginSupported(n.pluginJSON.ID) {
-		return s.cdn.AssetURL(n.pluginJSON.ID, n.pluginJSON.Info.Version, n.relPath)
+		return s.cdn.AssetURL(n.pluginJSON.ID, n.pluginJSON.Info.Version, "")
 	}
-	return path.Join("public/plugins", n.pluginJSON.ID, n.relPath), nil
+	if n.parent != nil {
+		if s.cdn.PluginSupported(n.parent.pluginJSON.ID) {
+			return s.cdn.AssetURL(n.parent.pluginJSON.ID, n.parent.pluginJSON.Info.Version, n.basePath)
+		}
+	}
+
+	return path.Join("public/plugins", n.pluginJSON.ID), nil
 }
 
 // Module returns the module.js path for the specified plugin.
@@ -66,25 +72,42 @@ func (s *Service) Module(n PluginInfo) (string, error) {
 			// The core plugin has been built externally, use the module from the dist folder
 		} else {
 			baseDir := getBaseDir(n.basePath)
-			return path.Join("core:plugin", baseDir, n.relPath), nil
+			return path.Join("core:plugin", baseDir), nil
 		}
 	}
 	if n.class == plugins.ClassCDN {
-		return pluginscdn.JoinPath(n.basePath, n.relPath, "module.js")
+		return pluginscdn.JoinPath(n.basePath, "module.js")
 	}
+
 	if s.cdn.PluginSupported(n.pluginJSON.ID) {
-		return s.cdn.AssetURL(n.pluginJSON.ID, n.pluginJSON.Info.Version, path.Join(n.relPath, "module.js"))
+		return s.cdn.AssetURL(n.pluginJSON.ID, n.pluginJSON.Info.Version, "module.js")
 	}
-	return path.Join("public/plugins", n.pluginJSON.ID, n.relPath, "module.js"), nil
+	if n.parent != nil {
+		if s.cdn.PluginSupported(n.parent.pluginJSON.ID) {
+			return s.cdn.AssetURL(n.parent.pluginJSON.ID, n.parent.pluginJSON.Info.Version, path.Join(n.basePath, "module.js"))
+		}
+	}
+
+	return path.Join("public/plugins", n.pluginJSON.ID, "module.js"), nil
 }
 
 // RelativeURL returns the relative URL for an arbitrary plugin asset.
 func (s *Service) RelativeURL(n PluginInfo, pathStr string) (string, error) {
 	if n.class == plugins.ClassCDN {
-		return pluginscdn.JoinPath(n.basePath, n.relPath, pathStr)
+		return pluginscdn.JoinPath(n.basePath, pathStr)
 	}
+
 	if s.cdn.PluginSupported(n.pluginJSON.ID) {
-		return s.cdn.NewCDNURLConstructor(n.pluginJSON.ID, n.pluginJSON.Info.Version).StringPath(path.Join(n.relPath, pathStr))
+		return s.cdn.NewCDNURLConstructor(n.pluginJSON.ID, n.pluginJSON.Info.Version).StringPath(pathStr)
+	}
+	if n.parent != nil {
+		if s.cdn.PluginSupported(n.parent.pluginJSON.ID) {
+			return s.cdn.AssetURL(n.parent.pluginJSON.ID, n.parent.pluginJSON.Info.Version, path.Join(n.basePath, "module.js"))
+		}
+	}
+
+	if s.cdn.PluginSupported(n.pluginJSON.ID) {
+		return s.cdn.NewCDNURLConstructor(n.pluginJSON.ID, n.pluginJSON.Info.Version).StringPath(pathStr)
 	}
 	// Local
 	u, err := url.Parse(pathStr)
