@@ -14,7 +14,7 @@ export interface RadioButtonListProps<T> {
   /** An array of available options */
   options: Array<SelectableValue<T>>;
   value?: T;
-  onChange?: (value: T) => void;
+  onChange?: (value: T, label: string) => void;
   /** Disables all elements in the list */
   disabled?: boolean;
   /** Disables subset of elements in the list. Compares values using the === operator */
@@ -43,7 +43,7 @@ export function RadioButtonList<T extends string | number | readonly string[]>({
         const isChecked = value && value === option.value;
         const isDisabled = disabled || disabledOptions.some((optionValue) => optionValue === option.value);
 
-        const handleChange = () => onChange && option.value && onChange(option.value);
+        const handleChange = () => onChange && option.value && option.label && onChange(option.value, option.label);
 
         return (
           <RadioButtonDot<T>

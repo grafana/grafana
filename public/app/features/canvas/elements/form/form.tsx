@@ -13,6 +13,7 @@ import { defaultApiConfig } from '../button';
 import { Checkbox } from './elements/Checkbox';
 import { FormChild, FormElementTypeEditor } from './elements/FormElementTypeEditor';
 import { NumberInput } from './elements/NumberInput';
+import { RadioGroup } from './elements/RadioGroup';
 import { SelectDisplay } from './elements/Select';
 import { Submit } from './elements/Submit';
 import { TextInput } from './elements/TextInput';
@@ -153,6 +154,16 @@ const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
             onChange={(v, i) => onCheckboxOptionsChange(v, i, child.id)}
           />
         );
+      case FormElementType.Radio:
+        return (
+          <RadioGroup
+            title={child.title}
+            options={child.options ?? []}
+            currentOption={child.currentOption}
+            onChange={(newParams) => onCurrentOptionChange(newParams, child.id)}
+          />
+        );
+
       case FormElementType.Submit:
         return <Submit formItem={child} />;
       default:

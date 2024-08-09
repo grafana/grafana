@@ -15,6 +15,7 @@ import { FormElementType } from '../form';
 
 import { CheckboxEditor } from './CheckboxEditor';
 import { NumberInputEditor } from './NumberInputEditor';
+import { RadioGroupEditor } from './RadioGroupEditor';
 import { SelectionEditor } from './SelectionEditor';
 import { TextInputEditor } from './TextInputEditor';
 import { updateAPIPayload } from './utils';
@@ -229,6 +230,19 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
             options={child.options ?? []}
             onParamsChange={(v) => onCheckboxParamsChange(v, child.id)}
             onTitleChange={(v) => onCheckBoxTitleChange(v, child.id)}
+          />
+        );
+        return {
+          element,
+          properties: child,
+        };
+      case FormElementType.Radio:
+        element = (
+          <RadioGroupEditor
+            title={child.title}
+            options={child.options ?? []}
+            onParamsChange={(newParams) => onOptionsChange(newParams, child.id)}
+            onTitleChange={(v) => onSelectionItemTitleChange(v, child.id)}
           />
         );
         return {
