@@ -25,7 +25,7 @@ func NewDefaultPluginFactory(assetPath *assetpath.Service) *DefaultPluginFactory
 
 func (f *DefaultPluginFactory) createPlugin(bundle *plugins.FoundBundle, class plugins.Class,
 	sig plugins.Signature) (*plugins.Plugin, error) {
-	parentInfo := assetpath.NewPluginInfo(bundle.Primary.JSONData, class, bundle.Primary.FS.Base(), nil)
+	parentInfo := assetpath.NewPluginInfo(bundle.Primary.JSONData, class, bundle.Primary.FS, nil)
 	plugin, err := f.newPlugin(bundle.Primary, class, sig, parentInfo)
 	if err != nil {
 		return nil, err
@@ -37,11 +37,7 @@ func (f *DefaultPluginFactory) createPlugin(bundle *plugins.FoundBundle, class p
 
 	plugin.Children = make([]*plugins.Plugin, 0, len(bundle.Children))
 	for _, child := range bundle.Children {
-		relPath, err := plugin.FS.Rel(child.FS.Base())
-		if err != nil {
-			return nil, err
-		}
-		childInfo := assetpath.NewPluginInfo(child.JSONData, class, relPath, &parentInfo)
+		childInfo := assetpath.NewPluginInfo(child.JSONData, class, child.FS, &parentInfo)
 		cp, err := f.newPlugin(*child, class, sig, childInfo)
 		if err != nil {
 			return nil, err
