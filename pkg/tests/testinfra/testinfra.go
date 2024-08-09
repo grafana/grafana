@@ -387,7 +387,7 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 		}
 
 		if o.DualWriterDesiredModes != nil {
-			unifiedStorageMode, err := getOrCreateSection("unified_storage_mode")
+			unifiedStorageMode, err := getOrCreateSection("unified_storage")
 			require.NoError(t, err)
 			for k, v := range o.DualWriterDesiredModes {
 				_, err = unifiedStorageMode.NewKey(k, fmt.Sprint(v))
