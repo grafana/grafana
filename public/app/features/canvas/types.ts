@@ -45,12 +45,14 @@ export interface VizElementConfig extends TextConfig {
   vizType?: string;
   fields?: string[];
   customOptions?: Array<[string, string]>; // hacky just to get it working
+  showLegend?: boolean;
 }
 
 export interface VizElementData extends TextData {
   vizType?: string;
   data?: PanelData;
   customOptions?: Array<[string, string]>; // hacky just to get it working
+  showLegend?: boolean;
 }
 
 export interface CanvasElementConfig extends TextConfig {
