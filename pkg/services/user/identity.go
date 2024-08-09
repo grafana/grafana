@@ -6,6 +6,7 @@ import (
 	"time"
 
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
@@ -50,6 +51,19 @@ type SignedInUser struct {
 
 	// When other settings are not deterministic, this value is used
 	FallbackType identity.IdentityType
+}
+
+// Access implements claims.AuthInfo.
+func (u *SignedInUser) GetAccess() claims.AccessClaims {
+	return &identity.IDClaimsWrapper{Source: u}
+}
+
+// Identity implements claims.AuthInfo.
+func (u *SignedInUser) GetIdentity() claims.IdentityClaims {
+	if u.IDTokenClaims != nil {
+		return authnlib.NewIdentityClaims(*u.IDTokenClaims)
+	}
+	return &identity.IDClaimsWrapper{Source: u}
 }
 
 // GetRawIdentifier implements Requester.

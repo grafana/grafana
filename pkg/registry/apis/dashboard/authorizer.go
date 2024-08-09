@@ -5,9 +5,9 @@ import (
 
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 )
@@ -39,7 +39,7 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionDeny, "expected namespace", nil
 			}
 
-			info, err := request.ParseNamespace(attr.GetNamespace())
+			info, err := claims.ParseNamespace(attr.GetNamespace())
 			if err != nil {
 				return authorizer.DecisionDeny, "error reading org from namespace", err
 			}

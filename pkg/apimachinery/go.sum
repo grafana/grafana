@@ -28,8 +28,10 @@ github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeN
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
 github.com/google/gofuzz v1.2.0 h1:xRy4A+RhZaiKjJ1bPfwQ8sedCA+YS2YcCHW6ec7JMi0=
 github.com/google/gofuzz v1.2.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
-github.com/grafana/authlib v0.0.0-20240730122259-a0d13672efb1 h1:EiaupmOnt6XF/LPxvagjTofWmByzYaf5VyMIF+w/71M=
-github.com/grafana/authlib v0.0.0-20240730122259-a0d13672efb1/go.mod h1:YA9We4kTafu7mlMnUh3In6Q2wpg8fYN3ycgCKOK1TB8=
+github.com/grafana/authlib v0.0.0-20240809101159-74eaccc31a06 h1:qks7nEo/A0+mWvjMjWEIfFD9eIVipb5Lxjfg+HcB5u4=
+github.com/grafana/authlib v0.0.0-20240809101159-74eaccc31a06/go.mod h1:5uu+ADz2c8bVsXheavXS735IcDuO6M3dr+evuDl8rIE=
+github.com/grafana/authlib/claims v0.0.0-20240809101159-74eaccc31a06 h1:uD1LcKwvEAqzDsgVChBudPqo5BhPxkj9AgylT5QCReo=
+github.com/grafana/authlib/claims v0.0.0-20240809101159-74eaccc31a06/go.mod h1:r+F8H6awwjNQt/KPZ2GNwjk8TvsJ7/gxzkXN26GlL/A=
 github.com/josharian/intern v1.0.0 h1:vlS4z54oSdjm0bgjRigI+G1HpF+tI+9rE5LLzOg8HmY=
 github.com/josharian/intern v1.0.0/go.mod h1:5DoeVV0s6jJacbCEi61lwdGj/aVlrQvzHFFd8Hwg//Y=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=

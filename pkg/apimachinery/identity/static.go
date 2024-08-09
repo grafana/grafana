@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/claims"
 )
 
 var _ Requester = &StaticRequester{}
@@ -33,6 +34,19 @@ type StaticRequester struct {
 	IDToken       string
 	IDTokenClaims *authnlib.Claims[authnlib.IDTokenClaims]
 	CacheKey      string
+}
+
+// Access implements Requester.
+func (u *StaticRequester) GetAccess() claims.AccessClaims {
+	return &IDClaimsWrapper{Source: u}
+}
+
+// Identity implements Requester.
+func (u *StaticRequester) GetIdentity() claims.IdentityClaims {
+	if u.IDTokenClaims != nil {
+		return authnlib.NewIdentityClaims(*u.IDTokenClaims)
+	}
+	return &IDClaimsWrapper{Source: u}
 }
 
 // GetRawIdentifier implements Requester.
