@@ -10,7 +10,7 @@ import {
 } from 'app/features/alerting/unified/openapi/timeIntervalsApi.gen';
 import { deleteMuteTimingAction, updateAlertManagerConfigAction } from 'app/features/alerting/unified/state/actions';
 import { BaseAlertmanagerArgs } from 'app/features/alerting/unified/types/hooks';
-import { renameMuteTimings } from 'app/features/alerting/unified/utils/alertmanager';
+import { renameTimeInterval } from 'app/features/alerting/unified/utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { PROVENANCE_ANNOTATION, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
 import { getK8sNamespace, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
@@ -261,7 +261,7 @@ export const useUpdateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
       }
 
       if (nameHasChanged && draft.alertmanager_config.route) {
-        draft.alertmanager_config.route = renameMuteTimings(
+        draft.alertmanager_config.route = renameTimeInterval(
           timeInterval.name,
           originalName,
           draft.alertmanager_config.route

@@ -163,6 +163,7 @@ const Policy = (props: PolicyComponentProps) => {
 
   const groupBy = currentRoute.group_by;
   const muteTimings = currentRoute.mute_time_intervals ?? [];
+  const activeTimings = currentRoute.active_time_intervals ?? [];
 
   const timingOptions: TimingOptions = {
     group_wait: currentRoute.group_wait,
@@ -326,6 +327,7 @@ const Policy = (props: PolicyComponentProps) => {
                 contactPoint={contactPoint ?? undefined}
                 groupBy={groupBy}
                 muteTimings={muteTimings}
+                activeTimings={activeTimings}
                 timingOptions={timingOptions}
                 inheritedProperties={inheritedProperties}
                 alertManagerSourceName={alertManagerSourceName}
@@ -397,6 +399,7 @@ interface MetadataRowProps {
   contactPoint?: string;
   groupBy?: string[];
   muteTimings?: string[];
+  activeTimings?: string[];
   timingOptions?: TimingOptions;
   inheritedProperties?: Partial<InheritableProperties>;
   alertManagerSourceName: string;
@@ -417,6 +420,7 @@ function MetadataRow({
   timingOptions,
   groupBy,
   muteTimings = [],
+  activeTimings = [],
   matchingInstancesPreview,
   inheritedProperties,
   matchingAlertGroups,
@@ -436,6 +440,7 @@ function MetadataRow({
   const singleGroup = isDefaultPolicy && isArray(groupBy) && groupBy.length === 0;
 
   const hasMuteTimings = Boolean(muteTimings.length);
+  const hasActiveTimings = Boolean(activeTimings.length);
 
   return (
     <div className={styles.metadataRow}>
@@ -486,7 +491,13 @@ function MetadataRow({
         {hasMuteTimings && (
           <MetaText icon="calendar-slash" data-testid="mute-timings">
             <span>Muted when</span>
-            <MuteTimings timings={muteTimings} alertManagerSourceName={alertManagerSourceName} />
+            <TimeIntervals timings={muteTimings} alertManagerSourceName={alertManagerSourceName} />
+          </MetaText>
+        )}
+        {hasActiveTimings && (
+          <MetaText icon="calendar-alt" data-testid="active-timings">
+            <span>Active when</span>
+            <TimeIntervals timings={activeTimings} alertManagerSourceName={alertManagerSourceName} />
           </MetaText>
         )}
         {timingOptions && (
@@ -683,7 +694,7 @@ const InheritedProperties: FC<{ properties: InheritableProperties }> = ({ proper
   </HoverCard>
 );
 
-const MuteTimings: FC<{ timings: string[]; alertManagerSourceName: string }> = ({
+const TimeIntervals: FC<{ timings: string[]; alertManagerSourceName: string }> = ({
   timings,
   alertManagerSourceName,
 }) => {
