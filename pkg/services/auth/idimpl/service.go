@@ -8,9 +8,7 @@ import (
 
 	"github.com/go-jose/go-jose/v3/jwt"
 	authnlib "github.com/grafana/authlib/authn"
-	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/sync/singleflight"
-
+	authnlibclaims "github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -19,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/sync/singleflight"
 )
 
 const (
@@ -101,7 +101,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			},
 		}
 
-		if identity.IsIdentityType(namespace, identity.TypeUser) {
+		if authnlibclaims.IsIdentityType(namespace, authnlibclaims.TypeUser) {
 			claims.Rest.Email = id.GetEmail()
 			claims.Rest.EmailVerified = id.IsEmailVerified()
 			claims.Rest.AuthenticatedBy = id.GetAuthenticatedBy()

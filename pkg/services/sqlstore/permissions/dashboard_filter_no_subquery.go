@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -35,7 +36,7 @@ func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses() 
 
 	userID := int64(0)
 	namespace, identifier := f.user.GetTypedID()
-	if namespace == identity.TypeUser || namespace == identity.TypeServiceAccount {
+	if namespace == claims.TypeUser || namespace == claims.TypeServiceAccount {
 		userID, _ = identity.IntIdentifier(namespace, identifier)
 	}
 

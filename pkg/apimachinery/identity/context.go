@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+
+	"github.com/grafana/authlib/claims"
 )
 
 type ctxUserKey struct{}
 
 // WithRequester attaches the requester to the context.
 func WithRequester(ctx context.Context, usr Requester) context.Context {
+	ctx = claims.WithClaims(ctx, usr) // also set the upstream auth info claims
 	return context.WithValue(ctx, ctxUserKey{}, usr)
 }
 

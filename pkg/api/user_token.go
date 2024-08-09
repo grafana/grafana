@@ -8,6 +8,7 @@ import (
 
 	"github.com/ua-parser/uap-go/uaparser"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -33,7 +34,7 @@ import (
 // 500: internalServerError
 func (hs *HTTPServer) GetUserAuthTokens(c *contextmodel.ReqContext) response.Response {
 	namespace, identifier := c.SignedInUser.GetTypedID()
-	if namespace != identity.TypeUser {
+	if namespace != claims.TypeUser {
 		return response.Error(http.StatusForbidden, "entity not allowed to revoke tokens", nil)
 	}
 
@@ -64,7 +65,7 @@ func (hs *HTTPServer) RevokeUserAuthToken(c *contextmodel.ReqContext) response.R
 	}
 
 	namespace, identifier := c.SignedInUser.GetTypedID()
-	if namespace != identity.TypeUser {
+	if namespace != claims.TypeUser {
 		return response.Error(http.StatusForbidden, "entity not allowed to revoke tokens", nil)
 	}
 

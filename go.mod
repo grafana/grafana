@@ -75,7 +75,7 @@ require (
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20240723124849-f2ab7c7b8f7d // @grafana/alerting-backend
-	github.com/grafana/authlib v0.0.0-20240730122259-a0d13672efb1 // @grafana/identity-access-team
+	github.com/grafana/authlib v0.0.0-20240809090637-9281bc7ac022 // @grafana/identity-access-team
 	github.com/grafana/codejen v0.0.3 // @grafana/dataviz-squad
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -473,6 +473,8 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect; @grafana/observability-metrics
 	github.com/grafana/e2e v0.1.1 // @grafana-app-platform-squad
 )
+
+require github.com/grafana/authlib/claims v0.0.0-20240809090428-0eaffcfc2870
 
 require (
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect

@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -45,7 +46,7 @@ func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashI
 
 	namespaceID, userIDstr := c.SignedInUser.GetTypedID()
 
-	if namespaceID != identity.TypeUser {
+	if namespaceID != claims.TypeUser {
 		return false, nil
 	}
 
@@ -517,7 +518,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	userID := int64(0)
 	namespaceID, userIDstr := c.SignedInUser.GetTypedID()
-	if namespaceID != identity.TypeUser && namespaceID != identity.TypeServiceAccount {
+	if namespaceID != claims.TypeUser && namespaceID != claims.TypeServiceAccount {
 		hs.log.Debug("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", userIDstr)
 	} else {
 		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
@@ -635,7 +636,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 	userID := int64(0)
 	var err error
 	namespaceID, userIDstr := c.SignedInUser.GetTypedID()
-	if namespaceID != identity.TypeUser && namespaceID != identity.TypeServiceAccount {
+	if namespaceID != claims.TypeUser && namespaceID != claims.TypeServiceAccount {
 		hs.log.Debug("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", userIDstr)
 	} else {
 		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
@@ -1087,7 +1088,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 
 	userID := int64(0)
 	namespaceID, userIDstr := c.SignedInUser.GetTypedID()
-	if namespaceID != identity.TypeUser && namespaceID != identity.TypeServiceAccount {
+	if namespaceID != claims.TypeUser && namespaceID != claims.TypeServiceAccount {
 		hs.log.Warn("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", userIDstr)
 	} else {
 		userID, err = identity.IntIdentifier(namespaceID, userIDstr)

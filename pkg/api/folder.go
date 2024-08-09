@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -195,7 +196,7 @@ func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int
 	var userID int64
 
 	namespace, id := user.GetTypedID()
-	if namespace == identity.TypeUser {
+	if namespace == claims.TypeUser {
 		var errID error
 		userID, errID = identity.IntIdentifier(namespace, id)
 		if errID != nil {

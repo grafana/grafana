@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -115,7 +116,7 @@ func ApplyUserHeader(sendUserHeader bool, req *http.Request, user identity.Reque
 	}
 
 	namespace, _ := user.GetTypedID()
-	if namespace == identity.TypeUser || namespace == identity.TypeServiceAccount {
+	if namespace == claims.TypeUser || namespace == claims.TypeServiceAccount {
 		req.Header.Set(UserHeaderName, user.GetLogin())
 	}
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -214,7 +215,7 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 	namespace, identifier := user.GetTypedID()
 
 	var userID int64
-	if namespace == identity.TypeUser || namespace == identity.TypeServiceAccount {
+	if namespace == claims.TypeUser || namespace == claims.TypeServiceAccount {
 		var err error
 		userID, err = strconv.ParseInt(identifier, 10, 64)
 		if err != nil {

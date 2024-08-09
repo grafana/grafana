@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/dskit/concurrency"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slices"
@@ -595,7 +596,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	userID := int64(0)
 	var err error
 	namespaceID, userIDstr := user.GetTypedID()
-	if namespaceID != identity.TypeUser && namespaceID != identity.TypeServiceAccount {
+	if namespaceID != claims.TypeUser && namespaceID != claims.TypeServiceAccount {
 		s.log.Debug("User does not belong to a user or service account namespace, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
 	} else {
 		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
@@ -740,7 +741,7 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 
 	var userID int64
 	namespace, id := cmd.SignedInUser.GetTypedID()
-	if namespace == identity.TypeUser || namespace == identity.TypeServiceAccount {
+	if namespace == claims.TypeUser || namespace == claims.TypeServiceAccount {
 		userID, err = identity.IntIdentifier(namespace, id)
 		if err != nil {
 			s.log.ErrorContext(ctx, "failed to parse user ID", "namespace", namespace, "userID", id, "error", err)
@@ -1165,7 +1166,7 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 
 	userID := int64(0)
 	namespaceID, userIDstr := dto.User.GetTypedID()
-	if namespaceID != identity.TypeUser && namespaceID != identity.TypeServiceAccount {
+	if namespaceID != claims.TypeUser && namespaceID != claims.TypeServiceAccount {
 		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
 	} else {
 		userID, err = identity.IntIdentifier(namespaceID, userIDstr)

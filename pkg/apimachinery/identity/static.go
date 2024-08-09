@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/claims"
 )
 
 var _ Requester = &StaticRequester{}
@@ -13,7 +14,7 @@ var _ Requester = &StaticRequester{}
 // This is mostly copied from:
 // https://github.com/grafana/grafana/blob/v11.0.0/pkg/services/user/identity.go#L16
 type StaticRequester struct {
-	Type                       IdentityType
+	Type                       claims.IdentityType
 	UserID                     int64
 	UserUID                    string
 	OrgID                      int64
@@ -35,6 +36,20 @@ type StaticRequester struct {
 	CacheKey      string
 }
 
+// Access implements Requester.
+func (u *StaticRequester) GetAccess() claims.AccessClaims {
+	return &IDClaimsWrapper{Source: u}
+}
+
+// Identity implements Requester.
+func (u *StaticRequester) GetIdentity() claims.IdentityClaims {
+	if u.IDTokenClaims != nil {
+		fmt.Printf("TODO... use them")
+		//return authnlib.NewAccessClaims(u.IDTokenClaims)
+	}
+	return &IDClaimsWrapper{Source: u}
+}
+
 // GetRawIdentifier implements Requester.
 func (u *StaticRequester) GetUID() string {
 	return fmt.Sprintf("%s:%s", u.Type, u.UserUID)
@@ -51,7 +66,7 @@ func (u *StaticRequester) GetInternalID() (int64, error) {
 }
 
 // GetIdentityType implements Requester.
-func (u *StaticRequester) GetIdentityType() IdentityType {
+func (u *StaticRequester) GetIdentityType() claims.IdentityType {
 	return u.Type
 }
 
@@ -151,7 +166,7 @@ func (u *StaticRequester) GetID() TypedID {
 
 // GetTypedID returns the namespace and ID of the active entity
 // The namespace is one of the constants defined in pkg/apimachinery/identity
-func (u *StaticRequester) GetTypedID() (IdentityType, string) {
+func (u *StaticRequester) GetTypedID() (claims.IdentityType, string) {
 	return u.Type, fmt.Sprintf("%d", u.UserID)
 }
 

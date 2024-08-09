@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -112,7 +113,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 	namespace, identifier := req.User.GetTypedID()
 	userID := int64(0)
 
-	if namespace == identity.TypeUser || namespace == identity.TypeServiceAccount {
+	if namespace == claims.TypeUser || namespace == claims.TypeServiceAccount {
 		userID, _ = identity.IntIdentifier(namespace, identifier)
 	}
 

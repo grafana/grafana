@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -125,7 +126,7 @@ func (d *DashboardSnapshotStore) SearchDashboardSnapshots(ctx context.Context, q
 		namespace, id := query.SignedInUser.GetTypedID()
 		var userID int64
 
-		if namespace == identity.TypeServiceAccount || namespace == identity.TypeUser {
+		if namespace == claims.TypeServiceAccount || namespace == claims.TypeUser {
 			var err error
 			userID, err = identity.IntIdentifier(namespace, id)
 			if err != nil {
@@ -137,7 +138,7 @@ func (d *DashboardSnapshotStore) SearchDashboardSnapshots(ctx context.Context, q
 		switch {
 		case query.SignedInUser.GetOrgRole() == org.RoleAdmin:
 			sess.Where("org_id = ?", query.SignedInUser.GetOrgID())
-		case namespace != identity.TypeAnonymous:
+		case namespace != claims.TypeAnonymous:
 			sess.Where("org_id = ? AND user_id = ?", query.OrgID, userID)
 		default:
 			queryResult = snapshots

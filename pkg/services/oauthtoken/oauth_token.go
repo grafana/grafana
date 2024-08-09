@@ -12,6 +12,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -95,7 +96,7 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*l
 	}
 
 	namespace, id := usr.GetTypedID()
-	if namespace != identity.TypeUser {
+	if namespace != claims.TypeUser {
 		// Not a user, therefore no token.
 		return nil, false, nil
 	}
@@ -137,7 +138,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 	}
 
 	namespace, id := usr.GetTypedID()
-	if namespace != identity.TypeUser {
+	if namespace != claims.TypeUser {
 		// Not a user, therefore no token.
 		logger.Warn("Can only refresh OAuth tokens for users", "namespace", namespace, "userId", id)
 		return nil

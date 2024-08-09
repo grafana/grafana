@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -172,7 +173,7 @@ func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dto
 	namespace, _ := c.SignedInUser.GetTypedID()
 
 	// Anonymous users do not have an email or auth info
-	if namespace != identity.TypeUser {
+	if namespace != claims.TypeUser {
 		return dtos.AnalyticsSettings{Identifier: "@" + hs.Cfg.AppURL}
 	}
 
