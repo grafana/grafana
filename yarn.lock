@@ -3563,8 +3563,8 @@ __metadata:
     "@leeoniya/ufuzzy": "npm:1.0.14"
     "@lezer/common": "npm:1.2.1"
     "@lezer/highlight": "npm:1.2.0"
-    "@lezer/lr": "npm:1.4.0"
-    "@prometheus-io/lezer-promql": "npm:0.52.1"
+    "@lezer/lr": "npm:1.4.2"
+    "@prometheus-io/lezer-promql": "npm:0.53.1"
     "@reduxjs/toolkit": "npm:2.2.7"
     "@rollup/plugin-image": "npm:3.0.3"
     "@rollup/plugin-node-resolve": "npm:15.2.3"
@@ -4622,12 +4622,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/lr@npm:1.4.0":
-  version: 1.4.0
-  resolution: "@lezer/lr@npm:1.4.0"
+"@lezer/lr@npm:1.4.2":
+  version: 1.4.2
+  resolution: "@lezer/lr@npm:1.4.2"
   dependencies:
     "@lezer/common": "npm:^1.0.0"
-  checksum: 10/7391d0d08e54cd9e4f4d46e6ee6aa81fbaf079b22ed9c13d01fc9928e0ffd16d0c2d21b2cedd55675ad6c687277db28349ea8db81c9c69222cd7e7c40edd026e
+  checksum: 10/f7b505906c8d8df14c07866553cf3dae1e065b1da8b28fbb4193fd67ab8d187eb45f92759e29a2cfe4283296f0aa864b38a0a91708ecfc3e24b8f662d626e0c6
   languageName: node
   linkType: hard
 
@@ -5841,13 +5841,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prometheus-io/lezer-promql@npm:0.52.1, @prometheus-io/lezer-promql@npm:^0.52.0":
-  version: 0.52.1
-  resolution: "@prometheus-io/lezer-promql@npm:0.52.1"
+"@prometheus-io/lezer-promql@npm:0.53.1":
+  version: 0.53.1
+  resolution: "@prometheus-io/lezer-promql@npm:0.53.1"
   peerDependencies:
     "@lezer/highlight": ^1.1.2
     "@lezer/lr": ^1.2.3
-  checksum: 10/531164b8ddedbe0e0ba9304ea918f5cb0bb9c14f5e68c835fa02d3dbbe37c90daa8344a54666ba32aea6db8dfc0720cbc5b5ea50e1ed1126e987fcea7394b595
+  checksum: 10/ebb506155f6343277e7bafc7342af3b8c0f162eda08c380f680f8c526878211a17be92e75b5d5de69cbf344f50a76221472b50533dde152ea396e148278c2d77
   languageName: node
   linkType: hard
 
@@ -17526,7 +17526,6 @@ __metadata:
     "@playwright/test": "npm:1.46.0"
     "@pmmmwh/react-refresh-webpack-plugin": "npm:0.5.15"
     "@popperjs/core": "npm:2.11.8"
-    "@prometheus-io/lezer-promql": "npm:^0.52.0"
     "@react-aria/dialog": "npm:3.5.16"
     "@react-aria/focus": "npm:3.18.1"
     "@react-aria/overlays": "npm:3.23.1"
