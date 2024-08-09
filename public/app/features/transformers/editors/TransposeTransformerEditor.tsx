@@ -12,10 +12,7 @@ export const TransposeTransfomerEditor = ({ options, onChange }: TransformerUIPr
   return (
     <>
       <InlineFieldRow>
-        <InlineField
-          label={'First field name'}
-          labelWidth={24}
-        >
+        <InlineField label={'First field name'} labelWidth={24}>
           <Input
             placeholder="Field"
             value={options.firstFieldName}
@@ -25,11 +22,7 @@ export const TransposeTransfomerEditor = ({ options, onChange }: TransformerUIPr
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField
-          label={'Remaining fields name'}
-          tooltip={'Name for value fields'}
-          labelWidth={24}
-        >
+        <InlineField label={'Remaining fields name'} tooltip={'Name for value fields'} labelWidth={24}>
           <Input
             placeholder="Value"
             value={options.restFieldsName}
