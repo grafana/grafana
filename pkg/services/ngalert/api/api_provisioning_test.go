@@ -1895,6 +1895,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		ac.NewReceiverAccess[*models.Receiver](env.ac, true),
 		configStore,
 		env.prov,
+		env.store,
 		env.secrets,
 		env.xact,
 		env.log,

@@ -392,6 +392,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), true),
 		legacy_storage.NewAlertmanagerConfigStore(configStore),
 		provisioningStore,
+		notifier.NewFakeConfigStore(t, nil),
 		secretService,
 		xact,
 		log.NewNopLogger(),

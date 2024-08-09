@@ -205,6 +205,7 @@ func TestReceiverService_Delete(t *testing.T) {
 		deleteUID        string
 		callerProvenance definitions.Provenance
 		version          string
+		storeSettings    map[models.AlertRuleKey][]models.NotificationSettings
 		existing         *models.Receiver
 		expectedErr      error
 	}{
@@ -240,6 +241,18 @@ func TestReceiverService_Delete(t *testing.T) {
 			expectedErr: makeReceiverInUseErr(true, nil),
 		},
 		{
+			name:      "delete receiver used by rule fails",
+			user:      writer,
+			deleteUID: baseReceiver.UID,
+			existing:  util.Pointer(baseReceiver.Clone()),
+			storeSettings: map[models.AlertRuleKey][]models.NotificationSettings{
+				models.AlertRuleKey{OrgID: 1, UID: "rule1"}: {
+					models.NotificationSettingsGen(models.NSMuts.WithReceiver(baseReceiver.Name))(),
+				},
+			},
+			expectedErr: makeReceiverInUseErr(true, []models.AlertRuleKey{{OrgID: 1, UID: "rule1"}}),
+		},
+		{
 			name:             "delete provisioning provenance fails when caller is ProvenanceNone",
 			user:             writer,
 			deleteUID:        baseReceiver.UID,
@@ -266,6 +279,15 @@ func TestReceiverService_Delete(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			sut := createReceiverServiceSut(t, &secretsService)
+
+			store := sut.ruleNotificationsStore.(*fakeConfigStore)
+			store.notificationSettings = map[int64]map[models.AlertRuleKey][]models.NotificationSettings{
+				1: make(map[models.AlertRuleKey][]models.NotificationSettings),
+			}
+
+			for key, settings := range tc.storeSettings {
+				store.notificationSettings[tc.user.GetOrgID()][key] = settings
+			}
 
 			if tc.existing != nil {
 				created, err := sut.CreateReceiver(context.Background(), tc.existing, tc.user.GetOrgID(), tc.user)
@@ -918,6 +940,7 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secretService) *ReceiverS
 		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), false),
 		legacy_storage.NewAlertmanagerConfigStore(store),
 		provisioningStore,
+		NewFakeConfigStore(t, nil),
 		encryptSvc,
 		xact,
 		log.NewNopLogger(),

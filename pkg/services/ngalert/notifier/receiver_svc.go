@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"errors"
 
+	"golang.org/x/exp/maps"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -22,13 +24,18 @@ var (
 
 // ReceiverService is the service for managing alertmanager receivers.
 type ReceiverService struct {
-	authz             receiverAccessControlService
-	provisioningStore provisoningStore
-	cfgStore          alertmanagerConfigStore
-	encryptionService secretService
-	xact              transactionManager
-	log               log.Logger
-	validator         validation.ProvenanceStatusTransitionValidator
+	authz                  receiverAccessControlService
+	provisioningStore      provisoningStore
+	cfgStore               alertmanagerConfigStore
+	ruleNotificationsStore alertRuleNotificationSettingsStore
+	encryptionService      secretService
+	xact                   transactionManager
+	log                    log.Logger
+	validator              validation.ProvenanceStatusTransitionValidator
+}
+
+type alertRuleNotificationSettingsStore interface {
+	ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
 }
 
 type secretService interface {
@@ -68,18 +75,20 @@ func NewReceiverService(
 	authz receiverAccessControlService,
 	cfgStore alertmanagerConfigStore,
 	provisioningStore provisoningStore,
+	ruleNotificationsStore alertRuleNotificationSettingsStore,
 	encryptionService secretService,
 	xact transactionManager,
 	log log.Logger,
 ) *ReceiverService {
 	return &ReceiverService{
-		authz:             authz,
-		provisioningStore: provisioningStore,
-		cfgStore:          cfgStore,
-		encryptionService: encryptionService,
-		xact:              xact,
-		log:               log,
-		validator:         validation.ValidateProvenanceRelaxed,
+		authz:                  authz,
+		provisioningStore:      provisioningStore,
+		cfgStore:               cfgStore,
+		ruleNotificationsStore: ruleNotificationsStore,
+		encryptionService:      encryptionService,
+		xact:                   xact,
+		log:                    log,
+		validator:              validation.ValidateProvenanceRelaxed,
 	}
 }
 
@@ -245,7 +254,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 	}
 
 	usedByRoutes := revision.ReceiverNameUsedByRoutes(existing.Name)
-	usedByRules, err := rs.UsedByRules(ctx, orgID, uid)
+	usedByRules, err := rs.UsedByRules(ctx, orgID, existing.Name)
 	if err != nil {
 		return err
 	}
@@ -370,9 +379,13 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	return &updatedReceiver, nil
 }
 
-func (rs *ReceiverService) UsedByRules(ctx context.Context, orgID int64, uid string) ([]models.AlertRuleKey, error) {
-	//TODO: Implement
-	return []models.AlertRuleKey{}, nil
+func (rs *ReceiverService) UsedByRules(ctx context.Context, orgID int64, name string) ([]models.AlertRuleKey, error) {
+	keys, err := rs.ruleNotificationsStore.ListNotificationSettings(ctx, models.ListNotificationSettingsQuery{OrgID: orgID, ReceiverName: name})
+	if err != nil {
+		return nil, err
+	}
+
+	return maps.Keys(keys), nil
 }
 
 func removedIntegrations(old, new *models.Receiver) []*models.Integration {
