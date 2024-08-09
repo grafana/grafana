@@ -10,6 +10,7 @@ include .bingo/Variables.mk
 GO = go
 GO_VERSION = 1.22.4
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
+GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_RACE  := $(shell [ -n "$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
 GO_RACE_FLAG := $(if $(GO_RACE),-race)
@@ -235,7 +236,7 @@ test-go: test-go-unit test-go-integration
 .PHONY: test-go-unit
 test-go-unit: ## Run unit tests for backend with flags.
 	@echo "test backend unit tests"
-	go list -f '{{.Dir}}/...' -m | xargs \
+	printf '$(GO_TEST_FILES)' | xargs \
 	$(GO) test $(GO_RACE_FLAG) -short -covermode=atomic -timeout=30m
 
 .PHONY: test-go-integration
