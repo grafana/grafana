@@ -92,7 +92,7 @@ func Test_GetMigrationSessionByUID(t *testing.T) {
 	})
 }
 
-/**
+/** rewrite this test using the new functions
 func Test_DeleteMigrationSession(t *testing.T) {
 	_, s := setUpTest(t)
 	ctx := context.Background()
