@@ -47,13 +47,12 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
       'data-testid': selectors.components.Tab.title(label),
       ...otherProps,
       onClick: onChangeTab,
-      role: 'tab',
       'aria-selected': active,
     };
 
     if (href) {
       return (
-        <div className={tabsStyles.item}>
+        <div className={tabsStyles.item} role="tab">
           <a
             {...commonProps}
             href={href}
@@ -68,7 +67,7 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
     }
 
     return (
-      <div className={tabsStyles.item}>
+      <div className={tabsStyles.item} role="tab">
         <button
           {...commonProps}
           type="button"
