@@ -36,6 +36,10 @@ For example, if you're monitoring the CPU usage of a server, you can use a state
 
 {{< figure src="/static/img/docs/state-timeline-panel/state-timeline-panel.png" max-width="1025px" alt="A state timeline visualization showing CPU usage" >}}
 
+When you have a lot of data, the state timeline visualization paginates the results. When pagination is enabled, the x-axis remains static, but the y-axis dynamically changes to align with the data currently visible:
+
+![State timeline with paginated results](/media/docs/grafana/panels-visualizations/screenshot-grafana-11-2-state-timeline-pagination.png)
+
 The state timeline visualization is useful when you need to monitor and analyze changes in states or statuses of various entities over time. You can use one when you need to:
 
 - Monitor the status of a server, application, or service to know when your infrastructure is experiencing issues over time.
