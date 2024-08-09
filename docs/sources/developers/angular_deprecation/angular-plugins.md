@@ -85,8 +85,8 @@ After installing [`detect-angular-dashboards`](https://github.com/grafana/detect
 ```
 
 Output:
+<img width="1274" alt="Pasted Graphic" src="https://github.com/user-attachments/assets/cb5b1e4c-1ee9-43f3-a05f-fe17348cbd83">
 
-![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/94f5b288-5607-407c-82b7-3283ebf49adb/c67e1ac7-ab0a-4cf5-99ed-b39caa93d667/Untitled.png)
 
 ### 3) Get the list of dashboard URLs.
 
@@ -98,7 +98,7 @@ As an input to our automation script, we need to supply the list of dashboard UR
 
 Output:
 
-![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/94f5b288-5607-407c-82b7-3283ebf49adb/d6b22c0c-fe99-4197-ac0e-b7e670874d69/Untitled.png)
+<img width="1594" alt="Pasted Graphic 1" src="https://github.com/user-attachments/assets/afb3c370-5f45-4b23-a258-8aa208feac4c">
 
 Save the output from the above command into a file, such as `dashboards.txt`.
 
@@ -203,7 +203,7 @@ finally:
 
 Replace `GRAFANA-IP-ADDRESS` with the IP address or URL of your Grafana instance. Also, substitute `GRAFANA-USER` and `GRAFANA-PASSWORD` with your Grafana credentials. I have used the admin credentials here. 
 
-![grafana.gif](https://prod-files-secure.s3.us-west-2.amazonaws.com/94f5b288-5607-407c-82b7-3283ebf49adb/2a108985-8620-41a9-a638-9622458ed766/grafana.gif)
+![grafana](https://github.com/user-attachments/assets/1d508bf8-e517-4a7f-b353-1e29a447783d)
 
 In the event that the script is unable to save a dashboard such as when the save button cannot be found due to the dashboard not being editable, or if any operation times out it will skip that dashboard and proceed to the next one. The script will log the dashboards for which the saving operation failed.
 
@@ -225,7 +225,7 @@ Run the same command executed in Step 1 to verify if the save operation was succ
 
 Output:
 
-![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/94f5b288-5607-407c-82b7-3283ebf49adb/ecb3b0ee-bb19-4923-8534-c4b725a30671/Untitled.png)
+<img width="1184" alt="Pasted Graphic 2" src="https://github.com/user-attachments/assets/9ec2ca33-7e7a-476c-b0d6-3e2982eb9aa3">
 
 Ideally, you should receive an empty result. If additional plugin IDs and their occurrences are returned, locate the corresponding dashboards and repeat the steps as needed.
 
