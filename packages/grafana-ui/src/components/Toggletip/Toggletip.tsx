@@ -93,11 +93,7 @@ export const Toggletip = memo(
         if (show === undefined) {
           setControlledVisible(open);
         }
-        if (!open) {
-          onClose?.();
-        } else {
-          onOpen?.();
-        }
+        
       },
       middleware,
       whileElementsMounted: autoUpdate,

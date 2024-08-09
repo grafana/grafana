@@ -11,6 +11,8 @@ import store from 'app/core/store';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { KioskMode } from 'app/types';
 
+import { Hoverbot } from '../Hoverbot/Hoverbot';
+
 import { AppChromeMenu } from './AppChromeMenu';
 import { DOCKED_LOCAL_STORAGE_KEY, DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './AppChromeService';
 import { MegaMenu } from './MegaMenu/MegaMenu';
@@ -112,6 +114,7 @@ export function AppChrome({ children }: Props) {
             })}
             id="pageContent"
           >
+            <Hoverbot />
             {children}
           </main>
         </div>
@@ -212,12 +215,6 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
     skipLink: css({
       position: 'fixed',
       top: -1000,
-
-      ':focus': {
-        left: theme.spacing(1),
-        top: theme.spacing(1),
-        zIndex: theme.zIndex.portal,
-      },
     }),
   };
 };
