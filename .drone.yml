@@ -396,8 +396,10 @@ steps:
   image: golang:1.22.4-alpine
   name: wire-install
 - commands:
+  - set -o pipefail
   - apk add --update build-base shared-mime-info shared-mime-info-lang
-  - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
+  - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
+    -short -covermode=atomic -timeout=5m
   depends_on:
   - wire-install
   image: golang:1.22.4-alpine
@@ -1033,6 +1035,7 @@ steps:
   name: wait-for-postgres
 - commands:
   - apk add --update build-base
+  - set -o pipefail
   - apk add --update postgresql-client
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
@@ -1054,6 +1057,7 @@ steps:
   name: wait-for-mysql-5.7
 - commands:
   - apk add --update build-base
+  - set -o pipefail
   - apk add --update mysql-client
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
@@ -1075,6 +1079,7 @@ steps:
   name: wait-for-mysql-8.0
 - commands:
   - apk add --update build-base
+  - set -o pipefail
   - apk add --update mysql-client
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
@@ -1096,9 +1101,10 @@ steps:
   name: wait-for-redis
 - commands:
   - apk add --update build-base
+  - set -o pipefail
   - go clean -testcache
-  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationRedis -covermode=atomic
-    -timeout=2m
+  - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationRedis
+    -covermode=atomic -timeout=2m
   depends_on:
   - wire-install
   - wait-for-redis
@@ -1112,9 +1118,10 @@ steps:
   name: wait-for-memcached
 - commands:
   - apk add --update build-base
+  - set -o pipefail
   - go clean -testcache
-  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationMemcached -covermode=atomic
-    -timeout=2m
+  - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationMemcached
+    -covermode=atomic -timeout=2m
   depends_on:
   - wire-install
   - wait-for-memcached
@@ -1774,8 +1781,10 @@ steps:
   image: golang:1.22.4-alpine
   name: wire-install
 - commands:
+  - set -o pipefail
   - apk add --update build-base shared-mime-info shared-mime-info-lang
-  - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
+  - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
+    -short -covermode=atomic -timeout=5m
   depends_on:
   - wire-install
   image: golang:1.22.4-alpine
@@ -2275,6 +2284,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
+  - set -o pipefail
   - apk add --update bash grep git
   - ./scripts/ci-frontend-metrics.sh ./grafana/public/build | ./bin/build publish-metrics
     $$GRAFANA_MISC_STATS_API_KEY
@@ -2538,6 +2548,7 @@ steps:
   name: wait-for-postgres
 - commands:
   - apk add --update build-base
+  - set -o pipefail
   - apk add --update postgresql-client
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
@@ -2559,6 +2570,7 @@ steps:
   name: wait-for-mysql-5.7
 - commands:
   - apk add --update build-base
+  - set -o pipefail
   - apk add --update mysql-client
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
@@ -2580,6 +2592,7 @@ steps:
   name: wait-for-mysql-8.0
 - commands:
   - apk add --update build-base
+  - set -o pipefail
   - apk add --update mysql-client
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
@@ -2601,9 +2614,10 @@ steps:
   name: wait-for-redis
 - commands:
   - apk add --update build-base
+  - set -o pipefail
   - go clean -testcache
-  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationRedis -covermode=atomic
-    -timeout=2m
+  - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationRedis
+    -covermode=atomic -timeout=2m
   depends_on:
   - wire-install
   - wait-for-redis
@@ -2617,9 +2631,10 @@ steps:
   name: wait-for-memcached
 - commands:
   - apk add --update build-base
+  - set -o pipefail
   - go clean -testcache
-  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationMemcached -covermode=atomic
-    -timeout=2m
+  - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationMemcached
+    -covermode=atomic -timeout=2m
   depends_on:
   - wire-install
   - wait-for-memcached
@@ -2971,8 +2986,10 @@ steps:
   image: golang:1.22.4-alpine
   name: wire-install
 - commands:
+  - set -o pipefail
   - apk add --update build-base shared-mime-info shared-mime-info-lang
-  - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
+  - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
+    -short -covermode=atomic -timeout=5m
   depends_on:
   - wire-install
   image: golang:1.22.4-alpine
@@ -3170,6 +3187,7 @@ steps:
   name: wait-for-postgres
 - commands:
   - apk add --update build-base
+  - set -o pipefail
   - apk add --update postgresql-client
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
@@ -3191,6 +3209,7 @@ steps:
   name: wait-for-mysql-5.7
 - commands:
   - apk add --update build-base
+  - set -o pipefail
   - apk add --update mysql-client
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
@@ -3212,6 +3231,7 @@ steps:
   name: wait-for-mysql-8.0
 - commands:
   - apk add --update build-base
+  - set -o pipefail
   - apk add --update mysql-client
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
@@ -3233,9 +3253,10 @@ steps:
   name: wait-for-redis
 - commands:
   - apk add --update build-base
+  - set -o pipefail
   - go clean -testcache
-  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationRedis -covermode=atomic
-    -timeout=2m
+  - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationRedis
+    -covermode=atomic -timeout=2m
   depends_on:
   - wire-install
   - wait-for-redis
@@ -3249,9 +3270,10 @@ steps:
   name: wait-for-memcached
 - commands:
   - apk add --update build-base
+  - set -o pipefail
   - go clean -testcache
-  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationMemcached -covermode=atomic
-    -timeout=2m
+  - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationMemcached
+    -covermode=atomic -timeout=2m
   depends_on:
   - wire-install
   - wait-for-memcached
@@ -3821,6 +3843,7 @@ platform:
 services: []
 steps:
 - commands:
+  - set -o pipefail
   - 'echo "Step 1: Updating package lists..."'
   - apt-get update >/dev/null 2>&1
   - 'echo "Step 2: Installing prerequisites..."'
@@ -3998,6 +4021,7 @@ steps:
       from_secret: packages_service_account
     target_bucket: grafana-packages
 - commands:
+  - set -o pipefail
   - 'echo "Step 1: Updating package lists..."'
   - apt-get update >/dev/null 2>&1
   - 'echo "Step 2: Installing prerequisites..."'
@@ -4356,8 +4380,10 @@ steps:
   image: golang:1.22.4-alpine
   name: wire-install
 - commands:
+  - set -o pipefail
   - apk add --update build-base shared-mime-info shared-mime-info-lang
-  - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
+  - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
+    -short -covermode=atomic -timeout=5m
   depends_on:
   - wire-install
   image: golang:1.22.4-alpine
@@ -4777,8 +4803,10 @@ steps:
   image: golang:1.22.4-alpine
   name: wire-install
 - commands:
+  - set -o pipefail
   - apk add --update build-base shared-mime-info shared-mime-info-lang
-  - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
+  - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
+    -short -covermode=atomic -timeout=5m
   depends_on:
   - wire-install
   image: golang:1.22.4-alpine
@@ -5202,7 +5230,7 @@ steps:
   image: golang:1.22.4-windowsservercore-1809
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifier -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: golang:1.22.4-windowsservercore-1809
@@ -5322,6 +5350,7 @@ steps:
   name: wait-for-postgres
 - commands:
   - apk add --update build-base
+  - set -o pipefail
   - apk add --update postgresql-client
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
@@ -5343,6 +5372,7 @@ steps:
   name: wait-for-mysql-5.7
 - commands:
   - apk add --update build-base
+  - set -o pipefail
   - apk add --update mysql-client
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
@@ -5364,6 +5394,7 @@ steps:
   name: wait-for-mysql-8.0
 - commands:
   - apk add --update build-base
+  - set -o pipefail
   - apk add --update mysql-client
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
@@ -5385,9 +5416,10 @@ steps:
   name: wait-for-redis
 - commands:
   - apk add --update build-base
+  - set -o pipefail
   - go clean -testcache
-  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationRedis -covermode=atomic
-    -timeout=2m
+  - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationRedis
+    -covermode=atomic -timeout=2m
   depends_on:
   - wire-install
   - wait-for-redis
@@ -5401,9 +5433,10 @@ steps:
   name: wait-for-memcached
 - commands:
   - apk add --update build-base
+  - set -o pipefail
   - go clean -testcache
-  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationMemcached -covermode=atomic
-    -timeout=2m
+  - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationMemcached
+    -covermode=atomic -timeout=2m
   depends_on:
   - wire-install
   - wait-for-memcached
@@ -6074,6 +6107,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d35eadf9a166f68973ffd6df85f165bbda468d422d5debe416ec6a5af6ead84a
+hmac: 45ad81db33af935af78f0ed636b850491eeb588e7c1d9d598af87f3038533598
 
 ...
