@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/apis/example"
+	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
 func TestSetDualWritingMode(t *testing.T) {
@@ -43,13 +43,15 @@ func TestSetDualWritingMode(t *testing.T) {
 		s := (Storage)(nil)
 		m := &mock.Mock{}
 
+		m.On("List", mock.Anything, mock.Anything).Return(exampleList, nil)
+		m.On("List", mock.Anything, mock.Anything).Return(anotherList, nil)
+
 		ls := legacyStoreMock{m, l}
 		us := storageMock{m, s}
 
 		kvStore := &fakeNamespacedKV{data: make(map[string]string), namespace: "storage.dualwriting." + tt.stackID}
 
-		p := prometheus.NewRegistry()
-		dwMode, err := SetDualWritingMode(context.Background(), kvStore, ls, us, "playlist.grafana.app/v0alpha1", tt.desiredMode, p)
+		dwMode, err := SetDualWritingMode(context.Background(), kvStore, ls, us, "playlist.grafana.app/v0alpha1", tt.desiredMode, p, &fakeServerLock{}, &request.RequestInfo{})
 		assert.NoError(t, err)
 		assert.Equal(t, tt.expectedMode, dwMode)
 
@@ -110,5 +112,14 @@ func (f *fakeNamespacedKV) Get(ctx context.Context, key string) (string, bool, e
 
 func (f *fakeNamespacedKV) Set(ctx context.Context, key, value string) error {
 	f.data[f.namespace+key] = value
+	return nil
+}
+
+// Never lock in tests
+type fakeServerLock struct {
+}
+
+func (f *fakeServerLock) LockExecuteAndRelease(ctx context.Context, actionName string, duration time.Duration, fn func(ctx context.Context)) error {
+	fn(ctx)
 	return nil
 }
