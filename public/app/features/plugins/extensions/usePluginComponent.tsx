@@ -3,12 +3,12 @@ import { useObservable } from 'react-use';
 
 import { UsePluginComponentResult } from '@grafana/runtime';
 
-import { ExposedComponentRegistry } from './registry/ExposedComponentRegistry';
+import { ExportedComponentRegistry } from './registry/ExportedComponentRegistry';
 import { wrapWithPluginContext } from './utils';
 
 // Returns a component exposed by a plugin.
 // (Exposed components can be defined in plugins by calling .exposeComponent() on the AppPlugin instance.)
-export function createUsePluginComponent(registry: ExposedComponentRegistry) {
+export function createUsePluginComponent(registry: ExportedComponentRegistry) {
   const observableRegistry = registry.asObservable();
 
   return function usePluginComponent<Props extends object = {}>(id: string): UsePluginComponentResult<Props> {
