@@ -72,6 +72,12 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	})
 
 	s.registerScenario(&Scenario{
+		ID:      kinds.TestDataQueryTypeRandomWalk48Columns,
+		Name:    "Random Walk 48 Columns",
+		handler: s.handle48ColumbHeatmapBucketDataScenario,
+	})
+
+	s.registerScenario(&Scenario{
 		ID:          kinds.TestDataQueryTypeSlowQuery,
 		Name:        "Slow Query",
 		StringInput: "5s",
@@ -549,6 +555,21 @@ func (s *Service) handleLinearHeatmapBucketDataScenario(ctx context.Context, req
 	return resp, nil
 }
 
+func (s *Service) handle48ColumbHeatmapBucketDataScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		respD := resp.Responses[q.RefID]
+		frame := randomHeatmapData48(q, func(index int) float64 {
+			return float64(index * 10)
+		})
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
 func (s *Service) handleTableStaticScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
@@ -944,6 +965,30 @@ func randomHeatmapData(query backend.DataQuery, fnBucketGen func(index int) floa
 	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	frame := data.NewFrame("data", data.NewField("time", nil, []*time.Time{}))
 	for i := 0; i < 10; i++ {
+		frame.Fields = append(frame.Fields, data.NewField(strconv.FormatInt(int64(fnBucketGen(i)), 10), nil, []*float64{}))
+	}
+
+	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
+	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
+
+	for j := int64(0); j < 100 && timeWalkerMs < to; j++ {
+		t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6))
+		vals := []any{&t}
+		for n := 1; n < len(frame.Fields); n++ {
+			v := float64(rand.Int63n(100))
+			vals = append(vals, &v)
+		}
+		frame.AppendRow(vals...)
+		timeWalkerMs += query.Interval.Milliseconds() * 50
+	}
+
+	return frame
+}
+
+func randomHeatmapData48(query backend.DataQuery, fnBucketGen func(index int) float64) *data.Frame {
+	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
+	frame := data.NewFrame("data", data.NewField("time", nil, []*time.Time{}))
+	for i := 0; i < 48; i++ {
 		frame.Fields = append(frame.Fields, data.NewField(strconv.FormatInt(int64(fnBucketGen(i)), 10), nil, []*float64{}))
 	}
 

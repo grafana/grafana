@@ -88,6 +88,12 @@ export const scenarios = [
   },
   {
     description: '',
+    id: TestDataQueryType.RandomWalk48Columns,
+    name: 'Random Walk 48 Columns',
+    stringInput: '',
+  },
+  {
+    description: '',
     id: TestDataQueryType.RandomWalkWithError,
     name: 'Random Walk (with error)',
     stringInput: '',
