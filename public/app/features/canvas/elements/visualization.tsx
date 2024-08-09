@@ -42,6 +42,7 @@ const VisualizationDisplay = (props: CanvasElementProps<VizElementConfig, VizEle
 
   const vizType = (data?.vizType ?? 'timeseries') as keyof typeof PanelBuilders;
   const customOptions = data?.customOptions;
+  const showLegend = data?.showLegend;
   const panelTitle = data?.text ?? '';
 
   // TODO: only re-init this when data has different schema (not on each data change)
@@ -56,6 +57,10 @@ const VisualizationDisplay = (props: CanvasElementProps<VizElementConfig, VizEle
           panelToEmbed.setOption(value[0], value[1]);
           panelToEmbed.setCustomFieldConfig(value[0], value[1]);
         });
+      }
+
+      if (!showLegend) {
+        panelToEmbed.setOption('legend', { showLegend: false });
       }
 
       panelToEmbed.setData(new SceneDataNode({ data: data?.data }));
@@ -134,6 +139,7 @@ export const visualizationItem: CanvasElementItem<VizElementConfig, VizElementDa
       vizType: 'timeseries',
       fields: options?.fields ?? [],
       text: { mode: TextDimensionMode.Fixed, fixed: defaultPanelTitle },
+      showLegend: true,
     },
     background: {
       color: {
@@ -185,6 +191,7 @@ export const visualizationItem: CanvasElementItem<VizElementConfig, VizElementDa
       vizType: vizConfig?.vizType,
       customOptions: vizConfig?.customOptions,
       data: panelData,
+      showLegend: vizConfig?.showLegend,
     };
 
     if (vizConfig?.color) {
@@ -213,6 +220,11 @@ export const visualizationItem: CanvasElementItem<VizElementConfig, VizElementDa
         path: 'config.fields',
         name: 'Fields',
         editor: FieldsPickerEditor,
+      })
+      .addBooleanSwitch({
+        category,
+        path: 'config.showLegend',
+        name: 'Show Legend',
       })
       .addCustomEditor({
         category,
