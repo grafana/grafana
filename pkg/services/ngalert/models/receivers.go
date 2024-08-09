@@ -1,9 +1,15 @@
 package models
 
 import (
+	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"maps"
+	"math"
+	"sort"
+	"unsafe"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 )
@@ -38,6 +44,7 @@ type Receiver struct {
 	Name         string
 	Integrations []*Integration
 	Provenance   Provenance
+	Version      string
 }
 
 func (r *Receiver) Clone() Receiver {
@@ -45,6 +52,7 @@ func (r *Receiver) Clone() Receiver {
 		UID:        r.UID,
 		Name:       r.Name,
 		Provenance: r.Provenance,
+		Version:    r.Version,
 	}
 
 	if r.Integrations != nil {
@@ -300,4 +308,110 @@ type Identified interface {
 
 func (r *Receiver) GetUID() string {
 	return r.UID
+}
+
+func (r *Receiver) Fingerprint() string {
+	sum := fnv.New64()
+
+	writeBytes := func(b []byte) {
+		_, _ = sum.Write(b)
+		// add a byte sequence that cannot happen in UTF-8 strings.
+		_, _ = sum.Write([]byte{255})
+	}
+	writeString := func(s string) {
+		if len(s) == 0 {
+			writeBytes(nil)
+			return
+		}
+		// #nosec G103
+		// avoid allocation when converting string to byte slice
+		writeBytes(unsafe.Slice(unsafe.StringData(s), len(s)))
+	}
+	// this temp slice is used to convert ints to bytes.
+	tmp := make([]byte, 8)
+	writeInt := func(u int) {
+		binary.LittleEndian.PutUint64(tmp, uint64(u))
+		writeBytes(tmp)
+	}
+
+	writeIntegration := func(in *Integration) {
+		writeString(in.UID)
+		writeString(in.Name)
+
+		// Do not include fields in fingerprint as these are not part of the receiver definition.
+		writeString(in.Config.Type)
+
+		if in.DisableResolveMessage {
+			writeInt(1)
+		} else {
+			writeInt(0)
+		}
+
+		// allocate a slice that will be used for sorting keys, so we allocate it only once
+		var keys []string
+		maxLen := int(math.Max(float64(len(in.Settings)), float64(len(in.SecureSettings))))
+		if maxLen > 0 {
+			keys = make([]string, maxLen)
+		}
+
+		writeSecureSettings := func(secureSettings map[string]string) {
+			// maps do not guarantee predictable sequence of keys.
+			// Therefore, to make hash stable, we need to sort keys
+			if len(secureSettings) == 0 {
+				return
+			}
+			idx := 0
+			for k := range secureSettings {
+				keys[idx] = k
+				idx++
+			}
+			sub := keys[:idx]
+			sort.Strings(sub)
+			for _, name := range sub {
+				writeString(name)
+				writeString(secureSettings[name])
+			}
+		}
+		writeSecureSettings(in.SecureSettings)
+
+		writeSettings := func(settings map[string]any) {
+			// maps do not guarantee predictable sequence of keys.
+			// Therefore, to make hash stable, we need to sort keys
+			if len(settings) == 0 {
+				return
+			}
+			idx := 0
+			for k := range settings {
+				keys[idx] = k
+				idx++
+			}
+			sub := keys[:idx]
+			sort.Strings(sub)
+			for _, name := range sub {
+				writeString(name)
+
+				// TODO: Improve this.
+				v := settings[name]
+				bytes, err := json.Marshal(v)
+				if err != nil {
+					writeString(fmt.Sprintf("%+v", v))
+				} else {
+					writeBytes(bytes)
+				}
+			}
+		}
+		writeSettings(in.Settings)
+
+	}
+
+	// fields that determine the rule state
+	writeString(r.UID)
+	writeString(r.Name)
+	writeString(string(r.Provenance))
+
+	for _, integration := range r.Integrations {
+		writeIntegration(integration)
+	}
+
+	return fmt.Sprintf("%016x", sum.Sum64())
 }

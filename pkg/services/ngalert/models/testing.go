@@ -1103,6 +1103,7 @@ func CopyReceiverWith(r Receiver, mutators ...Mutator[Receiver]) Receiver {
 	for _, mutator := range mutators {
 		mutator(&c)
 	}
+	c.Version = c.Fingerprint()
 	return c
 }
 
@@ -1120,6 +1121,7 @@ func ReceiverGen(mutators ...Mutator[Receiver]) func() Receiver {
 		for _, mutator := range mutators {
 			mutator(&c)
 		}
+		c.Version = c.Fingerprint()
 		return c
 	}
 }

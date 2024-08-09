@@ -30,12 +30,14 @@ func PostableApiReceiverToReceiver(postable *apimodels.PostableApiReceiver, prov
 		return nil, err
 
 	}
-	return &models.Receiver{
+	r := &models.Receiver{
 		UID:          legacy_storage.NameToUid(postable.GetName()), // TODO replace with stable UID.
 		Name:         postable.GetName(),
 		Integrations: integrations,
 		Provenance:   provenance,
-	}, nil
+	}
+	r.Version = r.Fingerprint()
+	return r, nil
 }
 
 func PostableGrafanaReceiversToIntegrations(postables []*apimodels.PostableGrafanaReceiver) ([]*models.Integration, error) {

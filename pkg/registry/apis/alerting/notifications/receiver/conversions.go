@@ -47,7 +47,7 @@ func convertToK8sResource(orgID int64, receiver *models.Receiver, namespacer req
 			UID:             types.UID(receiver.GetUID()), // This is needed to make PATCH work
 			Name:            receiver.GetUID(),
 			Namespace:       namespacer(orgID),
-			ResourceVersion: "", // TODO: Implement optimistic concurrency.
+			ResourceVersion: receiver.Version,
 		},
 		Spec: spec,
 	}
@@ -60,6 +60,7 @@ func convertToDomainModel(receiver *model.Receiver) (*models.Receiver, map[strin
 		UID:          legacy_storage.NameToUid(receiver.Spec.Title),
 		Name:         receiver.Spec.Title,
 		Integrations: make([]*models.Integration, 0, len(receiver.Spec.Integrations)),
+		Version:      receiver.ResourceVersion,
 		Provenance:   models.ProvenanceNone,
 	}
 

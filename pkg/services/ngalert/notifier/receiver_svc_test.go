@@ -194,8 +194,8 @@ func TestReceiverService_Delete(t *testing.T) {
 		},
 	}}
 
-	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig("slack"))()
-	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig("email"))()
+	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("slack"))()
+	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("email"))()
 	baseReceiver := models.ReceiverGen(models.ReceiverMuts.WithName("test receiver"), models.ReceiverMuts.WithIntegrations(slackIntegration))()
 
 	for _, tc := range []struct {
@@ -235,6 +235,7 @@ func TestReceiverService_Delete(t *testing.T) {
 			name:        "delete receiver used by route fails",
 			user:        redactedUser,
 			deleteUID:   legacy_storage.NameToUid("grafana-default-email"),
+			version:     "1fd7897966a2adc5", // Correct version for grafana-default-email.
 			expectedErr: makeReceiverInUseErr(true, nil),
 		},
 		{
@@ -253,31 +254,43 @@ func TestReceiverService_Delete(t *testing.T) {
 			existing:         util.Pointer(models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceAPI))),
 			//expectedErr:      validation.MakeErrProvenanceChangeNotAllowed(models.ProvenanceAPI, models.ProvenanceFile),
 		},
+		{
+			name:        "delete receiver with optimistic version mismatch fails",
+			user:        redactedUser,
+			deleteUID:   baseReceiver.UID,
+			existing:    util.Pointer(baseReceiver.Clone()),
+			version:     "wrong version",
+			expectedErr: ErrVersionConflict,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			sut := createReceiverServiceSut(t, &secretsService)
 
 			if tc.existing != nil {
-				_, err := sut.CreateReceiver(context.Background(), tc.existing, tc.user.GetOrgID())
+				created, err := sut.CreateReceiver(context.Background(), tc.existing, tc.user.GetOrgID())
 				require.NoError(t, err)
+
+				if tc.version == "" {
+					tc.version = created.Version
+				}
 			}
 
 			err := sut.DeleteReceiver(context.Background(), tc.deleteUID, tc.user.GetOrgID(), tc.callerProvenance, tc.version)
 			if tc.expectedErr == nil {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			} else {
 				assert.ErrorIs(t, err, tc.expectedErr)
 				return
 			}
 			// Ensure receiver saved to store is correct.
 			name, err := legacy_storage.UidToName(tc.deleteUID)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			q := models.GetReceiverQuery{OrgID: tc.user.GetOrgID(), Name: name}
 			_, err = sut.GetReceiver(context.Background(), q, redactedUser)
 			assert.ErrorIs(t, err, legacy_storage.ErrReceiverNotFound)
 
 			provenances, err := sut.provisioningStore.GetProvenances(context.Background(), tc.user.GetOrgID(), (&definitions.EmbeddedContactPoint{}).ResourceType())
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Len(t, provenances, 0)
 		})
 	}
@@ -297,8 +310,8 @@ func TestReceiverService_Create(t *testing.T) {
 		},
 	}}
 
-	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig("slack"))()
-	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig("email"))()
+	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("slack"))()
+	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("email"))()
 	baseReceiver := models.ReceiverGen(models.ReceiverMuts.WithName("test receiver"), models.ReceiverMuts.WithIntegrations(slackIntegration))()
 
 	for _, tc := range []struct {
@@ -342,7 +355,7 @@ func TestReceiverService_Create(t *testing.T) {
 
 			created, err := sut.CreateReceiver(context.Background(), &tc.receiver, tc.user.GetOrgID())
 			if tc.expectedErr == nil {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			} else {
 				assert.ErrorIs(t, err, tc.expectedErr)
 				return
@@ -353,11 +366,13 @@ func TestReceiverService_Create(t *testing.T) {
 			// Ensure receiver saved to store is correct.
 			q := models.GetReceiverQuery{OrgID: tc.user.GetOrgID(), Name: tc.receiver.Name, Decrypt: true}
 			stored, err := sut.GetReceiver(context.Background(), q, decryptUser)
-			assert.NoError(t, err)
-			assert.Equal(t, models.CopyReceiverWith(tc.expectedCreate, models.ReceiverMuts.Decrypted(models.Base64Decrypt)), *stored)
+			require.NoError(t, err)
+			decrypted := models.CopyReceiverWith(tc.expectedCreate, models.ReceiverMuts.Decrypted(models.Base64Decrypt))
+			decrypted.Version = tc.expectedCreate.Version // Version is calculated before decryption.
+			assert.Equal(t, decrypted, *stored)
 
 			provenances, err := sut.provisioningStore.GetProvenances(context.Background(), tc.user.GetOrgID(), (&definitions.EmbeddedContactPoint{}).ResourceType())
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, tc.expectedProvenances, provenances)
 		})
 	}
@@ -379,14 +394,15 @@ func TestReceiverService_Update(t *testing.T) {
 
 	rm := models.ReceiverMuts
 	im := models.IntegrationMuts
-	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig("slack"))()
-	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig("email"))()
+	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("slack"))()
+	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("email"))()
 	baseReceiver := models.ReceiverGen(models.ReceiverMuts.WithName("test receiver"), models.ReceiverMuts.WithIntegrations(slackIntegration))()
 
 	for _, tc := range []struct {
 		name                string
 		user                identity.Requester
 		receiver            models.Receiver
+		version             string
 		secureFields        map[string][]string
 		existing            *models.Receiver
 		expectedUpdate      models.Receiver
@@ -471,18 +487,31 @@ func TestReceiverService_Update(t *testing.T) {
 				rm.Encrypted(models.Base64Enrypt)),
 			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceAPI},
 		},
+		{
+			name:        "update receiver with optimistic version mismatch fails",
+			user:        redactedUser,
+			receiver:    baseReceiver.Clone(),
+			version:     "wrong version",
+			existing:    util.Pointer(baseReceiver.Clone()),
+			expectedErr: ErrVersionConflict,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			sut := createReceiverServiceSut(t, &secretsService)
 
 			if tc.existing != nil {
-				_, err := sut.CreateReceiver(context.Background(), tc.existing, tc.user.GetOrgID())
+				created, err := sut.CreateReceiver(context.Background(), tc.existing, tc.user.GetOrgID())
 				require.NoError(t, err)
+
+				if tc.version == "" {
+					tc.version = created.Version
+				}
 			}
 
+			tc.receiver.Version = tc.version
 			updated, err := sut.UpdateReceiver(context.Background(), &tc.receiver, tc.secureFields, tc.user.GetOrgID())
 			if tc.expectedErr == nil {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			} else {
 				assert.ErrorIs(t, err, tc.expectedErr)
 				return
@@ -493,11 +522,13 @@ func TestReceiverService_Update(t *testing.T) {
 			// Ensure receiver saved to store is correct.
 			q := models.GetReceiverQuery{OrgID: tc.user.GetOrgID(), Name: tc.receiver.Name, Decrypt: true}
 			stored, err := sut.GetReceiver(context.Background(), q, decryptUser)
-			assert.NoError(t, err)
-			assert.Equal(t, models.CopyReceiverWith(tc.expectedUpdate, models.ReceiverMuts.Decrypted(models.Base64Decrypt)), *stored)
+			require.NoError(t, err)
+			decrypted := models.CopyReceiverWith(tc.expectedUpdate, models.ReceiverMuts.Decrypted(models.Base64Decrypt))
+			decrypted.Version = tc.expectedUpdate.Version // Version is calculated before decryption.
+			assert.Equal(t, decrypted, *stored)
 
 			provenances, err := sut.provisioningStore.GetProvenances(context.Background(), tc.user.GetOrgID(), (&definitions.EmbeddedContactPoint{}).ResourceType())
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, tc.expectedProvenances, provenances)
 		})
 	}

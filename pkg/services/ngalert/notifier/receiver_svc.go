@@ -16,7 +16,8 @@ import (
 )
 
 var (
-	ErrReceiverInUse = errutil.Conflict("alerting.notifications.receiver.used").MustTemplate("Receiver is used by notification policies or alert rules")
+	ErrReceiverInUse   = errutil.Conflict("alerting.notifications.receiver.used").MustTemplate("Receiver is used by notification policies or alert rules")
+	ErrVersionConflict = errutil.Conflict("alerting.notifications.receiver.conflict")
 )
 
 // ReceiverService is the service for managing alertmanager receivers.
@@ -227,7 +228,11 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, orgID
 		return err
 	}
 
-	// TODO: Implement + check optimistic concurrency.
+	// Check optimistic concurrency.
+	err = rs.checkOptimisticConcurrency(existing, version)
+	if err != nil {
+		return err
+	}
 
 	if err := rs.validator(existing.Provenance, models.Provenance(callerProvenance)); err != nil {
 		return err
@@ -271,6 +276,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	if err != nil {
 		return nil, err
 	}
+	createdReceiver.Version = createdReceiver.Fingerprint()
 
 	err = rs.xact.InTransaction(ctx, func(ctx context.Context) error {
 		err = rs.cfgStore.Save(ctx, revision, orgID)
@@ -305,7 +311,11 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	// TODO: Implement + check optimistic concurrency.
+	// Check optimistic concurrency.
+	err = rs.checkOptimisticConcurrency(existing, r.Version)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := rs.validator(existing.Provenance, r.Provenance); err != nil {
 		return nil, err
@@ -328,6 +338,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	if err != nil {
 		return nil, err
 	}
+	updatedReceiver.Version = updatedReceiver.Fingerprint()
 
 	err = rs.xact.InTransaction(ctx, func(ctx context.Context) error {
 		err = rs.cfgStore.Save(ctx, revision, orgID)
@@ -430,6 +441,14 @@ func (rs *ReceiverService) encryptor(ctx context.Context) models.EncryptFn {
 		}
 		return base64.StdEncoding.EncodeToString(s), nil
 	}
+}
+
+// checkOptimisticConcurrency checks if the existing receiver's version matches the desired version.
+func (rs *ReceiverService) checkOptimisticConcurrency(receiver *models.Receiver, desiredVersion string) error {
+	if receiver.Version != desiredVersion {
+		return ErrVersionConflict.Errorf("provided version '%s' of receiver '%s' does not match current version '%s'", desiredVersion, receiver.Name, receiver.Version)
+	}
+	return nil
 }
 
 // limitOffset returns a subslice of items with the given offset and limit. Returns the same underlying array, not a copy.
