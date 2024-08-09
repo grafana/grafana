@@ -366,7 +366,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
     });
   } else if (variable.type === 'interval') {
-    const intervals = getIntervalsFromQueryString(variable.query);
+    const intervals = getIntervalsFromQueryString(variable.query ?? '');
     const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
     return new IntervalVariable({
       ...commonProperties,
@@ -389,7 +389,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else if (variable.type === 'textbox') {
     let val;
     if (!variable?.current?.value) {
-      val = variable.query;
+      val = variable.query ?? '';
     } else {
       if (typeof variable.current.value === 'string') {
         val = variable.current.value;

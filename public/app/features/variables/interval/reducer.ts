@@ -28,7 +28,7 @@ export const intervalVariableSlice = createSlice({
       if (instanceState.type !== 'interval') {
         return;
       }
-      const options: VariableOption[] = map(instanceState.query.match(/(["'])(.*?)\1|\w+/g), (text) => {
+      const options: VariableOption[] = map(instanceState.query?.match(/(["'])(.*?)\1|\w+/g) ?? [], (text) => {
         text = text.replace(/["']+/g, '');
         return { text: text.trim(), value: text.trim(), selected: false };
       });

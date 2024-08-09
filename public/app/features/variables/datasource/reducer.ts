@@ -43,7 +43,7 @@ export const dataSourceVariableSlice = createSlice({
       for (let i = 0; i < sources.length; i++) {
         const source = sources[i];
 
-        if (!matchPluginId(instanceState.query, source.meta)) {
+        if (!matchPluginId(instanceState.query ?? '', source.meta)) {
           continue;
         }
 

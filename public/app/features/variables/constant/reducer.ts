@@ -25,9 +25,9 @@ export const constantVariableSlice = createSlice({
         return;
       }
 
-      instanceState.options = [
-        { text: instanceState.query.trim(), value: instanceState.query.trim(), selected: false },
-      ];
+      const query = instanceState.query?.trim() ?? '';
+
+      instanceState.options = [{ text: query, value: query, selected: false }];
     },
   },
 });

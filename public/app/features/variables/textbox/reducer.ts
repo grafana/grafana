@@ -24,8 +24,8 @@ export const textBoxVariableSlice = createSlice({
       if (instanceState.type !== 'textbox') {
         return;
       }
-
-      const option = { text: instanceState.query.trim(), value: instanceState.query.trim(), selected: false };
+      const query = instanceState.query?.trim() ?? '';
+      const option = { text: query, value: query, selected: false };
       instanceState.options = [option];
       instanceState.current = option;
     },

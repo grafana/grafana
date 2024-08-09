@@ -42,7 +42,7 @@ export const IntervalVariableEditor = memo(({ onPropChange, variable }: Props) =
 
   return (
     <IntervalVariableForm
-      intervals={variable.query}
+      intervals={variable.query ?? ''}
       autoStepCount={variable.auto_count}
       autoEnabled={variable.auto}
       onAutoCountChanged={onAutoCountChanged}
