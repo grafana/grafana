@@ -3,6 +3,7 @@ package migrator
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -33,6 +34,8 @@ func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...Tu
 		collectors,
 		teamMembershipCollector(store),
 		managedPermissionsCollector(store),
+		folderTreeCollector(store),
+		dashboardFolderCollector(store),
 	)
 
 	return &ZanzanaSynchroniser{
@@ -111,9 +114,9 @@ func managedPermissionsCollector(store db.DB) TupleCollector {
 		for _, p := range permissions {
 			var subject string
 			if len(p.UserUID) > 0 {
-				subject = zanzana.NewObject(zanzana.TypeUser, p.UserUID)
+				subject = zanzana.NewTupleEntry(zanzana.TypeUser, p.UserUID, "")
 			} else if len(p.TeamUID) > 0 {
-				subject = zanzana.NewObject(zanzana.TypeTeam, p.TeamUID)
+				subject = zanzana.NewTupleEntry(zanzana.TypeTeam, p.TeamUID, "member")
 			} else {
 				// FIXME(kalleep): Unsuported role binding (org role). We need to have basic roles in place
 				continue
@@ -161,8 +164,8 @@ func teamMembershipCollector(store db.DB) TupleCollector {
 
 		for _, m := range memberships {
 			tuple := &openfgav1.TupleKey{
-				User:   zanzana.NewObject(zanzana.TypeUser, m.UserUID),
-				Object: zanzana.NewObject(zanzana.TypeTeam, m.TeamUID),
+				User:   zanzana.NewTupleEntry(zanzana.TypeUser, m.UserUID, ""),
+				Object: zanzana.NewTupleEntry(zanzana.TypeTeam, m.TeamUID, ""),
 			}
 
 			// Admin permission is 4 and member 0
@@ -170,6 +173,78 @@ func teamMembershipCollector(store db.DB) TupleCollector {
 				tuple.Relation = zanzana.RelationTeamAdmin
 			} else {
 				tuple.Relation = zanzana.RelationTeamMember
+			}
+
+			tuples[collectorID] = append(tuples[collectorID], tuple)
+		}
+
+		return nil
+	}
+}
+
+// folderTreeCollector collects folder tree structure and writes it as relation tuples
+func folderTreeCollector(store db.DB) TupleCollector {
+	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+		const collectorID = "folder"
+		const query = `
+			SELECT uid, parent_uid, org_id FROM folder WHERE parent_uid IS NOT NULL
+		`
+		type folder struct {
+			OrgID     int64  `xorm:"org_id"`
+			FolderUID string `xorm:"uid"`
+			ParentUID string `xorm:"parent_uid"`
+		}
+
+		var folders []folder
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(query).Find(&folders)
+		})
+
+		if err != nil {
+			return err
+		}
+
+		for _, f := range folders {
+			tuple := &openfgav1.TupleKey{
+				User:     zanzana.NewScopedTupleEntry(zanzana.TypeFolder, f.ParentUID, "", strconv.FormatInt(f.OrgID, 10)),
+				Object:   zanzana.NewScopedTupleEntry(zanzana.TypeFolder, f.FolderUID, "", strconv.FormatInt(f.OrgID, 10)),
+				Relation: zanzana.RelationParent,
+			}
+
+			tuples[collectorID] = append(tuples[collectorID], tuple)
+		}
+
+		return nil
+	}
+}
+
+// dashboardFolderCollector collects information about dashboards parent folders
+func dashboardFolderCollector(store db.DB) TupleCollector {
+	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+		const collectorID = "folder"
+		const query = `
+			SELECT org_id, uid, folder_uid, is_folder FROM dashboard WHERE is_folder = 0 AND folder_uid IS NOT NULL
+		`
+		type dashboard struct {
+			OrgID     int64  `xorm:"org_id"`
+			UID       string `xorm:"uid"`
+			ParentUID string `xorm:"folder_uid"`
+		}
+
+		var dashboards []dashboard
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(query).Find(&dashboards)
+		})
+
+		if err != nil {
+			return err
+		}
+
+		for _, d := range dashboards {
+			tuple := &openfgav1.TupleKey{
+				User:     zanzana.NewScopedTupleEntry(zanzana.TypeFolder, d.ParentUID, "", strconv.FormatInt(d.OrgID, 10)),
+				Object:   zanzana.NewScopedTupleEntry(zanzana.TypeDashboard, d.UID, "", strconv.FormatInt(d.OrgID, 10)),
+				Relation: zanzana.RelationParent,
 			}
 
 			tuples[collectorID] = append(tuples[collectorID], tuple)
