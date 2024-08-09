@@ -14,7 +14,7 @@ export const NumberInputEditor = ({ onChange, currentOption }: TextInputProps) =
         defaultValue={value}
         onBlur={(event) => {
           setValue(event.currentTarget.value);
-          onChange(event.currentTarget.value);
+          onChange(event.currentTarget.value === '' ? key : event.currentTarget.value);
         }}
       />
     </Field>
