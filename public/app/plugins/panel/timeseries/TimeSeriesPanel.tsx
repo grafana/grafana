@@ -31,6 +31,8 @@ export const TimeSeriesPanel = ({
   replaceVariables,
   id,
 }: TimeSeriesPanelProps) => {
+  performance.mark('TimeSeriesPanel()');
+
   const {
     sync,
     eventsScope,
