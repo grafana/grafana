@@ -14,7 +14,7 @@ import {
   otlpDataFrameFromResponse,
   otlpResponse,
   traceQlResponse,
-} from './testResponse';
+} from './test/testResponse';
 import { TraceSearchMetadata } from './types';
 
 const defaultSettings: DataSourceInstanceSettings = {

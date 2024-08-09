@@ -1,8 +1,8 @@
 import { DataSourceInstanceSettings, PluginType, toUtc } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
-import { TempoDatasource } from './datasource';
-import { TempoJsonData } from './types';
+import { TempoDatasource } from '../datasource';
+import { TempoJsonData } from '../types';
 
 const rawRange = {
   from: toUtc('2018-04-25 10:00'),
