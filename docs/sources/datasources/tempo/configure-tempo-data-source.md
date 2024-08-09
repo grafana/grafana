@@ -82,13 +82,6 @@ To configure basic settings for the Tempo data source, complete the following st
 
 1.  On the **Settings** tab, set the data source's basic configuration options. At a minimum, you need to complete the **Name**, **Connection**, and **Authentication** sections. The other sections provide optional capabilities.
 
-    | Name               | Description                                                              |
-    | ------------------ | ------------------------------------------------------------------------ |
-    | **Name**           | Sets the name you use to refer to the data source in panels and queries. |
-    | **Default**        | Sets the data source that's pre-selected for new panels.                 |
-    | **Connection**     | Sets the URL of the Tempo instance, such as `http://tempo`.              |
-    | **Authentication** | Enables authentication to the Tempo data source.                         |
-
 This video explains how to add data sources, including Loki, Tempo, and Mimir, to Grafana and Grafana Cloud.
 Tempo data source set up starts at 4:58 in the video.
 
@@ -96,13 +89,11 @@ Tempo data source set up starts at 4:58 in the video.
 
 ## Name and default
 
-**Name**
-: Enter a name to specify the data source in panels, queries, and Explore.
+Use the **Name** field to specify the name used for the data source in panels, queries, and Explore.
 
-**Default**
-: The default data source is pre-selected for new panels.
+Activate **Default** if you want the data source to be pre-selected for new panels.
 
-### Connection
+## Connection
 
 The required **Connection** field provides the connection point for your Tempo instance.
 
@@ -111,6 +102,15 @@ The required **Connection** field provides the connection point for your Tempo i
 1. Select **Save & test** to preserve your changes.
 
 ### Authentication
+
+Use this section to select an authentication method to access the data source.
+
+{{< admonition type="note" >}}
+Use Transport Layer Security (TLS) for an additional layer of security when working with Tempo.
+For additional information on setting up TLS encryption with Tempo, refer to [Configure TLS communication](https://grafana.com/docs/tempo/<TEMPO_VERSION>/configuration/network/tls/) and [Tempo configuration](https://grafana.com/docs/tempo/<TEMPO_VERSION>/configuration/).
+{{< /admonition >}}
+
+![Authentication section showing the TLS client certificate options](/media/docs/grafana/data-sources/tempo/tempo-data-source-authentication.png)
 
 To set up authentication:
 
@@ -140,7 +140,8 @@ To set up authentication:
 
 <!-- The traceQLStreaming toggle will be deprecated in Grafana 11.2 and removed in 11.3. -->
 
-Streaming enables TraceQL query results to be displayed as they become available. Without streaming, no results are displayed until all results have returned.
+Streaming enables TraceQL query results to be displayed as they become available.
+Without streaming, no results are displayed until all results have returned.
 
 {{< docs/public-preview product="TraceQL streaming results" >}}
 
@@ -157,16 +158,16 @@ For streaming to work for a particular Tempo data source, set your Grafana's `tr
 
 If you are using Grafana Cloud, the `traceQLStreaming` feature toggle is already set to `true` by default.
 
-If the Tempo data source is set to allow streaming but the `traceQLStreaming` feature toggle is set to `false` in Grafana, no streaming will occur.
+If the Tempo data source is set to allow streaming but the `traceQLStreaming` feature toggle is set to `false` in Grafana, no streaming occurs.
 
-If the data source has streaming disabled and `traceQLStreaming` is set to `true`, no streaming will happen for that data source.
+If the data source has streaming disabled and `traceQLStreaming` is set to `true`, no streaming happens for that data source.
 
 ## Trace to logs
 
 The **Trace to logs** setting configures [trace to logs](ref:explore-trace-integration) that's available when you integrate Grafana with Tempo.
 Trace to logs can also be used with other tracing data sources, such as Jaeger and Zipkin.
 
-![Trace to logs settings](/media/docs/tempo/tempo-trace-to-logs-9-4.png)
+![Trace to logs settings](/media/docs/grafana/data-sources/tempo/tempo-data-source-trace-to-logs.png)
 
 There are two ways to configure the trace to logs feature:
 
@@ -222,7 +223,9 @@ There are two ways to configure the trace to metrics feature:
 - Use a basic configuration with a default query, or
 - Configure one or more custom queries where you can use a [template language](ref:variable-syntax) to interpolate variables from the trace or span.
 
-Refer to the Trace to metrics configuration options section to learn about the available options.
+Refer to the [Trace to metrics configuration options](#trace-tometrics-configuration-options) section to learn about the available options.
+
+![Trace to metrics settings in the Tempo data source](/media/docs/grafana/data-sources/tempo/tempo-data-source-trace-to-metrics.png)
 
 ### Set up a simple configuration
 
@@ -366,6 +369,13 @@ You can use version control, like git, to track and manage file changes.
 Changes can be updated or rolled back as needed.
 
 For more information about provisioning and available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
+
+{{< admonition type="note" >}}
+You can't modify a provisioned data source using the Tempo data source settings in Grafana.
+Grafana displays a message for provisioned data sources.
+{{< /admonition >}}
+
+![Provisioned data source warning](/media/docs/grafana/data-sources/tempo/tempo-data-source-provisioned-error.png)
 
 ### Example file
 
