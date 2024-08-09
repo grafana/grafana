@@ -11,7 +11,7 @@ interface Props {
   onTitleChange: (v: string) => void;
 }
 
-export const RadioGroupEditor = ({ title, options, onParamsChange, onTitleChange }: Props) => {
+export const RadioListEditor = ({ title, options, onParamsChange, onTitleChange }: Props) => {
   const styles = useStyles2(getStyles);
 
   return (

@@ -15,7 +15,7 @@ import { FormElementType } from '../form';
 
 import { CheckboxEditor } from './CheckboxEditor';
 import { NumberInputEditor } from './NumberInputEditor';
-import { RadioGroupEditor } from './RadioGroupEditor';
+import { RadioListEditor } from './RadioListEditor';
 import { SelectionEditor } from './SelectionEditor';
 import { TextInputEditor } from './TextInputEditor';
 import { updateAPIPayload } from './utils';
@@ -30,6 +30,12 @@ export interface FormChild {
 }
 
 type Props = StandardEditorProps<FormChild[]>;
+
+const defaultOptionsConfig = [
+  {
+    'Option 1': 'option1',
+  },
+];
 
 export const FormElementTypeEditor = ({ value, context, onChange, item }: Props) => {
   const typeOptions = [
@@ -75,6 +81,14 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
           onChange([...value, newFormElement]);
         } else {
           const newElements = [...value];
+          if (sel.value === FormElementType.Checkbox || sel.value === FormElementType.Radio) {
+            newFormElement = {
+              ...newFormElement,
+              options: defaultOptionsConfig.map((option) => Object.entries(option)[0]),
+              currentOption: defaultOptionsConfig,
+            };
+          }
+
           newElements.splice(submitIndex, 0, newFormElement);
           onChange(newElements);
         }
@@ -253,7 +267,7 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
         };
       case FormElementType.Radio:
         element = (
-          <RadioGroupEditor
+          <RadioListEditor
             title={child.title}
             options={child.options ?? []}
             onParamsChange={(newParams) => onOptionsChange(newParams, child.id)}

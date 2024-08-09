@@ -9,7 +9,7 @@ interface Props extends Omit<FormChild, 'id' | 'type'> {
   onChange: (v: [string, string]) => void;
 }
 
-export const RadioGroup = ({ title, options, onChange, currentOption }: Props) => {
+export const RadioList = ({ title, options, onChange, currentOption }: Props) => {
   const key = Object.keys(currentOption?.[0] ?? {})[0];
   const [selected, setSelected] = useState(currentOption?.[0][key]);
   return (
