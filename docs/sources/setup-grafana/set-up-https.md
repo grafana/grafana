@@ -222,6 +222,10 @@ To adjust permissions, perform the following steps:
    lrwxrwxrwx 1 root grafana    65 Mar 22 14:15 /etc/grafana/grafana.key -> /etc/letsencrypt/live/subdomain.mysite.com/privkey.pem
    ```
 
+### Use your own CA
+
+If you want to use your own CA or your organization's and ensure Grafana advertises the full chain, ensure your `cert_file` contains your signed certificate followed by the full CA bundle chain.
+
 ## Configure Grafana HTTPS and restart Grafana
 
 In this section you edit the `grafana.ini` file so that it includes the certificate you created. If you need help identifying where to find this file, or what each key means, refer to [Configuration file location]({{< relref "./configure-grafana#configuration-file-location" >}}).
