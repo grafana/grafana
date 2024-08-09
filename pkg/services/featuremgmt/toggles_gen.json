@@ -805,6 +805,19 @@
     },
     {
       "metadata": {
+        "name": "dataplaneAggregator",
+        "resourceVersion": "1723151074613",
+        "creationTimestamp": "2024-08-08T21:04:34Z"
+      },
+      "spec": {
+        "description": "Enable grafana dataplane aggregator",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "dataplaneFrontendFallback",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-04-07T21:13:19Z",
@@ -1352,11 +1365,14 @@
     {
       "metadata": {
         "name": "kubernetesAggregator",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-02-12T20:59:35Z"
+        "resourceVersion": "1723151074613",
+        "creationTimestamp": "2024-02-12T20:59:35Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-08 21:04:34.613161685 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enable grafana aggregator",
+        "description": "Enable grafana's embedded kube-aggregator",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
