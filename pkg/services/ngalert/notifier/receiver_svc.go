@@ -18,8 +18,8 @@ import (
 )
 
 var (
-	ErrReceiverInUse   = errutil.Conflict("alerting.notifications.receiver.used").MustTemplate("Receiver is used by notification policies or alert rules")
-	ErrVersionConflict = errutil.Conflict("alerting.notifications.receiver.conflict")
+	ErrReceiverInUse           = errutil.Conflict("alerting.notifications.receiver.used").MustTemplate("Receiver is used by notification policies or alert rules")
+	ErrReceiverVersionConflict = errutil.Conflict("alerting.notifications.receiver.conflict")
 )
 
 // ReceiverService is the service for managing alertmanager receivers.
@@ -35,6 +35,7 @@ type ReceiverService struct {
 }
 
 type alertRuleNotificationSettingsStore interface {
+	RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error)
 	ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
 }
 
@@ -362,6 +363,18 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	updatedReceiver.Version = updatedReceiver.Fingerprint()
 
 	err = rs.xact.InTransaction(ctx, func(ctx context.Context) error {
+		// If the name of the receiver changed, we must update references to it in both routes and notification settings.
+		if existing.Name != r.Name {
+			affected, err := rs.ruleNotificationsStore.RenameReceiverInNotificationSettings(ctx, orgID, existing.Name, r.Name)
+			if err != nil {
+				return err
+			}
+			if affected > 0 {
+				rs.log.Info("Renamed receiver in notification settings", "oldName", existing.Name, "newName", r.Name, "affectedSettings", affected)
+			}
+			revision.RenameReceiverInRoutes(existing.Name, r.Name)
+		}
+
 		err = rs.cfgStore.Save(ctx, revision, orgID)
 		if err != nil {
 			return err
@@ -471,7 +484,7 @@ func (rs *ReceiverService) encryptor(ctx context.Context) models.EncryptFn {
 // checkOptimisticConcurrency checks if the existing receiver's version matches the desired version.
 func (rs *ReceiverService) checkOptimisticConcurrency(receiver *models.Receiver, desiredVersion string) error {
 	if receiver.Version != desiredVersion {
-		return ErrVersionConflict.Errorf("provided version '%s' of receiver '%s' does not match current version '%s'", desiredVersion, receiver.Name, receiver.Version)
+		return ErrReceiverVersionConflict.Errorf("provided version '%s' of receiver '%s' does not match current version '%s'", desiredVersion, receiver.Name, receiver.Version)
 	}
 	return nil
 }

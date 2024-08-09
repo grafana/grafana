@@ -74,6 +74,23 @@ func (rev *ConfigRevision) GetReceivers(uids []string) []*definitions.PostableAp
 	return receivers
 }
 
+// RenameReceiverInRoutes renames all references to a receiver in routes.
+func (rev *ConfigRevision) RenameReceiverInRoutes(oldName, newName string) {
+	RenameReceiverInRoute(oldName, newName, rev.Config.AlertmanagerConfig.Route)
+}
+
+func RenameReceiverInRoute(oldName, newName string, routes ...*definitions.Route) {
+	if len(routes) == 0 {
+		return
+	}
+	for _, route := range routes {
+		if route.Receiver == oldName {
+			route.Receiver = newName
+		}
+		RenameReceiverInRoute(oldName, newName, route.Routes...)
+	}
+}
+
 // isReceiverInUse checks if a receiver is used in a route or any of its sub-routes.
 func isReceiverInUse(name string, routes []*definitions.Route) bool {
 	if len(routes) == 0 {

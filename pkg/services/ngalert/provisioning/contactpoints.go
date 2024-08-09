@@ -419,7 +419,7 @@ groupLoop:
 				// If we're renaming, we'll need to fix up the macro receiver group for consistency.
 				// Firstly, if we're the only receiver in the group, simply rename the group to match. Done!
 				if len(receiverGroup.GrafanaManagedReceivers) == 1 {
-					replaceReferences(receiverGroup.Name, target.Name, cfg.AlertmanagerConfig.Route)
+					legacy_storage.RenameReceiverInRoute(receiverGroup.Name, target.Name, cfg.AlertmanagerConfig.Route)
 					receiverGroup.Name = target.Name
 					receiverGroup.GrafanaManagedReceivers[i] = target
 					renamedReceiver = receiverGroup.Name
@@ -465,18 +465,6 @@ groupLoop:
 	}
 
 	return configModified, renamedReceiver
-}
-
-func replaceReferences(oldName, newName string, routes ...*apimodels.Route) {
-	if len(routes) == 0 {
-		return
-	}
-	for _, route := range routes {
-		if route.Receiver == oldName {
-			route.Receiver = newName
-		}
-		replaceReferences(oldName, newName, route.Routes...)
-	}
 }
 
 func ValidateContactPoint(ctx context.Context, e apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn) error {

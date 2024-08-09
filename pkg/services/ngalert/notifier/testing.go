@@ -57,6 +57,28 @@ func (f *fakeConfigStore) ListNotificationSettings(ctx context.Context, q models
 	return settings, nil
 }
 
+func (f *fakeConfigStore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error) {
+	if oldReceiver == newReceiver {
+		return 0, nil
+	}
+	settings, ok := f.notificationSettings[orgID]
+	if !ok {
+		return 0, nil
+	}
+
+	var updated int
+	for _, notificationSettings := range settings {
+		for i, setting := range notificationSettings {
+			if setting.Receiver == oldReceiver {
+				updated++
+				notificationSettings[i].Receiver = newReceiver
+			}
+		}
+	}
+
+	return updated, nil
+}
+
 // Saves the image or returns an error.
 func (f *fakeConfigStore) SaveImage(ctx context.Context, img *models.Image) error {
 	return alertingImages.ErrImageNotFound

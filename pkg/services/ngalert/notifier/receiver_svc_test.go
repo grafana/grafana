@@ -274,7 +274,7 @@ func TestReceiverService_Delete(t *testing.T) {
 			deleteUID:   baseReceiver.UID,
 			existing:    util.Pointer(baseReceiver.Clone()),
 			version:     "wrong version",
-			expectedErr: ErrVersionConflict,
+			expectedErr: ErrReceiverVersionConflict,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -516,7 +516,7 @@ func TestReceiverService_Update(t *testing.T) {
 			receiver:    baseReceiver.Clone(),
 			version:     "wrong version",
 			existing:    util.Pointer(baseReceiver.Clone()),
-			expectedErr: ErrVersionConflict,
+			expectedErr: ErrReceiverVersionConflict,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -555,6 +555,52 @@ func TestReceiverService_Update(t *testing.T) {
 			assert.Equal(t, tc.expectedProvenances, provenances)
 		})
 	}
+}
+
+func TestReceiverService_UpdateReceiverName(t *testing.T) {
+	// This test is to ensure that the receiver name is updated in routes and notification settings when the name is changed.
+	writer := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionAlertingNotificationsWrite: nil}}}
+
+	secretsService := fake_secrets.NewFakeSecretsService()
+	sut := createReceiverServiceSut(t, &secretsService)
+
+	receiverName := "grafana-default-email"
+	newReceiverName := "new-name"
+	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName(receiverName), models.IntegrationMuts.WithValidConfig("slack"))()
+	baseReceiver := models.ReceiverGen(models.ReceiverMuts.WithName(receiverName), models.ReceiverMuts.WithIntegrations(slackIntegration))()
+	baseReceiver.Version = "1fd7897966a2adc5" // Correct version for grafana-default-email.
+	baseReceiver.Name = newReceiverName       // Done here instead of in a mutator so we keep the same uid.
+
+	store := sut.ruleNotificationsStore.(*fakeConfigStore)
+	ns := models.NotificationSettingsGen(models.NSMuts.WithReceiver(receiverName))()
+	store.notificationSettings = map[int64]map[models.AlertRuleKey][]models.NotificationSettings{
+		1: {
+			{OrgID: 1, UID: "rule1"}: {ns},
+		},
+	}
+
+	_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
+	require.NoError(t, err)
+
+	// Ensure receiver name is updated in notification settings.
+	oldSettings, err := sut.ruleNotificationsStore.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
+		OrgID:        writer.GetOrgID(),
+		ReceiverName: receiverName,
+	})
+	assert.Equal(t, 0, len(oldSettings))
+	newSettings, err := sut.ruleNotificationsStore.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
+		OrgID:        writer.GetOrgID(),
+		ReceiverName: baseReceiver.Name,
+	})
+	assert.Equal(t, 1, len(newSettings))
+	assert.Equal(t, newReceiverName, newSettings[models.AlertRuleKey{OrgID: 1, UID: "rule1"}][0].Receiver)
+
+	// Ensure receiver name is updated in routes.
+	revision, err := sut.cfgStore.Get(context.Background(), writer.GetOrgID())
+	require.NoError(t, err)
+
+	assert.Falsef(t, revision.ReceiverNameUsedByRoutes(receiverName), "old receiver name '%s' should not be used by routes", receiverName)
+	assert.Truef(t, revision.ReceiverNameUsedByRoutes(newReceiverName), "new receiver name '%s' should be used by routes", newReceiverName)
 }
 
 func TestReceiverServiceAC_Read(t *testing.T) {
