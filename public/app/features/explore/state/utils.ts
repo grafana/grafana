@@ -274,7 +274,12 @@ export const filterLogRowsByIndex = (
   }
 
   if (clearedAtIndex) {
-    const filteredRows = logRows.slice(clearedAtIndex + 1);
+    const startIndex = logRows.findIndex(row => row.rowIndex > clearedAtIndex);
+    if (startIndex === -1) {
+      return [];
+    }
+
+    const filteredRows = logRows.slice(startIndex);
     return filteredRows;
   }
 
