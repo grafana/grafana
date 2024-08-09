@@ -72,7 +72,7 @@ func (d *ParcaDatasource) query(ctx context.Context, pCtx backend.PluginContext,
 		resp, err := d.client.Query(ctx, makeProfileRequest(qm, query))
 		if err != nil {
 			if strings.Contains(err.Error(), "invalid report type") {
-				response.Error = fmt.Errorf("Try updating Parca to v0.19+: %v", err)
+				response.Error = fmt.Errorf("try updating Parca to v0.19+: %v", err)
 			} else {
 				response.Error = err
 			}
@@ -143,8 +143,7 @@ func responseToDataFrames(resp *connect.Response[v1alpha1.QueryResponse]) (*data
 	if flameResponse, ok := resp.Msg.Report.(*v1alpha1.QueryResponse_FlamegraphArrow); ok {
 		return arrowToNestedSetDataFrame(flameResponse.FlamegraphArrow)
 	} else {
-		// TODO: Can we be nicer about signaling users to update to have the latest APIs?
-		panic("unknown report type returned from query. update parca?")
+		return nil, fmt.Errorf("unknown report type returned from query. update parca")
 	}
 }
 
@@ -200,13 +199,7 @@ func arrowToNestedSetDataFrame(flamegraph *v1alpha1.FlamegraphArrow) (*data.Fram
 	arrowReader.Next()
 	rec := arrowReader.Record()
 
-	arrowTable := array.NewTableFromRecords(arrowReader.Schema(), []arrow.Record{rec})
-	defer arrowTable.Release()
-
-	reader := array.NewTableReader(arrowTable, 0)
-	defer reader.Release()
-
-	fi, err := newFlamegraphIterator(reader)
+	fi, err := newFlamegraphIterator(rec)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create flamegraph iterator: %w", err)
 	}
@@ -244,11 +237,7 @@ type flamegraphIterator struct {
 	addressBuilder *bytes.Buffer
 }
 
-func newFlamegraphIterator(tr *array.TableReader) (*flamegraphIterator, error) {
-	if !tr.Next() {
-		return nil, fmt.Errorf("table reader has no record")
-	}
-	rec := tr.Record()
+func newFlamegraphIterator(rec arrow.Record) (*flamegraphIterator, error) {
 	schema := rec.Schema()
 
 	columnChildren := rec.Column(schema.FieldIndices(FlamegraphFieldChildren)[0]).(*array.List)
