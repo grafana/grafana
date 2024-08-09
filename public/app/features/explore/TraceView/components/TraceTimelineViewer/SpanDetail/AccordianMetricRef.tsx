@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
@@ -154,10 +154,21 @@ export function References(props: ReferenceItemProps) {
     })
     .filter((each) => each !== undefined);
 
-  console.log({ minMaxObj });
+  const childrenNames = [
+    ...new Set(
+      data.map((each) => {
+        return each.tags[1].value;
+      })
+    ),
+  ];
+
+  console.log({ minMaxObj, childrenNames });
 
   return (
     <div className={styles.AccordianReferencesContent}>
+      {childrenNames.map((childName) => (
+        <div key={childName}>{childName}</div>
+      ))}
       {data.map((reference, i) => (
         <div className={i < data.length - 1 ? styles.AccordianReferenceItem : undefined} key={i}>
           <div className={styles.item} key={`${reference.spanID}`}>
@@ -167,20 +178,17 @@ export function References(props: ReferenceItemProps) {
               childrenToggle={childrenToggle}
             >
               <span className={styles.itemContent}>
-                <span>
-                  <span className={cx('span-svc-name', styles.serviceName)}>
-                    {reference.span.process ? reference.span.process.serviceName : reference.span.serviceName}
-                  </span>
-                  <small className="endpoint-name">{reference.span.operationName}</small>
-                </span>
-
                 <small className={styles.debugInfo}>
                   <span className={styles.debugLabel}>
                     {reference.tags[0].key}: {reference.tags[0].value}
                   </span>
 
-                  <span className={styles.debugLabel} data-label="SpanID:">
-                    {reference.spanID}
+                  <span className={styles.debugLabel}>
+                    {reference.spanID !== '0000000000000000' && (
+                      <>
+                        Jump to span {reference.spanID} <Icon name="external-link-alt" />
+                      </>
+                    )}
                   </span>
                 </small>
               </span>
@@ -221,6 +229,17 @@ const AccordianMetricRef = ({
   }
 
   const styles = useStyles2(getStyles);
+
+  let names = [];
+
+  for (let i = 0; i < data.length; i++) {
+    for (let j = 0; j < data[i].tags.length; j++) {
+      if (data[i].tags[j].key === 'name' && names.indexOf(data[i].tags[j].value) === -1) {
+        names.push(data[i].tags[j].value);
+      }
+    }
+  }
+
   return (
     <div className={styles.AccordianMetricRef}>
       <HeaderComponent className={styles.AccordianReferencesHeader} {...headerProps}>
@@ -228,7 +247,7 @@ const AccordianMetricRef = ({
         <strong>
           <span>Children Metrics</span>
         </strong>{' '}
-        ({data.length})
+        ({names.length})
       </HeaderComponent>
       {isOpen && (
         <References
