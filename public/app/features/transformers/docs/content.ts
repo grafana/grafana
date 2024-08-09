@@ -8,7 +8,7 @@
 
   Browse to http://localhost:3003/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/
 
-  Refer to ./docs/README.md for more information about building docs. 
+  Refer to ./docs/README.md for more information about building docs.
 */
 
 interface Link {
@@ -287,8 +287,8 @@ This transformation allows you to extract and format data in various ways. You c
     name: 'Lookup fields from resource',
     getHelperDocs: function () {
       return `
-Use this transformation to enrich a field value by looking up additional fields from an external source. 
-  
+Use this transformation to enrich a field value by looking up additional fields from an external source.
+
 This transformation has the following fields:
 
 - **Field** - Select a text field from your dataset.
@@ -437,7 +437,7 @@ Use this transformation to selectively remove parts of your query results. There
 
 #### Use a regular expression
 
-When you filter using a regular expression, field names that match the regular expression are included. 
+When you filter using a regular expression, field names that match the regular expression are included.
 
 For example, from the input data:
 
@@ -638,7 +638,7 @@ Use this transformation to construct a matrix by specifying fields from your que
     getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
   Use this transformation to group the data by a specified field (column) value and process calculations on each group. Records are generated that share the same grouped field value, to be displayed in a nested table.
-    
+
   To calculate a statistic for a field, click the selection box next to it and select the **Calculate** option:
 
   ${buildImageContent(
