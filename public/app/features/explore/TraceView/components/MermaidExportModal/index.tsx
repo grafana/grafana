@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { DataFrame } from '@grafana/data';
-import { Alert, Modal } from '@grafana/ui';
+import { Alert, Button, Modal } from '@grafana/ui';
 import { exportTraceAsMermaid } from 'app/features/inspector/utils/download';
 
 import { MermaidRenderer } from './MermaidRenderer';
@@ -19,6 +19,8 @@ export const MermaidExportModal = ({
   traceId: string;
 }) => {
   const [highlights, setHighlights] = useState<string[]>([]);
+  const [copySuccess, setCopySuccess] = useState<string>(''); // State to show copy success message
+
   (window as any).mermaidToggleSpan = (spanId: string) => {
     if (highlights.includes(spanId)) {
       setHighlights(highlights.filter((s) => s !== spanId));
@@ -28,6 +30,15 @@ export const MermaidExportModal = ({
   };
   const code = exportTraceAsMermaid(data, traceId, highlights);
   const handlers = data.fields[1].values.map((spanId) => `click ${spanId} call mermaidToggleSpan(${spanId})`);
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopySuccess('Copied!');
+    } catch (err) {
+      setCopySuccess('Failed to copy!');
+    }
+  };
 
   return (
     <Modal
@@ -40,6 +51,10 @@ export const MermaidExportModal = ({
     >
       <Alert severity="info" title="Click on spans to highlight them!" />
       <MermaidRenderer source={code + '\n' + handlers.join('\n')} id={'preview'} />
+      <div>
+        <Button onClick={copyToClipboard}>Copy to Clipboard</Button>
+        {copySuccess && <span>{copySuccess}</span>} {/* Show copy success message */}
+      </div>
       <pre>{code}</pre>
     </Modal>
   );
