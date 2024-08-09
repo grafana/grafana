@@ -4,38 +4,31 @@ import { GrafanaTheme2 } from '@grafana/data/src';
 import { ConfirmModal, useStyles2 } from '@grafana/ui/src';
 import { t } from 'app/core/internationalization';
 
-const Body = ({ title }: { title?: string }) => {
+const Body = () => {
   const styles = useStyles2(getStyles);
 
   return (
     <p className={styles.description}>
-      {title
-        ? t(
-            'public-dashboard.delete-modal.revoke-nonorphaned-body-text',
-            'Are you sure you want to revoke this URL? The dashboard will no longer be public.'
-          )
-        : t(
-            'public-dashboard.delete-modal.revoke-orphaned-body-text',
-            'Orphaned public dashboard will no longer be public.'
-          )}
+      {t(
+        'public-dashboard.delete-modal.revoke-body-text',
+        'Are you sure you want to revoke this access? The dashboard can no longer be shared.'
+      )}
     </p>
   );
 };
 
 export const DeletePublicDashboardModal = ({
-  dashboardTitle,
   onConfirm,
   onDismiss,
 }: {
-  dashboardTitle?: string;
   onConfirm: () => void;
   onDismiss: () => void;
 }) => {
-  const translatedRevocationModalText = t('public-dashboard.delete-modal.revoke-title', 'Revoke public URL');
+  const translatedRevocationModalText = t('public-dashboard.delete-modal.revoke-title', 'Revoke access');
   return (
     <ConfirmModal
       isOpen
-      body={<Body title={dashboardTitle} />}
+      body={<Body />}
       onConfirm={onConfirm}
       onDismiss={onDismiss}
       title={translatedRevocationModalText}
