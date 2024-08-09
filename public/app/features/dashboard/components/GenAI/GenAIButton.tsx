@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -52,16 +52,36 @@ export const GenAIButton = ({
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
 
-  const { setMessages, setStopGeneration, reply, value, error, streamStatus } = useOpenAIStream(model, temperature);
-
   const [history, setHistory] = useState<string[]>([]);
-  const [showHistory, setShowHistory] = useState(false);
+  const unshiftHistoryEntry = useCallback((historyEntry: string) => {
+    setHistory((h) => [historyEntry, ...h]);
+  }, []);
 
+  const onResponse = useCallback(
+    (reply: string) => {
+      const sanitizedReply = sanitizeReply(reply);
+      onGenerate(sanitizedReply);
+      unshiftHistoryEntry(sanitizedReply);
+    },
+    [onGenerate, unshiftHistoryEntry]
+  );
+
+  const { setMessages, stopGeneration, value, error, streamStatus } = useOpenAIStream({
+    model,
+    temperature,
+    onResponse,
+  });
+
+  const [showHistory, setShowHistory] = useState(false);
   const hasHistory = history.length > 0;
-  const isGenerating = streamStatus === StreamStatus.GENERATING;
   const isFirstHistoryEntry = !hasHistory;
+
+  const isGenerating = streamStatus === StreamStatus.GENERATING;
   const isButtonDisabled = disabled || (value && !value.enabled && !error);
-  const reportInteraction = (item: AutoGenerateItem) => reportAutoGenerateInteraction(eventTrackingSrc, item);
+  const reportInteraction = useCallback(
+    (item: AutoGenerateItem) => reportAutoGenerateInteraction(eventTrackingSrc, item),
+    [eventTrackingSrc]
+  );
 
   const showTooltip = error || tooltip ? undefined : false;
   const tooltipContent = error
@@ -70,7 +90,7 @@ export const GenAIButton = ({
 
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (streamStatus === StreamStatus.GENERATING) {
-      setStopGeneration(true);
+      stopGeneration();
     } else {
       if (!hasHistory) {
         onClickProp?.(e);
@@ -90,28 +110,6 @@ export const GenAIButton = ({
     reportInteraction(buttonItem);
   };
 
-  const pushHistoryEntry = useCallback(
-    (historyEntry: string) => {
-      if (history.indexOf(historyEntry) === -1) {
-        setHistory([historyEntry, ...history]);
-      }
-    },
-    [history]
-  );
-
-  useEffect(() => {
-    // Todo: Consider other options for `"` sanitation
-    if (streamStatus === StreamStatus.COMPLETED && reply) {
-      onGenerate(sanitizeReply(reply));
-    }
-  }, [streamStatus, reply, onGenerate]);
-
-  useEffect(() => {
-    if (streamStatus === StreamStatus.COMPLETED) {
-      pushHistoryEntry(sanitizeReply(reply));
-    }
-  }, [history, streamStatus, reply, pushHistoryEntry]);
-
   // The button is disabled if the plugin is not installed or enabled
   if (!value?.enabled) {
     return null;
@@ -127,9 +125,11 @@ export const GenAIButton = ({
     if (isGenerating) {
       return undefined;
     }
-    if (error || (value && !value?.enabled)) {
+
+    if (error || (value && !value.enabled)) {
       return 'exclamation-circle';
     }
+
     return 'ai';
   };
 
@@ -164,12 +164,7 @@ export const GenAIButton = ({
     </Button>
   );
 
-  const getMessages = () => {
-    if (typeof messages === 'function') {
-      return messages();
-    }
-    return messages;
-  };
+  const getMessages = () => (typeof messages === 'function' ? messages() : messages);
 
   const renderButtonWithToggletip = () => {
     if (hasHistory) {
@@ -183,7 +178,7 @@ export const GenAIButton = ({
               history={history}
               messages={getMessages()}
               onApplySuggestion={onApplySuggestion}
-              updateHistory={pushHistoryEntry}
+              updateHistory={unshiftHistoryEntry}
               eventTrackingSrc={eventTrackingSrc}
             />
           }
