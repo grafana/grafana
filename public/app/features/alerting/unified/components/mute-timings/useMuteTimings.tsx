@@ -3,18 +3,17 @@ import { useEffect } from 'react';
 
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { timeIntervalsApi } from 'app/features/alerting/unified/api/timeIntervalsApi';
-import {
-  getK8sNamespace,
-  mergeTimeIntervals,
-  shouldUseK8sApi,
-} from 'app/features/alerting/unified/components/mute-timings/util';
+import { mergeTimeIntervals } from 'app/features/alerting/unified/components/mute-timings/util';
 import {
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval,
   ReadNamespacedTimeIntervalApiResponse,
 } from 'app/features/alerting/unified/openapi/timeIntervalsApi.gen';
 import { deleteMuteTimingAction, updateAlertManagerConfigAction } from 'app/features/alerting/unified/state/actions';
+import { BaseAlertmanagerArgs } from 'app/features/alerting/unified/types/hooks';
 import { renameMuteTimings } from 'app/features/alerting/unified/utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { PROVENANCE_ANNOTATION, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
+import { getK8sNamespace, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
@@ -27,15 +26,6 @@ const {
   useDeleteNamespacedTimeIntervalMutation,
 } = timeIntervalsApi;
 
-type BaseAlertmanagerArgs = {
-  /**
-   * Name of alertmanager being used for mute timings management.
-   *
-   * Hooks will behave differently depending on whether this is `grafana` or an external alertmanager
-   */
-  alertmanager: string;
-};
-
 /**
  * Alertmanager mute time interval, with optional additional metadata
  * (returned in the case of K8S API implementation)
@@ -44,12 +34,6 @@ export type MuteTiming = MuteTimeInterval & {
   id: string;
   metadata?: ReadNamespacedTimeIntervalApiResponse['metadata'];
 };
-
-/** Name of the custom annotation label used in k8s APIs for us to discern if a given entity was provisioned */
-export const PROVENANCE_ANNOTATION = 'grafana.com/provenance';
-
-/** Value of `PROVENANCE_ANNOTATION` given for non-provisioned intervals */
-export const PROVENANCE_NONE = 'none';
 
 /** Alias for generated kuberenetes Alerting API Server type */
 type TimeIntervalV0Alpha1 = ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval;

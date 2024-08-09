@@ -5,6 +5,9 @@ import (
 	"strconv"
 	"time"
 
+	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/claims"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -40,12 +43,27 @@ type SignedInUser struct {
 	Teams            []int64
 	// Permissions grouped by orgID and actions
 	Permissions map[int64]map[string][]string `json:"-"`
+
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
-	IDToken string `json:"-" xorm:"-"`
+	IDToken       string                                   `json:"-" xorm:"-"`
+	IDTokenClaims *authnlib.Claims[authnlib.IDTokenClaims] `json:"-" xorm:"-"`
 
 	// When other settings are not deterministic, this value is used
 	FallbackType identity.IdentityType
+}
+
+// Access implements claims.AuthInfo.
+func (u *SignedInUser) GetAccess() claims.AccessClaims {
+	return &identity.IDClaimsWrapper{Source: u}
+}
+
+// Identity implements claims.AuthInfo.
+func (u *SignedInUser) GetIdentity() claims.IdentityClaims {
+	if u.IDTokenClaims != nil {
+		return authnlib.NewIdentityClaims(*u.IDTokenClaims)
+	}
+	return &identity.IDClaimsWrapper{Source: u}
 }
 
 // GetRawIdentifier implements Requester.
@@ -165,7 +183,7 @@ func (u *SignedInUser) GetAllowedKubernetesNamespace() string {
 // GetCacheKey returns a unique key for the entity.
 // Add an extra prefix to avoid collisions with other caches
 func (u *SignedInUser) GetCacheKey() string {
-	namespace, id := u.GetTypedID()
+	typ, id := u.GetID().Type(), u.GetID().ID()
 	if !u.HasUniqueId() {
 		// Hack use the org role as id for identities that do not have a unique id
 		// e.g. anonymous and render key.
@@ -177,7 +195,7 @@ func (u *SignedInUser) GetCacheKey() string {
 		id = string(orgRole)
 	}
 
-	return fmt.Sprintf("%d-%s-%s", u.GetOrgID(), namespace, id)
+	return fmt.Sprintf("%d-%s-%s", u.GetOrgID(), typ, id)
 }
 
 // GetIsGrafanaAdmin returns true if the user is a server admin
@@ -241,13 +259,11 @@ func (u *SignedInUser) GetOrgRole() identity.RoleType {
 
 // GetID returns namespaced id for the entity
 func (u *SignedInUser) GetID() identity.TypedID {
-	ns, id := u.GetTypedID()
+	ns, id := u.getTypeAndID()
 	return identity.NewTypedIDString(ns, id)
 }
 
-// GetTypedID returns the namespace and ID of the active entity
-// The namespace is one of the constants defined in pkg/apimachinery/identity
-func (u *SignedInUser) GetTypedID() (identity.IdentityType, string) {
+func (u *SignedInUser) getTypeAndID() (identity.IdentityType, string) {
 	switch {
 	case u.ApiKeyID != 0:
 		return identity.TypeAPIKey, strconv.FormatInt(u.ApiKeyID, 10)
@@ -308,4 +324,8 @@ func (u *SignedInUser) GetDisplayName() string {
 
 func (u *SignedInUser) GetIDToken() string {
 	return u.IDToken
+}
+
+func (u *SignedInUser) GetIDClaims() *authnlib.Claims[authnlib.IDTokenClaims] {
+	return u.IDTokenClaims
 }

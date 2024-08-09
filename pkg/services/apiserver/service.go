@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -281,8 +282,13 @@ func (s *service) start(ctx context.Context) error {
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
 			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
+
+		opts := []grpc.DialOption{
+			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+		}
 		// Create a connection to the gRPC server
-		conn, err := grpc.NewClient(o.StorageOptions.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.NewClient(o.StorageOptions.Address, opts...)
 		if err != nil {
 			return err
 		}
@@ -335,12 +341,12 @@ func (s *service) start(ctx context.Context) error {
 
 	var runningServer *genericapiserver.GenericAPIServer
 	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-		runningServer, err = s.startAggregator(transport, serverConfig, server, s.metrics)
+		runningServer, err = s.startAggregator(ctx, transport, serverConfig, server, s.metrics)
 		if err != nil {
 			return err
 		}
 	} else {
-		runningServer, err = s.startCoreServer(transport, serverConfig, server)
+		runningServer, err = s.startCoreServer(ctx, transport, server)
 		if err != nil {
 			return err
 		}
@@ -362,8 +368,8 @@ func (s *service) start(ctx context.Context) error {
 }
 
 func (s *service) startCoreServer(
+	ctx context.Context,
 	transport *roundTripperFunc,
-	serverConfig *genericapiserver.RecommendedConfig,
 	server *genericapiserver.GenericAPIServer,
 ) (*genericapiserver.GenericAPIServer, error) {
 	// setup the loopback transport and signal that it's ready.
@@ -375,13 +381,14 @@ func (s *service) startCoreServer(
 
 	prepared := server.PrepareRun()
 	go func() {
-		s.stoppedCh <- prepared.Run(s.stopCh)
+		s.stoppedCh <- prepared.RunWithContext(ctx)
 	}()
 
 	return server, nil
 }
 
 func (s *service) startAggregator(
+	ctx context.Context,
 	transport *roundTripperFunc,
 	serverConfig *genericapiserver.RecommendedConfig,
 	server *genericapiserver.GenericAPIServer,
@@ -412,7 +419,7 @@ func (s *service) startAggregator(
 	}
 
 	go func() {
-		s.stoppedCh <- prepared.Run(s.stopCh)
+		s.stoppedCh <- prepared.Run(ctx)
 	}()
 
 	return aggregatorServer.GenericAPIServer, nil
@@ -443,7 +450,7 @@ func (s *service) running(ctx context.Context) error {
 			return err
 		}
 	case <-ctx.Done():
-		close(s.stopCh)
+		return ctx.Err()
 	}
 	return nil
 }
