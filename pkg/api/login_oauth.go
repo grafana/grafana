@@ -22,7 +22,7 @@ func (hs *HTTPServer) OAuthLogin(reqCtx *contextmodel.ReqContext) {
 		errorDesc := reqCtx.Query("error_description")
 		hs.log.Error("failed to login ", "error", errorParam, "errorDesc", errorDesc)
 
-		hs.redirectWithError(reqCtx, errors.New("login provider denied login request"), "error", errorParam, "errorDesc", errorDesc)
+		hs.redirectWithError(reqCtx, errors.New("Login request was denied"), "error", errorParam, "errorDesc", errorDesc)
 		return
 	}
 
