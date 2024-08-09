@@ -100,6 +100,14 @@ editor
 viewer
 ```
 
+4. Add the _client roles_ mapper to the dedicated client scope with
+   the following settings:
+
+- Token Claim Name: `roles`
+- Add to ID token: `ON`
+
+This allows Grafana to extract the roles from the ID token.
+
 ## Teamsync
 
 {{% admonition type="note" %}}
