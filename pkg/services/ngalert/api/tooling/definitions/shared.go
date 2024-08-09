@@ -11,7 +11,7 @@ type Ack struct{}
 // swagger:model
 type ValidationError struct {
 	// example: error message
-	Msg string `json:"msg"`
+	Message string `json:"message"`
 }
 
 // swagger:model

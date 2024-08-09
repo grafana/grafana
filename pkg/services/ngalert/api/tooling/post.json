@@ -4380,7 +4380,7 @@
   },
   "ValidationError": {
    "properties": {
-    "msg": {
+    "message": {
      "example": "error message",
      "type": "string"
     }
@@ -4737,7 +4737,6 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert",
     "type": "object"
