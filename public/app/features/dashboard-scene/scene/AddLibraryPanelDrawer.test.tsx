@@ -50,6 +50,52 @@ describe('AddLibraryPanelWidget', () => {
     expect(gridItem.state.body.state.key).toBe('panel-1');
   });
 
+  it('should add library panel from menu and enter edit mode in a dashboard that is not already in edit mode', async () => {
+    const drawer = new AddLibraryPanelDrawer({});
+    const dashboard = new DashboardScene({
+      $timeRange: new SceneTimeRange({}),
+      title: 'hello',
+      uid: 'dash-1',
+      version: 4,
+      meta: {
+        canEdit: true,
+      },
+      body: new SceneGridLayout({
+        children: [],
+      }),
+      overlay: drawer,
+    });
+
+    activateFullSceneTree(dashboard);
+
+    await new Promise((r) => setTimeout(r, 1));
+
+    const panelInfo: LibraryPanel = {
+      uid: 'uid',
+      model: {
+        type: 'timeseries',
+      },
+      name: 'name',
+      version: 1,
+      type: 'timeseries',
+    };
+
+    // if we are in a saved dashboard with no panels, adding a lib panel through
+    // the CTA should enter edit mode
+    expect(dashboard.state.isEditing).toBe(undefined);
+
+    drawer.onAddLibraryPanel(panelInfo);
+
+    const layout = dashboard.state.body as SceneGridLayout;
+    const gridItem = layout.state.children[0] as DashboardGridItem;
+
+    expect(layout.state.children.length).toBe(1);
+    expect(gridItem.state.body!).toBeInstanceOf(VizPanel);
+    expect(gridItem.state.body.state.$behaviors![0]).toBeInstanceOf(LibraryPanelBehavior);
+    expect(gridItem.state.body.state.key).toBe('panel-1');
+    expect(dashboard.state.isEditing).toBe(true);
+  });
+
   it('should throw error if adding lib panel in a layout that is not SceneGridLayout', () => {
     dashboard.setState({ body: undefined });
 

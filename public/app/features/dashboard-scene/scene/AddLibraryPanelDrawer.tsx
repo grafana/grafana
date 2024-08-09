@@ -65,6 +65,10 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
       });
 
       layout.setState({ children: [newGridItem, ...layout.state.children] });
+
+      if (!dashboard.state.isEditing) {
+        dashboard.onEnterEditMode();
+      }
     }
 
     this.onClose();
