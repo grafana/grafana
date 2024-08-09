@@ -1,5 +1,5 @@
 import { ReactElement } from 'react';
-import { UseFormGetValues, UseFormWatch, Validate } from 'react-hook-form';
+import { UseFormWatch, Validate } from 'react-hook-form';
 import { UseFormSetValue } from 'react-hook-form/dist/types/form';
 
 import { IconName, SelectableValue } from '@grafana/data';
@@ -128,11 +128,7 @@ export type FieldData = {
   placeholder?: string;
   defaultValue?: SelectableValue<string>;
   hidden?: boolean;
-  content?: (
-    getValues: UseFormGetValues<SSOProviderDTO>,
-    setValue: UseFormSetValue<SSOProviderDTO>,
-    watch: UseFormWatch<SSOProviderDTO>
-  ) => ReactElement;
+  content?: (setValue: UseFormSetValue<SSOProviderDTO>, watch: UseFormWatch<SSOProviderDTO>) => ReactElement;
 };
 
 export type SSOSettingsField =

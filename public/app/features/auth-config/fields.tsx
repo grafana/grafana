@@ -632,7 +632,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       description:
         'The .well-known/openid-configuration endpoint for your IdP. The info extracted from this URL will be used to populate the Auth URL, Token URL and API URL fields.',
       type: 'custom',
-      content: (getValues, setValue, watch) => {
+      content: (setValue, watch) => {
         const modalIsOpen = watch('serverDiscoveryModal');
         const onClose = () => setValue('serverDiscoveryModal', false);
         const onSuccess = (data: ServerDiscoveryFormData) => {
