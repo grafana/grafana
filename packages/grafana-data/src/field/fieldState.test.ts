@@ -236,7 +236,7 @@ describe('Check field state calculations (displayName and id)', () => {
     expect(title).toEqual('Value');
   });
 
-  it('should use series name when field name is TIME_SERIES_VALUE_FIELD_NAME and there are no labels ', () => {
+  it('should use series name when field name is TIME_SERIES_VALUE_FIELD_NAME and there are no labels', () => {
     const title = checkScenario({
       frames: [
         toDataFrame({
@@ -246,6 +246,51 @@ describe('Check field state calculations (displayName and id)', () => {
       ],
     });
     expect(title).toEqual('Series A');
+  });
+
+  it('should use series name + increment when field name is TIME_SERIES_VALUE_FIELD_NAME and there are no labels', () => {
+    const title = checkScenario({
+      frames: [
+        toDataFrame({
+          name: 'Muta',
+          fields: [
+            { name: 'Time', type: FieldType.time },
+            { name: 'Value', type: FieldType.number },
+          ],
+        }),
+        toDataFrame({
+          name: 'Muta',
+          fields: [
+            { name: 'Time', type: FieldType.time },
+            { name: 'Value', type: FieldType.number },
+          ],
+        }),
+      ],
+      fieldIndex: 1,
+    });
+    expect(title).toEqual('Muta 1');
+
+    const title2 = checkScenario({
+      frames: [
+        toDataFrame({
+          name: 'Muta',
+          fields: [
+            { name: 'Time', type: FieldType.time },
+            { name: 'Value', type: FieldType.number },
+          ],
+        }),
+        toDataFrame({
+          name: 'Muta',
+          fields: [
+            { name: 'Time', type: FieldType.time },
+            { name: 'Value', type: FieldType.number },
+          ],
+        }),
+      ],
+      frameIndex: 1,
+      fieldIndex: 1,
+    });
+    expect(title2).toEqual('Muta 2');
   });
 
   it('should reder loki frames', () => {
