@@ -114,6 +114,7 @@ To integrate your OAuth2 provider with Grafana using our generic OAuth2 authenti
    | `client_id`, `client_secret` | These values must match the client ID and client secret from your OAuth2 app.                                                                                                                     |
    | `auth_url`                   | The authorization endpoint of your OAuth2 provider.                                                                                                                                               |
    | `api_url`                    | The user information endpoint of your OAuth2 provider. Information returned by this endpoint must be compatible with [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo). |
+   | `token_url`                  | The endpoint used to obtain the OAuth2 access token.                                                                                                                                              |
    | `enabled`                    | Enables generic OAuth2 authentication. Set this value to `true`.                                                                                                                                  |
 
    Review the list of other generic OAuth2 [configuration options]({{< relref "#configuration-options" >}}) and complete them, as necessary.
