@@ -37,10 +37,8 @@ composableKinds: PanelCfg: {
 					mergeValues?: bool | *true
 					//Controls value alignment on the timelines
 					alignValue?: ui.TimelineValueAlignment & (*"left" | _)
-					//Whether pagination should be enabled
-					enablePagination: bool | *false
-					//Configures max page size (if pagination is enabled)
-					maxPageSize?: number & >=1 | *20
+					//Enables pagination when > 0
+					perPage?: number & >=1 | *20
 				} @cuetsy(kind="interface")
 				FieldConfig: {
 					ui.HideableFieldConfig

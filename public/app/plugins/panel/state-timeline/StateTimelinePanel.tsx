@@ -14,7 +14,7 @@ import {
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import {
-  prepareFieldsForPagination,
+  makeFramePerSeries,
   prepareTimelineFields,
   prepareTimelineLegendItems,
   TimelineMode,
@@ -44,44 +44,37 @@ const styles = {
   }),
 };
 
-function usePagination(enablePagination: boolean, frames?: DataFrame[], maxPageSizeOptional?: number) {
+function usePagination(frames?: DataFrame[], perPage?: number) {
   const [currentPage, setCurrentPage] = useState(1);
 
   const [paginationWrapperRef, { height: paginationHeight, width: paginationWidth }] = useMeasure<HTMLDivElement>();
 
-  const maybeNormalizedFrames = useMemo(() => {
-    if (!enablePagination || frames === undefined) {
-      return frames;
-    }
-    return prepareFieldsForPagination(frames);
-  }, [enablePagination, frames]);
+  const pagedFrames = useMemo(
+    () => (!perPage || frames == null ? frames : makeFramePerSeries(frames)),
+    [frames, perPage]
+  );
 
-  if (!enablePagination || maybeNormalizedFrames === undefined) {
+  if (!perPage || pagedFrames == null) {
     return {
-      paginatedFrames: maybeNormalizedFrames,
+      paginatedFrames: pagedFrames,
       paginationRev: 'disabled',
       paginationElement: undefined,
       paginationHeight: 0,
     };
   }
 
-  // Some hackery to ensure `maxPageSize` is always defined and valid. We can remove this once
-  // it's possible to define these constraints in the panel options configuration.
-  let maxPageSize = maxPageSizeOptional ?? defaultOptions.maxPageSize;
-  if (maxPageSize === undefined || maxPageSize <= 0) {
-    maxPageSize = defaultOptions.maxPageSize!;
-  }
+  perPage ||= defaultOptions.perPage!;
 
-  const numberOfPages = Math.ceil(maybeNormalizedFrames.length / maxPageSize);
-  // `maxPageSize` changing might lead to temporarily too large values of `currentPage`.
+  const numberOfPages = Math.ceil(pagedFrames.length / perPage);
+  // `perPage` changing might lead to temporarily too large values of `currentPage`.
   const currentPageCapped = Math.min(currentPage, numberOfPages);
-  const pageOffset = (currentPageCapped - 1) * maxPageSize;
-  const paginatedFrames = maybeNormalizedFrames.slice(pageOffset, pageOffset + maxPageSize);
+  const pageOffset = (currentPageCapped - 1) * perPage;
+  const currentPageFrames = pagedFrames.slice(pageOffset, pageOffset + perPage);
 
   // `paginationRev` needs to change value whenever any of the pagination settings changes.
   // It's used in to trigger a reconfiguration of the underlying graphs (which is cached,
   // hence an explicit nudge is required).
-  const paginationRev = `${currentPageCapped}/${maxPageSize}`;
+  const paginationRev = `${currentPageCapped}/${perPage}`;
 
   const showSmallVersion = paginationWidth < 550;
   const paginationElement = (
@@ -96,7 +89,7 @@ function usePagination(enablePagination: boolean, frames?: DataFrame[], maxPageS
     </div>
   );
 
-  return { paginatedFrames, paginationRev, paginationElement, paginationHeight };
+  return { paginatedFrames: currentPageFrames, paginationRev, paginationElement, paginationHeight };
 }
 
 /**
@@ -125,9 +118,8 @@ export const StateTimelinePanel = ({
   );
 
   const { paginatedFrames, paginationRev, paginationElement, paginationHeight } = usePagination(
-    options.enablePagination,
     frames,
-    options.maxPageSize
+    options.perPage
   );
 
   const legendItems = useMemo(

@@ -435,27 +435,22 @@ export function prepareTimelineFields(
   return { frames };
 }
 
-// Normalize input frames into many frames with a single time field and a single value field each.
-// Expected to be called right after `prepareTimelineFields`, see `StateTimelinePanel` for reference.
-export function prepareFieldsForPagination(inputFrames: DataFrame[]): DataFrame[] {
-  const frames: DataFrame[] = [];
+export function makeFramePerSeries(frames: DataFrame[]) {
+  const outFrames: DataFrame[] = [];
 
-  for (let frame of inputFrames) {
-    // Assume there is at most one time field per frame. If there are >1 time fields,
-    // treat the first one (index ascending order) as the time field and drop the rest.
-    const timeField = frame.fields.find((field) => field.type === FieldType.time);
-    if (timeField === undefined) {
-      continue;
-    }
-    for (let field of frame.fields) {
-      if (field.type === FieldType.time) {
-        continue;
+  for (let frame of frames) {
+    const timeFields = frame.fields.filter((field) => field.type === FieldType.time);
+
+    if (timeFields.length > 0) {
+      for (let field of frame.fields) {
+        if (field.type !== FieldType.time) {
+          outFrames.push({ fields: [...timeFields, field], length: frame.length });
+        }
       }
-      frames.push({ fields: [timeField, field], length: frame.length });
     }
   }
 
-  return frames;
+  return outFrames;
 }
 
 export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2): VizLegendItem[] {

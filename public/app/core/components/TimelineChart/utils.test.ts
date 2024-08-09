@@ -17,7 +17,7 @@ import {
   findNextStateIndex,
   fmtDuration,
   getThresholdItems,
-  prepareFieldsForPagination,
+  makeFramePerSeries,
   prepareTimelineFields,
   prepareTimelineLegendItems,
 } from './utils';
@@ -279,30 +279,8 @@ describe('prepareFieldsForPagination', () => {
         ],
       }),
     ];
-    const normalizedFrames = prepareFieldsForPagination(frames);
+    const normalizedFrames = makeFramePerSeries(frames);
     expect(normalizedFrames.length).toEqual(0);
-  });
-
-  it('ignores trailing time fields when there are more than one', () => {
-    const frames = [
-      toDataFrame({
-        fields: [
-          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-          { name: 'value', type: FieldType.string, values: ['a', 'b', 'c'] },
-          { name: 'ignoredtime', type: FieldType.time, values: [4, 5, 6] },
-        ],
-      }),
-    ];
-    const normalizedFrames = prepareFieldsForPagination(frames);
-    expect(normalizedFrames.length).toEqual(1);
-    expect(normalizedFrames).toMatchObject([
-      {
-        fields: [
-          { name: 'time', values: [1, 2, 3] },
-          { name: 'value', values: ['a', 'b', 'c'] },
-        ],
-      },
-    ]);
   });
 
   it('returns normalized frames, each with one time field and one value field', () => {
@@ -321,7 +299,7 @@ describe('prepareFieldsForPagination', () => {
         ],
       }),
     ];
-    const normalizedFrames = prepareFieldsForPagination(frames);
+    const normalizedFrames = makeFramePerSeries(frames);
     expect(normalizedFrames.length).toEqual(3);
     expect(normalizedFrames).toMatchObject([
       {
