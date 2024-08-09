@@ -23,7 +23,7 @@ import {
   createRemoveCorrelationResponse,
   createUpdateCorrelationResponse,
 } from './__mocks__/useCorrelations.mocks';
-import { Correlation, CreateCorrelationParams } from './types';
+import { CORR_CONFIG_TYPES, Correlation, CreateCorrelationParams } from './types';
 
 const renderWithContext = async (
   datasources: ConstructorParameters<typeof MockDataSourceSrv>[0] = {},
@@ -364,7 +364,7 @@ describe('CorrelationsPage', () => {
             config: {
               field: 'line',
               target: {},
-              type: 'query',
+              type: CORR_CONFIG_TYPES.query.value,
               transformations: [
                 { type: SupportedTransformationType.Regex, expression: 'url=http[s]?://(S*)', mapValue: 'path' },
               ],
@@ -375,7 +375,7 @@ describe('CorrelationsPage', () => {
             targetUID: 'loki',
             uid: '2',
             label: 'Prometheus to Loki',
-            config: { field: 'label', target: {}, type: 'query' },
+            config: { field: 'label', target: {}, type: CORR_CONFIG_TYPES.query.value },
             provisioned: false,
           },
         ]
@@ -601,7 +601,7 @@ describe('CorrelationsPage', () => {
             config: {
               field: 'line',
               target: {},
-              type: 'query',
+              type: CORR_CONFIG_TYPES.query.value,
               transformations: [
                 { type: SupportedTransformationType.Regex, expression: 'url=http[s]?://(S*)', mapValue: 'path' },
               ],
@@ -616,7 +616,7 @@ describe('CorrelationsPage', () => {
             config: {
               field: 'line',
               target: {},
-              type: 'query',
+              type: CORR_CONFIG_TYPES.query.value,
               transformations: [
                 { type: SupportedTransformationType.Regex, expression: 'url=http[s]?://(S*)', mapValue: 'path' },
               ],
@@ -627,7 +627,7 @@ describe('CorrelationsPage', () => {
             targetUID: 'loki',
             uid: '3',
             label: 'Prometheus to Loki',
-            config: { field: 'label', target: {}, type: 'query' },
+            config: { field: 'label', target: {}, type: CORR_CONFIG_TYPES.query.value },
             provisioned: false,
           },
           {
@@ -635,7 +635,7 @@ describe('CorrelationsPage', () => {
             targetUID: 'prometheus',
             uid: '4',
             label: 'Prometheus to Prometheus',
-            config: { field: 'label', target: {}, type: 'query' },
+            config: { field: 'label', target: {}, type: CORR_CONFIG_TYPES.query.value },
             provisioned: false,
           },
         ]
@@ -663,7 +663,7 @@ describe('CorrelationsPage', () => {
         config: {
           field: 'line',
           target: {},
-          type: 'query',
+          type: CORR_CONFIG_TYPES.query.value,
           transformations: [{ type: SupportedTransformationType.Regex, expression: '(?:msg)=' }],
         },
       },

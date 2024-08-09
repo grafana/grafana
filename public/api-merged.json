@@ -13877,6 +13877,7 @@
       }
     },
     "CorrelationConfigType": {
+      "description": "the type of correlation configuration, either query for containing query information, or external for containing an external URL\n+enum",
       "type": "string"
     },
     "CorrelationConfigUpdateDTO": {

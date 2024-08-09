@@ -14,7 +14,7 @@ func TestCorrelationModels(t *testing.T) {
 			config := &CorrelationConfig{
 				Field:  "field",
 				Target: map[string]any{},
-				Type:   ConfigTypeQuery,
+				Type:   query,
 			}
 			cmd := &CreateCorrelationCommand{
 				SourceUID: "some-uid",
@@ -30,7 +30,7 @@ func TestCorrelationModels(t *testing.T) {
 			config := &CorrelationConfig{
 				Field:  "field",
 				Target: map[string]any{},
-				Type:   ConfigTypeQuery,
+				Type:   query,
 			}
 			cmd := &CreateCorrelationCommand{
 				SourceUID: "some-uid",
@@ -79,7 +79,7 @@ func TestCorrelationModels(t *testing.T) {
 		t.Run("Applies a default empty object if target is not defined", func(t *testing.T) {
 			config := CorrelationConfig{
 				Field: "field",
-				Type:  ConfigTypeQuery,
+				Type:  query,
 			}
 
 			data, err := json.Marshal(config)

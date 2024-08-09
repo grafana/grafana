@@ -482,7 +482,7 @@ describe('decorateWithCorrelations', () => {
         source: datasourceInstance,
         target: datasourceInstance,
         provisioned: true,
-        config: { field: panelData.series[0].fields[0].name },
+        config: { type: 'query', field: panelData.series[0].fields[0].name },
       },
     ] as CorrelationData[];
 

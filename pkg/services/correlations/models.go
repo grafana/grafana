@@ -27,8 +27,6 @@ const (
 	QuotaTarget    quota.Target    = "correlations"
 )
 
-type CorrelationConfigType string
-
 type Transformation struct {
 	//Enum: regex,logfmt
 	Type       string `json:"type"`
@@ -37,12 +35,17 @@ type Transformation struct {
 	MapValue   string `json:"mapValue,omitempty"`
 }
 
+// the type of correlation configuration, either query for containing query information, or external for containing an external URL
+// +enum
+type CorrelationConfigType string
+
 const (
-	ConfigTypeQuery CorrelationConfigType = "query"
+	query    CorrelationConfigType = "query"
+	external CorrelationConfigType = "external"
 )
 
 func (t CorrelationConfigType) Validate() error {
-	if t != ConfigTypeQuery {
+	if t != query && t != external {
 		return fmt.Errorf("%s: \"%s\"", ErrInvalidConfigType, t)
 	}
 	return nil
@@ -92,7 +95,7 @@ func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
 		Target          map[string]any        `json:"target"`
 		Transformations Transformations       `json:"transformations,omitempty"`
 	}{
-		Type:            ConfigTypeQuery,
+		Type:            c.Type,
 		Field:           c.Field,
 		Target:          target,
 		Transformations: transformations,
@@ -166,8 +169,8 @@ func (c CreateCorrelationCommand) Validate() error {
 	if err := c.Config.Type.Validate(); err != nil {
 		return err
 	}
-	if c.TargetUID == nil && c.Config.Type == ConfigTypeQuery {
-		return fmt.Errorf("correlations of type \"%s\" must have a targetUID", ConfigTypeQuery)
+	if c.TargetUID == nil && c.Config.Type == query {
+		return fmt.Errorf("correlations of type \"%s\" must have a targetUID", query)
 	}
 
 	if err := c.Config.Transformations.Validate(); err != nil {
