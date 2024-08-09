@@ -9,8 +9,8 @@ include .bingo/Variables.mk
 
 GO = go
 GO_VERSION = 1.22.4
-GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
-GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
+GO_LINT_FILES = $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
+GO_TEST_FILES = $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_RACE  := $(shell [ -n "$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
 GO_RACE_FLAG := $(if $(GO_RACE),-race)
