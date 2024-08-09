@@ -6,7 +6,7 @@ import useAsync from 'react-use/lib/useAsync';
 import { SelectableValue } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { FetchError, getTemplateSrv, isFetchError } from '@grafana/runtime';
-import { Select, HorizontalGroup, useStyles2 } from '@grafana/ui';
+import { Select, HorizontalGroup, useStyles2, InputActionMeta } from '@grafana/ui';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
@@ -59,6 +59,7 @@ const SearchField = ({
   // there's only one value selected, so we store the previous operator and value
   const [prevOperator, setPrevOperator] = useState(filter.operator);
   const [prevValue, setPrevValue] = useState(filter.value);
+  const [tagOptionsQuery, setTagOptionsQuery] = useState<string | undefined>('');
 
   const updateOptions = async () => {
     try {
@@ -127,13 +128,22 @@ const SearchField = ({
     case 'float':
       operatorList = numberOperators;
   }
-
-  const tagOptions = (filter.tag !== undefined ? uniq([filter.tag, ...tags]) : tags).map((t) => ({
-    label: t,
-    value: t,
-  }));
-
   const operatorOptions = operatorList.map(operatorSelectableValue);
+
+  const formatTagOptions = (tags: string[], filterTag: string | undefined) => {
+    return (filterTag !== undefined ? uniq([filterTag, ...tags]) : tags).map((t) => ({ label: t, value: t }));
+  };
+
+  const tagOptions = useMemo(() => {
+    if (!tagOptionsQuery?.length) {
+      return formatTagOptions(tags.slice(0, 10000), filter.tag);
+    }
+
+    const queryLowerCase = tagOptionsQuery.toLowerCase();
+    const filterdOptions = tags.filter((tag) => tag.toLowerCase().includes(queryLowerCase)).slice(0, 10000);
+
+    return formatTagOptions(filterdOptions, filter.tag);
+  }, [filter.tag, tagOptionsQuery, tags]);
 
   return (
     <>
@@ -158,6 +168,12 @@ const SearchField = ({
             isLoading={isTagsLoading}
             // Add the current tag to the list if it doesn't exist in the tags prop, otherwise the field will be empty even though the state has a value
             options={addVariablesToOptions ? withTemplateVariableOptions(tagOptions) : tagOptions}
+            onInputChange={(value: string, { action }: InputActionMeta) => {
+              if (action === 'input-change') {
+                setTagOptionsQuery(value);
+              }
+            }}
+            onCloseMenu={() => setTagOptionsQuery('')}
             value={filter.tag}
             onChange={(v) => {
               updateFilter({ ...filter, tag: v?.value, value: [] });
