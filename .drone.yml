@@ -397,8 +397,7 @@ steps:
   name: wire-install
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
-  - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
-    -short -covermode=atomic -timeout=5m
+  - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
   depends_on:
   - wire-install
   image: golang:1.22.4-alpine
@@ -1098,8 +1097,8 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationRedis
-    -covermode=atomic -timeout=2m
+  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationRedis -covermode=atomic
+    -timeout=2m
   depends_on:
   - wire-install
   - wait-for-redis
@@ -1114,8 +1113,8 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationMemcached
-    -covermode=atomic -timeout=2m
+  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationMemcached -covermode=atomic
+    -timeout=2m
   depends_on:
   - wire-install
   - wait-for-memcached
@@ -1776,8 +1775,7 @@ steps:
   name: wire-install
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
-  - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
-    -short -covermode=atomic -timeout=5m
+  - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
   depends_on:
   - wire-install
   image: golang:1.22.4-alpine
@@ -2604,8 +2602,8 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationRedis
-    -covermode=atomic -timeout=2m
+  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationRedis -covermode=atomic
+    -timeout=2m
   depends_on:
   - wire-install
   - wait-for-redis
@@ -2620,8 +2618,8 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationMemcached
-    -covermode=atomic -timeout=2m
+  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationMemcached -covermode=atomic
+    -timeout=2m
   depends_on:
   - wire-install
   - wait-for-memcached
@@ -2974,8 +2972,7 @@ steps:
   name: wire-install
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
-  - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
-    -short -covermode=atomic -timeout=5m
+  - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
   depends_on:
   - wire-install
   image: golang:1.22.4-alpine
@@ -3237,8 +3234,8 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationRedis
-    -covermode=atomic -timeout=2m
+  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationRedis -covermode=atomic
+    -timeout=2m
   depends_on:
   - wire-install
   - wait-for-redis
@@ -3253,8 +3250,8 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationMemcached
-    -covermode=atomic -timeout=2m
+  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationMemcached -covermode=atomic
+    -timeout=2m
   depends_on:
   - wire-install
   - wait-for-memcached
@@ -4360,8 +4357,7 @@ steps:
   name: wire-install
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
-  - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
-    -short -covermode=atomic -timeout=5m
+  - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
   depends_on:
   - wire-install
   image: golang:1.22.4-alpine
@@ -4782,8 +4778,7 @@ steps:
   name: wire-install
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
-  - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
-    -short -covermode=atomic -timeout=5m
+  - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
   depends_on:
   - wire-install
   image: golang:1.22.4-alpine
@@ -5207,7 +5202,7 @@ steps:
   image: golang:1.22.4-windowsservercore-1809
   name: wire-install
 - commands:
-  - go test -tags requires_buildifier -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: golang:1.22.4-windowsservercore-1809
@@ -5391,8 +5386,8 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationRedis
-    -covermode=atomic -timeout=2m
+  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationRedis -covermode=atomic
+    -timeout=2m
   depends_on:
   - wire-install
   - wait-for-redis
@@ -5407,8 +5402,8 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationMemcached
-    -covermode=atomic -timeout=2m
+  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationMemcached -covermode=atomic
+    -timeout=2m
   depends_on:
   - wire-install
   - wait-for-memcached
@@ -6079,6 +6074,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 6f24dc66b5c71dacfcd1a7bd8e42341a0f564e718605ccea252a2d68ff4b7918
+hmac: d35eadf9a166f68973ffd6df85f165bbda468d422d5debe416ec6a5af6ead84a
 
 ...
