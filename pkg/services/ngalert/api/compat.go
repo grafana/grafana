@@ -179,16 +179,32 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 		data = append(data, query)
 	}
 
+	cPtr := &rule.Condition
+	if rule.Condition == "" {
+		cPtr = nil
+	}
+
+	noDataState := definitions.NoDataState(rule.NoDataState)
+	ndsPtr := &noDataState
+	if noDataState == "" {
+		ndsPtr = nil
+	}
+	execErrorState := definitions.ExecutionErrorState(rule.ExecErrState)
+	eesPtr := &execErrorState
+	if execErrorState == "" {
+		eesPtr = nil
+	}
+
 	result := definitions.AlertRuleExport{
 		UID:                  rule.UID,
 		Title:                rule.Title,
 		For:                  model.Duration(rule.For),
-		Condition:            rule.Condition,
+		Condition:            cPtr,
 		Data:                 data,
 		DashboardUID:         rule.DashboardUID,
 		PanelID:              rule.PanelID,
-		NoDataState:          definitions.NoDataState(rule.NoDataState),
-		ExecErrState:         definitions.ExecutionErrorState(rule.ExecErrState),
+		NoDataState:          ndsPtr,
+		ExecErrState:         eesPtr,
 		IsPaused:             rule.IsPaused,
 		NotificationSettings: AlertRuleNotificationSettingsExportFromNotificationSettings(rule.NotificationSettings),
 		Record:               AlertRuleRecordExportFromRecord(rule.Record),
