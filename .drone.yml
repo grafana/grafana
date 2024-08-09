@@ -397,7 +397,7 @@ steps:
   name: wire-install
 - commands:
   - set -o pipefail
-  - apk add --update build-base shared-mime-info shared-mime-info-lang
+  - apk add --update build-base shared-mime-info shared-mime-info-lang bash
   - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
     -short -covermode=atomic -timeout=5m
   depends_on:
@@ -405,6 +405,7 @@ steps:
   image: golang:1.22.4-alpine
   name: test-backend
 - commands:
+  - set -o pipefail
   - apk add --update build-base
   - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
@@ -1034,8 +1035,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-postgres
 - commands:
-  - apk add --update build-base
   - set -o pipefail
+  - apk add --update build-base bash
   - apk add --update postgresql-client
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
@@ -1056,8 +1057,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-mysql-5.7
 - commands:
-  - apk add --update build-base
   - set -o pipefail
+  - apk add --update build-base bash
   - apk add --update mysql-client
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
@@ -1078,8 +1079,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-mysql-8.0
 - commands:
-  - apk add --update build-base
   - set -o pipefail
+  - apk add --update build-base bash
   - apk add --update mysql-client
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
@@ -1100,8 +1101,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-redis
 - commands:
-  - apk add --update build-base
   - set -o pipefail
+  - apk add --update build-base bash
   - go clean -testcache
   - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationRedis
     -covermode=atomic -timeout=2m
@@ -1117,8 +1118,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-memcached
 - commands:
-  - apk add --update build-base
   - set -o pipefail
+  - apk add --update build-base bash
   - go clean -testcache
   - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationMemcached
     -covermode=atomic -timeout=2m
@@ -1134,7 +1135,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-remote-alertmanager
 - commands:
-  - apk add --update build-base
+  - set -o pipefail
+  - apk add --update build-base bash
   - go clean -testcache
   - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/...
   depends_on:
@@ -1472,7 +1474,8 @@ steps:
   image: golang:1.22.4-alpine
   name: wire-install
 - commands:
-  - apk add --update build-base
+  - set -o pipefail
+  - apk add --update build-base bash
   - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
   - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
   depends_on:
@@ -1480,7 +1483,8 @@ steps:
   image: golang:1.22.4-alpine
   name: sqlite-benchmark-integration-tests
 - commands:
-  - apk add --update build-base
+  - set -o pipefail
+  - apk add --update build-base bash
   - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
   - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
   depends_on:
@@ -1492,7 +1496,8 @@ steps:
   image: golang:1.22.4-alpine
   name: postgres-benchmark-integration-tests
 - commands:
-  - apk add --update build-base
+  - set -o pipefail
+  - apk add --update build-base bash
   - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
   - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
   depends_on:
@@ -1503,7 +1508,8 @@ steps:
   image: golang:1.22.4-alpine
   name: mysql-5.7-benchmark-integration-tests
 - commands:
-  - apk add --update build-base
+  - set -o pipefail
+  - apk add --update build-base bash
   - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
   - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
   depends_on:
@@ -1782,7 +1788,7 @@ steps:
   name: wire-install
 - commands:
   - set -o pipefail
-  - apk add --update build-base shared-mime-info shared-mime-info-lang
+  - apk add --update build-base shared-mime-info shared-mime-info-lang bash
   - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
     -short -covermode=atomic -timeout=5m
   depends_on:
@@ -1790,6 +1796,7 @@ steps:
   image: golang:1.22.4-alpine
   name: test-backend
 - commands:
+  - set -o pipefail
   - apk add --update build-base
   - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
@@ -2284,7 +2291,6 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - set -o pipefail
   - apk add --update bash grep git
   - ./scripts/ci-frontend-metrics.sh ./grafana/public/build | ./bin/build publish-metrics
     $$GRAFANA_MISC_STATS_API_KEY
@@ -2547,8 +2553,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-postgres
 - commands:
-  - apk add --update build-base
   - set -o pipefail
+  - apk add --update build-base bash
   - apk add --update postgresql-client
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
@@ -2569,8 +2575,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-mysql-5.7
 - commands:
-  - apk add --update build-base
   - set -o pipefail
+  - apk add --update build-base bash
   - apk add --update mysql-client
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
@@ -2591,8 +2597,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-mysql-8.0
 - commands:
-  - apk add --update build-base
   - set -o pipefail
+  - apk add --update build-base bash
   - apk add --update mysql-client
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
@@ -2613,8 +2619,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-redis
 - commands:
-  - apk add --update build-base
   - set -o pipefail
+  - apk add --update build-base bash
   - go clean -testcache
   - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationRedis
     -covermode=atomic -timeout=2m
@@ -2630,8 +2636,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-memcached
 - commands:
-  - apk add --update build-base
   - set -o pipefail
+  - apk add --update build-base bash
   - go clean -testcache
   - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationMemcached
     -covermode=atomic -timeout=2m
@@ -2647,7 +2653,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-remote-alertmanager
 - commands:
-  - apk add --update build-base
+  - set -o pipefail
+  - apk add --update build-base bash
   - go clean -testcache
   - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/...
   depends_on:
@@ -2987,7 +2994,7 @@ steps:
   name: wire-install
 - commands:
   - set -o pipefail
-  - apk add --update build-base shared-mime-info shared-mime-info-lang
+  - apk add --update build-base shared-mime-info shared-mime-info-lang bash
   - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
     -short -covermode=atomic -timeout=5m
   depends_on:
@@ -2995,6 +3002,7 @@ steps:
   image: golang:1.22.4-alpine
   name: test-backend
 - commands:
+  - set -o pipefail
   - apk add --update build-base
   - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
@@ -3186,8 +3194,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-postgres
 - commands:
-  - apk add --update build-base
   - set -o pipefail
+  - apk add --update build-base bash
   - apk add --update postgresql-client
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
@@ -3208,8 +3216,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-mysql-5.7
 - commands:
-  - apk add --update build-base
   - set -o pipefail
+  - apk add --update build-base bash
   - apk add --update mysql-client
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
@@ -3230,8 +3238,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-mysql-8.0
 - commands:
-  - apk add --update build-base
   - set -o pipefail
+  - apk add --update build-base bash
   - apk add --update mysql-client
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
@@ -3252,8 +3260,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-redis
 - commands:
-  - apk add --update build-base
   - set -o pipefail
+  - apk add --update build-base bash
   - go clean -testcache
   - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationRedis
     -covermode=atomic -timeout=2m
@@ -3269,8 +3277,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-memcached
 - commands:
-  - apk add --update build-base
   - set -o pipefail
+  - apk add --update build-base bash
   - go clean -testcache
   - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationMemcached
     -covermode=atomic -timeout=2m
@@ -3286,7 +3294,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-remote-alertmanager
 - commands:
-  - apk add --update build-base
+  - set -o pipefail
+  - apk add --update build-base bash
   - go clean -testcache
   - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/...
   depends_on:
@@ -3843,7 +3852,6 @@ platform:
 services: []
 steps:
 - commands:
-  - set -o pipefail
   - 'echo "Step 1: Updating package lists..."'
   - apt-get update >/dev/null 2>&1
   - 'echo "Step 2: Installing prerequisites..."'
@@ -4021,7 +4029,6 @@ steps:
       from_secret: packages_service_account
     target_bucket: grafana-packages
 - commands:
-  - set -o pipefail
   - 'echo "Step 1: Updating package lists..."'
   - apt-get update >/dev/null 2>&1
   - 'echo "Step 2: Installing prerequisites..."'
@@ -4381,7 +4388,7 @@ steps:
   name: wire-install
 - commands:
   - set -o pipefail
-  - apk add --update build-base shared-mime-info shared-mime-info-lang
+  - apk add --update build-base shared-mime-info shared-mime-info-lang bash
   - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
     -short -covermode=atomic -timeout=5m
   depends_on:
@@ -4389,6 +4396,7 @@ steps:
   image: golang:1.22.4-alpine
   name: test-backend
 - commands:
+  - set -o pipefail
   - apk add --update build-base
   - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
@@ -4804,7 +4812,7 @@ steps:
   name: wire-install
 - commands:
   - set -o pipefail
-  - apk add --update build-base shared-mime-info shared-mime-info-lang
+  - apk add --update build-base shared-mime-info shared-mime-info-lang bash
   - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
     -short -covermode=atomic -timeout=5m
   depends_on:
@@ -4812,6 +4820,7 @@ steps:
   image: golang:1.22.4-alpine
   name: test-backend
 - commands:
+  - set -o pipefail
   - apk add --update build-base
   - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
@@ -5349,8 +5358,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-postgres
 - commands:
-  - apk add --update build-base
   - set -o pipefail
+  - apk add --update build-base bash
   - apk add --update postgresql-client
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
@@ -5371,8 +5380,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-mysql-5.7
 - commands:
-  - apk add --update build-base
   - set -o pipefail
+  - apk add --update build-base bash
   - apk add --update mysql-client
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
@@ -5393,8 +5402,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-mysql-8.0
 - commands:
-  - apk add --update build-base
   - set -o pipefail
+  - apk add --update build-base bash
   - apk add --update mysql-client
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
@@ -5415,8 +5424,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-redis
 - commands:
-  - apk add --update build-base
   - set -o pipefail
+  - apk add --update build-base bash
   - go clean -testcache
   - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationRedis
     -covermode=atomic -timeout=2m
@@ -5432,8 +5441,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-memcached
 - commands:
-  - apk add --update build-base
   - set -o pipefail
+  - apk add --update build-base bash
   - go clean -testcache
   - ./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationMemcached
     -covermode=atomic -timeout=2m
@@ -5449,7 +5458,8 @@ steps:
   image: jwilder/dockerize:0.6.1
   name: wait-for-remote-alertmanager
 - commands:
-  - apk add --update build-base
+  - set -o pipefail
+  - apk add --update build-base bash
   - go clean -testcache
   - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/...
   depends_on:
@@ -6107,6 +6117,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 45ad81db33af935af78f0ed636b850491eeb588e7c1d9d598af87f3038533598
+hmac: de9f1456229cd4d17e761edfe382f85128ff981988da8cb94af88190cf5d6bdb
 
 ...

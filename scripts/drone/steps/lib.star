@@ -553,7 +553,7 @@ def test_backend_step():
             "set -o pipefail",
             # shared-mime-info and shared-mime-info-lang is used for exactly 1 test for the
             # mime.TypeByExtension function.
-            "apk add --update build-base shared-mime-info shared-mime-info-lang",
+            "apk add --update build-base shared-mime-info shared-mime-info-lang bash",
             "./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier -short -covermode=atomic -timeout=5m",
         ],
     }
@@ -566,6 +566,7 @@ def test_backend_integration_step():
             "wire-install",
         ],
         "commands": [
+            "set -o pipefail",
             "apk add --update build-base",
             "go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
         ],
@@ -719,7 +720,6 @@ def frontend_metrics_step(trigger = None):
         },
         "failure": "ignore",
         "commands": [
-            "set -o pipefail",
             "apk add --update bash grep git",
             "./scripts/ci-frontend-metrics.sh ./grafana/public/build | ./bin/build publish-metrics $$GRAFANA_MISC_STATS_API_KEY",
         ],
@@ -995,7 +995,8 @@ def integration_tests_steps(name, cmds, hostname = None, port = None, environmen
         "image": images["go"],
         "depends_on": depends,
         "commands": [
-            "apk add --update build-base",
+            "set -o pipefail",
+            "apk add --update build-base bash",
         ] + cmds,
     }
 
@@ -1025,7 +1026,6 @@ def integration_benchmarks_step(name, environment = None):
 
 def postgres_integration_tests_steps():
     cmds = [
-        "set -o pipefail",
         "apk add --update postgresql-client",
         "psql -p 5432 -h postgres -U grafanatest -d grafanatest -f " +
         "devenv/docker/blocks/postgres_tests/setup.sql",
@@ -1043,7 +1043,6 @@ def postgres_integration_tests_steps():
 
 def mysql_integration_tests_steps(hostname, version):
     cmds = [
-        "set -o pipefail",
         "apk add --update mysql-client",
         "cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h {} -P 3306 -u root -prootpass".format(hostname),
         "go clean -testcache",
@@ -1059,7 +1058,6 @@ def mysql_integration_tests_steps(hostname, version):
 
 def redis_integration_tests_steps():
     cmds = [
-        "set -o pipefail",
         "go clean -testcache",
         "./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationRedis -covermode=atomic -timeout=2m",
     ]
@@ -1085,7 +1083,6 @@ def remote_alertmanager_integration_tests_steps():
 
 def memcached_integration_tests_steps():
     cmds = [
-        "set -o pipefail",
         "go clean -testcache",
         "./scripts/go-workspace/test-includes.sh | xargs go test -run IntegrationMemcached -covermode=atomic -timeout=2m",
     ]
@@ -1276,7 +1273,6 @@ def verify_linux_DEB_packages_step(depends_on = []):
         "image": images["ubuntu"],
         "environment": {},
         "commands": [
-            "set -o pipefail",
             'echo "Step 1: Updating package lists..."',
             "apt-get update >/dev/null 2>&1",
             'echo "Step 2: Installing prerequisites..."',
