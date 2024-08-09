@@ -1513,7 +1513,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 func GetSecretKeysForContactPointType(contactPointType string) ([]string, error) {
 	notifiers := GetAvailableNotifiers()
 	for _, n := range notifiers {
-		if n.Type == contactPointType {
+		if strings.ToLower(n.Type) == strings.ToLower(contactPointType) {
 			var secureFields []string
 			for _, field := range n.Options {
 				if field.Secure {
@@ -1524,4 +1524,15 @@ func GetSecretKeysForContactPointType(contactPointType string) ([]string, error)
 		}
 	}
 	return nil, fmt.Errorf("no secrets configured for type '%s'", contactPointType)
+}
+
+// ConfigForIntegrationType returns the config for the given integration type. Returns error is integration type is not known.
+func ConfigForIntegrationType(contactPointType string) (*NotifierPlugin, error) {
+	notifiers := GetAvailableNotifiers()
+	for _, n := range notifiers {
+		if strings.ToLower(n.Type) == strings.ToLower(contactPointType) {
+			return n, nil
+		}
+	}
+	return nil, fmt.Errorf("unknown integration type '%s'", contactPointType)
 }
