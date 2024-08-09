@@ -10,9 +10,10 @@ import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultThe
 import { Align, TextConfig, TextData } from '../../types';
 import { defaultApiConfig } from '../button';
 
-import { Checkbox } from './elements/Checkbox';
+import { CheckboxList } from './elements/CheckboxList';
 import { FormChild, FormElementTypeEditor } from './elements/FormElementTypeEditor';
 import { NumberInput } from './elements/NumberInput';
+import { RadioList } from './elements/RadioList';
 import { SelectDisplay } from './elements/Select';
 import { Submit } from './elements/Submit';
 import { TextInput } from './elements/TextInput';
@@ -103,9 +104,8 @@ const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
     const child = config.formElements?.find((child) => child.id === id);
 
     const updatedCheckboxes = child?.currentOption?.map((option, i) => {
-      const key = Object.keys(option)[0];
       if (i === index) {
-        return { [key]: value[1] };
+        return { [value[0]]: value[1] };
       }
 
       return option;
@@ -147,12 +147,23 @@ const Form = (props: CanvasElementProps<FormConfig, FormData>) => {
         );
       case FormElementType.Checkbox:
         return (
-          <Checkbox
+          <CheckboxList
             title={child.title}
-            options={child.currentOption ?? []}
+            options={child.options ?? []}
+            currentOption={child.currentOption}
             onChange={(v, i) => onCheckboxOptionsChange(v, i, child.id)}
           />
         );
+      case FormElementType.Radio:
+        return (
+          <RadioList
+            title={child.title}
+            options={child.options ?? []}
+            currentOption={child.currentOption}
+            onChange={(newParams) => onCurrentOptionChange(newParams, child.id)}
+          />
+        );
+
       case FormElementType.Submit:
         return <Submit formItem={child} />;
       default:
