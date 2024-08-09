@@ -201,6 +201,20 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		"datasource_uid": "1",
 		"ref_id":         "A",
 	}
+	genericErrorAnnotations := mergeLabels(
+		baseRule.Annotations,
+		data.Labels{
+			"Error": genericError.Error(),
+		},
+	)
+	datasourceErrorAnnotations := mergeLabels(
+		baseRule.Annotations,
+		data.Labels{
+			"datasource_uid": "datasource_uid_1",
+			"ref_id":         "A",
+			"Error":          datasourceError.Error(),
+		},
+	)
 
 	labels := map[string]data.Labels{
 		"system + rule":                    mergeLabels(baseRule.Labels, systemLabels),
@@ -2780,6 +2794,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									State:              eval.Alerting,
 									StateReason:        eval.Error.String(),
 									Error:              datasourceError,
+									Annotations:        datasourceErrorAnnotations,
 									LatestResult:       newEvaluation(t1, eval.Error),
 									StartsAt:           t1,
 									EndsAt:             t1.Add(ResendDelay * 4),
@@ -2856,10 +2871,13 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState: eval.Normal,
 								State: &State{
-									Labels:             labels["system + rule"],
-									State:              eval.Alerting,
-									StateReason:        eval.Error.String(),
-									Error:              genericError,
+									Labels:      labels["system + rule"],
+									State:       eval.Alerting,
+									StateReason: eval.Error.String(),
+									Error:       genericError,
+									Annotations: mergeLabels(baseRule.Annotations, data.Labels{
+										"Error": genericError.Error(),
+									}),
 									LatestResult:       newEvaluation(t1, eval.Error),
 									StartsAt:           t1,
 									EndsAt:             t1.Add(ResendDelay * 4),
@@ -2945,6 +2963,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									State:              eval.Pending,
 									StateReason:        eval.Error.String(),
 									Error:              datasourceError,
+									Annotations:        datasourceErrorAnnotations,
 									LatestResult:       newEvaluation(t2, eval.Error),
 									StartsAt:           t2,
 									EndsAt:             t2.Add(ResendDelay * 4),
@@ -2996,6 +3015,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									State:              eval.Alerting,
 									StateReason:        eval.Error.String(),
 									Error:              datasourceError,
+									Annotations:        datasourceErrorAnnotations,
 									LatestResult:       newEvaluationWithValues(t2, eval.Error, map[string]float64{"A": float64(-1)}),
 									StartsAt:           t2,
 									EndsAt:             t2.Add(ResendDelay * 4),
@@ -3084,6 +3104,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									State:              eval.Alerting,
 									StateReason:        eval.Error.String(),
 									Error:              datasourceError,
+									Annotations:        datasourceErrorAnnotations,
 									LatestResult:       newEvaluation(t2, eval.Error),
 									StartsAt:           t2,
 									EndsAt:             t2.Add(ResendDelay * 4),
@@ -3136,6 +3157,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									State:              eval.Alerting,
 									StateReason:        eval.Error.String(),
 									Error:              datasourceError,
+									Annotations:        datasourceErrorAnnotations,
 									LatestResult:       newEvaluationWithValues(t2, eval.Error, map[string]float64{"A": float64(-1)}),
 									StartsAt:           t2,
 									EndsAt:             t2.Add(ResendDelay * 4),
@@ -3248,6 +3270,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 								State: &State{
 									Labels:             labels["system + rule"],
 									Error:              datasourceError,
+									Annotations:        datasourceErrorAnnotations,
 									State:              eval.Normal,
 									StateReason:        ngmodels.StateReasonMissingSeries,
 									LatestResult:       newEvaluation(t1, eval.Error),
@@ -3359,6 +3382,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									State:              eval.Alerting,
 									StateReason:        eval.Error.String(),
 									Error:              datasourceError,
+									Annotations:        datasourceErrorAnnotations,
 									LatestResult:       newEvaluation(t2, eval.Error),
 									StartsAt:           t2,
 									EndsAt:             t2.Add(ResendDelay * 4),
@@ -3457,6 +3481,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									State:              eval.Alerting,
 									StateReason:        eval.Error.String(),
 									Error:              datasourceError,
+									Annotations:        datasourceErrorAnnotations,
 									LatestResult:       newEvaluation(t2, eval.Error),
 									StartsAt:           t2,
 									EndsAt:             t2.Add(ResendDelay * 4),
@@ -3560,6 +3585,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									State:              eval.Pending,
 									StateReason:        eval.Error.String(),
 									Error:              datasourceError,
+									Annotations:        datasourceErrorAnnotations,
 									LatestResult:       newEvaluation(t2, eval.Error),
 									StartsAt:           t1,
 									EndsAt:             t1.Add(ResendDelay * 4), // TODO probably it should be t1 (semantic of Normal)?
@@ -3770,9 +3796,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									EndsAt:             t2.Add(ResendDelay * 4),
 									LastEvaluationTime: t2,
 									LastSentAt:         &t1,
-									Annotations: mergeLabels(baseRule.Annotations, data.Labels{
-										"Error": genericError.Error(),
-									}),
+									Annotations:        genericErrorAnnotations,
 								},
 							},
 						},
@@ -3786,6 +3810,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									State:              eval.Alerting,
 									StateReason:        eval.Error.String(),
 									Error:              datasourceError,
+									Annotations:        datasourceErrorAnnotations,
 									LatestResult:       newEvaluation(t1, eval.Error),
 									StartsAt:           t1,
 									EndsAt:             t1.Add(ResendDelay * 4),
@@ -3803,6 +3828,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									State:              eval.Alerting,
 									StateReason:        eval.Error.String(),
 									Error:              genericError,
+									Annotations:        genericErrorAnnotations,
 									LatestResult:       newEvaluation(t2, eval.Error),
 									StartsAt:           t1,
 									EndsAt:             t2.Add(ResendDelay * 4),
