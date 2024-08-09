@@ -8,8 +8,8 @@ import { QueryToolbox } from '../query-editor-raw/QueryToolbox';
 import { Preview } from './Preview';
 import { SQLGroupByRow } from './SQLGroupByRow';
 import { SQLOrderByRow } from './SQLOrderByRow';
-import { SQLSelectRow } from './SQLSelectRow';
 import { SQLWhereRow } from './SQLWhereRow';
+import { SelectRow } from './SelectRow';
 
 interface VisualEditorProps extends QueryEditorProps {
   db: DB;
@@ -27,7 +27,7 @@ export const VisualEditor = ({ query, db, queryRowFilter, onChange, onValidate, 
     <>
       <EditorRows>
         <EditorRow>
-          <SQLSelectRow fields={state.value || []} query={query} onQueryChange={onChange} db={db} />
+          <SelectRow columns={state.value || []} query={query} onQueryChange={onChange} db={db} />
         </EditorRow>
         {queryRowFilter.filter && (
           <EditorRow>
