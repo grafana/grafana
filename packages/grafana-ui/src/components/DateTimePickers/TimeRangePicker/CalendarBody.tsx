@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { useCallback } from 'react';
 import Calendar from 'react-calendar';
-import { CalendarType } from 'react-calendar/dist/cjs/shared/types';
+// This doesn't work with esm. Fixed here: https://github.com/wojtekmaj/react-calendar/pull/946
+// import { CalendarType } from 'react-calendar/dist/cjs/shared/types';
 
 import { GrafanaTheme2, dateTimeParse, DateTime, TimeZone } from '@grafana/data';
 
@@ -12,6 +13,15 @@ import { WeekStart } from '../WeekStartPicker';
 import { adjustDateForReactCalendar } from '../utils/adjustDateForReactCalendar';
 
 import { TimePickerCalendarProps } from './TimePickerCalendar';
+
+export declare const CALENDAR_TYPES: {
+  readonly GREGORY: 'gregory';
+  readonly HEBREW: 'hebrew';
+  readonly ISLAMIC: 'islamic';
+  readonly ISO_8601: 'iso8601';
+};
+
+export type CalendarType = (typeof CALENDAR_TYPES)[keyof typeof CALENDAR_TYPES];
 
 const weekStartMap: Record<WeekStart, CalendarType> = {
   saturday: 'islamic',

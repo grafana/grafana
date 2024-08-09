@@ -1271,6 +1271,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`TimeSeries\`)", "6"],
       [0, 0, 0, "Do not re-export imported variable (\`updateLegendValues\`)", "7"]
     ],
+    "public/app/core/internationalization/constants.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`LocaleFileLoader\`)", "0"]
+    ],
     "public/app/core/navigation/GrafanaRouteError.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
@@ -7371,6 +7374,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"]
+    ],
+    "vite.config.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ]
   }`
 };

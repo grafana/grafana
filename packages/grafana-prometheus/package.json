@@ -31,9 +31,7 @@
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
     "bundle": "rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
-    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
-    "postpack": "mv package.json.bak package.json"
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
   },
   "dependencies": {
     "@emotion/css": "11.11.2",
@@ -49,7 +47,7 @@
     "@lezer/common": "1.2.1",
     "@lezer/highlight": "1.2.0",
     "@lezer/lr": "1.4.0",
-    "@prometheus-io/lezer-promql": "0.52.1",
+    "@prometheus-io/lezer-promql": "patch:@prometheus-io/lezer-promql@npm%3A0.52.1#~/.yarn/patches/@prometheus-io-lezer-promql-npm-0.52.1-8bed0ac41b.patch",
     "@reduxjs/toolkit": "2.2.7",
     "d3": "7.9.0",
     "date-fns": "3.6.0",

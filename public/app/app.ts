@@ -110,11 +110,14 @@ import { configureStore } from './store/configureStore';
 // @ts-ignore
 _.move = arrayMove;
 
-// import symlinked extensions
-const extensionsIndex = require.context('.', true, /extensions\/index.ts/);
-const extensionsExports = extensionsIndex.keys().map((key) => {
-  return extensionsIndex(key);
-});
+type ExtensionExports = {
+  init: () => void;
+  addExtensionReducers: () => void;
+};
+
+// import symlinked extensions (use glob so vite doesn't error if no files are found)
+const extensions: Record<string, ExtensionExports> = import.meta.glob('./extensions/index.ts', { eager: true });
+const extensionsExports = Object.values(extensions);
 
 if (process.env.NODE_ENV === 'development') {
   initDevFeatures();
@@ -133,6 +136,7 @@ export class GrafanaApp {
 
       setBackendSrv(backendSrv);
       initEchoSrv();
+      // TODO: Vite cannot locate this Icon files right now.
       initIconCache();
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');

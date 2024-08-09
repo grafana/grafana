@@ -1,8 +1,6 @@
-import { BettererFileTest } from '@betterer/betterer';
-import { promises as fs } from 'fs';
-import { ESLint, Linter } from 'eslint';
-import path from 'path';
-import { glob } from 'glob';
+const { BettererFileTest } = require('@betterer/betterer');
+const fs = require('fs/promises');
+const { ESLint } = require('eslint');
 
 // Why are we ignoring these?
 // They're all deprecated/being removed so doesn't make sense to fix types
@@ -13,7 +11,7 @@ const eslintPathsToIgnore = [
 ];
 
 // Avoid using functions that report the position of the issues, as this causes a lot of merge conflicts
-export default {
+module.exports = {
   'better eslint': () =>
     countEslintErrors()
       .include('**/*.{ts,tsx}')
@@ -55,7 +53,7 @@ function countUndocumentedStories() {
  *  Generic regexp pattern matcher, similar to @betterer/regexp.
  *  The only difference is that the positions of the errors are not reported, as this may cause a lot of merge conflicts.
  */
-function regexp(pattern: RegExp, issueMessage: string) {
+function regexp(pattern, issueMessage) {
   return new BettererFileTest(async (filePaths, fileTestResult) => {
     await Promise.all(
       filePaths.map(async (filePath) => {
@@ -87,7 +85,7 @@ function countEslintErrors() {
     // this is by far the slowest part of this code. It takes eslint about 2 seconds just to find the config
     const baseConfig = await cli.calculateConfigForFile(filePaths[0]);
 
-    const baseRules: Partial<Linter.RulesRecord> = {
+    const baseRules = {
       '@emotion/syntax-preference': [2, 'object'],
       '@typescript-eslint/no-explicit-any': 'error',
       '@grafana/no-aria-label-selectors': 'error',
@@ -105,7 +103,7 @@ function countEslintErrors() {
       ],
     };
 
-    const config: Linter.Config = {
+    const config = {
       ...baseConfig,
       rules: baseRules,
 

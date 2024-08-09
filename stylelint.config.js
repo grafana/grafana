@@ -1,4 +1,4 @@
-module.exports = {
+const config = {
   extends: ['stylelint-config-sass-guidelines'],
   ignoreFiles: ['**/node_modules/**/*.scss'],
   rules: {
@@ -38,3 +38,5 @@ module.exports = {
     'value-no-vendor-prefix': null,
   },
 };
+
+export default config;

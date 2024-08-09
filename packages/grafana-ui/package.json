@@ -38,9 +38,7 @@
     "storybook": "storybook dev -p 9001 -c .storybook --no-open",
     "storybook:build": "storybook build -o ./dist/storybook -c .storybook",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "generate-icons-bundle-cache-file": "node ./scripts/generate-icon-bundle.js",
-    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
-    "postpack": "mv package.json.bak package.json"
+    "generate-icons-bundle-cache-file": "node ./scripts/generate-icon-bundle.js"
   },
   "browserslist": [
     "defaults",
@@ -66,7 +64,7 @@
     "@types/jquery": "3.5.30",
     "@types/lodash": "4.17.7",
     "@types/react-table": "7.7.20",
-    "ansicolor": "1.1.100",
+    "ansicolor": "patch:ansicolor@npm%3A1.1.100#~/.yarn/patches/ansicolor-npm-1.1.100-32b8c891ec.patch",
     "calculate-size": "1.1.1",
     "classnames": "2.5.1",
     "d3": "7.9.0",

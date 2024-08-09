@@ -101,6 +101,7 @@ type Cfg struct {
 	AppSubURL         string
 	InstanceName      string
 	ServeFromSubPath  bool
+	FrontendDevServer string
 	StaticRootPath    string
 	Protocol          Scheme
 	SocketGid         int
@@ -1895,6 +1896,8 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 		return fmt.Errorf("TLS version not configured correctly:%v, allowed values are TLS1.2 and TLS1.3", cfg.MinTLSVersion)
 	}
 
+	// TODO: sanitize this for trailing slashes
+	cfg.FrontendDevServer = valueAsString(server, "frontend_dev_server", "")
 	cfg.Domain = valueAsString(server, "domain", "localhost")
 	cfg.HTTPAddr = valueAsString(server, "http_addr", DefaultHTTPAddr)
 	cfg.HTTPPort = valueAsString(server, "http_port", "3000")

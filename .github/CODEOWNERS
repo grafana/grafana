@@ -366,6 +366,7 @@
 /nx.json @grafana/frontend-ops
 /project.json @grafana/frontend-ops
 /tsconfig.json @grafana/frontend-ops
+/tsconfig.test.json @grafana/frontend-ops
 /.editorconfig @grafana/frontend-ops
 /.eslintignore @grafana/frontend-ops
 /.gitattributes @grafana/frontend-ops
@@ -379,14 +380,14 @@
 /.prettierrc.js @grafana/frontend-ops
 /.eslintrc @grafana/frontend-ops
 /.vim @zoltanbedi
-/jest.config.js @grafana/frontend-ops
+/jest.config.cjs @grafana/frontend-ops
 /latest.json @grafana/frontend-ops
 /stylelint.config.js @grafana/frontend-ops
 /tools/ @grafana/frontend-ops
 /lefthook.yml @grafana/frontend-ops
 /lefthook.rc @grafana/frontend-ops
 /.husky/pre-commit @grafana/frontend-ops
-/cypress.config.js @grafana/grafana-frontend-platform
+/cypress.config.cjs @grafana/grafana-frontend-platform
 /.levignore.js @grafana/plugins-platform-frontend
 playwright.config.ts @grafana/plugins-platform-frontend
 
@@ -521,6 +522,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/dev.ts @grafana/frontend-ops
 /public/app/core/utils/metrics.ts @grafana/plugins-platform-frontend
 /public/app/index.ts @grafana/frontend-ops
+/public/app/jquery.ts @grafana/frontend-ops
 /public/app/AppWrapper.tsx @grafana/frontend-ops
 /public/app/partials/ @grafana/grafana-frontend-platform
 
@@ -541,7 +543,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /scripts/import_many_dashboards.sh @torkelo
 /scripts/mixin-check.sh @bergquist
 /scripts/openapi3/ @grafana/grafana-operator-experience-squad
-/scripts/prepare-packagejson.js @grafana/frontend-ops
 /scripts/protobuf-check.sh @grafana/plugins-platform-backend
 /scripts/stripnulls.sh @grafana/grafana-as-code
 /scripts/tag_release.sh @grafana/grafana-release-guild
@@ -564,7 +565,8 @@ playwright.config.ts @grafana/plugins-platform-frontend
 .pa11yci-pr.conf.js @grafana/grafana-frontend-platform
 .betterer.results @grafanabot
 .betterer.results.json @grafanabot
-.betterer.ts @grafana/grafana-frontend-platform
+.betterer.cjs @grafana/grafana-frontend-platform
+vite.config.ts @grafana/frontend-ops
 
 # @grafana/ui component documentation
 *.mdx @grafana/plugins-platform-frontend

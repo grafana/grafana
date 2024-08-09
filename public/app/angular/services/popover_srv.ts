@@ -1,9 +1,10 @@
 import { extend } from 'lodash';
-// @ts-ignore
-import Drop from 'tether-drop';
 
 import { GrafanaRootScope } from 'app/angular/GrafanaCtrl';
 import coreModule from 'app/angular/core_module';
+
+// @ts-ignore
+import Drop from '../../../vendor/tether-drop';
 
 coreModule.service('popoverSrv', ['$compile', '$rootScope', '$timeout', popoverSrv]);
 
@@ -51,6 +52,7 @@ function popoverSrv(this: any, $compile: any, $rootScope: GrafanaRootScope, $tim
     $compile(contentElement)(scope);
 
     $timeout(() => {
+      // @ts-ignore
       drop = new Drop({
         target: options.element,
         content: contentElement,
