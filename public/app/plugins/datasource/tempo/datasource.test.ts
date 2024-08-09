@@ -1192,10 +1192,7 @@ describe('should provide functionality for ad-hoc filters', () => {
       },
     };
     const response = await datasource.getTagValues(options);
-    expect(response).toEqual([
-      { text: { type: 'value1', value: 'value1', label: 'value1' } },
-      { text: { type: 'value2', value: 'value2', label: 'value2' } },
-    ]);
+    expect(response).toEqual([{ text: 'value1' }, { text: 'value2' }]);
   });
 });
 
