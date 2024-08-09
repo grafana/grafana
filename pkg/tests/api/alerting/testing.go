@@ -839,7 +839,7 @@ func (a apiClient) GetTimeIntervalByNameWithStatus(t *testing.T, name string) (a
 	return sendRequest[apimodels.GettableTimeIntervals](t, req, http.StatusOK)
 }
 
-func (a apiClient) CreateReceiverWithStatus(t *testing.T, receiver apimodels.EmbeddedContactPoint) (apimodels.EmbeddedContactPoint, int, string) {
+func (a apiClient) CreateReceiverWithStatus(t *testing.T, receiver apimodels.EmbeddedContactPoint, skipProvisioning bool) (apimodels.EmbeddedContactPoint, int, string) {
 	t.Helper()
 
 	buf := bytes.Buffer{}
@@ -849,15 +849,18 @@ func (a apiClient) CreateReceiverWithStatus(t *testing.T, receiver apimodels.Emb
 
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/v1/provisioning/contact-points", a.url), &buf)
 	req.Header.Add("Content-Type", "application/json")
+	if skipProvisioning {
+		req.Header.Add("X-Disable-Provenance", "true")
+	}
 	require.NoError(t, err)
 
 	return sendRequest[apimodels.EmbeddedContactPoint](t, req, http.StatusAccepted)
 }
 
-func (a apiClient) EnsureReceiver(t *testing.T, receiver apimodels.EmbeddedContactPoint) {
+func (a apiClient) EnsureReceiver(t *testing.T, receiver apimodels.EmbeddedContactPoint, skipProvisioning bool) {
 	t.Helper()
 
-	_, status, body := a.CreateReceiverWithStatus(t, receiver)
+	_, status, body := a.CreateReceiverWithStatus(t, receiver, skipProvisioning)
 	require.Equalf(t, http.StatusAccepted, status, body)
 }
 

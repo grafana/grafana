@@ -1858,7 +1858,7 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 	err = json.Unmarshal(testDataRaw, &d)
 	require.NoError(t, err)
 
-	apiClient.EnsureReceiver(t, d.Receiver)
+	apiClient.EnsureReceiver(t, d.Receiver, false)
 	apiClient.EnsureMuteTiming(t, d.TimeInterval)
 
 	t.Run("create should fail if receiver does not exist", func(t *testing.T) {
