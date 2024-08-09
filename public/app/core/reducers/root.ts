@@ -2,6 +2,7 @@ import { ReducersMapObject } from '@reduxjs/toolkit';
 import { AnyAction, combineReducers } from 'redux';
 
 import sharedReducers from 'app/core/reducers';
+import appSidecarSlice from 'app/core/reducers/appSidecar';
 import ldapReducers from 'app/features/admin/state/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
 import apiKeysReducers from 'app/features/api-keys/state/reducers';
@@ -61,6 +62,7 @@ const rootReducers = {
   [cloudMigrationAPI.reducerPath]: cloudMigrationAPI.reducer,
   [queryLibraryApi.reducerPath]: queryLibraryApi.reducer,
   [userPreferencesAPI.reducerPath]: userPreferencesAPI.reducer,
+  [appSidecarSlice.reducerPath]: appSidecarSlice.reducer,
 };
 
 const addedReducers = {};

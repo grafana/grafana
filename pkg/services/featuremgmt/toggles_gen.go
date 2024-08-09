@@ -730,4 +730,8 @@ const (
 	// FlagPrometheusAzureOverrideAudience
 	// Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
+
+	// FlagAppSidecar
+	// Enable the app sidecar feature that allows rendering 2 apps at the same time
+	FlagAppSidecar = "appSidecar"
 )
