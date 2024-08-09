@@ -95,20 +95,6 @@ Tempo data source set up starts at 4:58 in the video.
 
 {{< youtube id="cqHO0oYW6Ic" start="298" >}}
 
-## Name and default
-
-Use the **Name** field to specify the name used for the data source in panels, queries, and Explore.
-
-Activate **Default** if you want the data source to be pre-selected for new panels.
-
-## Connection
-
-The required **Connection** field provides the connection point for your Tempo instance.
-
-1. Enter the **URL** of the Grafana Tempo instance, for example, `https://example.com:4100`.
-
-1. Select **Save & test** to preserve your changes.
-
 ## Authentication
 
 Use this section to select an authentication method to access the data source.
