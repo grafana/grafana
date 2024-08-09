@@ -19,10 +19,10 @@ export const NumberInput = ({ title, onChange, min, max, placeholder, currentOpt
     <Field label={title}>
       <Input
         type="number"
-        value={value}
+        defaultValue={value}
         onBlur={(e) => {
-          setValue(e.target.value);
-          onChange(e.target.value);
+          setValue(e.currentTarget.value);
+          onChange(e.currentTarget.value);
         }}
         min={min}
         max={max}

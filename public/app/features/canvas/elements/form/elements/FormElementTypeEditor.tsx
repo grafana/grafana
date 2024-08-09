@@ -154,11 +154,11 @@ export const FormElementTypeEditor = ({ value, context, onChange, item }: Props)
   );
 
   const onNumberInputTitleChange = useCallback(
-    (newTitle: string, id: string) => {
+    (newLabel: string, id: string) => {
       const newElements: FormChild[] = value.map((child) => {
-        const key = Object.keys(child?.currentOption![0])[0];
         if (child.id === id) {
-          return { ...child, title: newTitle, currentOption: [{ newTitle: child.currentOption![0][key] }] };
+          const keys = Object.keys(child?.currentOption![0]);
+          return { ...child, title: newLabel, currentOption: [{ [newLabel]: child.currentOption![0][keys[0]] }] };
         }
         return child;
       });
