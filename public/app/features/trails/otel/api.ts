@@ -6,7 +6,7 @@ import { OtelResponse, LabelResponse } from './types';
 
 /** This ensures we can join on a single series target*/
 const OTEL_TARGET_INFO_QUERY = 'count(target_info{}) by (job, instance)';
-const OTEL_RESOURCE_EXCLUDED_FILTERS = ['__name__']; // name is handled by metric search metrics bar
+const OTEL_RESOURCE_EXCLUDED_FILTERS = ['__name__', 'deployment_environment']; // name is handled by metric search metrics bar
 
 /**
  * Query the DS for target_info matching job and instance.
@@ -29,7 +29,7 @@ export async function getOtelResources(
   const params: Record<string, string | number> = {
     start,
     end,
-    'match[]': '{__name__=~".*target_info.*"}',
+    'match[]': '{__name__="target_info"}',
   };
 
   const response = await getBackendSrv().get<LabelResponse>(url, params, 'explore-metrics-otel-resources');
@@ -110,4 +110,34 @@ export async function isOtelStandardization(
   );
 
   return totalOtelResourcesAmount === responseStandard.data.result.length;
+}
+
+/**
+ * Query the DS for deployment environment label values.
+ *
+ * @param dataSourceUid
+ * @param timeRange
+ * @returns string[], values for the deployment_environment label
+ */
+export async function getDeploymentEnvironments(dataSourceUid: string, timeRange: RawTimeRange): Promise<string[]> {
+  const start = getPrometheusTime(timeRange.from, false);
+  const end = getPrometheusTime(timeRange.to, true);
+
+  const url = `/api/datasources/uid/${dataSourceUid}/resources/api/v1/label/deployment_environment/values`;
+  const params: Record<string, string | number> = {
+    start,
+    end,
+    'match[]': '{__name__="target_info"}',
+  };
+
+  const response = await getBackendSrv().get<LabelResponse>(
+    url,
+    params,
+    'explore-metrics-otel-resources-deployment-env'
+  );
+
+  // exclude __name__ or deployment_environment or previously chosen filters
+  const resources = response.data;
+
+  return resources;
 }

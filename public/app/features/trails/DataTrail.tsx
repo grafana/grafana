@@ -13,6 +13,7 @@ import {
 import { getAppEvents, locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
+  CustomVariable,
   DataSourceVariable,
   getUrlSyncManager,
   SceneComponentProps,
@@ -44,7 +45,7 @@ import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { reportChangeInLabelFilters } from './interactions';
-import { getOtelResources, isOtelStandardization, totalOtelResources } from './otel/api';
+import { getDeploymentEnvironments, getOtelResources, isOtelStandardization, totalOtelResources } from './otel/api';
 import { OtelTargetType } from './otel/types';
 import {
   MetricSelectedEvent,
@@ -52,6 +53,7 @@ import {
   VAR_DATASOURCE,
   VAR_DATASOURCE_EXPR,
   VAR_FILTERS,
+  VAR_OTEL_DEPLOYMENT_ENV,
   VAR_OTEL_RESOURCES,
 } from './shared';
 import { getMetricName, getTrailFor } from './utils';
@@ -148,18 +150,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         if (adhocVariable instanceof AdHocFiltersVariable && otelResourcesVariable instanceof AdHocFiltersVariable) {
           adhocVariable?.setState({ filters: [] });
           otelResourcesVariable?.setState({ filters: [], hide: VariableHide.hideVariable });
-        }
-      }
-
-      if (name === VAR_OTEL_RESOURCES) {
-        // if the variable is the otel deployment_environment
-        // filter with no other filters
-        // then we load all the other resources
-        const value = variable.getValue()?.toLocaleString();
-        // additional filters will be a comma separated list
-        const isDeploymentEnvironment = value?.includes('deployment_environment');
-        if (isDeploymentEnvironment) {
-          this.loadOtelResources();
         }
       }
     },
@@ -279,40 +269,58 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     const trail = getTrailFor(this);
 
     const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, this);
-
+    const otelDepEnvVariable = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, this);
     // get the time range
     const timeRange: RawTimeRange | undefined = trail.state.$timeRange?.state;
 
-    if (timeRange && otelResourcesVariable instanceof AdHocFiltersVariable) {
+    if (
+      timeRange &&
+      otelResourcesVariable instanceof AdHocFiltersVariable &&
+      otelDepEnvVariable instanceof CustomVariable
+    ) {
       const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
       const isStandard = await isOtelStandardization(datasourceUid, timeRange);
 
       if (isStandard) {
-        if (otelResourcesVariable?.state.filters.length === 0) {
-          // load the first var, deployment_environment
-          otelResourcesVariable?.setState({
-            defaultKeys: [{ text: 'deployment_environment' }],
-            hide: VariableHide.hideLabel,
-          });
-        } else {
-          // there are already otel filters so we load the regular filters
-          const excludedFilters = getOtelFilterKeys(otelResourcesVariable);
-          const resources = await getOtelResources(datasourceUid, timeRange, excludedFilters);
-          if (resources.length === 0) {
-            return;
-          }
-
-          const otelLabels = resources.map((resource) => {
-            return { text: resource };
-          });
-
-          this.setState({ otelResources: resources });
-
-          otelResourcesVariable?.setState({
-            defaultKeys: otelLabels,
-            hide: VariableHide.hideLabel,
-          });
+        const excludedFilters = getOtelFilterKeys(otelResourcesVariable);
+        const resources = await getOtelResources(datasourceUid, timeRange, excludedFilters);
+        if (resources.length === 0) {
+          return;
         }
+
+        const otelLabels = resources.map((resource) => {
+          return { text: resource };
+        });
+
+        this.setState({ otelResources: resources });
+
+        otelResourcesVariable?.setState({
+          defaultKeys: otelLabels,
+          hide: VariableHide.hideLabel,
+        });
+
+        const deployment_environments = await getDeploymentEnvironments(datasourceUid, timeRange);
+
+        let varQuery = '';
+        // let allValue = ''
+        const options = deployment_environments.map((env) => {
+          varQuery += env + ',';
+          // varQuery += env + '|';
+          return { value: env, label: env };
+        });
+
+        otelDepEnvVariable?.setState({
+          // cannot have an undefined custom value
+          // this breaks everything
+          // create an issue for this
+          value: options[0].value,
+          query: varQuery,
+          options: options,
+          hide: VariableHide.dontHide,
+          // this doesn;t work either
+          // create issue
+          // defaultToAll: false,
+        });
       } else {
         const appEvents = getAppEvents();
         appEvents.publish({
@@ -370,14 +378,24 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
     useEffect(() => {
       if (hasOtelResources) {
-        const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, model);
+        // const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, model);
 
-        const noOtelFilters = getOtelFilterKeys(otelResourcesVariable).length === 0;
+        // const noOtelFilters = getOtelFilterKeys(otelResourcesVariable).length === 0;
         if (useOtelExperience) {
-          if (noOtelFilters) {
-            model.checkOtelStandardization();
-          } else {
-            model.loadOtelResources();
+          model.checkOtelStandardization();
+        } else {
+          const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, model);
+          const otelDepEnvVariable = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, model);
+
+          if (otelResourcesVariable instanceof AdHocFiltersVariable && otelDepEnvVariable instanceof CustomVariable) {
+            otelResourcesVariable.setState({
+              defaultKeys: [],
+              hide: VariableHide.hideVariable,
+            });
+
+            otelDepEnvVariable.setState({
+              hide: VariableHide.hideVariable,
+            });
           }
         }
       }
@@ -421,13 +439,22 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
         value: initialDS,
         pluginId: 'prometheus',
       }),
+      new CustomVariable({
+        name: VAR_OTEL_DEPLOYMENT_ENV,
+        hide: VariableHide.hideVariable,
+        value: undefined,
+        placeholder: 'Select',
+        isMulti: true,
+        includeAll: true,
+        defaultToAll: false,
+        noValueOnClear: true,
+      }),
       new AdHocFiltersVariable({
         name: VAR_OTEL_RESOURCES,
-        addFilterButtonText: 'Otel resources',
+        addFilterButtonText: 'Add OTel resources',
         datasource: trailDS,
         hide: VariableHide.hideVariable,
         layout: 'vertical',
-        filters: initialFilters ?? [],
         defaultKeys: [],
       }),
       new AdHocFiltersVariable({
