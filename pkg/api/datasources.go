@@ -54,7 +54,7 @@ func (hs *HTTPServer) GetDataSources(c *contextmodel.ReqContext) response.Respon
 		return response.Error(http.StatusInternalServerError, "Failed to query datasources", err)
 	}
 
-	filtered, err := hs.dsGuardian.New(c.SignedInUser.OrgID, c.SignedInUser).FilterDatasourcesByQueryPermissions(dataSources)
+	filtered, err := hs.dsGuardian.New(c.SignedInUser.OrgID, c.SignedInUser).FilterDatasourcesByReadPermissions(dataSources)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to query datasources", err)
 	}
