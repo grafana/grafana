@@ -87,10 +87,10 @@ export async function fetchSelectedScopes(treeScopes: TreeScope[]): Promise<Sele
   }, []);
 }
 
-export async function fetchDashboards(scopes: Scope[]): Promise<ScopeDashboardBinding[]> {
+export async function fetchDashboards(scopeNames: string[]): Promise<ScopeDashboardBinding[]> {
   try {
     const response = await getBackendSrv().get<{ items: ScopeDashboardBinding[] }>(dashboardsEndpoint, {
-      scope: scopes.map(({ metadata: { name } }) => name),
+      scope: scopeNames,
     });
 
     return response?.items ?? [];
@@ -99,8 +99,8 @@ export async function fetchDashboards(scopes: Scope[]): Promise<ScopeDashboardBi
   }
 }
 
-export async function fetchSuggestedDashboards(scopes: Scope[]): Promise<SuggestedDashboard[]> {
-  const items = await fetchDashboards(scopes);
+export async function fetchSuggestedDashboards(scopeNames: string[]): Promise<SuggestedDashboard[]> {
+  const items = await fetchDashboards(scopeNames);
 
   return Object.values(
     items.reduce<Record<string, SuggestedDashboard>>((acc, item) => {

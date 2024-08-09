@@ -1,11 +1,13 @@
 import { screen } from '@testing-library/react';
-import { render } from 'test/test-utils';
+import { KBarProvider } from 'kbar';
+import { getWrapper, render } from 'test/test-utils';
 
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
 import {
   AdHocFiltersVariable,
   behaviors,
   GroupByVariable,
+  sceneGraph,
   SceneGridItem,
   SceneGridLayout,
   SceneQueryRunner,
@@ -13,10 +15,18 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
+import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
+import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
 import { DashboardControls } from 'app/features/dashboard-scene/scene//DashboardControls';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { configureStore } from 'app/store/configureStore';
 
-import * as api from './api';
+import { ScopesFacade } from './ScopesFacadeScene';
+import { scopesDashboardsScene, scopesSelectorScene } from './instance';
+import { getInitialDashboardsState } from './internal/ScopesDashboardsScene';
+import { initialSelectorState } from './internal/ScopesSelectorScene';
+import * as api from './internal/api';
+import { DASHBOARDS_OPENED_KEY } from './internal/const';
 
 export const mocksScopes: Scope[] = [
   {
@@ -321,12 +331,12 @@ const selectors = {
     expand: (nodeId: string, type: 'result' | 'persisted') => `scopes-tree-${type}-${nodeId}-expand`,
     title: (nodeId: string, type: 'result' | 'persisted') => `scopes-tree-${type}-${nodeId}-title`,
   },
-  filters: {
-    input: 'scopes-filters-input',
-    container: 'scopes-filters-container',
-    loading: 'scopes-filters-loading',
-    apply: 'scopes-filters-apply',
-    cancel: 'scopes-filters-cancel',
+  selector: {
+    input: 'scopes-selector-input',
+    container: 'scopes-selector-container',
+    loading: 'scopes-selector-loading',
+    apply: 'scopes-selector-apply',
+    cancel: 'scopes-selector-cancel',
   },
   dashboards: {
     expand: 'scopes-dashboards-expand',
@@ -341,15 +351,13 @@ const selectors = {
   },
 };
 
-export const getFiltersInput = () => screen.getByTestId<HTMLInputElement>(selectors.filters.input);
-export const queryFiltersApply = () => screen.queryByTestId(selectors.filters.apply);
-export const getFiltersApply = () => screen.getByTestId(selectors.filters.apply);
-export const getFiltersCancel = () => screen.getByTestId(selectors.filters.cancel);
+export const getSelectorInput = () => screen.getByTestId<HTMLInputElement>(selectors.selector.input);
+export const querySelectorApply = () => screen.queryByTestId(selectors.selector.apply);
+export const getSelectorApply = () => screen.getByTestId(selectors.selector.apply);
+export const getSelectorCancel = () => screen.getByTestId(selectors.selector.cancel);
 
-export const queryDashboardsExpand = () => screen.queryByTestId(selectors.dashboards.expand);
 export const getDashboardsExpand = () => screen.getByTestId(selectors.dashboards.expand);
 export const queryDashboardsContainer = () => screen.queryByTestId(selectors.dashboards.container);
-export const getDashboardsContainer = () => screen.getByTestId(selectors.dashboards.container);
 export const queryDashboardsSearch = () => screen.queryByTestId(selectors.dashboards.search);
 export const getDashboardsSearch = () => screen.getByTestId<HTMLInputElement>(selectors.dashboards.search);
 export const queryAllDashboard = (uid: string) => screen.queryAllByTestId(selectors.dashboards.dashboard(uid));
@@ -416,7 +424,12 @@ export function buildTestScene(overrides: Partial<DashboardScene> = {}) {
       timeZone: 'browser',
     }),
     controls: new DashboardControls({}),
-    $behaviors: [new behaviors.CursorSync({})],
+    $behaviors: [
+      new behaviors.CursorSync({}),
+      new ScopesFacade({
+        handler: (facade) => sceneGraph.getTimeRange(facade).onRefresh(),
+      }),
+    ],
     $variables: new SceneVariableSet({
       variables: [
         new AdHocFiltersVariable({
@@ -451,5 +464,31 @@ export function buildTestScene(overrides: Partial<DashboardScene> = {}) {
 }
 
 export function renderDashboard(dashboardScene: DashboardScene) {
-  return render(<dashboardScene.Component model={dashboardScene} />);
+  const store = configureStore();
+  const chrome = new AppChromeService();
+  chrome.update({ chromeless: false });
+  const Wrapper = getWrapper({ store, renderWithRouter: true, grafanaContext: { chrome } });
+
+  return render(
+    <KBarProvider>
+      <Wrapper>
+        <AppChrome>
+          <dashboardScene.Component model={dashboardScene} />
+        </AppChrome>
+      </Wrapper>
+    </KBarProvider>,
+    {
+      historyOptions: {
+        initialEntries: ['/'],
+      },
+    }
+  );
+}
+
+export function resetScenes() {
+  scopesSelectorScene?.setState(initialSelectorState);
+
+  localStorage.removeItem(DASHBOARDS_OPENED_KEY);
+
+  scopesDashboardsScene?.setState(getInitialDashboardsState());
 }
