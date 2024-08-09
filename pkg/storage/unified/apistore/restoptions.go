@@ -89,7 +89,9 @@ func NewRESTOptionsGetterForFile(path string,
 	), nil
 }
 
-func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
+// TODO: The RESTOptionsGetter interface added a new example object parameter to help determine the default
+// storage version for a resource. This is not currently used in this implementation.
+func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runtime.Object) (generic.RESTOptions, error) {
 	storageConfig := &storagebackend.ConfigForResource{
 		Config: storagebackend.Config{
 			Type:                      "resource",
