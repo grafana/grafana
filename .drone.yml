@@ -397,7 +397,7 @@ steps:
   name: wire-install
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
-  - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifer
+  - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
     -short -covermode=atomic -timeout=5m
   depends_on:
   - wire-install
@@ -1776,7 +1776,7 @@ steps:
   name: wire-install
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
-  - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifer
+  - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
     -short -covermode=atomic -timeout=5m
   depends_on:
   - wire-install
@@ -2974,7 +2974,7 @@ steps:
   name: wire-install
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
-  - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifer
+  - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
     -short -covermode=atomic -timeout=5m
   depends_on:
   - wire-install
@@ -4360,7 +4360,7 @@ steps:
   name: wire-install
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
-  - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifer
+  - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
     -short -covermode=atomic -timeout=5m
   depends_on:
   - wire-install
@@ -4782,7 +4782,7 @@ steps:
   name: wire-install
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
-  - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifer
+  - ./scripts/go-workspace/test-includes.sh | xargs go test -tags requires_buildifier
     -short -covermode=atomic -timeout=5m
   depends_on:
   - wire-install
@@ -5207,7 +5207,7 @@ steps:
   image: golang:1.22.4-windowsservercore-1809
   name: wire-install
 - commands:
-  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifier -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: golang:1.22.4-windowsservercore-1809
@@ -6079,6 +6079,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: fa7d6043308457e09a7d952ef254d086eae29793c42de5139fde06f9cb574670
+hmac: 6f24dc66b5c71dacfcd1a7bd8e42341a0f564e718605ccea252a2d68ff4b7918
 
 ...
