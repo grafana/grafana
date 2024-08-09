@@ -367,7 +367,7 @@ func (s *Service) updateSnapshotWithRetries(ctx context.Context, cmd cloudmigrat
 			return retryer.FuncFailure, nil
 		}
 		return retryer.FuncComplete, nil
-	}, 10, time.Millisecond*10, time.Second*5); err != nil {
+	}, maxRetries, time.Millisecond*10, time.Second*5); err != nil {
 		s.log.Error("failed to update snapshot status", "snapshotUid", cmd.UID, "status", cmd.Status, "num_resources", len(cmd.Resources), "error", err.Error())
 		return fmt.Errorf("failed to update snapshot status: %w", err)
 	}
