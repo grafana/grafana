@@ -208,6 +208,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: () => <NavLandingPage navId="cfg/access" />,
     },
     {
+      path: '/admin/access/groupsync',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "GroupSync" */ 'app/extensions/groupsync/GroupSyncEditor')
+      ),
+    },
+    {
       path: '/org',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "OrgDetailsPage" */ '../features/org/OrgDetailsPage')

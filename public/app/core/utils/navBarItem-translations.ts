@@ -262,6 +262,8 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.api-keys.subtitle', 'Manage and create API keys that are used to interact with Grafana HTTP APIs');
     case 'serviceaccounts':
       return t('nav.service-accounts.subtitle', 'Use service accounts to run automated workloads in Grafana');
+    case 'groupsync':
+      return t('nav.groupsync.subtitle', 'Manage mappings of Identity Provider groups to Grafana user attributes');
     case 'global-users':
       return t('nav.global-users.subtitle', 'Manage users in Grafana');
     case 'global-orgs':
