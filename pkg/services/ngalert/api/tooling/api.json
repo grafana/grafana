@@ -2960,7 +2960,8 @@
      "type": "string"
     },
     "for": {
-     "$ref": "#/definitions/Duration"
+     "format": "duration",
+     "type": "string"
     },
     "id": {
      "format": "int64",
@@ -4575,6 +4576,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup",
     "type": "object"

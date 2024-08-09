@@ -8482,7 +8482,8 @@
             "type": "string"
           },
           "for": {
-            "$ref": "#/components/schemas/Duration"
+            "format": "duration",
+            "type": "string"
           },
           "id": {
             "format": "int64",
@@ -12222,6 +12223,7 @@
         "type": "object"
       },
       "alertGroups": {
+        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
