@@ -6,4 +6,6 @@ package v0alpha1
 
 type ReceiverExpansion interface{}
 
+type TemplateGroupExpansion interface{}
+
 type TimeIntervalExpansion interface{}
