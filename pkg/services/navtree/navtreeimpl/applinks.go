@@ -269,7 +269,7 @@ func (s *ServiceImpl) hasAccessToInclude(c *contextmodel.ReqContext, pluginID st
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	return func(include *plugins.Includes) bool {
 		useRBAC := s.features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) && include.RequiresRBACAction()
-		if useRBAC && !hasAccess(pluginaccesscontrol.GetPluginRouteEvaluator(pluginID, include.Action)) {
+		if useRBAC && !hasAccess(pluginaccesscontrol.GetPluginRouteEvaluator(s.permRegistry, s.log, pluginID, include.Action)) {
 			s.log.Debug("plugin include is covered by RBAC, user doesn't have access",
 				"plugin", pluginID,
 				"include", include.Name)

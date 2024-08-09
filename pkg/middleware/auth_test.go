@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	testreg "github.com/grafana/grafana/pkg/services/accesscontrol/permreg/test"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -204,7 +205,7 @@ func TestRoleAppPluginAuth(t *testing.T) {
 					logger := &logtest.Fake{}
 					ac := &actest.FakeAccessControl{}
 
-					sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, ps, features, logger), func(c *contextmodel.ReqContext) {
+					sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, ps, features, logger, testreg.ProvidePermissionRegistry()), func(c *contextmodel.ReqContext) {
 						c.JSON(http.StatusOK, map[string]interface{}{})
 					})
 					sc.fakeReq("GET", path).exec()
@@ -226,7 +227,7 @@ func TestRoleAppPluginAuth(t *testing.T) {
 		features := featuremgmt.WithFeatures()
 		logger := &logtest.Fake{}
 		ac := &actest.FakeAccessControl{}
-		sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, &pluginstore.FakePluginStore{}, features, logger), func(c *contextmodel.ReqContext) {
+		sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, &pluginstore.FakePluginStore{}, features, logger, testreg.ProvidePermissionRegistry()), func(c *contextmodel.ReqContext) {
 			c.JSON(http.StatusOK, map[string]interface{}{})
 		})
 		sc.fakeReq("GET", "/a/test-app/test").exec()
@@ -255,7 +256,7 @@ func TestRoleAppPluginAuth(t *testing.T) {
 					},
 				},
 			},
-		}), features, logger), func(c *contextmodel.ReqContext) {
+		}), features, logger, testreg.ProvidePermissionRegistry()), func(c *contextmodel.ReqContext) {
 			c.JSON(http.StatusOK, map[string]interface{}{})
 		})
 		sc.fakeReq("GET", "/a/test-app/notExistingPath").exec()
@@ -323,7 +324,7 @@ func TestRoleAppPluginAuth(t *testing.T) {
 					},
 				})
 
-				sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, ps, features, logger), func(c *contextmodel.ReqContext) {
+				sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, ps, features, logger, testreg.ProvidePermissionRegistry()), func(c *contextmodel.ReqContext) {
 					c.JSON(http.StatusOK, map[string]interface{}{})
 				})
 				sc.fakeReq("GET", path).exec()

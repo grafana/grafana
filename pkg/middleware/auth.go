@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -102,7 +103,7 @@ func CanAdminPlugins(cfg *setting.Cfg, accessControl ac.AccessControl) func(c *c
 }
 
 func RoleAppPluginAuth(accessControl ac.AccessControl, ps pluginstore.Store, features featuremgmt.FeatureToggles,
-	logger log.Logger) func(c *contextmodel.ReqContext) {
+	logger log.Logger, permRegistry permreg.PermissionRegistry) func(c *contextmodel.ReqContext) {
 	return func(c *contextmodel.ReqContext) {
 		pluginID := web.Params(c.Req)[":id"]
 		p, exists := ps.Plugin(c.Req.Context(), pluginID)
@@ -127,7 +128,7 @@ func RoleAppPluginAuth(accessControl ac.AccessControl, ps pluginstore.Store, fea
 
 			if normalizeIncludePath(u.Path) == path {
 				useRBAC := features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) && i.RequiresRBACAction()
-				if useRBAC && !hasAccess(pluginaccesscontrol.GetPluginRouteEvaluator(pluginID, i.Action)) {
+				if useRBAC && !hasAccess(pluginaccesscontrol.GetPluginRouteEvaluator(permRegistry, logger, pluginID, i.Action)) {
 					logger.Debug("Plugin include is covered by RBAC, user doesn't have access", "plugin", pluginID, "include", i.Name)
 					permitted = false
 					break

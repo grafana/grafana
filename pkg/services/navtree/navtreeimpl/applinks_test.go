@@ -12,6 +12,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	testreg "github.com/grafana/grafana/pkg/services/accesscontrol/permreg/test"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -449,6 +450,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		pluginStore: &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{testApp1},
 		},
+		permRegistry: testreg.ProvidePermissionRegistry(),
 	}
 
 	t.Run("Without plugin RBAC - Enforce role", func(t *testing.T) {
@@ -495,6 +497,20 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 			require.Equal(t, "/a/test-app1/announcements", appsNode.Children[0].Children[0].Url)
 		})
 	})
+
+	testApp1.JSONData.Includes = append(testApp1.JSONData.Includes,
+		// Invalid include action, should be ignored in all tests
+		&plugins.Includes{
+			Name:     "Folders",
+			Path:     "/a/test-app1/folders",
+			Type:     "page",
+			AddToNav: true,
+			Action:   "folders:read",
+		},
+	)
+	service.pluginStore = &pluginstore.FakePluginStore{
+		PluginList: []pluginstore.Plugin{testApp1},
+	}
 
 	t.Run("With plugin RBAC - Enforce action first", func(t *testing.T) {
 		t.Run("Should not see any includes with no app access", func(t *testing.T) {
