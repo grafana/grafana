@@ -1,7 +1,8 @@
-import { Suspense, useEffect, useLayoutEffect } from 'react';
+import React, { Suspense, useEffect, useLayoutEffect, useState } from 'react';
 // @ts-ignore
 import Drop from 'tether-drop';
 
+import { AbsoluteTimeRange } from '@grafana/data';
 import { locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
 import { ErrorBoundary } from '@grafana/ui';
 
@@ -15,6 +16,7 @@ export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> {
 
 export function GrafanaRoute(props: Props) {
   const { chrome, keybindings } = useGrafana();
+  let [panelId, setPanelId] = useState(locationSearchToObject(props.location.search).panelId);
 
   chrome.setMatchedRoute(props.route);
 
@@ -41,6 +43,27 @@ export function GrafanaRoute(props: Props) {
     navigationLogger('GrafanaRoute', false, 'Updated', props);
   });
 
+  // receive panelId from parent window
+  useEffect(() => {
+    const receiveMessage = (event: {
+      data: {
+        panelId?: number;
+        variables?: Array<{ key: string; value: string }>;
+        timeRange?: AbsoluteTimeRange;
+      };
+    }) => {
+      if (event.data.panelId !== undefined) {
+        setPanelId(event.data.panelId);
+      }
+    };
+
+    window.addEventListener('message', receiveMessage);
+
+    return () => {
+      window.removeEventListener('message', receiveMessage);
+    };
+  }, []);
+
   navigationLogger('GrafanaRoute', false, 'Rendered', props.route);
 
   return (
@@ -52,7 +75,10 @@ export function GrafanaRoute(props: Props) {
 
         return (
           <Suspense fallback={<GrafanaRouteLoading />}>
-            <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />
+            <props.route.component
+              {...props}
+              queryParams={{ ...locationSearchToObject(props.location.search), panelId }}
+            />
           </Suspense>
         );
       }}

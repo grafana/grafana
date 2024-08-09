@@ -64,7 +64,7 @@ export class SoloPanelPage extends Component<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { dashboard } = this.props;
+    const { dashboard, queryParams } = this.props;
 
     if (!dashboard) {
       return;
@@ -84,6 +84,23 @@ export class SoloPanelPage extends Component<Props, State> {
       }
 
       this.setState({ panel });
+      dashboard.initViewPanel(panel);
+    }
+
+    // Here we are checking if the panelId has changed and if so we need to update the panel
+    if (!prevProps.queryParams || prevProps.queryParams.panelId !== queryParams.panelId) {
+      const panel = dashboard.getPanelByUrlId(this.getPanelId().toString());
+
+      if (!panel) {
+        this.setState({ notFound: true });
+        return;
+      }
+
+      if (panel) {
+        dashboard.exitViewPanel(panel);
+      }
+
+      this.setState({ panel, notFound: false });
       dashboard.initViewPanel(panel);
     }
   }

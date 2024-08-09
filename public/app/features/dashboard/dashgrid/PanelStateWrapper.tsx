@@ -21,6 +21,8 @@ import {
   TimeRange,
   toDataFrameDTO,
   toUtc,
+  TypedVariableModel,
+  VariableWithOptions,
 } from '@grafana/data';
 import { RefreshEvent } from '@grafana/runtime';
 import { VizLegendOptions } from '@grafana/schema';
@@ -37,6 +39,7 @@ import config from 'app/core/config';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getTemplateSrv } from 'app/features/templating/template_srv';
 import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
 import { onUpdatePanelSnapshotData } from 'app/plugins/datasource/grafana/utils';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
@@ -239,6 +242,47 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     // Listen for live timer events
     liveTimer.listen(this);
+
+    // receive message from parent window
+    const receiveMessage = (event: {
+      data: {
+        panelId?: string;
+        variables?: Array<{ key: string; value: never }>;
+        timeRange?: AbsoluteTimeRange;
+      };
+    }) => {
+      // receive variables from parent window
+      if (event.data.variables !== undefined) {
+        const change = event.data.variables;
+        const srv = getTemplateSrv();
+        const variables = srv.getVariables();
+        const newVariables: TypedVariableModel[] = [];
+        let tmp: (VariableWithOptions & TypedVariableModel) | undefined;
+        let newV: VariableWithOptions & TypedVariableModel;
+        change.forEach((c) => {
+          tmp = variables.find((v) => v.name === c.key) as VariableWithOptions & TypedVariableModel;
+          if (tmp !== undefined) {
+            newV = { ...tmp };
+            newV.current = { ...tmp.current, value: c.value };
+            newVariables.push(newV);
+          }
+        });
+        if (newVariables.length > 0) {
+          srv.init(newVariables);
+          this.onRefresh();
+        }
+      }
+      // receive timeRange from parent window
+      if (event.data.timeRange !== undefined) {
+        this.onChangeTimeRange(event.data.timeRange);
+      }
+    };
+
+    window.addEventListener('message', receiveMessage);
+
+    return () => {
+      window.removeEventListener('message', receiveMessage);
+    };
   }
 
   componentWillUnmount() {
@@ -379,7 +423,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     this.setState(stateUpdate);
   };
 
-  onOptionsChange = (options: any) => {
+  //Change from any to object to pass betterer test
+  onOptionsChange = (options: object) => {
     this.props.panel.updateOptions(options);
   };
 
