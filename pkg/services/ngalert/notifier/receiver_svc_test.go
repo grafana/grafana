@@ -587,11 +587,13 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		OrgID:        writer.GetOrgID(),
 		ReceiverName: receiverName,
 	})
+	require.NoError(t, err)
 	assert.Equal(t, 0, len(oldSettings))
 	newSettings, err := sut.ruleNotificationsStore.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
 		OrgID:        writer.GetOrgID(),
 		ReceiverName: baseReceiver.Name,
 	})
+	require.NoError(t, err)
 	assert.Equal(t, 1, len(newSettings))
 	assert.Equal(t, newReceiverName, newSettings[models.AlertRuleKey{OrgID: 1, UID: "rule1"}][0].Receiver)
 

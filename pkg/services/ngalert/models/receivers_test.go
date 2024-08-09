@@ -37,7 +37,7 @@ func TestReceiver_EncryptDecrypt(t *testing.T) {
 	encryptFn := Base64Enrypt
 	decryptnFn := Base64Decrypt
 	// Test that all known integration types encrypt and decrypt their secrets.
-	for integrationType, _ := range alertingNotify.AllKnownConfigsForTesting {
+	for integrationType := range alertingNotify.AllKnownConfigsForTesting {
 		t.Run(integrationType, func(t *testing.T) {
 			decrypedIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
 
@@ -72,7 +72,7 @@ func TestIntegration_Redact(t *testing.T) {
 		return "TESTREDACTED"
 	}
 	// Test that all known integration types redact their secrets.
-	for integrationType, _ := range alertingNotify.AllKnownConfigsForTesting {
+	for integrationType := range alertingNotify.AllKnownConfigsForTesting {
 		t.Run(integrationType, func(t *testing.T) {
 			validIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
 
@@ -215,7 +215,7 @@ func TestIntegration_WithExistingSecureFields(t *testing.T) {
 
 func TestIntegrationConfig(t *testing.T) {
 	// Test that all known integration types have a config and correctly mark their secrets as secure.
-	for integrationType, _ := range alertingNotify.AllKnownConfigsForTesting {
+	for integrationType := range alertingNotify.AllKnownConfigsForTesting {
 		t.Run(integrationType, func(t *testing.T) {
 			config, err := IntegrationConfigFromType(integrationType)
 			assert.NoError(t, err)
@@ -243,7 +243,7 @@ func TestIntegrationConfig(t *testing.T) {
 
 func TestIntegration_SecureFields(t *testing.T) {
 	// Test that all known integration types have a config and correctly mark their secrets as secure.
-	for integrationType, _ := range alertingNotify.AllKnownConfigsForTesting {
+	for integrationType := range alertingNotify.AllKnownConfigsForTesting {
 		t.Run(integrationType, func(t *testing.T) {
 			t.Run("contains SecureSettings", func(t *testing.T) {
 				validIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()

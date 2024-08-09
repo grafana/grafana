@@ -273,7 +273,6 @@ func (integration *Integration) WithExistingSecureFields(existing *Integration, 
 				integration.SecureSettings[secureField] = existingVal
 			}
 		}
-
 	}
 }
 
@@ -401,7 +400,6 @@ func (r *Receiver) Fingerprint() string {
 			}
 		}
 		writeSettings(in.Settings)
-
 	}
 
 	// fields that determine the rule state

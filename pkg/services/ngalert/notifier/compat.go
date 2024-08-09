@@ -28,7 +28,6 @@ func PostableApiReceiverToReceiver(postable *apimodels.PostableApiReceiver, prov
 	integrations, err := PostableGrafanaReceiversToIntegrations(postable.GrafanaManagedReceivers)
 	if err != nil {
 		return nil, err
-
 	}
 	r := &models.Receiver{
 		UID:          legacy_storage.NameToUid(postable.GetName()), // TODO replace with stable UID.

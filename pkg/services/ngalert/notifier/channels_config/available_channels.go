@@ -1513,7 +1513,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 func GetSecretKeysForContactPointType(contactPointType string) ([]string, error) {
 	notifiers := GetAvailableNotifiers()
 	for _, n := range notifiers {
-		if strings.ToLower(n.Type) == strings.ToLower(contactPointType) {
+		if strings.EqualFold(n.Type, contactPointType) {
 			var secureFields []string
 			for _, field := range n.Options {
 				if field.Secure {
@@ -1530,7 +1530,7 @@ func GetSecretKeysForContactPointType(contactPointType string) ([]string, error)
 func ConfigForIntegrationType(contactPointType string) (*NotifierPlugin, error) {
 	notifiers := GetAvailableNotifiers()
 	for _, n := range notifiers {
-		if strings.ToLower(n.Type) == strings.ToLower(contactPointType) {
+		if strings.EqualFold(n.Type, contactPointType) {
 			return n, nil
 		}
 	}
