@@ -77,6 +77,8 @@ func (hs *HTTPServer) GetDataSources(c *contextmodel.ReqContext) response.Respon
 			dsItem.TypeLogoUrl = plugin.Info.Logos.Small
 			dsItem.TypeName = plugin.Name
 			dsItem.Type = plugin.ID // may be from an alias
+			// If the plugin type is invisible, the datasource item will be forced to invisible
+			dsItem.Invisible = dsItem.Invisible || plugin.Invisible
 		} else {
 			dsItem.TypeLogoUrl = "public/img/icn-datasource.svg"
 		}

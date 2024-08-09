@@ -48,6 +48,7 @@ type DataSourceListItemDTO struct {
 	IsDefault   bool                 `json:"isDefault"`
 	JsonData    *simplejson.Json     `json:"jsonData,omitempty"`
 	ReadOnly    bool                 `json:"readOnly"`
+	Invisible   bool                 `json:"invisible,omitempty"`
 }
 
 type DataSourceList []DataSourceListItemDTO

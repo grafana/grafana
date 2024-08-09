@@ -205,6 +205,17 @@ export class DatasourceSrv implements DataSourceService {
 
   getList(filters: GetDataSourceListFilters = {}): DataSourceInstanceSettings[] {
     const base = Object.values(this.settingsMapByName).filter((x) => {
+      const invisible = x.invisible || x.meta.invisible;
+      if (filters.onlyInvisible) {
+        if (invisible) {
+          return false;
+        }
+      } else {
+        if (!invisible) {
+          return false;
+        }
+      }
+
       if (x.meta.id === 'grafana' || x.meta.id === 'mixed' || x.meta.id === 'dashboard') {
         return false;
       }

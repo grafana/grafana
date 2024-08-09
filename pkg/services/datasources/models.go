@@ -166,6 +166,8 @@ type AddDataSourceCommand struct {
 	JsonData        *simplejson.Json  `json:"jsonData"`
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	UID             string            `json:"uid"`
+	Invisible       bool              `json:"invisible,omitempty"`
+
 	// swagger:ignore
 	APIVersion string `json:"apiVersion"`
 	// swagger:ignore
@@ -194,6 +196,7 @@ type UpdateDataSourceCommand struct {
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	Version         int               `json:"version"`
 	UID             string            `json:"uid"`
+	Invisible       bool              `json:"invisible,omitempty"`
 	// swagger:ignore
 	APIVersion string `json:"apiVersion"`
 	// swagger:ignore

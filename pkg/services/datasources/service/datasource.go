@@ -254,6 +254,8 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 		}
 	}
 
+	cmd.Invisible = settings.Invisible
+
 	var dataSource *datasources.DataSource
 	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error

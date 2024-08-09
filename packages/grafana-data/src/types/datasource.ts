@@ -142,6 +142,7 @@ export interface DataSourcePluginMeta<T extends KeyValue = {}> extends PluginMet
   unlicensed?: boolean;
   backend?: boolean;
   isBackend?: boolean;
+  invisible?: boolean;
   multiValueFilterOperators?: boolean;
 }
 
@@ -688,6 +689,7 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
    */
   database?: string;
   isDefault?: boolean;
+  invisible?: boolean;
   access: 'direct' | 'proxy'; // Currently we support 2 options - direct (browser) and proxy (server)
 
   /**
