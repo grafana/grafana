@@ -191,6 +191,7 @@ Experimental features might be changed or removed without prior notice.
 | `databaseReadReplica`                       | Use a read replica for some database queries.                                                                                                                                                                                                                                     |
 | `alertingApiServer`                         | Register Alerting APIs with the K8s API server                                                                                                                                                                                                                                    |
 | `dashboardRestoreUI`                        | Enables the frontend to be able to restore a recently deleted dashboard                                                                                                                                                                                                           |
+| `adhocFilterOneOf`                          | Exposes a new 'one of' operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.                                                                                                                                                   |
 
 ## Development feature toggles
 
