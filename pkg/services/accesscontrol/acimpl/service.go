@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -50,9 +51,9 @@ var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.E
 func ProvideService(
 	cfg *setting.Cfg, db db.ReplDB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, actionResolver accesscontrol.ActionResolver,
-	features featuremgmt.FeatureToggles, tracer tracing.Tracer, zclient zanzana.Client,
+	features featuremgmt.FeatureToggles, tracer tracing.Tracer, zclient zanzana.Client, permRegistry permreg.PermissionRegistry,
 ) (*Service, error) {
-	service := ProvideOSSService(cfg, database.ProvideService(db), actionResolver, cache, features, tracer, zclient, db.DB())
+	service := ProvideOSSService(cfg, database.ProvideService(db), actionResolver, cache, features, tracer, zclient, db.DB(), permRegistry)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
@@ -73,7 +74,7 @@ func ProvideService(
 func ProvideOSSService(
 	cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver,
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
-	zclient zanzana.Client, db db.DB,
+	zclient zanzana.Client, db db.DB, permRegistry permreg.PermissionRegistry,
 ) *Service {
 	s := &Service{
 		actionResolver: actionResolver,
@@ -85,6 +86,7 @@ func ProvideOSSService(
 		store:          store,
 		tracer:         tracer,
 		sync:           migrator.NewZanzanaSynchroniser(zclient, db),
+		permRegistry:   permRegistry,
 	}
 
 	return s
@@ -102,6 +104,7 @@ type Service struct {
 	store          accesscontrol.Store
 	tracer         tracing.Tracer
 	sync           *migrator.ZanzanaSynchroniser
+	permRegistry   permreg.PermissionRegistry
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -125,7 +128,7 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	return s.getCachedUserPermissions(ctx, user, options)
 }
 
-func (s *Service) getUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+func (s *Service) getUserPermissions(ctx context.Context, user identity.Requester, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	ctx, span := s.tracer.Start(ctx, "authz.getUserPermissions")
 	defer span.End()
 
@@ -140,10 +143,9 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 		permissions = append(permissions, SharedWithMeFolderPermission)
 	}
 
-	userID, err := identity.UserIdentifier(user.GetTypedID())
-	if err != nil {
-		return nil, err
-	}
+	// we don't care about the error here, if this fails we get 0 and no
+	// permission assigned to user will be returned, only for org role.
+	userID, _ := identity.UserIdentifier(user.GetID())
 
 	dbPermissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
 		OrgID:        user.GetOrgID(),
@@ -208,12 +210,10 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 	ctx, span := s.tracer.Start(ctx, "authz.getUserDirectPermissions")
 	defer span.End()
 
-	namespace, identifier := user.GetTypedID()
-
 	var userID int64
-	if namespace == identity.TypeUser || namespace == identity.TypeServiceAccount {
+	if identity.IsIdentityType(user.GetID(), identity.TypeUser, identity.TypeServiceAccount) {
 		var err error
-		userID, err = strconv.ParseInt(identifier, 10, 64)
+		userID, err = identity.UserIdentifier(user.GetID())
 		if err != nil {
 			return nil, err
 		}
@@ -406,6 +406,10 @@ func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistrat
 			return err
 		}
 
+		for i := range r.Role.Permissions {
+			s.permRegistry.RegisterPermission(r.Role.Permissions[i].Action, r.Role.Permissions[i].Scope)
+		}
+
 		s.registrations.Append(r)
 	}
 
@@ -456,6 +460,12 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 
 		if err := accesscontrol.ValidateBuiltInRoles(r.Grants); err != nil {
 			return err
+		}
+
+		for i := range r.Role.Permissions {
+			// Register plugin actions and their possible scopes for permission validation
+			s.permRegistry.RegisterPluginScope(r.Role.Permissions[i].Scope)
+			s.permRegistry.RegisterPermission(r.Role.Permissions[i].Action, r.Role.Permissions[i].Scope)
 		}
 
 		s.log.Debug("Registering plugin role", "role", r.Role.Name)

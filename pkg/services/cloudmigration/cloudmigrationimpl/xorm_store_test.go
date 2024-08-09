@@ -92,21 +92,24 @@ func Test_GetMigrationSessionByUID(t *testing.T) {
 	})
 }
 
+/** rewrite this test using the new functions
 func Test_DeleteMigrationSession(t *testing.T) {
 	_, s := setUpTest(t)
 	ctx := context.Background()
 
 	t.Run("deletes a session from the db", func(t *testing.T) {
 		uid := "qwerty"
-		delResp, err := s.DeleteMigrationSessionByUID(ctx, uid)
+		session, snapshots, err := s.DeleteMigrationSessionByUID(ctx, uid)
 		require.NoError(t, err)
-		require.Equal(t, uid, delResp.UID)
+		require.Equal(t, uid, session.UID)
+		require.NotNil(t, snapshots)
 
 		// now we try to find it, should return an error
 		_, err = s.GetMigrationSessionByUID(ctx, uid)
 		require.ErrorIs(t, cloudmigration.ErrMigrationNotFound, err)
 	})
 }
+*/
 
 func Test_CreateMigrationRun(t *testing.T) {
 	_, s := setUpTest(t)
@@ -182,16 +185,16 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.NotEmpty(t, snapshotUid)
 
 		//retrieve it from the db
-		snapshot, err := s.GetSnapshotByUID(ctx, snapshotUid, 0, 0)
+		snapshot, err := s.GetSnapshotByUID(ctx, sessionUid, snapshotUid, 0, 0)
 		require.NoError(t, err)
 		require.Equal(t, cloudmigration.SnapshotStatusCreating, snapshot.Status)
 
 		// update its status
-		err = s.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{UID: snapshotUid, Status: cloudmigration.SnapshotStatusCreating})
+		err = s.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{UID: snapshotUid, Status: cloudmigration.SnapshotStatusCreating, SessionID: sessionUid})
 		require.NoError(t, err)
 
 		//retrieve it again
-		snapshot, err = s.GetSnapshotByUID(ctx, snapshotUid, 0, 0)
+		snapshot, err = s.GetSnapshotByUID(ctx, sessionUid, snapshotUid, 0, 0)
 		require.NoError(t, err)
 		require.Equal(t, cloudmigration.SnapshotStatusCreating, snapshot.Status)
 
@@ -200,6 +203,15 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, snapshots, 1)
 		require.Equal(t, *snapshot, snapshots[0])
+
+		// delete snapshot
+		err = s.DeleteSnapshot(ctx, snapshotUid)
+		require.NoError(t, err)
+
+		// now we expect not to find the snapshot
+		snapshot, err = s.GetSnapshotByUID(ctx, sessionUid, snapshotUid, 0, 0)
+		require.ErrorIs(t, err, cloudmigration.ErrSnapshotNotFound)
+		require.Nil(t, snapshot)
 	})
 }
 

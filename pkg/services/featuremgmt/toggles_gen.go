@@ -580,7 +580,7 @@ const (
 	FlagTlsMemcached = "tlsMemcached"
 
 	// FlagKubernetesAggregator
-	// Enable grafana aggregator
+	// Enable grafana&#39;s embedded kube-aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
 
 	// FlagExpressionParser
@@ -724,10 +724,14 @@ const (
 	FlagBodyScrolling = "bodyScrolling"
 
 	// FlagCloudwatchMetricInsightsCrossAccount
-	// Enables cross account observability for Cloudwatch Metric Insights
+	// Enables cross account observability for Cloudwatch Metric Insights query builder
 	FlagCloudwatchMetricInsightsCrossAccount = "cloudwatchMetricInsightsCrossAccount"
 
 	// FlagPrometheusAzureOverrideAudience
 	// Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
+
+	// FlagDataplaneAggregator
+	// Enable grafana dataplane aggregator
+	FlagDataplaneAggregator = "dataplaneAggregator"
 )

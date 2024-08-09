@@ -72,7 +72,7 @@ func (f *Authenticator) decodeMetadata(ctx context.Context, meta metadata.MD) (i
 		return nil, fmt.Errorf("no login found in grpc metadata")
 	}
 
-	// The namespaced verisons have a "-" in the key
+	// The namespaced versions have a "-" in the key
 	// TODO, remove after this has been deployed to unified storage
 	if getter(mdUserID) == "" {
 		var err error
@@ -150,7 +150,7 @@ func encodeIdentityInMetadata(user identity.Requester) metadata.MD {
 
 		// Or we can create it directly
 		mdUserID, user.GetID().String(),
-		mdUserUID, user.GetUID().String(),
+		mdUserUID, user.GetUID(),
 		mdOrgName, user.GetOrgName(),
 		mdOrgID, strconv.FormatInt(user.GetOrgID(), 10),
 		mdOrgRole, string(user.GetOrgRole()),
@@ -158,6 +158,6 @@ func encodeIdentityInMetadata(user identity.Requester) metadata.MD {
 
 		// TODO, Remove after this is deployed to unified storage
 		"grafana-userid", user.GetID().ID(),
-		"grafana-useruid", user.GetUID().ID(),
+		"grafana-useruid", user.GetRawIdentifier(),
 	)
 }

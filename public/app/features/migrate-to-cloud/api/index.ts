@@ -8,45 +8,35 @@ export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
 
   endpoints: {
     // Cloud-side - create token
-    getCloudMigrationToken(endpoint) {
-      suppressErrorsOnQuery(endpoint);
-      endpoint.providesTags = ['cloud-migration-token'];
+    getCloudMigrationToken: {
+      providesTags: ['cloud-migration-token'],
     },
-    createCloudMigrationToken(endpoint) {
-      suppressErrorsOnQuery(endpoint);
-      endpoint.invalidatesTags = ['cloud-migration-token'];
+    createCloudMigrationToken: {
+      invalidatesTags: ['cloud-migration-token'],
     },
-    deleteCloudMigrationToken(endpoint) {
-      suppressErrorsOnQuery(endpoint);
-      endpoint.invalidatesTags = ['cloud-migration-token'];
+    deleteCloudMigrationToken: {
+      invalidatesTags: ['cloud-migration-token'],
     },
 
-    // List Cloud Configs
+    // On-prem session management (entering token)
     getSessionList: {
       providesTags: ['cloud-migration-session'] /* should this be a -list? */,
     },
-
-    // Create Cloud Config
-    createSession(endpoint) {
-      suppressErrorsOnQuery(endpoint);
-      endpoint.invalidatesTags = ['cloud-migration-session'];
-    },
-
-    // Get one Cloud Config
     getSession: {
       providesTags: ['cloud-migration-session'],
     },
-
-    // Delete one Cloud Config
+    createSession: {
+      invalidatesTags: ['cloud-migration-session'],
+    },
     deleteSession: {
       invalidatesTags: ['cloud-migration-session', 'cloud-migration-snapshot'],
     },
 
     // Snapshot management
-    getSnapshot: {
+    getShapshotList: {
       providesTags: ['cloud-migration-snapshot'],
     },
-    getShapshotList: {
+    getSnapshot: {
       providesTags: ['cloud-migration-snapshot'],
     },
     createSnapshot: {

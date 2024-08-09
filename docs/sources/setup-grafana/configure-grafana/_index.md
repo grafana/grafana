@@ -754,10 +754,6 @@ Set name for external snapshot button. Defaults to `Publish to snapshots.raintan
 
 Set to true to enable this Grafana instance to act as an external snapshot server and allow unauthenticated requests for creating and deleting snapshots. Default is `false`.
 
-### snapshot_remove_expired
-
-Enable this to automatically remove expired snapshots. Default is `true`.
-
 <hr />
 
 ## [dashboards]
@@ -1494,6 +1490,10 @@ Turn on console instrumentation. Only affects Grafana Javascript Agent
 
 Turn on webvitals instrumentation. Only affects Grafana Javascript Agent
 
+### instrumentations_tracing_enabled
+
+Turns on tracing instrumentation. Only affects Grafana Javascript Agent.
+
 ### api_key
 
 If `custom_endpoint` required authentication, you can set the api key here. Only relevant for Grafana Javascript Agent provider.
@@ -1568,7 +1568,7 @@ Limit the number of query evaluation results per alert rule. If the condition qu
 
 ## [unified_alerting]
 
-For more information about the Grafana alerts, refer to [About Grafana Alerting]({{< relref "../../alerting" >}}).
+For more information about the Grafana alerts, refer to [Grafana Alerting]({{< relref "../../alerting" >}}).
 
 ### enabled
 
@@ -1595,6 +1595,10 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 ### ha_redis_address
 
 The Redis server address that should be connected to.
+
+{{< admonition type="note" >}}
+For more information on Redis, refer to [Enable alerting high availability using Redis](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-high-availability/#enable-alerting-high-availability-using-redis).
+{{< /admonition >}}
 
 ### ha_redis_username
 

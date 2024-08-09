@@ -787,7 +787,7 @@ func TestStore_StoreActionSet(t *testing.T) {
 
 			actionSetName := GetActionSetName(tt.resource, tt.action)
 			actionSet := asService.ResolveActionSet(actionSetName)
-			require.Equal(t, tt.actions, actionSet)
+			require.Equal(t, append(tt.actions, "folders:create"), actionSet)
 		})
 	}
 }
@@ -947,6 +947,9 @@ func TestStore_RegisterActionSet(t *testing.T) {
 
 			for _, expected := range tt.expectedActionSets {
 				actions := asService.ResolveActionSet(expected.Action)
+				if expected.Action == "folders:edit" || expected.Action == "folders:admin" {
+					expected.Actions = append(expected.Actions, "folders:create")
+				}
 				assert.ElementsMatch(t, expected.Actions, actions)
 			}
 

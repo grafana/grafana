@@ -7,10 +7,10 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-
 GO = go
 GO_VERSION = 1.22.4
-GO_FILES ?= ./pkg/... ./pkg/apiserver/... ./pkg/apimachinery/... ./pkg/promlib/...
+GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
+GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_RACE  := $(shell [ -n "$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
 GO_RACE_FLAG := $(if $(GO_RACE),-race)
@@ -172,10 +172,10 @@ gen-jsonnet:
 .PHONY: update-workspace
 update-workspace:
 	@echo "updating workspace"
-	$(GO) mod download
+	bash scripts/go-workspace/update-workspace.sh
 
 .PHONY: build-go
-build-go: update-workspace gen-go ## Build all Go binaries.
+build-go: gen-go update-workspace ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
 
@@ -236,7 +236,7 @@ test-go: test-go-unit test-go-integration
 .PHONY: test-go-unit
 test-go-unit: ## Run unit tests for backend with flags.
 	@echo "test backend unit tests"
-	go list -f '{{.Dir}}/...' -m | xargs \
+	printf '$(GO_TEST_FILES)' | xargs \
 	$(GO) test $(GO_RACE_FLAG) -short -covermode=atomic -timeout=30m
 
 .PHONY: test-go-integration
@@ -290,10 +290,10 @@ golangci-lint: $(GOLANGCI_LINT)
 	@echo "lint via golangci-lint"
 	$(GOLANGCI_LINT) run \
 		--config .golangci.toml \
-		$(GO_FILES)
+		$(GO_LINT_FILES)
 
 .PHONY: lint-go
-lint-go: golangci-lint ## Run all code checks for backend. You can use GO_FILES to specify exact files to check
+lint-go: golangci-lint ## Run all code checks for backend. You can use GO_LINT_FILES to specify exact files to check
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 .PHONY: shellcheck
@@ -382,10 +382,9 @@ devenv-mysql:
 protobuf: ## Compile protobuf definitions
 	bash scripts/protobuf-check.sh
 	go install google.golang.org/protobuf/cmd/protoc-gen-go
-	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.4.0
 	buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
 	buf generate pkg/plugins/backendplugin/secretsmanagerplugin --template pkg/plugins/backendplugin/secretsmanagerplugin/buf.gen.yaml
-	buf generate pkg/services/store/entity --template pkg/services/store/entity/buf.gen.yaml
 	buf generate pkg/storage/unified/resource --template pkg/storage/unified/resource/buf.gen.yaml
 
 .PHONY: clean
