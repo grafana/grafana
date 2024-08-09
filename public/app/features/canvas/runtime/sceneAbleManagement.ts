@@ -98,7 +98,7 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
     container: scene.div,
     rootContainer: getParent(scene),
     selectableTargets: targetElements,
-    toggleContinueSelect: 'shift',
+    toggleContinueSelect: 'meta',
     selectFromInside: false,
     hitRate: 0,
   });

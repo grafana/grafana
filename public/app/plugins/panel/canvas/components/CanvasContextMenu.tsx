@@ -8,11 +8,11 @@ import { ContextMenu, MenuItem, MenuItemProps } from '@grafana/ui';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene } from 'app/features/canvas/runtime/scene';
-import { findElementByTarget } from 'app/features/canvas/runtime/sceneElementManagement';
+import { findElementByTarget, getSelectedElements } from 'app/features/canvas/runtime/sceneElementManagement';
 
 import { CanvasPanel } from '../CanvasPanel';
 import { AnchorPoint, LayerActionID } from '../types';
-import { getElementTypes, onAddItem } from '../utils';
+import { onGenerateVisualization, getElementTypes, onAddItem, generateVisualizationExclude } from '../utils';
 
 type Props = {
   scene: Scene;
@@ -90,6 +90,35 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
         className={styles.menuItem}
       />
     );
+
+    const generateVisualizationMenuItem = () => {
+      if (selectedElements) {
+        let skipVizMenuItem = false;
+
+        if (selectedElements.length === 1) {
+          const element = findElementByTarget(selectedElements[0], scene.root.elements);
+          skipVizMenuItem =
+            generateVisualizationExclude.includes(element?.options.type!) ||
+            element?.data.field === undefined ||
+            element?.data.field === '';
+        }
+
+        if (!skipVizMenuItem) {
+          return (
+            <MenuItem
+              label="Generate visualization"
+              onClick={() => {
+                onGenerateVisualization(getSelectedElements(scene), scene.currentLayer!);
+                closeContextMenu();
+              }}
+              className={styles.menuItem}
+            />
+          );
+        }
+      }
+
+      return null;
+    };
 
     const editElementMenuItem = () => {
       if (selectedElements?.length === 1) {
@@ -201,6 +230,7 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
             className={styles.menuItem}
           />
           {openCloseEditorMenuItem}
+          {generateVisualizationMenuItem()}
         </>
       );
     } else {

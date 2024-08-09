@@ -7,6 +7,7 @@ import { droneFrontItem } from './elements/droneFront';
 import { droneSideItem } from './elements/droneSide';
 import { droneTopItem } from './elements/droneTop';
 import { ellipseItem } from './elements/ellipse';
+import { formItem } from './elements/form/form';
 import { iconItem } from './elements/icon';
 import { metricValueItem } from './elements/metricValue';
 import { parallelogramItem } from './elements/parallelogram';
@@ -14,6 +15,7 @@ import { rectangleItem } from './elements/rectangle';
 import { serverItem } from './elements/server/server';
 import { textItem } from './elements/text';
 import { triangleItem } from './elements/triangle';
+import { visualizationItem } from './elements/visualization';
 import { windTurbineItem } from './elements/windTurbine';
 
 export const DEFAULT_CANVAS_ELEMENT_CONFIG: CanvasElementOptions = {
@@ -33,6 +35,8 @@ export const defaultElementItems = [
   triangleItem,
   cloudItem,
   parallelogramItem,
+  formItem,
+  visualizationItem,
 ];
 
 export const advancedElementItems = [buttonItem, windTurbineItem, droneTopItem, droneFrontItem, droneSideItem];

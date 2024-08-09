@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import tinycolor from 'tinycolor2';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2, OneClickMode } from '@grafana/data';
@@ -121,7 +122,16 @@ export const triangleItem: CanvasElementItem = {
     }
 
     const { background, border } = elementOptions;
-    data.backgroundColor = background?.color ? dimensionContext.getColor(background.color).value() : defaultBgColor;
+    // TODO consolidate these calcs at the element level
+    if (background?.color?.field) {
+      const color = dimensionContext.getColor(background.color);
+      const alphaAdjustedColor = tinycolor(color.value())
+        .setAlpha(background.opacity ?? 1)
+        .toString();
+      data.backgroundColor = background?.color ? alphaAdjustedColor : defaultBgColor;
+    } else {
+      data.backgroundColor = background?.color ? dimensionContext.getColor(background.color).value() : defaultBgColor;
+    }
     data.borderColor = border?.color ? dimensionContext.getColor(border.color).value() : defaultBgColor;
     data.borderWidth = border?.width ?? 0;
 

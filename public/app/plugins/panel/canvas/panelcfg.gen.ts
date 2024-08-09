@@ -52,6 +52,7 @@ export enum BackgroundImageSize {
 export interface BackgroundConfig {
   color?: ui.ColorDimensionConfig;
   image?: ui.ResourceDimensionConfig;
+  opacity?: number;
   size?: BackgroundImageSize;
 }
 

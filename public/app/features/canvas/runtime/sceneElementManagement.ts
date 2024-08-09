@@ -168,3 +168,22 @@ const generateFrameContainer = (elements: ElementState[]): Placement => {
     height: maxBottom - minTop,
   };
 };
+
+/**
+ * Get selected elements from the scene, used in the context menu to generate a visualization
+ * @param scene
+ */
+export const getSelectedElements = (scene: Scene) => {
+  const selectedElements = scene.selecto?.getSelectedTargets();
+
+  const elements: ElementState[] = [];
+
+  selectedElements?.forEach((element) => {
+    const elementState = findElementByTarget(element, scene.root.elements);
+    if (elementState && elementState.options.type !== 'visualization') {
+      elements.push(elementState);
+    }
+  });
+
+  return elements;
+};

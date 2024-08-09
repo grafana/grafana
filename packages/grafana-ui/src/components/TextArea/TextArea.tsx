@@ -14,7 +14,9 @@ export interface Props extends Omit<HTMLProps<HTMLTextAreaElement>, 'size'> {
 export const TextArea = forwardRef<HTMLTextAreaElement, Props>(({ invalid, className, ...props }, ref) => {
   const styles = useStyles2(getTextAreaStyle, invalid);
 
-  return <textarea {...props} className={cx(styles.textarea, className)} ref={ref} />;
+  //TODO; hack to make sure the payload field in API Editor updates when canvas form values update
+  // using value props instead of defaultValue because updating defaultValue will not trigger a re-render
+  return <textarea {...props} value={props.defaultValue} className={cx(styles.textarea, className)} ref={ref} />;
 });
 
 const getTextAreaStyle = (theme: GrafanaTheme2, invalid = false) => ({

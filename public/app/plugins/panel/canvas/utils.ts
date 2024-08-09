@@ -2,7 +2,7 @@ import { isNumber, isString } from 'lodash';
 
 import { AppEvents, PluginState, SelectableValue } from '@grafana/data';
 import appEvents from 'app/core/app_events';
-import { hasAlphaPanels, config } from 'app/core/config';
+import { config, hasAlphaPanels } from 'app/core/config';
 import {
   CanvasConnection,
   CanvasElementItem,
@@ -33,6 +33,24 @@ export function doSelect(scene: Scene, element: ElementState | FrameState) {
     }
   } catch (error) {
     appEvents.emit(AppEvents.alertError, ['Unable to select element, try selecting element in panel instead']);
+  }
+}
+
+// @TODO update^ for frame selection
+export function doSelectMultiple(scene: Scene, elements: ElementState[] | FrameState[]) {
+  const selectedTargets = elements.map((element) => element.div!) || [];
+
+  if (selectedTargets.length > 0) {
+    try {
+      let selection: SelectionParams = { targets: selectedTargets };
+      scene.currentLayer = elements[0].parent;
+      selection.targets = selectedTargets;
+      scene.select(selection);
+    } catch (error) {
+      appEvents.emit(AppEvents.alertError, ['Unable to select element, try selecting element in panel instead']);
+    }
+  } else {
+    scene.clearCurrentSelection();
   }
 }
 
@@ -77,13 +95,22 @@ export function getElementTypesOptions(items: CanvasElementItem[], current: stri
   return selectables;
 }
 
-export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | undefined, anchorPoint?: AnchorPoint) {
+export function onAddItem(
+  sel: SelectableValue<string>,
+  rootLayer: FrameState | undefined,
+  anchorPoint?: AnchorPoint,
+  selectedFields?: string[]
+) {
   const newItem = canvasElementRegistry.getIfExists(sel.value) ?? notFoundItem;
   const newElementOptions: CanvasElementOptions = {
     ...newItem.getNewOptions(),
     type: newItem.id,
     name: '',
   };
+
+  if (newItem.id === 'visualization') {
+    newElementOptions.config.fields = selectedFields;
+  }
 
   if (anchorPoint) {
     newElementOptions.placement = { ...newElementOptions.placement, top: anchorPoint.y, left: anchorPoint.x };
@@ -293,3 +320,20 @@ export const getParent = (scene: Scene) => {
   }
   return scene.div;
 };
+
+export const onGenerateVisualization = (selectedElements: ElementState[], layer: FrameState) => {
+  const visualizationSelection = {
+    label: 'Visualization',
+    value: 'visualization',
+    description: 'Visualization',
+  };
+
+  let selectedFields: string[] = [];
+  selectedElements.map((selectedElement) => {
+    selectedFields.push(selectedElement?.data.field);
+  });
+
+  onAddItem(visualizationSelection, layer, undefined, selectedFields);
+};
+
+export const generateVisualizationExclude = ['visualization', 'form'];

@@ -13,7 +13,13 @@ import { frameSelection, reorderElements } from 'app/features/canvas/runtime/sce
 import { getGlobalStyles } from '../../globalStyles';
 import { Options } from '../../panelcfg.gen';
 import { DragNode, DropNode } from '../../types';
-import { doSelect, getElementTypes, onAddItem } from '../../utils';
+import {
+  doSelectMultiple,
+  generateVisualizationExclude,
+  getElementTypes,
+  onAddItem,
+  onGenerateVisualization,
+} from '../../utils';
 import { TreeViewEditorProps } from '../element/elementEditor';
 
 import { TreeNodeTitle } from './TreeNodeTitle';
@@ -58,9 +64,12 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
     return <div>Missing layer?</div>;
   }
 
-  const onSelect = (selectedKeys: Key[], info: { node: { dataRef: ElementState } }) => {
+  const onSelect = (keys: Key[], info: { node: { dataRef: ElementState }; selectedNodes: TreeElement[] }) => {
+    const selectedElements = info.selectedNodes.map((selectedNode) => selectedNode.dataRef);
+    setSelectedKeys(keys);
+
     if (allowSelection && item.settings?.scene) {
-      doSelect(item.settings.scene, info.node.dataRef);
+      doSelectMultiple(item.settings.scene, selectedElements);
     }
   };
 
@@ -125,6 +134,24 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
     }
   };
 
+  const onGenerateViz = () => {
+    const selectedElements = [...settings.selected].filter(
+      (element) => !generateVisualizationExclude.includes(element.options.type)
+    );
+    onGenerateVisualization(selectedElements, layer);
+  };
+
+  const shouldShowGenerateVizButton = () => {
+    if (selection.length > 0) {
+      const onlyExcludedVizSelected = settings.selected.every((element) =>
+        generateVisualizationExclude.includes(element.options.type)
+      );
+      return !onlyExcludedVizSelected;
+    }
+
+    return false;
+  };
+
   const typeOptions = getElementTypes(settings.scene.shouldShowAdvancedTypes).options;
 
   return (
@@ -163,6 +190,15 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
           </Button>
         )}
       </Stack>
+      <Stack justifyContent="space-between" direction="row">
+        {shouldShowGenerateVizButton() && (
+          <div className={styles.generateVizWrapper}>
+            <Button size="sm" variant="secondary" onClick={onGenerateViz}>
+              Generate visualization
+            </Button>
+          </div>
+        )}
+      </Stack>
     </>
   );
 };
@@ -171,5 +207,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   addLayerButton: css({
     marginLeft: '18px',
     minWidth: '150px',
+  }),
+  generateVizWrapper: css({
+    marginLeft: '18px',
+    paddingTop: '16px',
   }),
 });
