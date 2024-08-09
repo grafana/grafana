@@ -70,7 +70,6 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 		idClaims *auth.IDClaims
 	}
 	result, err, _ := s.si.Do(cacheKey, func() (any, error) {
-
 		cachedToken, err := s.cache.Get(ctx, cacheKey)
 		if err == nil {
 			s.metrics.tokenSigningFromCacheCounter.Inc()
