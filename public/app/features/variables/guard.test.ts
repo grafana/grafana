@@ -23,6 +23,7 @@ import {
   createIntervalVariable,
   createOrgVariable,
   createQueryVariable,
+  createSnapshotVariable,
   createTextBoxVariable,
   createUserVariable,
 } from './state/__tests__/fixtures';
@@ -163,18 +164,19 @@ describe('type guards', () => {
   type ExtraVariableTypes = 'org' | 'dashboard' | 'user';
   // prettier-ignore
   const variableFactsObj: Record<VariableType | ExtraVariableTypes, VariableFacts> = {
-    query:      { variable: createQueryVariable(),      isMulti: true,  hasOptions: true,  hasCurrent: true },
-    adhoc:      { variable: createAdhocVariable(),      isMulti: false, hasOptions: false, hasCurrent: false },
-    groupby:    { variable: createGroupByVariable(),    isMulti: true,  hasOptions: true, hasCurrent: true },
-    constant:   { variable: createConstantVariable(),   isMulti: false, hasOptions: true,  hasCurrent: true },
-    datasource: { variable: createDatasourceVariable(), isMulti: true,  hasOptions: true,  hasCurrent: true },
-    interval:   { variable: createIntervalVariable(),   isMulti: false, hasOptions: true,  hasCurrent: true },
-    textbox:    { variable: createTextBoxVariable(),    isMulti: false, hasOptions: true,  hasCurrent: true },
-    system:     { variable: createUserVariable(),       isMulti: false, hasOptions: false, hasCurrent: true },
-    user:       { variable: createUserVariable(),       isMulti: false, hasOptions: false, hasCurrent: true },
-    org:        { variable: createOrgVariable(),        isMulti: false, hasOptions: false, hasCurrent: true },
-    dashboard:  { variable: createDashboardVariable(),  isMulti: false, hasOptions: false, hasCurrent: true },
-    custom:     { variable: createCustomVariable(),     isMulti: true,  hasOptions: true,  hasCurrent: true },
+    query: { variable: createQueryVariable(), isMulti: true, hasOptions: true, hasCurrent: true },
+    adhoc: { variable: createAdhocVariable(), isMulti: false, hasOptions: false, hasCurrent: false },
+    groupby: { variable: createGroupByVariable(), isMulti: true, hasOptions: true, hasCurrent: true },
+    constant: { variable: createConstantVariable(), isMulti: false, hasOptions: true, hasCurrent: true },
+    datasource: { variable: createDatasourceVariable(), isMulti: true, hasOptions: true, hasCurrent: true },
+    interval: { variable: createIntervalVariable(), isMulti: false, hasOptions: true, hasCurrent: true },
+    textbox: { variable: createTextBoxVariable(), isMulti: false, hasOptions: true, hasCurrent: true },
+    system: { variable: createUserVariable(), isMulti: false, hasOptions: false, hasCurrent: true },
+    user: { variable: createUserVariable(), isMulti: false, hasOptions: false, hasCurrent: true },
+    org: { variable: createOrgVariable(), isMulti: false, hasOptions: false, hasCurrent: true },
+    dashboard: { variable: createDashboardVariable(), isMulti: false, hasOptions: false, hasCurrent: true },
+    custom: { variable: createCustomVariable(), isMulti: true, hasOptions: true, hasCurrent: true },
+    snapshot: { variable: createSnapshotVariable(), isMulti: false, hasOptions: true, hasCurrent: true },
   };
 
   const variableFacts = Object.values(variableFactsObj);
