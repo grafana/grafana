@@ -91,6 +91,102 @@ export const panelWithQueriesOnly = {
   type: 'timeseries',
 };
 
+export const repeatedPanel = {
+  datasource: {
+    type: 'grafana-testdata-datasource',
+    uid: 'gdev-testdata',
+  },
+  repeat: 'custom',
+  repeatDirection: 'h',
+  maxPerRow: 4,
+  fieldConfig: {
+    defaults: {
+      color: {
+        mode: 'palette-classic',
+      },
+      custom: {
+        axisBorderShow: false,
+        axisCenteredZero: false,
+        axisColorMode: 'text',
+        axisLabel: '',
+        axisPlacement: 'auto',
+        barAlignment: 0,
+        drawStyle: 'line',
+        fillOpacity: 0,
+        gradientMode: 'none',
+        hideFrom: {
+          legend: false,
+          tooltip: false,
+          viz: false,
+        },
+        insertNulls: false,
+        lineInterpolation: 'linear',
+        lineWidth: 1,
+        pointSize: 5,
+        scaleDistribution: {
+          type: 'linear',
+        },
+        showPoints: 'auto',
+        spanNulls: false,
+        stacking: {
+          group: 'A',
+          mode: 'none',
+        },
+        thresholdsStyle: {
+          mode: 'off',
+        },
+      },
+      mappings: [],
+      thresholds: {
+        mode: 'absolute',
+        steps: [
+          {
+            color: 'green',
+            value: null,
+          },
+          {
+            color: 'red',
+            value: 80,
+          },
+        ],
+      },
+    },
+    overrides: [],
+  },
+  gridPos: {
+    h: 8,
+    w: 12,
+    x: 0,
+    y: 0,
+  },
+  id: 1,
+  options: {
+    legend: {
+      calcs: [],
+      displayMode: 'list',
+      placement: 'bottom',
+      showLegend: true,
+    },
+    tooltip: {
+      mode: 'single',
+      sort: 'none',
+    },
+  },
+  targets: [
+    {
+      datasource: {
+        type: 'grafana-testdata-datasource',
+        uid: 'gdev-testdata',
+      },
+      refId: 'A',
+      scenarioId: 'random_walk',
+      seriesCount: 1,
+    },
+  ],
+  title: 'Panel with just queries',
+  type: 'timeseries',
+};
+
 export const panelWithTransformations = {
   datasource: {
     type: 'grafana-testdata-datasource',
@@ -636,6 +732,7 @@ export const testDashboard = {
     panelWithQueriesAndMixedDatasource,
     row,
     rowChild,
+    repeatedPanel,
   ],
   refresh: '',
   schemaVersion: 39,

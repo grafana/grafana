@@ -4,7 +4,14 @@ import { DataQueryRequest, DataSourceApi, DataSourceInstanceSettings, LoadingSta
 import { calculateFieldTransformer } from '@grafana/data/src/transformations/transformers/calculateField';
 import { mockTransformationsRegistry } from '@grafana/data/src/utils/tests/mockTransformationsRegistry';
 import { config, locationService } from '@grafana/runtime';
-import { LocalValueVariable, SceneGridRow, SceneVariableSet, VizPanel, sceneGraph } from '@grafana/scenes';
+import {
+  CustomVariable,
+  LocalValueVariable,
+  SceneGridRow,
+  SceneVariableSet,
+  VizPanel,
+  sceneGraph,
+} from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { InspectTab } from 'app/features/inspector/types';
@@ -799,6 +806,26 @@ describe('VizPanelManager', () => {
 
     expect(vizPanelManager.state.datasource).toEqual(ds1Mock);
     expect(vizPanelManager.state.dsSettings).toEqual(instance1SettingsMock);
+  });
+
+  it('Should default to the first variable value if panel is repeated', async () => {
+    const { scene, panel } = setupTest('panel-10');
+
+    scene.setState({
+      $variables: new SceneVariableSet({
+        variables: [
+          new CustomVariable({ name: 'custom', query: 'A,B,C', value: ['A', 'B', 'C'], text: ['A', 'B', 'C'] }),
+        ],
+      }),
+    });
+
+    scene.setState({ editPanel: buildPanelEditScene(panel) });
+
+    const vizPanelManager = scene.state.editPanel!.state.vizManager;
+    vizPanelManager.activate();
+
+    const variable = sceneGraph.lookupVariable('custom', vizPanelManager);
+    expect(variable?.getValue()).toBe('A');
   });
 
   describe('Given a panel inside repeated row', () => {
