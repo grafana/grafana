@@ -66,6 +66,12 @@ func TestNotificationPolicyService(t *testing.T) {
 				TimeIntervals: []timeinterval.TimeInterval{},
 			},
 		}
+		cfg.AlertmanagerConfig.TimeIntervals = []config.TimeInterval{
+			{
+				Name:          "existing-ti",
+				TimeIntervals: []timeinterval.TimeInterval{},
+			},
+		}
 		data, _ := legacy_storage.SerializeAlertmanagerConfig(*cfg)
 		mockStore.On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
 			Return(&models.AlertConfiguration{AlertmanagerConfiguration: string(data)}, nil)
@@ -75,7 +81,7 @@ func TestNotificationPolicyService(t *testing.T) {
 		newRoute := createTestRoutingTree()
 		newRoute.Routes = append(newRoute.Routes, &definitions.Route{
 			Receiver:          "slack receiver",
-			MuteTimeIntervals: []string{"existing"},
+			MuteTimeIntervals: []string{"existing", "existing-ti"},
 		})
 
 		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
