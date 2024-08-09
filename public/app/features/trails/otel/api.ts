@@ -40,11 +40,19 @@ export async function getOtelResources(
   return resources;
 }
 
-export async function isOtelStandardization(
+/**
+ * Get the total amount of job/instance pairs on target info metric
+ *
+ * @param dataSourceUid
+ * @param timeRange
+ * @param expr
+ * @returns
+ */
+export async function totalOtelResources(
   dataSourceUid: string,
   timeRange: RawTimeRange,
   expr?: string
-): Promise<boolean> {
+): Promise<number> {
   const start = getPrometheusTime(timeRange.from, false);
   const end = getPrometheusTime(timeRange.to, true);
 
@@ -61,6 +69,34 @@ export async function isOtelStandardization(
     'explore-metrics-otel-check-total'
   );
 
+  return responseTotal.data.result.length;
+}
+
+/**
+ * Check the total amount of otel resources to compare it
+ * with the stadardized amount of resources. When standardized,
+ * each job&instance pair in target info is a unique series.
+ * Duplicated series cannot be used to filter metrics
+ * by otel resources because the join required for filtering
+ * cannot join series on many(metrics) to many(job&instance series on target_info) and breaks.
+ *
+ * @param dataSourceUid
+ * @param timeRange
+ * @param expr
+ * @returns
+ */
+export async function isOtelStandardization(
+  dataSourceUid: string,
+  timeRange: RawTimeRange,
+  expr?: string
+): Promise<boolean> {
+  const url = `/api/datasources/uid/${dataSourceUid}/resources/api/v1/query`;
+
+  const start = getPrometheusTime(timeRange.from, false);
+  const end = getPrometheusTime(timeRange.to, true);
+
+  const totalOtelResourcesAmount = await totalOtelResources(dataSourceUid, timeRange);
+
   const paramsStandardTargets: Record<string, string | number> = {
     start,
     end,
@@ -73,5 +109,5 @@ export async function isOtelStandardization(
     'explore-metrics-otel-check-standard'
   );
 
-  return responseTotal.data.result.length === responseStandard.data.result.length;
+  return totalOtelResourcesAmount === responseStandard.data.result.length;
 }
