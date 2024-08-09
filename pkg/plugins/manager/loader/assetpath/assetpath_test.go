@@ -60,35 +60,35 @@ func TestService(t *testing.T) {
 			})
 
 			t.Run("Base", func(t *testing.T) {
-				base, err := svc.Base(NewPluginInfo(jsonData["one"], plugins.ClassExternal, extPath("one").Base(), ""))
+				base, err := svc.Base(NewPluginInfo(jsonData["one"], plugins.ClassExternal, extPath("one").Base(), nil))
 				require.NoError(t, err)
 
 				u, err := url.JoinPath(tc.cdnBaseURL, "/one/1.0.0/public/plugins/one")
 				require.NoError(t, err)
 				require.Equal(t, u, base)
 
-				base, err = svc.Base(NewPluginInfo(jsonData["two"], plugins.ClassExternal, extPath("two").Base(), ""))
+				base, err = svc.Base(NewPluginInfo(jsonData["two"], plugins.ClassExternal, extPath("two").Base(), nil))
 				require.NoError(t, err)
 				require.Equal(t, "public/plugins/two", base)
 
-				base, err = svc.Base(NewPluginInfo(jsonData["table-old"], plugins.ClassCore, tableOldFS.Base(), ""))
+				base, err = svc.Base(NewPluginInfo(jsonData["table-old"], plugins.ClassCore, tableOldFS.Base(), nil))
 				require.NoError(t, err)
 				require.Equal(t, "public/app/plugins/table-old", base)
 			})
 
 			t.Run("Module", func(t *testing.T) {
-				module, err := svc.Module(NewPluginInfo(jsonData["one"], plugins.ClassExternal, extPath("one").Base(), ""))
+				module, err := svc.Module(NewPluginInfo(jsonData["one"], plugins.ClassExternal, extPath("one").Base(), nil))
 				require.NoError(t, err)
 
 				u, err := url.JoinPath(tc.cdnBaseURL, "/one/1.0.0/public/plugins/one/module.js")
 				require.NoError(t, err)
 				require.Equal(t, u, module)
 
-				module, err = svc.Module(NewPluginInfo(jsonData["two"], plugins.ClassExternal, extPath("two").Base(), ""))
+				module, err = svc.Module(NewPluginInfo(jsonData["two"], plugins.ClassExternal, extPath("two").Base(), nil))
 				require.NoError(t, err)
 				require.Equal(t, "public/plugins/two/module.js", module)
 
-				module, err = svc.Module(NewPluginInfo(jsonData["table-old"], plugins.ClassCore, tableOldFS.Base(), ""))
+				module, err = svc.Module(NewPluginInfo(jsonData["table-old"], plugins.ClassCore, tableOldFS.Base(), nil))
 				require.NoError(t, err)
 				require.Equal(t, "core:plugin/table-old", module)
 			})
@@ -103,22 +103,22 @@ func TestService(t *testing.T) {
 					},
 				}
 
-				u, err := svc.RelativeURL(NewPluginInfo(pluginsMap["one"].JSONData, plugins.ClassExternal, extPath("one").Base(), ""), "")
+				u, err := svc.RelativeURL(NewPluginInfo(pluginsMap["one"].JSONData, plugins.ClassExternal, extPath("one").Base(), nil), "")
 				require.NoError(t, err)
 				// given an empty path, base URL will be returned
-				baseURL, err := svc.Base(NewPluginInfo(pluginsMap["one"].JSONData, plugins.ClassExternal, extPath("one").Base(), ""))
+				baseURL, err := svc.Base(NewPluginInfo(pluginsMap["one"].JSONData, plugins.ClassExternal, extPath("one").Base(), nil))
 				require.NoError(t, err)
 				require.Equal(t, baseURL, u)
 
-				u, err = svc.RelativeURL(NewPluginInfo(pluginsMap["one"].JSONData, plugins.ClassExternal, extPath("one").Base(), ""), "path/to/file.txt")
+				u, err = svc.RelativeURL(NewPluginInfo(pluginsMap["one"].JSONData, plugins.ClassExternal, extPath("one").Base(), nil), "path/to/file.txt")
 				require.NoError(t, err)
 				require.Equal(t, strings.TrimRight(tc.cdnBaseURL, "/")+"/one/1.0.0/public/plugins/one/path/to/file.txt", u)
 
-				u, err = svc.RelativeURL(NewPluginInfo(pluginsMap["two"].JSONData, plugins.ClassExternal, extPath("two").Base(), ""), "path/to/file.txt")
+				u, err = svc.RelativeURL(NewPluginInfo(pluginsMap["two"].JSONData, plugins.ClassExternal, extPath("two").Base(), nil), "path/to/file.txt")
 				require.NoError(t, err)
 				require.Equal(t, "public/plugins/two/path/to/file.txt", u)
 
-				u, err = svc.RelativeURL(NewPluginInfo(pluginsMap["two"].JSONData, plugins.ClassExternal, extPath("two").Base(), ""), "default")
+				u, err = svc.RelativeURL(NewPluginInfo(pluginsMap["two"].JSONData, plugins.ClassExternal, extPath("two").Base(), nil), "default")
 				require.NoError(t, err)
 				require.Equal(t, "public/plugins/two/default", u)
 			})
