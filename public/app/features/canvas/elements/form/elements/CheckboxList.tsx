@@ -8,13 +8,7 @@ interface CheckboxProps extends Omit<FormChild, 'id' | 'type'> {
 }
 
 export const CheckboxList = ({ title, options, onChange, currentOption }: CheckboxProps) => {
-  // get all the keys from the currentOption and values from the currentOption
-  const keys = currentOption?.map((item) => Object.keys(item)[0]);
   const values = currentOption?.map((item) => Object.values(item)[0]);
-
-  console.log('currentOption', currentOption);
-  console.log({ keys, values });
-  console.log({ options });
 
   return (
     <Field label={title}>
