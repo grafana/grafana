@@ -11,17 +11,16 @@ import { combineResponses, mergeFrames } from '@grafana/o11y-ds-frontend';
 
 import { LokiDatasource } from './datasource';
 import { adjustTargetsFromResponseState, querySupportsSplitting } from './querySplitting';
-import { addShardingPlaceholderSelector, interpolateShardingSelector } from './queryUtils';
+import { addShardingPlaceholderSelector } from './queryUtils';
 import { trackQuery } from './tracking';
-import { LokiQuery } from './types';
+import {LokiQuery, SubQueryResponse} from './types';
 
 export function splitQueriesByStreamShard(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>, splittingTargets: LokiQuery[], nonSplittingTargets: LokiQuery[] = []) {
-  let endShard = 0;
   let shouldStop = false;
   let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming, key: uuidv4() };
   let subquerySubsciption: Subscription | null = null;
 
-  const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, shard?: number) => {
+  const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, subRequests: Array<DataQueryRequest<LokiQuery>>, n: number, shard?: number) => {
     if (shouldStop) {
       subscriber.complete();
       return;
@@ -34,13 +33,12 @@ export function splitQueriesByStreamShard(datasource: LokiDatasource, request: D
     };
 
     const nextRequest = () => {
-      if (!shard) {
+      if (n === 0) {
         done();
         return;
       }
-      const nextShard = shard+1;
-      if (nextShard <= endShard) {
-        runNextRequest(subscriber, nextShard);
+      if (n >= 0) {
+        runNextRequest(subscriber, subRequests, n-1);
         return;
       }
       done();
@@ -52,13 +50,7 @@ export function splitQueriesByStreamShard(datasource: LokiDatasource, request: D
       return;
     }
 
-    const subRequest = { ...request, targets: interpolateShardingSelector(targets, shard) };
-    // Request may not have a request id
-    if (request.requestId) {
-      subRequest.requestId = `${request.requestId}_shard_${shard}`;
-    }
-
-    subquerySubsciption = datasource.runQuery(subRequest).subscribe({
+    subquerySubsciption = datasource.runQuery(subRequests[n]).subscribe({
       next: (partialResponse) => {
         mergedResponse = combineResponses(mergedResponse, partialResponse, mergeFrames);
         if ((mergedResponse.errors ?? []).length > 0 || mergedResponse.error != null) {
@@ -78,24 +70,16 @@ export function splitQueriesByStreamShard(datasource: LokiDatasource, request: D
   };
 
   const response = new Observable<DataQueryResponse>((subscriber) => {
-    datasource.languageProvider.fetchLabelValues('__stream_shard__', { timeRange: request.range })
-      .then((values) => {
-        values.forEach(shard => {
-          if (parseInt(shard, 10) > endShard) {
-            endShard = parseInt(shard, 10);
-          }
-        });
-        if (endShard === 0) {
-          console.warn(`Shard splitting not supported. Issuing a regular query.`);
-          runNextRequest(subscriber);
-        } else {
-          console.log(`Querying up to ${endShard} shards`);
-          runNextRequest(subscriber, -1);
-        }
+    let lokiQuery = request.targets[0]
+    let lokiRequests: Array<DataQueryRequest<LokiQuery>> = []
+    datasource.fetchSubQueries(lokiQuery, request.range)
+      .then((s ) => {
+        lokiRequests = parseToLokiRequests(s, request)
+        runNextRequest(subscriber, lokiRequests, s.results.length - 1);
       }).catch((e) => {
         console.error(e);
         shouldStop = true;
-        runNextRequest(subscriber, 0);
+        runNextRequest(subscriber, lokiRequests, -1);
       })
     return () => {
       shouldStop = true;
@@ -108,6 +92,32 @@ export function splitQueriesByStreamShard(datasource: LokiDatasource, request: D
   return response;
 }
 
+function parseToLokiRequests(s: SubQueryResponse, originalReq: DataQueryRequest<LokiQuery>): Array<DataQueryRequest<LokiQuery>> {
+  let result: Array<DataQueryRequest<LokiQuery>> = [];
+
+  let subQueries = s.results;
+  // iterate over subQueries
+  subQueries.map((subQuery) => {
+      result.push({
+        requestId: subQuery.id,
+        startTime: subQuery.start,
+        endTime: subQuery.end,
+        app: originalReq.app,
+        interval: originalReq.interval,
+        intervalMs: originalReq.intervalMs,
+        range: originalReq.range,
+        scopedVars: originalReq.scopedVars,
+        targets: [{
+          expr: subQuery.query,
+          refId: originalReq.targets[0].refId,
+        }],
+        timezone: ""
+
+      });
+  });
+
+  return result;
+}
 export function runShardSplitQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
   const queries = request.targets.filter((query) => !query.hide).filter((query) => query.expr);
   let [nonSplittingTargets, splittingTargets] = partition(queries, (query) => !querySupportsSplitting(query));

@@ -12,6 +12,7 @@ import {
   queryHasFilter,
   removeCommentsFromQuery,
   removeLabelFromQuery,
+  replaceStreamSelector,
 } from './modifyQuery';
 import { LabelType } from './types';
 
@@ -447,5 +448,14 @@ describe('getIdentifierInStreamPositions', () => {
         },
       },
     ]);
+  });
+});
+
+
+describe('replaceStreamSelector', () => {
+  it.each([
+    ['rate({job="grafana"}[1m])', '{namespace="grafana", job="not-grafana"}', 'rate({namespace="grafana", job="not-grafana"}[1m])'],
+  ])('should remove a negative label matcher from the query', (query: string, newSelector: string, expected: string) => {
+    expect(replaceStreamSelector(query, newSelector)).toBe(expected);
   });
 });

@@ -70,6 +70,7 @@ import {
   getLabelFilterPositions,
   queryHasFilter,
   removeLabelFromQuery,
+  replaceStreamSelector,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
 import { runSplitQuery } from './querySplitting';
@@ -95,6 +96,7 @@ import {
   LokiVariableQueryType,
   QueryStats,
   SupportingQueryType,
+  SubQueryResponse,
 } from './types';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
@@ -1161,6 +1163,48 @@ export class LokiDatasource
       ...defaults,
       queryType: LokiQueryType.Range,
     };
+  }
+
+  async fetchSubQueries(query: LokiQuery, timeRange: TimeRange): Promise<SubQueryResponse> {
+    let data: SubQueryResponse = { results: [], mergeStrategy: "sum" };
+    const labelMatchers = getStreamSelectorsFromQuery(query.expr);
+    // from these label matchers, construct an API request
+    for (const idx in labelMatchers) {
+      try {
+        let {start, end} = this.getTimeRangeParams(timeRange);
+        const data = await this.subQueryRequest(
+          'query/plan',
+          {
+            query: labelMatchers[idx],
+            start: start,
+            end: end,
+            buckets: 20,
+          }
+        );
+        data.results = data.results.map((result: any) => {
+          let e = replaceStreamSelector(query.expr, result.query);
+          return {
+            ...result,
+            query: e,
+          };
+        });
+        return data;
+      } catch (e) {
+        break;
+      }
+    }
+
+    return data;
+  }
+
+  private async subQueryRequest(url: string, params?: Record<string, string | number>,
+                                options?: Partial<BackendSrvRequest>): Promise<SubQueryResponse> {
+    // return empty promise
+    if (url.startsWith('/')) {
+      throw new Error (`invalid metadata request url: ${url}`);
+    }
+
+    return await this.getResource(url, params, options);
   }
 }
 

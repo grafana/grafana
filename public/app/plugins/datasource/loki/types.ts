@@ -104,4 +104,18 @@ export interface ParserAndLabelKeysResult {
   unwrapLabelKeys: string[];
 }
 
+export interface SubQueryResponse {
+  results: SubQueryResult[];
+  mergeStrategy?: string;
+}
+export interface SubQueryResult {
+  start: number;
+  end: number;
+  query: string;
+  limit?: number;
+  shards?: number;
+  volume?: number;
+  id: string;
+}
+
 export type LokiGroupedRequest = { request: DataQueryRequest<LokiQuery>; partition: TimeRange[] };

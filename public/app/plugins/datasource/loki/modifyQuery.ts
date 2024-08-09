@@ -644,3 +644,23 @@ export function getIdentifierInStreamPositions(query: string): NodePosition[] {
   });
   return positions;
 }
+
+/**
+ * Replaces the stream selector in the given query with the provided new selector.
+ * @param query - The original query string.
+ * @param newSelector - The new stream selector to replace the existing one.
+ * @returns The modified query with the new stream selector.
+ */
+export function replaceStreamSelector(query: string, newSelector: string): string {
+  const streamSelectorPositions = getStreamSelectorPositions(query);
+
+  if (streamSelectorPositions.length === 0) {
+    return query;
+  }
+
+  const streamSelectorPosition = streamSelectorPositions[0];
+  const prefix = query.slice(0, streamSelectorPosition.from);
+  const suffix = query.slice(streamSelectorPosition.to);
+
+  return `${prefix}${newSelector}${suffix}`;
+}
