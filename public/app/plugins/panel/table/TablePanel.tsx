@@ -15,6 +15,10 @@ import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 import { Options } from './panelcfg.gen';
 
+import 'react-data-grid/lib/styles.css';
+
+import DataGrid from 'react-data-grid';
+
 interface Props extends PanelProps<Options> {}
 
 export function TablePanel(props: Props) {
@@ -43,26 +47,34 @@ export function TablePanel(props: Props) {
     tableHeight = height - inputHeight - padding;
   }
 
-  const enableSharedCrosshair = panelContext.sync && panelContext.sync() !== DashboardCursorSync.Off;
+  // const enableSharedCrosshair = panelContext.sync && panelContext.sync() !== DashboardCursorSync.Off;
+
+  const columns: Array<{ key: string; name: string }> = [];
+  const rows: Array<{ [key: string]: string }> = [];
+
+  main.fields.map((field) => {
+    const key = field.name;
+    columns.push({ key, name: key }); // TODO add display function output
+    field.values.map((value, index) => {
+      const currentValue = { [key]: String(value) };
+      if (rows.length > index) {
+        rows[index] = { ...rows[index], ...currentValue };
+      } else {
+        rows[index] = currentValue;
+      }
+    });
+  });
 
   const tableElement = (
-    <Table
-      height={tableHeight}
-      width={width}
-      data={main}
-      noHeader={!options.showHeader}
-      showTypeIcons={options.showTypeIcons}
-      resizable={true}
-      initialSortBy={options.sortBy}
-      onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
-      onColumnResize={(displayName, resizedWidth) => onColumnResize(displayName, resizedWidth, props)}
-      onCellFilterAdded={panelContext.onAddAdHocFilter}
-      footerOptions={options.footer}
-      enablePagination={options.footer?.enablePagination}
-      cellHeight={options.cellHeight}
-      timeRange={timeRange}
-      enableSharedCrosshair={config.featureToggles.tableSharedCrosshair && enableSharedCrosshair}
-      fieldConfig={fieldConfig}
+    <DataGrid
+      columns={columns}
+      rows={rows}
+      className={tableStyles.dataGrid}
+      defaultColumnOptions={{
+        sortable: true,
+        resizable: true,
+        maxWidth: 200, // TODO base on panel options
+      }}
     />
   );
 
@@ -91,43 +103,43 @@ function getCurrentFrameIndex(frames: DataFrame[], options: Options) {
   return options.frameIndex > 0 && options.frameIndex < frames.length ? options.frameIndex : 0;
 }
 
-function onColumnResize(fieldDisplayName: string, width: number, props: Props) {
-  const { fieldConfig } = props;
-  const { overrides } = fieldConfig;
+// function onColumnResize(fieldDisplayName: string, width: number, props: Props) {
+//   const { fieldConfig } = props;
+//   const { overrides } = fieldConfig;
 
-  const matcherId = FieldMatcherID.byName;
-  const propId = 'custom.width';
+//   const matcherId = FieldMatcherID.byName;
+//   const propId = 'custom.width';
 
-  // look for existing override
-  const override = overrides.find((o) => o.matcher.id === matcherId && o.matcher.options === fieldDisplayName);
+//   // look for existing override
+//   const override = overrides.find((o) => o.matcher.id === matcherId && o.matcher.options === fieldDisplayName);
 
-  if (override) {
-    // look for existing property
-    const property = override.properties.find((prop) => prop.id === propId);
-    if (property) {
-      property.value = width;
-    } else {
-      override.properties.push({ id: propId, value: width });
-    }
-  } else {
-    overrides.push({
-      matcher: { id: matcherId, options: fieldDisplayName },
-      properties: [{ id: propId, value: width }],
-    });
-  }
+//   if (override) {
+//     // look for existing property
+//     const property = override.properties.find((prop) => prop.id === propId);
+//     if (property) {
+//       property.value = width;
+//     } else {
+//       override.properties.push({ id: propId, value: width });
+//     }
+//   } else {
+//     overrides.push({
+//       matcher: { id: matcherId, options: fieldDisplayName },
+//       properties: [{ id: propId, value: width }],
+//     });
+//   }
 
-  props.onFieldConfigChange({
-    ...fieldConfig,
-    overrides,
-  });
-}
+//   props.onFieldConfigChange({
+//     ...fieldConfig,
+//     overrides,
+//   });
+// }
 
-function onSortByChange(sortBy: TableSortByFieldState[], props: Props) {
-  props.onOptionsChange({
-    ...props.options,
-    sortBy,
-  });
-}
+// function onSortByChange(sortBy: TableSortByFieldState[], props: Props) {
+//   props.onOptionsChange({
+//     ...props.options,
+//     sortBy,
+//   });
+// }
 
 function onChangeTableSelection(val: SelectableValue<number>, props: Props) {
   props.onOptionsChange({
@@ -141,6 +153,9 @@ const tableStyles = {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    height: 100%;
+  `,
+  dataGrid: css`
     height: 100%;
   `,
   selectWrapper: css`
