@@ -71,13 +71,25 @@ func (d *ParcaDatasource) query(ctx context.Context, pCtx backend.PluginContext,
 		ctxLogger.Debug("Querying SelectMergeStacktraces()", "queryModel", qm, "function", logEntrypoint())
 		resp, err := d.client.Query(ctx, makeProfileRequest(qm, query))
 		if err != nil {
-			response.Error = err
+			if strings.Contains(err.Error(), "invalid report type") {
+				response.Error = fmt.Errorf("Try updating Parca to v0.19+: %v", err)
+			} else {
+				response.Error = err
+			}
+
 			ctxLogger.Error("Failed to process query", "error", err, "queryType", query.QueryType, "function", logEntrypoint())
 			span.RecordError(response.Error)
 			span.SetStatus(codes.Error, response.Error.Error())
 			return response
 		}
-		frame := responseToDataFrames(resp)
+		frame, err := responseToDataFrames(resp)
+		if err != nil {
+			response.Error = err
+			ctxLogger.Error("Failed to convert the response to a data frame", "error", err, "queryType", query.QueryType)
+			span.RecordError(response.Error)
+			span.SetStatus(codes.Error, response.Error.Error())
+			return response
+		}
 		response.Frames = append(response.Frames, frame)
 	}
 
@@ -127,7 +139,7 @@ type CustomMeta struct {
 // responseToDataFrames turns Parca response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
-func responseToDataFrames(resp *connect.Response[v1alpha1.QueryResponse]) *data.Frame {
+func responseToDataFrames(resp *connect.Response[v1alpha1.QueryResponse]) (*data.Frame, error) {
 	if flameResponse, ok := resp.Msg.Report.(*v1alpha1.QueryResponse_FlamegraphArrow); ok {
 		return arrowToNestedSetDataFrame(flameResponse.FlamegraphArrow)
 	} else {
@@ -167,7 +179,7 @@ func seriesToDataFrame(seriesResp *connect.Response[v1alpha1.QueryRangeResponse]
 	return frames
 }
 
-func arrowToNestedSetDataFrame(flamegraph *v1alpha1.FlamegraphArrow) *data.Frame {
+func arrowToNestedSetDataFrame(flamegraph *v1alpha1.FlamegraphArrow) (*data.Frame, error) {
 	frame := data.NewFrame("response")
 	frame.Meta = &data.FrameMeta{PreferredVisualization: "flamegraph"}
 
@@ -181,8 +193,7 @@ func arrowToNestedSetDataFrame(flamegraph *v1alpha1.FlamegraphArrow) *data.Frame
 
 	arrowReader, err := ipc.NewReader(bytes.NewBuffer(flamegraph.GetRecord()))
 	if err != nil {
-		// TODO: Handle properly?
-		return nil
+		return nil, err
 	}
 	defer arrowReader.Release()
 
@@ -197,8 +208,7 @@ func arrowToNestedSetDataFrame(flamegraph *v1alpha1.FlamegraphArrow) *data.Frame
 
 	fi, err := newFlamegraphIterator(reader)
 	if err != nil {
-		// TODO: Handle properly?
-		return nil
+		return nil, fmt.Errorf("failed to create flamegraph iterator: %w", err)
 	}
 
 	fi.iterate(func(name string, level, value, self int64) {
@@ -208,7 +218,7 @@ func arrowToNestedSetDataFrame(flamegraph *v1alpha1.FlamegraphArrow) *data.Frame
 		selfField.Append(self)
 	})
 
-	return frame
+	return frame, nil
 }
 
 const (

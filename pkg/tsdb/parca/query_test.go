@@ -64,7 +64,8 @@ func Test_query(t *testing.T) {
 
 // This is where the tests for the datasource backend live.
 func Test_profileToDataFrame(t *testing.T) {
-	frame := responseToDataFrames(flamegraphResponse())
+	frame, err := responseToDataFrames(flamegraphResponse())
+	require.NoError(t, err)
 	require.Equal(t, 4, len(frame.Fields))
 	require.Equal(t, data.NewField("level", nil, []int64{0, 1, 2, 3, 4, 4}), frame.Fields[0])
 	values := data.NewField("value", nil, []int64{11, 11, 11, 8, 3, 5})
