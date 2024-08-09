@@ -4,9 +4,11 @@ import { AppEvents } from '@grafana/data';
 import { config, getAppEvents } from '@grafana/runtime';
 import { Button, TextLink } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 
-import { FieldData, SSOProvider, SSOSettingsField } from './types';
+import { Trans } from '../../core/internationalization';
+
+import ServerDiscoveryModal from './components/ServerDiscoveryModal';
+import { FieldData, ServerDiscoveryFormData, SSOProvider, SSOSettingsField } from './types';
 import { isSelectableValue } from './utils/guards';
 import { isUrlValid } from './utils/url';
 
@@ -66,12 +68,12 @@ export const sectionFields: Section = {
       name: 'General settings',
       id: 'general',
       fields: [
-        'openIdMetadataUrl',
         'name',
         'clientId',
         'clientSecret',
         'authStyle',
         'scopes',
+        'serverDiscoveryUrl',
         'authUrl',
         'tokenUrl',
         'apiUrl',
@@ -625,78 +627,62 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         'If enabled, Grafana will match the Hosted Domain retrieved from the Google ID Token against the Allowed Domains list specified by the user.',
       type: 'checkbox',
     },
-    openIdMetadataUrl: {
-      label: t('oauth.form.open-id-url-label', 'OpenID Connect metadata URL'),
-      description: t(
-        'oauth.form.open-id-url-description',
-        'This is the .well-known/openid-configuration endpoint for your IdP.'
-      ),
-      type: 'text',
-      addon: (getValues, setValue) => (
-        <Button
-          type="button"
-          variant="secondary"
-          icon="sync"
-          onClick={() => {
-            const url = getValues('openIdMetadataUrl');
-
-            if (url === undefined || typeof url !== 'string') {
-              console.log('Invalid value for openIdMetadataUrl field');
-              return;
-            }
-
-            if (url === '') {
-              appEvents.publish({
-                type: AppEvents.alertWarning.name,
-                payload: [t('oauth.form.open-id-url-empty', 'The URL is empty')],
-              });
-              return;
-            }
-
-            if (!isUrlValid(url)) {
-              appEvents.publish({
-                type: AppEvents.alertWarning.name,
-                payload: [t('oauth.form.open-id-url-invalid', 'Not a valid URL')],
-              });
-              return;
-            }
-
-            fetch(url)
-              .then((res) => res.json())
-              .then((res) => {
-                if (!res['token_endpoint'] || !res['authorization_endpoint']) {
-                  appEvents.publish({
-                    type: AppEvents.alertWarning.name,
-                    payload: [t('oauth.form.open-id-url-invalid-content', 'Invalid content')],
-                  });
-                  return;
-                }
-
-                setValue('tokenUrl', res['token_endpoint']);
-                setValue('authUrl', res['authorization_endpoint']);
-                if (res['userinfo_endpoint']) {
-                  setValue('apiUrl', res['userinfo_endpoint']);
-                }
-
-                appEvents.publish({
-                  type: AppEvents.alertSuccess.name,
-                  payload: [
-                    t('oauth.form.open-id-url-success', 'OpenID Connect Metadata URL has been successfully fetched.'),
-                  ],
-                });
-              })
-              .catch((err) => {
-                console.log(err);
+    serverDiscoveryUrl: {
+      label: 'Server discovery URL',
+      description:
+        'The .well-known/openid-configuration endpoint for your IdP. The info extracted from this URL will be used to populate the Auth URL, Token URL and API URL fields.',
+      type: 'custom',
+      content: (getValues, setValue, watch) => {
+        const modalIsOpen = watch('serverDiscoveryModal');
+        const onClose = () => setValue('serverDiscoveryModal', false);
+        const onSuccess = (data: ServerDiscoveryFormData) => {
+          fetch(data.url)
+            .then((res) => res.json())
+            .then((res) => {
+              if (!res['token_endpoint'] || !res['authorization_endpoint']) {
                 appEvents.publish({
                   type: AppEvents.alertWarning.name,
-                  payload: [t('oauth.form.open-id-url-fetch-error', 'Failed to fetch URL or invalid content')],
+                  payload: ['The URL provided is not a valid .well-known/openid-configuration endpoint'],
                 });
+                return;
+              }
+
+              setValue('tokenUrl', res['token_endpoint']);
+              setValue('authUrl', res['authorization_endpoint']);
+              if (res['userinfo_endpoint']) {
+                setValue('apiUrl', res['userinfo_endpoint']);
+              }
+
+              appEvents.publish({
+                type: AppEvents.alertSuccess.name,
+                payload: ['Server discovery URL has been successfully fetched.'],
               });
-          }}
-        >
-          <Trans i18nKey={'oauth.form.open-id-url-update-button'}>Update</Trans>
-        </Button>
-      ),
+            })
+            .catch((err) => {
+              appEvents.publish({
+                type: AppEvents.alertWarning.name,
+                payload: ['Failed to fetch URL or invalid content'],
+              });
+            });
+
+          onClose();
+        };
+        return (
+          <>
+            <Button
+              type="button"
+              fill="text"
+              variant="secondary"
+              onClick={() => {
+                setValue('serverDiscoveryModal', true);
+              }}
+            >
+              <Trans i18nKey={'oauth.form.server-discovery-action-button'}>Enter server discovery URL</Trans>
+            </Button>
+            <ServerDiscoveryModal isOpen={modalIsOpen} onClose={onClose} onSuccess={onSuccess}></ServerDiscoveryModal>
+          </>
+        );
+      },
     },
   };
 }

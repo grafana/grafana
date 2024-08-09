@@ -1564,14 +1564,9 @@
   },
   "oauth": {
     "form": {
-      "open-id-url-description": "This is the .well-known/openid-configuration endpoint for your IdP.",
-      "open-id-url-empty": "The URL is empty",
-      "open-id-url-fetch-error": "Failed to fetch URL or invalid content",
-      "open-id-url-invalid": "Not a valid URL",
-      "open-id-url-invalid-content": "Invalid content",
-      "open-id-url-label": "OpenID Connect metadata URL",
-      "open-id-url-success": "OpenID Connect Metadata URL has been successfully fetched.",
-      "open-id-url-update-button": "Update"
+      "server-discovery-action-button": "Enter server discovery URL",
+      "server-discovery-modal-close": "Close",
+      "server-discovery-modal-submit": "Submit"
     }
   },
   "panel": {

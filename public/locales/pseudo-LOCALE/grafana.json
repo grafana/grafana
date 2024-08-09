@@ -1564,14 +1564,9 @@
   },
   "oauth": {
     "form": {
-      "open-id-url-description": "Ŧĥįş įş ŧĥę .ŵęľľ-ĸŉőŵŉ/őpęŉįđ-čőŉƒįģūřäŧįőŉ ęŉđpőįŉŧ ƒőř yőūř ĨđP.",
-      "open-id-url-empty": "Ŧĥę ŮŖĿ įş ęmpŧy",
-      "open-id-url-fetch-error": "Fäįľęđ ŧő ƒęŧčĥ ŮŖĿ őř įŉväľįđ čőŉŧęŉŧ",
-      "open-id-url-invalid": "Ńőŧ ä väľįđ ŮŖĿ",
-      "open-id-url-invalid-content": "Ĩŉväľįđ čőŉŧęŉŧ",
-      "open-id-url-label": "ØpęŉĨĐ Cőŉŉęčŧ męŧäđäŧä ŮŖĿ",
-      "open-id-url-success": "ØpęŉĨĐ Cőŉŉęčŧ Męŧäđäŧä ŮŖĿ ĥäş þęęŉ şūččęşşƒūľľy ƒęŧčĥęđ.",
-      "open-id-url-update-button": "Ůpđäŧę"
+      "server-discovery-action-button": "Ēŉŧęř şęřvęř đįşčővęřy ŮŖĿ",
+      "server-discovery-modal-close": "Cľőşę",
+      "server-discovery-modal-submit": "Ŝūþmįŧ"
     }
   },
   "panel": {

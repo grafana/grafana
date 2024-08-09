@@ -75,13 +75,7 @@ export const FieldRenderer = ({
     case 'text':
       return (
         <Field key={name} {...fieldProps}>
-          <Input
-            {...register(name, fieldData.validation)}
-            type={fieldData.type}
-            id={name}
-            autoComplete={'off'}
-            addonAfter={fieldData.addon ? fieldData.addon(getValues, setValue) : null}
-          />
+          <Input {...register(name, fieldData.validation)} type={fieldData.type} id={name} autoComplete={'off'} />
         </Field>
       );
     case 'secret':
@@ -156,6 +150,12 @@ export const FieldRenderer = ({
           {...fieldProps}
           className={css({ marginBottom: theme.spacing(2) })}
         />
+      );
+    case 'custom':
+      return (
+        <Field key={name} {...fieldProps}>
+          {fieldData.content ? fieldData.content(getValues, setValue, watch) : <></>}
+        </Field>
       );
     default:
       console.error(`Unknown field type: ${fieldData.type}`);
