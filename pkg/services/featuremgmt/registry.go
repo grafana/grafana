@@ -1373,6 +1373,13 @@ var (
 			Expression:  "true", // Enabled by default for now
 		},
 		{
+			Name:            "backgroundPluginInstaller",
+			Description:     "Enable background plugin installer",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:            "dataplaneAggregator",
 			Description:     "Enable grafana dataplane aggregator",
 			Stage:           FeatureStageExperimental,
