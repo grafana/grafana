@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -67,7 +68,7 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 			desc:   "should call sync when authenticated with grafana com and has viewer role",
 			module: login.GrafanaComAuthModule,
 			identity: &authn.Identity{
-				ID:       identity.NewTypedID(identity.TypeUser, 1),
+				ID:       identity.NewTypedID(claims.TypeUser, 1),
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
 			},
@@ -78,7 +79,7 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 			desc:   "should call sync when authenticated with grafana com and has editor role",
 			module: login.GrafanaComAuthModule,
 			identity: &authn.Identity{
-				ID:       identity.NewTypedID(identity.TypeUser, 1),
+				ID:       identity.NewTypedID(claims.TypeUser, 1),
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleEditor},
 			},
@@ -89,7 +90,7 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 			desc:   "should call sync when authenticated with grafana com and has admin role",
 			module: login.GrafanaComAuthModule,
 			identity: &authn.Identity{
-				ID:       identity.NewTypedID(identity.TypeUser, 1),
+				ID:       identity.NewTypedID(claims.TypeUser, 1),
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
 			},
@@ -100,7 +101,7 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 			desc:   "should not call sync when authenticated with grafana com and has invalid role",
 			module: login.GrafanaComAuthModule,
 			identity: &authn.Identity{
-				ID:       identity.NewTypedID(identity.TypeUser, 1),
+				ID:       identity.NewTypedID(claims.TypeUser, 1),
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleType("something else")},
 			},
@@ -111,7 +112,7 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 			desc:   "should not call sync when not authenticated with grafana com",
 			module: login.LDAPAuthModule,
 			identity: &authn.Identity{
-				ID:       identity.NewTypedID(identity.TypeUser, 1),
+				ID:       identity.NewTypedID(claims.TypeUser, 1),
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
 			},
@@ -157,7 +158,7 @@ func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
 		{
 			desc: "should map Cloud Viewer to Grafana Cloud Viewer and Support ticket reader",
 			identity: &authn.Identity{
-				ID:       identity.NewTypedID(identity.TypeUser, 1),
+				ID:       identity.NewTypedID(claims.TypeUser, 1),
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
 			},
@@ -176,7 +177,7 @@ func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
 		{
 			desc: "should map Cloud Editor to Grafana Cloud Editor and Support ticket admin",
 			identity: &authn.Identity{
-				ID:       identity.NewTypedID(identity.TypeUser, 1),
+				ID:       identity.NewTypedID(claims.TypeUser, 1),
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleEditor},
 			},
@@ -194,7 +195,7 @@ func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
 		{
 			desc: "should map Cloud Admin to Grafana Cloud Admin and Support ticket admin",
 			identity: &authn.Identity{
-				ID:       identity.NewTypedID(identity.TypeUser, 1),
+				ID:       identity.NewTypedID(claims.TypeUser, 1),
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
 			},
@@ -212,7 +213,7 @@ func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
 		{
 			desc: "should return an error for not supported role",
 			identity: &authn.Identity{
-				ID:       identity.NewTypedID(identity.TypeUser, 1),
+				ID:       identity.NewTypedID(claims.TypeUser, 1),
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleNone},
 			},

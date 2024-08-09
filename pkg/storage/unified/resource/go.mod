@@ -5,6 +5,7 @@ go 1.22.4
 require (
 	github.com/fullstorydev/grpchan v1.1.1
 	github.com/grafana/authlib v0.0.0-20240730122259-a0d13672efb1
+	github.com/grafana/authlib/claims v0.0.0-20240809101159-74eaccc31a06
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240808164224-787abccfbc9e
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
 	github.com/prometheus/client_golang v1.19.1

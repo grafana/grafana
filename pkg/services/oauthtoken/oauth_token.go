@@ -12,6 +12,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -94,7 +95,7 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*l
 		return nil, false, nil
 	}
 
-	if !identity.IsIdentityType(usr.GetID(), identity.TypeUser) {
+	if !identity.IsIdentityType(usr.GetID(), claims.TypeUser) {
 		return nil, false, nil
 	}
 
@@ -135,7 +136,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 		return nil
 	}
 
-	if !identity.IsIdentityType(usr.GetID(), identity.TypeUser) {
+	if !identity.IsIdentityType(usr.GetID(), claims.TypeUser) {
 		ctxLogger.Warn("Can only refresh OAuth tokens for users", "id", usr.GetID())
 		return nil
 	}

@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -217,7 +218,7 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 	}
 
 	// Login is only supported for users
-	if !id.ID.IsType(identity.TypeUser) {
+	if !id.ID.IsType(claims.TypeUser) {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		return nil, authn.ErrUnsupportedIdentity.Errorf("expected identity of type user but got: %s", id.ID.Type())
 	}
@@ -281,7 +282,7 @@ func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionTo
 		redirect.URL = s.cfg.SignoutRedirectUrl
 	}
 
-	if !user.GetID().IsType(identity.TypeUser) {
+	if !user.GetID().IsType(claims.TypeUser) {
 		return redirect, nil
 	}
 
@@ -380,7 +381,7 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, namespaceID i
 	ctx, span := s.tracer.Start(ctx, "authn.resolveIdentity")
 	defer span.End()
 
-	if namespaceID.IsType(identity.TypeUser) {
+	if namespaceID.IsType(claims.TypeUser) {
 		return &authn.Identity{
 			OrgID: orgID,
 			ID:    namespaceID,
@@ -391,7 +392,7 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, namespaceID i
 			}}, nil
 	}
 
-	if namespaceID.IsType(identity.TypeServiceAccount) {
+	if namespaceID.IsType(claims.TypeServiceAccount) {
 		return &authn.Identity{
 			ID:    namespaceID,
 			OrgID: orgID,

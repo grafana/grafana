@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
@@ -66,7 +67,7 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 	}
 
 	testUserA := &identity.StaticRequester{
-		Type:           identity.TypeUser,
+		Type:           claims.TypeUser,
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
@@ -341,7 +342,7 @@ func TestClientServer(t *testing.T) {
 
 	// Test with an admin identity
 	clientCtx := identity.WithRequester(ctx, &identity.StaticRequester{
-		Type:           identity.TypeUser,
+		Type:           claims.TypeUser,
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",

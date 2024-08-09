@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-jose/go-jose/v3/jwt"
 	authnlib "github.com/grafana/authlib/authn"
+	authnlibclaims "github.com/grafana/authlib/claims"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/singleflight"
 
@@ -99,7 +100,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			},
 		}
 
-		if identity.IsIdentityType(id.GetID(), identity.TypeUser) {
+		if identity.IsIdentityType(id.GetID(), authnlibclaims.TypeUser) {
 			claims.Rest.Email = id.GetEmail()
 			claims.Rest.EmailVerified = id.IsEmailVerified()
 			claims.Rest.AuthenticatedBy = id.GetAuthenticatedBy()

@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -51,7 +51,7 @@ func (tapi *TeamAPI) createTeam(c *contextmodel.ReqContext) response.Response {
 	// an additional check whether it is an actual user is required
 	namespace, identifier := c.SignedInUser.GetID().Type(), c.SignedInUser.GetID().ID()
 	switch namespace {
-	case identity.TypeUser:
+	case claims.TypeUser:
 		userID, err := strconv.ParseInt(identifier, 10, 64)
 		if err != nil {
 			c.Logger.Error("Could not add creator to team because user id is not a number", "error", err)

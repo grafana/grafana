@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/dskit/concurrency"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -323,7 +323,7 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 		}
 
 		// only list k6 folders when requested by a service account - prevents showing k6 folders in the UI for users
-		if q.SignedInUser == nil || q.SignedInUser.GetID().Type() != identity.TypeServiceAccount {
+		if q.SignedInUser == nil || q.SignedInUser.GetID().Type() != claims.TypeServiceAccount {
 			sql.WriteString(" AND uid != ?")
 			args = append(args, accesscontrol.K6FolderUID)
 		}
@@ -484,7 +484,7 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 			}
 
 			// only list k6 folders when requested by a service account - prevents showing k6 folders in the UI for users
-			if q.SignedInUser == nil || q.SignedInUser.GetID().Type() != identity.TypeServiceAccount {
+			if q.SignedInUser == nil || q.SignedInUser.GetID().Type() != claims.TypeServiceAccount {
 				s.WriteString(" AND f0.uid != ? AND (f0.parent_uid != ? OR f0.parent_uid IS NULL)")
 				args = append(args, accesscontrol.K6FolderUID, accesscontrol.K6FolderUID)
 			}

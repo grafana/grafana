@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -99,7 +100,7 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 	}
 
 	if api.cfg.RBAC.PermissionsOnCreation("service-account") {
-		if identity.IsIdentityType(c.SignedInUser.GetID(), identity.TypeUser) {
+		if identity.IsIdentityType(c.SignedInUser.GetID(), claims.TypeUser) {
 			userID, err := c.SignedInUser.GetID().ParseInt()
 			if err != nil {
 				return response.Error(http.StatusInternalServerError, "Failed to parse user id", err)

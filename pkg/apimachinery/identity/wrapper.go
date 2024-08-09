@@ -35,7 +35,7 @@ func (i *IDClaimsWrapper) EmailVerified() bool {
 
 // GetIdentityType implements claims.IdentityClaims.
 func (i *IDClaimsWrapper) IdentityType() claims.IdentityType {
-	return claims.IdentityType(i.Source.GetIdentityType())
+	return i.Source.GetIdentityType()
 }
 
 // GetInternalID implements claims.IdentityClaims.

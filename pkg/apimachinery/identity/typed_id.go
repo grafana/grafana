@@ -4,46 +4,12 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/grafana/authlib/claims"
 )
-
-type IdentityType string
-
-const (
-	TypeUser           IdentityType = "user"
-	TypeAPIKey         IdentityType = "api-key"
-	TypeServiceAccount IdentityType = "service-account"
-	TypeAnonymous      IdentityType = "anonymous"
-	TypeRenderService  IdentityType = "render"
-	TypeAccessPolicy   IdentityType = "access-policy"
-	TypeProvisioning   IdentityType = "provisioning"
-	TypeEmpty          IdentityType = ""
-)
-
-func (n IdentityType) String() string {
-	return string(n)
-}
-
-func ParseType(str string) (IdentityType, error) {
-	switch str {
-	case string(TypeUser):
-		return TypeUser, nil
-	case string(TypeAPIKey):
-		return TypeAPIKey, nil
-	case string(TypeServiceAccount):
-		return TypeServiceAccount, nil
-	case string(TypeAnonymous):
-		return TypeAnonymous, nil
-	case string(TypeRenderService):
-		return TypeRenderService, nil
-	case string(TypeAccessPolicy):
-		return TypeAccessPolicy, nil
-	default:
-		return "", ErrInvalidTypedID.Errorf("got invalid identity type %s", str)
-	}
-}
 
 // IsIdentityType returns true if typedID matches any expected identity type
-func IsIdentityType(typedID TypedID, expected ...IdentityType) bool {
+func IsIdentityType(typedID TypedID, expected ...claims.IdentityType) bool {
 	for _, e := range expected {
 		if typedID.Type() == e {
 			return true
@@ -53,7 +19,7 @@ func IsIdentityType(typedID TypedID, expected ...IdentityType) bool {
 	return false
 }
 
-var AnonymousTypedID = NewTypedID(TypeAnonymous, 0)
+var AnonymousTypedID = NewTypedID(claims.TypeAnonymous, 0)
 
 func ParseTypedID(str string) (TypedID, error) {
 	var typeID TypedID
@@ -63,7 +29,7 @@ func ParseTypedID(str string) (TypedID, error) {
 		return typeID, ErrInvalidTypedID.Errorf("expected typed id to have 2 parts")
 	}
 
-	t, err := ParseType(parts[0])
+	t, err := claims.ParseType(parts[0])
 	if err != nil {
 		return typeID, err
 	}
@@ -84,7 +50,7 @@ func MustParseTypedID(str string) TypedID {
 	return typeID
 }
 
-func NewTypedID(t IdentityType, id int64) TypedID {
+func NewTypedID(t claims.IdentityType, id int64) TypedID {
 	return TypedID{
 		id: strconv.FormatInt(id, 10),
 		t:  t,
@@ -92,7 +58,7 @@ func NewTypedID(t IdentityType, id int64) TypedID {
 }
 
 // NewTypedIDString creates a new TypedID with a string id
-func NewTypedIDString(t IdentityType, id string) TypedID {
+func NewTypedIDString(t claims.IdentityType, id string) TypedID {
 	return TypedID{
 		id: id,
 		t:  t,
@@ -102,7 +68,7 @@ func NewTypedIDString(t IdentityType, id string) TypedID {
 // FIXME: use this instead of encoded string through the codebase
 type TypedID struct {
 	id string
-	t  IdentityType
+	t  claims.IdentityType
 }
 
 func (ni TypedID) ID() string {
@@ -112,7 +78,7 @@ func (ni TypedID) ID() string {
 // UserID will try to parse and int64 identifier if namespace is either user or service-account.
 // For all other namespaces '0' will be returned.
 func (ni TypedID) UserID() (int64, error) {
-	if ni.IsType(TypeUser, TypeServiceAccount) {
+	if ni.IsType(claims.TypeUser, claims.TypeServiceAccount) {
 		return ni.ParseInt()
 	}
 	return 0, nil
@@ -123,11 +89,11 @@ func (ni TypedID) ParseInt() (int64, error) {
 	return strconv.ParseInt(ni.id, 10, 64)
 }
 
-func (ni TypedID) Type() IdentityType {
+func (ni TypedID) Type() claims.IdentityType {
 	return ni.t
 }
 
-func (ni TypedID) IsType(expected ...IdentityType) bool {
+func (ni TypedID) IsType(expected ...claims.IdentityType) bool {
 	return IsIdentityType(ni, expected...)
 }
 

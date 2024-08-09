@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -39,7 +39,7 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 
 	ctxLogger := s.log.FromContext(ctx).New("id", id.ID, "login", id.Login)
 
-	if !id.ID.IsType(identity.TypeUser) {
+	if !id.ID.IsType(claims.TypeUser) {
 		ctxLogger.Warn("Failed to sync org role, invalid namespace for identity", "type", id.ID.Type())
 		return nil
 	}
@@ -145,7 +145,7 @@ func (s *OrgSync) SetDefaultOrgHook(ctx context.Context, currentIdentity *authn.
 
 	ctxLogger := s.log.FromContext(ctx)
 
-	if !currentIdentity.ID.IsType(identity.TypeUser) {
+	if !currentIdentity.ID.IsType(claims.TypeUser) {
 		ctxLogger.Debug("Skipping default org sync, not a user", "type", currentIdentity.ID.Type())
 		return
 	}

@@ -50,7 +50,7 @@ type SignedInUser struct {
 	IDTokenClaims *authnlib.Claims[authnlib.IDTokenClaims] `json:"-" xorm:"-"`
 
 	// When other settings are not deterministic, this value is used
-	FallbackType identity.IdentityType
+	FallbackType claims.IdentityType
 }
 
 // Access implements claims.AuthInfo.
@@ -89,18 +89,18 @@ func (u *SignedInUser) GetInternalID() (int64, error) {
 }
 
 // GetIdentityType implements Requester.
-func (u *SignedInUser) GetIdentityType() identity.IdentityType {
+func (u *SignedInUser) GetIdentityType() claims.IdentityType {
 	switch {
 	case u.ApiKeyID != 0:
-		return identity.TypeAPIKey
+		return claims.TypeAPIKey
 	case u.IsServiceAccount:
-		return identity.TypeServiceAccount
+		return claims.TypeServiceAccount
 	case u.UserID > 0:
-		return identity.TypeUser
+		return claims.TypeUser
 	case u.IsAnonymous:
-		return identity.TypeAnonymous
+		return claims.TypeAnonymous
 	case u.AuthenticatedBy == "render" && u.UserID == 0:
-		return identity.TypeRenderService
+		return claims.TypeRenderService
 	}
 	return u.FallbackType
 }
@@ -263,18 +263,18 @@ func (u *SignedInUser) GetID() identity.TypedID {
 	return identity.NewTypedIDString(ns, id)
 }
 
-func (u *SignedInUser) getTypeAndID() (identity.IdentityType, string) {
+func (u *SignedInUser) getTypeAndID() (claims.IdentityType, string) {
 	switch {
 	case u.ApiKeyID != 0:
-		return identity.TypeAPIKey, strconv.FormatInt(u.ApiKeyID, 10)
+		return claims.TypeAPIKey, strconv.FormatInt(u.ApiKeyID, 10)
 	case u.IsServiceAccount:
-		return identity.TypeServiceAccount, strconv.FormatInt(u.UserID, 10)
+		return claims.TypeServiceAccount, strconv.FormatInt(u.UserID, 10)
 	case u.UserID > 0:
-		return identity.TypeUser, strconv.FormatInt(u.UserID, 10)
+		return claims.TypeUser, strconv.FormatInt(u.UserID, 10)
 	case u.IsAnonymous:
-		return identity.TypeAnonymous, "0"
+		return claims.TypeAnonymous, "0"
 	case u.AuthenticatedBy == "render" && u.UserID == 0:
-		return identity.TypeRenderService, "0"
+		return claims.TypeRenderService, "0"
 	}
 
 	return u.FallbackType, strconv.FormatInt(u.UserID, 10)
