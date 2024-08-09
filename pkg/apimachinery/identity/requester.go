@@ -5,11 +5,13 @@ import (
 	"strconv"
 
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/claims"
 	"k8s.io/apiserver/pkg/authentication/user"
 )
 
 type Requester interface {
 	user.Info
+	claims.AuthInfo
 
 	// GetIdentityType returns the type for the requester
 	GetIdentityType() IdentityType
