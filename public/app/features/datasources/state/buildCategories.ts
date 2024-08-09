@@ -239,6 +239,18 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       name: 'CockroachDB',
       imgUrl: 'public/img/plugins/cockroachdb.jpg',
     }),
+    getPhantomPlugin({
+      id: 'grafana-netlify-datasource',
+      description: 'Netlify datasource',
+      name: 'Netlify',
+      imgUrl: 'public/img/plugins/netlify.svg',
+    }),
+    getPhantomPlugin({
+      id: 'grafana-drone-datasource',
+      description: 'Drone datasource',
+      name: 'Drone',
+      imgUrl: 'public/img/plugins/drone.svg',
+    }),
   ];
 }
 
