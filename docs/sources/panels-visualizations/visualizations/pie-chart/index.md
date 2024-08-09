@@ -35,6 +35,21 @@ The following video guides you through the creation steps and common customizati
 
 {{< docs/play title="Grafana Bar Charts and Pie Charts" url="https://play.grafana.org/d/ktMs4D6Mk/" >}}
 
+## Supported data formats
+
+The pie chart visualization requires a dataset with at least one row of numeric values to be added together to make up the complete pie. If the first row contains column titles, they're used to label the slices of the pie chart and appear in the legend. Cells with non-numeric values are not displayed in the pie chart.
+
+Example:
+
+| Description   | Internet Explorer | Chrome |
+| ------------- | ----------------- | ------ |
+| Other users   | 1.5               | 7      |
+| English users | 17.5              | 50     |
+
+If the dataset contains multiple rows, the visualization displays the last row by default, but multiple rows can be configured as described in the [Value options](#value-options) section. If you configure multiple rows to be displayed, the panel concatenates the text fields of each row with the numeric column titles.
+
+We recommend you only use one data set with the pie chart. If you have multiple datasets, the numeric values configured in the **Value options** section will be added up and displayed from all the datasets.
+
 ## Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
@@ -96,10 +111,6 @@ The following example shows a pie chart with **Name** and **Percent** labels dis
 
 ![Pie chart labels](/static/img/docs/pie-chart-panel/pie-chart-labels-7-5.png)
 
-## Standard options
-
-{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
 ## Tooltip options
 
 {{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
@@ -136,6 +147,14 @@ Select values to display in the legend. You can select more than one.
 
 - **Percent:** The percentage of the whole.
 - **Value:** The raw numerical value.
+
+## Standard options
+
+{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Data links
+
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Value mappings
 
