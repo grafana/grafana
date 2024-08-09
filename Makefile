@@ -9,7 +9,7 @@ include .bingo/Variables.mk
 
 GO = go
 GO_VERSION = 1.22.4
-GO_FILES ?= $(shell $(GO) run ./scripts/go-workspace/main.go list-submodules --delimiter '/... ')
+GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_RACE  := $(shell [ -n "$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
 GO_RACE_FLAG := $(if $(GO_RACE),-race)
@@ -289,10 +289,10 @@ golangci-lint: $(GOLANGCI_LINT)
 	@echo "lint via golangci-lint"
 	$(GOLANGCI_LINT) run \
 		--config .golangci.toml \
-		$(GO_FILES)
+		$(GO_LINT_FILES)
 
 .PHONY: lint-go
-lint-go: golangci-lint ## Run all code checks for backend. You can use GO_FILES to specify exact files to check
+lint-go: golangci-lint ## Run all code checks for backend. You can use GO_LINT_FILES to specify exact files to check
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 .PHONY: shellcheck
