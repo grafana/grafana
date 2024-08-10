@@ -14,6 +14,7 @@ type DataSource struct {
 	OrgId            int64                  `json:"orgId"`
 	Name             string                 `json:"name"`
 	Type             string                 `json:"type"`
+	Invisible        bool                   `json:"invisible,omitempty"`
 	TypeLogoUrl      string                 `json:"typeLogoUrl"`
 	Access           datasources.DsAccess   `json:"access"`
 	Url              string                 `json:"url"`

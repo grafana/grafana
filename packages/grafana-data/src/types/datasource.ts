@@ -656,6 +656,7 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   basicAuth: boolean;
   basicAuthUser: string;
   isDefault: boolean;
+  invisible: boolean;
   jsonData: T;
   secureJsonData?: S;
   secureJsonFields: KeyValue<boolean>;

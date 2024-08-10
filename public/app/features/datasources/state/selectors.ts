@@ -6,9 +6,11 @@ import { DataSourcesState } from 'app/types/datasources';
 export const getDataSources = memoizeOne((state: DataSourcesState) => {
   const regex = new RegExp(state.searchQuery, 'i');
 
-  const filteredDataSources = state.dataSources.filter((dataSource: DataSourceSettings) => {
-    return regex.test(dataSource.name) || regex.test(dataSource.database) || regex.test(dataSource.type);
-  });
+  const filteredDataSources = state.dataSources
+    .filter((dataSource: DataSourceSettings) => {
+      return regex.test(dataSource.name) || regex.test(dataSource.database) || regex.test(dataSource.type);
+    })
+    .filter((dataSource) => !dataSource.invisible);
 
   return filteredDataSources.sort((a, b) =>
     state.isSortAscending ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)

@@ -71,6 +71,7 @@ func (hs *HTTPServer) GetDataSources(c *contextmodel.ReqContext) response.Respon
 			IsDefault: ds.IsDefault,
 			JsonData:  ds.JsonData,
 			ReadOnly:  ds.ReadOnly,
+			Invisible: ds.Invisible,
 		}
 
 		if plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type); exists {
@@ -752,6 +753,7 @@ func (hs *HTTPServer) convertModelToDtos(ctx context.Context, ds *datasources.Da
 		Version:          ds.Version,
 		ReadOnly:         ds.ReadOnly,
 		APIVersion:       ds.APIVersion,
+		Invisible:        ds.Invisible,
 	}
 
 	if hs.pluginStore != nil {

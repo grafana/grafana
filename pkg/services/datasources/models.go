@@ -59,6 +59,7 @@ type DataSource struct {
 	BasicAuthPassword string            `json:"-"`
 	WithCredentials   bool              `json:"withCredentials"`
 	IsDefault         bool              `json:"isDefault"`
+	Invisible         bool              `json:"invisible,omitempty"`
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string][]byte `json:"secureJsonData"`
 	ReadOnly          bool              `json:"readOnly"`

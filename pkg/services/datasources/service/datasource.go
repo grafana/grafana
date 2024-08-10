@@ -233,6 +233,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 		BasicAuthEnabled:        cmd.BasicAuth,
 		BasicAuthUser:           cmd.BasicAuthUser,
 		APIVersion:              cmd.APIVersion,
+		Invisible:               cmd.Invisible,
 	}, nil)
 	if err != nil {
 		return nil, err
@@ -241,6 +242,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 	// The mutable properties
 	cmd.URL = settings.URL
 	cmd.User = settings.User
+	cmd.Invisible = settings.Invisible
 	cmd.BasicAuth = settings.BasicAuthEnabled
 	cmd.BasicAuthUser = settings.BasicAuthUser
 	cmd.Database = settings.Database
@@ -253,8 +255,6 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			return nil, err
 		}
 	}
-
-	cmd.Invisible = settings.Invisible
 
 	var dataSource *datasources.DataSource
 	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
