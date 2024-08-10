@@ -8,7 +8,7 @@ ARG GO_IMAGE=golang:1.22.4-alpine
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
 
-FROM --platform=${JS_PLATFORM} ${JS_IMAGE} as js-builder
+FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
@@ -32,7 +32,7 @@ COPY emails emails
 ENV NODE_ENV production
 RUN yarn build
 
-FROM ${GO_IMAGE} as go-builder
+FROM ${GO_IMAGE} AS go-builder
 
 ARG COMMIT_SHA=""
 ARG BUILD_BRANCH=""
@@ -79,14 +79,13 @@ COPY public/api-merged.json public/api-merged.json
 COPY pkg pkg
 COPY scripts scripts
 COPY conf conf
-COPY .github .github
 
 ENV COMMIT_SHA=${COMMIT_SHA}
 ENV BUILD_BRANCH=${BUILD_BRANCH}
 
 RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
 
-FROM ${BASE_IMAGE} as tgz-builder
+FROM ${BASE_IMAGE} AS tgz-builder
 
 WORKDIR /tmp/grafana
 
@@ -98,8 +97,8 @@ COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 RUN tar x -z -f /tmp/grafana.tar.gz --strip-components=1
 
 # helpers for COPY --from
-FROM ${GO_SRC} as go-src
-FROM ${JS_SRC} as js-src
+FROM ${GO_SRC} AS go-src
+FROM ${JS_SRC} AS js-src
 
 # Final stage
 FROM ${BASE_IMAGE}
