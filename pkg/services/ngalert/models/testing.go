@@ -1221,6 +1221,12 @@ var (
 
 type IntegrationMutators struct{}
 
+func (n IntegrationMutators) WithUID(uid string) Mutator[Integration] {
+	return func(s *Integration) {
+		s.UID = uid
+	}
+}
+
 func (n IntegrationMutators) WithName(name string) Mutator[Integration] {
 	return func(s *Integration) {
 		s.Name = name

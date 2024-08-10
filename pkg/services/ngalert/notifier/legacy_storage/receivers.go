@@ -2,10 +2,12 @@ package legacy_storage
 
 import (
 	"errors"
+	"fmt"
 	"slices"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func (rev *ConfigRevision) DeleteReceiver(uid string) {
@@ -25,18 +27,31 @@ func (rev *ConfigRevision) CreateReceiver(receiver *models.Receiver) error {
 		return err
 	}
 
+	if err := validateAndSetIntegrationUIDs(receiver); err != nil {
+		return err
+	}
+
 	postable, err := ReceiverToPostableApiReceiver(receiver)
 	if err != nil {
 		return err
 	}
 
 	rev.Config.AlertmanagerConfig.Receivers = append(rev.Config.AlertmanagerConfig.Receivers, postable)
+
+	if err := rev.ValidateReceivers(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) error {
 	existing, err := rev.GetReceiver(receiver.GetUID())
 	if err != nil {
+		return err
+	}
+
+	if err := validateAndSetIntegrationUIDs(receiver); err != nil {
 		return err
 	}
 
@@ -47,6 +62,10 @@ func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) error {
 
 	// Update receiver in the configuration.
 	*existing = *postable
+
+	if err := rev.ValidateReceivers(); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -79,6 +98,26 @@ func (rev *ConfigRevision) RenameReceiverInRoutes(oldName, newName string) {
 	RenameReceiverInRoute(oldName, newName, rev.Config.AlertmanagerConfig.Route)
 }
 
+// ValidateReceivers checks if any receivers have the same Name or if any integrations have the same UID.
+func (rev *ConfigRevision) ValidateReceivers() error {
+	receivers := make(map[string]struct{}, len(rev.Config.AlertmanagerConfig.Receivers))
+	uids := make(map[string]struct{}, len(rev.Config.AlertmanagerConfig.Receivers))
+	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
+		if _, exists := receivers[r.GetName()]; exists {
+			return makeErrReceiverInvalid(fmt.Errorf("name %q already exists", r.GetName()))
+		}
+		receivers[r.GetName()] = struct{}{}
+
+		for _, gr := range r.GrafanaManagedReceivers {
+			if _, exists := uids[gr.UID]; exists {
+				return makeErrReceiverInvalid(fmt.Errorf("integration with UID %q already exists", gr.UID))
+			}
+			uids[gr.UID] = struct{}{}
+		}
+	}
+	return nil
+}
+
 func RenameReceiverInRoute(oldName, newName string, routes ...*definitions.Route) {
 	if len(routes) == 0 {
 		return
@@ -105,4 +144,16 @@ func isReceiverInUse(name string, routes []*definitions.Route) bool {
 		}
 	}
 	return false
+}
+
+// validateAndSetIntegrationUIDs validates existing integration UIDs and generates them if they are empty.
+func validateAndSetIntegrationUIDs(receiver *models.Receiver) error {
+	for _, integration := range receiver.Integrations {
+		if integration.UID == "" {
+			integration.UID = util.GenerateShortUID()
+		} else if err := util.ValidateUID(integration.UID); err != nil {
+			return makeErrReceiverInvalid(fmt.Errorf("integration UID %q is invalid: %w", integration.UID, err))
+		}
+	}
+	return nil
 }

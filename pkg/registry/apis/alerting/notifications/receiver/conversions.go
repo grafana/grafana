@@ -85,13 +85,16 @@ func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[str
 
 		domain.Integrations = append(domain.Integrations, &grafanaIntegration)
 
-		secureFields := make([]string, 0, len(integration.SecureFields))
-		for k, isSecure := range integration.SecureFields {
-			if isSecure {
-				secureFields = append(secureFields, k)
+		if grafanaIntegration.UID != "" {
+			// This is an existing integration, so we track the secure fields being requested to copy over from existing values.
+			secureFields := make([]string, 0, len(integration.SecureFields))
+			for k, isSecure := range integration.SecureFields {
+				if isSecure {
+					secureFields = append(secureFields, k)
+				}
 			}
+			storedSecureFields[grafanaIntegration.UID] = secureFields
 		}
-		storedSecureFields[grafanaIntegration.UID] = secureFields
 	}
 
 	return domain, storedSecureFields, nil

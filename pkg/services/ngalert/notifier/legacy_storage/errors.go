@@ -8,6 +8,10 @@ var (
 
 	ErrReceiverNotFound = errutil.NotFound("alerting.notifications.receiver.notFound", errutil.WithPublicMessage("Receiver not found"))
 	ErrReceiverExists   = errutil.BadRequest("alerting.notifications.receiver.exists", errutil.WithPublicMessage("Receiver with this name already exists. Use a different name or update an existing one."))
+	ErrReceiverInvalid  = errutil.Conflict("alerting.notifications.receiver.invalid").MustTemplate(
+		"Invalid receiver: '{{ .Public.Reason }}'",
+		errutil.WithPublic("Invalid receiver: '{{ .Public.Reason }}'"),
+	)
 )
 
 func makeErrBadAlertmanagerConfiguration(err error) error {
@@ -18,4 +22,14 @@ func makeErrBadAlertmanagerConfiguration(err error) error {
 		Error: err,
 	}
 	return ErrBadAlertmanagerConfiguration.Build(data)
+}
+
+func makeErrReceiverInvalid(err error) error {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"Reason": err.Error(),
+		},
+		Error: err,
+	}
+	return ErrReceiverInvalid.Build(data)
 }

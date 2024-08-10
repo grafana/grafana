@@ -102,6 +102,10 @@ func (r *Receiver) WithExistingSecureFields(existing *Receiver, integrationSecur
 	}
 
 	for _, integration := range r.Integrations {
+		if integration.UID == "" {
+			// This is a new integration, so we don't need to copy any secure fields.
+			continue
+		}
 		fields := integrationSecureFields[integration.UID]
 		if len(fields) > 0 {
 			integration.WithExistingSecureFields(existingIntegrations[integration.UID], fields)
