@@ -15,7 +15,7 @@ import (
 	grafanaRest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 var (
@@ -25,10 +25,10 @@ var (
 var resourceInfo = notifications.ReceiverResourceInfo
 
 type ReceiverService interface {
-	GetReceiver(ctx context.Context, q models.GetReceiverQuery, user identity.Requester) (*models.Receiver, error)
-	GetReceivers(ctx context.Context, q models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error)
-	CreateReceiver(ctx context.Context, r *models.Receiver, orgID int64, user identity.Requester) (*models.Receiver, error)
-	UpdateReceiver(ctx context.Context, r *models.Receiver, storedSecureFields map[string][]string, orgID int64, user identity.Requester) (*models.Receiver, error)
+	GetReceiver(ctx context.Context, q ngmodels.GetReceiverQuery, user identity.Requester) (*ngmodels.Receiver, error)
+	GetReceivers(ctx context.Context, q ngmodels.GetReceiversQuery, user identity.Requester) ([]*ngmodels.Receiver, error)
+	CreateReceiver(ctx context.Context, r *ngmodels.Receiver, orgID int64, user identity.Requester) (*ngmodels.Receiver, error)
+	UpdateReceiver(ctx context.Context, r *ngmodels.Receiver, storedSecureFields map[string][]string, orgID int64, user identity.Requester) (*ngmodels.Receiver, error)
 	DeleteReceiver(ctx context.Context, name string, provenance definitions.Provenance, version string, orgID int64, user identity.Requester) error
 }
 
@@ -66,7 +66,7 @@ func (s *legacyStorage) List(ctx context.Context, _ *internalversion.ListOptions
 		return nil, err
 	}
 
-	q := models.GetReceiversQuery{
+	q := ngmodels.GetReceiversQuery{
 		OrgID:   orgId,
 		Decrypt: false,
 		//Names:   ctx.QueryStrings("names"), // TODO: Query params.
@@ -93,7 +93,7 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 		return nil, err
 	}
 
-	q := models.GetReceiversQuery{
+	q := ngmodels.GetReceiversQuery{
 		OrgID:   info.OrgID,
 		Decrypt: false,
 	}
@@ -234,8 +234,8 @@ func (s *legacyStorage) Delete(ctx context.Context, uid string, deleteValidation
 		version = *options.Preconditions.ResourceVersion
 	}
 
-	err = s.service.DeleteReceiver(ctx, uid, definitions.Provenance(models.ProvenanceNone), version, info.OrgID, user) // TODO add support for dry-run option
-	return old, false, err                                                                                             // false - will be deleted async
+	err = s.service.DeleteReceiver(ctx, uid, definitions.Provenance(ngmodels.ProvenanceNone), version, info.OrgID, user) // TODO add support for dry-run option
+	return old, false, err                                                                                               // false - will be deleted async
 }
 
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {

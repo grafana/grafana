@@ -9,11 +9,11 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	model "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 )
 
-func convertToK8sResources(orgID int64, receivers []*models.Receiver, namespacer request.NamespaceMapper) (*model.ReceiverList, error) {
+func convertToK8sResources(orgID int64, receivers []*ngmodels.Receiver, namespacer request.NamespaceMapper) (*model.ReceiverList, error) {
 	result := &model.ReceiverList{
 		Items: make([]model.Receiver, 0, len(receivers)),
 	}
@@ -27,7 +27,7 @@ func convertToK8sResources(orgID int64, receivers []*models.Receiver, namespacer
 	return result, nil
 }
 
-func convertToK8sResource(orgID int64, receiver *models.Receiver, namespacer request.NamespaceMapper) (*model.Receiver, error) {
+func convertToK8sResource(orgID int64, receiver *ngmodels.Receiver, namespacer request.NamespaceMapper) (*model.Receiver, error) {
 	spec := model.ReceiverSpec{
 		Title: receiver.Name,
 	}
@@ -55,22 +55,22 @@ func convertToK8sResource(orgID int64, receiver *models.Receiver, namespacer req
 	return r, nil
 }
 
-func convertToDomainModel(receiver *model.Receiver) (*models.Receiver, map[string][]string, error) {
-	domain := &models.Receiver{
+func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[string][]string, error) {
+	domain := &ngmodels.Receiver{
 		UID:          legacy_storage.NameToUid(receiver.Spec.Title),
 		Name:         receiver.Spec.Title,
-		Integrations: make([]*models.Integration, 0, len(receiver.Spec.Integrations)),
+		Integrations: make([]*ngmodels.Integration, 0, len(receiver.Spec.Integrations)),
 		Version:      receiver.ResourceVersion,
-		Provenance:   models.ProvenanceNone,
+		Provenance:   ngmodels.ProvenanceNone,
 	}
 
 	storedSecureFields := make(map[string][]string, len(receiver.Spec.Integrations))
 	for _, integration := range receiver.Spec.Integrations {
-		config, err := models.IntegrationConfigFromType(integration.Type)
+		config, err := ngmodels.IntegrationConfigFromType(integration.Type)
 		if err != nil {
 			return nil, nil, err
 		}
-		grafanaIntegration := models.Integration{
+		grafanaIntegration := ngmodels.Integration{
 			Name:           receiver.Spec.Title,
 			Config:         config,
 			Settings:       maps.Clone(integration.Settings.UnstructuredContent()),
