@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -9,6 +10,7 @@ import (
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	"k8s.io/component-base/tracing"
+	"k8s.io/klog/v2"
 
 	aggregationv0alpha1 "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
 	grafanasemconv "github.com/grafana/grafana/pkg/semconv"
@@ -42,7 +44,7 @@ func newPluginHandler(
 	for _, service := range dataplaneService.Spec.Services {
 		switch service.Type {
 		case aggregationv0alpha1.DataServiceType:
-			proxyPath := fmt.Sprintf("/apis/%s/%s/namespaces/{namespace}/connection/{uid}/query", dataplaneService.Spec.Group, dataplaneService.Spec.Version)
+			proxyPath := fmt.Sprintf("/apis/%s/%s/namespaces/{namespace}/connections/{uid}/query", dataplaneService.Spec.Group, dataplaneService.Spec.Version)
 			mux.Handle(proxyPath, h.QueryDataHandler())
 		case aggregationv0alpha1.StreamServiceType:
 			// TODO: implement in future PR
@@ -79,7 +81,7 @@ func (h *pluginHandler) QueryDataHandler() http.HandlerFunc {
 			return
 		}
 
-		dsUID := req.URL.Query().Get("uid")
+		dsUID := req.PathValue("uid")
 		dsType := h.dataplaneService.Spec.PluginID
 
 		queries, dsRef, err := data.ToDataSourceQueries(dqr)
@@ -96,13 +98,17 @@ func (h *pluginHandler) QueryDataHandler() http.HandlerFunc {
 
 		// the datasource type in the query body should match the plugin ID
 		if dsRef.Type != dsType {
-			responder.Error(w, req, fmt.Errorf("invalid datasource type"))
+			err := errors.New("invalid datasource type")
+			klog.ErrorS(err, "type", dsType, "ref.Type", dsRef.Type)
+			responder.Error(w, req, err)
 			return
 		}
 
 		// the UID in the query body should match the UID in the URL
 		if dsRef.UID != dsUID {
-			responder.Error(w, req, fmt.Errorf("invalid datasource UID"))
+			err := errors.New("invalid datasource UID")
+			klog.ErrorS(err, "path", dsUID, "ref.UID", dsRef.UID)
+			responder.Error(w, req, err)
 			return
 		}
 

@@ -97,5 +97,6 @@ func (r *responder) Object(statusCode int, obj runtime.Object) {
 
 func (r *responder) Error(_ http.ResponseWriter, req *http.Request, err error) {
 	tracing.SpanFromContext(req.Context()).RecordError(err)
-	http.Error(r.w, err.Error(), http.StatusServiceUnavailable)
+	s := responsewriters.ErrorToAPIStatus(err)
+	r.Object(http.StatusInternalServerError, s)
 }

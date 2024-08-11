@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
-	datasourcecontext "github.com/grafana/grafana/pkg/registry/apis/datasource/context"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/identity"
@@ -26,10 +25,6 @@ var WireSet = wire.NewSet(
 	plugincontext.ProvideService,
 	wire.Bind(new(datasource.PluginContextWrapper), new(*plugincontext.Provider)),
 	datasource.ProvideDefaultPluginConfigs,
-
-	// TODO: remove duplicate
-	datasourcecontext.ProvideDefaultPluginConfigs,
-	wire.Bind(new(datasourcecontext.PluginContextWrapper), new(*plugincontext.Provider)),
 
 	// Each must be added here *and* in the ServiceSink above
 	playlist.RegisterAPIService,

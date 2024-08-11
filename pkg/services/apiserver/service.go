@@ -35,7 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
-	datasourcecontext "github.com/grafana/grafana/pkg/registry/apis/datasource/context"
+	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	kubeaggregator "github.com/grafana/grafana/pkg/services/apiserver/aggregator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
@@ -125,8 +125,8 @@ type service struct {
 	kvStore           kvstore.KVStore
 
 	pluginClient    plugins.Client
-	datasources     datasourcecontext.ScopedPluginDatasourceProvider
-	contextProvider datasourcecontext.PluginContextWrapper
+	datasources     datasource.ScopedPluginDatasourceProvider
+	contextProvider datasource.PluginContextWrapper
 	pluginStore     pluginstore.Store
 }
 
@@ -140,8 +140,8 @@ func ProvideService(
 	db db.DB,
 	kvStore kvstore.KVStore,
 	pluginClient plugins.Client,
-	datasources datasourcecontext.ScopedPluginDatasourceProvider,
-	contextProvider datasourcecontext.PluginContextWrapper,
+	datasources datasource.ScopedPluginDatasourceProvider,
+	contextProvider datasource.PluginContextWrapper,
 	pluginStore pluginstore.Store,
 ) (*service, error) {
 	s := &service{
@@ -559,14 +559,14 @@ func (f *roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) 
 
 type pluginContextProvider struct {
 	pluginStore     pluginstore.Store
-	datasources     datasourcecontext.ScopedPluginDatasourceProvider
-	contextProvider datasourcecontext.PluginContextWrapper
+	datasources     datasource.ScopedPluginDatasourceProvider
+	contextProvider datasource.PluginContextWrapper
 }
 
 func (p *pluginContextProvider) GetPluginContext(ctx context.Context, pluginID string, uid string) (backend.PluginContext, error) {
 	all := p.pluginStore.Plugins(ctx)
 
-	var datasourceProvider datasourcecontext.PluginDatasourceProvider
+	var datasourceProvider datasource.PluginDatasourceProvider
 	for _, plugin := range all {
 		if plugin.ID == pluginID {
 			datasourceProvider = p.datasources.GetDatasourceProvider(plugin.JSONData)
