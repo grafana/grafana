@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 )
 
 var (
@@ -93,8 +94,13 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 		return nil, err
 	}
 
-	q := ngmodels.GetReceiversQuery{
+	name, err := legacy_storage.UidToName(uid)
+	if err != nil {
+		return nil, errors.NewNotFound(resourceInfo.GroupResource(), uid)
+	}
+	q := ngmodels.GetReceiverQuery{
 		OrgID:   info.OrgID,
+		Name:    name,
 		Decrypt: false,
 	}
 
@@ -103,18 +109,11 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 		return nil, err
 	}
 
-	res, err := s.service.GetReceivers(ctx, q, user)
+	r, err := s.service.GetReceiver(ctx, q, user)
 	if err != nil {
 		return nil, err
 	}
-
-	for _, r := range res {
-		if r.GetUID() == uid {
-			return convertToK8sResource(info.OrgID, r, s.namespacer)
-		}
-	}
-
-	return nil, errors.NewNotFound(resourceInfo.GroupResource(), uid)
+	return convertToK8sResource(info.OrgID, r, s.namespacer)
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
