@@ -56,6 +56,9 @@ interface LogsPanelProps extends PanelProps<Options> {
    *
    * Determines if a given key => value filter is active in a given query. Used by Log details.
    * isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
+   * 
+   * Array of field names to display instead of the log line. Used, for example, by the "eye" icon in Explore's Log Details.
+   * displayedFields?: string[]
    */
 }
 interface LogsPermalinkUrlState {
