@@ -635,37 +635,37 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       content: (setValue, watch) => {
         const modalIsOpen = watch('serverDiscoveryModal');
         const onClose = () => setValue('serverDiscoveryModal', false);
-        const onSuccess = (data: ServerDiscoveryFormData) => {
-          fetch(data.url)
-            .then((res) => res.json())
-            .then((res) => {
-              if (!res['token_endpoint'] || !res['authorization_endpoint']) {
-                appEvents.publish({
-                  type: AppEvents.alertWarning.name,
-                  payload: ['The URL provided is not a valid .well-known/openid-configuration endpoint'],
-                });
-                return;
-              }
+        const onSuccess = async (data: ServerDiscoveryFormData) => {
+          try {
+            const response = await fetch(data.url);
+            const res = await response.json();
 
-              setValue('tokenUrl', res['token_endpoint']);
-              setValue('authUrl', res['authorization_endpoint']);
-              if (res['userinfo_endpoint']) {
-                setValue('apiUrl', res['userinfo_endpoint']);
-              }
-
-              appEvents.publish({
-                type: AppEvents.alertSuccess.name,
-                payload: ['Server discovery URL has been successfully fetched.'],
-              });
-            })
-            .catch((err) => {
+            if (!res['token_endpoint'] || !res['authorization_endpoint']) {
               appEvents.publish({
                 type: AppEvents.alertWarning.name,
-                payload: ['Failed to fetch URL or invalid content'],
+                payload: ['The URL provided is not a valid .well-known/openid-configuration endpoint'],
               });
-            });
+              return;
+            }
 
-          onClose();
+            setValue('tokenUrl', res['token_endpoint']);
+            setValue('authUrl', res['authorization_endpoint']);
+            if (res['userinfo_endpoint']) {
+              setValue('apiUrl', res['userinfo_endpoint']);
+            }
+
+            appEvents.publish({
+              type: AppEvents.alertSuccess.name,
+              payload: ['Server discovery URL has been successfully fetched.'],
+            });
+          } catch (error) {
+            appEvents.publish({
+              type: AppEvents.alertWarning.name,
+              payload: ['Failed to fetch URL or invalid content'],
+            });
+          } finally {
+            onClose();
+          }
         };
         return (
           <>
@@ -679,7 +679,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
             >
               <Trans i18nKey={'oauth.form.server-discovery-action-button'}>Enter server discovery URL</Trans>
             </Button>
-            <ServerDiscoveryModal isOpen={modalIsOpen} onClose={onClose} onSuccess={onSuccess}></ServerDiscoveryModal>
+            <ServerDiscoveryModal isOpen={modalIsOpen} onClose={onClose} onSuccess={onSuccess} />
           </>
         );
       },
