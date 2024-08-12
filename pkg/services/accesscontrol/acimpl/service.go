@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -128,7 +129,7 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	return s.getCachedUserPermissions(ctx, user, options)
 }
 
-func (s *Service) getUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+func (s *Service) getUserPermissions(ctx context.Context, user identity.Requester, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	ctx, span := s.tracer.Start(ctx, "authz.getUserPermissions")
 	defer span.End()
 
@@ -143,10 +144,9 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 		permissions = append(permissions, SharedWithMeFolderPermission)
 	}
 
-	userID, err := identity.UserIdentifier(user.GetTypedID())
-	if err != nil {
-		return nil, err
-	}
+	// we don't care about the error here, if this fails we get 0 and no
+	// permission assigned to user will be returned, only for org role.
+	userID, _ := identity.UserIdentifier(user.GetID())
 
 	dbPermissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
 		OrgID:        user.GetOrgID(),
@@ -211,12 +211,10 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 	ctx, span := s.tracer.Start(ctx, "authz.getUserDirectPermissions")
 	defer span.End()
 
-	namespace, identifier := user.GetTypedID()
-
 	var userID int64
-	if namespace == identity.TypeUser || namespace == identity.TypeServiceAccount {
+	if identity.IsIdentityType(user.GetID(), claims.TypeUser, claims.TypeServiceAccount) {
 		var err error
-		userID, err = strconv.ParseInt(identifier, 10, 64)
+		userID, err = identity.UserIdentifier(user.GetID())
 		if err != nil {
 			return nil, err
 		}
