@@ -34,6 +34,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { deleteDashboard } from 'app/features/manage-dashboards/state/actions';
+import { getClosestScopesFacade, ScopesFacade } from 'app/features/scopes';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -70,7 +71,6 @@ import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
-import { ScopesScene } from './Scopes/ScopesScene';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
@@ -119,8 +119,6 @@ export interface DashboardSceneState extends SceneObjectState {
   overlay?: SceneObject;
   /** The dashboard doesn't have panels */
   isEmpty?: boolean;
-  /** Scene object that handles the scopes selector */
-  scopes?: ScopesScene;
   /** Kiosk mode */
   kioskMode?: KioskMode;
 }
@@ -159,6 +157,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    */
   private _fromExplore = false;
 
+  /**
+   * A reference to the scopes facade
+   */
+  private _scopesFacade: ScopesFacade | null;
+
   public constructor(state: Partial<DashboardSceneState>) {
     super({
       title: 'Dashboard',
@@ -166,9 +169,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       editable: true,
       body: state.body ?? new SceneFlexLayout({ children: [] }),
       links: state.links ?? [],
-      scopes: state.uid && config.featureToggles.scopeFilters ? new ScopesScene() : undefined,
       ...state,
     });
+
+    this._scopesFacade = getClosestScopesFacade(this);
 
     this._changeTracker = new DashboardSceneChangeTracker(this);
 
@@ -225,6 +229,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // Propagate change edit mode change to children
     this.propagateEditModeChange();
 
+    // Propagate edit mode to scopes
+    this._scopesFacade?.enterReadOnly();
+
     this._changeTracker.startTrackingChanges();
   };
 
@@ -270,6 +277,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     if (!this.state.isDirty || skipConfirm) {
       this.exitEditModeConfirmed(restoreInitialState || this.state.isDirty);
+      this._scopesFacade?.exitReadOnly();
       return;
     }
 
@@ -279,7 +287,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         text: `You have unsaved changes to this dashboard. Are you sure you want to discard them?`,
         icon: 'trash-alt',
         yesText: 'Discard',
-        onConfirm: this.exitEditModeConfirmed.bind(this),
+        onConfirm: () => {
+          this.exitEditModeConfirmed();
+          this._scopesFacade?.exitReadOnly();
+        },
       })
     );
   }
@@ -791,13 +802,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       dashboardUID: this.state.uid,
       panelId,
       panelPluginId: panel?.state.pluginId,
-      scopes: this.state.scopes?.getSelectedScopes(),
+      scopes: this._scopesFacade?.value,
     };
   }
 
   public enrichFiltersRequest(): Partial<DataSourceGetTagKeysOptions | DataSourceGetTagValuesOptions> {
     return {
-      scopes: this.state.scopes?.getSelectedScopes(),
+      scopes: this._scopesFacade?.value,
     };
   }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -43,7 +44,7 @@ func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 
 	if renderUsr.UserID <= 0 {
 		return &authn.Identity{
-			ID:              identity.NewTypedID(identity.TypeRenderService, 0),
+			ID:              identity.NewTypedID(claims.TypeRenderService, 0),
 			OrgID:           renderUsr.OrgID,
 			OrgRoles:        map[int64]org.RoleType{renderUsr.OrgID: org.RoleType(renderUsr.OrgRole)},
 			ClientParams:    authn.ClientParams{SyncPermissions: true},
@@ -53,7 +54,7 @@ func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	}
 
 	return &authn.Identity{
-		ID:              identity.NewTypedID(identity.TypeUser, renderUsr.UserID),
+		ID:              identity.NewTypedID(claims.TypeUser, renderUsr.UserID),
 		LastSeenAt:      time.Now(),
 		AuthenticatedBy: login.RenderModule,
 		ClientParams:    authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},

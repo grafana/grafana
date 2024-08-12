@@ -132,7 +132,7 @@ type DeleteTestComponentProps = {
   rule: CombinedRule;
 };
 const DeleteTestComponent = ({ rule }: DeleteTestComponentProps) => {
-  const [requestState, deleteRuleFromGroup] = useDeleteRuleFromGroup();
+  const [deleteRuleFromGroup, requestState] = useDeleteRuleFromGroup();
 
   // always handle your errors!
   const ruleGroupID = getRuleGroupLocationFromCombinedRule(rule);
