@@ -31,7 +31,7 @@ describe('usePluginComponent()', () => {
   });
 
   it('should return component, that can be rendered, from the registry', async () => {
-    const id = 'my-app-plugin/foo/bar';
+    const id = 'my-app-plugin/foo/bar/v1';
     const pluginId = 'my-app-plugin';
 
     registry.register({
@@ -54,7 +54,7 @@ describe('usePluginComponent()', () => {
   });
 
   it('should dynamically update when component is registered to the registry', async () => {
-    const id = 'my-app-plugin/foo/bar';
+    const id = 'my-app-plugin/foo/bar/v1';
     const pluginId = 'my-app-plugin';
     const usePluginComponent = createUsePluginComponent(registry);
     const { result, rerender } = renderHook(() => usePluginComponent(id));
