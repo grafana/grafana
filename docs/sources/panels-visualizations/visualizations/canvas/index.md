@@ -72,6 +72,10 @@ The text element lets you easily add text to the canvas. The element also suppor
 
 The icon element lets you add a supported icon to the canvas. Icons can have their color set based on thresholds / value mappings.
 
+To set a custom icon, upload or add the image URL for both the **Icon** and **Background (icon)** options:
+
+![Canvas visualization icon image options](/media/docs/grafana/panels-visualizations/screenshot-canvas-icon-images-11.2.png)
+
 ### Server
 
 The server element lets you easily represent a single server, a stack of servers, a database, or a terminal. Server elements support status color, bulb color, and a bulb blink rate all configurable by fixed or field values.
