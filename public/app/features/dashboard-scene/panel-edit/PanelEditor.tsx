@@ -92,6 +92,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   }
 
   public onDiscard = () => {
+    this.state.vizManager.setState({ isDirty: false });
     this._discardChanges = true;
     locationService.partial({ editPanel: null });
   };
@@ -146,6 +147,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   public onConfirmSaveLibraryPanel = () => {
     this.state.vizManager.commitChanges();
+    this.state.vizManager.setState({ isDirty: false });
     locationService.partial({ editPanel: null });
   };
 

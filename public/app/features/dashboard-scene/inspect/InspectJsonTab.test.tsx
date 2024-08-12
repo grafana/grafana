@@ -226,7 +226,7 @@ async function buildTestSceneWithLibraryPanel() {
     }),
   });
 
-  const panel = vizPanelToPanel(libraryPanel);
+  const panel = vizPanelToPanel(libraryPanel.clone({ $behaviors: undefined }));
 
   const libraryPanelState = {
     name: 'LibraryPanel A',

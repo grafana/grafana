@@ -1,9 +1,7 @@
-import { Unsubscribable } from 'rxjs';
-
 import { SceneObjectBase, SceneObjectState, VizPanel, VizPanelState } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state';
-import { getLibraryPanel, libraryVizPanelToSaveModel } from 'app/features/library-panels/state/api';
+import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 
@@ -19,8 +17,6 @@ interface LibraryPanelBehaviorState extends SceneObjectState {
 }
 
 export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorState> {
-  private _libPanelSubscription: Unsubscribable | undefined;
-
   public constructor(state: LibraryPanelBehaviorState) {
     super(state);
 
@@ -31,25 +27,6 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     if (!this.state.isLoaded) {
       this.loadLibraryPanelFromPanelModel();
     }
-
-    const vizPanel = this.parent;
-
-    if (vizPanel instanceof VizPanel) {
-      this._libPanelSubscription = vizPanel.subscribeToState((newState, prevState) => {
-        if (newState !== prevState) {
-          const _loadedPanel = libraryVizPanelToSaveModel(vizPanel);
-
-          if (this.state._loadedPanel !== _loadedPanel) {
-            this.setState({ _loadedPanel });
-          }
-        }
-      });
-    }
-
-    return () => {
-      this._libPanelSubscription?.unsubscribe();
-      this._libPanelSubscription = undefined;
-    };
   }
 
   public setPanelFromLibPanel(libPanel: LibraryPanel) {

@@ -203,7 +203,6 @@ export function vizPanelToPanel(
         name: libPanel!.state.name,
         uid: libPanel!.state.uid,
       },
-      type: vizPanel.state.pluginId,
     } as Panel;
 
     return panel;

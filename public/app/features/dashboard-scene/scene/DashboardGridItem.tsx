@@ -23,9 +23,8 @@ import {
 } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
-import { getMultiVariableValues, isLibraryPanel } from '../utils/utils';
+import { getLibraryPanelBehavior, getMultiVariableValues, isLibraryPanel } from '../utils/utils';
 
-import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { DashboardRepeatsProcessedEvent } from './types';
 
@@ -66,11 +65,9 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       this.subscribeToState((newState, prevState) => {
         if (newState.body !== prevState.body) {
           if (newState.body instanceof VizPanel && isLibraryPanel(newState.body)) {
-            const libraryPanel = newState.body.state.$behaviors?.find(
-              (behaviour) => behaviour instanceof LibraryPanelBehavior
-            );
+            const libraryPanel = getLibraryPanelBehavior(newState.body);
 
-            if (!libraryPanel || !(libraryPanel instanceof LibraryPanelBehavior)) {
+            if (!libraryPanel) {
               return;
             }
             if (libraryPanel.state._loadedPanel?.model.repeat) {

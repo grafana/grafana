@@ -116,8 +116,8 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
   private _detectPanelModelChanges = debounce(() => {
     const { hasChanges } = getPanelChanges(
-      vizPanelToPanel(this.state.sourcePanel.resolve()),
-      vizPanelToPanel(this.state.panel)
+      vizPanelToPanel(this.state.sourcePanel.resolve().clone({ $behaviors: undefined })),
+      vizPanelToPanel(this.state.panel.clone({ $behaviors: undefined }))
     );
     this.setState({ isDirty: hasChanges });
   }, 250);
