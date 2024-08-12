@@ -38,7 +38,7 @@ func (rev *ConfigRevision) CreateReceiver(receiver *models.Receiver) error {
 
 	rev.Config.AlertmanagerConfig.Receivers = append(rev.Config.AlertmanagerConfig.Receivers, postable)
 
-	if err := rev.ValidateReceivers(); err != nil {
+	if err := rev.ValidateReceiver(postable); err != nil {
 		return err
 	}
 
@@ -63,7 +63,7 @@ func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) error {
 	// Update receiver in the configuration.
 	*existing = *postable
 
-	if err := rev.ValidateReceivers(); err != nil {
+	if err := rev.ValidateReceiver(existing); err != nil {
 		return err
 	}
 
@@ -98,21 +98,30 @@ func (rev *ConfigRevision) RenameReceiverInRoutes(oldName, newName string) {
 	RenameReceiverInRoute(oldName, newName, rev.Config.AlertmanagerConfig.Route)
 }
 
-// ValidateReceivers checks if any receivers have the same Name or if any integrations have the same UID.
-func (rev *ConfigRevision) ValidateReceivers() error {
-	receivers := make(map[string]struct{}, len(rev.Config.AlertmanagerConfig.Receivers))
+// ValidateReceiver checks if the given receiver conflicts in name or integration UID with existing receivers.
+// We only check the receiver being modified to prevent existing issues from other receivers being reported.
+func (rev *ConfigRevision) ValidateReceiver(p *definitions.PostableApiReceiver) error {
 	uids := make(map[string]struct{}, len(rev.Config.AlertmanagerConfig.Receivers))
+	for _, integrations := range p.GrafanaManagedReceivers {
+		if _, exists := uids[integrations.UID]; exists {
+			return MakeErrReceiverInvalid(fmt.Errorf("integration with UID %q already exists", integrations.UID))
+		}
+		uids[integrations.UID] = struct{}{}
+	}
+
 	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
-		if _, exists := receivers[r.GetName()]; exists {
+		if p == r {
+			// Skip the receiver itself.
+			continue
+		}
+		if r.GetName() == p.GetName() {
 			return MakeErrReceiverInvalid(fmt.Errorf("name %q already exists", r.GetName()))
 		}
-		receivers[r.GetName()] = struct{}{}
 
 		for _, gr := range r.GrafanaManagedReceivers {
 			if _, exists := uids[gr.UID]; exists {
 				return MakeErrReceiverInvalid(fmt.Errorf("integration with UID %q already exists", gr.UID))
 			}
-			uids[gr.UID] = struct{}{}
 		}
 	}
 	return nil
