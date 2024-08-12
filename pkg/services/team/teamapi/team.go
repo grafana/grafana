@@ -152,13 +152,13 @@ func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Respons
 func (tapi *TeamAPI) searchTeamsZanzana(c *contextmodel.ReqContext) response.Response {
 	start := time.Now()
 	r := tapi.searchThenCheck(c)
-	fmt.Printf("searchThenCheck took %v\n", time.Since(start))
+	fmt.Printf("searchThenCheck,%v\n", time.Since(start))
 	start = time.Now()
 	r = tapi.buildIndexAndSearch(c)
-	fmt.Printf("buildIndexAndSearch took %v\n", time.Since(start))
+	fmt.Printf("buildIndexAndSearch,%v\n", time.Since(start))
 	start = time.Now()
 	r = tapi.listIDsThenSearch(c)
-	fmt.Printf("listIDsThenSearch took %v\n", time.Since(start))
+	fmt.Printf("listIDsThenSearch,%v\n", time.Since(start))
 	return r
 }
 
@@ -244,9 +244,6 @@ func (tapi *TeamAPI) buildIndexAndSearch(c *contextmodel.ReqContext) response.Re
 		}
 	}
 
-	// local index removed around
-	fmt.Printf("local index removed %d teams from the search result to not check permissions\n", len(queryResult.Teams)-len(intersectedTeams))
-
 	// Check permissions for the intersected teams
 	filteredTeams := []*team.TeamDTO{}
 	for _, team := range intersectedTeams {
@@ -272,7 +269,7 @@ func (tapi *TeamAPI) listIDsThenSearch(c *contextmodel.ReqContext) response.Resp
 	listResp, err := tapi.zanzanaClient.ListObjects(c.Req.Context(), &openfgav1.ListObjectsRequest{
 		Type:     zanzana.TypeTeam,
 		Relation: zanzana.RelationTeamMember,
-		User:     strconv.FormatInt(c.SignedInUser.UserID, 10),
+		User:     zanzana.TypeUser + ":" + strconv.FormatInt(c.SignedInUser.UserID, 10),
 	})
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to list accessible teams", err)
