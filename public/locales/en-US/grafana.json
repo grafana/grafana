@@ -1564,7 +1564,7 @@
   },
   "oauth": {
     "form": {
-      "server-discovery-action-button": "Enter server discovery URL",
+      "server-discovery-action-button": "Enter OpenID Connect Discovery URL",
       "server-discovery-modal-close": "Close",
       "server-discovery-modal-submit": "Submit"
     }

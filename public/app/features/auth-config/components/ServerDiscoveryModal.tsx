@@ -47,7 +47,7 @@ export const ServerDiscoveryModalUnconnected = ({ isOpen, onClose, onSuccess }: 
   };
 
   return (
-    <Modal title="Server discovery URL" onDismiss={onClose} onClickBackdrop={onClose} isOpen={isOpen}>
+    <Modal title="OpenID Connect Discovery URL" onDismiss={onClose} onClickBackdrop={onClose} isOpen={isOpen}>
       <form
         onSubmit={(e) => {
           e.stopPropagation();

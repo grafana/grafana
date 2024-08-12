@@ -628,7 +628,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'checkbox',
     },
     serverDiscoveryUrl: {
-      label: 'Server discovery URL',
+      label: 'OpenID Connect Discovery URL',
       description:
         'The .well-known/openid-configuration endpoint for your IdP. The info extracted from this URL will be used to populate the Auth URL, Token URL and API URL fields.',
       type: 'custom',
@@ -656,7 +656,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
 
             appEvents.publish({
               type: AppEvents.alertSuccess.name,
-              payload: ['Server discovery URL has been successfully fetched.'],
+              payload: ['OpenID Connect Discovery URL has been successfully fetched.'],
             });
           } catch (error) {
             appEvents.publish({
@@ -677,7 +677,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
                 setValue('serverDiscoveryModal', true);
               }}
             >
-              <Trans i18nKey={'oauth.form.server-discovery-action-button'}>Enter server discovery URL</Trans>
+              <Trans i18nKey={'oauth.form.server-discovery-action-button'}>Enter OpenID Connect Discovery URL</Trans>
             </Button>
             <ServerDiscoveryModal isOpen={modalIsOpen} onClose={onClose} onSuccess={onSuccess} />
           </>
