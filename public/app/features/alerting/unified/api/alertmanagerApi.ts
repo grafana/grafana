@@ -279,9 +279,11 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
     // TODO: Remove as part of migration to k8s API for receivers
     getContactPointsList: build.query<GrafanaManagedContactPoint[], void>({
       query: () => ({ url: '/api/v1/notifications/receivers' }),
+      providesTags: ['AlertmanagerConfiguration'],
     }),
     getMuteTimingList: build.query<MuteTimeInterval[], void>({
       query: () => ({ url: '/api/v1/notifications/time-intervals' }),
+      providesTags: ['AlertmanagerConfiguration'],
     }),
   }),
 });
