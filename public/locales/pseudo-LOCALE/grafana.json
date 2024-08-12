@@ -1911,16 +1911,7 @@
     "dismissable-button": "Cľőşę"
   },
   "scopes": {
-    "filters": {
-      "apply": "Åppľy",
-      "cancel": "Cäŉčęľ",
-      "input": {
-        "placeholder": "Ŝęľęčŧ şčőpęş...",
-        "removeAll": "Ŗęmővę äľľ şčőpęş"
-      },
-      "title": "Ŝęľęčŧ şčőpęş"
-    },
-    "suggestedDashboards": {
+    "dashboards": {
       "loading": "Ŀőäđįŉģ đäşĥþőäřđş",
       "noResultsForFilter": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy",
       "noResultsForFilterClear": "Cľęäř şęäřčĥ",
@@ -1928,9 +1919,19 @@
       "noResultsNoScopes": "Ńő şčőpęş şęľęčŧęđ",
       "search": "Ŝęäřčĥ",
       "toggle": {
-        "collapse": "Cőľľäpşę şčőpę ƒįľŧęřş",
-        "expand": "Ēχpäŉđ şčőpę ƒįľŧęřş"
+        "collapse": "Cőľľäpşę şūģģęşŧęđ đäşĥþőäřđş ľįşŧ",
+        "disabled": "Ŝūģģęşŧęđ đäşĥþőäřđş ľįşŧ įş đįşäþľęđ đūę ŧő řęäđ őŉľy mőđę",
+        "expand": "Ēχpäŉđ şūģģęşŧęđ đäşĥþőäřđş ľįşŧ"
       }
+    },
+    "selector": {
+      "apply": "Åppľy",
+      "cancel": "Cäŉčęľ",
+      "input": {
+        "placeholder": "Ŝęľęčŧ şčőpęş...",
+        "removeAll": "Ŗęmővę äľľ şčőpęş"
+      },
+      "title": "Ŝęľęčŧ şčőpęş"
     },
     "tree": {
       "collapse": "Cőľľäpşę",

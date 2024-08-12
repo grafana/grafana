@@ -17,8 +17,7 @@ import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, editview, editPanel, isEmpty, scopes, meta } = model.useState();
-  const { isExpanded: isScopesExpanded } = scopes?.useState() ?? {};
+  const { controls, overlay, editview, editPanel, isEmpty, meta } = model.useState();
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
@@ -60,20 +59,10 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
       {editPanel && <editPanel.Component model={editPanel} />}
       {!editPanel && (
-        <div
-          className={cx(
-            styles.pageContainer,
-            hasControls && !scopes && styles.pageContainerWithControls,
-            scopes && styles.pageContainerWithScopes,
-            scopes && isScopesExpanded && styles.pageContainerWithScopesExpanded
-          )}
-        >
-          {scopes && !meta.dashboardNotFound && <scopes.Component model={scopes} />}
+        <div className={cx(styles.pageContainer, hasControls && styles.pageContainerWithControls)}>
           <NavToolbarActions dashboard={model} />
           {controls && (
-            <div
-              className={cx(styles.controlsWrapper, scopes && !isScopesExpanded && styles.controlsWrapperWithScopes)}
-            >
+            <div className={styles.controlsWrapper}>
               <controls.Component model={controls} />
             </div>
           )}
@@ -118,18 +107,6 @@ function getStyles(theme: GrafanaTheme2) {
         "panels"`,
       gridTemplateRows: 'auto 1fr',
     }),
-    pageContainerWithScopes: css({
-      gridTemplateAreas: `
-        "scopes controls"
-        "panels panels"`,
-      gridTemplateColumns: `${theme.spacing(32)} 1fr`,
-      gridTemplateRows: 'auto 1fr',
-    }),
-    pageContainerWithScopesExpanded: css({
-      gridTemplateAreas: `
-        "scopes controls"
-        "scopes panels"`,
-    }),
     panelsContainer: css({
       gridArea: 'panels',
     }),
@@ -142,9 +119,6 @@ function getStyles(theme: GrafanaTheme2) {
       ':empty': {
         display: 'none',
       },
-    }),
-    controlsWrapperWithScopes: css({
-      padding: theme.spacing(2, 2, 2, 0),
     }),
     canvasContent: css({
       label: 'canvas-content',

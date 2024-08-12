@@ -40,20 +40,21 @@ export function ScopesInput({
       let titles: string[];
 
       if (path.length > 0) {
-        titles = path
-          .map((nodeName) => {
-            const cl = currentLevel[nodeName];
-            if (!cl) {
-              return null;
-            }
+        titles = path.reduce<string[]>((acc, nodeName) => {
+          const cl = currentLevel[nodeName];
 
-            const { title, nodes } = cl;
+          if (!cl) {
+            return acc;
+          }
 
-            currentLevel = nodes;
+          const { title, nodes } = cl;
 
-            return title;
-          })
-          .filter((title) => title !== null) as string[];
+          currentLevel = nodes;
+
+          acc.push(title);
+
+          return acc;
+        }, []);
 
         if (titles[0] === '') {
           titles.splice(0, 1);
@@ -90,15 +91,16 @@ export function ScopesInput({
     () => (
       <Input
         readOnly
-        placeholder={t('scopes.filters.input.placeholder', 'Select scopes...')}
+        placeholder={t('scopes.selector.input.placeholder', 'Select scopes...')}
+        disabled={isDisabled}
         loading={isLoading}
         value={scopesTitles}
-        aria-label={t('scopes.filters.input.placeholder', 'Select scopes...')}
-        data-testid="scopes-filters-input"
+        aria-label={t('scopes.selector.input.placeholder', 'Select scopes...')}
+        data-testid="scopes-selector-input"
         suffix={
           scopes.length > 0 && !isDisabled ? (
             <IconButton
-              aria-label={t('scopes.filters.input.removeAll', 'Remove all scopes')}
+              aria-label={t('scopes.selector.input.removeAll', 'Remove all scopes')}
               name="times"
               onClick={() => onRemoveAllClick()}
             />
@@ -127,8 +129,8 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     scopePath: css({
       color: theme.colors.text.primary,
-      fontSize: theme.typography.pxToRem(14),
-      margin: theme.spacing(1, 0),
+      fontSize: theme.typography.pxToRem(12),
+      margin: theme.spacing(0, 0),
     }),
   };
 };
