@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -132,7 +133,7 @@ func (hs *HTTPServer) CreateOrg(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	if !identity.IsIdentityType(c.SignedInUser.GetID(), identity.TypeUser) {
+	if !identity.IsIdentityType(c.SignedInUser.GetID(), claims.TypeUser) {
 		return response.Error(http.StatusForbidden, "Only users can create organizations", nil)
 	}
 

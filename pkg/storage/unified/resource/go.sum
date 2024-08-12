@@ -349,6 +349,8 @@ github.com/googleapis/gax-go/v2 v2.12.3/go.mod h1:AKloxT6GtNbaLm8QTNSidHUVsHYcBH
 github.com/gorilla/websocket v1.4.1/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/grafana/authlib v0.0.0-20240730122259-a0d13672efb1 h1:EiaupmOnt6XF/LPxvagjTofWmByzYaf5VyMIF+w/71M=
 github.com/grafana/authlib v0.0.0-20240730122259-a0d13672efb1/go.mod h1:YA9We4kTafu7mlMnUh3In6Q2wpg8fYN3ycgCKOK1TB8=
+github.com/grafana/authlib/claims v0.0.0-20240809101159-74eaccc31a06 h1:uD1LcKwvEAqzDsgVChBudPqo5BhPxkj9AgylT5QCReo=
+github.com/grafana/authlib/claims v0.0.0-20240809101159-74eaccc31a06/go.mod h1:r+F8H6awwjNQt/KPZ2GNwjk8TvsJ7/gxzkXN26GlL/A=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240808164224-787abccfbc9e h1:3vNpomyzv714Hgls5vn+fC0vgv8wUOSHepUl7PB5nUs=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240808164224-787abccfbc9e/go.mod h1:ORVFiW/KNRY52lNjkGwnFWCxNVfE97bJG2jr2fetq0I=
 github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0 h1:pRhl55Yx1eC7BZ1N+BBWwnKaMyD8uC+34TLdndZMAKk=
