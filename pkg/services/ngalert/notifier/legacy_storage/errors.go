@@ -6,9 +6,9 @@ var (
 	ErrNoAlertmanagerConfiguration  = errutil.Internal("alerting.notification.configMissing", errutil.WithPublicMessage("No alertmanager configuration present in this organization"))
 	ErrBadAlertmanagerConfiguration = errutil.Internal("alerting.notification.configCorrupted").MustTemplate("Failed to unmarshal the Alertmanager configuration", errutil.WithPublic("Current Alertmanager configuration in the storage is corrupted. Reset the configuration or rollback to a recent valid one."))
 
-	ErrReceiverNotFound = errutil.NotFound("alerting.notifications.receiver.notFound", errutil.WithPublicMessage("Receiver not found"))
-	ErrReceiverExists   = errutil.BadRequest("alerting.notifications.receiver.exists", errutil.WithPublicMessage("Receiver with this name already exists. Use a different name or update an existing one."))
-	ErrReceiverInvalid  = errutil.Conflict("alerting.notifications.receiver.invalid").MustTemplate(
+	ErrReceiverNotFound = errutil.NotFound("alerting.notifications.receivers.notFound", errutil.WithPublicMessage("Receiver not found"))
+	ErrReceiverExists   = errutil.BadRequest("alerting.notifications.receivers.exists", errutil.WithPublicMessage("Receiver with this name already exists. Use a different name or update an existing one."))
+	ErrReceiverInvalid  = errutil.Conflict("alerting.notifications.receivers.invalid").MustTemplate(
 		"Invalid receiver: '{{ .Public.Reason }}'",
 		errutil.WithPublic("Invalid receiver: '{{ .Public.Reason }}'"),
 	)

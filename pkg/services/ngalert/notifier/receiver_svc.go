@@ -20,11 +20,11 @@ import (
 )
 
 var (
-	ErrReceiverInUse = errutil.Conflict("alerting.notifications.receiver.used").MustTemplate(
+	ErrReceiverInUse = errutil.Conflict("alerting.notifications.receivers.used").MustTemplate(
 		"Receiver is used by '{{ .Public.UsedBy }}'",
 		errutil.WithPublic("Receiver is used by {{ .Public.UsedBy }}"),
 	)
-	ErrReceiverVersionConflict = errutil.Conflict("alerting.notifications.receiver.conflict").MustTemplate(
+	ErrReceiverVersionConflict = errutil.Conflict("alerting.notifications.receivers.conflict").MustTemplate(
 		"Provided version '{{ .Public.Version }}' of receiver '{{ .Public.Name }}' does not match current version '{{ .Public.CurrentVersion }}'",
 		errutil.WithPublic("Provided version '{{ .Public.Version }}' of receiver '{{ .Public.Name }}' does not match current version '{{ .Public.CurrentVersion }}'"),
 	)
