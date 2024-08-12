@@ -109,17 +109,15 @@ const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
       // match against every tag filter
       return tags.every((tag: Tag) => {
         if (tag.key && tag.value) {
-          if (tag.operator === '=' && checkKeyValConditionForMatch(tag, span)) {
-            return getReturnValue(tag.operator, true);
-          } else if (tag.operator === '=~' && checkKeyValConditionForRegex(tag, span)) {
-            return getReturnValue(tag.operator, false);
-          } else if (tag.operator === '!=' && !checkKeyValConditionForMatch(tag, span)) {
-            return getReturnValue(tag.operator, false);
-          } else if (tag.operator === '!~' && !checkKeyValConditionForRegex(tag, span)) {
-            return getReturnValue(tag.operator, false);
-          } else {
-            return false;
+          if (
+            (tag.operator === '=' && checkKeyValConditionForMatch(tag, span)) ||
+            (tag.operator === '=~' && checkKeyValConditionForRegex(tag, span)) ||
+            (tag.operator === '!=' && !checkKeyValConditionForMatch(tag, span)) ||
+            (tag.operator === '!~' && !checkKeyValConditionForRegex(tag, span))
+          ) {
+            return true;
           }
+          return false;
         } else if (tag.key) {
           if (
             span.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key)) ||
@@ -133,10 +131,11 @@ const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
             (span.traceState && tag.key === TRACE_STATE) ||
             tag.key === ID
           ) {
-            return getReturnValue(tag.operator, true);
+            return tag.operator === '=' || tag.operator === '=~' ? true : false;
           }
+          return tag.operator === '=' || tag.operator === '=~' ? false : true;
         }
-        return getReturnValue(tag.operator, false);
+        return false;
       });
     });
   }
@@ -184,30 +183,15 @@ const checkKeyValConditionForMatch = (tag: Tag, span: TraceSpan) => {
 };
 
 const checkKeyForMatch = (tagKey: string, key: string) => {
-  return tagKey === key.toString() ? true : false;
+  return tagKey === key.toString();
 };
 
 const checkKeyAndValueForMatch = (tag: Tag, kv: TraceKeyValuePair) => {
-  return tag.key === kv.key.toString() && tag.value === kv.value.toString() ? true : false;
+  return tag.key === kv.key.toString() && tag.value === kv.value.toString();
 };
 
 const checkKeyAndValueForRegex = (tag: Tag, kv: TraceKeyValuePair) => {
-  return kv.key.toString().includes(tag.key || '') && kv.value.toString().includes(tag.value || '') ? true : false;
-};
-
-const getReturnValue = (operator: string, found: boolean) => {
-  switch (operator) {
-    case '=':
-      return found;
-    case '!=':
-      return !found;
-    case '~=':
-      return !found;
-    case '!~':
-      return !found;
-    default:
-      return !found;
-  }
+  return kv.key.toString().includes(tag.key || '') && kv.value.toString().includes(tag.value || '');
 };
 
 const getServiceNameMatches = (spans: TraceSpan[], searchProps: SearchProps) => {
