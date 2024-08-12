@@ -24,12 +24,9 @@
 	<noscript>
 		You need to enable JavaScript to run this app.
 	</noscript>
-  <script>
+  <script nonce="[[$.Nonce]]">
     [[if .Assets.ContentDeliveryURL]]
         window.public_cdn_path = '[[.Assets.ContentDeliveryURL]]public/build/';
-    [[end]]
-    [[if .Nonce]]
-      window.nonce = '[[.Nonce]]';
     [[end]]
   </script>
 	<div id="root"></div>

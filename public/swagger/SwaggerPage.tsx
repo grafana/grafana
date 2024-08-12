@@ -88,7 +88,14 @@ export const Page = () => {
           </div>
 
           {url?.value && (
-            <SwaggerUI url={url.value} presets={[WrappedPlugins]} deepLinking={true} tryItOutEnabled={true} />
+            <SwaggerUI
+              url={url.value}
+              presets={[WrappedPlugins]}
+              deepLinking={true}
+              tryItOutEnabled={true}
+              queryConfigEnabled={false}
+              persistAuthorization={false}
+            />
           )}
 
           {!url?.value && <div>TODO... api landing page...??</div>}
