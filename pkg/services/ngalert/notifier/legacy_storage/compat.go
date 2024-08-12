@@ -2,11 +2,11 @@ package legacy_storage
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"maps"
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -33,7 +33,7 @@ func IntegrationToPostableGrafanaReceiver(integration *models.Integration) (*api
 	}
 
 	if len(integration.Settings) > 0 {
-		jsonBytes, err := simplejson.NewFromAny(integration.Settings).MarshalJSON()
+		jsonBytes, err := json.Marshal(integration.Settings)
 		if err != nil {
 			return nil, err
 		}

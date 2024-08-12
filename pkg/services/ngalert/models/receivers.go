@@ -14,7 +14,6 @@ import (
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 )
 
@@ -321,7 +320,7 @@ func (integration *Integration) Validate(decryptFn DecryptFn) error {
 	if err := decrypted.Decrypt(decryptFn); err != nil {
 		return err
 	}
-	jsonBytes, err := simplejson.NewFromAny(decrypted.Settings).MarshalJSON()
+	jsonBytes, err := json.Marshal(decrypted.Settings)
 	if err != nil {
 		return err
 	}

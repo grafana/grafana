@@ -9,7 +9,6 @@ import (
 	amConfig "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
@@ -499,7 +498,7 @@ func GettableGrafanaReceiverFromReceiver(r *models.Integration, provenance model
 	}
 
 	if len(r.Settings) > 0 {
-		jsonBytes, err := simplejson.NewFromAny(r.Settings).MarshalJSON()
+		jsonBytes, err := json.Marshal(r.Settings)
 		if err != nil {
 			return definitions.GettableGrafanaReceiver{}, err
 		}
