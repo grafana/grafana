@@ -23,6 +23,9 @@ import (
 // 422: unprocessableEntityError
 // 500: internalServerError
 func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
+	c, span := hs.injectSpan(c, "api.Search")
+	defer span.End()
+
 	query := c.Query("query")
 	tags := c.QueryStrings("tag")
 	starred := c.Query("starred")

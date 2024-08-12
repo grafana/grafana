@@ -1,6 +1,8 @@
 SELECT
-    kv.{{ .Ident "resource_version" | .Into .Response.ResourceVersion }},
-    kv.{{ .Ident "value" | .Into .Response.Value }}
+    kv.{{ .Ident "resource_version" }},
+    kv.{{ .Ident "namespace" }},
+    kv.{{ .Ident "name" }},
+    kv.{{ .Ident "value" }}
     FROM {{ .Ident "resource_history" }} as kv 
     INNER JOIN  (
         SELECT {{ .Ident "namespace" }}, {{ .Ident "group" }}, {{ .Ident "resource" }}, {{ .Ident "name" }},  max({{ .Ident "resource_version" }}) AS {{ .Ident "resource_version" }}
@@ -44,7 +46,7 @@ SELECT
         AND kv.{{ .Ident "name" }}      = {{ .Arg .Request.Options.Key.Name }}
         {{ end }}
     {{ end }}
-    ORDER BY kv.{{ .Ident "resource_version" }} DESC
+    ORDER BY kv.{{ .Ident "namespace" }} ASC, kv.{{ .Ident "name" }} ASC
     {{ if (gt .Request.Limit 0) }}
     LIMIT {{ .Arg .Request.Limit }} OFFSET {{ .Arg .Request.Offset }}
     {{ end }}

@@ -2,8 +2,6 @@ package identity
 
 import (
 	"context"
-	"fmt"
-	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -19,7 +17,6 @@ import (
 	identityapi "github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -87,85 +84,25 @@ func (b *IdentityAPIBuilder) GetAPIGroupInfo(
 
 	team := identity.TeamResourceInfo
 	teamStore := &legacyTeamStorage{
-		service:      b.svcTeam,
-		resourceInfo: team,
-		tableConverter: gapiutil.NewTableConverter(
-			team.GroupResource(),
-			[]metav1.TableColumnDefinition{
-				{Name: "Name", Type: "string", Format: "name"},
-				{Name: "Title", Type: "string", Format: "string", Description: "The team name"},
-				{Name: "Email", Type: "string", Format: "string", Description: "team email"},
-				{Name: "Created At", Type: "date"},
-			},
-			func(obj any) ([]interface{}, error) {
-				m, ok := obj.(*identity.Team)
-				if !ok {
-					return nil, fmt.Errorf("expected playlist")
-				}
-				return []interface{}{
-					m.Name,
-					m.Spec.Title,
-					m.Spec.Email,
-					m.CreationTimestamp.UTC().Format(time.RFC3339),
-				}, nil
-			},
-		),
+		service:        b.svcTeam,
+		resourceInfo:   team,
+		tableConverter: team.TableConverter(),
 	}
 	storage[team.StoragePath()] = teamStore
 
 	user := identity.UserResourceInfo
 	userStore := &legacyUserStorage{
-		service:      b.svcUser,
-		resourceInfo: user,
-		tableConverter: gapiutil.NewTableConverter(
-			user.GroupResource(),
-			[]metav1.TableColumnDefinition{
-				{Name: "Name", Type: "string", Format: "name"},
-				{Name: "Login", Type: "string", Format: "string", Description: "The user login"},
-				{Name: "Email", Type: "string", Format: "string", Description: "The user email"},
-				{Name: "Created At", Type: "date"},
-			},
-			func(obj any) ([]interface{}, error) {
-				u, ok := obj.(*identity.User)
-				if ok {
-					return []interface{}{
-						u.Name,
-						u.Spec.Login,
-						u.Spec.Email,
-						u.CreationTimestamp.UTC().Format(time.RFC3339),
-					}, nil
-				}
-				return nil, fmt.Errorf("expected user")
-			},
-		),
+		service:        b.svcUser,
+		resourceInfo:   user,
+		tableConverter: user.TableConverter(),
 	}
 	storage[user.StoragePath()] = userStore
 
 	sa := identity.ServiceAccountResourceInfo
 	saStore := &legacyServiceAccountStorage{
-		service:      b.svcUser,
-		resourceInfo: sa,
-		tableConverter: gapiutil.NewTableConverter(
-			user.GroupResource(),
-			[]metav1.TableColumnDefinition{
-				{Name: "Name", Type: "string", Format: "name"},
-				{Name: "Account", Type: "string", Format: "string", Description: "The service account email"},
-				{Name: "Email", Type: "string", Format: "string", Description: "The user email"},
-				{Name: "Created At", Type: "date"},
-			},
-			func(obj any) ([]interface{}, error) {
-				u, ok := obj.(*identity.ServiceAccount)
-				if ok {
-					return []interface{}{
-						u.Name,
-						u.Spec.Name,
-						u.Spec.Email,
-						u.CreationTimestamp.UTC().Format(time.RFC3339),
-					}, nil
-				}
-				return nil, fmt.Errorf("expected user")
-			},
-		),
+		service:        b.svcUser,
+		resourceInfo:   sa,
+		tableConverter: sa.TableConverter(),
 	}
 	storage[sa.StoragePath()] = saStore
 
