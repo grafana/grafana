@@ -8,9 +8,7 @@ import (
 
 	"github.com/go-jose/go-jose/v3/jwt"
 	authlib "github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/claims"
 	authlibclaims "github.com/grafana/authlib/claims"
-
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -125,7 +123,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTInvalid.Errorf("failed to parse id token subject: %w", err)
 	}
 
-	if !userID.IsType(claims.TypeUser) {
+	if !userID.IsType(authlibclaims.TypeUser) {
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", userID.String())
 	}
 
