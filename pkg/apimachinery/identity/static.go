@@ -69,6 +69,11 @@ func (u *StaticRequester) GetIdentityType() claims.IdentityType {
 	return u.Type
 }
 
+// IsIdentityType implements Requester.
+func (u *StaticRequester) IsIdentityType(expected ...claims.IdentityType) bool {
+	return claims.IsIdentityType(u.GetIdentityType(), expected...)
+}
+
 // GetExtra implements Requester.
 func (u *StaticRequester) GetExtra() map[string][]string {
 	return map[string][]string{}

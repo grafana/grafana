@@ -105,6 +105,11 @@ func (i *Identity) GetIdentityType() claims.IdentityType {
 	return i.Type
 }
 
+// GetIdentityType implements Requester.
+func (i *Identity) IsIdentityType(expected ...claims.IdentityType) bool {
+	return claims.IsIdentityType(i.GetIdentityType(), expected...)
+}
+
 // GetExtra implements identity.Requester.
 func (i *Identity) GetExtra() map[string][]string {
 	extra := map[string][]string{}

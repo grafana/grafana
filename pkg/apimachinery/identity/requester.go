@@ -15,6 +15,8 @@ type Requester interface {
 
 	// GetIdentityType returns the type for the requester
 	GetIdentityType() claims.IdentityType
+	// IsIdentityType returns true if identity type for requester matches any expected identity type
+	IsIdentityType(expected ...claims.IdentityType) bool
 	// GetRawIdentifier returns only the identifier part of the UID, excluding the type
 	GetRawIdentifier() string
 	// Deprecated: use GetUID instead

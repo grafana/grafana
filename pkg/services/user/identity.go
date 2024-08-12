@@ -105,6 +105,11 @@ func (u *SignedInUser) GetIdentityType() claims.IdentityType {
 	return u.FallbackType
 }
 
+// IsIdentityType implements Requester.
+func (u *SignedInUser) IsIdentityType(expected ...claims.IdentityType) bool {
+	return claims.IsIdentityType(u.GetIdentityType(), expected...)
+}
+
 // GetName implements identity.Requester.
 func (u *SignedInUser) GetName() string {
 	return u.Name
