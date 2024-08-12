@@ -155,22 +155,22 @@ func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) w
 			return
 		}
 
-		id := ident.GetID()
-		if !identity.IsIdentityType(
-			id,
+		// FIXME(kalleep): handle 0 raw id
+		if !claims.IsIdentityType(
+			ident.GetIdentityType(),
 			claims.TypeUser,
 			claims.TypeServiceAccount,
 			claims.TypeAPIKey,
-		) || id.ID() == "0" {
+		) {
 			return
 		}
 
-		if _, ok := h.Cfg.IDResponseHeaderNamespaces[id.Type().String()]; !ok {
+		if _, ok := h.Cfg.IDResponseHeaderNamespaces[string(ident.GetIdentityType())]; !ok {
 			return
 		}
 
 		headerName := fmt.Sprintf("%s-Identity-Id", h.Cfg.IDResponseHeaderPrefix)
-		w.Header().Add(headerName, id.String())
+		w.Header().Add(headerName, ident.GetID().String())
 	}
 }
 

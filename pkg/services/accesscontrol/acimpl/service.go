@@ -212,7 +212,7 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 	defer span.End()
 
 	var userID int64
-	if identity.IsIdentityType(user.GetID(), claims.TypeUser, claims.TypeServiceAccount) {
+	if claims.IsIdentityType(user.GetIdentityType(), claims.TypeUser, claims.TypeServiceAccount) {
 		var err error
 		userID, err = identity.UserIdentifier(user.GetID())
 		if err != nil {

@@ -124,7 +124,7 @@ func (d *DashboardSnapshotStore) SearchDashboardSnapshots(ctx context.Context, q
 		}
 
 		var userID int64
-		if identity.IsIdentityType(query.SignedInUser.GetID(), claims.TypeUser, claims.TypeServiceAccount) {
+		if claims.IsIdentityType(query.SignedInUser.GetIdentityType(), claims.TypeUser, claims.TypeServiceAccount) {
 			var err error
 			userID, err = identity.UserIdentifier(query.SignedInUser.GetID())
 			if err != nil {

@@ -44,7 +44,7 @@ func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashI
 		return false, nil
 	}
 
-	if !identity.IsIdentityType(c.SignedInUser.GetID(), claims.TypeUser) {
+	if !claims.IsIdentityType(c.SignedInUser.GetIdentityType(), claims.TypeUser) {
 		return false, nil
 	}
 

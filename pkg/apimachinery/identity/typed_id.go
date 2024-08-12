@@ -8,17 +8,6 @@ import (
 	"github.com/grafana/authlib/claims"
 )
 
-// IsIdentityType returns true if typedID matches any expected identity type
-func IsIdentityType(typedID TypedID, expected ...claims.IdentityType) bool {
-	for _, e := range expected {
-		if typedID.Type() == e {
-			return true
-		}
-	}
-
-	return false
-}
-
 func ParseTypeAndID(str string) (claims.IdentityType, string, error) {
 	parts := strings.Split(str, ":")
 	if len(parts) != 2 {
@@ -74,7 +63,7 @@ func (ni TypedID) Type() claims.IdentityType {
 }
 
 func (ni TypedID) IsType(expected ...claims.IdentityType) bool {
-	return IsIdentityType(ni, expected...)
+	return claims.IsIdentityType(ni.Type(), expected...)
 }
 
 func (ni TypedID) String() string {
