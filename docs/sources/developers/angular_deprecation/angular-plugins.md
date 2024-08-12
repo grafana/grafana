@@ -103,7 +103,7 @@ Output:
 
 Save the output from the above command into a file, such as `dashboards.txt`.
 
-## 4) Script to save dashboard.
+### 4. Script to save dashboard.
 
 The Grafana HTTP API does not support saving dashboards directly. Therefore, we need to open each dashboard and manually click the save button. To automate this process of opening Grafana dashboards and clicking the save button, we can use a browser automation tool, such as Selenium for Python.
 
