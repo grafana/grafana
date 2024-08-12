@@ -104,13 +104,13 @@ func (rev *ConfigRevision) ValidateReceivers() error {
 	uids := make(map[string]struct{}, len(rev.Config.AlertmanagerConfig.Receivers))
 	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
 		if _, exists := receivers[r.GetName()]; exists {
-			return makeErrReceiverInvalid(fmt.Errorf("name %q already exists", r.GetName()))
+			return MakeErrReceiverInvalid(fmt.Errorf("name %q already exists", r.GetName()))
 		}
 		receivers[r.GetName()] = struct{}{}
 
 		for _, gr := range r.GrafanaManagedReceivers {
 			if _, exists := uids[gr.UID]; exists {
-				return makeErrReceiverInvalid(fmt.Errorf("integration with UID %q already exists", gr.UID))
+				return MakeErrReceiverInvalid(fmt.Errorf("integration with UID %q already exists", gr.UID))
 			}
 			uids[gr.UID] = struct{}{}
 		}
@@ -152,7 +152,7 @@ func validateAndSetIntegrationUIDs(receiver *models.Receiver) error {
 		if integration.UID == "" {
 			integration.UID = util.GenerateShortUID()
 		} else if err := util.ValidateUID(integration.UID); err != nil {
-			return makeErrReceiverInvalid(fmt.Errorf("integration UID %q is invalid: %w", integration.UID, err))
+			return MakeErrReceiverInvalid(fmt.Errorf("integration UID %q is invalid: %w", integration.UID, err))
 		}
 	}
 	return nil

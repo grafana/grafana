@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
@@ -11,6 +12,9 @@ import (
 	"sort"
 	"unsafe"
 
+	alertingNotify "github.com/grafana/alerting/notify"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 )
 
@@ -111,6 +115,17 @@ func (r *Receiver) WithExistingSecureFields(existing *Receiver, integrationSecur
 			integration.WithExistingSecureFields(existingIntegrations[integration.UID], fields)
 		}
 	}
+}
+
+// Validate validates all integration settings, ensuring that the integrations are correctly configured.
+func (r *Receiver) Validate(decryptFn DecryptFn) error {
+	var errs []error
+	for _, integration := range r.Integrations {
+		if err := integration.Validate(decryptFn); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errors.Join(errs...)
 }
 
 // Integration is the domain model representation of an integration.
@@ -298,6 +313,46 @@ func (integration *Integration) SecureFields() map[string]bool {
 	}
 
 	return secureFields
+}
+
+// Validate validates the integration settings, ensuring that the integration is correctly configured.
+func (integration *Integration) Validate(decryptFn DecryptFn) error {
+	decrypted := integration.Clone()
+	if err := decrypted.Decrypt(decryptFn); err != nil {
+		return err
+	}
+	jsonBytes, err := simplejson.NewFromAny(decrypted.Settings).MarshalJSON()
+	if err != nil {
+		return err
+	}
+
+	return ValidateIntegration(context.Background(), alertingNotify.GrafanaIntegrationConfig{
+		UID:                   decrypted.UID,
+		Name:                  decrypted.Name,
+		Type:                  decrypted.Config.Type,
+		DisableResolveMessage: decrypted.DisableResolveMessage,
+		Settings:              jsonBytes,
+		SecureSettings:        decrypted.SecureSettings,
+	}, alertingNotify.NoopDecrypt)
+}
+
+func ValidateIntegration(ctx context.Context, integration alertingNotify.GrafanaIntegrationConfig, decryptFunc alertingNotify.GetDecryptedValueFn) error {
+	if integration.Type == "" {
+		return fmt.Errorf("type should not be an empty string")
+	}
+	if integration.Settings == nil {
+		return fmt.Errorf("settings should not be empty")
+	}
+
+	_, err := alertingNotify.BuildReceiverConfiguration(ctx, &alertingNotify.APIReceiver{
+		GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
+			Integrations: []*alertingNotify.GrafanaIntegrationConfig{&integration},
+		},
+	}, decryptFunc)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 type EncryptFn = func(string) (string, error)

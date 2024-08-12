@@ -95,6 +95,21 @@ func TestIntegration_Redact(t *testing.T) {
 	}
 }
 
+func TestIntegration_Validate(t *testing.T) {
+	// Test that all known integration types are valid.
+	for integrationType := range alertingNotify.AllKnownConfigsForTesting {
+		t.Run(integrationType, func(t *testing.T) {
+			validIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
+			assert.NoError(t, validIntegration.Encrypt(Base64Enrypt))
+			assert.NoErrorf(t, validIntegration.Validate(Base64Decrypt), "integration should be valid")
+
+			invalidIntegration := IntegrationGen(IntegrationMuts.WithInvalidConfig(integrationType))()
+			assert.NoError(t, invalidIntegration.Encrypt(Base64Enrypt))
+			assert.Errorf(t, invalidIntegration.Validate(Base64Decrypt), "integration should be invalid")
+		})
+	}
+}
+
 func TestIntegration_WithExistingSecureFields(t *testing.T) {
 	// Test that WithExistingSecureFields will copy over the secure fields from the existing integration.
 	testCases := []struct {

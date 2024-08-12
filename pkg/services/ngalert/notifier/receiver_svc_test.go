@@ -408,6 +408,12 @@ func TestReceiverService_Create(t *testing.T) {
 			)),
 			expectedErr: legacy_storage.ErrReceiverInvalid,
 		},
+		{
+			name:        "create with invalid integration fails",
+			user:        writer,
+			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithInvalidIntegration("slack")),
+			expectedErr: legacy_storage.ErrReceiverInvalid,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			sut := createReceiverServiceSut(t, &secretsService)
@@ -605,6 +611,13 @@ func TestReceiverService_Update(t *testing.T) {
 			name:        "update with integration that has a UID that already exists fails",
 			user:        writer,
 			receiver:    models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(slackIntegration, models.CopyIntegrationWith(emailIntegration, im.WithUID(slackIntegration.UID)))),
+			existing:    util.Pointer(baseReceiver.Clone()),
+			expectedErr: legacy_storage.ErrReceiverInvalid,
+		},
+		{
+			name:        "update with invalid integration fails",
+			user:        writer,
+			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithInvalidIntegration("slack")),
 			existing:    util.Pointer(baseReceiver.Clone()),
 			expectedErr: legacy_storage.ErrReceiverInvalid,
 		},

@@ -24,7 +24,7 @@ func makeErrBadAlertmanagerConfiguration(err error) error {
 	return ErrBadAlertmanagerConfiguration.Build(data)
 }
 
-func makeErrReceiverInvalid(err error) error {
+func MakeErrReceiverInvalid(err error) error {
 	data := errutil.TemplateData{
 		Public: map[string]interface{}{
 			"Reason": err.Error(),

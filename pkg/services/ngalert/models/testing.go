@@ -1152,6 +1152,13 @@ func (n ReceiverMutators) WithValidIntegration(integrationType string) Mutator[R
 	}
 }
 
+func (n ReceiverMutators) WithInvalidIntegration(integrationType string) Mutator[Receiver] {
+	return func(r *Receiver) {
+		integration := IntegrationGen(IntegrationMuts.WithInvalidConfig(integrationType))()
+		r.Integrations = []*Integration{&integration}
+	}
+}
+
 func (n ReceiverMutators) WithIntegrations(integration ...Integration) Mutator[Receiver] {
 	return func(r *Receiver) {
 		integrations := make([]*Integration, len(integration))
@@ -1248,6 +1255,19 @@ func (n IntegrationMutators) WithValidConfig(integrationType string) Mutator[Int
 		for k, v := range c.SecureSettings {
 			decodeValue, _ := base64.StdEncoding.DecodeString(v)
 			settings[k] = string(decodeValue)
+		}
+	}
+}
+
+func (n IntegrationMutators) WithInvalidConfig(integrationType string) Mutator[Integration] {
+	return func(c *Integration) {
+		integrationConfig, _ := IntegrationConfigFromType(integrationType)
+		c.Config = integrationConfig
+		c.Settings = map[string]interface{}{}
+		c.SecureSettings = map[string]string{}
+		if integrationType == "webex" {
+			// Webex passes validation without any settings but should fail with an unparsable URL.
+			c.Settings["api_url"] = "(*^$*^%!@#$*()"
 		}
 	}
 }

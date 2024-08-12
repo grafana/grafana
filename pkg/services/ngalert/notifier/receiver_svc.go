@@ -299,6 +299,10 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
+	if err := createdReceiver.Validate(rs.decryptor(ctx)); err != nil {
+		return nil, legacy_storage.MakeErrReceiverInvalid(err)
+	}
+
 	err = revision.CreateReceiver(&createdReceiver)
 	if err != nil {
 		return nil, err
@@ -362,6 +366,10 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	}
 	if len(storedSecureFields) > 0 {
 		updatedReceiver.WithExistingSecureFields(existing, storedSecureFields)
+	}
+
+	if err := updatedReceiver.Validate(rs.decryptor(ctx)); err != nil {
+		return nil, legacy_storage.MakeErrReceiverInvalid(err)
 	}
 
 	err = revision.UpdateReceiver(&updatedReceiver)
