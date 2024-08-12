@@ -417,22 +417,3 @@ export function changeAnonPage(page: number): ThunkResult<void> {
 //     }
 //   };
 // }
-
-// SSO SETTINGS
-
-/**
- * GET api/v1/sso-settings/ldap
- */
-export function getSSOSettings(): ThunkResult<void> {
-  console.log(`getSSOSettings`)
-  return async (dispatch) => {
-    console.log(`getSSOSettings dispatch`)
-    try {
-      const result = await getBackendSrv().get(`/api/v1/sso-settings/ldap`);
-      console.log(result);
-      dispatch(clearUserErrorAction());
-    } catch (error) {
-      console.error(error);
-    }
-  };
-}
