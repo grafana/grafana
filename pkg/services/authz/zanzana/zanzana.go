@@ -10,14 +10,22 @@ import (
 const (
 	TypeUser      string = "user"
 	TypeTeam      string = "team"
+	TypeRole      string = "role"
 	TypeFolder    string = "folder"
 	TypeDashboard string = "dashboard"
+	TypeOrg       string = "org"
 )
 
 const (
 	RelationTeamMember string = "member"
 	RelationTeamAdmin  string = "admin"
 	RelationParent     string = "parent"
+)
+
+const (
+	KindOrg        string = "org"
+	KindDashboards string = "dashboards"
+	KindFolders    string = "folders"
 )
 
 // NewTupleEntry constructs new openfga entry type:id[#relation].
@@ -61,6 +69,29 @@ func TranslateToTuple(user string, action, kind, identifier string, orgID int64)
 	} else {
 		tuple.Object = NewTupleEntry(typeTranslation.objectType, identifier, "")
 	}
+
+	return tuple, true
+}
+
+func TranslateToOrgTuple(user string, action string, orgID int64) (*openfgav1.TupleKey, bool) {
+	typeTranslation, ok := actionKindTranslations[KindOrg]
+	if !ok {
+		return nil, false
+	}
+
+	relation, ok := typeTranslation.translations[action]
+	if !ok {
+		return nil, false
+	}
+
+	tuple := &openfgav1.TupleKey{
+		Relation: relation,
+	}
+
+	tuple.User = user
+	tuple.Relation = relation
+
+	tuple.Object = NewTupleEntry(typeTranslation.objectType, strconv.FormatInt(orgID, 10), "")
 
 	return tuple, true
 }
