@@ -1,6 +1,8 @@
 # App with exposed components
 
-This myorg-componentconsumer-app app uses the `usePluginComponent` hook to render a component that is exposed by the myorg-componentexposer-app app. The myorg-componentexposer-app app is nested inside the myorg-componentconsumer-app app.
+This directory contains two apps - `myorg-componentconsumer-app` and `myorg-componentexposer-app` which is nested inside `myorg-componentconsumer-app`. 
+
+`myorg-componentconsumer-app` exposes a simple React component using the [`exposeComponent`](https://grafana.com/developers/plugin-tools/reference/ui-extensions#exposecomponent) api. `myorg-componentconsumer-app` in turn, consumes this compoment using the [`https://grafana.com/developers/plugin-tools/reference/ui-extensions#useplugincomponent`](https://grafana.com/developers/plugin-tools/reference/ui-extensions#useplugincomponent) hook. 
 
 To test this app:
 
