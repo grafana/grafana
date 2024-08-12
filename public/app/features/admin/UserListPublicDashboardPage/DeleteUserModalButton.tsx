@@ -33,7 +33,7 @@ const DeleteUserModal = ({ user, hideModal }: { user: SessionUser; hideModal: ()
           i18nKey="public-dashboard-users-access-list.delete-user-modal.revoke-user-access-modal-desc-line2"
           shouldUnescape
         >
-          This action will immediately revoke {{ email: user.email }}&apos;s access to all public dashboards.
+          This action will immediately revoke {{ email: user.email }}&apos;s access to all shared dashboards.
         </Trans>
       </p>
       <Modal.ButtonRow>

@@ -21,7 +21,7 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
     <Modal
       className={styles.modal}
       isOpen
-      title={t('public-dashboard-users-access-list.modal.dashboard-modal-title', 'Public dashboards')}
+      title={t('public-dashboard-users-access-list.modal.dashboard-modal-title', 'Shared dashboards')}
       onDismiss={onDismiss}
     >
       {isLoading ? (
@@ -42,9 +42,7 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
                 href={generatePublicDashboardUrl(dash.publicDashboardAccessToken)}
                 onClick={onDismiss}
               >
-                <Trans i18nKey="public-dashboard-users-access-list.dashboard-modal.public-dashboard-link">
-                  Public dashboard URL
-                </Trans>
+                <Trans i18nKey="public-dashboard-users-access-list.dashboard-modal.external-link">External link</Trans>
               </a>
               <span className={styles.urlsDivider}>•</span>
               <a
@@ -52,8 +50,8 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
                 href={generatePublicDashboardConfigUrl(dash.dashboardUid, dash.slug)}
                 onClick={onDismiss}
               >
-                <Trans i18nKey="public-dashboard-users-access-list.dashboard-modal.public-dashboard-setting">
-                  Public dashboard settings
+                <Trans i18nKey="public-dashboard-users-access-list.dashboard-modal.sharing-setting">
+                  Sharing settings
                 </Trans>
               </a>
             </div>
