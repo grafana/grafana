@@ -735,6 +735,10 @@ const (
 	// Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
 
+	// FlagBackgroundPluginInstaller
+	// Enable background plugin installer
+	FlagBackgroundPluginInstaller = "backgroundPluginInstaller"
+
 	// FlagDataplaneAggregator
 	// Enable grafana dataplane aggregator
 	FlagDataplaneAggregator = "dataplaneAggregator"

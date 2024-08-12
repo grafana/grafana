@@ -531,6 +531,19 @@
     },
     {
       "metadata": {
+        "name": "backgroundPluginInstaller",
+        "resourceVersion": "1723202510081",
+        "creationTimestamp": "2024-08-09T11:21:50Z"
+      },
+      "spec": {
+        "description": "Enable background plugin installer",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "bodyScrolling",
         "resourceVersion": "1721723807004",
         "creationTimestamp": "2024-07-01T10:28:39Z",
