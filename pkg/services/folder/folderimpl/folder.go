@@ -13,6 +13,8 @@ import (
 
 	"github.com/grafana/dskit/concurrency"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -20,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -51,6 +54,7 @@ type Service struct {
 	mutex    sync.RWMutex
 	registry map[string]folder.RegistryService
 	metrics  *foldersMetrics
+	tracer   tracing.Tracer
 }
 
 func ProvideService(
@@ -62,6 +66,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	supportBundles supportbundles.Service,
 	r prometheus.Registerer,
+	tracer tracing.Tracer,
 ) folder.Service {
 	store := ProvideStore(db)
 	srv := &Service{
@@ -75,6 +80,7 @@ func ProvideService(
 		db:                   db,
 		registry:             make(map[string]folder.RegistryService),
 		metrics:              newFoldersMetrics(r),
+		tracer:               tracer,
 	}
 	srv.DBMigration(db)
 
@@ -656,6 +662,9 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 }
 
 func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.Update")
+	defer span.End()
+
 	if cmd.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -868,6 +877,9 @@ func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderComm
 }
 
 func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.Move")
+	defer span.End()
+
 	if cmd.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -954,6 +966,9 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 }
 
 func (s *Service) publishFolderFullPathUpdatedEvent(ctx context.Context, timestamp time.Time, orgID int64, folderUID string) error {
+	ctx, span := s.tracer.Start(ctx, "folder.publishFolderFullPathUpdatedEvent")
+	defer span.End()
+
 	descFolders, err := s.store.GetDescendants(ctx, orgID, folderUID)
 	if err != nil {
 		s.log.ErrorContext(ctx, "Failed to get descendants of the folder", "folderUID", folderUID, "orgID", orgID, "error", err)
@@ -964,6 +979,9 @@ func (s *Service) publishFolderFullPathUpdatedEvent(ctx context.Context, timesta
 	for _, f := range descFolders {
 		uids = append(uids, f.UID)
 	}
+	span.AddEvent("found folder descendants", trace.WithAttributes(
+		attribute.Int64("folders", int64(len(uids))),
+	))
 
 	if err := s.bus.Publish(ctx, &events.FolderFullPathUpdated{
 		Timestamp: timestamp,
