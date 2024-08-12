@@ -14,6 +14,7 @@ import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'a
 import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { logError } from '../../../Analytics';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { createDagFromQueries, getOriginOfRefId } from '../dag';
 import { queriesWithUpdatedReferences, refIdExists } from '../util';
@@ -154,11 +155,20 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
       if (payload.type === ExpressionQueryType.resample && payload.expression) {
         // findDataSourceFromExpression uses memoization and it doesn't always work with proxies when the proxy has been revoked
         const originalQueries = original(state)?.queries ?? [];
-        const dataSourceAlertQuery = findDataSourceFromExpression(originalQueries, payload.expression);
 
-        const relativeTimeRange = dataSourceAlertQuery
-          ? dataSourceAlertQuery.relativeTimeRange
-          : getDefaultRelativeTimeRange();
+        let relativeTimeRange = getDefaultRelativeTimeRange();
+        try {
+          const dataSourceAlertQuery = findDataSourceFromExpression(originalQueries, payload.expression);
+          if (dataSourceAlertQuery?.relativeTimeRange) {
+            relativeTimeRange = dataSourceAlertQuery.relativeTimeRange;
+          }
+        } catch (error) {
+          if (error instanceof Error) {
+            logError(error);
+          } else {
+            logError(new Error('Error while trying to find data source from expression'));
+          }
+        }
 
         queryToUpdate.relativeTimeRange = relativeTimeRange;
       }
