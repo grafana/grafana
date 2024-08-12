@@ -499,6 +499,41 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 			require.Equal(t, tc.ExpectedGrafanaAdmin, actualResult.IsGrafanaAdmin)
 		})
 	}
+
+	t.Run("Generic OAuth with empty API URL shouldn't call fetchPrivateEmail function", func(t *testing.T) {
+		orgSvc := &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "org_dev"}, {ID: 5, Name: "org_engineering"}}}
+		orgRoleMapper := ProvideOrgRoleMapper(cfg, orgSvc)
+		provider := NewGenericOAuthProvider(&social.OAuthInfo{
+			EmailAttributePath: "email",
+		}, cfg,
+			orgRoleMapper,
+			&ssosettingstests.MockService{},
+			featuremgmt.WithFeatures())
+
+		body, err := json.Marshal(map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}})
+		require.NoError(t, err)
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/json")
+			_, err = w.Write(body)
+			require.NoError(t, err)
+		}))
+
+		provider.info.ApiUrl = ""
+		staticToken := oauth2.Token{
+			AccessToken:  "",
+			TokenType:    "",
+			RefreshToken: "",
+			Expiry:       time.Now(),
+		}
+
+		token := staticToken.WithExtra(map[string]any{
+			"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6IiJ9.hQPKYTPXyEYAD_cS6uxBDJcG8ucLePR3thBBQST6tQs",
+		})
+		actualResult, err := provider.UserInfo(context.Background(), ts.Client(), token)
+		require.NoError(t, err)
+		require.Equal(t, "", actualResult.Email)
+	})
 }
 
 func TestUserInfoSearchesForLogin(t *testing.T) {
