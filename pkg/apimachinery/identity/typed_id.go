@@ -19,8 +19,6 @@ func IsIdentityType(typedID TypedID, expected ...claims.IdentityType) bool {
 	return false
 }
 
-var AnonymousTypedID = NewTypedID(claims.TypeAnonymous, 0)
-
 func ParseTypedID(str string) (TypedID, error) {
 	var typeID TypedID
 
@@ -38,6 +36,20 @@ func ParseTypedID(str string) (TypedID, error) {
 	typeID.t = t
 
 	return typeID, nil
+}
+
+func ParseTypeAndID(str string) (claims.IdentityType, string, error) {
+	parts := strings.Split(str, ":")
+	if len(parts) != 2 {
+		return "", "", ErrInvalidTypedID.Errorf("expected typed id to have 2 parts")
+	}
+
+	t, err := claims.ParseType(parts[0])
+	if err != nil {
+		return "", "", err
+	}
+
+	return t, parts[1], nil
 }
 
 // MustParseTypedID parses namespace id, it will panic if it fails to do so.
