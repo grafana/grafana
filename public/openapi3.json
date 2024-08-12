@@ -7314,6 +7314,9 @@
           },
           "template": {
             "type": "string"
+          },
+          "version": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -7321,6 +7324,9 @@
       "NotificationTemplateContent": {
         "properties": {
           "template": {
+            "type": "string"
+          },
+          "version": {
             "type": "string"
           }
         },
@@ -25843,10 +25849,18 @@
         "operationId": "RouteDeleteTemplate",
         "parameters": [
           {
-            "description": "Template Name",
+            "description": "Template name",
             "in": "path",
             "name": "name",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Version of template to use for optimistic concurrency. Leave empty to disable validation",
+            "in": "query",
+            "name": "version",
             "schema": {
               "type": "string"
             }
@@ -25855,6 +25869,16 @@
         "responses": {
           "204": {
             "description": " The template was deleted successfully."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericPublicError"
+                }
+              }
+            },
+            "description": "GenericPublicError"
           }
         },
         "summary": "Delete a template.",
@@ -25945,6 +25969,16 @@
               }
             },
             "description": "ValidationError"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericPublicError"
+                }
+              }
+            },
+            "description": "GenericPublicError"
           }
         },
         "summary": "Updates an existing notification template.",
