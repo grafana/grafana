@@ -389,6 +389,10 @@ Let's see how we can configure this.
 
    {{< figure src="/media/tutorials/grafana-alert-on-dashboard.png" alt="A panel in a Grafana dashboard with alerting and annotations configured" caption="Displaying Grafana Alerts on a dashboard" >}}
 
+{{ <admonition type="tip">}}
+Check out our [advanced alerting tutorial](http://grafana.com/tutorials/alerting-get-started-pt2/) for more insights and tips.
+{{ </admonition >}}
+
 ## Summary
 
 In this tutorial you learned about fundamental features of Grafana. To do so, we ran several Docker containers on your local machine. When you are ready to clean up this local tutorial environment, run the following command:
