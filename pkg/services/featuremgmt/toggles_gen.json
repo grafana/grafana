@@ -2185,6 +2185,18 @@
     },
     {
       "metadata": {
+        "name": "prometheusRunQueriesInParallel",
+        "resourceVersion": "1720677541862",
+        "creationTimestamp": "2024-07-11T05:59:01Z"
+      },
+      "spec": {
+        "description": "Enables running Prometheus queries in parallel",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/observability-metrics"
+      }
+    },
+    {
+      "metadata": {
         "name": "publicDashboards",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2022-04-07T18:30:19Z",
