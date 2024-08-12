@@ -110,12 +110,12 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTMisMatchedNamespaceClaims.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
 	}
 
-	typ, id, err := identity.ParseTypeAndID(accessTokenClaims.Subject)
+	accessType, _, err := identity.ParseTypeAndID(accessTokenClaims.Subject)
 	if err != nil {
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
 	}
 
-	if !authlibclaims.IsIdentityType(typ, authlibclaims.TypeAccessPolicy) {
+	if !authlibclaims.IsIdentityType(accessType, authlibclaims.TypeAccessPolicy) {
 		return nil, errExtJWTInvalid.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
 	}
 
