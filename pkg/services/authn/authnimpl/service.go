@@ -329,7 +329,7 @@ Default:
 	return redirect, nil
 }
 
-func (s *Service) ResolveIdentity(ctx context.Context, orgID int64, namespaceID identity.TypedID) (*authn.Identity, error) {
+func (s *Service) ResolveIdentity(ctx context.Context, orgID int64, typedID string) (*authn.Identity, error) {
 	ctx, span := s.tracer.Start(ctx, "authn.ResolveIdentity")
 	defer span.End()
 
@@ -338,7 +338,7 @@ func (s *Service) ResolveIdentity(ctx context.Context, orgID int64, namespaceID 
 	// hack to not update last seen
 	r.SetMeta(authn.MetaKeyIsLogin, "true")
 
-	identity, err := s.resolveIdenity(ctx, orgID, namespaceID)
+	identity, err := s.resolveIdenity(ctx, orgID, typedID)
 	if err != nil {
 		return nil, err
 	}
@@ -377,14 +377,19 @@ func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) er
 	return s.runPostAuthHooks(ctx, identity, r)
 }
 
-func (s *Service) resolveIdenity(ctx context.Context, orgID int64, typeID identity.TypedID) (*authn.Identity, error) {
+func (s *Service) resolveIdenity(ctx context.Context, orgID int64, typedID string) (*authn.Identity, error) {
 	ctx, span := s.tracer.Start(ctx, "authn.resolveIdentity")
 	defer span.End()
 
-	if claims.IsIdentityType(typeID.Type(), claims.TypeUser) {
+	t, i, err := identity.ParseTypeAndID(typedID)
+	if err != nil {
+		return nil, err
+	}
+
+	if claims.IsIdentityType(t, claims.TypeUser) {
 		return &authn.Identity{
 			OrgID: orgID,
-			ID:    typeID.ID(),
+			ID:    i,
 			Type:  claims.TypeUser,
 			ClientParams: authn.ClientParams{
 				AllowGlobalOrg:  true,
@@ -393,9 +398,9 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, typeID identi
 			}}, nil
 	}
 
-	if claims.IsIdentityType(typeID.Type(), claims.TypeServiceAccount) {
+	if claims.IsIdentityType(t, claims.TypeServiceAccount) {
 		return &authn.Identity{
-			ID:    typeID.ID(),
+			ID:    i,
 			Type:  claims.TypeServiceAccount,
 			OrgID: orgID,
 			ClientParams: authn.ClientParams{
@@ -405,11 +410,11 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, typeID identi
 			}}, nil
 	}
 
-	resolver, ok := s.idenityResolverClients[string(typeID.Type())]
+	resolver, ok := s.idenityResolverClients[string(t)]
 	if !ok {
-		return nil, authn.ErrUnsupportedIdentity.Errorf("no resolver for : %s", typeID.Type())
+		return nil, authn.ErrUnsupportedIdentity.Errorf("no resolver for : %s", t)
 	}
-	return resolver.ResolveIdentity(ctx, orgID, typeID)
+	return resolver.ResolveIdentity(ctx, orgID, t, i)
 }
 
 func (s *Service) errorLogFunc(ctx context.Context, err error) func(msg string, ctx ...any) {

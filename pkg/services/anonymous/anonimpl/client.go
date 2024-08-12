@@ -3,13 +3,11 @@ package anonimpl
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
@@ -75,7 +73,7 @@ func (a *Anonymous) IdentityType() claims.IdentityType {
 	return claims.TypeAnonymous
 }
 
-func (a *Anonymous) ResolveIdentity(ctx context.Context, orgID int64, typedID identity.TypedID) (*authn.Identity, error) {
+func (a *Anonymous) ResolveIdentity(ctx context.Context, orgID int64, typ claims.IdentityType, id string) (*authn.Identity, error) {
 	o, err := a.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: a.cfg.AnonymousOrgName})
 	if err != nil {
 		return nil, err
@@ -86,7 +84,7 @@ func (a *Anonymous) ResolveIdentity(ctx context.Context, orgID int64, typedID id
 	}
 
 	// Anonymous identities should always have the same namespace id.
-	if typedID.String() != fmt.Sprintf("%s:%d", claims.TypeAnonymous, 0) {
+	if !claims.IsIdentityType(typ, claims.TypeAnonymous) || id != "0" {
 		return nil, errInvalidID
 	}
 

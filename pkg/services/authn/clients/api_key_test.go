@@ -293,8 +293,9 @@ func TestAPIKey_GetAPIKeyIDFromIdentity(t *testing.T) {
 
 func TestAPIKey_ResolveIdentity(t *testing.T) {
 	type testCase struct {
-		desc    string
-		typedID identity.TypedID
+		desc string
+		typ  claims.IdentityType
+		id   string
 
 		exptedApiKey *apikey.APIKey
 
@@ -305,12 +306,14 @@ func TestAPIKey_ResolveIdentity(t *testing.T) {
 	tests := []testCase{
 		{
 			desc:        "should return error for invalid type",
-			typedID:     identity.MustParseTypedID("user:1"),
+			id:          "1",
+			typ:         claims.TypeUser,
 			expectedErr: identity.ErrInvalidTypedID,
 		},
 		{
-			desc:    "should return error when api key has expired",
-			typedID: identity.MustParseTypedID("api-key:1"),
+			desc: "should return error when api key has expired",
+			id:   "1",
+			typ:  claims.TypeAPIKey,
 			exptedApiKey: &apikey.APIKey{
 				ID:      1,
 				OrgID:   1,
@@ -319,8 +322,9 @@ func TestAPIKey_ResolveIdentity(t *testing.T) {
 			expectedErr: errAPIKeyExpired,
 		},
 		{
-			desc:    "should return error when api key is revoked",
-			typedID: identity.MustParseTypedID("api-key:1"),
+			desc: "should return error when api key is revoked",
+			id:   "1",
+			typ:  claims.TypeAPIKey,
 			exptedApiKey: &apikey.APIKey{
 				ID:        1,
 				OrgID:     1,
@@ -329,8 +333,10 @@ func TestAPIKey_ResolveIdentity(t *testing.T) {
 			expectedErr: errAPIKeyRevoked,
 		},
 		{
-			desc:    "should return error when api key is connected to service account",
-			typedID: identity.MustParseTypedID("api-key:1"),
+			desc: "should return error when api key is connected to service account",
+			id:   "1",
+			typ:  claims.TypeAPIKey,
+
 			exptedApiKey: &apikey.APIKey{
 				ID:               1,
 				OrgID:            1,
@@ -339,8 +345,9 @@ func TestAPIKey_ResolveIdentity(t *testing.T) {
 			expectedErr: identity.ErrInvalidTypedID,
 		},
 		{
-			desc:    "should return error when api key is belongs to different org",
-			typedID: identity.MustParseTypedID("api-key:1"),
+			desc: "should return error when api key is belongs to different org",
+			id:   "1",
+			typ:  claims.TypeAPIKey,
 			exptedApiKey: &apikey.APIKey{
 				ID:               1,
 				OrgID:            2,
@@ -349,8 +356,9 @@ func TestAPIKey_ResolveIdentity(t *testing.T) {
 			expectedErr: errAPIKeyOrgMismatch,
 		},
 		{
-			desc:    "should return valid idenitty",
-			typedID: identity.MustParseTypedID("api-key:1"),
+			desc: "should return valid idenitty",
+			id:   "1",
+			typ:  claims.TypeAPIKey,
 			exptedApiKey: &apikey.APIKey{
 				ID:    1,
 				OrgID: 1,
@@ -373,7 +381,7 @@ func TestAPIKey_ResolveIdentity(t *testing.T) {
 				ExpectedAPIKey: tt.exptedApiKey,
 			})
 
-			identity, err := c.ResolveIdentity(context.Background(), 1, tt.typedID)
+			identity, err := c.ResolveIdentity(context.Background(), 1, tt.typ, tt.id)
 			if tt.expectedErr != nil {
 				assert.Nil(t, identity)
 				assert.ErrorIs(t, err, tt.expectedErr)

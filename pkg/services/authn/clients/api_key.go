@@ -141,12 +141,12 @@ func (s *APIKey) IdentityType() claims.IdentityType {
 	return claims.TypeAPIKey
 }
 
-func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, typedID identity.TypedID) (*authn.Identity, error) {
-	if !claims.IsIdentityType(typedID.Type(), claims.TypeAPIKey) {
-		return nil, identity.ErrInvalidTypedID.Errorf("got unexpected type: %s", typedID.Type())
+func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, typ claims.IdentityType, id string) (*authn.Identity, error) {
+	if !claims.IsIdentityType(typ, claims.TypeAPIKey) {
+		return nil, identity.ErrInvalidTypedID.Errorf("got unexpected type: %s", typ)
 	}
 
-	apiKeyID, err := strconv.ParseInt(typedID.ID(), 10, 64)
+	apiKeyID, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return nil, err
 	}

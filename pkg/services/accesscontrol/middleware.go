@@ -192,7 +192,7 @@ func AuthorizeInOrgMiddleware(ac AccessControl, authnService authn.Service) func
 
 			var orgUser identity.Requester = c.SignedInUser
 			if targetOrgID != c.SignedInUser.GetOrgID() {
-				orgUser, err = authnService.ResolveIdentity(c.Req.Context(), targetOrgID, c.SignedInUser.GetID())
+				orgUser, err = authnService.ResolveIdentity(c.Req.Context(), targetOrgID, c.SignedInUser.GetID().String())
 				if err != nil {
 					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
 					return
