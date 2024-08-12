@@ -85,6 +85,7 @@ export const LogsPanel = ({
     onClickFilterOutString,
     onClickFilterString,
     isFilterLabelActive,
+    displayedFields,
   },
   id,
 }: LogsPanelProps) => {
@@ -342,6 +343,7 @@ export const LogsPanel = ({
               isOnClickFilterOutString(onClickFilterOutString) ? onClickFilterOutString : undefined
             }
             isFilterLabelActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
+            displayedFields={displayedFields}
           />
           {showCommonLabels && isAscending && renderCommonLabels()}
         </div>
