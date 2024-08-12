@@ -644,7 +644,7 @@ describe('NotificationPolicies', () => {
     renderNotificationPolicies(dataSources.promAlertManager.name);
     const rootRouteContainer = await ui.rootRouteContainer.find();
     await waitFor(() =>
-      expect(within(rootRouteContainer).getByTestId('matching-instances')).toHaveTextContent('0instances')
+      expect(within(rootRouteContainer).getByTestId('matching-instances')).toHaveTextContent('0instance')
     );
 
     expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument();

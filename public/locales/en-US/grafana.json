@@ -106,6 +106,7 @@
       "export-all": "Export all",
       "view": "View"
     },
+    "contact-point": "Contact Point",
     "contact-points": {
       "delivery-duration": "Last delivery took <1></1>",
       "last-delivery-attempt": "Last delivery attempt",
@@ -136,7 +137,23 @@
       "saving": "Saving mute timing"
     },
     "policies": {
+      "default-policy": {
+        "description": "All alert instances will be handled by the default policy if no other matching policies are found.",
+        "title": "Default policy"
+      },
+      "generated-policies": "Auto-generated policies",
       "metadata": {
+        "active-time": "Active when",
+        "delivered-to": "Delivered to",
+        "grouped-by": "Grouped by",
+        "grouping": {
+          "none": "Not grouping",
+          "single-group": "Single group"
+        },
+        "inherited": "Inherited",
+        "mute-time": "Muted when",
+        "n-instances_one": "instance",
+        "n-instances_other": "instances",
         "timingOptions": {
           "groupInterval": {
             "description": "How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent.",
@@ -151,7 +168,12 @@
             "label": "Repeated every <1></1>"
           }
         }
-      }
+      },
+      "n-more-policies_one": "{{count}} additional policy",
+      "n-more-policies_other": "{{count}} additional policies",
+      "new-child": "New child policy",
+      "new-policy": "Add new policy",
+      "no-matchers": "No matchers"
     },
     "provisioning": {
       "badge-tooltip-provenance": "This resource has been provisioned via {{provenance}} and cannot be edited through the UI",

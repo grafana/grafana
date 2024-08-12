@@ -52,7 +52,7 @@ import { discoverFeatures } from '../api/buildInfo';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import { FetchRulerRulesFilter, deleteRulerRulesGroup, fetchRulerRules, setRulerRuleGroup } from '../api/ruler';
 import { RuleFormValues } from '../types/rule-form';
-import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
+import { addDefaultsToAlertmanagerConfig, removeTimeIntervalFromRoute } from '../utils/alertmanager';
 import {
   GRAFANA_RULES_SOURCE_NAME,
   getAllRulesSourceNames,
@@ -590,7 +590,7 @@ export const deleteMuteTimingAction = (alertManagerSourceName: string, muteTimin
             alertmanager_config: {
               ...configWithoutMuteTimings,
               route: config.alertmanager_config.route
-                ? removeMuteTimingFromRoute(muteTimingName, config.alertmanager_config?.route)
+                ? removeTimeIntervalFromRoute(muteTimingName, config.alertmanager_config?.route)
                 : undefined,
               ...time_intervals_without_mute_to_save,
             },
