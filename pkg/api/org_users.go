@@ -326,7 +326,7 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 	if c.QueryBool("accesscontrol") {
 		permissions := c.SignedInUser.GetPermissions()
 		if query.OrgID != c.SignedInUser.GetOrgID() {
-			identity, err := hs.authnService.ResolveIdentity(c.Req.Context(), query.OrgID, c.SignedInUser.GetID().String())
+			identity, err := hs.authnService.ResolveIdentity(c.Req.Context(), query.OrgID, c.SignedInUser.GetID())
 			if err != nil {
 				return nil, err
 			}

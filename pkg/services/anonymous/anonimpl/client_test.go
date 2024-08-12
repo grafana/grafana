@@ -60,7 +60,7 @@ func TestAnonymous_Authenticate(t *testing.T) {
 			} else {
 				require.Nil(t, err)
 
-				assert.Equal(t, "anonymous:0", user.GetID().String())
+				assert.Equal(t, "anonymous:0", user.GetID())
 				assert.Equal(t, tt.org.ID, user.OrgID)
 				assert.Equal(t, tt.org.Name, user.OrgName)
 				assert.Equal(t, tt.cfg.AnonymousOrgRole, string(user.GetOrgRole()))

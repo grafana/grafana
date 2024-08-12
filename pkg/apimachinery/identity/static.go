@@ -163,8 +163,8 @@ func (u *StaticRequester) HasUniqueId() bool {
 	return u.UserID > 0
 }
 
-// GetID returns namespaced id for the entity
-func (u *StaticRequester) GetID() TypedID {
+// GetID returns typed id for the entity
+func (u *StaticRequester) GetID() string {
 	return NewTypedIDString(u.Type, fmt.Sprintf("%d", u.UserID))
 }
 

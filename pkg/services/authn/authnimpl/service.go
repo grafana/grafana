@@ -145,7 +145,7 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 	}
 
 	span.SetAttributes(
-		attribute.String("identity.ID", identity.GetID().String()),
+		attribute.String("identity.ID", identity.GetID()),
 		attribute.String("identity.AuthID", identity.GetAuthID()),
 		attribute.String("identity.AuthenticatedBy", identity.GetAuthenticatedBy()),
 	)

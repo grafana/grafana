@@ -182,7 +182,7 @@ func TestService_Authenticate(t *testing.T) {
 				for _, attr := range passedAuthnSpan.Attributes() {
 					switch attr.Key {
 					case "identity.ID":
-						assert.Equal(t, tt.expectedIdentity.GetID().String(), attr.Value.AsString())
+						assert.Equal(t, tt.expectedIdentity.GetID(), attr.Value.AsString())
 					case "identity.AuthID":
 						assert.Equal(t, tt.expectedIdentity.AuthID, attr.Value.AsString())
 					case "identity.AuthenticatedBy":

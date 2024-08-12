@@ -367,7 +367,7 @@ func (hs *HTTPServer) AdminLogoutUser(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	if c.SignedInUser.GetID().String() == identity.NewTypedID(claims.TypeUser, userID) {
+	if c.SignedInUser.GetID() == identity.NewTypedID(claims.TypeUser, userID) {
 		return response.Error(http.StatusBadRequest, "You cannot logout yourself", nil)
 	}
 

@@ -188,7 +188,7 @@ func (u *SignedInUser) GetAllowedKubernetesNamespace() string {
 // GetCacheKey returns a unique key for the entity.
 // Add an extra prefix to avoid collisions with other caches
 func (u *SignedInUser) GetCacheKey() string {
-	typ, id := u.GetID().Type(), u.GetID().ID()
+	typ, id := u.getTypeAndID()
 	if !u.HasUniqueId() {
 		// Hack use the org role as id for identities that do not have a unique id
 		// e.g. anonymous and render key.
@@ -263,7 +263,7 @@ func (u *SignedInUser) GetOrgRole() identity.RoleType {
 }
 
 // GetID returns namespaced id for the entity
-func (u *SignedInUser) GetID() identity.TypedID {
+func (u *SignedInUser) GetID() string {
 	ns, id := u.getTypeAndID()
 	return identity.NewTypedIDString(ns, id)
 }

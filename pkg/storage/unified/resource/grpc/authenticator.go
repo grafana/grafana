@@ -145,12 +145,14 @@ func wrapContext(ctx context.Context) (context.Context, error) {
 }
 
 func encodeIdentityInMetadata(user identity.Requester) metadata.MD {
+	id, _ := user.GetInternalID()
+
 	return metadata.Pairs(
 		// This should be everything needed to recreate the user
 		mdToken, user.GetIDToken(),
 
 		// Or we can create it directly
-		mdUserID, user.GetID().String(),
+		mdUserID, user.GetID(),
 		mdUserUID, user.GetUID(),
 		mdOrgName, user.GetOrgName(),
 		mdOrgID, strconv.FormatInt(user.GetOrgID(), 10),
@@ -158,7 +160,7 @@ func encodeIdentityInMetadata(user identity.Requester) metadata.MD {
 		mdLogin, user.GetLogin(),
 
 		// TODO, Remove after this is deployed to unified storage
-		"grafana-userid", user.GetID().ID(),
+		"grafana-userid", strconv.FormatInt(id, 10),
 		"grafana-useruid", user.GetRawIdentifier(),
 	)
 }

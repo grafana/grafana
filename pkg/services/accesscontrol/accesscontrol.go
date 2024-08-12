@@ -174,7 +174,7 @@ type User struct {
 func HasGlobalAccess(ac AccessControl, authnService authn.Service, c *contextmodel.ReqContext) func(evaluator Evaluator) bool {
 	return func(evaluator Evaluator) bool {
 		var targetOrgID int64 = GlobalOrgID
-		orgUser, err := authnService.ResolveIdentity(c.Req.Context(), targetOrgID, c.SignedInUser.GetID().String())
+		orgUser, err := authnService.ResolveIdentity(c.Req.Context(), targetOrgID, c.SignedInUser.GetID())
 		if err != nil {
 			// This will be an common error for entities that can't authenticate in global scope
 			c.Logger.Debug("Failed to authenticate user in global scope", "error", err)
