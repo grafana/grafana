@@ -62,11 +62,11 @@ Automatic migration is supported for the plugins shown in the following table. E
 
 A dashboard must still be saved with the new plugin ID to persist the change.
 
-# Automate save dashboards after auto migration
+## Automate save dashboards after auto-migration
 
 When dealing with a small number of dashboards, manual saving is feasible. However, for multiple organizations and thousands of dashboards, this process becomes impractical and time-consuming. Therefore, automating the process is a more efficient solution.
 
-### 1) Create a service account with an API key.
+### 1. Create a service account with an API key.
 
 Create a service account with viewer permissions in each organization and generate the corresponding API key.
 
@@ -76,7 +76,7 @@ Set the generated API key as the value for the `GRAFANA_TOKEN` environment varia
 export GRAFANA_TOKEN="<SERVICE-ACCOUNT-API-KEY>""
 ```
 
-### 2) Get the list of plugins based on type.
+### 2. Get the list of plugins based on type
 
 After installing [`detect-angular-dashboards`](https://github.com/grafana/detect-angular-dashboards) on your local machine, execute the following command to retrieve the list of Angular plugin IDs along with their number of occurrences.
 
@@ -89,7 +89,7 @@ Output:
 <img width="1274" alt="Pasted Graphic" src="https://github.com/user-attachments/assets/cb5b1e4c-1ee9-43f3-a05f-fe17348cbd83">
 
 
-### 3) Get the list of dashboard URLs.
+### 3. Get the list of dashboard URLs
 
 As an input to our automation script, we need to supply the list of dashboard URLs. The following command will generate a list of dashboards containing Angular plugins that need to be saved for the changes to take effect.
 
@@ -216,7 +216,7 @@ ERROR:root:Failed to process dashboard http://10.15.47.221/d/iWcvUh7nz/compute-r
 
 If the number of failed dashboard saves is small, these dashboards can be saved manually. Alternatively, the issue can be resolved, and the script can be re-run with only the list of dashboards that need to be updated.
 
-## 5) Confirm if the outdated panels are updated.
+### 5. Confirm the outdated panels are updated
 
 Run the same command executed in Step 1 to verify if the save operation was successful and if the changes have been reflected.
 
