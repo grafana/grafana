@@ -3,6 +3,7 @@
 
 @use 'sass:map';
 @use 'sass:color';
+@use 'sass:list';
 
 // Gradients
 @mixin gradient-vertical($startColor: #555, $endColor: #333) {
@@ -2248,5 +2249,53 @@ div.flot-text {
     span {
       text-align: center;
     }
+  }
+}
+
+.gf-form-dropdown-typeahead {
+  position: relative;
+
+  &::after {
+    position: absolute;
+    top: 35%;
+    right: $space-sm;
+    background-color: transparent;
+    color: $input-color;
+    font: normal normal normal list.slash($font-size-sm, 1) FontAwesome;
+    content: '\f0d7';
+    pointer-events: none;
+    font-size: 11px;
+  }
+}
+
+.gf-form-help-icon {
+  flex-grow: 0;
+  color: $text-color-weak;
+
+  &--bold {
+    color: $text-color-emphasis;
+    padding-left: 0;
+  }
+
+  &--right-absolute {
+    position: absolute;
+    right: $spacer;
+    top: 6px;
+  }
+
+  &--right-normal {
+    float: right;
+  }
+
+  &--header {
+    margin-bottom: $space-xxs;
+  }
+
+  &--small-padding {
+    padding-left: 4px;
+  }
+
+  &:hover {
+    color: $text-color;
   }
 }
