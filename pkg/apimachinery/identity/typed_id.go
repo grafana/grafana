@@ -19,25 +19,6 @@ func IsIdentityType(typedID TypedID, expected ...claims.IdentityType) bool {
 	return false
 }
 
-func ParseTypedID(str string) (TypedID, error) {
-	var typeID TypedID
-
-	parts := strings.Split(str, ":")
-	if len(parts) != 2 {
-		return typeID, ErrInvalidTypedID.Errorf("expected typed id to have 2 parts")
-	}
-
-	t, err := claims.ParseType(parts[0])
-	if err != nil {
-		return typeID, err
-	}
-
-	typeID.id = parts[1]
-	typeID.t = t
-
-	return typeID, nil
-}
-
 func ParseTypeAndID(str string) (claims.IdentityType, string, error) {
 	parts := strings.Split(str, ":")
 	if len(parts) != 2 {
@@ -52,21 +33,8 @@ func ParseTypeAndID(str string) (claims.IdentityType, string, error) {
 	return t, parts[1], nil
 }
 
-// MustParseTypedID parses namespace id, it will panic if it fails to do so.
-// Suitable to use in tests or when we can guarantee that we pass a correct format.
-func MustParseTypedID(str string) TypedID {
-	typeID, err := ParseTypedID(str)
-	if err != nil {
-		panic(err)
-	}
-	return typeID
-}
-
-func NewTypedID(t claims.IdentityType, id int64) TypedID {
-	return TypedID{
-		id: strconv.FormatInt(id, 10),
-		t:  t,
-	}
+func NewTypedID(t claims.IdentityType, id int64) string {
+	return fmt.Sprintf("%s:%d", t, id)
 }
 
 // NewTypedIDString creates a new TypedID with a string id
