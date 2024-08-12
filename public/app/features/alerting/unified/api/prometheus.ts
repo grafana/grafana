@@ -52,9 +52,9 @@ export function getRulesFilterSearchParams(filter?: FetchPromRulesFilter): Recor
   const filterParams: Record<string, string> = {};
 
   if (filter?.dashboardUID) {
-    filterParams['dashboard_uid'] = filter.dashboardUID;
+    filterParams.dashboard_uid = filter.dashboardUID;
     if (filter?.panelId) {
-      filterParams['panel_id'] = String(filter.panelId);
+      filterParams.panel_id = String(filter.panelId);
     }
   }
 
