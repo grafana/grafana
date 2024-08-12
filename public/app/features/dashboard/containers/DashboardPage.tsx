@@ -1,8 +1,8 @@
-import { cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil } from '@grafana/data';
+import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
@@ -44,6 +44,9 @@ import { initDashboard } from '../state/initDashboard';
 
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from './types';
 
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
+
 export const mapStateToProps = (state: StoreState) => ({
   initPhase: state.dashboard.initPhase,
   initError: state.dashboard.initError,
@@ -78,6 +81,40 @@ export interface State {
   pageNav?: NavModelItem;
   sectionNav?: NavModel;
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  fullScreenPanel: css({
+    '.react-grid-layout': {
+      height: 'auto !important',
+      transitionProperty: 'none',
+    },
+    '.react-grid-item': {
+      display: 'none !important',
+      transitionProperty: 'none !important',
+
+      '&--fullscreen': {
+        display: 'block !important',
+        // can't avoid type assertion here due to !important
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        position: 'unset !important' as 'unset',
+        transform: 'translate(0px, 0px) !important',
+      },
+    },
+
+    // Disable grid interaction indicators in fullscreen panels
+    '.panel-header:hover': {
+      backgroundColor: 'inherit',
+    },
+
+    '.panel-title-container': {
+      cursor: 'pointer',
+    },
+
+    '.react-resizable-handle': {
+      display: 'none',
+    },
+  }),
+});
 
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
   declare context: GrafanaContextType;
@@ -328,9 +365,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   };
 
   render() {
-    const { dashboard, initError, queryParams } = this.props;
+    const { dashboard, initError, queryParams, theme } = this.props;
     const { editPanel, viewPanel, updateScrollTop, pageNav, sectionNav } = this.state;
     const kioskMode = getKioskMode(this.props.queryParams);
+    const styles = getStyles(theme);
 
     if (!dashboard || !pageNav || !sectionNav) {
       return <DashboardLoading initPhase={this.props.initPhase} />;
@@ -342,7 +380,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const showToolbar = kioskMode !== KioskMode.Full && !queryParams.editview;
 
     const pageClassName = cx({
-      'panel-in-fullscreen': Boolean(viewPanel),
+      [styles.fullScreenPanel]: Boolean(viewPanel),
       'page-hidden': Boolean(queryParams.editview || editPanel),
     });
 
