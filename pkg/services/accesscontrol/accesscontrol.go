@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -110,7 +111,7 @@ func (s *SearchOptions) ComputeUserID() (int64, error) {
 	}
 
 	// Validate namespace type is user or service account
-	if s.TypedID.Type() != identity.TypeUser && s.TypedID.Type() != identity.TypeServiceAccount {
+	if s.TypedID.Type() != claims.TypeUser && s.TypedID.Type() != claims.TypeServiceAccount {
 		return 0, fmt.Errorf("invalid type: %s", s.TypedID.Type())
 	}
 

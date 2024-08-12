@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
@@ -179,7 +180,7 @@ type UsageStatClient interface {
 // Clients that implements this interface can resolve an full identity from an orgID and namespaceID.
 type IdentityResolverClient interface {
 	Client
-	IdentityType() identity.IdentityType
+	IdentityType() claims.IdentityType
 	ResolveIdentity(ctx context.Context, orgID int64, namespaceID identity.TypedID) (*Identity, error)
 }
 

@@ -3,6 +3,7 @@ package clientmiddleware
 import (
 	"context"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -35,8 +36,7 @@ func (m *UserHeaderMiddleware) applyUserHeader(ctx context.Context, h backend.Fo
 	}
 
 	h.DeleteHTTPHeader(proxyutil.UserHeaderName)
-	namespace, _ := reqCtx.SignedInUser.GetTypedID()
-	if namespace != identity.TypeAnonymous {
+	if !identity.IsIdentityType(reqCtx.SignedInUser.GetID(), claims.TypeAnonymous) {
 		h.SetHTTPHeader(proxyutil.UserHeaderName, reqCtx.SignedInUser.GetLogin())
 	}
 }
