@@ -547,7 +547,7 @@ export const useCreateDropdownMenuActions = (
   provisioned: boolean,
   onEditPolicy: (route: RouteWithID, isDefault?: boolean, readOnly?: boolean) => void,
   currentRoute: RouteWithID,
-  toggleShowExportDrawer: (nextValue?: any) => void,
+  toggleShowExportDrawer: () => void,
   onDeletePolicy: (route: RouteWithID) => void
 ) => {
   const [
