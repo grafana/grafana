@@ -64,6 +64,32 @@ export interface LdapServerInfo {
   error: string;
 }
 
+export interface GroupMapping {
+  groupDn?: string;
+  orgId?: string;
+  orgRole?: string;
+  grafanaAdmin?: boolean;
+}
+
+export interface LdapAttributes {
+  email?: string;
+  memberOf?: string;
+  name?: string;
+  surname?: string;
+  username?: string;
+}
+
+export interface LdapSsoSettings {
+  data?: any;
+  attributes?: LdapAttributes;
+  bindDn?: string;
+  bindPassword?: string;
+  groupMappings?: GroupMapping[];
+  host?: string;
+  searchFilter?: string;
+  searchBaseDn?: string;
+}
+
 export type LdapConnectionInfo = LdapServerInfo[];
 
 export interface LdapState {
@@ -73,4 +99,5 @@ export interface LdapState {
   connectionError?: LdapError;
   userError?: LdapError;
   ldapError?: LdapError;
+  ldapSsoSettings?: LdapSsoSettings;
 }
