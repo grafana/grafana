@@ -45,16 +45,12 @@ export function removeTimeIntervalFromRoute(muteTiming: string, route: Route): R
   return newRoute;
 }
 
-export function renameTimeInterval(newMuteTimingName: string, oldMuteTimingName: string, route: Route): Route {
+export function renameTimeInterval(newName: string, oldName: string, route: Route): Route {
   return {
     ...route,
-    mute_time_intervals: route.mute_time_intervals?.map((name) =>
-      name === oldMuteTimingName ? newMuteTimingName : name
-    ),
-    active_time_intervals: route.active_time_intervals?.map((name) =>
-      name === oldMuteTimingName ? newMuteTimingName : name
-    ),
-    routes: route.routes?.map((subRoute) => renameTimeInterval(newMuteTimingName, oldMuteTimingName, subRoute)),
+    mute_time_intervals: route.mute_time_intervals?.map((name) => (name === oldName ? newName : name)),
+    active_time_intervals: route.active_time_intervals?.map((name) => (name === oldName ? newName : name)),
+    routes: route.routes?.map((subRoute) => renameTimeInterval(newName, oldName, subRoute)),
   };
 }
 
