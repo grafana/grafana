@@ -192,6 +192,7 @@ Experimental features might be changed or removed without prior notice.
 | `alertingApiServer`                         | Register Alerting APIs with the K8s API server                                                                                                                                                                                                                                    |
 | `dashboardRestoreUI`                        | Enables the frontend to be able to restore a recently deleted dashboard                                                                                                                                                                                                           |
 | `dataplaneAggregator`                       | Enable grafana dataplane aggregator                                                                                                                                                                                                                                               |
+| `adhocFilterOneOf`                          | Exposes a new 'one of' operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.                                                                                                                                                   |
 
 ## Development feature toggles
 
