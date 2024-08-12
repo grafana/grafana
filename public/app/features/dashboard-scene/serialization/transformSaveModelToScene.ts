@@ -29,8 +29,10 @@ import {
   GroupByVariable,
   AdHocFiltersVariable,
   SceneInteractionProfileEvent,
+  sceneGraph,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { ScopesFacade } from 'app/features/scopes';
 import { DashboardDTO, DashboardDataDTO } from 'app/types';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
@@ -283,6 +285,9 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       registerPanelInteractionsReporter,
       new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
       preserveDashboardSceneStateInLocalStorage,
+      new ScopesFacade({
+        handler: (facade) => sceneGraph.getTimeRange(facade).onRefresh(),
+      }),
     ],
     $data: new DashboardDataLayerSet({ annotationLayers, alertStatesLayer }),
     controls: new DashboardControls({
@@ -522,9 +527,6 @@ function registerPanelInteractionsReporter(scene: DashboardScene) {
         break;
       case 'panel-cancel-query-clicked':
         DashboardInteractions.panelCancelQueryClicked();
-        break;
-      case 'panel-menu-shown':
-        DashboardInteractions.panelMenuShown();
         break;
     }
   });

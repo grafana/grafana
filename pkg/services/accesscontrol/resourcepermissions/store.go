@@ -7,10 +7,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -743,6 +741,23 @@ func managedPermission(action, resource string, resourceID, resourceAttribute st
 	}
 }
 
+// InMemoryActionSets is an in-memory implementation of the ActionSetStore.
+type InMemoryActionSets struct {
+	features           featuremgmt.FeatureToggles
+	log                log.Logger
+	actionSetToActions map[string][]string
+	actionToActionSets map[string][]string
+}
+
+func NewInMemoryActionSetStore(features featuremgmt.FeatureToggles) *InMemoryActionSets {
+	return &InMemoryActionSets{
+		actionSetToActions: make(map[string][]string),
+		actionToActionSets: make(map[string][]string),
+		log:                log.New("resourcepermissions.actionsets"),
+		features:           features,
+	}
+}
+
 // ResolveActionPrefix returns all action sets that include at least one action with the specified prefix
 func (s *InMemoryActionSets) ResolveActionPrefix(prefix string) []string {
 	if prefix == "" {
@@ -752,11 +767,6 @@ func (s *InMemoryActionSets) ResolveActionPrefix(prefix string) []string {
 	sets := make([]string, 0, len(s.actionSetToActions))
 
 	for set, actions := range s.actionSetToActions {
-		// Only use action sets for folders and dashboards for now
-		// We need to verify that action sets for other resources do not share names with actions (eg, `datasources:read`)
-		if !isFolderOrDashboardAction(set) {
-			continue
-		}
 		for _, action := range actions {
 			if strings.HasPrefix(action, prefix) {
 				sets = append(sets, set)
@@ -769,44 +779,13 @@ func (s *InMemoryActionSets) ResolveActionPrefix(prefix string) []string {
 }
 
 func (s *InMemoryActionSets) ResolveAction(action string) []string {
-	actionSets := s.actionToActionSets[action]
-	sets := make([]string, 0, len(actionSets))
-
-	for _, actionSet := range actionSets {
-		// Only use action sets for folders and dashboards for now
-		// We need to verify that action sets for other resources do not share names with actions (eg, `datasources:read`)
-		if !isFolderOrDashboardAction(actionSet) {
-			continue
-		}
-		sets = append(sets, actionSet)
-	}
-
-	return sets
+	return s.actionToActionSets[action]
 }
 
 func (s *InMemoryActionSets) ResolveActionSet(actionSet string) []string {
-	// Only use action sets for folders and dashboards for now
-	// We need to verify that action sets for other resources do not share names with actions (eg, `datasources:read`)
-	if !isFolderOrDashboardAction(actionSet) {
-		return nil
-	}
 	return s.actionSetToActions[actionSet]
 }
 
-func isFolderOrDashboardAction(action string) bool {
-	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) || strings.HasPrefix(action, dashboards.ScopeFoldersRoot)
-}
-
-// ExpandActionSets takes a set of permissions that might include some action set permissions, and returns a set of permissions with action sets expanded into underlying permissions
-func (s *InMemoryActionSets) ExpandActionSets(permissions []accesscontrol.Permission) []accesscontrol.Permission {
-	actionMatcher := func(_ string) bool {
-		return true
-	}
-	return s.ExpandActionSetsWithFilter(permissions, actionMatcher)
-}
-
-// ExpandActionSetsWithFilter works like ExpandActionSets, but it also takes a function for action filtering. When action sets are expanded into the underlying permissions,
-// only those permissions whose action is matched by actionMatcher are included.
 func (s *InMemoryActionSets) ExpandActionSetsWithFilter(permissions []accesscontrol.Permission, actionMatcher func(action string) bool) []accesscontrol.Permission {
 	var expandedPermissions []accesscontrol.Permission
 	for _, permission := range permissions {
@@ -827,40 +806,13 @@ func (s *InMemoryActionSets) ExpandActionSetsWithFilter(permissions []accesscont
 }
 
 func (s *InMemoryActionSets) StoreActionSet(name string, actions []string) {
-	actionSet := &ActionSet{
-		Action:  name,
-		Actions: actions,
-	}
-	s.actionSetToActions[actionSet.Action] = append(s.actionSetToActions[actionSet.Action], actions...)
+	s.actionSetToActions[name] = append(s.actionSetToActions[name], actions...)
 
 	for _, action := range actions {
 		if _, ok := s.actionToActionSets[action]; !ok {
 			s.actionToActionSets[action] = []string{}
 		}
-		s.actionToActionSets[action] = append(s.actionToActionSets[action], actionSet.Action)
+		s.actionToActionSets[action] = append(s.actionToActionSets[action], name)
 	}
-	s.log.Debug("stored action set", "action set name", actionSet.Action)
-}
-
-// RegisterActionSets allow the caller to expand the existing action sets with additional permissions
-// This is intended to be used by plugins, and currently supports extending folder and dashboard action sets
-func (s *InMemoryActionSets) RegisterActionSets(ctx context.Context, pluginID string, registrations []plugins.ActionSet) error {
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) || !s.features.IsEnabled(ctx, featuremgmt.FlagAccessControlOnCall) {
-		return nil
-	}
-	for _, reg := range registrations {
-		if err := pluginutils.ValidatePluginActionSet(pluginID, reg); err != nil {
-			return err
-		}
-		s.StoreActionSet(reg.Action, reg.Actions)
-	}
-	return nil
-}
-
-// GetActionSetName function creates an action set from a list of actions and stores it inmemory.
-func GetActionSetName(resource, permission string) string {
-	// lower cased
-	resource = strings.ToLower(resource)
-	permission = strings.ToLower(permission)
-	return fmt.Sprintf("%s:%s", resource, permission)
+	s.log.Debug("stored action set", "action set name", name)
 }

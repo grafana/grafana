@@ -47,6 +47,18 @@
     },
     {
       "metadata": {
+        "name": "adhocFilterOneOf",
+        "resourceVersion": "1723119716623",
+        "creationTimestamp": "2024-08-08T12:21:56Z"
+      },
+      "spec": {
+        "description": "Exposes a new 'one of' operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "aiGeneratedDashboardChanges",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-03-05T12:01:31Z"
@@ -429,14 +441,18 @@
     {
       "metadata": {
         "name": "autoMigrateXYChartPanel",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-03-22T15:44:37Z"
+        "resourceVersion": "1722537244598",
+        "creationTimestamp": "2024-03-22T15:44:37Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-01 18:34:04.598082 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Migrate old XYChart panel to new XYChart2 model",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
@@ -501,12 +517,15 @@
     {
       "metadata": {
         "name": "azureMonitorPrometheusExemplars",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-06-06T16:53:17Z"
+        "resourceVersion": "1723028568258",
+        "creationTimestamp": "2024-06-06T16:53:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-07 11:02:48.258776 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/partner-datasources"
       }
     },
@@ -571,14 +590,19 @@
     {
       "metadata": {
         "name": "cloudRBACRoles",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-01-10T13:19:01Z"
+        "resourceVersion": "1721984527957",
+        "creationTimestamp": "2024-01-10T13:19:01Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-07-26 09:02:07.957377 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enabled grafana cloud specific RBAC roles",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/identity-access-team",
         "requiresRestart": true,
+        "allowSelfServe": true,
+        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -792,6 +816,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-backend-services-squad",
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dataplaneAggregator",
+        "resourceVersion": "1723151074613",
+        "creationTimestamp": "2024-08-08T21:04:34Z"
+      },
+      "spec": {
+        "description": "Enable grafana dataplane aggregator",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
       }
     },
     {
@@ -1343,11 +1380,14 @@
     {
       "metadata": {
         "name": "kubernetesAggregator",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-02-12T20:59:35Z"
+        "resourceVersion": "1723151074613",
+        "creationTimestamp": "2024-02-12T20:59:35Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-08 21:04:34.613161685 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enable grafana aggregator",
+        "description": "Enable grafana's embedded kube-aggregator",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
@@ -2499,14 +2539,17 @@
     {
       "metadata": {
         "name": "tlsMemcached",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-05-09T19:12:08Z"
+        "resourceVersion": "1722608472573",
+        "creationTimestamp": "2024-05-09T19:12:08Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-02 14:21:12.57399 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use TLS-enabled memcached in the enterprise caching feature",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-operator-experience-squad",
-        "hideFromDocs": true
+        "expression": "true"
       }
     },
     {

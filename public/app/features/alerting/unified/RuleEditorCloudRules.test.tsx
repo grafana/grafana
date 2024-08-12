@@ -1,8 +1,8 @@
-import { screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
+import { screen, waitFor, waitForElementToBeRemoved } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -123,7 +123,7 @@ describe('RuleEditor cloud', () => {
 
     const switchToCloudButton = screen.getByText('Data source-managed');
     expect(switchToCloudButton).toBeInTheDocument();
-    expect(switchToCloudButton).not.toBeDisabled();
+    expect(switchToCloudButton).toBeEnabled();
 
     await user.click(switchToCloudButton);
 

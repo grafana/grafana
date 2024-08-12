@@ -323,7 +323,7 @@ func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder
 
 	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
-	ac := actest.FakeAccessControl{}
+	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sc.replStore, cfg, features, tagimpl.ProvideService(sc.sqlStore), quotaService)
 	require.NoError(t, err)
@@ -428,7 +428,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			LastSeenAt: time.Now(),
 			// Allow user to create folders
 			Permissions: map[int64]map[string][]string{
-				1: {dashboards.ActionFoldersCreate: {}},
+				1: {dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll}},
 			},
 		}
 		req := &http.Request{

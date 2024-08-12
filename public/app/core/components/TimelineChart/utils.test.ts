@@ -17,6 +17,7 @@ import {
   findNextStateIndex,
   fmtDuration,
   getThresholdItems,
+  makeFramePerSeries,
   prepareTimelineFields,
   prepareTimelineLegendItems,
 } from './utils';
@@ -264,6 +265,61 @@ describe('prepare timeline graph', () => {
       ],
       ['OK', undefined, null, undefined, 'NO_DATA', undefined, undefined, null],
       [undefined, 'ERROR', undefined, null, undefined, 'WARNING', null, undefined],
+    ]);
+  });
+});
+
+describe('prepareFieldsForPagination', () => {
+  it('ignores frames without any time fields', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'a', type: FieldType.number, values: [1, 2, 3] },
+          { name: 'b', type: FieldType.string, values: ['a', 'b', 'c'] },
+        ],
+      }),
+    ];
+    const normalizedFrames = makeFramePerSeries(frames);
+    expect(normalizedFrames.length).toEqual(0);
+  });
+
+  it('returns normalized frames, each with one time field and one value field', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'a', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'b', type: FieldType.number, values: [100, 200, 300] },
+          { name: 'c', type: FieldType.string, values: ['h', 'i', 'j'] },
+        ],
+      }),
+      toDataFrame({
+        fields: [
+          { name: 'x', type: FieldType.time, values: [10, 20, 30] },
+          { name: 'y', type: FieldType.string, values: ['e', 'f', 'g'] },
+        ],
+      }),
+    ];
+    const normalizedFrames = makeFramePerSeries(frames);
+    expect(normalizedFrames.length).toEqual(3);
+    expect(normalizedFrames).toMatchObject([
+      {
+        fields: [
+          { name: 'a', values: [1, 2, 3] },
+          { name: 'b', values: [100, 200, 300] },
+        ],
+      },
+      {
+        fields: [
+          { name: 'a', values: [1, 2, 3] },
+          { name: 'c', values: ['h', 'i', 'j'] },
+        ],
+      },
+      {
+        fields: [
+          { name: 'x', values: [10, 20, 30] },
+          { name: 'y', values: ['e', 'f', 'g'] },
+        ],
+      },
     ]);
   });
 });

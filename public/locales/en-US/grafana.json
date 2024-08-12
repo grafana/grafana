@@ -1,6 +1,5 @@
 {
   "_comment": "The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.",
-  "{unit}": "{unit}",
   "access-control": {
     "add-permission": {
       "role-label": "Role",
@@ -99,6 +98,14 @@
         "title": "Unable to display all events"
       }
     },
+    "common": {
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "export": "Export",
+      "export-all": "Export all",
+      "view": "View"
+    },
     "contact-points": {
       "delivery-duration": "Last delivery took <1></1>",
       "last-delivery-attempt": "Last delivery attempt",
@@ -118,6 +125,16 @@
       "new-recording-rule": "New recording rule",
       "title": "Grafana"
     },
+    "mute_timings": {
+      "error-loading": {
+        "description": "Could not load mute timings. Please try again later.",
+        "title": "Error loading mute timings"
+      }
+    },
+    "mute-timings": {
+      "save": "Save mute timing",
+      "saving": "Saving mute timing"
+    },
     "policies": {
       "metadata": {
         "timingOptions": {
@@ -135,6 +152,10 @@
           }
         }
       }
+    },
+    "provisioning": {
+      "badge-tooltip-provenance": "This resource has been provisioned via {{provenance}} and cannot be edited through the UI",
+      "badge-tooltip-standard": "This resource has been provisioned and cannot be edited through the UI"
     },
     "rule-groups": {
       "delete": {
@@ -304,10 +325,13 @@
     },
     "save": "Save"
   },
+  "complete": "complete",
   "connections": {
     "connect-data": {
       "category-header-label": "Data sources",
-      "empty-message": "No results matching your query were found"
+      "empty-message": "No results matching your query were found",
+      "request-data-source": "Request a new data source",
+      "roadmap": "View roadmap"
     },
     "search": {
       "placeholder": "Search all"
@@ -645,7 +669,6 @@
       "message": "No data sources found"
     }
   },
-  "Description": "Description",
   "explore": {
     "add-to-dashboard": "Add to dashboard",
     "add-to-library-modal": {
@@ -916,7 +939,6 @@
       "refresh": "Refresh"
     }
   },
-  "Labels": "Labels",
   "library-panel": {
     "add-modal": {
       "cancel": "Cancel",
@@ -1068,6 +1090,11 @@
       "link-title": "View the full migration guide",
       "title": "Let us help you migrate to this stack"
     },
+    "migrated-counts": {
+      "dashboards": "dashboards",
+      "datasources": "data sources",
+      "folders": "folders"
+    },
     "migration-token": {
       "delete-button": "Delete token",
       "delete-modal-body": "If you've already used this token with a self-managed installation, that installation will no longer be able to upload content.",
@@ -1087,6 +1114,22 @@
       "modal-title": "Migration token created",
       "status": "Current status: <2></2>"
     },
+    "onprem": {
+      "cancel-snapshot-error-title": "Error cancelling creating snapshot",
+      "create-snapshot-error-title": "Error creating snapshot",
+      "disconnect-error-title": "Error disconnecting",
+      "error-see-server-logs": "See the Grafana server logs for more details",
+      "get-session-error-title": "Error loading migration configuration",
+      "get-snapshot-error-title": "Error loading snapshot",
+      "migration-finished-with-caveat-title": "Resource migration complete",
+      "migration-finished-with-errors-body": "The migration has completed, but some items could not be migrated to the cloud stack. Check the failed resources for more details",
+      "migration-finished-with-warnings-body": "The migration has completed with some warnings. Check individual resources for more details",
+      "snapshot-error-status-body": "There was an error creating the snapshot or starting the migration process. See the Grafana server logs for more details",
+      "snapshot-error-status-title": "Error migrating resources",
+      "success-message": "Successfully migrated {{successCount}} {{types, list}} to your Grafana Cloud instance.",
+      "success-title": "Migration completed!",
+      "upload-snapshot-error-title": "Error uploading snapshot"
+    },
     "pdc": {
       "body": "Exposing your data sources to the internet can raise security concerns. Private data source connect (PDC) allows Grafana Cloud to access your existing data sources over a secure network tunnel.",
       "link-title": "Learn about PDC",
@@ -1099,15 +1142,17 @@
     },
     "public-preview": {
       "button-text": "Give feedback",
-      "message": "Help us improve this feature by providing feedback and reporting any issues.",
+      "message": "No SLAs are available yet. <2>Visit our docs</2> to learn more about this feature!",
       "title": "Migrate to Grafana Cloud is in public preview"
     },
-    "resource-error": {
+    "resource-details": {
       "dismiss-button": "OK",
+      "error-title": "Unable to migrate this resource:",
+      "generic-title": "Resource migration details:",
+      "missing-message": "No message provided.",
       "resource-summary": "{{refId}} ({{typeName}})",
-      "specific-error": "The specific error was:",
-      "title": "Unable to migrate this resource",
-      "unknown-error": "An unknown error occurred."
+      "title": "Migration resource details",
+      "warning-title": "Resource migrated with a warning:"
     },
     "resource-status": {
       "error-details-button": "Details",
@@ -1115,7 +1160,9 @@
       "migrated": "Uploaded to cloud",
       "migrating": "Uploading...",
       "not-migrated": "Not yet uploaded",
-      "unknown": "Unknown"
+      "unknown": "Unknown",
+      "warning": "Uploaded with warning",
+      "warning-details-button": "Details"
     },
     "resource-table": {
       "unknown-datasource-title": "Data source {{datasourceUID}}",
@@ -1130,13 +1177,9 @@
     "summary": {
       "cancel-snapshot": "Cancel snapshot",
       "disconnect": "Disconnect",
-      "disconnect-error-description": "See the Grafana server logs for more details",
-      "disconnect-error-title": "There was an error disconnecting",
       "errored-resource-count": "Errors",
       "page-loading": "Loading...",
       "rebuild-snapshot": "Rebuild snapshot",
-      "run-migration-error-description": "See the Grafana server logs for more details",
-      "run-migration-error-title": "Error creating snapshot",
       "snapshot-date": "Snapshot timestamp",
       "snapshot-not-created": "Not yet created",
       "start-migration": "Build snapshot",
@@ -1144,6 +1187,9 @@
       "target-stack-title": "Uploading to",
       "total-resource-count": "Total resources",
       "upload-migration": "Upload snapshot"
+    },
+    "support-types-disclosure": {
+      "text": "Dashboards, Folders, and built-in core data sources are migrated to your Grafana Cloud stack. <2>Learn about migrating other settings.</2>"
     },
     "token-status": {
       "active": "Token created and active",
@@ -1508,7 +1554,6 @@
     },
     "title": "Latest from the blog"
   },
-  "No description available": "No description available",
   "notifications": {
     "empty-state": {
       "description": "Notifications you have received will appear here",
@@ -1866,16 +1911,7 @@
     "dismissable-button": "Close"
   },
   "scopes": {
-    "filters": {
-      "apply": "Apply",
-      "cancel": "Cancel",
-      "input": {
-        "placeholder": "Select scopes...",
-        "removeAll": "Remove all scopes"
-      },
-      "title": "Select scopes"
-    },
-    "suggestedDashboards": {
+    "dashboards": {
       "loading": "Loading dashboards",
       "noResultsForFilter": "No results found for your query",
       "noResultsForFilterClear": "Clear search",
@@ -1883,9 +1919,19 @@
       "noResultsNoScopes": "No scopes selected",
       "search": "Search",
       "toggle": {
-        "collapse": "Collapse scope filters",
-        "expand": "Expand scope filters"
+        "collapse": "Collapse suggested dashboards list",
+        "disabled": "Suggested dashboards list is disabled due to read only mode",
+        "expand": "Expand suggested dashboards list"
       }
+    },
+    "selector": {
+      "apply": "Apply",
+      "cancel": "Cancel",
+      "input": {
+        "placeholder": "Select scopes...",
+        "removeAll": "Remove all scopes"
+      },
+      "title": "Select scopes"
     },
     "tree": {
       "collapse": "Collapse",
@@ -2200,15 +2246,22 @@
       "select-search-input": "Type to search (country, city, abbreviation)"
     }
   },
+  "trails": {
+    "metric-overview": {
+      "description-label": "Description",
+      "labels-label": "Labels",
+      "no-description": "No description available",
+      "type-label": "Type",
+      "unit-label": "Unit",
+      "unknown-type": "Unknown"
+    }
+  },
   "transformations": {
     "empty": {
       "add-transformation-body": "Transformations allow data to be changed in various ways before your visualization is shown.<1></1>This includes joining data together, renaming fields, making calculations, formatting data for display, and more.",
       "add-transformation-header": "Start transforming data"
     }
   },
-  "Type": "Type",
-  "Unit": "Unit",
-  "Unknown": "Unknown",
   "user-orgs": {
     "current-org-button": "Current",
     "name-column": "Name",
