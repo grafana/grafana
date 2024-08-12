@@ -554,15 +554,29 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 
 	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && cmd.ParentUID != "" {
 		// Check that the user is allowed to create a subfolder in this folder
-		evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.ParentUID))
+		parentUIDScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.ParentUID)
+		legacyEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, parentUIDScope)
+		newEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersCreate, parentUIDScope)
+		evaluator := accesscontrol.EvalAny(legacyEvaluator, newEvaluator)
 		hasAccess, evalErr := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator)
 		if evalErr != nil {
 			return nil, evalErr
 		}
 		if !hasAccess {
-			return nil, dashboards.ErrFolderAccessDenied
+			return nil, dashboards.ErrFolderCreationAccessDenied.Errorf("user is missing the permission with action either folders:create or folders:write and scope %s or any of the parent folder scopes", parentUIDScope)
 		}
 		dashFolder.FolderUID = cmd.ParentUID
+	}
+
+	if cmd.ParentUID == "" {
+		evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
+		hasAccess, evalErr := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator)
+		if evalErr != nil {
+			return nil, evalErr
+		}
+		if !hasAccess {
+			return nil, dashboards.ErrFolderCreationAccessDenied.Errorf("user is missing the permission with action folders:create and scope folders:uid:general, which is required to create a folder under the root level")
+		}
 	}
 
 	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && cmd.UID == folder.SharedWithMeFolderUID {
@@ -578,21 +592,17 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 
 	user := cmd.SignedInUser
 
-	userID := int64(0)
-	var err error
-	namespaceID, userIDstr := user.GetTypedID()
-	if namespaceID != identity.TypeUser && namespaceID != identity.TypeServiceAccount {
-		s.log.Debug("User does not belong to a user or service account namespace, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
+	var userID int64
+	if id, err := identity.UserIdentifier(cmd.SignedInUser.GetID()); err == nil {
+		userID = id
 	} else {
-		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
-		if err != nil {
-			s.log.Debug("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
-		}
+		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "id", cmd.SignedInUser.GetID())
 	}
 
 	if userID == 0 {
 		userID = -1
 	}
+
 	dashFolder.CreatedBy = userID
 	dashFolder.UpdatedBy = userID
 	dashFolder.UpdateSlug()
@@ -668,8 +678,6 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 		}
 
 		if cmd.NewTitle != nil {
-			namespace, id := cmd.SignedInUser.GetTypedID()
-
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 			if err := s.bus.Publish(ctx, &events.FolderTitleUpdated{
 				Timestamp: foldr.Updated,
@@ -678,7 +686,7 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 				UID:       dashFolder.UID,
 				OrgID:     cmd.OrgID,
 			}); err != nil {
-				s.log.ErrorContext(ctx, "failed to publish FolderTitleUpdated event", "folder", foldr.Title, "user", id, "namespace", namespace, "error", err)
+				s.log.ErrorContext(ctx, "failed to publish FolderTitleUpdated event", "folder", foldr.Title, "user", cmd.SignedInUser.GetID(), "error", err)
 				return err
 			}
 		}
@@ -725,12 +733,10 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 	}
 
 	var userID int64
-	namespace, id := cmd.SignedInUser.GetTypedID()
-	if namespace == identity.TypeUser || namespace == identity.TypeServiceAccount {
-		userID, err = identity.IntIdentifier(namespace, id)
-		if err != nil {
-			s.log.ErrorContext(ctx, "failed to parse user ID", "namespace", namespace, "userID", id, "error", err)
-		}
+	if id, err := identity.UserIdentifier(cmd.SignedInUser.GetID()); err == nil {
+		userID = id
+	} else {
+		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "id", cmd.SignedInUser.GetID())
 	}
 
 	prepareForUpdate(dashFolder, cmd.OrgID, userID, cmd)
@@ -953,10 +959,12 @@ func (s *Service) canMove(ctx context.Context, cmd *folder.MoveFolderCommand) (b
 	var evaluator accesscontrol.Evaluator
 	parentUID := cmd.NewParentUID
 	if parentUID != "" {
-		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(parentUID))
+		legacyEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.NewParentUID))
+		newEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.NewParentUID))
+		evaluator = accesscontrol.EvalAny(legacyEvaluator, newEvaluator)
 	} else {
 		// Evaluate folder creation permission when moving folder to the root level
-		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)
+		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
 		parentUID = folder.GeneralFolderUID
 	}
 	if hasAccess, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator); err != nil {
@@ -1147,15 +1155,11 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		}
 	}
 
-	userID := int64(0)
-	namespaceID, userIDstr := dto.User.GetTypedID()
-	if namespaceID != identity.TypeUser && namespaceID != identity.TypeServiceAccount {
-		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
+	var userID int64
+	if id, err := identity.UserIdentifier(dto.User.GetID()); err == nil {
+		userID = id
 	} else {
-		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
-		if err != nil {
-			s.log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
-		}
+		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "id", dto.User.GetID())
 	}
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
