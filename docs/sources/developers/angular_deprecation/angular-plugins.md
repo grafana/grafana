@@ -107,7 +107,7 @@ Save the output from the above command into a file, such as `dashboards.txt`.
 
 The Grafana HTTP API does not support saving dashboards directly. Therefore, we need to open each dashboard and manually click the save button. To automate this process of opening Grafana dashboards and clicking the save button, we can use a browser automation tool, such as Selenium for Python.
 
-### Install Selenium:
+#### Install Selenium
 
 Make sure you have Selenium installed. 
 
@@ -115,7 +115,7 @@ Make sure you have Selenium installed.
 pip3 install selenium
 ```
 
-### Install WebDriver:
+#### Install WebDriver
 
 Install the WebDriver for your browser (e.g., ChromeDriver for Chrome)
 
@@ -123,7 +123,7 @@ Install the WebDriver for your browser (e.g., ChromeDriver for Chrome)
 pip3 install webdriver_manager
 ```
 
-### Python Script:
+#### Python Script
 
 Below is a simple script that logs into Grafana, navigates to the dashboard list, and automates the clicking of the save button using Selenium in Python.
 
