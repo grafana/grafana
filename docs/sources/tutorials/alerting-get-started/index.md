@@ -42,7 +42,7 @@ Before you dive in, remember that you can [explore advanced topics like alert in
 
 {{< docs/ignore >}}
 
-Before you dive in, remember that you can [explore advanced topics like alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/) in the second part of this guide.
+> Before you dive in, remember that you can [explore advanced topics like alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/) in the second part of this guide.
 
 {{< /docs/ignore >}}
 
