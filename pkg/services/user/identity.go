@@ -81,11 +81,10 @@ func (u *SignedInUser) GetInternalID() (int64, error) {
 	switch {
 	case u.ApiKeyID != 0:
 		return u.ApiKeyID, nil
-	case u.IsAnonymous:
-		return 0, nil
-	default:
+	case u.UserID != 0:
+		return u.UserID, nil
 	}
-	return u.UserID, nil
+	return 0, nil
 }
 
 // GetIdentityType implements Requester.

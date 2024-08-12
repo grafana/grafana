@@ -155,12 +155,12 @@ func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) w
 			return
 		}
 
-		// FIXME(kalleep): handle 0 raw id
+		id, _ := ident.GetInternalID()
 		if !ident.IsIdentityType(
 			claims.TypeUser,
 			claims.TypeServiceAccount,
 			claims.TypeAPIKey,
-		) {
+		) || id == 0 {
 			return
 		}
 
