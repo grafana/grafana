@@ -32,7 +32,7 @@ cards:
       description: Add variables to metric queries and panel titles to create interactive and dynamic dashboards.
       height: 24
     - title: Public dashboards
-      href: ./dashboard-public/
+      href: ./share-dashboards-panels/shared-dashboards/
       description: Make your Grafana dashboards public and share them with anyone without requiring access to your Grafana organization.
       height: 24
     - title: Reporting
