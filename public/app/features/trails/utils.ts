@@ -100,7 +100,9 @@ export function getColorByIndex(index: number) {
 export type SceneTimeRangeState = SceneObjectState & {
   from: string;
   to: string;
+  timeZone?: string;
 };
+
 export function isSceneTimeRangeState(state: SceneObjectState): state is SceneTimeRangeState {
   const keys = Object.keys(state);
   return keys.includes('from') && keys.includes('to');

@@ -37,9 +37,6 @@ func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards, n
 		1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
 			{
 				Action: dashboards.ActionFoldersCreate,
-			},
-			{
-				Action: dashboards.ActionFoldersWrite,
 				Scope:  dashboards.ScopeFoldersAll,
 			},
 		}),

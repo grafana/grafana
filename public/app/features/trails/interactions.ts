@@ -95,6 +95,21 @@ type Interactions = {
     // The number of search terms activated when the selection was made
     searchTermCount: number | null;
   };
+  // User opens/closes the prefix filter dropdown
+  prefix_filter_clicked: {
+    from: (
+      // By clicking "Select" on a metric panel when on the no-metric-selected metrics list view
+      | 'metric_list'
+      // By clicking "Select" on a metric panel when on the related metrics tab
+      | 'related_metrics'
+    )
+    action: (
+      // Opens the dropdown
+      | 'open'
+      // Closes the dropdown
+      | 'close'
+    )
+  };
 };
 
 const PREFIX = 'grafana_explore_metrics_';

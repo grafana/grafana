@@ -367,8 +367,8 @@ export function prepConfig(opts: PrepConfigOpts) {
           if (meta.yOrdinalDisplay) {
             return splits.map((v) =>
               v < 0
-                ? meta.yMinDisplay ?? '' // Check prometheus style labels
-                : meta.yOrdinalDisplay[v] ?? ''
+                ? (meta.yMinDisplay ?? '') // Check prometheus style labels
+                : (meta.yOrdinalDisplay[v] ?? '')
             );
           }
           return splits;
@@ -597,7 +597,7 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
         );
 
         for (let i = 0; i < dlen; i++) {
-          if (counts[i] > hideLE && counts[i] < hideGE) {
+          if (counts[i] != null && counts[i] > hideLE && counts[i] < hideGE) {
             let cx = cxs[~~(i / yBinQty)];
             let cy = cys[i % yBinQty];
 
@@ -826,7 +826,7 @@ export const boundedMinMax = (
     minValue = Infinity;
 
     for (let i = 0; i < values.length; i++) {
-      if (values[i] > hideLE && values[i] < hideGE) {
+      if (values[i] != null && values[i] > hideLE && values[i] < hideGE) {
         minValue = Math.min(minValue, values[i]);
       }
     }
@@ -836,7 +836,7 @@ export const boundedMinMax = (
     maxValue = -Infinity;
 
     for (let i = 0; i < values.length; i++) {
-      if (values[i] > hideLE && values[i] < hideGE) {
+      if (values[i] != null && values[i] > hideLE && values[i] < hideGE) {
         maxValue = Math.max(maxValue, values[i]);
       }
     }

@@ -32,7 +32,7 @@ func init() {
 	// Make sure there is a user in every context
 	storagetesting.NewContext = func() context.Context {
 		testUserA := &identity.StaticRequester{
-			Namespace:      identity.NamespaceUser,
+			Type:           identity.TypeUser,
 			Login:          "testuser",
 			UserID:         123,
 			UserUID:        "u123",

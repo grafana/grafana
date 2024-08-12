@@ -58,6 +58,8 @@ refs:
 
 # Configure the Tempo data source
 
+The Tempo data source sets how Grafana connects to your Tempo database and lets you configure features and integrations with other telemetry signals.
+
 To configure basic settings for the Tempo data source, complete the following steps:
 
 1.  Click **Connections** in the left-side menu.
@@ -72,7 +74,7 @@ To configure basic settings for the Tempo data source, complete the following st
     | **Name**       | Sets the name you use to refer to the data source in panels and queries. |
     | **Default**    | Sets the data source that's pre-selected for new panels.                 |
     | **URL**        | Sets the URL of the Tempo instance, such as `http://tempo`.              |
-    | **Basic Auth** | Enables basic authentication to the Tempo data source.                   |
+    | **Basic Auth** | Enables authentication to the Tempo data source.                         |
     | **User**       | Sets the user name for basic authentication.                             |
     | **Password**   | Sets the password for basic authentication.                              |
 
@@ -82,11 +84,38 @@ This video explains how to add data sources, including Loki, Tempo, and Mimir, t
 
 {{< youtube id="cqHO0oYW6Ic" start="298" >}}
 
+## Streaming
+
+<!-- The traceQLStreaming toggle will be deprecated in Grafana 11.2 and removed in 11.3. -->
+
+Streaming enables TraceQL query results to be displayed as they become available. Without streaming, no results are displayed until all results have returned.
+
+{{< docs/public-preview product="TraceQL streaming results" >}}
+
+### Requirements
+
+To use streaming, you need to:
+
+- Be running Tempo version 2.2 or newer, or Grafana Enterprise Traces (GET) version 2.2 or newer, or be using Grafana Cloud Traces.
+- For self-managed Tempo or GET instances: If your Tempo or GET instance is behind a load balancer or proxy that doesn't supporting gRPC or HTTP2, streaming may not work and should be disabled.
+
+### Activate streaming
+
+For streaming to work for a particular Tempo data source, set your Grafana's `traceQLStreaming` [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) to true and set **Streaming** to enabled in your Tempo data source configuration.
+
+![Streaming section in Tempo data source](/media/docs/grafana/data-sources/tempo-data-source-streaming-v11.2.png)
+
+If you are using Grafana Cloud, the `traceQLStreaming` feature toggle is already set to `true` by default.
+
+If the Tempo data source is set to allow streaming but the `traceQLStreaming` feature toggle is set to `false` in Grafana, no streaming will occur.
+
+If the data source has streaming disabled and `traceQLStreaming` is set to `true`, no streaming will happen for that data source.
+
 ## Trace to logs
 
-![Trace to logs settings](/media/docs/tempo/tempo-trace-to-logs-9-4.png)
+The **Trace to logs** setting configures [trace to logs](ref:explore-trace-integration) that's available when you integrate Grafana with Tempo.
 
-The **Trace to logs** setting configures the [trace to logs feature](ref:explore-trace-integration) that is available when you integrate Grafana with Tempo.
+![Trace to logs settings](/media/docs/tempo/tempo-trace-to-logs-9-4.png)
 
 There are two ways to configure the trace to logs feature:
 
@@ -100,8 +129,9 @@ There are two ways to configure the trace to logs feature:
    You can also click **Open advanced data source picker** to see more options, including adding a data source.
 
 1. Set start and end time shift. As the logs timestamps may not exactly match the timestamps of the spans in trace it may be necessary to search in larger or shifted time range to find the desired logs.
-1. Select which tags to use in the logs query. The tags you configure must be present in the span's attributes or resources for a trace to logs span link to appear. You can optionally configure a new name for the tag. This is useful, for example, if the tag has dots in the name and the target data source does not allow using dots in labels. In that case, you can for example remap `http.status` (the span attribute) to `http_status` (the data source field). "Data source" in this context can refer to Loki, or another log data source.
-1. Optionally switch on the **Filter by trace ID** and/or **Filter by span ID** setting to further filter the logs if your logs consistently contain trace or span IDs.
+1. Select which tags to use in the logs query.
+   The tags you configure must be present in the span's attributes or resources for a trace to logs span link to appear. You can optionally configure a new name for the tag. This is useful, for example, if the tag has dots in the name and the target data source does not allow using dots in labels. In that case, you can for example remap `http.status` (the span attribute) to `http_status` (the data source field). "Data source" in this context can refer to Loki, or another log data source.
+1. Optional: If your logs consistently trace or span IDs, you can use one or both of the **Filter by trace ID** and **Filter by span ID** settings.
 
 ### Configure a custom query
 
@@ -141,19 +171,33 @@ There are two ways to configure the trace to metrics feature:
 - Use a basic configuration with a default query, or
 - Configure one or more custom queries where you can use a [template language](ref:variable-syntax) to interpolate variables from the trace or span.
 
-### Simple config
+Refer to the Trace to metrics configuration options section to learn about the available options.
+
+### Set up a simple configuration
 
 To use a simple configuration, follow these steps:
 
 1. Select a metrics data source from the **Data source** drop-down.
+1. Optional: Change **Span start time shift** and **Span end time shift**. You can change one or both of these settings. The default start time shift is -2 minutes and 2 minutes for end time shift.
 1. Optional: Choose any tags to use in the query. If left blank, the default values of `cluster`, `hostname`, `namespace`, `pod`, `service.name` and `service.namespace` are used.
 
    The tags you configure must be present in the spans attributes or resources for a trace to metrics span link to appear. You can optionally configure a new name for the tag. This is useful for example if the tag has dots in the name and the target data source doesn't allow using dots in labels. In that case you can for example remap `service.name` to `service_name`.
 
-1. Do not select **Add query**.
+1. Don't select **Add query**.
 1. Select **Save and Test**.
 
-### Custom queries
+### Set up custom queries
+
+To use custom queries, you need to configure the tags you’d like to include in the linked queries.
+For each tag, the key is the span attribute name.
+In cases where the attribute name would result in an invalid metrics query or doesn’t exactly match the desired label name, you can enter the label name as the second value.
+For example, you could map the attribute `k8s.pod` to the label `pod`.
+
+You can interpolate the configured tags using the `$__tags` keyword.
+For example, when you configure the query `requests_total{$__tags}` with the tags `k8s.pod=pod` and `cluster`, it results in `requests_total{pod="nginx-554b9", cluster="us-east-1"}`.
+The label values are dynamically inserted based on the span attributes’ values.
+
+You can link to any metric you’d like, but metrics for span durations, counts, and errors filtered by service or span are a great starting point.
 
 To use custom queries with the configuration, follow these steps:
 
@@ -174,7 +218,7 @@ To use custom queries with the configuration, follow these steps:
 
 1. Select **Save and Test**.
 
-### Configure trace to metrics
+### Trace to metrics configuration options
 
 | Setting name              | Description                                                                                                                                                                                                                                                     |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -193,7 +237,8 @@ To use custom queries with the configuration, follow these steps:
 
 ## Custom query variables
 
-To use a variable in your trace to logs, metrics or profiles you need to wrap it in `${}`. For example, `${__span.name}`.
+To use a variable in your trace to logs, metrics, or profiles, you need to wrap it in `${}`.
+For example, `${__span.name}`.
 
 | Variable name          | Description                                                                                                                                                                                                                                                                                                                              |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

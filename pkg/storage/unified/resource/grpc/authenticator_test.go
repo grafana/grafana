@@ -11,13 +11,13 @@ import (
 
 func TestBasicEncodeDecode(t *testing.T) {
 	before := &identity.StaticRequester{
-		UserID:    123,
-		UserUID:   "abc",
-		Login:     "test",
-		Namespace: identity.NamespaceUser,
-		OrgID:     456,
-		OrgName:   "org",
-		OrgRole:   identity.RoleAdmin,
+		UserID:  123,
+		UserUID: "abc",
+		Login:   "test",
+		Type:    identity.TypeUser,
+		OrgID:   456,
+		OrgName: "org",
+		OrgRole: identity.RoleAdmin,
 	}
 
 	auth := &Authenticator{}
@@ -27,6 +27,7 @@ func TestBasicEncodeDecode(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, before.GetID(), after.GetID())
 	require.Equal(t, before.GetUID(), after.GetUID())
+	require.Equal(t, before.GetIdentityType(), after.GetIdentityType())
 	require.Equal(t, before.GetLogin(), after.GetLogin())
 	require.Equal(t, before.GetOrgID(), after.GetOrgID())
 	require.Equal(t, before.GetOrgName(), after.GetOrgName())

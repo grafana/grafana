@@ -143,7 +143,8 @@ function useCombinedRulesLoader(
 
   return {
     loading,
-    error: promRuleRequest.error ?? isRulerNotSupportedResponse(rulerRuleRequest) ? undefined : rulerRuleRequest.error,
+    error:
+      (promRuleRequest.error ?? isRulerNotSupportedResponse(rulerRuleRequest)) ? undefined : rulerRuleRequest.error,
     dispatched: promRuleRequest.dispatched && rulerRuleRequest.dispatched,
   };
 }

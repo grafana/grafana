@@ -26,8 +26,9 @@ var (
 // RoleRegistration stores a role and its assignments to built-in roles
 // (Viewer, Editor, Admin, Grafana Admin)
 type RoleRegistration struct {
-	Role   RoleDTO
-	Grants []string
+	Role    RoleDTO
+	Grants  []string
+	Exclude []string
 }
 
 // Role is the model for Role in RBAC.

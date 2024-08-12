@@ -76,7 +76,7 @@ export const StateTimelineTooltip2 = ({
   }
 
   const headerItem: VizTooltipItem = {
-    label: xField.type === FieldType.time ? '' : xField.state?.displayName ?? xField.name,
+    label: xField.type === FieldType.time ? '' : (xField.state?.displayName ?? xField.name),
     value: xVal,
   };
 

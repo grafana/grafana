@@ -59,9 +59,7 @@ const navTreeSlice = createSlice({
       const { item, isSaved } = action.payload;
       if (bookmarks) {
         if (isSaved) {
-          if (!bookmarks.children) {
-            bookmarks.children = [];
-          }
+          bookmarks.children ||= [];
           const newBookmark: NavModelItem = {
             ...item,
             // Clear the children, sortWeight and empty message of the item
@@ -69,10 +67,11 @@ const navTreeSlice = createSlice({
             sortWeight: 0,
             emptyMessageId: '',
             emptyMessage: '',
+            parentItem: { id: bookmarks.id, text: bookmarks.text },
           };
           bookmarks.children.push(newBookmark);
         } else {
-          bookmarks.children = bookmarks.children?.filter((i) => i.id !== item.id) ?? [];
+          bookmarks.children = bookmarks.children?.filter((i) => i.url !== item.url) ?? [];
         }
       }
     },

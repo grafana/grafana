@@ -43,9 +43,9 @@ func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashI
 		return false, nil
 	}
 
-	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
+	namespaceID, userIDstr := c.SignedInUser.GetTypedID()
 
-	if namespaceID != identity.NamespaceUser {
+	if namespaceID != identity.TypeUser {
 		return false, nil
 	}
 
@@ -82,7 +82,7 @@ func dashboardGuardianResponse(err error) response.Response {
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response {
-	ctx, span := hs.tracer.Start(c.Req.Context(), "httpserver.GetDashboard")
+	ctx, span := hs.tracer.Start(c.Req.Context(), "api.GetDashboard")
 	defer span.End()
 
 	uid := web.Params(c.Req)[":uid"]
@@ -262,6 +262,9 @@ func (hs *HTTPServer) getUserLogin(ctx context.Context, userID int64) string {
 }
 
 func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id int64, uid string) (*dashboards.Dashboard, response.Response) {
+	ctx, span := hs.tracer.Start(ctx, "api.getDashboardHelper")
+	defer span.End()
+
 	var query dashboards.GetDashboardQuery
 
 	if len(uid) > 0 {
@@ -436,7 +439,7 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "Use folders endpoint for deleting folders.", nil)
 	}
 
-	namespaceID, userIDStr := c.SignedInUser.GetNamespacedID()
+	namespaceID, userIDStr := c.SignedInUser.GetTypedID()
 
 	// disconnect all library elements for this dashboard
 	err = hs.LibraryElementService.DisconnectElementsFromDashboard(c.Req.Context(), dash.ID)
@@ -513,8 +516,8 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	var err error
 
 	userID := int64(0)
-	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
-	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+	namespaceID, userIDstr := c.SignedInUser.GetTypedID()
+	if namespaceID != identity.TypeUser && namespaceID != identity.TypeServiceAccount {
 		hs.log.Debug("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", userIDstr)
 	} else {
 		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
@@ -631,8 +634,8 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Response {
 	userID := int64(0)
 	var err error
-	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
-	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+	namespaceID, userIDstr := c.SignedInUser.GetTypedID()
+	if namespaceID != identity.TypeUser && namespaceID != identity.TypeServiceAccount {
 		hs.log.Debug("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", userIDstr)
 	} else {
 		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
@@ -1083,8 +1086,8 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 	}
 
 	userID := int64(0)
-	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
-	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+	namespaceID, userIDstr := c.SignedInUser.GetTypedID()
+	if namespaceID != identity.TypeUser && namespaceID != identity.TypeServiceAccount {
 		hs.log.Warn("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", userIDstr)
 	} else {
 		userID, err = identity.IntIdentifier(namespaceID, userIDstr)

@@ -442,7 +442,7 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetTypedID())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError,
 			"Failed to add datasource", err)
