@@ -261,7 +261,7 @@ func TestCloudMigrationAPI_RunMigration(t *testing.T) {
 			requestUrl:         "/api/cloudmigration/migration/1234/run",
 			basicRole:          org.RoleAdmin,
 			expectedHttpResult: http.StatusOK,
-			expectedBody:       `{"uid":"fake_uid","items":[{"type":"type","refId":"make_refid","status":"ok","error":"none"}]}`,
+			expectedBody:       `{"uid":"fake_uid","items":[{"type":"type","refId":"make_refid","status":"ok","message":"none"}]}`,
 		},
 		{
 			desc:               "should return 403 if no used is not admin",
@@ -303,7 +303,7 @@ func TestCloudMigrationAPI_GetMigrationRun(t *testing.T) {
 			requestUrl:         "/api/cloudmigration/migration/run/1234",
 			basicRole:          org.RoleAdmin,
 			expectedHttpResult: http.StatusOK,
-			expectedBody:       `{"uid":"fake_uid","items":[{"type":"type","refId":"make_refid","status":"ok","error":"none"}]}`,
+			expectedBody:       `{"uid":"fake_uid","items":[{"type":"type","refId":"make_refid","status":"ok","message":"none"}]}`,
 		},
 		{
 			desc:               "should return 403 if no used is not admin",

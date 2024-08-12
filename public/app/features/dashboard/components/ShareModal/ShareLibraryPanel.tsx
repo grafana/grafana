@@ -28,7 +28,7 @@ export const ShareLibraryPanel = ({
 
   return (
     <>
-      <p className="share-modal-info-text">
+      <p>
         <Trans i18nKey="share-modal.library.info">Create library panel.</Trans>
       </p>
       <AddLibraryPanelContents
