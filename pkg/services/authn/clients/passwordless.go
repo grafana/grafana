@@ -55,14 +55,19 @@ type EmailForm struct {
 	Email string `json:"email" binding:"required,email"`
 }
 
+type PasswordlessForm struct {
+	Code             string `json:"code" binding:"required"`
+	ConfirmationCode string `json:"confirmationCode" binding:"required"`
+}
+
 // Authenticate implements authn.Client.
 func (c *Passwordless) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
-	// TODO: colin - confirm that this is the right way to get query params
-	// TODO: colin - do we need separate authenticate and authenticatePasswordless methods?
-	code := r.HTTPRequest.URL.Query().Get("code")
-	confirmationCode := r.HTTPRequest.URL.Query().Get("confirmationCode")
+	var form PasswordlessForm
+	if err := web.Bind(r.HTTPRequest, &form); err != nil {
+		return nil, err
+	}
 
-	return c.authenticatePasswordless(ctx, r, code, confirmationCode)
+	return c.authenticatePasswordless(ctx, r, form.Code, form.ConfirmationCode)
 }
 
 // RedirectURL implements authn.RedirectClient.

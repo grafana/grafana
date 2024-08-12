@@ -156,9 +156,8 @@ export class LoginCtrl extends PureComponent<Props, State> {
       isLoggingIn: true,
     });
 
-    // TODO: make this a POST request
     getBackendSrv()
-      .get<LoginDTO>('/login/passwordless', {code: formModel.code, confirmationCode: formModel.confirmationCode})
+      .post<LoginDTO>('/login/passwordless', formModel, { showErrorAlert: false })
       .then((result) => {
         this.result = result;
         this.toGrafana();
@@ -171,19 +170,6 @@ export class LoginCtrl extends PureComponent<Props, State> {
           loginErrorMessage: fetchErrorMessage || t('login.error.unknown', 'Unknown error occurred'),
         });
       });
-
-    // getBackendSrv()
-    //   .post<LoginDTO>('/login/passwordless', formModel, { showErrorAlert: false })
-    //   .then(() => {
-    //     return;
-    //   })
-    //   .catch((err) => {
-    //     const fetchErrorMessage = isFetchError(err) ? getErrorMessage(err) : undefined;
-    //     this.setState({
-    //       isLoggingIn: false,
-    //       loginErrorMessage: fetchErrorMessage || t('login.error.unknown', 'Unknown error occurred'),
-    //     });
-    //   });
   }
 
   changeView = (showDefaultPasswordWarning: boolean) => {

@@ -6,7 +6,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Input, Field, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { PasswordlessConfirmationFormModel } from './LoginCtrl';
 
@@ -31,10 +30,13 @@ export const PasswordlessConfirmation = ({ onSubmit, isLoggingIn }: Props) => {
     const queryValues = Object.fromEntries(
       new URLSearchParams(window.location.search.split(/\?/)[1])
     );
-    const code = queryValues.code;
 
-    setValue('code', code);
-  }, [setValue]);
+    setValue('code', queryValues.code);
+    if (queryValues.confirmationCode) {
+      setValue('confirmationCode', queryValues.confirmationCode);
+      handleSubmit(onSubmit)();
+    }
+  }, [setValue, handleSubmit, onSubmit]);
 
   return (
     <div className={styles.wrapper}>

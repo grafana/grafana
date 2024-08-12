@@ -69,7 +69,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/logout", hs.Logout)
 	r.Post("/login", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.LoginPost))
 	r.Post("/login/start", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), hs.StartPasswordless)
-	r.Get("/login/passwordless", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.LoginPasswordless))
+	r.Post("/login/passwordless", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.LoginPasswordless))
 	r.Get("/login/:name", quota(string(auth.QuotaTargetSrv)), hs.OAuthLogin)
 
 	r.Get("/login", hs.LoginView)
