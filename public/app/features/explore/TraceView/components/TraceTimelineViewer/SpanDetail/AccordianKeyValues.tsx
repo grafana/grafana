@@ -152,6 +152,8 @@ export default function AccordianKeyValues({
     };
   }
 
+  const showDataSummaryFields = data.length > 0 && !isOpen;
+
   return (
     <div className={cx(className, styles.container)}>
       <div
@@ -165,9 +167,9 @@ export default function AccordianKeyValues({
         {arrow}
         <strong data-test={markers.LABEL}>
           {label}
-          {isOpen || ':'}
+          {showDataSummaryFields && ':'}
         </strong>
-        {!isOpen && <KeyValuesSummary data={data} />}
+        {showDataSummaryFields && <KeyValuesSummary data={data} />}
       </div>
       {isOpen && <KeyValuesTable data={data} linksGetter={linksGetter} />}
     </div>
