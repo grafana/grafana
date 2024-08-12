@@ -14,10 +14,10 @@ export function PluginDetailsRightPanel(props: Props): React.ReactElement | null
   const { info, plugin } = props;
 
   return (
-    <Stack direction="column" gap={2} grow={0} shrink={0}>
+    <Stack direction="column" gap={1} grow={0} shrink={0} maxWidth={'250px'}>
       {info.map((infoItem, index) => {
         return (
-          <Stack key={index}>
+          <Stack key={index} wrap>
             <Text color="secondary">{infoItem.label + ':'}</Text>
             <div>{infoItem.value}</div>
           </Stack>
@@ -45,9 +45,11 @@ export function PluginDetailsRightPanel(props: Props): React.ReactElement | null
         </Stack>
       )}
 
-      <TextLink href="mailto:integrations@grafana.com" external>
-        <Trans i18nKey="plugins.details.labels.reportAbuse">Report Abuse</Trans>
-      </TextLink>
+      {!plugin?.isCore && (
+        <TextLink href="mailto:integrations@grafana.com" external>
+          <Trans i18nKey="plugins.details.labels.reportAbuse">Report Abuse</Trans>
+        </TextLink>
+      )}
     </Stack>
   );
 }
