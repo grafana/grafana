@@ -8,6 +8,7 @@ import {
   PluginExtensionTypes,
   PluginExtensionComponentConfig,
   PluginExportedComponent,
+  PluginExtensionConfig,
 } from './pluginExtensions';
 
 /**
@@ -56,9 +57,8 @@ export interface AppPluginMeta<T extends KeyValue = KeyValue> extends PluginMeta
 }
 
 export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
-  private _addedLinks: PluginExtensionLinkConfig[] = [];
-  private _addedComponents: PluginExtensionComponentConfig[] = [];
   private _exportedComponents: PluginExportedComponent[] = [];
+  private _extensionConfigs: PluginExtensionConfig[] = [];
 
   // Content under: /a/${plugin-id}/*
   root?: ComponentType<AppRootProps<T>>;
@@ -99,32 +99,51 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
       }
     }
   }
-  get addedLinks() {
-    return this._addedLinks;
-  }
-
-  get addedComponents() {
-    return this._addedComponents;
-  }
 
   get exportedComponents() {
     return this._exportedComponents;
   }
 
-  addLink<Context extends object>(extension: Omit<PluginExtensionLinkConfig<Context>, 'type'>) {
-    this._addedLinks.push({
-      ...extension,
-      type: PluginExtensionTypes.link,
-    } as PluginExtensionLinkConfig);
+  get extensionConfigs() {
+    return this._extensionConfigs;
+  }
+
+  addLink<Context extends object>(
+    extensionConfig: { targets: string | string[] } & Omit<
+      PluginExtensionLinkConfig<Context>,
+      'type' | 'extensionPointId'
+    >
+  ) {
+    const { targets, ...extension } = extensionConfig;
+    const targetsArray = Array.isArray(targets) ? targets : [targets];
+
+    targetsArray.forEach((target) => {
+      this._extensionConfigs.push({
+        ...extension,
+        extensionPointId: target,
+        type: PluginExtensionTypes.link,
+      } as PluginExtensionLinkConfig);
+    });
 
     return this;
   }
 
-  addComponent<Props = {}>(extension: Omit<PluginExtensionComponentConfig<Props>, 'type'>) {
-    this._addedComponents.push({
-      ...extension,
-      type: PluginExtensionTypes.component,
-    } as PluginExtensionComponentConfig);
+  addComponent<Props = {}>(
+    extensionConfig: { targets: string | string[] } & Omit<
+      PluginExtensionComponentConfig<Props>,
+      'type' | 'extensionPointId'
+    >
+  ) {
+    const { targets, ...extension } = extensionConfig;
+    const targetsArray = Array.isArray(targets) ? targets : [targets];
+
+    targetsArray.forEach((target) => {
+      this._extensionConfigs.push({
+        ...extension,
+        extensionPointId: target,
+        type: PluginExtensionTypes.component,
+      } as PluginExtensionComponentConfig);
+    });
 
     return this;
   }
@@ -135,21 +154,21 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this;
   }
 
-  /** @deprecated Use .addedLinks, .addedComponents or .exportedComponents instead */
-  get extensionConfigs() {
-    return [...this._addedLinks, ...this._addedComponents];
-  }
-
   /** @deprecated Use .addLink() instead */
   configureExtensionLink<Context extends object>(extension: Omit<PluginExtensionLinkConfig<Context>, 'type'>) {
-    this.addLink(extension);
+    this.addLink({
+      targets: [extension.extensionPointId],
+      ...extension,
+    });
 
     return this;
   }
-
   /** @deprecated Use .addComponent() instead */
   configureExtensionComponent<Props = {}>(extension: Omit<PluginExtensionComponentConfig<Props>, 'type'>) {
-    this.addComponent(extension);
+    this.addComponent({
+      targets: [extension.extensionPointId],
+      ...extension,
+    });
 
     return this;
   }
