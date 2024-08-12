@@ -8,41 +8,42 @@ import (
 )
 
 const (
-	TypeUser string = "user"
-	TypeTeam string = "team"
+	TypeUser      string = "user"
+	TypeTeam      string = "team"
+	TypeFolder    string = "folder"
+	TypeDashboard string = "dashboard"
 )
 
 const (
 	RelationTeamMember string = "member"
 	RelationTeamAdmin  string = "admin"
+	RelationParent     string = "parent"
 )
 
-func NewObject(typ, id string) string {
-	return fmt.Sprintf("%s:%s", typ, id)
+// NewTupleEntry constructs new openfga entry type:id[#relation].
+// Relation allows to specify group of users (subjects) related to type:id
+// (for example, team:devs#member refers to users which are members of team devs)
+func NewTupleEntry(objectType, id, relation string) string {
+	obj := fmt.Sprintf("%s:%s", objectType, id)
+	if relation != "" {
+		obj = fmt.Sprintf("%s#%s", obj, relation)
+	}
+	return obj
 }
 
-func NewScopedObject(typ, id, scope string) string {
-	return NewObject(typ, fmt.Sprintf("%s-%s", scope, id))
+// NewScopedTupleEntry constructs new openfga entry type:id[#relation]
+// with id prefixed by scope (usually org id)
+func NewScopedTupleEntry(objectType, id, relation, scope string) string {
+	return NewTupleEntry(objectType, fmt.Sprintf("%s-%s", scope, id), "")
 }
-
-// rbac action to relation translation
-var actionTranslations = map[string]string{}
-
-type kindTranslation struct {
-	typ       string
-	orgScoped bool
-}
-
-// all kinds that we can translate into a openFGA object
-var kindTranslations = map[string]kindTranslation{}
 
 func TranslateToTuple(user string, action, kind, identifier string, orgID int64) (*openfgav1.TupleKey, bool) {
-	relation, ok := actionTranslations[action]
+	typeTranslation, ok := actionKindTranslations[kind]
 	if !ok {
 		return nil, false
 	}
 
-	t, ok := kindTranslations[kind]
+	relation, ok := typeTranslation.translations[action]
 	if !ok {
 		return nil, false
 	}
@@ -55,10 +56,10 @@ func TranslateToTuple(user string, action, kind, identifier string, orgID int64)
 	tuple.Relation = relation
 
 	// Some uid:s in grafana are not guarantee to be unique across orgs so we need to scope them.
-	if t.orgScoped {
-		tuple.Object = NewScopedObject(t.typ, identifier, strconv.FormatInt(orgID, 10))
+	if typeTranslation.orgScoped {
+		tuple.Object = NewScopedTupleEntry(typeTranslation.objectType, identifier, "", strconv.FormatInt(orgID, 10))
 	} else {
-		tuple.Object = NewObject(t.typ, identifier)
+		tuple.Object = NewTupleEntry(typeTranslation.objectType, identifier, "")
 	}
 
 	return tuple, true
