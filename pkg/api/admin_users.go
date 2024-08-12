@@ -8,6 +8,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -366,7 +367,7 @@ func (hs *HTTPServer) AdminLogoutUser(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	if c.SignedInUser.GetID() == identity.NewTypedID(identity.TypeUser, userID) {
+	if c.SignedInUser.GetID() == identity.NewTypedID(claims.TypeUser, userID) {
 		return response.Error(http.StatusBadRequest, "You cannot logout yourself", nil)
 	}
 

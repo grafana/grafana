@@ -117,11 +117,13 @@ export class GrafanaBootConfig implements GrafanaConfig {
     errorInstrumentalizationEnabled: true,
     consoleInstrumentalizationEnabled: false,
     webVitalsInstrumentalizationEnabled: false,
+    tracingInstrumentalizationEnabled: false,
   };
   pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
   pluginAdminEnabled = true;
   pluginAdminExternalManageEnabled = false;
   pluginCatalogHiddenPlugins: string[] = [];
+  pluginCatalogManagedPlugins: string[] = [];
   pluginsCDNBaseURL = '';
   expressionsEnabled = false;
   customTheme?: undefined;
@@ -180,6 +182,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   localFileSystemAvailable: boolean | undefined;
   cloudMigrationIsTarget: boolean | undefined;
   cloudMigrationFeedbackURL = '';
+  cloudMigrationPollIntervalMs = 2000;
   reportingStaticContext?: Record<string, string>;
   exploreDefaultTimeOffset = '1h';
 

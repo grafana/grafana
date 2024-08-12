@@ -138,7 +138,6 @@ export const Expression: FC<ExpressionProps> = ({
           queryType={queryType}
           onRemoveExpression={() => onRemoveExpression(query.refId)}
           onUpdateRefId={(newRefId) => onUpdateRefId(query.refId, newRefId)}
-          onUpdateExpressionType={(type) => onUpdateExpressionType(query.refId, type)}
           onSetCondition={onSetCondition}
           query={query}
           alertCondition={alertCondition}
@@ -286,7 +285,6 @@ interface HeaderProps {
   queryType: ExpressionQueryType;
   onUpdateRefId: (refId: string) => void;
   onRemoveExpression: () => void;
-  onUpdateExpressionType: (type: ExpressionQueryType) => void;
   onSetCondition: (refId: string) => void;
   query: ExpressionQuery;
   alertCondition: boolean;

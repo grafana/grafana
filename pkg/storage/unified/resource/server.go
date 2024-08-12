@@ -3,7 +3,6 @@ package resource
 import (
 	context "context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -16,25 +15,41 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// Package-level errors.
-var (
-	ErrNotFound                 = errors.New("resource not found")
-	ErrOptimisticLockingFailed  = errors.New("optimistic locking failed")
-	ErrUserNotFoundInContext    = errors.New("user not found in context")
-	ErrUnableToReadResourceJSON = errors.New("unable to read resource json")
-	ErrNotImplementedYet        = errors.New("not implemented yet")
-)
-
-// ResourceServer implements all services
+// ResourceServer implements all gRPC services
 type ResourceServer interface {
 	ResourceStoreServer
 	ResourceIndexServer
 	DiagnosticsServer
 	LifecycleHooks
+}
+
+type ListIterator interface {
+	Next() bool // sql.Rows
+
+	// Iterator error (if exts)
+	Error() error
+
+	// The token that can be used to start iterating *after* this item
+	ContinueToken() string
+
+	// ResourceVersion of the current item
+	ResourceVersion() int64
+
+	// Namespace of the current item
+	// Used for fast(er) authz filtering
+	Namespace() string
+
+	// Name of the current item
+	// Used for fast(er) authz filtering
+	Name() string
+
+	// Value for the current item
+	Value() []byte
 }
 
 // The StorageBackend is an internal abstraction that supports interacting with
@@ -46,15 +61,15 @@ type StorageBackend interface {
 	// Return the revisionVersion for this event or error
 	WriteEvent(context.Context, WriteEvent) (int64, error)
 
-	// Read a value from storage optionally at an explicit version
-	Read(context.Context, *ReadRequest) (*ReadResponse, error)
+	// Read a resource from storage optionally at an explicit version
+	ReadResource(context.Context, *ReadRequest) *ReadResponse
 
-	// When the ResourceServer executes a List request, it will first
+	// When the ResourceServer executes a List request, this iterator will
 	// query the backend for potential results.  All results will be
 	// checked against the kubernetes requirements before finally returning
 	// results.  The list options can be used to improve performance
 	// but are the the final answer.
-	PrepareList(context.Context, *ListRequest) (*ListResponse, error)
+	ListIterator(context.Context, *ListRequest, func(ListIterator) error) (int64, error)
 
 	// Get all events from the store
 	// For HA setups, this will be more events than the local WriteEvent above!
@@ -106,9 +121,9 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	}
 
 	// Make this cancelable
-	ctx, cancel := context.WithCancel(identity.WithRequester(context.Background(),
+	ctx, cancel := context.WithCancel(claims.WithClaims(context.Background(),
 		&identity.StaticRequester{
-			Type:           identity.TypeServiceAccount,
+			Type:           claims.TypeServiceAccount,
 			Login:          "watcher", // admin user for watch
 			UserID:         1,
 			IsGrafanaAdmin: true,
@@ -197,19 +212,15 @@ func (s *server) Stop(ctx context.Context) error {
 }
 
 // Old value indicates an update -- otherwise a create
-func (s *server) newEvent(ctx context.Context, key *ResourceKey, value, oldValue []byte) (*WriteEvent, error) {
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, ErrUserNotFoundInContext
-	}
+func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *ResourceKey, value, oldValue []byte) (*WriteEvent, *ErrorResult) {
 	tmp := &unstructured.Unstructured{}
-	err = tmp.UnmarshalJSON(value)
+	err := tmp.UnmarshalJSON(value)
 	if err != nil {
-		return nil, err
+		return nil, AsErrorResult(err)
 	}
 	obj, err := utils.MetaAccessor(tmp)
 	if err != nil {
-		return nil, err
+		return nil, AsErrorResult(err)
 	}
 
 	event := &WriteEvent{
@@ -225,27 +236,27 @@ func (s *server) newEvent(ctx context.Context, key *ResourceKey, value, oldValue
 		temp := &unstructured.Unstructured{}
 		err = temp.UnmarshalJSON(oldValue)
 		if err != nil {
-			return nil, err
+			return nil, AsErrorResult(err)
 		}
 		event.ObjectOld, err = utils.MetaAccessor(temp)
 		if err != nil {
-			return nil, err
+			return nil, AsErrorResult(err)
 		}
 	}
 
 	if key.Namespace != obj.GetNamespace() {
-		return nil, apierrors.NewBadRequest("key/namespace do not match")
+		return nil, NewBadRequestError("key/namespace do not match")
 	}
 
 	gvk := obj.GetGroupVersionKind()
 	if gvk.Kind == "" {
-		return nil, apierrors.NewBadRequest("expecting resources with a kind in the body")
+		return nil, NewBadRequestError("expecting resources with a kind in the body")
 	}
 	if gvk.Version == "" {
-		return nil, apierrors.NewBadRequest("expecting resources with an apiVersion")
+		return nil, NewBadRequestError("expecting resources with an apiVersion")
 	}
 	if gvk.Group != "" && gvk.Group != key.Group {
-		return nil, apierrors.NewBadRequest(
+		return nil, NewBadRequestError(
 			fmt.Sprintf("group in key does not match group in the body (%s != %s)", key.Group, gvk.Group),
 		)
 	}
@@ -253,15 +264,14 @@ func (s *server) newEvent(ctx context.Context, key *ResourceKey, value, oldValue
 	// This needs to be a create function
 	if key.Name == "" {
 		if obj.GetName() == "" {
-			return nil, apierrors.NewBadRequest("missing name")
+			return nil, NewBadRequestError("missing name")
 		}
 		key.Name = obj.GetName()
 	} else if key.Name != obj.GetName() {
-		return nil, apierrors.NewBadRequest(
+		return nil, NewBadRequestError(
 			fmt.Sprintf("key/name do not match (key: %s, name: %s)", key.Name, obj.GetName()))
 	}
-	err = validateName(obj.GetName())
-	if err != nil {
+	if err := validateName(obj.GetName()); err != nil {
 		return nil, err
 	}
 
@@ -269,17 +279,17 @@ func (s *server) newEvent(ctx context.Context, key *ResourceKey, value, oldValue
 	if folder != "" {
 		err = s.access.CanWriteFolder(ctx, user, folder)
 		if err != nil {
-			return nil, err
+			return nil, AsErrorResult(err)
 		}
 	}
 	origin, err := obj.GetOriginInfo()
 	if err != nil {
-		return nil, apierrors.NewBadRequest("invalid origin info")
+		return nil, NewBadRequestError("invalid origin info")
 	}
 	if origin != nil {
 		err = s.access.CanWriteOrigin(ctx, user, origin.Name)
 		if err != nil {
-			return nil, err
+			return nil, AsErrorResult(err)
 		}
 	}
 	return event, nil
@@ -294,7 +304,16 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	}
 
 	rsp := &CreateResponse{}
-	found, _ := s.backend.Read(ctx, &ReadRequest{Key: req.Key})
+	user, ok := claims.From(ctx)
+	if !ok || user == nil {
+		rsp.Error = &ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}
+		return rsp, nil
+	}
+
+	found := s.backend.ReadResource(ctx, &ReadRequest{Key: req.Key})
 	if found != nil && len(found.Value) > 0 {
 		rsp.Error = &ErrorResult{
 			Code:    http.StatusConflict,
@@ -303,56 +322,18 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 		return rsp, nil
 	}
 
-	event, err := s.newEvent(ctx, req.Key, req.Value, nil)
-	if err != nil {
-		rsp.Error, err = errToStatus(err)
-		return rsp, err
+	event, e := s.newEvent(ctx, user, req.Key, req.Value, nil)
+	if e != nil {
+		rsp.Error = e
+		return rsp, nil
 	}
 
+	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
-		rsp.Error, err = errToStatus(err)
+		rsp.Error = AsErrorResult(err)
 	}
-	return rsp, err
-}
-
-// Convert golang errors to status result errors that can be returned to a client
-func errToStatus(err error) (*ErrorResult, error) {
-	if err != nil {
-		apistatus, ok := err.(apierrors.APIStatus)
-		if ok {
-			s := apistatus.Status()
-			res := &ErrorResult{
-				Message: s.Message,
-				Reason:  string(s.Reason),
-				Code:    s.Code,
-			}
-			if s.Details != nil {
-				res.Details = &ErrorDetails{
-					Group:             s.Details.Group,
-					Kind:              s.Details.Kind,
-					Name:              s.Details.Name,
-					Uid:               string(s.Details.UID),
-					RetryAfterSeconds: s.Details.RetryAfterSeconds,
-				}
-				for _, c := range s.Details.Causes {
-					res.Details.Causes = append(res.Details.Causes, &ErrorCause{
-						Reason:  string(c.Type),
-						Message: c.Message,
-						Field:   c.Field,
-					})
-				}
-			}
-			return res, nil
-		}
-
-		// TODO... better conversion??
-		return &ErrorResult{
-			Message: err.Error(),
-			Code:    500,
-		}, nil
-	}
-	return nil, err
+	return rsp, nil
 }
 
 func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateResponse, error) {
@@ -364,40 +345,49 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 	}
 
 	rsp := &UpdateResponse{}
+	user, ok := claims.From(ctx)
+	if !ok || user == nil {
+		rsp.Error = &ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}
+		return rsp, nil
+	}
 	if req.ResourceVersion < 0 {
-		rsp.Error, _ = errToStatus(apierrors.NewBadRequest("update must include the previous version"))
+		rsp.Error = AsErrorResult(apierrors.NewBadRequest("update must include the previous version"))
 		return rsp, nil
 	}
 
-	latest, err := s.backend.Read(ctx, &ReadRequest{
+	latest := s.backend.ReadResource(ctx, &ReadRequest{
 		Key: req.Key,
 	})
-	if err != nil {
-		return nil, err
+	if latest.Error != nil {
+		return rsp, nil
 	}
 	if latest.Value == nil {
-		return nil, apierrors.NewBadRequest("current value does not exist")
+		rsp.Error = NewBadRequestError("current value does not exist")
+		return rsp, nil
 	}
 
 	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
 		return nil, ErrOptimisticLockingFailed
 	}
 
-	event, err := s.newEvent(ctx, req.Key, req.Value, latest.Value)
-	if err != nil {
-		rsp.Error, err = errToStatus(err)
-		return rsp, err
+	event, e := s.newEvent(ctx, user, req.Key, req.Value, latest.Value)
+	if e != nil {
+		rsp.Error = e
+		return rsp, nil
 	}
 
 	event.Type = WatchEvent_MODIFIED
 	event.PreviousRV = latest.ResourceVersion
 
+	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
-	rsp.Error, err = errToStatus(err)
 	if err != nil {
-		rsp.Error, err = errToStatus(err)
+		rsp.Error = AsErrorResult(err)
 	}
-	return rsp, err
+	return rsp, nil
 }
 
 func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteResponse, error) {
@@ -413,14 +403,16 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 		return nil, apierrors.NewBadRequest("update must include the previous version")
 	}
 
-	latest, err := s.backend.Read(ctx, &ReadRequest{
+	latest := s.backend.ReadResource(ctx, &ReadRequest{
 		Key: req.Key,
 	})
-	if err != nil {
-		return nil, err
+	if latest.Error != nil {
+		rsp.Error = latest.Error
+		return rsp, nil
 	}
 	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
-		return nil, ErrOptimisticLockingFailed
+		rsp.Error = AsErrorResult(ErrOptimisticLockingFailed)
+		return rsp, nil
 	}
 
 	now := metav1.NewTime(time.UnixMilli(s.now()))
@@ -429,12 +421,12 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 		Type:       WatchEvent_DELETED,
 		PreviousRV: latest.ResourceVersion,
 	}
-	requester, err := identity.GetRequester(ctx)
-	if err != nil {
+	requester, ok := claims.From(ctx)
+	if !ok {
 		return nil, apierrors.NewBadRequest("unable to get user")
 	}
 	marker := &DeletedMarker{}
-	err = json.Unmarshal(latest.Value, marker)
+	err := json.Unmarshal(latest.Value, marker)
 	if err != nil {
 		return nil, apierrors.NewBadRequest(
 			fmt.Sprintf("unable to read previous object, %v", err))
@@ -447,7 +439,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	obj.SetUpdatedTimestamp(&now.Time)
 	obj.SetManagedFields(nil)
 	obj.SetFinalizers(nil)
-	obj.SetUpdatedBy(requester.GetUID().String())
+	obj.SetUpdatedBy(requester.GetUID())
 	marker.TypeMeta = metav1.TypeMeta{
 		Kind:       "DeletedMarker",
 		APIVersion: "common.grafana.app/v0alpha1", // ?? or can we stick this in common?
@@ -460,8 +452,10 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	}
 
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
-	rsp.Error, err = errToStatus(err)
-	return rsp, err
+	if err != nil {
+		rsp.Error = AsErrorResult(err)
+	}
+	return rsp, nil
 }
 
 func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
@@ -470,31 +464,66 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 	}
 
 	// if req.Key.Group == "" {
-	// 	status, _ := errToStatus(apierrors.NewBadRequest("missing group"))
+	// 	status, _ := AsErrorResult(apierrors.NewBadRequest("missing group"))
 	// 	return &ReadResponse{Status: status}, nil
 	// }
 	if req.Key.Resource == "" {
-		status, _ := errToStatus(apierrors.NewBadRequest("missing resource"))
-		return &ReadResponse{Error: status}, nil
+		return &ReadResponse{Error: NewBadRequestError("missing resource")}, nil
 	}
 
-	rsp, err := s.backend.Read(ctx, req)
-	if err != nil {
-		if rsp == nil {
-			rsp = &ReadResponse{}
-		}
-		rsp.Error, err = errToStatus(err)
-	}
-	return rsp, err
+	rsp := s.backend.ReadResource(ctx, req)
+	// TODO, check folder permissions etc
+	return rsp, nil
 }
 
 func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, error) {
 	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
+	if req.Limit < 1 {
+		req.Limit = 50 // default max 50 items in a page
+	}
+	maxPageBytes := 1024 * 1024 * 2 // 2mb/page
+	pageBytes := 0
+	rsp := &ListResponse{}
+	rv, err := s.backend.ListIterator(ctx, req, func(iter ListIterator) error {
+		for iter.Next() {
+			if err := iter.Error(); err != nil {
+				return err
+			}
 
-	rsp, err := s.backend.PrepareList(ctx, req)
-	// Status???
+			// TODO: add authz filters
+
+			item := &ResourceWrapper{
+				ResourceVersion: iter.ResourceVersion(),
+				Value:           iter.Value(),
+			}
+
+			pageBytes += len(item.Value)
+			rsp.Items = append(rsp.Items, item)
+			if len(rsp.Items) >= int(req.Limit) || pageBytes >= maxPageBytes {
+				t := iter.ContinueToken()
+				if iter.Next() {
+					rsp.NextPageToken = t
+				}
+				break
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		rsp.Error = AsErrorResult(err)
+		return rsp, nil
+	}
+
+	if rv < 1 {
+		rsp.Error = &ErrorResult{
+			Code:    http.StatusInternalServerError,
+			Message: fmt.Sprintf("invalid resource version for list: %v", rv),
+		}
+		return rsp, nil
+	}
+	rsp.ResourceVersion = rv
 	return rsp, err
 }
 
@@ -559,7 +588,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 				// }
 				// TODO: return values that match either the old or the new
 
-				srv.Send(&WatchEvent{
+				if err := srv.Send(&WatchEvent{
 					Timestamp: event.Timestamp,
 					Type:      event.Type,
 					Resource: &WatchEvent_Resource{
@@ -567,7 +596,9 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 						Version: event.ResourceVersion,
 					},
 					// TODO... previous???
-				})
+				}); err != nil {
+					return err
+				}
 			}
 		}
 	}

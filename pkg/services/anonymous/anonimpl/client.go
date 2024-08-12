@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -69,8 +70,8 @@ func (a *Anonymous) Test(ctx context.Context, r *authn.Request) bool {
 	return true
 }
 
-func (a *Anonymous) IdentityType() identity.IdentityType {
-	return identity.TypeAnonymous
+func (a *Anonymous) IdentityType() claims.IdentityType {
+	return claims.TypeAnonymous
 }
 
 func (a *Anonymous) ResolveIdentity(ctx context.Context, orgID int64, namespaceID identity.TypedID) (*authn.Identity, error) {

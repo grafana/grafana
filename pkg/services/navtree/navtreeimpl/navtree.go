@@ -297,7 +297,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*navtree.NavLink, error) {
 	starredItemsChildNavs := []*navtree.NavLink{}
 
-	userID, _ := identity.UserIdentifier(c.SignedInUser.GetTypedID())
+	userID, _ := identity.UserIdentifier(c.SignedInUser.GetID())
 	query := star.GetUserStarsQuery{
 		UserID: userID,
 	}
@@ -338,11 +338,11 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*
 func (s *ServiceImpl) buildBookmarksNavLinks(prefs *pref.Preference, treeRoot *navtree.NavTreeRoot) []*navtree.NavLink {
 	bookmarksChildNavs := []*navtree.NavLink{}
 
-	bookmarkIds := prefs.JSONData.Navbar.BookmarkIds
+	bookmarkUrls := prefs.JSONData.Navbar.BookmarkUrls
 
-	if len(bookmarkIds) > 0 {
-		for _, id := range bookmarkIds {
-			item := treeRoot.FindById(id)
+	if len(bookmarkUrls) > 0 {
+		for _, url := range bookmarkUrls {
+			item := treeRoot.FindByURL(url)
 			if item != nil {
 				bookmarksChildNavs = append(bookmarksChildNavs, &navtree.NavLink{
 					Id:             item.Id,

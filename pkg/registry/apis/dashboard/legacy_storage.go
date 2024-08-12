@@ -38,7 +38,7 @@ func (s *dashboardStorage) newStore(scheme *runtime.Scheme, defaultOptsGetter ge
 	s.server = server
 
 	resourceInfo := s.resource
-	defaultOpts, err := defaultOptsGetter.GetRESTOptions(resourceInfo.GroupResource())
+	defaultOpts, err := defaultOptsGetter.GetRESTOptions(resourceInfo.GroupResource(), nil)
 	if err != nil {
 		return nil, err
 	}

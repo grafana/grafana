@@ -98,6 +98,9 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 		OrgID:          orgID,
 		OrgRole:        org.RoleAdmin,
 		IsGrafanaAdmin: true,
+		Permissions: map[int64]map[string][]string{
+			orgID: {dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll}},
+		},
 	}
 
 	ctx = identity.WithRequester(ctx, user)
