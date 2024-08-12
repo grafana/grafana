@@ -233,7 +233,7 @@ func SetDualWritingMode(
 	}
 
 	if (desiredMode == Mode3) && (currentMode == Mode2) {
-		// This is where we go through the different gates to allow the instance to migrate from mode 1 to mode 3.
+		// This is where we go through the different gates to allow the instance to migrate from mode 2 to mode 3.
 
 		// gate #1: ensure the data is 100% in sync
 		syncOk, err := runDataSyncer(ctx, currentMode, legacy, storage, entity, reg, serverLockService, requestInfo)
