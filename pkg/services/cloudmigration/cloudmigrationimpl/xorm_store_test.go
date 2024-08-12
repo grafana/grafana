@@ -13,7 +13,6 @@ import (
 	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -172,12 +171,12 @@ func Test_SnapshotManagement(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("tests the snapshot lifecycle", func(t *testing.T) {
-		var snapshotUid string
-		sessionUid := util.GenerateShortUID()
+		session, err := s.CreateMigrationSession(ctx, cloudmigration.CloudMigrationSession{})
+		require.NoError(t, err)
 
 		// create a snapshot
 		cmr := cloudmigration.CloudMigrationSnapshot{
-			SessionUID: sessionUid,
+			SessionUID: session.UID,
 			Status:     cloudmigration.SnapshotStatusCreating,
 		}
 
@@ -186,21 +185,21 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.NotEmpty(t, snapshotUid)
 
 		//retrieve it from the db
-		snapshot, err := s.GetSnapshotByUID(ctx, sessionUid, snapshotUid, 0, 0)
+		snapshot, err := s.GetSnapshotByUID(ctx, session.UID, snapshotUid, 0, 0)
 		require.NoError(t, err)
 		require.Equal(t, cloudmigration.SnapshotStatusCreating, snapshot.Status)
 
 		// update its status
-		err = s.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{UID: snapshotUid, Status: cloudmigration.SnapshotStatusCreating, SessionID: sessionUid})
+		err = s.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{UID: snapshotUid, Status: cloudmigration.SnapshotStatusCreating, SessionID: session.UID})
 		require.NoError(t, err)
 
 		//retrieve it again
-		snapshot, err = s.GetSnapshotByUID(ctx, sessionUid, snapshotUid, 0, 0)
+		snapshot, err = s.GetSnapshotByUID(ctx, session.UID, snapshotUid, 0, 0)
 		require.NoError(t, err)
 		require.Equal(t, cloudmigration.SnapshotStatusCreating, snapshot.Status)
 
 		// lists snapshots and ensures it's in there
-		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUid, Page: 1, Limit: 100})
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: session.UID, Page: 1, Limit: 100})
 		require.NoError(t, err)
 		require.Len(t, snapshots, 1)
 		require.Equal(t, *snapshot, snapshots[0])
@@ -210,7 +209,7 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.NoError(t, err)
 
 		// now we expect not to find the snapshot
-		snapshot, err = s.GetSnapshotByUID(ctx, sessionUid, snapshotUid, 0, 0)
+		snapshot, err = s.GetSnapshotByUID(ctx, session.UID, snapshotUid, 0, 0)
 		require.ErrorIs(t, err, cloudmigration.ErrSnapshotNotFound)
 		require.Nil(t, snapshot)
 	})
