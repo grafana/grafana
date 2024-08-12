@@ -743,9 +743,8 @@ const TimeIntervals: FC<{ timings: string[]; alertManagerSourceName: string }> =
   return (
     <div>
       {timings.map((timing, index) => (
-        <>
+        <Fragment key={timing}>
           <TextLink
-            key={timing}
             href={createMuteTimingLink(timing, alertManagerSourceName)}
             color="primary"
             variant="bodySmall"
@@ -754,7 +753,7 @@ const TimeIntervals: FC<{ timings: string[]; alertManagerSourceName: string }> =
             {timing}
           </TextLink>
           {index < timings.length - 1 && ', '}
-        </>
+        </Fragment>
       ))}
     </div>
   );
