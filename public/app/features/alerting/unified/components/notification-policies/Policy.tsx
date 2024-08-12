@@ -384,7 +384,7 @@ const Policy = (props: PolicyComponentProps) => {
                   onClick={() => setVisibleChildPolicies(visibleChildPolicies + POLICIES_PER_PAGE)}
                 >
                   <Trans i18nKey="alerting.policies.n-more-policies" count={moreCount}>
-                    {{ count: moreCount }} additional policy
+                    {{ count: moreCount }} additional policies
                   </Trans>
                 </Button>
               )}
