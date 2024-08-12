@@ -39,6 +39,7 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	cfg.DisablePlugins = util.SplitString(pluginsSection.Key("disable_plugins").MustString(""))
 	cfg.HideAngularDeprecation = util.SplitString(pluginsSection.Key("hide_angular_deprecation").MustString(""))
 	cfg.ForwardHostEnvVars = util.SplitString(pluginsSection.Key("forward_host_env_vars").MustString(""))
+	cfg.InstallPlugins = util.SplitString(pluginsSection.Key("install").MustString(""))
 
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
 	cfg.PluginAdminEnabled = pluginsSection.Key("plugin_admin_enabled").MustBool(true)
