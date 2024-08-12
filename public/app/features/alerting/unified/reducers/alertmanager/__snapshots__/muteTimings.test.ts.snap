@@ -91,15 +91,18 @@ exports[`mute timings should be able to remove a mute timing 1`] = `
   "alertmanager_config": {
     "mute_time_intervals": [],
     "route": {
+      "active_time_intervals": [],
       "mute_time_intervals": [],
       "routes": [
         {
+          "active_time_intervals": [],
           "mute_time_intervals": [
             "default time interval",
           ],
           "routes": undefined,
         },
         {
+          "active_time_intervals": [],
           "mute_time_intervals": [],
           "routes": undefined,
         },
@@ -158,13 +161,16 @@ exports[`mute timings should be able to remove a mute timing 2`] = `
       },
     ],
     "route": {
+      "active_time_intervals": [],
       "mute_time_intervals": [],
       "routes": [
         {
+          "active_time_intervals": [],
           "mute_time_intervals": [],
           "routes": undefined,
         },
         {
+          "active_time_intervals": [],
           "mute_time_intervals": [
             "default legacy time interval",
           ],
@@ -204,15 +210,18 @@ exports[`mute timings should be able to update a time interval 1`] = `
       },
     ],
     "route": {
+      "active_time_intervals": undefined,
       "mute_time_intervals": undefined,
       "routes": [
         {
+          "active_time_intervals": undefined,
           "mute_time_intervals": [
             "default time interval",
           ],
           "routes": undefined,
         },
         {
+          "active_time_intervals": undefined,
           "mute_time_intervals": [
             "new mute time interval",
           ],
@@ -273,15 +282,18 @@ exports[`mute timings should be able to update a time interval 2`] = `
       },
     ],
     "route": {
+      "active_time_intervals": undefined,
       "mute_time_intervals": undefined,
       "routes": [
         {
+          "active_time_intervals": undefined,
           "mute_time_intervals": [
             "new mute time interval",
           ],
           "routes": undefined,
         },
         {
+          "active_time_intervals": undefined,
           "mute_time_intervals": [
             "default legacy time interval",
           ],
