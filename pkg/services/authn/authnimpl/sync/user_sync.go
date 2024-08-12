@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -118,7 +119,7 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, id *authn.Identity, 
 		return nil
 	}
 
-	if !id.ID.IsType(identity.TypeUser, identity.TypeServiceAccount) {
+	if !id.ID.IsType(claims.TypeUser, claims.TypeServiceAccount) {
 		return nil
 	}
 
@@ -159,7 +160,7 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, id *authn.Identity, r *
 		return nil
 	}
 
-	if !id.ID.IsType(identity.TypeUser, identity.TypeServiceAccount) {
+	if !id.ID.IsType(claims.TypeUser, claims.TypeServiceAccount) {
 		return nil
 	}
 
@@ -195,7 +196,7 @@ func (s *UserSync) EnableUserHook(ctx context.Context, id *authn.Identity, _ *au
 		return nil
 	}
 
-	if !id.ID.IsType(identity.TypeUser) {
+	if !id.ID.IsType(claims.TypeUser) {
 		return nil
 	}
 
@@ -418,8 +419,8 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 // syncUserToIdentity syncs a user to an identity.
 // This is used to update the identity with the latest user information.
 func syncUserToIdentity(usr *user.User, id *authn.Identity) {
-	id.ID = identity.NewTypedID(identity.TypeUser, usr.ID)
-	id.UID = identity.NewTypedIDString(identity.TypeUser, usr.UID)
+	id.ID = identity.NewTypedID(claims.TypeUser, usr.ID)
+	id.UID = identity.NewTypedIDString(claims.TypeUser, usr.UID)
 	id.Login = usr.Login
 	id.Email = usr.Email
 	id.Name = usr.Name
@@ -429,11 +430,11 @@ func syncUserToIdentity(usr *user.User, id *authn.Identity) {
 
 // syncSignedInUserToIdentity syncs a user to an identity.
 func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
-	var ns identity.IdentityType
-	if id.ID.IsType(identity.TypeServiceAccount) {
-		ns = identity.TypeServiceAccount
+	var ns claims.IdentityType
+	if id.ID.IsType(claims.TypeServiceAccount) {
+		ns = claims.TypeServiceAccount
 	} else {
-		ns = identity.TypeUser
+		ns = claims.TypeUser
 	}
 	id.UID = identity.NewTypedIDString(ns, usr.UserUID)
 

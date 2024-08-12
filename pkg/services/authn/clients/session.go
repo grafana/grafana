@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -58,7 +59,7 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	}
 
 	ident := &authn.Identity{
-		ID:           identity.NewTypedID(identity.TypeUser, token.UserId),
+		ID:           identity.NewTypedID(claims.TypeUser, token.UserId),
 		SessionToken: token,
 		ClientParams: authn.ClientParams{
 			FetchSyncedUser: true,

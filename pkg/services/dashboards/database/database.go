@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -879,7 +879,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	// only list k6 folders when requested by a service account - prevents showing k6 folders in the UI for users
-	if query.SignedInUser == nil || query.SignedInUser.GetID().Type() != identity.TypeServiceAccount {
+	if query.SignedInUser == nil || query.SignedInUser.GetID().Type() != claims.TypeServiceAccount {
 		filters = append(filters, searchstore.K6FolderFilter{})
 	}
 

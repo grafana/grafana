@@ -14,7 +14,7 @@ var _ Requester = &StaticRequester{}
 // This is mostly copied from:
 // https://github.com/grafana/grafana/blob/v11.0.0/pkg/services/user/identity.go#L16
 type StaticRequester struct {
-	Type                       IdentityType
+	Type                       claims.IdentityType
 	UserID                     int64
 	UserUID                    string
 	OrgID                      int64
@@ -65,7 +65,7 @@ func (u *StaticRequester) GetInternalID() (int64, error) {
 }
 
 // GetIdentityType implements Requester.
-func (u *StaticRequester) GetIdentityType() IdentityType {
+func (u *StaticRequester) GetIdentityType() claims.IdentityType {
 	return u.Type
 }
 
