@@ -15,7 +15,7 @@ export function createUsePluginComponent(registry: ExportedComponentRegistry) {
     const registry = useObservable(observableRegistry);
 
     return useMemo(() => {
-      if (!registry) {
+      if (!registry || !registry[id]) {
         return {
           isLoading: false,
           component: null,
