@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/claims"
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -74,6 +75,19 @@ type Identity struct {
 	IDTokenClaims *authn.Claims[authn.IDTokenClaims]
 }
 
+// Access implements claims.AuthInfo.
+func (i *Identity) GetAccess() claims.AccessClaims {
+	return &identity.IDClaimsWrapper{Source: i}
+}
+
+// Identity implements claims.AuthInfo.
+func (i *Identity) GetIdentity() claims.IdentityClaims {
+	if i.IDTokenClaims != nil {
+		return authn.NewIdentityClaims(*i.IDTokenClaims)
+	}
+	return &identity.IDClaimsWrapper{Source: i}
+}
+
 // GetRawIdentifier implements Requester.
 func (i *Identity) GetRawIdentifier() string {
 	return i.UID.ID()
@@ -85,7 +99,7 @@ func (i *Identity) GetInternalID() (int64, error) {
 }
 
 // GetIdentityType implements Requester.
-func (i *Identity) GetIdentityType() identity.IdentityType {
+func (i *Identity) GetIdentityType() claims.IdentityType {
 	return i.UID.Type()
 }
 
@@ -229,9 +243,9 @@ func (i *Identity) HasRole(role org.RoleType) bool {
 
 func (i *Identity) HasUniqueId() bool {
 	typ := i.GetID().Type()
-	return typ == identity.TypeUser ||
-		typ == identity.TypeServiceAccount ||
-		typ == identity.TypeAPIKey
+	return typ == claims.TypeUser ||
+		typ == claims.TypeServiceAccount ||
+		typ == claims.TypeAPIKey
 }
 
 func (i *Identity) IsAuthenticatedBy(providers ...string) bool {
@@ -259,7 +273,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		AuthID:          i.AuthID,
 		AuthenticatedBy: i.AuthenticatedBy,
 		IsGrafanaAdmin:  i.GetIsGrafanaAdmin(),
-		IsAnonymous:     i.ID.IsType(identity.TypeAnonymous),
+		IsAnonymous:     i.ID.IsType(claims.TypeAnonymous),
 		IsDisabled:      i.IsDisabled,
 		HelpFlags1:      i.HelpFlags1,
 		LastSeenAt:      i.LastSeenAt,
@@ -269,14 +283,14 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		FallbackType:    i.ID.Type(),
 	}
 
-	if i.ID.IsType(identity.TypeAPIKey) {
+	if i.ID.IsType(claims.TypeAPIKey) {
 		id, _ := i.ID.ParseInt()
 		u.ApiKeyID = id
 	} else {
 		id, _ := i.ID.UserID()
 		u.UserID = id
 		u.UserUID = i.UID.ID()
-		u.IsServiceAccount = i.ID.IsType(identity.TypeServiceAccount)
+		u.IsServiceAccount = i.ID.IsType(claims.TypeServiceAccount)
 	}
 
 	return u

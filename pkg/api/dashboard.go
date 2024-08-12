@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -43,7 +44,7 @@ func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashI
 		return false, nil
 	}
 
-	if !identity.IsIdentityType(c.SignedInUser.GetID(), identity.TypeUser) {
+	if !identity.IsIdentityType(c.SignedInUser.GetID(), claims.TypeUser) {
 		return false, nil
 	}
 

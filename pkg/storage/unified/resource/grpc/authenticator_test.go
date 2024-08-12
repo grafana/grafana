@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -14,7 +15,7 @@ func TestBasicEncodeDecode(t *testing.T) {
 		UserID:  123,
 		UserUID: "abc",
 		Login:   "test",
-		Type:    identity.TypeUser,
+		Type:    claims.TypeUser,
 		OrgID:   456,
 		OrgName: "org",
 		OrgRole: identity.RoleAdmin,
