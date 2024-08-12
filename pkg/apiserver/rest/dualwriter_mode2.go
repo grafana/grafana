@@ -489,7 +489,7 @@ func mode2DataSyncer(ctx context.Context, legacy LegacyStorage, storage Storage,
 		for _, obj := range storageList {
 			accessor, err := utils.MetaAccessor(obj)
 			if err != nil {
-				log.Error(err, "error retrieving accessor data for object from storage")
+				log.WithValues("name", name).Error(err, "error retrieving accessor data for object from storage")
 				continue
 			}
 			name := accessor.GetName()
