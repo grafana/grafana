@@ -76,6 +76,7 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
                 variableName: libraryPanel.state._loadedPanel.model.repeat,
                 repeatDirection: libraryPanel.state._loadedPanel.model.repeatDirection,
                 maxPerRow: libraryPanel.state._loadedPanel.model.maxPerRow,
+                itemHeight: this.state.height ?? 10,
               });
               this._performRepeat();
             }

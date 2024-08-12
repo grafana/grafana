@@ -198,7 +198,7 @@ export function vizPanelToPanel(
     panel = {
       id: getPanelIdForVizPanel(vizPanel),
       title: libPanel!.state.title,
-      gridPos: gridPos ?? { x: 0, y: 0, w: 0, h: 0 },
+      gridPos: gridPos,
       libraryPanel: {
         name: libPanel!.state.name,
         uid: libPanel!.state.uid,
