@@ -144,7 +144,7 @@ require (
 	github.com/redis/go-redis/v9 v9.1.0 // @grafana/alerting-backend
 	github.com/robfig/cron/v3 v3.0.1 // @grafana/grafana-backend-group
 	github.com/russellhaering/goxmldsig v1.4.0 // @grafana/grafana-backend-group
-	github.com/scottlepp/go-duck v0.0.21 // @grafana/grafana-app-platform-squad
+	github.com/scottlepp/go-duck v0.1.0 // @grafana/grafana-app-platform-squad
 	github.com/spf13/cobra v1.8.1 // @grafana/grafana-app-platform-squad
 	github.com/spf13/pflag v1.0.5 // @grafana-app-platform-squad
 	github.com/spyzhov/ajson v0.9.0 // @grafana/grafana-app-platform-squad
@@ -231,7 +231,6 @@ require (
 	github.com/alecthomas/units v0.0.0-20231202071711-9a357b53e9c9 // indirect
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
-	github.com/apache/arrow/go/arrow v0.0.0-20211112161151-bc219186db40 // indirect
 	github.com/apache/thrift v0.20.0 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
@@ -479,6 +478,11 @@ require (
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect; indirect0.0.0-20240809095826-8eb5495c0b2a
 	github.com/x448/float16 v0.8.4 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
+)
+
+require (
+	github.com/hairyhenderson/go-which v0.2.0 // indirect
+	github.com/iancoleman/orderedmap v0.3.0 // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
