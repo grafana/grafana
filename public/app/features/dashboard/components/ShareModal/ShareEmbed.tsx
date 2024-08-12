@@ -54,7 +54,7 @@ export function ShareEmbed({ panel, dashboard, range, buildIframe = buildIframeH
 
   return (
     <>
-      <p className="share-modal-info-text">
+      <p>
         <Trans i18nKey="share-modal.embed.info">Generate HTML for embedding an iframe with this panel.</Trans>
       </p>
       <Field label={t('share-modal.embed.time-range', 'Current time range')} description={timeRangeDescription}>

@@ -185,14 +185,14 @@ function ShareSnapshotTabRenderer({ model }: SceneComponentProps<ShareSnapshotTa
       {!Boolean(snapshotResult.value) && (
         <>
           <div>
-            <p className="share-modal-info-text">
+            <p>
               <Trans i18nKey="share-modal.snapshot.info-text-1">
                 A snapshot is an instant way to share an interactive dashboard publicly. When created, we strip
                 sensitive data like queries (metric, template, and annotation) and panel links, leaving only the visible
                 metric data and series names embedded in your dashboard.
               </Trans>
             </p>
-            <p className="share-modal-info-text">
+            <p>
               <Trans i18nKey="share-modal.snapshot.info-text-2">
                 Keep in mind, your snapshot <em>can be viewed by anyone</em> that has the link and can access the URL.
                 Share wisely.
