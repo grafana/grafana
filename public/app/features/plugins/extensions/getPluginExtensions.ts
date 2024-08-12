@@ -9,10 +9,15 @@ import {
   urlUtil,
   PluginExtensionEventHelpers,
 } from '@grafana/data';
-import { config, GetPluginExtensions, LocationService, reportInteraction } from '@grafana/runtime';
-
-import appSidecarSlice from '../../../core/reducers/appSidecar';
-import { AppDispatch } from '../../../store/configureStore';
+import {
+  CloseAppInSideviewEvent,
+  config,
+  getAppEvents,
+  GetPluginExtensions,
+  LocationService,
+  OpenAppInSideviewEvent,
+  reportInteraction,
+} from '@grafana/runtime';
 
 import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
 import type { PluginExtensionRegistry } from './types';
@@ -280,7 +285,6 @@ function getLinkExtensionPathWithTracking(pluginId: string, path: string, config
 }
 
 export function getSidecarHelpers(
-  dispatch: AppDispatch,
   getSidecarAppId: () => string | undefined,
   locationService: LocationService
 ): SidecarHelpers {
@@ -289,7 +293,7 @@ export function getSidecarHelpers(
       console.warn('App sidecar feature toggle is not enabled, doing nothing');
       return;
     }
-    dispatch(appSidecarSlice.actions.closeApp({ appId }));
+    getAppEvents().publish(new CloseAppInSideviewEvent({ appId }));
   };
 
   const openApp = (appId: string) => {
@@ -297,7 +301,7 @@ export function getSidecarHelpers(
       console.warn('App sidecar feature toggle is not enabled, doing nothing');
       return;
     }
-    dispatch(appSidecarSlice.actions.openApp({ appId }));
+    getAppEvents().publish(new OpenAppInSideviewEvent({ appId }));
   };
 
   const getOpenedApps = () => {

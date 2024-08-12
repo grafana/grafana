@@ -4,7 +4,7 @@ import { useObservable } from 'react-use';
 import { PluginExtension } from '@grafana/data';
 import { GetPluginExtensionsOptions, useLocationService, UsePluginExtensionsResult } from '@grafana/runtime';
 
-import { useDispatch, useSelector } from '../../../types';
+import { useSelector } from '../../../types';
 
 import { getPluginExtensions, getSidecarHelpers } from './getPluginExtensions';
 import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
@@ -14,14 +14,13 @@ export function createUsePluginExtensions(extensionsRegistry: ReactivePluginExte
 
   return function usePluginExtensions(options: GetPluginExtensionsOptions): UsePluginExtensionsResult<PluginExtension> {
     const registry = useObservable(observableRegistry);
-    const dispatch = useDispatch();
     const locationService = useLocationService();
     const sidecarAppId = useSelector((state) => state.appSidecar.appId);
     // Memoize this so that the functions do not change everytime and the getSidecarHelpers is also used in non react
     // context so cannot use useCallback inside.
     const sidecarHelpers = useMemo(
-      () => getSidecarHelpers(dispatch, () => sidecarAppId, locationService),
-      [dispatch, locationService, sidecarAppId]
+      () => getSidecarHelpers(() => sidecarAppId, locationService),
+      [locationService, sidecarAppId]
     );
 
     const { extensions } = useMemo(() => {

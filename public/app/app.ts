@@ -40,11 +40,15 @@ import {
   setPluginComponentHook,
   setCurrentUser,
   setChromeHeaderHeightHook,
+  getAppEvents,
+  CloseAppInSideviewEvent,
+  OpenAppInSideviewEvent,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
 import { setPluginPage } from '@grafana/runtime/src/components/PluginPage';
 import config, { updateConfig } from 'app/core/config';
+import appSidecarSlice from 'app/core/reducers/appSidecar';
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -225,12 +229,20 @@ export class GrafanaApp {
         await preloadPlugins(awaitedAppPlugins, extensionsRegistry, 'frontend_awaited_plugins_preload');
       }
 
+      getAppEvents().subscribe(CloseAppInSideviewEvent, (event) => {
+        store.dispatch(appSidecarSlice.actions.closeApp(event.payload));
+      });
+
+      getAppEvents().subscribe(OpenAppInSideviewEvent, (event) => {
+        store.dispatch(appSidecarSlice.actions.openApp(event.payload));
+      });
+
       // Accessing this as a singleton will create some problems to URL handling for sidecar. Right now it's ok
       // because we use the URl just to get some pseudo app IDs for core functionality.
       setPluginExtensionGetter(
         createPluginExtensionsGetter(
           extensionsRegistry,
-          getSidecarHelpers(store.dispatch, () => store.getState().appSidecar.appId, locationService)
+          getSidecarHelpers(() => store.getState().appSidecar.appId, locationService)
         )
       );
       setPluginExtensionsHook(createUsePluginExtensions(extensionsRegistry));
