@@ -96,6 +96,8 @@ func (c *Passwordless) Name() string {
 }
 
 func (c *Passwordless) startPasswordless(ctx context.Context, email string) (string, error) {
+	// TODO: ratelimit on email as well (is there a record for this email in the last x minutes?) - return success message, but don't send email
+
 	// 1. check if is existing user with email or user invite with email
 	var existingUser *user.User
 	var tempUser []*tempuser.TempUserDTO
@@ -144,6 +146,7 @@ func (c *Passwordless) startPasswordless(ctx context.Context, email string) (str
 				"Email":            email,
 				"ConfirmationCode": confirmationCode,
 				"Code":             code,
+				// TODO: send the expiration date/time as well in the email
 			},
 		}
 
@@ -162,7 +165,7 @@ func (c *Passwordless) startPasswordless(ctx context.Context, email string) (str
 			return "", err
 		}
 
-		expire := time.Duration(20) * time.Minute
+		expire := time.Duration(20) * time.Minute // make it configurable and mention this in the email
 		cacheKey := fmt.Sprintf(passwordlessKeyPrefix, code)
 		c.cache.Set(ctx, cacheKey, valueBytes, expire)
 
