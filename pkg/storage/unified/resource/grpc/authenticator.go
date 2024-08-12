@@ -89,21 +89,21 @@ func (f *Authenticator) decodeMetadata(ctx context.Context, meta metadata.MD) (i
 		return user, nil
 	}
 
-	ns, err := identity.ParseTypedID(getter(mdUserID))
+	typ, id, err := identity.ParseTypeAndID(getter(mdUserID))
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
-	user.Type = ns.Type()
-	user.UserID, err = ns.ParseInt()
+	user.Type = typ
+	user.UserID, err = strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
 
-	ns, err = identity.ParseTypedID(getter(mdUserUID))
+	_, id, err = identity.ParseTypeAndID(getter(mdUserUID))
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
-	user.UserUID = ns.ID()
+	user.UserUID = id
 
 	user.OrgName = getter(mdOrgName)
 	user.OrgID, err = strconv.ParseInt(getter(mdOrgID), 10, 64)

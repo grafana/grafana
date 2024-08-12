@@ -110,13 +110,13 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTMisMatchedNamespaceClaims.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
 	}
 
-	accessID, err := identity.ParseTypedID(accessTokenClaims.Subject)
+	typ, id, err := identity.ParseTypeAndID(accessTokenClaims.Subject)
 	if err != nil {
-		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", accessID.String())
+		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
 	}
 
-	if !accessID.IsType(authlibclaims.TypeAccessPolicy) {
-		return nil, errExtJWTInvalid.Errorf("unexpected identity: %s", accessID.String())
+	if !authlibclaims.IsIdentityType(typ, authlibclaims.TypeAccessPolicy) {
+		return nil, errExtJWTInvalid.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
 	}
 
 	t, id, err := identity.ParseTypeAndID(idTokenClaims.Subject)
@@ -140,7 +140,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 		Type:                       t,
 		OrgID:                      s.getDefaultOrgID(),
 		AuthenticatedBy:            login.ExtendedJWTModule,
-		AuthID:                     accessID.String(),
+		AuthID:                     accessTokenClaims.Subject,
 		AllowedKubernetesNamespace: allowedKubernetesNamespace,
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,

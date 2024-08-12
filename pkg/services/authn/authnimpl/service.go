@@ -340,6 +340,10 @@ func (s *Service) ResolveIdentity(ctx context.Context, orgID int64, typedID stri
 
 	identity, err := s.resolveIdenity(ctx, orgID, typedID)
 	if err != nil {
+		if errors.Is(err, claims.ErrInvalidTypedID) {
+			return nil, authn.ErrUnsupportedIdentity.Errorf("invalid identity type")
+		}
+
 		return nil, err
 	}
 
