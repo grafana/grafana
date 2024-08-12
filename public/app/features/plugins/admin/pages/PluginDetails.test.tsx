@@ -880,4 +880,25 @@ describe('Plugin details page', () => {
       expect(queryByText('Add new data source')).toBeNull();
     });
   });
+
+  describe('Display plugin details right panel', () => {
+    beforeAll(() => {
+      mockUserPermissions({
+        isAdmin: true,
+        isDataSourceEditor: false,
+        isOrgAdmin: true,
+      });
+    });
+
+    it('should display Last updated and report abuse information', async () => {
+      config.featureToggles.pluginsDetailsRightPanel = true;
+      const id = 'right-panel-test-plugin';
+      const updatedAt = '2023-10-26T16:54:55.000Z';
+      const { queryByText } = renderPluginDetails({ id, updatedAt });
+      expect(queryByText('Last updated:')).toBeVisible();
+      expect(queryByText('10/26/2023')).toBeVisible();
+      expect(queryByText('Report Abuse')).toBeVisible();
+      config.featureToggles.pluginsDetailsRightPanel = false;
+    });
+  });
 });
