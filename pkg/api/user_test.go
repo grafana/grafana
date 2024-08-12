@@ -464,78 +464,74 @@ func TestUser_UpdateEmail(t *testing.T) {
 					},
 				}
 				for _, ttt := range tests {
-					t.Run(ttt.name, func(t *testing.T) {
-						settings := setting.NewCfg()
-						settings.Smtp.Enabled = ttt.smtpConfigured
-						settings.VerifyEmailEnabled = ttt.verifyEmailEnabled
+					settings := setting.NewCfg()
+					settings.Smtp.Enabled = ttt.smtpConfigured
+					settings.VerifyEmailEnabled = ttt.verifyEmailEnabled
 
-						usr, hs, nsMock := setupUpdateEmailTests(t, settings)
+					usr, hs, nsMock := setupUpdateEmailTests(t, settings)
 
-						updateUserCommand := user.UpdateUserCommand{
-							Email:  usr.Email,
-							Name:   "newName",
-							Login:  usr.Login,
-							UserID: usr.ID,
-						}
+					updateUserCommand := user.UpdateUserCommand{
+						Email:  usr.Email,
+						Name:   "newName",
+						Login:  usr.Login,
+						UserID: usr.ID,
+					}
+
+					switch tt.Field {
+					case user.LoginUpdateAction:
+						updateUserCommand.Login = newEmail
+					case user.EmailUpdateAction:
+						updateUserCommand.Email = newEmail
+					}
+
+					fn := func(sc *scenarioContext) {
+						// User is internal
+						sc.authInfoService.ExpectedError = user.ErrUserNotFound
+
+						sc.fakeReqWithParams("PUT", sc.url, nil).exec()
+						assert.Equal(t, http.StatusOK, sc.resp.Code)
+
+						// Verify that no email has been sent after update
+						require.False(t, nsMock.EmailVerified)
+
+						userQuery := user.GetUserByIDQuery{ID: usr.ID}
+						updatedUsr, err := hs.userService.GetByID(context.Background(), &userQuery)
+						require.NoError(t, err)
+
+						// Verify fields have been updated
+						require.NotEqual(t, usr.Name, updatedUsr.Name)
+						require.Equal(t, updateUserCommand.Name, updatedUsr.Name)
 
 						switch tt.Field {
 						case user.LoginUpdateAction:
-							updateUserCommand.Login = newEmail
+							require.Equal(t, usr.Email, updatedUsr.Email)
+							require.NotEqual(t, usr.Login, updatedUsr.Login)
+							require.Equal(t, updateUserCommand.Login, updatedUsr.Login)
 						case user.EmailUpdateAction:
-							updateUserCommand.Email = newEmail
+							require.Equal(t, usr.Login, updatedUsr.Login)
+							require.NotEqual(t, usr.Email, updatedUsr.Email)
+							require.Equal(t, updateUserCommand.Email, updatedUsr.Email)
 						}
 
-						fn := func(sc *scenarioContext) {
-							// User is internal
-							sc.authInfoService.ExpectedError = user.ErrUserNotFound
+						// Verify other fields have been kept
+						require.Equal(t, usr.Company, updatedUsr.Company)
+					}
 
-							sc.fakeReqWithParams("PUT", sc.url, nil).exec()
-							assert.Equal(t, http.StatusOK, sc.resp.Code)
+					updateUserScenario(t, updateUserContext{
+						desc:         ttt.name,
+						url:          fmt.Sprintf("/api/users/%d", usr.ID),
+						routePattern: "/api/users/:id",
+						cmd:          updateUserCommand,
+						fn:           fn,
+					}, hs)
 
-							// Verify that no email has been sent after update
-							require.False(t, nsMock.EmailVerified)
-
-							userQuery := user.GetUserByIDQuery{ID: usr.ID}
-							updatedUsr, err := hs.userService.GetByID(context.Background(), &userQuery)
-							require.NoError(t, err)
-
-							// Verify fields have been updated
-							require.NotEqual(t, usr.Name, updatedUsr.Name)
-							require.Equal(t, updateUserCommand.Name, updatedUsr.Name)
-
-							switch tt.Field {
-							case user.LoginUpdateAction:
-								require.Equal(t, usr.Email, updatedUsr.Email)
-								require.NotEqual(t, usr.Login, updatedUsr.Login)
-								require.Equal(t, updateUserCommand.Login, updatedUsr.Login)
-							case user.EmailUpdateAction:
-								require.Equal(t, usr.Login, updatedUsr.Login)
-								require.NotEqual(t, usr.Email, updatedUsr.Email)
-								require.Equal(t, updateUserCommand.Email, updatedUsr.Email)
-							}
-
-							// Verify other fields have been kept
-							require.Equal(t, usr.Company, updatedUsr.Company)
-						}
-
-						updateUserScenario(t, updateUserContext{
-							desc:         ttt.name,
-							url:          fmt.Sprintf("/api/users/%d", usr.ID),
-							routePattern: "/api/users/:id",
-							cmd:          updateUserCommand,
-							fn:           fn,
-						}, hs)
-
-						updateSignedInUserScenario(t, updateUserContext{
-							desc:         ttt.name,
-							url:          "/api/user",
-							routePattern: "/api/user",
-							cmd:          updateUserCommand,
-							fn:           fn,
-						}, hs)
-
-					})
-
+					updateSignedInUserScenario(t, updateUserContext{
+						desc:         ttt.name,
+						url:          "/api/user",
+						routePattern: "/api/user",
+						cmd:          updateUserCommand,
+						fn:           fn,
+					}, hs)
 				}
 			})
 		})
