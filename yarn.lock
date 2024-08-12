@@ -5868,16 +5868,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prometheus-io/lezer-promql@npm:^0.52.0":
-  version: 0.52.1
-  resolution: "@prometheus-io/lezer-promql@npm:0.52.1"
-  peerDependencies:
-    "@lezer/highlight": ^1.1.2
-    "@lezer/lr": ^1.2.3
-  checksum: 10/531164b8ddedbe0e0ba9304ea918f5cb0bb9c14f5e68c835fa02d3dbbe37c90daa8344a54666ba32aea6db8dfc0720cbc5b5ea50e1ed1126e987fcea7394b595
-  languageName: node
-  linkType: hard
-
 "@protobufjs/aspromise@npm:^1.1.1, @protobufjs/aspromise@npm:^1.1.2":
   version: 1.1.2
   resolution: "@protobufjs/aspromise@npm:1.1.2"
@@ -18203,7 +18193,6 @@ __metadata:
     "@playwright/test": "npm:1.46.0"
     "@pmmmwh/react-refresh-webpack-plugin": "npm:0.5.15"
     "@popperjs/core": "npm:2.11.8"
-    "@prometheus-io/lezer-promql": "npm:^0.52.0"
     "@react-aria/dialog": "npm:3.5.16"
     "@react-aria/focus": "npm:3.18.1"
     "@react-aria/overlays": "npm:3.23.1"
