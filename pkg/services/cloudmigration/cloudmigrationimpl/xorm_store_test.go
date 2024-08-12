@@ -305,9 +305,15 @@ func TestGetSnapshotList(t *testing.T) {
 		assert.Equal(t, []string{"lkjhg", "poiuy"}, ids)
 	})
 
+	t.Run("only the snapshots that belong to a specific session are returned", func(t *testing.T) {
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: "session-uid-that-doesnt-exist", Page: 1, Limit: 100})
+		require.NoError(t, err)
+		assert.Empty(t, snapshots)
+	})
+
 	t.Run("if the session is deleted, snapshots can't be retrieved anymore", func(t *testing.T) {
 		// Delete the session.
-		_, err := s.DeleteMigrationSessionByUID(ctx, sessionUID)
+		_, _, err := s.DeleteMigrationSessionByUID(ctx, sessionUID)
 		require.NoError(t, err)
 
 		// Fetch the snapshots that belong to the deleted session.
