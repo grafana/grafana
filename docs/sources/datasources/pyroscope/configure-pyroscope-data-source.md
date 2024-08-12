@@ -62,7 +62,7 @@ If you're provisioning a Pyroscope data source, then you also need administrativ
 
 To configure basic settings for the data source, complete the following steps:
 
-1. Click **Connections** in the left-side menu.
+1. Click **Connections** in the main menu.
 1. Enter `Grafana Pyroscope` in the search bar.
 1. Select **Grafana Pyroscope**.
 1. Click **Add new data source** in the top-right corner of the page.

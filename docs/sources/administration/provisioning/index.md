@@ -16,7 +16,7 @@ weight: 600
 # Provision Grafana
 
 Grafana has an active provisioning system that uses configuration files.
-This makes GitOps more natural as data sources and dashboards can be defined using files that can be version controlled.
+This makes GitOps more natural since data sources and dashboards can be defined using files that can be version controlled.
 
 ## Configuration file
 
@@ -35,10 +35,10 @@ packages, then your configuration file is located at
 `init.d` script using the `--config` file parameter.
 {{< /admonition >}}
 
-### Using environment variables
+### Environment variables
 
 You can use environment variable interpolation in all three provisioning configuration types.
-The allowed syntax is either `$ENV_VAR_NAME` or `${ENV_VAR_NAME}` and can be used only for values not for keys or bigger parts
+The allowed syntax is either `$ENV_VAR_NAME` or `${ENV_VAR_NAME}`, and it can be used only for values, not for keys or larger parts
 of the configurations.
 It's not available in the dashboard's definition files, just the dashboard provisioning
 configuration.
@@ -250,7 +250,7 @@ For examples of specific data sources' JSON data, refer to that [data source's d
 
 Secure JSON data is a map of settings that are encrypted with a [secret key]({{< relref "../../setup-grafana/configure-grafana#secret_key" >}}) from the Grafana configuration.
 The encryption hides content from the users of the application.
-This should be used for storing TLS Cert and password that Grafana appends to the request on the server side.
+This should be used for storing the TLS Cert and password that Grafana appends to the request on the server side.
 All of these settings are optional.
 
 {{< admonition type="note" >}}
@@ -357,19 +357,19 @@ providers:
 ```
 
 When Grafana starts, it updates and inserts all dashboards available in the configured path.
-Then later on poll that path every **updateIntervalSeconds** and look for updated JSON files and updates and inserts those into the database.
+Then later on, Grafana polls that path every **updateIntervalSeconds**, looks for updated JSON files, and updates and inserts those into the database.
 
 > **Note:** Dashboards are provisioned to the root level if the `folder` option is missing or empty.
 
 #### Making changes to a provisioned dashboard
 
 While you can change a provisioned dashboard in the Grafana UI, those changes can't be saved back to the provisioning source.
-If `allowUiUpdates` is set to `true` and you make changes to a provisioned dashboard, you can `Save` the dashboard then changes persist to the Grafana database.
+If `allowUiUpdates` is set to `true` and you make changes to a provisioned dashboard, you can `Save` the dashboard, then changes persist to the Grafana database.
 
 {{< admonition type="note" >}}
-If a provisioned dashboard is saved from the UI and then later updated from the source, the dashboard stored in the database is always be overwritten. The `version` property in the JSON file won't affect this, even if it's lower than the existing dashboard.
+If a provisioned dashboard is saved from the UI and then later updated from the source, the dashboard stored in the database will always be overwritten. The `version` property in the JSON file won't affect this, even if it's lower than the version of the existing dashboard.
 
-If a provisioned dashboard is saved from the UI and the source is removed, the dashboard stored in the database is deleted unless the configuration option `disableDeletion` is set to true.
+If a provisioned dashboard is saved from the UI and the source is removed, the dashboard stored in the database is deleted unless the configuration option `disableDeletion` is set to `true`.
 {{< /admonition >}}
 
 If `allowUiUpdates` is configured to `false`, you are not able to make changes to a provisioned dashboard. When you click `Save`, Grafana brings up a _Cannot save provisioned dashboard_ dialog. The screenshot below illustrates this behavior.

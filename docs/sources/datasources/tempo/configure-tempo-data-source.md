@@ -60,7 +60,7 @@ refs:
 
 The Tempo data source sets how Grafana connects to your Tempo database and lets you configure features and integrations with other telemetry signals.
 
-You can configure the data source using either the data source interface within Grafana or using a configuration file.
+You can configure the data source using either the data source interface in Grafana or using a configuration file.
 This page explains how to set up and enable the data source capabilities using Grafana.
 
 If you're using your own installation of Grafana, you can provision the Tempo data source using a YAML configuration file.
