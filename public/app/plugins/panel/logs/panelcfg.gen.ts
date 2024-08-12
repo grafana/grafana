@@ -12,6 +12,7 @@ import * as common from '@grafana/schema';
 
 export interface Options {
   dedupStrategy: common.LogsDedupStrategy;
+  displayedFields?: Array<string>;
   enableLogDetails: boolean;
   isFilterLabelActive?: unknown;
   /**
@@ -29,3 +30,7 @@ export interface Options {
   sortOrder: common.LogsSortOrder;
   wrapLogMessage: boolean;
 }
+
+export const defaultOptions: Partial<Options> = {
+  displayedFields: [],
+};
