@@ -1,12 +1,12 @@
 {
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
   "type": "app",
-  "name": "Extension Point App",
-  "id": "myorg-extensionpoint-app",
+  "name": "A App",
+  "id": "myorg-componentexposer-app",
   "preload": true,
   "info": {
     "keywords": ["app"],
-    "description": "Show case how to add an extension point to your plugin",
+    "description": "Will extend root app with ui extensions",
     "author": {
       "name": "Myorg"
     },
@@ -15,22 +15,21 @@
       "large": "img/logo.svg"
     },
     "screenshots": [],
-    "version": "1.0.0",
-    "updated": "2024-06-11"
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
   },
   "includes": [
     {
       "type": "page",
       "name": "Default",
-      "path": "/a/myorg-extensionpoint-app",
+      "path": "/a/myorg-componentexposer-app",
       "role": "Admin",
-      "addToNav": true,
-      "defaultNav": true
+      "addToNav": false,
+      "defaultNav": false
     }
   ],
   "dependencies": {
     "grafanaDependency": ">=10.3.3",
     "plugins": []
-  },
-  "extensions": []
+  }
 }
