@@ -59,7 +59,8 @@ const SearchField = ({
   // there's only one value selected, so we store the previous operator and value
   const [prevOperator, setPrevOperator] = useState(filter.operator);
   const [prevValue, setPrevValue] = useState(filter.value);
-  const [tagOptionsQuery, setTagOptionsQuery] = useState<string>('');
+  const [tagQuery, setTagQuery] = useState<string>('');
+  const [tagValuesQuery, setTagValuesQuery] = useState<string>('');
 
   const updateOptions = async () => {
     try {
@@ -135,15 +136,34 @@ const SearchField = ({
   };
 
   const tagOptions = useMemo(() => {
-    if (tagOptionsQuery.length === 0) {
-      return formatTagOptions(tags.slice(0, 10000), filter.tag);
+    if (tagQuery.length === 0) {
+      return formatTagOptions(tags.slice(0, maxOptions), filter.tag);
     }
 
-    const queryLowerCase = tagOptionsQuery.toLowerCase();
-    const filterdOptions = tags.filter((tag) => tag.toLowerCase().includes(queryLowerCase)).slice(0, 10000);
-
+    const queryLowerCase = tagQuery.toLowerCase();
+    const filterdOptions = tags.filter((tag) => tag.toLowerCase().includes(queryLowerCase)).slice(0, maxOptions);
     return formatTagOptions(filterdOptions, filter.tag);
-  }, [filter.tag, tagOptionsQuery, tags]);
+  }, [filter.tag, tagQuery, tags]);
+
+  const tagValueOptions = useMemo(() => {
+    if (!options) {
+      return;
+    }
+
+    if (tagValuesQuery.length === 0) {
+      return options.slice(0, maxOptions);
+    }
+
+    const queryLowerCase = tagValuesQuery.toLowerCase();
+    return options
+      .filter((tag) => {
+        if (tag.value && tag.value.length > 0) {
+          return tag.value.toLowerCase().includes(queryLowerCase);
+        }
+        return false;
+      })
+      .slice(0, maxOptions);
+  }, [tagValuesQuery, options]);
 
   return (
     <>
@@ -168,10 +188,10 @@ const SearchField = ({
             options={addVariablesToOptions ? withTemplateVariableOptions(tagOptions) : tagOptions}
             onInputChange={(value: string, { action }: InputActionMeta) => {
               if (action === 'input-change') {
-                setTagOptionsQuery(value);
+                setTagQuery(value);
               }
             }}
-            onCloseMenu={() => setTagOptionsQuery('')}
+            onCloseMenu={() => setTagQuery('')}
             onChange={(v) => updateFilter({ ...filter, tag: v?.value, value: [] })}
             value={filter.tag}
             placeholder="Select tag"
@@ -203,8 +223,14 @@ const SearchField = ({
             className={styles.dropdown}
             inputId={`${filter.id}-value`}
             isLoading={isLoadingValues}
-            options={addVariablesToOptions ? withTemplateVariableOptions(options) : options}
+            options={addVariablesToOptions ? withTemplateVariableOptions(tagValueOptions) : tagValueOptions}
             value={filter.value}
+            onInputChange={(value: string, { action }: InputActionMeta) => {
+              if (action === 'input-change') {
+                setTagValuesQuery(value);
+              }
+            }}
+            onCloseMenu={() => setTagValuesQuery('')}
             onChange={(val) => {
               if (Array.isArray(val)) {
                 updateFilter({
@@ -240,5 +266,8 @@ export const withTemplateVariableOptions = (options: SelectableValue[] | undefin
   const templateVariables = getTemplateSrv().getVariables();
   return [...(options || []), ...templateVariables.map((v) => ({ label: `$${v.name}`, value: `$${v.name}` }))];
 };
+
+// Limit maximum options in select dropdowns for performance reasons
+export const maxOptions = 10000;
 
 export default SearchField;
