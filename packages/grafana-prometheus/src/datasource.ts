@@ -835,9 +835,15 @@ export class PrometheusDatasource
     }
 
     const finalQuery = filters.reduce((acc, filter) => {
-      const { key, operator } = filter;
-      let { value } = filter;
-      if (operator === '=~' || operator === '!~') {
+      const { key } = filter;
+      let { operator, value } = filter;
+      if (operator === '=|') {
+        operator = '=~';
+        value = filter.value.split('|').map(prometheusRegularEscape).join('|');
+      } else if (operator === '!=|') {
+        operator = '!~';
+        value = filter.value.split('|').map(prometheusRegularEscape).join('|');
+      } else if (operator === '=~' || operator === '!~') {
         value = prometheusRegularEscape(value);
       }
       return addLabelToQuery(acc, key, value, operator);
