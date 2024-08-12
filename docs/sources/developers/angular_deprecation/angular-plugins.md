@@ -103,7 +103,7 @@ Output:
 
 Save the output from the above command into a file, such as `dashboards.txt`.
 
-### 4. Script to save dashboard.
+### 4. Run script to save dashboard
 
 The Grafana HTTP API does not support saving dashboards directly. Therefore, we need to open each dashboard and manually click the save button. To automate this process of opening Grafana dashboards and clicking the save button, we can use a browser automation tool, such as Selenium for Python.
 
@@ -231,7 +231,7 @@ Output:
 Ideally, you should receive an empty result. If additional plugin IDs and their occurrences are returned, locate the corresponding dashboards and repeat the steps as needed.
 
 
-# AngularJS-based plugins
+## AngularJS-based plugins
 
 This table lists plugins which we have detected as having a dependency on AngularJS. For alternatives, consider included [Visualizations]({{< relref "../../panels-visualizations/visualizations" >}}) and [Data sources]({{< relref "../../datasources" >}}), as well as external plugins from the [catalog](/grafana/plugins).
 
