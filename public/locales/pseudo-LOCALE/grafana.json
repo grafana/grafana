@@ -106,6 +106,7 @@
       "export-all": "Ēχpőřŧ äľľ",
       "view": "Vįęŵ"
     },
+    "contact-point": "Cőŉŧäčŧ Pőįŉŧ",
     "contact-points": {
       "delivery-duration": "Ŀäşŧ đęľįvęřy ŧőőĸ <1></1>",
       "last-delivery-attempt": "Ŀäşŧ đęľįvęřy äŧŧęmpŧ",
@@ -136,7 +137,23 @@
       "saving": "Ŝävįŉģ mūŧę ŧįmįŉģ"
     },
     "policies": {
+      "default-policy": {
+        "description": "Åľľ äľęřŧ įŉşŧäŉčęş ŵįľľ þę ĥäŉđľęđ þy ŧĥę đęƒäūľŧ pőľįčy įƒ ŉő őŧĥęř mäŧčĥįŉģ pőľįčįęş äřę ƒőūŉđ.",
+        "title": "Đęƒäūľŧ pőľįčy"
+      },
+      "generated-policies": "Åūŧő-ģęŉęřäŧęđ pőľįčįęş",
       "metadata": {
+        "active-time": "Åčŧįvę ŵĥęŉ",
+        "delivered-to": "Đęľįvęřęđ ŧő",
+        "grouped-by": "Ğřőūpęđ þy",
+        "grouping": {
+          "none": "Ńőŧ ģřőūpįŉģ",
+          "single-group": "Ŝįŉģľę ģřőūp"
+        },
+        "inherited": "Ĩŉĥęřįŧęđ",
+        "mute-time": "Mūŧęđ ŵĥęŉ",
+        "n-instances_one": "įŉşŧäŉčę",
+        "n-instances_other": "įŉşŧäŉčęş",
         "timingOptions": {
           "groupInterval": {
             "description": "Ħőŵ ľőŉģ ŧő ŵäįŧ þęƒőřę şęŉđįŉģ ä ŉőŧįƒįčäŧįőŉ äþőūŧ ŉęŵ äľęřŧş ŧĥäŧ äřę äđđęđ ŧő ä ģřőūp őƒ äľęřŧş ƒőř ŵĥįčĥ äŉ įŉįŧįäľ ŉőŧįƒįčäŧįőŉ ĥäş äľřęäđy þęęŉ şęŉŧ.",
@@ -151,7 +168,12 @@
             "label": "Ŗępęäŧęđ ęvęřy <1></1>"
           }
         }
-      }
+      },
+      "n-more-policies_one": "{{count}} äđđįŧįőŉäľ pőľįčy",
+      "n-more-policies_other": "{{count}} äđđįŧįőŉäľ pőľįčįęş",
+      "new-child": "Ńęŵ čĥįľđ pőľįčy",
+      "new-policy": "Åđđ ŉęŵ pőľįčy",
+      "no-matchers": "Ńő mäŧčĥęřş"
     },
     "provisioning": {
       "badge-tooltip-provenance": "Ŧĥįş řęşőūřčę ĥäş þęęŉ přővįşįőŉęđ vįä {{provenance}} äŉđ čäŉŉőŧ þę ęđįŧęđ ŧĥřőūģĥ ŧĥę ŮĨ",
