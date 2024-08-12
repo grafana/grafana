@@ -6,7 +6,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
@@ -19,6 +21,7 @@ func TestService_IsDisabled(t *testing.T) {
 			InstallPlugins: []string{"myplugin"},
 		},
 		featuremgmt.WithFeatures(featuremgmt.FlagBackgroundPluginInstaller),
+		pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
 		&fakes.FakePluginInstaller{},
 	)
 
@@ -31,14 +34,42 @@ func TestService_IsDisabled(t *testing.T) {
 func TestService_Run(t *testing.T) {
 	t.Run("Installs a plugin", func(t *testing.T) {
 		installed := false
-		s := ProvideService(&setting.Cfg{
-			InstallPlugins: []string{"myplugin"},
-		}, featuremgmt.WithFeatures(), &fakes.FakePluginInstaller{
-			AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {
-				installed = true
-				return nil
+		s := ProvideService(
+			&setting.Cfg{
+				InstallPlugins: []string{"myplugin"},
 			},
-		})
+			featuremgmt.WithFeatures(),
+			pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
+			&fakes.FakePluginInstaller{
+				AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {
+					installed = true
+					return nil
+				},
+			},
+		)
+
+		err := s.Run(context.Background())
+		require.NoError(t, err)
+		require.True(t, installed)
+	})
+
+	t.Run("Install a plugin with version", func(t *testing.T) {
+		installed := false
+		s := ProvideService(
+			&setting.Cfg{
+				InstallPlugins: []string{"myplugin@1.0.0"},
+			},
+			featuremgmt.WithFeatures(),
+			pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
+			&fakes.FakePluginInstaller{
+				AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {
+					if pluginID == "myplugin" && version == "1.0.0" {
+						installed = true
+					}
+					return nil
+				},
+			},
+		)
 
 		err := s.Run(context.Background())
 		require.NoError(t, err)
@@ -47,47 +78,78 @@ func TestService_Run(t *testing.T) {
 
 	t.Run("Skips already installed plugin", func(t *testing.T) {
 		installed := false
-		s := ProvideService(&setting.Cfg{
-			InstallPlugins: []string{"myplugin"},
-		}, featuremgmt.WithFeatures(), &fakes.FakePluginInstaller{
-			AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {
-				return plugins.DuplicateError{}
+		preg := registry.NewInMemory()
+		err := preg.Add(context.Background(), &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				ID: "myplugin",
 			},
 		})
+		require.NoError(t, err)
+		s := ProvideService(
+			&setting.Cfg{
+				InstallPlugins: []string{"myplugin"},
+			},
+			featuremgmt.WithFeatures(),
+			pluginstore.New(preg, &fakes.FakeLoader{}),
+			&fakes.FakePluginInstaller{
+				AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {
+					t.Fatal("Should not install plugin")
+					return plugins.DuplicateError{}
+				},
+			},
+		)
 
-		err := s.Run(context.Background())
+		err = s.Run(context.Background())
 		require.NoError(t, err)
 		require.False(t, installed)
 	})
 
-	t.Run("Install a plugin with version", func(t *testing.T) {
+	t.Run("Still installs a plugin if the plugin version does not match", func(t *testing.T) {
 		installed := false
-		s := ProvideService(&setting.Cfg{
-			InstallPlugins: []string{"myplugin@1.0.0"},
-		}, featuremgmt.WithFeatures(), &fakes.FakePluginInstaller{
-			AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {
-				if pluginID == "myplugin" && version == "1.0.0" {
-					installed = true
-				}
-				return nil
+		preg := registry.NewInMemory()
+		err := preg.Add(context.Background(), &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				ID: "myplugin",
+				Info: plugins.Info{
+					Version: "1.0.0",
+				},
 			},
 		})
+		require.NoError(t, err)
+		s := ProvideService(
+			&setting.Cfg{
+				InstallPlugins: []string{"myplugin@1.0.1"},
+			},
+			featuremgmt.WithFeatures(),
+			pluginstore.New(preg, &fakes.FakeLoader{}),
+			&fakes.FakePluginInstaller{
+				AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {
+					installed = true
+					return nil
+				},
+			},
+		)
 
-		err := s.Run(context.Background())
+		err = s.Run(context.Background())
 		require.NoError(t, err)
 		require.True(t, installed)
 	})
 
 	t.Run("Install multiple plugins", func(t *testing.T) {
 		installed := 0
-		s := ProvideService(&setting.Cfg{
-			InstallPlugins: []string{"myplugin1", "myplugin2"},
-		}, featuremgmt.WithFeatures(), &fakes.FakePluginInstaller{
-			AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {
-				installed++
-				return nil
+		s := ProvideService(
+			&setting.Cfg{
+				InstallPlugins: []string{"myplugin1", "myplugin2"},
 			},
-		})
+			featuremgmt.WithFeatures(),
+			pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
+			&fakes.FakePluginInstaller{
+				AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {
+					installed++
+					return nil
+				},
+			},
+		)
 
 		err := s.Run(context.Background())
 		require.NoError(t, err)
@@ -96,18 +158,22 @@ func TestService_Run(t *testing.T) {
 
 	t.Run("Fails to install a plugin but install the rest", func(t *testing.T) {
 		installed := 0
-		s := ProvideService(&setting.Cfg{
-			InstallPlugins: []string{"myplugin1", "myplugin2"},
-		}, featuremgmt.WithFeatures(), &fakes.FakePluginInstaller{
-			AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {
-				if pluginID == "myplugin1" {
-					return plugins.NotFoundError{}
-				}
-				installed++
-				return nil
+		s := ProvideService(
+			&setting.Cfg{
+				InstallPlugins: []string{"myplugin1", "myplugin2"},
 			},
-		})
-
+			featuremgmt.WithFeatures(),
+			pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
+			&fakes.FakePluginInstaller{
+				AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {
+					if pluginID == "myplugin1" {
+						return plugins.NotFoundError{}
+					}
+					installed++
+					return nil
+				},
+			},
+		)
 		err := s.Run(context.Background())
 		require.NoError(t, err)
 		require.Equal(t, 1, installed)

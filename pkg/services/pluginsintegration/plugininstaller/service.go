@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -17,14 +18,16 @@ type Service struct {
 	features        featuremgmt.FeatureToggles
 	log             log.Logger
 	pluginInstaller plugins.Installer
+	pluginStore     pluginstore.Store
 }
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, pluginInstaller plugins.Installer) *Service {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, pluginStore pluginstore.Store, pluginInstaller plugins.Installer) *Service {
 	s := &Service{
 		features:        features,
 		log:             log.New("background.plugin.installer"),
 		cfg:             cfg,
 		pluginInstaller: pluginInstaller,
+		pluginStore:     pluginStore,
 	}
 	return s
 }
@@ -38,13 +41,24 @@ func (s *Service) IsDisabled() bool {
 func (s *Service) Run(ctx context.Context) error {
 	compatOpts := plugins.NewCompatOpts(s.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 
-	for _, pluginIDUnparsed := range s.cfg.InstallPlugins {
-		parsed := strings.Split(pluginIDUnparsed, "@")
+	for _, pluginIDRaw := range s.cfg.InstallPlugins {
+		parsed := strings.Split(pluginIDRaw, "@")
 		pluginID := parsed[0]
 		version := ""
 		if len(parsed) == 2 {
 			version = parsed[1]
 		}
+
+		// Check if the plugin is already installed
+		p, exists := s.pluginStore.Plugin(ctx, pluginID)
+		if exists {
+			// If it's installed, check if we are looking for a specific version
+			if version == "" || p.Info.Version == version {
+				s.log.Debug("Plugin already installed", "pluginID", pluginID, "version", version)
+				continue
+			}
+		}
+
 		s.log.Info("Installing plugin", "pluginID", pluginID, "version", version)
 		err := s.pluginInstaller.Add(ctx, pluginID, version, compatOpts)
 		if err != nil {
