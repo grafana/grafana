@@ -34,11 +34,11 @@ describe('getUnitFromRecordingRule', () => {
     expect(getUnitFromRecordingRule('HelloWorldBytes')).toBe('bytes');
   });
 
-  it('should return null if no valid unit is found', () => {
-    expect(getUnitFromRecordingRule('instance_path:requests:rate5m')).toBe(null);
+  it('should return undefined if no valid unit is found', () => {
+    expect(getUnitFromRecordingRule('instance_path:requests:rate5m')).toBe(undefined);
   });
 
-  it('should return null if no valid unit is found in recording rules with no separators', () => {
-    expect(getUnitFromRecordingRule('KubePersistentVolumeFillingUp')).toBe(null);
+  it('should return undefined if no valid unit is found in recording rules with no separators', () => {
+    expect(getUnitFromRecordingRule('KubePersistentVolumeFillingUp')).toBe(undefined);
   });
 });

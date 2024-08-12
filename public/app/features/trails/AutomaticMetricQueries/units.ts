@@ -9,20 +9,15 @@ export function getUnitFromMetric(metric: string) {
     return suffix;
   } else if (UNIT_LIST.includes(secondToLastSuffix)) {
     return secondToLastSuffix;
-  } else {
-    return null;
   }
+  return undefined;
 }
 
 // Get unit from recording rule (e.g. "workload:memory_working_set_bytes:sum" -> "bytes")
-export function getUnitFromRecordingRule(recordingRule: string): string | null {
+export function getUnitFromRecordingRule(recordingRule: string) {
   const lowerCaseRule = recordingRule.toLowerCase();
 
-  const unit = Object.keys(UNIT_MAP).find((key) => {
-    return lowerCaseRule.includes(key);
-  });
-
-  return unit || null;
+  return Object.keys(UNIT_MAP).find((key) => lowerCaseRule.includes(key));
 }
 
 // Get Grafana unit for a panel (e.g. "go_gc_duration_seconds" -> "s")
