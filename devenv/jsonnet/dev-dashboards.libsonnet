@@ -20,6 +20,7 @@
     "barchart-series-toggle": (import '../dev-dashboards/panel-barchart/barchart-series-toggle.json'),
     "barchart-thresholds-mappings": (import '../dev-dashboards/panel-barchart/barchart-thresholds-mappings.json'),
     "barchart-tooltips-legends": (import '../dev-dashboards/panel-barchart/barchart-tooltips-legends.json'),
+    "bench-query-variable-single-panel": (import '../dev-dashboards/benchmark/bench-query-variable-single-panel.json'),
     "bench-single-panel": (import '../dev-dashboards/benchmark/bench-single-panel.json'),
     "bench-slow-query": (import '../dev-dashboards/benchmark/bench-slow-query.json'),
     "candlestick": (import '../dev-dashboards/panel-candlestick/candlestick.json'),

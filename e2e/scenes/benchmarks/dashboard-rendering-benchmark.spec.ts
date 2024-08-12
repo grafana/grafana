@@ -1,6 +1,6 @@
 import { e2e } from '../utils';
 
-const RUNS = 20;
+const RUNS = 10;
 
 describe('Dashboard rendering benchmark', () => {
   beforeEach(() => {
@@ -26,9 +26,30 @@ describe('Dashboard rendering benchmark', () => {
 
     e2e.components.Panels.Panel.content().should('have.length', 1);
   });
+
+  it('dashboard with a query variable and a single panel', () => {
+    setupBenchmark('edt8433nfnzswe/benchmark3a-with-1-query-variable', 5000);
+    const fileName = 'benchmark3a-with-1-query-variable.csv';
+
+    runBenchmarkInteraction(RUNS, () => e2e.components.RefreshPicker.runButtonV2().click(), 3000);
+    processBenchmarkResults(fileName);
+
+    e2e.components.Panels.Panel.content().should('have.length', 1);
+  });
 });
 
 function setupBenchmark(uid: string, wait = 2500) {
+  e2e.pages.AddDataSource.visit();
+  e2e.pages.AddDataSource.dataSourcePluginsV2('Prometheus')
+    .scrollIntoView()
+    .should('be.visible') // prevents flakiness
+    .click();
+
+  e2e.pages.DataSource.name().clear();
+  e2e.pages.DataSource.name().type('prom-demo');
+  e2e.components.DataSource.Prometheus.configPage.connectionSettings().type('https://prometheus.demo.do.prometheus.io');
+  e2e.pages.DataSource.saveAndTest().click();
+
   e2e.flows.openDashboard({ uid });
   cy.wait(wait);
 }
