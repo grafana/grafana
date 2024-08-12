@@ -306,8 +306,6 @@ func basicRolesCollector(store db.DB) TupleCollector {
 				continue
 			}
 
-			// our "sync key" is a combination of collectorID and action so we can run this
-			// sync new data when more actions are supported
 			key := fmt.Sprintf("%s-%s", collectorID, p.Action)
 			if !slices.ContainsFunc(tuples[key], func(e *openfgav1.TupleKey) bool {
 				// skip duplicated tuples
@@ -361,8 +359,6 @@ func basicRoleAssignemtCollector(store db.DB) TupleCollector {
 				Object:   zanzana.NewScopedTupleEntry(zanzana.TypeRole, roleUID, "", strconv.FormatInt(a.OrgID, 10)),
 			}
 
-			// our "sync key" is a combination of collectorID and action so we can run this
-			// sync new data when more actions are supported
 			key := fmt.Sprintf("%s-%s", collectorID, zanzana.RelationAssignee)
 			tuples[key] = append(tuples[key], tuple)
 		}

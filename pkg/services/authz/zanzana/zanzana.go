@@ -100,12 +100,9 @@ func TranslateToOrgTuple(user string, action string, orgID int64) (*openfgav1.Tu
 
 	tuple := &openfgav1.TupleKey{
 		Relation: relation,
+		User:     user,
+		Object:   NewTupleEntry(typeTranslation.objectType, strconv.FormatInt(orgID, 10), ""),
 	}
-
-	tuple.User = user
-	tuple.Relation = relation
-
-	tuple.Object = NewTupleEntry(typeTranslation.objectType, strconv.FormatInt(orgID, 10), "")
 
 	return tuple, true
 }
