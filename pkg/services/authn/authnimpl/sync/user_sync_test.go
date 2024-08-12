@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -484,7 +485,7 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 		{
 			desc: "should skip if correct flag is not set",
 			identity: &authn.Identity{
-				ID:           identity.NewTypedID(identity.TypeUser, 1),
+				ID:           identity.NewTypedID(claims.TypeUser, 1),
 				IsDisabled:   true,
 				ClientParams: authn.ClientParams{EnableUser: false},
 			},
@@ -493,7 +494,7 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 		{
 			desc: "should skip if identity is not a user",
 			identity: &authn.Identity{
-				ID:           identity.NewTypedID(identity.TypeAPIKey, 1),
+				ID:           identity.NewTypedID(claims.TypeAPIKey, 1),
 				IsDisabled:   true,
 				ClientParams: authn.ClientParams{EnableUser: true},
 			},
@@ -502,7 +503,7 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 		{
 			desc: "should enabled disabled user",
 			identity: &authn.Identity{
-				ID:           identity.NewTypedID(identity.TypeUser, 1),
+				ID:           identity.NewTypedID(claims.TypeUser, 1),
 				IsDisabled:   true,
 				ClientParams: authn.ClientParams{EnableUser: true},
 			},
