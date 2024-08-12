@@ -16,6 +16,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -402,7 +403,7 @@ func enrichLegacyObject(originalObj, returnedObj runtime.Object) error {
 
 func getSyncRequester(orgId int64) *identity.StaticRequester {
 	return &identity.StaticRequester{
-		Type:           identity.TypeServiceAccount, // system:apiserver
+		Type:           claims.TypeServiceAccount, // system:apiserver
 		UserID:         1,
 		OrgID:          orgId,
 		Name:           "admin",
@@ -489,7 +490,7 @@ func mode2DataSyncer(ctx context.Context, legacy LegacyStorage, storage Storage,
 		for _, obj := range storageList {
 			accessor, err := utils.MetaAccessor(obj)
 			if err != nil {
-				log.WithValues("name", name).Error(err, "error retrieving accessor data for object from storage")
+				log.Error(err, "error retrieving accessor data for object from storage")
 				continue
 			}
 			name := accessor.GetName()
