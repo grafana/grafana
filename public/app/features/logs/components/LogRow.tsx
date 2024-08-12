@@ -115,13 +115,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       return;
     }
 
-    reportInteraction('grafana_explore_logs_log_details_clicked', {
-      datasourceType: this.props.row.datasourceType,
-      type: this.state.showDetails ? 'close' : 'open',
-      logRowUid: this.props.row.uid,
-      app: this.props.app,
-    });
-
     this.setState((state) => {
       return {
         showDetails: !state.showDetails,

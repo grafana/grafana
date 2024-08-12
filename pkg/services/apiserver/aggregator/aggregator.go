@@ -12,7 +12,6 @@
 package aggregator
 
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -203,7 +202,7 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 	}
 
 	err = aggregatorServer.GenericAPIServer.AddPostStartHook("grafana-apiserver-autoregistration", func(context genericapiserver.PostStartHookContext) error {
-		go autoRegistrationController.Run(5, context.StopCh)
+		go autoRegistrationController.Run(5, context.Done())
 		return nil
 	})
 	if err != nil {
@@ -214,10 +213,10 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 		addRemoteAPIServicesToRegister(remoteServicesConfig, autoRegistrationController)
 		externalNames := getRemoteExternalNamesToRegister(remoteServicesConfig)
 		err = aggregatorServer.GenericAPIServer.AddPostStartHook("grafana-apiserver-remote-autoregistration", func(ctx genericapiserver.PostStartHookContext) error {
-			controllers.WaitForCacheSync("grafana-apiserver-remote-autoregistration", ctx.StopCh, externalNamesInformer.Informer().HasSynced)
+			controllers.WaitForCacheSync("grafana-apiserver-remote-autoregistration", ctx.Done(), externalNamesInformer.Informer().HasSynced)
 			namespacedClient := remoteServicesConfig.serviceClientSet.ServiceV0alpha1().ExternalNames(remoteServicesConfig.ExternalNamesNamespace)
 			for _, externalName := range externalNames {
-				_, err := namespacedClient.Apply(context.Background(), externalName, metav1.ApplyOptions{
+				_, err := namespacedClient.Apply(ctx, externalName, metav1.ApplyOptions{
 					FieldManager: "grafana-aggregator",
 					Force:        true,
 				})
@@ -275,13 +274,13 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 
 	aggregatorServer.GenericAPIServer.AddPostStartHookOrDie("apiservice-status-override-available-controller", func(context genericapiserver.PostStartHookContext) error {
 		// if we end up blocking for long periods of time, we may need to increase workers.
-		go availableController.Run(5, context.StopCh)
+		go availableController.Run(5, context.Done())
 		return nil
 	})
 
 	aggregatorServer.GenericAPIServer.AddPostStartHookOrDie("start-grafana-aggregator-informers", func(context genericapiserver.PostStartHookContext) error {
-		sharedInformerFactory.Start(context.StopCh)
-		aggregatorServer.APIRegistrationInformers.Start(context.StopCh)
+		sharedInformerFactory.Start(context.Done())
+		aggregatorServer.APIRegistrationInformers.Start(context.Done())
 		return nil
 	})
 

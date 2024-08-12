@@ -171,6 +171,10 @@ const (
 	// Enables running InfluxDB Influxql queries in parallel
 	FlagInfluxdbRunQueriesInParallel = "influxdbRunQueriesInParallel"
 
+	// FlagPrometheusRunQueriesInParallel
+	// Enables running Prometheus queries in parallel
+	FlagPrometheusRunQueriesInParallel = "prometheusRunQueriesInParallel"
+
 	// FlagPrometheusDataplane
 	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular, when this feature toggle is active, the numeric `Field.Name` is set from &#39;Value&#39; to the value of the `__name__` label.
 	FlagPrometheusDataplane = "prometheusDataplane"
@@ -580,7 +584,7 @@ const (
 	FlagTlsMemcached = "tlsMemcached"
 
 	// FlagKubernetesAggregator
-	// Enable grafana aggregator
+	// Enable grafana&#39;s embedded kube-aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
 
 	// FlagExpressionParser
@@ -724,10 +728,22 @@ const (
 	FlagBodyScrolling = "bodyScrolling"
 
 	// FlagCloudwatchMetricInsightsCrossAccount
-	// Enables cross account observability for Cloudwatch Metric Insights
+	// Enables cross account observability for Cloudwatch Metric Insights query builder
 	FlagCloudwatchMetricInsightsCrossAccount = "cloudwatchMetricInsightsCrossAccount"
 
 	// FlagPrometheusAzureOverrideAudience
 	// Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
+
+	// FlagBackgroundPluginInstaller
+	// Enable background plugin installer
+	FlagBackgroundPluginInstaller = "backgroundPluginInstaller"
+
+	// FlagDataplaneAggregator
+	// Enable grafana dataplane aggregator
+	FlagDataplaneAggregator = "dataplaneAggregator"
+
+	// FlagAdhocFilterOneOf
+	// Exposes a new &#39;one of&#39; operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.
+	FlagAdhocFilterOneOf = "adhocFilterOneOf"
 )

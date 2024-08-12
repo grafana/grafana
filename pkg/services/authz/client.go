@@ -5,6 +5,8 @@ import (
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
+	authnlib "github.com/grafana/authlib/authn"
+	authzlib "github.com/grafana/authlib/authz"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc"
@@ -15,15 +17,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
-	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
 
-type Client interface {
-	// TODO
-}
+// `authzService` is hardcoded in authz-service
+const authzServiceAudience = "authzService"
 
-type LegacyClient struct {
-	clientV1 authzv1.AuthzServiceClient
+type Client interface {
+	authzlib.MultiTenantClient
 }
 
 // ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
@@ -40,7 +40,7 @@ func ProvideAuthZClient(
 		return nil, err
 	}
 
-	var client *LegacyClient
+	var client authzlib.MultiTenantClient
 
 	// Register the server
 	server, err := newLegacyServer(acSvc, features, grpcServer, tracer, authCfg)
@@ -50,9 +50,17 @@ func ProvideAuthZClient(
 
 	switch authCfg.mode {
 	case ModeInProc:
-		client = newInProcLegacyClient(server)
+		client, err = newInProcLegacyClient(server)
+		if err != nil {
+			return nil, err
+		}
 	case ModeGRPC:
 		client, err = newGrpcLegacyClient(authCfg.remoteAddress)
+		if err != nil {
+			return nil, err
+		}
+	case ModeCloud:
+		client, err = newCloudLegacyClient(authCfg)
 		if err != nil {
 			return nil, err
 		}
@@ -78,19 +86,12 @@ func ProvideStandaloneAuthZClient(
 	return newGrpcLegacyClient(authCfg.remoteAddress)
 }
 
-func newInProcLegacyClient(server *legacyServer) *LegacyClient {
-	channel := &inprocgrpc.Channel{}
-
-	// TODO (gamab): change this once it's clear how to authenticate the client
-	// Choices are:
-	// - noAuth given it's in proc and we don't need the user
-	// - access_token verif only as it's consistent with when it's remote (we check the service is allowed to call the authz service)
-	// - access_token and id_token ? the id_token being only necessary when the user is trying to access the service straight away
-	// auth := grpcUtils.ProvideAuthenticator(cfg)
+func newInProcLegacyClient(server *legacyServer) (authzlib.MultiTenantClient, error) {
 	noAuth := func(ctx context.Context) (context.Context, error) {
 		return ctx, nil
 	}
 
+	channel := &inprocgrpc.Channel{}
 	channel.RegisterService(
 		grpchan.InterceptServer(
 			&authzv1.AuthzService_ServiceDesc,
@@ -100,25 +101,74 @@ func newInProcLegacyClient(server *legacyServer) *LegacyClient {
 		server,
 	)
 
-	conn := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
-
-	client := authzv1.NewAuthzServiceClient(conn)
-
-	return &LegacyClient{
-		clientV1: client,
-	}
+	return authzlib.NewLegacyClient(
+		&authzlib.MultiTenantClientConfig{},
+		authzlib.WithGrpcConnectionLCOption(channel),
+		// nolint:staticcheck
+		authzlib.WithNamespaceFormatterLCOption(authnlib.OnPremNamespaceFormatter),
+		authzlib.WithDisableAccessTokenLCOption(),
+	)
 }
 
-func newGrpcLegacyClient(address string) (*LegacyClient, error) {
-	// Create a connection to the gRPC server
-	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func newGrpcLegacyClient(address string) (authzlib.MultiTenantClient, error) {
+	// This client interceptor is a noop, as we don't send an access token
+	grpcClientConfig := authnlib.GrpcClientConfig{}
+	clientInterceptor, err := authnlib.NewGrpcClientInterceptor(&grpcClientConfig,
+		authnlib.WithDisableAccessTokenOption(),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	client := authzv1.NewAuthzServiceClient(conn)
+	cfg := authzlib.MultiTenantClientConfig{RemoteAddress: address}
+	client, err := authzlib.NewLegacyClient(&cfg,
+		// TODO(drclau): make this configurable (e.g. allow to use insecure connections)
+		authzlib.WithGrpcDialOptionsLCOption(
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithUnaryInterceptor(clientInterceptor.UnaryClientInterceptor),
+			grpc.WithStreamInterceptor(clientInterceptor.StreamClientInterceptor),
+		),
+		// nolint:staticcheck
+		authzlib.WithNamespaceFormatterLCOption(authnlib.OnPremNamespaceFormatter),
+		// TODO(drclau): remove this once we have access token support on-prem
+		authzlib.WithDisableAccessTokenLCOption(),
+	)
+	if err != nil {
+		return nil, err
+	}
 
-	return &LegacyClient{
-		clientV1: client,
-	}, nil
+	return client, nil
+}
+
+func newCloudLegacyClient(authCfg *Cfg) (authzlib.MultiTenantClient, error) {
+	grpcClientConfig := authnlib.GrpcClientConfig{
+		TokenClientConfig: &authnlib.TokenExchangeConfig{
+			Token:            authCfg.token,
+			TokenExchangeURL: authCfg.tokenExchangeURL,
+		},
+		TokenRequest: &authnlib.TokenExchangeRequest{
+			Namespace: authCfg.tokenNamespace,
+			Audiences: []string{authzServiceAudience},
+		},
+	}
+
+	clientInterceptor, err := authnlib.NewGrpcClientInterceptor(&grpcClientConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	clientCfg := authzlib.MultiTenantClientConfig{RemoteAddress: authCfg.remoteAddress}
+	client, err := authzlib.NewLegacyClient(&clientCfg,
+		// TODO(drclau): make this configurable (e.g. allow to use insecure connections)
+		authzlib.WithGrpcDialOptionsLCOption(
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithUnaryInterceptor(clientInterceptor.UnaryClientInterceptor),
+			grpc.WithStreamInterceptor(clientInterceptor.StreamClientInterceptor),
+		),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }

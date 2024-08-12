@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/apiserver/storage/entity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
@@ -67,16 +66,16 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	}
 
 	parentUID := ""
-	// translate grafana.app/* label selectors into field requirements
-	requirements, newSelector, err := entity.ReadLabelSelectors(options.LabelSelector)
-	if err != nil {
-		return nil, err
-	}
-	if requirements.Folder != nil {
-		parentUID = *requirements.Folder
-	}
-	// Update the selector to remove the unneeded requirements
-	options.LabelSelector = newSelector
+	// // translate grafana.app/* label selectors into field requirements
+	// requirements, newSelector, err := entity.ReadLabelSelectors(options.LabelSelector)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if requirements.Folder != nil {
+	// 	parentUID = *requirements.Folder
+	// }
+	// // Update the selector to remove the unneeded requirements
+	// options.LabelSelector = newSelector
 
 	paging, err := readContinueToken(options)
 	if err != nil {
