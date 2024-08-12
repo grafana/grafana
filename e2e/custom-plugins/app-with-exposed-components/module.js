@@ -15,7 +15,7 @@ define(['@grafana/data', '@grafana/runtime', 'react'], function (grafanaData, gr
       React.Fragment,
       null,
       React.createElement('div', null, 'Exposed component:'),
-      isLoading ? 'Loading..' : React.createElement(TestComponent, { name: 'John' })
+      isLoading ? 'Loading..' : React.createElement(TestComponent, { name: 'World' })
     );
   };
 
