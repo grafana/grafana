@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
@@ -135,12 +136,12 @@ func (s *APIKey) Priority() uint {
 	return 30
 }
 
-func (s *APIKey) IdentityType() identity.IdentityType {
-	return identity.TypeAPIKey
+func (s *APIKey) IdentityType() claims.IdentityType {
+	return claims.TypeAPIKey
 }
 
 func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, namespaceID identity.TypedID) (*authn.Identity, error) {
-	if !namespaceID.IsType(identity.TypeAPIKey) {
+	if !namespaceID.IsType(claims.TypeAPIKey) {
 		return nil, identity.ErrInvalidTypedID.Errorf("got unspected namespace: %s", namespaceID.Type())
 	}
 
@@ -195,11 +196,11 @@ func (s *APIKey) getAPIKeyID(ctx context.Context, id *authn.Identity, r *authn.R
 		return -1, false
 	}
 
-	if id.ID.IsType(identity.TypeAPIKey) {
+	if id.ID.IsType(claims.TypeAPIKey) {
 		return internalId, true
 	}
 
-	if id.ID.IsType(identity.TypeServiceAccount) {
+	if id.ID.IsType(claims.TypeServiceAccount) {
 		// When the identity is service account, the ID in from the namespace is the service account ID.
 		// We need to fetch the API key in this scenario, as we could use it to uniquely identify a service account token.
 		apiKey, err := s.getAPIKey(ctx, getTokenFromRequest(r))
@@ -256,7 +257,7 @@ func validateApiKey(orgID int64, key *apikey.APIKey) error {
 
 func newAPIKeyIdentity(key *apikey.APIKey) *authn.Identity {
 	return &authn.Identity{
-		ID:              identity.NewTypedID(identity.TypeAPIKey, key.ID),
+		ID:              identity.NewTypedID(claims.TypeAPIKey, key.ID),
 		OrgID:           key.OrgID,
 		OrgRoles:        map[int64]org.RoleType{key.OrgID: key.Role},
 		ClientParams:    authn.ClientParams{SyncPermissions: true},
@@ -266,7 +267,7 @@ func newAPIKeyIdentity(key *apikey.APIKey) *authn.Identity {
 
 func newServiceAccountIdentity(key *apikey.APIKey) *authn.Identity {
 	return &authn.Identity{
-		ID:              identity.NewTypedID(identity.TypeServiceAccount, *key.ServiceAccountId),
+		ID:              identity.NewTypedID(claims.TypeServiceAccount, *key.ServiceAccountId),
 		OrgID:           key.OrgID,
 		AuthenticatedBy: login.APIKeyAuthModule,
 		ClientParams:    authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},
