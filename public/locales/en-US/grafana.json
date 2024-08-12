@@ -691,7 +691,6 @@
       "message": "No data sources found"
     }
   },
-  "Description": "Description",
   "embed": {
     "share": {
       "time-range-description": "Change the current relative time range to an absolute time range",
@@ -2108,7 +2107,7 @@
   },
   "share-panel": {
     "drawer": {
-      "share-embed-title": "Embed",
+      "share-embed-title": "Share embed",
       "share-link-title": "Link settings"
     },
     "menu": {

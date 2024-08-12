@@ -101,7 +101,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         shortcut: 'p e',
         onClick: () => {
           const drawer = new ShareDrawer({
-            title: t('share-panel.drawer.share-embed-title', 'Embed'),
+            title: t('share-panel.drawer.share-embed-title', 'Share embed'),
             body: new SharePanelEmbedTab({ panelRef: panel.getRef() }),
           });
 
