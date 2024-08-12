@@ -3,6 +3,7 @@ package cloudmigrationimpl
 import (
 	"context"
 	"encoding/base64"
+	"slices"
 	"strconv"
 	"testing"
 
@@ -267,6 +268,43 @@ func Test_SnapshotResources(t *testing.T) {
 		resources, err = s.GetSnapshotResources(ctx, "poiuy", 0, 100)
 		assert.NoError(t, err)
 		assert.Len(t, resources, 0)
+	})
+}
+
+func TestGetSnapshotList(t *testing.T) {
+	t.Parallel()
+
+	_, s := setUpTest(t)
+	// Taken from setUpTest
+	sessionUID := "qwerty"
+	ctx := context.Background()
+
+	t.Run("returns list of snapshots that belong to a session", func(t *testing.T) {
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 1, Limit: 100})
+		require.NoError(t, err)
+
+		ids := make([]string, 0)
+		for _, snapshot := range snapshots {
+			ids = append(ids, snapshot.UID)
+		}
+		slices.Sort(ids)
+
+		// There are 3 snapshots in the db but only 2 of them belong to this specific session.
+		assert.Equal(t, []string{"lkjhg", "poiuy"}, ids)
+	})
+
+	t.Run("if the session is deleted, snapshots can't be retrieved anymore", func(t *testing.T) {
+		// Delete the session.
+		_, err := s.DeleteMigrationSessionByUID(ctx, sessionUID)
+		require.NoError(t, err)
+
+		// Fetch the snapshots that belong to the deleted session.
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 1, Limit: 100})
+		require.NoError(t, err)
+
+		// No snapshots should be returned because the session that
+		// they belong to has been deleted.
+		assert.Empty(t, snapshots)
 	})
 }
 
