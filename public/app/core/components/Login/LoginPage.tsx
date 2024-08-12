@@ -14,6 +14,7 @@ import LoginCtrl from './LoginCtrl';
 import { LoginForm } from './LoginForm';
 import { LoginLayout, InnerBox } from './LoginLayout';
 import { LoginServiceButtons } from './LoginServiceButtons';
+import { PasswordlessConfirmation } from './PasswordlessConfirmationForm';
 import { PasswordlessLoginForm } from './PasswordlessLoginForm';
 import { UserSignup } from './UserSignup';
 
@@ -29,7 +30,9 @@ export const LoginPage = () => {
         disableLoginForm,
         disableUserSignUp,
         login,
-        passwordlessLogin,
+        passwordlessStart,
+        passwordlessConfirm,
+        showPasswordlessConfirmation,
         isLoggingIn,
         changePassword,
         skipPasswordChange,
@@ -38,7 +41,7 @@ export const LoginPage = () => {
         loginErrorMessage,
       }) => (
         <LoginLayout isChangingPassword={isChangingPassword}>
-          {!isChangingPassword && (
+          {!isChangingPassword && !showPasswordlessConfirmation && (
             <InnerBox>
               {loginErrorMessage && (
                 <Alert className={styles.alert} severity="error" title={t('login.error.title', 'Login failed')}>
@@ -62,14 +65,20 @@ export const LoginPage = () => {
                 </LoginForm>
               )}
               {config.auth.passwordlessLoginEnabled && (
-                <PasswordlessLoginForm onSubmit={passwordlessLogin} isLoggingIn={isLoggingIn}></PasswordlessLoginForm>
+                <PasswordlessLoginForm onSubmit={passwordlessStart} isLoggingIn={isLoggingIn}></PasswordlessLoginForm>
               )}
               <LoginServiceButtons />
               {!disableUserSignUp && <UserSignup />}
             </InnerBox>
           )}
 
-          {isChangingPassword && (
+          {config.auth.passwordlessLoginEnabled && showPasswordlessConfirmation && (
+            <InnerBox>
+              <PasswordlessConfirmation onSubmit={passwordlessConfirm} isLoggingIn={isLoggingIn}></PasswordlessConfirmation>
+            </InnerBox>
+          )}
+
+          {isChangingPassword && !config.auth.passwordlessLoginEnabled && (
             <InnerBox>
               <ChangePassword
                 showDefaultPasswordWarning={showDefaultPasswordWarning}
@@ -78,6 +87,8 @@ export const LoginPage = () => {
               />
             </InnerBox>
           )}
+
+
         </LoginLayout>
       )}
     </LoginCtrl>

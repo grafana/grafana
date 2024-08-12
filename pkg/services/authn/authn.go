@@ -165,11 +165,6 @@ type PasswordClient interface {
 	AuthenticatePassword(ctx context.Context, r *Request, username, password string) (*Identity, error)
 }
 
-type PasswordlessClient interface {
-	StartPasswordless(ctx context.Context, r *Request, email string) error
-	AuthenticatePasswordless(ctx context.Context, r *Request, email, code string) (*Identity, error)
-}
-
 type ProxyClient interface {
 	AuthenticateProxy(ctx context.Context, r *Request, username string, additional map[string]string) (*Identity, error)
 }

@@ -2,6 +2,7 @@ package clients
 
 import (
 	"context"
+	"crypto/subtle"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -9,32 +10,29 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/services/temp_user"
+	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var (
-	errInvalidPasswordless    = errutil.Unauthorized("passwordless-auth.invalid", errutil.WithPublicMessage("Invalid code"))
-	errPasswordlessAuthFailed = errutil.Unauthorized("passwordless-auth.failed", errutil.WithPublicMessage("Invalid code"))
+	errInvalidConfirmationCode = errutil.Unauthorized("passwordless-auth.invalid", errutil.WithPublicMessage("Invalid code"))
+	errPasswordlessAuthFailed  = errutil.Unauthorized("passwordless-auth.failed", errutil.WithPublicMessage("Invalid code"))
 )
 
 const passwordlessKeyPrefix = "passwordless-%s"
 
-var _ authn.PasswordlessClient = new(Passwordless)
+var _ authn.RedirectClient = new(Passwordless)
 
-func ProvidePasswordless(loginAttempts loginattempt.Service, userService user.Service, tempUserService tempuser.Service, notificationService notifications.Service, cache passwordlessCache) *Passwordless {
-	return &Passwordless{loginAttempts, userService, tempUserService, notificationService, cache, log.New("authn.passwordless")}
-}
-
-type passwordlessCache interface {
-	Get(ctx context.Context, key string) ([]byte, error)
-	Set(ctx context.Context, key string, value []byte, expire time.Duration) error
-	Delete(ctx context.Context, key string) error
+func ProvidePasswordless(cfg *setting.Cfg, loginAttempts loginattempt.Service, userService user.Service, tempUserService tempuser.Service, notificationService notifications.Service, cache remotecache.CacheStorage) *Passwordless {
+	return &Passwordless{cfg, loginAttempts, userService, tempUserService, notificationService, cache, log.New("authn.passwordless")}
 }
 
 type PasswordlessCacheEntry struct {
@@ -44,12 +42,17 @@ type PasswordlessCacheEntry struct {
 }
 
 type Passwordless struct {
+	cfg                 *setting.Cfg
 	loginAttempts       loginattempt.Service
 	userService         user.Service
 	tempUserService     tempuser.Service
 	notificationService notifications.Service
-	cache               passwordlessCache
+	cache               remotecache.CacheStorage
 	log                 log.Logger
+}
+
+type EmailForm struct {
+	Email string `json:"email" binding:"required,email"`
 }
 
 // Authenticate implements authn.Client.
@@ -59,7 +62,29 @@ func (c *Passwordless) Authenticate(ctx context.Context, r *authn.Request) (*aut
 	code := r.HTTPRequest.URL.Query().Get("code")
 	confirmationCode := r.HTTPRequest.URL.Query().Get("confirmationCode")
 
-	return c.AuthenticatePasswordless(ctx, r, code, confirmationCode)
+	return c.authenticatePasswordless(ctx, r, code, confirmationCode)
+}
+
+// RedirectURL implements authn.RedirectClient.
+func (c *Passwordless) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redirect, error) {
+	var form EmailForm
+	if err := web.Bind(r.HTTPRequest, &form); err != nil {
+		return nil, err
+	}
+
+	var (
+		code string
+		err  error
+	)
+	code, err = c.startPasswordless(ctx, form.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	return &authn.Redirect{
+		URL:   c.cfg.AppSubURL + "/login?code=" + code,
+		Extra: map[string]string{"code": code},
+	}, nil
 }
 
 func (c *Passwordless) IsEnabled() bool {
@@ -70,42 +95,42 @@ func (c *Passwordless) Name() string {
 	return authn.ClientPasswordless
 }
 
-func (c *Passwordless) StartPasswordless(ctx context.Context, r *authn.Request, email string) error {
+func (c *Passwordless) startPasswordless(ctx context.Context, email string) (string, error) {
 	// 1. check if is existing user with email or user invite with email
 	var existingUser *user.User
 	var tempUser []*tempuser.TempUserDTO
 	var err error
 
 	if !util.IsEmail(email) {
-		return errPasswordlessAuthFailed.Errorf("invalid email %s", email)
+		return "", errPasswordlessAuthFailed.Errorf("invalid email %s", email)
 	}
 
 	// TODO: colin - check passwordless cache if user has already been sent a passwordless link
 
 	existingUser, err = c.userService.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: email})
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if existingUser == nil {
 		// TODO: colin - set Status in GetTempUsersQuery so that revoked invites are ignored
 		tempUser, err = c.tempUserService.GetTempUsersQuery(ctx, &tempuser.GetTempUsersQuery{Email: email})
 		if err != nil {
-			return err
+			return "", err
 		}
 		if tempUser == nil {
-			return errPasswordlessAuthFailed.Errorf("no user found with email %s", email)
+			return "", errPasswordlessAuthFailed.Errorf("no user found with email %s", email)
 		}
 	} else {
 		// 2. if existing user, send email with passwordless link
 		alphabet := []byte("BCDFGHJKLMNPQRSTVWXZ")
 		confirmationCode, err := util.GetRandomString(8, alphabet...)
 		if err != nil {
-			return err
+			return "", err
 		}
 		code, err := util.GetRandomString(32)
 		if err != nil {
-			return err
+			return "", err
 		}
 
 		c.log.Info("code: ", code)
@@ -124,7 +149,7 @@ func (c *Passwordless) StartPasswordless(ctx context.Context, r *authn.Request, 
 
 		err = c.notificationService.SendEmailCommandHandler(ctx, &emailCmd)
 		if err != nil {
-			return err
+			return "", err
 		}
 
 		value := &PasswordlessCacheEntry{
@@ -134,20 +159,23 @@ func (c *Passwordless) StartPasswordless(ctx context.Context, r *authn.Request, 
 		}
 		valueBytes, err := json.Marshal(value)
 		if err != nil {
-			return err
+			return "", err
 		}
 
 		expire := time.Duration(20) * time.Minute
-		c.cache.Set(ctx, fmt.Sprintf(passwordlessKeyPrefix, code), valueBytes, expire)
+		cacheKey := fmt.Sprintf(passwordlessKeyPrefix, code)
+		c.cache.Set(ctx, cacheKey, valueBytes, expire)
+
+		return code, nil
 	}
 
 	if tempUser != nil {
 		// 3. if temp user, re-send invite with passwordless link
 	}
-	return nil
+	return "", nil
 }
 
-func (c *Passwordless) AuthenticatePasswordless(ctx context.Context, r *authn.Request, code string, confirmationCode string) (*authn.Identity, error) {
+func (c *Passwordless) authenticatePasswordless(ctx context.Context, r *authn.Request, code string, confirmationCode string) (*authn.Identity, error) {
 	// TODO: colin - validate login attempts for email instead of username
 
 	// ok, err := c.loginAttempts.Validate(ctx, username)
@@ -162,21 +190,23 @@ func (c *Passwordless) AuthenticatePasswordless(ctx context.Context, r *authn.Re
 		return nil, errPasswordlessAuthFailed.Errorf("no code provided")
 	}
 
-	jsonData, err := c.cache.Get(ctx, code)
+	cacheKey := fmt.Sprintf(passwordlessKeyPrefix, code)
+	jsonData, err := c.cache.Get(ctx, cacheKey)
 	if err != nil {
 		return nil, err
 	}
+
 	var entry PasswordlessCacheEntry
 	err = json.Unmarshal(jsonData, &entry)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse entry from passwordless cache: %w - entry: %s", err, string(jsonData))
 	}
 
-	if entry.ConfirmationCode != confirmationCode {
-		return nil, errInvalidPasswordless
+	if subtle.ConstantTimeCompare([]byte(entry.ConfirmationCode), []byte(confirmationCode)) != 1 {
+		return nil, errInvalidConfirmationCode
 	}
 
-	err = c.cache.Delete(ctx, code)
+	err = c.cache.Delete(ctx, cacheKey)
 	if err != nil {
 		return nil, err
 	}

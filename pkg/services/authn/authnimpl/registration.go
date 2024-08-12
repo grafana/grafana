@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/temp_user"
+	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -80,7 +80,7 @@ func ProvideRegistration(
 	}
 
 	if cfg.PasswordlessLoginEnabled {
-		passwordless := clients.ProvidePasswordless(loginAttempts, userService, tempUserService, notificationService, cache)
+		passwordless := clients.ProvidePasswordless(cfg, loginAttempts, userService, tempUserService, notificationService, cache)
 		authnSvc.RegisterClient(passwordless)
 	}
 
