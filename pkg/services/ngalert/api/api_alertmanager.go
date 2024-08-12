@@ -316,59 +316,13 @@ func newTestReceiversResult(r *alertingNotify.TestReceiversResult) apimodels.Tes
 			configs[jx].Name = config.Name
 			configs[jx].UID = config.UID
 			configs[jx].Status = config.Status
-			if config.Error != "" {
-				configs[jx].Error = config.Error
-			}
+			configs[jx].Error = config.Error
 		}
 		v.Receivers[ix].Configs = configs
 		v.Receivers[ix].Name = next.Name
 	}
 	return v
 }
-
-// statusForTestReceivers returns the appropriate status code for the response
-// for the results.
-//
-// It returns an HTTP 200 OK status code if notifications were sent to all receivers,
-// an HTTP 400 Bad Request status code if all receivers contain invalid configuration,
-// an HTTP 408 Request Timeout status code if all receivers timed out when sending
-// a test notification or an HTTP 207 Multi Status.
-// func statusForTestReceivers(v []alertingNotify.TestReceiverResult) int {
-// 	var (
-// 		numBadRequests   int
-// 		numTimeouts      int
-// 		numUnknownErrors int
-// 	)
-// 	for _, receiver := range v {
-// 		for _, next := range receiver.Configs {
-// 			if next.Error != nil {
-// 				var (
-// 					invalidReceiverErr alertingNotify.IntegrationValidationError
-// 					receiverTimeoutErr alertingNotify.IntegrationTimeoutError
-// 				)
-// 				if errors.As(next.Error, &invalidReceiverErr) {
-// 					numBadRequests += 1
-// 				} else if errors.As(next.Error, &receiverTimeoutErr) {
-// 					numTimeouts += 1
-// 				} else {
-// 					numUnknownErrors += 1
-// 				}
-// 			}
-// 		}
-// 	}
-// 	if numBadRequests == len(v) {
-// 		// if all receivers contain invalid configuration
-// 		return http.StatusBadRequest
-// 	} else if numTimeouts == len(v) {
-// 		// if all receivers contain valid configuration but timed out
-// 		return http.StatusRequestTimeout
-// 	} else if numBadRequests+numTimeouts+numUnknownErrors > 0 {
-// 		return http.StatusMultiStatus
-// 	} else {
-// 		// all receivers were sent a notification without error
-// 		return http.StatusOK
-// 	}
-// }
 
 func newTestTemplateResult(res *notifier.TestTemplatesResults) apimodels.TestTemplatesResults {
 	apiRes := apimodels.TestTemplatesResults{}
