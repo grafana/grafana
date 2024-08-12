@@ -1,6 +1,7 @@
 import { PluginExportedComponent } from '@grafana/data';
 
 import { PluginPreloadResult } from '../../pluginPreloader';
+import { logWarning } from '../utils';
 
 import { Registry } from './Registry';
 
@@ -19,11 +20,7 @@ export class ExportedComponentRegistry extends Registry<RegistryType> {
     const { pluginId, exportedComponents, error } = item;
 
     if (error) {
-      console.log({
-        message: 'Plugin failed to load, skip exposing its components.',
-        pluginId,
-        error,
-      });
+      logWarning(`"${pluginId}" plugin failed to load. Skip registering its exposed components.`);
       return registry;
     }
 
@@ -32,13 +29,30 @@ export class ExportedComponentRegistry extends Registry<RegistryType> {
     }
 
     for (const config of exportedComponents) {
-      const { id } = config;
+      const { id, description } = config;
 
-      // check if config is valid, skip and warn if invalid.
-      // if(isConfigValid(config)) { ... }
+      if (!id.startsWith(pluginId)) {
+        logWarning(
+          `Could not register exposed component with id '${id}'. Reason: The component id does not match the id naming convention. Id should be prefixed with plugin id. e.g 'myorg-basic-app/my-component-id/v1'.`
+        );
+        continue;
+      }
+
+      if (!id.match(/.*\/v\d+$/)) {
+        logWarning(
+          `Exposed component with id '${id}' does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
+        );
+      }
 
       if (registry[id]) {
-        // log a warning that a component already exists for that id.
+        logWarning(
+          `Could not register exposed component with id '${id}'. Reason: An exposed component with the same id already exists.`
+        );
+        continue;
+      }
+
+      if (!description) {
+        logWarning(`Could not register exposed component with id '${id}'. Reason: Description is missing.`);
         continue;
       }
 

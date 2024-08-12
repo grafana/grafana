@@ -1,8 +1,6 @@
 import { act, render, screen } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 
-import { PluginExtensionTypes } from '@grafana/data';
-
 import { ExportedComponentRegistry } from './registry/ExportedComponentRegistry';
 import { createUsePluginComponent } from './usePluginComponent';
 
