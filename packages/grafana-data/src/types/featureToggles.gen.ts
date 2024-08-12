@@ -200,4 +200,5 @@ export interface FeatureToggles {
   cloudwatchMetricInsightsCrossAccount?: boolean;
   prometheusAzureOverrideAudience?: boolean;
   dataplaneAggregator?: boolean;
+  adhocFilterOneOf?: boolean;
 }

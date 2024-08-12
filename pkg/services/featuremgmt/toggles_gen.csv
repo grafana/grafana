@@ -181,3 +181,4 @@ bodyScrolling,preview,@grafana/grafana-frontend-platform,false,false,true
 cloudwatchMetricInsightsCrossAccount,preview,@grafana/aws-datasources,false,false,true
 prometheusAzureOverrideAudience,deprecated,@grafana/partner-datasources,false,false,false
 dataplaneAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
+adhocFilterOneOf,experimental,@grafana/dashboards-squad,false,false,false
