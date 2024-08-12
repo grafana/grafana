@@ -956,7 +956,7 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 func (s *Service) publishFolderFullPathUpdatedEvent(ctx context.Context, timestamp time.Time, orgID int64, folderUID string) error {
 	descFolders, err := s.store.GetDescendants(ctx, orgID, folderUID)
 	if err != nil {
-		s.log.ErrorContext(ctx, "failed to get descendants of the folder", "folderUID", folderUID, "orgID", orgID, "error", err)
+		s.log.ErrorContext(ctx, "Failed to get descendants of the folder", "folderUID", folderUID, "orgID", orgID, "error", err)
 		return err
 	}
 	uids := make([]string, 0, len(descFolders)+1)
