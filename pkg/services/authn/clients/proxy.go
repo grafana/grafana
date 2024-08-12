@@ -152,7 +152,7 @@ func (c *Proxy) Hook(ctx context.Context, id *authn.Identity, r *authn.Request) 
 		return nil
 	}
 
-	if !claims.IsIdentityType(id.GetIdentityType(), claims.TypeUser) {
+	if !id.IsIdentityType(claims.TypeUser) {
 		return nil
 	}
 

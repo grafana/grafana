@@ -39,7 +39,7 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 
 	ctxLogger := s.log.FromContext(ctx).New("id", id.ID, "login", id.Login)
 
-	if !claims.IsIdentityType(id.GetIdentityType(), claims.TypeUser) {
+	if !id.IsIdentityType(claims.TypeUser) {
 		ctxLogger.Warn("Failed to sync org role, invalid namespace for identity", "type", id.GetIdentityType())
 		return nil
 	}
@@ -145,7 +145,7 @@ func (s *OrgSync) SetDefaultOrgHook(ctx context.Context, currentIdentity *authn.
 
 	ctxLogger := s.log.FromContext(ctx)
 
-	if !claims.IsIdentityType(currentIdentity.GetIdentityType(), claims.TypeUser) {
+	if !currentIdentity.IsIdentityType(claims.TypeUser) {
 		ctxLogger.Debug("Skipping default org sync, not a user", "type", currentIdentity.GetIdentityType())
 		return
 	}

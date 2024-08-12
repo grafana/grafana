@@ -99,8 +99,8 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 	}
 
 	if api.cfg.RBAC.PermissionsOnCreation("service-account") {
-		if claims.IsIdentityType(c.SignedInUser.GetIdentityType(), claims.TypeUser) {
-			userID, err := c.SignedInUser.GetID().ParseInt()
+		if c.SignedInUser.IsIdentityType(claims.TypeUser) {
+			userID, err := c.SignedInUser.GetInternalID()
 			if err != nil {
 				return response.Error(http.StatusInternalServerError, "Failed to parse user id", err)
 			}

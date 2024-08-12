@@ -42,7 +42,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 	defer span.End()
 
 	// only perform oauth token check if identity is a user
-	if !claims.IsIdentityType(id.GetIdentityType(), claims.TypeUser) {
+	if !id.IsIdentityType(claims.TypeUser) {
 		return nil
 	}
 

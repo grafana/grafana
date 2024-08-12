@@ -76,7 +76,7 @@ func (u *SignedInUser) GetRawIdentifier() string {
 	return u.UserUID
 }
 
-// Deprecated: use GetUID
+// GetInternalID implements Requester.
 func (u *SignedInUser) GetInternalID() (int64, error) {
 	switch {
 	case u.ApiKeyID != 0:

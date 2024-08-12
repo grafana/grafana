@@ -197,11 +197,11 @@ func (s *APIKey) getAPIKeyID(ctx context.Context, id *authn.Identity, r *authn.R
 		return -1, false
 	}
 
-	if claims.IsIdentityType(id.GetIdentityType(), claims.TypeAPIKey) {
+	if id.IsIdentityType(claims.TypeAPIKey) {
 		return internalId, true
 	}
 
-	if claims.IsIdentityType(id.GetIdentityType(), claims.TypeServiceAccount) {
+	if id.IsIdentityType(claims.TypeServiceAccount) {
 		// When the identity is service account, the ID in from the namespace is the service account ID.
 		// We need to fetch the API key in this scenario, as we could use it to uniquely identify a service account token.
 		apiKey, err := s.getAPIKey(ctx, getTokenFromRequest(r))

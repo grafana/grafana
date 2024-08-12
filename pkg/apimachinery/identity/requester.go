@@ -19,7 +19,7 @@ type Requester interface {
 	IsIdentityType(expected ...claims.IdentityType) bool
 	// GetRawIdentifier returns only the identifier part of the UID, excluding the type
 	GetRawIdentifier() string
-	// Deprecated: use GetUID instead
+	// GetInternalID returns only the identifier part of the ID, excluding the type
 	GetInternalID() (int64, error)
 	// GetID returns namespaced internalID for the entity
 	// Deprecated: use GetUID instead

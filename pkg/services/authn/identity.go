@@ -280,7 +280,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		AuthID:          i.AuthID,
 		AuthenticatedBy: i.AuthenticatedBy,
 		IsGrafanaAdmin:  i.GetIsGrafanaAdmin(),
-		IsAnonymous:     claims.IsIdentityType(i.Type, claims.TypeAnonymous),
+		IsAnonymous:     i.IsIdentityType(claims.TypeAnonymous),
 		IsDisabled:      i.IsDisabled,
 		HelpFlags1:      i.HelpFlags1,
 		LastSeenAt:      i.LastSeenAt,
@@ -290,14 +290,14 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		FallbackType:    i.Type,
 	}
 
-	if claims.IsIdentityType(i.Type, claims.TypeAPIKey) {
-		id, _ := strconv.ParseInt(i.ID, 10, 64)
+	if i.IsIdentityType(claims.TypeAPIKey) {
+		id, _ := i.GetInternalID()
 		u.ApiKeyID = id
 	} else {
-		id, _ := strconv.ParseInt(i.ID, 10, 64)
+		id, _ := i.GetInternalID()
 		u.UserID = id
 		u.UserUID = i.UID
-		u.IsServiceAccount = claims.IsIdentityType(i.Type, claims.TypeServiceAccount)
+		u.IsServiceAccount = i.IsIdentityType(claims.TypeServiceAccount)
 	}
 
 	return u

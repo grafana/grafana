@@ -218,7 +218,7 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 	}
 
 	// Login is only supported for users
-	if !claims.IsIdentityType(id.GetIdentityType(), claims.TypeUser) {
+	if !id.IsIdentityType(claims.TypeUser) {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		return nil, authn.ErrUnsupportedIdentity.Errorf("expected identity of type user but got: %s", id.GetIdentityType())
 	}
@@ -282,7 +282,7 @@ func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionTo
 		redirect.URL = s.cfg.SignoutRedirectUrl
 	}
 
-	if !claims.IsIdentityType(user.GetIdentityType(), claims.TypeUser) {
+	if !user.IsIdentityType(claims.TypeUser) {
 		return redirect, nil
 	}
 

@@ -120,7 +120,7 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, id *authn.Identity, 
 		return nil
 	}
 
-	if !claims.IsIdentityType(id.GetIdentityType(), claims.TypeUser, claims.TypeServiceAccount) {
+	if !id.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		return nil
 	}
 
@@ -161,7 +161,7 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, id *authn.Identity, r *
 		return nil
 	}
 
-	if !claims.IsIdentityType(id.GetIdentityType(), claims.TypeUser, claims.TypeServiceAccount) {
+	if !id.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		return nil
 	}
 
@@ -197,7 +197,7 @@ func (s *UserSync) EnableUserHook(ctx context.Context, id *authn.Identity, _ *au
 		return nil
 	}
 
-	if !claims.IsIdentityType(id.GetIdentityType(), claims.TypeUser, claims.TypeServiceAccount) {
+	if !id.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		return nil
 	}
 
