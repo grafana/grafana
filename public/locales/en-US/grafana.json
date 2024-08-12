@@ -106,6 +106,7 @@
       "export-all": "Export all",
       "view": "View"
     },
+    "contact-point": "Contact Point",
     "contact-points": {
       "delivery-duration": "Last delivery took <1></1>",
       "last-delivery-attempt": "Last delivery attempt",
@@ -136,7 +137,23 @@
       "saving": "Saving mute timing"
     },
     "policies": {
+      "default-policy": {
+        "description": "All alert instances will be handled by the default policy if no other matching policies are found.",
+        "title": "Default policy"
+      },
+      "generated-policies": "Auto-generated policies",
       "metadata": {
+        "active-time": "Active when",
+        "delivered-to": "Delivered to",
+        "grouped-by": "Grouped by",
+        "grouping": {
+          "none": "Not grouping",
+          "single-group": "Single group"
+        },
+        "inherited": "Inherited",
+        "mute-time": "Muted when",
+        "n-instances_one": "instance",
+        "n-instances_other": "instances",
         "timingOptions": {
           "groupInterval": {
             "description": "How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent.",
@@ -151,7 +168,12 @@
             "label": "Repeated every <1></1>"
           }
         }
-      }
+      },
+      "n-more-policies_one": "{{count}} additional policy",
+      "n-more-policies_other": "{{count}} additional policies",
+      "new-child": "New child policy",
+      "new-policy": "Add new policy",
+      "no-matchers": "No matchers"
     },
     "provisioning": {
       "badge-tooltip-provenance": "This resource has been provisioned via {{provenance}} and cannot be edited through the UI",
@@ -325,6 +347,7 @@
     },
     "save": "Save"
   },
+  "complete": "complete",
   "connections": {
     "connect-data": {
       "category-header-label": "Data sources",
@@ -1089,6 +1112,11 @@
       "link-title": "View the full migration guide",
       "title": "Let us help you migrate to this stack"
     },
+    "migrated-counts": {
+      "dashboards": "dashboards",
+      "datasources": "data sources",
+      "folders": "folders"
+    },
     "migration-token": {
       "delete-button": "Delete token",
       "delete-modal-body": "If you've already used this token with a self-managed installation, that installation will no longer be able to upload content.",
@@ -1120,6 +1148,8 @@
       "migration-finished-with-warnings-body": "The migration has completed with some warnings. Check individual resources for more details",
       "snapshot-error-status-body": "There was an error creating the snapshot or starting the migration process. See the Grafana server logs for more details",
       "snapshot-error-status-title": "Error migrating resources",
+      "success-message": "Successfully migrated {{successCount}} {{types, list}} to your Grafana Cloud instance.",
+      "success-title": "Migration completed!",
       "upload-snapshot-error-title": "Error uploading snapshot"
     },
     "pdc": {
@@ -1903,16 +1933,7 @@
     "dismissable-button": "Close"
   },
   "scopes": {
-    "filters": {
-      "apply": "Apply",
-      "cancel": "Cancel",
-      "input": {
-        "placeholder": "Select scopes...",
-        "removeAll": "Remove all scopes"
-      },
-      "title": "Select scopes"
-    },
-    "suggestedDashboards": {
+    "dashboards": {
       "loading": "Loading dashboards",
       "noResultsForFilter": "No results found for your query",
       "noResultsForFilterClear": "Clear search",
@@ -1920,9 +1941,19 @@
       "noResultsNoScopes": "No scopes selected",
       "search": "Search",
       "toggle": {
-        "collapse": "Collapse scope filters",
-        "expand": "Expand scope filters"
+        "collapse": "Collapse suggested dashboards list",
+        "disabled": "Suggested dashboards list is disabled due to read only mode",
+        "expand": "Expand suggested dashboards list"
       }
+    },
+    "selector": {
+      "apply": "Apply",
+      "cancel": "Cancel",
+      "input": {
+        "placeholder": "Select scopes...",
+        "removeAll": "Remove all scopes"
+      },
+      "title": "Select scopes"
     },
     "tree": {
       "collapse": "Collapse",

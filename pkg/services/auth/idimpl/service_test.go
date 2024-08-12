@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -85,7 +86,7 @@ func TestService_SignIdentity(t *testing.T) {
 			ID:              identity.MustParseTypedID("user:1"),
 			AuthenticatedBy: login.AzureADAuthModule,
 			Login:           "U1",
-			UID:             identity.NewTypedIDString(identity.TypeUser, "edpu3nnt61se8e")})
+			UID:             identity.NewTypedIDString(claims.TypeUser, "edpu3nnt61se8e")})
 		require.NoError(t, err)
 
 		parsed, err := jwt.ParseSigned(token)
@@ -108,7 +109,7 @@ func TestService_SignIdentity(t *testing.T) {
 			ID:              identity.MustParseTypedID("user:1"),
 			AuthenticatedBy: login.AzureADAuthModule,
 			Login:           "U1",
-			UID:             identity.NewTypedIDString(identity.TypeUser, "edpu3nnt61se8e")})
+			UID:             identity.NewTypedIDString(claims.TypeUser, "edpu3nnt61se8e")})
 		require.NoError(t, err)
 
 		assert.Equal(t, login.AzureADAuthModule, gotClaims.Rest.AuthenticatedBy)
