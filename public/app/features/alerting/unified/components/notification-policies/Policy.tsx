@@ -246,7 +246,9 @@ const Policy = (props: PolicyComponentProps) => {
                   ) : hasMatchers ? (
                     <Matchers matchers={matchers ?? []} formatter={getAmMatcherFormatter(alertManagerSourceName)} />
                   ) : (
-                    <span className={styles.metadata}>No matchers</span>
+                    <span className={styles.metadata}>
+                      <Trans i18nKey="alerting.policies.no-matchers">No matchers</Trans>
+                    </span>
                   )}
                   <Spacer />
                   {/* TODO maybe we should move errors to the gutter instead? */}
@@ -265,7 +267,7 @@ const Policy = (props: PolicyComponentProps) => {
                               type="button"
                               onClick={() => onAddPolicy(currentRoute, 'child')}
                             >
-                              New child policy
+                              <Trans i18nKey="alerting.policies.new-child">New child policy</Trans>
                             </Button>
                           ) : (
                             <Dropdown
@@ -297,7 +299,7 @@ const Policy = (props: PolicyComponentProps) => {
                                 icon="angle-down"
                                 type="button"
                               >
-                                Add new policy
+                                <Trans i18nKey="alerting.policies.new-policy">Add new policy</Trans>
                               </Button>
                             </Dropdown>
                           )}
@@ -381,7 +383,9 @@ const Policy = (props: PolicyComponentProps) => {
                   className={styles.moreButtons}
                   onClick={() => setVisibleChildPolicies(visibleChildPolicies + POLICIES_PER_PAGE)}
                 >
-                  {moreCount} additional {pluralize('policy', moreCount)}
+                  <Trans i18nKey="alerting.policies.n-more-policies" count={moreCount}>
+                    {{ count: moreCount }} additional policy
+                  </Trans>
                 </Button>
               )}
             </>
@@ -455,12 +459,18 @@ function MetadataRow({
             data-testid="matching-instances"
           >
             <Text color="primary">{numberOfAlertInstances ?? '-'}</Text>
-            <span>{pluralize('instance', numberOfAlertInstances)}</span>
+            <span>
+              <Trans i18nKey="alerting.policies.metadata.n-instances" count={numberOfAlertInstances ?? 0}>
+                instance
+              </Trans>
+            </span>
           </MetaText>
         )}
         {contactPoint && (
           <MetaText icon="at" data-testid="contact-point">
-            <span>Delivered to</span>
+            <span>
+              <Trans i18nKey="alerting.policies.metadata.delivered-to">Delivered to</Trans>
+            </span>
             <ContactPointsHoverDetails
               alertManagerSourceName={alertManagerSourceName}
               receivers={receivers}
@@ -472,31 +482,41 @@ function MetadataRow({
           <>
             {customGrouping && (
               <MetaText icon="layer-group" data-testid="grouping">
-                <span>Grouped by</span>
+                <span>
+                  <Trans i18nKey="alerting.policies.metadata.grouped-by">Grouped by</Trans>
+                </span>
                 <Text color="primary">{groupBy.join(', ')}</Text>
               </MetaText>
             )}
             {singleGroup && (
               <MetaText icon="layer-group">
-                <span>Single group</span>
+                <span>
+                  <Trans i18nKey="alerting.policies.metadata.grouping.single-group">Single group</Trans>
+                </span>
               </MetaText>
             )}
             {noGrouping && (
               <MetaText icon="layer-group">
-                <span>Not grouping</span>
+                <span>
+                  <Trans i18nKey="alerting.policies.metadata.grouping.none">Not grouping</Trans>
+                </span>
               </MetaText>
             )}
           </>
         )}
         {hasMuteTimings && (
           <MetaText icon="calendar-slash" data-testid="mute-timings">
-            <span>Muted when</span>
+            <span>
+              <Trans i18nKey="alerting.policies.metadata.mute-time">Muted when</Trans>
+            </span>
             <TimeIntervals timings={muteTimings} alertManagerSourceName={alertManagerSourceName} />
           </MetaText>
         )}
         {hasActiveTimings && (
           <MetaText icon="calendar-alt" data-testid="active-timings">
-            <span>Active when</span>
+            <span>
+              <Trans i18nKey="alerting.policies.metadata.active-time">Active when</Trans>
+            </span>
             <TimeIntervals timings={activeTimings} alertManagerSourceName={alertManagerSourceName} />
           </MetaText>
         )}
@@ -509,7 +529,9 @@ function MetadataRow({
         {hasInheritedProperties && (
           <>
             <MetaText icon="corner-down-right-alt" data-testid="inherited-properties">
-              <span>Inherited</span>
+              <span>
+                <Trans i18nKey="alerting.policies.metadata.inherited">Inherited</Trans>
+              </span>
               <InheritedProperties properties={inheritedProperties} />
             </MetaText>
           </>
@@ -655,10 +677,12 @@ function DefaultPolicyIndicator() {
   return (
     <>
       <Text element="h2" variant="body" weight="medium">
-        Default policy
+        <Trans i18nKey="alerting.policies.default-policy.title">Default policy</Trans>
       </Text>
       <span className={styles.metadata}>
-        All alert instances will be handled by the default policy if no other matching policies are found.
+        <Trans i18nKey="alerting.policies.default-policy.description">
+          All alert instances will be handled by the default policy if no other matching policies are found.
+        </Trans>
       </span>
     </>
   );
@@ -667,7 +691,7 @@ function DefaultPolicyIndicator() {
 function AutogeneratedRootIndicator() {
   return (
     <Text element="h3" variant="body" weight="medium">
-      Auto-generated policies
+      <Trans i18nKey="alerting.policies.generated-policies">Auto-generated policies</Trans>
     </Text>
   );
 }
@@ -863,7 +887,9 @@ const ContactPointsHoverDetails: FC<ContactPointDetailsProps> = ({
       placement="top"
       header={
         <MetaText icon="at">
-          <div>Contact Point</div>
+          <div>
+            <Trans i18nKey="alerting.contact-point">Contact Point</Trans>
+          </div>
           <Text color="primary">{contactPoint}</Text>
         </MetaText>
       }
@@ -941,7 +967,7 @@ const routePropertyToValue = (
   if (isNotGrouping) {
     return (
       <Text variant="bodySmall" color="secondary">
-        Not grouping
+        <Trans i18nKey="alerting.policies.metadata.grouping.none">Not grouping</Trans>
       </Text>
     );
   }
@@ -949,7 +975,7 @@ const routePropertyToValue = (
   if (isSingleGroup) {
     return (
       <Text variant="bodySmall" color="secondary">
-        Single group
+        <Trans i18nKey="alerting.policies.metadata.grouping.single-group">Single group</Trans>
       </Text>
     );
   }
