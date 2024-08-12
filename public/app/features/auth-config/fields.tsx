@@ -637,6 +637,12 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         const onClose = () => setValue('serverDiscoveryModal', false);
         const onSuccess = async (data: ServerDiscoveryFormData) => {
           try {
+            const wellKnownSuffix = '/.well-known/openid-configuration';
+            const url = new URL(data.url);
+            if (!url.pathname.includes(wellKnownSuffix)) {
+              data.url = url.origin + wellKnownSuffix;
+            }
+
             const response = await fetch(data.url);
             const res = await response.json();
 
