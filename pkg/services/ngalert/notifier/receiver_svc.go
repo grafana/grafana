@@ -39,7 +39,7 @@ type ReceiverService struct {
 	encryptionService      secretService
 	xact                   transactionManager
 	log                    log.Logger
-	validator              validation.ProvenanceStatusTransitionValidator
+	provenanceValidator    validation.ProvenanceStatusTransitionValidator
 }
 
 type alertRuleNotificationSettingsStore interface {
@@ -97,7 +97,7 @@ func NewReceiverService(
 		encryptionService:      encryptionService,
 		xact:                   xact,
 		log:                    log,
-		validator:              validation.ValidateProvenanceRelaxed,
+		provenanceValidator:    validation.ValidateProvenanceRelaxed,
 	}
 }
 
@@ -258,7 +258,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		return err
 	}
 
-	if err := rs.validator(existing.Provenance, models.Provenance(callerProvenance)); err != nil {
+	if err := rs.provenanceValidator(existing.Provenance, models.Provenance(callerProvenance)); err != nil {
 		return err
 	}
 
@@ -351,7 +351,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	if err := rs.validator(existing.Provenance, r.Provenance); err != nil {
+	if err := rs.provenanceValidator(existing.Provenance, r.Provenance); err != nil {
 		return nil, err
 	}
 
