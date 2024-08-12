@@ -63,13 +63,13 @@ The Tempo data source sets how Grafana connects to your Tempo database and lets 
 You can configure the data source using either the data source interface within Grafana or using a configuration file.
 This page explains how to set up and enable the data source capabilities using Grafana.
 
-If you are using your own installation of Grafana, you can provision the Tempo data source using a YAML configuration file.
+If you're using your own installation of Grafana, you can provision the Tempo data source using a YAML configuration file.
 
 ## Before you begin
 
 To configure a Tempo data source, you need administrator rights to your Grafana instance and a Tempo instance configured to send tracing data to Grafana.
 
-If you are provisioning a Tempo data source, then you also need administrative rights on the server hosting your Grafana instance.
+If you're provisioning a Tempo data source, then you also need administrative rights on the server hosting your Grafana instance.
 Refer to [Provision the data source](#provision-the-data-source) for next steps.
 
 ![Provisioned data source warning](/media/docs/grafana/data-sources/tempo/tempo-data-source-provisioned-error.png)
@@ -78,12 +78,13 @@ Refer to [Provision the data source](#provision-the-data-source) for next steps.
 
 To configure basic settings for the Tempo data source, complete the following steps:
 
-1.  Click **Connections** in the left-side menu and select **Data sources**.
-1.  Enter `Tempo` in the search bar.
-1.  Select **Tempo**.
+1. Click **Connections** in the main menu.
+1. Enter `Tempo` in the search bar.
+1. Select **Tempo**.
+1. Click **Add new data source** in the top-right corner of the page.
 1.  On the **Settings** tab, complete the **Name**, **Connection**, and **Authentication** sections.
 
-- Use the **Name** field to specify the name used for the data source in panels, queries, and Explore. Activate **Default** for the data source to be pre-selected for new panels.
+- Use the **Name** field to specify the name used for the data source in panels, queries, and Explore. Toggle the **Default** switch for the data source to be pre-selected for new panels.
 - Under **Connection**, enter the **URL** of the Tempo instance, for example, `https://example.com:4100`.
 - Complete the [**Authentication** section](#authentication).
 
@@ -280,7 +281,7 @@ For example, `${__span.name}`.
 
 ## Additional settings
 
-Use the down-arrow to expand the **Additional settings** section to view these options.
+Use the down arrow to expand the **Additional settings** section to view these options.
 
 ### Advanced HTTP settings
 

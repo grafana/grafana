@@ -44,33 +44,32 @@ refs:
 
 The Pyroscope data source sets how Grafana connects to your Pyroscope database.
 
-You can configure the data source using either the data source interface within Grafana or using a configuration file.
+You can configure the data source using either the data source interface in Grafana or using a configuration file.
 This page explains how to set up and enable the data source capabilities using Grafana.
 
 If you make any changes, select **Save & test** to preserve those changes.
 
-If you are using your own installation of Grafana, you can provision the Pyroscope data source using a YAML configuration file.
+If you're using your own installation of Grafana, you can provision the Pyroscope data source using a YAML configuration file.
 For more information about provisioning and available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
 
 ## Before you begin
 
 To configure a Pyroscope data source, you need administrator rights to your Grafana instance and a Pyroscope instance configured to send data to Grafana.
 
-If you are provisioning a Pyroscope data source, then you also need administrative rights on the server hosting your Grafana instance.
+If you're provisioning a Pyroscope data source, then you also need administrative rights on the server hosting your Grafana instance.
 
 ## Set up the data source
 
 To configure basic settings for the data source, complete the following steps:
 
 1. Click **Connections** in the left-side menu.
-1. Under Your connections, click **Data sources**.
 1. Enter `Grafana Pyroscope` in the search bar.
-1. Select **Add new data source**.
-1. Click **Grafana Pyroscope** to display the **Settings** tab of the data source.
+1. Select **Grafana Pyroscope**.
+1. Click **Add new data source** in the top-right corner of the page.
 1. On the **Settings** tab, complete the **Name**, **Connection**, and **Authentication** sections.
 
-- Use the **Name** field to specify the name used for the data source in panels, queries, and Explore. Activate **Default** for the data source to be pre-selected for new panels.
-- Under **Connection**, enter the **URL** of the Pyroscope instance, for example, `https://example.com:4100`.
+- Use the **Name** field to specify the name used for the data source in panels, queries, and Explore. Toggle the  **Default** switch for the data source to be pre-selected for new panels.
+- Under **Connection**, enter the **URL** of the Pyroscope instance. For example, `https://example.com:4100`.
 - Complete the [**Authentication** section](#authentication).
 
 1. Optional: Use **Additional settings** to configure other options.
@@ -91,11 +90,11 @@ For additional information on setting up TLS encryption with Pyroscope, refer to
 
 ## Additional settings
 
-Use the down-arrow to expand the **Additional settings** section to view these options.
+Use the down arrow to expand the **Additional settings** section to view these options.
 
 ### Advanced HTTP settings
 
-The Grafana Proxy deletes forwarded cookies. Use the **Allowed cookies** field to specify cookies by name that should be forwarded to the data source.
+The Grafana Proxy deletes forwarded cookies. Use the **Allowed cookies** field to specify cookies  that should be forwarded to the data source by name.
 
 The **Timeout** field sets the HTTP request timeout in seconds.
 
