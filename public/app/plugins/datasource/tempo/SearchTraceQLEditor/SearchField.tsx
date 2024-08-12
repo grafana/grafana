@@ -154,9 +154,7 @@ const SearchField = ({
             inputId={`${filter.id}-scope`}
             options={addVariablesToOptions ? withTemplateVariableOptions(scopeOptions) : scopeOptions}
             value={filter.scope}
-            onChange={(v) => {
-              updateFilter({ ...filter, scope: v?.value });
-            }}
+            onChange={(v) => updateFilter({ ...filter, scope: v?.value })}
             placeholder="Select scope"
             aria-label={`select ${filter.id} scope`}
           />
@@ -174,10 +172,8 @@ const SearchField = ({
               }
             }}
             onCloseMenu={() => setTagOptionsQuery('')}
+            onChange={(v) => updateFilter({ ...filter, tag: v?.value, value: [] })}
             value={filter.tag}
-            onChange={(v) => {
-              updateFilter({ ...filter, tag: v?.value, value: [] });
-            }}
             placeholder="Select tag"
             isClearable
             aria-label={`select ${filter.id} tag`}
@@ -190,9 +186,7 @@ const SearchField = ({
           inputId={`${filter.id}-operator`}
           options={addVariablesToOptions ? withTemplateVariableOptions(operatorOptions) : operatorOptions}
           value={filter.operator}
-          onChange={(v) => {
-            updateFilter({ ...filter, operator: v?.value });
-          }}
+          onChange={(v) => updateFilter({ ...filter, operator: v?.value })}
           isClearable={false}
           aria-label={`select ${filter.id} operator`}
           allowCustomValue={true}
