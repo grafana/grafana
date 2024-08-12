@@ -361,6 +361,12 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 	)
 	require.NoError(t, err)
 
+	// Store encryption keys used to encrypt/decrypt snapshots.
+	for _, snapshotUid := range []string{"poiuy", "lkjhg", "mnbvvc"} {
+		err = s.secretsStore.Set(ctx, secretskv.AllOrganizations, snapshotUid, secretType, "encryption_key")
+		require.NoError(t, err)
+	}
+
 	_, err = testDB.GetSqlxSession().Exec(ctx, `
 		INSERT INTO
 			cloud_migration_resource (uid, snapshot_uid, resource_type, resource_uid, status, error_string)
