@@ -94,3 +94,11 @@ var actionKindTranslations = map[string]actionKindTranslation{
 		translations: dashboardActions,
 	},
 }
+
+var basicRolesTranslations = map[string]string{
+	RoleGrafanaAdmin: "basic_grafana_admin",
+	RoleAdmin:        "basic_admin",
+	RoleEditor:       "basic_editor",
+	RoleViewer:       "basic_viewer",
+	RoleNone:         "basic_none",
+}

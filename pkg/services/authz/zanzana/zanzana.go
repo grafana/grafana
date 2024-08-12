@@ -20,12 +20,26 @@ const (
 	RelationTeamMember string = "member"
 	RelationTeamAdmin  string = "admin"
 	RelationParent     string = "parent"
+	RelationAssignee   string = "assignee"
 )
 
 const (
 	KindOrg        string = "org"
 	KindDashboards string = "dashboards"
 	KindFolders    string = "folders"
+)
+
+const (
+	RoleGrafanaAdmin = "Grafana Admin"
+	RoleAdmin        = "Admin"
+	RoleEditor       = "Editor"
+	RoleViewer       = "Viewer"
+	RoleNone         = "None"
+
+	BasicRolePrefix    = "basic:"
+	BasicRoleUIDPrefix = "basic_"
+
+	GlobalOrgID = 0
 )
 
 // NewTupleEntry constructs new openfga entry type:id[#relation].
@@ -94,4 +108,8 @@ func TranslateToOrgTuple(user string, action string, orgID int64) (*openfgav1.Tu
 	tuple.Object = NewTupleEntry(typeTranslation.objectType, strconv.FormatInt(orgID, 10), "")
 
 	return tuple, true
+}
+
+func TranslateBasicRole(role string) string {
+	return basicRolesTranslations[role]
 }
