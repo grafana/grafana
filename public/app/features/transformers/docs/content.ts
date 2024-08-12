@@ -1520,6 +1520,15 @@ ${buildImageContent(
       },
     ],
   },
+  transpose: {
+    name: 'Transpose',
+    getHelperDocs: function () {
+      return `
+Use this transformation to pivot the data frame, converting rows into columns and columns into rows. This transformation is particularly useful when you want to switch the orientation of your data to better suit your visualization needs.
+If you have multiple types it will default to string type.
+  `;
+    },
+  },
   regression: {
     name: 'Regression analysis',
     getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {

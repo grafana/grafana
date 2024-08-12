@@ -116,6 +116,22 @@ func FormatSQL(q string) string {
 	return q
 }
 
+// RemoveEmptyLines removes the empty lines from a SQL statement
+// empty lines are typical when using text template formatting
+func RemoveEmptyLines(q string) string {
+	var b strings.Builder
+	lines := strings.Split(strings.ReplaceAll(q, "\r\n", "\n"), "\n")
+	for _, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		line = strings.ReplaceAll(line, "\t", "  ")
+		b.WriteString(line)
+		b.WriteByte('\n')
+	}
+	return b.String()
+}
+
 type reFormatting struct {
 	re          *regexp.Regexp
 	replacement string

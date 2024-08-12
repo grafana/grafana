@@ -156,7 +156,7 @@ def test_backend_step_windows():
             "wire-install",
         ],
         "commands": [
-            "go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...",
+            "go test -short -covermode=atomic -timeout=5m ./pkg/...",
         ],
     }
 

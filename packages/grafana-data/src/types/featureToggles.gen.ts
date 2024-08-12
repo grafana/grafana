@@ -59,6 +59,7 @@ export interface FeatureToggles {
   influxdbBackendMigration?: boolean;
   influxqlStreamingParser?: boolean;
   influxdbRunQueriesInParallel?: boolean;
+  prometheusRunQueriesInParallel?: boolean;
   prometheusDataplane?: boolean;
   lokiMetricDataplane?: boolean;
   lokiLogsDataplane?: boolean;
@@ -199,4 +200,6 @@ export interface FeatureToggles {
   bodyScrolling?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
   prometheusAzureOverrideAudience?: boolean;
+  dataplaneAggregator?: boolean;
+  adhocFilterOneOf?: boolean;
 }
