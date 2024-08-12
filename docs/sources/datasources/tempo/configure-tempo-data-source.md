@@ -124,7 +124,7 @@ To use streaming, you need to:
 
 ### Activate streaming
 
-You can activate streaming by either setting the  `traceQLStreaming` [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) to true or by activating the Streaming toggle in the Tempo data source.
+You can activate streaming by either setting the `traceQLStreaming` [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) to true or by activating the Streaming toggle in the Tempo data source.
 
 ![Streaming section in Tempo data source](/media/docs/grafana/data-sources/tempo-data-source-streaming-v11.2.png)
 
