@@ -338,7 +338,7 @@ func runDataSyncer(ctx context.Context, mode DualWriterMode, legacy LegacyStorag
 	case Mode2:
 		return mode2DataSyncer(ctx, legacy, storage, kind, reg, serverLockService, requestInfo)
 	default:
-		klog.Error("data syncer not implemented for mode mode:", mode)
+		klog.Info("data syncer not implemented for mode mode:", mode)
 		return false, nil
 	}
 }
