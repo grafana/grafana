@@ -15,13 +15,15 @@ type Requester interface {
 
 	// GetIdentityType returns the type for the requester
 	GetIdentityType() claims.IdentityType
+	// IsIdentityType returns true if identity type for requester matches any expected identity type
+	IsIdentityType(expected ...claims.IdentityType) bool
 	// GetRawIdentifier returns only the identifier part of the UID, excluding the type
 	GetRawIdentifier() string
-	// Deprecated: use GetUID instead
+	// GetInternalID returns only the identifier part of the ID, excluding the type
 	GetInternalID() (int64, error)
 	// GetID returns namespaced internalID for the entity
 	// Deprecated: use GetUID instead
-	GetID() TypedID
+	GetID() string
 	// GetDisplayName returns the display name of the active entity.
 	// The display name is the name if it is set, otherwise the login or email.
 	GetDisplayName() string
@@ -81,11 +83,32 @@ type Requester interface {
 // IntIdentifier converts a typeID to an int64.
 // Applicable for users, service accounts, api keys and renderer service.
 // Errors if the identifier is not initialized or if type is not recognized.
-func IntIdentifier(typedID TypedID) (int64, error) {
-	if claims.IsIdentityType(typedID.t, claims.TypeUser, claims.TypeAPIKey, claims.TypeServiceAccount, claims.TypeRenderService) {
-		id, err := strconv.ParseInt(typedID.ID(), 10, 64)
+func IntIdentifier(typedID string) (int64, error) {
+	typ, id, err := ParseTypeAndID(typedID)
+	if err != nil {
+		return 0, err
+	}
+
+	return intIdentifier(typ, id, claims.TypeUser, claims.TypeAPIKey, claims.TypeServiceAccount, claims.TypeRenderService)
+}
+
+// UserIdentifier converts a typeID to an int64.
+// Errors if the identifier is not initialized or if namespace is not recognized.
+// Returns 0 if the type is not user or service account
+func UserIdentifier(typedID string) (int64, error) {
+	typ, id, err := ParseTypeAndID(typedID)
+	if err != nil {
+		return 0, err
+	}
+
+	return intIdentifier(typ, id, claims.TypeUser, claims.TypeServiceAccount)
+}
+
+func intIdentifier(typ claims.IdentityType, id string, expected ...claims.IdentityType) (int64, error) {
+	if claims.IsIdentityType(typ, expected...) {
+		id, err := strconv.ParseInt(id, 10, 64)
 		if err != nil {
-			return 0, fmt.Errorf("unrecognized format for valid type %s: %w", typedID.Type(), err)
+			return 0, fmt.Errorf("unrecognized format for valid type %s: %w", typ, err)
 		}
 
 		if id < 1 {
@@ -96,20 +119,4 @@ func IntIdentifier(typedID TypedID) (int64, error) {
 	}
 
 	return 0, ErrNotIntIdentifier
-}
-
-// UserIdentifier converts a typeID to an int64.
-// Errors if the identifier is not initialized or if namespace is not recognized.
-// Returns 0 if the type is not user or service account
-func UserIdentifier(typedID TypedID) (int64, error) {
-	userID, err := IntIdentifier(typedID)
-	if err != nil {
-		return 0, err
-	}
-
-	if claims.IsIdentityType(typedID.t, claims.TypeUser, claims.TypeServiceAccount) {
-		return userID, nil
-	}
-
-	return 0, ErrInvalidIDType
 }

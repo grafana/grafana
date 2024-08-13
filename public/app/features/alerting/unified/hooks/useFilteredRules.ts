@@ -8,6 +8,7 @@ import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { CombinedRuleGroup, CombinedRuleNamespace, Rule } from 'app/types/unified-alerting';
 import { isPromAlertingRuleState, PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { logError } from '../Analytics';
 import { applySearchFilterToQuery, getSearchFilterFromQuery, RulesFilter } from '../search/rulesSearchParser';
 import { labelsMatchMatchers, matcherToMatcherField } from '../utils/alertmanager';
 import { Annotation } from '../utils/constants';
@@ -27,6 +28,8 @@ import { useURLSearchParams } from './useURLSearchParams';
 // if the search term is longer than MAX_NEEDLE_SIZE we disable Levenshtein distance
 const MAX_NEEDLE_SIZE = 25;
 const INFO_THRESHOLD = Infinity;
+
+const SEARCH_FAILED_ERR = new Error('Failed to search rules');
 
 /**
  * Escape query strings so that regex characters don't interfere
@@ -160,7 +163,20 @@ export const filterRules = (
   }
 
   // If a namespace and group have rules that match the rules filters then keep them.
-  return filteredNamespaces.reduce<CombinedRuleNamespace[]>(reduceNamespaces(filterState), []);
+  const filteredRuleNamespaces: CombinedRuleNamespace[] = [];
+
+  try {
+    const matches = filteredNamespaces.reduce<CombinedRuleNamespace[]>(reduceNamespaces(filterState), []);
+    matches.forEach((match) => {
+      filteredRuleNamespaces.push(match);
+    });
+  } catch {
+    logError(SEARCH_FAILED_ERR, {
+      search: JSON.stringify(filterState),
+    });
+  }
+
+  return filteredRuleNamespaces;
 };
 
 const reduceNamespaces = (filterState: RulesFilter) => {
