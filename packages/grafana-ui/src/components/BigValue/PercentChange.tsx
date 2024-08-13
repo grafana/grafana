@@ -13,9 +13,9 @@ export const PercentChange = ({ percentChange, styles }: Props) => {
 
   return (
     <div style={styles.containerStyles}>
-      {percentChangeIcon && (
+      {percentChangeIcon ? (
         <Icon name={percentChangeIcon} height={styles.iconSize} width={styles.iconSize} viewBox="6 6 12 12" />
-      )}
+      ) : null}
       {percentChangeString(percentChange)}
     </div>
   );
