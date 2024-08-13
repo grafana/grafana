@@ -427,7 +427,7 @@ describe('LogsPanel', () => {
     });
   });
 
-  describe.only('Show/hide fields', () => {
+  describe('Show/hide fields', () => {
     const series = [
       createDataFrame({
         refId: 'A',
