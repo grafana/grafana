@@ -531,6 +531,19 @@
     },
     {
       "metadata": {
+        "name": "backgroundPluginInstaller",
+        "resourceVersion": "1723202510081",
+        "creationTimestamp": "2024-08-09T11:21:50Z"
+      },
+      "spec": {
+        "description": "Enable background plugin installer",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "bodyScrolling",
         "resourceVersion": "1721723807004",
         "creationTimestamp": "2024-07-01T10:28:39Z",
@@ -1425,6 +1438,7 @@
         "name": "kubernetesPlaylists",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-10-05T19:00:36Z",
+        "deletionTimestamp": "2024-07-30T19:34:12Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -2026,6 +2040,22 @@
     },
     {
       "metadata": {
+        "name": "pluginsDetailsRightPanel",
+        "resourceVersion": "1720788722220",
+        "creationTimestamp": "2024-07-12T08:39:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-07-12 12:52:02.22099 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables right panel for the plugins details page",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginsFrontendSandbox",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-06-05T08:51:36Z"
@@ -2181,6 +2211,18 @@
         "stage": "experimental",
         "codeowner": "@grafana/observability-metrics",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "prometheusRunQueriesInParallel",
+        "resourceVersion": "1720677541862",
+        "creationTimestamp": "2024-07-11T05:59:01Z"
+      },
+      "spec": {
+        "description": "Enables running Prometheus queries in parallel",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/observability-metrics"
       }
     },
     {

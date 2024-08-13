@@ -91,7 +91,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			Claims: &jwt.Claims{
 				Issuer:   s.cfg.AppURL,
 				Audience: getAudience(id.GetOrgID()),
-				Subject:  id.GetID().String(),
+				Subject:  id.GetID(),
 				Expiry:   jwt.NewNumericDate(now.Add(tokenTTL)),
 				IssuedAt: jwt.NewNumericDate(now),
 			},
@@ -100,7 +100,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			},
 		}
 
-		if identity.IsIdentityType(id.GetID(), authnlibclaims.TypeUser) {
+		if id.IsIdentityType(authnlibclaims.TypeUser) {
 			claims.Rest.Email = id.GetEmail()
 			claims.Rest.EmailVerified = id.IsEmailVerified()
 			claims.Rest.AuthenticatedBy = id.GetAuthenticatedBy()

@@ -171,6 +171,10 @@ const (
 	// Enables running InfluxDB Influxql queries in parallel
 	FlagInfluxdbRunQueriesInParallel = "influxdbRunQueriesInParallel"
 
+	// FlagPrometheusRunQueriesInParallel
+	// Enables running Prometheus queries in parallel
+	FlagPrometheusRunQueriesInParallel = "prometheusRunQueriesInParallel"
+
 	// FlagPrometheusDataplane
 	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular, when this feature toggle is active, the numeric `Field.Name` is set from &#39;Value&#39; to the value of the `__name__` label.
 	FlagPrometheusDataplane = "prometheusDataplane"
@@ -238,6 +242,10 @@ const (
 	// FlagFrontendSandboxMonitorOnly
 	// Enables monitor only in the plugin frontend sandbox (if enabled)
 	FlagFrontendSandboxMonitorOnly = "frontendSandboxMonitorOnly"
+
+	// FlagPluginsDetailsRightPanel
+	// Enables right panel for the plugins details page
+	FlagPluginsDetailsRightPanel = "pluginsDetailsRightPanel"
 
 	// FlagSqlDatasourceDatabaseSelection
 	// Enables previous SQL data source dataset dropdown behavior
@@ -378,10 +386,6 @@ const (
 	// FlagTransformationsVariableSupport
 	// Allows using variables in transformations
 	FlagTransformationsVariableSupport = "transformationsVariableSupport"
-
-	// FlagKubernetesPlaylists
-	// Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s
-	FlagKubernetesPlaylists = "kubernetesPlaylists"
 
 	// FlagKubernetesSnapshots
 	// Routes snapshot requests from /api to the /apis endpoint
@@ -730,6 +734,10 @@ const (
 	// FlagPrometheusAzureOverrideAudience
 	// Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
+
+	// FlagBackgroundPluginInstaller
+	// Enable background plugin installer
+	FlagBackgroundPluginInstaller = "backgroundPluginInstaller"
 
 	// FlagDataplaneAggregator
 	// Enable grafana dataplane aggregator

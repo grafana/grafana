@@ -1,4 +1,7 @@
 import { Action } from '@reduxjs/toolkit';
+import reduceReducers from 'reduce-reducers';
+
+import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { muteTimingsReducer } from '../reducers/alertmanager/muteTimings';
@@ -9,6 +12,20 @@ import { mergeRequestStates } from './mergeRequestStates';
 const ERR_NO_ACTIVE_AM = new Error('no active Alertmanager');
 
 const { useLazyGetAlertmanagerConfigurationQuery, useUpdateAlertmanagerConfigurationMutation } = alertmanagerApi;
+
+export const initialAlertmanagerConfiguration: AlertManagerCortexConfig = {
+  alertmanager_config: {
+    receivers: [],
+    route: {},
+    time_intervals: [],
+    mute_time_intervals: [],
+    inhibit_rules: [],
+    templates: [],
+  },
+  template_files: {},
+};
+
+const configurationReducer = reduceReducers(initialAlertmanagerConfiguration, muteTimingsReducer);
 
 /**
  * This hook will make sure we are always applying actions that mutate the Alertmanager configuration
@@ -36,7 +53,8 @@ export function useProduceNewAlertmanagerConfiguration() {
    */
   const produceNewAlertmanagerConfiguration = async (action: Action) => {
     const currentAlertmanagerConfiguration = await fetchAlertmanagerConfig(selectedAlertmanager).unwrap();
-    const newConfig = muteTimingsReducer(currentAlertmanagerConfiguration, action);
+
+    const newConfig = configurationReducer(currentAlertmanagerConfiguration, action);
 
     return updateAlertManager({
       selectedAlertmanager,
