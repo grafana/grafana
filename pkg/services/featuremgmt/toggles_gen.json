@@ -1438,6 +1438,7 @@
         "name": "kubernetesPlaylists",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-10-05T19:00:36Z",
+        "deletionTimestamp": "2024-07-30T19:34:12Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -2032,6 +2033,22 @@
       },
       "spec": {
         "description": "Sends metrics of public grafana packages usage by plugins",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "pluginsDetailsRightPanel",
+        "resourceVersion": "1720788722220",
+        "creationTimestamp": "2024-07-12T08:39:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-07-12 12:52:02.22099 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables right panel for the plugins details page",
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true
