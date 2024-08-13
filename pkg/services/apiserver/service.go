@@ -7,6 +7,7 @@ import (
 	"path"
 
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
@@ -19,7 +20,9 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
 
+	dataplaneaggregator "github.com/grafana/grafana/pkg/aggregator/apiserver"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
@@ -30,8 +33,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/apiserver/aggregator"
+	"github.com/grafana/grafana/pkg/registry/apis/datasource"
+	kubeaggregator "github.com/grafana/grafana/pkg/services/apiserver/aggregator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -41,6 +46,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -117,6 +123,11 @@ type service struct {
 	authorizer        *authorizer.GrafanaAuthorizer
 	serverLockService builder.ServerLockService
 	kvStore           kvstore.KVStore
+
+	pluginClient    plugins.Client
+	datasources     datasource.ScopedPluginDatasourceProvider
+	contextProvider datasource.PluginContextWrapper
+	pluginStore     pluginstore.Store
 }
 
 func ProvideService(
@@ -128,19 +139,27 @@ func ProvideService(
 	serverLockService *serverlock.ServerLockService,
 	db db.DB,
 	kvStore kvstore.KVStore,
+	pluginClient plugins.Client,
+	datasources datasource.ScopedPluginDatasourceProvider,
+	contextProvider datasource.PluginContextWrapper,
+	pluginStore pluginstore.Store,
 ) (*service, error) {
 	s := &service{
-		cfg:        cfg,
-		features:   features,
-		rr:         rr,
-		startedCh:  make(chan struct{}),
-		stopCh:     make(chan struct{}),
-		builders:   []builder.APIGroupBuilder{},
-		authorizer: authorizer.NewGrafanaAuthorizer(cfg, orgService),
-		tracing:    tracing,
-		db:         db, // For Unified storage
-		metrics:    metrics.ProvideRegisterer(),
-		kvStore:    kvStore,
+		cfg:             cfg,
+		features:        features,
+		rr:              rr,
+		startedCh:       make(chan struct{}),
+		stopCh:          make(chan struct{}),
+		builders:        []builder.APIGroupBuilder{},
+		authorizer:      authorizer.NewGrafanaAuthorizer(cfg, orgService),
+		tracing:         tracing,
+		db:              db, // For Unified storage
+		metrics:         metrics.ProvideRegisterer(),
+		kvStore:         kvStore,
+		pluginClient:    pluginClient,
+		datasources:     datasources,
+		contextProvider: contextProvider,
+		pluginStore:     pluginStore,
 	}
 
 	// This will be used when running as a dskit service
@@ -214,7 +233,7 @@ func (s *service) start(ctx context.Context) error {
 
 	groupVersions := make([]schema.GroupVersion, 0, len(builders))
 	// Install schemas
-	initialSize := len(aggregator.APIVersionPriorities)
+	initialSize := len(kubeaggregator.APIVersionPriorities)
 	for i, b := range builders {
 		groupVersions = append(groupVersions, b.GetGroupVersion())
 		if err := b.InstallSchema(Scheme); err != nil {
@@ -223,7 +242,7 @@ func (s *service) start(ctx context.Context) error {
 
 		if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
 			// set the priority for the group+version
-			aggregator.APIVersionPriorities[b.GetGroupVersion()] = aggregator.Priority{Group: 15000, Version: int32(i + initialSize)}
+			kubeaggregator.APIVersionPriorities[b.GetGroupVersion()] = kubeaggregator.Priority{Group: 15000, Version: int32(i + initialSize)}
 		}
 
 		auth := b.GetAuthorizer()
@@ -339,9 +358,24 @@ func (s *service) start(ctx context.Context) error {
 	// stash the options for later use
 	s.options = o
 
-	var runningServer *genericapiserver.GenericAPIServer
+	delegate := server
+	var aggregatorServer *aggregatorapiserver.APIAggregator
 	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-		runningServer, err = s.startAggregator(ctx, transport, serverConfig, server, s.metrics)
+		aggregatorServer, err = s.createKubeAggregator(serverConfig, server, s.metrics)
+		if err != nil {
+			return err
+		}
+		delegate = aggregatorServer.GenericAPIServer
+	}
+
+	var runningServer *genericapiserver.GenericAPIServer
+	if s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator) {
+		runningServer, err = s.startDataplaneAggregator(ctx, transport, serverConfig, delegate)
+		if err != nil {
+			return err
+		}
+	} else if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
+		runningServer, err = s.startKubeAggregator(ctx, transport, aggregatorServer)
 		if err != nil {
 			return err
 		}
@@ -387,25 +421,74 @@ func (s *service) startCoreServer(
 	return server, nil
 }
 
-func (s *service) startAggregator(
+func (s *service) startDataplaneAggregator(
 	ctx context.Context,
 	transport *roundTripperFunc,
 	serverConfig *genericapiserver.RecommendedConfig,
+	delegate *genericapiserver.GenericAPIServer,
+) (*genericapiserver.GenericAPIServer, error) {
+	config := &dataplaneaggregator.Config{
+		GenericConfig: serverConfig,
+		ExtraConfig: dataplaneaggregator.ExtraConfig{
+			PluginClient: s.pluginClient,
+			PluginContextProvider: &pluginContextProvider{
+				pluginStore:     s.pluginStore,
+				datasources:     s.datasources,
+				contextProvider: s.contextProvider,
+			},
+		},
+	}
+
+	if err := s.options.GrafanaAggregatorOptions.ApplyTo(config, s.options.RecommendedOptions.Etcd); err != nil {
+		return nil, err
+	}
+
+	completedConfig := config.Complete()
+
+	aggregatorServer, err := completedConfig.NewWithDelegate(delegate)
+	if err != nil {
+		return nil, err
+	}
+
+	// setup the loopback transport for the aggregator server and signal that it's ready
+	// ignore the lint error because the response is passed directly to the client,
+	// so the client will be responsible for closing the response body.
+	// nolint:bodyclose
+	transport.fn = grafanaresponsewriter.WrapHandler(aggregatorServer.GenericAPIServer.Handler)
+	close(transport.ready)
+
+	prepared, err := aggregatorServer.PrepareRun()
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		s.stoppedCh <- prepared.RunWithContext(ctx)
+	}()
+
+	return aggregatorServer.GenericAPIServer, nil
+}
+
+func (s *service) createKubeAggregator(
+	serverConfig *genericapiserver.RecommendedConfig,
 	server *genericapiserver.GenericAPIServer,
 	reg prometheus.Registerer,
-) (*genericapiserver.GenericAPIServer, error) {
+) (*aggregatorapiserver.APIAggregator, error) {
 	namespaceMapper := request.GetNamespaceMapper(s.cfg)
 
-	aggregatorConfig, err := aggregator.CreateAggregatorConfig(s.options, *serverConfig, namespaceMapper(1))
+	aggregatorConfig, err := kubeaggregator.CreateAggregatorConfig(s.options, *serverConfig, namespaceMapper(1))
 	if err != nil {
 		return nil, err
 	}
 
-	aggregatorServer, err := aggregator.CreateAggregatorServer(aggregatorConfig, server, reg)
-	if err != nil {
-		return nil, err
-	}
+	return kubeaggregator.CreateAggregatorServer(aggregatorConfig, server, reg)
+}
 
+func (s *service) startKubeAggregator(
+	ctx context.Context,
+	transport *roundTripperFunc,
+	aggregatorServer *aggregatorapiserver.APIAggregator,
+) (*genericapiserver.GenericAPIServer, error) {
 	// setup the loopback transport for the aggregator server and signal that it's ready
 	// ignore the lint error because the response is passed directly to the client,
 	// so the client will be responsible for closing the response body.
@@ -472,4 +555,31 @@ func (f *roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) 
 		<-f.ready
 	}
 	return f.fn(req)
+}
+
+type pluginContextProvider struct {
+	pluginStore     pluginstore.Store
+	datasources     datasource.ScopedPluginDatasourceProvider
+	contextProvider datasource.PluginContextWrapper
+}
+
+func (p *pluginContextProvider) GetPluginContext(ctx context.Context, pluginID string, uid string) (backend.PluginContext, error) {
+	all := p.pluginStore.Plugins(ctx)
+
+	var datasourceProvider datasource.PluginDatasourceProvider
+	for _, plugin := range all {
+		if plugin.ID == pluginID {
+			datasourceProvider = p.datasources.GetDatasourceProvider(plugin.JSONData)
+		}
+	}
+	if datasourceProvider == nil {
+		return backend.PluginContext{}, fmt.Errorf("plugin not found")
+	}
+
+	s, err := datasourceProvider.GetInstanceSettings(ctx, uid)
+	if err != nil {
+		return backend.PluginContext{}, err
+	}
+
+	return p.contextProvider.PluginContextForDataSource(ctx, s)
 }
