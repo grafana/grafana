@@ -320,6 +320,13 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
+			Name:         "prometheusRunQueriesInParallel",
+			Description:  "Enables running Prometheus queries in parallel",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
 			Name:           "prometheusDataplane",
 			Description:    "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular, when this feature toggle is active, the numeric `Field.Name` is set from 'Value' to the value of the `__name__` label.",
 			Expression:     "true",
@@ -1263,7 +1270,7 @@ var (
 		{
 			Name:        "azureMonitorPrometheusExemplars",
 			Description: "Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaPartnerPluginsSquad,
 		},
 		{
@@ -1371,6 +1378,13 @@ var (
 			Stage:       FeatureStageDeprecated,
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "true", // Enabled by default for now
+		},
+		{
+			Name:            "backgroundPluginInstaller",
+			Description:     "Enable background plugin installer",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresRestart: true,
 		},
 		{
 			Name:            "dataplaneAggregator",
