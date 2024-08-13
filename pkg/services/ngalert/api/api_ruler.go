@@ -76,7 +76,8 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 		return toNamespaceErrorResponse(err)
 	}
 
-	userNamespace, id := c.SignedInUser.GetID().Type(), c.SignedInUser.GetID().ID()
+	id, _ := c.SignedInUser.GetInternalID()
+	userNamespace := c.SignedInUser.GetIdentityType()
 	var loggerCtx = []any{
 		"identity",
 		id,
@@ -294,7 +295,8 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 	for groupKey, rules := range configs {
 		folder, ok := namespaceMap[groupKey.NamespaceUID]
 		if !ok {
-			userNamespace, id := c.SignedInUser.GetID().Type(), c.SignedInUser.GetID().ID()
+			id, _ := c.SignedInUser.GetInternalID()
+			userNamespace := c.SignedInUser.GetIdentityType()
 			srv.log.Error("Namespace not visible to the user", "user", id, "userNamespace", userNamespace, "namespace", groupKey.NamespaceUID)
 			continue
 		}
@@ -370,7 +372,9 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 	var finalChanges *store.GroupDelta
 	var dbConfig *ngmodels.AlertConfiguration
 	err := srv.xactManager.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
-		userNamespace, id := c.SignedInUser.GetID().Type(), c.SignedInUser.GetID().ID()
+		id, _ := c.SignedInUser.GetInternalID()
+		userNamespace := c.SignedInUser.GetIdentityType()
+
 		logger := srv.log.New("namespace_uid", groupKey.NamespaceUID, "group",
 			groupKey.RuleGroup, "org_id", groupKey.OrgID, "user_id", id, "userNamespace", userNamespace)
 		groupChanges, err := store.CalculateChanges(tranCtx, srv.store, groupKey, rules)
