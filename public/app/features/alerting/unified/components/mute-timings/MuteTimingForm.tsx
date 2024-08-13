@@ -60,9 +60,11 @@ const useDefaultValues = (muteTiming?: MuteTiming): MuteTimingFields => {
 const MuteTimingForm = ({ muteTiming, showError, loading, provisioned, editMode }: Props) => {
   const { selectedAlertmanager } = useAlertmanager();
   const hookArgs = { alertmanager: selectedAlertmanager! };
-  const createTimeInterval = useCreateMuteTiming(hookArgs);
-  const updateTimeInterval = useUpdateMuteTiming(hookArgs);
+
+  const [createTimeInterval] = useCreateMuteTiming(hookArgs);
+  const [updateTimeInterval] = useUpdateMuteTiming(hookArgs);
   const validateMuteTiming = useValidateMuteTiming(hookArgs);
+
   /**
    * The k8s API approach does not support renaming an entity at this time,
    * as it requires renaming all other references of this entity.
@@ -79,13 +81,13 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provisioned, editMode 
   const returnLink = makeAMLink('/alerting/routes/', selectedAlertmanager!, { tab: 'mute_timings' });
 
   const onSubmit = async (values: MuteTimingFields) => {
-    const timeInterval = createMuteTiming(values);
+    const interval = createMuteTiming(values);
 
     const updateOrCreate = async () => {
       if (editMode) {
-        return updateTimeInterval({ timeInterval, originalName: muteTiming?.metadata?.name || muteTiming!.name });
+        return updateTimeInterval.execute({ interval, originalName: muteTiming?.metadata?.name || muteTiming!.name });
       }
-      return createTimeInterval({ timeInterval });
+      return createTimeInterval.execute({ interval });
     };
 
     return updateOrCreate().then(() => {

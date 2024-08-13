@@ -1,4 +1,5 @@
 import { InitialEntry } from 'history';
+import { last } from 'lodash';
 import { Route } from 'react-router';
 import { render, within, userEvent, screen } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
@@ -189,7 +190,7 @@ const saveMuteTiming = async () => {
 
 setupMswServer();
 
-const getAlertmanagerConfigUpdate = async (requests: Request[]) => {
+const getAlertmanagerConfigUpdate = async (requests: Request[]): Promise<AlertManagerCortexConfig> => {
   const alertmanagerUpdate = requests.find(
     (r) => r.url.match('/alertmanager/(.*)/config/api/v1/alert') && r.method === 'POST'
   );
@@ -227,8 +228,10 @@ describe('Mute timings', () => {
 
     const requests = await capture;
     const alertmanagerUpdate = await getAlertmanagerConfigUpdate(requests);
+    const lastAdded = last(alertmanagerUpdate.alertmanager_config.time_intervals);
+
     // Check that the last mute_time_interval is the one we just submitted via the form
-    expect(alertmanagerUpdate.alertmanager_config.mute_time_intervals.pop().name).toEqual('maintenance period');
+    expect(lastAdded?.name).toEqual('maintenance period');
   });
 
   it('creates a new mute timing, with time_intervals in config', async () => {
@@ -252,7 +255,9 @@ describe('Mute timings', () => {
 
     const requests = await capture;
     const alertmanagerUpdate = await getAlertmanagerConfigUpdate(requests);
-    expect(alertmanagerUpdate.alertmanager_config.time_intervals.pop().name).toEqual('maintenance period');
+    const lastAdded = last(alertmanagerUpdate.alertmanager_config.time_intervals);
+
+    expect(lastAdded?.name).toEqual('maintenance period');
   });
 
   it('creates a new mute timing, with time_intervals and mute_time_intervals in config', async () => {
@@ -310,9 +315,9 @@ describe('Mute timings', () => {
 
     const requests = await capture;
     const alertmanagerUpdate = await getAlertmanagerConfigUpdate(requests);
-    const mostRecentInterval = alertmanagerUpdate.alertmanager_config.mute_time_intervals.pop().time_intervals[0];
+    const lastAdded = last(alertmanagerUpdate.alertmanager_config.mute_time_intervals);
 
-    expect(mostRecentInterval).toMatchObject({
+    expect(lastAdded?.time_intervals[0]).toMatchObject({
       days_of_month: [formValues.days],
       months: formValues.months.split(', '),
       years: [formValues.years],
