@@ -18,6 +18,7 @@ if (window.nonce) {
 import 'swagger-ui-react/swagger-ui.css';
 
 import DOMPurify from 'dompurify';
+import { textUtil } from '@grafana/data';
 import { createRoot } from 'react-dom/client';
 
 import { Page } from './SwaggerPage';
@@ -26,7 +27,9 @@ import { Page } from './SwaggerPage';
 const tt = window.trustedTypes;
 if (tt?.createPolicy) {
   tt.createPolicy('default', {
-    createHTML: (string, sink) => DOMPurify.sanitize(string, {RETURN_TRUSTED_TYPE: true}) as unknown as string
+    createHTML: (string, sink) => DOMPurify.sanitize(string, {RETURN_TRUSTED_TYPE: true}) as unknown as string,
+    createScriptURL: (url, sink) => textUtil.sanitizeUrl(url) as unknown as string,
+    createScript: (script, sink) => script,
   });
 }
 
