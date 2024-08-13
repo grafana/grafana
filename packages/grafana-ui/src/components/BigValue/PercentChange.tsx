@@ -21,5 +21,5 @@ export const PercentChange = ({ percentChange, styles }: Props) => {
 };
 
 export const percentChangeString = (percentChange: number) => {
-  return percentChange.toLocaleString(undefined, { style: 'percent', maximumSignificantDigits: 3 }) ?? '';
+  return percentChange.toLocaleString(undefined, { style: 'percent', maximumSignificantDigits: 3 });
 };
