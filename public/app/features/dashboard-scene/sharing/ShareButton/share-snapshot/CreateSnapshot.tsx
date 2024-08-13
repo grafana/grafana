@@ -78,7 +78,7 @@ export function CreateSnapshot({
         </Stack>
       </Alert>
       <Field label={t('snapshot.share.name-label', 'Snapshot name*')}>
-        <Input id="snapshot-name-input" defaultValue={name} onBlur={(e) => onNameChange(e.target.value)} />
+        <Input id="snapshot-name-input" defaultValue={name} onChange={(e) => onNameChange(e.currentTarget.value)} />
       </Field>
       <Field label={t('snapshot.share.expiration-label', 'Expires in')}>
         <RadioButtonGroup<number>
