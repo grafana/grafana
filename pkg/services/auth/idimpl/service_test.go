@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/idtest"
@@ -71,7 +70,7 @@ func TestService_SignIdentity(t *testing.T) {
 			featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding),
 			&authntest.FakeService{}, nil,
 		)
-		token, _, err := s.SignIdentity(context.Background(), &authn.Identity{ID: identity.MustParseTypedID("user:1")})
+		token, _, err := s.SignIdentity(context.Background(), &authn.Identity{ID: "1", Type: claims.TypeUser})
 		require.NoError(t, err)
 		require.NotEmpty(t, token)
 	})
@@ -83,10 +82,12 @@ func TestService_SignIdentity(t *testing.T) {
 			&authntest.FakeService{}, nil,
 		)
 		token, _, err := s.SignIdentity(context.Background(), &authn.Identity{
-			ID:              identity.MustParseTypedID("user:1"),
+			ID:              "1",
+			Type:            claims.TypeUser,
 			AuthenticatedBy: login.AzureADAuthModule,
 			Login:           "U1",
-			UID:             identity.NewTypedIDString(claims.TypeUser, "edpu3nnt61se8e")})
+			UID:             "edpu3nnt61se8e",
+		})
 		require.NoError(t, err)
 
 		parsed, err := jwt.ParseSigned(token)
@@ -106,10 +107,12 @@ func TestService_SignIdentity(t *testing.T) {
 			&authntest.FakeService{}, nil,
 		)
 		_, gotClaims, err := s.SignIdentity(context.Background(), &authn.Identity{
-			ID:              identity.MustParseTypedID("user:1"),
+			ID:              "1",
+			Type:            claims.TypeUser,
 			AuthenticatedBy: login.AzureADAuthModule,
 			Login:           "U1",
-			UID:             identity.NewTypedIDString(claims.TypeUser, "edpu3nnt61se8e")})
+			UID:             "edpu3nnt61se8e",
+		})
 		require.NoError(t, err)
 
 		assert.Equal(t, login.AzureADAuthModule, gotClaims.Rest.AuthenticatedBy)

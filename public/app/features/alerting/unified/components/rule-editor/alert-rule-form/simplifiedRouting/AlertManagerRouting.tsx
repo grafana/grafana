@@ -3,12 +3,10 @@ import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, CollapsableSection, LoadingPlaceholder, Stack, useStyles2 } from '@grafana/ui';
+import { CollapsableSection, Stack, useStyles2 } from '@grafana/ui';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
 
-import { ContactPointReceiverSummary } from '../../../contact-points/ContactPoint';
-import { useGrafanaContactPoints } from '../../../contact-points/useContactPoints';
 import { ContactPointWithMetadata } from '../../../contact-points/utils';
 
 import { ContactPointDetails } from './contactPoint/ContactPointDetails';
@@ -24,12 +22,6 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
   const styles = useStyles2(getStyles);
 
   const alertManagerName = alertManager.name;
-  const {
-    isLoading,
-    error: errorInContactPointStatus,
-    contactPoints,
-    refetch: refetchReceivers,
-  } = useGrafanaContactPoints();
 
   const [selectedContactPointWithMetadata, setSelectedContactPointWithMetadata] = useState<
     ContactPointWithMetadata | undefined
@@ -45,19 +37,6 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
     watch(`contactPoints.${alertManagerName}.overrideTimings`) ||
     watch(`contactPoints.${alertManagerName}.muteTimeIntervals`)?.length > 0;
 
-  const options = contactPoints.map((receiver) => {
-    const integrations = receiver?.grafana_managed_receiver_configs;
-    const description = <ContactPointReceiverSummary receivers={integrations ?? []} />;
-
-    return { label: receiver.name, value: receiver, description };
-  });
-
-  if (errorInContactPointStatus) {
-    return <Alert title="Failed to fetch contact points" severity="error" />;
-  }
-  if (isLoading) {
-    return <LoadingPlaceholder text={'Loading...'} />;
-  }
   return (
     <Stack direction="column">
       <Stack direction="row" alignItems="center">
@@ -70,12 +49,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
         <div className={styles.secondAlertManagerLine}></div>
       </Stack>
       <Stack direction="row" gap={1} alignItems="center">
-        <ContactPointSelector
-          alertManager={alertManagerName}
-          options={options}
-          onSelectContactPoint={onSelectContactPoint}
-          refetchReceivers={refetchReceivers}
-        />
+        <ContactPointSelector alertManager={alertManagerName} onSelectContactPoint={onSelectContactPoint} />
       </Stack>
       {selectedContactPointWithMetadata?.grafana_managed_receiver_configs && (
         <ContactPointDetails receivers={selectedContactPointWithMetadata.grafana_managed_receiver_configs} />
