@@ -539,7 +539,6 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 		Alert:     alert,
 		Receivers: receivers,
 	})
-
 }
 
 func (am *Alertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
