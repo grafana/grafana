@@ -311,14 +311,13 @@ describe('Language completion provider', () => {
       );
     });
 
-    it('should have a default limit parameter', () => {
+    it("should not use default limit parameter when 'none' is passed to fetchSeriesLabels", () => {
       const languageProvider = new LanguageProvider({
         ...defaultDatasource,
-        // interpolateString: (string: string) => string.replace(/\$/, 'interpolated-'),
       } as PrometheusDatasource);
       const fetchSeriesLabels = languageProvider.fetchSeriesLabels;
       const requestSpy = jest.spyOn(languageProvider, 'request');
-      fetchSeriesLabels('metric-with-limit');
+      fetchSeriesLabels('metric-with-limit', undefined, 'none');
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy).toHaveBeenCalledWith(
         '/api/v1/series',
@@ -327,7 +326,6 @@ describe('Language completion provider', () => {
           end: toPrometheusTimeString,
           'match[]': 'metric-with-limit',
           start: fromPrometheusTimeString,
-          limit: DEFAULT_SERIES_LIMIT,
         },
         undefined
       );
