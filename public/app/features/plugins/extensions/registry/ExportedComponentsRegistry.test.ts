@@ -1,9 +1,9 @@
 import React from 'react';
 import { firstValueFrom } from 'rxjs';
 
-import { ExportedComponentsRegistry } from './ExportedComponentsRegistry';
+import { ExposedComponentsRegistry } from './ExposedComponentsRegistry';
 
-describe('ExportedComponentsRegistry', () => {
+describe('ExposedComponentsRegistry', () => {
   const consoleWarn = jest.fn();
 
   beforeEach(() => {
@@ -12,7 +12,7 @@ describe('ExportedComponentsRegistry', () => {
   });
 
   it('should return empty registry when exposed components have been registered', async () => {
-    const reactiveRegistry = new ExportedComponentsRegistry();
+    const reactiveRegistry = new ExposedComponentsRegistry();
     const observable = reactiveRegistry.asObservable();
     const registry = await firstValueFrom(observable);
     expect(registry).toEqual({});
@@ -21,11 +21,11 @@ describe('ExportedComponentsRegistry', () => {
   it('should be possible to register exposed components in the registry', async () => {
     const pluginId = 'grafana-basic-app';
     const id = `${pluginId}/hello-world/v1`;
-    const reactiveRegistry = new ExportedComponentsRegistry();
+    const reactiveRegistry = new ExposedComponentsRegistry();
 
     reactiveRegistry.register({
       pluginId,
-      exportedComponentConfigs: [
+      exposedComponentConfigs: [
         {
           id,
           title: 'not important',
@@ -54,11 +54,11 @@ describe('ExportedComponentsRegistry', () => {
     const id1 = `${pluginId}/hello-world1/v1`;
     const id2 = `${pluginId}/hello-world2/v1`;
     const id3 = `${pluginId}/hello-world3/v1`;
-    const reactiveRegistry = new ExportedComponentsRegistry();
+    const reactiveRegistry = new ExposedComponentsRegistry();
 
     reactiveRegistry.register({
       pluginId,
-      exportedComponentConfigs: [
+      exposedComponentConfigs: [
         {
           id: id1,
           title: 'not important',
@@ -96,11 +96,11 @@ describe('ExportedComponentsRegistry', () => {
     const id2 = `${pluginId1}/hello-world2/v1`;
     const id3 = `${pluginId2}/hello-world1/v1`;
     const id4 = `${pluginId2}/hello-world2/v1`;
-    const reactiveRegistry = new ExportedComponentsRegistry();
+    const reactiveRegistry = new ExposedComponentsRegistry();
 
     reactiveRegistry.register({
       pluginId: pluginId1,
-      exportedComponentConfigs: [
+      exposedComponentConfigs: [
         {
           id: id1,
           title: 'not important',
@@ -119,7 +119,7 @@ describe('ExportedComponentsRegistry', () => {
 
     reactiveRegistry.register({
       pluginId: pluginId2,
-      exportedComponentConfigs: [
+      exposedComponentConfigs: [
         {
           id: id3,
           title: 'not important',
@@ -146,7 +146,7 @@ describe('ExportedComponentsRegistry', () => {
   });
 
   it('should notify subscribers when the registry changes', async () => {
-    const registry = new ExportedComponentsRegistry();
+    const registry = new ExposedComponentsRegistry();
     const observable = registry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -156,7 +156,7 @@ describe('ExportedComponentsRegistry', () => {
     registry.register({
       pluginId: 'grafana-basic-app1',
       extensionConfigs: [],
-      exportedComponentConfigs: [
+      exposedComponentConfigs: [
         {
           id: 'grafana-basic-app1/hello-world/v1',
           title: 'not important',
@@ -172,7 +172,7 @@ describe('ExportedComponentsRegistry', () => {
     registry.register({
       pluginId: 'grafana-basic-app2',
       extensionConfigs: [],
-      exportedComponentConfigs: [
+      exposedComponentConfigs: [
         {
           id: 'grafana-basic-app2/hello-world/v1',
           title: 'not important',
@@ -190,7 +190,7 @@ describe('ExportedComponentsRegistry', () => {
   });
 
   it('should give the last version of the registry for new subscribers', async () => {
-    const registry = new ExportedComponentsRegistry();
+    const registry = new ExposedComponentsRegistry();
     const observable = registry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -198,7 +198,7 @@ describe('ExportedComponentsRegistry', () => {
     registry.register({
       pluginId: 'grafana-basic-app',
       extensionConfigs: [],
-      exportedComponentConfigs: [
+      exposedComponentConfigs: [
         {
           id: 'grafana-basic-app/hello-world/v1',
           title: 'not important',
@@ -225,7 +225,7 @@ describe('ExportedComponentsRegistry', () => {
 
   it('should not register exposed components for a plugin that had errors', () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new ExportedComponentsRegistry();
+    const reactiveRegistry = new ExposedComponentsRegistry();
     const observable = reactiveRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -233,7 +233,7 @@ describe('ExportedComponentsRegistry', () => {
       error: new Error('Something is broken'),
       pluginId,
       extensionConfigs: [],
-      exportedComponentConfigs: [
+      exposedComponentConfigs: [
         {
           id: `${pluginId}/hello-world/v1`,
           title: 'not important',
@@ -253,11 +253,11 @@ describe('ExportedComponentsRegistry', () => {
   });
 
   it('should log a warning if another component with the same id already exists in the registry', async () => {
-    const registry = new ExportedComponentsRegistry();
+    const registry = new ExposedComponentsRegistry();
     registry.register({
       pluginId: 'grafana-basic-app1',
       extensionConfigs: [],
-      exportedComponentConfigs: [
+      exposedComponentConfigs: [
         {
           id: 'grafana-basic-app1/hello-world/v1',
           title: 'not important',
@@ -279,7 +279,7 @@ describe('ExportedComponentsRegistry', () => {
     registry.register({
       pluginId: 'grafana-basic-app2',
       extensionConfigs: [],
-      exportedComponentConfigs: [
+      exposedComponentConfigs: [
         {
           id: 'grafana-basic-app1/hello-world/v1', // incorrectly scoped
           title: 'not important',
@@ -297,11 +297,11 @@ describe('ExportedComponentsRegistry', () => {
   });
 
   it('should skip registering component and log a warning when id is not prefixed with plugin id', async () => {
-    const registry = new ExportedComponentsRegistry();
+    const registry = new ExposedComponentsRegistry();
     registry.register({
       pluginId: 'grafana-basic-app1',
       extensionConfigs: [],
-      exportedComponentConfigs: [
+      exposedComponentConfigs: [
         {
           id: 'hello-world/v1',
           title: 'not important',
@@ -319,11 +319,11 @@ describe('ExportedComponentsRegistry', () => {
   });
 
   it('should log a warning when exposed component id is not suffixed with component version', async () => {
-    const registry = new ExportedComponentsRegistry();
+    const registry = new ExposedComponentsRegistry();
     registry.register({
       pluginId: 'grafana-basic-app1',
       extensionConfigs: [],
-      exportedComponentConfigs: [
+      exposedComponentConfigs: [
         {
           id: 'grafana-basic-app1/hello-world',
           title: 'not important',
@@ -341,12 +341,12 @@ describe('ExportedComponentsRegistry', () => {
   });
 
   it('should not register component when description is missing', async () => {
-    const registry = new ExportedComponentsRegistry();
+    const registry = new ExposedComponentsRegistry();
 
     registry.register({
       pluginId: 'grafana-basic-app',
       extensionConfigs: [],
-      exportedComponentConfigs: [
+      exposedComponentConfigs: [
         {
           id: 'grafana-basic-app/hello-world/v1',
           title: 'not important',
@@ -365,12 +365,12 @@ describe('ExportedComponentsRegistry', () => {
   });
 
   it('should not register component when title is missing', async () => {
-    const registry = new ExportedComponentsRegistry();
+    const registry = new ExposedComponentsRegistry();
 
     registry.register({
       pluginId: 'grafana-basic-app',
       extensionConfigs: [],
-      exportedComponentConfigs: [
+      exposedComponentConfigs: [
         {
           id: 'grafana-basic-app/hello-world/v1',
           title: '',

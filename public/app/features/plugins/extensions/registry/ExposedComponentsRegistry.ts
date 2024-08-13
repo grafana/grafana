@@ -1,4 +1,4 @@
-import { PluginExportedComponentConfig } from '@grafana/data';
+import { PluginExposedComponentConfig } from '@grafana/data';
 
 import { PluginPreloadResult } from '../../pluginPreloader';
 import { logWarning } from '../utils';
@@ -8,11 +8,11 @@ import { Registry } from './Registry';
 export type RegistryType = {
   [id: string]: {
     pluginId: string;
-    config: PluginExportedComponentConfig;
+    config: PluginExposedComponentConfig;
   };
 };
 
-export class ExportedComponentsRegistry extends Registry<RegistryType> {
+export class ExposedComponentsRegistry extends Registry<RegistryType> {
   constructor(initialState: RegistryType = {}) {
     super({
       initialState,
@@ -20,18 +20,18 @@ export class ExportedComponentsRegistry extends Registry<RegistryType> {
   }
 
   mapToRegistry(registry: RegistryType, item: PluginPreloadResult): RegistryType {
-    const { pluginId, exportedComponentConfigs: exportedComponentsConfigs, error } = item;
+    const { pluginId, exposedComponentConfigs, error } = item;
 
     if (error) {
       logWarning(`"${pluginId}" plugin failed to load. Skip registering its exposed components.`);
       return registry;
     }
 
-    if (!exportedComponentsConfigs) {
+    if (!exposedComponentConfigs) {
       return registry;
     }
 
-    for (const config of exportedComponentsConfigs) {
+    for (const config of exposedComponentConfigs) {
       const { id, description, title } = config;
 
       if (!id.startsWith(pluginId)) {

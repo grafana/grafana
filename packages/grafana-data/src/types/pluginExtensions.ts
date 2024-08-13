@@ -95,7 +95,7 @@ export type PluginExtensionComponentConfig<Props = {}> = {
   extensionPointId: string;
 };
 
-export type PluginExportedComponentConfig<Props = {}> = {
+export type PluginExposedComponentConfig<Props = {}> = {
   /**
    * The unique identifier of the component
    * Shoud be in the format of `<pluginId>/<componentName>/<componentVersion>`. e.g. `myorg-todo-app/todo-list/v1`

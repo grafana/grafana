@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 
-import { ExportedComponentsRegistry } from './registry/ExportedComponentsRegistry';
+import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
 import { createUsePluginComponent } from './usePluginComponent';
 
 jest.mock('app/features/plugins/pluginSettings', () => ({
@@ -16,10 +16,10 @@ jest.mock('app/features/plugins/pluginSettings', () => ({
 }));
 
 describe('usePluginComponent()', () => {
-  let registry: ExportedComponentsRegistry;
+  let registry: ExposedComponentsRegistry;
 
   beforeEach(() => {
-    registry = new ExportedComponentsRegistry();
+    registry = new ExposedComponentsRegistry();
   });
 
   it('should return null if there are no component exposed for the id', () => {
@@ -37,7 +37,7 @@ describe('usePluginComponent()', () => {
     registry.register({
       pluginId,
       extensionConfigs: [],
-      exportedComponentConfigs: [
+      exposedComponentConfigs: [
         { id, title: 'not important', description: 'not important', component: () => <div>Hello World</div> },
       ],
     });
@@ -70,7 +70,7 @@ describe('usePluginComponent()', () => {
       registry.register({
         pluginId,
         extensionConfigs: [],
-        exportedComponentConfigs: [
+        exposedComponentConfigs: [
           {
             id,
             title: 'not important',
