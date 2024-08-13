@@ -1,7 +1,8 @@
-import { AppEvents } from '@grafana/data';
+import { AppEvents, textUtil } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, getTemplateSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import { appEvents } from 'app/core/core';
+import { createAbsoluteUrl, RelativeUrl } from 'app/features/alerting/unified/utils/url';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { HttpRequestMethod } from '../../panelcfg.gen';
@@ -11,10 +12,10 @@ import { APIEditorConfig } from './APIEditor';
 type IsLoadingCallback = (loading: boolean) => void;
 
 export const callApi = (api: APIEditorConfig, updateLoadingStateCallback?: IsLoadingCallback) => {
-  if (api && api.endpoint) {
-    // If API endpoint origin matches Grafana origin, don't call it.
-    const interpolatedUrl = interpolateVariables(api.endpoint);
-    if (isRequestUrlAllowed(interpolatedUrl)) {
+  const endpoint = interpolateVariables(getEndpoint(api.endpoint));
+
+  if (endpoint) {
+    if (isRequestUrlAllowed(endpoint)) {
       appEvents.emit(AppEvents.alertError, ['Cannot call API at Grafana origin.']);
       updateLoadingStateCallback && updateLoadingStateCallback(false);
       return;
@@ -44,8 +45,8 @@ export const interpolateVariables = (text: string) => {
 
 export const getRequest = (api: APIEditorConfig) => {
   const requestHeaders: HeadersInit = [];
-
-  const url = new URL(interpolateVariables(api.endpoint!));
+  const endpoint = interpolateVariables(getEndpoint(api.endpoint));
+  const url = new URL(endpoint);
 
   let request: BackendSrvRequest = {
     url: url.toString(),
@@ -84,6 +85,17 @@ const getData = (api: APIEditorConfig) => {
   }
 
   return data;
+};
+
+const getEndpoint = (endpoint: string) => {
+  const isRelativeUrl = endpoint.startsWith('/');
+  if (isRelativeUrl) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const sanitizedRelativeURL = textUtil.sanitizeUrl(endpoint) as RelativeUrl;
+    endpoint = createAbsoluteUrl(sanitizedRelativeURL, []);
+  }
+
+  return endpoint;
 };
 
 const isRequestUrlAllowed = (requestEndpoint: string) => {
