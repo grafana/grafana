@@ -120,6 +120,9 @@
       "used-by_one": "Ůşęđ þy {{ count }} ŉőŧįƒįčäŧįőŉ pőľįčy",
       "used-by_other": "Ůşęđ þy {{ count }} ŉőŧįƒįčäŧįőŉ pőľįčįęş"
     },
+    "contactPointFilter": {
+      "label": "Cőŉŧäčŧ pőįŉŧ"
+    },
     "grafana-rules": {
       "export-rules": "Ēχpőřŧ řūľęş",
       "loading": "Ŀőäđįŉģ...",
@@ -1662,6 +1665,18 @@
     }
   },
   "plugins": {
+    "details": {
+      "labels": {
+        "dependencies": "Đępęŉđęŉčįęş",
+        "downloads": "Đőŵŉľőäđş",
+        "from": "Fřőm",
+        "reportAbuse": "Ŗępőřŧ Åþūşę",
+        "signature": "Ŝįģŉäŧūřę",
+        "status": "Ŝŧäŧūş",
+        "updatedAt": "Ŀäşŧ ūpđäŧęđ: ",
+        "version": "Vęřşįőŉ"
+      }
+    },
     "empty-state": {
       "message": "Ńő pľūģįŉş ƒőūŉđ"
     }

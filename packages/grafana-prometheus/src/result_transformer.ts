@@ -202,11 +202,10 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
         .forEach((label) => {
           // If we don't have label in labelFields, add it
           if (!labelFields.some((l) => l.name === label)) {
-            const numberField = label === HISTOGRAM_QUANTILE_LABEL_NAME;
             labelFields.push({
               name: label,
               config: { filterable: true },
-              type: numberField ? FieldType.number : FieldType.string,
+              type: FieldType.string,
               values: [],
             });
           }
@@ -280,9 +279,6 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
 
 function getLabelValue(metric: PromMetric, label: string): string | number {
   if (metric.hasOwnProperty(label)) {
-    if (label === HISTOGRAM_QUANTILE_LABEL_NAME) {
-      return parseSampleValue(metric[label]);
-    }
     return metric[label];
   }
   return '';

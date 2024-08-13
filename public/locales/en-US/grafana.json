@@ -120,6 +120,9 @@
       "used-by_one": "Used by {{ count }} notification policy",
       "used-by_other": "Used by {{ count }} notification policies"
     },
+    "contactPointFilter": {
+      "label": "Contact point"
+    },
     "grafana-rules": {
       "export-rules": "Export rules",
       "loading": "Loading...",
@@ -1662,6 +1665,18 @@
     }
   },
   "plugins": {
+    "details": {
+      "labels": {
+        "dependencies": "Dependencies",
+        "downloads": "Downloads",
+        "from": "From",
+        "reportAbuse": "Report Abuse",
+        "signature": "Signature",
+        "status": "Status",
+        "updatedAt": "Last updated: ",
+        "version": "Version"
+      }
+    },
     "empty-state": {
       "message": "No plugins found"
     }

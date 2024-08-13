@@ -87,7 +87,7 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 	access.CanSave, _ = guardian.CanSave()
 	access.CanAdmin, _ = guardian.CanAdmin()
 	access.CanDelete, _ = guardian.CanDelete()
-	access.CanStar = user.GetID().Type() == claims.TypeUser // not anon
+	access.CanStar = user.IsIdentityType(claims.TypeUser)
 
 	access.AnnotationsPermissions = &dashboard.AnnotationPermission{}
 	r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
