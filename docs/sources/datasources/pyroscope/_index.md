@@ -16,8 +16,8 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Grafana Pyroscope
-weight: 1150
+title: Pyroscope
+weight: 1350
 refs:
   flame-graph:
     - pattern: /docs/grafana/
