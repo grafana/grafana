@@ -77,11 +77,11 @@ Refer to [Provision the data source](#provision-the-data-source) for next steps.
 
 ![Provisioned data source warning](/media/docs/grafana/data-sources/tempo/tempo-data-source-provisioned-error.png)
 
-## Set up a data source
+## Add or modify a data source
 
 You can use these procedures to configure a new Tempo data source or to edit an existing one.
 
-### Create a new data source
+### Add a new data source
 
 Follow these steps to set up a new Tempo data source:
 
