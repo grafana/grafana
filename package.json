@@ -383,6 +383,7 @@
     "react-window": "1.8.10",
     "react-window-infinite-loader": "1.0.9",
     "react-zoom-pan-pinch": "^3.3.0",
+    "reduce-reducers": "^1.0.4",
     "redux": "5.0.1",
     "redux-thunk": "3.1.0",
     "regenerator-runtime": "0.14.1",
