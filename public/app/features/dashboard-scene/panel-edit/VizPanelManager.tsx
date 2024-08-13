@@ -113,9 +113,13 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
           text: String(texts[0]),
         });
 
-        variables = new SceneVariableSet({
-          variables: [varWithDefaultValue],
-        });
+        if (!variables) {
+          variables = new SceneVariableSet({
+            variables: [varWithDefaultValue],
+          });
+        } else {
+          variables.setState({ variables: [varWithDefaultValue] });
+        }
       }
     }
 
