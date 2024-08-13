@@ -21,7 +21,7 @@ import (
 type FakePluginInstaller struct {
 	AddFunc func(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error
 	// Remove removes a plugin from the store.
-	RemoveFunc func(ctx context.Context, pluginID string) error
+	RemoveFunc func(ctx context.Context, pluginID, version string) error
 }
 
 func (i *FakePluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
@@ -31,9 +31,9 @@ func (i *FakePluginInstaller) Add(ctx context.Context, pluginID, version string,
 	return nil
 }
 
-func (i *FakePluginInstaller) Remove(ctx context.Context, pluginID string) error {
+func (i *FakePluginInstaller) Remove(ctx context.Context, pluginID, version string) error {
 	if i.RemoveFunc != nil {
-		return i.RemoveFunc(ctx, pluginID)
+		return i.RemoveFunc(ctx, pluginID, version)
 	}
 	return nil
 }
