@@ -55,7 +55,6 @@ func (tapi *TeamAPI) createTeam(c *contextmodel.ReqContext) response.Response {
 			t.ID, dashboardaccess.PERMISSION_ADMIN.String()); err != nil {
 			c.Logger.Error("Could not add creator to team", "error", err)
 		}
-
 	}
 
 	return response.JSON(http.StatusOK, &util.DynMap{
