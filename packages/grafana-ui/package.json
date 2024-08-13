@@ -183,6 +183,7 @@
     "rollup-plugin-svg-import": "1.6.0",
     "sass-loader": "14.2.1",
     "storybook": "^8.1.6",
+    "storybook-addon-performance": "^0.17.3",
     "storybook-dark-mode": "^4.0.1",
     "style-loader": "4.0.0",
     "typescript": "5.4.5",

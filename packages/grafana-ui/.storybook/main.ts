@@ -51,6 +51,7 @@ const mainConfig: StorybookConfig = {
     getAbsolutePath('storybook-dark-mode'),
     getAbsolutePath('@storybook/addon-mdx-gfm'),
     getAbsolutePath('@storybook/addon-webpack5-compiler-swc'),
+    'storybook-addon-performance',
   ],
   core: {},
   docs: {

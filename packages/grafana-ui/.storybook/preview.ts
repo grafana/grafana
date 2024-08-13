@@ -21,6 +21,7 @@ import lightTheme from '../../../public/sass/grafana.light.scss';
 // @ts-ignore
 import darkTheme from '../../../public/sass/grafana.dark.scss';
 import { GrafanaDark, GrafanaLight } from './storybookTheme';
+import { withPerformance } from 'storybook-addon-performance';
 
 const handleThemeChange = (theme: any) => {
   if (theme !== 'light') {
@@ -33,7 +34,7 @@ const handleThemeChange = (theme: any) => {
 };
 
 const preview: Preview = {
-  decorators: [withTheme(handleThemeChange), withTimeZone()],
+  decorators: [withTheme(handleThemeChange), withTimeZone(), withPerformance],
   parameters: {
     actions: { argTypesRegex: '^on[A-Z].*' },
     darkMode: {
