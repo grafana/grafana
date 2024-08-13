@@ -306,13 +306,15 @@ func StartPeriodicDataSyncer(ctx context.Context, mode DualWriterMode, legacy Le
 	// run in background
 	go func() {
 		// run it immediately
-		_, _ = runDataSyncer(ctx, mode, legacy, storage, kind, reg, serverLockService, requestInfo)
+		syncOK, err := runDataSyncer(ctx, mode, legacy, storage, kind, reg, serverLockService, requestInfo)
+		klog.Info("data syncer finished, syncOK: ", syncOK, ", error: ", err)
 
 		ticker := time.NewTicker(dataSyncerInterval)
 		for {
 			select {
 			case <-ticker.C:
-				_, _ = runDataSyncer(ctx, mode, legacy, storage, kind, reg, serverLockService, requestInfo)
+				syncOK, err = runDataSyncer(ctx, mode, legacy, storage, kind, reg, serverLockService, requestInfo)
+				klog.Info("data syncer finished, syncOK: ", syncOK, ", error: ", err)
 			case <-ctx.Done():
 				return
 			}
