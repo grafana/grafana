@@ -154,8 +154,8 @@ func (a *State) AddErrorInformation(err error, rule *models.AlertRule, addDataso
 	// If the evaluation failed because a query returned an error then add the Ref ID and
 	// Datasource UID as labels or annotations
 	var utilError errutil.Error
-	if errors.As(a.Error, &utilError) &&
-		(errors.Is(a.Error, expr.QueryError) || errors.Is(a.Error, expr.ConversionError)) {
+	if errors.As(err, &utilError) &&
+		(errors.Is(err, expr.QueryError) || errors.Is(err, expr.ConversionError)) {
 		for _, next := range rule.Data {
 			if next.RefID == utilError.PublicPayload["refId"].(string) {
 				if addDatasourceInfoToLabels {
@@ -379,6 +379,7 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 	case models.OkErrState:
 		logger.Debug("Execution error state is Normal", "handler", "resultNormal", "previous_handler", handlerStr)
 		resultNormal(state, rule, result, logger, "") // TODO: Should we add a reason?
+		state.AddErrorInformation(result.Error, rule, false)
 	case models.KeepLastErrState:
 		logger := logger.New("previous_handler", handlerStr)
 		resultKeepLast(state, rule, result, logger)
