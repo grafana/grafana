@@ -24,7 +24,7 @@ type Service struct {
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, pluginStore pluginstore.Store, pluginInstaller plugins.Installer) *Service {
 	s := &Service{
 		features:        features,
-		log:             log.New("background.plugin.installer"),
+		log:             log.New("plugin.backgroundinstaller"),
 		cfg:             cfg,
 		pluginInstaller: pluginInstaller,
 		pluginStore:     pluginStore,
@@ -67,7 +67,7 @@ func (s *Service) Run(ctx context.Context) error {
 				s.log.Debug("Plugin already installed", "pluginID", pluginID, "version", version)
 				continue
 			}
-			s.log.Error("Failed to install plugin", "pluginID", pluginID, "version", version, "err", err)
+			s.log.Error("Failed to install plugin", "pluginID", pluginID, "version", version, "error", err)
 			continue
 		}
 		s.log.Info("Plugin successfully installed", "pluginID", pluginID, "version", version)
