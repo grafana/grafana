@@ -11,31 +11,37 @@ import { APIEditorConfig } from './APIEditor';
 
 type IsLoadingCallback = (loading: boolean) => void;
 
+const allowedAPIEndpointPattern = 'api/plugins';
+
 export const callApi = (api: APIEditorConfig, updateLoadingStateCallback?: IsLoadingCallback) => {
+  if (!api.endpoint) {
+    appEvents.emit(AppEvents.alertError, ['API endpoint is not defined.']);
+    return;
+  }
+
   const endpoint = interpolateVariables(getEndpoint(api.endpoint));
 
-  if (endpoint) {
-    if (isRequestUrlAllowed(endpoint)) {
-      appEvents.emit(AppEvents.alertError, ['Cannot call API at Grafana origin.']);
-      updateLoadingStateCallback && updateLoadingStateCallback(false);
-      return;
-    }
-    const request = getRequest(api);
-
-    getBackendSrv()
-      .fetch(request)
-      .subscribe({
-        error: (error) => {
-          appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
-          console.error('API call error: ', error);
-          updateLoadingStateCallback && updateLoadingStateCallback(false);
-        },
-        complete: () => {
-          appEvents.emit(AppEvents.alertSuccess, ['API call was successful']);
-          updateLoadingStateCallback && updateLoadingStateCallback(false);
-        },
-      });
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  if (!isRequestUrlAllowed(api.method as HttpRequestMethod, endpoint)) {
+    appEvents.emit(AppEvents.alertError, ['Cannot call API at Grafana origin.']);
+    updateLoadingStateCallback && updateLoadingStateCallback(false);
+    return;
   }
+  const request = getRequest(api);
+
+  getBackendSrv()
+    .fetch(request)
+    .subscribe({
+      error: (error) => {
+        appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
+        console.error('API call error: ', error);
+        updateLoadingStateCallback && updateLoadingStateCallback(false);
+      },
+      complete: () => {
+        appEvents.emit(AppEvents.alertSuccess, ['API call was successful']);
+        updateLoadingStateCallback && updateLoadingStateCallback(false);
+      },
+    });
 };
 
 export const interpolateVariables = (text: string) => {
@@ -98,10 +104,17 @@ const getEndpoint = (endpoint: string) => {
   return endpoint;
 };
 
-const isRequestUrlAllowed = (requestEndpoint: string) => {
-  if (config.actions.allowPostURL !== '') {
-    const allowedRegex = new RegExp(config.actions.allowPostURL!);
-    return !allowedRegex.test(requestEndpoint);
+const isRequestUrlAllowed = (method: HttpRequestMethod, requestEndpoint: string) => {
+  const allowedMethods = [HttpRequestMethod.POST, HttpRequestMethod.PUT];
+  const allowedAPIRegex = new RegExp(allowedAPIEndpointPattern);
+
+  if (allowedMethods.includes(method) && config.actions.allowPostURL !== '') {
+    const allowedRegexFromConfig = new RegExp(config.actions.allowPostURL!);
+    return allowedRegexFromConfig.test(requestEndpoint) && allowedAPIRegex.test(requestEndpoint);
+  }
+
+  if (method === HttpRequestMethod.GET) {
+    return allowedAPIRegex.test(requestEndpoint);
   }
 
   const requestURL = new URL(requestEndpoint);
