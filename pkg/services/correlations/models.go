@@ -166,7 +166,7 @@ type CreateCorrelationCommand struct {
 }
 
 func (c CreateCorrelationCommand) Validate() error {
-	if err := c.Config.Type.Validate(); err != nil {
+	if err := c.Type.Validate(); err != nil {
 		return err
 	}
 	if c.TargetUID == nil && c.Config.Type == TypeQuery {

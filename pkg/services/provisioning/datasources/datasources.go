@@ -192,6 +192,11 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 }
 
 func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, OrgId int64) (correlations.CreateCorrelationCommand, error) {
+	var corrType = correlation["type"]
+	if (corrType == nil || corrType == "") {
+		corrType = correlations.TypeQuery
+	}
+
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	createCommand := correlations.CreateCorrelationCommand{
 		SourceUID:   SourceUID,
@@ -199,7 +204,7 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 		Description: correlation["description"].(string),
 		OrgId:       OrgId,
 		Provisioned: true,
-		Type: correlation["type"].(correlations.CorrelationType) ,
+		Type: corrType.(correlations.CorrelationType),
 	}
 
 	targetUID, ok := correlation["targetUID"].(string)
@@ -222,12 +227,12 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 			return correlations.CreateCorrelationCommand{}, err
 		}
 
-		if (correlation["type"] == nil && config.Type != nil) {
+		// if type is not defined at root but is defined in the config, use that
+		if (correlation["type"] == nil && config.Type == correlations.TypeQuery) {
 			createCommand.Type = config.Type
-		} else if (correlation["type"] == nil && config.Type == nil) {
-						createCommand.Type = correlations.TypeQuery
+		} else if (correlation["type"] == nil && config.Type != correlations.TypeQuery) { // if it is not defined in either, use default
+			createCommand.Type = correlations.TypeQuery
 		}
-
 
 		createCommand.Config = config
 	} 
