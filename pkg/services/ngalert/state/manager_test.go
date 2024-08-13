@@ -1160,6 +1160,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(4),
 					LastSentAt:         &t3, // Resend delay is 30s, so last sent at is t3.
+					Annotations:        datasourceErrorAnnotations,
 				},
 			},
 		},
@@ -1192,6 +1193,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(4),
 					LastSentAt:         util.Pointer(tn(4)),
+					Annotations:        datasourceErrorAnnotations,
 				},
 			},
 		},

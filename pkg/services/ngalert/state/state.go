@@ -383,10 +383,11 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 	case models.KeepLastErrState:
 		logger := logger.New("previous_handler", handlerStr)
 		resultKeepLast(state, rule, result, logger)
+		state.AddErrorInformation(result.Error, rule, false)
 	default:
 		err := fmt.Errorf("unsupported execution error state: %s", rule.ExecErrState)
 		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
-		state.Annotations["Error"] = err.Error()
+		state.AddErrorInformation(result.Error, rule, false)
 	}
 }
 
