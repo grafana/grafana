@@ -1,6 +1,6 @@
 ---
 aliases:
-  - features/explore/
+  - 
 keywords:
   - explore
   - loki
@@ -121,7 +121,7 @@ Use the time picker to select a time range for your query. The default is **last
 
 1. Click **Change time settings** to change the timezone or apply a fiscal year.
 
-Refer to [Set dashboard time range](https://grafana.com/docs/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#set-dashboard-time-range) for more information on absolute and relative time ranges. You can also [control the time range using a URL](https://grafana.com/docs/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#control-the-time-range-using-a-url).
+Refer to [Set dashboard time range](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#set-dashboard-time-range) for more information on absolute and relative time ranges. You can also [control the time range using a URL](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#control-the-time-range-using-a-url).
 
 ## Mixed data source
 
