@@ -168,9 +168,9 @@ where:
 }
 ```
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The `from` and `to` also accept relative ranges defined in [Time units and relative ranges](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#time-units-and-relative-ranges).
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Share shortened link
 
