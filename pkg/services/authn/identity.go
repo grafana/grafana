@@ -2,6 +2,7 @@ package authn
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/grafana/authlib/authn"
@@ -21,10 +22,11 @@ var _ identity.Requester = (*Identity)(nil)
 
 type Identity struct {
 	// ID is the unique identifier for the entity in the Grafana database.
-	// If the entity is not found in the DB or this entity is non-persistent, this field will be empty.
-	ID identity.TypedID
+	ID string
 	// UID is a unique identifier stored for the entity in Grafana database. Not all entities support uid so it can be empty.
-	UID identity.TypedID
+	UID string
+	// Type is the IdentityType of entity.
+	Type claims.IdentityType
 	// OrgID is the active organization for the entity.
 	OrgID int64
 	// OrgName is the name of the active organization.
@@ -90,17 +92,22 @@ func (i *Identity) GetIdentity() claims.IdentityClaims {
 
 // GetRawIdentifier implements Requester.
 func (i *Identity) GetRawIdentifier() string {
-	return i.UID.ID()
+	return i.UID
 }
 
 // GetInternalID implements Requester.
 func (i *Identity) GetInternalID() (int64, error) {
-	return i.ID.UserID()
+	return identity.IntIdentifier(i.GetID())
 }
 
 // GetIdentityType implements Requester.
 func (i *Identity) GetIdentityType() claims.IdentityType {
-	return i.UID.Type()
+	return i.Type
+}
+
+// GetIdentityType implements Requester.
+func (i *Identity) IsIdentityType(expected ...claims.IdentityType) bool {
+	return claims.IsIdentityType(i.GetIdentityType(), expected...)
 }
 
 // GetExtra implements identity.Requester.
@@ -125,12 +132,12 @@ func (i *Identity) GetName() string {
 	return i.Name
 }
 
-func (i *Identity) GetID() identity.TypedID {
-	return i.ID
+func (i *Identity) GetID() string {
+	return identity.NewTypedIDString(i.Type, i.ID)
 }
 
 func (i *Identity) GetUID() string {
-	return i.UID.String()
+	return identity.NewTypedIDString(i.Type, i.UID)
 }
 
 func (i *Identity) GetAuthID() string {
@@ -142,14 +149,14 @@ func (i *Identity) GetAuthenticatedBy() string {
 }
 
 func (i *Identity) GetCacheKey() string {
-	id := i.GetID().ID()
+	id := i.ID
 	if !i.HasUniqueId() {
 		// Hack use the org role as id for identities that do not have a unique id
 		// e.g. anonymous and render key.
 		id = string(i.GetOrgRole())
 	}
 
-	return fmt.Sprintf("%d-%s-%s", i.GetOrgID(), i.GetID().Type(), id)
+	return fmt.Sprintf("%d-%s-%s", i.GetOrgID(), i.Type, id)
 }
 
 func (i *Identity) GetDisplayName() string {
@@ -242,10 +249,7 @@ func (i *Identity) HasRole(role org.RoleType) bool {
 }
 
 func (i *Identity) HasUniqueId() bool {
-	typ := i.GetID().Type()
-	return typ == claims.TypeUser ||
-		typ == claims.TypeServiceAccount ||
-		typ == claims.TypeAPIKey
+	return i.IsIdentityType(claims.TypeUser, claims.TypeAPIKey, claims.TypeServiceAccount)
 }
 
 func (i *Identity) IsAuthenticatedBy(providers ...string) bool {
@@ -273,31 +277,31 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		AuthID:          i.AuthID,
 		AuthenticatedBy: i.AuthenticatedBy,
 		IsGrafanaAdmin:  i.GetIsGrafanaAdmin(),
-		IsAnonymous:     i.ID.IsType(claims.TypeAnonymous),
+		IsAnonymous:     i.IsIdentityType(claims.TypeAnonymous),
 		IsDisabled:      i.IsDisabled,
 		HelpFlags1:      i.HelpFlags1,
 		LastSeenAt:      i.LastSeenAt,
 		Teams:           i.Teams,
 		Permissions:     i.Permissions,
 		IDToken:         i.IDToken,
-		FallbackType:    i.ID.Type(),
+		FallbackType:    i.Type,
 	}
 
-	if i.ID.IsType(claims.TypeAPIKey) {
-		id, _ := i.ID.ParseInt()
+	if i.IsIdentityType(claims.TypeAPIKey) {
+		id, _ := i.GetInternalID()
 		u.ApiKeyID = id
 	} else {
-		id, _ := i.ID.UserID()
+		id, _ := i.GetInternalID()
 		u.UserID = id
-		u.UserUID = i.UID.ID()
-		u.IsServiceAccount = i.ID.IsType(claims.TypeServiceAccount)
+		u.UserUID = i.UID
+		u.IsServiceAccount = i.IsIdentityType(claims.TypeServiceAccount)
 	}
 
 	return u
 }
 
 func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
-	id, _ := i.ID.UserID()
+	id, _ := strconv.ParseInt(i.ID, 10, 64)
 	return login.ExternalUserInfo{
 		OAuthToken:     i.OAuthToken,
 		AuthModule:     i.AuthenticatedBy,

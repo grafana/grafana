@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -32,18 +31,18 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetSignedInUser(c *contextmodel.ReqContext) response.Response {
-	if !identity.IsIdentityType(c.GetID(), claims.TypeUser) {
+	if !c.IsIdentityType(claims.TypeUser) {
 		return response.JSON(http.StatusOK, user.UserProfileDTO{
 			IsGrafanaAdmin: c.SignedInUser.GetIsGrafanaAdmin(),
 			OrgID:          c.SignedInUser.GetOrgID(),
-			UID:            c.SignedInUser.GetID().String(),
+			UID:            c.SignedInUser.GetID(),
 			Name:           c.SignedInUser.NameOrFallback(),
 			Email:          c.SignedInUser.GetEmail(),
 			Login:          c.SignedInUser.GetLogin(),
 		})
 	}
 
-	userID, err := identity.UserIdentifier(c.GetID())
+	userID, err := c.GetInternalID()
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to parse user id", err)
 	}
@@ -278,7 +277,7 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 }
 
 func (hs *HTTPServer) StartEmailVerificaton(c *contextmodel.ReqContext) response.Response {
-	if !identity.IsIdentityType(c.SignedInUser.GetID(), claims.TypeUser) {
+	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
 		return response.Error(http.StatusBadRequest, "Only users can verify their email", nil)
 	}
 
@@ -287,7 +286,7 @@ func (hs *HTTPServer) StartEmailVerificaton(c *contextmodel.ReqContext) response
 		return response.Respond(http.StatusNotModified, nil)
 	}
 
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	userID, err := c.SignedInUser.GetInternalID()
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Got invalid user id", err)
 	}
@@ -505,12 +504,12 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *contextmodel.ReqContex
 		return
 	}
 
-	if !identity.IsIdentityType(c.SignedInUser.GetID(), claims.TypeUser) {
+	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
 		c.JsonApiErr(http.StatusForbidden, "Endpoint only available for users", nil)
 		return
 	}
 
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	userID, err := c.SignedInUser.GetInternalID()
 	if err != nil {
 		c.JsonApiErr(http.StatusInternalServerError, "Failed to parse user id", err)
 		return
@@ -630,11 +629,11 @@ func (hs *HTTPServer) ClearHelpFlags(c *contextmodel.ReqContext) response.Respon
 }
 
 func getUserID(c *contextmodel.ReqContext) (int64, *response.NormalResponse) {
-	if !identity.IsIdentityType(c.SignedInUser.GetID(), claims.TypeUser) {
+	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
 		return 0, response.Error(http.StatusForbidden, "Endpoint only available for users", nil)
 	}
 
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	userID, err := c.SignedInUser.GetInternalID()
 	if err != nil {
 		return 0, response.Error(http.StatusInternalServerError, "Failed to parse user id", err)
 	}

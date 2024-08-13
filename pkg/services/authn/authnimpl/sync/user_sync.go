@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/grafana/authlib/claims"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -119,11 +120,11 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, id *authn.Identity, 
 		return nil
 	}
 
-	if !id.ID.IsType(claims.TypeUser, claims.TypeServiceAccount) {
+	if !id.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		return nil
 	}
 
-	userID, err := id.ID.ParseInt()
+	userID, err := id.GetInternalID()
 	if err != nil {
 		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
 		return nil
@@ -160,11 +161,11 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, id *authn.Identity, r *
 		return nil
 	}
 
-	if !id.ID.IsType(claims.TypeUser, claims.TypeServiceAccount) {
+	if !id.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		return nil
 	}
 
-	userID, err := id.ID.ParseInt()
+	userID, err := id.GetInternalID()
 	if err != nil {
 		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
 		return nil
@@ -196,11 +197,11 @@ func (s *UserSync) EnableUserHook(ctx context.Context, id *authn.Identity, _ *au
 		return nil
 	}
 
-	if !id.ID.IsType(claims.TypeUser) {
+	if !id.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		return nil
 	}
 
-	userID, err := id.ID.ParseInt()
+	userID, err := id.GetInternalID()
 	if err != nil {
 		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
 		return nil
@@ -419,8 +420,9 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 // syncUserToIdentity syncs a user to an identity.
 // This is used to update the identity with the latest user information.
 func syncUserToIdentity(usr *user.User, id *authn.Identity) {
-	id.ID = identity.NewTypedID(claims.TypeUser, usr.ID)
-	id.UID = identity.NewTypedIDString(claims.TypeUser, usr.UID)
+	id.ID = strconv.FormatInt(usr.ID, 10)
+	id.UID = usr.UID
+	id.Type = claims.TypeUser
 	id.Login = usr.Login
 	id.Email = usr.Email
 	id.Name = usr.Name
@@ -430,14 +432,7 @@ func syncUserToIdentity(usr *user.User, id *authn.Identity) {
 
 // syncSignedInUserToIdentity syncs a user to an identity.
 func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
-	var ns claims.IdentityType
-	if id.ID.IsType(claims.TypeServiceAccount) {
-		ns = claims.TypeServiceAccount
-	} else {
-		ns = claims.TypeUser
-	}
-	id.UID = identity.NewTypedIDString(ns, usr.UserUID)
-
+	id.UID = usr.UserUID
 	id.Name = usr.Name
 	id.Login = usr.Login
 	id.Email = usr.Email

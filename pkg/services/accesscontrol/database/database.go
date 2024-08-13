@@ -164,7 +164,7 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 	dbPerms := make([]UserRBACPermission, 0)
 
 	userID := int64(-1)
-	if options.TypedID.Type() != "" {
+	if options.TypedID != "" {
 		var err error
 		userID, err = options.ComputeUserID()
 		if err != nil {

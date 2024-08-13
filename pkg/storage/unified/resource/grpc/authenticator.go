@@ -89,21 +89,21 @@ func (f *Authenticator) decodeMetadata(ctx context.Context, meta metadata.MD) (i
 		return user, nil
 	}
 
-	ns, err := identity.ParseTypedID(getter(mdUserID))
+	typ, id, err := identity.ParseTypeAndID(getter(mdUserID))
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
-	user.Type = ns.Type()
-	user.UserID, err = ns.ParseInt()
+	user.Type = typ
+	user.UserID, err = strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
 
-	ns, err = identity.ParseTypedID(getter(mdUserUID))
+	_, id, err = identity.ParseTypeAndID(getter(mdUserUID))
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
-	user.UserUID = ns.ID()
+	user.UserUID = id
 
 	user.OrgName = getter(mdOrgName)
 	user.OrgID, err = strconv.ParseInt(getter(mdOrgID), 10, 64)
@@ -145,12 +145,14 @@ func wrapContext(ctx context.Context) (context.Context, error) {
 }
 
 func encodeIdentityInMetadata(user identity.Requester) metadata.MD {
+	id, _ := user.GetInternalID()
+
 	return metadata.Pairs(
 		// This should be everything needed to recreate the user
 		mdToken, user.GetIDToken(),
 
 		// Or we can create it directly
-		mdUserID, user.GetID().String(),
+		mdUserID, user.GetID(),
 		mdUserUID, user.GetUID(),
 		mdOrgName, user.GetOrgName(),
 		mdOrgID, strconv.FormatInt(user.GetOrgID(), 10),
@@ -158,7 +160,7 @@ func encodeIdentityInMetadata(user identity.Requester) metadata.MD {
 		mdLogin, user.GetLogin(),
 
 		// TODO, Remove after this is deployed to unified storage
-		"grafana-userid", user.GetID().ID(),
+		"grafana-userid", strconv.FormatInt(id, 10),
 		"grafana-useruid", user.GetRawIdentifier(),
 	)
 }

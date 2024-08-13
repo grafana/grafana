@@ -95,12 +95,12 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*l
 		return nil, false, nil
 	}
 
-	if !identity.IsIdentityType(usr.GetID(), claims.TypeUser) {
+	if !usr.IsIdentityType(claims.TypeUser) {
 		return nil, false, nil
 	}
 
 	ctxLogger := logger.FromContext(ctx)
-	userID, err := identity.UserIdentifier(usr.GetID())
+	userID, err := usr.GetInternalID()
 	if err != nil {
 		ctxLogger.Error("Failed to convert user id to int", "id", usr.GetID(), "error", err)
 		return nil, false, err
@@ -136,12 +136,12 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 		return nil
 	}
 
-	if !identity.IsIdentityType(usr.GetID(), claims.TypeUser) {
+	if !usr.IsIdentityType(claims.TypeUser) {
 		ctxLogger.Warn("Can only refresh OAuth tokens for users", "id", usr.GetID())
 		return nil
 	}
 
-	userID, err := identity.UserIdentifier(usr.GetID())
+	userID, err := usr.GetInternalID()
 	if err != nil {
 		ctxLogger.Warn("Failed to convert user id to int", "id", usr.GetID(), "error", err)
 		return nil

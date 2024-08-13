@@ -3,6 +3,7 @@ package clients
 import (
 	"context"
 	"errors"
+	"strconv"
 	"strings"
 	"time"
 
@@ -140,12 +141,12 @@ func (s *APIKey) IdentityType() claims.IdentityType {
 	return claims.TypeAPIKey
 }
 
-func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, namespaceID identity.TypedID) (*authn.Identity, error) {
-	if !namespaceID.IsType(claims.TypeAPIKey) {
-		return nil, identity.ErrInvalidTypedID.Errorf("got unspected namespace: %s", namespaceID.Type())
+func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, typ claims.IdentityType, id string) (*authn.Identity, error) {
+	if !claims.IsIdentityType(typ, claims.TypeAPIKey) {
+		return nil, identity.ErrInvalidTypedID.Errorf("got unexpected type: %s", typ)
 	}
 
-	apiKeyID, err := namespaceID.ParseInt()
+	apiKeyID, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return nil, err
 	}
@@ -190,17 +191,17 @@ func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Re
 }
 
 func (s *APIKey) getAPIKeyID(ctx context.Context, id *authn.Identity, r *authn.Request) (apiKeyID int64, exists bool) {
-	internalId, err := id.ID.ParseInt()
+	internalId, err := id.GetInternalID()
 	if err != nil {
 		s.log.Warn("Failed to parse ID from identifier", "err", err)
 		return -1, false
 	}
 
-	if id.ID.IsType(claims.TypeAPIKey) {
+	if id.IsIdentityType(claims.TypeAPIKey) {
 		return internalId, true
 	}
 
-	if id.ID.IsType(claims.TypeServiceAccount) {
+	if id.IsIdentityType(claims.TypeServiceAccount) {
 		// When the identity is service account, the ID in from the namespace is the service account ID.
 		// We need to fetch the API key in this scenario, as we could use it to uniquely identify a service account token.
 		apiKey, err := s.getAPIKey(ctx, getTokenFromRequest(r))
@@ -257,7 +258,8 @@ func validateApiKey(orgID int64, key *apikey.APIKey) error {
 
 func newAPIKeyIdentity(key *apikey.APIKey) *authn.Identity {
 	return &authn.Identity{
-		ID:              identity.NewTypedID(claims.TypeAPIKey, key.ID),
+		ID:              strconv.FormatInt(key.ID, 10),
+		Type:            claims.TypeAPIKey,
 		OrgID:           key.OrgID,
 		OrgRoles:        map[int64]org.RoleType{key.OrgID: key.Role},
 		ClientParams:    authn.ClientParams{SyncPermissions: true},
@@ -267,7 +269,8 @@ func newAPIKeyIdentity(key *apikey.APIKey) *authn.Identity {
 
 func newServiceAccountIdentity(key *apikey.APIKey) *authn.Identity {
 	return &authn.Identity{
-		ID:              identity.NewTypedID(claims.TypeServiceAccount, *key.ServiceAccountId),
+		ID:              strconv.FormatInt(*key.ServiceAccountId, 10),
+		Type:            claims.TypeServiceAccount,
 		OrgID:           key.OrgID,
 		AuthenticatedBy: login.APIKeyAuthModule,
 		ClientParams:    authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},
