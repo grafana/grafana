@@ -37,6 +37,7 @@ import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@gr
 import {
   generateQueryFromAdHocFilters,
   generateQueryFromFilters,
+  getTagWithoutScope,
   interpolateFilters,
 } from './SearchTraceQLEditor/utils';
 import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
@@ -180,7 +181,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return tags.filter((tag) => tag !== undefined).map((tag) => ({ text: tag }));
   }
 
-  async labelValuesQuery(labelName?: string, query?: string): Promise<Array<{ text: string }>> {
+  async labelValuesQuery(labelName?: string): Promise<Array<{ text: string }>> {
     if (!labelName) {
       return [];
     }
@@ -202,7 +203,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       // For V2, we need to send scope and tag name, e.g. `span.http.status_code`,
       // unless the tag has intrinsic scope
       const scopeAndTag = scope === 'intrinsic' ? labelName : `${scope}.${labelName}`;
-      options = await this.languageProvider.getOptionsV2(scopeAndTag, query);
+      options = await this.languageProvider.getOptionsV2(scopeAndTag);
     } catch {
       // For V1, the tag name (e.g. `http.status_code`) is enough
       options = await this.languageProvider.getOptionsV1(labelName);
@@ -228,7 +229,23 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   // Allows to retrieve the list of tag values for ad-hoc filters
   getTagValues(options: DataSourceGetTagValuesOptions<TempoQuery>): Promise<Array<{ text: string }>> {
     const query = generateQueryFromAdHocFilters(options.filters);
-    return this.labelValuesQuery(options.key.replace(/^(resource|span)\./, ''), query);
+    return this.tagValuesQuery(options.key, query);
+  }
+
+  async tagValuesQuery(tag: string, query: string): Promise<Array<{ text: string }>> {
+    let options;
+    try {
+      // For V2, we need to send scope and tag name, e.g. `span.http.status_code`,
+      // unless the tag has intrinsic scope
+      options = await this.languageProvider.getOptionsV2(tag, query);
+    } catch {
+      // For V1, the tag name (e.g. `http.status_code`) is enough
+      options = await this.languageProvider.getOptionsV1(getTagWithoutScope(tag));
+    }
+
+    return options.flatMap((option: SelectableValue<string>) =>
+      option.value !== undefined ? [{ text: option.value }] : []
+    );
   }
 
   init = async () => {

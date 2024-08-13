@@ -151,9 +151,9 @@ describe('generateQueryFromAdHocFilters generates the correct query for', () => 
     expect(
       generateQueryFromAdHocFilters([
         { key: 'footag', operator: '=', value: 'foovalue' },
-        { key: 'bartag', operator: '=', value: 'barvalue' },
+        { key: 'bartag', operator: '=', value: '0' },
       ])
-    ).toBe('{footag="foovalue" && bartag="barvalue"}');
+    ).toBe('{footag="foovalue" && bartag=0}');
   });
 
   it('a filter with intrinsic values', () => {
