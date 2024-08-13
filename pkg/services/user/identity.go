@@ -78,13 +78,7 @@ func (u *SignedInUser) GetRawIdentifier() string {
 
 // GetInternalID implements Requester.
 func (u *SignedInUser) GetInternalID() (int64, error) {
-	switch {
-	case u.ApiKeyID != 0:
-		return u.ApiKeyID, nil
-	case u.UserID != 0:
-		return u.UserID, nil
-	}
-	return 0, nil
+	return identity.IntIdentifier(u.GetID())
 }
 
 // GetIdentityType implements Requester.

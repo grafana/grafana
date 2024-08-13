@@ -97,7 +97,7 @@ func (i *Identity) GetRawIdentifier() string {
 
 // GetInternalID implements Requester.
 func (i *Identity) GetInternalID() (int64, error) {
-	return strconv.ParseInt(i.ID, 10, 64)
+	return identity.IntIdentifier(i.GetID())
 }
 
 // GetIdentityType implements Requester.
