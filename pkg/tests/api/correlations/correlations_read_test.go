@@ -78,7 +78,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 		TargetUID: &dsWithCorrelations.UID,
 		OrgId:     dsWithCorrelations.OrgID,
 		Config: correlations.CorrelationConfig{
-			Type:   correlations.ConfigTypeQuery,
+			Type:   correlations.TypeQuery,
 			Field:  "foo",
 			Target: map[string]any{},
 			Transformations: []correlations.Transformation{

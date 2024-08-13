@@ -195,7 +195,7 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 	// we look for a correlation type at the root if it is defined, if not use default
 	// we ignore the legacy config.type value - the only valid value at that version was "query"
 	var corrType = correlation["type"]
-	if (corrType == nil || corrType == "") {
+	if corrType == nil || corrType == "" {
 		corrType = correlations.TypeQuery
 	}
 
@@ -206,7 +206,7 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 		Description: correlation["description"].(string),
 		OrgId:       OrgId,
 		Provisioned: true,
-		Type: corrType.(correlations.CorrelationType),
+		Type:        corrType.(correlations.CorrelationType),
 	}
 
 	targetUID, ok := correlation["targetUID"].(string)
@@ -230,7 +230,7 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 		}
 
 		createCommand.Config = config
-	} 
+	}
 	if err := createCommand.Validate(); err != nil {
 		return correlations.CreateCorrelationCommand{}, err
 	}

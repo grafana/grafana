@@ -20,7 +20,7 @@ func TestCorrelationModels(t *testing.T) {
 				OrgId:     1,
 				TargetUID: &targetUid,
 				Config:    *config,
-				Type:		TypeQuery,
+				Type:      TypeQuery,
 			}
 
 			require.NoError(t, cmd.Validate())
