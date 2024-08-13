@@ -42,9 +42,9 @@ In order to access Explore, you must have either the `editor` or `administrator`
 
 Refer to [Role-based access control (RBAC)](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/) in Grafana Enterprise to understand how you can manage Explore with role-based permissions.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you are using Grafana Cloud, open a [support ticket in the Cloud Portal](/https://grafana.com/auth/sign-in) to enable the `viewers_can_edit` option.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Explore elements
 
