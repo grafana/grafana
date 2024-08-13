@@ -58,9 +58,15 @@ interface LogsPanelProps extends PanelProps<Options> {
    *
    * Determines if a given key => value filter is active in a given query. Used by Log details.
    * isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
-   * 
-   * Array of field names to display instead of the log line. Used, for example, by the "eye" icon in Explore's Log Details.
+   *
+   * Array of field names to display instead of the log line. Pass a list of fields or an empty array to enable hide/show fields in Log Details.
    * displayedFields?: string[]
+   *
+   * Called from the "eye" icon in Log Details to request showing the displayed field. If ommited, a default implementation is used.
+   * onClickShowField?: (key: string) => void;
+   *
+   * Called from the "eye" icon in Log Details to request hiding the displayed field. If ommited, a default implementation is used.
+   * onClickHideField?: (key: string) => void;
    */
 }
 interface LogsPermalinkUrlState {
@@ -103,7 +109,9 @@ export const LogsPanel = ({
   const dataSourcesMap = useDatasourcesFromTargets(data.request?.targets);
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
   const defaultDisplayedFields = options.displayedFields !== undefined ? options.displayedFields : [];
-  const [displayedFields, setDisplayedFields] = useState<string[] | undefined>((options.onClickHideField || options.onClickShowField) ? defaultDisplayedFields : options.displayedFields)
+  const [displayedFields, setDisplayedFields] = useState<string[] | undefined>(
+    options.onClickHideField || options.onClickShowField ? defaultDisplayedFields : options.displayedFields
+  );
   let closeCallback = useRef<() => void>();
 
   const { eventBus, onAddAdHocFilter } = usePanelContext();
