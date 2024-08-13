@@ -27,7 +27,7 @@ import {
   FetchPromRulesFilter,
   groupRulesByFileName,
   paramsWithMatcherAndState,
-  prepareRulesFilterQueryParams,
+  getRulesFilterSearchParams,
 } from './prometheus';
 import { FetchRulerRulesFilter, rulerUrlBuilder } from './ruler';
 
@@ -153,7 +153,8 @@ export const alertRuleApi = alertingApi.injectEndpoints({
           searchParams.set(PrometheusAPIFilters.RuleGroup, identifier.groupName);
         }
 
-        const params = prepareRulesFilterQueryParams(searchParams, filter);
+        const filterParams = getRulesFilterSearchParams(filter);
+        const params = { ...filterParams, ...Object.fromEntries(searchParams) };
 
         return { url: PROM_RULES_URL, params: paramsWithMatcherAndState(params, state, matcher) };
       },
