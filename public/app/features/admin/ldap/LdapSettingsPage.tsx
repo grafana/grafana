@@ -325,13 +325,13 @@ export const LdapSettingsPage = (): JSX.Element => {
                   placeholder="example: 127.0.0.1"
                   type="text"
                   defaultValue={formSettings.settings?.config?.server?.host}
-                  onChange={e => onChange({
+                  onChange={({currentTarget: {value}}) => onChange({
                     ...formSettings.settings,
                     config: {
                       ...formSettings.settings.config,
                       server: {
                         ...formSettings.settings.config.server,
-                        host: e.currentTarget.value,
+                        host: value,
                       },
                     },
                   })}
