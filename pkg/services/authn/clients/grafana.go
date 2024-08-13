@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/mail"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -106,7 +107,7 @@ func (c *Grafana) AuthenticatePassword(ctx context.Context, r *authn.Request, us
 	}
 
 	return &authn.Identity{
-		ID:              identity.NewTypedID(identity.TypeUser, usr.ID),
+		ID:              identity.NewTypedID(claims.TypeUser, usr.ID),
 		OrgID:           r.OrgID,
 		ClientParams:    authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},
 		AuthenticatedBy: login.PasswordAuthModule,
