@@ -133,7 +133,10 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
     case 'datasource':
       return new DataSourceVariable(initialState);
     case 'adhoc':
-      return new AdHocFiltersVariable(initialState);
+      return new AdHocFiltersVariable({
+        ...initialState,
+        supportsMultiValueOperators: config.featureToggles.adhocFilterOneOf,
+      });
     case 'groupby':
       return new GroupByVariable(initialState);
     case 'textbox':
