@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
-import { AbsoluteTimeRange, LogRowModel, TimeRange } from '@grafana/data';
+import { AbsoluteTimeRange, CoreApp, LogRowModel, TimeRange } from '@grafana/data';
 import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana/data/src/datetime/rangeutil';
 import { config, reportInteraction } from '@grafana/runtime';
 import { LogsSortOrder, TimeZone } from '@grafana/schema';
@@ -10,6 +10,7 @@ import { Button, Icon } from '@grafana/ui';
 import { LoadingIndicator } from './LoadingIndicator';
 
 export type Props = {
+  app?: CoreApp;
   children: ReactNode;
   loading: boolean;
   loadMoreLogs?: (range: AbsoluteTimeRange) => void;
@@ -22,6 +23,7 @@ export type Props = {
 };
 
 export const InfiniteScroll = ({
+  app,
   children,
   loading,
   loadMoreLogs,
@@ -149,19 +151,18 @@ export const InfiniteScroll = ({
     setUpperOutOfRange(false);
     loadMoreLogs?.(newRange);
     setUpperLoading(true);
-  }, [loadMoreLogs, range, rows, sortOrder, timeZone])
+    scrollElement?.scroll({
+      behavior: 'auto',
+      top: 0,
+    });
+  }, [loadMoreLogs, range, rows, scrollElement, sortOrder, timeZone]);
 
   return (
     <>
       {upperLoading && <LoadingIndicator adjective={sortOrder === LogsSortOrder.Descending ? 'newer' : 'older'} />}
       {!hideTopMessage && upperOutOfRange && outOfRangeMessage}
-      {sortOrder === LogsSortOrder.Ascending && (
-        <Button
-          className={styles.navButton}
-          variant="secondary"
-          onClick={loadOlderLogs}
-          disabled={loading}
-        >
+      {sortOrder === LogsSortOrder.Ascending && app === CoreApp.Explore && (
+        <Button className={styles.navButton} variant="secondary" onClick={loadOlderLogs} disabled={loading}>
           <div className={styles.navButtonContent}>
             <Icon name="angle-up" size="lg" />
             Older logs
@@ -189,7 +190,8 @@ const styles = {
     alignItems: 'center',
     lineHeight: '1',
     position: 'absolute',
-    right: 6,
+    top: 0,
+    right: -2,
     zIndex: 1,
   }),
   navButtonContent: css({
