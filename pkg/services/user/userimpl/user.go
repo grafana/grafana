@@ -7,9 +7,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
+	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -468,6 +471,26 @@ func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUser
 	}
 
 	return usr, nil
+}
+
+func (s *Service) GetDisplay(ctx context.Context, requester claims.IdentityClaims, keys []string) (*identity.IdentityDisplayResults, error) {
+	// TODO?  use requester to filter matches?
+
+	res := &identity.IdentityDisplayResults{
+		Keys: keys,
+	}
+
+	for i, key := range keys {
+		res.Display = append(res.Display, identity.IdentityDisplay{
+			IdentityType: claims.TypeUser,
+			UID:          key,
+			AvatarURL:    dtos.GetGravatarUrlWithDefault(s.cfg, key, "bbb"),
+			Display:      "test test // " + key,
+			InternalID:   int64(1000 + i),
+		})
+	}
+
+	return res, nil
 }
 
 func (s *Service) supportBundleCollector() supportbundles.Collector {

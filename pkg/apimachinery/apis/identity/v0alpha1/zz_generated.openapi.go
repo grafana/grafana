@@ -17,7 +17,7 @@ import (
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.IdentityDisplay":     schema_apimachinery_apis_identity_v0alpha1_IdentityDisplay(ref),
-		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.IdentityDisplayList": schema_apimachinery_apis_identity_v0alpha1_IdentityDisplayList(ref),
+		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.IdentityDisplayResults": schema_apimachinery_apis_identity_v0alpha1_IdentityDisplayList(ref),
 		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.ServiceAccount":      schema_apimachinery_apis_identity_v0alpha1_ServiceAccount(ref),
 		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.ServiceAccountList":  schema_apimachinery_apis_identity_v0alpha1_ServiceAccountList(ref),
 		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.ServiceAccountSpec":  schema_apimachinery_apis_identity_v0alpha1_ServiceAccountSpec(ref),

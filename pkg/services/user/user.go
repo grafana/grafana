@@ -3,6 +3,8 @@ package user
 import (
 	"context"
 
+	"github.com/grafana/authlib/claims"
+	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry"
 )
 
@@ -23,6 +25,9 @@ type Service interface {
 	Search(context.Context, *SearchUsersQuery) (*SearchUserQueryResult, error)
 	BatchDisableUsers(context.Context, *BatchDisableUsersCommand) error
 	GetProfile(context.Context, *GetUserProfileQuery) (*UserProfileDTO, error)
+
+	// Search for matching display properties for a given user
+	GetDisplay(ctx context.Context, requester claims.IdentityClaims, keys []string) (*identity.IdentityDisplayResults, error)
 }
 
 type Verifier interface {

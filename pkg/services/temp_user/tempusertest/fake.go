@@ -2,7 +2,10 @@ package tempusertest
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/grafana/authlib/claims"
+	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 )
 
@@ -50,4 +53,8 @@ func (f *FakeTempUserService) UpdateTempUserWithEmailSent(ctx context.Context, c
 		return f.UpdateTempUserWithEmailSentFN(ctx, cmd)
 	}
 	return nil
+}
+
+func (f *FakeTempUserService) GetDisplay(ctx context.Context, requester claims.IdentityClaims, keys []string) (*identity.IdentityDisplayResults, error) {
+	return nil, fmt.Errorf("not implemented")
 }

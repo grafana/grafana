@@ -106,6 +106,9 @@ func (b *IdentityAPIBuilder) GetAPIGroupInfo(
 	}
 	storage[sa.StoragePath()] = saStore
 
+	// The display endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
+	storage["display"] = newDisplayREST(b)
+
 	apiGroupInfo.VersionedResourcesStorageMap[identity.VERSION] = storage
 	return &apiGroupInfo, nil
 }
