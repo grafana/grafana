@@ -212,6 +212,15 @@ func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int
 			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 		}...)
+
+	}
+
+	// Add admin permission to the folder for action sets, as actionsets enable
+	// admin, editor, and viewer permissions to be dynamically set
+	if hs.Features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
+		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+			{BuiltinRole: string(org.RoleAdmin), Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+		}...)
 	}
 
 	_, err := hs.folderPermissionsService.SetPermissions(ctx, orgID, folder.UID, permissions...)

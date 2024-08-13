@@ -507,6 +507,12 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 		}...)
 	}
 
+	if dr.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
+		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+			{BuiltinRole: string(org.RoleAdmin), Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+		}...)
+	}
+
 	svc := dr.dashboardPermissions
 	if dash.IsFolder {
 		svc = dr.folderPermissions
