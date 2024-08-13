@@ -19,7 +19,7 @@ import {
 } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
 import { RefreshEvent, TimeRangeUpdatedEvent, config } from '@grafana/runtime';
-import { Dashboard, DashboardLink, VariableModel, VariableOption } from '@grafana/schema';
+import { Dashboard, DashboardLink, VariableModel } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -476,31 +476,21 @@ export class DashboardModel implements TimeModel {
       return templating;
     }
 
-    const adjustedTemplating: { list: VariableModel[] } = {
-      ...templating,
-      list: [],
-    };
-
     for (const variable of templating.list) {
-      let current: VariableModel['current'] = {
-        ...(variable.current || {}),
-      } as VariableOption;
-
-      // this is a safeguard for null value that breaks scenes dashboards
-      //    expecting error at .includes(null) in order to not adjust
-      //    VariableOption type to avoid breaking changes
-      //@ts-expect-error
-      if (current.value === null || (Array.isArray(current.value) && current.value.includes(null))) {
-        current = undefined;
+      if (variable.current) {
+        // this is a safeguard for null value that breaks scenes dashboards.
+        //    expecting error at .includes(null) in order to not adjust
+        //    VariableOption type to avoid breaking changes
+        if (
+          variable.current.value === null ||
+          //@ts-expect-error
+          (Array.isArray(variable.current.value) && variable.current.value.includes(null))
+        ) {
+          variable.current = undefined;
+        }
       }
-
-      adjustedTemplating.list.push({
-        ...variable,
-        query: variable.query ?? '',
-        current,
-      });
     }
-    return adjustedTemplating;
+    return templating;
   }
 
   private ensureListExist(data: any = {}) {
