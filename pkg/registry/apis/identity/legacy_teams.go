@@ -4,16 +4,15 @@ import (
 	"context"
 	"strconv"
 
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/registry/rest"
-
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/team"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/registry/rest"
 )
 
 var (
@@ -25,7 +24,7 @@ var (
 )
 
 type legacyTeamStorage struct {
-	service        team.Service
+	service        LegacyUserStore
 	tableConverter rest.TableConvertor
 	resourceInfo   common.ResourceInfo
 }
@@ -56,7 +55,8 @@ func (s *legacyTeamStorage) doList(ctx context.Context, ns string, query *team.L
 	if query.Limit < 1 {
 		query.Limit = 100
 	}
-	teams, err := s.service.ListTeams(ctx, query)
+
+	teams, err := s.service.ListTeams(ctx, ns, LegacyPaging{Limit: int64(query.Limit)})
 	if err != nil {
 		return nil, err
 	}

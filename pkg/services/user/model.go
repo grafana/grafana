@@ -105,6 +105,12 @@ type ListUsersCommand struct {
 	IsServiceAccount bool
 }
 
+type GetDisplayCommand struct {
+	OrgID int64
+	UIDs  []string
+	IDs   []int64
+}
+
 type ListUserResult struct {
 	Users      []*User
 	ContinueID int64

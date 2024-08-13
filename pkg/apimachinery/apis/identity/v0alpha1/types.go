@@ -77,13 +77,17 @@ type ServiceAccountList struct {
 type IdentityDisplayResults struct {
 	metav1.TypeMeta `json:",inline"`
 
-	// The query keys
+	// Request keys used to lookup the display value
 	// +listType=set
 	Keys []string `json:"keys"`
 
 	// Matching items (the caller may need to remap from keys to results)
 	// +listType=atomic
 	Display []IdentityDisplay `json:"display"`
+
+	// Input keys that were not useable
+	// +listType=set
+	InvalidKeys []string `json:"invalidKeys,omitempty"`
 }
 
 type IdentityDisplay struct {

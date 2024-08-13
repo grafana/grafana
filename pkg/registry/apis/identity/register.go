@@ -26,8 +26,7 @@ var _ builder.APIGroupBuilder = (*IdentityAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type IdentityAPIBuilder struct {
-	svcTeam team.Service
-	svcUser user.Service
+	Store LegacyUserStore
 }
 
 func RegisterAPIService(
@@ -42,8 +41,10 @@ func RegisterAPIService(
 	}
 
 	builder := &IdentityAPIBuilder{
-		svcTeam: svcTeam,
-		svcUser: svcUser,
+		Store: &legacyUserStore{
+			svcTeam: svcTeam,
+			svcUser: svcUser,
+		},
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -84,7 +85,7 @@ func (b *IdentityAPIBuilder) GetAPIGroupInfo(
 
 	team := identity.TeamResourceInfo
 	teamStore := &legacyTeamStorage{
-		service:        b.svcTeam,
+		service:        b.Store,
 		resourceInfo:   team,
 		tableConverter: team.TableConverter(),
 	}
@@ -92,15 +93,16 @@ func (b *IdentityAPIBuilder) GetAPIGroupInfo(
 
 	user := identity.UserResourceInfo
 	userStore := &legacyUserStorage{
-		service:        b.svcUser,
+		service:        b.Store,
 		resourceInfo:   user,
 		tableConverter: user.TableConverter(),
 	}
 	storage[user.StoragePath()] = userStore
+	storage[user.StoragePath("teams")] = newUserTeamsREST(b.Store)
 
 	sa := identity.ServiceAccountResourceInfo
 	saStore := &legacyServiceAccountStorage{
-		service:        b.svcUser,
+		service:        b.Store,
 		resourceInfo:   sa,
 		tableConverter: sa.TableConverter(),
 	}

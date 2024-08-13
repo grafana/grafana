@@ -7,6 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/api/dtos"
+	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -34,6 +37,7 @@ type store interface {
 	Search(context.Context, *user.SearchUsersQuery) (*user.SearchUserQueryResult, error)
 	Count(ctx context.Context) (int64, error)
 	CountUserAccountsWithEmptyRole(ctx context.Context) (int64, error)
+	GetDisplay(ctx context.Context, cmd *user.GetDisplayCommand) ([]identity.IdentityDisplay, error)
 }
 
 type sqlStore struct {
@@ -419,6 +423,78 @@ func (ss *sqlStore) CountUserAccountsWithEmptyRole(ctx context.Context) (int64, 
 	}
 
 	return countStats, nil
+}
+
+func (ss *sqlStore) GetDisplay(ctx context.Context, cmd *user.GetDisplayCommand) ([]identity.IdentityDisplay, error) {
+	sb := &db.SQLBuilder{}
+	sb.Write("SELECT uid,id,login,email,name,is_service_account \n")
+	sb.Write("  FROM " + ss.dialect.Quote("user") + "\n")
+	sb.Write(" WHERE ") // orgId == ?
+	if len(cmd.UIDs) > 0 {
+		sb.Write("uid IN (")
+		for i, uid := range cmd.UIDs {
+			if i > 0 {
+				sb.Write(",")
+			}
+			sb.Write("?")
+			sb.AddParams(uid)
+		}
+		sb.Write(")")
+	}
+	if len(cmd.IDs) > 0 {
+		if len(cmd.UIDs) > 0 {
+			sb.Write("\n   OR ")
+		}
+		sb.Write("id IN (")
+		for i, id := range cmd.IDs {
+			if i > 0 {
+				sb.Write(",")
+			}
+			sb.Write("?")
+			sb.AddParams(id)
+		}
+		sb.Write(")")
+	}
+
+	disp := make([]identity.IdentityDisplay, 0, len(cmd.UIDs)+5)
+	//fmt.Printf("%s // %v\n", sb.GetSQLString(), sb.GetParams())
+
+	rows, err := ss.db.GetSqlxSession().Query(ctx, sb.GetSQLString(), sb.GetParams()...)
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+	if err == nil {
+		isServiceAccount := false
+		email := ""
+		login := ""
+		for rows.Next() {
+			// uid,id,login,email,name,is_service_account
+			row := identity.IdentityDisplay{}
+			rows.Scan(&row.UID, &row.InternalID, &login, &email, &row.Display, &isServiceAccount)
+			if isServiceAccount {
+				row.IdentityType = claims.TypeServiceAccount
+			} else {
+				row.IdentityType = claims.TypeUser
+			}
+			if row.Display == "" {
+				if login != "" {
+					row.Display = login
+				} else if email != "" {
+					row.Display = email
+				} else {
+					row.Display = row.UID
+				}
+			}
+			if email == "" {
+				email = row.Display
+			}
+			row.AvatarURL = dtos.GetGravatarUrlWithDefault(ss.cfg, email, row.Display)
+			disp = append(disp, row)
+		}
+	}
+	return disp, err
 }
 
 // validateOneAdminLeft validate that there is an admin user left

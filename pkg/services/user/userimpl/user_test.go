@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -341,4 +342,8 @@ func (f *FakeUserStore) Count(ctx context.Context) (int64, error) {
 
 func (f *FakeUserStore) CountUserAccountsWithEmptyRole(ctx context.Context) (int64, error) {
 	return f.ExpectedCountUserAccountsWithEmptyRoles, nil
+}
+
+func (f *FakeUserStore) GetDisplay(ctx context.Context, cmd *user.GetDisplayCommand) ([]identity.IdentityDisplay, error) {
+	return nil, f.ExpectedError
 }

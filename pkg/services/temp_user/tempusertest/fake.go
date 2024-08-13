@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/authlib/claims"
 	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var _ tempuser.Service = (*FakeTempUserService)(nil)
@@ -55,6 +55,6 @@ func (f *FakeTempUserService) UpdateTempUserWithEmailSent(ctx context.Context, c
 	return nil
 }
 
-func (f *FakeTempUserService) GetDisplay(ctx context.Context, requester claims.IdentityClaims, keys []string) (*identity.IdentityDisplayResults, error) {
+func (f *FakeTempUserService) GetDisplay(ctx context.Context, cmd *user.GetDisplayCommand) (*identity.IdentityDisplayResults, error) {
 	return nil, fmt.Errorf("not implemented")
 }
