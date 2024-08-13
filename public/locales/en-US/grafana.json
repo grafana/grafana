@@ -1910,6 +1910,11 @@
     },
     "dismissable-button": "Close"
   },
+  "save-dashboards": {
+    "drawer": {
+      "name-exists": "A dashboard with the same name in selected folder already exists, including recently deleted dashboards. Please choose a different name or folder."
+    }
+  },
   "scopes": {
     "filters": {
       "apply": "Apply",
