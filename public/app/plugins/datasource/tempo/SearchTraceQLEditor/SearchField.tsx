@@ -6,7 +6,7 @@ import useAsync from 'react-use/lib/useAsync';
 import { SelectableValue } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { FetchError, getTemplateSrv, isFetchError } from '@grafana/runtime';
-import { Select, HorizontalGroup, useStyles2 } from '@grafana/ui';
+import { Select, HorizontalGroup, useStyles2, InputActionMeta } from '@grafana/ui';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
@@ -59,6 +59,8 @@ const SearchField = ({
   // there's only one value selected, so we store the previous operator and value
   const [prevOperator, setPrevOperator] = useState(filter.operator);
   const [prevValue, setPrevValue] = useState(filter.value);
+  const [tagQuery, setTagQuery] = useState<string>('');
+  const [tagValuesQuery, setTagValuesQuery] = useState<string>('');
 
   const updateOptions = async () => {
     try {
@@ -127,13 +129,41 @@ const SearchField = ({
     case 'float':
       operatorList = numberOperators;
   }
-
-  const tagOptions = (filter.tag !== undefined ? uniq([filter.tag, ...tags]) : tags).map((t) => ({
-    label: t,
-    value: t,
-  }));
-
   const operatorOptions = operatorList.map(operatorSelectableValue);
+
+  const formatTagOptions = (tags: string[], filterTag: string | undefined) => {
+    return (filterTag !== undefined ? uniq([filterTag, ...tags]) : tags).map((t) => ({ label: t, value: t }));
+  };
+
+  const tagOptions = useMemo(() => {
+    if (tagQuery.length === 0) {
+      return formatTagOptions(tags.slice(0, maxOptions), filter.tag);
+    }
+
+    const queryLowerCase = tagQuery.toLowerCase();
+    const filterdOptions = tags.filter((tag) => tag.toLowerCase().includes(queryLowerCase)).slice(0, maxOptions);
+    return formatTagOptions(filterdOptions, filter.tag);
+  }, [filter.tag, tagQuery, tags]);
+
+  const tagValueOptions = useMemo(() => {
+    if (!options) {
+      return;
+    }
+
+    if (tagValuesQuery.length === 0) {
+      return options.slice(0, maxOptions);
+    }
+
+    const queryLowerCase = tagValuesQuery.toLowerCase();
+    return options
+      .filter((tag) => {
+        if (tag.value && tag.value.length > 0) {
+          return tag.value.toLowerCase().includes(queryLowerCase);
+        }
+        return false;
+      })
+      .slice(0, maxOptions);
+  }, [tagValuesQuery, options]);
 
   return (
     <>
@@ -144,9 +174,7 @@ const SearchField = ({
             inputId={`${filter.id}-scope`}
             options={addVariablesToOptions ? withTemplateVariableOptions(scopeOptions) : scopeOptions}
             value={filter.scope}
-            onChange={(v) => {
-              updateFilter({ ...filter, scope: v?.value });
-            }}
+            onChange={(v) => updateFilter({ ...filter, scope: v?.value })}
             placeholder="Select scope"
             aria-label={`select ${filter.id} scope`}
           />
@@ -158,10 +186,14 @@ const SearchField = ({
             isLoading={isTagsLoading}
             // Add the current tag to the list if it doesn't exist in the tags prop, otherwise the field will be empty even though the state has a value
             options={addVariablesToOptions ? withTemplateVariableOptions(tagOptions) : tagOptions}
-            value={filter.tag}
-            onChange={(v) => {
-              updateFilter({ ...filter, tag: v?.value, value: [] });
+            onInputChange={(value: string, { action }: InputActionMeta) => {
+              if (action === 'input-change') {
+                setTagQuery(value);
+              }
             }}
+            onCloseMenu={() => setTagQuery('')}
+            onChange={(v) => updateFilter({ ...filter, tag: v?.value, value: [] })}
+            value={filter.tag}
             placeholder="Select tag"
             isClearable
             aria-label={`select ${filter.id} tag`}
@@ -174,9 +206,7 @@ const SearchField = ({
           inputId={`${filter.id}-operator`}
           options={addVariablesToOptions ? withTemplateVariableOptions(operatorOptions) : operatorOptions}
           value={filter.operator}
-          onChange={(v) => {
-            updateFilter({ ...filter, operator: v?.value });
-          }}
+          onChange={(v) => updateFilter({ ...filter, operator: v?.value })}
           isClearable={false}
           aria-label={`select ${filter.id} operator`}
           allowCustomValue={true}
@@ -193,8 +223,14 @@ const SearchField = ({
             className={styles.dropdown}
             inputId={`${filter.id}-value`}
             isLoading={isLoadingValues}
-            options={addVariablesToOptions ? withTemplateVariableOptions(options) : options}
+            options={addVariablesToOptions ? withTemplateVariableOptions(tagValueOptions) : tagValueOptions}
             value={filter.value}
+            onInputChange={(value: string, { action }: InputActionMeta) => {
+              if (action === 'input-change') {
+                setTagValuesQuery(value);
+              }
+            }}
+            onCloseMenu={() => setTagValuesQuery('')}
             onChange={(val) => {
               if (Array.isArray(val)) {
                 updateFilter({
@@ -230,5 +266,8 @@ export const withTemplateVariableOptions = (options: SelectableValue[] | undefin
   const templateVariables = getTemplateSrv().getVariables();
   return [...(options || []), ...templateVariables.map((v) => ({ label: `$${v.name}`, value: `$${v.name}` }))];
 };
+
+// Limit maximum options in select dropdowns for performance reasons
+export const maxOptions = 10000;
 
 export default SearchField;
