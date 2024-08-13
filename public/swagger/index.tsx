@@ -27,7 +27,7 @@ import { Page } from './SwaggerPage';
 const tt = window.trustedTypes;
 if (tt?.createPolicy) {
   tt.createPolicy('default', {
-    createHTML: (string, sink) => DOMPurify.sanitize(string, {RETURN_TRUSTED_TYPE: true}) as unknown as string,
+    createHTML: (string, sink) => DOMPurify.sanitize(string, { RETURN_TRUSTED_TYPE: true }) as unknown as string,
     createScriptURL: (url, sink) => textUtil.sanitizeUrl(url) as unknown as string,
     createScript: (script, sink) => script,
   });
