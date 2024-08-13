@@ -219,7 +219,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
   };
 
   onChangeSeriesLimit = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ seriesLimit: event.target.value });
+    this.setState({ seriesLimit: event.target.value.trim() });
   };
 
   onChangeValueSearch = (event: ChangeEvent<HTMLInputElement>) => {
