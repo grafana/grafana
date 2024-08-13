@@ -11,7 +11,7 @@ const RATE_SUFFIXES = new Set(['count', 'total']);
 
 const UNSUPPORTED_SUFFIXES = new Set(['sum', 'bucket']);
 
-/** Non-default aggregattion keyed by suffix */
+/** Non-default aggregation keyed by suffix */
 const SPECIFIC_AGGREGATIONS_FOR_SUFFIX: Record<string, string> = {
   count: 'sum',
   total: 'sum',
