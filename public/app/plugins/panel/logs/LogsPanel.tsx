@@ -36,6 +36,8 @@ import {
   isOnClickFilterOutLabel,
   isOnClickFilterOutString,
   isOnClickFilterString,
+  isOnClickHideField,
+  isOnClickShowField,
   Options,
 } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
@@ -88,7 +90,7 @@ export const LogsPanel = ({
     onClickFilterOutString,
     onClickFilterString,
     isFilterLabelActive,
-    displayedFields,
+    ...options
   },
   id,
 }: LogsPanelProps) => {
@@ -100,6 +102,8 @@ export const LogsPanel = ({
   const timeRange = data.timeRange;
   const dataSourcesMap = useDatasourcesFromTargets(data.request?.targets);
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
+  const defaultDisplayedFields = options.displayedFields !== undefined ? options.displayedFields : [];
+  const [displayedFields, setDisplayedFields] = useState<string[] | undefined>((options.onClickHideField || options.onClickShowField) ? defaultDisplayedFields : options.displayedFields)
   let closeCallback = useRef<() => void>();
 
   const { eventBus, onAddAdHocFilter } = usePanelContext();
@@ -276,6 +280,26 @@ export const LogsPanel = ({
     [onAddAdHocFilter]
   );
 
+  const showField = useCallback(
+    (key: string) => {
+      const index = displayedFields?.indexOf(key);
+      if (index === -1) {
+        setDisplayedFields(displayedFields?.concat(key));
+      }
+    },
+    [displayedFields]
+  );
+
+  const hideField = useCallback(
+    (key: string) => {
+      const index = displayedFields?.indexOf(key);
+      if (index !== undefined && index > -1) {
+        setDisplayedFields(displayedFields?.filter((k) => key !== k));
+      }
+    },
+    [displayedFields]
+  );
+
   if (!data || logRows.length === 0) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
   }
@@ -293,6 +317,9 @@ export const LogsPanel = ({
   // Passing callbacks control the display of the filtering buttons. We want to pass it only if onAddAdHocFilter is defined.
   const defaultOnClickFilterLabel = onAddAdHocFilter ? handleOnClickFilterLabel : undefined;
   const defaultOnClickFilterOutLabel = onAddAdHocFilter ? handleOnClickFilterOutLabel : undefined;
+
+  const onClickShowField = isOnClickShowField(options.onClickShowField) ? options.onClickShowField : showField;
+  const onClickHideField = isOnClickHideField(options.onClickHideField) ? options.onClickHideField : hideField;
 
   return (
     <>
@@ -347,6 +374,8 @@ export const LogsPanel = ({
             }
             isFilterLabelActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
             displayedFields={displayedFields}
+            onClickShowField={displayedFields !== undefined ? onClickShowField : undefined}
+            onClickHideField={displayedFields !== undefined ? onClickHideField : undefined}
           />
           {showCommonLabels && isAscending && renderCommonLabels()}
         </div>
