@@ -21,6 +21,7 @@ const (
 	RelationTeamAdmin  string = "admin"
 	RelationParent     string = "parent"
 	RelationAssignee   string = "assignee"
+	RelationOrg        string = "org"
 )
 
 const (

@@ -191,7 +191,7 @@ func folderTreeCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "folder"
 		const query = `
-			SELECT uid, parent_uid, org_id FROM folder WHERE parent_uid IS NOT NULL
+			SELECT uid, parent_uid, org_id FROM folder
 		`
 		type folder struct {
 			OrgID     int64  `xorm:"org_id"`
@@ -209,12 +209,21 @@ func folderTreeCollector(store db.DB) TupleCollector {
 		}
 
 		for _, f := range folders {
-			tuple := &openfgav1.TupleKey{
-				User:     zanzana.NewScopedTupleEntry(zanzana.TypeFolder, f.ParentUID, "", strconv.FormatInt(f.OrgID, 10)),
-				Object:   zanzana.NewScopedTupleEntry(zanzana.TypeFolder, f.FolderUID, "", strconv.FormatInt(f.OrgID, 10)),
-				Relation: zanzana.RelationParent,
+			var tuple *openfgav1.TupleKey
+			if f.ParentUID != "" {
+				tuple = &openfgav1.TupleKey{
+					Object:   zanzana.NewScopedTupleEntry(zanzana.TypeFolder, f.FolderUID, "", strconv.FormatInt(f.OrgID, 10)),
+					Relation: zanzana.RelationParent,
+					User:     zanzana.NewScopedTupleEntry(zanzana.TypeFolder, f.ParentUID, "", strconv.FormatInt(f.OrgID, 10)),
+				}
+			} else {
+				// Map root folders to org
+				tuple = &openfgav1.TupleKey{
+					Object:   zanzana.NewScopedTupleEntry(zanzana.TypeFolder, f.FolderUID, "", strconv.FormatInt(f.OrgID, 10)),
+					Relation: zanzana.RelationOrg,
+					User:     zanzana.NewTupleEntry(zanzana.TypeOrg, strconv.FormatInt(f.OrgID, 10), ""),
+				}
 			}
-
 			tuples[collectorID] = append(tuples[collectorID], tuple)
 		}
 
