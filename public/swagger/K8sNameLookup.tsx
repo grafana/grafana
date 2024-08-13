@@ -11,7 +11,7 @@ type Props = {
 
   // The wrapped element
   Original: React.ElementType;
-  props: Record<string,unknown>;
+  props: Record<string, unknown>;
 };
 
 export function K8sNameLookup(props: Props) {
@@ -23,12 +23,12 @@ export function K8sNameLookup(props: Props) {
   const [namespaced, setNamespaced] = useState<boolean>();
   const [loading, setLoading] = useState(false);
   const [options, setOptions] = useState<Array<SelectableValue<string>>>();
-  const [placeholder, setPlaceholder] = useState<string>("Enter kubernetes name");
+  const [placeholder, setPlaceholder] = useState<string>('Enter kubernetes name');
 
   useEffect(() => {
     if (focused && group && version && resource) {
       setLoading(true);
-      setPlaceholder("Enter kubernetes name")
+      setPlaceholder('Enter kubernetes name');
       const fn = async () => {
         const url = namespaced
           ? `apis/${group}/${version}/namespaces/${namespace}/${resource}`
@@ -56,7 +56,7 @@ export function K8sNameLookup(props: Props) {
             }
           });
         } else {
-          setPlaceholder("No items found");
+          setPlaceholder('No items found');
         }
         setLoading(false);
         setOptions(options);
