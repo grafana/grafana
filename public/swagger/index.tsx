@@ -17,9 +17,18 @@ if (window.nonce) {
 
 import 'swagger-ui-react/swagger-ui.css';
 
+import DOMPurify from 'dompurify';
 import { createRoot } from 'react-dom/client';
 
 import { Page } from './SwaggerPage';
+
+// Use dom purify for the default policy
+const tt = window.trustedTypes;
+if (tt?.createPolicy) {
+  tt.createPolicy('default', {
+    createHTML: (string, sink) => DOMPurify.sanitize(string, {RETURN_TRUSTED_TYPE: true}) as unknown as string
+  });
+}
 
 window.onload = () => {
   // the trailing slash breaks relative URL loading
