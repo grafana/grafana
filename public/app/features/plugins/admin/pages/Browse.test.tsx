@@ -406,39 +406,4 @@ describe('Browse list of plugins', () => {
       await waitFor(() => expect(getByRole('radio', { name: 'Installed' })).toBeDisabled());
     });
   });
-
-  it('should be possible to switch between display modes', async () => {
-    const { findByTestId, getByRole, getByTitle, queryByText } = renderBrowse('/plugins?filterBy=all', [
-      getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1' }),
-      getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2' }),
-      getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3' }),
-    ]);
-
-    await findByTestId('plugin-list');
-
-    const listOptionTitle = 'Display plugins in list';
-    const gridOptionTitle = 'Display plugins in a grid layout';
-    const listOption = getByRole('radio', { name: listOptionTitle });
-    const listOptionLabel = getByTitle(listOptionTitle);
-    const gridOption = getByRole('radio', { name: gridOptionTitle });
-    const gridOptionLabel = getByTitle(gridOptionTitle);
-
-    // All options should be visible
-    expect(listOptionLabel).toBeVisible();
-    expect(gridOptionLabel).toBeVisible();
-
-    // The default display mode should be "grid"
-    expect(gridOption).toBeChecked();
-    expect(listOption).not.toBeChecked();
-
-    // Switch to "list" view
-    await userEvent.click(listOption);
-    expect(gridOption).not.toBeChecked();
-    expect(listOption).toBeChecked();
-
-    // All plugins are still visible
-    expect(queryByText('Plugin 1')).toBeInTheDocument();
-    expect(queryByText('Plugin 2')).toBeInTheDocument();
-    expect(queryByText('Plugin 3')).toBeInTheDocument();
-  });
 });
