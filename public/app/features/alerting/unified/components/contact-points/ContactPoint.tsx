@@ -191,10 +191,10 @@ export const ContactPointReceiverSummary = ({ receivers, limit }: ContactPointRe
                   />
                 )}
                 {iconName && <Icon name={iconName} />}
-                <Text variant="body">
+                <span>
                   {receiverName}
                   {receivers.length > 1 && receivers.length}
-                </Text>
+                </span>
               </Stack>
               {!isLastItem && '⋅'}
             </Fragment>

@@ -2,7 +2,7 @@ import { css, cx, keyframes } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Select, SelectCommonProps, Stack, Alert, IconButton, useStyles2, LoadingPlaceholder } from '@grafana/ui';
+import { Select, SelectCommonProps, Stack, Alert, IconButton, Text, useStyles2 } from '@grafana/ui';
 import { ContactPointReceiverSummary } from 'app/features/alerting/unified/components/contact-points/ContactPoint';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 
@@ -39,7 +39,9 @@ export const ContactPointSelector = ({
       label: contactPoint.name,
       value: contactPoint,
       component: () => (
-        <ContactPointReceiverSummary receivers={contactPoint.grafana_managed_receiver_configs} limit={2} />
+        <Text variant="bodySmall" color="secondary">
+          <ContactPointReceiverSummary receivers={contactPoint.grafana_managed_receiver_configs} limit={2} />
+        </Text>
       ),
     };
   });
@@ -60,9 +62,6 @@ export const ContactPointSelector = ({
   if (error) {
     return <Alert title="Failed to fetch contact points" severity="error" />;
   }
-  if (isLoading) {
-    return <LoadingPlaceholder text="Loading..." />;
-  }
 
   return (
     <Stack>
@@ -71,6 +70,7 @@ export const ContactPointSelector = ({
         options={options}
         value={matchedContactPoint}
         {...selectProps}
+        isLoading={isLoading}
       />
       {showRefreshButton && (
         <IconButton
