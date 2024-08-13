@@ -63,15 +63,11 @@ The first option to configure is the name of your connection:
 
 - **Default** - Toggle to select as the default name in dashboard panels. When you go to a dashboard panel this will be the default selected data source.
 
-### HTTP section
+### Connection section
 
-- **URL** - The URL of your Prometheus server. If your Prometheus server is local, use `<http://localhost:9090>`. If it is on a server within a network, this is the URL with port where you are running Prometheus. Example: `<http://prometheus.example.orgname:9090>`.
+- **Prometheus server URL** - The URL of your Prometheus server. If your Prometheus server is local, use `<http://localhost:9090>`. If it is on a server within a network, this is the URL with port where you are running Prometheus. Example: `<http://prometheus.example.orgname:9090>`.
 
-- **Allowed cookies** - Specify cookies by name that should be forwarded to the data source. The Grafana proxy deletes all forwarded cookies by default.
-
-- **Timeout** - The HTTP request timeout. This must be in seconds. There is no default, so this setting is up to you.
-
-### Auth section
+### Authentication section
 
 There are several authentication methods you can choose in the Authentication section.
 
@@ -99,15 +95,21 @@ Use TLS (Transport Layer Security) for an additional layer of security when work
 
 - **Value** - The value of the header.
 
-## Additional settings
+## Advanced settings
 
 Following are additional configuration options.
+
+### Advanced HTTP settings
+
+- **Allowed cookies** - Specify cookies by name that should be forwarded to the data source. The Grafana proxy deletes all forwarded cookies by default.
+
+- **Timeout** - The HTTP request timeout. This must be in seconds. There is no default, so this setting is up to you.
 
 ### Alerting
 
 - **Manage alerts via Alerting UI** - Toggle to enable `Alertmanager` integration for this data source.
 
-### Interval behavior
+### Interval behaviour
 
 - **Scrape interval** - Set this to the typical scrape and evaluation interval configured in Prometheus. The default is `15s`.
 
@@ -121,11 +123,13 @@ Following are additional configuration options.
 
 ### Performance
 
-- **Prometheus type** - The type of your Prometheus server. There are four options: `Prometheus`, `Cortex`, `Thanos`, `Mimir`.
+- **Prometheus type** - The type of your Prometheus server. There are four options: `Prometheus`, `Cortex`, `Mimir`, `Thanos`.
 
-- **Version** Select the version you are using. Once the Prometheus type has been selected, a list of versions auto-populates using the Prometheus [buildinfo](https://semver.org/) API. The `Cortex` Prometheus type does not support this API so you will need to manually add the version.
+- **Cache level** - The browser caching level for editor queries. There are four options: `Low`, `Medium`, `High`, `None`.
 
 - **Incremental querying (beta)** - Changes the default behavior of relative queries to always request fresh data from the Prometheus instance. Enable this option to decrease database and network load.
+
+- **Disable recording rules (beta)** - Toggle on to disable the recording rules. Enable this option to improve dashboard performance.
 
 ### Other
 
