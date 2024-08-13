@@ -535,37 +535,11 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 		alert = &alertingNotify.TestReceiversConfigAlertParams{Annotations: c.Alert.Annotations, Labels: c.Alert.Labels}
 	}
 
-	result, err := am.mimirClient.TestReceivers(ctx, alertingNotify.TestReceiversConfigBodyParams{
+	return am.mimirClient.TestReceivers(ctx, alertingNotify.TestReceiversConfigBodyParams{
 		Alert:     alert,
 		Receivers: receivers,
 	})
 
-	if err != nil {
-		return nil, err
-	}
-
-	resultReceivers := make([]notifier.TestReceiverResult, 0, len(result.Receivers))
-	for _, resultReceiver := range result.Receivers {
-		configs := make([]notifier.TestReceiverConfigResult, 0, len(resultReceiver.Configs))
-		for _, c := range resultReceiver.Configs {
-			configs = append(configs, notifier.TestReceiverConfigResult{
-				Name:   c.Name,
-				UID:    c.UID,
-				Status: c.Status,
-				Error:  c.Error,
-			})
-		}
-		resultReceivers = append(resultReceivers, notifier.TestReceiverResult{
-			Name:    resultReceiver.Name,
-			Configs: configs,
-		})
-	}
-
-	return &notifier.TestReceiversResult{
-		Alert:     result.Alert,
-		Receivers: resultReceivers,
-		NotifedAt: result.NotifedAt,
-	}, err
 }
 
 func (am *Alertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {

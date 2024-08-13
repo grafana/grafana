@@ -31,7 +31,7 @@ type MimirClient interface {
 	DeleteGrafanaAlertmanagerConfig(ctx context.Context) error
 
 	TestTemplate(ctx context.Context, c alertingNotify.TestTemplatesConfigBodyParams) (*alertingNotify.TestTemplatesResults, error)
-	TestReceivers(ctx context.Context, c alertingNotify.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, error)
+	TestReceivers(ctx context.Context, c alertingNotify.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error)
 
 	ShouldPromoteConfig() bool
 
@@ -200,10 +200,10 @@ func (mc *Mimir) doOK(ctx context.Context, p, method string, payload io.Reader) 
 	}
 }
 
-func (mc *Mimir) TestReceivers(ctx context.Context, c alertingNotify.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, error) {
+func (mc *Mimir) TestReceivers(ctx context.Context, c alertingNotify.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
 	payload, err := json.Marshal(c)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	trResult := &alertingNotify.TestReceiversResult{}
@@ -212,10 +212,10 @@ func (mc *Mimir) TestReceivers(ctx context.Context, c alertingNotify.TestReceive
 	// closed within `do`
 	_, err = mc.do(ctx, "api/v1/grafana/receivers/test", http.MethodPost, bytes.NewBuffer(payload), &trResult)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return trResult, nil
+	return trResult, http.StatusOK, nil
 }
 
 func (mc *Mimir) TestTemplate(ctx context.Context, c alertingNotify.TestTemplatesConfigBodyParams) (*alertingNotify.TestTemplatesResults, error) {
