@@ -154,7 +154,6 @@ describe('Language completion provider', () => {
           end: toPrometheusTimeString,
           'match[]': '{job="grafana"}',
           start: fromPrometheusTimeString,
-          limit: DEFAULT_SERIES_LIMIT,
         },
         undefined
       );
@@ -215,7 +214,6 @@ describe('Language completion provider', () => {
           end: toPrometheusTimeString,
           'match[]': '{job="grafana"}',
           start: fromPrometheusTimeString,
-          limit: DEFAULT_SERIES_LIMIT,
         },
         undefined
       );
@@ -260,7 +258,6 @@ describe('Language completion provider', () => {
           end: toPrometheusTimeString,
           'match[]': '{instance="interpolated-instance", job="grafana"}',
           start: fromPrometheusTimeString,
-          limit: DEFAULT_SERIES_LIMIT,
         },
         undefined
       );
