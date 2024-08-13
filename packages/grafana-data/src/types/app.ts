@@ -7,7 +7,7 @@ import {
   type PluginExtensionLinkConfig,
   PluginExtensionTypes,
   PluginExtensionComponentConfig,
-  PluginExportedComponent,
+  PluginExportedComponentConfig,
   PluginExtensionConfig,
 } from './pluginExtensions';
 
@@ -57,7 +57,7 @@ export interface AppPluginMeta<T extends KeyValue = KeyValue> extends PluginMeta
 }
 
 export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
-  private _exportedComponents: PluginExportedComponent[] = [];
+  private _exportedComponentConfigs: PluginExportedComponentConfig[] = [];
   private _extensionConfigs: PluginExtensionConfig[] = [];
 
   // Content under: /a/${plugin-id}/*
@@ -100,8 +100,8 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     }
   }
 
-  get exportedComponents() {
-    return this._exportedComponents;
+  get exportedComponentConfigs() {
+    return this._exportedComponentConfigs;
   }
 
   get extensionConfigs() {
@@ -148,8 +148,11 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this;
   }
 
-  exposeComponent<Props = {}>(component: PluginExportedComponent) {
-    this._exportedComponents.push(component);
+  // exposeComponent<Props = {}>(
+  //   componentConfig: { id: string } & Omit<PluginExtensionComponentConfig<Props>, 'type' | 'extensionPointId'>
+  // ) {
+  exposeComponent<Props = {}>(componentConfig: PluginExportedComponentConfig) {
+    this._exportedComponentConfigs.push(componentConfig);
 
     return this;
   }

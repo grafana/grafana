@@ -1,4 +1,4 @@
-import { PluginExportedComponent } from '@grafana/data';
+import { PluginExportedComponentConfig } from '@grafana/data';
 
 import { PluginPreloadResult } from '../../pluginPreloader';
 import { logWarning } from '../utils';
@@ -6,7 +6,7 @@ import { logWarning } from '../utils';
 import { Registry } from './Registry';
 
 export type RegistryType = {
-  [id: string]: PluginExportedComponent;
+  [id: string]: PluginExportedComponentConfig;
 };
 
 export class ExportedComponentRegistry extends Registry<RegistryType> {
@@ -17,7 +17,7 @@ export class ExportedComponentRegistry extends Registry<RegistryType> {
   }
 
   mapToRegistry(registry: RegistryType, item: PluginPreloadResult): RegistryType {
-    const { pluginId, exportedComponents, error } = item;
+    const { pluginId, exportedComponentsConfigs: exportedComponents, error } = item;
 
     if (error) {
       logWarning(`"${pluginId}" plugin failed to load. Skip registering its exposed components.`);
@@ -29,7 +29,7 @@ export class ExportedComponentRegistry extends Registry<RegistryType> {
     }
 
     for (const config of exportedComponents) {
-      const { id, description } = config;
+      const { id, description, title } = config;
 
       if (!id.startsWith(pluginId)) {
         logWarning(
@@ -48,6 +48,11 @@ export class ExportedComponentRegistry extends Registry<RegistryType> {
         logWarning(
           `Could not register exposed component with id '${id}'. Reason: An exposed component with the same id already exists.`
         );
+        continue;
+      }
+
+      if (!title) {
+        logWarning(`Could not register exposed component with id '${id}'. Reason: Title is missing.`);
         continue;
       }
 

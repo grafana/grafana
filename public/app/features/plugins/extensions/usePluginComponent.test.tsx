@@ -37,7 +37,9 @@ describe('usePluginComponent()', () => {
     registry.register({
       pluginId,
       extensionConfigs: [],
-      exportedComponents: [{ id, pluginId, description: 'not important', component: () => <div>Hello World</div> }],
+      exportedComponentsConfigs: [
+        { id, pluginId, title: 'not important', description: 'not important', component: () => <div>Hello World</div> },
+      ],
     });
 
     const usePluginComponent = createUsePluginComponent(registry);
@@ -68,7 +70,15 @@ describe('usePluginComponent()', () => {
       registry.register({
         pluginId,
         extensionConfigs: [],
-        exportedComponents: [{ id, pluginId, description: 'not important', component: () => <div>Hello World</div> }],
+        exportedComponentsConfigs: [
+          {
+            id,
+            pluginId,
+            title: 'not important',
+            description: 'not important',
+            component: () => <div>Hello World</div>,
+          },
+        ],
       });
     });
 

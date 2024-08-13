@@ -8,13 +8,6 @@ import { IconName } from './icon';
 import { PanelData } from './panel';
 import { RawTimeRange, TimeZone } from './time';
 
-export type PluginExportedComponent = {
-  id: string;
-  pluginId: string;
-  description: string;
-  component: React.ComponentType;
-};
-
 // Plugin Extensions types
 // ---------------------------------------
 
@@ -100,6 +93,34 @@ export type PluginExtensionComponentConfig<Props = {}> = {
    * (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
    */
   extensionPointId: string;
+};
+
+export type PluginExportedComponentConfig<Props = {}> = {
+  /**
+   * The unique identifier of the component
+   * Shoud be in the format of `<pluginId>/<componentName>/<componentVersion>`. e.g. `myorg-todo-app/todo-list/v1`
+   */
+  id: string;
+
+  /**
+   * The unique identifier of the plugin that exports the component
+   */
+  pluginId: string;
+
+  /**
+   * The title of the component
+   */
+  title: string;
+
+  /**
+   * A short description of the component
+   */
+  description: string;
+
+  /**
+   * The React component that will be exposed to other plugins
+   */
+  component: React.ComponentType<Props>;
 };
 
 export type PluginExtensionConfig = PluginExtensionLinkConfig | PluginExtensionComponentConfig;
