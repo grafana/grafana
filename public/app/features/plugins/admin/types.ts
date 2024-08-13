@@ -80,6 +80,7 @@ export interface CatalogPluginDetails {
   pluginDependencies?: PluginDependencies['plugins'];
   statusContext?: string;
   iam?: IdentityAccessManagement;
+  changelog?: string;
 }
 
 export interface CatalogPluginInfo {
@@ -91,6 +92,7 @@ export interface CatalogPluginInfo {
 }
 
 export type RemotePlugin = {
+  changelog: string;
   createdAt: string;
   description: string;
   downloads: number;
@@ -252,6 +254,7 @@ export enum PluginTabLabels {
   DASHBOARDS = 'Dashboards',
   USAGE = 'Usage',
   IAM = 'IAM',
+  CHANGELOG = 'Changelog',
 }
 
 export enum PluginTabIds {
@@ -261,6 +264,7 @@ export enum PluginTabIds {
   DASHBOARDS = 'dashboards',
   USAGE = 'usage',
   IAM = 'iam',
+  CHANGELOG = 'changelog',
 }
 
 export enum RequestStatus {

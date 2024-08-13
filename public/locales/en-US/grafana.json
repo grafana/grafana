@@ -1656,6 +1656,18 @@
     }
   },
   "plugins": {
+    "details": {
+      "labels": {
+        "dependencies": "Dependencies",
+        "downloads": "Downloads",
+        "from": "From",
+        "reportAbuse": "Report Abuse",
+        "signature": "Signature",
+        "status": "Status",
+        "updatedAt": "Last updated: ",
+        "version": "Version"
+      }
+    },
     "empty-state": {
       "message": "No plugins found"
     }
