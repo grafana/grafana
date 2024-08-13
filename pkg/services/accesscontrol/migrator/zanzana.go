@@ -37,8 +37,9 @@ func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...Tu
 		managedPermissionsCollector(store),
 		folderTreeCollector(store),
 		dashboardFolderCollector(store),
-		basicRolesCollector(store),
+		basicFixedRolesCollector(store),
 		basicRoleAssignemtCollector(store),
+		roleAssignemtCollector(store),
 	)
 
 	return &ZanzanaSynchroniser{
@@ -257,15 +258,17 @@ func dashboardFolderCollector(store db.DB) TupleCollector {
 	}
 }
 
-func basicRolesCollector(store db.DB) TupleCollector {
+// basicFixedRolesCollector migrates basic and fixed roles to OpenFGA tuples
+func basicFixedRolesCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
-		const collectorID = "basic_role"
+		const collectorID = "basic_fixed_role"
 		const query = `
 			SELECT r.name, r.uid as role_uid, p.action, p.kind, p.identifier, r.org_id
 			FROM permission p
 			INNER JOIN role r ON p.role_id = r.id
 			LEFT JOIN builtin_role br ON r.id  = br.role_id
 			WHERE r.name LIKE 'basic:%'
+			OR r.name LIKE 'fixed:%'
 		`
 		type Permission struct {
 			RoleName   string `xorm:"role_name"`
@@ -370,6 +373,52 @@ func basicRoleAssignemtCollector(store db.DB) TupleCollector {
 				User:     subject,
 				Relation: zanzana.RelationAssignee,
 				Object:   zanzana.NewScopedTupleEntry(zanzana.TypeRole, roleUID, "", strconv.FormatInt(a.OrgID, 10)),
+			}
+
+			key := fmt.Sprintf("%s-%s", collectorID, zanzana.RelationAssignee)
+			tuples[key] = append(tuples[key], tuple)
+		}
+
+		return nil
+	}
+}
+
+func roleAssignemtCollector(store db.DB) TupleCollector {
+	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+		const collectorID = "role_assignment"
+		const query = `
+			SELECT ur.org_id, u.uid AS user_uid, r.uid AS role_uid
+			FROM user_role ur
+			LEFT JOIN role r ON r.id = ur.role_id
+			LEFT JOIN user u ON u.id = ur.user_id
+		`
+
+		type Assignment struct {
+			OrgID   int64  `xorm:"org_id"`
+			UserUID string `xorm:"user_uid"`
+			RoleUID string `xorm:"role_uid"`
+		}
+
+		var assignments []Assignment
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(query).Find(&assignments)
+		})
+		if err != nil {
+			return err
+		}
+
+		for _, a := range assignments {
+			var subject string
+			if a.UserUID != "" && a.RoleUID != "" {
+				subject = zanzana.NewTupleEntry(zanzana.TypeUser, a.UserUID, "")
+			} else {
+				continue
+			}
+
+			tuple := &openfgav1.TupleKey{
+				User:     subject,
+				Relation: zanzana.RelationAssignee,
+				Object:   zanzana.NewScopedTupleEntry(zanzana.TypeRole, a.RoleUID, "", strconv.FormatInt(a.OrgID, 10)),
 			}
 
 			key := fmt.Sprintf("%s-%s", collectorID, zanzana.RelationAssignee)
