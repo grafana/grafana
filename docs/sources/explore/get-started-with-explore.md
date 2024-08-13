@@ -148,7 +148,7 @@ where:
 
 - `org_id` is the organization ID
 - `schema_version` is the schema version (should be set to the latest version which is `1`)
-- `panes` is a url-encoded JSON object of panes, where each key is the pane ID and each value is an object matching the following schema:
+- `panes` is a URL-encoded JSON object of panes, where each key is the pane ID and each value is an object matching the following schema:
 
 ```
 {
