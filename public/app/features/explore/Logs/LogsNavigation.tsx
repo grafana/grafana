@@ -21,7 +21,6 @@ type Props = {
   scrollToTopLogs: () => void;
   addResultsToCache: () => void;
   clearCache: () => void;
-  loadMoreLogs?: (range: AbsoluteTimeRange) => void;
 };
 
 export type LogsPage = {
@@ -40,7 +39,6 @@ function LogsNavigation({
   queries,
   clearCache,
   addResultsToCache,
-  loadMoreLogs
 }: Props) {
   const [pages, setPages] = useState<LogsPage[]>([]);
 
@@ -102,8 +100,6 @@ function LogsNavigation({
     return a.queryRange.to > b.queryRange.to ? -1 : 1;
   };
 
-  const infiniteScrollWithOldersLogsButton = config.featureToggles.logsInfiniteScrolling && oldestLogsFirst && loadMoreLogs;
-
   const olderLogsButton = (
     <Button
       data-testid="olderLogsButton"
@@ -114,13 +110,6 @@ function LogsNavigation({
         reportInteraction('grafana_explore_logs_pagination_clicked', {
           pageType: 'olderLogsButton',
         });
-
-        if (infiniteScrollWithOldersLogsButton) {
-          loadMoreLogs({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
-          scrollToTopLogs();
-          return;
-        }
-
         if (!onLastPage) {
           const indexChange = oldestLogsFirst ? -1 : 1;
           changeTime({
@@ -190,7 +179,7 @@ function LogsNavigation({
   }, [scrollToTopLogs]);
 
   return (
-    <div className={`${styles.navContainer} ${infiniteScrollWithOldersLogsButton ? styles.navContainerOldestFirst : ''}`}>
+    <div className={styles.navContainer}>
       {!config.featureToggles.logsInfiniteScrolling && (
         <>
           {oldestLogsFirst ? olderLogsButton : newerLogsButton}
@@ -205,7 +194,6 @@ function LogsNavigation({
           {oldestLogsFirst ? newerLogsButton : olderLogsButton}
         </>
       )}
-      {infiniteScrollWithOldersLogsButton && olderLogsButton}
       <Button
         data-testid="scrollToTop"
         className={styles.scrollToTopButton}
@@ -262,8 +250,5 @@ const getStyles = (theme: GrafanaTheme2, oldestLogsFirst: boolean) => {
       align-items: center;
       margin-top: ${theme.spacing(1)};
     `,
-    navContainerOldestFirst: css({
-      justifyContent: 'space-between',
-    })
   };
 };
