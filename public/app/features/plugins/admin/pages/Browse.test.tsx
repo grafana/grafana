@@ -94,6 +94,21 @@ describe('Browse list of plugins', () => {
       expect(queryByText('Plugin 2')).not.toBeInTheDocument();
     });
 
+    it('should list plugins with update when filtering by update', async () => {
+      const { queryByText } = renderBrowse('/plugins?filterBy=has-update', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true, hasUpdate: true }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: false }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', isInstalled: true, hasUpdate: true }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', isInstalled: true, isCore: true }),
+      ]);
+
+      await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
+      expect(queryByText('Plugin 3')).toBeInTheDocument();
+
+      expect(queryByText('Plugin 2')).not.toBeInTheDocument();
+      expect(queryByText('Plugin 4')).not.toBeInTheDocument();
+    });
+
     it('should list all plugins (including disabled plugins) when filtering by all', async () => {
       const { queryByText } = renderBrowse('/plugins?filterBy=all&filterByType=all', [
         getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),

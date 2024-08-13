@@ -187,6 +187,12 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 				continue
 			}
 
+			// nil safety.
+			annotations := ruleForEntry.Annotations
+			if annotations == nil {
+				annotations = make(map[string]string)
+			}
+
 			rulesStates, ok := orgStates[entry.RuleUID]
 			if !ok {
 				rulesStates = &ruleStates{states: make(map[data.Fingerprint]*State)}
@@ -214,7 +220,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 				StartsAt:             entry.CurrentStateSince,
 				EndsAt:               entry.CurrentStateEnd,
 				LastEvaluationTime:   entry.LastEvalTime,
-				Annotations:          ruleForEntry.Annotations,
+				Annotations:          annotations,
 				ResultFingerprint:    resultFp,
 				ResolvedAt:           entry.ResolvedAt,
 				LastSentAt:           entry.LastSentAt,
@@ -395,6 +401,9 @@ func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.
 		transitions := st.setNextStateForAll(ctx, alertRule, results[0], logger)
 		if len(transitions) > 0 {
 			for _, t := range transitions {
+				if t.State.Annotations == nil {
+					t.State.Annotations = make(map[string]string)
+				}
 				t.State.Annotations["datasource_uid"] = datasourceUIDs.String()
 				t.State.Annotations["ref_id"] = refIds.String()
 			}

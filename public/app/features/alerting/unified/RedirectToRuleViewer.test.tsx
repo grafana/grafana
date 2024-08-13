@@ -1,9 +1,7 @@
-import { render, screen } from '@testing-library/react';
 import { useLocation } from 'react-use';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render, screen } from 'test/test-utils';
 
 import { DataSourceJsonData, PluginMeta } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
 
 import { CombinedRule, Rule } from '../../../types/unified-alerting';
 import { PromRuleType } from '../../../types/unified-alerting-dto';
@@ -27,13 +25,7 @@ jest.mock('react-use', () => ({
 const renderRedirectToRuleViewer = (pathname: string, search?: string) => {
   jest.mocked(useLocation).mockReturnValue({ pathname, trigger: '', search });
 
-  locationService.push(pathname);
-
-  return render(
-    <TestProvider>
-      <RedirectToRuleViewer />
-    </TestProvider>
-  );
+  return render(<RedirectToRuleViewer />, { historyOptions: { initialEntries: [pathname] } });
 };
 
 const mockRuleSourceByName = () => {

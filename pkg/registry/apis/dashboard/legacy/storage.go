@@ -9,9 +9,9 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -43,7 +43,7 @@ func isDashboardKey(key *resource.ResourceKey, requireName bool) error {
 }
 
 func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.WriteEvent) (rv int64, err error) {
-	info, err := request.ParseNamespace(event.Key.Namespace)
+	info, err := claims.ParseNamespace(event.Key.Namespace)
 	if err == nil {
 		err = isDashboardKey(event.Key, true)
 	}
@@ -125,7 +125,7 @@ func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid 
 // Read implements ResourceStoreServer.
 func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.ReadResponse {
 	rsp := &resource.ReadResponse{}
-	info, err := request.ParseNamespace(req.Key.Namespace)
+	info, err := claims.ParseNamespace(req.Key.Namespace)
 	if err == nil {
 		err = isDashboardKey(req.Key, true)
 	}
@@ -147,20 +147,20 @@ func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.Rea
 		rsp.Error = &resource.ErrorResult{
 			Code: http.StatusNotFound,
 		}
+	} else {
+		rsp.Value, err = json.Marshal(dash)
+		if err != nil {
+			rsp.Error = resource.AsErrorResult(err)
+		}
 	}
-
 	rsp.ResourceVersion = rv
-	rsp.Value, err = json.Marshal(dash)
-	if err != nil {
-		rsp.Error = resource.AsErrorResult(err)
-	}
 	return rsp
 }
 
 // List implements AppendingStore.
 func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	opts := req.Options
-	info, err := request.ParseNamespace(opts.Key.Namespace)
+	info, err := claims.ParseNamespace(opts.Key.Namespace)
 	if err == nil {
 		err = isDashboardKey(opts.Key, false)
 	}
@@ -177,11 +177,10 @@ func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.Lis
 	}
 
 	query := &DashboardQuery{
-		OrgID:    info.OrgID,
-		Limit:    int(req.Limit),
-		MaxBytes: 2 * 1024 * 1024, // 2MB,
-		LastID:   token.id,
-		Labels:   req.Options.Labels,
+		OrgID:  info.OrgID,
+		Limit:  int(req.Limit),
+		LastID: token.id,
+		Labels: req.Options.Labels,
 	}
 
 	listRV, err := a.currentRV(ctx)
@@ -194,7 +193,7 @@ func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.Lis
 			_ = rows.Close()
 		}()
 	}
-	if err != nil {
+	if err == nil {
 		err = cb(rows)
 	}
 	return listRV, err
@@ -238,7 +237,7 @@ func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest
 }
 
 func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryRequest) (*resource.HistoryResponse, error) {
-	info, err := request.ParseNamespace(req.Key.Namespace)
+	info, err := claims.ParseNamespace(req.Key.Namespace)
 	if err == nil {
 		err = isDashboardKey(req.Key, false)
 	}
@@ -253,13 +252,15 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 	if token.orgId > 0 && token.orgId != info.OrgID {
 		return nil, fmt.Errorf("token and orgID mismatch")
 	}
-
+	limit := int(req.Limit)
+	if limit < 1 {
+		limit = 15
+	}
 	query := &DashboardQuery{
-		OrgID:    info.OrgID,
-		Limit:    int(req.Limit),
-		MaxBytes: 2 * 1024 * 1024, // 2MB,
-		LastID:   token.id,
-		UID:      req.Key.Name,
+		OrgID:  info.OrgID,
+		Limit:  limit + 1,
+		LastID: token.id,
+		UID:    req.Key.Name,
 	}
 	if req.ShowDeleted {
 		query.GetTrash = true
@@ -273,7 +274,6 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 	}
 	defer func() { _ = rows.Close() }()
 
-	totalSize := 0
 	list := &resource.HistoryResponse{}
 	for rows.Next() {
 		if rows.err != nil || rows.row == nil {
@@ -291,8 +291,7 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 			return list, err
 		}
 
-		totalSize += len(rows.Value())
-		if len(list.Items) > 0 && (totalSize > query.MaxBytes || len(list.Items) >= query.Limit) {
+		if len(list.Items) >= limit {
 			// if query.Requirements.Folder != nil {
 			// 	row.token.folder = *query.Requirements.Folder
 			// }
