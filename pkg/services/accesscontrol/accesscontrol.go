@@ -3,12 +3,14 @@ package accesscontrol
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -83,8 +85,8 @@ type SearchOptions struct {
 	Action       string
 	ActionSets   []string
 	Scope        string
-	TypedID      identity.TypedID // ID of the identity (ex: user:3, service-account:4)
-	wildcards    Wildcards        // private field computed based on the Scope
+	TypedID      string    // ID of the identity (ex: user:3, service-account:4)
+	wildcards    Wildcards // private field computed based on the Scope
 	RolePrefixes []string
 }
 
@@ -104,17 +106,16 @@ func (s *SearchOptions) Wildcards() []string {
 }
 
 func (s *SearchOptions) ComputeUserID() (int64, error) {
-	id, err := s.TypedID.ParseInt()
+	typ, id, err := identity.ParseTypeAndID(s.TypedID)
 	if err != nil {
 		return 0, err
 	}
 
-	// Validate namespace type is user or service account
-	if s.TypedID.Type() != identity.TypeUser && s.TypedID.Type() != identity.TypeServiceAccount {
-		return 0, fmt.Errorf("invalid type: %s", s.TypedID.Type())
+	if !claims.IsIdentityType(typ, claims.TypeUser, claims.TypeServiceAccount) {
+		return 0, fmt.Errorf("invalid type: %s", typ)
 	}
 
-	return id, nil
+	return strconv.ParseInt(id, 10, 64)
 }
 
 type SyncUserRolesCommand struct {

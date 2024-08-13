@@ -8,7 +8,7 @@ import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
 
 import { ContactPointReceiverSummary } from '../../../contact-points/ContactPoint';
-import { useGetContactPoints } from '../../../contact-points/useContactPoints';
+import { useGrafanaContactPoints } from '../../../contact-points/useContactPoints';
 import { ContactPointWithMetadata } from '../../../contact-points/utils';
 
 import { ContactPointDetails } from './contactPoint/ContactPointDetails';
@@ -29,7 +29,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
     error: errorInContactPointStatus,
     contactPoints,
     refetch: refetchReceivers,
-  } = useGetContactPoints();
+  } = useGrafanaContactPoints();
 
   const [selectedContactPointWithMetadata, setSelectedContactPointWithMetadata] = useState<
     ContactPointWithMetadata | undefined

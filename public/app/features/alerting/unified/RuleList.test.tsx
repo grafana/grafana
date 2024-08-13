@@ -384,7 +384,7 @@ describe('RuleList', () => {
     const table = await ui.rulesTable.find(groups[1]);
 
     // check that rule rows are rendered properly
-    let ruleRows = ui.ruleRow.getAll(table);
+    const ruleRows = ui.ruleRow.getAll(table);
     expect(ruleRows).toHaveLength(4);
 
     expect(ruleRows[0]).toHaveTextContent('Recording rule');
@@ -760,7 +760,7 @@ describe('RuleList', () => {
         { dataSourceName: testDatasources.prom.name, apiVersion: 'legacy' },
         'super namespace',
         {
-          ...someRulerRules['namespace1'][0],
+          ...someRulerRules.namespace1[0],
           name: 'super group',
           interval: '5m',
         }
@@ -769,7 +769,7 @@ describe('RuleList', () => {
         2,
         { dataSourceName: testDatasources.prom.name, apiVersion: 'legacy' },
         'super namespace',
-        someRulerRules['namespace1'][1]
+        someRulerRules.namespace1[1]
       );
       expect(mocks.api.deleteNamespace).toHaveBeenLastCalledWith(
         { dataSourceName: testDatasources.prom.name, apiVersion: 'legacy' },
@@ -799,7 +799,7 @@ describe('RuleList', () => {
         { dataSourceName: testDatasources.prom.name, apiVersion: 'legacy' },
         'namespace1',
         {
-          ...someRulerRules['namespace1'][0],
+          ...someRulerRules.namespace1[0],
           name: 'super group',
           interval: '5m',
         }
@@ -830,7 +830,7 @@ describe('RuleList', () => {
         { dataSourceName: testDatasources.prom.name, apiVersion: 'legacy' },
         'namespace1',
         {
-          ...someRulerRules['namespace1'][0],
+          ...someRulerRules.namespace1[0],
           interval: '5m',
         }
       );

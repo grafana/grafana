@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/osutil"
@@ -92,6 +93,7 @@ type Cfg struct {
 	// HTTP Server Settings
 	CertFile          string
 	KeyFile           string
+	CertPassword      string
 	CertWatchInterval time.Duration
 	HTTPAddr          string
 	HTTPPort          string
@@ -519,6 +521,9 @@ type Cfg struct {
 
 	//Short Links
 	ShortLinkExpiration int
+
+	// Unified Storage
+	UnifiedStorage map[string]grafanarest.DualWriterMode
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -1874,11 +1879,13 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 		cfg.Protocol = HTTPSScheme
 		cfg.CertFile = server.Key("cert_file").String()
 		cfg.KeyFile = server.Key("cert_key").String()
+		cfg.CertPassword = server.Key("cert_pass").String()
 	}
 	if protocolStr == "h2" {
 		cfg.Protocol = HTTP2Scheme
 		cfg.CertFile = server.Key("cert_file").String()
 		cfg.KeyFile = server.Key("cert_key").String()
+		cfg.CertPassword = server.Key("cert_pass").String()
 	}
 	if protocolStr == "socket" {
 		cfg.Protocol = SocketScheme
