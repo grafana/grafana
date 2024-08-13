@@ -477,6 +477,8 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 )
 
+require github.com/grafana/grafana/pkg/aggregator v0.0.0-20240813211650-e90b27229938
+
 require (
 	cloud.google.com/go/longrunning v0.5.12 // indirect
 	github.com/at-wat/mqtt-go v0.19.4 // indirect
