@@ -4,6 +4,7 @@ import reduceReducers from 'reduce-reducers';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
+import { muteTimingsReducer } from '../reducers/alertmanager/muteTimings';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 
 import { mergeRequestStates } from './mergeRequestStates';
@@ -24,7 +25,7 @@ export const initialAlertmanagerConfiguration: AlertManagerCortexConfig = {
   template_files: {},
 };
 
-const configurationReducer = reduceReducers(initialAlertmanagerConfiguration);
+const configurationReducer = reduceReducers(initialAlertmanagerConfiguration, muteTimingsReducer);
 
 /**
  * This hook will make sure we are always applying actions that mutate the Alertmanager configuration
@@ -52,6 +53,7 @@ export function useProduceNewAlertmanagerConfiguration() {
    */
   const produceNewAlertmanagerConfiguration = async (action: Action) => {
     const currentAlertmanagerConfiguration = await fetchAlertmanagerConfig(selectedAlertmanager).unwrap();
+
     const newConfig = configurationReducer(currentAlertmanagerConfiguration, action);
 
     return updateAlertManager({
