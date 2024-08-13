@@ -1656,6 +1656,18 @@
     }
   },
   "plugins": {
+    "details": {
+      "labels": {
+        "dependencies": "Đępęŉđęŉčįęş",
+        "downloads": "Đőŵŉľőäđş",
+        "from": "Fřőm",
+        "reportAbuse": "Ŗępőřŧ Åþūşę",
+        "signature": "Ŝįģŉäŧūřę",
+        "status": "Ŝŧäŧūş",
+        "updatedAt": "Ŀäşŧ ūpđäŧęđ: ",
+        "version": "Vęřşįőŉ"
+      }
+    },
     "empty-state": {
       "message": "Ńő pľūģįŉş ƒőūŉđ"
     }

@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, PluginSignatureType } from '@grafana/data';
+import { t } from 'app/core/internationalization';
 
 import { PageInfoItem } from '../../../../core/components/Page/types';
 import { PluginDisabledBadge } from '../components/Badges';
@@ -27,12 +28,12 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
   if (Boolean(version)) {
     if (plugin.isManaged) {
       info.push({
-        label: 'Version',
+        label: t('plugins.details.labels.version', 'Version'),
         value: 'Managed by Grafana',
       });
     } else {
       info.push({
-        label: 'Version',
+        label: t('plugins.details.labels.version', 'Version'),
         value: version,
       });
     }
@@ -40,7 +41,7 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
 
   if (Boolean(plugin.orgName)) {
     info.push({
-      label: 'From',
+      label: t('plugins.details.labels.from', 'From'),
       value: plugin.orgName,
     });
   }
@@ -51,7 +52,7 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
     plugin.signatureType === PluginSignatureType.commercial;
   if (showDownloads && Boolean(plugin.downloads > 0)) {
     info.push({
-      label: 'Downloads',
+      label: t('plugins.details.labels.downloads', 'Downloads'),
       value: new Intl.NumberFormat().format(plugin.downloads),
     });
   }
@@ -65,20 +66,20 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
 
   if (!hasNoDependencyInfo) {
     info.push({
-      label: 'Dependencies',
+      label: t('plugins.details.labels.dependencies', 'Dependencies'),
       value: <PluginDetailsHeaderDependencies plugin={plugin} grafanaDependency={grafanaDependency} />,
     });
   }
 
   if (plugin.isDisabled) {
     info.push({
-      label: 'Status',
+      label: t('plugins.details.labels.status', 'Status'),
       value: <PluginDisabledBadge error={plugin.error!} />,
     });
   }
 
   info.push({
-    label: 'Signature',
+    label: t('plugins.details.labels.signature', 'Signature'),
     value: <PluginDetailsHeaderSignature plugin={plugin} />,
   });
 
