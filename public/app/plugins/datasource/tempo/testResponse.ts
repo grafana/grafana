@@ -1920,7 +1920,7 @@ export const otlpDataFrameFromResponse = new MutableDataFrame({
       name: 'logs',
       type: FieldType.other,
       config: {},
-      values: [[]],
+      values: [[{ name: 'DNSDone', fields: [{ key: 'addr', value: '172.18.0.6' }] }]],
     },
     {
       name: 'references',
@@ -2138,7 +2138,20 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
       name: 'logs',
       type: FieldType.other,
       config: {},
-      values: [[]],
+      values: [
+        [
+          {
+            fields: [
+              {
+                key: 'addr',
+                value: '172.18.0.6',
+              },
+            ],
+            timestamp: 1627471657255.809,
+            name: 'DNSDone',
+          },
+        ],
+      ],
       state: {
         displayName: 'logs',
       },
@@ -2239,6 +2252,14 @@ export const otlpResponse = {
                 { key: 'http.method', value: { stringValue: 'GET' } },
                 { key: 'http.url', value: { stringValue: '/' } },
                 { key: 'component', value: { stringValue: 'net/http' } },
+              ],
+              events: [
+                {
+                  name: 'DNSDone',
+                  attributes: [{ key: 'addr', value: { stringValue: '172.18.0.6' } }],
+                  droppedAttributesCount: 0,
+                  timeUnixNano: 1627471657255809000,
+                },
               ],
               links: [
                 {
