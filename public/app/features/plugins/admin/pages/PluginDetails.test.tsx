@@ -215,7 +215,7 @@ describe('Plugin details page', () => {
     it('should display a "Signed" badge if the plugin signature is verified', async () => {
       const { queryByText } = renderPluginDetails({ id, signature: PluginSignatureStatus.valid });
 
-      expect(await queryByText('Signed')).toBeInTheDocument();
+      expect(await queryByText('community')).toBeInTheDocument();
     });
 
     it('should display a "Missing signature" badge if the plugin signature is missing', async () => {
@@ -878,6 +878,44 @@ describe('Plugin details page', () => {
 
       await waitFor(() => queryByText('Uninstall'));
       expect(queryByText('Add new data source')).toBeNull();
+    });
+  });
+
+  describe('Display plugin details right panel', () => {
+    beforeAll(() => {
+      mockUserPermissions({
+        isAdmin: true,
+        isDataSourceEditor: false,
+        isOrgAdmin: true,
+      });
+      config.featureToggles.pluginsDetailsRightPanel = true;
+    });
+
+    afterAll(() => {
+      config.featureToggles.pluginsDetailsRightPanel = false;
+    });
+
+    it('should display Last updated and report abuse information', async () => {
+      const id = 'right-panel-test-plugin';
+      const updatedAt = '2023-10-26T16:54:55.000Z';
+      const { queryByText } = renderPluginDetails({ id, updatedAt });
+      expect(queryByText('Last updated:')).toBeVisible();
+      expect(queryByText('10/26/2023')).toBeVisible();
+      expect(queryByText('Report Abuse')).toBeVisible();
+    });
+
+    it('should not display Last updated if there is no updated At data', async () => {
+      const id = 'right-panel-test-plugin';
+      const updatedAt = undefined;
+      const { queryByText } = renderPluginDetails({ id, updatedAt });
+      expect(queryByText('Last updated:')).toBeNull();
+    });
+
+    it('should not display Report Abuse if the plugin is Core', async () => {
+      const id = 'right-panel-test-plugin';
+      const isCore = true;
+      const { queryByText } = renderPluginDetails({ id, isCore });
+      expect(queryByText('Report Abuse')).toBeNull();
     });
   });
 });

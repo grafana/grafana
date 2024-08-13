@@ -5,6 +5,7 @@ import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap } from '@g
 import { config } from '@grafana/runtime';
 import { CellProps, Column, InteractiveTable, Stack, useStyles2 } from '@grafana/ui';
 
+import { Changelog } from '../components/Changelog';
 import { VersionList } from '../components/VersionList';
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { CatalogPlugin, Permission, PluginTabIds } from '../types';
@@ -58,6 +59,10 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
         <VersionList versions={plugin.details?.versions} installedVersion={plugin.installedVersion} />
       </div>
     );
+  }
+
+  if (pageId === PluginTabIds.CHANGELOG && plugin?.details?.changelog) {
+    return <Changelog sanitizedHTML={plugin?.details?.changelog} />;
   }
 
   if (pageId === PluginTabIds.CONFIG && pluginConfig?.angularConfigCtrl) {
