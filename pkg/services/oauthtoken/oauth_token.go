@@ -187,8 +187,10 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) (
 			return
 		}
 
-		_, needRefresh := needTokenRefresh(authInfo)
+		storedToken, needRefresh := needTokenRefresh(authInfo)
 		if !needRefresh {
+			// Set the token which is returned by the outer function in case there's no need to refresh the token
+			newToken = storedToken
 			return
 		}
 
