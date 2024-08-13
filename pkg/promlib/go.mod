@@ -14,7 +14,7 @@ require (
 	go.opentelemetry.io/otel v1.28.0
 	go.opentelemetry.io/otel/trace v1.28.0
 	golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f
-	k8s.io/apimachinery v0.31.0-rc.1
+	k8s.io/apimachinery v0.31.0
 )
 
 require (
