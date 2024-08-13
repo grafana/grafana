@@ -97,6 +97,8 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			},
 			Rest: authnlib.IDTokenClaims{
 				Namespace: s.nsMapper(id.GetOrgID()),
+				UID:       id.GetUID(),
+				Type:      id.GetIdentityType(),
 			},
 		}
 
@@ -105,7 +107,6 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			claims.Rest.EmailVerified = id.IsEmailVerified()
 			claims.Rest.AuthenticatedBy = id.GetAuthenticatedBy()
 			claims.Rest.Username = id.GetLogin()
-			claims.Rest.UID = id.GetUID()
 			claims.Rest.DisplayName = id.GetDisplayName()
 		}
 
