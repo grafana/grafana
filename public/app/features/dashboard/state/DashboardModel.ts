@@ -19,7 +19,7 @@ import {
 } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
 import { RefreshEvent, TimeRangeUpdatedEvent, config } from '@grafana/runtime';
-import { Dashboard, DashboardLink } from '@grafana/schema';
+import { Dashboard, DashboardLink, VariableModel, VariableOption } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -145,7 +145,7 @@ export class DashboardModel implements TimeModel {
     this.time = data.time ?? { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker ?? {};
     this.liveNow = data.liveNow;
-    this.templating = this.ensureListExist(data.templating);
+    this.templating = this.removeNullValuesFromVariables(this.ensureListExist(data.templating));
     this.annotations = this.ensureListExist(data.annotations);
     this.refresh = data.refresh;
     this.snapshot = data.snapshot;
@@ -469,6 +469,38 @@ export class DashboardModel implements TimeModel {
       }
       ids.add(panel.id);
     }
+  }
+
+  private removeNullValuesFromVariables(templating: { list: VariableModel[] }) {
+    if (!templating.list.length) {
+      return templating;
+    }
+
+    const adjustedTemplating: { list: VariableModel[] } = {
+      ...templating,
+      list: [],
+    };
+
+    for (const variable of templating.list) {
+      let current: VariableModel['current'] = {
+        ...(variable.current || {}),
+      } as VariableOption;
+
+      // this is a safeguard for null value that breaks scenes dashboards
+      //    expecting error at .includes(null) in order to not adjust
+      //    VariableOption type to avoid breaking changes
+      //@ts-expect-error
+      if (current.value === null || (Array.isArray(current.value) && current.value.includes(null))) {
+        current = undefined;
+      }
+
+      adjustedTemplating.list.push({
+        ...variable,
+        query: variable.query ?? '',
+        current,
+      });
+    }
+    return adjustedTemplating;
   }
 
   private ensureListExist(data: any = {}) {
