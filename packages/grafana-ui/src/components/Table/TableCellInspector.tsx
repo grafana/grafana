@@ -7,10 +7,9 @@ import { Stack } from '../Layout/Stack/Stack';
 import { CodeEditor } from '../Monaco/CodeEditor';
 import { Tab, TabsBar } from '../Tabs';
 
-
 export enum TableCellInspectorMode {
   code = 'code',
-  text = 'text'
+  text = 'text',
 }
 
 interface TableCellInspectorProps {
@@ -29,11 +28,9 @@ export function TableCellInspector({ value, onDismiss, mode }: TableCellInspecto
     if (trimmedValue[0] === '{' || trimmedValue[0] === '[' || mode === 'code') {
       try {
         value = JSON.parse(value);
-      }
-      catch { }
+      } catch {}
     }
-  }
-  else {
+  } else {
     displayValue = JSON.stringify(value, null, ' ');
   }
   let text = displayValue;
@@ -45,28 +42,21 @@ export function TableCellInspector({ value, onDismiss, mode }: TableCellInspecto
     },
     {
       label: 'Code editor',
-      value: 'code'
-    }
-  ]
+      value: 'code',
+    },
+  ];
 
   const changeTabs = () => {
-    setMode(
-      currentMode === TableCellInspectorMode.text ?
-        TableCellInspectorMode.code :
-        TableCellInspectorMode.text
-    );
-  }
+    setMode(currentMode === TableCellInspectorMode.text ? TableCellInspectorMode.code : TableCellInspectorMode.text);
+  };
 
-  const tabBar = <TabsBar>
-    {tabs.map((t, index) => (
-      <Tab
-        key={`${t.value}-${index}`}
-        label={t.label}
-        active={t.value === currentMode}
-        onChangeTab={changeTabs}
-      />
-    ))}
-  </TabsBar>
+  const tabBar = (
+    <TabsBar>
+      {tabs.map((t, index) => (
+        <Tab key={`${t.value}-${index}`} label={t.label} active={t.value === currentMode} onChangeTab={changeTabs} />
+      ))}
+    </TabsBar>
+  );
 
   return (
     <Drawer onClose={onDismiss} title="Inspect value" tabs={tabBar}>

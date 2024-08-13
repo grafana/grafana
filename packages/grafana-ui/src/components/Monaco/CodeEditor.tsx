@@ -129,7 +129,8 @@ class UnthemedCodeEditor extends PureComponent<Props> {
   };
 
   render() {
-    const { theme, language, width, height, showMiniMap, showLineNumbers, readOnly, wordWrap, monacoOptions } = this.props;
+    const { theme, language, width, height, showMiniMap, showLineNumbers, readOnly, wordWrap, monacoOptions } =
+      this.props;
     const { alwaysConsumeMouseWheel, ...restMonacoOptions } = monacoOptions ?? {};
 
     const value = this.props.value ?? '';
