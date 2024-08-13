@@ -97,7 +97,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			},
 			Rest: authnlib.IDTokenClaims{
 				Namespace: s.nsMapper(id.GetOrgID()),
-				UID:       id.GetUID(),
+				UID:       id.GetRawIdentifier(),
 				Type:      id.GetIdentityType(),
 			},
 		}
