@@ -417,6 +417,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/dashboard/ @grafana/dashboards-squad
 /public/app/features/dashboard/components/TransformationsEditor/ @grafana/dataviz-squad
 /public/app/features/dashboard-scene/ @grafana/dashboards-squad
+/public/app/features/scopes/ @grafana/dashboards-squad
 /public/app/features/datasources/ @grafana/plugins-platform-frontend
 /public/app/features/dimensions/ @grafana/dataviz-squad
 /public/app/features/dataframe-import/ @grafana/dataviz-squad
@@ -664,7 +665,7 @@ embed.go @grafana/grafana-as-code
 
 # GitHub Workflows and Templates
 /.github/CODEOWNERS @tolzhabayev
-/.github/ISSUE_TEMPLATE/ @torkelo
+/.github/ISSUE_TEMPLATE/ @torkelo @sympatheticmoose
 /.github/PULL_REQUEST_TEMPLATE.md @torkelo
 /.github/bot.md @torkelo
 /.github/commands.json @torkelo

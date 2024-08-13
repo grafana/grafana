@@ -46,7 +46,7 @@ const getWrapper = ({
   historyOptions,
   grafanaContext,
 }: ExtendedRenderOptions & {
-  grafanaContext?: GrafanaContextType;
+  grafanaContext?: Partial<GrafanaContextType>;
 }) => {
   const reduxStore = store || configureStore();
   /**

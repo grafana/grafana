@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardsV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
@@ -338,10 +339,10 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 
 func getUserID(v sql.NullString, id sql.NullInt64) string {
 	if v.Valid && v.String != "" {
-		return identity.NewTypedIDString(identity.TypeUser, v.String).String()
+		return identity.NewTypedIDString(claims.TypeUser, v.String)
 	}
 	if id.Valid && id.Int64 == -1 {
-		return identity.NewTypedIDString(identity.TypeProvisioning, "").String()
+		return identity.NewTypedIDString(claims.TypeProvisioning, "")
 	}
 	return ""
 }
@@ -394,9 +395,12 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		dash.Spec.Remove("uid")
 	}
 
-	userID, err := user.GetID().UserID()
-	if err != nil {
-		return nil, false, err
+	var userID int64
+	if user.IsIdentityType(claims.TypeUser) {
+		userID, err = user.GetInternalID()
+		if err != nil {
+			return nil, false, err
+		}
 	}
 
 	meta, err := utils.MetaAccessor(dash)
