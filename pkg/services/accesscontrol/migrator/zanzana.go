@@ -297,13 +297,6 @@ func basicFixedRolesCollector(store db.DB) TupleCollector {
 		}
 
 		for _, p := range permissions {
-			var subject string
-			if p.RoleUID != "" {
-				subject = zanzana.NewTupleEntry(zanzana.TypeRole, p.RoleUID, "assignee")
-			} else {
-				continue
-			}
-
 			type Org struct {
 				Id   int64
 				Name string
@@ -317,8 +310,15 @@ func basicFixedRolesCollector(store db.DB) TupleCollector {
 				return err
 			}
 
-			// Populate basic roles permissions for every org
+			// Populate basic and fixed roles permissions for every org
 			for _, org := range orgs {
+				var subject string
+				if p.RoleUID != "" {
+					subject = zanzana.NewScopedTupleEntry(zanzana.TypeRole, p.RoleUID, "assignee", strconv.FormatInt(org.Id, 10))
+				} else {
+					continue
+				}
+
 				var tuple *openfgav1.TupleKey
 				ok := false
 				if p.Identifier == "" || p.Identifier == "*" {

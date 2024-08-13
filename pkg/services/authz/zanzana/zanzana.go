@@ -57,7 +57,7 @@ func NewTupleEntry(objectType, id, relation string) string {
 // NewScopedTupleEntry constructs new openfga entry type:id[#relation]
 // with id prefixed by scope (usually org id)
 func NewScopedTupleEntry(objectType, id, relation, scope string) string {
-	return NewTupleEntry(objectType, fmt.Sprintf("%s-%s", scope, id), "")
+	return NewTupleEntry(objectType, fmt.Sprintf("%s-%s", scope, id), relation)
 }
 
 func TranslateToTuple(user string, action, kind, identifier string, orgID int64) (*openfgav1.TupleKey, bool) {
