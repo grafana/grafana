@@ -56,7 +56,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
 ---
 
-# Configure the Tempo data source
+# Configure a Tempo data source
 
 The Tempo data source sets how Grafana connects to your Tempo database and lets you configure features and integrations with other telemetry signals.
 
@@ -64,6 +64,9 @@ You can configure the data source using either the data source interface in Graf
 This page explains how to set up and enable the data source capabilities using Grafana.
 
 If you're using your own installation of Grafana, you can provision the Tempo data source using a YAML configuration file.
+
+Depending upon your tracing environment, you may have more than one Tempo instance.
+Grafana supports multiple Tempo data sources.
 
 ## Before you begin
 
@@ -74,27 +77,36 @@ Refer to [Provision the data source](#provision-the-data-source) for next steps.
 
 ![Provisioned data source warning](/media/docs/grafana/data-sources/tempo/tempo-data-source-provisioned-error.png)
 
-## Set up the data source
+## Set up a data source
 
-To configure basic settings for the Tempo data source, complete the following steps:
+You can use these procedures to configure a new Tempo data source or to edit an existing one.
 
-1. Click **Connections** in the main menu.
+### Create a new data source
+
+Follow these steps to set up a new Tempo data source:
+
+1. Select **Connections** in the main menu.
 1. Enter `Tempo` in the search bar.
 1. Select **Tempo**.
-1. Click **Add new data source** in the top-right corner of the page.
-1.  On the **Settings** tab, complete the **Name**, **Connection**, and **Authentication** sections.
+1. Select **Add new data source** in the top-right corner of the page.
+1. On the **Settings** tab, complete the **Name**, **Connection**, and **Authentication** sections.
 
 - Use the **Name** field to specify the name used for the data source in panels, queries, and Explore. Toggle the **Default** switch for the data source to be pre-selected for new panels.
 - Under **Connection**, enter the **URL** of the Tempo instance, for example, `https://example.com:4100`.
 - Complete the [**Authentication** section](#authentication).
 
-1. Optional: Configure other sections to add capabilities to your tracing data.
+1. Optional: Configure other sections to add capabilities to your tracing data. Refer to the additional procedures for instructions.
 1. Select **Save & test**.
 
-This video explains how to add data sources, including Loki, Tempo, and Mimir, to Grafana and Grafana Cloud.
-Tempo data source set up starts at 4:58 in the video.
+### Update an existing data source
 
-{{< youtube id="cqHO0oYW6Ic" start="298" >}}
+To modify an existing Tempo data source:
+
+1. Select **Connections** in the main menu.
+1. Select Data sources to view a list of configured data sources.
+1. Select the Tempo data source you wish to modify.
+1. Configure or update additional sections to add capabilities to your tracing data. Refer to the additional procedures for instructions.
+1. After completing your updates, select **Save & test**.
 
 ## Authentication
 
@@ -125,7 +137,7 @@ To use streaming, you need to:
 
 ### Activate streaming
 
-You can activate streaming by either setting the `traceQLStreaming` [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) to true or by activating the Streaming toggle in the Tempo data source.
+You can activate streaming by either setting the `traceQLStreaming` [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) to true or by activating the **Streaming** toggle in the Tempo data source.
 
 ![Streaming section in Tempo data source](/media/docs/grafana/data-sources/tempo-data-source-streaming-v11.2.png)
 

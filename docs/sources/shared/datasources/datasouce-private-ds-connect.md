@@ -14,6 +14,7 @@ labels:
 [//]: # 'Any links should be fully qualified and not relative: /docs/grafana/ instead of ../grafana/.'
 
 <!-- Procedure for using private data source connect section in the data sources -->
+
 {{< admonition type="note" >}}
 This feature is only available in Grafana Cloud.
 {{< /admonition >}}
