@@ -93,7 +93,6 @@ enableNativeHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,f
 disableClassicHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
 formatString,GA,@grafana/dataviz-squad,false,false,true
 transformationsVariableSupport,GA,@grafana/dataviz-squad,false,false,true
-kubernetesPlaylists,GA,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesDashboards,experimental,@grafana/grafana-app-platform-squad,false,false,true
 datasourceQueryTypes,experimental,@grafana/grafana-app-platform-squad,false,true,false
