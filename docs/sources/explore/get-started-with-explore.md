@@ -182,7 +182,7 @@ The Share shortened link capability allows you to create smaller and simpler URL
 
 A shortened link that's not accessed automatically gets deleted after a [configurable period](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#short_links), which defaults to seven days. However, if the link is accessed at least once, it will not be deleted.
 
-### Sharing shortened links with absolute time
+### Share shortened links with absolute time
 
 {{< admonition type="note" >}}
 Available in Grafana 10.3 and later versions.
