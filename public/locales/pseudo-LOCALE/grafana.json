@@ -120,6 +120,9 @@
       "used-by_one": "Ůşęđ þy {{ count }} ŉőŧįƒįčäŧįőŉ pőľįčy",
       "used-by_other": "Ůşęđ þy {{ count }} ŉőŧįƒįčäŧįőŉ pőľįčįęş"
     },
+    "contactPointFilter": {
+      "label": "Cőŉŧäčŧ pőįŉŧ"
+    },
     "grafana-rules": {
       "export-rules": "Ēχpőřŧ řūľęş",
       "loading": "Ŀőäđįŉģ...",

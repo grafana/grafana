@@ -120,6 +120,9 @@
       "used-by_one": "Used by {{ count }} notification policy",
       "used-by_other": "Used by {{ count }} notification policies"
     },
+    "contactPointFilter": {
+      "label": "Contact point"
+    },
     "grafana-rules": {
       "export-rules": "Export rules",
       "loading": "Loading...",

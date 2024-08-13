@@ -5,6 +5,7 @@ import receiversMock from 'app/features/alerting/unified/components/contact-poin
 import { MOCK_SILENCE_ID_EXISTING, mockAlertmanagerAlert } from 'app/features/alerting/unified/mocks';
 import { defaultGrafanaAlertingConfigurationStatusResponse } from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import { MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { AlertManagerCortexConfig, AlertState } from 'app/plugins/datasource/alertmanager/types';
 
 export const grafanaAlertingConfigurationStatusHandler = (
@@ -84,8 +85,21 @@ const getGrafanaAlertmanagerTemplatePreview = () =>
     HttpResponse.json({})
   );
 
-const getGrafanaReceiversHandler = () =>
-  http.get('/api/alertmanager/grafana/config/api/v1/receivers', () => HttpResponse.json(receiversMock));
+const getReceiversHandler = () =>
+  http.get<{ datasourceUid: string }>('/api/alertmanager/:datasourceUid/config/api/v1/receivers', ({ params }) => {
+    if (params.datasourceUid === GRAFANA_RULES_SOURCE_NAME) {
+      return HttpResponse.json(receiversMock);
+    }
+    // API does not exist for non-Grafana alertmanager,
+    // and UI uses this as heuristic to work out how to render in notification policies
+    return HttpResponse.json({ message: 'Not found.' }, { status: 404 });
+  });
+
+const getGroupsHandler = () =>
+  http.get<{ datasourceUid: string }>('/api/alertmanager/:datasourceUid/api/v2/alerts/groups', () =>
+    // TODO: Scaffold out response with better data as required by tests
+    HttpResponse.json([])
+  );
 
 const handlers = [
   alertmanagerAlertsListHandler(),
@@ -95,6 +109,7 @@ const handlers = [
   updateGrafanaAlertmanagerConfigHandler(),
   updateAlertmanagerConfigHandler(),
   getGrafanaAlertmanagerTemplatePreview(),
-  getGrafanaReceiversHandler(),
+  getReceiversHandler(),
+  getGroupsHandler(),
 ];
 export default handlers;

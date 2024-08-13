@@ -29,6 +29,7 @@ export const AlertGroupFilter = ({ groups }: Props) => {
       groupBy: null,
       queryString: null,
       alertState: null,
+      contactPoint: null,
     });
     setTimeout(() => setFilterKey(filterKey + 1), 100);
   };
