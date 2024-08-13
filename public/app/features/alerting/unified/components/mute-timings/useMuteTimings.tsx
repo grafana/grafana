@@ -116,6 +116,8 @@ export const useMuteTimings = ({ alertmanager }: BaseAlertmanagerArgs) => {
   return useK8sApi ? intervalsResponse : configApiResponse;
 };
 
+type CreateUpdateMuteTimingArgs = { interval: MuteTimeInterval };
+
 /**
  * Create a new mute timing.
  *
@@ -124,15 +126,13 @@ export const useMuteTimings = ({ alertmanager }: BaseAlertmanagerArgs) => {
  *
  * Otherwise, creates the new timing in `time_intervals` via AM config API
  */
-type CreateMuteTimingArgs = { interval: MuteTimeInterval };
-
 export const useCreateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
   const useK8sApi = shouldUseK8sApi(alertmanager);
 
   const [createGrafanaTimeInterval] = useCreateNamespacedTimeIntervalMutation();
   const [updateConfiguration] = useProduceNewAlertmanagerConfiguration();
 
-  const addToK8sAPI = useAsync(({ interval }: CreateMuteTimingArgs) => {
+  const addToK8sAPI = useAsync(({ interval }: CreateUpdateMuteTimingArgs) => {
     const namespace = getK8sNamespace();
 
     return createGrafanaTimeInterval({
@@ -141,7 +141,7 @@ export const useCreateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
     }).unwrap();
   });
 
-  const addToAlertmanagerConfiguration = useAsync(({ interval }: CreateMuteTimingArgs) => {
+  const addToAlertmanagerConfiguration = useAsync(({ interval }: CreateUpdateMuteTimingArgs) => {
     const action = addMuteTimingAction({ interval });
     return updateConfiguration(action);
   });
@@ -216,7 +216,7 @@ export const useUpdateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
   const [updateConfiguration] = useProduceNewAlertmanagerConfiguration();
 
   const updateToK8sAPI = useAsync(
-    async ({ interval, originalName }: { interval: MuteTimeInterval; originalName: string }) => {
+    async ({ interval, originalName }: CreateUpdateMuteTimingArgs & { originalName: string }) => {
       const namespace = getK8sNamespace();
 
       return replaceGrafanaTimeInterval({
@@ -231,7 +231,7 @@ export const useUpdateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
   );
 
   const updateToAlertmanagerConfiguration = useAsync(
-    async ({ interval, originalName }: { interval: MuteTimeInterval; originalName: string }) => {
+    async ({ interval, originalName }: CreateUpdateMuteTimingArgs & { originalName: string }) => {
       const action = updateMuteTimingAction({ interval, originalName });
       return updateConfiguration(action);
     }
