@@ -259,8 +259,8 @@ export const alertRuleApi = alertingApi.injectEndpoints({
           params,
           method: 'DELETE',
           notificationOptions: {
-            ...notificationOptions,
             successMessage,
+            ...notificationOptions,
           },
         };
       },
@@ -292,8 +292,8 @@ export const alertRuleApi = alertingApi.injectEndpoints({
           data: payload,
           method: 'POST',
           notificationOptions: {
-            ...notificationOptions,
             successMessage,
+            ...notificationOptions,
           },
         };
       },
