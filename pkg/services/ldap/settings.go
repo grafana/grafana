@@ -81,7 +81,7 @@ type GroupToOrgRole struct {
 	OrgId   int64  `toml:"org_id" json:"org_id"`
 
 	// This pointer specifies if setting was set (for backwards compatibility)
-	IsGrafanaAdmin *bool `toml:"grafana_admin" json:"grafana_admin"`
+	IsGrafanaAdmin *bool `toml:"grafana_admin" json:"grafana_admin,omitempty"`
 
 	OrgRole org.RoleType `toml:"org_role" json:"org_role"`
 }
