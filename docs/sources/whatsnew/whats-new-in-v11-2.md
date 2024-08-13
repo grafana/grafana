@@ -36,7 +36,7 @@ _Generally available in all editions of Grafana_
 
 As a continuation of our efforts to standardize tooltips across visualizations, we've updated canvas visualization tooltips to be supported for all elements tied to data. Besides the element name and data, the tooltip now also displays the timestamp. This is a step forward from the previous implementation where tooltips were shown only if data links were configured.
 
-### Data link improvements
+### Data links improvements
 
 We've updated canvas visualizations so that you can add data links to canvas elements without using an override. The **Selected element** configuration now includes a **Data links** section where you can add data links to elements using the same steps as in other visualizations.
 
@@ -44,7 +44,7 @@ Data links in canvas elements can also be configured to open with a single click
 
 As part of this improvement, we've also added the ability to control the order in which data links are displayed by dragging and dropping them. This improvement has been added to all visualizations.
 
-{{< video-embed src="/media/docs/grafana/panels-visualizations/canvas-one-click-datalink-.mp4" >}}
+{{< video-embed src="/media/docs/grafana/panels-visualizations/canvas-oneclick-tooltips-v4-11.2.mp4" >}}
 
 In future releases, we'll add one-click functionality to data links in other Grafana visualizations.
 
@@ -60,7 +60,17 @@ We've made a number of exciting updates to transformations!
 
 **You can now use variables in some transformations**
 
-Template variables are now supported for the **Limit**, **Sort by**, **Filter data by values**, **Heatmap**, and **Histogram** transformations. This enables dynamic transformation configurations based on panel data and dashboard variables.
+Template variables are now supported for the **Limit**, **Sort by**, **Filter data by values**, **Grouping to matrix** ([a community contribution](https://github.com/grafana/grafana/pull/88551) ⭐️), **Heatmap**, and **Histogram** transformations. This enables dynamic transformation configurations based on panel data and dashboard variables.
+
+**New transpose transformation**
+
+We're excited to announce the new transpose transformation, which allows you to pivot the data frame, converting rows into columns and columns into rows. This feature is particularly useful for data sources that don't support pivot queries, enabling more flexible and insightful data visualizations.
+
+For more information, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#transpose).
+
+{{< figure src="/media/docs/grafana/transformations/screenshot-grafana-11-2-transpose-transformation.png" alt="Transpose transformation in action" >}}
+
+This feature is [a community contribution](https://github.com/grafana/grafana/pull/88963) ❤️
 
 **Group to nested tables is now generally available**
 
@@ -80,6 +90,24 @@ The **Add field from calculation** transformation now supports both cumulative a
 
 See [the documentation for more information](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation).
 
+### State timeline supports pagination
+
+<!-- #grafana-dataviz -->
+
+_Generally available in all editions of Grafana_
+
+The state timeline visualization now supports pagination. The **Page size** option lets you paginate the state timeline visualization to limit how many series are visible at once. This is useful when you have many series. Previously, all the series in a state timeline were made to fit within the single window of the panel, which could make it hard to read.
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/screen-recording-grafana-11-2-state-timeline-pagination-dark.mp4" >}}
+
+With paginated results, the visualization displays a subset of all series on each page.
+
+Pagination is especially useful if you're running a query on a dynamic data source. It's also helpful regardless of whether you have many data frames with just two fields (time + value) or few frames with many fields (time + many values).
+
+This feature is [a community contribution](https://github.com/grafana/grafana/pull/89586) ❤️
+
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/state-timeline/#page-size-enable-pagination)
+
 ## Alerting
 
 ### Centralized alert history page
@@ -94,7 +122,7 @@ An alert event is displayed each time an alert instance changes its state over a
 
 For Grafana Enterprise and OSS users:
 
-To try out the new alert history page, enable the alertingCentralAlertHistory feature toggle and [configure Loki annotations](https://grafana.com/docs/grafana/latest/alerting/set-up/configure-alert-state-history/).
+To try out the new alert history page, enable the alertingCentralAlertHistory feature toggle and [configure Loki annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alert-state-history/).
 
 {{< figure src="/media/docs/alerting/alert-state-history.png" >}}
 
@@ -124,10 +152,9 @@ Grafana Explore now allows for logs filtering and pinning in content outline.
 
 _Generally available in all editions of Grafana_
 
-We are excited to announce support for cross-account querying in Metric Insights query builder for AWS Cloudwatch Plugin. This enables building SQL queries to monitor across multiple accounts in the same region in AWS Cloudwatch. \
-This feature introduces an account dropdown for selecting one or all of your source accounts and builds a query that targets them. Furthermore, results can be grouped by account ID by selecting "Account ID" in the Group By dropdown. \
-For more complex queries that are not covered by the options in the builder you can switch to the manual Code editor and edit the query.\
-\
+We are excited to announce support for cross-account querying in Metric Insights query builder for AWS Cloudwatch Plugin. This enables building SQL queries to monitor across multiple accounts in the same region in AWS Cloudwatch.
+This feature introduces an account dropdown for selecting one or all of your source accounts and builds a query that targets them. Furthermore, results can be grouped by account ID by selecting "Account ID" in the Group By dropdown.
+For more complex queries that are not covered by the options in the builder you can switch to the manual Code editor and edit the query.
 To set up cross-account querying for AWS Cloudwatch Plugin, see instructions [here](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/query-editor/#cross-account-observability).
 
 ## Authentication and authorization
