@@ -444,7 +444,13 @@ func mode2DataSyncer(ctx context.Context, legacy LegacyStorage, storage Storage,
 	syncSuccess := 0
 	syncErr := 0
 
-	err := serverLockService.LockExecuteAndRelease(ctx, "dualwriter mode 2 sync", time.Minute*30, func(context.Context) {
+	maxInterval := dataSyncerInterval + 5*time.Minute
+
+	// LockExecuteAndRelease ensures that just a single Grafana server acquires a lock at a time
+	// The parameter 'maxInterval' is a timeout safeguard, if the LastExecution in the
+	// database is older than maxInterval, we will assume the lock as timeouted. The 'maxInterval' parameter should be so long
+	// that is impossible for 2 processes to run at the same time.
+	err := serverLockService.LockExecuteAndRelease(ctx, "dualwriter mode 2 sync", maxInterval, func(context.Context) {
 		log.Info("starting dualwriter mode 2 sync")
 		startSync := time.Now()
 
