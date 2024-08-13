@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
@@ -103,17 +104,14 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*l
 		return nil, false, nil
 	}
 
-	namespace, id := usr.GetTypedID()
-	if namespace != identity.TypeUser {
-		// Not a user, therefore no token.
+	if !usr.IsIdentityType(claims.TypeUser) {
 		return nil, false, nil
 	}
 
 	ctxLogger := logger.FromContext(ctx)
-
-	userID, err := identity.IntIdentifier(namespace, id)
+	userID, err := usr.GetInternalID()
 	if err != nil {
-		ctxLogger.Error("Failed to convert user id to int", "namespace", namespace, "userID", id, "error", err)
+		ctxLogger.Error("Failed to convert user id to int", "id", usr.GetID(), "error", err)
 		return nil, false, err
 	}
 
@@ -139,24 +137,22 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*l
 // TryTokenRefresh returns an error in case the OAuth token refresh was unsuccessful
 // It uses a server lock to prevent getting the Refresh Token multiple times for a given User
 func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) (*oauth2.Token, error) {
+	ctxLogger := logger.FromContext(ctx)
+
 	if usr == nil || usr.IsNil() {
-		logger.Warn("Can only refresh OAuth tokens for existing users", "user", "nil")
+		ctxLogger.Warn("Can only refresh OAuth tokens for existing users", "user", "nil")
 		// Not user, no token.
 		return nil, nil
 	}
 
-	namespace, id := usr.GetTypedID()
-	if namespace != identity.TypeUser {
-		// Not a user, therefore no token.
-		logger.Warn("Can only refresh OAuth tokens for users", "namespace", namespace, "userId", id)
+	if !usr.IsIdentityType(claims.TypeUser) {
+		ctxLogger.Warn("Can only refresh OAuth tokens for users", "id", usr.GetID())
 		return nil, nil
 	}
 
-	ctxLogger := logger.FromContext(ctx)
-
-	userID, err := identity.IntIdentifier(namespace, id)
+	userID, err := usr.GetInternalID()
 	if err != nil {
-		ctxLogger.Warn("Failed to convert user id to int", "namespace", namespace, "userId", id, "error", err)
+		ctxLogger.Warn("Failed to convert user id to int", "id", usr.GetID(), "error", err)
 		return nil, nil
 	}
 

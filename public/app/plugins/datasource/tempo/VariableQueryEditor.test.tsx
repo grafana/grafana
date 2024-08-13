@@ -10,7 +10,7 @@ import {
   TempoVariableQueryType,
 } from './VariableQueryEditor';
 import { selectOptionInTest } from './_importedDependencies/test/helpers/selectOptionInTest';
-import { createTempoDatasource } from './mocks';
+import { createTempoDatasource } from './test/mocks';
 
 const refId = 'TempoDatasourceVariableQueryEditor-VariableQuery';
 

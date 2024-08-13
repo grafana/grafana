@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/authlib/claims"
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -48,7 +48,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 	defer span.End()
 
 	// only perform oauth token check if identity is a user
-	if !id.ID.IsType(identity.TypeUser) {
+	if !id.IsIdentityType(claims.TypeUser) {
 		return nil
 	}
 
@@ -62,15 +62,15 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 		return nil
 	}
 
-	ctxLogger := s.log.FromContext(ctx).New("userID", id.ID.ID())
+	ctxLogger := s.log.FromContext(ctx).New("userID", id.GetID())
 
-	cacheKey := id.ID.String()
+	cacheKey := id.GetID()
 	if _, ok := s.cache.Get(cacheKey); ok {
 		ctxLogger.Debug("Expiration check has been cached, no need to refresh")
 		return nil
 	}
 
-	_, err, _ := s.singleflightGroup.Do(id.ID.String(), func() (interface{}, error) {
+	_, err, _ := s.singleflightGroup.Do(id.GetID(), func() (interface{}, error) {
 		ctxLogger.Debug("Singleflight request for OAuth token sync")
 
 		updateCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
