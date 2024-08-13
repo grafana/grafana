@@ -52,7 +52,13 @@ function ScrollWithWrapper({ children, ...props }: Props) {
   );
 }
 
-function setup(loadMoreMock: () => void, startPosition: number, rows: LogRowModel[], order: LogsSortOrder, app?: CoreApp) {
+function setup(
+  loadMoreMock: () => void,
+  startPosition: number,
+  rows: LogRowModel[],
+  order: LogsSortOrder,
+  app?: CoreApp
+) {
   const { element, events } = getMockElement(startPosition);
 
   function scrollTo(position: number) {
@@ -273,7 +279,10 @@ describe('InfiniteScroll', () => {
   describe.only('In Explore', () => {
     test('Requests older logs from the oldest timestamp', async () => {
       const loadMoreMock = jest.fn();
-      const rows = createLogRows(absoluteRange.from + 2 * SCROLLING_THRESHOLD, absoluteRange.to - 2 * SCROLLING_THRESHOLD);
+      const rows = createLogRows(
+        absoluteRange.from + 2 * SCROLLING_THRESHOLD,
+        absoluteRange.to - 2 * SCROLLING_THRESHOLD
+      );
       setup(loadMoreMock, 0, rows, LogsSortOrder.Ascending, CoreApp.Explore);
 
       expect(await screen.findByTestId('contents')).toBeInTheDocument();
