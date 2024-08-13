@@ -33,7 +33,7 @@ import { fetchAnnotations } from '../api/annotations';
 import { discoverFeatures } from '../api/buildInfo';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import { FetchRulerRulesFilter, fetchRulerRules } from '../api/ruler';
-import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
+import { addDefaultsToAlertmanagerConfig, removeTimeIntervalFromRoute } from '../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME, getAllRulesSourceNames, getRulesDataSource } from '../utils/datasource';
 import { makeAMLink } from '../utils/misc';
 import { AsyncRequestMapSlice, withAppEvents, withSerializedError } from '../utils/redux';
@@ -374,39 +374,6 @@ export const deleteReceiverAction = (receiverName: string, alertManagerSourceNam
   };
 };
 
-export const deleteTemplateAction = (templateName: string, alertManagerSourceName: string): ThunkResult<void> => {
-  return async (dispatch) => {
-    const config = await dispatch(
-      alertmanagerApi.endpoints.getAlertmanagerConfiguration.initiate(alertManagerSourceName)
-    ).unwrap();
-
-    if (!config) {
-      throw new Error(`Config for ${alertManagerSourceName} not found`);
-    }
-    if (typeof config.template_files?.[templateName] !== 'string') {
-      throw new Error(`Cannot delete template ${templateName}: not found in config.`);
-    }
-    const newTemplates = { ...config.template_files };
-    delete newTemplates[templateName];
-    const newConfig: AlertManagerCortexConfig = {
-      ...config,
-      alertmanager_config: {
-        ...config.alertmanager_config,
-        templates: config.alertmanager_config.templates?.filter((existing) => existing !== templateName),
-      },
-      template_files: newTemplates,
-    };
-    return dispatch(
-      updateAlertManagerConfigAction({
-        newConfig,
-        oldConfig: config,
-        alertManagerSourceName,
-        successMessage: 'Template deleted.',
-      })
-    );
-  };
-};
-
 export const fetchFolderAction = createAsyncThunk(
   'unifiedalerting/fetchFolder',
   (uid: string): Promise<FolderDTO> => withSerializedError(backendSrv.getFolderByUid(uid, { withAccessControl: true }))
@@ -478,7 +445,7 @@ export const deleteMuteTimingAction = (alertManagerSourceName: string, muteTimin
             alertmanager_config: {
               ...configWithoutMuteTimings,
               route: config.alertmanager_config.route
-                ? removeMuteTimingFromRoute(muteTimingName, config.alertmanager_config?.route)
+                ? removeTimeIntervalFromRoute(muteTimingName, config.alertmanager_config?.route)
                 : undefined,
               ...time_intervals_without_mute_to_save,
             },

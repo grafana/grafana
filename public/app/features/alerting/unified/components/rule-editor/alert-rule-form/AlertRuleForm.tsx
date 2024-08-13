@@ -66,9 +66,9 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const [showEditYaml, setShowEditYaml] = useState(false);
   const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
 
-  const [_deleteRuleState, deleteRuleFromGroup] = useDeleteRuleFromGroup();
-  const [_addRuleState, addRuleToRuleGroup] = useAddRuleToRuleGroup();
-  const [_updateRuleState, updateRuleInRuleGroup] = useUpdateRuleInRuleGroup();
+  const [deleteRuleFromGroup] = useDeleteRuleFromGroup();
+  const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
+  const [updateRuleInRuleGroup] = useUpdateRuleInRuleGroup();
 
   const routeParams = useParams<{ type: string; id: string }>();
   const ruleType = translateRouteParamToRuleType(routeParams.type);

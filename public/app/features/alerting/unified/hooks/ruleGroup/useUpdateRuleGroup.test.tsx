@@ -108,7 +108,7 @@ describe('reorder rules for rule group', () => {
 });
 
 const UpdateRuleGroupComponent = () => {
-  const [requestState, updateRuleGroup] = useUpdateRuleGroupConfiguration();
+  const [updateRuleGroup, requestState] = useUpdateRuleGroupConfiguration();
 
   const ruleGroupID: RuleGroupIdentifier = {
     dataSourceName: GRAFANA_RULES_SOURCE_NAME,
@@ -125,7 +125,7 @@ const UpdateRuleGroupComponent = () => {
 };
 
 const RenameRuleGroupComponent = ({ group = 'another-group-name' }: { group?: string }) => {
-  const [requestState, renameRuleGroup] = useRenameRuleGroup();
+  const [renameRuleGroup, requestState] = useRenameRuleGroup();
 
   const ruleGroupID: RuleGroupIdentifier = {
     dataSourceName: GRAFANA_RULES_SOURCE_NAME,
@@ -142,7 +142,7 @@ const RenameRuleGroupComponent = ({ group = 'another-group-name' }: { group?: st
 };
 
 const MoveGrafanaManagedRuleGroupComponent = () => {
-  const [requestState, moveRuleGroup] = useMoveRuleGroup();
+  const [moveRuleGroup, requestState] = useMoveRuleGroup();
 
   const ruleGroupID: RuleGroupIdentifier = {
     dataSourceName: GRAFANA_RULES_SOURCE_NAME,
@@ -169,7 +169,7 @@ const MoveDataSourceManagedRuleGroupComponent = ({
   group,
   interval,
 }: MoveDataSourceManagedRuleGroupComponentProps) => {
-  const [requestState, moveRuleGroup] = useMoveRuleGroup();
+  const [moveRuleGroup, requestState] = useMoveRuleGroup();
 
   const ruleGroupID: RuleGroupIdentifier = {
     dataSourceName: MIMIR_DATASOURCE_UID,
@@ -192,7 +192,7 @@ type ReorderRuleGroupComponentProps = {
 };
 
 const ReorderRuleGroupComponent = ({ namespace, group, swaps }: ReorderRuleGroupComponentProps) => {
-  const [requestState, reorderRules] = useReorderRuleForRuleGroup();
+  const [reorderRules, requestState] = useReorderRuleForRuleGroup();
 
   const ruleGroupID: RuleGroupIdentifier = {
     dataSourceName: MIMIR_DATASOURCE_UID,

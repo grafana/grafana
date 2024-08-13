@@ -47,7 +47,7 @@ export const ReorderCloudGroupModal = (props: ModalProps) => {
   const { group, namespace, onClose, folderUid } = props;
   const [operations, setOperations] = useState<Array<[number, number]>>([]);
 
-  const [reorderState, reorderRulesInGroup] = useReorderRuleForRuleGroup();
+  const [reorderRulesInGroup, reorderState] = useReorderRuleForRuleGroup();
   const isUpdating = isLoading(reorderState);
 
   // The list of rules might have been filtered before we get to this reordering modal

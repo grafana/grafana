@@ -281,7 +281,7 @@ const UpdateRuleTestComponent = ({
   ruleID,
   rule,
 }: UpdateRuleTestComponentProps) => {
-  const [requestState, updateRule] = useUpdateRuleInRuleGroup();
+  const [updateRule, requestState] = useUpdateRuleInRuleGroup();
 
   const onClick = () => {
     updateRule.execute(ruleGroupIdentifier, ruleID, rule, targetRuleGroupIdentifier);

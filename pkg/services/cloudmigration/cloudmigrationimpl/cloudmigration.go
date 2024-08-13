@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -27,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/gcom"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -57,6 +59,7 @@ type Service struct {
 	gcomService      gcom.Service
 	dashboardService dashboards.DashboardService
 	folderService    folder.Service
+	pluginStore      pluginstore.Store
 	secretsService   secrets.Service
 	kvStore          *kvstore.NamespacedKVStore
 
@@ -90,6 +93,7 @@ func ProvideService(
 	tracer tracing.Tracer,
 	dashboardService dashboards.DashboardService,
 	folderService folder.Service,
+	pluginStore pluginstore.Store,
 	kvStore kvstore.KVStore,
 ) (cloudmigration.Service, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
@@ -107,6 +111,7 @@ func ProvideService(
 		secretsService:   secretsService,
 		dashboardService: dashboardService,
 		folderService:    folderService,
+		pluginStore:      pluginStore,
 		kvStore:          kvstore.WithNamespace(kvStore, 0, "cloudmigration"),
 	}
 	s.api = api.RegisterApi(routeRegister, s, tracer)
@@ -386,7 +391,7 @@ func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMig
 		return nil, fmt.Errorf("error creating migration: %w", err)
 	}
 
-	s.report(ctx, cm, gmsclient.EventConnect, 0, nil)
+	s.report(ctx, &migration, gmsclient.EventConnect, 0, nil)
 
 	return &cloudmigration.CloudMigrationSessionResponse{
 		UID:     cm.UID,
@@ -464,15 +469,16 @@ func (s *Service) GetMigrationRunList(ctx context.Context, migUID string) (*clou
 	return runList, nil
 }
 
-func (s *Service) DeleteSession(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
-	c, err := s.store.DeleteMigrationSessionByUID(ctx, uid)
+func (s *Service) DeleteSession(ctx context.Context, sessionUID string) (*cloudmigration.CloudMigrationSession, error) {
+	session, snapshots, err := s.store.DeleteMigrationSessionByUID(ctx, sessionUID)
 	if err != nil {
-		return c, fmt.Errorf("deleting migration from db: %w", err)
+		s.report(ctx, session, gmsclient.EventDisconnect, 0, err)
+		return nil, fmt.Errorf("deleting migration from db: %w", err)
 	}
 
-	s.report(ctx, c, gmsclient.EventDisconnect, 0, nil)
-
-	return c, nil
+	err = s.deleteLocalFiles(snapshots)
+	s.report(ctx, session, gmsclient.EventDisconnect, 0, err)
+	return session, nil
 }
 
 func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedInUser, sessionUid string) (*cloudmigration.CloudMigrationSnapshot, error) {
@@ -590,12 +596,19 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 			return snapshot, nil
 		}
 
+		// For 11.2 we only support core data sources. Apply a warning for any non-core ones before storing.
+		resources, err := s.getResourcesWithPluginWarnings(ctx, snapshotMeta.Results)
+		if err != nil {
+			// treat this as non-fatal since the migration still succeeded
+			s.log.Error("error applying plugin warnings, please open a bug report: %w", err)
+		}
+
 		// We need to update the snapshot in our db before reporting anything
 		if err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
 			UID:       snapshot.UID,
 			SessionID: sessionUid,
 			Status:    localStatus,
-			Resources: snapshotMeta.Results,
+			Resources: resources,
 		}); err != nil {
 			return nil, fmt.Errorf("error updating snapshot status: %w", err)
 		}
@@ -776,4 +789,52 @@ func (s *Service) getLocalEventId(ctx context.Context) (string, error) {
 	}
 
 	return anonId, nil
+}
+
+func (s *Service) deleteLocalFiles(snapshots []cloudmigration.CloudMigrationSnapshot) error {
+	var err error
+	for _, snapshot := range snapshots {
+		err = os.RemoveAll(snapshot.LocalDir)
+		if err != nil {
+			// in this case we only log the error, don't return it to continue with the process
+			s.log.Error("deleting migration snapshot files", "err", err)
+		}
+	}
+	return err
+}
+
+// getResourcesWithPluginWarnings iterates through each resource and, if a non-core datasource, applies a warning that we only support core
+func (s *Service) getResourcesWithPluginWarnings(ctx context.Context, results []cloudmigration.CloudMigrationResource) ([]cloudmigration.CloudMigrationResource, error) {
+	dsList, err := s.dsService.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
+	if err != nil {
+		return nil, fmt.Errorf("getting all data sources: %w", err)
+	}
+	dsMap := make(map[string]*datasources.DataSource, len(dsList))
+	for i := 0; i < len(dsList); i++ {
+		dsMap[dsList[i].UID] = dsList[i]
+	}
+
+	for i := 0; i < len(results); i++ {
+		r := results[i]
+
+		if r.Type == cloudmigration.DatasourceDataType &&
+			r.Error == "" { // any error returned by GMS takes priority
+			ds, ok := dsMap[r.RefID]
+			if !ok {
+				s.log.Error("data source with id %s was not found in data sources list", r.RefID)
+				continue
+			}
+
+			p, found := s.pluginStore.Plugin(ctx, ds.Type)
+			// if the plugin is not found, it means it was uninstalled, meaning it wasn't core
+			if !p.IsCorePlugin() || !found {
+				r.Status = cloudmigration.ItemStatusWarning
+				r.Error = "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack."
+			}
+
+			results[i] = r
+		}
+	}
+
+	return results, nil
 }

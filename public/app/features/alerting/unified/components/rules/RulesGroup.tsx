@@ -40,7 +40,7 @@ interface Props {
 export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }: Props) => {
   const { rulesSource } = namespace;
   const styles = useStyles2(getStyles);
-  const [_deleteRuleGroupState, deleteRuleGroup] = useDeleteRuleGroup();
+  const [deleteRuleGroup] = useDeleteRuleGroup();
 
   const [isEditingGroup, setIsEditingGroup] = useState(false);
   const [isDeletingGroup, setIsDeletingGroup] = useState(false);

@@ -47,6 +47,18 @@
     },
     {
       "metadata": {
+        "name": "adhocFilterOneOf",
+        "resourceVersion": "1723119716623",
+        "creationTimestamp": "2024-08-08T12:21:56Z"
+      },
+      "spec": {
+        "description": "Exposes a new 'one of' operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "aiGeneratedDashboardChanges",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-03-05T12:01:31Z"
@@ -505,13 +517,29 @@
     {
       "metadata": {
         "name": "azureMonitorPrometheusExemplars",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-06-06T16:53:17Z"
+        "resourceVersion": "1723028568258",
+        "creationTimestamp": "2024-06-06T16:53:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-07 11:02:48.258776 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/partner-datasources"
+      }
+    },
+    {
+      "metadata": {
+        "name": "backgroundPluginInstaller",
+        "resourceVersion": "1723202510081",
+        "creationTimestamp": "2024-08-09T11:21:50Z"
+      },
+      "spec": {
+        "description": "Enable background plugin installer",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true
       }
     },
     {
@@ -801,6 +829,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-backend-services-squad",
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dataplaneAggregator",
+        "resourceVersion": "1723151074613",
+        "creationTimestamp": "2024-08-08T21:04:34Z"
+      },
+      "spec": {
+        "description": "Enable grafana dataplane aggregator",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
       }
     },
     {
@@ -1352,11 +1393,14 @@
     {
       "metadata": {
         "name": "kubernetesAggregator",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-02-12T20:59:35Z"
+        "resourceVersion": "1723151074613",
+        "creationTimestamp": "2024-02-12T20:59:35Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-08 21:04:34.613161685 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enable grafana aggregator",
+        "description": "Enable grafana's embedded kube-aggregator",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
@@ -1394,6 +1438,7 @@
         "name": "kubernetesPlaylists",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-10-05T19:00:36Z",
+        "deletionTimestamp": "2024-07-30T19:34:12Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -1995,6 +2040,22 @@
     },
     {
       "metadata": {
+        "name": "pluginsDetailsRightPanel",
+        "resourceVersion": "1720788722220",
+        "creationTimestamp": "2024-07-12T08:39:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-07-12 12:52:02.22099 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables right panel for the plugins details page",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginsFrontendSandbox",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-06-05T08:51:36Z"
@@ -2150,6 +2211,18 @@
         "stage": "experimental",
         "codeowner": "@grafana/observability-metrics",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "prometheusRunQueriesInParallel",
+        "resourceVersion": "1720677541862",
+        "creationTimestamp": "2024-07-11T05:59:01Z"
+      },
+      "spec": {
+        "description": "Enables running Prometheus queries in parallel",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/observability-metrics"
       }
     },
     {

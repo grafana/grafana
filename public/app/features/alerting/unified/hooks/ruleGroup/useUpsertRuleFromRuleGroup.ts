@@ -50,7 +50,7 @@ export function useAddRuleToRuleGroup() {
  */
 export function useUpdateRuleInRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
-  const [_moveRuleState, moveRuleToGroup] = useMoveRuleToRuleGroup();
+  const [moveRuleToGroup] = useMoveRuleToRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
 
   const successMessage = t('alerting.rules.update-rule.success', 'Rule updated successfully');
@@ -93,7 +93,7 @@ export function useUpdateRuleInRuleGroup() {
  */
 export function useMoveRuleToRuleGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
-  const [_deleteRuleState, deleteRuleFromGroup] = useDeleteRuleFromGroup();
+  const [deleteRuleFromGroup] = useDeleteRuleFromGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
 
   const successMessage = t('alerting.rules.update-rule.success', 'Rule updated successfully');

@@ -142,7 +142,7 @@ type AddRuleTestComponentProps = {
 };
 
 const AddRuleTestComponent = ({ ruleGroupIdentifier, rule, interval }: AddRuleTestComponentProps) => {
-  const [requestState, addRule] = useAddRuleToRuleGroup();
+  const [addRule, requestState] = useAddRuleToRuleGroup();
 
   const onClick = () => {
     addRule.execute(ruleGroupIdentifier, rule, interval);
