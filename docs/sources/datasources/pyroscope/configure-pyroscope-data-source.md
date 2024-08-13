@@ -84,7 +84,7 @@ To configure basic settings for the data source, complete the following steps:
 To modify an existing Pyroscope data source:
 
 1. Select **Connections** in the main menu.
-1. Select Data sources to view a list of configured data sources.
+1. Select **Data sources** to view a list of configured data sources.
 1. Select the Pyroscope data source you wish to modify.
 1. Optional: Use **Additional settings** to configure or modify other options.
 1. After completing your updates, select **Save & test**.

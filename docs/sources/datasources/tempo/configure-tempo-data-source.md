@@ -103,7 +103,7 @@ Follow these steps to set up a new Tempo data source:
 To modify an existing Tempo data source:
 
 1. Select **Connections** in the main menu.
-1. Select Data sources to view a list of configured data sources.
+1. Select **Data sources** to view a list of configured data sources.
 1. Select the Tempo data source you wish to modify.
 1. Configure or update additional sections to add capabilities to your tracing data. Refer to the additional procedures for instructions.
 1. After completing your updates, select **Save & test**.
