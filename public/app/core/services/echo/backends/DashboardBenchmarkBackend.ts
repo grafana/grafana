@@ -3,6 +3,7 @@ import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
 export interface DashboardRenderBenchmarkPayload {
   interactionType: string;
   duration: number;
+  networkDuration: number;
 }
 
 export interface DashboardRenderBenchmark
@@ -28,6 +29,7 @@ export class DashboardBenchmarkBackend
     if (e.payload.properties.interactionType) {
       this.buffer.push({
         duration: e.payload.properties.duration,
+        networkDuration: e.payload.properties.networkDuration,
         interactionType: e.payload.properties.interactionType,
       });
     }

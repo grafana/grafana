@@ -3251,17 +3251,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/e2e-selectors@npm:^11.0.0":
-  version: 11.1.3
-  resolution: "@grafana/e2e-selectors@npm:11.1.3"
-  dependencies:
-    "@grafana/tsconfig": "npm:^1.3.0-rc1"
-    tslib: "npm:2.6.3"
-    typescript: "npm:5.4.5"
-  checksum: 10/0e9588bf6ab9c8747bb29831e8276c0ea0df0aa376d336347ad57e6eb9e1d8f0d07025897f4e06a026145f090b40bee60c3a64bbc6570c1686270fb2ba2c6537
-  languageName: node
-  linkType: hard
-
 "@grafana/eslint-config@npm:7.0.0":
   version: 7.0.0
   resolution: "@grafana/eslint-config@npm:7.0.0"
@@ -3732,26 +3721,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:5.7.4--canary.858.10213075790.0":
-  version: 5.7.4--canary.858.10213075790.0
-  resolution: "@grafana/scenes@npm:5.7.4--canary.858.10213075790.0"
-  dependencies:
-    "@grafana/e2e-selectors": "npm:^11.0.0"
-    "@leeoniya/ufuzzy": "npm:^1.0.14"
-    react-grid-layout: "npm:1.3.4"
-    react-use: "npm:17.5.0"
-    react-virtualized-auto-sizer: "npm:1.0.24"
-    uuid: "npm:^9.0.0"
-  peerDependencies:
-    "@grafana/data": ">=10.4"
-    "@grafana/runtime": ">=10.4"
-    "@grafana/schema": ">=10.4"
-    "@grafana/ui": ">=10.4"
-    react: ^18.0.0
-    react-dom: ^18.0.0
-  checksum: 10/fefa02543d41a7fa36209a7929d152bd3ae1042cecf06173b3f5eacb71d8f11673915ee2c8267b38956b116df20f41e7bb368242ee42e1ff6cac0093f578375c
+"@grafana/scenes@link:/Users/dominik/Projects/grafana-scenes/packages/scenes::locator=grafana%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@grafana/scenes@link:/Users/dominik/Projects/grafana-scenes/packages/scenes::locator=grafana%40workspace%3A."
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@grafana/schema@npm:11.2.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
@@ -4504,7 +4478,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@leeoniya/ufuzzy@npm:1.0.14, @leeoniya/ufuzzy@npm:^1.0.14":
+"@leeoniya/ufuzzy@npm:1.0.14":
   version: 1.0.14
   resolution: "@leeoniya/ufuzzy@npm:1.0.14"
   checksum: 10/852b580a8eaaf92e2d448f5b720e3c53e4bea22187bf5e8459256677c47183321b47b8384982e15751f42da7e77a216fd86c80e6185677d8270adeab4a4fb771
@@ -17503,7 +17477,7 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:5.7.4--canary.858.10213075790.0"
+    "@grafana/scenes": "link:/Users/dominik/Projects/grafana-scenes/packages/scenes"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
@@ -22684,7 +22658,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nano-css@npm:^5.6.1, nano-css@npm:^5.6.2":
+"nano-css@npm:^5.6.2":
   version: 5.6.2
   resolution: "nano-css@npm:5.6.2"
   dependencies:
@@ -26236,31 +26210,6 @@ __metadata:
     react: ">=16.13"
     react-dom: ">=16.13"
   checksum: 10/0da4fcec48b640e25b9189ebc43612c58652cd2ebea67a755e097ebfff19f6cfd9b0a19b47498e957fa5faf34ab7b77852a063b286f28925afaa24e573a7903d
-  languageName: node
-  linkType: hard
-
-"react-use@npm:17.5.0":
-  version: 17.5.0
-  resolution: "react-use@npm:17.5.0"
-  dependencies:
-    "@types/js-cookie": "npm:^2.2.6"
-    "@xobotyi/scrollbar-width": "npm:^1.9.5"
-    copy-to-clipboard: "npm:^3.3.1"
-    fast-deep-equal: "npm:^3.1.3"
-    fast-shallow-equal: "npm:^1.0.0"
-    js-cookie: "npm:^2.2.1"
-    nano-css: "npm:^5.6.1"
-    react-universal-interface: "npm:^0.6.2"
-    resize-observer-polyfill: "npm:^1.5.1"
-    screenfull: "npm:^5.1.0"
-    set-harmonic-interval: "npm:^1.0.1"
-    throttle-debounce: "npm:^3.0.1"
-    ts-easing: "npm:^0.2.0"
-    tslib: "npm:^2.1.0"
-  peerDependencies:
-    react: "*"
-    react-dom: "*"
-  checksum: 10/5d81fe0902303d3ed7810cdd56c6cae12b08124a3d4fcbfa3924327105b81447b039ea9d6aff20aac3c13999f949000870a7a2fa29fe20ed844ac26606462fa0
   languageName: node
   linkType: hard
 

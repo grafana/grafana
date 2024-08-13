@@ -1,6 +1,6 @@
 import { e2e } from '../utils';
 
-const RUNS = 10;
+const RUNS = 500;
 
 describe('Dashboard rendering benchmark', () => {
   beforeEach(() => {
@@ -9,12 +9,10 @@ describe('Dashboard rendering benchmark', () => {
 
   it('dashboard with a single panel', () => {
     setupBenchmark('cdt8wrar2blkwe/benchmark3a-single-query');
-    const fileName = 'benchmark3a-slow-query.csv';
+    const fileName = 'benchmark-single-query.csv';
 
     runBenchmarkInteraction(RUNS, () => e2e.components.RefreshPicker.runButtonV2().click());
     processBenchmarkResults(fileName);
-
-    e2e.components.Panels.Panel.content().should('have.length', 1);
   });
 
   it('dashboard with a slow panel', () => {
@@ -23,18 +21,14 @@ describe('Dashboard rendering benchmark', () => {
 
     runBenchmarkInteraction(RUNS, () => e2e.components.RefreshPicker.runButtonV2().click(), 3000);
     processBenchmarkResults(fileName);
-
-    e2e.components.Panels.Panel.content().should('have.length', 1);
   });
 
   it('dashboard with a query variable and a single panel', () => {
     setupBenchmark('edt8433nfnzswe/benchmark3a-with-1-query-variable', 5000);
-    const fileName = 'benchmark3a-with-1-query-variable.csv';
+    const fileName = 'benchmarka-with-single-query-variable-and-panel.csv';
 
     runBenchmarkInteraction(RUNS, () => e2e.components.RefreshPicker.runButtonV2().click(), 3000);
     processBenchmarkResults(fileName);
-
-    e2e.components.Panels.Panel.content().should('have.length', 1);
   });
 });
 

@@ -598,6 +598,7 @@ function reportDashboardInteractions(e: SceneInteractionProfileEvent) {
     reportInteraction('dashboard-render', {
       interactionType,
       duration: e.duration,
+      networkDuration: e.networkDuration,
       crumbs: e.crumbs,
     });
   }
