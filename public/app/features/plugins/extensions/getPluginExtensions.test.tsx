@@ -22,7 +22,7 @@ function createPluginExtensionRegistry(preloadResults: Array<{ pluginId: string;
     registry.register({
       pluginId,
       extensionConfigs,
-      exportedComponentsConfigs: [],
+      exportedComponentConfigs: [],
     });
   }
 

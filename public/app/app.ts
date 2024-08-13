@@ -214,7 +214,7 @@ export class GrafanaApp {
       extensionsRegistry.register({
         pluginId: 'grafana',
         extensionConfigs: getCoreExtensionConfigurations(),
-        exportedComponentsConfigs: [],
+        exportedComponentConfigs: [],
       });
 
       const exportedComponentsRegistry = new ExportedComponentsRegistry();

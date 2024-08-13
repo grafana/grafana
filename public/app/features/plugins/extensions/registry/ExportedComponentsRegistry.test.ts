@@ -25,7 +25,7 @@ describe('ExportedComponentsRegistry', () => {
 
     reactiveRegistry.register({
       pluginId,
-      exportedComponentsConfigs: [
+      exportedComponentConfigs: [
         {
           id,
           title: 'not important',
@@ -58,7 +58,7 @@ describe('ExportedComponentsRegistry', () => {
 
     reactiveRegistry.register({
       pluginId,
-      exportedComponentsConfigs: [
+      exportedComponentConfigs: [
         {
           id: id1,
           title: 'not important',
@@ -100,7 +100,7 @@ describe('ExportedComponentsRegistry', () => {
 
     reactiveRegistry.register({
       pluginId: pluginId1,
-      exportedComponentsConfigs: [
+      exportedComponentConfigs: [
         {
           id: id1,
           title: 'not important',
@@ -119,7 +119,7 @@ describe('ExportedComponentsRegistry', () => {
 
     reactiveRegistry.register({
       pluginId: pluginId2,
-      exportedComponentsConfigs: [
+      exportedComponentConfigs: [
         {
           id: id3,
           title: 'not important',
@@ -156,7 +156,7 @@ describe('ExportedComponentsRegistry', () => {
     registry.register({
       pluginId: 'grafana-basic-app1',
       extensionConfigs: [],
-      exportedComponentsConfigs: [
+      exportedComponentConfigs: [
         {
           id: 'grafana-basic-app1/hello-world/v1',
           title: 'not important',
@@ -172,7 +172,7 @@ describe('ExportedComponentsRegistry', () => {
     registry.register({
       pluginId: 'grafana-basic-app2',
       extensionConfigs: [],
-      exportedComponentsConfigs: [
+      exportedComponentConfigs: [
         {
           id: 'grafana-basic-app2/hello-world/v1',
           title: 'not important',
@@ -198,7 +198,7 @@ describe('ExportedComponentsRegistry', () => {
     registry.register({
       pluginId: 'grafana-basic-app',
       extensionConfigs: [],
-      exportedComponentsConfigs: [
+      exportedComponentConfigs: [
         {
           id: 'grafana-basic-app/hello-world/v1',
           title: 'not important',
@@ -233,7 +233,7 @@ describe('ExportedComponentsRegistry', () => {
       error: new Error('Something is broken'),
       pluginId,
       extensionConfigs: [],
-      exportedComponentsConfigs: [
+      exportedComponentConfigs: [
         {
           id: `${pluginId}/hello-world/v1`,
           title: 'not important',
@@ -257,7 +257,7 @@ describe('ExportedComponentsRegistry', () => {
     registry.register({
       pluginId: 'grafana-basic-app1',
       extensionConfigs: [],
-      exportedComponentsConfigs: [
+      exportedComponentConfigs: [
         {
           id: 'grafana-basic-app1/hello-world/v1',
           title: 'not important',
@@ -279,7 +279,7 @@ describe('ExportedComponentsRegistry', () => {
     registry.register({
       pluginId: 'grafana-basic-app2',
       extensionConfigs: [],
-      exportedComponentsConfigs: [
+      exportedComponentConfigs: [
         {
           id: 'grafana-basic-app1/hello-world/v1', // incorrectly scoped
           title: 'not important',
@@ -301,7 +301,7 @@ describe('ExportedComponentsRegistry', () => {
     registry.register({
       pluginId: 'grafana-basic-app1',
       extensionConfigs: [],
-      exportedComponentsConfigs: [
+      exportedComponentConfigs: [
         {
           id: 'hello-world/v1',
           title: 'not important',
@@ -323,7 +323,7 @@ describe('ExportedComponentsRegistry', () => {
     registry.register({
       pluginId: 'grafana-basic-app1',
       extensionConfigs: [],
-      exportedComponentsConfigs: [
+      exportedComponentConfigs: [
         {
           id: 'grafana-basic-app1/hello-world',
           title: 'not important',
@@ -346,7 +346,7 @@ describe('ExportedComponentsRegistry', () => {
     registry.register({
       pluginId: 'grafana-basic-app',
       extensionConfigs: [],
-      exportedComponentsConfigs: [
+      exportedComponentConfigs: [
         {
           id: 'grafana-basic-app/hello-world/v1',
           title: 'not important',
@@ -370,7 +370,7 @@ describe('ExportedComponentsRegistry', () => {
     registry.register({
       pluginId: 'grafana-basic-app',
       extensionConfigs: [],
-      exportedComponentsConfigs: [
+      exportedComponentConfigs: [
         {
           id: 'grafana-basic-app/hello-world/v1',
           title: '',

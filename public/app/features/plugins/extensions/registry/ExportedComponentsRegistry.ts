@@ -20,7 +20,7 @@ export class ExportedComponentsRegistry extends Registry<RegistryType> {
   }
 
   mapToRegistry(registry: RegistryType, item: PluginPreloadResult): RegistryType {
-    const { pluginId, exportedComponentsConfigs, error } = item;
+    const { pluginId, exportedComponentConfigs: exportedComponentsConfigs, error } = item;
 
     if (error) {
       logWarning(`"${pluginId}" plugin failed to load. Skip registering its exposed components.`);

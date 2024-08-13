@@ -11,7 +11,7 @@ export type PluginPreloadResult = {
   pluginId: string;
   error?: unknown;
   extensionConfigs: PluginExtensionConfig[];
-  exportedComponentsConfigs: PluginExportedComponentConfig[];
+  exportedComponentConfigs: PluginExportedComponentConfig[];
 };
 
 export async function preloadPlugins(
@@ -42,16 +42,16 @@ async function preload(config: AppPluginConfig): Promise<PluginPreloadResult> {
       isAngular: config.angular.detected,
       pluginId,
     });
-    const { extensionConfigs = [], exportedComponents = [] } = plugin;
+    const { extensionConfigs = [], exportedComponentConfigs = [] } = plugin;
 
     // Fetching meta-information for the preloaded app plugin and caching it for later.
     // (The function below returns a promise, but it's not awaited for a reason: we don't want to block the preload process, we would only like to cache the result for later.)
     getPluginSettings(pluginId);
 
-    return { pluginId, extensionConfigs, exportedComponentsConfigs: exportedComponents };
+    return { pluginId, extensionConfigs, exportedComponentConfigs };
   } catch (error) {
     console.error(`[Plugins] Failed to preload plugin: ${path} (version: ${version})`, error);
-    return { pluginId, extensionConfigs: [], error, exportedComponentsConfigs: [] };
+    return { pluginId, extensionConfigs: [], error, exportedComponentConfigs: [] };
   } finally {
     stopMeasure(`frontend_plugin_preload_${pluginId}`);
   }
