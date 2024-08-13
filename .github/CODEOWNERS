@@ -665,7 +665,7 @@ embed.go @grafana/grafana-as-code
 
 # GitHub Workflows and Templates
 /.github/CODEOWNERS @tolzhabayev
-/.github/ISSUE_TEMPLATE/ @torkelo
+/.github/ISSUE_TEMPLATE/ @torkelo @sympatheticmoose
 /.github/PULL_REQUEST_TEMPLATE.md @torkelo
 /.github/bot.md @torkelo
 /.github/commands.json @torkelo
