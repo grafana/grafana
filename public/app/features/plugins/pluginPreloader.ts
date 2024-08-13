@@ -4,7 +4,7 @@ import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
 import { ReactivePluginExtensionsRegistry } from './extensions/reactivePluginExtensionRegistry';
-import { ExportedComponentRegistry } from './extensions/registry/ExportedComponentRegistry';
+import { ExportedComponentsRegistry } from './extensions/registry/ExportedComponentsRegistry';
 import * as pluginLoader from './plugin_loader';
 
 export type PluginPreloadResult = {
@@ -18,7 +18,7 @@ export type PluginPreloadResult = {
 export async function preloadPlugins(
   apps: AppPluginConfig[] = [],
   registry: ReactivePluginExtensionsRegistry,
-  exportedComponentRegistry: ExportedComponentRegistry,
+  exportedComponentRegistry: ExportedComponentsRegistry,
   eventName = 'frontend_plugins_preload'
 ) {
   startMeasure(eventName);

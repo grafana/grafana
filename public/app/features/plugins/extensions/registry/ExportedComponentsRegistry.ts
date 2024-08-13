@@ -9,7 +9,7 @@ export type RegistryType = {
   [id: string]: PluginExportedComponentConfig;
 };
 
-export class ExportedComponentRegistry extends Registry<RegistryType> {
+export class ExportedComponentsRegistry extends Registry<RegistryType> {
   constructor(initialState: RegistryType = {}) {
     super({
       initialState,

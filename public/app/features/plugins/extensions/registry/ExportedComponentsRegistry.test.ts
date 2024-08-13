@@ -1,7 +1,7 @@
 import React from 'react';
 import { firstValueFrom } from 'rxjs';
 
-import { ExportedComponentRegistry } from './ExportedComponentRegistry';
+import { ExportedComponentsRegistry } from './ExportedComponentsRegistry';
 
 describe('ExportedComponentRegistry', () => {
   const consoleWarn = jest.fn();
@@ -12,7 +12,7 @@ describe('ExportedComponentRegistry', () => {
   });
 
   it('should return empty registry when exposed components have been registered', async () => {
-    const reactiveRegistry = new ExportedComponentRegistry();
+    const reactiveRegistry = new ExportedComponentsRegistry();
     const observable = reactiveRegistry.asObservable();
     const registry = await firstValueFrom(observable);
     expect(registry).toEqual({});
@@ -21,7 +21,7 @@ describe('ExportedComponentRegistry', () => {
   it('should be possible to register exposed components in the registry', async () => {
     const pluginId = 'grafana-basic-app';
     const id = `${pluginId}/hello-world/v1`;
-    const reactiveRegistry = new ExportedComponentRegistry();
+    const reactiveRegistry = new ExportedComponentsRegistry();
 
     reactiveRegistry.register({
       pluginId,
@@ -52,7 +52,7 @@ describe('ExportedComponentRegistry', () => {
     const id1 = `${pluginId}/hello-world1/v1`;
     const id2 = `${pluginId}/hello-world2/v1`;
     const id3 = `${pluginId}/hello-world3/v1`;
-    const reactiveRegistry = new ExportedComponentRegistry();
+    const reactiveRegistry = new ExportedComponentsRegistry();
 
     reactiveRegistry.register({
       pluginId,
@@ -97,7 +97,7 @@ describe('ExportedComponentRegistry', () => {
     const id2 = `${pluginId1}/hello-world2/v1`;
     const id3 = `${pluginId2}/hello-world1/v1`;
     const id4 = `${pluginId2}/hello-world2/v1`;
-    const reactiveRegistry = new ExportedComponentRegistry();
+    const reactiveRegistry = new ExportedComponentsRegistry();
 
     reactiveRegistry.register({
       pluginId: pluginId1,
@@ -151,7 +151,7 @@ describe('ExportedComponentRegistry', () => {
   });
 
   it('should notify subscribers when the registry changes', async () => {
-    const registry = new ExportedComponentRegistry();
+    const registry = new ExportedComponentsRegistry();
     const observable = registry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -197,7 +197,7 @@ describe('ExportedComponentRegistry', () => {
   });
 
   it('should give the last version of the registry for new subscribers', async () => {
-    const registry = new ExportedComponentRegistry();
+    const registry = new ExportedComponentsRegistry();
     const observable = registry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -231,7 +231,7 @@ describe('ExportedComponentRegistry', () => {
 
   it('should not register exposed components for a plugin that had errors', () => {
     const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new ExportedComponentRegistry();
+    const reactiveRegistry = new ExportedComponentsRegistry();
     const observable = reactiveRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
@@ -260,7 +260,7 @@ describe('ExportedComponentRegistry', () => {
   });
 
   it('should log a warning if another component with the same id already exists in the registry', async () => {
-    const registry = new ExportedComponentRegistry();
+    const registry = new ExportedComponentsRegistry();
     registry.register({
       pluginId: 'grafana-basic-app1',
       extensionConfigs: [],
@@ -304,7 +304,7 @@ describe('ExportedComponentRegistry', () => {
   });
 
   it('should slip registering component and log a warning when id is not prefixed with plugin id', async () => {
-    const registry = new ExportedComponentRegistry();
+    const registry = new ExportedComponentsRegistry();
     registry.register({
       pluginId: 'grafana-basic-app1',
       extensionConfigs: [],
@@ -327,7 +327,7 @@ describe('ExportedComponentRegistry', () => {
   });
 
   it('should log a warning when exposed component id is not suffixed with component version', async () => {
-    const registry = new ExportedComponentRegistry();
+    const registry = new ExportedComponentsRegistry();
     registry.register({
       pluginId: 'grafana-basic-app1',
       extensionConfigs: [],
@@ -350,7 +350,7 @@ describe('ExportedComponentRegistry', () => {
   });
 
   it('should not register component when title or description is missing', async () => {
-    const registry = new ExportedComponentRegistry();
+    const registry = new ExportedComponentsRegistry();
 
     registry.register({
       pluginId: 'grafana-basic-app',
