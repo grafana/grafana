@@ -112,13 +112,10 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
           value: values[0],
           text: String(texts[0]),
         });
-        if (!variables) {
-          variables = new SceneVariableSet({
-            variables: [varWithDefaultValue],
-          });
-        } else {
-          variables.state.variables.push(varWithDefaultValue);
-        }
+
+        variables = new SceneVariableSet({
+          variables: [varWithDefaultValue],
+        });
       }
     }
 
