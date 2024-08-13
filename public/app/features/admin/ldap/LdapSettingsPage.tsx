@@ -77,13 +77,25 @@ const emptySettings: LdapPayload = {
         attributes: {},
         bindDn: '',
         bindPassword: '',
+        clientCert: '',
+        clientKey: '',
         groupMappings: [],
+        groupSearchBaseDns: [],
+        groupSearchFilter: '',
+        groupSearchFilterUserAttribute: '',
         host: '',
+        mapLdapGroupsToOrgRoles: false,
+        minTlsVersion: '',
         port: 389,
-        searchBaseDn: '',
+        rootCaCert: '',
+        searchBaseDn: [],
         searchFilter: '',
+        startTls: false,
         sslSkipVerify: false,
         timeout: 10,
+        tlsCiphers: [],
+        tlsSkipVerify: false,
+        useSsl: false,
       },
     },
     enabled: false,
@@ -104,6 +116,7 @@ const mapJsonToModel = (json: any): LdapPayload => {
     username: server.attributes.username,
   };
   const groupMappings: GroupMapping[] = server.group_mappings.map((gp: any) => ({
+    grafanaAdmin: !!gp.grafana_admin,
     groupDn: gp.group_dn,
     orgId: +gp.org_id,
     orgRole: gp.org_role
@@ -120,13 +133,25 @@ const mapJsonToModel = (json: any): LdapPayload => {
           attributes: attributes,
           bindDn: server.bind_dn,
           bindPassword: server.bind_password,
+          clientCert: server.client_cert,
+          clientKey: server.client_key,
           groupMappings: groupMappings,
+          groupSearchBaseDns: server.group_search_base_dns,
+          groupSearchFilter: server.group_search_filter,
+          groupSearchFilterUserAttribute: server.group_search_filter_user_attribute,
           host: server.host,
+          mapLdapGroupsToOrgRoles: !!server.map_ldap_groups_to_org_roles,
+          minTlsVersion: server.min_tls_version,
           port: +server.port,
-          searchBaseDn: server.search_base_dns.join(', '),
+          rootCaCert: server.root_ca_cert,
+          searchBaseDn: server.search_base_dns,
           searchFilter: server.search_filter,
           sslSkipVerify: server.ssl_skip_verify,
+          startTls: server.start_tls,
           timeout: +server.timeout,
+          tlsCiphers: server.tls_ciphers,
+          tlsSkipVerify: server.tls_skip_verify,
+          useSsl: server.use_ssl,
         },
       },
       enabled: settings.enabled,
@@ -192,17 +217,29 @@ export const LdapSettingsPage = (): JSX.Element => {
             },
             bind_dn: formSettings.settings.config.server.bindDn,
             bind_password: formSettings.settings.config.server.bindPassword,
+            client_cert: formSettings.settings.config.server.clientCert,
+            client_key: formSettings.settings.config.server.clientKey,
             group_mappings: formSettings.settings.config.server.groupMappings.map((gp: GroupMapping) => ({
               group_dn: gp.groupDn,
               org_id: gp.orgId,
               org_role: gp.orgRole
             })),
+            group_search_base_dns: formSettings.settings.config.server.groupSearchBaseDns,
+            group_search_filter: formSettings.settings.config.server.groupSearchFilter,
+            group_search_filter_user_attribute: formSettings.settings.config.server.groupSearchFilterUserAttribute,
             host: formSettings.settings.config.server.host,
+            map_ldap_groups_to_org_roles: formSettings.settings.config.server.mapLdapGroupsToOrgRoles,
+            min_tls_version: formSettings.settings.config.server.minTlsVersion,
             port: formSettings.settings.config.server.port,
-            search_base_dns: [formSettings.settings.config.server.searchBaseDn], // TODO: fix array
+            root_ca_cert: formSettings.settings.config.server.rootCaCert,
+            search_base_dns: formSettings.settings.config.server.searchBaseDn,
             search_filter: formSettings.settings.config.server.searchFilter,
             ssl_skip_verify: formSettings.settings.config.server.sslSkipVerify,
+            start_tls: formSettings.settings.config.server.startTls,
             timeout: formSettings.settings.config.server.timeout,
+            tls_ciphers: formSettings.settings.config.server.tlsCiphers,
+            tls_skip_verify: formSettings.settings.config.server.tlsSkipVerify,
+            use_ssl: formSettings.settings.config.server.useSsl
           }],
         },
         enabled: formSettings.settings.enabled,
@@ -241,23 +278,22 @@ export const LdapSettingsPage = (): JSX.Element => {
       setIsLoading(false);
     }
   };
-  const openDrawer = () => {
-    setIsDrawerOpen(true);
-  };
   const onChange = (ldapSettings: LdapSettings) => {
     setFormSettings({
       ...formSettings,
       settings: {
+        ...formSettings.settings,
         ...ldapSettings,
       },
     });
   };
 
+  const url = 'https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#variable-expansion';
   const passwordTooltip = (
     <Tooltip
       content={
         <>
-          We recommend using variable expansion for bind password, for more information visit our <TextLink href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#variable-expansion" external>documentation</TextLink>.
+          We recommend using variable expansion for bind password, for more information visit our <TextLink href={url} external>documentation</TextLink>.
         </>
       }
       interactive={true}>
@@ -354,7 +390,7 @@ export const LdapSettingsPage = (): JSX.Element => {
                     <Text element="h2">Advanced Settings</Text>
                     <Text>Mappings, extra security measures, and more.</Text>
                   </Stack>
-                  <Button variant='secondary' onClick={openDrawer}>Edit</Button>
+                  <Button variant='secondary' onClick={() => setIsDrawerOpen(true)}>Edit</Button>
                 </Stack>
             </Box>
             <Box display={'flex'} gap={2} marginTop={5}>
@@ -374,7 +410,7 @@ export const LdapSettingsPage = (): JSX.Element => {
         </section>}
         {isDrawerOpen && <LdapDrawer
           ldapSettings={formSettings.settings}
-          onChange={ldapSettings => onChange(ldapSettings)}
+          onChange={onChange}
           onClose={() => setIsDrawerOpen(false)} />}
       </Page.Contents>
     </Page>

@@ -83,13 +83,25 @@ export interface LdapServerConfig {
   attributes: LdapAttributes;
   bindDn: string;
   bindPassword: string;
+  clientCert: string;
+  clientKey: string;
   groupMappings: GroupMapping[];
+  groupSearchBaseDns: string[];
+  groupSearchFilter: string;
+  groupSearchFilterUserAttribute: string;
   host: string;
+  mapLdapGroupsToOrgRoles: boolean;
+  minTlsVersion: string;
   port: number;
+  rootCaCert: string;
+  searchBaseDn: string[];
   searchFilter: string;
-  searchBaseDn: string;
   sslSkipVerify: boolean;
+  startTls: boolean;
   timeout: number;
+  tlsCiphers: string[];
+  tlsSkipVerify: boolean;
+  useSsl: boolean;
 }
 
 export type LdapConnectionInfo = LdapServerInfo[];
