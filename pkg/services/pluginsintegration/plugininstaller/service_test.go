@@ -18,7 +18,7 @@ func TestService_IsDisabled(t *testing.T) {
 	// Create a new service
 	s := ProvideService(
 		&setting.Cfg{
-			InstallPlugins: []string{"myplugin"},
+			InstallPlugins: []setting.InstallPlugin{{ID: "myplugin"}},
 		},
 		featuremgmt.WithFeatures(featuremgmt.FlagBackgroundPluginInstaller),
 		pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
@@ -36,7 +36,7 @@ func TestService_Run(t *testing.T) {
 		installed := false
 		s := ProvideService(
 			&setting.Cfg{
-				InstallPlugins: []string{"myplugin"},
+				InstallPlugins: []setting.InstallPlugin{{ID: "myplugin"}},
 			},
 			featuremgmt.WithFeatures(),
 			pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
@@ -57,7 +57,7 @@ func TestService_Run(t *testing.T) {
 		installed := false
 		s := ProvideService(
 			&setting.Cfg{
-				InstallPlugins: []string{"myplugin@1.0.0"},
+				InstallPlugins: []setting.InstallPlugin{{ID: "myplugin", Version: "1.0.0"}},
 			},
 			featuremgmt.WithFeatures(),
 			pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
@@ -77,7 +77,6 @@ func TestService_Run(t *testing.T) {
 	})
 
 	t.Run("Skips already installed plugin", func(t *testing.T) {
-		installed := false
 		preg := registry.NewInMemory()
 		err := preg.Add(context.Background(), &plugins.Plugin{
 			JSONData: plugins.JSONData{
@@ -87,7 +86,7 @@ func TestService_Run(t *testing.T) {
 		require.NoError(t, err)
 		s := ProvideService(
 			&setting.Cfg{
-				InstallPlugins: []string{"myplugin"},
+				InstallPlugins: []setting.InstallPlugin{{ID: "myplugin"}},
 			},
 			featuremgmt.WithFeatures(),
 			pluginstore.New(preg, &fakes.FakeLoader{}),
@@ -101,7 +100,6 @@ func TestService_Run(t *testing.T) {
 
 		err = s.Run(context.Background())
 		require.NoError(t, err)
-		require.False(t, installed)
 	})
 
 	t.Run("Still installs a plugin if the plugin version does not match", func(t *testing.T) {
@@ -118,7 +116,7 @@ func TestService_Run(t *testing.T) {
 		require.NoError(t, err)
 		s := ProvideService(
 			&setting.Cfg{
-				InstallPlugins: []string{"myplugin@1.0.1"},
+				InstallPlugins: []setting.InstallPlugin{{ID: "myplugin", Version: "2.0.0"}},
 			},
 			featuremgmt.WithFeatures(),
 			pluginstore.New(preg, &fakes.FakeLoader{}),
@@ -139,7 +137,7 @@ func TestService_Run(t *testing.T) {
 		installed := 0
 		s := ProvideService(
 			&setting.Cfg{
-				InstallPlugins: []string{"myplugin1", "myplugin2"},
+				InstallPlugins: []setting.InstallPlugin{{ID: "myplugin1"}, {ID: "myplugin2"}},
 			},
 			featuremgmt.WithFeatures(),
 			pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
@@ -160,7 +158,7 @@ func TestService_Run(t *testing.T) {
 		installed := 0
 		s := ProvideService(
 			&setting.Cfg{
-				InstallPlugins: []string{"myplugin1", "myplugin2"},
+				InstallPlugins: []setting.InstallPlugin{{ID: "myplugin1"}, {ID: "myplugin2"}},
 			},
 			featuremgmt.WithFeatures(),
 			pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"runtime"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -41,36 +40,29 @@ func (s *Service) IsDisabled() bool {
 func (s *Service) Run(ctx context.Context) error {
 	compatOpts := plugins.NewCompatOpts(s.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 
-	for _, pluginIDRaw := range s.cfg.InstallPlugins {
-		parsed := strings.Split(pluginIDRaw, "@")
-		pluginID := parsed[0]
-		version := ""
-		if len(parsed) == 2 {
-			version = parsed[1]
-		}
-
+	for _, installPlugin := range s.cfg.InstallPlugins {
 		// Check if the plugin is already installed
-		p, exists := s.pluginStore.Plugin(ctx, pluginID)
+		p, exists := s.pluginStore.Plugin(ctx, installPlugin.ID)
 		if exists {
 			// If it's installed, check if we are looking for a specific version
-			if version == "" || p.Info.Version == version {
-				s.log.Debug("Plugin already installed", "pluginID", pluginID, "version", version)
+			if installPlugin.Version == "" || p.Info.Version == installPlugin.Version {
+				s.log.Debug("Plugin already installed", "pluginId", installPlugin.ID, "version", installPlugin.Version)
 				continue
 			}
 		}
 
-		s.log.Info("Installing plugin", "pluginID", pluginID, "version", version)
-		err := s.pluginInstaller.Add(ctx, pluginID, version, compatOpts)
+		s.log.Info("Installing plugin", "pluginId", installPlugin.ID, "version", installPlugin.Version)
+		err := s.pluginInstaller.Add(ctx, installPlugin.ID, installPlugin.Version, compatOpts)
 		if err != nil {
 			var dupeErr plugins.DuplicateError
 			if errors.As(err, &dupeErr) {
-				s.log.Debug("Plugin already installed", "pluginID", pluginID, "version", version)
+				s.log.Debug("Plugin already installed", "pluginId", installPlugin.ID, "version", installPlugin.Version)
 				continue
 			}
-			s.log.Error("Failed to install plugin", "pluginID", pluginID, "version", version, "error", err)
+			s.log.Error("Failed to install plugin", "pluginId", installPlugin.ID, "version", installPlugin.Version, "error", err)
 			continue
 		}
-		s.log.Info("Plugin successfully installed", "pluginID", pluginID, "version", version)
+		s.log.Info("Plugin successfully installed", "pluginId", installPlugin.ID, "version", installPlugin.Version)
 	}
 
 	return nil
