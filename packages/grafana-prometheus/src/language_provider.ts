@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 
-import { DEFAULT_SERIES_LIMIT } from './components/PrometheusMetricsBrowser';
+import { DEFAULT_SERIES_LIMIT, REMOVE_SERIES_LIMIT } from './components/PrometheusMetricsBrowser';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
 import {
@@ -189,7 +189,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       if (selector === EMPTY_SELECTOR) {
         return await this.fetchDefaultSeries();
       } else {
-        return await this.fetchSeriesLabels(selector, withName);
+        return await this.fetchSeriesLabels(selector, withName, REMOVE_SERIES_LIMIT);
       }
     } catch (error) {
       // TODO: better error handling
@@ -333,7 +333,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     if (this.datasource.hasLabelsMatchAPISupport()) {
       return this.fetchSeriesLabelsMatch(name, withName);
     } else {
-      return this.fetchSeriesLabels(name, withName);
+      return this.fetchSeriesLabels(name, withName, REMOVE_SERIES_LIMIT);
     }
   };
 

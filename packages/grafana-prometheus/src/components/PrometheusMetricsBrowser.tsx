@@ -49,6 +49,7 @@ interface BrowserState {
 }
 
 export const DEFAULT_SERIES_LIMIT = '40000';
+export const REMOVE_SERIES_LIMIT = 'none';
 
 interface FacettableValue {
   name: string;
