@@ -108,10 +108,7 @@ export const LogsPanel = ({
   const timeRange = data.timeRange;
   const dataSourcesMap = useDatasourcesFromTargets(data.request?.targets);
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
-  const defaultDisplayedFields = options.displayedFields !== undefined ? options.displayedFields : [];
-  const [displayedFields, setDisplayedFields] = useState<string[] | undefined>(
-    options.onClickHideField || options.onClickShowField ? defaultDisplayedFields : options.displayedFields
-  );
+  const [displayedFields, setDisplayedFields] = useState<string[]>(options.displayedFields ?? []);
   let closeCallback = useRef<() => void>();
 
   const { eventBus, onAddAdHocFilter } = usePanelContext();

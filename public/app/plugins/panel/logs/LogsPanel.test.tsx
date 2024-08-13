@@ -449,34 +449,7 @@ describe('LogsPanel', () => {
       }),
     ];
 
-    it('does not show the button if the callbacks and fields are not passed', async () => {
-      setup({
-        data: {
-          series,
-        },
-        options: {
-          showLabels: false,
-          showTime: false,
-          wrapLogMessage: false,
-          showCommonLabels: false,
-          prettifyLogMessage: false,
-          sortOrder: LogsSortOrder.Descending,
-          dedupStrategy: LogsDedupStrategy.none,
-          enableLogDetails: true,
-          displayedFields: undefined,
-          onClickHideField: undefined,
-          onClickShowField: undefined,
-        },
-      });
-
-      expect(await screen.findByRole('row')).toBeInTheDocument();
-
-      await userEvent.click(screen.getByText('logline text'));
-
-      expect(screen.queryByLabelText('Show this field instead of the message')).not.toBeInTheDocument();
-    });
-
-    it('shows the button if an array of fields is passed', async () => {
+    it('displays the provided fields instead of the log line', async () => {
       setup({
         data: {
           series,
@@ -508,7 +481,7 @@ describe('LogsPanel', () => {
       expect(screen.getByText('logline text')).toBeInTheDocument();
     });
 
-    it('enables the behavior with a default implementation when passing an empty array', async () => {
+    it('enables the behavior with a default implementation', async () => {
       setup({
         data: {
           series,
@@ -540,7 +513,7 @@ describe('LogsPanel', () => {
       expect(screen.getByText('logline text')).toBeInTheDocument();
     });
 
-    it('enables the behavior when the callbacks are passed', async () => {
+    it('overrides the default implementation when the callbacks are provided', async () => {
       const onClickShowFieldMock = jest.fn();
 
       setup({
