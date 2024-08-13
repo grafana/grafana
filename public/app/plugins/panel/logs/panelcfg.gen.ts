@@ -22,6 +22,8 @@ export interface Options {
   onClickFilterOutLabel?: unknown;
   onClickFilterOutString?: unknown;
   onClickFilterString?: unknown;
+  onClickHideField?: unknown;
+  onClickShowField?: unknown;
   prettifyLogMessage: boolean;
   showCommonLabels: boolean;
   showLabels: boolean;
