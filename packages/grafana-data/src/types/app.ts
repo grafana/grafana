@@ -148,9 +148,6 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this;
   }
 
-  // exposeComponent<Props = {}>(
-  //   componentConfig: { id: string } & Omit<PluginExtensionComponentConfig<Props>, 'type' | 'extensionPointId'>
-  // ) {
   exposeComponent<Props = {}>(componentConfig: PluginExportedComponentConfig) {
     this._exportedComponentConfigs.push(componentConfig);
 
