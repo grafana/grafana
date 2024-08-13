@@ -12,7 +12,7 @@ export type PluginPreloadResult = {
   error?: unknown;
   extensionConfigs: PluginExtensionConfig[];
   //TODO: this prop should be required
-  exportedComponentsConfigs?: PluginExportedComponentConfig[];
+  exportedComponentsConfigs: PluginExportedComponentConfig[];
 };
 
 export async function preloadPlugins(
