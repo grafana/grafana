@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect } from 'react-redux';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
@@ -21,18 +21,16 @@ import {
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { Loader } from 'app/features/plugins/admin/components/Loader';
 import {
-  LdapSsoSettings,
+  GroupMapping,
+  LdapAttributes,
+  LdapPayload,
+  LdapSettings,
   StoreState,
 } from 'app/types';
 
 import { LdapDrawer } from './LdapDrawer';
-
-interface OwnProps extends GrafanaRouteComponentProps<{}, { username?: string }> {
-  ldapSsoSettings?: LdapSsoSettings;
-}
 
 const mapStateToProps = (state: StoreState) => ({
   ldapSsoSettings: state.ldap.ldapSsoSettings,
@@ -41,7 +39,6 @@ const mapStateToProps = (state: StoreState) => ({
 const mapDispatchToProps = {};
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
-type Props = OwnProps & ConnectedProps<typeof connector>;
 
 interface FormModel {
   serverHost: string;
@@ -68,37 +65,97 @@ const subTitle = (
   </div>
 );
 
-export const LdapSettingsPage = ({
-}: Props): JSX.Element => {
+const emptySettings: LdapPayload = {
+  id: '',
+  provider: '',
+  source: '',
+  settings: {
+    activeSyncEnabled: false,
+    allowSignUp: false,
+    config: {
+      server: {
+        attributes: {},
+        bindDn: '',
+        bindPassword: '',
+        groupMappings: [],
+        host: '',
+        port: 389,
+        searchBaseDn: '',
+        searchFilter: '',
+        sslSkipVerify: false,
+        timeout: 10,
+      },
+    },
+    enabled: false,
+    skipOrgRoleSync: false,
+    syncCron: '',
+  },
+};
+
+const mapJsonToModel = (json: any): LdapPayload => {
+  const settings = json.settings;
+  const config = settings.config;
+  const server = config.servers[0];
+  const attributes: LdapAttributes = {
+    email: server.attributes.email,
+    memberOf: server.attributes.member_of,
+    name: server.attributes.name,
+    surname: server.attributes.surname,
+    username: server.attributes.username,
+  };
+  const groupMappings: GroupMapping[] = server.group_mappings.map((gp: any) => ({
+    groupDn: gp.group_dn,
+    orgId: +gp.org_id,
+    orgRole: gp.org_role
+  }));
+  return {
+    id: json.id,
+    provider: json.provider,
+    source: json.source,
+    settings: {
+      activeSyncEnabled: settings.activeSyncEnabled,
+      allowSignUp: settings.allowSignUp,
+      config: {
+        server: {
+          attributes: attributes,
+          bindDn: server.bind_dn,
+          bindPassword: server.bind_password,
+          groupMappings: groupMappings,
+          host: server.host,
+          port: +server.port,
+          searchBaseDn: server.search_base_dns.join(', '),
+          searchFilter: server.search_filter,
+          sslSkipVerify: server.ssl_skip_verify,
+          timeout: +server.timeout,
+        },
+      },
+      enabled: settings.enabled,
+      skipOrgRoleSync: settings.skipOrgRoleSync,
+      syncCron: settings.syncCron,
+    },
+  };
+};
+
+export const LdapSettingsPage = (): JSX.Element => {
   const [isLoading, setIsLoading] = useState(true);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false); // TODO: change to false
-  const [settings, setSettings] = useState<LdapSsoSettings>({});
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [formSettings, setFormSettings] = useState<LdapPayload>(emptySettings);
   const { register, handleSubmit } = useForm<FormModel>();
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
     async function init() {
-      const result = await getBackendSrv().get('/api/v1/sso-settings/ldap');
-      // Recover only the first server mapping found
-      const serverSettings = result.settings?.config?.servers[0];
-      const settings: LdapSsoSettings = {
-        data: serverSettings, // TODO: remove this
-        attributes: {
-          ...serverSettings?.attributes,
-          memberOf: serverSettings?.attributes?.member_of,
-        },
-        bindDn: serverSettings?.bind_dn,
-        bindPassword: serverSettings?.bind_password,
-        groupMappings: serverSettings?.group_mappings.map((gp: any) => ({
-          groupDn: gp.group_dn,
-          orgId: gp.org_id,
-          orgRole: gp.org_role
-        })),
-        host: serverSettings?.host,
-        searchBaseDn: serverSettings?.search_base_dns.join(', '),
-        searchFilter: serverSettings?.search_filter,
-      };
-      setSettings(settings);
+      const payload = await getBackendSrv().get<LdapPayload>('/api/v1/sso-settings/ldap');
+      if (!payload) {
+        console.error('Error fetching LDAP settings'); // TODO: add error handling
+        return;
+      }
+
+      if (!payload.settings || !payload.settings.config) {
+        setIsLoading(false);
+        return;
+      }
+      setFormSettings(mapJsonToModel(payload));
       setIsLoading(false);
     };
     init();
@@ -112,22 +169,88 @@ export const LdapSettingsPage = ({
   }
 
   const submitLdapSettings = ({ }: FormModel) => {
-    console.log('submitLdapSettings')
+    console.log('submitLdapSettings', formSettings)
   };
 
   // Button's Actions
-  const saveForm = () => {
-    console.log('saveForm')
+  const saveForm = async() => {
+    const payload = {
+      id: formSettings.id,
+      provider: formSettings.provider,
+      source: formSettings.source,
+      settings: {
+        active_sync_enabled: formSettings.settings.activeSyncEnabled,
+        allow_sign_up: formSettings.settings.allowSignUp,
+        config: {
+          servers: [{
+            attributes: {
+              email: formSettings.settings.config.server.attributes.email,
+              member_of: formSettings.settings.config.server.attributes.memberOf,
+              name: formSettings.settings.config.server.attributes.name,
+              surname: formSettings.settings.config.server.attributes.surname,
+              username: formSettings.settings.config.server.attributes.username,
+            },
+            bind_dn: formSettings.settings.config.server.bindDn,
+            bind_password: formSettings.settings.config.server.bindPassword,
+            group_mappings: formSettings.settings.config.server.groupMappings.map((gp: GroupMapping) => ({
+              group_dn: gp.groupDn,
+              org_id: gp.orgId,
+              org_role: gp.orgRole
+            })),
+            host: formSettings.settings.config.server.host,
+            port: formSettings.settings.config.server.port,
+            search_base_dns: [formSettings.settings.config.server.searchBaseDn], // TODO: fix array
+            search_filter: formSettings.settings.config.server.searchFilter,
+            ssl_skip_verify: formSettings.settings.config.server.sslSkipVerify,
+            timeout: formSettings.settings.config.server.timeout,
+          }],
+        },
+        enabled: formSettings.settings.enabled,
+        skip_org_role_sync: formSettings.settings.skipOrgRoleSync,
+        sync_cron: formSettings.settings.syncCron,
+      },
+    };
+    try {
+      const result = await getBackendSrv().put('/api/v1/sso-settings/ldap', payload);
+      if (result) {
+        console.error('Error saving LDAP settings');
+      }
+      // TODO: add success message
+    } catch (error) {
+      console.error('Error saving LDAP settings', error);
+    }
   };
-  const discardForm = () => {
-    console.log('discardForm', settings)
-    // TODO: add a confirmation dialog
+  const discardForm = async () => {
+    try {
+      setIsLoading(true);
+      await getBackendSrv().delete('/api/v1/sso-settings/ldap');
+      const payload = await getBackendSrv().get<LdapPayload>('/api/v1/sso-settings/ldap');
+      if (!payload) {
+        console.error('Error fetching LDAP settings'); // TODO: add error handling
+        return;
+      }
+
+      if (!payload.settings || !payload.settings.config) {
+        setIsLoading(false);
+        return;
+      }
+      setFormSettings(mapJsonToModel(payload));
+    } catch (error) {
+      // TODO: add error handling
+    } finally {
+      setIsLoading(false);
+    }
   };
   const openDrawer = () => {
     setIsDrawerOpen(true);
   };
-  const onChange = (settings: LdapSsoSettings) => {
-    setSettings({...settings});
+  const onChange = (ldapSettings: LdapSettings) => {
+    setFormSettings({
+      ...formSettings,
+      settings: {
+        ...ldapSettings,
+      },
+    });
   };
 
   const passwordTooltip = (
@@ -154,7 +277,7 @@ export const LdapSettingsPage = ({
     <Page navId="authentication" pageNav={pageNav} subTitle={subTitle}>
       <Page.Contents>
         { isLoading && <Loader /> }
-        { !isLoading && settings && <section className={styles.form}>
+        { !isLoading && formSettings && <section className={styles.form}>
           <h3>Basic Settings</h3>
           <form onSubmit={handleSubmit(submitLdapSettings)}>
             <Field
@@ -165,8 +288,17 @@ export const LdapSettingsPage = ({
                   id="serverHost"
                   placeholder="example: 127.0.0.1"
                   type="text"
-                  defaultValue={settings.host}
-                  onChange={e => onChange({...settings, host: e.currentTarget.value})}
+                  defaultValue={formSettings.settings?.config?.server?.host}
+                  onChange={e => onChange({
+                    ...formSettings.settings,
+                    config: {
+                      ...formSettings.settings.config,
+                      server: {
+                        ...formSettings.settings.config.server,
+                        host: e.currentTarget.value,
+                      },
+                    },
+                  })}
                 />
             </Field>
             <Field
@@ -177,7 +309,7 @@ export const LdapSettingsPage = ({
                   id="bindDN"
                   placeholder="example: cn=admin,dc=grafana,dc=org"
                   type="text"
-                  value={settings.bindDn}/>
+                  value={formSettings.settings.config.server.bindDn}/>
             </Field>
             <Field
               label={passwordLabel}>
@@ -185,7 +317,7 @@ export const LdapSettingsPage = ({
                   {...register('bindPassword', { required: false })}
                   id="bindPassword"
                   type="text"
-                  value={settings.bindPassword}/>
+                  value={formSettings.settings.config.server.bindPassword}/>
             </Field>
             <Field
               label="Search filter*"
@@ -195,7 +327,7 @@ export const LdapSettingsPage = ({
                   id="searchFilter"
                   placeholder="example: cn=%s"
                   type="text"
-                  value={settings.searchFilter}/>
+                  value={formSettings.settings.config.server.searchFilter}/>
             </Field>
             <Field
               label="Search base DNS *"
@@ -205,7 +337,7 @@ export const LdapSettingsPage = ({
                   id="searchBaseDns"
                   placeholder='example: "dc=grafana.dc=org"'
                   type="text"
-                  value={settings.searchBaseDn}
+                  value={formSettings.settings.config.server.searchBaseDn}
                   />
             </Field>
             <Box
@@ -241,8 +373,8 @@ export const LdapSettingsPage = ({
           </form>
         </section>}
         {isDrawerOpen && <LdapDrawer
-          ldapSsoSettings={settings}
-          onChange={returnSettings => setSettings({...settings, ...returnSettings})}
+          ldapSettings={formSettings.settings}
+          onChange={ldapSettings => onChange(ldapSettings)}
           onClose={() => setIsDrawerOpen(false)} />}
       </Page.Contents>
     </Page>

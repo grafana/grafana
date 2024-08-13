@@ -1,14 +1,15 @@
+import { css } from '@emotion/css';
 import { Component, JSX } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { SelectableValue } from '@grafana/data';
-import { Button, CollapsableSection, Divider, Drawer, Field, Input, RadioButtonGroup, Switch, Text } from '@grafana/ui';
-import { GroupMapping, LdapSsoSettings, OrgRole } from 'app/types';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { useStyles2, Button, CollapsableSection, Divider, Drawer, Field, Input, RadioButtonGroup, Switch, Text } from '@grafana/ui';
+import { GroupMapping, LdapServerConfig, LdapSettings, OrgRole } from 'app/types';
 
 interface OwnProps {
   onClose: () => void;
-  onChange: (settings: LdapSsoSettings | undefined) => void;
-  ldapSsoSettings?: LdapSsoSettings;
+  onChange: (settings: LdapSettings) => void;
+  ldapSettings: LdapSettings;
 }
 
 const mapStateToProps = () => ({});
@@ -37,7 +38,7 @@ class GroupMappingComponent extends Component<GroupMappingProps> {
           <RadioButtonGroup options={roleOptions} value={groupMapping.orgRole} onChange={role => onChange({...groupMapping, orgRole: role})} />
         </Field>
         <Field label="Org ID" description="The Grafana organization database id. Default org (ID 1) will be used if left out">
-          <Input defaultValue={groupMapping.orgId} onChange={e => onChange({...groupMapping, orgId: e.currentTarget.value})}></Input>
+          <Input defaultValue={groupMapping.orgId} onChange={e => onChange({...groupMapping, orgId: +e.currentTarget.value})}></Input>
         </Field>
         <Field label="Grafana Admin" description="If enabled, all users from this group will be Grafana Admins">
           <Switch value={groupMapping.grafanaAdmin} onChange={() => onChange({...groupMapping, grafanaAdmin: !groupMapping.grafanaAdmin})} />
@@ -49,53 +50,127 @@ class GroupMappingComponent extends Component<GroupMappingProps> {
 }
 
 export const LdapDrawerUnconnected = ({
-  ldapSsoSettings,
+  ldapSettings,
   onChange,
   onClose,
 }: Props): JSX.Element => {
+  const styles = useStyles2(getStyles);
+
   const onAddGroupMapping = () => {
     onChange({
-      ...ldapSsoSettings,
-      groupMappings: [
-        ...ldapSsoSettings?.groupMappings!,
-        { orgRole: 'Viewer' }
-      ]});
+      ...ldapSettings,
+      config: {
+        ...ldapSettings.config,
+        server: {
+          ...ldapSettings.config.server,
+          groupMappings: [
+            ...ldapSettings.config.server.groupMappings,
+            {
+              groupDn: '',
+              orgId: 1,
+              orgRole: OrgRole.Viewer,
+              grafanaAdmin: false
+            }
+          ]
+        }
+      }
+    });
+  };
+  const onAttributeChange = (attribute: string, value: string) => {
+    onChange({
+      ...ldapSettings,
+      config: {
+        ...ldapSettings.config,
+        server: {
+          ...ldapSettings.config.server,
+          attributes: {
+            ...ldapSettings.config.server.attributes,
+            [attribute]: value
+          }
+        }
+      }
+    });
+  }
+  const onServerConfigChange = (serverConfig: LdapServerConfig) => {
+    onChange({
+      ...ldapSettings,
+      config: {
+        ...ldapSettings.config,
+        server: {
+          ...ldapSettings.config.server,
+          ...serverConfig
+        }
+      }
+    });
+  }
+  const onGroupMappingsChange = (groupMappings: GroupMapping[]) => {
+    onChange({
+      ...ldapSettings,
+      config: {
+        ...ldapSettings.config,
+        server: {
+          ...ldapSettings.config.server,
+          groupMappings: groupMappings
+        }
+      }
+    });
   };
 
   return (
     <Drawer title="Advanced Settings" onClose={onClose}>
       <CollapsableSection label="Misc" isOpen={true}>
         <Field label="Allow sign up" description="If not enabled, only existing Grafana users can log in using LDAP">
-          <Switch/>
+          <Switch
+            value={ldapSettings.allowSignUp}
+            onChange={() => {
+              onChange({
+                ...ldapSettings,
+                allowSignUp: !ldapSettings.allowSignUp,
+              });
+            }
+            }
+          />
         </Field>
         <Field label="Port" description="Default port is 389 without SSL or 636 with SSL">
-          <Input placeholder="389" />
+          <Input
+            placeholder='389'
+            defaultValue={ldapSettings.config.server.port.toString()}
+            type='number'
+            onChange={e => {
+              onServerConfigChange({
+                ...ldapSettings.config.server,
+                port: +e.currentTarget.value
+              });
+            }}
+          />
         </Field>
         <Field label="Timeout" description="Timeout in seconds. Applies to each host specified in the “host” entry">
-          <Input placeholder="10s" />
+          <Input
+            placeholder="10"
+            defaultValue={ldapSettings.config.server.timeout.toString()}
+            type='number'
+            onChange={e => {
+              onServerConfigChange({
+                ...ldapSettings.config.server,
+                timeout: +e.currentTarget.value
+              });
+            }}
+          />
         </Field>
       </CollapsableSection>
       <CollapsableSection label="Attributes" isOpen={true}>
         <Text color="secondary">Specify the LDAP attributes that map to the user&lsquo;s given name, surname, and email address, ensuring the application correctly retrieves and displays user information.</Text>
         <Field label="Name">
-        <Input defaultValue={ldapSsoSettings?.attributes?.name} onChange={e => {
-            onChange({attributes: {...ldapSsoSettings?.attributes, name: e.currentTarget.value}});
-          }}/>
+        <Input defaultValue={ldapSettings.config.server?.attributes.name} onChange={e => onAttributeChange('name', e.currentTarget.value)}/>
         </Field>
         <Field label="Surname">
-          <Input defaultValue={ldapSsoSettings?.attributes?.surname} onChange={e => {
-            onChange({attributes: {...ldapSsoSettings?.attributes, surname: e.currentTarget.value}});
-          }}/>
+          <Input defaultValue={ldapSettings.config.server?.attributes.surname} onChange={e => onAttributeChange('surname', e.currentTarget.value)}/>
         </Field>
         <Field label="Member Of">
-          <Input defaultValue={ldapSsoSettings?.attributes?.memberOf} onChange={e => {
-            onChange({attributes: {...ldapSsoSettings?.attributes, memberOf: e.currentTarget.value}});
-          }}/>
+          <Input defaultValue={ldapSettings.config.server?.attributes.memberOf} onChange={e => onAttributeChange('memberOf', e.currentTarget.value)}/>
         </Field>
         <Field label="Email">
-          <Input defaultValue={ldapSsoSettings?.attributes?.email} onChange={e => {
-            onChange({attributes: {...ldapSsoSettings?.attributes, email: e.currentTarget.value}});
-          }}/>
+          <Input defaultValue={ldapSettings.config.server?.attributes.email} onChange={e => onAttributeChange('email', e.currentTarget.value)}/>
         </Field>
       </CollapsableSection>
       <CollapsableSection label="Group Mapping" isOpen={true}>
@@ -112,23 +187,24 @@ export const LdapDrawerUnconnected = ({
         <Field label="Group name attribute" description="Identifies users within group entries for filtering purposes">
           <Input></Input>
         </Field>
-        {ldapSsoSettings?.groupMappings?.map((gp, i) =>
+        {ldapSettings.config.server.groupMappings.map((gp, i) =>
           <GroupMappingComponent
             key={i}
             groupMapping={gp}
             onRemove={() => {
-              ldapSsoSettings.groupMappings!.splice(i, 1);
-              onChange(ldapSsoSettings);
+              ldapSettings.config.server.groupMappings!.splice(i, 1);
+              onGroupMappingsChange([...ldapSettings.config.server.groupMappings!]);
             }}
             onChange={(updatedGroupMapping) => {
-              ldapSsoSettings.groupMappings![i] = {...ldapSsoSettings.groupMappings![i], ...updatedGroupMapping};
-              onChange(ldapSsoSettings);
+              ldapSettings.config.server.groupMappings![i] = {...ldapSettings.config.server.groupMappings![i], ...updatedGroupMapping};
+              onGroupMappingsChange([...ldapSettings.config.server.groupMappings!]);
             }}
           />
         )}
         <Divider />
-        <Button variant='secondary' icon="plus" onClick={() => onAddGroupMapping()}>Add group mapping</Button>
+        <Button className={styles.button} variant='secondary' icon="plus" onClick={() => onAddGroupMapping()}>Add group mapping</Button>
       </CollapsableSection>
+      {/* TODO: add some spacing here */}
       <CollapsableSection label="Extra security measures" isOpen={true}>
         <Field label="Use SSL" description="Set to true if LDAP server should use an encrypted TLS connection (either with STARTTLS or LDAPS)">
           <Switch/>
@@ -158,5 +234,13 @@ export const LdapDrawerUnconnected = ({
     </Drawer>
   );
 };
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    button: css({
+      marginBottom: theme.spacing(4),
+    }),
+  };
+}
 
 export const LdapDrawer = connector(LdapDrawerUnconnected);
