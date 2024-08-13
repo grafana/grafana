@@ -349,7 +349,32 @@ describe('ExportedComponentRegistry', () => {
     expect(Object.keys(currentState)).toHaveLength(1);
   });
 
-  it('should not register component when title or description is missing', async () => {
+  it('should not register component when description is missing', async () => {
+    const registry = new ExportedComponentsRegistry();
+
+    registry.register({
+      pluginId: 'grafana-basic-app',
+      extensionConfigs: [],
+      exportedComponentsConfigs: [
+        {
+          id: 'grafana-basic-app/hello-world/v1',
+          pluginId: 'grafana-basic-app',
+          title: 'not important',
+          description: '',
+          component: () => React.createElement('div', null, 'Hello World1'),
+        },
+      ],
+    });
+
+    expect(consoleWarn).toHaveBeenCalledWith(
+      "[Plugin Extensions] Could not register exposed component with id 'grafana-basic-app/hello-world/v1'. Reason: Description is missing."
+    );
+
+    const currentState = await registry.getState();
+    expect(Object.keys(currentState)).toHaveLength(0);
+  });
+
+  it('should not register component when title is missing', async () => {
     const registry = new ExportedComponentsRegistry();
 
     registry.register({
@@ -360,14 +385,14 @@ describe('ExportedComponentRegistry', () => {
           id: 'grafana-basic-app/hello-world/v1',
           pluginId: 'grafana-basic-app',
           title: '',
-          description: '',
+          description: 'not important',
           component: () => React.createElement('div', null, 'Hello World1'),
         },
       ],
     });
 
     expect(consoleWarn).toHaveBeenCalledWith(
-      "[Plugin Extensions] Could not register exposed component with id 'grafana-basic-app/hello-world/v1'. Reason: Description is missing."
+      "[Plugin Extensions] Could not register exposed component with id 'grafana-basic-app/hello-world/v1'. Reason: Title is missing."
     );
 
     const currentState = await registry.getState();
