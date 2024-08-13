@@ -148,7 +148,7 @@ type CreateCorrelationCommand struct {
 	// UID of the data source for which correlation is created.
 	SourceUID string `json:"-"`
 	OrgId     int64  `json:"-"`
-	// Target data source UID to which the correlation is created. required if config.type = query
+	// Target data source UID to which the correlation is created. required if type = query
 	// example: PE1C5CBDA0504A6A3
 	TargetUID *string `json:"targetUID"`
 	// Optional label identifying the correlation
@@ -169,7 +169,7 @@ func (c CreateCorrelationCommand) Validate() error {
 	if err := c.Type.Validate(); err != nil {
 		return err
 	}
-	if c.TargetUID == nil && c.Config.Type == TypeQuery {
+	if c.TargetUID == nil && c.Type == TypeQuery {
 		return fmt.Errorf("correlations of type \"%s\" must have a targetUID", TypeQuery)
 	}
 

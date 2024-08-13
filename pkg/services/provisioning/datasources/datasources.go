@@ -192,6 +192,8 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 }
 
 func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, OrgId int64) (correlations.CreateCorrelationCommand, error) {
+	// we look for a correlation type at the root if it is defined, if not use default
+	// we ignore the legacy config.type value - the only valid value at that version was "query"
 	var corrType = correlation["type"]
 	if (corrType == nil || corrType == "") {
 		corrType = correlations.TypeQuery
@@ -225,13 +227,6 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 		config := correlations.CorrelationConfig{}
 		if err := json.Unmarshal(jsonbody, &config); err != nil {
 			return correlations.CreateCorrelationCommand{}, err
-		}
-
-		// if type is not defined at root but is defined in the config, use that
-		if (correlation["type"] == nil && config.Type == correlations.TypeQuery) {
-			createCommand.Type = config.Type
-		} else if (correlation["type"] == nil && config.Type != correlations.TypeQuery) { // if it is not defined in either, use default
-			createCommand.Type = correlations.TypeQuery
 		}
 
 		createCommand.Config = config
