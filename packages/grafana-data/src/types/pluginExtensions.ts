@@ -103,11 +103,6 @@ export type PluginExportedComponentConfig<Props = {}> = {
   id: string;
 
   /**
-   * The unique identifier of the plugin that exports the component
-   */
-  pluginId: string;
-
-  /**
    * The title of the component
    */
   title: string;

@@ -6,7 +6,10 @@ import { logWarning } from '../utils';
 import { Registry } from './Registry';
 
 export type RegistryType = {
-  [id: string]: PluginExportedComponentConfig;
+  [id: string]: {
+    pluginId: string;
+    config: PluginExportedComponentConfig;
+  };
 };
 
 export class ExportedComponentsRegistry extends Registry<RegistryType> {
@@ -17,18 +20,18 @@ export class ExportedComponentsRegistry extends Registry<RegistryType> {
   }
 
   mapToRegistry(registry: RegistryType, item: PluginPreloadResult): RegistryType {
-    const { pluginId, exportedComponentsConfigs: exportedComponents, error } = item;
+    const { pluginId, exportedComponentsConfigs, error } = item;
 
     if (error) {
       logWarning(`"${pluginId}" plugin failed to load. Skip registering its exposed components.`);
       return registry;
     }
 
-    if (!exportedComponents) {
+    if (!exportedComponentsConfigs) {
       return registry;
     }
 
-    for (const config of exportedComponents) {
+    for (const config of exportedComponentsConfigs) {
       const { id, description, title } = config;
 
       if (!id.startsWith(pluginId)) {
@@ -61,7 +64,7 @@ export class ExportedComponentsRegistry extends Registry<RegistryType> {
         continue;
       }
 
-      registry[id] = { ...config, pluginId };
+      registry[id] = { config, pluginId };
     }
 
     return registry;

@@ -26,7 +26,7 @@ export function createUsePluginComponent(registry: ExportedComponentsRegistry) {
 
       return {
         isLoading: false,
-        component: wrapWithPluginContext(registryItem.pluginId, registryItem.component),
+        component: wrapWithPluginContext(registryItem.pluginId, registryItem.config.component),
       };
     }, [id, registry]);
   };

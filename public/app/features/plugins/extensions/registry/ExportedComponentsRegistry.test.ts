@@ -3,7 +3,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { ExportedComponentsRegistry } from './ExportedComponentsRegistry';
 
-describe('ExportedComponentRegistry', () => {
+describe('ExportedComponentsRegistry', () => {
   const consoleWarn = jest.fn();
 
   beforeEach(() => {
@@ -28,7 +28,6 @@ describe('ExportedComponentRegistry', () => {
       exportedComponentsConfigs: [
         {
           id,
-          pluginId,
           title: 'not important',
           description: 'not important',
           component: () => React.createElement('div', null, 'Hello World'),
@@ -41,9 +40,12 @@ describe('ExportedComponentRegistry', () => {
 
     expect(Object.keys(registry)).toHaveLength(1);
     expect(registry[id]).toMatchObject({
-      id,
       pluginId,
-      description: 'not important',
+      config: {
+        id,
+        title: 'not important',
+        description: 'not important',
+      },
     });
   });
 
@@ -59,21 +61,18 @@ describe('ExportedComponentRegistry', () => {
       exportedComponentsConfigs: [
         {
           id: id1,
-          pluginId,
           title: 'not important',
           description: 'not important',
           component: () => React.createElement('div', null, 'Hello World1'),
         },
         {
           id: id2,
-          pluginId,
           title: 'not important',
           description: 'not important',
           component: () => React.createElement('div', null, 'Hello World2'),
         },
         {
           id: id3,
-          pluginId,
           title: 'not important',
           description: 'not important',
           component: () => React.createElement('div', null, 'Hello World3'),
@@ -85,9 +84,9 @@ describe('ExportedComponentRegistry', () => {
     const registry = await reactiveRegistry.getState();
 
     expect(Object.keys(registry)).toHaveLength(3);
-    expect(registry[id1]).toMatchObject({ id: id1, pluginId });
-    expect(registry[id2]).toMatchObject({ id: id2, pluginId });
-    expect(registry[id3]).toMatchObject({ id: id3, pluginId });
+    expect(registry[id1]).toMatchObject({ config: { id: id1 }, pluginId });
+    expect(registry[id2]).toMatchObject({ config: { id: id2 }, pluginId });
+    expect(registry[id3]).toMatchObject({ config: { id: id3 }, pluginId });
   });
 
   it('should be possible to register multiple exposed components from multiple plugins', async () => {
@@ -104,14 +103,12 @@ describe('ExportedComponentRegistry', () => {
       exportedComponentsConfigs: [
         {
           id: id1,
-          pluginId: pluginId1,
           title: 'not important',
           description: 'not important',
           component: () => React.createElement('div', null, 'Hello World1'),
         },
         {
           id: id2,
-          pluginId: pluginId1,
           title: 'not important',
           description: 'not important',
           component: () => React.createElement('div', null, 'Hello World2'),
@@ -125,14 +122,12 @@ describe('ExportedComponentRegistry', () => {
       exportedComponentsConfigs: [
         {
           id: id3,
-          pluginId: pluginId2,
           title: 'not important',
           description: 'not important',
           component: () => React.createElement('div', null, 'Hello World3'),
         },
         {
           id: id4,
-          pluginId: pluginId2,
           title: 'not important',
           description: 'not important',
           component: () => React.createElement('div', null, 'Hello World4'),
@@ -144,10 +139,10 @@ describe('ExportedComponentRegistry', () => {
     const registry = await reactiveRegistry.getState();
 
     expect(Object.keys(registry)).toHaveLength(4);
-    expect(registry[id1]).toMatchObject({ id: id1, pluginId: pluginId1 });
-    expect(registry[id2]).toMatchObject({ id: id2, pluginId: pluginId1 });
-    expect(registry[id3]).toMatchObject({ id: id3, pluginId: pluginId2 });
-    expect(registry[id4]).toMatchObject({ id: id4, pluginId: pluginId2 });
+    expect(registry[id1]).toMatchObject({ config: { id: id1 }, pluginId: pluginId1 });
+    expect(registry[id2]).toMatchObject({ config: { id: id2 }, pluginId: pluginId1 });
+    expect(registry[id3]).toMatchObject({ config: { id: id3 }, pluginId: pluginId2 });
+    expect(registry[id4]).toMatchObject({ config: { id: id4 }, pluginId: pluginId2 });
   });
 
   it('should notify subscribers when the registry changes', async () => {
@@ -164,7 +159,6 @@ describe('ExportedComponentRegistry', () => {
       exportedComponentsConfigs: [
         {
           id: 'grafana-basic-app1/hello-world/v1',
-          pluginId: 'grafana-basic-app1',
           title: 'not important',
           description: 'not important',
           component: () => React.createElement('div', null, 'Hello World1'),
@@ -181,7 +175,6 @@ describe('ExportedComponentRegistry', () => {
       exportedComponentsConfigs: [
         {
           id: 'grafana-basic-app2/hello-world/v1',
-          pluginId: 'grafana-basic-app2',
           title: 'not important',
           description: 'not important',
           component: () => React.createElement('div', null, 'Hello World1'),
@@ -208,7 +201,6 @@ describe('ExportedComponentRegistry', () => {
       exportedComponentsConfigs: [
         {
           id: 'grafana-basic-app/hello-world/v1',
-          pluginId: 'grafana-basic-app',
           title: 'not important',
           description: 'not important',
           component: () => React.createElement('div', null, 'Hello World1'),
@@ -222,10 +214,12 @@ describe('ExportedComponentRegistry', () => {
     const mock = subscribeCallback.mock.calls[0][0];
 
     expect(mock['grafana-basic-app/hello-world/v1']).toMatchObject({
-      id: 'grafana-basic-app/hello-world/v1',
       pluginId: 'grafana-basic-app',
-      title: 'not important',
-      description: 'not important',
+      config: {
+        id: 'grafana-basic-app/hello-world/v1',
+        title: 'not important',
+        description: 'not important',
+      },
     });
   });
 
@@ -242,7 +236,6 @@ describe('ExportedComponentRegistry', () => {
       exportedComponentsConfigs: [
         {
           id: `${pluginId}/hello-world/v1`,
-          pluginId,
           title: 'not important',
           description: 'not important',
           component: () => React.createElement('div', null, 'Hello World1'),
@@ -267,7 +260,6 @@ describe('ExportedComponentRegistry', () => {
       exportedComponentsConfigs: [
         {
           id: 'grafana-basic-app1/hello-world/v1',
-          pluginId: 'grafana-basic-app1',
           title: 'not important',
           description: 'not important',
           component: () => React.createElement('div', null, 'Hello World1'),
@@ -278,8 +270,10 @@ describe('ExportedComponentRegistry', () => {
     const currentState1 = await registry.getState();
     expect(Object.keys(currentState1)).toHaveLength(1);
     expect(currentState1['grafana-basic-app1/hello-world/v1']).toMatchObject({
-      id: 'grafana-basic-app1/hello-world/v1',
       pluginId: 'grafana-basic-app1',
+      config: {
+        id: 'grafana-basic-app1/hello-world/v1',
+      },
     });
 
     registry.register({
@@ -288,7 +282,6 @@ describe('ExportedComponentRegistry', () => {
       exportedComponentsConfigs: [
         {
           id: 'grafana-basic-app1/hello-world/v1', // incorrectly scoped
-          pluginId: 'grafana-basic-app2',
           title: 'not important',
           description: 'not important',
           component: () => React.createElement('div', null, 'Hello World1'),
@@ -303,7 +296,7 @@ describe('ExportedComponentRegistry', () => {
     expect(Object.keys(currentState2)).toHaveLength(1);
   });
 
-  it('should slip registering component and log a warning when id is not prefixed with plugin id', async () => {
+  it('should skip registering component and log a warning when id is not prefixed with plugin id', async () => {
     const registry = new ExportedComponentsRegistry();
     registry.register({
       pluginId: 'grafana-basic-app1',
@@ -311,7 +304,6 @@ describe('ExportedComponentRegistry', () => {
       exportedComponentsConfigs: [
         {
           id: 'hello-world/v1',
-          pluginId: 'grafana-basic-app1',
           title: 'not important',
           description: 'not important',
           component: () => React.createElement('div', null, 'Hello World1'),
@@ -334,7 +326,6 @@ describe('ExportedComponentRegistry', () => {
       exportedComponentsConfigs: [
         {
           id: 'grafana-basic-app1/hello-world',
-          pluginId: 'grafana-basic-app1',
           title: 'not important',
           description: 'not important',
           component: () => React.createElement('div', null, 'Hello World1'),
@@ -358,7 +349,6 @@ describe('ExportedComponentRegistry', () => {
       exportedComponentsConfigs: [
         {
           id: 'grafana-basic-app/hello-world/v1',
-          pluginId: 'grafana-basic-app',
           title: 'not important',
           description: '',
           component: () => React.createElement('div', null, 'Hello World1'),
@@ -383,7 +373,6 @@ describe('ExportedComponentRegistry', () => {
       exportedComponentsConfigs: [
         {
           id: 'grafana-basic-app/hello-world/v1',
-          pluginId: 'grafana-basic-app',
           title: '',
           description: 'not important',
           component: () => React.createElement('div', null, 'Hello World1'),

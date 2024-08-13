@@ -38,7 +38,7 @@ describe('usePluginComponent()', () => {
       pluginId,
       extensionConfigs: [],
       exportedComponentsConfigs: [
-        { id, pluginId, title: 'not important', description: 'not important', component: () => <div>Hello World</div> },
+        { id, title: 'not important', description: 'not important', component: () => <div>Hello World</div> },
       ],
     });
 
@@ -73,7 +73,6 @@ describe('usePluginComponent()', () => {
         exportedComponentsConfigs: [
           {
             id,
-            pluginId,
             title: 'not important',
             description: 'not important',
             component: () => <div>Hello World</div>,
