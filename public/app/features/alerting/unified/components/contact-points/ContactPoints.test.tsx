@@ -106,18 +106,18 @@ describe('contact points', () => {
 
       const viewProvisioned = screen.getByRole('link', { name: 'view-action' });
       expect(viewProvisioned).toBeInTheDocument();
-      expect(viewProvisioned).not.toBeDisabled();
+      expect(viewProvisioned).toBeEnabled();
 
       const editButtons = screen.getAllByRole('link', { name: 'edit-action' });
       expect(editButtons).toHaveLength(4);
       editButtons.forEach((button) => {
-        expect(button).not.toBeDisabled();
+        expect(button).toBeEnabled();
       });
 
       const moreActionsButtons = screen.getAllByRole('button', { name: /More/ });
       expect(moreActionsButtons).toHaveLength(5);
       moreActionsButtons.forEach((button) => {
-        expect(button).not.toBeDisabled();
+        expect(button).toBeEnabled();
       });
     });
 
@@ -175,7 +175,7 @@ describe('contact points', () => {
       renderWithProvider(<ContactPoint name={'my-contact-point'} disabled={true} receivers={[]} onDelete={noop} />);
 
       const moreActions = screen.getByRole('button', { name: /More/ });
-      expect(moreActions).not.toBeDisabled();
+      expect(moreActions).toBeEnabled();
 
       const editAction = screen.getByTestId('edit-action');
       expect(editAction).toHaveAttribute('aria-disabled', 'true');
@@ -193,7 +193,7 @@ describe('contact points', () => {
       expect(viewAction).toBeInTheDocument();
 
       const moreActions = screen.getByRole('button', { name: /More/ });
-      expect(moreActions).not.toBeDisabled();
+      expect(moreActions).toBeEnabled();
       await userEvent.click(moreActions);
 
       const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
@@ -237,7 +237,7 @@ describe('contact points', () => {
       await userEvent.click(moreActions);
 
       const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
-      expect(deleteButton).not.toBeDisabled();
+      expect(deleteButton).toBeEnabled();
     });
 
     it('should be able to search', async () => {
@@ -299,13 +299,13 @@ describe('contact points', () => {
       const editButtons = screen.getAllByRole('link', { name: 'edit-action' });
       expect(editButtons).toHaveLength(2);
       editButtons.forEach((button) => {
-        expect(button).not.toBeDisabled();
+        expect(button).toBeEnabled();
       });
 
       const moreActionsButtons = screen.getAllByRole('button', { name: /More/ });
       expect(moreActionsButtons).toHaveLength(2);
       moreActionsButtons.forEach((button) => {
-        expect(button).not.toBeDisabled();
+        expect(button).toBeEnabled();
       });
     });
   });
@@ -343,7 +343,7 @@ describe('contact points', () => {
 
       const viewProvisioned = screen.getByRole('link', { name: 'view-action' });
       expect(viewProvisioned).toBeInTheDocument();
-      expect(viewProvisioned).not.toBeDisabled();
+      expect(viewProvisioned).toBeEnabled();
 
       // check buttons in Notification Templates
       const notificationTemplatesTab = screen.getByRole('tab', { name: 'Notification Templates' });

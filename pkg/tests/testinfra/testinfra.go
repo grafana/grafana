@@ -387,7 +387,7 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 		}
 
 		if o.DualWriterDesiredModes != nil {
-			unifiedStorageMode, err := getOrCreateSection("unified_storage_mode")
+			unifiedStorageMode, err := getOrCreateSection("unified_storage")
 			require.NoError(t, err)
 			for k, v := range o.DualWriterDesiredModes {
 				_, err = unifiedStorageMode.NewKey(k, fmt.Sprint(v))
@@ -451,7 +451,7 @@ func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUser
 	cfg.AutoAssignOrgId = 1
 	cmd.OrgID = 1
 
-	quotaService := quotaimpl.ProvideService(store, cfg)
+	quotaService := quotaimpl.ProvideService(db.FakeReplDBFromDB(store), cfg)
 	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(

@@ -101,7 +101,7 @@ export class ShareExport extends PureComponent<Props, State> {
 
     return (
       <>
-        <p className="share-modal-info-text">
+        <p>
           <Trans i18nKey="share-modal.export.info-text">Export this dashboard.</Trans>
         </p>
         <Field label={exportExternallyTranslation}>

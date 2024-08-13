@@ -20,6 +20,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -242,7 +243,7 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 					}
 
 					vars := mux.Vars(r)
-					info, err := request.ParseNamespace(vars["namespace"])
+					info, err := claims.ParseNamespace(vars["namespace"])
 					if err != nil {
 						wrap.JsonApiErr(http.StatusBadRequest, "expected namespace", nil)
 						return
