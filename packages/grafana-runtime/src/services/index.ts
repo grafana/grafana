@@ -28,8 +28,6 @@ export {
   usePluginComponentExtensions,
   usePluginComponents,
   usePluginLinks,
-  PluginLinksProvider,
-  PluginComponentsProvider,
 } from './pluginExtensions/usePluginExtensions';
 
 export { setPluginComponentHook, usePluginComponent } from './pluginExtensions/usePluginComponent';
