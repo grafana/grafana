@@ -265,7 +265,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		require.Equal(t, writableDs, *response.Result.TargetUID)
 		require.Equal(t, description, response.Result.Description)
 		require.Equal(t, label, response.Result.Label)
-		require.Equal(t, corrType, response.Result.Config.Type)
+		require.Equal(t, corrType, response.Result.Type)
 		require.Equal(t, fieldName, response.Result.Config.Field)
 		require.Equal(t, map[string]any{"expr": "foo"}, response.Result.Config.Target)
 		require.Equal(t, transformation, response.Result.Config.Transformations[0])
