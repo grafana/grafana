@@ -63,7 +63,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 	t.Run("should register scope resolvers", func(t *testing.T) {
 		ac := acmock.New()
 		db := db.InitTestDB(t)
-		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), nil, nil, db, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil)
+		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), nil, nil, db, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 3)
 	})
@@ -100,6 +100,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			accessControl:        acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()),
 			metrics:              newFoldersMetrics(nil),
 			registry:             make(map[string]folder.RegistryService),
+			tracer:               tracing.InitializeTracerForTest(),
 		}
 
 		require.NoError(t, service.RegisterService(alertingStore))
@@ -440,6 +441,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 		accessControl:        ac,
 		registry:             make(map[string]folder.RegistryService),
 		metrics:              newFoldersMetrics(nil),
+		tracer:               tracing.InitializeTracerForTest(),
 	}
 
 	signedInUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
@@ -553,6 +555,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				db:                   db,
 				registry:             make(map[string]folder.RegistryService),
 				metrics:              newFoldersMetrics(nil),
+				tracer:               tracing.InitializeTracerForTest(),
 			}
 
 			origNewGuardian := guardian.New
@@ -630,6 +633,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			db:                   db,
 			registry:             make(map[string]folder.RegistryService),
 			metrics:              newFoldersMetrics(nil),
+			tracer:               tracing.InitializeTracerForTest(),
 		}
 
 		testCases := []struct {
@@ -805,6 +809,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 		features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
 		metrics:              newFoldersMetrics(nil),
+		tracer:               tracing.InitializeTracerForTest(),
 	}
 	t.Run("create folder", func(t *testing.T) {
 		nestedFolderStore.ExpectedFolder = &folder.Folder{ParentUID: util.GenerateShortUID()}
@@ -841,6 +846,7 @@ func TestFolderServiceDualWrite(t *testing.T) {
 		features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
 		metrics:              newFoldersMetrics(nil),
+		tracer:               tracing.InitializeTracerForTest(),
 		bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
 	}
 
@@ -1475,6 +1481,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		accessControl:        ac,
 		registry:             make(map[string]folder.RegistryService),
 		metrics:              newFoldersMetrics(nil),
+		tracer:               tracing.InitializeTracerForTest(),
 	}
 
 	dashboardPermissions := acmock.NewMockedPermissionsService()
@@ -1977,6 +1984,7 @@ func TestFolderServiceGetFolders(t *testing.T) {
 		accessControl:        ac,
 		registry:             make(map[string]folder.RegistryService),
 		metrics:              newFoldersMetrics(nil),
+		tracer:               tracing.InitializeTracerForTest(),
 	}
 
 	signedInAdminUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
@@ -2063,6 +2071,7 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 		accessControl:        ac,
 		registry:             make(map[string]folder.RegistryService),
 		metrics:              newFoldersMetrics(nil),
+		tracer:               tracing.InitializeTracerForTest(),
 	}
 
 	origGuardian := guardian.New
@@ -2523,6 +2532,7 @@ func setup(t *testing.T, dashStore dashboards.Store, dashboardFolderStore folder
 		accessControl:        ac,
 		db:                   db,
 		metrics:              newFoldersMetrics(nil),
+		tracer:               tracing.InitializeTracerForTest(),
 	}
 }
 

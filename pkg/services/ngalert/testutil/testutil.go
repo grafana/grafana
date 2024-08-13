@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -26,7 +27,7 @@ import (
 
 func SetupFolderService(tb testing.TB, cfg *setting.Cfg, db db.DB, dashboardStore dashboards.Store, folderStore *folderimpl.DashboardFolderStoreImpl, bus *bus.InProcBus, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl) folder.Service {
 	tb.Helper()
-	return folderimpl.ProvideService(ac, bus, dashboardStore, folderStore, db, features, supportbundlestest.NewFakeBundleService(), nil)
+	return folderimpl.ProvideService(ac, bus, dashboardStore, folderStore, db, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 }
 
 func SetupDashboardService(tb testing.TB, sqlStore db.ReplDB, fs *folderimpl.DashboardFolderStoreImpl, cfg *setting.Cfg) (*dashboardservice.DashboardServiceImpl, dashboards.Store) {

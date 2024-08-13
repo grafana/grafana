@@ -9,6 +9,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -25,37 +26,52 @@ import (
 )
 
 func Test_subscribeToFolderChanges(t *testing.T) {
+	getRecordedCommand := func(ruleStore *fakes.RuleStore) []fakes.GenericRecordedQuery {
+		results := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+			c, ok := cmd.(fakes.GenericRecordedQuery)
+			if !ok || c.Name != "IncreaseVersionForAllRulesInNamespaces" {
+				return nil, false
+			}
+			return c, ok
+		})
+		var result []fakes.GenericRecordedQuery
+		for _, cmd := range results {
+			result = append(result, cmd.(fakes.GenericRecordedQuery))
+		}
+		return result
+	}
+
 	orgID := rand.Int63()
-	folder := &folder.Folder{
+	folder1 := &folder.Folder{
+		UID:   util.GenerateShortUID(),
+		Title: "Folder" + util.GenerateShortUID(),
+	}
+	folder2 := &folder.Folder{
 		UID:   util.GenerateShortUID(),
 		Title: "Folder" + util.GenerateShortUID(),
 	}
 	gen := models.RuleGen
-	rules := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder)).GenerateManyRef(5)
+	rules := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder1)).GenerateManyRef(5)
 
 	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
 	db := fakes.NewRuleStore(t)
-	db.Folders[orgID] = append(db.Folders[orgID], folder)
+	db.Folders[orgID] = append(db.Folders[orgID], folder1)
 	db.PutRule(context.Background(), rules...)
 
 	subscribeToFolderChanges(log.New("test"), bus, db)
 
-	err := bus.Publish(context.Background(), &events.FolderTitleUpdated{
+	err := bus.Publish(context.Background(), &events.FolderFullPathUpdated{
 		Timestamp: time.Now(),
-		Title:     "Folder" + util.GenerateShortUID(),
-		UID:       folder.UID,
+		UIDs:      []string{folder1.UID, folder2.UID},
 		OrgID:     orgID,
 	})
 	require.NoError(t, err)
 
-	require.Eventuallyf(t, func() bool {
-		return len(db.GetRecordedCommands(func(cmd any) (any, bool) {
-			c, ok := cmd.(fakes.GenericRecordedQuery)
-			if !ok || c.Name != "IncreaseVersionForAllRulesInNamespace" {
-				return nil, false
-			}
-			return c, true
-		})) > 0
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		recordedCommands := getRecordedCommand(db)
+		require.Len(c, recordedCommands, 1)
+		require.Equal(c, recordedCommands[0].Params[0].(int64), orgID)
+		require.ElementsMatch(c, recordedCommands[0].Params[1].([]string), []string{folder1.UID, folder2.UID})
 	}, time.Second, 10*time.Millisecond, "expected to call db store method but nothing was called")
 }
 

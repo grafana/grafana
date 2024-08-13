@@ -315,19 +315,24 @@ func (f *RuleStore) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceU
 	return nil
 }
 
-func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, orgID int64, namespaceUID string) ([]models.AlertRuleKeyWithVersion, error) {
+func (f *RuleStore) IncreaseVersionForAllRulesInNamespaces(_ context.Context, orgID int64, namespaceUIDs []string) ([]models.AlertRuleKeyWithVersion, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
 	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
-		Name:   "IncreaseVersionForAllRulesInNamespace",
-		Params: []any{orgID, namespaceUID},
+		Name:   "IncreaseVersionForAllRulesInNamespaces",
+		Params: []any{orgID, namespaceUIDs},
 	})
 
 	var result []models.AlertRuleKeyWithVersion
 
+	namespaceUIDsMap := make(map[string]struct{}, len(namespaceUIDs))
+	for _, namespaceUID := range namespaceUIDs {
+		namespaceUIDsMap[namespaceUID] = struct{}{}
+	}
+
 	for _, rule := range f.Rules[orgID] {
-		if rule.NamespaceUID == namespaceUID && rule.OrgID == orgID {
+		if _, ok := namespaceUIDsMap[rule.NamespaceUID]; ok && rule.OrgID == orgID {
 			rule.Version++
 			rule.Updated = time.Now()
 			result = append(result, models.AlertRuleKeyWithVersion{
