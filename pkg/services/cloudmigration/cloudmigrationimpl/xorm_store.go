@@ -316,6 +316,7 @@ func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, sessionUid, uid string
 func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.ListSnapshotsQuery) ([]cloudmigration.CloudMigrationSnapshot, error) {
 	var snapshots = make([]cloudmigration.CloudMigrationSnapshot, 0)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		sess.Join("INNER", "cloud_migration_session", "cloud_migration_session.uid = cloud_migration_snapshot.session_uid")
 		if query.Limit != GetAllSnapshots {
 			offset := (query.Page - 1) * query.Limit
 			sess.Limit(query.Limit, offset)
