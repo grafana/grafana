@@ -66,7 +66,7 @@ export interface LdapServerInfo {
 
 export interface GroupMapping {
   groupDn?: string;
-  orgId?: string;
+  orgId?: number;
   orgRole?: string;
   grafanaAdmin?: boolean;
 }
@@ -79,15 +79,17 @@ export interface LdapAttributes {
   username?: string;
 }
 
-export interface LdapSsoSettings {
-  data?: any;
-  attributes?: LdapAttributes;
-  bindDn?: string;
-  bindPassword?: string;
-  groupMappings?: GroupMapping[];
-  host?: string;
-  searchFilter?: string;
-  searchBaseDn?: string;
+export interface LdapServerConfig {
+  attributes: LdapAttributes;
+  bindDn: string;
+  bindPassword: string;
+  groupMappings: GroupMapping[];
+  host: string;
+  port: number;
+  searchFilter: string;
+  searchBaseDn: string;
+  sslSkipVerify: boolean;
+  timeout: number;
 }
 
 export type LdapConnectionInfo = LdapServerInfo[];
@@ -99,5 +101,25 @@ export interface LdapState {
   connectionError?: LdapError;
   userError?: LdapError;
   ldapError?: LdapError;
-  ldapSsoSettings?: LdapSsoSettings;
+  ldapSsoSettings?: LdapServerConfig;
+}
+
+export interface LdapConfig {
+  server: LdapServerConfig;
+}
+
+export interface LdapSettings {
+  activeSyncEnabled: boolean;
+  allowSignUp: boolean;
+  config: LdapConfig;
+  enabled: boolean;
+  skipOrgRoleSync: boolean;
+  syncCron: string;
+}
+
+export interface LdapPayload {
+  id: string;
+  provider: string;
+  settings: LdapSettings;
+  source: string;
 }
