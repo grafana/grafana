@@ -198,6 +198,7 @@ type Cfg struct {
 	HideAngularDeprecation           []string
 	PluginInstallToken               string
 	ForwardHostEnvVars               []string
+	InstallPlugins                   []InstallPlugin
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
@@ -524,6 +525,11 @@ type Cfg struct {
 
 	// Unified Storage
 	UnifiedStorage map[string]grafanarest.DualWriterMode
+}
+
+type InstallPlugin struct {
+	ID      string
+	Version string
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
