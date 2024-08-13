@@ -87,6 +87,10 @@ type schedule struct {
 	featureToggles       featuremgmt.FeatureToggles
 
 	metrics *metrics.Scheduler
+	// lastUpdatedMetricsForOrgsAndGroups contains AlertRuleGroupKeyWithFolderFullpaths that
+	// were passed to updateRulesMetrics in the current tick. This is used to
+	// delete metrics for the rules/groups that are not longer present.
+	lastUpdatedMetricsForOrgsAndGroups map[int64]map[ngmodels.AlertRuleGroupKeyWithFolderFullpath]struct{} // orgID -> set of AlertRuleGroupKeyWithFolderFullpath
 
 	alertsSender    AlertsSender
 	minRuleInterval time.Duration
@@ -130,24 +134,25 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 	}
 
 	sch := schedule{
-		registry:              newRuleRegistry(),
-		maxAttempts:           cfg.MaxAttempts,
-		clock:                 cfg.C,
-		baseInterval:          cfg.BaseInterval,
-		log:                   cfg.Log,
-		evaluatorFactory:      cfg.EvaluatorFactory,
-		ruleStore:             cfg.RuleStore,
-		metrics:               cfg.Metrics,
-		appURL:                cfg.AppURL,
-		disableGrafanaFolder:  cfg.DisableGrafanaFolder,
-		jitterEvaluations:     cfg.JitterEvaluations,
-		featureToggles:        cfg.FeatureToggles,
-		stateManager:          stateManager,
-		minRuleInterval:       cfg.MinRuleInterval,
-		schedulableAlertRules: alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
-		alertsSender:          cfg.AlertSender,
-		tracer:                cfg.Tracer,
-		recordingWriter:       cfg.RecordingWriter,
+		registry:                           newRuleRegistry(),
+		maxAttempts:                        cfg.MaxAttempts,
+		clock:                              cfg.C,
+		baseInterval:                       cfg.BaseInterval,
+		log:                                cfg.Log,
+		evaluatorFactory:                   cfg.EvaluatorFactory,
+		ruleStore:                          cfg.RuleStore,
+		metrics:                            cfg.Metrics,
+		lastUpdatedMetricsForOrgsAndGroups: make(map[int64]map[ngmodels.AlertRuleGroupKeyWithFolderFullpath]struct{}),
+		appURL:                             cfg.AppURL,
+		disableGrafanaFolder:               cfg.DisableGrafanaFolder,
+		jitterEvaluations:                  cfg.JitterEvaluations,
+		featureToggles:                     cfg.FeatureToggles,
+		stateManager:                       stateManager,
+		minRuleInterval:                    cfg.MinRuleInterval,
+		schedulableAlertRules:              alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
+		alertsSender:                       cfg.AlertSender,
+		tracer:                             cfg.Tracer,
+		recordingWriter:                    cfg.RecordingWriter,
 	}
 
 	return &sch

@@ -66,7 +66,7 @@ func (f *fakeRulesStore) GetAlertRulesForScheduling(ctx context.Context, query *
 	query.ResultFoldersTitles = map[models.FolderKey]string{}
 	for _, rule := range f.rules {
 		query.ResultRules = append(query.ResultRules, rule)
-		key := models.FolderKey{OrgID: rule.OrgID, UID: rule.UID}
+		key := models.FolderKey{OrgID: rule.OrgID, UID: rule.NamespaceUID}
 		query.ResultFoldersTitles[key] = f.getNamespaceTitle(rule.NamespaceUID)
 	}
 	return nil
