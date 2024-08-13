@@ -280,7 +280,6 @@ func basicRolesCollector(store db.DB) TupleCollector {
 		err := store.WithDbSession(ctx, func(sess *db.Session) error {
 			return sess.SQL(query).Find(&permissions)
 		})
-
 		if err != nil {
 			return err
 		}
@@ -293,25 +292,39 @@ func basicRolesCollector(store db.DB) TupleCollector {
 				continue
 			}
 
-			// TODO: run for all orgs
-			var orgID int64 = 1
-			var tuple *openfgav1.TupleKey
-			ok := false
-			if p.Identifier == "" || p.Identifier == "*" {
-				tuple, ok = zanzana.TranslateToOrgTuple(subject, p.Action, orgID)
-			} else {
-				tuple, ok = zanzana.TranslateToTuple(subject, p.Action, p.Kind, p.Identifier, orgID)
+			type Org struct {
+				Id   int64
+				Name string
 			}
-			if !ok {
-				continue
+			var orgs []Org
+			orgsQuery := "SELECT id, name FROM org"
+			err := store.WithDbSession(ctx, func(sess *db.Session) error {
+				return sess.SQL(orgsQuery).Find(&orgs)
+			})
+			if err != nil {
+				return err
 			}
 
-			key := fmt.Sprintf("%s-%s", collectorID, p.Action)
-			if !slices.ContainsFunc(tuples[key], func(e *openfgav1.TupleKey) bool {
-				// skip duplicated tuples
-				return e.Object == tuple.Object && e.Relation == tuple.Relation && e.User == tuple.User
-			}) {
-				tuples[key] = append(tuples[key], tuple)
+			// Populate basic roles permissions for every org
+			for _, org := range orgs {
+				var tuple *openfgav1.TupleKey
+				ok := false
+				if p.Identifier == "" || p.Identifier == "*" {
+					tuple, ok = zanzana.TranslateToOrgTuple(subject, p.Action, org.Id)
+				} else {
+					tuple, ok = zanzana.TranslateToTuple(subject, p.Action, p.Kind, p.Identifier, org.Id)
+				}
+				if !ok {
+					continue
+				}
+
+				key := fmt.Sprintf("%s-%s", collectorID, p.Action)
+				if !slices.ContainsFunc(tuples[key], func(e *openfgav1.TupleKey) bool {
+					// skip duplicated tuples
+					return e.Object == tuple.Object && e.Relation == tuple.Relation && e.User == tuple.User
+				}) {
+					tuples[key] = append(tuples[key], tuple)
+				}
 			}
 		}
 
