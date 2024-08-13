@@ -342,6 +342,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * they can change over requested time.
    * @param name
    * @param withName
+   * @param withLimit
    */
   fetchSeriesLabels = async (
     name: string,
