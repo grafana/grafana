@@ -1008,7 +1008,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             scrollToTopLogs={scrollToTopLogs}
             addResultsToCache={addResultsToCache}
             clearCache={clearCache}
-            loadMoreLogs={loadMoreLogs}
           />
         </div>
       </PanelChrome>
