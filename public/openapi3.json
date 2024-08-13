@@ -6304,7 +6304,7 @@
             "type": "array"
           }
         },
-        "title": "Headers represents the configuration for HTTP headers.",
+        "title": "Header represents the configuration for a single HTTP header.",
         "type": "object"
       },
       "Headers": {
@@ -9559,6 +9559,12 @@
       "Route": {
         "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
         "properties": {
+          "active_time_intervals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "continue": {
             "type": "boolean"
           },
@@ -12222,6 +12228,7 @@
         "type": "object"
       },
       "alertGroups": {
+        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -25833,9 +25840,6 @@
               }
             },
             "description": "NotificationTemplates"
-          },
-          "404": {
-            "description": " Not found."
           }
         },
         "summary": "Get all notification templates.",
@@ -25911,7 +25915,14 @@
             "description": "NotificationTemplate"
           },
           "404": {
-            "description": " Not found."
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericPublicError"
+                }
+              }
+            },
+            "description": "GenericPublicError"
           }
         },
         "summary": "Get a notification template.",
@@ -25964,11 +25975,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError"
+                  "$ref": "#/components/schemas/GenericPublicError"
                 }
               }
             },
-            "description": "ValidationError"
+            "description": "GenericPublicError"
           },
           "409": {
             "content": {

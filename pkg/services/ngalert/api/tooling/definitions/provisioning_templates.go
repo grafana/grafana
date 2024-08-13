@@ -6,7 +6,6 @@ package definitions
 //
 //     Responses:
 //       200: NotificationTemplates
-//       404: description: Not found.
 
 // swagger:route GET /v1/provisioning/templates/{name} provisioning stable RouteGetTemplate
 //
@@ -14,7 +13,7 @@ package definitions
 //
 //     Responses:
 //       200: NotificationTemplate
-//       404: description: Not found.
+//       404: GenericPublicError
 
 // swagger:route PUT /v1/provisioning/templates/{name} provisioning stable RoutePutTemplate
 //
@@ -25,7 +24,7 @@ package definitions
 //
 //     Responses:
 //       202: NotificationTemplate
-//       400: ValidationError
+//       400: GenericPublicError
 //       409: GenericPublicError
 
 // swagger:route DELETE /v1/provisioning/templates/{name} provisioning stable RouteDeleteTemplate

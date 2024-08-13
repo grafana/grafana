@@ -98,7 +98,7 @@ func TestTemplateService(t *testing.T) {
 
 			_, err := sut.SetTemplate(context.Background(), 1, tmpl)
 
-			require.ErrorIs(t, err, ErrValidation)
+			require.ErrorIs(t, err, ErrTemplateInvalid)
 		})
 
 		t.Run("rejects existing templates if provenance is not right", func(t *testing.T) {
@@ -341,7 +341,7 @@ func TestTemplateService(t *testing.T) {
 
 			_, err := sut.SetTemplate(context.Background(), 1, tmpl)
 
-			require.ErrorIs(t, err, ErrValidation)
+			require.ErrorIs(t, err, ErrTemplateInvalid)
 		})
 
 		t.Run("does not reject template with unknown field", func(t *testing.T) {

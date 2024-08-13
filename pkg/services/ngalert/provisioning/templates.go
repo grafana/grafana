@@ -59,7 +59,7 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]defi
 func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error) {
 	err := tmpl.Validate()
 	if err != nil {
-		return definitions.NotificationTemplate{}, fmt.Errorf("%w: %s", ErrValidation, err.Error())
+		return definitions.NotificationTemplate{}, MakeErrTemplateInvalid(err)
 	}
 
 	revision, err := t.configStore.Get(ctx, orgID)
