@@ -147,6 +147,10 @@ If the Tempo data source is set to allow streaming but the `traceQLStreaming` fe
 
 If the data source has streaming disabled and `traceQLStreaming` is set to `true`, streaming happens for that data source.
 
+When streaming is active, the **Options** section of Explore for the Tempo data source shows that **Streaming** is **Enabled**.
+
+![The Explore screen shows the Tempo data source with streaming active](/media/docs/grafana/data-sources/tempo/tempo-query-stream-active.png)
+
 ## Trace to logs
 
 The **Trace to logs** setting configures [trace to logs](ref:explore-trace-integration) that's available when you integrate Grafana with Tempo.
