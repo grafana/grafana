@@ -391,9 +391,11 @@ Let's see how we can configure this.
 
 <!-- INTERACTIVE ignore START -->
 
-{{ <admonition type="tip">}}
+{{< admonition type="tip" >}}
+
 Check out our [advanced alerting tutorial](http://grafana.com/tutorials/alerting-get-started-pt2/) for more insights and tips.
-{{ </admonition >}}
+
+{{< /admonition >}}
 
 <!-- INTERACTIVE ignore END -->
 

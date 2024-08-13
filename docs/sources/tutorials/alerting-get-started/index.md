@@ -34,9 +34,11 @@ In this tutorial you will:
 
 <!-- INTERACTIVE ignore START -->
 
-{{ <admonition type="tip">}}
+{{< admonition type="tip" >}}
+
 Before you dive in, remember that you can [explore advanced topics like alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/) in the second part of this guide.
-{{ </admonition >}}
+
+{{< /admonition >}}
 
 <!-- INTERACTIVE ignore END -->
 
@@ -277,6 +279,20 @@ By incrementing the threshold, the condition is no longer met, and after the eva
 
 ## Learn more
 
+<!-- INTERACTIVE ignore START -->
+
+{{< admonition type="tip" >}}
+
 Advance your skills by exploring [alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/) in Part 2 of your learning journey.
+
+{{< /admonition >}}
+
+<!-- INTERACTIVE ignore END -->
+
+{{< docs/ignore >}}
+
+Advance your skills by exploring [alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/) in Part 2 of your learning journey.
+
+{{< /docs/ignore >}}
 
 <!-- INTERACTIVE page finish.md END -->
