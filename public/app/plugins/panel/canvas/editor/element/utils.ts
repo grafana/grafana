@@ -1,5 +1,6 @@
 import { AppEvents } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, getTemplateSrv } from '@grafana/runtime';
+import config from 'app/core/config';
 import { appEvents } from 'app/core/core';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -13,7 +14,7 @@ export const callApi = (api: APIEditorConfig, updateLoadingStateCallback?: IsLoa
   if (api && api.endpoint) {
     // If API endpoint origin matches Grafana origin, don't call it.
     const interpolatedUrl = interpolateVariables(api.endpoint);
-    if (requestMatchesGrafanaOrigin(interpolatedUrl)) {
+    if (isRequestUrlAllowed(interpolatedUrl)) {
       appEvents.emit(AppEvents.alertError, ['Cannot call API at Grafana origin.']);
       updateLoadingStateCallback && updateLoadingStateCallback(false);
       return;
@@ -85,8 +86,14 @@ const getData = (api: APIEditorConfig) => {
   return data;
 };
 
-const requestMatchesGrafanaOrigin = (requestEndpoint: string) => {
+const isRequestUrlAllowed = (requestEndpoint: string) => {
+  if (config.actions.allowPostURL !== '') {
+    const allowedRegex = new RegExp(config.actions.allowPostURL!);
+    return !allowedRegex.test(requestEndpoint);
+  }
+
   const requestURL = new URL(requestEndpoint);
   const grafanaURL = new URL(window.location.origin);
+
   return requestURL.origin === grafanaURL.origin;
 };
