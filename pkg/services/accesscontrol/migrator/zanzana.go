@@ -38,6 +38,7 @@ func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...Tu
 		folderTreeCollector(store),
 		dashboardFolderCollector(store),
 		basicFixedRolesCollector(store),
+		customRolesCollector(store),
 		basicRoleAssignemtCollector(store),
 		roleAssignemtCollector(store),
 	)
@@ -337,6 +338,68 @@ func basicFixedRolesCollector(store db.DB) TupleCollector {
 				}) {
 					tuples[key] = append(tuples[key], tuple)
 				}
+			}
+		}
+
+		return nil
+	}
+}
+
+// customRolesCollector migrates custom roles to OpenFGA tuples
+func customRolesCollector(store db.DB) TupleCollector {
+	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+		const collectorID = "custom_role"
+		const query = `
+			SELECT r.name, r.uid as role_uid, p.action, p.kind, p.identifier, r.org_id
+			FROM permission p
+			INNER JOIN role r ON p.role_id = r.id
+			LEFT JOIN builtin_role br ON r.id  = br.role_id
+			WHERE r.name NOT LIKE 'basic:%'
+			AND r.name NOT LIKE 'fixed:%'
+			AND r.name NOT LIKE 'managed:%'
+		`
+		type Permission struct {
+			RoleName   string `xorm:"role_name"`
+			OrgID      int64  `xorm:"org_id"`
+			Action     string `xorm:"action"`
+			Kind       string
+			Identifier string
+			RoleUID    string `xorm:"role_uid"`
+		}
+
+		var permissions []Permission
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(query).Find(&permissions)
+		})
+		if err != nil {
+			return err
+		}
+
+		for _, p := range permissions {
+			var subject string
+			if p.RoleUID != "" {
+				subject = zanzana.NewScopedTupleEntry(zanzana.TypeRole, p.RoleUID, "assignee", strconv.FormatInt(p.OrgID, 10))
+			} else {
+				continue
+			}
+
+			var tuple *openfgav1.TupleKey
+			ok := false
+			if p.Identifier == "" || p.Identifier == "*" {
+				tuple, ok = zanzana.TranslateToOrgTuple(subject, p.Action, p.OrgID)
+			} else {
+				tuple, ok = zanzana.TranslateToTuple(subject, p.Action, p.Kind, p.Identifier, p.OrgID)
+			}
+			if !ok {
+				continue
+			}
+
+			key := fmt.Sprintf("%s-%s", collectorID, p.Action)
+			if !slices.ContainsFunc(tuples[key], func(e *openfgav1.TupleKey) bool {
+				// skip duplicated tuples
+				return e.Object == tuple.Object && e.Relation == tuple.Relation && e.User == tuple.User
+			}) {
+				tuples[key] = append(tuples[key], tuple)
 			}
 		}
 
