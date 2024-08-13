@@ -4,7 +4,7 @@ import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/d
 /**
  * Get the correct namespace to use when using the K8S API.
  */
-export const getNamespace = () => config.namespace;
+export const getK8sNamespace = () => config.namespace;
 
 /**
  * Should we call the kubernetes-style API for managing alertmanager entities?

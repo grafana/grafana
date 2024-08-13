@@ -320,6 +320,13 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
+			Name:         "prometheusRunQueriesInParallel",
+			Description:  "Enables running Prometheus queries in parallel",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
 			Name:           "prometheusDataplane",
 			Description:    "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular, when this feature toggle is active, the numeric `Field.Name` is set from 'Value' to the value of the `__name__` label.",
 			Expression:     "true",
@@ -432,6 +439,13 @@ var (
 		{
 			Name:         "frontendSandboxMonitorOnly",
 			Description:  "Enables monitor only in the plugin frontend sandbox (if enabled)",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "pluginsDetailsRightPanel",
+			Description:  "Enables right panel for the plugins details page",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
@@ -970,7 +984,7 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
-			// this is mainly used a a way to quickly disable query hints as a safe guard for our infrastructure
+			// this is mainly used as a way to quickly disable query hints as a safeguard for our infrastructure
 			Name:           "lokiQueryHints",
 			Description:    "Enables query hints for Loki",
 			Stage:          FeatureStageGeneralAvailability,
@@ -989,12 +1003,14 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:            "cloudRBACRoles",
-			Description:     "Enabled grafana cloud specific RBAC roles",
-			Stage:           FeatureStageExperimental,
-			Owner:           identityAccessTeam,
-			HideFromDocs:    true,
-			RequiresRestart: true,
+			Name:              "cloudRBACRoles",
+			Description:       "Enabled grafana cloud specific RBAC roles",
+			Stage:             FeatureStagePublicPreview,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			AllowSelfServe:    true,
+			HideFromAdminPage: true,
+			RequiresRestart:   true,
 		},
 		{
 			Name:           "alertingQueryOptimization",
@@ -1071,15 +1087,16 @@ var (
 			Owner:       grafanaSharingSquad,
 		},
 		{
-			Name:         "tlsMemcached",
-			Description:  "Use TLS-enabled memcached in the enterprise caching feature",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaOperatorExperienceSquad,
-			HideFromDocs: true,
+			Name:           "tlsMemcached",
+			Description:    "Use TLS-enabled memcached in the enterprise caching feature",
+			Stage:          FeatureStageGeneralAvailability,
+			Owner:          grafanaOperatorExperienceSquad,
+			Expression:     "true",
+			AllowSelfServe: false, // the non-tls implementation is slated for removal
 		},
 		{
 			Name:            "kubernetesAggregator",
-			Description:     "Enable grafana aggregator",
+			Description:     "Enable grafana's embedded kube-aggregator",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
@@ -1260,7 +1277,7 @@ var (
 		{
 			Name:        "azureMonitorPrometheusExemplars",
 			Description: "Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaPartnerPluginsSquad,
 		},
 		{
@@ -1368,6 +1385,26 @@ var (
 			Stage:       FeatureStageDeprecated,
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "true", // Enabled by default for now
+		},
+		{
+			Name:            "backgroundPluginInstaller",
+			Description:     "Enable background plugin installer",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresRestart: true,
+		},
+		{
+			Name:            "dataplaneAggregator",
+			Description:     "Enable grafana dataplane aggregator",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+		},
+		{
+			Name:        "adhocFilterOneOf",
+			Description: "Exposes a new 'one of' operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
 		},
 	}
 )

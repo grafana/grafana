@@ -15,7 +15,6 @@ interface Props {
   data: PanelData;
   thresholds?: ThresholdsConfig;
   thresholdsType?: GraphThresholdsStyleMode;
-  onThresholdsChange?: (thresholds: ThresholdsConfig) => void;
 }
 
 /** The VizWrapper is just a simple component that renders either a table or a graph based on the type of data we receive from "PanelData" */

@@ -240,6 +240,7 @@ func removeMeta(obj runtime.Object) []byte {
 	}
 	// we don't want to compare meta fields
 	delete(unstObj, "metadata")
+	delete(unstObj, "objectMeta")
 
 	jsonObj, err := json.Marshal(unstObj)
 	if err != nil {

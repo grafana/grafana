@@ -31,19 +31,19 @@ export const plugin = new PanelPlugin<Options>(DebugPanel).useFieldConfig().setP
     })
     .addBooleanSwitch({
       path: 'counters.render',
-      name: 'Render Count',
+      name: 'Render count',
       defaultValue: true,
       showIf: ({ mode }) => mode === DebugMode.Render,
     })
     .addBooleanSwitch({
       path: 'counters.dataChanged',
-      name: 'Data Changed Count',
+      name: 'Data changed count',
       defaultValue: true,
       showIf: ({ mode }) => mode === DebugMode.Render,
     })
     .addBooleanSwitch({
       path: 'counters.schemaChanged',
-      name: 'Schema Changed Count',
+      name: 'Schema changed count',
       defaultValue: true,
       showIf: ({ mode }) => mode === DebugMode.Render,
     })
