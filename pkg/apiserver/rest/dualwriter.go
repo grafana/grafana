@@ -239,12 +239,14 @@ func SetDualWritingMode(
 		syncOk, err := runDataSyncer(ctx, currentMode, legacy, storage, entity, reg, serverLockService, requestInfo)
 		if err != nil {
 			klog.Info("data syncer failed for mode:", m)
-		} else {
-			if syncOk {
-				// only set currentMode to 3 if data is in sync
-				currentMode = Mode3
-			}
+			return currentMode, err
 		}
+		if !syncOk {
+			klog.Info("data syncer not ok for mode:", m)
+			return currentMode, nil
+		}
+		// only set currentMode to 3 if data is in sync
+		currentMode = Mode3
 
 		err = kvs.Set(ctx, entity, fmt.Sprint(currentMode))
 		if err != nil {
