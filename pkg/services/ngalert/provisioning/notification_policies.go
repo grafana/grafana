@@ -73,11 +73,14 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
-	muteTimes := map[string]struct{}{}
+	timeIntervals := map[string]struct{}{}
 	for _, mt := range revision.Config.AlertmanagerConfig.MuteTimeIntervals {
-		muteTimes[mt.Name] = struct{}{}
+		timeIntervals[mt.Name] = struct{}{}
 	}
-	err = tree.ValidateMuteTimes(muteTimes)
+	for _, mt := range revision.Config.AlertmanagerConfig.TimeIntervals {
+		timeIntervals[mt.Name] = struct{}{}
+	}
+	err = tree.ValidateMuteTimes(timeIntervals)
 	if err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}

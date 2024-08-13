@@ -2213,10 +2213,10 @@ var testConfig = `
 			}]
 		}],
 		"mute_time_intervals": [{
-			"name": "interval",
+			"name": "interval-1",
 			"time_intervals": []
 		}, {
-                "name": "full-interval",
+                "name": "interval-2",
                 "time_intervals": [
                     {
                         "times": [
