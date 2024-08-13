@@ -8,7 +8,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"go.opentelemetry.io/otel"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/database")
 
 const (
 	// userAssignsSQL is a query to select all users assignments.
@@ -45,6 +48,9 @@ type AccessControlStore struct {
 }
 
 func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.database.GetUserPermissions")
+	defer span.End()
+
 	result := make([]accesscontrol.Permission, 0)
 	err := s.sql.ReadReplica().WithDbSession(ctx, func(sess *db.Session) error {
 		if query.UserID == 0 && len(query.TeamIDs) == 0 && len(query.Roles) == 0 {

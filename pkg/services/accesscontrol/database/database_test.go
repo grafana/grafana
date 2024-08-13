@@ -31,6 +31,8 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
+var _ = tracing.InitializeTracerForTest()
+
 // run tests with cleanup
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
