@@ -8,8 +8,7 @@ import { Stack, Select } from '@grafana/ui';
 import { setMonacoEnv } from 'app/core/monacoEnv';
 import { ThemeProvider } from 'app/core/utils/ConfigProvider';
 
-import { NamespaceContext } from './context';
-import { WrappedPlugins } from './wrapped';
+import { NamespaceContext, WrappedPlugins } from './plugins';
 
 export const Page = () => {
   const theme = createTheme({ colors: { mode: 'light' } });
@@ -69,7 +68,7 @@ export const Page = () => {
               <img height="40" src="public/img/grafana_icon.svg" alt="Grafana" />
               <Select
                 options={urls.value}
-                isClearable={true}
+                isClearable={false /* TODO -- when we allow a landing page, this can be true */}
                 onChange={(v) => {
                   const url = new URL(window.location.href);
                   url.hash = '';
@@ -98,7 +97,7 @@ export const Page = () => {
             />
           )}
 
-          {!url?.value && <div>TODO... api landing page...??</div>}
+          {!url?.value && <div>...{/** TODO, we can make an api docs loading page here */}</div>}
         </NamespaceContext.Provider>
       </ThemeProvider>
     </div>

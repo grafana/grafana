@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
-import { NamespaceContext, ResourceContext } from './context';
+import { NamespaceContext, ResourceContext } from './plugins';
 
 type Props = {
   value?: string;
@@ -11,7 +11,7 @@ type Props = {
 
   // The wrapped element
   Original: React.ElementType;
-  props: any;
+  props: Record<string,unknown>;
 };
 
 export function K8sNameLookup(props: Props) {
@@ -23,10 +23,12 @@ export function K8sNameLookup(props: Props) {
   const [namespaced, setNamespaced] = useState<boolean>();
   const [loading, setLoading] = useState(false);
   const [options, setOptions] = useState<Array<SelectableValue<string>>>();
+  const [placeholder, setPlaceholder] = useState<string>("Enter kubernetes name");
 
   useEffect(() => {
     if (focused && group && version && resource) {
       setLoading(true);
+      setPlaceholder("Enter kubernetes name")
       const fn = async () => {
         const url = namespaced
           ? `apis/${group}/${version}/namespaces/${namespace}/${resource}`
@@ -44,14 +46,18 @@ export function K8sNameLookup(props: Props) {
           return;
         }
         const table = await response.json();
+        console.log('LIST', url, table);
         const options: Array<SelectableValue<string>> = [];
-        table.rows.forEach((row: any) => {
-          const n = row.object?.metadata?.name;
-          if (n) {
-            options.push({ label: n, value: n });
-          }
-        });
-        console.log('DO QUERY', table);
+        if (table.rows?.length) {
+          table.rows.forEach((row: any) => {
+            const n = row.object?.metadata?.name;
+            if (n) {
+              options.push({ label: n, value: n });
+            }
+          });
+        } else {
+          setPlaceholder("No items found");
+        }
         setLoading(false);
         setOptions(options);
       };
@@ -67,7 +73,6 @@ export function K8sNameLookup(props: Props) {
             {(info) => {
               // delay avoids Cannot update a component
               setTimeout(() => {
-                console.log('INFO', info);
                 setNamespace(namespace);
                 setGroup(info?.group);
                 setVersion(info?.version);
@@ -80,7 +85,7 @@ export function K8sNameLookup(props: Props) {
                   <Select
                     allowCreateWhileLoading={true}
                     allowCustomValue={true}
-                    placeholder="Enter kubernetes name"
+                    placeholder={placeholder}
                     loadingMessage="Loading kubernetes names..."
                     formatCreateLabel={(v) => `Use: ${v}`}
                     onFocus={() => {
