@@ -2,6 +2,7 @@ import { urlUtil } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
+  CustomVariable,
   getUrlSyncManager,
   sceneGraph,
   SceneObject,
@@ -16,7 +17,7 @@ import { DataTrail } from './DataTrail';
 import { DataTrailSettings } from './DataTrailSettings';
 import { MetricScene } from './MetricScene';
 import { getTrailStore } from './TrailStore/TrailStore';
-import { LOGS_METRIC, TRAILS_ROUTE, VAR_DATASOURCE_EXPR } from './shared';
+import { LOGS_METRIC, TRAILS_ROUTE, VAR_DATASOURCE_EXPR, VAR_OTEL_DEPLOYMENT_ENV, VAR_OTEL_RESOURCES } from './shared';
 
 export function getTrailFor(model: SceneObject): DataTrail {
   return sceneGraph.getAncestor(model, DataTrail);
@@ -114,4 +115,50 @@ export function getFilters(scene: SceneObject) {
     return filters.state.filters;
   }
   return null;
+}
+
+/**
+ * Return a collection of labels and labels filters.
+ * This data is used to build the join query to filter with otel resources
+ *
+ * @param scene
+ * @returns
+ */
+export function getOtelFilters(scene: SceneObject): { labels: string; filters: string } {
+  const otelResources = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, scene);
+  // add deployment env to otel resource filters
+  const otelDepEnv = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, scene);
+
+  if (otelResources instanceof AdHocFiltersVariable && otelDepEnv instanceof CustomVariable) {
+    // get the collection of adhoc filters
+    const otelFilters = otelResources.state.filters;
+
+    // get the value for deployment_environment
+    let otelDepEnvValue = String(otelDepEnv.getValue());
+    const isMulti = otelDepEnvValue.includes(',');
+    let op = '=';
+    let val = otelDepEnvValue;
+
+    if (isMulti) {
+      op = '=~';
+      val = val.split(',').join('|');
+    }
+
+    // start with the deployment environment
+    let allFilters = `deployment_environment${op}"${val}"`;
+    let allLabels = 'deployment_environment';
+
+    for (let i = 0; i < otelFilters?.length; i++) {
+      const labelName = otelFilters[i].key;
+      const op = otelFilters[i].operator;
+      const labelValue = otelFilters[i].value;
+
+      allFilters += `,${labelName}${op}"${labelValue}"`;
+      allLabels += `,${labelName}`;
+    }
+
+    return { filters: allFilters, labels: allLabels };
+  }
+
+  return { labels: '', filters: '' };
 }
