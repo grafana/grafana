@@ -48,12 +48,12 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
                 onClick={onDismiss}
               >
                 {config.featureToggles.newDashboardSharingComponent ? (
-                  <Trans i18nKey="public-dashboard-users-access-list.dashboard-modal.public-dashboard-link">
-                    Public dashboard URL
-                  </Trans>
-                ) : (
                   <Trans i18nKey="public-dashboard-users-access-list.dashboard-modal.external-link">
                     External link
+                  </Trans>
+                ) : (
+                  <Trans i18nKey="public-dashboard-users-access-list.dashboard-modal.public-dashboard-link">
+                    Public dashboard URL
                   </Trans>
                 )}
               </a>
@@ -64,12 +64,12 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
                 onClick={onDismiss}
               >
                 {config.featureToggles.newDashboardSharingComponent ? (
-                  <Trans i18nKey="public-dashboard-users-access-list.dashboard-modal.public-dashboard-setting">
-                    Public dashboard settings
-                  </Trans>
-                ) : (
                   <Trans i18nKey="public-dashboard-users-access-list.dashboard-modal.sharing-setting">
                     Sharing settings
+                  </Trans>
+                ) : (
+                  <Trans i18nKey="public-dashboard-users-access-list.dashboard-modal.public-dashboard-setting">
+                    Public dashboard settings
                   </Trans>
                 )}
               </a>
