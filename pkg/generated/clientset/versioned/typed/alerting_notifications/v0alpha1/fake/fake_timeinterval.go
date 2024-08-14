@@ -30,22 +30,24 @@ var timeintervalsKind = v0alpha1.SchemeGroupVersion.WithKind("TimeInterval")
 
 // Get takes name of the timeInterval, and returns the corresponding timeInterval object, and an error if there is any.
 func (c *FakeTimeIntervals) Get(ctx context.Context, name string, options v1.GetOptions) (result *v0alpha1.TimeInterval, err error) {
+	emptyResult := &v0alpha1.TimeInterval{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(timeintervalsResource, c.ns, name), &v0alpha1.TimeInterval{})
+		Invokes(testing.NewGetActionWithOptions(timeintervalsResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v0alpha1.TimeInterval), err
 }
 
 // List takes label and field selectors, and returns the list of TimeIntervals that match those selectors.
 func (c *FakeTimeIntervals) List(ctx context.Context, opts v1.ListOptions) (result *v0alpha1.TimeIntervalList, err error) {
+	emptyResult := &v0alpha1.TimeIntervalList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(timeintervalsResource, timeintervalsKind, c.ns, opts), &v0alpha1.TimeIntervalList{})
+		Invokes(testing.NewListActionWithOptions(timeintervalsResource, timeintervalsKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -64,28 +66,30 @@ func (c *FakeTimeIntervals) List(ctx context.Context, opts v1.ListOptions) (resu
 // Watch returns a watch.Interface that watches the requested timeIntervals.
 func (c *FakeTimeIntervals) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(timeintervalsResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(timeintervalsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a timeInterval and creates it.  Returns the server's representation of the timeInterval, and an error, if there is any.
 func (c *FakeTimeIntervals) Create(ctx context.Context, timeInterval *v0alpha1.TimeInterval, opts v1.CreateOptions) (result *v0alpha1.TimeInterval, err error) {
+	emptyResult := &v0alpha1.TimeInterval{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(timeintervalsResource, c.ns, timeInterval), &v0alpha1.TimeInterval{})
+		Invokes(testing.NewCreateActionWithOptions(timeintervalsResource, c.ns, timeInterval, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v0alpha1.TimeInterval), err
 }
 
 // Update takes the representation of a timeInterval and updates it. Returns the server's representation of the timeInterval, and an error, if there is any.
 func (c *FakeTimeIntervals) Update(ctx context.Context, timeInterval *v0alpha1.TimeInterval, opts v1.UpdateOptions) (result *v0alpha1.TimeInterval, err error) {
+	emptyResult := &v0alpha1.TimeInterval{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(timeintervalsResource, c.ns, timeInterval), &v0alpha1.TimeInterval{})
+		Invokes(testing.NewUpdateActionWithOptions(timeintervalsResource, c.ns, timeInterval, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v0alpha1.TimeInterval), err
 }
@@ -100,7 +104,7 @@ func (c *FakeTimeIntervals) Delete(ctx context.Context, name string, opts v1.Del
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeTimeIntervals) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(timeintervalsResource, c.ns, listOpts)
+	action := testing.NewDeleteCollectionActionWithOptions(timeintervalsResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v0alpha1.TimeIntervalList{})
 	return err
@@ -108,11 +112,12 @@ func (c *FakeTimeIntervals) DeleteCollection(ctx context.Context, opts v1.Delete
 
 // Patch applies the patch and returns the patched timeInterval.
 func (c *FakeTimeIntervals) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v0alpha1.TimeInterval, err error) {
+	emptyResult := &v0alpha1.TimeInterval{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(timeintervalsResource, c.ns, name, pt, data, subresources...), &v0alpha1.TimeInterval{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(timeintervalsResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v0alpha1.TimeInterval), err
 }
@@ -130,11 +135,12 @@ func (c *FakeTimeIntervals) Apply(ctx context.Context, timeInterval *alertingnot
 	if name == nil {
 		return nil, fmt.Errorf("timeInterval.Name must be provided to Apply")
 	}
+	emptyResult := &v0alpha1.TimeInterval{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(timeintervalsResource, c.ns, *name, types.ApplyPatchType, data), &v0alpha1.TimeInterval{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(timeintervalsResource, c.ns, *name, types.ApplyPatchType, data, opts.ToPatchOptions()), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v0alpha1.TimeInterval), err
 }

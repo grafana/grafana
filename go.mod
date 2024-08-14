@@ -192,7 +192,6 @@ require (
 	k8s.io/apimachinery v0.31.0 // @grafana/grafana-app-platform-squad
 	k8s.io/apiserver v0.31.0 // @grafana/grafana-app-platform-squad
 	k8s.io/client-go v0.31.0 // @grafana/grafana-app-platform-squad
-	k8s.io/code-generator v0.31.0 // @grafana/grafana-app-platform-squad
 	k8s.io/component-base v0.31.0 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.130.1 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-aggregator v0.31.0 // @grafana/grafana-app-platform-squad
@@ -485,7 +484,6 @@ require (
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20240808213237-f4d2e064f435 // indirect
 	github.com/hairyhenderson/go-which v0.2.0 // indirect
 	github.com/iancoleman/orderedmap v0.3.0 // indirect
-	k8s.io/gengo/v2 v2.0.0-20240228010128-51d4e06bde70 // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream

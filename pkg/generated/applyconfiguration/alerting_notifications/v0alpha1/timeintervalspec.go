@@ -4,14 +4,14 @@
 
 package v0alpha1
 
-// TimeIntervalSpecApplyConfiguration represents an declarative configuration of the TimeIntervalSpec type for use
+// TimeIntervalSpecApplyConfiguration represents a declarative configuration of the TimeIntervalSpec type for use
 // with apply.
 type TimeIntervalSpecApplyConfiguration struct {
 	Name          *string                      `json:"name,omitempty"`
 	TimeIntervals []IntervalApplyConfiguration `json:"time_intervals,omitempty"`
 }
 
-// TimeIntervalSpecApplyConfiguration constructs an declarative configuration of the TimeIntervalSpec type for use with
+// TimeIntervalSpecApplyConfiguration constructs a declarative configuration of the TimeIntervalSpec type for use with
 // apply.
 func TimeIntervalSpec() *TimeIntervalSpecApplyConfiguration {
 	return &TimeIntervalSpecApplyConfiguration{}

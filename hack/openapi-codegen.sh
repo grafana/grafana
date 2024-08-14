@@ -51,7 +51,7 @@ function grafana::codegen::gen_openapi() {
             ;;
         "--include-common-input-dirs")
             if [ "$2" == "true" ]; then
-                COMMON_INPUT_DIRS='"k8s.io/apimachinery/pkg/apis/meta/v1" "k8s.io/apimachinery/pkg/runtime" "k8s.io/apimachinery/pkg/version"'
+                COMMON_INPUT_DIRS='k8s.io/apimachinery/pkg/apis/meta/v1 k8s.io/apimachinery/pkg/runtime k8s.io/apimachinery/pkg/version'
             else
                 COMMON_INPUT_DIRS=""
             fi
@@ -99,6 +99,7 @@ function grafana::codegen::gen_openapi() {
         # To support running this from anywhere, first cd into this directory,
         # and then install with forced module mode on and fully qualified name.
         cd "${KUBE_CODEGEN_ROOT}"
+        GO111MODULE=on go mod download
         BINS=(
             openapi-gen
         )
@@ -150,7 +151,7 @@ function grafana::codegen::gen_openapi() {
         --output-file zz_generated.openapi.go \
         --go-header-file "${boilerplate}" \
         --output-dir "${root}" \
-        --output-pkg "${in_pkg_single}" \
+        --output-pkg "github.com/grafana/grafana/${in_pkg_single}" \
         --report-filename "${new_report}" \
         ${COMMON_INPUT_DIRS} \
         "${input_pkgs[@]}"

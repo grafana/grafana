@@ -10,7 +10,7 @@ import (
 	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
-// ReceiverApplyConfiguration represents an declarative configuration of the Receiver type for use
+// ReceiverApplyConfiguration represents a declarative configuration of the Receiver type for use
 // with apply.
 type ReceiverApplyConfiguration struct {
 	v1.TypeMetaApplyConfiguration    `json:",inline"`
@@ -18,7 +18,7 @@ type ReceiverApplyConfiguration struct {
 	Spec                             *ReceiverSpecApplyConfiguration `json:"spec,omitempty"`
 }
 
-// Receiver constructs an declarative configuration of the Receiver type for use with
+// Receiver constructs a declarative configuration of the Receiver type for use with
 // apply.
 func Receiver(name, namespace string) *ReceiverApplyConfiguration {
 	b := &ReceiverApplyConfiguration{}
@@ -193,4 +193,10 @@ func (b *ReceiverApplyConfiguration) ensureObjectMetaApplyConfigurationExists() 
 func (b *ReceiverApplyConfiguration) WithSpec(value *ReceiverSpecApplyConfiguration) *ReceiverApplyConfiguration {
 	b.Spec = value
 	return b
+}
+
+// GetName retrieves the value of the Name field in the declarative configuration.
+func (b *ReceiverApplyConfiguration) GetName() *string {
+	b.ensureObjectMetaApplyConfigurationExists()
+	return b.Name
 }
