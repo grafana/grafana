@@ -157,11 +157,13 @@ The viewer receives an email with a new one-time use link. This invalidates all 
 
 To see a list of users who have accessed your externally shared dashboard by way of email sharing, take the following steps:
 
-1. In the main sidebar navigation, click **Administration**.
-1. Click **Users**.
-1. Click the **Shared dashboard users** tab.
+1. In the main menu, click **Administration**.
+1. Select **Users and access** > **Users**.
+1. On the **Users** page, click the **Shared dashboard users** tab.
 
-From here, you can see the earliest time a user has been active in a dashboard, which shared dashboards they have access to, and their role.
+From here, you can see the earliest time a user has been active in a dashboard, when they last accessed a shared dashboard, which dashboards they have access to, and their role. You can also revoke a user's access to all shared dashboards on from this tab.
+
+<!-- maybe an image here? -->
 
 ### Access limitations
 
