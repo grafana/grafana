@@ -77,7 +77,7 @@ Effective starting in Grafana v11, anonymous users are counted and charged as us
 
 #### Migration/mitigation
 
-Turn off anonymous access, and consider using public dashboards to allow view-only access to publicly-accessible dashboards.
+Turn off anonymous access, and consider sharing dashboards externally to allow view-only access to publicly-accessible dashboards.
 
 #### Learn more
 
@@ -118,7 +118,7 @@ Ensure you have a public dashboard footer logo or footer text set if you don't w
 
 #### Learn more
 
-[Configure custom branding documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/configure-custom-branding/#custom-branding-for-public-dashboards) for public dashboards
+[Configure custom branding documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/configure-custom-branding/#custom-branding-for-shared-dashboards) for public dashboards
 
 ### Subfolders cause very rare issues with folders that have forward slashes in their names
 

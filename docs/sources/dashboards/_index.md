@@ -31,10 +31,6 @@ cards:
       href: ./variables/
       description: Add variables to metric queries and panel titles to create interactive and dynamic dashboards.
       height: 24
-    - title: Public dashboards
-      href: ./share-dashboards-panels/shared-dashboards/
-      description: Make your Grafana dashboards public and share them with anyone without requiring access to your Grafana organization.
-      height: 24
     - title: Reporting
       href: ./create-reports/
       description: Automatically generate and share PDF reports from your Grafana dashboards.
@@ -42,6 +38,10 @@ cards:
     - title: Sharing
       href: ./share-dashboards-panels/
       description: Share Grafana dashboards and panels within your organization using links, snapshots, and JSON exports.
+      height: 24
+    - title: Shared dashboards
+      href: ./share-dashboards-panels/shared-dashboards/
+      description: Share your dashboards with anyone without requiring access to your Grafana organization.
       height: 24
 refs:
   panels:

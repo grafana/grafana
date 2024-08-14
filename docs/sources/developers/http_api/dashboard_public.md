@@ -276,6 +276,8 @@ Status Codes:
 - **401** – Unauthorized
 - **403** – Access denied
 
+<!-- this needs to be updated -->
+
 ## Get a list of all public dashboards with pagination
 
 `GET /api/dashboards/public-dashboards`
