@@ -46,7 +46,10 @@ import (
 	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
+	"go.opentelemetry.io/otel"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/api")
 
 // registerRoutes registers all API HTTP routes.
 func (hs *HTTPServer) registerRoutes() {
