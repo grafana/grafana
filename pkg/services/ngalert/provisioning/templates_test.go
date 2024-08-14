@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	mock "github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -456,39 +456,30 @@ func TestSetTemplate(t *testing.T) {
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			return revision(), nil
 		}
-
 		template := definitions.NotificationTemplate{
 			Name:            "template2",
 			Template:        "asdf-new",
 			ResourceVersion: "version",
 			Provenance:      definitions.Provenance(models.ProvenanceNone),
 		}
-
 		_, err := sut.SetTemplate(context.Background(), orgID, template)
-
 		require.ErrorIs(t, err, ErrTemplateNotFound)
 	})
-
 	t.Run("propagates errors", func(t *testing.T) {
-
 		tmpl := definitions.NotificationTemplate{
 			Name:       templateName,
 			Template:   "content",
 			Provenance: definitions.Provenance(models.ProvenanceNone),
 		}
-
 		t.Run("when unable to read config", func(t *testing.T) {
-			sut, store, prov := createTemplateServiceSut()
+			sut, store, _ := createTemplateServiceSut()
 			expectedErr := errors.New("test")
 			store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
 				return nil, expectedErr
 			}
 
 			_, err := sut.SetTemplate(context.Background(), orgID, tmpl)
-
 			require.ErrorIs(t, err, expectedErr)
-
-			prov.AssertExpectations(t)
 		})
 
 		t.Run("when reading provenance status fails", func(t *testing.T) {
@@ -516,7 +507,6 @@ func TestSetTemplate(t *testing.T) {
 			prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(expectedErr)
 
 			_, err := sut.SetTemplate(context.Background(), orgID, tmpl)
-
 			require.ErrorIs(t, err, expectedErr)
 
 			prov.AssertExpectations(t)
@@ -535,7 +525,6 @@ func TestSetTemplate(t *testing.T) {
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 
 			_, err := sut.SetTemplate(context.Background(), 1, tmpl)
-
 			require.ErrorIs(t, err, expectedErr)
 		})
 	})
