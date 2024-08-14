@@ -133,18 +133,17 @@ func TestIntegrationIdentity(t *testing.T) {
 		found = teamClient.SpecJSON(rsp)
 		fmt.Printf("%s", found) // NOTE the first value does not have an email or login
 		require.JSONEq(t, `[
-			{},
 			{
-				"email": "admin-1",
-				"login": "admin-1"
+				"email": "admin-3",
+				"login": "admin-3"
 			},
 			{
-				"email": "editor-1",
-				"login": "editor-1"
+				"email": "editor-3",
+				"login": "editor-3"
 			},
 			{
-				"email": "viewer-1",
-				"login": "viewer-1"
+				"email": "viewer-3",
+				"login": "viewer-3"
 			}
 		]`, found)
 	})
