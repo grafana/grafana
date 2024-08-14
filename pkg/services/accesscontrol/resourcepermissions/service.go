@@ -416,7 +416,7 @@ func (s *Service) validateTeam(ctx context.Context, orgID, teamID int64) error {
 }
 
 func (s *Service) validateBuiltinRole(ctx context.Context, builtinRole string) error {
-	ctx, span := tracer.Start(ctx, "accesscontroll.resourcepermissions.validateBuiltinRole")
+	_, span := tracer.Start(ctx, "accesscontroll.resourcepermissions.validateBuiltinRole")
 	defer span.End()
 
 	if !s.options.Assignments.BuiltInRoles {

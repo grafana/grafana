@@ -109,7 +109,7 @@ func genExternalServiceAssignment(cmd accesscontrol.SaveExternalServiceRoleComma
 }
 
 func getRoleByUID(ctx context.Context, sess *db.Session, uid string) (*accesscontrol.Role, error) {
-	ctx, span := tracer.Start(ctx, "accesscontrol.database.getRoleByUID")
+	_, span := tracer.Start(ctx, "accesscontrol.database.getRoleByUID")
 	defer span.End()
 
 	var role accesscontrol.Role
@@ -124,7 +124,7 @@ func getRoleByUID(ctx context.Context, sess *db.Session, uid string) (*accesscon
 }
 
 func getRoleAssignments(ctx context.Context, sess *db.Session, roleID int64) ([]accesscontrol.UserRole, error) {
-	ctx, span := tracer.Start(ctx, "accesscontrol.database.GgetRoleAssignments")
+	_, span := tracer.Start(ctx, "accesscontrol.database.GgetRoleAssignments")
 	defer span.End()
 
 	var assignements []accesscontrol.UserRole
@@ -135,7 +135,7 @@ func getRoleAssignments(ctx context.Context, sess *db.Session, roleID int64) ([]
 }
 
 func getRolePermissions(ctx context.Context, sess *db.Session, id int64) ([]accesscontrol.Permission, error) {
-	ctx, span := tracer.Start(ctx, "accesscontrol.database.getRolePermissions")
+	_, span := tracer.Start(ctx, "accesscontrol.database.getRolePermissions")
 	defer span.End()
 
 	var permissions []accesscontrol.Permission
