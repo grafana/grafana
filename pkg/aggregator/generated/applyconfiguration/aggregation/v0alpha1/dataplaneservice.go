@@ -10,7 +10,7 @@ import (
 	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
-// DataPlaneServiceApplyConfiguration represents an declarative configuration of the DataPlaneService type for use
+// DataPlaneServiceApplyConfiguration represents a declarative configuration of the DataPlaneService type for use
 // with apply.
 type DataPlaneServiceApplyConfiguration struct {
 	v1.TypeMetaApplyConfiguration    `json:",inline"`
@@ -19,7 +19,7 @@ type DataPlaneServiceApplyConfiguration struct {
 	Status                           *DataPlaneServiceStatusApplyConfiguration `json:"status,omitempty"`
 }
 
-// DataPlaneService constructs an declarative configuration of the DataPlaneService type for use with
+// DataPlaneService constructs a declarative configuration of the DataPlaneService type for use with
 // apply.
 func DataPlaneService(name string) *DataPlaneServiceApplyConfiguration {
 	b := &DataPlaneServiceApplyConfiguration{}
@@ -201,4 +201,10 @@ func (b *DataPlaneServiceApplyConfiguration) WithSpec(value *DataPlaneServiceSpe
 func (b *DataPlaneServiceApplyConfiguration) WithStatus(value *DataPlaneServiceStatusApplyConfiguration) *DataPlaneServiceApplyConfiguration {
 	b.Status = value
 	return b
+}
+
+// GetName retrieves the value of the Name field in the declarative configuration.
+func (b *DataPlaneServiceApplyConfiguration) GetName() *string {
+	b.ensureObjectMetaApplyConfigurationExists()
+	return b.Name
 }

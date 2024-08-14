@@ -4,13 +4,13 @@
 
 package v0alpha1
 
-// DataPlaneServiceStatusApplyConfiguration represents an declarative configuration of the DataPlaneServiceStatus type for use
+// DataPlaneServiceStatusApplyConfiguration represents a declarative configuration of the DataPlaneServiceStatus type for use
 // with apply.
 type DataPlaneServiceStatusApplyConfiguration struct {
 	Conditions []DataPlaneServiceConditionApplyConfiguration `json:"conditions,omitempty"`
 }
 
-// DataPlaneServiceStatusApplyConfiguration constructs an declarative configuration of the DataPlaneServiceStatus type for use with
+// DataPlaneServiceStatusApplyConfiguration constructs a declarative configuration of the DataPlaneServiceStatus type for use with
 // apply.
 func DataPlaneServiceStatus() *DataPlaneServiceStatusApplyConfiguration {
 	return &DataPlaneServiceStatusApplyConfiguration{}

@@ -9,7 +9,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// DataPlaneServiceConditionApplyConfiguration represents an declarative configuration of the DataPlaneServiceCondition type for use
+// DataPlaneServiceConditionApplyConfiguration represents a declarative configuration of the DataPlaneServiceCondition type for use
 // with apply.
 type DataPlaneServiceConditionApplyConfiguration struct {
 	Type               *v0alpha1.DataPlaneServiceConditionType `json:"type,omitempty"`
@@ -19,7 +19,7 @@ type DataPlaneServiceConditionApplyConfiguration struct {
 	Message            *string                                 `json:"message,omitempty"`
 }
 
-// DataPlaneServiceConditionApplyConfiguration constructs an declarative configuration of the DataPlaneServiceCondition type for use with
+// DataPlaneServiceConditionApplyConfiguration constructs a declarative configuration of the DataPlaneServiceCondition type for use with
 // apply.
 func DataPlaneServiceCondition() *DataPlaneServiceConditionApplyConfiguration {
 	return &DataPlaneServiceConditionApplyConfiguration{}

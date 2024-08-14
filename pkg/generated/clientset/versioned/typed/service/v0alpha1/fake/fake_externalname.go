@@ -30,22 +30,24 @@ var externalnamesKind = v0alpha1.SchemeGroupVersion.WithKind("ExternalName")
 
 // Get takes name of the externalName, and returns the corresponding externalName object, and an error if there is any.
 func (c *FakeExternalNames) Get(ctx context.Context, name string, options v1.GetOptions) (result *v0alpha1.ExternalName, err error) {
+	emptyResult := &v0alpha1.ExternalName{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(externalnamesResource, c.ns, name), &v0alpha1.ExternalName{})
+		Invokes(testing.NewGetActionWithOptions(externalnamesResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v0alpha1.ExternalName), err
 }
 
 // List takes label and field selectors, and returns the list of ExternalNames that match those selectors.
 func (c *FakeExternalNames) List(ctx context.Context, opts v1.ListOptions) (result *v0alpha1.ExternalNameList, err error) {
+	emptyResult := &v0alpha1.ExternalNameList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(externalnamesResource, externalnamesKind, c.ns, opts), &v0alpha1.ExternalNameList{})
+		Invokes(testing.NewListActionWithOptions(externalnamesResource, externalnamesKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -64,28 +66,30 @@ func (c *FakeExternalNames) List(ctx context.Context, opts v1.ListOptions) (resu
 // Watch returns a watch.Interface that watches the requested externalNames.
 func (c *FakeExternalNames) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(externalnamesResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(externalnamesResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a externalName and creates it.  Returns the server's representation of the externalName, and an error, if there is any.
 func (c *FakeExternalNames) Create(ctx context.Context, externalName *v0alpha1.ExternalName, opts v1.CreateOptions) (result *v0alpha1.ExternalName, err error) {
+	emptyResult := &v0alpha1.ExternalName{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(externalnamesResource, c.ns, externalName), &v0alpha1.ExternalName{})
+		Invokes(testing.NewCreateActionWithOptions(externalnamesResource, c.ns, externalName, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v0alpha1.ExternalName), err
 }
 
 // Update takes the representation of a externalName and updates it. Returns the server's representation of the externalName, and an error, if there is any.
 func (c *FakeExternalNames) Update(ctx context.Context, externalName *v0alpha1.ExternalName, opts v1.UpdateOptions) (result *v0alpha1.ExternalName, err error) {
+	emptyResult := &v0alpha1.ExternalName{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(externalnamesResource, c.ns, externalName), &v0alpha1.ExternalName{})
+		Invokes(testing.NewUpdateActionWithOptions(externalnamesResource, c.ns, externalName, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v0alpha1.ExternalName), err
 }
@@ -100,7 +104,7 @@ func (c *FakeExternalNames) Delete(ctx context.Context, name string, opts v1.Del
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeExternalNames) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(externalnamesResource, c.ns, listOpts)
+	action := testing.NewDeleteCollectionActionWithOptions(externalnamesResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v0alpha1.ExternalNameList{})
 	return err
@@ -108,11 +112,12 @@ func (c *FakeExternalNames) DeleteCollection(ctx context.Context, opts v1.Delete
 
 // Patch applies the patch and returns the patched externalName.
 func (c *FakeExternalNames) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v0alpha1.ExternalName, err error) {
+	emptyResult := &v0alpha1.ExternalName{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(externalnamesResource, c.ns, name, pt, data, subresources...), &v0alpha1.ExternalName{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(externalnamesResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v0alpha1.ExternalName), err
 }
@@ -130,11 +135,12 @@ func (c *FakeExternalNames) Apply(ctx context.Context, externalName *servicev0al
 	if name == nil {
 		return nil, fmt.Errorf("externalName.Name must be provided to Apply")
 	}
+	emptyResult := &v0alpha1.ExternalName{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(externalnamesResource, c.ns, *name, types.ApplyPatchType, data), &v0alpha1.ExternalName{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(externalnamesResource, c.ns, *name, types.ApplyPatchType, data, opts.ToPatchOptions()), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v0alpha1.ExternalName), err
 }

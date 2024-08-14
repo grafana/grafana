@@ -29,20 +29,22 @@ var dataplaneservicesKind = v0alpha1.SchemeGroupVersion.WithKind("DataPlaneServi
 
 // Get takes name of the dataPlaneService, and returns the corresponding dataPlaneService object, and an error if there is any.
 func (c *FakeDataPlaneServices) Get(ctx context.Context, name string, options v1.GetOptions) (result *v0alpha1.DataPlaneService, err error) {
+	emptyResult := &v0alpha1.DataPlaneService{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootGetAction(dataplaneservicesResource, name), &v0alpha1.DataPlaneService{})
+		Invokes(testing.NewRootGetActionWithOptions(dataplaneservicesResource, name, options), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v0alpha1.DataPlaneService), err
 }
 
 // List takes label and field selectors, and returns the list of DataPlaneServices that match those selectors.
 func (c *FakeDataPlaneServices) List(ctx context.Context, opts v1.ListOptions) (result *v0alpha1.DataPlaneServiceList, err error) {
+	emptyResult := &v0alpha1.DataPlaneServiceList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootListAction(dataplaneservicesResource, dataplaneservicesKind, opts), &v0alpha1.DataPlaneServiceList{})
+		Invokes(testing.NewRootListActionWithOptions(dataplaneservicesResource, dataplaneservicesKind, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -61,36 +63,39 @@ func (c *FakeDataPlaneServices) List(ctx context.Context, opts v1.ListOptions) (
 // Watch returns a watch.Interface that watches the requested dataPlaneServices.
 func (c *FakeDataPlaneServices) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewRootWatchAction(dataplaneservicesResource, opts))
+		InvokesWatch(testing.NewRootWatchActionWithOptions(dataplaneservicesResource, opts))
 }
 
 // Create takes the representation of a dataPlaneService and creates it.  Returns the server's representation of the dataPlaneService, and an error, if there is any.
 func (c *FakeDataPlaneServices) Create(ctx context.Context, dataPlaneService *v0alpha1.DataPlaneService, opts v1.CreateOptions) (result *v0alpha1.DataPlaneService, err error) {
+	emptyResult := &v0alpha1.DataPlaneService{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateAction(dataplaneservicesResource, dataPlaneService), &v0alpha1.DataPlaneService{})
+		Invokes(testing.NewRootCreateActionWithOptions(dataplaneservicesResource, dataPlaneService, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v0alpha1.DataPlaneService), err
 }
 
 // Update takes the representation of a dataPlaneService and updates it. Returns the server's representation of the dataPlaneService, and an error, if there is any.
 func (c *FakeDataPlaneServices) Update(ctx context.Context, dataPlaneService *v0alpha1.DataPlaneService, opts v1.UpdateOptions) (result *v0alpha1.DataPlaneService, err error) {
+	emptyResult := &v0alpha1.DataPlaneService{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateAction(dataplaneservicesResource, dataPlaneService), &v0alpha1.DataPlaneService{})
+		Invokes(testing.NewRootUpdateActionWithOptions(dataplaneservicesResource, dataPlaneService, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v0alpha1.DataPlaneService), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeDataPlaneServices) UpdateStatus(ctx context.Context, dataPlaneService *v0alpha1.DataPlaneService, opts v1.UpdateOptions) (*v0alpha1.DataPlaneService, error) {
+func (c *FakeDataPlaneServices) UpdateStatus(ctx context.Context, dataPlaneService *v0alpha1.DataPlaneService, opts v1.UpdateOptions) (result *v0alpha1.DataPlaneService, err error) {
+	emptyResult := &v0alpha1.DataPlaneService{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateSubresourceAction(dataplaneservicesResource, "status", dataPlaneService), &v0alpha1.DataPlaneService{})
+		Invokes(testing.NewRootUpdateSubresourceActionWithOptions(dataplaneservicesResource, "status", dataPlaneService, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v0alpha1.DataPlaneService), err
 }
@@ -104,7 +109,7 @@ func (c *FakeDataPlaneServices) Delete(ctx context.Context, name string, opts v1
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeDataPlaneServices) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(dataplaneservicesResource, listOpts)
+	action := testing.NewRootDeleteCollectionActionWithOptions(dataplaneservicesResource, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v0alpha1.DataPlaneServiceList{})
 	return err
@@ -112,10 +117,11 @@ func (c *FakeDataPlaneServices) DeleteCollection(ctx context.Context, opts v1.De
 
 // Patch applies the patch and returns the patched dataPlaneService.
 func (c *FakeDataPlaneServices) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v0alpha1.DataPlaneService, err error) {
+	emptyResult := &v0alpha1.DataPlaneService{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(dataplaneservicesResource, name, pt, data, subresources...), &v0alpha1.DataPlaneService{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(dataplaneservicesResource, name, pt, data, opts, subresources...), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v0alpha1.DataPlaneService), err
 }
@@ -133,10 +139,11 @@ func (c *FakeDataPlaneServices) Apply(ctx context.Context, dataPlaneService *agg
 	if name == nil {
 		return nil, fmt.Errorf("dataPlaneService.Name must be provided to Apply")
 	}
+	emptyResult := &v0alpha1.DataPlaneService{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(dataplaneservicesResource, *name, types.ApplyPatchType, data), &v0alpha1.DataPlaneService{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(dataplaneservicesResource, *name, types.ApplyPatchType, data, opts.ToPatchOptions()), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v0alpha1.DataPlaneService), err
 }
@@ -155,10 +162,11 @@ func (c *FakeDataPlaneServices) ApplyStatus(ctx context.Context, dataPlaneServic
 	if name == nil {
 		return nil, fmt.Errorf("dataPlaneService.Name must be provided to Apply")
 	}
+	emptyResult := &v0alpha1.DataPlaneService{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(dataplaneservicesResource, *name, types.ApplyPatchType, data, "status"), &v0alpha1.DataPlaneService{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(dataplaneservicesResource, *name, types.ApplyPatchType, data, opts.ToPatchOptions(), "status"), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v0alpha1.DataPlaneService), err
 }
