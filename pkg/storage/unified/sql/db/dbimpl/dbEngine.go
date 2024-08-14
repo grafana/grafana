@@ -7,10 +7,9 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"go.opentelemetry.io/otel/trace"
 	"xorm.io/xorm"
-
-	"github.com/grafana/grafana/pkg/services/store/entity/db"
 )
 
 func getEngineMySQL(getter *sectionGetter, _ trace.Tracer) (*xorm.Engine, error) {
@@ -23,6 +22,10 @@ func getEngineMySQL(getter *sectionGetter, _ trace.Tracer) (*xorm.Engine, error)
 	config.Params = map[string]string{
 		// See: https://dev.mysql.com/doc/refman/en/sql-mode.html
 		"@@SESSION.sql_mode": "ANSI",
+	}
+	tls := getter.String("db_tls")
+	if tls != "" {
+		config.Params["tls"] = tls
 	}
 	config.Collation = "utf8mb4_unicode_ci"
 	config.Loc = time.UTC

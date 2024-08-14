@@ -1,15 +1,15 @@
 import {
+  getTimeZone,
   InterpolateFunction,
   LinkModel,
   PanelMenuItem,
   PanelPlugin,
   PluginExtensionPanelContext,
   PluginExtensionPoints,
-  getTimeZone,
   urlUtil,
 } from '@grafana/data';
 import { config, getPluginLinkExtensions, locationService } from '@grafana/runtime';
-import { LocalValueVariable, SceneGridRow, VizPanel, VizPanelMenu, sceneGraph } from '@grafana/scenes';
+import { LocalValueVariable, sceneGraph, SceneGridRow, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { DataQuery, OptionsWithLegend } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
@@ -21,7 +21,9 @@ import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { addDataTrailPanelAction } from 'app/features/trails/Integrations/dashboardIntegration';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
+import { SharePanelInternally } from '../sharing/panel-share/SharePanelInternally';
 import { DashboardInteractions } from '../utils/interactions';
 import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
@@ -62,7 +64,6 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         text: t('panel.header-menu.view', `View`),
         iconClassName: 'eye',
         shortcut: 'v',
-        onClick: () => DashboardInteractions.panelMenuItemClicked('view'),
         href: getViewPanelUrl(panel),
       });
     }
@@ -74,26 +75,50 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         text: t('panel.header-menu.edit', `Edit`),
         iconClassName: 'edit',
         shortcut: 'e',
-        onClick: () => DashboardInteractions.panelMenuItemClicked('edit'),
         href: getEditPanelUrl(getPanelIdForVizPanel(panel)),
       });
     }
 
-    items.push({
-      text: t('panel.header-menu.share', `Share`),
-      iconClassName: 'share-alt',
-      onClick: () => {
-        DashboardInteractions.panelMenuItemClicked('share');
-        dashboard.showModal(new ShareModal({ panelRef: panel.getRef() }));
-      },
-      shortcut: 'p s',
-    });
+    if (config.featureToggles.newDashboardSharingComponent) {
+      const subMenu: PanelMenuItem[] = [];
+      subMenu.push({
+        text: t('share-panel.menu.share-link-title', 'Share link'),
+        iconClassName: 'link',
+        shortcut: 'p u',
+        onClick: () => {
+          const drawer = new ShareDrawer({
+            title: t('share-panel.drawer.share-link-title', 'Link settings'),
+            body: new SharePanelInternally({ panelRef: panel.getRef() }),
+          });
+
+          dashboard.showModal(drawer);
+        },
+      });
+
+      items.push({
+        type: 'submenu',
+        text: t('panel.header-menu.share', 'Share'),
+        iconClassName: 'share-alt',
+        subMenu,
+        onClick: (e) => {
+          e.preventDefault();
+        },
+      });
+    } else {
+      items.push({
+        text: t('panel.header-menu.share', 'Share'),
+        iconClassName: 'share-alt',
+        onClick: () => {
+          dashboard.showModal(new ShareModal({ panelRef: panel.getRef() }));
+        },
+        shortcut: 'p s',
+      });
+    }
 
     if (dashboard.state.isEditing && !isRepeat && !isEditingPanel) {
       moreSubMenu.push({
         text: t('panel.header-menu.duplicate', `Duplicate`),
         onClick: () => {
-          DashboardInteractions.panelMenuItemClicked('duplicate');
           dashboard.duplicatePanel(panel);
         },
         shortcut: 'p d',
@@ -104,7 +129,6 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       moreSubMenu.push({
         text: t('panel.header-menu.copy', `Copy`),
         onClick: () => {
-          DashboardInteractions.panelMenuItemClicked('copy');
           dashboard.copyPanel(panel);
         },
       });
@@ -115,7 +139,6 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         moreSubMenu.push({
           text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
           onClick: () => {
-            DashboardInteractions.panelMenuItemClicked('unlinkLibraryPanel');
             dashboard.showModal(
               new UnlinkLibraryPanelModal({
                 panelRef: parent.getRef(),
@@ -127,7 +150,6 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         moreSubMenu.push({
           text: t('panel.header-menu.replace-library-panel', `Replace library panel`),
           onClick: () => {
-            DashboardInteractions.panelMenuItemClicked('replaceLibraryPanel');
             dashboard.onShowAddLibraryPanelDrawer(parent.getRef());
           },
         });
@@ -135,7 +157,6 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         moreSubMenu.push({
           text: t('panel.header-menu.create-library-panel', `Create library panel`),
           onClick: () => {
-            DashboardInteractions.panelMenuItemClicked('createLibraryPanel');
             dashboard.showModal(
               new ShareModal({
                 panelRef: panel.getRef(),
@@ -224,7 +245,6 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         text: t('panel.header-menu.remove', `Remove`),
         iconClassName: 'trash-alt',
         onClick: () => {
-          DashboardInteractions.panelMenuItemClicked('remove');
           onRemovePanel(dashboard, panel);
         },
         shortcut: 'p r',
@@ -249,7 +269,6 @@ async function getExploreMenuItem(panel: VizPanel): Promise<PanelMenuItem | unde
     text: t('panel.header-menu.explore', `Explore`),
     iconClassName: 'compass',
     shortcut: 'p x',
-    onClick: () => DashboardInteractions.panelMenuItemClicked('explore'),
     href: exploreUrl,
   };
 }
@@ -268,7 +287,6 @@ function getInspectMenuItem(
       onClick: (e) => {
         e.preventDefault();
         locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Data });
-        DashboardInteractions.panelMenuInspectClicked(InspectTab.Data);
       },
     });
 
@@ -279,7 +297,6 @@ function getInspectMenuItem(
         onClick: (e) => {
           e.preventDefault();
           locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Query });
-          DashboardInteractions.panelMenuInspectClicked(InspectTab.Query);
         },
       });
     }
@@ -291,7 +308,6 @@ function getInspectMenuItem(
     onClick: (e) => {
       e.preventDefault();
       locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.JSON });
-      DashboardInteractions.panelMenuInspectClicked(InspectTab.JSON);
     },
   });
 
@@ -303,7 +319,6 @@ function getInspectMenuItem(
     onClick: (e) => {
       if (!e.isDefaultPrevented()) {
         locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Data });
-        DashboardInteractions.panelMenuInspectClicked(InspectTab.Data);
       }
     },
     subMenu: inspectSubMenu.length > 0 ? inspectSubMenu : undefined,
@@ -418,17 +433,12 @@ export function onRemovePanel(dashboard: DashboardScene, panel: VizPanel) {
 }
 
 const onCreateAlert = async (panel: VizPanel) => {
-  DashboardInteractions.panelMenuItemClicked('create-alert');
-
   const formValues = await scenesPanelToRuleFormValues(panel);
   const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
     defaults: JSON.stringify(formValues),
     returnTo: location.pathname + location.search,
   });
-
   locationService.push(ruleFormUrl);
-
-  DashboardInteractions.panelMenuItemClicked('create-alert');
 };
 
 export function toggleVizPanelLegend(vizPanel: VizPanel): void {
@@ -440,8 +450,6 @@ export function toggleVizPanelLegend(vizPanel: VizPanel): void {
       },
     });
   }
-
-  DashboardInteractions.panelMenuItemClicked('toggleLegend');
 }
 
 function hasLegendOptions(optionsWithLegend: unknown): optionsWithLegend is OptionsWithLegend {
@@ -453,5 +461,4 @@ const onInspectPanel = (vizPanel: VizPanel, tab?: InspectTab) => {
     inspect: vizPanel.state.key,
     inspectTab: tab,
   });
-  DashboardInteractions.panelMenuInspectClicked(tab ?? InspectTab.Data);
 };

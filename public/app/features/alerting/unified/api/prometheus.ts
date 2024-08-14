@@ -37,8 +37,9 @@ export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfi
         searchParams.set('rule_group', identifier.groupName);
       }
 
-      const params = prepareRulesFilterQueryParams(searchParams, filter);
+      const filterParams = getRulesFilterSearchParams(filter);
 
+      const params = { ...filterParams, ...Object.fromEntries(searchParams) };
       return {
         url: `/api/prometheus/${getDatasourceAPIUid(dataSourceName)}/api/v1/rules`,
         params: paramsWithMatcherAndState(params, state, matcher),
@@ -47,18 +48,17 @@ export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfi
   };
 }
 
-export function prepareRulesFilterQueryParams(
-  params: URLSearchParams,
-  filter?: FetchPromRulesFilter
-): Record<string, string> {
+export function getRulesFilterSearchParams(filter?: FetchPromRulesFilter): Record<string, string> {
+  const filterParams: Record<string, string> = {};
+
   if (filter?.dashboardUID) {
-    params.set('dashboard_uid', filter.dashboardUID);
+    filterParams.dashboard_uid = filter.dashboardUID;
     if (filter?.panelId) {
-      params.set('panel_id', String(filter.panelId));
+      filterParams.panel_id = String(filter.panelId);
     }
   }
 
-  return Object.fromEntries(params);
+  return filterParams;
 }
 
 export function paramsWithMatcherAndState(

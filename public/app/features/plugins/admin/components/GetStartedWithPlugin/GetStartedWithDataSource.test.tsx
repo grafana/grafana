@@ -32,6 +32,7 @@ const plugin: CatalogPlugin = {
   isDisabled: false,
   isDeprecated: false,
   isPublished: true,
+  isManaged: false,
 };
 
 describe('GetStartedWithDataSource', () => {

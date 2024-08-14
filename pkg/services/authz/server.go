@@ -5,7 +5,6 @@ import (
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -48,6 +47,8 @@ func (s *legacyServer) Read(ctx context.Context, req *authzv1.ReadRequest) (*aut
 	ctx, span := s.tracer.Start(ctx, "authz.grpc.Read")
 	defer span.End()
 
+	// FIXME: once we have access tokens, we need to do namespace validation here
+
 	action := req.GetAction()
 	subject := req.GetSubject()
 	stackID := req.GetStackId() // TODO can we consider the stackID as the orgID?
@@ -55,16 +56,11 @@ func (s *legacyServer) Read(ctx context.Context, req *authzv1.ReadRequest) (*aut
 	ctxLogger := s.logger.FromContext(ctx)
 	ctxLogger.Debug("Read", "action", action, "subject", subject, "stackID", stackID)
 
-	var err error
-	opts := accesscontrol.SearchOptions{Action: action}
-	if subject != "" {
-		opts.TypedID, err = identity.ParseTypedID(subject)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	permissions, err := s.acSvc.SearchUserPermissions(ctx, stackID, opts)
+	permissions, err := s.acSvc.SearchUserPermissions(
+		ctx,
+		stackID,
+		accesscontrol.SearchOptions{Action: action, TypedID: subject},
+	)
 	if err != nil {
 		ctxLogger.Error("failed to search user permissions", "error", err)
 		return nil, tracing.Errorf(span, "failed to search user permissions: %w", err)
@@ -74,5 +70,8 @@ func (s *legacyServer) Read(ctx context.Context, req *authzv1.ReadRequest) (*aut
 	for _, perm := range permissions {
 		data = append(data, &authzv1.ReadResponse_Data{Object: perm.Scope})
 	}
-	return &authzv1.ReadResponse{Data: data}, nil
+	return &authzv1.ReadResponse{
+		Data:  data,
+		Found: len(data) > 0,
+	}, nil
 }
