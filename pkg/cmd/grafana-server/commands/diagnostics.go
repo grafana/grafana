@@ -7,8 +7,10 @@ import (
 	"runtime"
 	"runtime/trace"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -84,6 +86,28 @@ func (pd *profilingDiagnostics) overrideWithEnv() error {
 	return nil
 }
 
+func (pd *profilingDiagnostics) overrideWithArgs(profiling bool, addr string, port uint64, blockRate int, mutexRate int) {
+	if profiling {
+		pd.enabled = profiling
+	}
+
+	if addr != "" {
+		pd.addr = addr
+	}
+
+	if port != 0 {
+		pd.port = port
+	}
+
+	if blockRate != 0 {
+		pd.blockRate = blockRate
+	}
+
+	if mutexRate != 0 {
+		pd.mutexRate = mutexRate
+	}
+}
+
 type tracingDiagnostics struct {
 	enabled bool
 	file    string
@@ -114,8 +138,19 @@ func (td *tracingDiagnostics) overrideWithEnv() error {
 	return nil
 }
 
-func setupProfiling(profile bool, profileAddr string, profilePort uint64, blockRate int, mutexFraction int) error {
-	profileDiagnostics := newProfilingDiagnostics(profile, profileAddr, profilePort, blockRate, mutexFraction)
+func (td *tracingDiagnostics) overrideWithArgs(tracing bool, file string) {
+	if tracing {
+		td.enabled = tracing
+	}
+
+	if file != "" {
+		td.file = file
+	}
+}
+
+func setupProfiling(cfg *setting.Cfg, profile bool, profileAddr string, profilePort uint64, blockRate int, mutexFraction int) error {
+	profileDiagnostics := newProfilingDiagnostics(cfg.Diagnostics.Profile, cfg.Diagnostics.ProfileAddr, cfg.Diagnostics.ProfilePort, cfg.Diagnostics.ProfileBlockRate, cfg.Diagnostics.ProfileMutexFraction)
+	profileDiagnostics.overrideWithArgs(profile, profileAddr, profilePort, blockRate, mutexFraction)
 	if err := profileDiagnostics.overrideWithEnv(); err != nil {
 		return err
 	}
@@ -126,11 +161,12 @@ func setupProfiling(profile bool, profileAddr string, profilePort uint64, blockR
 		runtime.SetMutexProfileFraction(profileDiagnostics.mutexRate)
 
 		go func() {
-			// TODO: We should enable the linter and fix G114 here.
-			//	G114: Use of net/http serve function that has no support for setting timeouts (gosec)
-			//
-			//nolint:gosec
-			err := http.ListenAndServe(fmt.Sprintf("%s:%d", profileDiagnostics.addr, profileDiagnostics.port), nil)
+			server := &http.Server{
+				// 5s timeout for header reads to avoid Slowloris attacks (https://thetooth.io/blog/slowloris-attack/)
+				ReadHeaderTimeout: 5 * time.Second,
+				Addr:              fmt.Sprintf("%s:%d", profileDiagnostics.addr, profileDiagnostics.port),
+			}
+			err := server.ListenAndServe()
 			if err != nil {
 				panic(err)
 			}
@@ -139,8 +175,9 @@ func setupProfiling(profile bool, profileAddr string, profilePort uint64, blockR
 	return nil
 }
 
-func setupTracing(tracing bool, tracingFile string, logger *log.ConcreteLogger) error {
-	traceDiagnostics := newTracingDiagnostics(tracing, tracingFile)
+func setupTracing(cfg *setting.Cfg, tracing bool, tracingFile string, logger *log.ConcreteLogger) error {
+	traceDiagnostics := newTracingDiagnostics(cfg.Diagnostics.Tracing, cfg.Diagnostics.TracingFile)
+	traceDiagnostics.overrideWithArgs(tracing, tracingFile)
 	if err := traceDiagnostics.overrideWithEnv(); err != nil {
 		return err
 	}

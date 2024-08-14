@@ -1,8 +1,6 @@
 package commands
 
 import (
-	"runtime"
-
 	"github.com/urfave/cli/v2"
 )
 
@@ -72,25 +70,25 @@ var commonFlags = []cli.Flag{
 	},
 	&cli.StringFlag{
 		Name:        "profile-addr",
-		Value:       "localhost",
+		Value:       "",
 		Usage:       "Define custom address for profiling",
 		Destination: &ProfileAddr,
 	},
 	&cli.Uint64Flag{
 		Name:        "profile-port",
-		Value:       6060,
+		Value:       0,
 		Usage:       "Define custom port for profiling",
 		Destination: &ProfilePort,
 	},
 	&cli.IntFlag{
 		Name:        "profile-block-rate",
-		Value:       1,
+		Value:       0,
 		Usage:       "Controls the fraction of goroutine blocking events that are reported in the blocking profile. The profiler aims to sample an average of one blocking event per rate nanoseconds spent blocked. To turn off profiling entirely, use 0",
 		Destination: &ProfileBlockRate,
 	},
 	&cli.IntFlag{
 		Name:        "profile-mutex-rate",
-		Value:       runtime.SetMutexProfileFraction(-1),
+		Value:       0,
 		Usage:       "Controls the fraction of mutex contention events that are reported in the mutex profile. On average 1/rate events are reported. To turn off mutex profiling entirely, use 0",
 		Destination: &ProfileMutexFraction,
 	},
@@ -102,7 +100,7 @@ var commonFlags = []cli.Flag{
 	},
 	&cli.StringFlag{
 		Name:        "tracing-file",
-		Value:       "trace.out",
+		Value:       "",
 		Usage:       "Define tracing output file",
 		Destination: &TracingFile,
 	},

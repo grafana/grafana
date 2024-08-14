@@ -114,6 +114,9 @@ type Cfg struct {
 	EnforceDomain     bool
 	MinTLSVersion     string
 
+	// Diagnostics
+	Diagnostics DiagnosticsSettings
+
 	// Security settings
 	SecretKey             string
 	EmailCodeValidMinutes int
@@ -1072,6 +1075,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.BundledPluginsPath = makeAbsolute("plugins-bundled", cfg.HomePath)
 	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	cfg.ProvisioningPath = makeAbsolute(provisioning, cfg.HomePath)
+	cfg.readDiagnosticsSettings()
 
 	if err := cfg.readServerSettings(iniFile); err != nil {
 		return err

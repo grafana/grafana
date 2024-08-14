@@ -77,13 +77,6 @@ func RunServer(opts ServerOptions) error {
 		}
 	}()
 
-	if err := setupProfiling(Profile, ProfileAddr, ProfilePort, ProfileBlockRate, ProfileMutexFraction); err != nil {
-		return err
-	}
-	if err := setupTracing(Tracing, TracingFile, logger); err != nil {
-		return err
-	}
-
 	defer func() {
 		// If we've managed to initialize them, this is the last place
 		// where we're able to log anything that'll end up in Grafana's
@@ -109,6 +102,13 @@ func RunServer(opts ServerOptions) error {
 		Args: append(configOptions, opts.Context.Args().Slice()...),
 	})
 	if err != nil {
+		return err
+	}
+
+	if err := setupProfiling(cfg, Profile, ProfileAddr, ProfilePort, ProfileBlockRate, ProfileMutexFraction); err != nil {
+		return err
+	}
+	if err := setupTracing(cfg, Tracing, TracingFile, logger); err != nil {
 		return err
 	}
 
