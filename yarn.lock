@@ -20428,7 +20428,7 @@ __metadata:
     webpack-manifest-plugin: 5.0.0
     webpack-merge: 5.8.0
     whatwg-fetch: 3.6.2
-    xlsx: "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
+    xlsx: "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
     yargs: ^17.5.1
   languageName: unknown
   linkType: soft
@@ -37775,12 +37775,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"xlsx@https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz":
-  version: 0.19.1
-  resolution: "xlsx@https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
+"xlsx@https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz":
+  version: 0.20.2
+  resolution: "xlsx@https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
   bin:
     xlsx: ./bin/xlsx.njs
-  checksum: a7fa1b95dfc9a6923458e19f0dcd0c64d70ce49a5959c8f38c219fd232a4fdfd48d70115dbe01b0e58e80f336ce872495dcc3d12943c4d19b041c87f8eeb69c8
+  checksum: d6a7cce81cdf5f832311feaef08c8918cb51cdaac235efd29c7f6caf881f7aa797aa51cdbcb583a491ba82d1e7c2b97f92ed082eda754de05731a4558768e68d
   languageName: node
   linkType: hard
 
