@@ -2130,11 +2130,13 @@
   "share-panel": {
     "drawer": {
       "share-embed-title": "Share embed",
-      "share-link-title": "Link settings"
+      "share-link-title": "Link settings",
+      "share-snapshot-title": "Share snapshot"
     },
     "menu": {
       "share-embed-title": "Share embed",
-      "share-link-title": "Share link"
+      "share-link-title": "Share link",
+      "share-snapshot-title": "Share snapshot"
     }
   },
   "share-playlist": {
@@ -2215,11 +2217,14 @@
       "info-alert": "A Grafana dashboard snapshot publicly shares a dashboard while removing sensitive data such as queries and panel links, leaving only visible metrics and series names. Anyone with the link can access the snapshot.",
       "learn-more-button": "Learn more",
       "local-button": "Publish snapshot",
-      "name-label": "Snapshot name*",
+      "name-label": "Snapshot name",
       "new-snapshot-button": "New snapshot",
       "success-creation": "Your snapshot has been created",
       "success-delete": "Your snapshot has been deleted",
       "view-all-button": "View all snapshots"
+    },
+    "share-panel": {
+      "info-alert": "A Grafana panel snapshot publicly shares a panel while removing sensitive data such as queries and panel links, leaving only visible metrics and series names. Anyone with the link can access the snapshot."
     },
     "url-column-header": "Snapshot url",
     "view-button": "View"

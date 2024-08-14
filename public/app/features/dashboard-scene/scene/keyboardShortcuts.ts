@@ -4,7 +4,9 @@ import { sceneGraph, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
+import { contextSrv } from 'app/core/services/context_srv';
 
+import { ShareSnapshot } from '../sharing/ShareButton/share-snapshot/ShareSnapshot';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
 import { SharePanelEmbedTab } from '../sharing/SharePanelEmbedTab';
@@ -72,6 +74,20 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
         scene.showModal(drawer);
       }),
     });
+
+    if (contextSrv.isSignedIn && config.snapshotEnabled && scene.canEditDashboard()) {
+      keybindings.addBinding({
+        key: 'p s',
+        onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+          const drawer = new ShareDrawer({
+            title: t('share-panel.drawer.share-snapshot-title', 'Share snapshot'),
+            body: new ShareSnapshot({ dashboardRef: scene.getRef(), panelRef: vizPanel.getRef() }),
+          });
+
+          scene.showModal(drawer);
+        }),
+      });
+    }
   } else {
     keybindings.addBinding({
       key: 'p s',
