@@ -7,6 +7,7 @@ import { KeybindingSet } from 'app/core/services/KeybindingSet';
 
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
+import { SharePanelEmbedTab } from '../sharing/SharePanelEmbedTab';
 import { SharePanelInternally } from '../sharing/panel-share/SharePanelInternally';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
@@ -55,6 +56,17 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
         const drawer = new ShareDrawer({
           title: t('share-panel.drawer.share-link-title', 'Link settings'),
           body: new SharePanelInternally({ panelRef: vizPanel.getRef() }),
+        });
+
+        scene.showModal(drawer);
+      }),
+    });
+    keybindings.addBinding({
+      key: 'p e',
+      onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+        const drawer = new ShareDrawer({
+          title: t('share-panel.drawer.share-embed-title', 'Share embed'),
+          body: new SharePanelEmbedTab({ panelRef: vizPanel.getRef() }),
         });
 
         scene.showModal(drawer);

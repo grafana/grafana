@@ -48,6 +48,7 @@ function SharePanelEmbedTabRenderer({ model }: SceneComponentProps<SharePanelEmb
       range={timeRangeState.state.value}
       dashboard={{ uid: dashUid ?? '', time: timeRangeState.state.value }}
       buildIframe={getIframeBuilder(dash)}
+      onCancelClick={() => dash.closeModal()}
     />
   );
 }

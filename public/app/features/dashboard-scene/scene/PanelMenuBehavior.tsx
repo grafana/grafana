@@ -23,6 +23,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
+import { SharePanelEmbedTab } from '../sharing/SharePanelEmbedTab';
 import { SharePanelInternally } from '../sharing/panel-share/SharePanelInternally';
 import { DashboardInteractions } from '../utils/interactions';
 import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
@@ -89,6 +90,19 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
           const drawer = new ShareDrawer({
             title: t('share-panel.drawer.share-link-title', 'Link settings'),
             body: new SharePanelInternally({ panelRef: panel.getRef() }),
+          });
+
+          dashboard.showModal(drawer);
+        },
+      });
+      subMenu.push({
+        text: t('share-panel.menu.share-embed-title', 'Share embed'),
+        iconClassName: 'arrow',
+        shortcut: 'p e',
+        onClick: () => {
+          const drawer = new ShareDrawer({
+            title: t('share-panel.drawer.share-embed-title', 'Share embed'),
+            body: new SharePanelEmbedTab({ panelRef: panel.getRef() }),
           });
 
           dashboard.showModal(drawer);
