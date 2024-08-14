@@ -108,7 +108,7 @@ func TestGetTeamMembersAPIEndpoint(t *testing.T) {
 
 func TestUpdateTeamMembersAPIEndpoint(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *TeamAPI) {
-		hs.TeamService = &teamtest.FakeService{ExpectedIsMember: true}
+		hs.teamService = &teamtest.FakeService{ExpectedIsMember: true}
 	})
 
 	t.Run("should be able to update team member with correct permission", func(t *testing.T) {
