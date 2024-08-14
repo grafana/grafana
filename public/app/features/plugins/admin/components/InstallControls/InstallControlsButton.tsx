@@ -120,7 +120,7 @@ export function InstallControlsButton({
   let uninstallTitle = '';
   if (plugin.isPreinstalled.found) {
     disableUninstall = true;
-    uninstallTitle = 'Plugin bundled with Grafana. Remove it from the Grafana configuration first.';
+    uninstallTitle = 'Preinstalled plugin. Remove from Grafana config before uninstalling.';
   }
 
   if (pluginStatus === PluginStatus.UNINSTALL) {

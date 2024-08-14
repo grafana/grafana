@@ -25,21 +25,16 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
     version = latestCompatibleVersion?.version;
   }
 
-  if (Boolean(version)) {
+  if (version) {
     if (plugin.isManaged) {
       info.push({
         label: t('plugins.details.labels.version', 'Version'),
         value: 'Managed by Grafana',
       });
-    } else if (plugin.isPreinstalled.withVersion) {
-      info.push({
-        label: 'Version',
-        value: 'Bundled with Grafana - ' + version,
-      });
     } else {
       info.push({
         label: t('plugins.details.labels.version', 'Version'),
-        value: version,
+        value: `${version}${plugin.isPreinstalled.withVersion ? ' (preinstalled)' : ''}`,
       });
     }
   }
