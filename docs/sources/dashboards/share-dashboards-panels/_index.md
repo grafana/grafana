@@ -48,7 +48,7 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/shared-dashboards/
+      destination: /docs/grafana/grafana-cloud/visualizations/dashboards/share-dashboards-panels/shared-dashboards/
 ---
 
 # Share dashboards and panels
@@ -82,8 +82,6 @@ You can share dashboards in the following ways:
 - [As a JSON file export](#export-a-dashboard-as-json)
 
 When you share a dashboard externally as a link or by email, those dashboards are included a list of your shared dashboards. To view the list and manage these dashboards, navigate to **Dashboards > Shared dashboards**.
-
-<!-- image of list here -->
 
 ### Share internally
 

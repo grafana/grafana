@@ -50,7 +50,15 @@ This can be mitigated by using the Enterprise [caching](ref:caching) and/or rate
 
 Externally shared dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to make your dashboard available to the world without requiring access to your Grafana organization.
 
-You can see a list of all your externally shared dashboards in one place by navigating to **Dashboards > Shared dashboards**. For each dashboard in the list, the page displays the status, a link to view the dashboard, a link to the externally shared dashboard configuration, and the options to pause or revoke the external URL.
+## Shared dashboards list
+
+You can see a list of all your externally shared dashboards in one place by navigating to **Dashboards > Shared dashboards**. For each dashboard in the list, the page displays:
+
+- a link to view the externally shared version of the dashboard
+- a link to the shared dashboard configuration
+- options to pause or revoke access to the external dashboard
+
+You can also click the name of the dashboard to navigate to the dashboard internally.
 
 ## Security implications of sharing your dashboard externally
 
@@ -72,7 +80,7 @@ To share your dashboard so that anyone with the link can access it, follow these
 1. (Optional) Set the following options:
    - **Enable time range** - Allow people accessing the link to change the time range. This configuration screen shows the default time range of the dashboard.
    - **Display annotations** - Allow people accessing the link to view the dashboard annotations.
-1. Each recipient will receive an email with link to the dashboard that's valid until you revoke access to the dashboard.
+1. Now anyone with the link can access the dashboard until you pause or revoke access to it.
 1. Click the **X** at the top-right corner to close the share drawer.
 
 Once you've shared a dashboard externally, a **Public** label is displayed in the header of the dashboard.
@@ -90,7 +98,7 @@ You can update the access to externally shared dashboard links by following thes
    - Click **Revoke access** so that people can't access the dashboard unless a new external link is generated. Confirm that you want to revoke the link.
 1. Click the **X** at the top-right corner to close the share drawer.
 
-The link no longer works. You must create a new external URL, as in [Share externally to anyone with a link](#share-externally-to-anyone-with-a-link).
+The link no longer works. You must create a new external link, as in [Share externally to anyone with a link](#share-externally-to-anyone-with-a-link).
 
 ## Share externally with specific people
 
@@ -105,7 +113,7 @@ When you share a dashboard with an email link, your organization is billed per u
 1. Click **Dashboards** in the main menu.
 1. Click the dashboard you want to share.
 1. Click the **Share** drop-down in the top-right corner and select **Share externally**.
-1. In the **Link access** drop-down, select **Anyone with the link**.
+1. In the **Link access** drop-down, select **Only specific people**.
 1. Click the checkbox confirming that you understand payment is required to add users.
 1. Click **Accept**.
 1. In the **Invite** field, enter the email address of the person you want to invite and click **Invite**.
@@ -122,8 +130,6 @@ When you share a dashboard with an email link, your organization is billed per u
 ### Viewers requesting access
 
 If a viewer without access tries to navigate to the shared dashboard, they'll be asked to request access by providing their email. They'll receive an email with a new one-time use link if the email they provided has already been invited to view the shared dashboard and hasn't been revoked.
-
-If the viewer doesn't have an invitation or it's been revoked, you won't be notified and no link is sent.
 
 ### Revoke access for a viewer
 
