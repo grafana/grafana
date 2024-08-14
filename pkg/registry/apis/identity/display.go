@@ -7,9 +7,11 @@ import (
 	"strings"
 
 	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/api/dtos"
 	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/setting"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -62,6 +64,9 @@ func (r *displayREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, "" // true means you can use the trailing path as a variable
 }
 
+// This will always have an empty app url
+var fakeCfgForGravatar = &setting.Cfg{}
+
 func (r *displayREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	// See: /pkg/services/apiserver/builder/helper.go#L34
 	// The name is set with a rewriter hack
@@ -75,9 +80,10 @@ func (r *displayREST) Connect(ctx context.Context, name string, _ runtime.Object
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		keys := parseKeys(req.URL.Query()["key"])
-		v, err := r.store.GetDisplay(ctx, ns, legacy.GetUserDisplayQuery{
-			UIDs: keys.uids,
-			IDs:  keys.ids,
+		users, err := r.store.GetDisplay(ctx, ns, legacy.GetUserDisplayQuery{
+			OrgID: ns.OrgID,
+			UIDs:  keys.uids,
+			IDs:   keys.ids,
 		})
 		if err != nil {
 			responder.Error(err)
@@ -87,8 +93,21 @@ func (r *displayREST) Connect(ctx context.Context, name string, _ runtime.Object
 		rsp := &identity.IdentityDisplayResults{
 			Keys:        keys.keys,
 			InvalidKeys: keys.invalid,
-			Display:     v,
+			Display:     make([]identity.IdentityDisplay, 0, len(users.Users)+len(keys.disp)+1),
 		}
+		for _, user := range users.Users {
+			disp := identity.IdentityDisplay{
+				IdentityType: claims.TypeUser,
+				Display:      user.NameOrFallback(),
+				UID:          user.UID,
+			}
+			if user.IsServiceAccount {
+				disp.IdentityType = claims.TypeServiceAccount
+			}
+			disp.AvatarURL = dtos.GetGravatarUrlWithDefault(fakeCfgForGravatar, user.Email, disp.Display)
+			rsp.Display = append(rsp.Display, disp)
+		}
+
 		// Append the constants here
 		if len(keys.disp) > 0 {
 			rsp.Display = append(rsp.Display, keys.disp...)
@@ -128,6 +147,7 @@ func parseKeys(req []string) dispKeys {
 				keys.disp = append(keys.disp, identity.IdentityDisplay{
 					IdentityType: t,
 					Display:      "Anonymous",
+					AvatarURL:    dtos.GetGravatarUrl(fakeCfgForGravatar, string(t)),
 				})
 				continue
 			case claims.TypeAPIKey:
@@ -135,6 +155,7 @@ func parseKeys(req []string) dispKeys {
 					IdentityType: t,
 					UID:          key,
 					Display:      "API Key",
+					AvatarURL:    dtos.GetGravatarUrl(fakeCfgForGravatar, string(t)),
 				})
 				continue
 			case claims.TypeProvisioning:
@@ -142,6 +163,7 @@ func parseKeys(req []string) dispKeys {
 					IdentityType: t,
 					UID:          "Provisioning",
 					Display:      "Provisioning",
+					AvatarURL:    dtos.GetGravatarUrl(fakeCfgForGravatar, string(t)),
 				})
 				continue
 			default:

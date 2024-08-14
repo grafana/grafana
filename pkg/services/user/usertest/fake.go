@@ -3,7 +3,6 @@ package usertest
 import (
 	"context"
 
-	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -17,7 +16,6 @@ type FakeUserService struct {
 	ExpectedUserProfileDTO   *user.UserProfileDTO
 	ExpectedUserProfileDTOs  []*user.UserProfileDTO
 	ExpectedUsageStats       map[string]any
-	ExpectedGetDisplay       []identity.IdentityDisplay
 
 	UpdateFn            func(ctx context.Context, cmd *user.UpdateUserCommand) error
 	GetSignedInUserFn   func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
@@ -122,8 +120,4 @@ func (f *FakeUserService) GetProfile(ctx context.Context, query *user.GetUserPro
 
 	f.counter++
 	return f.ExpectedUserProfileDTOs[f.counter-1], f.ExpectedError
-}
-
-func (f *FakeUserService) GetDisplay(ctx context.Context, cmd *user.GetDisplayCommand) ([]identity.IdentityDisplay, error) {
-	return f.ExpectedGetDisplay, f.ExpectedError
 }

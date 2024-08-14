@@ -25,8 +25,9 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlQueryTeams = mustTemplate("query_teams.sql")
-	sqlQueryUsers = mustTemplate("query_users.sql")
+	sqlQueryTeams   = mustTemplate("query_teams.sql")
+	sqlQueryUsers   = mustTemplate("query_users.sql")
+	sqlQueryDisplay = mustTemplate("query_display.sql")
 )
 
 type sqlQueryListUsers struct {
@@ -44,5 +45,14 @@ type sqlQueryListTeams struct {
 }
 
 func (r sqlQueryListTeams) Validate() error {
+	return nil // TODO
+}
+
+type sqlQueryGetDisplay struct {
+	*sqltemplate.SQLTemplate
+	Query *GetUserDisplayQuery
+}
+
+func (r sqlQueryGetDisplay) Validate() error {
 	return nil // TODO
 }

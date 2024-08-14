@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -469,10 +468,6 @@ func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUser
 	}
 
 	return usr, nil
-}
-
-func (s *Service) GetDisplay(ctx context.Context, cmd *user.GetDisplayCommand) ([]identity.IdentityDisplay, error) {
-	return s.store.GetDisplay(ctx, cmd)
 }
 
 func (s *Service) supportBundleCollector() supportbundles.Collector {

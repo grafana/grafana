@@ -134,6 +134,39 @@ func TestQueries(t *testing.T) {
 				},
 			},
 		},
+		sqlQueryDisplay: {
+			{
+				Name: "display_uids",
+				Data: &sqlQueryGetDisplay{
+					SQLTemplate: new(sqltemplate.SQLTemplate),
+					Query: &GetUserDisplayQuery{
+						OrgID: 2,
+						UIDs:  []string{"a", "b"},
+					},
+				},
+			},
+			{
+				Name: "display_ids",
+				Data: &sqlQueryGetDisplay{
+					SQLTemplate: new(sqltemplate.SQLTemplate),
+					Query: &GetUserDisplayQuery{
+						OrgID: 2,
+						IDs:   []int64{1, 2},
+					},
+				},
+			},
+			{
+				Name: "display_ids_uids",
+				Data: &sqlQueryGetDisplay{
+					SQLTemplate: new(sqltemplate.SQLTemplate),
+					Query: &GetUserDisplayQuery{
+						OrgID: 2,
+						UIDs:  []string{"a", "b"},
+						IDs:   []int64{1, 2},
+					},
+				},
+			},
+		},
 	}
 
 	// Execute test cases

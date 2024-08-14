@@ -3,9 +3,9 @@ package legacy
 import (
 	"context"
 	"fmt"
+	"text/template"
 
 	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
@@ -111,18 +111,20 @@ func (s *legacySQLStore) ListUsers(ctx context.Context, ns claims.NamespaceInfo,
 		return nil, fmt.Errorf("expected non zero orgID")
 	}
 
-	req := sqlQueryListUsers{
+	return s.queryUsers(ctx, sqlQueryUsers, sqlQueryListUsers{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Query:       &query,
-	}
+	}, limit, query.UID != "")
+}
 
-	rawQuery, err := sqltemplate.Execute(sqlQueryUsers, req)
+func (s *legacySQLStore) queryUsers(ctx context.Context, t *template.Template, req sqltemplate.ArgsIface, limit int, getRV bool) (*ListUserResult, error) {
+	rawQuery, err := sqltemplate.Execute(t, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", sqlQueryUsers.Name(), err)
 	}
 	q := rawQuery
 
-	fmt.Printf("%s // %v {%+v}\n", rawQuery, req.GetArgs(), ns)
+	fmt.Printf("%s // %v\n", rawQuery, req.GetArgs())
 
 	res := &ListUserResult{}
 	rows, err := s.sess.Query(ctx, q, req.GetArgs()...)
@@ -149,7 +151,7 @@ func (s *legacySQLStore) ListUsers(ctx context.Context, ns claims.NamespaceInfo,
 				break
 			}
 		}
-		if query.UID == "" {
+		if getRV {
 			res.RV, err = s.usersRV(ctx)
 		}
 	}
@@ -162,6 +164,14 @@ func (s *legacySQLStore) GetUserTeams(ctx context.Context, ns claims.NamespaceIn
 }
 
 // GetDisplay implements LegacyIdentityStore.
-func (s *legacySQLStore) GetDisplay(ctx context.Context, ns claims.NamespaceInfo, query GetUserDisplayQuery) ([]v0alpha1.IdentityDisplay, error) {
-	panic("unimplemented")
+func (s *legacySQLStore) GetDisplay(ctx context.Context, ns claims.NamespaceInfo, query GetUserDisplayQuery) (*ListUserResult, error) {
+	query.OrgID = ns.OrgID
+	if ns.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero orgID")
+	}
+
+	return s.queryUsers(ctx, sqlQueryDisplay, sqlQueryGetDisplay{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Query:       &query,
+	}, 10000, false)
 }

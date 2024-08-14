@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/authlib/claims"
-	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -37,14 +36,15 @@ type ListTeamResult struct {
 }
 
 type GetUserDisplayQuery struct {
-	UIDs []string
-	IDs  []int64
+	OrgID int64
+	UIDs  []string
+	IDs   []int64
 }
 
 // In every case, RBAC should be applied before calling, or before returning results to the requester
 type LegacyIdentityStore interface {
 	ListUsers(ctx context.Context, ns claims.NamespaceInfo, query ListUserQuery) (*ListUserResult, error)
 	ListTeams(ctx context.Context, ns claims.NamespaceInfo, query ListTeamQuery) (*ListTeamResult, error)
-	GetDisplay(ctx context.Context, ns claims.NamespaceInfo, query GetUserDisplayQuery) ([]identity.IdentityDisplay, error)
+	GetDisplay(ctx context.Context, ns claims.NamespaceInfo, query GetUserDisplayQuery) (*ListUserResult, error)
 	GetUserTeams(ctx context.Context, ns claims.NamespaceInfo, uid string) ([]team.Team, error)
 }
