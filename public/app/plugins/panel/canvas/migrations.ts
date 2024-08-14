@@ -54,7 +54,7 @@ export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
         // append override links to elements with dimensions mapped to same field name
         for (const prop of override.properties) {
           if (prop.id === 'links') {
-            addLinks(panel.options.root.elements, prop.value, override.matcher.options);
+            addLinks(panel.options.root.elements, prop.value ?? [], override.matcher.options);
           } else {
             props.push(prop);
           }
