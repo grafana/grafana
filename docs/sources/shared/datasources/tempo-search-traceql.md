@@ -18,14 +18,14 @@ labels:
 # Write TraceQL queries using Search
 
 The TraceQL query builder, located on the **Explore** > **Query type** > **Search** in Grafana, provides drop-downs and text fields to help you write a query.
+The selections you make automatically generate a [TraceQL query](/docs/tempo/latest/traceql).
 
 ![The TraceQL query builder](/media/docs/tempo/traceql/screenshot-traceql-query-type-search-v10.png)
 
 The builder lets you run the most common queries in as few clicks as possible. You don't need to know the underlying query language or database architecture to use it.
 
-The builder supports a subset of TraceQL capabilities. For example, if you wish to use structural operators (`>>`, `>`, `~`), you need to use the query editor on the **TraceQL** tab.
-
-You can use the query builder’s drop-downs to compose TraceQL queries. The selections you make automatically generate a [TraceQL query](/docs/tempo/latest/traceql).
+The builder supports a subset of TraceQL capabilities.
+For example, if you wish to use structural operators (`>>`, `>`, `~`), you need to use the query editor on the **TraceQL** tab.
 
 To access **Search**, select your Tempo data source, and then choose **Explore** and select **Query type** > **Search**.
 You can use the query builder to search trace data by resource service name, span name, duration, and one or more tags. The examples on this page use the default filters.
