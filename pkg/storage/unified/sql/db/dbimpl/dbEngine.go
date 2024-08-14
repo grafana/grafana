@@ -7,13 +7,12 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
+	"go.opentelemetry.io/otel/trace"
 	"xorm.io/xorm"
-
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/store/entity/db"
 )
 
-func getEngineMySQL(getter *sectionGetter, _ tracing.Tracer) (*xorm.Engine, error) {
+func getEngineMySQL(getter *sectionGetter, _ trace.Tracer) (*xorm.Engine, error) {
 	config := mysql.NewConfig()
 	config.User = getter.String("db_user")
 	config.Passwd = getter.String("db_pass")
@@ -24,10 +23,19 @@ func getEngineMySQL(getter *sectionGetter, _ tracing.Tracer) (*xorm.Engine, erro
 		// See: https://dev.mysql.com/doc/refman/en/sql-mode.html
 		"@@SESSION.sql_mode": "ANSI",
 	}
+	tls := getter.String("db_tls")
+	if tls != "" {
+		config.Params["tls"] = tls
+	}
 	config.Collation = "utf8mb4_unicode_ci"
 	config.Loc = time.UTC
 	config.AllowNativePasswords = true
 	config.ClientFoundRows = true
+
+	// allow executing multiple SQL statements in a single roundtrip, and also
+	// enable executing the CALL statement to run stored procedures that execute
+	// multiple SQL statements.
+	//config.MultiStatements = true
 
 	// TODO: do we want to support these?
 	//	config.ServerPubKey = getter.String("db_server_pub_key")
@@ -54,7 +62,7 @@ func getEngineMySQL(getter *sectionGetter, _ tracing.Tracer) (*xorm.Engine, erro
 	return engine, nil
 }
 
-func getEnginePostgres(getter *sectionGetter, _ tracing.Tracer) (*xorm.Engine, error) {
+func getEnginePostgres(getter *sectionGetter, _ trace.Tracer) (*xorm.Engine, error) {
 	dsnKV := map[string]string{
 		"user":     getter.String("db_user"),
 		"password": getter.String("db_pass"),

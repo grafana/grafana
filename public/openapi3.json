@@ -3241,6 +3241,10 @@
           "credentials_file": {
             "type": "string"
           },
+          "credentials_ref": {
+            "description": "CredentialsRef is the name of the secret within the secret manager to use as credentials.",
+            "type": "string"
+          },
           "type": {
             "type": "string"
           }
@@ -3310,10 +3314,18 @@
           "password_file": {
             "type": "string"
           },
+          "password_ref": {
+            "description": "PasswordRef is the name of the secret within the secret manager to use as the password.",
+            "type": "string"
+          },
           "username": {
             "type": "string"
           },
           "username_file": {
+            "type": "string"
+          },
+          "username_ref": {
+            "description": "UsernameRef is the name of the secret within the secret manager to use as the username.",
             "type": "string"
           }
         },
@@ -6244,6 +6256,9 @@
             "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
             "type": "boolean"
           },
+          "http_headers": {
+            "$ref": "#/components/schemas/Headers"
+          },
           "no_proxy": {
             "description": "NoProxy contains addresses that should not use a proxy.",
             "type": "string"
@@ -6252,7 +6267,7 @@
             "$ref": "#/components/schemas/OAuth2"
           },
           "proxy_connect_header": {
-            "$ref": "#/components/schemas/Header"
+            "$ref": "#/components/schemas/ProxyHeader"
           },
           "proxy_from_environment": {
             "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
@@ -6269,12 +6284,39 @@
         "type": "object"
       },
       "Header": {
-        "additionalProperties": {
-          "items": {
-            "$ref": "#/components/schemas/Secret"
+        "properties": {
+          "files": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
-          "type": "array"
+          "secrets": {
+            "items": {
+              "$ref": "#/components/schemas/Secret"
+            },
+            "type": "array"
+          },
+          "values": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
         },
+        "title": "Header represents the configuration for a single HTTP header.",
+        "type": "object"
+      },
+      "Headers": {
+        "properties": {
+          "Headers": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Header"
+            },
+            "type": "object"
+          }
+        },
+        "title": "Headers represents the configuration for HTTP headers.",
         "type": "object"
       },
       "Hit": {
@@ -7004,7 +7046,7 @@
       },
       "MigrateDataResponseItemDTO": {
         "properties": {
-          "error": {
+          "message": {
             "type": "string"
           },
           "refId": {
@@ -7013,6 +7055,7 @@
           "status": {
             "enum": [
               "OK",
+              "WARNING",
               "ERROR",
               "PENDING",
               "UNKNOWN"
@@ -7146,7 +7189,7 @@
       },
       "NavbarPreference": {
         "properties": {
-          "savedItemIds": {
+          "bookmarkUrls": {
             "items": {
               "type": "string"
             },
@@ -7271,6 +7314,9 @@
           },
           "template": {
             "type": "string"
+          },
+          "version": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -7278,6 +7324,9 @@
       "NotificationTemplateContent": {
         "properties": {
           "template": {
+            "type": "string"
+          },
+          "version": {
             "type": "string"
           }
         },
@@ -7312,6 +7361,10 @@
           "client_secret_file": {
             "type": "string"
           },
+          "client_secret_ref": {
+            "description": "ClientSecretRef is the name of the secret within the secret manager to use as the client\nsecret.",
+            "type": "string"
+          },
           "endpoint_params": {
             "additionalProperties": {
               "type": "string"
@@ -7323,7 +7376,7 @@
             "type": "string"
           },
           "proxy_connect_header": {
-            "$ref": "#/components/schemas/Header"
+            "$ref": "#/components/schemas/ProxyHeader"
           },
           "proxy_from_environment": {
             "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
@@ -8519,7 +8572,7 @@
             "type": "string"
           },
           "proxy_connect_header": {
-            "$ref": "#/components/schemas/Header"
+            "$ref": "#/components/schemas/ProxyHeader"
           },
           "proxy_from_environment": {
             "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
@@ -8528,6 +8581,15 @@
           "proxy_url": {
             "$ref": "#/components/schemas/URL"
           }
+        },
+        "type": "object"
+      },
+      "ProxyHeader": {
+        "additionalProperties": {
+          "items": {
+            "$ref": "#/components/schemas/Secret"
+          },
+          "type": "array"
         },
         "type": "object"
       },
@@ -9497,6 +9559,12 @@
       "Route": {
         "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
         "properties": {
+          "active_time_intervals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "continue": {
             "type": "boolean"
           },
@@ -10497,6 +10565,10 @@
             },
             "type": "object"
           },
+          "total": {
+            "format": "int64",
+            "type": "integer"
+          },
           "types": {
             "additionalProperties": {
               "format": "int64",
@@ -10588,12 +10660,20 @@
             "description": "The CA cert to use for the targets.",
             "type": "string"
           },
+          "ca_ref": {
+            "description": "CARef is the name of the secret within the secret manager to use as the CA cert for the\ntargets.",
+            "type": "string"
+          },
           "cert": {
             "description": "Text of the client cert file for the targets.",
             "type": "string"
           },
           "cert_file": {
             "description": "The client cert file for the targets.",
+            "type": "string"
+          },
+          "cert_ref": {
+            "description": "CertRef is the name of the secret within the secret manager to use as the client cert for\nthe targets.",
             "type": "string"
           },
           "insecure_skip_verify": {
@@ -10605,6 +10685,10 @@
           },
           "key_file": {
             "description": "The client key file for the targets.",
+            "type": "string"
+          },
+          "key_ref": {
+            "description": "KeyRef is the name of the secret within the secret manager to use as the client key for\nthe targets.",
             "type": "string"
           },
           "max_version": {
@@ -12144,6 +12228,7 @@
         "type": "object"
       },
       "alertGroups": {
+        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -12332,6 +12417,7 @@
         "type": "object"
       },
       "gettableAlerts": {
+        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -12455,40 +12541,27 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
         "type": "array"
       },
-      "integration": {
-        "description": "Integration integration",
+      "healthResponse": {
         "properties": {
-          "lastNotifyAttempt": {
-            "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
-            "format": "date-time",
+          "commit": {
             "type": "string"
           },
-          "lastNotifyAttemptDuration": {
-            "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
+          "database": {
             "type": "string"
           },
-          "lastNotifyAttemptError": {
-            "description": "Error string for the last attempt to deliver a notification. Empty if the last attempt was successful.",
+          "enterpriseCommit": {
             "type": "string"
           },
-          "name": {
-            "description": "name",
+          "version": {
             "type": "string"
-          },
-          "sendResolved": {
-            "description": "send resolved",
-            "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "sendResolved"
-        ],
         "type": "object"
       },
       "labelSet": {
@@ -12665,25 +12738,12 @@
       "receiver": {
         "description": "Receiver receiver",
         "properties": {
-          "active": {
-            "description": "active",
-            "type": "boolean"
-          },
-          "integrations": {
-            "description": "integrations",
-            "items": {
-              "$ref": "#/components/schemas/integration"
-            },
-            "type": "array"
-          },
           "name": {
             "description": "name",
             "type": "string"
           }
         },
         "required": [
-          "active",
-          "integrations",
           "name"
         ],
         "type": "object"
@@ -18839,6 +18899,30 @@
         "summary": "Updates permissions for a folder. This operation will remove existing permissions if they’re not included in the request.",
         "tags": [
           "folder_permissions"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "description": "apiHealthHandler will return ok if Grafana's web server is running and it\ncan access the database. If the database cannot be accessed it will return\nhttp status code 503.",
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/healthResponse"
+                }
+              }
+            },
+            "description": "healthResponse"
+          },
+          "503": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "tags": [
+          "health"
         ]
       }
     },
@@ -25756,9 +25840,6 @@
               }
             },
             "description": "NotificationTemplates"
-          },
-          "404": {
-            "description": " Not found."
           }
         },
         "summary": "Get all notification templates.",
@@ -25772,10 +25853,18 @@
         "operationId": "RouteDeleteTemplate",
         "parameters": [
           {
-            "description": "Template Name",
+            "description": "Template name",
             "in": "path",
             "name": "name",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Version of template to use for optimistic concurrency. Leave empty to disable validation",
+            "in": "query",
+            "name": "version",
             "schema": {
               "type": "string"
             }
@@ -25784,6 +25873,16 @@
         "responses": {
           "204": {
             "description": " The template was deleted successfully."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericPublicError"
+                }
+              }
+            },
+            "description": "GenericPublicError"
           }
         },
         "summary": "Delete a template.",
@@ -25816,7 +25915,14 @@
             "description": "NotificationTemplate"
           },
           "404": {
-            "description": " Not found."
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericPublicError"
+                }
+              }
+            },
+            "description": "GenericPublicError"
           }
         },
         "summary": "Get a notification template.",
@@ -25869,11 +25975,21 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError"
+                  "$ref": "#/components/schemas/GenericPublicError"
                 }
               }
             },
-            "description": "ValidationError"
+            "description": "GenericPublicError"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericPublicError"
+                }
+              }
+            },
+            "description": "GenericPublicError"
           }
         },
         "summary": "Updates an existing notification template.",

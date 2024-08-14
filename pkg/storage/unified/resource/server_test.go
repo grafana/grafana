@@ -8,25 +8,25 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/stretchr/testify/require"
 	"gocloud.dev/blob/fileblob"
 	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func TestSimpleServer(t *testing.T) {
 	testUserA := &identity.StaticRequester{
-		Namespace:      identity.NamespaceUser,
+		Type:           claims.TypeUser,
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
 		OrgRole:        identity.RoleAdmin,
 		IsGrafanaAdmin: true, // can do anything
 	}
-	ctx := identity.WithRequester(context.Background(), testUserA)
+	ctx := claims.WithClaims(context.Background(), testUserA)
 
 	bucket := memblob.OpenBucket(nil)
 	if false {
@@ -116,7 +116,7 @@ func TestSimpleServer(t *testing.T) {
 		require.NoError(t, err)
 		obj.SetAnnotation("test", "hello")
 		obj.SetUpdatedTimestampMillis(now)
-		obj.SetUpdatedBy(testUserA.GetUID().String())
+		obj.SetUpdatedBy(testUserA.GetUID())
 		raw, err = json.Marshal(tmp)
 		require.NoError(t, err)
 

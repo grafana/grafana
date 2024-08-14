@@ -6,9 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/sync/singleflight"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -41,17 +43,17 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 	tests := []testCase{
 		{
 			desc:                        "should skip sync when identity is not a user",
-			identity:                    &authn.Identity{ID: authn.MustParseNamespaceID("service-account:1")},
+			identity:                    &authn.Identity{ID: "1", Type: claims.TypeServiceAccount},
 			expectTryRefreshTokenCalled: false,
 		},
 		{
 			desc:                        "should skip sync when identity is a user but is not authenticated with session token",
-			identity:                    &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
+			identity:                    &authn.Identity{ID: "1", Type: claims.TypeUser},
 			expectTryRefreshTokenCalled: false,
 		},
 		{
 			desc:                              "should invalidate access token and session token if token refresh fails",
-			identity:                          &authn.Identity{ID: authn.MustParseNamespaceID("user:1"), SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
+			identity:                          &authn.Identity{ID: "1", Type: claims.TypeUser, SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
 			expectHasEntryCalled:              true,
 			expectedTryRefreshErr:             errors.New("some err"),
 			expectTryRefreshTokenCalled:       true,
@@ -62,7 +64,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 		},
 		{
 			desc:                              "should refresh the token successfully",
-			identity:                          &authn.Identity{ID: authn.MustParseNamespaceID("user:1"), SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
+			identity:                          &authn.Identity{ID: "1", Type: claims.TypeUser, SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
 			expectHasEntryCalled:              false,
 			expectTryRefreshTokenCalled:       true,
 			expectInvalidateOauthTokensCalled: false,
@@ -70,7 +72,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 		},
 		{
 			desc:                              "should not invalidate the token if the token has already been refreshed by another request (singleflight)",
-			identity:                          &authn.Identity{ID: authn.MustParseNamespaceID("user:1"), SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
+			identity:                          &authn.Identity{ID: "1", Type: claims.TypeUser, SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
 			expectHasEntryCalled:              true,
 			expectTryRefreshTokenCalled:       true,
 			expectInvalidateOauthTokensCalled: false,
@@ -92,7 +94,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			)
 
 			service := &oauthtokentest.MockOauthTokenService{
-				HasOAuthEntryFunc: func(ctx context.Context, usr authn.Requester) (*login.UserAuth, bool, error) {
+				HasOAuthEntryFunc: func(ctx context.Context, usr identity.Requester) (*login.UserAuth, bool, error) {
 					hasEntryCalled = true
 					return tt.expectedHasEntryToken, tt.expectedHasEntryToken != nil, nil
 				},
@@ -100,7 +102,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 					invalidateTokensCalled = true
 					return nil
 				},
-				TryTokenRefreshFunc: func(ctx context.Context, usr authn.Requester) error {
+				TryTokenRefreshFunc: func(ctx context.Context, usr identity.Requester) error {
 					tryRefreshCalled = true
 					return tt.expectedTryRefreshErr
 				},

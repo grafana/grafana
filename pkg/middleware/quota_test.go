@@ -3,6 +3,7 @@ package middleware
 import (
 	"testing"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -52,7 +53,7 @@ func TestMiddlewareQuota(t *testing.T) {
 
 	t.Run("with user logged in", func(t *testing.T) {
 		setUp := func(sc *scenarioContext) {
-			sc.withIdentity(&authn.Identity{ID: authn.MustParseNamespaceID("user:1"), SessionToken: &auth.UserToken{UserId: 12}})
+			sc.withIdentity(&authn.Identity{ID: "1", Type: claims.TypeUser, SessionToken: &auth.UserToken{UserId: 12}})
 		}
 
 		middlewareScenario(t, "global datasource quota reached", func(t *testing.T, sc *scenarioContext) {

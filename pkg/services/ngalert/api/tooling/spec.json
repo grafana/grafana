@@ -3314,9 +3314,6 @@
             "schema": {
               "$ref": "#/definitions/NotificationTemplates"
             }
-          },
-          "404": {
-            "description": " Not found."
           }
         }
       }
@@ -3346,7 +3343,10 @@
             }
           },
           "404": {
-            "description": " Not found."
+            "description": "GenericPublicError",
+            "schema": {
+              "$ref": "#/definitions/GenericPublicError"
+            }
           }
         }
       },
@@ -3389,9 +3389,15 @@
             }
           },
           "400": {
-            "description": "ValidationError",
+            "description": "GenericPublicError",
             "schema": {
-              "$ref": "#/definitions/ValidationError"
+              "$ref": "#/definitions/GenericPublicError"
+            }
+          },
+          "409": {
+            "description": "GenericPublicError",
+            "schema": {
+              "$ref": "#/definitions/GenericPublicError"
             }
           }
         }
@@ -3406,15 +3412,27 @@
         "parameters": [
           {
             "type": "string",
-            "description": "Template Name",
+            "description": "Template name",
             "name": "name",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "description": "Version of template to use for optimistic concurrency. Leave empty to disable validation",
+            "name": "version",
+            "in": "query"
           }
         ],
         "responses": {
           "204": {
             "description": " The template was deleted successfully."
+          },
+          "409": {
+            "description": "GenericPublicError",
+            "schema": {
+              "$ref": "#/definitions/GenericPublicError"
+            }
           }
         }
       }
@@ -4164,6 +4182,10 @@
         "credentials_file": {
           "type": "string"
         },
+        "credentials_ref": {
+          "description": "CredentialsRef is the name of the secret within the secret manager to use as credentials.",
+          "type": "string"
+        },
         "type": {
           "type": "string"
         }
@@ -4233,10 +4255,18 @@
         "password_file": {
           "type": "string"
         },
+        "password_ref": {
+          "description": "PasswordRef is the name of the secret within the secret manager to use as the password.",
+          "type": "string"
+        },
         "username": {
           "type": "string"
         },
         "username_file": {
+          "type": "string"
+        },
+        "username_ref": {
+          "description": "UsernameRef is the name of the secret within the secret manager to use as the username.",
           "type": "string"
         }
       }
@@ -5462,6 +5492,9 @@
           "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
           "type": "boolean"
         },
+        "http_headers": {
+          "$ref": "#/definitions/Headers"
+        },
         "no_proxy": {
           "description": "NoProxy contains addresses that should not use a proxy.",
           "type": "string"
@@ -5470,7 +5503,7 @@
           "$ref": "#/definitions/OAuth2"
         },
         "proxy_connect_header": {
-          "$ref": "#/definitions/Header"
+          "$ref": "#/definitions/ProxyHeader"
         },
         "proxy_from_environment": {
           "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
@@ -5486,10 +5519,37 @@
     },
     "Header": {
       "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/Secret"
+      "title": "Header represents the configuration for a single HTTP header.",
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "secrets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Secret"
+          }
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Headers": {
+      "type": "object",
+      "title": "Headers represents the configuration for HTTP headers.",
+      "properties": {
+        "Headers": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Header"
+          }
         }
       }
     },
@@ -5838,6 +5898,9 @@
         },
         "template": {
           "type": "string"
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -5845,6 +5908,9 @@
       "type": "object",
       "properties": {
         "template": {
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         }
       }
@@ -5880,6 +5946,10 @@
         "client_secret_file": {
           "type": "string"
         },
+        "client_secret_ref": {
+          "description": "ClientSecretRef is the name of the secret within the secret manager to use as the client\nsecret.",
+          "type": "string"
+        },
         "endpoint_params": {
           "type": "object",
           "additionalProperties": {
@@ -5891,7 +5961,7 @@
           "type": "string"
         },
         "proxy_connect_header": {
-          "$ref": "#/definitions/Header"
+          "$ref": "#/definitions/ProxyHeader"
         },
         "proxy_from_environment": {
           "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
@@ -6614,7 +6684,7 @@
           "type": "string"
         },
         "proxy_connect_header": {
-          "$ref": "#/definitions/Header"
+          "$ref": "#/definitions/ProxyHeader"
         },
         "proxy_from_environment": {
           "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
@@ -6622,6 +6692,15 @@
         },
         "proxy_url": {
           "$ref": "#/definitions/URL"
+        }
+      }
+    },
+    "ProxyHeader": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Secret"
         }
       }
     },
@@ -6958,6 +7037,12 @@
       "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
       "type": "object",
       "properties": {
+        "active_time_intervals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "continue": {
           "type": "boolean"
         },
@@ -7501,12 +7586,20 @@
           "description": "The CA cert to use for the targets.",
           "type": "string"
         },
+        "ca_ref": {
+          "description": "CARef is the name of the secret within the secret manager to use as the CA cert for the\ntargets.",
+          "type": "string"
+        },
         "cert": {
           "description": "Text of the client cert file for the targets.",
           "type": "string"
         },
         "cert_file": {
           "description": "The client cert file for the targets.",
+          "type": "string"
+        },
+        "cert_ref": {
+          "description": "CertRef is the name of the secret within the secret manager to use as the client cert for\nthe targets.",
           "type": "string"
         },
         "insecure_skip_verify": {
@@ -7518,6 +7611,10 @@
         },
         "key_file": {
           "description": "The client key file for the targets.",
+          "type": "string"
+        },
+        "key_ref": {
+          "description": "KeyRef is the name of the secret within the secret manager to use as the client key for\nthe targets.",
           "type": "string"
         },
         "max_version": {
@@ -8118,7 +8215,6 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "type": "object",
@@ -8405,41 +8501,11 @@
       }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "type": "object",
         "$ref": "#/definitions/gettableSilence"
-      }
-    },
-    "integration": {
-      "description": "Integration integration",
-      "type": "object",
-      "required": [
-        "name",
-        "sendResolved"
-      ],
-      "properties": {
-        "lastNotifyAttempt": {
-          "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
-          "type": "string",
-          "format": "date-time"
-        },
-        "lastNotifyAttemptDuration": {
-          "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
-          "type": "string"
-        },
-        "lastNotifyAttemptError": {
-          "description": "Error string for the last attempt to deliver a notification. Empty if the last attempt was successful.",
-          "type": "string"
-        },
-        "name": {
-          "description": "name",
-          "type": "string"
-        },
-        "sendResolved": {
-          "description": "send resolved",
-          "type": "boolean"
-        }
       }
     },
     "labelSet": {
@@ -8589,22 +8655,9 @@
       "description": "Receiver receiver",
       "type": "object",
       "required": [
-        "active",
-        "integrations",
         "name"
       ],
       "properties": {
-        "active": {
-          "description": "active",
-          "type": "boolean"
-        },
-        "integrations": {
-          "description": "integrations",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/integration"
-          }
-        },
         "name": {
           "description": "name",
           "type": "string"

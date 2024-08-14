@@ -71,14 +71,15 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 		ActionPrefix: c.Query("actionPrefix"),
 		Action:       c.Query("action"),
 		Scope:        c.Query("scope"),
-		NamespacedID: c.Query("namespacedId"),
+		TypedID:      c.Query("namespacedId"),
 	}
 
 	// Validate inputs
 	if searchOptions.ActionPrefix != "" && searchOptions.Action != "" {
 		return response.JSON(http.StatusBadRequest, "'action' and 'actionPrefix' are mutually exclusive")
 	}
-	if searchOptions.NamespacedID == "" && searchOptions.ActionPrefix == "" && searchOptions.Action == "" {
+
+	if searchOptions.TypedID == "" && searchOptions.ActionPrefix == "" && searchOptions.Action == "" {
 		return response.JSON(http.StatusBadRequest, "at least one search option must be provided")
 	}
 

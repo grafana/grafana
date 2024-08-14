@@ -172,7 +172,7 @@ def enterprise_downstream_step(ver_mode):
       Drone step.
     """
     repo = "grafana/grafana-enterprise@"
-    if ver_mode == "pr":
+    if ver_mode == "pr" or ver_mode == "rrc":
         repo += "${DRONE_SOURCE_BRANCH}"
     else:
         repo += "main"
@@ -196,6 +196,9 @@ def enterprise_downstream_step(ver_mode):
     if ver_mode == "pr":
         step.update({"failure": "ignore"})
         step["settings"]["params"].append("OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}")
+
+    if ver_mode == "rrc":
+        step["settings"]["params"].append("SOURCE_TAG=${DRONE_TAG}")
 
     return step
 
@@ -550,7 +553,7 @@ def test_backend_step():
             # shared-mime-info and shared-mime-info-lang is used for exactly 1 test for the
             # mime.TypeByExtension function.
             "apk add --update build-base shared-mime-info shared-mime-info-lang",
-            "go list -f '{{.Dir}}/...' -m | xargs go test -tags requires_buildifer -short -covermode=atomic -timeout=5m",
+            "go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m",
         ],
     }
 
@@ -1053,7 +1056,7 @@ def mysql_integration_tests_steps(hostname, version):
 def redis_integration_tests_steps():
     cmds = [
         "go clean -testcache",
-        "go list -f '{{.Dir}}/...' -m | xargs go test -run IntegrationRedis -covermode=atomic -timeout=2m",
+        "go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationRedis -covermode=atomic -timeout=2m",
     ]
 
     environment = {
@@ -1078,7 +1081,7 @@ def remote_alertmanager_integration_tests_steps():
 def memcached_integration_tests_steps():
     cmds = [
         "go clean -testcache",
-        "go list -f '{{.Dir}}/...' -m | xargs go test -run IntegrationMemcached -covermode=atomic -timeout=2m",
+        "go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationMemcached -covermode=atomic -timeout=2m",
     ]
 
     environment = {
@@ -1318,7 +1321,7 @@ def verify_linux_RPM_packages_step(depends_on = []):
             'echo "Step 3: Adding Grafana GPG key..."',
             "rpm --import https://rpm.grafana.com/gpg.key",
             'echo "Step 4: Configuring Grafana repository..."',
-            "echo '" + repo_config + "' > /etc/yum.repos.d/grafana.repo",
+            "echo -e '" + repo_config + "' > /etc/yum.repos.d/grafana.repo",
             'echo "Step 5: Checking RPM repository..."',
             "dnf list available grafana-${TAG}",
             "if [ $? -eq 0 ]; then",

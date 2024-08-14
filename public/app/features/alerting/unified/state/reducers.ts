@@ -7,7 +7,6 @@ import {
   fetchAlertGroupsAction,
   fetchFolderAction,
   fetchGrafanaAnnotationsAction,
-  fetchGrafanaNotifiersAction,
   fetchPromRulesAction,
   fetchRulerRulesAction,
   fetchRulesSourceBuildInfoAction,
@@ -28,7 +27,6 @@ export const reducer = combineReducers({
   ruleForm: combineReducers({
     saveRule: createAsyncSlice('saveRule', saveRuleFormAction).reducer,
   }),
-  grafanaNotifiers: createAsyncSlice('grafanaNotifiers', fetchGrafanaNotifiersAction).reducer,
   saveAMConfig: createAsyncSlice('saveAMConfig', updateAlertManagerConfigAction).reducer,
   deleteAMConfig: createAsyncSlice('deleteAMConfig', deleteAlertManagerConfigAction).reducer,
   folders: createAsyncMapSlice('folders', fetchFolderAction, (uid) => uid).reducer,

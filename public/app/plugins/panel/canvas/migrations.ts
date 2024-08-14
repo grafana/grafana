@@ -1,4 +1,4 @@
-import { DataLink, DynamicConfigValue, FieldMatcherID, PanelModel } from '@grafana/data';
+import { DataLink, DynamicConfigValue, FieldMatcherID, PanelModel, OneClickMode } from '@grafana/data';
 import { CanvasElementOptions } from 'app/features/canvas/element';
 
 import { Options } from './panelcfg.gen';
@@ -43,7 +43,8 @@ export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
     }
   }
 
-  if (parseFloat(pluginVersion) <= 11.2) {
+  if (parseFloat(pluginVersion) <= 11.3) {
+    // migrate links from field name overrides to elements
     for (let idx = 0; idx < panel.fieldConfig.overrides.length; idx++) {
       const override = panel.fieldConfig.overrides[idx];
 
@@ -63,6 +64,17 @@ export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
           override.properties = props;
         } else {
           panel.fieldConfig.overrides.splice(idx, 1);
+        }
+      }
+    }
+
+    // migrate oneClickLinks to oneClickMode
+    const root = panel.options?.root;
+    if (root?.elements) {
+      for (const element of root.elements) {
+        if (element.oneClickLinks) {
+          element.oneClickMode = OneClickMode.Link;
+          delete element.oneClickLinks;
         }
       }
     }

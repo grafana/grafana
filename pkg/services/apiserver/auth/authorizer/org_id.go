@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	grafanarequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/org"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
 var _ authorizer.Authorizer = &orgIDAuthorizer{}
@@ -32,7 +31,7 @@ func (auth orgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attribut
 		return authorizer.DecisionDeny, fmt.Sprintf("error getting signed in user: %v", err), nil
 	}
 
-	info, err := grafanarequest.ParseNamespace(a.GetNamespace())
+	info, err := claims.ParseNamespace(a.GetNamespace())
 	if err != nil {
 		return authorizer.DecisionDeny, fmt.Sprintf("error reading namespace: %v", err), nil
 	}
@@ -46,7 +45,7 @@ func (auth orgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attribut
 		return authorizer.DecisionDeny, "org id is required", nil
 	}
 
-	if info.StackID != "" {
+	if info.StackID != 0 {
 		return authorizer.DecisionDeny, "using a stack namespace requires deployment with a fixed stack id", nil
 	}
 
@@ -56,7 +55,8 @@ func (auth orgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attribut
 	}
 
 	// Check if the user has access to the specified org
-	userId, err := signedInUser.GetID().UserID()
+	// nolint:staticcheck
+	userId, err := signedInUser.GetInternalID()
 	if err != nil {
 		return authorizer.DecisionDeny, "unable to get userId", err
 	}

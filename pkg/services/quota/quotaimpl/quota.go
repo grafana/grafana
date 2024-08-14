@@ -53,7 +53,7 @@ type service struct {
 	targetToSrv *quota.TargetToSrv
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg) quota.Service {
+func ProvideService(db db.ReplDB, cfg *setting.Cfg) quota.Service {
 	logger := log.New("quota_service")
 	s := service{
 		store:         &sqlStore{db: db, logger: logger},

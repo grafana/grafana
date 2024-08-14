@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"net/mail"
+	"strconv"
 	"time"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -152,6 +154,6 @@ func (s *Verifier) Complete(ctx context.Context, cmd user.CompleteEmailVerifyCom
 	// remove the current token, so a new one can be generated with correct values.
 	return s.is.RemoveIDToken(
 		ctx,
-		&authn.Identity{ID: authn.NewNamespaceID(authn.NamespaceUser, usr.ID), OrgID: usr.OrgID},
+		&authn.Identity{ID: strconv.FormatInt(usr.ID, 10), Type: claims.TypeUser, OrgID: usr.OrgID},
 	)
 }

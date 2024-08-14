@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"io"
 	"net/http"
 	"net/url"
@@ -23,6 +24,11 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
+)
+
+const (
+	namespaceQueryTag = "QUERY_NAMESPACE"
+	groupQueryTag     = "QUERY_GROUP"
 )
 
 var searchRegex = regexp.MustCompile(`\{(\w+)\}`)
@@ -229,4 +235,39 @@ func containsProvisionedAlerts(provenances map[string]ngmodels.Provenance, rules
 		}
 	}
 	return false
+}
+
+func getHash(hashSlice []string) uint64 {
+	sum := fnv.New64()
+	for _, str := range hashSlice {
+		_, _ = sum.Write([]byte(str))
+	}
+	hash := sum.Sum64()
+	return hash
+}
+
+func getRulesGroupParam(ctx *contextmodel.ReqContext, pathGroup string) (string, error) {
+	if pathGroup == groupQueryTag {
+		group := ctx.Query("group")
+		if group == "" {
+			return "", fmt.Errorf("group query parameter is empty")
+		}
+
+		return group, nil
+	}
+
+	return pathGroup, nil
+}
+
+func getRulesNamespaceParam(ctx *contextmodel.ReqContext, pathNamespace string) (string, error) {
+	if pathNamespace == namespaceQueryTag {
+		namespace := ctx.Query("namespace")
+		if namespace == "" {
+			return "", fmt.Errorf("namespace query parameter is empty")
+		}
+
+		return namespace, nil
+	}
+
+	return pathNamespace, nil
 }

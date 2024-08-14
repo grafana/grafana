@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
@@ -28,12 +28,12 @@ func TestSignedInUser(t *testing.T) {
 
 	t.Run("should set user and group", func(t *testing.T) {
 		u := &user.SignedInUser{
-			Login:   "admin",
+			Name:    "admin",
 			UserID:  1,
-			UserUID: uuid.New().String(),
+			UserUID: "xyz",
 			Teams:   []int64{1, 2},
 		}
-		ctx := appcontext.WithUser(context.Background(), u)
+		ctx := identity.WithRequester(context.Background(), u)
 		req, err := http.NewRequest("GET", "http://localhost:3000/apis", nil)
 		require.NoError(t, err)
 		req = req.WithContext(ctx)
@@ -44,21 +44,21 @@ func TestSignedInUser(t *testing.T) {
 		require.True(t, ok)
 		require.False(t, mockAuthenticator.called)
 
-		require.Equal(t, u.Login, res.User.GetName())
-		require.Equal(t, u.UserUID, res.User.GetUID())
+		require.Equal(t, u.GetName(), res.User.GetName())
+		require.Equal(t, u.GetUID(), res.User.GetUID())
 		require.Equal(t, []string{"1", "2"}, res.User.GetGroups())
 		require.Empty(t, res.User.GetExtra()["id-token"])
 	})
 
 	t.Run("should set ID token when available", func(t *testing.T) {
 		u := &user.SignedInUser{
-			Login:   "admin",
+			Name:    "admin",
 			UserID:  1,
 			UserUID: uuid.New().String(),
 			Teams:   []int64{1, 2},
 			IDToken: "test-id-token",
 		}
-		ctx := appcontext.WithUser(context.Background(), u)
+		ctx := identity.WithRequester(context.Background(), u)
 		req, err := http.NewRequest("GET", "http://localhost:3000/apis", nil)
 		require.NoError(t, err)
 		req = req.WithContext(ctx)
@@ -69,8 +69,8 @@ func TestSignedInUser(t *testing.T) {
 		require.True(t, ok)
 
 		require.False(t, mockAuthenticator.called)
-		require.Equal(t, u.Login, res.User.GetName())
-		require.Equal(t, u.UserUID, res.User.GetUID())
+		require.Equal(t, u.GetName(), res.User.GetName())
+		require.Equal(t, u.GetUID(), res.User.GetUID())
 		require.Equal(t, []string{"1", "2"}, res.User.GetGroups())
 		require.Equal(t, "test-id-token", res.User.GetExtra()["id-token"][0])
 	})
