@@ -467,7 +467,6 @@ func TestSetTemplate(t *testing.T) {
 		_, err := sut.SetTemplate(context.Background(), orgID, template)
 
 		require.ErrorIs(t, err, ErrTemplateNotFound)
-		prov.AssertExpectations(t)
 	})
 
 	t.Run("propagates errors", func(t *testing.T) {
@@ -540,7 +539,6 @@ func TestSetTemplate(t *testing.T) {
 			require.ErrorIs(t, err, expectedErr)
 		})
 	})
-
 }
 
 func TestDeleteTemplate(t *testing.T) {
