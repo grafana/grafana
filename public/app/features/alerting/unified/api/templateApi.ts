@@ -2,8 +2,7 @@ import { Template } from 'app/features/alerting/unified/components/receivers/for
 import { DEFAULT_TEMPLATES } from 'app/features/alerting/unified/utils/template-constants';
 
 import { parseTemplates } from '../components/receivers/form/fields/utils';
-
-import { alertingApi } from './alertingApi';
+import { generatedTemplatesApi } from '../openapi/templatesApi.gen';
 
 export const previewTemplateUrl = `/api/alertmanager/grafana/config/api/v1/templates/test`;
 
@@ -30,7 +29,7 @@ export interface AlertField {
   labels: KeyValueField[];
 }
 
-export const templatesApi = alertingApi.injectEndpoints({
+export const templatesApi = generatedTemplatesApi.injectEndpoints({
   endpoints: (build) => ({
     previewTemplate: build.mutation<TemplatePreviewResponse, { template: string; alerts: AlertField[]; name: string }>({
       query: ({ template, alerts, name }) => ({

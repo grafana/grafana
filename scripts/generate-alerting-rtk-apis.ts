@@ -50,6 +50,20 @@ const config: ConfigFile = {
       exportName: 'generatedReceiversApi',
       flattenArg: false,
     },
+    '../public/app/features/alerting/unified/openapi/templatesApi.gen.ts': {
+      apiFile: '../public/app/features/alerting/unified/api/alertingApi.ts',
+      apiImport: 'alertingApi',
+      filterEndpoints: [
+        'listNamespacedTemplateGroup',
+        'createNamespacedTemplateGroup',
+        'readNamespacedTemplateGroup',
+        'replaceNamespacedTemplateGroup',
+        'deleteNamespacedTemplateGroup',
+        'patchNamespacedTemplateGroup',
+      ],
+      exportName: 'generatedTemplatesApi',
+      flattenArg: false,
+    },
   },
 };
 
