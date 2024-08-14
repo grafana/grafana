@@ -3,6 +3,7 @@ package remote
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -474,6 +475,30 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 		id, err = forked.CreateSilence(ctx, testSilence)
 		require.NoError(tt, err)
 		require.Equal(tt, expID, id)
+
+		// If the silence ID changes, the internal Alertmanager should attempt to expire the old silence.
+		newID := "new"
+		internal, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
+		remote.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return(newID, nil).Once()
+		internal.EXPECT().DeleteSilence(mock.Anything, mock.Anything).Return(nil).Once()
+		internal.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return(testSilence.ID, nil).Once()
+		id, err = forked.CreateSilence(ctx, testSilence)
+		require.NoError(tt, err)
+		require.Equal(tt, newID, testSilence.ID)
+		require.Equal(tt, newID, id)
+
+		// Restore original ID.
+		testSilence.ID = expID
+
+		// An error attempting to delete a silence in the internal Alertmanager not be returned.
+		internal, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
+		remote.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return(newID, nil).Once()
+		internal.EXPECT().DeleteSilence(mock.Anything, mock.Anything).Return(fmt.Errorf("test error")).Once()
+		internal.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return(testSilence.ID, nil).Once()
+		id, err = forked.CreateSilence(ctx, testSilence)
+		require.NoError(tt, err)
+		require.Equal(tt, newID, testSilence.ID)
+		require.Equal(tt, newID, id)
 	})
 
 	t.Run("DeleteSilence", func(tt *testing.T) {
