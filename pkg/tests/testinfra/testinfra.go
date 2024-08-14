@@ -155,6 +155,11 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			  "js": ["public/build/runtime.XYZ.js"]
 			}
 		  },
+		  "swagger": {
+			"assets": {
+			  "js": ["public/build/runtime.XYZ.js"]
+			}
+		  },
 		  "dark": {
 			"assets": {
 			  "css": ["public/build/dark.css"]
@@ -387,7 +392,7 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 		}
 
 		if o.DualWriterDesiredModes != nil {
-			unifiedStorageMode, err := getOrCreateSection("unified_storage")
+			unifiedStorageMode, err := getOrCreateSection("unified_storage_mode")
 			require.NoError(t, err)
 			for k, v := range o.DualWriterDesiredModes {
 				_, err = unifiedStorageMode.NewKey(k, fmt.Sprint(v))

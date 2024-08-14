@@ -2,8 +2,8 @@ import { FormEvent, useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { RawTimeRange, TimeRange } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
-import { ClipboardButton, Field, Modal, Switch, TextArea } from '@grafana/ui';
+import { config, reportInteraction } from '@grafana/runtime';
+import { Button, ClipboardButton, Field, Label, Modal, Stack, Switch, TextArea } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
@@ -16,9 +16,10 @@ interface Props extends Omit<ShareModalTabProps, 'panel' | 'dashboard'> {
   dashboard: { uid: string; time: RawTimeRange };
   range?: TimeRange;
   buildIframe?: typeof buildIframeHtml;
+  onCancelClick?: () => void;
 }
 
-export function ShareEmbed({ panel, dashboard, range, buildIframe = buildIframeHtml }: Props) {
+export function ShareEmbed({ panel, dashboard, range, onCancelClick, buildIframe = buildIframeHtml }: Props) {
   const [useCurrentTimeRange, setUseCurrentTimeRange] = useState(true);
   const [selectedTheme, setSelectedTheme] = useState('current');
   const [iframeHtml, setIframeHtml] = useState('');
@@ -44,21 +45,45 @@ export function ShareEmbed({ panel, dashboard, range, buildIframe = buildIframeH
     setSelectedTheme(value);
   };
 
-  const isRelativeTime = dashboard.time.to === 'now';
-  const timeRangeDescription = isRelativeTime
-    ? t(
-        'share-modal.embed.time-range-description',
-        'Transforms the current relative time range to an absolute time range'
-      )
-    : '';
+  const clipboardButton = (
+    <ClipboardButton
+      icon="copy"
+      variant="primary"
+      getText={() => iframeHtml}
+      onClipboardCopy={() => {
+        DashboardInteractions.embedSnippetCopy({
+          currentTimeRange: useCurrentTimeRange,
+          theme: selectedTheme,
+          shareResource: getTrackingSource(panel),
+        });
+      }}
+    >
+      <Trans i18nKey="share-modal.embed.copy">Copy to clipboard</Trans>
+    </ClipboardButton>
+  );
 
   return (
     <>
       <p>
         <Trans i18nKey="share-modal.embed.info">Generate HTML for embedding an iframe with this panel.</Trans>
       </p>
-      <Field label={t('share-modal.embed.time-range', 'Current time range')} description={timeRangeDescription}>
-        <Switch id="share-current-time-range" value={useCurrentTimeRange} onChange={onUseCurrentTimeRangeChange} />
+      <Field>
+        <Stack gap={1} alignItems="start">
+          <Switch
+            label={t('share-modal.embed.time-range', 'Time range')}
+            id="share-current-time-range"
+            value={useCurrentTimeRange}
+            onChange={onUseCurrentTimeRangeChange}
+          />
+          <Label
+            description={t(
+              'embed.share.time-range-description',
+              'Change the current relative time range to an absolute time range'
+            )}
+          >
+            <Trans i18nKey="embed.share.time-range-label">Time range</Trans>
+          </Label>
+        </Stack>
       </Field>
       <ThemePicker selectedTheme={selectedTheme} onChange={onThemeChange} />
       <Field
@@ -76,22 +101,16 @@ export function ShareEmbed({ panel, dashboard, range, buildIframe = buildIframeH
           onChange={onIframeHtmlChange}
         />
       </Field>
-      <Modal.ButtonRow>
-        <ClipboardButton
-          icon="copy"
-          variant="primary"
-          getText={() => iframeHtml}
-          onClipboardCopy={() => {
-            DashboardInteractions.embedSnippetCopy({
-              currentTimeRange: useCurrentTimeRange,
-              theme: selectedTheme,
-              shareResource: getTrackingSource(panel),
-            });
-          }}
-        >
-          <Trans i18nKey="share-modal.embed.copy">Copy to clipboard</Trans>
-        </ClipboardButton>
-      </Modal.ButtonRow>
+      {config.featureToggles.newDashboardSharingComponent ? (
+        <Stack gap={1} justifyContent={'start'}>
+          {clipboardButton}
+          <Button variant="secondary" fill="outline" onClick={onCancelClick}>
+            <Trans i18nKey="snapshot.share.cancel-button">Cancel</Trans>
+          </Button>
+        </Stack>
+      ) : (
+        <Modal.ButtonRow>{clipboardButton}</Modal.ButtonRow>
+      )}
     </>
   );
 }

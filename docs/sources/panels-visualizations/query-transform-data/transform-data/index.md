@@ -1428,6 +1428,22 @@ For each generated **Trend** field value, a calculation function can be selected
 Use this transformation to pivot the data frame, converting rows into columns and columns into rows. This transformation is particularly useful when you want to switch the orientation of your data to better suit your visualization needs.
 If you have multiple types it will default to string type.
 
+**Before Transformation:**
+
+| env  | January | February |
+| ---- | ------- | -------- |
+| prod | 1       | 2        |
+| dev  | 3       | 4        |
+
+**After applying transpose transformation:**
+
+| Field    | prod | dev |
+| -------- | ---- | --- |
+| January  | 1    | 3   |
+| February | 2    | 4   |
+
+{{< figure src="/media/docs/grafana/transformations/screenshot-grafana-11-2-transpose-transformation.png" class="docs-image--no-shadow" max-width= "1100px" alt="Before and after transpose transformation" >}}
+
 ### Regression analysis
 
 Use this transformation to create a new data frame containing values predicted by a statistical model. This is useful for finding a trend in chaotic data. It works by fitting a mathematical function to the data, using either linear or polynomial regression. The data frame can then be used in a visualization to display a trendline.

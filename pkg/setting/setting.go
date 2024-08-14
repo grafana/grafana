@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/osutil"
@@ -198,6 +197,7 @@ type Cfg struct {
 	HideAngularDeprecation           []string
 	PluginInstallToken               string
 	ForwardHostEnvVars               []string
+	InstallPlugins                   []InstallPlugin
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
@@ -521,9 +521,11 @@ type Cfg struct {
 
 	//Short Links
 	ShortLinkExpiration int
+}
 
-	// Unified Storage
-	UnifiedStorage map[string]grafanarest.DualWriterMode
+type InstallPlugin struct {
+	ID      string
+	Version string
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
