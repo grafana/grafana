@@ -97,7 +97,7 @@ func TestService_SignIdentity(t *testing.T) {
 		require.NoError(t, parsed.UnsafeClaimsWithoutVerification(&claims.Claims, &claims.Rest))
 		assert.Equal(t, login.AzureADAuthModule, claims.Rest.AuthenticatedBy)
 		assert.Equal(t, "U1", claims.Rest.Username)
-		assert.Equal(t, "user:edpu3nnt61se8e", claims.Rest.UID)
+		assert.Equal(t, "user:edpu3nnt61se8e", claims.Rest.Identifier)
 	})
 
 	t.Run("should sign identity with authenticated by if user is externally authenticated", func(t *testing.T) {
@@ -117,6 +117,6 @@ func TestService_SignIdentity(t *testing.T) {
 
 		assert.Equal(t, login.AzureADAuthModule, gotClaims.Rest.AuthenticatedBy)
 		assert.Equal(t, "U1", gotClaims.Rest.Username)
-		assert.Equal(t, "user:edpu3nnt61se8e", gotClaims.Rest.UID)
+		assert.Equal(t, "user:edpu3nnt61se8e", gotClaims.Rest.Identifier)
 	})
 }
