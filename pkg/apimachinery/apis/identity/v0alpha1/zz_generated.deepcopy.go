@@ -31,6 +31,21 @@ func (in *IdentityDisplay) DeepCopy() *IdentityDisplay {
 func (in *IdentityDisplayResults) DeepCopyInto(out *IdentityDisplayResults) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
+	if in.Keys != nil {
+		in, out := &in.Keys, &out.Keys
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.Display != nil {
+		in, out := &in.Display, &out.Display
+		*out = make([]IdentityDisplay, len(*in))
+		copy(*out, *in)
+	}
+	if in.InvalidKeys != nil {
+		in, out := &in.InvalidKeys, &out.InvalidKeys
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

@@ -98,8 +98,8 @@ func (r *displayREST) Connect(ctx context.Context, name string, _ runtime.Object
 			Display:     v,
 		}
 		// Append the constants here
-		for _, d := range keys.disp {
-			rsp.Display = append(rsp.Display, d)
+		if len(keys.disp) > 0 {
+			rsp.Display = append(rsp.Display, keys.disp...)
 		}
 		responder.Object(200, rsp)
 	}), nil
