@@ -55,6 +55,7 @@ COPY .bingo .bingo
 
 # Include vendored dependencies
 COPY pkg/util/xorm/go.* pkg/util/xorm/
+COPY pkg/aggregator/go.* pkg/aggregator/
 COPY pkg/apiserver/go.* pkg/apiserver/
 COPY pkg/apimachinery/go.* pkg/apimachinery/
 COPY pkg/build/go.* pkg/build/
