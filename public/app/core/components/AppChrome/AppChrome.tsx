@@ -174,7 +174,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
     panes: css(
       {
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'row',
         flexGrow: 1,
         label: 'page-panes',
       },
