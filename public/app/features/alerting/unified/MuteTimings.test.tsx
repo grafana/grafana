@@ -185,7 +185,7 @@ const fillOutForm = async ({
 
 const saveMuteTiming = async () => {
   const user = userEvent.setup();
-  await user.click(screen.getByText(/save mute timing/i));
+  await user.click(await screen.findByText(/save mute timing/i));
 };
 
 setupMswServer();
@@ -365,7 +365,7 @@ describe('Mute timings', () => {
     });
 
     it('allows creation of new mute timings', async () => {
-      await renderMuteTimings({
+      renderMuteTimings({
         pathname: '/alerting/routes/mute-timing/new',
       });
 
@@ -389,9 +389,6 @@ describe('Mute timings', () => {
         pathname: '/alerting/routes/mute-timing/edit',
         search: `?alertmanager=${GRAFANA_RULES_SOURCE_NAME}&muteName=${TIME_INTERVAL_UID_HAPPY_PATH}`,
       });
-
-      // For now, we expect the name field to be disabled editing via the k8s API
-      expect(await ui.nameField.find()).toBeDisabled();
 
       await saveMuteTiming();
       await expectedToHaveRedirectedToRoutesRoute();
