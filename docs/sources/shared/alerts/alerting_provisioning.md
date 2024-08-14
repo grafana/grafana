@@ -1060,7 +1060,7 @@ GET /api/v1/provisioning/templates/:name
 | Code                           | Status    | Description          | Has headers | Schema                                   |
 | ------------------------------ | --------- | -------------------- | :---------: | ---------------------------------------- |
 | [200](#route-get-template-200) | OK        | NotificationTemplate |             | [schema](#route-get-template-200-schema) |
-| [404](#route-get-template-404) | Not Found | Not found.           |             | [schema](#route-get-template-404-schema) |
+| [404](#route-get-template-404) | Not Found | GenericPublicError   |             | [schema](#route-get-template-404-schema) |
 
 #### Responses
 
@@ -1074,7 +1074,7 @@ Status: OK
 
 ##### <span id="route-get-template-404"></span> 404 - Not found.
 
-Status: Not Found
+[GenericPublicError](#generic-public-error)
 
 ###### <span id="route-get-template-404-schema"></span> Schema
 
@@ -1086,10 +1086,9 @@ GET /api/v1/provisioning/templates
 
 #### All responses
 
-| Code                            | Status    | Description           | Has headers | Schema                                    |
-| ------------------------------- | --------- | --------------------- | :---------: | ----------------------------------------- |
-| [200](#route-get-templates-200) | OK        | NotificationTemplates |             | [schema](#route-get-templates-200-schema) |
-| [404](#route-get-templates-404) | Not Found | Not found.            |             | [schema](#route-get-templates-404-schema) |
+| Code                            | Status | Description           | Has headers | Schema                                    |
+| ------------------------------- | ------ | --------------------- | :---------: | ----------------------------------------- |
+| [200](#route-get-templates-200) | OK     | NotificationTemplates |             | [schema](#route-get-templates-200-schema) |
 
 #### Responses
 
@@ -1100,12 +1099,6 @@ Status: OK
 ###### <span id="route-get-templates-200-schema"></span> Schema
 
 [NotificationTemplates](#notification-templates)
-
-##### <span id="route-get-templates-404"></span> 404 - Not found.
-
-Status: Not Found
-
-###### <span id="route-get-templates-404-schema"></span> Schema
 
 ### <span id="route-post-alert-rule"></span> Create a new alert rule. (_RoutePostAlertRule_)
 
@@ -1480,7 +1473,7 @@ PUT /api/v1/provisioning/templates/:name
 | Code                           | Status      | Description          | Has headers | Schema                                   |
 | ------------------------------ | ----------- | -------------------- | :---------: | ---------------------------------------- |
 | [202](#route-put-template-202) | Accepted    | NotificationTemplate |             | [schema](#route-put-template-202-schema) |
-| [400](#route-put-template-400) | Bad Request | ValidationError      |             | [schema](#route-put-template-400-schema) |
+| [400](#route-put-template-400) | Bad Request | GenericPublicError   |             | [schema](#route-put-template-400-schema) |
 | [409](#route-put-template-409) | Conflict    | GenericPublicError   |             | [schema](#route-put-template-409-schema) |
 
 #### Responses
@@ -1499,7 +1492,7 @@ Status: Bad Request
 
 ###### <span id="route-put-template-400-schema"></span> Schema
 
-[ValidationError](#validation-error)
+[GenericPublicError](#generic-public-error)
 
 ##### <span id="route-put-template-409"></span> 409 - Conflict
 
