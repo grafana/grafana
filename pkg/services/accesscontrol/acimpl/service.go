@@ -56,7 +56,7 @@ func ProvideService(
 ) (*Service, error) {
 	service := ProvideOSSService(cfg, database.ProvideService(db), actionResolver, cache, features, tracer, zclient, db.DB(), permRegistry)
 
-	api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
+	api.NewAccessControlAPI(routeRegister, accessControl, service, features, cfg).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
 		return nil, err
 	}
@@ -494,7 +494,9 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 	// Limit roles to available in OSS
 	options.RolePrefixes = OSSRolesPrefixes
 	if options.TypedID != "" {
-		userID, err := options.ComputeUserID()
+		var err error
+		var userID int64
+		userID, err = options.ComputeUserID()
 		if err != nil {
 			s.log.Error("Failed to resolve user ID", "error", err)
 			return nil, err

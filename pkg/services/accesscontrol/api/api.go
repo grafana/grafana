@@ -10,11 +10,13 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service,
-	features featuremgmt.FeatureToggles) *AccessControlAPI {
+	features featuremgmt.FeatureToggles, cfg *setting.Cfg) *AccessControlAPI {
 	return &AccessControlAPI{
+		Cfg:           cfg,
 		RouteRegister: router,
 		Service:       service,
 		AccessControl: accesscontrol,
@@ -23,6 +25,7 @@ func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessCo
 }
 
 type AccessControlAPI struct {
+	Cfg           *setting.Cfg
 	Service       ac.Service
 	AccessControl ac.AccessControl
 	RouteRegister routing.RouteRegister
@@ -68,10 +71,11 @@ func (api *AccessControlAPI) getUserPermissions(c *contextmodel.ReqContext) resp
 // GET /api/access-control/users/permissions/search
 func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) response.Response {
 	searchOptions := ac.SearchOptions{
-		ActionPrefix: c.Query("actionPrefix"),
-		Action:       c.Query("action"),
-		Scope:        c.Query("scope"),
-		TypedID:      c.Query("namespacedId"),
+		AllowAnonymous: api.Cfg.AnonymousEnabled,
+		ActionPrefix:   c.Query("actionPrefix"),
+		Action:         c.Query("action"),
+		Scope:          c.Query("scope"),
+		TypedID:        c.Query("namespacedId"),
 	}
 
 	// Validate inputs

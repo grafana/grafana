@@ -81,13 +81,14 @@ type Options struct {
 }
 
 type SearchOptions struct {
-	ActionPrefix string // Needed for the PoC v1, it's probably going to be removed.
-	Action       string
-	ActionSets   []string
-	Scope        string
-	TypedID      string    // ID of the identity (ex: user:3, service-account:4)
-	wildcards    Wildcards // private field computed based on the Scope
-	RolePrefixes []string
+	AllowAnonymous bool
+	ActionPrefix   string // Needed for the PoC v1, it's probably going to be removed.
+	Action         string
+	ActionSets     []string
+	Scope          string
+	TypedID        string    // ID of the identity (ex: user:3, service-account:4)
+	wildcards      Wildcards // private field computed based on the Scope
+	RolePrefixes   []string
 }
 
 // Wildcards computes the wildcard scopes that include the scope
@@ -111,6 +112,10 @@ func (s *SearchOptions) ComputeUserID() (int64, error) {
 		return 0, err
 	}
 
+	if s.AllowAnonymous && claims.IsIdentityType(typ, claims.TypeAnonymous) {
+		// their userID is 0 as they don't exist. Their permissions matches only their basic role
+		return 0, nil
+	}
 	if !claims.IsIdentityType(typ, claims.TypeUser, claims.TypeServiceAccount) {
 		return 0, fmt.Errorf("invalid type: %s", typ)
 	}

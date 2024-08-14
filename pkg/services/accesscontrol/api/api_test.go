@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -40,7 +41,7 @@ func TestAPI_getUserActions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			acSvc := actest.FakeService{ExpectedPermissions: tt.permissions}
-			api := NewAccessControlAPI(routing.NewRouteRegister(), actest.FakeAccessControl{}, acSvc, featuremgmt.WithFeatures())
+			api := NewAccessControlAPI(routing.NewRouteRegister(), actest.FakeAccessControl{}, acSvc, featuremgmt.WithFeatures(), setting.NewCfg())
 			api.RegisterAPIEndpoints()
 
 			server := webtest.NewServer(t, api.RouteRegister)
@@ -93,7 +94,7 @@ func TestAPI_getUserPermissions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			acSvc := actest.FakeService{ExpectedPermissions: tt.permissions}
-			api := NewAccessControlAPI(routing.NewRouteRegister(), actest.FakeAccessControl{}, acSvc, featuremgmt.WithFeatures())
+			api := NewAccessControlAPI(routing.NewRouteRegister(), actest.FakeAccessControl{}, acSvc, featuremgmt.WithFeatures(), setting.NewCfg())
 			api.RegisterAPIEndpoints()
 
 			server := webtest.NewServer(t, api.RouteRegister)
@@ -174,7 +175,7 @@ func TestAccessControlAPI_searchUsersPermissions(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			acSvc := actest.FakeService{ExpectedUsersPermissions: tt.permissions}
 			accessControl := actest.FakeAccessControl{ExpectedEvaluate: true} // Always allow access to the endpoint
-			api := NewAccessControlAPI(routing.NewRouteRegister(), accessControl, acSvc, featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall))
+			api := NewAccessControlAPI(routing.NewRouteRegister(), accessControl, acSvc, featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall), setting.NewCfg())
 			api.RegisterAPIEndpoints()
 
 			server := webtest.NewServer(t, api.RouteRegister)
