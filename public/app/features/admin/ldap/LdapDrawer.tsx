@@ -20,7 +20,7 @@ import { GroupMapping, LdapServerConfig, LdapSettings, OrgRole } from 'app/types
 
 interface OwnProps {
   onClose: () => void;
-  onChange: (settings: LdapSettings) => void; // TODO: Change to Partial
+  onChange: (settings: LdapSettings) => void;
   ldapSettings: LdapSettings;
 }
 
