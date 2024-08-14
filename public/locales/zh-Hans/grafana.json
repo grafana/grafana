@@ -119,6 +119,9 @@
       },
       "used-by_other": ""
     },
+    "contactPointFilter": {
+      "label": ""
+    },
     "grafana-rules": {
       "export-rules": "",
       "loading": "",
@@ -681,6 +684,12 @@
     },
     "empty-state": {
       "message": ""
+    }
+  },
+  "embed": {
+    "share": {
+      "time-range-description": "",
+      "time-range-label": ""
     }
   },
   "explore": {
@@ -1647,6 +1656,18 @@
     }
   },
   "plugins": {
+    "details": {
+      "labels": {
+        "dependencies": "",
+        "downloads": "",
+        "from": "",
+        "reportAbuse": "",
+        "signature": "",
+        "status": "",
+        "updatedAt": "",
+        "version": ""
+      }
+    },
     "empty-state": {
       "message": ""
     }
@@ -2020,8 +2041,7 @@
       "html": "嵌入 HTML",
       "html-description": "可将以下 HTML 代码粘贴并纳入另一网页。除非启用了匿名访问，否则查看该页面的用户需要登录 Grafana 才能加载图表。",
       "info": "生成用于对此面板嵌入 iframe 的 HTML。",
-      "time-range": "当前时间范围",
-      "time-range-description": "将当前相对时间范围转换为绝对时间范围"
+      "time-range": ""
     },
     "export": {
       "back-button": "返回到导出配置",
@@ -2091,9 +2111,11 @@
   },
   "share-panel": {
     "drawer": {
+      "share-embed-title": "",
       "share-link-title": ""
     },
     "menu": {
+      "share-embed-title": "",
       "share-link-title": ""
     }
   },

@@ -120,6 +120,9 @@
       "used-by_one": "",
       "used-by_other": ""
     },
+    "contactPointFilter": {
+      "label": ""
+    },
     "grafana-rules": {
       "export-rules": "",
       "loading": "",
@@ -689,6 +692,12 @@
     },
     "empty-state": {
       "message": "Keine Datenquellen gefunden"
+    }
+  },
+  "embed": {
+    "share": {
+      "time-range-description": "",
+      "time-range-label": ""
     }
   },
   "explore": {
@@ -1656,6 +1665,18 @@
     }
   },
   "plugins": {
+    "details": {
+      "labels": {
+        "dependencies": "",
+        "downloads": "",
+        "from": "",
+        "reportAbuse": "",
+        "signature": "",
+        "status": "",
+        "updatedAt": "",
+        "version": ""
+      }
+    },
     "empty-state": {
       "message": ""
     }
@@ -2031,8 +2052,7 @@
       "html": "HTML einbetten",
       "html-description": "Der folgende HTML-Code kann kopiert und in eine Website eingefügt werden. Wenn der anonyme Zugriff nicht aktiviert ist, muss der Benutzer, der diese Seite aufruft, bei Grafana angemeldet sein, damit das Diagramm geladen wird.",
       "info": "Erstelle einen HTML-Code zum Einbetten eines Inlineframes in dieses Panel.",
-      "time-range": "Aktueller Zeitbereich",
-      "time-range-description": "Wandelt den aktuellen relativen Zeitbereich in einen absoluten Zeitbereich um"
+      "time-range": ""
     },
     "export": {
       "back-button": "Zurück zum Export der Konfiguration",
@@ -2102,9 +2122,11 @@
   },
   "share-panel": {
     "drawer": {
+      "share-embed-title": "",
       "share-link-title": ""
     },
     "menu": {
+      "share-embed-title": "",
       "share-link-title": ""
     }
   },

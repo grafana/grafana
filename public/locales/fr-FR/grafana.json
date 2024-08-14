@@ -120,6 +120,9 @@
       "used-by_one": "",
       "used-by_other": ""
     },
+    "contactPointFilter": {
+      "label": ""
+    },
     "grafana-rules": {
       "export-rules": "",
       "loading": "",
@@ -689,6 +692,12 @@
     },
     "empty-state": {
       "message": ""
+    }
+  },
+  "embed": {
+    "share": {
+      "time-range-description": "",
+      "time-range-label": ""
     }
   },
   "explore": {
@@ -1656,6 +1665,18 @@
     }
   },
   "plugins": {
+    "details": {
+      "labels": {
+        "dependencies": "",
+        "downloads": "",
+        "from": "",
+        "reportAbuse": "",
+        "signature": "",
+        "status": "",
+        "updatedAt": "",
+        "version": ""
+      }
+    },
     "empty-state": {
       "message": ""
     }
@@ -2031,8 +2052,7 @@
       "html": "Intégrer du HTML",
       "html-description": "Le code HTML ci-dessous peut être copié et inclus dans une autre page Web. Sauf si l'accès anonyme est activé, l'utilisateur qui consulte cette page doit être connecté à Grafana pour que le graphique charge.",
       "info": "Générer du HTML pour intégrer un iframe avec ce panneau.",
-      "time-range": "Période temporelle actuelle",
-      "time-range-description": "Transforme la période temporelle relative actuelle en une période temporelle absolue"
+      "time-range": ""
     },
     "export": {
       "back-button": "Retour à la configuration de l'exportation",
@@ -2102,9 +2122,11 @@
   },
   "share-panel": {
     "drawer": {
+      "share-embed-title": "",
       "share-link-title": ""
     },
     "menu": {
+      "share-embed-title": "",
       "share-link-title": ""
     }
   },
