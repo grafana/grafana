@@ -1,12 +1,12 @@
 import * as React from 'react';
 
+import { config } from '@grafana/runtime';
 import { Button, ModalsController, ButtonProps } from '@grafana/ui/src';
 import { t } from 'app/core/internationalization';
 import { useDeletePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { DeletePublicDashboardModal } from './DeletePublicDashboardModal';
-import { config } from '@grafana/runtime';
 
 export interface PublicDashboardDeletion {
   uid: string;
