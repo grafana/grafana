@@ -688,6 +688,11 @@ func (d *dashboardStore) deleteChildrenDashboardAssociations(sess *db.Session, d
 
 	if len(dashIds) > 0 {
 		for _, dash := range dashIds {
+			provisioningData, _ := d.GetProvisionedDataByDashboardID(context.Background(), dash.Id)
+			if provisioningData != nil {
+				return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
+			}
+
 			// remove all access control permission with child dashboard scopes
 			if err := d.deleteResourcePermissions(sess, dashboard.OrgID, ac.GetResourceScopeUID("dashboards", dash.Uid)); err != nil {
 				return err
