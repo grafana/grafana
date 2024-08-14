@@ -1328,6 +1328,13 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.ScopesListScopesURL = scopesSection.Key("list_scopes_endpoint").MustString("")
 	cfg.ScopesListDashboardsURL = scopesSection.Key("list_dashboards_endpoint").MustString("")
 
+	// read unifed storage config
+	err = cfg.setUnifiedStorageConfig()
+	if err != nil {
+		cfg.Logger.Error("failed to set unified_storage configs", "err", err.Error())
+		return err
+	}
+
 	return nil
 }
 
