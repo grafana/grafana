@@ -303,8 +303,11 @@ func NewConditionCmd(refID string, ccj []ConditionJSON) (*ConditionsCmd, error) 
 	for i, cj := range ccj {
 		cond := condition{}
 
-		if i > 0 && cj.Operator.Type != "and" && cj.Operator.Type != "or" {
-			return nil, fmt.Errorf("condition %v operator must be `and` or `or`", i+1)
+		if i > 0 &&
+			cj.Operator.Type != ConditionOperatorAnd &&
+			cj.Operator.Type != ConditionOperatorOr &&
+			cj.Operator.Type != ConditionOperatorLogicOr {
+			return nil, fmt.Errorf("condition %v operator must be `and`, `or` or `logic-or`", i+1)
 		}
 		cond.Operator = cj.Operator.Type
 
