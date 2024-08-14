@@ -44,9 +44,9 @@ const getIntervalByName = (name: string) => {
 };
 
 export const listNamespacedTimeIntervalHandler = () =>
-  http.get<{ namespace: string }>(
+  http.get<{ namespace: string }, { fieldSelector: string }>(
     `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/timeintervals`,
-    ({ params }) => {
+    ({ params, request }) => {
       const { namespace } = params;
 
       // k8s APIs expect `default` rather than `org-1` - this is one particular example
@@ -59,6 +59,17 @@ export const listNamespacedTimeIntervalHandler = () =>
           { status: 403 }
         );
       }
+
+      // Rudimentary filter support for `spec.name`
+      const url = new URL(request.url);
+      const fieldSelector = url.searchParams.get('fieldSelector');
+      if (fieldSelector && fieldSelector.includes('spec.name')) {
+        const name = fieldSelector.split('=')[1];
+        const matchingInterval = getIntervalByName(name);
+
+        return HttpResponse.json({ items: matchingInterval ? [matchingInterval] : [] });
+      }
+
       return HttpResponse.json(allTimeIntervals);
     }
   );
