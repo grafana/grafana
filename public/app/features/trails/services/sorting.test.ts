@@ -1,4 +1,5 @@
 import { toDataFrame, FieldType, ReducerID } from '@grafana/data';
+
 import { sortSeries } from './sorting';
 
 const frameA = toDataFrame({
@@ -46,28 +47,28 @@ describe('sortSeries', () => {
     const series = [frameA, frameB, frameC];
     const sortedSeries = [frameC, frameA, frameB];
 
-    const result = sortSeries(series, ReducerID.stdDev, 'desc');
+    const result = sortSeries(series, ReducerID.stdDev);
     expect(result).toEqual(sortedSeries);
   });
   test('Sorts series by standard deviation, ascending', () => {
     const series = [frameA, frameB, frameC];
     const sortedSeries = [frameB, frameA, frameC];
 
-    const result = sortSeries(series, ReducerID.stdDev, 'asc');
+    const result = sortSeries(series, ReducerID.stdDev);
     expect(result).toEqual(sortedSeries);
   });
   test('Sorts series alphabetically, ascending', () => {
     const series = [frameA, frameB, frameC];
     const sortedSeries = [frameB, frameC, frameA];
 
-    const result = sortSeries(series, 'alphabetical', 'asc');
+    const result = sortSeries(series, 'alphabetical');
     expect(result).toEqual(sortedSeries);
   });
   test('Sorts series alphabetically, ascending', () => {
     const series = [frameA, frameB, frameC];
     const sortedSeries = [frameA, frameC, frameB];
 
-    const result = sortSeries(series, 'alphabetical', 'desc');
+    const result = sortSeries(series, 'alphabetical');
     expect(result).toEqual(sortedSeries);
   });
 });
