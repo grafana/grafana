@@ -964,6 +964,105 @@
       "refresh": "Refresh"
     }
   },
+  "ldap-drawer": {
+    "attributes-section": {
+      "description": "Specify the LDAP attributes that map to the user&lsquo;s given name, surname, and email address, ensuring the application correctly retrieves and displays user information.",
+      "email": {
+        "label": "Email"
+      },
+      "label": "Attributes",
+      "member-of": {
+        "label": "Member Of"
+      },
+      "name": {
+        "label": "Name"
+      },
+      "surname": {
+        "label": "Surname"
+      }
+    },
+    "extra-security-section": {
+      "label": "Extra security measures",
+      "min-tls-version": {
+        "description": "This is the minimum TLS version allowed. Accepted values are: TLS1.1, TLS1.2, TLS1.3.",
+        "label": "Min TLS version"
+      },
+      "start-tls": {
+        "description": "If set to true, use LDAP with STARTTLS instead of LDAPS",
+        "label": "Start TLS"
+      },
+      "tls-ciphers": {
+        "description": "List of comma- or space-separated ciphers",
+        "label": "TLS ciphers",
+        "placeholder": "e.g. [\"TLS_AES_256_GCM_SHA384\"]"
+      },
+      "use-ssl": {
+        "description": "Set to true if LDAP server should use an encrypted TLS connection (either with STARTTLS or LDAPS)",
+        "label": "Use SSL"
+      }
+    },
+    "group-mapping": {
+      "grafana-admin": {
+        "description": "If enabled, all users from this group will be Grafana Admins",
+        "label": "Grafana Admin"
+      },
+      "group-dn": {
+        "description": "The name of the key used to extract the ID token from the returned OAuth2 token.",
+        "label": "Group DN"
+      },
+      "org-id": {
+        "description": "The Grafana organization database id. Default org (ID 1) will be used if left out",
+        "label": "Org ID"
+      },
+      "org-role": {
+        "label": "Org role *"
+      },
+      "remove": {
+        "button": "Remove group mapping"
+      }
+    },
+    "group-mapping-section": {
+      "add": {
+        "button": "Add group mapping"
+      },
+      "description": "Map LDAP groups to grafana org roles",
+      "group-search-base-dns": {
+        "description": "Separate by commas or spaces",
+        "label": "Group search base DNS"
+      },
+      "group-search-filter": {
+        "description": "Used to filter and identify group entries within the directory",
+        "label": "Group search filter"
+      },
+      "group-search-filter-user-attribute": {
+        "description": "Identifies users within group entries for filtering purposes",
+        "label": "Group name attribute"
+      },
+      "label": "Group Mapping",
+      "skip-org-role-sync": {
+        "description": "Prevent synchronizing users’ organization roles from your IdP",
+        "label": "Skip organization role sync"
+      }
+    },
+    "misc-section": {
+      "allow-sign-up": {
+        "descrition": "If not enabled, only existing Grafana users can log in using LDAP",
+        "label": "Allow sign up"
+      },
+      "label": "Misc",
+      "port": {
+        "description": "Default port is 389 without SSL or 636 with SSL",
+        "label": "Port",
+        "placeholder": "389"
+      },
+      "timeout": {
+        "description": "Timeout",
+        "label": "Timeout",
+        "placeholder": "389"
+      }
+    },
+    "title": "Advanced Settings"
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "Cancel",

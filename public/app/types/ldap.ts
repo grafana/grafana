@@ -90,12 +90,12 @@ export interface LdapServerConfig {
   groupSearchFilter: string;
   groupSearchFilterUserAttribute: string;
   host: string;
-  mapLdapGroupsToOrgRoles: boolean;
   minTlsVersion: string;
   port: number;
   rootCaCert: string;
   searchBaseDn: string[];
   searchFilter: string;
+  skipOrgRoleSync: boolean;
   sslSkipVerify: boolean;
   startTls: boolean;
   timeout: number;

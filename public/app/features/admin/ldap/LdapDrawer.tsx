@@ -16,6 +16,7 @@ import {
   Switch,
   Text,
 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { GroupMapping, LdapServerConfig, LdapSettings, OrgRole } from 'app/types';
 
 interface OwnProps {
@@ -50,15 +51,15 @@ class GroupMappingComponent extends Component<GroupMappingProps> {
       <div>
         <Divider />
         <Field
-          label="Group DN"
-          description="The name of the key used to extract the ID token from the returned OAuth2 token."
+          label={<Trans i18nKey='ldap-drawer.group-mapping.group-dn.label'>Group DN</Trans>}
+          description={<Trans i18nKey='ldap-drawer.group-mapping.group-dn.description'>The name of the key used to extract the ID token from the returned OAuth2 token.</Trans>}
         >
           <Input
             defaultValue={groupMapping.groupDn}
             onChange={({ currentTarget: { value } }) => onChange({ ...groupMapping, groupDn: value })}
           ></Input>
         </Field>
-        <Field label="Org role *">
+        <Field label={<Trans i18nKey='ldap-drawer.group-mapping.org-role.label'>Org role *</Trans>}>
           <RadioButtonGroup
             options={roleOptions}
             value={groupMapping.orgRole}
@@ -66,22 +67,24 @@ class GroupMappingComponent extends Component<GroupMappingProps> {
           />
         </Field>
         <Field
-          label="Org ID"
-          description="The Grafana organization database id. Default org (ID 1) will be used if left out"
+          label={<Trans i18nKey='ldap-drawer.group-mapping.org-id.label'>Org ID</Trans>}
+          description={<Trans i18nKey='ldap-drawer.group-mapping.org-id.description'>The Grafana organization database id. Default org (ID 1) will be used if left out</Trans>}
         >
           <Input
             defaultValue={groupMapping.orgId}
             onChange={({ currentTarget: { value } }) => onChange({ ...groupMapping, orgId: +value })}
           ></Input>
         </Field>
-        <Field label="Grafana Admin" description="If enabled, all users from this group will be Grafana Admins">
+        <Field
+          label={<Trans i18nKey='ldap-drawer.group-mapping.grafana-admin.label'>Grafana Admin</Trans>}
+          description={<Trans i18nKey='ldap-drawer.group-mapping.grafana-admin.description'>If enabled, all users from this group will be Grafana Admins</Trans>}>
           <Switch
             value={groupMapping.grafanaAdmin}
             onChange={() => onChange({ ...groupMapping, grafanaAdmin: !groupMapping.grafanaAdmin })}
           />
         </Field>
         <Button variant="secondary" fill="outline" icon="trash-alt" onClick={onRemove}>
-          Remove group mapping
+          <Trans i18nKey='ldap-drawer.group-mapping.remove.button'>Remove group mapping</Trans>
         </Button>
       </div>
     );
@@ -152,9 +155,11 @@ export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props
   };
 
   return (
-    <Drawer title="Advanced Settings" onClose={onClose}>
-      <CollapsableSection label="Misc" isOpen={true}>
-        <Field label="Allow sign up" description="If not enabled, only existing Grafana users can log in using LDAP">
+    <Drawer title={<Trans i18nKey='ldap-drawer.title'>Advanced Settings</Trans>} onClose={onClose}>
+      <CollapsableSection label={<Trans i18nKey='ldap-drawer.misc-section.label'>Misc</Trans>} isOpen={true}>
+        <Field
+          label={<Trans i18nKey='ldap-drawer.misc-section.allow-sign-up.label'>Allow sign up</Trans>}
+          description={<Trans i18nKey='ldap-drawer.misc-section.allow-sign-up.descrition'>If not enabled, only existing Grafana users can log in using LDAP</Trans>}>
           <Switch
             value={ldapSettings.allowSignUp}
             onChange={() => {
@@ -165,79 +170,96 @@ export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props
             }}
           />
         </Field>
-        <Field label="Port" description="Default port is 389 without SSL or 636 with SSL">
+        <Field
+          label={<Trans i18nKey='ldap-drawer.misc-section.port.label'>Port</Trans>}
+          description={<Trans i18nKey='ldap-drawer.misc-section.port.description'>Default port is 389 without SSL or 636 with SSL</Trans>}>
           <Input
-            placeholder="389"
+            placeholder={t('ldap-drawer.misc-section.port.placeholder', '389')}
             defaultValue={ldapSettings.config.server.port.toString()}
             type="number"
             onChange={({ currentTarget: { value } }) => onServerConfigChange({ port: +value })}
           />
         </Field>
-        <Field label="Timeout" description="Timeout in seconds. Applies to each host specified in the “host” entry">
+        <Field
+          label={<Trans i18nKey='ldap-drawer.misc-section.timeout.label'>Timeout</Trans>}
+          description={<Trans i18nKey='ldap-drawer.misc-section.timeout.description'>Timeout</Trans>}>
           <Input
-            placeholder="10"
+            placeholder={t('ldap-drawer.misc-section.timeout.placeholder', '389')}
             defaultValue={ldapSettings.config.server.timeout.toString()}
             type="number"
             onChange={({ currentTarget: { value } }) => onServerConfigChange({ timeout: +value })}
           />
         </Field>
       </CollapsableSection>
-      <CollapsableSection label="Attributes" isOpen={true}>
+      <CollapsableSection
+        label={<Trans i18nKey='ldap-drawer.attributes-section.label'>Attributes</Trans>}
+        isOpen={true}>
         <Text color="secondary">
-          Specify the LDAP attributes that map to the user&lsquo;s given name, surname, and email address, ensuring the
-          application correctly retrieves and displays user information.
+          <Trans i18nKey='ldap-drawer.attributes-section.description'>Specify the LDAP attributes that map to the user&lsquo;s given name, surname, and email address, ensuring the
+          application correctly retrieves and displays user information.</Trans>
         </Text>
-        <Field label="Name">
+        <Field label={<Trans i18nKey='ldap-drawer.attributes-section.name.label'>Name</Trans>}>
           <Input
             defaultValue={ldapSettings.config.server?.attributes.name}
             onChange={({ currentTarget: { value } }) => onAttributeChange('name', value)}
           />
         </Field>
-        <Field label="Surname">
+        <Field label={<Trans i18nKey='ldap-drawer.attributes-section.surname.label'>Surname</Trans>}>
           <Input
             defaultValue={ldapSettings.config.server?.attributes.surname}
             onChange={({ currentTarget: { value } }) => onAttributeChange('surname', value)}
           />
         </Field>
-        <Field label="Member Of">
+        <Field label={<Trans i18nKey='ldap-drawer.attributes-section.member-of.label'>Member Of</Trans>}>
           <Input
             defaultValue={ldapSettings.config.server?.attributes.memberOf}
             onChange={({ currentTarget: { value } }) => onAttributeChange('memberOf', value)}
           />
         </Field>
-        <Field label="Email">
+        <Field label={<Trans i18nKey='ldap-drawer.attributes-section.email.label'>Email</Trans>}>
           <Input
             defaultValue={ldapSettings.config.server?.attributes.email}
             onChange={({ currentTarget: { value } }) => onAttributeChange('email', value)}
           />
         </Field>
       </CollapsableSection>
-      <CollapsableSection label="Group Mapping" isOpen={true}>
-        <Text>Map LDAP groups to grafana org roles</Text>
+      <CollapsableSection label={<Trans i18nKey='ldap-drawer.group-mapping-section.label'>Group Mapping</Trans>} isOpen={true}>
+        <Text>
+          <Trans i18nKey='ldap-drawer.group-mapping-section.description'>Map LDAP groups to grafana org roles</Trans>
+        </Text>
         <Field
-          label="Skip organization role sync"
-          description="Prevent synchronizing users’ organization roles from your IdP"
+          label={<Trans i18nKey='ldap-drawer.group-mapping-section.skip-org-role-sync.label'>Skip organization role sync</Trans>}
+          description={<Trans i18nKey='ldap-drawer.group-mapping-section.skip-org-role-sync.description'>Prevent synchronizing users’ organization roles from your IdP</Trans>}
         >
           <Switch
-            value={ldapSettings.config.server.mapLdapGroupsToOrgRoles}
+            value={ldapSettings.config.server.skipOrgRoleSync}
             onChange={() =>
-              onServerConfigChange({ mapLdapGroupsToOrgRoles: !ldapSettings.config.server.mapLdapGroupsToOrgRoles })
+              onServerConfigChange({ skipOrgRoleSync: !ldapSettings.config.server.skipOrgRoleSync })
             }
           />
         </Field>
-        <Field label="Group search filter" description="Used to filter and identify group entries within the directory">
+        <Field
+          label={<Trans i18nKey='ldap-drawer.group-mapping-section.group-search-filter.label'>Group search filter</Trans>}
+          description={<Trans i18nKey='ldap-drawer.group-mapping-section.group-search-filter.description'>Used to filter and identify group entries within the directory</Trans>}
+        >
           <Input
             defaultValue={ldapSettings.config.server.groupSearchFilter}
             onChange={({ currentTarget: { value } }) => onServerConfigChange({ groupSearchFilter: value })}
           />
         </Field>
-        <Field label="Group search base DNS" description="Separate by commas or spaces">
+        <Field
+          label={<Trans i18nKey='ldap-drawer.group-mapping-section.group-search-base-dns.label'>Group search base DNS</Trans>}
+          description={<Trans i18nKey='ldap-drawer.group-mapping-section.group-search-base-dns.description'>Separate by commas or spaces</Trans>}
+        >
           <Input
             defaultValue={ldapSettings.config.server.groupSearchBaseDns?.join(' ')}
             onChange={({ currentTarget: { value } }) => onServerConfigChange({ groupSearchBaseDns: value.split(' ') })}
           />
         </Field>
-        <Field label="Group name attribute" description="Identifies users within group entries for filtering purposes">
+        <Field
+          label={<Trans i18nKey='ldap-drawer.group-mapping-section.group-search-filter-user-attribute.label'>Group name attribute</Trans>}
+          description={<Trans i18nKey='ldap-drawer.group-mapping-section.group-search-filter-user-attribute.description'>Identifies users within group entries for filtering purposes</Trans>}
+        >
           <Input
             defaultValue={ldapSettings.config.server.groupSearchFilterUserAttribute}
             onChange={({ currentTarget: { value } }) => onServerConfigChange({ groupSearchFilterUserAttribute: value })}
@@ -262,28 +284,31 @@ export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props
         ))}
         <Divider />
         <Button className={styles.button} variant="secondary" icon="plus" onClick={() => onAddGroupMapping()}>
-          Add group mapping
+          <Trans i18nKey='ldap-drawer.group-mapping-section.add.button'>Add group mapping</Trans>
         </Button>
       </CollapsableSection>
-      <CollapsableSection label="Extra security measures" isOpen={true}>
+      <CollapsableSection label={<Trans i18nKey='ldap-drawer.extra-security-section.label'>Extra security measures</Trans>} isOpen={true}>
         <Field
-          label="Use SSL"
-          description="Set to true if LDAP server should use an encrypted TLS connection (either with STARTTLS or LDAPS)"
+          label={<Trans i18nKey='ldap-drawer.extra-security-section.use-ssl.label'>Use SSL</Trans>}
+          description={<Trans i18nKey='ldap-drawer.extra-security-section.use-ssl.description'>Set to true if LDAP server should use an encrypted TLS connection (either with STARTTLS or LDAPS)</Trans>}
         >
           <Switch
             value={ldapSettings.config.server.useSsl}
             onChange={() => onServerConfigChange({ useSsl: !ldapSettings.config.server.useSsl })}
           />
         </Field>
-        <Field label="Start TLS" description="If set to true, use LDAP with STARTTLS instead of LDAPS">
+        <Field
+          label={<Trans i18nKey='ldap-drawer.extra-security-section.start-tls.label'>Start TLS</Trans>}
+          description={<Trans i18nKey='ldap-drawer.extra-security-section.start-tls.description'>If set to true, use LDAP with STARTTLS instead of LDAPS</Trans>}
+        >
           <Switch
             value={ldapSettings.config.server.startTls}
             onChange={() => onServerConfigChange({ startTls: !ldapSettings.config.server.startTls })}
           />
         </Field>
         <Field
-          label="Min TLS version"
-          description="This is the minimum TLS version allowed. Accepted values are: TLS1.1, TLS1.2, TLS1.3."
+          label={<Trans i18nKey='ldap-drawer.extra-security-section.min-tls-version.label'>Min TLS version</Trans>}
+          description={<Trans i18nKey='ldap-drawer.extra-security-section.min-tls-version.description'>This is the minimum TLS version allowed. Accepted values are: TLS1.1, TLS1.2, TLS1.3.</Trans>}
         >
           <Select
             options={tlsOptions}
@@ -291,9 +316,12 @@ export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props
             onChange={(v) => onServerConfigChange({ minTlsVersion: v.value })}
           ></Select>
         </Field>
-        <Field label="TLS ciphers" description="List of comma- or space-separated ciphers">
+        <Field
+          label={<Trans i18nKey='ldap-drawer.extra-security-section.tls-ciphers.label'>TLS ciphers</Trans>}
+          description={<Trans i18nKey='ldap-drawer.extra-security-section.tls-ciphers.description'>List of comma- or space-separated ciphers</Trans>}
+        >
           <Input
-            placeholder='e.g. ["TLS_AES_256_GCM_SHA384"]'
+            placeholder={t('ldap-drawer.extra-security-section.tls-ciphers.placeholder', 'e.g. ["TLS_AES_256_GCM_SHA384"]')}
             defaultValue={ldapSettings.config.server.tlsCiphers?.join(' ')}
             onChange={({ currentTarget: { value } }) => onServerConfigChange({ tlsCiphers: value.split(' ') })}
           />
