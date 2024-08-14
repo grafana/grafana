@@ -106,6 +106,7 @@
 /pkg/semconv/ @grafana/grafana-backend-group
 /pkg/server/ @grafana/grafana-backend-group
 /pkg/apiserver @grafana/grafana-app-platform-squad
+/pkg/aggregator @grafana/grafana-app-platform-squad
 /pkg/apimachinery @grafana/grafana-app-platform-squad
 /pkg/apimachinery/identity/ @grafana/identity-squad
 /pkg/apimachinery/errutil/ @grafana/grafana-backend-group
@@ -344,6 +345,7 @@
 /packages/grafana-ui/src/components/DataLinks/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/DateTimePickers/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/Gauge/ @grafana/dataviz-squad
+/packages/grafana-ui/src/components/PluginSignatureBadge/ @grafana/plugins-platform-frontend
 /packages/grafana-ui/src/components/Sparkline/ @grafana/grafana-frontend-platform @grafana/app-o11y-visualizations
 /packages/grafana-ui/src/components/Table/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/Table/SparklineCell.tsx @grafana/dataviz-squad @grafana/app-o11y-visualizations
@@ -504,7 +506,8 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/test/ @grafana/grafana-frontend-platform
 /public/test/helpers/alertingRuleEditor.tsx @grafana/alerting-frontend
 /public/views/ @grafana/grafana-frontend-platform
-/public/views/swagger.html @grafana/grafana-backend-group
+/public/views/swagger.html @grafana/grafana-app-platform-squad
+/public/swagger/ @grafana/grafana-app-platform-squad
 
 /public/app/features/explore/Logs/ @grafana/observability-logs
 
@@ -665,7 +668,7 @@ embed.go @grafana/grafana-as-code
 
 # GitHub Workflows and Templates
 /.github/CODEOWNERS @tolzhabayev
-/.github/ISSUE_TEMPLATE/ @torkelo
+/.github/ISSUE_TEMPLATE/ @torkelo @sympatheticmoose
 /.github/PULL_REQUEST_TEMPLATE.md @torkelo
 /.github/bot.md @torkelo
 /.github/commands.json @torkelo

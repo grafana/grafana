@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -188,7 +188,8 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/api/endpoint", nil)
 
 			expectedIdentity := &authn.Identity{
-				ID:          identity.NewTypedID(claims.TypeUser, tc.ctxSignedInUser.UserID),
+				ID:          strconv.FormatInt(tc.ctxSignedInUser.UserID, 10),
+				Type:        claims.TypeUser,
 				OrgID:       tc.targetOrgId,
 				Permissions: map[int64]map[string][]string{},
 			}
