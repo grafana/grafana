@@ -13,7 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+	"go.opentelemetry.io/otel"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/accesscontrol/resourcepermissions")
 
 type api struct {
 	cfg         *setting.Cfg
@@ -140,6 +143,10 @@ type getResourcePermissionsResponse []resourcePermissionDTO
 // 404: notFoundError
 // 500: internalServerError
 func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
+	ctx, span := tracer.Start(c.Req.Context(), "accesscontrol.resourcepermissions.getPermissions")
+	defer span.End()
+	c.Req = c.Req.WithContext(ctx)
+
 	resourceID := web.Params(c.Req)[":resourceID"]
 
 	permissions, err := a.service.GetPermissions(c.Req.Context(), c.SignedInUser, resourceID)
@@ -227,6 +234,10 @@ type SetResourcePermissionsForUserParams struct {
 // 404: notFoundError
 // 500: internalServerError
 func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
+	ctx, span := tracer.Start(c.Req.Context(), "accesscontrol.resourcepermissions.setUserPermission")
+	defer span.End()
+	c.Req = c.Req.WithContext(ctx)
+
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":userID"], 10, 64)
 	if err != nil {
 		return response.Err(ErrInvalidParam.Build(ErrInvalidParamData("userID", err)))
@@ -280,6 +291,10 @@ type SetResourcePermissionsForTeamParams struct {
 // 404: notFoundError
 // 500: internalServerError
 func (a *api) setTeamPermission(c *contextmodel.ReqContext) response.Response {
+	ctx, span := tracer.Start(c.Req.Context(), "accesscontrol.resourcepermissions.setTeamPermission")
+	defer span.End()
+	c.Req = c.Req.WithContext(ctx)
+
 	teamID, err := strconv.ParseInt(web.Params(c.Req)[":teamID"], 10, 64)
 	if err != nil {
 		return response.Err(ErrInvalidParam.Build(ErrInvalidParamData("teamID", err)))
@@ -333,6 +348,10 @@ type SetResourcePermissionsForBuiltInRoleParams struct {
 // 404: notFoundError
 // 500: internalServerError
 func (a *api) setBuiltinRolePermission(c *contextmodel.ReqContext) response.Response {
+	ctx, span := tracer.Start(c.Req.Context(), "accesscontrol.resourcepermissions.setBuiltinRolePermission")
+	defer span.End()
+	c.Req = c.Req.WithContext(ctx)
+
 	builtInRole := web.Params(c.Req)[":builtInRole"]
 	resourceID := web.Params(c.Req)[":resourceID"]
 
@@ -379,6 +398,10 @@ type SetResourcePermissionsParams struct {
 // 404: notFoundError
 // 500: internalServerError
 func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
+	ctx, span := tracer.Start(c.Req.Context(), "accesscontrol.resourcepermissions.setPermissions")
+	defer span.End()
+	c.Req = c.Req.WithContext(ctx)
+
 	resourceID := web.Params(c.Req)[":resourceID"]
 
 	cmd := setPermissionsCommand{}
