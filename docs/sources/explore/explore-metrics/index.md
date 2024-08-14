@@ -21,11 +21,11 @@ Explore Metrics is currently in [public preview](/docs/release-life-cycle/). Gra
 
 With Explore Metrics, you can:
 
-- easily slice and dice metrics based on their labels, so you can immediately see anomalies and identify issues
-- see the right visualization for your metric based on its type (gauge vs. counter, for example) without building it yourself
-- surface other metrics relevant to the current metric
-- “explore in a drawer” - expand a drawer over a dashboard with more content so you don’t lose your place
-- view a history of user steps when navigating through metrics and their filters
+- Easily slice and dice metrics based on their labels, so you can immediately see anomalies and identify issues
+- See the right visualization for your metric based on its type (gauge vs. counter, for example) without building it yourself
+- Surface other metrics relevant to the current metric
+- “Explore in a drawer” - expand a drawer over a dashboard with more content so you don’t lose your place
+- View a history of user steps when navigating through metrics and their filters
 <!-- - easily pivot to other related telemetry, including logs or traces -->
 
 {{< docs/play title="Explore Metrics" url="https://play.grafana.org/explore/metrics/trail?from=now-1h&to=now&var-ds=grafanacloud-demoinfra-prom&var-filters=&refresh=&metricPrefix=all" >}}
