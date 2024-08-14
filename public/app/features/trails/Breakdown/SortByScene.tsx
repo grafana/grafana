@@ -97,7 +97,7 @@ export class SortByScene extends SceneObjectBase<SortBySceneState> {
         <InlineField
           label="Sort by"
           htmlFor="sort-by-criteria"
-          tooltip="Calculate a derived quantity from the values in your time series and sort by this criteria. Defaults to standard deviation."
+          tooltip="Sorts by a calculation based on time series values. Defaults to standard deviation."
         >
           <Select
             value={value}
