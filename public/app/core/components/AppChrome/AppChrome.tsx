@@ -202,7 +202,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
     panes: css(
       {
         display: 'flex',
-        flexDirection: 'row',
+        flexDirection: 'column',
         flexGrow: 1,
         label: 'page-panes',
       },
