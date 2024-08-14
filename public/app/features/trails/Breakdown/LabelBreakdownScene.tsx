@@ -1,4 +1,4 @@
-import init from '@bsull/augurs';
+// import init from '@bsull/augurs';
 import { css } from '@emotion/css';
 import { isNumber, max, min, throttle } from 'lodash';
 
@@ -80,7 +80,7 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
 
   private _onActivate() {
     // eslint-disable-next-line no-console
-    init().then(() => console.debug('Grafana ML initialized'));
+    // init().then(() => console.debug('Grafana ML initialized'));
 
     const variable = this.getVariable();
 
@@ -281,6 +281,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       alignItems: 'flex-start',
       gap: theme.spacing(2),
+      justifyContent: 'space-between',
     }),
   };
 }
