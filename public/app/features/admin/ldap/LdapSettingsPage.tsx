@@ -75,6 +75,7 @@ const emptySettings: LdapPayload = {
   },
 };
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const mapJsonToModel = (json: any): LdapPayload => {
   const settings = json.settings;
   const config = settings.config;
@@ -86,6 +87,7 @@ const mapJsonToModel = (json: any): LdapPayload => {
     surname: server.attributes.surname,
     username: server.attributes.username,
   };
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   const groupMappings: GroupMapping[] = server.group_mappings.map((gp: any) => ({
     grafanaAdmin: !!gp.grafana_admin,
     groupDn: gp.group_dn,
@@ -161,7 +163,7 @@ export const LdapSettingsPage = (): JSX.Element => {
   if (!config.featureToggles.ssoSettingsLDAP) {
     return (
       <Alert title="invalid configuration">
-        This page is only accessible by enabling the <strong>ssoSettingsLDAP</strong> feature flag.
+        <Trans i18nKey='ldap-settings-page.alert'>This page is only accessible by enabling the <strong>ssoSettingsLDAP</strong> feature flag.</Trans>
       </Alert>
     );
   }
@@ -262,12 +264,13 @@ export const LdapSettingsPage = (): JSX.Element => {
     });
   };
 
+  const documentation = <Trans i18nKey='ldap-settings-page.documentation'>documentation</Trans>
   const subtitle = (
     <TextLink
       href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/ldap/"
       external
     >
-      documentation
+      {documentation}
     </TextLink>
   );
   const subTitle = (
@@ -282,7 +285,7 @@ export const LdapSettingsPage = (): JSX.Element => {
       href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#variable-expansion"
       external
     >
-      documentation
+      {documentation}
     </TextLink>
   );
   const passwordTooltip = (
