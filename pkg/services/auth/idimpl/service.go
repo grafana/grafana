@@ -96,9 +96,9 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 				IssuedAt: jwt.NewNumericDate(now),
 			},
 			Rest: authnlib.IDTokenClaims{
-				Namespace: s.nsMapper(id.GetOrgID()),
-				UID:       id.GetRawIdentifier(),
-				Type:      id.GetIdentityType(),
+				Namespace:  s.nsMapper(id.GetOrgID()),
+				Identifier: id.GetRawIdentifier(),
+				Type:       id.GetIdentityType(),
 			},
 		}
 
