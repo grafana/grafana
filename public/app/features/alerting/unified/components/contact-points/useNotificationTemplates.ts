@@ -1,12 +1,21 @@
 import { produce } from 'immer';
+import { useEffect } from 'react';
 
 import { useDispatch } from 'app/types';
 
 import { AlertManagerCortexConfig } from '../../../../../plugins/datasource/alertmanager/types';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { templatesApi } from '../../api/templateApi';
+import {
+  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup,
+  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroupList,
+} from '../../openapi/templatesApi.gen';
 import { updateAlertManagerConfigAction } from '../../state/actions';
-import { PROVENANCE_NONE } from '../../utils/k8s/constants';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { PROVENANCE_ANNOTATION, PROVENANCE_NONE } from '../../utils/k8s/constants';
+import { shouldUseK8sApi } from '../../utils/k8s/utils';
 import { ensureDefine } from '../../utils/templates';
+import { getK8sNamespace } from '../mute-timings/util';
 import { TemplateFormValues } from '../receivers/TemplateForm';
 
 interface BaseAlertmanagerArgs {
@@ -18,11 +27,27 @@ export interface NotificationTemplate {
   template: string;
   provenance: string;
 }
+
 export function useNotificationTemplates({ alertmanager }: BaseAlertmanagerArgs) {
   const { useGetAlertmanagerConfigurationQuery } = alertmanagerApi;
+  const { useListNamespacedTemplateGroupQuery } = templatesApi;
+
+  const k8sApiSupported = shouldUseK8sApi(alertmanager);
+
+  const k8sTemplatesRequestState = useListNamespacedTemplateGroupQuery(
+    { namespace: getK8sNamespace() },
+    {
+      skip: !k8sApiSupported || alertmanager !== GRAFANA_RULES_SOURCE_NAME,
+      selectFromResult: (state) => ({
+        ...state,
+        data: state.data ? templateGroupsToTemplates(state.data) : undefined,
+        currentData: state.currentData ? templateGroupsToTemplates(state.currentData) : undefined,
+      }),
+    }
+  );
 
   const templatesRequestState = useGetAlertmanagerConfigurationQuery(alertmanager, {
-    skip: !alertmanager,
+    skip: !alertmanager || k8sApiSupported,
     selectFromResult: (state) => ({
       ...state,
       data: state.data ? amConfigToTemplates(state.data) : undefined,
@@ -30,7 +55,25 @@ export function useNotificationTemplates({ alertmanager }: BaseAlertmanagerArgs)
     }),
   });
 
-  return templatesRequestState;
+  return k8sApiSupported ? k8sTemplatesRequestState : templatesRequestState;
+}
+
+function templateGroupsToTemplates(
+  templateGroups: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroupList
+): NotificationTemplate[] {
+  return templateGroups.items.map((templateGroup) => templateGroupToTemplate(templateGroup));
+}
+
+function templateGroupToTemplate(
+  templateGroup: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup
+): NotificationTemplate {
+  return {
+    name: templateGroup.spec.title,
+    template: templateGroup.spec.content,
+    provenance: templateGroup.metadata.annotations
+      ? templateGroup.metadata.annotations[PROVENANCE_ANNOTATION]
+      : PROVENANCE_NONE,
+  };
 }
 
 function amConfigToTemplates(config: AlertManagerCortexConfig): NotificationTemplate[] {
@@ -40,6 +83,48 @@ function amConfigToTemplates(config: AlertManagerCortexConfig): NotificationTemp
     // Undefined, null or empty string should be converted to PROVENANCE_NONE
     provenance: (config.template_file_provenances ?? {})[name] || PROVENANCE_NONE,
   }));
+}
+
+function amConfigToTemplate(config: AlertManagerCortexConfig, name: string): NotificationTemplate | undefined {
+  const templates = amConfigToTemplates(config);
+  return templates.find((t) => t.name === name);
+}
+
+interface GetTemplateParams extends BaseAlertmanagerArgs {
+  name: string;
+}
+
+export function useGetNotificationTemplate({ alertmanager, name }: GetTemplateParams) {
+  const { useLazyGetAlertmanagerConfigurationQuery } = alertmanagerApi;
+  const { useLazyReadNamespacedTemplateGroupQuery } = templatesApi;
+
+  const [fetchAmConfig, amConfigStatus] = useLazyGetAlertmanagerConfigurationQuery({
+    selectFromResult: (state) => ({
+      ...state,
+      data: state.data ? amConfigToTemplate(state.data, name) : undefined,
+      currentData: state.currentData ? amConfigToTemplate(state.currentData, name) : undefined,
+      // TODO set error and isError in case template is not found
+    }),
+  });
+  const [fetchTemplate, templateStatus] = useLazyReadNamespacedTemplateGroupQuery({
+    selectFromResult: (state) => ({
+      ...state,
+      data: state.data ? templateGroupToTemplate(state.data) : undefined,
+      currentData: state.currentData ? templateGroupToTemplate(state.currentData) : undefined,
+    }),
+  });
+
+  const k8sApiSupported = shouldUseK8sApi(alertmanager);
+
+  useEffect(() => {
+    if (k8sApiSupported) {
+      fetchTemplate({ namespace: getK8sNamespace(), name });
+    } else {
+      fetchAmConfig(alertmanager);
+    }
+  }, [alertmanager, name, k8sApiSupported, fetchAmConfig, fetchTemplate]);
+
+  return k8sApiSupported ? templateStatus : amConfigStatus;
 }
 
 export function useCreateNotificationTemplate({ alertmanager }: BaseAlertmanagerArgs) {

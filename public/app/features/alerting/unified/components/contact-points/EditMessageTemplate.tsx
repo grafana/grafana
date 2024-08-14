@@ -1,44 +1,52 @@
 import { RouteChildrenProps } from 'react-router-dom';
 
-import { Alert } from '@grafana/ui';
+import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
-import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { EditTemplateView } from '../receivers/EditTemplateView';
+import { stringifyErrorLike } from '../../utils/misc';
+import { TemplateForm } from '../receivers/TemplateForm';
+
+import { useGetNotificationTemplate } from './useNotificationTemplates';
 
 type Props = RouteChildrenProps<{ name: string }>;
 
 const EditMessageTemplate = ({ match }: Props) => {
-  const { selectedAlertmanager } = useAlertmanager();
-  const { data, isLoading, error } = useAlertmanagerConfig(selectedAlertmanager);
+  const templateName = match?.params.name;
 
-  const name = match?.params.name;
-  if (!name) {
+  const { selectedAlertmanager } = useAlertmanager();
+  const { currentData, isLoading, error } = useGetNotificationTemplate({
+    alertmanager: selectedAlertmanager ?? '',
+    name: templateName ?? '',
+  });
+
+  if (!templateName) {
     return <EntityNotFound entity="Notification template" />;
   }
 
-  if (isLoading && !data) {
-    return 'loading...';
+  if (isLoading) {
+    return <LoadingPlaceholder text="Loading template..." />;
   }
 
   if (error) {
     return (
       <Alert severity="error" title="Failed to fetch notification template">
-        {String(error)}
+        {stringifyErrorLike(error)}
       </Alert>
     );
   }
 
-  if (!data) {
-    return null;
+  if (!currentData) {
+    return <EntityNotFound entity="Notification template" />;
   }
 
+  const { name, template, provenance } = currentData;
   return (
-    <EditTemplateView
-      alertManagerSourceName={selectedAlertmanager!}
-      config={data}
-      templateName={decodeURIComponent(name)}
+    <TemplateForm
+      alertManagerSourceName={selectedAlertmanager ?? ''}
+      // config={config}
+      existing={{ name, content: template }}
+      provenance={provenance}
     />
   );
 };
