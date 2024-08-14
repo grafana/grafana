@@ -15,6 +15,7 @@ import { useSelector } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
+import { TOP_BAR_LEVEL_HEIGHT } from 'app/core/components/AppChrome/types';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const { controls, overlay, editview, editPanel, isEmpty, scopes, meta } = model.useState();
@@ -77,14 +78,15 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
               <controls.Component model={controls} />
             </div>
           )}
-          <PanelsContainer
+          {/* <PanelsContainer
             // This id is used by the image renderer to scroll through the dashboard
             id="page-scrollbar"
             className={styles.panelsContainer}
             testId={selectors.pages.Dashboard.DashNav.scrollContainer}
-          >
-            <div className={cx(styles.canvasContent)}>{body}</div>
-          </PanelsContainer>
+          > */}
+          <div className={cx(styles.canvasContent)}>{body}</div>
+          {/* <div className={cx(styles.canvasContent)}>{body}</div>
+          </PanelsContainer> */}
         </div>
       )}
       {overlay && <overlay.Component model={overlay} />}
@@ -106,11 +108,11 @@ function getStyles(theme: GrafanaTheme2) {
           display: 'flex',
           flexDirection: 'column',
         },
-      },
-      config.featureToggles.bodyScrolling && {
-        position: 'absolute',
-        width: '100%',
       }
+      // config.featureToggles.bodyScrolling && {
+      //   position: 'absolute',
+      //   width: '100%',
+      // }
     ),
     pageContainerWithControls: css({
       gridTemplateAreas: `
@@ -138,10 +140,22 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       flexGrow: 0,
       gridArea: 'controls',
+      top: TOP_BAR_LEVEL_HEIGHT * 2,
       padding: theme.spacing(2),
       ':empty': {
         display: 'none',
       },
+      // Make controls sticky on larger screens (> mobile)
+      [theme.breakpoints.up('sm')]: {
+        position: 'sticky',
+        zIndex: theme.zIndex.activePanel,
+        background: theme.colors.background.canvas,
+      },
+    }),
+    // TODO use
+    controlsWrapperEmbedded: css({
+      background: 'unset',
+      position: 'unset',
     }),
     controlsWrapperWithScopes: css({
       padding: theme.spacing(2, 2, 2, 0),
@@ -167,34 +181,3 @@ function getStyles(theme: GrafanaTheme2) {
     }),
   };
 }
-
-interface PanelsContainerProps {
-  id: string;
-  children: React.ReactNode;
-  className?: string;
-  testId?: string;
-}
-/**
- * Removes the scrollbar on mobile and uses a custom scrollbar on desktop
- */
-const PanelsContainer = ({ id, children, className, testId }: PanelsContainerProps) => {
-  const theme = useTheme2();
-  const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
-  const styles = useStyles2(() => ({
-    nonScrollable: css({
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-    }),
-  }));
-
-  return isMobile ? (
-    <div id={id} className={cx(className, styles.nonScrollable)} data-testid={testId}>
-      {children}
-    </div>
-  ) : (
-    <CustomScrollbar divId={id} autoHeightMin={'100%'} className={className} testId={testId}>
-      {children}
-    </CustomScrollbar>
-  );
-};
