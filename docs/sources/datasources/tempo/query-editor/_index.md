@@ -21,28 +21,41 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-  explore:
+  service-graph:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+  explore:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/service-graph/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/tempo/service-graph/
 ---
 
 # Query tracing data
 
 The Tempo data source's query editor helps you query and display traces from Tempo in [Explore](ref:explore).
+Most queries are created using [TraceQL](/docs/tempo/latest/traceql), the query language designed specifically for tracing.
+The Tempo data source query editor provides three interfaces:
 
-This topic explains configuration and queries specific to the Tempo data source.
+- The **Search** query type, also called the query builder, provides a user interface for building a TraceQL query.
+- The **TraceQL** query type, where you can write your own TraceQL query with autocomplete help.
+- The **Service Graph** query type, which displays a visual relationship between services. Refer to the [Service graph](ref:service-graph) documentation for more information.
+
+Your queries can use one or more of these query types.
+
+You don't have to know TraceQL to create a query.
+You can use the **Search** query type query builder's user interface to select options to search your data.
+These selections generate a TraceQL query.
+You can also create a query using the Search query builder and then edit it in the TraceQL query editor.
+
+This topic explains queries specific to the Tempo data source.
 For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
 
-To add TraceQL panels to your dashboard, refer to the [Traces panel documentation](/docs/grafana/latest/panels-visualizations/visualizations/traces/).
+## Before you begin
 
-To learn more about Grafana dashboards, refer to the [Use dashboards documentation](/docs/grafana/latest/dashboards/use-dashboards/).
-
-## Write TraceQL queries in Grafana
-
-You can compose TraceQL queries in Grafana and Grafana Cloud using **Explore** and a Tempo data source. You can use either the **Query type** > **Search** (the TraceQL query builder) or the **TraceQL** tab (the TraceQL query editor).
-Both of these methods let you build queries and drill-down into result sets.
+You can compose TraceQL queries in Grafana and Grafana Cloud using **Explore** and a Tempo data source.
 
 To learn more about how to query by TraceQL, refer to the [TraceQL documentation](/docs/tempo/latest/traceql).
 
@@ -62,45 +75,6 @@ Refer to the [TraceQL query editor documentation]({{< relref "./traceql-editor" 
 
 ![The TraceQL query editor](/static/img/docs/tempo/screenshot-traceql-query-editor-v10.png)
 
-## Query by search (deprecated)
-
-{{% admonition type="caution" %}}
-Starting with Grafana v10.2, this query type has been deprecated. It will be removed in Grafana v10.3.
-{{% /admonition %}}
-
-Use this to search for traces by service name, span name, duration range, or process-level attributes that are included in your application's instrumentation, such as HTTP status code and customer ID.
-
-To configure Tempo and the Tempo data source for search, refer to [Configure the data source]({{< relref "../#configure-the-data-source" >}}).
-
-To search for traces:
-
-1. Select **Search** from the **Query** type selector.
-1. Fill out the search form:
-
-| Name             | Description                                                                                                                       |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| **Service Name** | Returns a list of services.                                                                                                       |
-| **Span Name**    | Returns a list of span names.                                                                                                     |
-| **Tags**         | Sets tags with values in the [logfmt](https://brandur.org/logfmt) format, such as `error=true db.statement="select * from User"`. |
-| **Min Duration** | Filters all traces with a duration higher than the set value. Possible values are `1.2s`, `100ms`, `500us`.                       |
-| **Max Duration** | Filters all traces with a duration lower than the set value. Possible values are `1.2s`, `100ms`, `500us`.                        |
-| **Limit**        | Limits the number of traces returned.                                                                                             |
-
-{{< figure src="/static/img/docs/explore/tempo-search.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo search feature with a trace rendered in the right panel" >}}
-
-### Search recent traces
-
-You can search recent traces held in Tempo's ingesters.
-By default, ingesters store the last 15 minutes of tracing data.
-
-To configure your Tempo data source to use this feature, refer to the [Tempo documentation](/docs/tempo/latest/getting-started/tempo-in-grafana/#search-of-recent-traces).
-
-### Search the backend datastore
-
-Tempo includes the ability to search the entire backend datastore.
-
-To configure your Tempo data source to use this feature, refer to the [Tempo documentation](/docs/tempo/latest/getting-started/tempo-in-grafana/#search-of-the-backend-datastore).
-
 ## Query by TraceID
 
 To query a particular trace:
@@ -109,3 +83,9 @@ To query a particular trace:
 1. Enter the trace's ID into the query field.
 
 {{< figure src="/static/img/docs/tempo/query-editor-traceid.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo TraceID query type" >}}
+
+## Use TraceQL panels in dashboards
+
+To add TraceQL panels to your dashboard, refer to the [Traces panel documentation](/docs/grafana/latest/panels-visualizations/visualizations/traces/).
+
+To learn more about Grafana dashboards, refer to the [Use dashboards documentation](/docs/grafana/latest/dashboards/use-dashboards/).

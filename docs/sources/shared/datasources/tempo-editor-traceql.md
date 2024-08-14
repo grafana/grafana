@@ -33,9 +33,14 @@ This feature is automatically available in Grafana 10 (and newer) and Grafana Cl
 
 To use the TraceQL query editor in self-hosted Grafana 9.3.2 and older, you need to [enable the `traceqlEditor` feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/).
 
-If trying to query a self-managed Grafana Tempo or Grafana Enterprise Traces database with a gateway (e.g., nginx) in front of it from your hosted Grafana, that gateway (e.g., nginx) must allow gRPC connections. If it does not, streaming will not work and queries will fail to return results.
+### Streaming and gRPC
 
-If you cannot configure your gateway to allow gRPC, open a support escalation to request streaming query results be disabled in your hosted Grafana.
+If trying to query a self-managed Grafana Tempo or Grafana Enterprise Traces database with a gateway, such as nginx, in front of it from your hosted Grafana, that gateway (for example, nginx) must allow gRPC connections.
+If it doesn't, streaming won't work and queries will fail to return results.
+
+If you can't configure your gateway to allow gRPC, deactivate streaming in your hosted Grafana.
+In Grafana 11.2 and newer, you can deactivate **Streaming** in your Tempo data source settings from **Connections** > **Data sources** in the Grafana menu.
+You can also open a support escalation to request streaming query results be disabled in your hosted Grafana.
 
 ## Write TraceQL queries using the query editor
 
@@ -44,8 +49,9 @@ The Tempo data source’s TraceQL query editor helps you query and display trace
 To access the query editor, follow these steps:
 
 1. Sign into Grafana or Grafana Cloud.
-1. Select your Tempo data source.
-1. From the menu, choose **Explore** and select the **TraceQL** tab.
+1. Select **Explore** from the menu.
+1. Select a Tempo data source.
+1. Select the **TraceQL** tab.
 1. Start your query on the text line by entering `{`. For help with TraceQL syntax, refer to the [Construct a TraceQL query documentation](https://grafana.com/docs/tempo/latest/traceql/#construct-a-traceql-query).
 1. Optional: Use the Time picker drop-down to change the time and range for the query (refer to the [documentation for instructions](https://grafana.com/docs/grafana/latest/dashboards/use-dashboards/#set-dashboard-time-range)).
 1. Once you have finished your query, select **Run query**.
