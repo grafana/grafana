@@ -1071,6 +1071,7 @@
       "subtitle": "Mappings, extra security measures, and more.",
       "title": "Advanced Settings"
     },
+    "alert": "This page is only accessible by enabling the <1>ssoSettingsLDAP</1> feature flag.",
     "bind-dn": {
       "description": "Distinguished name of the account used to bind and authenticate to the LDAP server.",
       "label": "Bind DN",
@@ -1092,6 +1093,7 @@
         "button": "Save and enable"
       }
     },
+    "documentation": "documentation",
     "host": {
       "description": "Hostname or IP address of the LDAP server you wish to connect to.",
       "label": "Server host",
