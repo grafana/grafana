@@ -148,8 +148,8 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this;
   }
 
-  exposeComponent<Props = {}>(componentConfig: PluginExposedComponentConfig) {
-    this._exposedComponentConfigs.push(componentConfig);
+  exposeComponent<Props = {}>(componentConfig: PluginExposedComponentConfig<Props>) {
+    this._exposedComponentConfigs.push(componentConfig as PluginExposedComponentConfig);
 
     return this;
   }
