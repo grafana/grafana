@@ -93,11 +93,12 @@ func TestService_SignIdentity(t *testing.T) {
 		parsed, err := jwt.ParseSigned(token)
 		require.NoError(t, err)
 
-		claims := &auth.IDClaims{}
-		require.NoError(t, parsed.UnsafeClaimsWithoutVerification(&claims.Claims, &claims.Rest))
-		assert.Equal(t, login.AzureADAuthModule, claims.Rest.AuthenticatedBy)
-		assert.Equal(t, "U1", claims.Rest.Username)
-		assert.Equal(t, "user:edpu3nnt61se8e", claims.Rest.UID)
+		gotClaims := &auth.IDClaims{}
+		require.NoError(t, parsed.UnsafeClaimsWithoutVerification(&gotClaims.Claims, &gotClaims.Rest))
+		assert.Equal(t, login.AzureADAuthModule, gotClaims.Rest.AuthenticatedBy)
+		assert.Equal(t, "U1", gotClaims.Rest.Username)
+		assert.Equal(t, claims.TypeUser, gotClaims.Rest.Type)
+		assert.Equal(t, "edpu3nnt61se8e", gotClaims.Rest.Identifier)
 	})
 
 	t.Run("should sign identity with authenticated by if user is externally authenticated", func(t *testing.T) {
@@ -117,6 +118,7 @@ func TestService_SignIdentity(t *testing.T) {
 
 		assert.Equal(t, login.AzureADAuthModule, gotClaims.Rest.AuthenticatedBy)
 		assert.Equal(t, "U1", gotClaims.Rest.Username)
-		assert.Equal(t, "user:edpu3nnt61se8e", gotClaims.Rest.UID)
+		assert.Equal(t, claims.TypeUser, gotClaims.Rest.Type)
+		assert.Equal(t, "edpu3nnt61se8e", gotClaims.Rest.Identifier)
 	})
 }
