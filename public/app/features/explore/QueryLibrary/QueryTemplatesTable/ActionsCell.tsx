@@ -76,6 +76,7 @@ function ActionsCell({ queryTemplate, rootDatasourceUid, queryUid }: ActionsCell
       <ExploreRunQueryButton
         queries={queryTemplate.query ? [queryTemplate.query] : []}
         rootDatasourceUid={rootDatasourceUid}
+        onClick={() => setDrawerOpened(false)}
       />
       <Modal
         title={t('explore.query-template-modal.edit-title', 'Edit query')}
@@ -90,11 +91,6 @@ function ActionsCell({ queryTemplate, rootDatasourceUid, queryUid }: ActionsCell
           }}
         />
       </Modal>
-      <ExploreRunQueryButton
-        queries={queryTemplate.query ? [queryTemplate.query] : []}
-        rootDatasourceUid={rootDatasourceUid}
-        onClick={() => setDrawerOpened(false)}
-      />
     </div>
   );
 }
