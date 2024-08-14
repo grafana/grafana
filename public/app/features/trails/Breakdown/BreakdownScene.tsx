@@ -404,7 +404,6 @@ function buildNormalLayout(queryDef: AutoQueryDef, onBreakdownLayoutChange: Brea
         }),
         getLayoutChild,
         sortBy: '',
-        direction: '',
         getFilter: () => '',
       }),
       new ByFrameRepeater({
@@ -415,7 +414,6 @@ function buildNormalLayout(queryDef: AutoQueryDef, onBreakdownLayoutChange: Brea
         }),
         getLayoutChild,
         sortBy: '',
-        direction: '',
         getFilter: () => '',
       }),
     ],
