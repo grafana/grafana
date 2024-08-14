@@ -472,7 +472,10 @@ func (ss *sqlStore) GetDisplay(ctx context.Context, cmd *user.GetDisplayCommand)
 		for rows.Next() {
 			// uid,id,login,email,name,is_service_account
 			row := identity.IdentityDisplay{}
-			rows.Scan(&row.UID, &row.InternalID, &login, &email, &row.Display, &isServiceAccount)
+			err = rows.Scan(&row.UID, &row.InternalID, &login, &email, &row.Display, &isServiceAccount)
+			if err != nil {
+				return nil, err
+			}
 			if isServiceAccount {
 				row.IdentityType = claims.TypeServiceAccount
 			} else {

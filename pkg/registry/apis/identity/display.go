@@ -2,25 +2,22 @@ package identity
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/grafana/authlib/claims"
 	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
 type displayREST struct {
-	logger  log.Logger
-	builder *IdentityAPIBuilder
+	store legacy.LegacyIdentityStore
 }
 
 var (
@@ -31,11 +28,8 @@ var (
 	_ rest.StorageMetadata      = (*displayREST)(nil)
 )
 
-func newDisplayREST(builder *IdentityAPIBuilder) *displayREST {
-	return &displayREST{
-		logger:  log.New("identity display"),
-		builder: builder,
-	}
+func newDisplayREST(store legacy.LegacyIdentityStore) *displayREST {
+	return &displayREST{store}
 }
 
 func (r *displayREST) New() runtime.Object {
@@ -74,16 +68,14 @@ func (r *displayREST) Connect(ctx context.Context, name string, _ runtime.Object
 	if name != "name" {
 		return nil, errorsK8s.NewNotFound(schema.GroupResource{}, name)
 	}
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		ns, ok := request.NamespaceFrom(ctx)
-		if !ok {
-			responder.Error(fmt.Errorf("displayREST, expected namespace"))
-			return
-		}
 		keys := parseKeys(req.URL.Query()["key"])
-
-		v, err := r.builder.Store.GetDisplay(ctx, ns, &user.GetDisplayCommand{
+		v, err := r.store.GetDisplay(ctx, ns, legacy.GetUserDisplayQuery{
 			UIDs: keys.uids,
 			IDs:  keys.ids,
 		})

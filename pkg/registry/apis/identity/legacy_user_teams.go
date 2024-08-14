@@ -2,20 +2,19 @@ package identity
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
-	"github.com/grafana/authlib/claims"
 	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
 type userTeamsREST struct {
 	logger log.Logger
-	store  LegacyUserStore
+	store  legacy.LegacyIdentityStore
 }
 
 var (
@@ -26,7 +25,7 @@ var (
 	_ rest.StorageMetadata      = (*userTeamsREST)(nil)
 )
 
-func newUserTeamsREST(store LegacyUserStore) *userTeamsREST {
+func newUserTeamsREST(store legacy.LegacyIdentityStore) *userTeamsREST {
 	return &userTeamsREST{
 		logger: log.New("user teams"),
 		store:  store,
@@ -64,11 +63,11 @@ func (r *userTeamsREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *userTeamsREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
-	ns, ok := request.NamespaceFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("expected namespace")
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
 	}
-	teams, err := r.store.GetUserTeams(ctx, ns, claims.TypeUser, name)
+	teams, err := r.store.GetUserTeams(ctx, ns, name)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +75,7 @@ func (r *userTeamsREST) Connect(ctx context.Context, name string, _ runtime.Obje
 	return http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
 		list := &identity.TeamList{}
 		for _, team := range teams {
-			t, err := asTeam(team, ns)
+			t, err := asTeam(&team, ns.Value)
 			if err != nil {
 				responder.Error(err)
 				return

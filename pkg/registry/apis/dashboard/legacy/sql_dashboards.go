@@ -19,7 +19,6 @@ import (
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -53,7 +52,7 @@ type dashboardSqlAccess struct {
 	namespacer   request.NamespaceMapper
 	dashStore    dashboards.Store
 	provisioning provisioning.ProvisioningService
-	currentRV    func(ctx context.Context) (int64, error)
+	currentRV    ResourceVersionLookup
 
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
@@ -72,38 +71,14 @@ func NewDashboardAccess(sql db.DB,
 		fmt.Printf("ERROR: NO DIALECT")
 	}
 
-	sess := sql.GetSqlxSession()
-	currentRV := func(ctx context.Context) (int64, error) {
-		t := time.Now()
-		max := ""
-		err := sess.Get(ctx, &max, "SELECT MAX(updated) FROM dashboard")
-		if err == nil && max != "" {
-			t, _ = time.Parse(time.DateTime, max) // ignore null errors
-		}
-		return t.UnixMilli(), nil
-	}
-	if sql.GetDBType() == migrator.Postgres {
-		currentRV = func(ctx context.Context) (int64, error) {
-			max := time.Now()
-			_ = sess.Get(ctx, &max, "SELECT MAX(updated) FROM dashboard")
-			return max.UnixMilli(), nil
-		}
-	} else if sql.GetDBType() == migrator.MySQL {
-		currentRV = func(ctx context.Context) (int64, error) {
-			max := time.Now().UnixMilli()
-			_ = sess.Get(ctx, &max, "SELECT UNIX_TIMESTAMP(MAX(updated)) FROM dashboard;")
-			return max, nil
-		}
-	}
-
 	return &dashboardSqlAccess{
 		sql:          sql,
-		sess:         sess,
+		sess:         sql.GetSqlxSession(),
 		dialect:      dialect,
 		namespacer:   namespacer,
 		dashStore:    dashStore,
 		provisioning: provisioning,
-		currentRV:    currentRV,
+		currentRV:    GetResourceVersionLookup(sql, "dashboard"),
 	}
 }
 
