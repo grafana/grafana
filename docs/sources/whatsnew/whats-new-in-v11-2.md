@@ -26,30 +26,6 @@ For even more detail about all the changes in this release, refer to the [change
 
 ## Dashboards and visualizations
 
-### Improvements in canvas visualizations
-
-<!-- Adela Almasan, Nathan Marrs, #grafana-dataviz -->
-
-_Generally available in all editions of Grafana_
-
-### Standardized tooltips
-
-As a continuation of our efforts to standardize tooltips across visualizations, we've updated canvas visualization tooltips to be supported for all elements tied to data. Besides the element name and data, the tooltip now also displays the timestamp. This is a step forward from the previous implementation where tooltips were shown only if data links were configured.
-
-### Data links improvements
-
-We've updated canvas visualizations so that you can add data links to canvas elements without using an override. The **Selected element** configuration now includes a **Data links** section where you can add data links to elements using the same steps as in other visualizations.
-
-Data links in canvas elements can also be configured to open with a single click. To enable this functionality, select **Link** under the one **One-click** section in the **Selected element** data link options. If there are multiple data links for an element, the first link in the list has the one-click functionality.
-
-As part of this improvement, we've also added the ability to control the order in which data links are displayed by dragging and dropping them. This improvement has been added to all visualizations.
-
-{{< video-embed src="/media/docs/grafana/panels-visualizations/canvas-oneclick-tooltips-v4-11.2.mp4" >}}
-
-In future releases, we'll add one-click functionality to data links in other Grafana visualizations.
-
-[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#data-links)
-
 ### Transformation updates
 
 <!-- Nathan Marrs; #grafana-dataviz -->
@@ -89,6 +65,30 @@ The **Format string** transformation is now generally available! Use this transf
 The **Add field from calculation** transformation now supports both cumulative and window calculations. The cumulative function calculates on the current row and all preceding rows. You can calculate the total or the mean of your data up to and including the current row. With the window function you can calculate the mean, standard deviation, or variance on a specified set (window) of your data. The window can either be trailing or centered. With a trailing window the current row will be the last row in the window. With a centered window the window will be centered on the current row.
 
 See [the documentation for more information](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation).
+
+### Improvements in canvas visualizations
+
+<!-- Adela Almasan, Nathan Marrs, #grafana-dataviz -->
+
+_Generally available in all editions of Grafana_
+
+### Standardized tooltips
+
+As a continuation of our efforts to standardize tooltips across visualizations, we've updated canvas visualization tooltips to be supported for all elements tied to data. Besides the element name and data, the tooltip now also displays the timestamp. This is a step forward from the previous implementation where tooltips were shown only if data links were configured.
+
+### Data links improvements
+
+We've updated canvas visualizations so that you can add data links to canvas elements without using an override. The **Selected element** configuration now includes a **Data links** section where you can add data links to elements using the same steps as in other visualizations.
+
+Data links in canvas elements can also be configured to open with a single click. To enable this functionality, select **Link** under the one **One-click** section in the **Selected element** data link options. If there are multiple data links for an element, the first link in the list has the one-click functionality.
+
+As part of this improvement, we've also added the ability to control the order in which data links are displayed by dragging and dropping them. This improvement has been added to all visualizations.
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/canvas-oneclick-tooltips-v4-11.2.mp4" >}}
+
+In future releases, we'll add one-click functionality to data links in other Grafana visualizations.
+
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#data-links)
 
 ### State timeline supports pagination
 
@@ -144,6 +144,16 @@ Grafana Explore now allows for logs filtering and pinning in content outline.
 
 **Pinning Logs:** The new pinning feature allows users to pin logs to the content outline, making them easily accessible for quick reference during investigations. To pin a log, hover over a log in the logs panel and click on the _Pin to content outline_ icon in the log row menu. Clicking on a pinned log will open the log context modal, showing the log highlighted in context with other logs. From here, you can also open the log in split mode to preserve the time range in the left pane while having the time range specific to that log in the right pane.
 
+### Forward direction search for Loki
+
+<!-- #observability-logs -->
+
+_Generally available in all editions of Grafana_
+
+Explore now supports forward direction search for Loki logs searches. This allows users to seamlessly browse logs in a time range in forward chronological order (for example, tracing a specific user's actions using logs).
+
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/query-editor/)
+
 ## Data sources
 
 ### Cloudwatch Metric Insights cross account observability support
@@ -153,8 +163,11 @@ Grafana Explore now allows for logs filtering and pinning in content outline.
 _Generally available in all editions of Grafana_
 
 We are excited to announce support for cross-account querying in Metric Insights query builder for AWS Cloudwatch Plugin. This enables building SQL queries to monitor across multiple accounts in the same region in AWS Cloudwatch.
+
 This feature introduces an account dropdown for selecting one or all of your source accounts and builds a query that targets them. Furthermore, results can be grouped by account ID by selecting "Account ID" in the Group By dropdown.
+
 For more complex queries that are not covered by the options in the builder you can switch to the manual Code editor and edit the query.
+
 To set up cross-account querying for AWS Cloudwatch Plugin, see instructions [here](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/query-editor/#cross-account-observability).
 
 ## Authentication and authorization
