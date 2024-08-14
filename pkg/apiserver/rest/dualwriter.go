@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -307,6 +308,12 @@ func StartPeriodicDataSyncer(ctx context.Context, mode DualWriterMode, legacy Le
 
 	// run in background
 	go func() {
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		timeWindow := 600 // 600 seconds (10 minutes)
+		jitterSeconds := r.Int63n(int64(timeWindow))
+		klog.Info("data syncer is going to start at: ", time.Now().Add(time.Second*time.Duration(jitterSeconds)))
+		time.Sleep(time.Second * time.Duration(jitterSeconds))
+
 		// run it immediately
 		syncOK, err := runDataSyncer(ctx, mode, legacy, storage, kind, reg, serverLockService, requestInfo)
 		klog.Info("data syncer finished, syncOK: ", syncOK, ", error: ", err)
