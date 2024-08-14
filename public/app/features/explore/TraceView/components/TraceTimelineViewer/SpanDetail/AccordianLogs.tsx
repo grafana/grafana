@@ -24,7 +24,7 @@ import { TNil } from '../../types';
 import { TraceLog, TraceKeyValuePair, TraceLink } from '../../types/trace';
 import { formatDuration } from '../utils';
 
-import AccordianKeyValues from './AccordianKeyValues';
+import AccordianKeyValues, { KeyValuesSummary } from './AccordianKeyValues';
 
 import { alignIcon } from '.';
 
@@ -110,7 +110,16 @@ export default function AccordianLogs({
         <div className={styles.AccordianLogsContent}>
           {_sortBy(logs, 'timestamp').map((log, i) => {
             const formattedDuration = formatDuration(log.timestamp - timestamp);
-            const label = log.name ? `${log.name} (${formattedDuration})` : formattedDuration;
+            const duration = (
+              <KeyValuesSummary data={[{ key: 'duration', value: formattedDuration }]}></KeyValuesSummary>
+            );
+            const label = log.name ? (
+              <span>
+                {log.name} ({duration})
+              </span>
+            ) : (
+              formattedDuration
+            );
             return (
               <AccordianKeyValues
                 // `i` is necessary in the key because timestamps can repeat

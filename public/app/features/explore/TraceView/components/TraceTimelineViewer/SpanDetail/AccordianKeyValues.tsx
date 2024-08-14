@@ -67,7 +67,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
     summaryItem: css`
       label: summaryItem;
       display: inline;
-      margin-left: 0.7em;
       padding-right: 0.5rem;
       border-right: 1px solid ${autoColor(theme, '#ddd')};
       &:last-child {
@@ -93,7 +92,7 @@ export type AccordianKeyValuesProps = {
   highContrast?: boolean;
   interactive?: boolean;
   isOpen: boolean;
-  label: string;
+  label: string | React.ReactNode;
   linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
   onToggle?: null | (() => void);
 };
@@ -169,7 +168,11 @@ export default function AccordianKeyValues({
           {label}
           {showDataSummaryFields && ':'}
         </strong>
-        {showDataSummaryFields && <KeyValuesSummary data={data} />}
+        {showDataSummaryFields && (
+          <span className={css({ marginLeft: '0.7em' })}>
+            <KeyValuesSummary data={data} />
+          </span>
+        )}
       </div>
       {isOpen && <KeyValuesTable data={data} linksGetter={linksGetter} />}
     </div>
