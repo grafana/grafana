@@ -738,7 +738,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 			})
 
 		ruleStore := &fakeAlertRuleNotificationStore{
-			RenameTimeIntervalInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, allowedProvenances []models.Provenance) ([]models.AlertRuleKey, map[models.Provenance][]models.AlertRuleKey, error) {
+			RenameTimeIntervalInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, allowedProvenances []models.Provenance) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
 				assertInTransaction(t, ctx)
 				return nil, nil, nil
 			},
@@ -861,7 +861,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 			expectedErr := errors.New("test-err")
 
 			ruleStore := &fakeAlertRuleNotificationStore{
-				RenameTimeIntervalInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, allowedProvenances []models.Provenance) ([]models.AlertRuleKey, map[models.Provenance][]models.AlertRuleKey, error) {
+				RenameTimeIntervalInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, allowedProvenances []models.Provenance) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
 					return nil, nil, expectedErr
 				},
 			}

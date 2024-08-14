@@ -925,11 +925,11 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 			allowedProvenance := []models.Provenance{models.ProvenanceNone}
 			affected, invalidProvenance, err := store.RenameTimeIntervalInNotificationSettings(context.Background(), 1, timeIntervalName, newName, allowedProvenance)
 
-			expected := map[models.Provenance][]models.AlertRuleKey{}
+			var expected []models.AlertRuleKey
 			for _, rule := range timeIntervalRules {
 				provenance := provenances[rule.GetKey()]
 				if provenance != models.ProvenanceNone {
-					expected[provenance] = append(expected[provenance], rule.GetKey())
+					expected = append(expected, rule.GetKey())
 				}
 			}
 

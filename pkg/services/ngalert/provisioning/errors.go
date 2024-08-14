@@ -14,10 +14,10 @@ var ErrNotFound = fmt.Errorf("object not found")
 var (
 	ErrVersionConflict = errutil.Conflict("alerting.notifications.conflict")
 
-	ErrTimeIntervalNotFound = errutil.NotFound("alerting.notifications.time-intervals.notFound")
-	ErrTimeIntervalExists   = errutil.BadRequest("alerting.notifications.time-intervals.nameExists", errutil.WithPublicMessage("Time interval with this name already exists. Use a different name or update existing one."))
-	ErrTimeIntervalInvalid  = errutil.BadRequest("alerting.notifications.time-intervals.invalidFormat").MustTemplate("Invalid format of the submitted time interval", errutil.WithPublic("Time interval is in invalid format. Correct the payload and try again."))
-	ErrTimeIntervalInUse    = errutil.Conflict("alerting.notifications.time-intervals.used").MustTemplate("Time interval is used")
+	ErrTimeIntervalNotFound                     = errutil.NotFound("alerting.notifications.time-intervals.notFound")
+	ErrTimeIntervalExists                       = errutil.BadRequest("alerting.notifications.time-intervals.nameExists", errutil.WithPublicMessage("Time interval with this name already exists. Use a different name or update existing one."))
+	ErrTimeIntervalInvalid                      = errutil.BadRequest("alerting.notifications.time-intervals.invalidFormat").MustTemplate("Invalid format of the submitted time interval", errutil.WithPublic("Time interval is in invalid format. Correct the payload and try again."))
+	ErrTimeIntervalInUse                        = errutil.Conflict("alerting.notifications.time-intervals.used").MustTemplate("Time interval is used")
 	ErrTimeIntervalDependentResourcesProvenance = errutil.Conflict("alerting.notifications.time-intervals.usedProvisioned").MustTemplate(
 		"Time interval cannot be renamed because it is used by a provisioned {{.Private.Resource}}",
 		errutil.WithPublic("Time interval cannot be renamed because it is used by a provisioned {{.Private.Resource}}. You must update those resources first using the original provision method"),
@@ -73,12 +73,10 @@ func MakeErrTemplateInvalid(err error) error {
 	return ErrTemplateInvalid.Build(data)
 }
 
-func MakeErrTimeIntervalDependentResourcesProvenance(usedByRoutes bool, rules map[models.Provenance][]models.AlertRuleKey) error {
+func MakeErrTimeIntervalDependentResourcesProvenance(usedByRoutes bool, rules []models.AlertRuleKey) error {
 	uids := make([]string, 0, len(rules))
-	for _, keys := range rules {
-		for _, key := range keys {
-			uids = append(uids, key.UID)
-		}
+	for _, key := range rules {
+		uids = append(uids, key.UID)
 	}
 	data := make(map[string]any, 2)
 	resource := make([]string, 0, 2)

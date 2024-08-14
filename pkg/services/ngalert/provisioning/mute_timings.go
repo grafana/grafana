@@ -405,8 +405,8 @@ func (svc *MuteTimingService) checkOptimisticConcurrency(current config.MuteTime
 func (svc *MuteTimingService) renameTimeIntervalInDependentResources(ctx context.Context, orgID int64, route *definitions.Route, oldName, newName string, timeIntervalProvenance models.Provenance) error {
 	allowedProvenance := validation.GetAllowedProvenanceForDependentResources(timeIntervalProvenance)
 	// if there are no references to the old time interval, exit
-	var updatedRoutes int
-	if isMuteTimeInUseInRoutes(oldName, route) {
+	updatedRoutes := replaceMuteTiming(route, oldName, newName)
+	if updatedRoutes > 0 {
 		routeProvenance, err := svc.provenanceStore.GetProvenance(ctx, route, orgID)
 		if err != nil {
 			return err
@@ -414,7 +414,6 @@ func (svc *MuteTimingService) renameTimeIntervalInDependentResources(ctx context
 		if !slices.Contains(allowedProvenance, routeProvenance) {
 			return MakeErrTimeIntervalDependentResourcesProvenance(true, nil)
 		}
-		updatedRoutes = replaceMuteTiming(route, oldName, newName)
 	}
 
 	affected, invalidProvenance, err := svc.ruleNotificationsStore.RenameTimeIntervalInNotificationSettings(ctx, orgID, oldName, newName, allowedProvenance)
