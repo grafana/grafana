@@ -27,7 +27,7 @@ func TestQueryDataHandler(t *testing.T) {
 			Version:  "v1",
 			Services: []v0alpha1.Service{
 				{
-					Type: v0alpha1.DataServiceType,
+					Type: v0alpha1.QueryServiceType,
 				},
 			},
 		},
