@@ -65,6 +65,7 @@ Here are some examples of operators.
 
 - `TRUE and TRUE or FALSE and FALSE` evaluate to `FALSE`, because last two conditions return `FALSE`.
 - `TRUE and TRUE logic-or FALSE and FALSE` evaluate to `TRUE`, because the preceding condition returns `TRUE`.
+
 ## Evaluation example
 
 Keep in mind:
