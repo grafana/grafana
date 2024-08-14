@@ -495,13 +495,13 @@ func (a *AlertRuleMutators) WithRandomRecordingRules() AlertRuleMutator {
 		if rand.Int63()%2 == 0 {
 			return
 		}
-		convertToRecordingRule(rule)
+		ConvertToRecordingRule(rule)
 	}
 }
 
 func (a *AlertRuleMutators) WithAllRecordingRules() AlertRuleMutator {
 	return func(rule *AlertRule) {
-		convertToRecordingRule(rule)
+		ConvertToRecordingRule(rule)
 	}
 }
 
@@ -1092,7 +1092,7 @@ func (n SilenceMutators) WithEmptyId() Mutator[Silence] {
 	}
 }
 
-func convertToRecordingRule(rule *AlertRule) {
+func ConvertToRecordingRule(rule *AlertRule) {
 	if rule.Record == nil {
 		rule.Record = &Record{}
 	}

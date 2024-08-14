@@ -154,7 +154,7 @@ func TestRecordingRule(t *testing.T) {
 
 func blankRecordingRuleForTests(ctx context.Context) *recordingRule {
 	ft := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules)
-	return newRecordingRule(context.Background(), models.AlertRuleKey{}, 0, nil, nil, ft, log.NewNopLogger(), nil, nil, writer.FakeWriter{})
+	return newRecordingRule(context.Background(), models.AlertRuleKey{}, 0, nil, nil, ft, log.NewNopLogger(), nil, nil, writer.FakeWriter{}, nil, nil)
 }
 
 func TestRecordingRule_Integration(t *testing.T) {
