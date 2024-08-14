@@ -1,6 +1,6 @@
 ---
 aliases:
-  - 
+  -
 keywords:
   - explore
   - loki
