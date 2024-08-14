@@ -1,12 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { useLocation } from 'react-router-dom';
-import { useMedia } from 'react-use';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
-import { CustomScrollbar, useStyles2, useTheme2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { getNavModel } from 'app/core/selectors/navModel';
