@@ -20,7 +20,7 @@ var (
 	ErrTimeIntervalInUse                        = errutil.Conflict("alerting.notifications.time-intervals.used").MustTemplate("Time interval is used")
 	ErrTimeIntervalDependentResourcesProvenance = errutil.Conflict("alerting.notifications.time-intervals.usedProvisioned").MustTemplate(
 		"Time interval cannot be renamed because it is used by a provisioned {{.Private.Resource}}",
-		errutil.WithPublic("Time interval cannot be renamed because it is used by a provisioned {{.Private.Resource}}. You must update those resources first using the original provision method"),
+		errutil.WithPublic("Time interval cannot be renamed because it is used by provisioned {{.Private.Resource}}. You must update those resources first using the original provision method"),
 	)
 
 	ErrTemplateNotFound = errutil.NotFound("alerting.notifications.templates.notFound")
@@ -89,7 +89,7 @@ func MakeErrTimeIntervalDependentResourcesProvenance(usedByRoutes bool, rules []
 		data["UsedByRoutes"] = true
 	}
 
-	return ErrTimeIntervalInUse.Build(errutil.TemplateData{
+	return ErrTimeIntervalDependentResourcesProvenance.Build(errutil.TemplateData{
 		Public: data,
 		Private: map[string]any{
 			"Resource": strings.Join(resource, " and "),

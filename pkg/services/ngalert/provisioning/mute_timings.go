@@ -194,6 +194,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 			if err != nil {
 				return err
 			}
+
 			err = svc.provenanceStore.DeleteProvenance(ctx, &definitions.MuteTimeInterval{MuteTimeInterval: old}, orgID)
 			if err != nil {
 				return err
@@ -406,22 +407,21 @@ func (svc *MuteTimingService) renameTimeIntervalInDependentResources(ctx context
 	allowedProvenance := validation.GetAllowedProvenanceForDependentResources(timeIntervalProvenance)
 	// if there are no references to the old time interval, exit
 	updatedRoutes := replaceMuteTiming(route, oldName, newName)
+	canUpdate := true
 	if updatedRoutes > 0 {
 		routeProvenance, err := svc.provenanceStore.GetProvenance(ctx, route, orgID)
 		if err != nil {
 			return err
 		}
-		if !slices.Contains(allowedProvenance, routeProvenance) {
-			return MakeErrTimeIntervalDependentResourcesProvenance(true, nil)
-		}
+		canUpdate = slices.Contains(allowedProvenance, routeProvenance)
 	}
-
-	affected, invalidProvenance, err := svc.ruleNotificationsStore.RenameTimeIntervalInNotificationSettings(ctx, orgID, oldName, newName, allowedProvenance)
+	dryRun := !canUpdate
+	affected, invalidProvenance, err := svc.ruleNotificationsStore.RenameTimeIntervalInNotificationSettings(ctx, orgID, oldName, newName, allowedProvenance, dryRun)
 	if err != nil {
 		return err
 	}
-	if len(invalidProvenance) > 0 {
-		return MakeErrTimeIntervalDependentResourcesProvenance(false, invalidProvenance)
+	if !canUpdate || len(invalidProvenance) > 0 {
+		return MakeErrTimeIntervalDependentResourcesProvenance(updatedRoutes > 0, invalidProvenance)
 	}
 	if len(affected) > 0 || updatedRoutes > 0 {
 		svc.log.FromContext(ctx).Info("Updated rules and routes that use renamed time interval", "oldName", oldName, "newName", newName, "rules", len(affected), "routes", updatedRoutes)

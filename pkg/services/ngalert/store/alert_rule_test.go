@@ -915,7 +915,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 		newName := "new-time-interval"
 
 		t.Run("should do nothing if no rules that match the filter", func(t *testing.T) {
-			affected, invalidProvenance, err := store.RenameTimeIntervalInNotificationSettings(context.Background(), 1, "not-found", timeIntervalName, models.KnownProvenances)
+			affected, invalidProvenance, err := store.RenameTimeIntervalInNotificationSettings(context.Background(), 1, "not-found", timeIntervalName, models.KnownProvenances, false)
 			require.NoError(t, err)
 			require.Empty(t, affected)
 			require.Empty(t, invalidProvenance)
@@ -923,7 +923,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 
 		t.Run("should do nothing if at least one rule has provenance that is not allowed", func(t *testing.T) {
 			allowedProvenance := []models.Provenance{models.ProvenanceNone}
-			affected, invalidProvenance, err := store.RenameTimeIntervalInNotificationSettings(context.Background(), 1, timeIntervalName, newName, allowedProvenance)
+			affected, invalidProvenance, err := store.RenameTimeIntervalInNotificationSettings(context.Background(), 1, timeIntervalName, newName, allowedProvenance, false)
 
 			var expected []models.AlertRuleKey
 			for _, rule := range timeIntervalRules {
@@ -945,8 +945,26 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 			assert.Len(t, actual, len(timeIntervalRules))
 		})
 
+		t.Run("should do nothing if dry run is set to true", func(t *testing.T) {
+			affected, invalidProvenance, err := store.RenameTimeIntervalInNotificationSettings(context.Background(), 1, timeIntervalName, newName, models.KnownProvenances, true)
+			require.NoError(t, err)
+			require.Empty(t, invalidProvenance)
+			assert.Len(t, affected, len(timeIntervalRules))
+			expected := getKeyMap(timeIntervalRules)
+			for _, key := range affected {
+				assert.Contains(t, expected, key)
+			}
+
+			actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+				OrgID:            1,
+				TimeIntervalName: timeIntervalName,
+			})
+			require.NoError(t, err)
+			assert.Len(t, actual, len(timeIntervalRules))
+		})
+
 		t.Run("should update all rules that refer to the old time interval", func(t *testing.T) {
-			affected, invalidProvenance, err := store.RenameTimeIntervalInNotificationSettings(context.Background(), 1, timeIntervalName, newName, models.KnownProvenances)
+			affected, invalidProvenance, err := store.RenameTimeIntervalInNotificationSettings(context.Background(), 1, timeIntervalName, newName, models.KnownProvenances, false)
 			require.NoError(t, err)
 			require.Empty(t, invalidProvenance)
 			assert.Len(t, affected, len(timeIntervalRules))

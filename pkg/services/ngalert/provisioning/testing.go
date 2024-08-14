@@ -170,7 +170,7 @@ type fakeAlertRuleNotificationStore struct {
 	Calls []call
 
 	RenameReceiverInNotificationSettingsFn     func(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error)
-	RenameTimeIntervalInNotificationSettingsFn func(ctx context.Context, orgID int64, old, new string, allowedProvenances []models.Provenance) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
+	RenameTimeIntervalInNotificationSettingsFn func(ctx context.Context, orgID int64, old, new string, allowedProvenances []models.Provenance, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
 	ListNotificationSettingsFn                 func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
 }
 
@@ -189,15 +189,15 @@ func (f *fakeAlertRuleNotificationStore) RenameReceiverInNotificationSettings(ct
 	return 0, nil
 }
 
-func (f *fakeAlertRuleNotificationStore) RenameTimeIntervalInNotificationSettings(ctx context.Context, orgID int64, oldTimeInterval, newTimeInterval string, allowedProvenances []models.Provenance) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
+func (f *fakeAlertRuleNotificationStore) RenameTimeIntervalInNotificationSettings(ctx context.Context, orgID int64, oldTimeInterval, newTimeInterval string, allowedProvenances []models.Provenance, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
 	call := call{
 		Method: "RenameTimeIntervalInNotificationSettings",
-		Args:   []interface{}{ctx, orgID, oldTimeInterval, newTimeInterval, allowedProvenances},
+		Args:   []interface{}{ctx, orgID, oldTimeInterval, newTimeInterval, allowedProvenances, dryRun},
 	}
 	f.Calls = append(f.Calls, call)
 
 	if f.RenameTimeIntervalInNotificationSettingsFn != nil {
-		return f.RenameTimeIntervalInNotificationSettingsFn(ctx, orgID, oldTimeInterval, newTimeInterval, allowedProvenances)
+		return f.RenameTimeIntervalInNotificationSettingsFn(ctx, orgID, oldTimeInterval, newTimeInterval, allowedProvenances, dryRun)
 	}
 
 	// Default values when no function hook is provided

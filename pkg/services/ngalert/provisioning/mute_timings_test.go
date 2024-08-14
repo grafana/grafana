@@ -738,7 +738,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 			})
 
 		ruleStore := &fakeAlertRuleNotificationStore{
-			RenameTimeIntervalInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, allowedProvenances []models.Provenance) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
+			RenameTimeIntervalInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, allowedProvenances []models.Provenance, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
 				assertInTransaction(t, ctx)
 				return nil, nil, nil
 			},
@@ -768,6 +768,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 		assert.Equal(t, original.Name, ruleStore.Calls[0].Args[2])
 		assert.Equal(t, interval.Name, ruleStore.Calls[0].Args[3])
 		assert.Equal(t, validation.GetAllowedProvenanceForDependentResources(expectedProvenance), ruleStore.Calls[0].Args[4])
+		assert.False(t, ruleStore.Calls[0].Args[5].(bool))
 
 		prov.AssertCalled(t, "SetProvenance", mock.Anything, mock.MatchedBy(func(m *definitions.MuteTimeInterval) bool {
 			return m.Name == interval.Name
@@ -788,6 +789,82 @@ func TestUpdateMuteTimings(t *testing.T) {
 		assert.EqualValues(t, append(initialConfig().AlertmanagerConfig.TimeIntervals, config.TimeInterval(interval)), revision.Config.AlertmanagerConfig.TimeIntervals)
 		assert.Falsef(t, isMuteTimeInUseInRoutes(expected.Name, revision.Config.AlertmanagerConfig.Route), "There are still references to the old time interval")
 		assert.Truef(t, isMuteTimeInUseInRoutes(interval.Name, revision.Config.AlertmanagerConfig.Route), "There are no references to the new time interval")
+	})
+
+	t.Run("returns ErrTimeIntervalDependentResourcesProvenance if route has different provenance status", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.MatchedBy(func(*definitions.Route) bool { return true }), mock.Anything).Return(models.ProvenanceFile, nil)
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(expectedProvenance, nil)
+
+		ruleStore := &fakeAlertRuleNotificationStore{
+			RenameTimeIntervalInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, allowedProvenances []models.Provenance, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
+				assertInTransaction(t, ctx)
+				return nil, nil, nil
+			},
+		}
+		sut.ruleNotificationsStore = ruleStore
+
+		interval := expected
+		interval.Name = "another-time-interval"
+		timing := definitions.MuteTimeInterval{
+			UID:              expectedUID,
+			MuteTimeInterval: interval,
+			Version:          originalVersion,
+			Provenance:       definitions.Provenance(expectedProvenance),
+		}
+
+		_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
+		require.ErrorIs(t, err, ErrTimeIntervalDependentResourcesProvenance)
+
+		require.Len(t, ruleStore.Calls, 1)
+		assert.Equal(t, "RenameTimeIntervalInNotificationSettings", ruleStore.Calls[0].Method)
+		assert.Equal(t, orgID, ruleStore.Calls[0].Args[1])
+		assert.Equal(t, original.Name, ruleStore.Calls[0].Args[2])
+		assert.Equal(t, interval.Name, ruleStore.Calls[0].Args[3])
+		assert.Equal(t, validation.GetAllowedProvenanceForDependentResources(expectedProvenance), ruleStore.Calls[0].Args[4])
+		assert.True(t, ruleStore.Calls[0].Args[5].(bool)) // still check if there are rules that have incompatible provenance
+	})
+
+	t.Run("returns ErrTimeIntervalDependentResourcesProvenance if rules have different provenance status", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.MatchedBy(func(*definitions.Route) bool { return true }), mock.Anything).Return(models.ProvenanceNone, nil)
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(expectedProvenance, nil)
+
+		ruleStore := &fakeAlertRuleNotificationStore{
+			RenameTimeIntervalInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, allowedProvenances []models.Provenance, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
+				assertInTransaction(t, ctx)
+				return nil, []models.AlertRuleKey{models.GenerateRuleKey(orgID)}, nil
+			},
+		}
+		sut.ruleNotificationsStore = ruleStore
+
+		interval := expected
+		interval.Name = "another-time-interval"
+		timing := definitions.MuteTimeInterval{
+			UID:              expectedUID,
+			MuteTimeInterval: interval,
+			Version:          originalVersion,
+			Provenance:       definitions.Provenance(expectedProvenance),
+		}
+
+		_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
+		require.ErrorIs(t, err, ErrTimeIntervalDependentResourcesProvenance)
+
+		require.Len(t, ruleStore.Calls, 1)
+		assert.Equal(t, "RenameTimeIntervalInNotificationSettings", ruleStore.Calls[0].Method)
+		assert.Equal(t, orgID, ruleStore.Calls[0].Args[1])
+		assert.Equal(t, original.Name, ruleStore.Calls[0].Args[2])
+		assert.Equal(t, interval.Name, ruleStore.Calls[0].Args[3])
+		assert.Equal(t, validation.GetAllowedProvenanceForDependentResources(expectedProvenance), ruleStore.Calls[0].Args[4])
+		assert.False(t, ruleStore.Calls[0].Args[5].(bool))
 	})
 
 	t.Run("propagates errors", func(t *testing.T) {
@@ -861,7 +938,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 			expectedErr := errors.New("test-err")
 
 			ruleStore := &fakeAlertRuleNotificationStore{
-				RenameTimeIntervalInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, allowedProvenances []models.Provenance) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
+				RenameTimeIntervalInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, allowedProvenances []models.Provenance, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
 					return nil, nil, expectedErr
 				},
 			}

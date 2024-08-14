@@ -846,7 +846,7 @@ func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgI
 // - a collection of models.AlertRuleKey of rules that were updated,
 // - a collection of rules that do not have allowed provenance status,
 // - database error
-func (st DBstore) RenameTimeIntervalInNotificationSettings(ctx context.Context, orgID int64, oldTimeInterval, newTimeInterval string, allowedProvenances []ngmodels.Provenance) ([]ngmodels.AlertRuleKey, []ngmodels.AlertRuleKey, error) {
+func (st DBstore) RenameTimeIntervalInNotificationSettings(ctx context.Context, orgID int64, oldTimeInterval, newTimeInterval string, allowedProvenances []ngmodels.Provenance, dryRun bool) ([]ngmodels.AlertRuleKey, []ngmodels.AlertRuleKey, error) {
 	// fetch entire rules because Update method requires it because it copies rules to version table
 	rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
 		OrgID:            orgID,
@@ -880,6 +880,11 @@ func (st DBstore) RenameTimeIntervalInNotificationSettings(ctx context.Context, 
 		}
 
 		result = append(result, rule.GetKey())
+
+		if dryRun {
+			continue
+		}
+
 		r := ngmodels.CopyRule(rule)
 		for idx := range r.NotificationSettings {
 			for mtIdx := range r.NotificationSettings[idx].MuteTimeIntervals {
@@ -896,6 +901,9 @@ func (st DBstore) RenameTimeIntervalInNotificationSettings(ctx context.Context, 
 	}
 	if len(invalidProvenance) > 0 {
 		return nil, invalidProvenance, nil
+	}
+	if dryRun {
+		return result, nil, nil
 	}
 	return result, nil, st.UpdateAlertRules(ctx, updates)
 }
