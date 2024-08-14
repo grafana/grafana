@@ -2343,12 +2343,16 @@ github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/grafana-plugin-sdk-go v0.241.0 h1:zBcSW9xV9gA9hD8UN+HjJtD7tESMZcaQhA1BI76MTxM=
 github.com/grafana/grafana-plugin-sdk-go v0.241.0/go.mod h1:2HjNwzGCfaFAyR2HGoECTwAmq8vSIn2L1/1yOt4XRS4=
-github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240730185644-783ff7156079 h1:JnIzjNpW56Z9Tdmkzfs+kn3h2vtqavdr/CJTdAG1GIM=
-github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240730185644-783ff7156079/go.mod h1:m/Tqd1ow+lmYtCj6/UZpejLdP2sxtN/4r6THdzS48r4=
+github.com/grafana/grafana/pkg/aggregator v0.0.0-20240813192817-1b0e6b5c09b2 h1:2H9x4q53pkfUGtSNYD1qSBpNnxrFgylof/TYADb5xMI=
+github.com/grafana/grafana/pkg/aggregator v0.0.0-20240813192817-1b0e6b5c09b2/go.mod h1:gBLBniiSUQvyt4LRrpIeysj8Many0DV+hdUKifRE0Ec=
+github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240808213237-f4d2e064f435 h1:lmw60EW7JWlAEvgggktOyVkH4hF1m/+LSF/Ap0NCyi8=
+github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240808213237-f4d2e064f435/go.mod h1:ORVFiW/KNRY52lNjkGwnFWCxNVfE97bJG2jr2fetq0I=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20240708134731-e9876749d440 h1:833vWSgndCcOXycwCq2Y98W8+W2ouuuhTL+Gf3BNKg8=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20240708134731-e9876749d440/go.mod h1:qfZc7FEYBdKcxHUTtWtEAH+ArbMIkEQnbVPzr8giY3k=
 github.com/grafana/grafana/pkg/promlib v0.0.6 h1:FuRyHMIgVVXkLuJnCflNfk3gqJflmyiI+/ZuJ9MoAfY=
 github.com/grafana/grafana/pkg/promlib v0.0.6/go.mod h1:shFkrG1fQ/PPNRGhxAPNMLp0SAeG/jhqaLoG6n2191M=
+github.com/grafana/grafana/pkg/semconv v0.0.0-20240808213237-f4d2e064f435 h1:SNEeqY22DrGr5E9kGF1mKSqlOom14W9+b1u4XEGJowA=
+github.com/grafana/grafana/pkg/semconv v0.0.0-20240808213237-f4d2e064f435/go.mod h1:8cz+z0i57IjN6MYmu/zZQdCg9CQcsnEHbaJBBEf3KQo=
 github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20240624122844-a89deaeb7365 h1:XRHqYGxjN2+/4QHPoOtr7kYTL9p2P5UxTXfnbiaO/NI=
 github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20240624122844-a89deaeb7365/go.mod h1:X4dwV2eQI8z8G2aHXvhZZXu/y/rb3psQXuaZa66WZfA=
 github.com/grafana/grafana/pkg/util/xorm v0.0.1 h1:72QZjxWIWpSeOF8ob4aMV058kfgZyeetkAB8dmeti2o=
@@ -4707,6 +4711,7 @@ k8s.io/code-generator v0.31.0/go.mod h1:84y4w3es8rOJOUUP1rLsIiGlO1JuEaPFXQPA9e/K
 k8s.io/component-base v0.31.0 h1:/KIzGM5EvPNQcYgwq5NwoQBaOlVFrghoVGr8lG6vNRs=
 k8s.io/component-base v0.31.0/go.mod h1:TYVuzI1QmN4L5ItVdMSXKvH7/DtvIuas5/mm8YT3rTo=
 k8s.io/gengo v0.0.0-20230829151522-9cce18d56c01/go.mod h1:FiNAH4ZV3gBg2Kwh89tzAEV2be7d5xI0vBa/VySYy3E=
+k8s.io/gengo/v2 v2.0.0-20240228010128-51d4e06bde70 h1:NGrVE502P0s0/1hudf8zjgwki1X/TByhmAoILTarmzo=
 k8s.io/gengo/v2 v2.0.0-20240228010128-51d4e06bde70/go.mod h1:VH3AT8AaQOqiGjMF9p0/IM1Dj+82ZwjfxUP1IxaHE+8=
 k8s.io/klog v1.0.0/go.mod h1:4Bi6QPql/J/LkTDqv7R/cd3hPo4k2DG6Ptcz060Ez5I=
 k8s.io/klog/v2 v2.0.0/go.mod h1:PBfzABfn139FHAV07az/IF9Wp1bkk3vpT2XSJ76fSDE=
