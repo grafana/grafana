@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -140,12 +141,7 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "Failed to save annotation", err)
 	}
 
-	// nolint:staticcheck
-	userID, err := c.SignedInUser.GetInternalID()
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to save annotation", err)
-	}
-
+	userID, _ := identity.UserIdentifier(c.GetID())
 	item := annotations.Item{
 		OrgID:       c.SignedInUser.GetOrgID(),
 		UserID:      userID,
@@ -228,12 +224,7 @@ func (hs *HTTPServer) PostGraphiteAnnotation(c *contextmodel.ReqContext) respons
 		return response.Error(http.StatusBadRequest, "Failed to save Graphite annotation", err)
 	}
 
-	// nolint:staticcheck
-	userID, err := c.SignedInUser.GetInternalID()
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to save Graphite annotation", err)
-	}
-
+	userID, _ := identity.UserIdentifier(c.GetID())
 	item := annotations.Item{
 		OrgID:  c.SignedInUser.GetOrgID(),
 		UserID: userID,
@@ -286,12 +277,7 @@ func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Resp
 		}
 	}
 
-	// nolint:staticcheck
-	userID, err := c.SignedInUser.GetInternalID()
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to update annotation", err)
-	}
-
+	userID, _ := identity.UserIdentifier(c.GetID())
 	item := annotations.Item{
 		OrgID:    c.SignedInUser.GetOrgID(),
 		UserID:   userID,
@@ -349,12 +335,7 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 		}
 	}
 
-	// nolint:staticcheck
-	userID, err := c.SignedInUser.GetInternalID()
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to update annotation", err)
-	}
-
+	userID, _ := identity.UserIdentifier(c.GetID())
 	existing := annotations.Item{
 		OrgID:    c.SignedInUser.GetOrgID(),
 		UserID:   userID,
