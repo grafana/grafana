@@ -11,7 +11,7 @@ describe('ExposedComponentsRegistry', () => {
     consoleWarn.mockReset();
   });
 
-  it('should return empty registry when exposed components have been registered', async () => {
+  it('should return empty registry when no exposed components have been registered', async () => {
     const reactiveRegistry = new ExposedComponentsRegistry();
     const observable = reactiveRegistry.asObservable();
     const registry = await firstValueFrom(observable);
