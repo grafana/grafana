@@ -77,7 +77,7 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 
 	if err == nil {
 		// id, uid, name, email, created, updated
-		lastID := int64(1)
+		var lastID int64
 		for rows.Next() {
 			t := team.Team{}
 			err = rows.Scan(&t.ID, &t.UID, &t.Name, &t.Email, &t.Created, &t.Updated)
@@ -135,7 +135,7 @@ func (s *legacySQLStore) queryUsers(ctx context.Context, t *template.Template, r
 	}()
 
 	if err == nil {
-		lastID := int64(1)
+		var lastID int64
 		for rows.Next() {
 			u := user.User{}
 			err = rows.Scan(&u.OrgID, &u.ID, &u.UID, &u.Login, &u.Email, &u.Name,
