@@ -44,11 +44,11 @@ func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashI
 		return false, nil
 	}
 
-	if !identity.IsIdentityType(c.SignedInUser.GetID(), claims.TypeUser) {
+	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
 		return false, nil
 	}
 
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	userID, err := c.SignedInUser.GetInternalID()
 	if err != nil {
 		return false, err
 	}

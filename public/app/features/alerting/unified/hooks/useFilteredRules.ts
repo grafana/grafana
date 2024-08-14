@@ -250,7 +250,16 @@ const reduceGroups = (filterState: RulesFilter) => {
       const matchesFilterFor = chain(filterState)
         // ⚠️ keep this list of properties we filter for here up-to-date ⚠️
         // We are ignoring predicates we've matched before we get here (like "freeFormWords")
-        .pick(['ruleType', 'dataSourceNames', 'ruleHealth', 'labels', 'ruleState', 'dashboardUid', 'plugins'])
+        .pick([
+          'ruleType',
+          'dataSourceNames',
+          'ruleHealth',
+          'labels',
+          'ruleState',
+          'dashboardUid',
+          'plugins',
+          'contactPoint',
+        ])
         .omitBy(isEmpty)
         .mapValues(() => false)
         .value();
@@ -261,6 +270,17 @@ const reduceGroups = (filterState: RulesFilter) => {
 
       if ('plugins' in matchesFilterFor && filterState.plugins === 'hide') {
         matchesFilterFor.plugins = !isPluginProvidedRule(rule);
+      }
+
+      if ('contactPoint' in matchesFilterFor) {
+        const contactPoint = filterState.contactPoint;
+        const hasContactPoint =
+          isGrafanaRulerRule(rule.rulerRule) &&
+          rule.rulerRule.grafana_alert.notification_settings?.receiver === contactPoint;
+
+        if (hasContactPoint) {
+          matchesFilterFor.contactPoint = true;
+        }
       }
 
       if ('dataSourceNames' in matchesFilterFor) {
