@@ -54,7 +54,6 @@ export const AuthConfigPageUnconnected = ({
 
   // filter out saml and ldap from sso providers because it is already included in availableProviders
   providers = providers.filter((p) => p.provider !== 'saml');
-  providers = providers.filter((p) => p.provider !== 'ldap');
 
   // temporarily remove LDAP until its configuration form is ready
   providers = providers.filter((p) => p.provider !== 'ldap');
