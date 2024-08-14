@@ -386,9 +386,9 @@ export function isManagedPlugin(id: string) {
 }
 
 export function isPreinstalledPlugin(id: string): { found: boolean; withVersion: boolean } {
-  const { pluginsPreinstalled } = config;
+  const { pluginCatalogPreinstalledPlugins } = config;
 
-  const plugin = pluginsPreinstalled?.find((p) => p.id === id);
+  const plugin = pluginCatalogPreinstalledPlugins?.find((p) => p.id === id);
   return { found: !!plugin?.id, withVersion: !!plugin?.version };
 }
 

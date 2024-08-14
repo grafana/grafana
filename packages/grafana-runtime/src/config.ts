@@ -129,7 +129,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   pluginAdminExternalManageEnabled = false;
   pluginCatalogHiddenPlugins: string[] = [];
   pluginCatalogManagedPlugins: string[] = [];
-  pluginsPreinstalled: PreinstalledPlugin[] = [];
+  pluginCatalogPreinstalledPlugins: PreinstalledPlugin[] = [];
   pluginsCDNBaseURL = '';
   expressionsEnabled = false;
   customTheme?: undefined;
