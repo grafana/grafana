@@ -441,6 +441,7 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
       }),
       new CustomVariable({
         name: VAR_OTEL_DEPLOYMENT_ENV,
+        label: 'Deployment environment',
         hide: VariableHide.hideVariable,
         value: undefined,
         placeholder: 'Select',
@@ -456,6 +457,7 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
         hide: VariableHide.hideVariable,
         layout: 'vertical',
         defaultKeys: [],
+        applyMode: 'manual',
       }),
       new AdHocFiltersVariable({
         name: VAR_FILTERS,
