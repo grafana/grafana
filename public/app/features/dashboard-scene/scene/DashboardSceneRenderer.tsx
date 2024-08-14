@@ -15,7 +15,6 @@ import { useSelector } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
-import { AppChromeSidePane } from 'app/core/components/AppChrome/AppChromeSidePane';
 import { ScopesDashboards } from 'app/features/scopes';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
