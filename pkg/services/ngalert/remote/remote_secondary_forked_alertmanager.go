@@ -159,7 +159,7 @@ func (fam *RemoteSecondaryForkedAlertmanager) GetReceivers(ctx context.Context) 
 	return fam.internal.GetReceivers(ctx)
 }
 
-func (fam *RemoteSecondaryForkedAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error) {
+func (fam *RemoteSecondaryForkedAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
 	return fam.internal.TestReceivers(ctx, c)
 }
 

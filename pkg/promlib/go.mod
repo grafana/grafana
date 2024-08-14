@@ -3,6 +3,7 @@ module github.com/grafana/grafana/pkg/promlib
 go 1.22.4
 
 require (
+	github.com/grafana/dskit v0.0.0-20240805174438-dfa83b4ed2d3
 	github.com/grafana/grafana-plugin-sdk-go v0.241.0
 	github.com/json-iterator/go v1.1.12
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -13,7 +14,7 @@ require (
 	go.opentelemetry.io/otel v1.28.0
 	go.opentelemetry.io/otel/trace v1.28.0
 	golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f
-	k8s.io/apimachinery v0.31.0-rc.1
+	k8s.io/apimachinery v0.31.0
 )
 
 require (
