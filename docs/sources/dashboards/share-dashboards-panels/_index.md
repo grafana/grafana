@@ -83,7 +83,7 @@ You can share dashboards in the following ways:
 
 When you share a dashboard externally as a link or by email, those dashboards are included a list of your shared dashboards. To view the list and manage these dashboards, navigate to **Dashboards > Shared dashboards**.
 
-### Share internally
+### Share an internal link
 
 Share a personalized, direct link to your dashboard within your organization.
 
@@ -106,7 +106,7 @@ Once you have a customized internal link, you can share it quickly by following 
 
 This link has any customizations like time range locking or theme you've previously set.
 
-### Share externally
+### Share external links
 
 Externally shared dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to make your dashboard available to the world without requiring access to your Grafana organization.
 
@@ -202,37 +202,41 @@ Export a Grafana JSON file that contains everything you need, including layout, 
 
 You can share a panel as a direct link, as a snapshot, or as an embedded link. You can also create library panels using the **Share** option on any panel.
 
-1. Hover over any part of the panel to display the actions menu on the top right corner.
-1. Click the menu and select **Share**.
+The share dialog opens and shows the **Link** tab.
 
-   The share dialog opens and shows the **Link** tab.
+### Share an internal link
 
-### Use direct link
+Share a personalized, direct link to your panel within your organization.
 
-The **Link** tab shows the current time range, template variables, and the default theme. You can optionally enable a shortened URL to share.
-
-1. Click **Copy**.
-
-   This action copies the default or the shortened URL to the clipboard.
-
-1. Send the copied URL to a Grafana user with authorization to view the link.
-1. You also optionally click **Direct link rendered image** to share an image of the panel.
-
-For more information, refer to [Image rendering](ref:image-rendering).
-
-The following example shows a link to a server-side rendered PNG:
-
-```bash
-https://play.grafana.org/d/000000012/grafana-play-home?orgId=1&from=1568719680173&to=1568726880174&panelId=4&fullscreen
-```
+1. Hover over any part of the panel you want to share to display the actions menu on the top right corner.
+1. Click the menu and select **Share link**.
+1. (Optional) Set the following options:
+   - **Lock time range** - Change the current relative time range to an absolute time range. This option is enabled by default.
+   - **Shorten link** - Shorten the dashboard link. This option is disabled by default.
+1. Select the **Current**, **Dark**, or **Light** theme for the dashboard.
+1. Do one or both of the following:
+   - Click **Copy link**.
+   - [Click **Render image**.](ref:image-rendering)
+1. Send the copied link to a Grafana user with authorization to view the link.
+1. Click the **X** at the top-right corner to close the share drawer.
 
 #### Query string parameters for server-side rendered images
+
+When you click **Render image** in the panel link settings, Grafana generates a .png image of the panel with the following default parameters:
 
 - **width:** Width in pixels. Default is 800.
 - **height:** Height in pixels. Default is 400.
 - **tz:** Timezone in the format `UTC%2BHH%3AMM` where HH and MM are offset in hours and minutes after UTC
 - **timeout:** Number of seconds. The timeout can be increased if the query for the panel needs more than the default 30 seconds.
 - **scale:** Numeric value to configure device scale factor. Default is 1. Use a higher value to produce more detailed images (higher DPI). Supported in Grafana v7.0+.
+
+<!--how do you update these params? -->
+
+The following example shows a link to a server-side rendered PNG:
+
+```bash
+https://play.grafana.org/d/000000012/grafana-play-home?orgId=1&from=1568719680173&to=1568726880174&panelId=4&fullscreen
+```
 
 ### Publish a snapshot
 
