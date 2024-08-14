@@ -9,7 +9,6 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import store from 'app/core/store';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
-import { ScopesDashboards } from 'app/features/scopes';
 import { KioskMode } from 'app/types';
 
 import { AppChromeMenu } from './AppChromeMenu';
@@ -32,8 +31,7 @@ export function AppChrome({ children }: Props) {
   const dockedMenuBreakpoint = theme.breakpoints.values.xl;
   const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
-  // TODO how to get this state from the scene?
-  const scopeDashboardsState = true;
+  const leftToolbarPaneOpen = state.sidePaneLeft !== undefined;
 
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
@@ -112,19 +110,19 @@ export function AppChrome({ children }: Props) {
           )}
           {!state.chromeless && (
             <div
-              className={cx(styles.scopedDashboardsContainer, {
-                [styles.dockedScopedDashboardsContainer]: menuDockedAndOpen,
+              className={cx(styles.sidePaneLeft, {
+                [styles.sidePaneLeftWithDockedMenu]: menuDockedAndOpen,
               })}
             >
-              <ScopesDashboards />
+              {state.sidePaneLeft}
             </div>
           )}
           <main
             className={cx(styles.pageContainer, {
               [styles.pageContainerMenuDocked]:
-                config.featureToggles.bodyScrolling && (menuDockedAndOpen || scopeDashboardsState),
+                config.featureToggles.bodyScrolling && (menuDockedAndOpen || leftToolbarPaneOpen),
               [styles.pageContainerMenuDockedScopes]:
-                config.featureToggles.bodyScrolling && menuDockedAndOpen && scopeDashboardsState,
+                config.featureToggles.bodyScrolling && menuDockedAndOpen && leftToolbarPaneOpen,
             })}
             id="pageContent"
           >
@@ -176,7 +174,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
             zIndex: theme.zIndex.navbarFixed,
           }
     ),
-    scopedDashboardsContainer: css(
+    sidePaneLeft: css(
       config.featureToggles.bodyScrolling
         ? {
             position: 'fixed',
@@ -187,7 +185,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
             zIndex: theme.zIndex.navbarFixed,
           }
     ),
-    dockedScopedDashboardsContainer: css({
+    sidePaneLeftWithDockedMenu: css({
       left: MENU_WIDTH,
     }),
     topNav: css({

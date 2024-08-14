@@ -13,6 +13,8 @@ import { fetchSuggestedDashboards } from './api';
 import { DASHBOARDS_OPENED_KEY } from './const';
 import { SuggestedDashboard } from './types';
 import { getScopeNamesFromSelectedScopes } from './utils';
+import { AppChromeSidePane } from 'app/core/components/AppChrome/AppChromeSidePane';
+import React from 'react';
 
 export interface ScopesDashboardsSceneState extends SceneObjectState {
   selector: SceneObjectRef<ScopesSelectorScene> | null;
@@ -150,12 +152,14 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
   const [queryParams] = useQueryParams();
 
   if (!isEnabled || !isPanelOpened) {
-    return null;
+    return <AppChromeSidePane left={undefined} />;
   }
+
+  let paneContent: React.ReactNode;
 
   if (!isLoading) {
     if (!scopesSelected) {
-      return (
+      paneContent = (
         <div
           className={cx(styles.container, styles.noResultsContainer)}
           data-testid="scopes-dashboards-notFoundNoScopes"
@@ -164,7 +168,7 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
         </div>
       );
     } else if (dashboards.length === 0) {
-      return (
+      paneContent = (
         <div
           className={cx(styles.container, styles.noResultsContainer)}
           data-testid="scopes-dashboards-notFoundForScope"
@@ -175,7 +179,7 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
     }
   }
 
-  return (
+  paneContent = (
     <div className={styles.container} data-testid="scopes-dashboards-container">
       <div className={styles.searchInputContainer}>
         <FilterInput
@@ -221,6 +225,8 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
       )}
     </div>
   );
+
+  return <AppChromeSidePane left={paneContent} />;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -233,6 +239,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(1),
       padding: theme.spacing(2),
       width: theme.spacing(37.5),
+      height: '100%',
     }),
     noResultsContainer: css({
       alignItems: 'center',

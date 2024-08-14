@@ -15,6 +15,8 @@ import { useSelector } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
+import { AppChromeSidePane } from 'app/core/components/AppChrome/AppChromeSidePane';
+import { ScopesDashboards } from 'app/features/scopes';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const { controls, overlay, editview, editPanel, isEmpty, meta } = model.useState();
@@ -61,6 +63,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       {!editPanel && (
         <div className={cx(styles.pageContainer, hasControls && styles.pageContainerWithControls)}>
           <NavToolbarActions dashboard={model} />
+          <ScopesDashboards />
           {controls && (
             <div className={styles.controlsWrapper}>
               <controls.Component model={controls} />

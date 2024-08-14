@@ -23,6 +23,7 @@ export interface AppChromeState {
   megaMenuDocked: boolean;
   kioskMode: KioskMode | null;
   layout: PageLayoutType;
+  sidePaneLeft?: React.ReactNode;
   returnToPrevious?: {
     title: ReturnToPreviousProps['title'];
     href: ReturnToPreviousProps['href'];
@@ -72,6 +73,7 @@ export class AppChromeService {
     // when route change update props from route and clear fields
     if (!this.routeChangeHandled) {
       newState.actions = undefined;
+      newState.sidePaneLeft = undefined;
       newState.pageNav = undefined;
       newState.sectionNav = { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } };
       newState.chromeless = this.currentRoute?.chromeless;
