@@ -36,10 +36,7 @@ describe('usePluginComponent()', () => {
 
     registry.register({
       pluginId,
-      extensionConfigs: [],
-      exposedComponentConfigs: [
-        { id, title: 'not important', description: 'not important', component: () => <div>Hello World</div> },
-      ],
+      configs: [{ id, title: 'not important', description: 'not important', component: () => <div>Hello World</div> }],
     });
 
     const usePluginComponent = createUsePluginComponent(registry);
@@ -69,8 +66,7 @@ describe('usePluginComponent()', () => {
     act(() => {
       registry.register({
         pluginId,
-        extensionConfigs: [],
-        exposedComponentConfigs: [
+        configs: [
           {
             id,
             title: 'not important',

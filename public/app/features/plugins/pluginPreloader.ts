@@ -25,8 +25,17 @@ export async function preloadPlugins(
   const preloadedPlugins = await Promise.all(promises);
 
   for (const preloadedPlugin of preloadedPlugins) {
+    if (preloadedPlugin.error) {
+      console.error(`[Plugins] Skip loading extensions for "${preloadedPlugin.pluginId}" due to an error.`);
+      continue;
+    }
+
     registry.register(preloadedPlugin);
-    exposedComponentsRegistry.register(preloadedPlugin);
+
+    exposedComponentsRegistry.register({
+      pluginId: preloadedPlugin.pluginId,
+      configs: preloadedPlugin.exposedComponentConfigs,
+    });
   }
 
   stopMeasure(eventName);

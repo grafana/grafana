@@ -25,7 +25,7 @@ describe('ExposedComponentsRegistry', () => {
 
     reactiveRegistry.register({
       pluginId,
-      exposedComponentConfigs: [
+      configs: [
         {
           id,
           title: 'not important',
@@ -33,7 +33,6 @@ describe('ExposedComponentsRegistry', () => {
           component: () => React.createElement('div', null, 'Hello World'),
         },
       ],
-      extensionConfigs: [],
     });
 
     const registry = await reactiveRegistry.getState();
@@ -58,7 +57,7 @@ describe('ExposedComponentsRegistry', () => {
 
     reactiveRegistry.register({
       pluginId,
-      exposedComponentConfigs: [
+      configs: [
         {
           id: id1,
           title: 'not important',
@@ -78,7 +77,6 @@ describe('ExposedComponentsRegistry', () => {
           component: () => React.createElement('div', null, 'Hello World3'),
         },
       ],
-      extensionConfigs: [],
     });
 
     const registry = await reactiveRegistry.getState();
@@ -100,7 +98,7 @@ describe('ExposedComponentsRegistry', () => {
 
     reactiveRegistry.register({
       pluginId: pluginId1,
-      exposedComponentConfigs: [
+      configs: [
         {
           id: id1,
           title: 'not important',
@@ -114,12 +112,11 @@ describe('ExposedComponentsRegistry', () => {
           component: () => React.createElement('div', null, 'Hello World2'),
         },
       ],
-      extensionConfigs: [],
     });
 
     reactiveRegistry.register({
       pluginId: pluginId2,
-      exposedComponentConfigs: [
+      configs: [
         {
           id: id3,
           title: 'not important',
@@ -133,7 +130,6 @@ describe('ExposedComponentsRegistry', () => {
           component: () => React.createElement('div', null, 'Hello World4'),
         },
       ],
-      extensionConfigs: [],
     });
 
     const registry = await reactiveRegistry.getState();
@@ -155,8 +151,7 @@ describe('ExposedComponentsRegistry', () => {
     // Register extensions for the first plugin
     registry.register({
       pluginId: 'grafana-basic-app1',
-      extensionConfigs: [],
-      exposedComponentConfigs: [
+      configs: [
         {
           id: 'grafana-basic-app1/hello-world/v1',
           title: 'not important',
@@ -171,8 +166,7 @@ describe('ExposedComponentsRegistry', () => {
     // Register exposed components for the second plugin
     registry.register({
       pluginId: 'grafana-basic-app2',
-      extensionConfigs: [],
-      exposedComponentConfigs: [
+      configs: [
         {
           id: 'grafana-basic-app2/hello-world/v1',
           title: 'not important',
@@ -197,8 +191,7 @@ describe('ExposedComponentsRegistry', () => {
     // Register extensions for the first plugin
     registry.register({
       pluginId: 'grafana-basic-app',
-      extensionConfigs: [],
-      exposedComponentConfigs: [
+      configs: [
         {
           id: 'grafana-basic-app/hello-world/v1',
           title: 'not important',
@@ -223,41 +216,11 @@ describe('ExposedComponentsRegistry', () => {
     });
   });
 
-  it('should not register exposed components for a plugin that had errors', () => {
-    const pluginId = 'grafana-basic-app';
-    const reactiveRegistry = new ExposedComponentsRegistry();
-    const observable = reactiveRegistry.asObservable();
-    const subscribeCallback = jest.fn();
-
-    reactiveRegistry.register({
-      error: new Error('Something is broken'),
-      pluginId,
-      extensionConfigs: [],
-      exposedComponentConfigs: [
-        {
-          id: `${pluginId}/hello-world/v1`,
-          title: 'not important',
-          description: 'not important',
-          component: () => React.createElement('div', null, 'Hello World1'),
-        },
-      ],
-    });
-
-    expect(consoleWarn).toHaveBeenCalled();
-
-    observable.subscribe(subscribeCallback);
-    expect(subscribeCallback).toHaveBeenCalledTimes(1);
-
-    const registry = subscribeCallback.mock.calls[0][0];
-    expect(registry).toEqual({});
-  });
-
   it('should log a warning if another component with the same id already exists in the registry', async () => {
     const registry = new ExposedComponentsRegistry();
     registry.register({
       pluginId: 'grafana-basic-app1',
-      extensionConfigs: [],
-      exposedComponentConfigs: [
+      configs: [
         {
           id: 'grafana-basic-app1/hello-world/v1',
           title: 'not important',
@@ -278,8 +241,7 @@ describe('ExposedComponentsRegistry', () => {
 
     registry.register({
       pluginId: 'grafana-basic-app2',
-      extensionConfigs: [],
-      exposedComponentConfigs: [
+      configs: [
         {
           id: 'grafana-basic-app1/hello-world/v1', // incorrectly scoped
           title: 'not important',
@@ -300,8 +262,7 @@ describe('ExposedComponentsRegistry', () => {
     const registry = new ExposedComponentsRegistry();
     registry.register({
       pluginId: 'grafana-basic-app1',
-      extensionConfigs: [],
-      exposedComponentConfigs: [
+      configs: [
         {
           id: 'hello-world/v1',
           title: 'not important',
@@ -322,8 +283,7 @@ describe('ExposedComponentsRegistry', () => {
     const registry = new ExposedComponentsRegistry();
     registry.register({
       pluginId: 'grafana-basic-app1',
-      extensionConfigs: [],
-      exposedComponentConfigs: [
+      configs: [
         {
           id: 'grafana-basic-app1/hello-world',
           title: 'not important',
@@ -345,8 +305,7 @@ describe('ExposedComponentsRegistry', () => {
 
     registry.register({
       pluginId: 'grafana-basic-app',
-      extensionConfigs: [],
-      exposedComponentConfigs: [
+      configs: [
         {
           id: 'grafana-basic-app/hello-world/v1',
           title: 'not important',
@@ -369,8 +328,7 @@ describe('ExposedComponentsRegistry', () => {
 
     registry.register({
       pluginId: 'grafana-basic-app',
-      extensionConfigs: [],
-      exposedComponentConfigs: [
+      configs: [
         {
           id: 'grafana-basic-app/hello-world/v1',
           title: '',

@@ -1,37 +1,25 @@
 import { PluginExposedComponentConfig } from '@grafana/data';
 
-import { PluginPreloadResult } from '../../pluginPreloader';
 import { logWarning } from '../utils';
 
-import { Registry } from './Registry';
+import { Registry, RegistryType, PluginExtensionConfigs } from './Registry';
 
-export type RegistryType = {
-  [id: string]: {
-    pluginId: string;
-    config: PluginExposedComponentConfig;
-  };
-};
-
-export class ExposedComponentsRegistry extends Registry<RegistryType> {
-  constructor(initialState: RegistryType = {}) {
+export class ExposedComponentsRegistry extends Registry<PluginExposedComponentConfig> {
+  constructor(initialState: RegistryType<PluginExposedComponentConfig> = {}) {
     super({
       initialState,
     });
   }
 
-  mapToRegistry(registry: RegistryType, item: PluginPreloadResult): RegistryType {
-    const { pluginId, exposedComponentConfigs, error } = item;
-
-    if (error) {
-      logWarning(`"${pluginId}" plugin failed to load. Skip registering its exposed components.`);
+  mapToRegistry(
+    registry: RegistryType<PluginExposedComponentConfig>,
+    { pluginId, configs }: PluginExtensionConfigs<PluginExposedComponentConfig>
+  ): RegistryType<PluginExposedComponentConfig> {
+    if (!configs) {
       return registry;
     }
 
-    if (!exposedComponentConfigs) {
-      return registry;
-    }
-
-    for (const config of exposedComponentConfigs) {
+    for (const config of configs) {
       const { id, description, title } = config;
 
       if (!id.startsWith(pluginId)) {
