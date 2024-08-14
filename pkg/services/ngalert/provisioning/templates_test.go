@@ -452,7 +452,7 @@ func TestSetTemplate(t *testing.T) {
 	})
 
 	t.Run("rejects new template if version is set", func(t *testing.T) {
-		sut, store, prov := createTemplateServiceSut()
+		sut, store, _ := createTemplateServiceSut()
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			return revision(), nil
 		}
@@ -467,7 +467,6 @@ func TestSetTemplate(t *testing.T) {
 		_, err := sut.SetTemplate(context.Background(), orgID, template)
 
 		require.ErrorIs(t, err, ErrTemplateNotFound)
-		prov.AssertExpectations(t)
 	})
 
 	t.Run("propagates errors", func(t *testing.T) {
