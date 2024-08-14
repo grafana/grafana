@@ -114,6 +114,7 @@ type Interactions = {
       // type of sorting
       sortBy: string
   };
+  wasm_not_supported: {},
 };
 
 const PREFIX = 'grafana_explore_metrics_';
