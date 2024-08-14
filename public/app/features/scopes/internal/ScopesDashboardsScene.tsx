@@ -47,7 +47,7 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
     });
 
     this.addActivationHandler(() => {
-      if (this.state.isPanelOpened) {
+      if (this.state.isEnabled && this.state.isPanelOpened) {
         this.fetchDashboards();
       }
 
@@ -57,6 +57,7 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
         this._subs.add(
           resolvedSelector.subscribeToState((newState, prevState) => {
             if (
+              this.state.isEnabled &&
               this.state.isPanelOpened &&
               !newState.isLoadingScopes &&
               (prevState.isLoadingScopes || newState.scopes !== prevState.scopes)
