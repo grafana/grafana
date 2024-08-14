@@ -48,6 +48,7 @@ const getMockPlugin = (id: string): CatalogPlugin => {
     isDeprecated: false,
     isPublished: true,
     isManaged: false,
+    isPreinstalled: { found: false, withVersion: false },
   };
 };
 
