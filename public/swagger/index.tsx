@@ -18,8 +18,9 @@ if (window.nonce) {
 import 'swagger-ui-react/swagger-ui.css';
 
 import DOMPurify from 'dompurify';
-import { textUtil } from '@grafana/data';
 import { createRoot } from 'react-dom/client';
+
+import { textUtil } from '@grafana/data';
 
 import { Page } from './SwaggerPage';
 
