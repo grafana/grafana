@@ -17,6 +17,7 @@ import {
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { GroupMapping, LdapServerConfig, LdapSettings, OrgRole } from 'app/types';
+
 import { GroupMappingUnconnected } from './LdapGroupMapping';
 
 interface OwnProps {
