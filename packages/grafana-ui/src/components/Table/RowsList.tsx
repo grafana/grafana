@@ -301,10 +301,12 @@ export const RowsList = (props: RowsListProps) => {
         );
         style.height = bbox.height;
       }
+      const { key, ...rowProps } = row.getRowProps({ style, ...additionalProps });
 
       return (
         <div
-          {...row.getRowProps({ style, ...additionalProps })}
+          key={key}
+          {...rowProps}
           className={cx(tableStyles.row, expandedRowStyle)}
           onMouseEnter={() => onRowHover(index, data)}
           onMouseLeave={onRowLeave}

@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -201,7 +201,7 @@ func TestDashboardService(t *testing.T) {
 			folderSvc.ExpectedFolder = &folder.Folder{UID: "i am a folder"}
 			// set up a ctx with signed in user
 			usr := &user.SignedInUser{UserID: 1}
-			ctx := appcontext.WithUser(context.Background(), usr)
+			ctx := identity.WithRequester(context.Background(), usr)
 
 			count, err := service.CountInFolders(ctx, 1, []string{"i am a folder"}, usr)
 			require.NoError(t, err)

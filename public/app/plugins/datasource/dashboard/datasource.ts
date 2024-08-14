@@ -6,6 +6,7 @@ import {
   DataQueryResponse,
   DataSourceInstanceSettings,
   TestDataSourceResponse,
+  ScopedVar,
 } from '@grafana/data';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import { findVizPanelByKey, getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
@@ -25,7 +26,8 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   }
 
   query(options: DataQueryRequest<DashboardQuery>): Observable<DataQueryResponse> {
-    const scene: SceneObject | undefined = options.scopedVars?.__sceneObject?.value;
+    const sceneScopedVar: ScopedVar | undefined = options.scopedVars?.__sceneObject;
+    let scene: SceneObject | undefined = sceneScopedVar ? (sceneScopedVar.value.valueOf() as SceneObject) : undefined;
 
     if (options.requestId.indexOf('mixed') > -1) {
       throw new Error('Dashboard data source cannot be used with Mixed data source.');

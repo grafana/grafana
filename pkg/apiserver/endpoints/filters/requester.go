@@ -8,6 +8,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/klog/v2"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -26,7 +27,7 @@ func WithRequester(handler http.Handler) http.Handler {
 		if ok {
 			if info.GetName() == user.Anonymous {
 				requester = &identity.StaticRequester{
-					Namespace:   identity.NamespaceAnonymous,
+					Type:        claims.TypeAnonymous,
 					Name:        info.GetName(),
 					Login:       info.GetName(),
 					Permissions: map[int64]map[string][]string{},
@@ -37,12 +38,12 @@ func WithRequester(handler http.Handler) http.Handler {
 				slices.Contains(info.GetGroups(), user.SystemPrivilegedGroup) {
 				orgId := int64(1)
 				requester = &identity.StaticRequester{
-					Namespace: identity.NamespaceServiceAccount, // system:apiserver
-					UserID:    1,
-					OrgID:     orgId,
-					Name:      info.GetName(),
-					Login:     info.GetName(),
-					OrgRole:   identity.RoleAdmin,
+					Type:    claims.TypeServiceAccount, // system:apiserver
+					UserID:  1,
+					OrgID:   orgId,
+					Name:    info.GetName(),
+					Login:   info.GetName(),
+					OrgRole: identity.RoleAdmin,
 
 					IsGrafanaAdmin:             true,
 					AllowedKubernetesNamespace: "default",

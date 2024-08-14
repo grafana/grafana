@@ -94,6 +94,12 @@ const (
 	RowPanelTypeRow RowPanelType = "row"
 )
 
+// Defines values for SpecPanels0RepeatDirection.
+const (
+	SpecPanels0RepeatDirectionH SpecPanels0RepeatDirection = "h"
+	SpecPanels0RepeatDirectionV SpecPanels0RepeatDirection = "v"
+)
+
 // Defines values for SpecialValueMapType.
 const (
 	SpecialValueMapTypeRange   SpecialValueMapType = "range"
@@ -809,6 +815,10 @@ type Spec struct {
 	// Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
 	WeekStart *string `json:"weekStart,omitempty"`
 }
+
+// Direction to repeat in if 'repeat' is set.
+// `h` for horizontal, `v` for vertical.
+type SpecPanels0RepeatDirection string
 
 // Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color.
 // See SpecialValueMatch to see the list of special values.

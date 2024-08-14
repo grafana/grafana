@@ -12,8 +12,6 @@ import {
   DataSourceRef,
   PluginExtensionLink,
   PluginExtensionTypes,
-  PluginMeta,
-  PluginType,
   ScopedVars,
   TestDataSourceResponse,
 } from '@grafana/data';
@@ -131,6 +129,42 @@ export const mockRulerGrafanaRule = (
           refId: 'A',
           queryType: 'huh',
           model: {} as any,
+        },
+      ],
+      ...partialDef,
+    },
+    annotations: {
+      message: 'alert with severity "{{.warning}}}"',
+    },
+    labels: {
+      severity: 'warning',
+    },
+    ...partial,
+  };
+};
+export const mockRulerGrafanaRecordingRule = (
+  partial: Partial<RulerGrafanaRuleDTO> = {},
+  partialDef: Partial<GrafanaRuleDefinition> = {}
+): RulerGrafanaRuleDTO => {
+  return {
+    grafana_alert: {
+      uid: '123',
+      title: 'myalert',
+      namespace_uid: '123',
+      rule_group: 'my-group',
+      condition: 'A',
+      record: {
+        metric: 'myalert',
+        from: 'A',
+      },
+      data: [
+        {
+          datasourceUid: '123',
+          refId: 'A',
+          queryType: 'huh',
+          model: {
+            refId: '',
+          },
         },
       ],
       ...partialDef,
@@ -796,28 +830,3 @@ export function mockDashboardDto(
     meta: { ...meta },
   };
 }
-
-export const getMockPluginMeta: (id: string, name: string) => PluginMeta = (id, name) => {
-  return {
-    name,
-    id,
-    type: PluginType.app,
-    module: `plugins/${id}/module`,
-    baseUrl: `public/plugins/${id}`,
-    info: {
-      author: { name: 'Grafana Labs' },
-      description: name,
-      updated: '',
-      version: '',
-      links: [],
-      logos: {
-        small: '',
-        large: '',
-      },
-      screenshots: [],
-    },
-  };
-};
-
-export const labelsPluginMetaMock = getMockPluginMeta('grafana-labels-app', 'Grafana IRM Labels');
-export const onCallPluginMetaMock = getMockPluginMeta('grafana-oncall-app', 'Grafana OnCall');

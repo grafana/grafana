@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -163,8 +164,9 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			},
 			wantErr: false,
 			wantID: &authn.Identity{
-				ID:             authn.MustParseNamespaceID("user:1"),
-				UID:            authn.MustParseNamespaceID("user:1"),
+				ID:             "1",
+				UID:            "1",
+				Type:           claims.TypeUser,
 				Login:          "test",
 				Name:           "test",
 				Email:          "test",
@@ -202,8 +204,9 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			},
 			wantErr: false,
 			wantID: &authn.Identity{
-				ID:             authn.MustParseNamespaceID("user:1"),
-				UID:            authn.MustParseNamespaceID("user:1"),
+				ID:             "1",
+				UID:            "1",
+				Type:           claims.TypeUser,
 				Login:          "test",
 				Name:           "test",
 				Email:          "test",
@@ -243,8 +246,9 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			},
 			wantErr: false,
 			wantID: &authn.Identity{
-				ID:              authn.MustParseNamespaceID("user:1"),
-				UID:             authn.MustParseNamespaceID("user:1"),
+				ID:              "1",
+				UID:             "1",
+				Type:            claims.TypeUser,
 				AuthID:          "2032",
 				AuthenticatedBy: "oauth",
 				Login:           "test",
@@ -315,8 +319,9 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			},
 			wantErr: false,
 			wantID: &authn.Identity{
-				ID:              authn.MustParseNamespaceID("user:2"),
-				UID:             authn.MustParseNamespaceID("user:2"),
+				ID:              "2",
+				UID:             "2",
+				Type:            claims.TypeUser,
 				Login:           "test_create",
 				Name:            "test_create",
 				Email:           "test_create",
@@ -361,8 +366,9 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			},
 			wantErr: false,
 			wantID: &authn.Identity{
-				ID:             authn.MustParseNamespaceID("user:3"),
-				UID:            authn.MustParseNamespaceID("user:3"),
+				ID:             "3",
+				UID:            "3",
+				Type:           claims.TypeUser,
 				Login:          "test_mod",
 				Name:           "test_mod",
 				Email:          "test_mod",
@@ -406,8 +412,9 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			},
 			wantErr: false,
 			wantID: &authn.Identity{
-				ID:             authn.MustParseNamespaceID("user:3"),
-				UID:            authn.MustParseNamespaceID("user:3"),
+				ID:             "3",
+				UID:            "3",
+				Type:           claims.TypeUser,
 				Name:           "test",
 				Login:          "test",
 				Email:          "test_mod@test.com",
@@ -457,7 +464,7 @@ func TestUserSync_FetchSyncedUserHook(t *testing.T) {
 		{
 			desc:     "should skip hook when identity is not a user",
 			req:      &authn.Request{},
-			identity: &authn.Identity{ID: authn.MustParseNamespaceID("api-key:1"), ClientParams: authn.ClientParams{FetchSyncedUser: true}},
+			identity: &authn.Identity{ID: "1", Type: claims.TypeAPIKey, ClientParams: authn.ClientParams{FetchSyncedUser: true}},
 		},
 	}
 
@@ -483,7 +490,8 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 		{
 			desc: "should skip if correct flag is not set",
 			identity: &authn.Identity{
-				ID:           authn.NewNamespaceID(authn.NamespaceUser, 1),
+				ID:           "1",
+				Type:         claims.TypeUser,
 				IsDisabled:   true,
 				ClientParams: authn.ClientParams{EnableUser: false},
 			},
@@ -492,7 +500,8 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 		{
 			desc: "should skip if identity is not a user",
 			identity: &authn.Identity{
-				ID:           authn.NewNamespaceID(authn.NamespaceAPIKey, 1),
+				ID:           "1",
+				Type:         claims.TypeAPIKey,
 				IsDisabled:   true,
 				ClientParams: authn.ClientParams{EnableUser: true},
 			},
@@ -501,7 +510,8 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 		{
 			desc: "should enabled disabled user",
 			identity: &authn.Identity{
-				ID:           authn.NewNamespaceID(authn.NamespaceUser, 1),
+				ID:           "1",
+				Type:         claims.TypeUser,
 				IsDisabled:   true,
 				ClientParams: authn.ClientParams{EnableUser: true},
 			},

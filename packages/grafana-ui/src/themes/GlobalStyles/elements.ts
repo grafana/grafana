@@ -333,6 +333,17 @@ export function getElementStyles(theme: GrafanaTheme2) {
       color: theme.components.textHighlight.text,
       padding: 0,
     },
+
+    '.template-variable': {
+      color: theme.colors.primary.text,
+    },
+
+    '.modal-header-title': {
+      fontSize: theme.typography.size.lg,
+      float: 'left',
+      paddingTop: theme.spacing(1),
+      margin: theme.spacing(0, 2),
+    },
   });
 }
 

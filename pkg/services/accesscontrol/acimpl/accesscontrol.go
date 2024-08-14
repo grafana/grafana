@@ -108,12 +108,13 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 
 	return eval.EvaluateCustom(func(action, scope string) (bool, error) {
 		kind, _, identifier := accesscontrol.SplitScope(scope)
-		key, ok := zanzana.TranslateToTuple(user.GetUID().String(), action, kind, identifier, user.GetOrgID())
+		key, ok := zanzana.TranslateToTuple(user.GetUID(), action, kind, identifier, user.GetOrgID())
 		if !ok {
 			// unsupported translation
 			return false, errAccessNotImplemented
 		}
 
+		a.log.Debug("evaluating zanzana", "user", key.User, "relation", key.Relation, "object", key.Object)
 		res, err := a.zclient.Check(ctx, &openfgav1.CheckRequest{
 			TupleKey: &openfgav1.CheckRequestTupleKey{
 				User:     key.User,
@@ -191,6 +192,5 @@ func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver a
 }
 
 func (a *AccessControl) debug(ctx context.Context, ident identity.Requester, msg string, eval accesscontrol.Evaluator) {
-	namespace, id := ident.GetNamespacedID()
-	a.log.FromContext(ctx).Debug(msg, "namespace", namespace, "id", id, "orgID", ident.GetOrgID(), "permissions", eval.GoString())
+	a.log.FromContext(ctx).Debug(msg, "id", ident.GetID(), "orgID", ident.GetOrgID(), "permissions", eval.GoString())
 }
