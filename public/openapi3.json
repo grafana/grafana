@@ -3938,9 +3938,6 @@
         ],
         "type": "object"
       },
-      "CorrelationConfigType": {
-        "type": "string"
-      },
       "CorrelationConfigUpdateDTO": {
         "properties": {
           "field": {

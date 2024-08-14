@@ -13878,9 +13878,6 @@
         }
       }
     },
-    "CorrelationConfigType": {
-      "type": "string"
-    },
     "CorrelationConfigUpdateDTO": {
       "type": "object",
       "properties": {
