@@ -75,19 +75,21 @@ Sign in to Grafana and navigate to **Administration > Authentication > Configure
    | **Single logout**                     | The SAML single logout feature enables users to log out from all applications associated with the current IdP session established using SAML SSO. For more information, refer to [SAML single logout documentation]]({{< relref "../saml#single-logout" >}}). |
    | **Identity provider initiated login** | Enables users to log in to Grafana directly from the SAML IdP. For more information, refer to [IdP initiated login documentation]({{< relref "../saml#idp-initiated-single-sign-on-sso" >}}).                                                                 |
 
-1. Click **Next: Key and certificate**.
+1. Click **Next: Sign requests**.
 
-### 2. Key and Certificate Section
+### 2. Sign Requests Section
 
-1. Provide a certificate and a private key that will be used by the service provider (Grafana) and the SAML IdP.
+1. In the **Sign requests** field, specify whether you want the outgoing requests to be signed, and, if so, then:
 
-   Use the [PKCS #8](https://en.wikipedia.org/wiki/PKCS_8) format to issue the private key.
+   1. Provide a certificate and a private key that will be used by the service provider (Grafana) and the SAML IdP.
 
-   For more information, refer to an [example on how to generate SAML credentials]({{< relref "../saml#generate-private-key-for-saml-authentication" >}}).
+      Use the [PKCS #8](https://en.wikipedia.org/wiki/PKCS_8) format to issue the private key.
 
-1. In the **Sign requests** field, specify whether you want the outgoing requests to be signed, and, if so, which signature algorithm should be used.
+      For more information, refer to an [example on how to generate SAML credentials]({{< relref "../saml#generate-private-key-for-saml-authentication" >}}).
 
-   The SAML standard recommends using a digital signature for some types of messages, like authentication or logout requests to avoid [man-in-the-middle attacks](https://en.wikipedia.org/wiki/Man-in-the-middle_attack).
+   1. Choose which signature algorithm should be used.
+
+      The SAML standard recommends using a digital signature for some types of messages, like authentication or logout requests to avoid [man-in-the-middle attacks](https://en.wikipedia.org/wiki/Man-in-the-middle_attack).
 
 1. Click **Next: Connect Grafana with Identity Provider**.
 
