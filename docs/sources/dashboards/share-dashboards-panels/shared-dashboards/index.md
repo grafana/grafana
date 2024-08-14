@@ -153,7 +153,7 @@ To see a list of users who have accessed your externally shared dashboard by way
 
 1. In the main sidebar navigation, click **Administration**.
 1. Click **Users**.
-1. Click the **Public dashboard users** tab.
+1. Click the **Shared dashboard users** tab.
 
 From here, you can see the earliest time a user has been active in a dashboard, which shared dashboards they have access to, and their role.
 
