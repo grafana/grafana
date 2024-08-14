@@ -32,7 +32,8 @@ export function AppChrome({ children }: Props) {
   const dockedMenuBreakpoint = theme.breakpoints.values.xl;
   const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
-  const isScopesDashboardsOpen = Boolean(useScopesDashboardsState()?.isPanelOpened);
+  const scopesDashboardsState = useScopesDashboardsState();
+  const isScopesDashboardsOpen = Boolean(scopesDashboardsState?.isEnabled && scopesDashboardsState?.isPanelOpened);
 
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
