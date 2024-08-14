@@ -13,6 +13,7 @@ import { LocalValueVariable, sceneGraph, SceneGridRow, VizPanel, VizPanelMenu } 
 import { DataQuery, OptionsWithLegend } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
+import { contextSrv } from 'app/core/services/context_srv';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { InspectTab } from 'app/features/inspector/types';
@@ -110,19 +111,21 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         },
       });
 
-      subMenu.push({
-        text: t('share-panel.menu.share-snapshot-title', 'Share snapshot'),
-        iconClassName: 'camera',
-        shortcut: 'p s',
-        onClick: () => {
-          const drawer = new ShareDrawer({
-            title: t('share-panel.drawer.share-snapshot-title', 'Share snapshot'),
-            body: new ShareSnapshot({ dashboardRef: dashboard.getRef(), panelRef: panel.getRef() }),
-          });
+      if (contextSrv.isSignedIn && config.snapshotEnabled && dashboard.canEditDashboard()) {
+        subMenu.push({
+          text: t('share-panel.menu.share-snapshot-title', 'Share snapshot'),
+          iconClassName: 'camera',
+          shortcut: 'p s',
+          onClick: () => {
+            const drawer = new ShareDrawer({
+              title: t('share-panel.drawer.share-snapshot-title', 'Share snapshot'),
+              body: new ShareSnapshot({ dashboardRef: dashboard.getRef(), panelRef: panel.getRef() }),
+            });
 
-          dashboard.showModal(drawer);
-        },
-      });
+            dashboard.showModal(drawer);
+          },
+        });
+      }
 
       items.push({
         type: 'submenu',
