@@ -335,12 +335,7 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 		}
 	}
 
-	// nolint:staticcheck
-	userID, err := c.SignedInUser.GetInternalID()
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to update annotation", err)
-	}
-
+	userID, _ := identity.UserIdentifier(c.GetID())
 	existing := annotations.Item{
 		OrgID:    c.SignedInUser.GetOrgID(),
 		UserID:   userID,
