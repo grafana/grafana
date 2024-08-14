@@ -68,10 +68,7 @@ export const AuthConfigPageUnconnected = ({
         ...providers,
       ]
     : providers;
-    providerList.map((provider, i) => {
-      console.log(provider.provider + i, provider.settings)
-    })
-    return (
+  return (
     <Page
       navId="authentication"
       subTitle={

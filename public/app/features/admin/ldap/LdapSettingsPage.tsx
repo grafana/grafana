@@ -5,30 +5,11 @@ import { connect } from 'react-redux';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import {
-  useStyles2,
-  Alert,
-  Box,
-  Button,
-  Field,
-  Icon,
-  Input,
-  Label,
-  Stack,
-  Text,
-  TextLink,
-  Tooltip
-} from '@grafana/ui';
+import { useStyles2, Alert, Box, Button, Field, Icon, Input, Label, Stack, Text, TextLink, Tooltip } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { Loader } from 'app/features/plugins/admin/components/Loader';
-import {
-  GroupMapping,
-  LdapAttributes,
-  LdapPayload,
-  LdapSettings,
-  StoreState,
-} from 'app/types';
+import { GroupMapping, LdapAttributes, LdapPayload, LdapSettings, StoreState } from 'app/types';
 
 import { LdapDrawer } from './LdapDrawer';
 
@@ -56,9 +37,12 @@ const pageNav: NavModelItem = {
 
 const subTitle = (
   <div>
-    The LDAP integration in Grafana allows your Grafana users to log in with
-    their LDAP credentials. Find out more in our{' '}
-    <a className="external-link" href={`https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/ldap/`}>
+    The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in
+    our{' '}
+    <a
+      className="external-link"
+      href={`https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/ldap/`}
+    >
       documentation
     </a>
     .
@@ -119,7 +103,7 @@ const mapJsonToModel = (json: any): LdapPayload => {
     grafanaAdmin: !!gp.grafana_admin,
     groupDn: gp.group_dn,
     orgId: +gp.org_id,
-    orgRole: gp.org_role
+    orgRole: gp.org_role,
   }));
   return {
     id: json.id,
@@ -182,23 +166,25 @@ export const LdapSettingsPage = (): JSX.Element => {
       }
       setFormSettings(mapJsonToModel(payload));
       setIsLoading(false);
-    };
+    }
     init();
   }, []);
 
   // Display warning if the feature flag is disabled
   if (!config.featureToggles.ssoSettingsLDAP) {
     return (
-      <Alert title="invalid configuration">This page is only accessible by enabling the <strong>ssoSettingsLDAP</strong> feature flag.</Alert>
+      <Alert title="invalid configuration">
+        This page is only accessible by enabling the <strong>ssoSettingsLDAP</strong> feature flag.
+      </Alert>
     );
   }
 
-  const submitLdapSettings = ({ }: FormModel) => {
-    console.log('submitLdapSettings', formSettings)
+  const submitLdapSettings = ({}: FormModel) => {
+    console.log('submitLdapSettings', formSettings);
   };
 
   // Button's Actions
-  const saveForm = async() => {
+  const saveForm = async () => {
     const payload = {
       id: formSettings.id,
       provider: formSettings.provider,
@@ -207,40 +193,42 @@ export const LdapSettingsPage = (): JSX.Element => {
         active_sync_enabled: formSettings.settings.activeSyncEnabled,
         allow_sign_up: formSettings.settings.allowSignUp,
         config: {
-          servers: [{
-            attributes: {
-              email: formSettings.settings.config.server.attributes.email,
-              member_of: formSettings.settings.config.server.attributes.memberOf,
-              name: formSettings.settings.config.server.attributes.name,
-              surname: formSettings.settings.config.server.attributes.surname,
-              username: formSettings.settings.config.server.attributes.username,
+          servers: [
+            {
+              attributes: {
+                email: formSettings.settings.config.server.attributes.email,
+                member_of: formSettings.settings.config.server.attributes.memberOf,
+                name: formSettings.settings.config.server.attributes.name,
+                surname: formSettings.settings.config.server.attributes.surname,
+                username: formSettings.settings.config.server.attributes.username,
+              },
+              bind_dn: formSettings.settings.config.server.bindDn,
+              bind_password: formSettings.settings.config.server.bindPassword,
+              client_cert: formSettings.settings.config.server.clientCert,
+              client_key: formSettings.settings.config.server.clientKey,
+              group_mappings: formSettings.settings.config.server.groupMappings.map((gp: GroupMapping) => ({
+                group_dn: gp.groupDn,
+                org_id: gp.orgId,
+                org_role: gp.orgRole,
+              })),
+              group_search_base_dns: formSettings.settings.config.server.groupSearchBaseDns,
+              group_search_filter: formSettings.settings.config.server.groupSearchFilter,
+              group_search_filter_user_attribute: formSettings.settings.config.server.groupSearchFilterUserAttribute,
+              host: formSettings.settings.config.server.host,
+              map_ldap_groups_to_org_roles: formSettings.settings.config.server.mapLdapGroupsToOrgRoles,
+              min_tls_version: formSettings.settings.config.server.minTlsVersion,
+              port: formSettings.settings.config.server.port,
+              root_ca_cert: formSettings.settings.config.server.rootCaCert,
+              search_base_dns: formSettings.settings.config.server.searchBaseDn,
+              search_filter: formSettings.settings.config.server.searchFilter,
+              ssl_skip_verify: formSettings.settings.config.server.sslSkipVerify,
+              start_tls: formSettings.settings.config.server.startTls,
+              timeout: formSettings.settings.config.server.timeout,
+              tls_ciphers: formSettings.settings.config.server.tlsCiphers,
+              tls_skip_verify: formSettings.settings.config.server.tlsSkipVerify,
+              use_ssl: formSettings.settings.config.server.useSsl,
             },
-            bind_dn: formSettings.settings.config.server.bindDn,
-            bind_password: formSettings.settings.config.server.bindPassword,
-            client_cert: formSettings.settings.config.server.clientCert,
-            client_key: formSettings.settings.config.server.clientKey,
-            group_mappings: formSettings.settings.config.server.groupMappings.map((gp: GroupMapping) => ({
-              group_dn: gp.groupDn,
-              org_id: gp.orgId,
-              org_role: gp.orgRole
-            })),
-            group_search_base_dns: formSettings.settings.config.server.groupSearchBaseDns,
-            group_search_filter: formSettings.settings.config.server.groupSearchFilter,
-            group_search_filter_user_attribute: formSettings.settings.config.server.groupSearchFilterUserAttribute,
-            host: formSettings.settings.config.server.host,
-            map_ldap_groups_to_org_roles: formSettings.settings.config.server.mapLdapGroupsToOrgRoles,
-            min_tls_version: formSettings.settings.config.server.minTlsVersion,
-            port: formSettings.settings.config.server.port,
-            root_ca_cert: formSettings.settings.config.server.rootCaCert,
-            search_base_dns: formSettings.settings.config.server.searchBaseDn,
-            search_filter: formSettings.settings.config.server.searchFilter,
-            ssl_skip_verify: formSettings.settings.config.server.sslSkipVerify,
-            start_tls: formSettings.settings.config.server.startTls,
-            timeout: formSettings.settings.config.server.timeout,
-            tls_ciphers: formSettings.settings.config.server.tlsCiphers,
-            tls_skip_verify: formSettings.settings.config.server.tlsSkipVerify,
-            use_ssl: formSettings.settings.config.server.useSsl
-          }],
+          ],
         },
         enabled: formSettings.settings.enabled,
         skip_org_role_sync: formSettings.settings.skipOrgRoleSync,
@@ -293,15 +281,22 @@ export const LdapSettingsPage = (): JSX.Element => {
     <Tooltip
       content={
         <>
-          We recommend using variable expansion for bind password, for more information visit our <TextLink href={url} external>documentation</TextLink>.
+          We recommend using variable expansion for bind password, for more information visit our{' '}
+          <TextLink href={url} external>
+            documentation
+          </TextLink>
+          .
         </>
       }
-      interactive={true}>
+      interactive={true}
+    >
       <Icon name="info-circle" />
     </Tooltip>
   );
   const passwordLabel = (
-    <Label description={'If the password contains “#” or “;” you have to wrap it with triple quotes. E.g. """#password;""".'}>
+    <Label
+      description={'If the password contains “#” or “;” you have to wrap it with triple quotes. E.g. """#password;""".'}
+    >
       <Stack>
         Bind password
         {passwordTooltip}
@@ -312,106 +307,107 @@ export const LdapSettingsPage = (): JSX.Element => {
   return (
     <Page navId="authentication" pageNav={pageNav} subTitle={subTitle}>
       <Page.Contents>
-        { isLoading && <Loader /> }
-        { !isLoading && formSettings && <section className={styles.form}>
-          <h3>Basic Settings</h3>
-          <form onSubmit={handleSubmit(submitLdapSettings)}>
-            <Field
-              id="serverHost"
-              description="Hostname or IP address of the LDAP server you wish to connect to."
-              label="Server host">
+        {isLoading && <Loader />}
+        {!isLoading && formSettings && (
+          <section className={styles.form}>
+            <h3>Basic Settings</h3>
+            <form onSubmit={handleSubmit(submitLdapSettings)}>
+              <Field
+                id="serverHost"
+                description="Hostname or IP address of the LDAP server you wish to connect to."
+                label="Server host"
+              >
                 <Input
                   id="serverHost"
                   placeholder="example: 127.0.0.1"
                   type="text"
                   defaultValue={formSettings.settings?.config?.server?.host}
-                  onChange={({currentTarget: {value}}) => onChange({
-                    ...formSettings.settings,
-                    config: {
-                      ...formSettings.settings.config,
-                      server: {
-                        ...formSettings.settings.config.server,
-                        host: value,
+                  onChange={({ currentTarget: { value } }) =>
+                    onChange({
+                      ...formSettings.settings,
+                      config: {
+                        ...formSettings.settings.config,
+                        server: {
+                          ...formSettings.settings.config.server,
+                          host: value,
+                        },
                       },
-                    },
-                  })}
+                    })
+                  }
                 />
-            </Field>
-            <Field
-              label="Bind DN"
-              description="Distinguished name of the account used to bind and authenticate to the LDAP server.">
+              </Field>
+              <Field
+                label="Bind DN"
+                description="Distinguished name of the account used to bind and authenticate to the LDAP server."
+              >
                 <Input
                   {...register('bindDN', { required: false })}
                   id="bindDN"
                   placeholder="example: cn=admin,dc=grafana,dc=org"
                   type="text"
-                  value={formSettings.settings.config.server.bindDn}/>
-            </Field>
-            <Field
-              label={passwordLabel}>
+                  value={formSettings.settings.config.server.bindDn}
+                />
+              </Field>
+              <Field label={passwordLabel}>
                 <Input
                   {...register('bindPassword', { required: false })}
                   id="bindPassword"
                   type="text"
-                  value={formSettings.settings.config.server.bindPassword}/>
-            </Field>
-            <Field
-              label="Search filter*"
-              description="LDAP search filter used to locate specific entries within the directory.">
+                  value={formSettings.settings.config.server.bindPassword}
+                />
+              </Field>
+              <Field
+                label="Search filter*"
+                description="LDAP search filter used to locate specific entries within the directory."
+              >
                 <Input
                   {...register('searchFilter', { required: true })}
                   id="searchFilter"
                   placeholder="example: cn=%s"
                   type="text"
-                  value={formSettings.settings.config.server.searchFilter}/>
-            </Field>
-            <Field
-              label="Search base DNS *"
-              description="An array of base dns to search through; separate by commas or spaces.">
+                  value={formSettings.settings.config.server.searchFilter}
+                />
+              </Field>
+              <Field
+                label="Search base DNS *"
+                description="An array of base dns to search through; separate by commas or spaces."
+              >
                 <Input
                   {...register('searchBaseDns', { required: true })}
                   id="searchBaseDns"
                   placeholder='example: "dc=grafana.dc=org"'
                   type="text"
                   value={formSettings.settings.config.server.searchBaseDn}
-                  />
-            </Field>
-            <Box
-              borderColor="strong"
-              borderStyle="solid"
-              padding={2}
-              width={68}>
-                <Stack
-                  alignItems={"center"}
-                  direction={"row"}
-                  gap={2}
-                  justifyContent={'space-between'}>
-                  <Stack alignItems={"start"} direction={"column"}>
+                />
+              </Field>
+              <Box borderColor="strong" borderStyle="solid" padding={2} width={68}>
+                <Stack alignItems={'center'} direction={'row'} gap={2} justifyContent={'space-between'}>
+                  <Stack alignItems={'start'} direction={'column'}>
                     <Text element="h2">Advanced Settings</Text>
                     <Text>Mappings, extra security measures, and more.</Text>
                   </Stack>
-                  <Button variant='secondary' onClick={() => setIsDrawerOpen(true)}>Edit</Button>
+                  <Button variant="secondary" onClick={() => setIsDrawerOpen(true)}>
+                    Edit
+                  </Button>
                 </Stack>
-            </Box>
-            <Box display={'flex'} gap={2} marginTop={5}>
-              <Stack alignItems={'center'} gap={2}>
-                <Button type={'submit'}>
-                  Save and enable
-                </Button>
-                <Button variant='secondary' onClick={saveForm}>
-                  Save
-                </Button>
-                <Button variant='secondary' onClick={discardForm}>
-                  Discard
-                </Button>
-              </Stack>
-            </Box>
-          </form>
-        </section>}
-        {isDrawerOpen && <LdapDrawer
-          ldapSettings={formSettings.settings}
-          onChange={onChange}
-          onClose={() => setIsDrawerOpen(false)} />}
+              </Box>
+              <Box display={'flex'} gap={2} marginTop={5}>
+                <Stack alignItems={'center'} gap={2}>
+                  <Button type={'submit'}>Save and enable</Button>
+                  <Button variant="secondary" onClick={saveForm}>
+                    Save
+                  </Button>
+                  <Button variant="secondary" onClick={discardForm}>
+                    Discard
+                  </Button>
+                </Stack>
+              </Box>
+            </form>
+          </section>
+        )}
+        {isDrawerOpen && (
+          <LdapDrawer ldapSettings={formSettings.settings} onChange={onChange} onClose={() => setIsDrawerOpen(false)} />
+        )}
       </Page.Contents>
     </Page>
   );
@@ -428,7 +424,7 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(2),
     }),
     form: css({
-      'input': css({
+      input: css({
         width: theme.spacing(68),
       }),
     }),

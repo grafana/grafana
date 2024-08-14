@@ -298,10 +298,10 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/authentication/ldap',
-      component: config.featureToggles.ssoSettingsLDAP ?
-        SafeDynamicImport(
-          () => import(/* webpackChunkName: "LdapSettingsPage" */ 'app/features/admin/ldap/LdapSettingsPage')
-        )
+      component: config.featureToggles.ssoSettingsLDAP
+        ? SafeDynamicImport(
+            () => import(/* webpackChunkName: "LdapSettingsPage" */ 'app/features/admin/ldap/LdapSettingsPage')
+          )
         : LdapPage,
     },
     {
