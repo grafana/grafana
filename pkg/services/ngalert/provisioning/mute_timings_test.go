@@ -524,7 +524,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 
 		require.ErrorIs(t, err, expectedErr)
 	})
-	
+
 	t.Run("returns ErrVersionConflict if storage version does not match", func(t *testing.T) {
 		sut, store, prov := createMuteTimingSvcSut()
 		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
