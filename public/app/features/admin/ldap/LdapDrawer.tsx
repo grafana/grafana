@@ -300,53 +300,57 @@ export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props
             onChange={() => onServerConfigChange({ useSsl: !ldapSettings.config.server.useSsl })}
           />
         </Field>
-        {ldapSettings.config.server.useSsl && (<><Field
-          htmlFor="start-tls"
-          label={t('ldap-drawer.extra-security-section.start-tls.label', 'Start TLS')}
-          description={t(
-            'ldap-drawer.extra-security-section.start-tls.description',
-            'If set to true, use LDAP with STARTTLS instead of LDAPS'
-          )}
-        >
-          <Switch
-            id="start-tls"
-            value={ldapSettings.config.server.startTls}
-            onChange={() => onServerConfigChange({ startTls: !ldapSettings.config.server.startTls })}
-          />
-        </Field>
-        <Field
-          htmlFor="min-tls-version"
-          label={t('ldap-drawer.extra-security-section.min-tls-version.label', 'Min TLS version')}
-          description={t(
-            'ldap-drawer.extra-security-section.min-tls-version.description',
-            'This is the minimum TLS version allowed. Accepted values are: TLS1.2, TLS1.3.'
-          )}
-        >
-          <Select
-            id="min-tls-version"
-            options={tlsOptions}
-            value={ldapSettings.config.server.minTlsVersion}
-            onChange={(v) => onServerConfigChange({ minTlsVersion: v.value })}
-          />
-        </Field>
-        <Field
-          htmlFor="tls-ciphers"
-          label={t('ldap-drawer.extra-security-section.tls-ciphers.label', 'TLS ciphers')}
-          description={t(
-            'ldap-drawer.extra-security-section.tls-ciphers.description',
-            'List of comma- or space-separated ciphers'
-          )}
-        >
-          <Input
-            id="tls-ciphers"
-            placeholder={t(
-              'ldap-drawer.extra-security-section.tls-ciphers.placeholder',
-              'e.g. ["TLS_AES_256_GCM_SHA384"]'
-            )}
-            defaultValue={ldapSettings.config.server.tlsCiphers?.join(' ')}
-            onChange={({ currentTarget: { value } }) => onServerConfigChange({ tlsCiphers: value.split(' ') })}
-          />
-        </Field></>)}
+        {ldapSettings.config.server.useSsl && (
+          <>
+            <Field
+              htmlFor="start-tls"
+              label={t('ldap-drawer.extra-security-section.start-tls.label', 'Start TLS')}
+              description={t(
+                'ldap-drawer.extra-security-section.start-tls.description',
+                'If set to true, use LDAP with STARTTLS instead of LDAPS'
+              )}
+            >
+              <Switch
+                id="start-tls"
+                value={ldapSettings.config.server.startTls}
+                onChange={() => onServerConfigChange({ startTls: !ldapSettings.config.server.startTls })}
+              />
+            </Field>
+            <Field
+              htmlFor="min-tls-version"
+              label={t('ldap-drawer.extra-security-section.min-tls-version.label', 'Min TLS version')}
+              description={t(
+                'ldap-drawer.extra-security-section.min-tls-version.description',
+                'This is the minimum TLS version allowed. Accepted values are: TLS1.2, TLS1.3.'
+              )}
+            >
+              <Select
+                id="min-tls-version"
+                options={tlsOptions}
+                value={ldapSettings.config.server.minTlsVersion}
+                onChange={(v) => onServerConfigChange({ minTlsVersion: v.value })}
+              />
+            </Field>
+            <Field
+              htmlFor="tls-ciphers"
+              label={t('ldap-drawer.extra-security-section.tls-ciphers.label', 'TLS ciphers')}
+              description={t(
+                'ldap-drawer.extra-security-section.tls-ciphers.description',
+                'List of comma- or space-separated ciphers'
+              )}
+            >
+              <Input
+                id="tls-ciphers"
+                placeholder={t(
+                  'ldap-drawer.extra-security-section.tls-ciphers.placeholder',
+                  'e.g. ["TLS_AES_256_GCM_SHA384"]'
+                )}
+                defaultValue={ldapSettings.config.server.tlsCiphers?.join(' ')}
+                onChange={({ currentTarget: { value } }) => onServerConfigChange({ tlsCiphers: value.split(' ') })}
+              />
+            </Field>
+          </>
+        )}
         {/* <Field label="Encryption key and certificate provision specification (required)" description="X.509 certificate provides the public part, while the private key issued in a PKCS#8 format provides the private part of the asymmetric encryption.">
           <Input placeholder='TODO: This is a Base64-enconded content or a Path to file'></Input>
         </Field>
