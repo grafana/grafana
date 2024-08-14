@@ -65,7 +65,7 @@ func TestGetTemplates(t *testing.T) {
 			},
 		}
 
-		require.Equal(t, expected, result)
+		require.ElementsMatch(t, expected, result)
 
 		prov.AssertCalled(t, "GetProvenances", mock.Anything, orgID, (&definitions.NotificationTemplate{}).ResourceType())
 		prov.AssertExpectations(t)
