@@ -621,3 +621,11 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqSignedIn, routing.Wrap(hs.DeleteDashboardSnapshot))
 }
+
+func (hs *HTTPServer) shouldUseK8sAPI(resource string) bool {
+	unifiedStorageOptions := hs.Cfg.UnifiedStorage
+	if _, ok := unifiedStorageOptions[resource]; ok {
+		return true
+	}
+	return false
+}

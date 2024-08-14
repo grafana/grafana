@@ -279,6 +279,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		AwsAllowedAuthProviders:          hs.Cfg.AWSAllowedAuthProviders,
 		AwsAssumeRoleEnabled:             hs.Cfg.AWSAssumeRoleEnabled,
 		SupportBundlesEnabled:            isSupportBundlesEnabled(hs),
+		UnifiedStorage:                   hs.Cfg.UnifiedStorage,
 
 		Azure: dtos.FrontendSettingsAzureDTO{
 			Cloud:                                  hs.Cfg.Azure.Cloud,

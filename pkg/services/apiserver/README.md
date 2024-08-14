@@ -62,6 +62,7 @@ app_mode = development
 
 [feature_toggles]
 grafanaAPIServerEnsureKubectlAccess = true
+kubernetesPlaylists = true
 
 [unified_storage]
 playlists.playlist.grafana.app = 2
