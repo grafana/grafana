@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { useStyles2, Alert, Box, Button, Field, Icon, Input, Label, Stack, Text, TextLink, Tooltip } from '@grafana/ui';
+import { useStyles2, Alert, Box, Button, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
@@ -198,6 +198,7 @@ export const LdapSettingsPage = (): JSX.Element => {
               client_cert: formSettings.settings.config.server.clientCert,
               client_key: formSettings.settings.config.server.clientKey,
               group_mappings: formSettings.settings.config.server.groupMappings.map((gp: GroupMapping) => ({
+                grafana_admin: gp.grafanaAdmin,
                 group_dn: gp.groupDn,
                 org_id: gp.orgId,
                 org_role: gp.orgRole,
@@ -266,55 +267,19 @@ export const LdapSettingsPage = (): JSX.Element => {
     });
   };
 
-  const documentation = <Trans i18nKey="ldap-settings-page.documentation">documentation</Trans>;
-  const subtitle = (
+  const documentation = (
     <TextLink
       href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/ldap/"
       external
     >
-      {documentation}
+      <Trans i18nKey="ldap-settings-page.documentation">documentation</Trans>
     </TextLink>
   );
   const subTitle = (
     <Trans i18nKey="ldap-settings-page.subtitle">
       The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in
-      our {subtitle}.
+      our {documentation}.
     </Trans>
-  );
-
-  const toolTipUrl = (
-    <TextLink
-      href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#variable-expansion"
-      external
-    >
-      {documentation}
-    </TextLink>
-  );
-  const passwordTooltip = (
-    <Tooltip
-      content={
-        <Trans i18nKey="ldap-settings-page.bind-password.tool-tip">
-          We recommend using variable expansion for bind password, for more information visit our {toolTipUrl}.
-        </Trans>
-      }
-    >
-      <Icon name="info-circle" />
-    </Tooltip>
-  );
-  const passwordLabel = (
-    <Label
-      description={
-        <Trans i18nKey="ldap-settings-page.bind-password.description">
-          If the password contains “#” or “;” you have to wrap it with triple quotes. E.g.
-          &quot;&quot;&quot;#password;&quot;&quot;&quot;.
-        </Trans>
-      }
-    >
-      <Stack>
-        <Trans i18nKey="ldap-settings-page.bind-password.label">Bind password</Trans>
-        {passwordTooltip}
-      </Stack>
-    </Label>
   );
 
   return (
@@ -328,16 +293,15 @@ export const LdapSettingsPage = (): JSX.Element => {
             </h3>
             <form onSubmit={handleSubmit(submitLdapSettings)}>
               <Field
-                id="serverHost"
-                label={<Trans i18nKey="ldap-settings-page.host.label">Server host</Trans>}
-                description={
-                  <Trans i18nKey="ldap-settings-page.host.description">
-                    Hostname or IP address of the LDAP server you wish to connect to.
-                  </Trans>
-                }
+                htmlFor="host"
+                label={t('ldap-settings-page.host.label', 'Server host')}
+                description={t(
+                  'ldap-settings-page.host.description',
+                  'Hostname or IP address of the LDAP server you wish to connect to.'
+                )}
               >
                 <Input
-                  id="serverHost"
+                  id="host"
                   placeholder={t('ldap-settings-page.host.placeholder', 'example: 127.0.0.1')}
                   type="text"
                   defaultValue={formSettings.settings?.config?.server?.host}
@@ -356,56 +320,56 @@ export const LdapSettingsPage = (): JSX.Element => {
                 />
               </Field>
               <Field
-                label={<Trans i18nKey="ldap-settings-page.bind-dn.label">Bind DN</Trans>}
-                description={
-                  <Trans i18nKey="ldap-settings-page.bind-dn.description">
-                    Distinguished name of the account used to bind and authenticate to the LDAP server.
-                  </Trans>
-                }
+                htmlFor="bind-dn"
+                label={t('ldap-settings-page.bind-dn.label', 'Bind DN')}
+                description={t(
+                  'ldap-settings-page.bind-dn.description',
+                  'Distinguished name of the account used to bind and authenticate to the LDAP server.'
+                )}
               >
                 <Input
                   {...register('bindDn', { required: false })}
-                  id="bindDn"
+                  id="bind-dn"
                   placeholder={t('ldap-settings-page.bind-dn.placeholder', 'example: cn=admin,dc=grafana,dc=org')}
                   type="text"
                   value={formSettings.settings.config.server.bindDn}
                 />
               </Field>
-              <Field label={passwordLabel}>
+              <Field htmlFor="bind-password" label={t('ldap-settings-page.bind-password.label', 'Bind password')}>
                 <Input
                   {...register('bindPassword', { required: false })}
-                  id="bindPassword"
+                  id="bind-password"
                   type="text"
                   value={formSettings.settings.config.server.bindPassword}
                 />
               </Field>
               <Field
-                label={<Trans i18nKey="ldap-settings-page.search-filter.label">Search filter*</Trans>}
-                description={
-                  <Trans i18nKey="ldap-settings-page.search-filter.description">
-                    LDAP search filter used to locate specific entries within the directory.
-                  </Trans>
-                }
+                htmlFor="search-filter"
+                label={t('ldap-settings-page.search-filter.label', 'Search filter*')}
+                description={t(
+                  'ldap-settings-page.search-filter.description',
+                  'LDAP search filter used to locate specific entries within the directory.'
+                )}
               >
                 <Input
                   {...register('searchFilter', { required: true })}
-                  id="searchFilter"
+                  id="search-filter"
                   placeholder={t('ldap-settings-page.search-filter.placeholder', 'example: cn=%s')}
                   type="text"
                   value={formSettings.settings.config.server.searchFilter}
                 />
               </Field>
               <Field
-                label={<Trans i18nKey="ldap-settings-page.search-base-dns.label">Search base DNS *</Trans>}
-                description={
-                  <Trans i18nKey="ldap-settings-page.search-base-dns.description">
-                    An array of base dns to search through; separate by commas or spaces.
-                  </Trans>
-                }
+                htmlFor="search-base-dns"
+                label={t('ldap-settings-page.search-base-dns.label', 'Search base DNS *')}
+                description={t(
+                  'ldap-settings-page.search-base-dns.description',
+                  'An array of base dns to search through; separate by commas or spaces.'
+                )}
               >
                 <Input
                   {...register('searchBaseDns', { required: true })}
-                  id="searchBaseDns"
+                  id="search-base-dns"
                   placeholder={t('ldap-settings-page.search-base-dns.placeholder', 'example: "dc=grafana.dc=org"')}
                   type="text"
                   value={formSettings.settings.config.server.searchBaseDn}
