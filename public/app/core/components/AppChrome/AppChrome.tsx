@@ -31,7 +31,7 @@ export function AppChrome({ children }: Props) {
   const dockedMenuBreakpoint = theme.breakpoints.values.xl;
   const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
-  const leftToolbarPaneOpen = state.sidePaneLeft !== undefined;
+  const sidePaneLeftOpen = state.sidePaneLeft !== undefined;
 
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
@@ -120,9 +120,9 @@ export function AppChrome({ children }: Props) {
           <main
             className={cx(styles.pageContainer, {
               [styles.pageContainerMenuDocked]:
-                config.featureToggles.bodyScrolling && (menuDockedAndOpen || leftToolbarPaneOpen),
+                config.featureToggles.bodyScrolling && (menuDockedAndOpen || sidePaneLeftOpen),
               [styles.pageContainerMenuDockedScopes]:
-                config.featureToggles.bodyScrolling && menuDockedAndOpen && leftToolbarPaneOpen,
+                config.featureToggles.bodyScrolling && menuDockedAndOpen && sidePaneLeftOpen,
             })}
             id="pageContent"
           >
