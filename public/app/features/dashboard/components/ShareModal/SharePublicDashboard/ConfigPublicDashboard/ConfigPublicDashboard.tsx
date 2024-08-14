@@ -264,7 +264,6 @@ export function ConfigPublicDashboard({ publicDashboard, unsupportedDatasources 
           onRevoke={() => {
             DashboardInteractions.revokePublicDashboardClicked();
             showModal(DeletePublicDashboardModal, {
-              dashboardTitle: dashboard.title,
               onConfirm: () => onDeletePublicDashboardClick(hideModal),
               onDismiss: () => {
                 showModal(ShareModal, {
