@@ -145,7 +145,7 @@ export const LdapSettingsPage = (): JSX.Element => {
     async function init() {
       const payload = await getBackendSrv().get<LdapPayload>('/api/v1/sso-settings/ldap');
       if (!payload) {
-        console.error('Error fetching LDAP settings'); // TODO: add error handling
+        console.error('Error fetching LDAP settings'); // TODO:  add error handling
         return;
       }
 

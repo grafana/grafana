@@ -285,8 +285,9 @@ export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props
         label={t('ldap-drawer.extra-security-section.label', 'Extra security measures')}
         isOpen={true}
       >
+        {/* TODO: add tooltip */}
         <Field
-          htmlFor="ssl-skip-verify"
+          htmlFor="use-ssl"
           label={t('ldap-drawer.extra-security-section.use-ssl.label', 'Use SSL')}
           description={t(
             'ldap-drawer.extra-security-section.use-ssl.description',
@@ -294,12 +295,12 @@ export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props
           )}
         >
           <Switch
-            id="ssl-skip-verify"
+            id="use-ssl"
             value={ldapSettings.config.server.useSsl}
             onChange={() => onServerConfigChange({ useSsl: !ldapSettings.config.server.useSsl })}
           />
         </Field>
-        <Field
+        {ldapSettings.config.server.useSsl && (<><Field
           htmlFor="start-tls"
           label={t('ldap-drawer.extra-security-section.start-tls.label', 'Start TLS')}
           description={t(
@@ -345,7 +346,7 @@ export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props
             defaultValue={ldapSettings.config.server.tlsCiphers?.join(' ')}
             onChange={({ currentTarget: { value } }) => onServerConfigChange({ tlsCiphers: value.split(' ') })}
           />
-        </Field>
+        </Field></>)}
         {/* <Field label="Encryption key and certificate provision specification (required)" description="X.509 certificate provides the public part, while the private key issued in a PKCS#8 format provides the private part of the asymmetric encryption.">
           <Input placeholder='TODO: This is a Base64-enconded content or a Path to file'></Input>
         </Field>

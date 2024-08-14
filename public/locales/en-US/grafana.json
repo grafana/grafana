@@ -979,12 +979,15 @@
       },
       "surname": {
         "label": "Surname"
+      },
+      "username": {
+        "label": "Username"
       }
     },
     "extra-security-section": {
       "label": "Extra security measures",
       "min-tls-version": {
-        "description": "This is the minimum TLS version allowed. Accepted values are: TLS1.1, TLS1.2, TLS1.3.",
+        "description": "This is the minimum TLS version allowed. Accepted values are: TLS1.2, TLS1.3.",
         "label": "Min TLS version"
       },
       "start-tls": {
@@ -1056,8 +1059,8 @@
         "placeholder": "389"
       },
       "timeout": {
-        "description": "Timeout",
-        "label": "Timeout",
+        "description": "Timeout in seconds for the connection to the LDAP server",
+        "labe": "Timeout",
         "placeholder": "389"
       }
     },
@@ -1078,9 +1081,7 @@
       "placeholder": "example: cn=admin,dc=grafana,dc=org"
     },
     "bind-password": {
-      "description": "If the password contains “#” or “;” you have to wrap it with triple quotes. E.g. \"\"\"#password;\"\"\".",
-      "label": "Bind password",
-      "tool-tip": "We recommend using variable expansion for bind password, for more information visit our {toolTipUrl}."
+      "label": "Bind password"
     },
     "buttons-section": {
       "discard": {
@@ -1109,7 +1110,7 @@
       "label": "Search filter*",
       "placeholder": "example: cn=%s"
     },
-    "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our {subtitle}.",
+    "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our {documentation}.",
     "title": "Basic Settings"
   },
   "library-panel": {
