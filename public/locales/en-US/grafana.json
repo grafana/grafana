@@ -1911,8 +1911,10 @@
     "dismissable-button": "Close"
   },
   "save-dashboards": {
-    "drawer": {
-      "name-exists": "A dashboard with the same name in selected folder already exists, including recently deleted dashboards. Please choose a different name or folder."
+    "name-exists": {
+      "message-info": "A dashboard with the same name in the selected folder already exists, including recently deleted dashboards.",
+      "message-suggestion": "Please choose a different name or folder.",
+      "title": "Dashboard name already exists"
     }
   },
   "scopes": {

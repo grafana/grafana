@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { FetchError } from '@grafana/runtime';
+import { config, FetchError } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Button, ConfirmModal, Modal, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../state/DashboardModel';
 
@@ -30,7 +31,7 @@ export const SaveDashboardErrorProxy = ({
   setErrorIsHandled,
 }: SaveDashboardErrorProxyProps) => {
   const { onDashboardSave } = useDashboardSave();
-
+  const isRestoreDashboardsEnabled = config.featureToggles.dashboardRestore && config.featureToggles.dashboardRestoreUI;
   return (
     <>
       {error.data && error.data.status === 'version-mismatch' && (
@@ -50,7 +51,7 @@ export const SaveDashboardErrorProxy = ({
           onDismiss={onDismiss}
         />
       )}
-      {error.data && error.data.status === 'name-exists' && (
+      {error.data && error.data.status === 'name-exists' && !isRestoreDashboardsEnabled && (
         <ConfirmModal
           isOpen={true}
           title="Conflict"
@@ -67,6 +68,25 @@ export const SaveDashboardErrorProxy = ({
           }}
           onDismiss={onDismiss}
         />
+      )}
+      {error.data && error.data.status === 'name-exists' && isRestoreDashboardsEnabled && (
+        <Modal
+          isOpen={true}
+          title={t('save-dashboards.name-exists.title', 'Dashboard name already exists')}
+          onDismiss={onDismiss}
+        >
+          <p>
+            <Trans i18nKey="save-dashboards.name-exists.message-info">
+              A dashboard with the same name in the selected folder already exists, including recently deleted
+              dashboards.
+            </Trans>
+          </p>
+          <p>
+            <Trans i18nKey="save-dashboards.name-exists.message-suggestion">
+              Please choose a different name or folder.
+            </Trans>
+          </p>
+        </Modal>
       )}
       {error.data && error.data.status === 'plugin-dashboard' && (
         <ConfirmPluginDashboardSaveModal
