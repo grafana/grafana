@@ -592,9 +592,5 @@ func mode2DataSyncer(ctx context.Context, legacy LegacyStorage, storage Storage,
 		log.Info("finished syncing items", "items", len(itemsByName), "updated", syncSuccess, "failed", syncErr, "outcome", everythingSynced)
 	})
 
-	if err != nil {
-		log.Error(err, "Server lock for dualwriter mode 2 sync already exists")
-	}
-
-	return everythingSynced, nil
+	return everythingSynced, err
 }
