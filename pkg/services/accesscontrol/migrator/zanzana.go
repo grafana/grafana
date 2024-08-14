@@ -40,7 +40,8 @@ func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...Tu
 		basicFixedRolesCollector(store),
 		customRolesCollector(store),
 		basicRoleAssignemtCollector(store),
-		roleAssignemtCollector(store),
+		userRoleAssignemtCollector(store),
+		teamRoleAssignemtCollector(store),
 	)
 
 	return &ZanzanaSynchroniser{
@@ -455,9 +456,9 @@ func basicRoleAssignemtCollector(store db.DB) TupleCollector {
 	}
 }
 
-func roleAssignemtCollector(store db.DB) TupleCollector {
+func userRoleAssignemtCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
-		const collectorID = "role_assignment"
+		const collectorID = "user_role_assignment"
 		const query = `
 			SELECT ur.org_id, u.uid AS user_uid, r.uid AS role_uid
 			FROM user_role ur
@@ -483,6 +484,52 @@ func roleAssignemtCollector(store db.DB) TupleCollector {
 			var subject string
 			if a.UserUID != "" && a.RoleUID != "" {
 				subject = zanzana.NewTupleEntry(zanzana.TypeUser, a.UserUID, "")
+			} else {
+				continue
+			}
+
+			tuple := &openfgav1.TupleKey{
+				User:     subject,
+				Relation: zanzana.RelationAssignee,
+				Object:   zanzana.NewScopedTupleEntry(zanzana.TypeRole, a.RoleUID, "", strconv.FormatInt(a.OrgID, 10)),
+			}
+
+			key := fmt.Sprintf("%s-%s", collectorID, zanzana.RelationAssignee)
+			tuples[key] = append(tuples[key], tuple)
+		}
+
+		return nil
+	}
+}
+
+func teamRoleAssignemtCollector(store db.DB) TupleCollector {
+	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+		const collectorID = "team_role_assignment"
+		const query = `
+			SELECT tr.org_id, t.uid AS team_uid, r.uid AS role_uid
+			FROM team_role tr
+			LEFT JOIN role r ON r.id = tr.role_id
+			LEFT JOIN team t ON t.id = tr.team_id
+		`
+
+		type Assignment struct {
+			OrgID   int64  `xorm:"org_id"`
+			TeamUID string `xorm:"team_uid"`
+			RoleUID string `xorm:"role_uid"`
+		}
+
+		var assignments []Assignment
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(query).Find(&assignments)
+		})
+		if err != nil {
+			return err
+		}
+
+		for _, a := range assignments {
+			var subject string
+			if a.TeamUID != "" && a.RoleUID != "" {
+				subject = zanzana.NewTupleEntry(zanzana.TypeTeam, a.TeamUID, "member")
 			} else {
 				continue
 			}
