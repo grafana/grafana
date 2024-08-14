@@ -6,4 +6,4 @@ spec:
   group: prometheus.grafana.app
   version: v0alpha1
   services:
-    - type: data
+    - type: query
