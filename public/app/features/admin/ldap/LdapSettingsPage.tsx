@@ -163,7 +163,9 @@ export const LdapSettingsPage = (): JSX.Element => {
   if (!config.featureToggles.ssoSettingsLDAP) {
     return (
       <Alert title="invalid configuration">
-        <Trans i18nKey='ldap-settings-page.alert'>This page is only accessible by enabling the <strong>ssoSettingsLDAP</strong> feature flag.</Trans>
+        <Trans i18nKey="ldap-settings-page.alert">
+          This page is only accessible by enabling the <strong>ssoSettingsLDAP</strong> feature flag.
+        </Trans>
       </Alert>
     );
   }
@@ -264,7 +266,7 @@ export const LdapSettingsPage = (): JSX.Element => {
     });
   };
 
-  const documentation = <Trans i18nKey='ldap-settings-page.documentation'>documentation</Trans>
+  const documentation = <Trans i18nKey="ldap-settings-page.documentation">documentation</Trans>;
   const subtitle = (
     <TextLink
       href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/ldap/"
