@@ -113,12 +113,17 @@ export function InstallControlsButton({
     }
   };
 
-  if (pluginStatus === PluginStatus.UNINSTALL) {
-    const disableUninstall =
-      config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
-        ? plugin.isUninstallingFromInstance
-        : isUninstalling;
+  let disableUninstall =
+    config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
+      ? plugin.isUninstallingFromInstance
+      : isUninstalling;
+  let uninstallTitle = '';
+  if (plugin.isPreinstalled.found) {
+    disableUninstall = true;
+    uninstallTitle = 'Preinstalled plugin. Remove from Grafana config before uninstalling.';
+  }
 
+  if (pluginStatus === PluginStatus.UNINSTALL) {
     return (
       <>
         <ConfirmModal
@@ -131,7 +136,7 @@ export function InstallControlsButton({
           onDismiss={hideConfirmModal}
         />
         <Stack alignItems="flex-start" width="auto" height="auto">
-          <Button variant="destructive" disabled={disableUninstall} onClick={showConfirmModal}>
+          <Button variant="destructive" disabled={disableUninstall} onClick={showConfirmModal} title={uninstallTitle}>
             {uninstallBtnText}
           </Button>
         </Stack>
@@ -152,12 +157,12 @@ export function InstallControlsButton({
 
     return (
       <Stack alignItems="flex-start" width="auto" height="auto">
-        {!plugin.isManaged && (
+        {!plugin.isManaged && !plugin.isPreinstalled.withVersion && (
           <Button disabled={disableUpdate} onClick={onUpdate}>
             {isInstalling ? 'Updating' : 'Update'}
           </Button>
         )}
-        <Button variant="destructive" disabled={isUninstalling} onClick={onUninstall}>
+        <Button variant="destructive" disabled={disableUninstall} onClick={onUninstall} title={uninstallTitle}>
           {uninstallBtnText}
         </Button>
       </Stack>
