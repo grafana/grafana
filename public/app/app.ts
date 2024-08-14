@@ -40,15 +40,11 @@ import {
   setPluginComponentHook,
   setCurrentUser,
   setChromeHeaderHeightHook,
-  getAppEvents,
-  CloseAppInSideviewEvent,
-  OpenAppInSideviewEvent,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
 import { setPluginPage } from '@grafana/runtime/src/components/PluginPage';
 import config, { updateConfig } from 'app/core/config';
-import appSidecarSlice from 'app/core/reducers/appSidecar';
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -87,7 +83,7 @@ import { PanelDataErrorView } from './features/panel/components/PanelDataErrorVi
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { getCoreExtensionConfigurations } from './features/plugins/extensions/getCoreExtensionConfigurations';
-import { createPluginExtensionsGetter, getSidecarHelpers } from './features/plugins/extensions/getPluginExtensions';
+import { createPluginExtensionsGetter } from './features/plugins/extensions/getPluginExtensions';
 import { ReactivePluginExtensionsRegistry } from './features/plugins/extensions/reactivePluginExtensionRegistry';
 import { createUsePluginComponent } from './features/plugins/extensions/usePluginComponent';
 import { createUsePluginExtensions } from './features/plugins/extensions/usePluginExtensions';
@@ -163,7 +159,7 @@ export class GrafanaApp {
 
       // Important that extension reducers are initialized before store
       addExtensionReducers();
-      const store = configureStore();
+      configureStore();
       initExtensions();
 
       initAlerting();
@@ -230,22 +226,7 @@ export class GrafanaApp {
         await preloadPlugins(awaitedAppPlugins, extensionsRegistry, 'frontend_awaited_plugins_preload');
       }
 
-      getAppEvents().subscribe(CloseAppInSideviewEvent, (event) => {
-        store.dispatch(appSidecarSlice.actions.closeApp(event.payload));
-      });
-
-      getAppEvents().subscribe(OpenAppInSideviewEvent, (event) => {
-        store.dispatch(appSidecarSlice.actions.openApp(event.payload));
-      });
-
-      // Accessing this as a singleton will create some problems to URL handling for sidecar. Right now it's ok
-      // because we use the URl just to get some pseudo app IDs for core functionality.
-      setPluginExtensionGetter(
-        createPluginExtensionsGetter(
-          extensionsRegistry,
-          getSidecarHelpers(() => store.getState().appSidecar.appId, locationService)
-        )
-      );
+      setPluginExtensionGetter(createPluginExtensionsGetter(extensionsRegistry));
       setPluginExtensionsHook(createUsePluginExtensions(extensionsRegistry));
       setPluginComponentHook(createUsePluginComponent(extensionsRegistry));
 

@@ -45,7 +45,7 @@ describe('getExploreExtensionConfigs', () => {
       const extensions = getExploreExtensionConfigs();
       const [extension] = extensions;
 
-      expect(extension?.configure?.()).toBeUndefined();
+      expect(extension?.configure?.(undefined, { isAppOpened: () => false })).toBeUndefined();
     });
 
     it('should return empty object if sufficient permissions', () => {
@@ -54,7 +54,7 @@ describe('getExploreExtensionConfigs', () => {
       const extensions = getExploreExtensionConfigs();
       const [extension] = extensions;
 
-      expect(extension?.configure?.()).toEqual({});
+      expect(extension?.configure?.(undefined, { isAppOpened: () => false })).toEqual({});
     });
   });
 });

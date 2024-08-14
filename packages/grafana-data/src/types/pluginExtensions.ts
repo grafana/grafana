@@ -112,6 +112,9 @@ export type PluginExtensionOpenModalOptions = {
 };
 
 type PluginExtensionHelpers = {
+  /** Checks if the app plugin (that registers the extension) is currently visible (either in the main view or in the side view)
+   * @experimental
+   */
   isAppOpened: () => boolean;
 };
 
@@ -119,10 +122,15 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
   context?: Readonly<Context>;
   // Opens a modal dialog and renders the provided React component inside it
   openModal: (options: PluginExtensionOpenModalOptions) => void;
-  // Open an app in a sidecar meaning both main app and this app will be opened at the same time.
-  openApp: (context?: unknown) => void;
-  // Close this app if it's opened.
-  closeApp: () => void;
+
+  /** Opens the app plugin (that registers the extensions) in a side view
+   * @experimental
+   */
+  openAppInSideview: (context?: unknown) => void;
+  /** Closes the side view for the app plugin (that registers the extensions) in case it was open
+   * @experimental
+   */
+  closeAppInSideview: () => void;
 } & PluginExtensionHelpers;
 
 // Extension Points & Contexts

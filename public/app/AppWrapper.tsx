@@ -26,14 +26,14 @@ import { AppNotificationList } from './core/components/AppNotifications/AppNotif
 import { SplitPaneWrapper } from './core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { GrafanaContext } from './core/context/GrafanaContext';
 import { ModalsContextProvider } from './core/context/ModalsContextProvider';
+import { SidecarContext, useSidecar } from './core/context/SidecarContext';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
-import appSidecar from './core/reducers/appSidecar';
+import { sidecarService } from './core/services/SidecarService';
 import { contextSrv } from './core/services/context_srv';
 import { ThemeProvider } from './core/utils/ConfigProvider';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import AppRootPage from './features/plugins/components/AppRootPage';
-import { useDispatch, useSelector } from './types';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -116,13 +116,15 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                 actions={[]}
                 options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
               >
-                <div className="grafana-app">
-                  {config.featureToggles.appSidecar ? (
-                    <ExperimentalSplitPaneTree routes={ready && this.renderRoutes()} />
-                  ) : (
-                    <RouterTree routes={ready && this.renderRoutes()} />
-                  )}
-                </div>
+                <SidecarContext.Provider value={sidecarService}>
+                  <div className="grafana-app">
+                    {config.featureToggles.appSidecar ? (
+                      <ExperimentalSplitPaneTree routes={ready && this.renderRoutes()} />
+                    ) : (
+                      <RouterTree routes={ready && this.renderRoutes()} />
+                    )}
+                  </div>
+                </SidecarContext.Provider>
               </KBarProvider>
             </ThemeProvider>
           </GrafanaContext.Provider>
@@ -169,8 +171,7 @@ function RouterTree(props: { routes?: JSX.Element | false }) {
  * @constructor
  */
 function ExperimentalSplitPaneTree(props: { routes?: JSX.Element | false }) {
-  const appId = useSelector((state) => state.appSidecar.appId);
-  const dispatch = useDispatch();
+  const { activePluginId, closeApp } = useSidecar();
 
   const memoryLocationService = new HistoryWrapper(H.createMemoryHistory({ initialEntries: ['/'] }));
 
@@ -181,11 +182,13 @@ function ExperimentalSplitPaneTree(props: { routes?: JSX.Element | false }) {
       minSize={200}
       maxSize={200 * -1}
       primary="second"
-      splitVisible={!!appId}
+      splitVisible={!!activePluginId}
       paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
     >
       <RouterTree routes={props.routes} />
-      {appId && (
+
+      {/* Sidecar */}
+      {activePluginId && (
         <Router history={memoryLocationService.getHistory()}>
           <LocationServiceProvider service={memoryLocationService}>
             <CompatRouter>
@@ -195,7 +198,7 @@ function ExperimentalSplitPaneTree(props: { routes?: JSX.Element | false }) {
                   style={{
                     display: 'flex',
                     height: '100%',
-                    paddingTop: TOP_BAR_LEVEL_HEIGHT,
+                    paddingTop: TOP_BAR_LEVEL_HEIGHT * 2,
                     flexGrow: 1,
                     flexDirection: 'column',
                   }}
@@ -206,12 +209,10 @@ function ExperimentalSplitPaneTree(props: { routes?: JSX.Element | false }) {
                       style={{ margin: '8px' }}
                       name={'times'}
                       aria-label={'close'}
-                      onClick={() => {
-                        dispatch(appSidecar.actions.closeApp({ appId }));
-                      }}
+                      onClick={() => closeApp(activePluginId)}
                     />
                   </div>
-                  <AppRootPage pluginId={appId} />
+                  <AppRootPage pluginId={activePluginId} />
                 </div>
               </ModalsContextProvider>
             </CompatRouter>

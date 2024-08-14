@@ -36,24 +36,6 @@ export class CopyPanelEvent extends BusEventWithPayload<PanelModel> {
   static type = 'copy-panel';
 }
 
-/**
- * Opens an app plugin in a side view
- *
- * @internal
- */
-export class OpenAppInSideviewEvent extends BusEventWithPayload<{ appId: string }> {
-  static type = 'open-app-in-sideview';
-}
-
-/**
- * Closes an app plugin
- *
- * @internal
- */
-export class CloseAppInSideviewEvent extends BusEventWithPayload<{ appId: string }> {
-  static type = 'close-app-in-sideview';
-}
-
 // Internal singleton instance
 let singletonInstance: EventBus;
 

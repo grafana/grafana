@@ -18,6 +18,8 @@ import {
 } from '@grafana/data';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+// TODO: instead of depending on the service as a singleton, inject it as an argument from the React context
+import { sidecarService } from 'app/core/services/SidecarService';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { ShowModalReactEvent } from 'app/types/events';
 
@@ -309,3 +311,9 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
 
   return subMenu;
 }
+
+export const openAppInSideview = (pluginId: string) => sidecarService.openApp(pluginId);
+
+export const closeAppInSideview = (pluginId: string) => sidecarService.closeApp(pluginId);
+
+export const isAppOpened = (pluginId: string) => sidecarService.isAppOpened(pluginId);

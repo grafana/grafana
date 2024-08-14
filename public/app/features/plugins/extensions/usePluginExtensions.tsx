@@ -2,11 +2,10 @@ import { useMemo } from 'react';
 import { useObservable } from 'react-use';
 
 import { PluginExtension } from '@grafana/data';
-import { GetPluginExtensionsOptions, useLocationService, UsePluginExtensionsResult } from '@grafana/runtime';
+import { GetPluginExtensionsOptions, UsePluginExtensionsResult } from '@grafana/runtime';
+import { useSidecar } from 'app/core/context/SidecarContext';
 
-import { useSelector } from '../../../types';
-
-import { getPluginExtensions, getSidecarHelpers } from './getPluginExtensions';
+import { getPluginExtensions } from './getPluginExtensions';
 import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
 
 export function createUsePluginExtensions(extensionsRegistry: ReactivePluginExtensionsRegistry) {
@@ -14,14 +13,7 @@ export function createUsePluginExtensions(extensionsRegistry: ReactivePluginExte
 
   return function usePluginExtensions(options: GetPluginExtensionsOptions): UsePluginExtensionsResult<PluginExtension> {
     const registry = useObservable(observableRegistry);
-    const locationService = useLocationService();
-    const sidecarAppId = useSelector((state) => state.appSidecar.appId);
-    // Memoize this so that the functions do not change everytime and the getSidecarHelpers is also used in non react
-    // context so cannot use useCallback inside.
-    const sidecarHelpers = useMemo(
-      () => getSidecarHelpers(() => sidecarAppId, locationService),
-      [locationService, sidecarAppId]
-    );
+    const { activePluginId } = useSidecar();
 
     const { extensions } = useMemo(() => {
       if (!registry) {
@@ -32,12 +24,12 @@ export function createUsePluginExtensions(extensionsRegistry: ReactivePluginExte
         context: options.context,
         limitPerPlugin: options.limitPerPlugin,
         registry,
-        ...sidecarHelpers,
       });
       // Doing the deps like this instead of just `option` because there is low chance users will also memoize the
       // options object. This way we don't have to count on it and just check the simple values.
       // The context though still has to be memoized though and not mutated.
-    }, [options.extensionPointId, options.context, options.limitPerPlugin, registry, sidecarHelpers]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- TODO: refactor `getPluginExtensions` to accept service dependencies as arguments instead of relying on the sidecar singleton under the hood
+    }, [options.extensionPointId, options.context, options.limitPerPlugin, registry, activePluginId]);
 
     return {
       extensions,
