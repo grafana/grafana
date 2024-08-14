@@ -1870,6 +1870,7 @@
       "title": "Permanently Delete Dashboards"
     },
     "restore-modal": {
+      "folder-picker-text": "Please choose a folder where your dashboards will be restored.",
       "restore-button": "Restore",
       "restore-loading": "Restoring...",
       "text_one": "This action will restore {{numberOfDashboards}} dashboard.",
