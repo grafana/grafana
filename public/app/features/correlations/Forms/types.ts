@@ -1,13 +1,14 @@
 import { SupportedTransformationType } from '@grafana/data';
 import { t } from 'app/core/internationalization';
 
-import { CorrelationConfig } from '../types';
+import { CorrelationConfig, CorrelationType } from '../types';
 
 export interface FormDTO {
   sourceUID: string;
   targetUID: string;
   label: string;
   description: string;
+  type: CorrelationType;
   config: CorrelationConfig;
 }
 

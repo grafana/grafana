@@ -44,7 +44,7 @@ export const AddCorrelationForm = ({ onClose, onCreated }: Props) => {
     }
   }, [error, loading, value, onCreated]);
 
-  const defaultValues: Partial<FormDTO> = { config: { type: 'query', target: {}, field: '' } };
+  const defaultValues: Partial<FormDTO> = { type: 'query', config: { target: {}, field: '' } };
 
   return (
     <PanelContainer className={styles.panelContainer}>

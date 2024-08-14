@@ -137,7 +137,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		require.NoError(t, res.Body.Close())
 	})
 
-	t.Run("inexistent target data source should result in a 404 if config.type=query", func(t *testing.T) {
+	t.Run("inexistent target data source should result in a 404 if type=query", func(t *testing.T) {
 		res := ctx.Post(PostParams{
 			url: fmt.Sprintf("/api/datasources/uid/%s/correlations", writableDs),
 			body: `{
