@@ -33,20 +33,17 @@ type FrameIterateCallback = (frames: DataFrame[], seriesIndex: number) => void;
 export class ByFrameRepeater extends SceneObjectBase<ByFrameRepeaterState> {
   private unfilteredChildren: SceneFlexItem[] = [];
   private sortBy: string;
-  private direction: string;
   private sortedSeries: DataFrame[] = [];
   private getFilter: () => string;
 
   public constructor({
     sortBy,
-    direction,
     getFilter,
     ...state
-  }: ByFrameRepeaterState & { sortBy: string; direction: string; getFilter: () => string }) {
+  }: ByFrameRepeaterState & { sortBy: string; getFilter: () => string }) {
     super(state);
 
     this.sortBy = sortBy;
-    this.direction = direction;
     this.getFilter = getFilter;
 
     this.addActivationHandler(() => {
@@ -60,7 +57,7 @@ export class ByFrameRepeater extends SceneObjectBase<ByFrameRepeaterState> {
 
           const newData = newState.data;
 
-          if (newState.data !== undefined && newState.data?.state !== oldState.data?.state) {
+          if (newState.data?.state !== oldState.data?.state) {
             findSceneObjectsByType(this, SceneDataNode).forEach((dataNode) => {
               dataNode.setState({ data: { ...dataNode.state.data, state: newData.state } });
             });
@@ -77,10 +74,9 @@ export class ByFrameRepeater extends SceneObjectBase<ByFrameRepeaterState> {
     });
   }
 
-  public sort = (sortBy: string, direction: string) => {
+  public sort = (sortBy: string) => {
     const data = sceneGraph.getData(this);
     this.sortBy = sortBy;
-    this.direction = direction;
     if (data.state.data) {
       this.performRepeat(data.state.data);
     }
@@ -88,7 +84,7 @@ export class ByFrameRepeater extends SceneObjectBase<ByFrameRepeaterState> {
 
   private performRepeat(data: PanelData) {
     const newChildren: SceneFlexItem[] = [];
-    const sortedSeries = sortSeries(data.series, this.sortBy, this.direction);
+    const sortedSeries = sortSeries(data.series, this.sortBy);
 
     for (let seriesIndex = 0; seriesIndex < sortedSeries.length; seriesIndex++) {
       const layoutChild = this.state.getLayoutChild(data, sortedSeries[seriesIndex], seriesIndex);

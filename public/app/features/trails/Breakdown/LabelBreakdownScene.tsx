@@ -1,8 +1,8 @@
-// import init from '@bsull/augurs';
+import init from '@bsull/augurs';
 import { css } from '@emotion/css';
 import { isNumber, max, min, throttle } from 'lodash';
 
-import { DataFrame, FieldType, GrafanaTheme2, PanelData, ReducerID, SelectableValue } from '@grafana/data';
+import { DataFrame, FieldType, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
 import {
   PanelBuilders,
   QueryVariable,
@@ -80,7 +80,7 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
 
   private _onActivate() {
     // eslint-disable-next-line no-console
-    // init().then(() => console.debug('Grafana ML initialized'));
+    init().then(() => console.debug('Grafana ML initialized'));
 
     const variable = this.getVariable();
 
@@ -183,11 +183,11 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
     if (this.state.body instanceof LayoutSwitcher) {
       this.state.body.state.breakdownLayouts.forEach((layout) => {
         if (layout instanceof ByFrameRepeater) {
-          layout.sort(event.sortBy, event.direction);
+          layout.sort(event.sortBy);
         }
       });
     }
-    reportExploreMetrics('sorting_changed', { sortBy: event.sortBy, direction: event.direction });
+    reportExploreMetrics('sorting_changed', { sortBy: event.sortBy });
   };
 
   private onReferencedVariableValueChanged() {
@@ -395,7 +395,7 @@ function buildNormalLayout(
     return item;
   }
 
-  const { sortBy, direction } = getSortByPreference('labels', ReducerID.stdDev, 'desc');
+  const { sortBy } = getSortByPreference('labels', 'outliers');
   const getFilter = () => searchScene.state.filter ?? '';
 
   return new LayoutSwitcher({
@@ -434,7 +434,6 @@ function buildNormalLayout(
         }),
         getLayoutChild,
         sortBy,
-        direction,
         getFilter,
       }),
       new ByFrameRepeater({
@@ -445,7 +444,6 @@ function buildNormalLayout(
         }),
         getLayoutChild,
         sortBy,
-        direction,
         getFilter,
       }),
     ],

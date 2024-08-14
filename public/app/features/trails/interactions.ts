@@ -113,9 +113,7 @@ type Interactions = {
   sorting_changed: {
       // type of sorting
       sortBy: string
-      // direction asc | desc
-      direction: string
-  }
+  };
 };
 
 const PREFIX = 'grafana_explore_metrics_';
