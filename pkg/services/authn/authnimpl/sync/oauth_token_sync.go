@@ -62,7 +62,13 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 		return nil
 	}
 
-	ctxLogger := s.log.FromContext(ctx).New("userID", id.GetID())
+	userID, err := id.GetInternalID()
+	if err != nil {
+		s.log.FromContext(ctx).Error("Failed to refresh token. Invalid ID for identity", "type", id.GetIdentityType(), "err", err)
+		return nil
+	}
+
+	ctxLogger := s.log.FromContext(ctx).New("userID", userID)
 
 	cacheKey := id.GetID()
 	if _, ok := s.cache.Get(cacheKey); ok {
@@ -70,7 +76,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 		return nil
 	}
 
-	_, err, _ := s.singleflightGroup.Do(id.GetID(), func() (interface{}, error) {
+	_, err, _ = s.singleflightGroup.Do(id.GetID(), func() (interface{}, error) {
 		ctxLogger.Debug("Singleflight request for OAuth token sync")
 
 		updateCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
@@ -111,7 +117,7 @@ func getOAuthTokenCacheTTL(token *oauth2.Token) time.Duration {
 	}
 
 	if !token.Expiry.IsZero() {
-		d := time.Until(token.Expiry)
+		d := time.Until(token.Expiry.Add(-oauthtoken.ExpiryDelta))
 		if d < ttl {
 			ttl = d
 		}
@@ -119,11 +125,11 @@ func getOAuthTokenCacheTTL(token *oauth2.Token) time.Duration {
 
 	idTokenExpiry, err := oauthtoken.GetIDTokenExpiry(token)
 	if err == nil && !idTokenExpiry.IsZero() {
-		d := time.Until(idTokenExpiry)
+		d := time.Until(idTokenExpiry.Add(-oauthtoken.ExpiryDelta))
 		if d < ttl {
 			ttl = d
 		}
 	}
 
-	return ttl - oauthtoken.ExpiryDelta
+	return ttl
 }
