@@ -98,6 +98,21 @@ files = [
   "**/pkg/apimachinery/**/*"
 ]
 
+[linters-settings.depguard.rules.aggregator]
+list-mode = "lax"
+allow = [
+  "github.com/grafana/grafana/pkg/aggregator",
+  "github.com/grafana/grafana/pkg/semconv",
+  "github.com/grafana/grafana/pkg/apimachinery",
+]
+deny = [
+  { pkg = "github.com/grafana/grafana/pkg", desc = "apimachinery is not allowed to import grafana core" }
+]
+files = [
+  "./pkg/aggregator/*",
+  "./pkg/aggregator/**/*"
+]
+
 [linters-settings.depguard.rules.promlib]
 list-mode = "lax" # allow unless explicitely denied
 deny = [
@@ -107,7 +122,6 @@ allow = [
   "github.com/grafana/grafana/pkg/promlib"
 ]
 files = [
-  "**/pkg/promlib/*",
   "**/pkg/promlib/**/*"
 ]
 
