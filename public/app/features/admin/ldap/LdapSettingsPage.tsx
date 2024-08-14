@@ -262,21 +262,51 @@ export const LdapSettingsPage = (): JSX.Element => {
     });
   };
 
-  const subtitle = <TextLink href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/ldap/" external>documentation</TextLink>
-  const subTitle = <Trans i18nKey='ldap-settings-page.subtitle'>
-    The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our {subtitle}.
-  </Trans>;
+  const subtitle = (
+    <TextLink
+      href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/ldap/"
+      external
+    >
+      documentation
+    </TextLink>
+  );
+  const subTitle = (
+    <Trans i18nKey="ldap-settings-page.subtitle">
+      The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in
+      our {subtitle}.
+    </Trans>
+  );
 
-  const toolTipUrl = <TextLink href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#variable-expansion" external>documentation</TextLink>
-  const passwordTooltip = <Tooltip
-    content={<Trans i18nKey='ldap-settings-page.bind-password.tool-tip'>We recommend using variable expansion for bind password, for more information visit our {toolTipUrl}.</Trans>}
-  >
-    <Icon name="info-circle" />
-  </Tooltip>
+  const toolTipUrl = (
+    <TextLink
+      href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#variable-expansion"
+      external
+    >
+      documentation
+    </TextLink>
+  );
+  const passwordTooltip = (
+    <Tooltip
+      content={
+        <Trans i18nKey="ldap-settings-page.bind-password.tool-tip">
+          We recommend using variable expansion for bind password, for more information visit our {toolTipUrl}.
+        </Trans>
+      }
+    >
+      <Icon name="info-circle" />
+    </Tooltip>
+  );
   const passwordLabel = (
-    <Label description={<Trans i18nKey='ldap-settings-page.bind-password.description'>If the password contains “#” or “;” you have to wrap it with triple quotes. E.g. &quot;&quot;&quot;#password;&quot;&quot;&quot;.</Trans>}>
+    <Label
+      description={
+        <Trans i18nKey="ldap-settings-page.bind-password.description">
+          If the password contains “#” or “;” you have to wrap it with triple quotes. E.g.
+          &quot;&quot;&quot;#password;&quot;&quot;&quot;.
+        </Trans>
+      }
+    >
       <Stack>
-        <Trans i18nKey='ldap-settings-page.bind-password.label'>Bind password</Trans>
+        <Trans i18nKey="ldap-settings-page.bind-password.label">Bind password</Trans>
         {passwordTooltip}
       </Stack>
     </Label>
@@ -288,12 +318,18 @@ export const LdapSettingsPage = (): JSX.Element => {
         {isLoading && <Loader />}
         {!isLoading && formSettings && (
           <section className={styles.form}>
-            <h3><Trans i18nKey='ldap-settings-page.title'>Basic Settings</Trans></h3>
+            <h3>
+              <Trans i18nKey="ldap-settings-page.title">Basic Settings</Trans>
+            </h3>
             <form onSubmit={handleSubmit(submitLdapSettings)}>
               <Field
                 id="serverHost"
-                label={<Trans i18nKey='ldap-settings-page.host.label'>Server host</Trans>}
-                description={<Trans i18nKey='ldap-settings-page.host.description'>Hostname or IP address of the LDAP server you wish to connect to.</Trans>}
+                label={<Trans i18nKey="ldap-settings-page.host.label">Server host</Trans>}
+                description={
+                  <Trans i18nKey="ldap-settings-page.host.description">
+                    Hostname or IP address of the LDAP server you wish to connect to.
+                  </Trans>
+                }
               >
                 <Input
                   id="serverHost"
@@ -315,8 +351,12 @@ export const LdapSettingsPage = (): JSX.Element => {
                 />
               </Field>
               <Field
-                label={<Trans i18nKey='ldap-settings-page.bind-dn.label'>Bind DN</Trans>}
-                description={<Trans i18nKey='ldap-settings-page.bind-dn.description'>Distinguished name of the account used to bind and authenticate to the LDAP server.</Trans>}
+                label={<Trans i18nKey="ldap-settings-page.bind-dn.label">Bind DN</Trans>}
+                description={
+                  <Trans i18nKey="ldap-settings-page.bind-dn.description">
+                    Distinguished name of the account used to bind and authenticate to the LDAP server.
+                  </Trans>
+                }
               >
                 <Input
                   {...register('bindDn', { required: false })}
@@ -335,8 +375,12 @@ export const LdapSettingsPage = (): JSX.Element => {
                 />
               </Field>
               <Field
-                label={<Trans i18nKey='ldap-settings-page.search-filter.label'>Search filter*</Trans>}
-                description={<Trans i18nKey='ldap-settings-page.search-filter.description'>LDAP search filter used to locate specific entries within the directory.</Trans>}
+                label={<Trans i18nKey="ldap-settings-page.search-filter.label">Search filter*</Trans>}
+                description={
+                  <Trans i18nKey="ldap-settings-page.search-filter.description">
+                    LDAP search filter used to locate specific entries within the directory.
+                  </Trans>
+                }
               >
                 <Input
                   {...register('searchFilter', { required: true })}
@@ -347,8 +391,12 @@ export const LdapSettingsPage = (): JSX.Element => {
                 />
               </Field>
               <Field
-                label={<Trans i18nKey='ldap-settings-page.search-base-dns.label'>Search base DNS *</Trans>}
-                description={<Trans i18nKey='ldap-settings-page.search-base-dns.description'>An array of base dns to search through; separate by commas or spaces.</Trans>}
+                label={<Trans i18nKey="ldap-settings-page.search-base-dns.label">Search base DNS *</Trans>}
+                description={
+                  <Trans i18nKey="ldap-settings-page.search-base-dns.description">
+                    An array of base dns to search through; separate by commas or spaces.
+                  </Trans>
+                }
               >
                 <Input
                   {...register('searchBaseDns', { required: true })}
@@ -361,26 +409,30 @@ export const LdapSettingsPage = (): JSX.Element => {
               <Box borderColor="strong" borderStyle="solid" padding={2} width={68}>
                 <Stack alignItems={'center'} direction={'row'} gap={2} justifyContent={'space-between'}>
                   <Stack alignItems={'start'} direction={'column'}>
-                    <Text element="h2"><Trans i18nKey='ldap-settings-page.advanced-settings-section.title'>Advanced Settings</Trans></Text>
+                    <Text element="h2">
+                      <Trans i18nKey="ldap-settings-page.advanced-settings-section.title">Advanced Settings</Trans>
+                    </Text>
                     <Text>
-                      <Trans i18nKey='ldap-settings-page.advanced-settings-section.subtitle'>Mappings, extra security measures, and more.</Trans>
+                      <Trans i18nKey="ldap-settings-page.advanced-settings-section.subtitle">
+                        Mappings, extra security measures, and more.
+                      </Trans>
                     </Text>
                   </Stack>
                   <Button variant="secondary" onClick={() => setIsDrawerOpen(true)}>
-                  <Trans i18nKey='ldap-settings-page.advanced-settings-section.edit.button'>Edit</Trans>
+                    <Trans i18nKey="ldap-settings-page.advanced-settings-section.edit.button">Edit</Trans>
                   </Button>
                 </Stack>
               </Box>
               <Box display={'flex'} gap={2} marginTop={5}>
                 <Stack alignItems={'center'} gap={2}>
                   <Button type={'submit'}>
-                    <Trans i18nKey='ldap-settings-page.buttons-section.save-and-enable.button'>Save and enable</Trans>
+                    <Trans i18nKey="ldap-settings-page.buttons-section.save-and-enable.button">Save and enable</Trans>
                   </Button>
                   <Button variant="secondary" onClick={saveForm}>
-                    <Trans i18nKey='ldap-settings-page.buttons-section.save.button'>Save</Trans>
+                    <Trans i18nKey="ldap-settings-page.buttons-section.save.button">Save</Trans>
                   </Button>
                   <Button variant="secondary" onClick={discardForm}>
-                    <Trans i18nKey='ldap-settings-page.buttons-section.discard.button'>Discard</Trans>
+                    <Trans i18nKey="ldap-settings-page.buttons-section.discard.button">Discard</Trans>
                   </Button>
                 </Stack>
               </Box>
