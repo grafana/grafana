@@ -85,6 +85,7 @@ Occasionally, an alert instance may be in a state that isn't immediately clear t
 - Stale alert instances in the `Alerting` state transition to the `Normal` state when the series disappear.
 - If "no data" handling is configured to transition to a state other than `NoData`.
 - If "error" handling is configured to transition to a state other than `Error`.
+- If the alert rule is deleted, paused, or updated in some cases, the alert instance also transitions to the `Normal` state.
 
 In these situations, the evaluation state may differ from the alert state, and it might be necessary to understand the reason for being in that state when receiving the notification.
 
@@ -92,6 +93,7 @@ The `grafana_state_reason` annotation is included in these situations, providing
 
 - Stale alert instances in the `Normal` state include the `grafana_state_reason` annotation with the value **MissingSeries**.
 - If "no data" or "error" handling transitions to the `Normal` state, the `grafana_state_reason` annotation is included with the value **NoData** or **Error**, respectively.
+- If the alert rule is deleted or paused, the `grafana_state_reason` is set to **Paused** or **RuleDeleted**. For some updates, it is set to **Updated**.
 
 ### Special alerts for `NoData` and `Error`
 
