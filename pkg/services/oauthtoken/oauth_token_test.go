@@ -288,7 +288,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 					Expiry:       time.Now().Add(-time.Hour),
 					TokenType:    "Bearer",
 				}
-				env.identity = &authn.Identity{ID: "1234", Type: claims.TypeUser}
+				env.identity = &authn.Identity{ID: "1234", Type: claims.TypeUser, AuthenticatedBy: login.GenericOAuthModule}
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: true,
 				}
@@ -313,7 +313,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 					Expiry:       time.Now().Add(time.Hour),
 					TokenType:    "Bearer",
 				}
-				env.identity = &authn.Identity{ID: "1234", Type: claims.TypeUser}
+				env.identity = &authn.Identity{ID: "1234", Type: claims.TypeUser, AuthenticatedBy: login.GenericOAuthModule}
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: true,
 				}

@@ -158,6 +158,26 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) (
 
 	ctxLogger = ctxLogger.New("userID", userID)
 
+	// get the token's auth provider (f.e. azuread)
+	currAuthenticator := usr.GetAuthenticatedBy()
+	if !strings.HasPrefix(currAuthenticator, "oauth") {
+		ctxLogger.Warn("The specified user's auth provider is not OAuth", "authmodule", currAuthenticator)
+		return nil, nil
+	}
+
+	provider := strings.TrimPrefix(currAuthenticator, "oauth_")
+	currentOAuthInfo := o.SocialService.GetOAuthInfoProvider(provider)
+	if currentOAuthInfo == nil {
+		ctxLogger.Warn("OAuth provider not found", "provider", provider)
+		return nil, nil
+	}
+
+	// if refresh token handling is disabled for this provider, we can skip the refresh
+	if !currentOAuthInfo.UseRefreshToken {
+		ctxLogger.Debug("Skipping token refresh", "provider", provider)
+		return nil, nil
+	}
+
 	lockKey := fmt.Sprintf("oauth-refresh-token-%d", userID)
 
 	lockTimeConfig := serverlock.LockTimeConfig{
@@ -191,20 +211,6 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) (
 		if !needRefresh {
 			// Set the token which is returned by the outer function in case there's no need to refresh the token
 			newToken = storedToken
-			return
-		}
-
-		// get the token's auth provider (f.e. azuread)
-		provider := strings.TrimPrefix(authInfo.AuthModule, "oauth_")
-		currentOAuthInfo := o.SocialService.GetOAuthInfoProvider(provider)
-		if currentOAuthInfo == nil {
-			ctxLogger.Warn("OAuth provider not found", "provider", provider)
-			return
-		}
-
-		// if refresh token handling is disabled for this provider, we can skip the refresh
-		if !currentOAuthInfo.UseRefreshToken {
-			ctxLogger.Debug("Skipping token refresh", "provider", provider)
 			return
 		}
 
