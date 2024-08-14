@@ -645,7 +645,7 @@ export function guessTextBoundingBox(
   lineHeight: number,
   defaultRowHeight: number
 ) {
-  const width = Number(headerGroup.width ?? 300);
+  const width = Number(headerGroup?.width ?? 300);
   const LINE_SCALE_FACTOR = 1.17;
   const LOW_LINE_PAD = 42;
 
