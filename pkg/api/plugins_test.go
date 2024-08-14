@@ -55,7 +55,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 	canInstall := []ac.Permission{{Action: pluginaccesscontrol.ActionInstall}}
 	cannotInstall := []ac.Permission{{Action: "plugins:cannotinstall"}}
 
-	pluginID := "grafana-test-datasource"
+	pluginID := ""
 	localOrg := int64(1)
 	globalOrg := int64(ac.GlobalOrgID)
 
@@ -66,6 +66,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 		pluginAdminEnabled               bool
 		pluginAdminExternalManageEnabled bool
 		singleOrganization               bool
+		preInstalledPlugin               bool
 	}
 	tcs := []testCase{
 		{expectedCode: http.StatusNotFound, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: true},
@@ -76,6 +77,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 		{expectedCode: http.StatusForbidden, permissionOrg: localOrg, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false},
 		{expectedCode: http.StatusForbidden, permissionOrg: localOrg, permissions: cannotInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false, singleOrganization: true},
 		{expectedCode: http.StatusOK, permissionOrg: localOrg, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false, singleOrganization: true},
+		{expectedCode: http.StatusConflict, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false, preInstalledPlugin: true},
 	}
 
 	testName := func(action string, tc testCase) string {
@@ -84,11 +86,16 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
+		pluginID = "grafana-test-datasource"
+		if tc.preInstalledPlugin {
+			pluginID = "grafana-preinstalled-datasource"
+		}
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
 			hs.Cfg = setting.NewCfg()
 			hs.Cfg.PluginAdminEnabled = tc.pluginAdminEnabled
 			hs.Cfg.PluginAdminExternalManageEnabled = tc.pluginAdminExternalManageEnabled
 			hs.Cfg.RBAC.SingleOrganization = tc.singleOrganization
+			hs.Cfg.InstallPlugins = []setting.InstallPlugin{{ID: "grafana-preinstalled-datasource", Version: "1.0.0"}}
 
 			hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
 			hs.accesscontrolService = &actest.FakeService{}
