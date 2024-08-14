@@ -2,7 +2,7 @@ import { JSX } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { SelectableValue } from '@grafana/data';
-import { Button, Divider, Field, Input, RadioButtonGroup, Switch } from '@grafana/ui';
+import { Box, Button, Field, Input, RadioButtonGroup, Switch } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { GroupMapping, OrgRole } from 'app/types';
 
@@ -24,8 +24,7 @@ export type Props = GroupMappingProps & ConnectedProps<typeof connector>;
 
 export const GroupMappingUnconnected = ({ onRemove, onChange, groupMapping }: Props): JSX.Element => {
   return (
-    <div>
-      <Divider />
+    <Box borderColor="strong" borderStyle="solid" padding={2} marginBottom={2}>
       <Field
         htmlFor="group-dn"
         label={t('ldap-drawer.group-mapping.group-dn.label', 'Group DN')}
@@ -79,7 +78,7 @@ export const GroupMappingUnconnected = ({ onRemove, onChange, groupMapping }: Pr
       <Button variant="secondary" fill="outline" icon="trash-alt" onClick={onRemove}>
         <Trans i18nKey="ldap-drawer.group-mapping.remove.button">Remove group mapping</Trans>
       </Button>
-    </div>
+    </Box>
   );
 };
 
