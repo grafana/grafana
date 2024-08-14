@@ -114,7 +114,7 @@ const isRequestUrlAllowed = (method: HttpRequestMethod, requestEndpoint: string)
   }
 
   if (method === HttpRequestMethod.GET) {
-    return allowedAPIRegex.test(requestEndpoint);
+    return true;
   }
 
   const requestURL = new URL(requestEndpoint);
