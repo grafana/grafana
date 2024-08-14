@@ -327,7 +327,7 @@ describe('Plugin details page', () => {
     });
 
     it('should not display an update button for a plugin that is pre installed', async () => {
-      const { queryByRole } = renderPluginDetails({
+      const { queryByRole, getByText } = renderPluginDetails({
         id,
         isInstalled: true,
         hasUpdate: true,
@@ -341,8 +341,7 @@ describe('Plugin details page', () => {
       expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
 
       // Display an uninstall button but disabled
-      expect(queryByRole('button', { name: /uninstall/i })).toBeInTheDocument();
-      expect(queryByRole('button', { name: /uninstall/i })).toBeDisabled();
+      expect(getByText(/Uninstall/i).closest('button')).toBeDisabled();
     });
 
     it('should display an install button for enterprise plugins if license is valid', async () => {
