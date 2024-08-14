@@ -231,7 +231,7 @@ export const LdapDrawerUnconnected = ({
             onChange={({currentTarget: {value}}) => onServerConfigChange({tlsCiphers: value.split(' ')})}
           />
         </Field>
-        <Field label="Encryption key and certificate provision specification (required)" description="X.509 certificate provides the public part, while the private key issued in a PKCS#8 format provides the private part of the asymmetric encryption.">
+        {/* <Field label="Encryption key and certificate provision specification (required)" description="X.509 certificate provides the public part, while the private key issued in a PKCS#8 format provides the private part of the asymmetric encryption.">
           <Input placeholder='TODO: This is a Base64-enconded content or a Path to file'></Input>
         </Field>
         <Field label="Root CA certificate path" description="Separate by commas or spaces">
@@ -254,7 +254,7 @@ export const LdapDrawerUnconnected = ({
             defaultValue={ldapSettings.config.server.clientKey}
             onChange={({currentTarget: {value}}) => onServerConfigChange({clientKey: value})}
           />
-        </Field>
+        </Field> */}
       </CollapsableSection>
     </Drawer>
   );
