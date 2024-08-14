@@ -79,7 +79,7 @@ func ProvideRegistration(
 		}
 	}
 
-	if cfg.PasswordlessLoginEnabled {
+	if cfg.PasswordlessEnabled {
 		passwordless := clients.ProvidePasswordless(cfg, loginAttempts, userService, tempUserService, notificationService, cache)
 		authnSvc.RegisterClient(passwordless)
 	}

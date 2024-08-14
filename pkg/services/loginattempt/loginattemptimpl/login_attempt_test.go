@@ -73,7 +73,7 @@ func TestService_Validate(t *testing.T) {
 				cfg: cfg,
 			}
 
-			ok, err := service.Validate(context.Background(), "test")
+			ok, err := service.ValidateUsername(context.Background(), "test")
 			assert.Equal(t, tt.expected, ok)
 			assert.Equal(t, tt.expectedErr, err)
 		})
@@ -100,7 +100,7 @@ func TestLoginAttempts(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, int64(6), count)
 
-	ok, err := service.Validate(ctx, "admin")
+	ok, err := service.ValidateUsername(ctx, "admin")
 	assert.False(t, ok)
 	assert.Nil(t, err)
 }
@@ -111,6 +111,10 @@ type fakeStore struct {
 	ExpectedErr         error
 	ExpectedCount       int64
 	ExpectedDeletedRows int64
+}
+
+func (f fakeStore) GetIPLoginAttemptCount(ctx context.Context, query GetIPLoginAttemptCountQuery) (int64, error) {
+	return f.ExpectedCount, f.ExpectedErr
 }
 
 func (f fakeStore) GetUserLoginAttemptCount(ctx context.Context, query GetUserLoginAttemptCountQuery) (int64, error) {

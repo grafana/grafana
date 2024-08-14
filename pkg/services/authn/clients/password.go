@@ -31,7 +31,7 @@ type Password struct {
 func (c *Password) AuthenticatePassword(ctx context.Context, r *authn.Request, username, password string) (*authn.Identity, error) {
 	r.SetMeta(authn.MetaKeyUsername, username)
 
-	ok, err := c.loginAttempts.Validate(ctx, username)
+	ok, err := c.loginAttempts.ValidateUsername(ctx, username)
 	if err != nil {
 		return nil, err
 	}

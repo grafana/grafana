@@ -278,6 +278,6 @@ export interface AuthSettings {
   GenericOAuthSkipOrgRoleSync?: boolean;
 
   disableLogin?: boolean;
-  passwordlessLoginEnabled?: boolean;
+  passwordlessEnabled?: boolean;
   basicAuthStrongPasswordPolicy?: boolean;
 }

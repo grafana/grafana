@@ -33,7 +33,7 @@ type FrontendSettingsAuthDTO struct {
 
 	DisableLogin                  bool `json:"disableLogin"`
 	BasicAuthStrongPasswordPolicy bool `json:"basicAuthStrongPasswordPolicy"`
-	PasswordlessLoginEnabled      bool `json:"passwordlessLoginEnabled"`
+	PasswordlessEnabled           bool `json:"passwordlessEnabled"`
 }
 
 type FrontendSettingsBuildInfoDTO struct {
@@ -251,7 +251,7 @@ type FrontendSettingsDTO struct {
 	TokenExpirationDayLimit int                                `json:"tokenExpirationDayLimit"`
 	SharedWithMeFolderUID   string                             `json:"sharedWithMeFolderUID"`
 	RootFolderUID           string                             `json:"rootFolderUID"`
-	passwordlessEnabled     string                             `json:"passwordlessEnabled"`
+	PasswordlessEnabled     string                             `json:"passwordlessEnabled"`
 
 	GeomapDefaultBaseLayerConfig *map[string]any `json:"geomapDefaultBaseLayerConfig,omitempty"`
 	GeomapDisableCustomBaseLayer bool            `json:"geomapDisableCustomBaseLayer"`

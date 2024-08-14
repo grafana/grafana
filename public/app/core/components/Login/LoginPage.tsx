@@ -49,7 +49,7 @@ export const LoginPage = () => {
                 </Alert>
               )}
 
-              {!disableLoginForm && !config.auth.passwordlessLoginEnabled && (
+              {!disableLoginForm && !config.auth.passwordlessEnabled && (
                 <LoginForm onSubmit={login} loginHint={loginHint} passwordHint={passwordHint} isLoggingIn={isLoggingIn}>
                   <Stack justifyContent="flex-end">
                     {!config.auth.disableLogin && (
@@ -64,7 +64,7 @@ export const LoginPage = () => {
                   </Stack>
                 </LoginForm>
               )}
-              {config.auth.passwordlessLoginEnabled && (
+              {config.auth.passwordlessEnabled && (
                 <PasswordlessLoginForm onSubmit={passwordlessStart} isLoggingIn={isLoggingIn}></PasswordlessLoginForm>
               )}
               <LoginServiceButtons />
@@ -72,13 +72,16 @@ export const LoginPage = () => {
             </InnerBox>
           )}
 
-          {config.auth.passwordlessLoginEnabled && showPasswordlessConfirmation && (
+          {config.auth.passwordlessEnabled && showPasswordlessConfirmation && (
             <InnerBox>
-              <PasswordlessConfirmation onSubmit={passwordlessConfirm} isLoggingIn={isLoggingIn}></PasswordlessConfirmation>
+              <PasswordlessConfirmation
+                onSubmit={passwordlessConfirm}
+                isLoggingIn={isLoggingIn}
+              ></PasswordlessConfirmation>
             </InnerBox>
           )}
 
-          {isChangingPassword && !config.auth.passwordlessLoginEnabled && (
+          {isChangingPassword && !config.auth.passwordlessEnabled && (
             <InnerBox>
               <ChangePassword
                 showDefaultPasswordWarning={showDefaultPasswordWarning}
@@ -87,8 +90,6 @@ export const LoginPage = () => {
               />
             </InnerBox>
           )}
-
-
         </LoginLayout>
       )}
     </LoginCtrl>

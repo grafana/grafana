@@ -27,7 +27,12 @@ func (f *MockLoginAttemptService) Reset(ctx context.Context, username string) er
 	return f.ExpectedErr
 }
 
-func (f *MockLoginAttemptService) Validate(ctx context.Context, username string) (bool, error) {
+func (f *MockLoginAttemptService) ValidateUsername(ctx context.Context, username string) (bool, error) {
+	f.ValidateCalled = true
+	return f.ExpectedValid, f.ExpectedErr
+}
+
+func (f *MockLoginAttemptService) ValidateIPAddress(ctx context.Context, IPAddress string) (bool, error) {
 	f.ValidateCalled = true
 	return f.ExpectedValid, f.ExpectedErr
 }

@@ -65,7 +65,7 @@ func (s *Service) Reset(ctx context.Context, username string) error {
 	return s.store.DeleteLoginAttempts(ctx, DeleteLoginAttemptsCommand{strings.ToLower(username)})
 }
 
-func (s *Service) Validate(ctx context.Context, username string) (bool, error) {
+func (s *Service) ValidateUsername(ctx context.Context, username string) (bool, error) {
 	if s.cfg.DisableBruteForceLoginProtection {
 		return true, nil
 	}
@@ -76,6 +76,28 @@ func (s *Service) Validate(ctx context.Context, username string) (bool, error) {
 	}
 
 	count, err := s.store.GetUserLoginAttemptCount(ctx, loginAttemptCountQuery)
+	if err != nil {
+		return false, err
+	}
+
+	if count >= maxInvalidLoginAttempts {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func (s *Service) ValidateIPAddress(ctx context.Context, IPAddress string) (bool, error) {
+	if s.cfg.DisableBruteForceLoginProtection {
+		return true, nil
+	}
+
+	loginAttemptCountQuery := GetIPLoginAttemptCountQuery{
+		IPAddress: IPAddress,
+		Since:     time.Now().Add(-loginAttemptsWindow),
+	}
+
+	count, err := s.store.GetIPLoginAttemptCount(ctx, loginAttemptCountQuery)
 	if err != nil {
 		return false, err
 	}
