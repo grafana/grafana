@@ -17,14 +17,12 @@ import { RoadmapLinks } from '../components/RoadmapLinks';
 import { SearchField } from '../components/SearchField';
 import { Sorters } from '../helpers';
 import { useHistory } from '../hooks/useHistory';
-import { useGetAll, useIsRemotePluginsAvailable, useDisplayMode } from '../state/hooks';
-import { PluginListDisplayMode } from '../types';
+import { useGetAll, useIsRemotePluginsAvailable } from '../state/hooks';
 
 export default function Browse({ route }: GrafanaRouteComponentProps): ReactElement | null {
   const location = useLocation();
   const locationSearch = locationSearchToObject(location.search);
   const navModel = useSelector((state) => getNavModel(state.navIndex, 'plugins'));
-  const { displayMode, setDisplayMode } = useDisplayMode();
   const styles = useStyles2(getStyles);
   const history = useHistory();
   const remotePluginsAvailable = useIsRemotePluginsAvailable();
@@ -143,27 +141,10 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
                 ]}
               />
             </Field>
-
-            {/* Display mode */}
-            <Field label="View">
-              <RadioButtonGroup<PluginListDisplayMode>
-                className={styles.displayAs}
-                value={displayMode}
-                onChange={setDisplayMode}
-                options={[
-                  {
-                    value: PluginListDisplayMode.Grid,
-                    icon: 'table',
-                    description: 'Display plugins in a grid layout',
-                  },
-                  { value: PluginListDisplayMode.List, icon: 'list-ul', description: 'Display plugins in list' },
-                ]}
-              />
-            </Field>
           </HorizontalGroup>
         </HorizontalGroup>
         <div className={styles.listWrap}>
-          <PluginList plugins={plugins} displayMode={displayMode} isLoading={isLoading} />
+          <PluginList plugins={plugins} isLoading={isLoading} />
         </div>
         <RoadmapLinks />
       </Page.Contents>

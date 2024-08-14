@@ -12,8 +12,6 @@ export const selectRoot = (state: PluginCatalogStoreState) => state.plugins;
 
 export const selectItems = createSelector(selectRoot, ({ items }) => items);
 
-export const selectDisplayMode = createSelector(selectRoot, ({ settings }) => settings.displayMode);
-
 export const { selectAll, selectById } = pluginsAdapter.getSelectors(selectItems);
 
 export type PluginFilters = {
