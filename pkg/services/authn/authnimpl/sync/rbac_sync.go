@@ -6,8 +6,8 @@ import (
 
 	"golang.org/x/exp/maps"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -148,12 +148,12 @@ func (s *RBACSync) SyncCloudRoles(ctx context.Context, ident *authn.Identity, r 
 		return nil
 	}
 
-	if !ident.ID.IsType(identity.TypeUser) {
+	if !ident.IsIdentityType(claims.TypeUser) {
 		s.log.FromContext(ctx).Debug("Skip syncing cloud role", "id", ident.ID)
 		return nil
 	}
 
-	userID, err := ident.ID.ParseInt()
+	userID, err := ident.GetInternalID()
 	if err != nil {
 		return err
 	}

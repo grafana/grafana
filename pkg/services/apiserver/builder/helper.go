@@ -5,24 +5,19 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	goruntime "runtime"
-	"runtime/debug"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/mod/semver"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/apimachinery/pkg/version"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/util/openapi"
+	utilversion "k8s.io/apiserver/pkg/util/version"
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	k8stracing "k8s.io/component-base/tracing"
 	"k8s.io/kube-openapi/pkg/common"
@@ -122,22 +117,8 @@ func SetupConfig(
 		return handler
 	}
 
-	k8sVersion, err := getK8sApiserverVersion()
-	if err != nil {
-		return err
-	}
-	before, after, _ := strings.Cut(buildVersion, ".")
-	serverConfig.Version = &version.Info{
-		Major:        before,
-		Minor:        after,
-		GoVersion:    goruntime.Version(),
-		Platform:     fmt.Sprintf("%s/%s", goruntime.GOOS, goruntime.GOARCH),
-		Compiler:     goruntime.Compiler,
-		GitTreeState: buildBranch,
-		GitCommit:    buildCommit,
-		BuildDate:    time.Unix(buildTimestamp, 0).UTC().Format(time.DateTime),
-		GitVersion:   k8sVersion,
-	}
+	serverConfig.EffectiveVersion = utilversion.DefaultKubeEffectiveVersion()
+
 	return nil
 }
 
@@ -199,34 +180,4 @@ func InstallAPIs(
 		}
 	}
 	return nil
-}
-
-// find the k8s version according to build info
-func getK8sApiserverVersion() (string, error) {
-	bi, ok := debug.ReadBuildInfo()
-	if !ok {
-		return "", fmt.Errorf("debug.ReadBuildInfo() failed")
-	}
-
-	if len(bi.Deps) == 0 {
-		return "v?.?", nil // this is normal while debugging
-	}
-
-	for _, dep := range bi.Deps {
-		if dep.Path == "k8s.io/apiserver" {
-			if !semver.IsValid(dep.Version) {
-				return "", fmt.Errorf("invalid semantic version for k8s.io/apiserver")
-			}
-			// v0 => v1
-			majorVersion := strings.TrimPrefix(semver.Major(dep.Version), "v")
-			majorInt, err := strconv.Atoi(majorVersion)
-			if err != nil {
-				return "", fmt.Errorf("could not convert majorVersion to int. majorVersion: %s", majorVersion)
-			}
-			newMajor := fmt.Sprintf("v%d", majorInt+1)
-			return strings.Replace(dep.Version, semver.Major(dep.Version), newMajor, 1), nil
-		}
-	}
-
-	return "", fmt.Errorf("could not find k8s.io/apiserver in build info")
 }
