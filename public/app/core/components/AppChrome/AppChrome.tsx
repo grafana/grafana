@@ -9,7 +9,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import store from 'app/core/store';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
-import { ScopesDashboards } from 'app/features/scopes';
+import { ScopesDashboards, useScopesDashboardsState } from 'app/features/scopes';
 import { KioskMode } from 'app/types';
 
 import { AppChromeMenu } from './AppChromeMenu';
@@ -32,8 +32,7 @@ export function AppChrome({ children }: Props) {
   const dockedMenuBreakpoint = theme.breakpoints.values.xl;
   const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
-  // TODO how to get this state from the scene?
-  const scopeDashboardsState = true;
+  const isScopesDashboardsOpen = Boolean(useScopesDashboardsState()?.isPanelOpened);
 
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
@@ -112,8 +111,8 @@ export function AppChrome({ children }: Props) {
           )}
           {!state.chromeless && (
             <div
-              className={cx(styles.scopedDashboardsContainer, {
-                [styles.dockedScopedDashboardsContainer]: menuDockedAndOpen,
+              className={cx(styles.scopesDashboardsContainer, {
+                [styles.scopesDashboardsContainerDocked]: menuDockedAndOpen,
               })}
             >
               <ScopesDashboards />
@@ -122,9 +121,9 @@ export function AppChrome({ children }: Props) {
           <main
             className={cx(styles.pageContainer, {
               [styles.pageContainerMenuDocked]:
-                config.featureToggles.bodyScrolling && (menuDockedAndOpen || scopeDashboardsState),
+                config.featureToggles.bodyScrolling && (menuDockedAndOpen || isScopesDashboardsOpen),
               [styles.pageContainerMenuDockedScopes]:
-                config.featureToggles.bodyScrolling && menuDockedAndOpen && scopeDashboardsState,
+                config.featureToggles.bodyScrolling && menuDockedAndOpen && isScopesDashboardsOpen,
             })}
             id="pageContent"
           >
@@ -176,7 +175,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
             zIndex: theme.zIndex.navbarFixed,
           }
     ),
-    scopedDashboardsContainer: css(
+    scopesDashboardsContainer: css(
       config.featureToggles.bodyScrolling
         ? {
             position: 'fixed',
@@ -187,7 +186,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
             zIndex: theme.zIndex.navbarFixed,
           }
     ),
-    dockedScopedDashboardsContainer: css({
+    scopesDashboardsContainerDocked: css({
       left: MENU_WIDTH,
     }),
     topNav: css({
