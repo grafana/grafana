@@ -6,7 +6,7 @@ import { BackendSrvRequest } from '@grafana/runtime';
 export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit => {
   const method = options.method;
   const headers = parseHeaders(options);
-  const isAppJson = isContentTypeApplicationJson(headers);
+  const isAppJson = isContentTypeJson(headers);
   const body = parseBody(options, isAppJson);
   const credentials = parseCredentials(options);
 
@@ -68,13 +68,16 @@ export const parseHeaders = (options: BackendSrvRequest) => {
   return combinedHeaders;
 };
 
-export const isContentTypeApplicationJson = (headers: Headers) => {
+export const isContentTypeJson = (headers: Headers) => {
   if (!headers) {
     return false;
   }
 
   const contentType = headers.get('content-type');
-  if (contentType && contentType.toLowerCase() === 'application/json') {
+  if (
+    contentType &&
+    (contentType.toLowerCase() === 'application/json' || contentType.toLowerCase() === 'application/merge-patch+json')
+  ) {
     return true;
   }
 

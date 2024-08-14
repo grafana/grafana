@@ -1,5 +1,5 @@
 import {
-  isContentTypeApplicationJson,
+  isContentTypeJson,
   parseBody,
   parseCredentials,
   parseHeaders,
@@ -75,7 +75,7 @@ describe('parseHeaders', () => {
   });
 });
 
-describe('isContentTypeApplicationJson', () => {
+describe('isContentTypeJson', () => {
   it.each`
     headers                                                                 | expected
     ${undefined}                                                            | ${false}
@@ -85,7 +85,7 @@ describe('isContentTypeApplicationJson', () => {
     ${new Headers({ 'content-type': 'application/x-www-form-urlencoded' })} | ${false}
     ${new Headers({ auth: 'Basic akdjasdkjalksdjasd' })}                    | ${false}
   `("when called with headers: 'headers' then the result should be '$expected'", ({ headers, expected }) => {
-    expect(isContentTypeApplicationJson(headers)).toEqual(expected);
+    expect(isContentTypeJson(headers)).toEqual(expected);
   });
 });
 
