@@ -35,7 +35,7 @@ export function RecentlyDeletedActions() {
     stateManager.doSearchWithDebounce();
   };
 
-  const onRestore = async () => {
+  const onRestore = async (restoreTarget: string) => {
     const resultsView = stateManager.state.result?.view.toArray();
     if (!resultsView) {
       return;
