@@ -815,7 +815,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 	for idx, rule := range append(timeIntervalRules, receiveRules...) {
 		p := models.KnownProvenances[idx%len(models.KnownProvenances)]
 		provenances[rule.GetKey()] = p
-		require.NoError(t, store.SetProvenance(context.Background(), rule, rule.OrgID, models.KnownProvenances[idx%len(models.KnownProvenances)]))
+		require.NoError(t, store.SetProvenance(context.Background(), rule, rule.OrgID, p))
 	}
 
 	_, err := store.InsertAlertRules(context.Background(), deref)
@@ -935,7 +935,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Empty(t, affected)
-			require.Equal(t, expected, invalidProvenance)
+			require.ElementsMatch(t, expected, invalidProvenance)
 
 			actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
 				OrgID:            1,
