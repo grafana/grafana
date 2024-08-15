@@ -524,8 +524,8 @@ type Cfg struct {
 }
 
 type InstallPlugin struct {
-	ID      string
-	Version string
+	ID      string `json:"id"`
+	Version string `json:"version"`
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since

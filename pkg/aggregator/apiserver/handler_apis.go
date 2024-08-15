@@ -6,36 +6,44 @@ import (
 	"net/http/httptest"
 
 	"github.com/emicklei/go-restful/v3"
+	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
+	apidiscoveryv2beta1 "k8s.io/api/apidiscovery/v2beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apiserver/pkg/endpoints/discovery/aggregated"
 	"k8s.io/apiserver/pkg/endpoints/handlers/negotiation"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
-	genericapiserver "k8s.io/apiserver/pkg/server"
-
-	aggregationv0alpha1api "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
-)
-
-var (
-	discoveryGroup = metav1.APIGroup{
-		Name: aggregationv0alpha1api.SchemeGroupVersion.Group,
-		Versions: []metav1.GroupVersionForDiscovery{
-			{
-				GroupVersion: aggregationv0alpha1api.SchemeGroupVersion.String(),
-				Version:      aggregationv0alpha1api.SchemeGroupVersion.Version,
-			},
-		},
-		PreferredVersion: metav1.GroupVersionForDiscovery{
-			GroupVersion: aggregationv0alpha1api.SchemeGroupVersion.String(),
-			Version:      aggregationv0alpha1api.SchemeGroupVersion.Version,
-		},
-	}
 )
 
 // apisProxyHandler serves the `/apis` endpoint.
 type apisProxyHandler struct {
-	delegationTarget genericapiserver.DelegationTarget
-	codecs           serializer.CodecFactory
+	delegate http.Handler
+	codecs   serializer.CodecFactory
+}
+
+func newApisProxyHandler(delegate http.Handler) *apisProxyHandler {
+	scheme := runtime.NewScheme()
+	metav1.AddToGroupVersion(scheme, schema.GroupVersion{Version: "v1"})
+
+	// TODO: keep the generic API server from wanting this
+	unversioned := schema.GroupVersion{Group: "", Version: "v1"}
+	scheme.AddUnversionedTypes(unversioned,
+		&metav1.Status{},
+		&metav1.APIVersions{},
+		&metav1.APIGroupList{},
+		&metav1.APIGroup{},
+		&metav1.APIResourceList{},
+	)
+	utilruntime.Must(apidiscoveryv2.AddToScheme(scheme))
+	utilruntime.Must(apidiscoveryv2beta1.AddToScheme(scheme))
+	codecs := serializer.NewCodecFactory(scheme)
+	return &apisProxyHandler{
+		delegate: delegate,
+		codecs:   codecs,
+	}
 }
 
 func (a *apisProxyHandler) handle(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
@@ -43,26 +51,89 @@ func (a *apisProxyHandler) handle(req *restful.Request, resp *restful.Response, 
 		chain.ProcessFilter(req, resp)
 		return
 	}
+	apisHandlerWithAggregationSupport := aggregated.WrapAggregatedDiscoveryToHandler(a.v1handler(chain), a.v2handler(chain))
+	apisHandlerWithAggregationSupport.ServeHTTP(resp.ResponseWriter, req.Request)
+}
 
-	discoveryGroupList := &metav1.APIGroupList{
-		Groups: []metav1.APIGroup{discoveryGroup},
+func (a *apisProxyHandler) v2handler(chain *restful.FilterChain) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		clonedReq := req.Clone(req.Context())
+		newReq := restful.NewRequest(clonedReq)
+		rw := httptest.NewRecorder()
+		newRes := restful.NewResponse(rw)
+
+		chain.ProcessFilter(newReq, newRes)
+		if rw.Code != http.StatusOK {
+			http.Error(w, rw.Body.String(), rw.Code)
+			return
+		}
+
+		v2Discovery := apidiscoveryv2.APIGroupDiscoveryList{}
+		if err := json.Unmarshal(rw.Body.Bytes(), &v2Discovery); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		clonedReq = req.Clone(req.Context())
+		rw = httptest.NewRecorder()
+
+		a.delegate.ServeHTTP(rw, clonedReq)
+		if rw.Code != http.StatusOK {
+			http.Error(w, rw.Body.String(), rw.Code)
+			return
+		}
+
+		proxiedDiscovery := apidiscoveryv2.APIGroupDiscoveryList{}
+		if err := json.Unmarshal(rw.Body.Bytes(), &proxiedDiscovery); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		v2Discovery.Items = append(v2Discovery.Items, proxiedDiscovery.Items...)
+		responsewriters.WriteObjectNegotiated(a.codecs, aggregated.DiscoveryEndpointRestrictions, schema.GroupVersion{
+			Group:   apidiscoveryv2.SchemeGroupVersion.Group,
+			Version: apidiscoveryv2.SchemeGroupVersion.Version,
+		}, w, req, http.StatusOK, &v2Discovery, true)
 	}
+}
 
-	rw := httptest.NewRecorder()
-	a.delegationTarget.UnprotectedHandler().ServeHTTP(rw, req.Request)
+func (a *apisProxyHandler) v1handler(chain *restful.FilterChain) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		clonedReq := req.Clone(req.Context())
+		clonedReq.Header.Set("Accept", "application/json")
+		newReq := restful.NewRequest(clonedReq)
+		rw := httptest.NewRecorder()
+		newRes := restful.NewResponse(rw)
 
-	if rw.Code != http.StatusOK {
-		http.Error(resp.ResponseWriter, rw.Body.String(), rw.Code)
-		return
+		chain.ProcessFilter(newReq, newRes)
+		if rw.Code != http.StatusOK {
+			http.Error(w, rw.Body.String(), rw.Code)
+			return
+		}
+
+		discoveryGroupList := metav1.APIGroupList{}
+		if err := json.Unmarshal(rw.Body.Bytes(), &discoveryGroupList); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		clonedReq = req.Clone(req.Context())
+		clonedReq.Header.Set("Accept", "application/json")
+		rw = httptest.NewRecorder()
+
+		a.delegate.ServeHTTP(rw, clonedReq)
+		if rw.Code != http.StatusOK {
+			http.Error(w, rw.Body.String(), rw.Code)
+			return
+		}
+
+		proxiedGroups := metav1.APIGroupList{}
+		if err := json.Unmarshal(rw.Body.Bytes(), &proxiedGroups); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		discoveryGroupList.Groups = append(discoveryGroupList.Groups, proxiedGroups.Groups...)
+		responsewriters.WriteObjectNegotiated(a.codecs, negotiation.DefaultEndpointRestrictions, schema.GroupVersion{}, w, req, http.StatusOK, &discoveryGroupList, false)
 	}
-
-	proxiedGroups := metav1.APIGroupList{}
-	if err := json.Unmarshal(rw.Body.Bytes(), &proxiedGroups); err != nil {
-		http.Error(resp.ResponseWriter, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	discoveryGroupList.Groups = append(discoveryGroupList.Groups, proxiedGroups.Groups...)
-
-	responsewriters.WriteObjectNegotiated(a.codecs, negotiation.DefaultEndpointRestrictions, schema.GroupVersion{}, resp.ResponseWriter, req.Request, http.StatusOK, discoveryGroupList, false)
 }

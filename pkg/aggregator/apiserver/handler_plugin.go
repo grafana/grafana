@@ -43,7 +43,7 @@ func newPluginHandler(
 
 	for _, service := range dataplaneService.Spec.Services {
 		switch service.Type {
-		case aggregationv0alpha1.DataServiceType:
+		case aggregationv0alpha1.QueryServiceType:
 			proxyPath := fmt.Sprintf("/apis/%s/%s/namespaces/{namespace}/connections/{uid}/query", dataplaneService.Spec.Group, dataplaneService.Spec.Version)
 			mux.Handle(proxyPath, h.QueryDataHandler())
 		case aggregationv0alpha1.StreamServiceType:

@@ -45,6 +45,7 @@ type ContactPointService interface {
 
 type TemplateService interface {
 	GetTemplates(ctx context.Context, orgID int64) ([]definitions.NotificationTemplate, error)
+	GetTemplate(ctx context.Context, orgID int64, name string) (definitions.NotificationTemplate, error)
 	SetTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error)
 	DeleteTemplate(ctx context.Context, orgID int64, name string, provenance definitions.Provenance, version string) error
 }

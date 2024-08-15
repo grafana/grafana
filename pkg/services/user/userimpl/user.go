@@ -378,15 +378,6 @@ func (s *Service) getSignedInUser(ctx context.Context, query *user.GetSignedInUs
 	return usr, err
 }
 
-func (s *Service) List(ctx context.Context, query *user.ListUsersCommand) (*user.ListUserResult, error) {
-	ctx, span := s.tracer.Start(ctx, "user.List", trace.WithAttributes(
-		attribute.Int64("orgID", query.OrgID),
-	))
-	defer span.End()
-
-	return s.store.List(ctx, query)
-}
-
 func (s *Service) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
 	ctx, span := s.tracer.Start(ctx, "user.Search", trace.WithAttributes(
 		attribute.Int64("orgID", query.OrgID),
