@@ -34,7 +34,6 @@ type LoggerMiddleware struct {
 	pluginRegistry registry.Service
 }
 
-// pluginTarget returns the value for the "target" Prometheus label for the given plugin ID.
 func (m *LoggerMiddleware) pluginTarget(ctx context.Context, pCtx backend.PluginContext) (string, error) {
 	p, exists := m.pluginRegistry.Plugin(ctx, pCtx.PluginID, pCtx.PluginVersion)
 	if !exists {
