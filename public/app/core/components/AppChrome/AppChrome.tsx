@@ -9,12 +9,12 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import store from 'app/core/store';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
-import { ScopesDashboards } from 'app/features/scopes';
+import { ScopesDashboards, useScopesDashboardsState } from 'app/features/scopes';
 import { KioskMode } from 'app/types';
 
 import { AppChromeMenu } from './AppChromeMenu';
 import { DOCKED_LOCAL_STORAGE_KEY, DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './AppChromeService';
-import { MegaMenu } from './MegaMenu/MegaMenu';
+import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { NavToolbar } from './NavToolbar/NavToolbar';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { TopSearchBar } from './TopBar/TopSearchBar';
@@ -32,6 +32,9 @@ export function AppChrome({ children }: Props) {
   const dockedMenuBreakpoint = theme.breakpoints.values.xl;
   const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
+  const scopesDashboardsState = useScopesDashboardsState();
+  const isScopesDashboardsOpen = Boolean(scopesDashboardsState?.isEnabled && scopesDashboardsState?.isPanelOpened);
+
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
     onChange: (e) => {
@@ -107,10 +110,21 @@ export function AppChrome({ children }: Props) {
           {menuDockedAndOpen && (
             <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
           )}
-          {!state.chromeless && <ScopesDashboards />}
+          {!state.chromeless && (
+            <div
+              className={cx(styles.scopesDashboardsContainer, {
+                [styles.scopesDashboardsContainerDocked]: menuDockedAndOpen,
+              })}
+            >
+              <ScopesDashboards />
+            </div>
+          )}
           <main
             className={cx(styles.pageContainer, {
-              [styles.pageContainerMenuDocked]: config.featureToggles.bodyScrolling && menuDockedAndOpen,
+              [styles.pageContainerMenuDocked]:
+                config.featureToggles.bodyScrolling && (menuDockedAndOpen || isScopesDashboardsOpen),
+              [styles.pageContainerMenuDockedScopes]:
+                config.featureToggles.bodyScrolling && menuDockedAndOpen && isScopesDashboardsOpen,
             })}
             id="pageContent"
           >
@@ -156,12 +170,26 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
         ? {
             position: 'fixed',
             height: `calc(100% - ${searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
+            zIndex: 2,
+          }
+        : {
+            zIndex: theme.zIndex.navbarFixed,
+          }
+    ),
+    scopesDashboardsContainer: css(
+      config.featureToggles.bodyScrolling
+        ? {
+            position: 'fixed',
+            height: `calc(100% - ${searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
             zIndex: 1,
           }
         : {
             zIndex: theme.zIndex.navbarFixed,
           }
     ),
+    scopesDashboardsContainerDocked: css({
+      left: MENU_WIDTH,
+    }),
     topNav: css({
       display: 'flex',
       position: 'fixed',
@@ -188,7 +216,10 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
       }
     ),
     pageContainerMenuDocked: css({
-      paddingLeft: '300px',
+      paddingLeft: MENU_WIDTH,
+    }),
+    pageContainerMenuDockedScopes: css({
+      paddingLeft: `calc(${MENU_WIDTH} * 2)`,
     }),
     pageContainer: css(
       {

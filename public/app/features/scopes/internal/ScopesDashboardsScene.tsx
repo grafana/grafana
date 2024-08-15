@@ -231,6 +231,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRight: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
       flexDirection: 'column',
+      height: '100%',
       gap: theme.spacing(1),
       padding: theme.spacing(2),
       width: theme.spacing(37.5),
