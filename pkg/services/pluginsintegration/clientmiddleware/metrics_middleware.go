@@ -242,11 +242,11 @@ func (m *MetricsMiddleware) MutateAdmission(ctx context.Context, req *backend.Ad
 	return resp, err
 }
 
-func (m *MetricsMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+func (m *MetricsMiddleware) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	var resp *backend.ConversionResponse
 	err := m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
 		var innerErr error
-		resp, innerErr = m.next.ConvertObject(ctx, req)
+		resp, innerErr = m.next.ConvertObjects(ctx, req)
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
 

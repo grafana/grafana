@@ -4,7 +4,7 @@ go 1.22.4
 
 require (
 	github.com/grafana/dskit v0.0.0-20240805174438-dfa83b4ed2d3
-	github.com/grafana/grafana-plugin-sdk-go v0.241.0
+	github.com/grafana/grafana-plugin-sdk-go v0.243.0
 	github.com/json-iterator/go v1.1.12
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.19.1
@@ -103,7 +103,7 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.53.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.53.0 // indirect
 	go.opentelemetry.io/contrib/propagators/jaeger v1.28.0 // indirect
-	go.opentelemetry.io/contrib/samplers/jaegerremote v0.20.0 // indirect
+	go.opentelemetry.io/contrib/samplers/jaegerremote v0.22.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.28.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.28.0 // indirect
 	go.opentelemetry.io/otel/metric v1.28.0 // indirect

@@ -218,7 +218,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 }
 
 // ConvertObject implements plugins.Client.
-func (s *Service) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+func (s *Service) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	if req == nil {
 		return nil, errNilRequest
 	}
@@ -228,7 +228,7 @@ func (s *Service) ConvertObject(ctx context.Context, req *backend.ConversionRequ
 		return nil, plugins.ErrPluginNotRegistered
 	}
 
-	return plugin.ConvertObject(ctx, req)
+	return plugin.ConvertObjects(ctx, req)
 }
 
 // MutateAdmission implements plugins.Client.
