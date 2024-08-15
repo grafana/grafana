@@ -30,7 +30,7 @@ export function getLabelOptions(scenObject: SceneObject, variable: QueryVariable
 }
 
 interface Type<T> extends Function {
-  new (...args: any[]): T;
+  new(...args: unknown[]): T;
 }
 export function findSceneObjectByType<T extends SceneObject>(scene: SceneObject, sceneType: Type<T>) {
   const targetScene = sceneGraph.findObject(scene, (obj) => obj instanceof sceneType);
