@@ -19,7 +19,7 @@ import (
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning"
-	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -46,13 +46,12 @@ type dashboardRow struct {
 }
 
 type dashboardSqlAccess struct {
-	sql          db.DB
+	sql          legacysql.NamespacedDBProvider
 	dialect      sqltemplate.Dialect
-	sess         *session.SessionDB
 	namespacer   request.NamespaceMapper
 	dashStore    dashboards.Store
 	provisioning provisioning.ProvisioningService
-	currentRV    ResourceVersionLookup
+	currentRV    legacysql.ResourceVersionLookup
 
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
@@ -71,14 +70,15 @@ func NewDashboardAccess(sql db.DB,
 		fmt.Printf("ERROR: NO DIALECT")
 	}
 
+	nssql := func(ctx context.Context) (db.DB, error) { return sql, nil }
+
 	return &dashboardSqlAccess{
-		sql:          sql,
-		sess:         sql.GetSqlxSession(),
+		sql:          nssql,
 		dialect:      dialect,
 		namespacer:   namespacer,
 		dashStore:    dashStore,
 		provisioning: provisioning,
-		currentRV:    GetResourceVersionLookup(sql, "dashboard"),
+		currentRV:    legacysql.GetResourceVersionLookup(nssql, "dashboard", "updated"),
 	}
 }
 
@@ -109,7 +109,11 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 	// q = sqltemplate.RemoveEmptyLines(rawQuery)
 	// fmt.Printf(">>%s [%+v]", q, req.GetArgs())
 
-	rows, err := a.sess.Query(ctx, q, req.GetArgs()...)
+	db, err := a.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := db.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	if err != nil {
 		if rows != nil {
 			_ = rows.Close()

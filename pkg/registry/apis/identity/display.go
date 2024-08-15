@@ -45,11 +45,11 @@ func (r *displayREST) NamespaceScoped() bool {
 }
 
 func (r *displayREST) GetSingularName() string {
-	return "QueryResults" // Used for the
+	return "IdentityDisplay" // not actually used anywhere, but required by SingularNameProvider
 }
 
 func (r *displayREST) ProducesMIMETypes(verb string) []string {
-	return []string{"application/json"} // and parquet!
+	return []string{"application/json"}
 }
 
 func (r *displayREST) ProducesObject(verb string) any {

@@ -40,7 +40,9 @@ func RegisterAPIService(
 		return nil, nil // skip registration unless opting into experimental apis
 	}
 
-	store, err := legacy.NewLegacySQLStores(sql)
+	store, err := legacy.NewLegacySQLStores(func(context.Context) (db.DB, error) {
+		return sql, nil
+	})
 	if err != nil {
 		return nil, err
 	}

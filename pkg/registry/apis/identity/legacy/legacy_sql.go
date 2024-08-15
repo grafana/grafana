@@ -6,11 +6,9 @@ import (
 	"text/template"
 
 	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
-	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
@@ -19,25 +17,27 @@ var (
 )
 
 type legacySQLStore struct {
-	sql     db.DB
 	dialect sqltemplate.Dialect
-	sess    *session.SessionDB
-	teamsRV legacy.ResourceVersionLookup
-	usersRV legacy.ResourceVersionLookup
+	sql     legacysql.NamespacedDBProvider
+	teamsRV legacysql.ResourceVersionLookup
+	usersRV legacysql.ResourceVersionLookup
 }
 
-func NewLegacySQLStores(sql db.DB) (LegacyIdentityStore, error) {
-	dialect := sqltemplate.DialectForDriver(string(sql.GetDBType()))
+func NewLegacySQLStores(sql legacysql.NamespacedDBProvider) (LegacyIdentityStore, error) {
+	db, err := sql(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	dialect := sqltemplate.DialectForDriver(string(db.GetDBType()))
 	if dialect == nil {
 		return nil, fmt.Errorf("unknown dialect")
 	}
 
 	return &legacySQLStore{
 		sql:     sql,
-		sess:    sql.GetSqlxSession(),
 		dialect: dialect,
-		teamsRV: legacy.GetResourceVersionLookup(sql, "team"),
-		usersRV: legacy.GetResourceVersionLookup(sql, "user"),
+		teamsRV: legacysql.GetResourceVersionLookup(sql, "team", "updated"),
+		usersRV: legacysql.GetResourceVersionLookup(sql, "user", "updated"),
 	}, nil
 }
 
@@ -65,10 +65,15 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 	}
 	q := rawQuery
 
-	fmt.Printf("%s // %v\n", rawQuery, req.GetArgs())
+	// fmt.Printf("%s // %v\n", rawQuery, req.GetArgs())
+
+	db, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	res := &ListTeamResult{}
-	rows, err := s.sess.Query(ctx, q, req.GetArgs()...)
+	rows, err := db.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	defer func() {
 		if rows != nil {
 			_ = rows.Close()
@@ -124,9 +129,14 @@ func (s *legacySQLStore) queryUsers(ctx context.Context, t *template.Template, r
 	}
 	q := rawQuery
 
+	// fmt.Printf("%s // %v\n", rawQuery, req.GetArgs())
+	db, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	res := &ListUserResult{}
-	rows, err := s.sess.Query(ctx, q, req.GetArgs()...)
+	rows, err := db.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	defer func() {
 		if rows != nil {
 			_ = rows.Close()
