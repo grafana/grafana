@@ -34,26 +34,25 @@ type LoggerMiddleware struct {
 	pluginRegistry registry.Service
 }
 
-func (m *LoggerMiddleware) pluginTarget(ctx context.Context, pCtx backend.PluginContext) (string, error) {
+func (m *LoggerMiddleware) pluginTarget(ctx context.Context, pCtx backend.PluginContext) string {
 	p, exists := m.pluginRegistry.Plugin(ctx, pCtx.PluginID, pCtx.PluginVersion)
 	if !exists {
-		return "", plugins.ErrPluginNotRegistered
+		return ""
 	}
-	return string(p.Target()), nil
+	return string(p.Target())
 }
 
 func (m *LoggerMiddleware) logRequest(ctx context.Context, pCtx backend.PluginContext, fn func(ctx context.Context) (instrumentationutils.RequestStatus, error)) error {
 	start := time.Now()
 	timeBeforePluginRequest := log.TimeSinceStart(ctx, start)
 
-	target, _ := m.pluginTarget(ctx, pCtx)
 	status, err := fn(ctx)
 	logParams := []any{
 		"status", status.String(),
 		"duration", time.Since(start),
 		"eventName", "grafana-data-egress",
 		"time_before_plugin_request", timeBeforePluginRequest,
-		"target", target,
+		"target", m.pluginTarget(ctx, pCtx),
 	}
 	if err != nil {
 		logParams = append(logParams, "error", err)
