@@ -113,11 +113,6 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number | undefined) {
         top: headerHeight,
       },
     }),
-    // TODO use
-    controlsWrapperEmbedded: css({
-      background: 'unset',
-      position: 'unset',
-    }),
     canvasContent: css({
       label: 'canvas-content',
       display: 'flex',
