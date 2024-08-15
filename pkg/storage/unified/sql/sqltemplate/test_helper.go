@@ -91,6 +91,9 @@ func CheckQuerySnapshots(t *testing.T, setup TemplateTestSetup) {
 							update := false
 							fname := fmt.Sprintf("%s--%s-%s.sql", dialect.DialectName(), tname, input.Name)
 							fpath := filepath.Join(setup.RootDir, fname)
+
+							// We can ignore the gosec G304 because this is only for tests
+							// nolint:gosec
 							expect, err := os.ReadFile(fpath)
 							if err != nil || len(expect) < 1 {
 								update = true
