@@ -372,6 +372,8 @@ func TestProcessEvalResults(t *testing.T) {
 		return r
 	}
 
+	datasourceError := expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error"))
+
 	labels1 := data.Labels{
 		"instance_label": "test-1",
 	}
@@ -390,6 +392,13 @@ func TestProcessEvalResults(t *testing.T) {
 		"system + rule + labels1": mergeLabels(mergeLabels(labels1, baseRule.Labels), systemLabels),
 		"system + rule + labels2": mergeLabels(mergeLabels(labels2, baseRule.Labels), systemLabels),
 		"system + rule + no-data": mergeLabels(mergeLabels(noDataLabels, baseRule.Labels), systemLabels),
+	}
+
+	datasourceErrorAnnotations := data.Labels{
+		"annotation":     "test",
+		"datasource_uid": "datasource_uid_1",
+		"ref_id":         "A",
+		"Error":          datasourceError.Error(),
 	}
 
 	// keep it separate to make code folding work correctly.
@@ -1042,6 +1051,7 @@ func TestProcessEvalResults(t *testing.T) {
 					State:              eval.Pending,
 					StateReason:        eval.Error.String(),
 					Error:              errors.New("with_state_error"),
+					Annotations:        map[string]string{"annotation": "test", "Error": "with_state_error"},
 					LatestResult:       newEvaluation(t2, eval.Error),
 					StartsAt:           t2,
 					EndsAt:             t2.Add(state.ResendDelay * 4),
@@ -1077,6 +1087,7 @@ func TestProcessEvalResults(t *testing.T) {
 					State:              eval.Alerting,
 					StateReason:        eval.Error.String(),
 					Error:              errors.New("with_state_error"),
+					Annotations:        map[string]string{"annotation": "test", "Error": "with_state_error"},
 					LatestResult:       newEvaluation(tn(5), eval.Error),
 					StartsAt:           tn(5),
 					EndsAt:             tn(5).Add(state.ResendDelay * 4),
@@ -1093,7 +1104,7 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithError(expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error"))), eval.WithLabels(labels1)), // TODO fix it because error labels are different
+					newResult(eval.WithError(datasourceError), eval.WithLabels(labels1)), // TODO fix it because error labels are different
 				},
 			},
 			expectedAnnotations: 1,
@@ -1109,7 +1120,7 @@ func TestProcessEvalResults(t *testing.T) {
 					}),
 					ResultFingerprint:  labels1.Fingerprint(),
 					State:              eval.Error,
-					Error:              expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error")),
+					Error:              datasourceError,
 					LatestResult:       newEvaluation(t2, eval.Error),
 					StartsAt:           t2,
 					EndsAt:             t2.Add(state.ResendDelay * 4),
@@ -1128,13 +1139,13 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithError(expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error"))), eval.WithLabels(labels1)), // TODO fix it because error labels are different
+					newResult(eval.WithError(datasourceError), eval.WithLabels(labels1)), // TODO fix it because error labels are different
 				},
 				t3: {
 					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
 				},
 				tn(4): {
-					newResult(eval.WithError(expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error"))), eval.WithLabels(labels1)), // TODO fix it because error labels are different
+					newResult(eval.WithError(datasourceError), eval.WithLabels(labels1)), // TODO fix it because error labels are different
 				},
 			},
 			expectedAnnotations: 1,
@@ -1149,6 +1160,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(4),
 					LastSentAt:         &t3, // Resend delay is 30s, so last sent at is t3.
+					Annotations:        datasourceErrorAnnotations,
 				},
 			},
 		},
@@ -1163,10 +1175,10 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithError(expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error"))), eval.WithLabels(labels1)), // TODO fix it because error labels are different
+					newResult(eval.WithError(datasourceError), eval.WithLabels(labels1)), // TODO fix it because error labels are different
 				},
 				tn(4): {
-					newResult(eval.WithError(expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error"))), eval.WithLabels(labels1)), // TODO fix it because error labels are different
+					newResult(eval.WithError(datasourceError), eval.WithLabels(labels1)), // TODO fix it because error labels are different
 				},
 			},
 			expectedAnnotations: 2,
@@ -1181,6 +1193,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(4),
 					LastSentAt:         util.Pointer(tn(4)),
+					Annotations:        datasourceErrorAnnotations,
 				},
 			},
 		},
@@ -1192,7 +1205,7 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithError(expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error"))), eval.WithLabels(labels1)), // TODO fix it because error labels are different
+					newResult(eval.WithError(datasourceError), eval.WithLabels(labels1)), // TODO fix it because error labels are different
 				},
 			},
 			expectedAnnotations: 1,
@@ -1203,6 +1216,7 @@ func TestProcessEvalResults(t *testing.T) {
 					State:              eval.Normal,
 					StateReason:        eval.Error.String(),
 					LatestResult:       newEvaluation(t2, eval.Error),
+					Annotations:        datasourceErrorAnnotations,
 					StartsAt:           t1,
 					EndsAt:             t1,
 					LastEvaluationTime: t2,
@@ -1217,7 +1231,7 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithError(expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error"))), eval.WithLabels(labels1)), // TODO fix it because error labels are different
+					newResult(eval.WithError(datasourceError), eval.WithLabels(labels1)), // TODO fix it because error labels are different
 				},
 			},
 			expectedAnnotations: 2,
@@ -1228,6 +1242,7 @@ func TestProcessEvalResults(t *testing.T) {
 					State:              eval.Normal,
 					StateReason:        eval.Error.String(),
 					LatestResult:       newEvaluation(t2, eval.Error),
+					Annotations:        datasourceErrorAnnotations,
 					StartsAt:           t2,
 					EndsAt:             t2,
 					LastEvaluationTime: t2,
