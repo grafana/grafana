@@ -41,7 +41,7 @@ function processStreamFrame(
   const meta: QueryResultMeta = {
     preferredVisualisationType: 'logs',
     limit: query?.maxLines,
-    searchWords: query !== undefined ? getHighlighterExpressionsFromQuery(query.expr, templateSrv) : undefined,
+    searchWords: query ? getHighlighterExpressionsFromQuery(query.expr, templateSrv) : undefined,
     custom,
   };
 
