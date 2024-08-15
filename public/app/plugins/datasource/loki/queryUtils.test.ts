@@ -1,6 +1,4 @@
-import { TypedVariableModel } from '@grafana/data';
 import { String } from '@grafana/lezer-logql';
-import { TemplateSrv } from '@grafana/runtime';
 
 import {
   getHighlighterExpressionsFromQuery,
