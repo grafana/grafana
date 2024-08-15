@@ -37,7 +37,7 @@ func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...Tu
 		managedPermissionsCollector(store),
 		folderTreeCollector(store),
 		dashboardFolderCollector(store),
-		basicFixedRolesCollector(store),
+		basicRolesCollector(store),
 		customRolesCollector(store),
 		basicRoleAssignemtCollector(store),
 		userRoleAssignemtCollector(store),
@@ -269,17 +269,16 @@ func dashboardFolderCollector(store db.DB) TupleCollector {
 	}
 }
 
-// basicFixedRolesCollector migrates basic and fixed roles to OpenFGA tuples
-func basicFixedRolesCollector(store db.DB) TupleCollector {
+// basicRolesCollector migrates basic roles to OpenFGA tuples
+func basicRolesCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
-		const collectorID = "basic_fixed_role"
+		const collectorID = "basic_role"
 		const query = `
 			SELECT r.name, r.uid as role_uid, p.action, p.kind, p.identifier, r.org_id
 			FROM permission p
 			INNER JOIN role r ON p.role_id = r.id
 			LEFT JOIN builtin_role br ON r.id  = br.role_id
 			WHERE r.name LIKE 'basic:%'
-			OR r.name LIKE 'fixed:%'
 		`
 		type Permission struct {
 			RoleName   string `xorm:"role_name"`
@@ -312,7 +311,7 @@ func basicFixedRolesCollector(store db.DB) TupleCollector {
 				return err
 			}
 
-			// Populate basic and fixed roles permissions for every org
+			// Populate basic roles permissions for every org
 			for _, org := range orgs {
 				var subject string
 				if p.RoleUID != "" {
