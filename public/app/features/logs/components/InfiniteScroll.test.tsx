@@ -276,7 +276,7 @@ describe('InfiniteScroll', () => {
     }
   );
 
-  describe.only('In Explore', () => {
+  describe('In Explore', () => {
     test('Requests older logs from the oldest timestamp', async () => {
       const loadMoreMock = jest.fn();
       const rows = createLogRows(
