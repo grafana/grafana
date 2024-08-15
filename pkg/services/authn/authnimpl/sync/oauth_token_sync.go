@@ -77,7 +77,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 		return nil
 	}
 
-	_, err, _ = s.singleflightGroup.Do(id.GetID(), func() (interface{}, error) {
+	_, err, _ = s.singleflightGroup.Do(cacheKey, func() (interface{}, error) {
 		ctxLogger.Debug("Singleflight request for OAuth token sync")
 
 		updateCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
