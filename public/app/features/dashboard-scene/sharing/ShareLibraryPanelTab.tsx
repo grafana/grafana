@@ -48,7 +48,7 @@ function ShareLibraryPanelTabRenderer({ model }: SceneComponentProps<ShareLibrar
         dashboard={dashboardModel}
         panel={panelModel}
         onDismiss={() => {
-          modelRef ? modalRef.resolve().onDismiss() :  dashboardScene.closeModal();
+          modalRef ? modalRef.resolve().onDismiss() : dashboardScene.closeModal();
         }}
         onCreateLibraryPanel={(libPanel: LibraryPanel) => dashboardScene.createLibraryPanel(panel, libPanel)}
       />
