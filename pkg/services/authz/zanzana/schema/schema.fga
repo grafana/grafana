@@ -9,7 +9,6 @@ type org
   relations
     define instance: [instance]
     define member: [user]
-    define viewer: [user]
 
     # team management
     define team_create: [role#assignee]

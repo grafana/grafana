@@ -4,11 +4,12 @@ go 1.22.4
 
 require (
 	github.com/emicklei/go-restful/v3 v3.11.0
-	github.com/grafana/grafana-plugin-sdk-go v0.241.0
+	github.com/grafana/grafana-plugin-sdk-go v0.243.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240808213237-f4d2e064f435
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20240808213237-f4d2e064f435
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/otel v1.28.0
+	k8s.io/api v0.31.0
 	k8s.io/apimachinery v0.31.0
 	k8s.io/apiserver v0.31.0
 	k8s.io/client-go v0.31.0
@@ -117,7 +118,7 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.53.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.53.0 // indirect
 	go.opentelemetry.io/contrib/propagators/jaeger v1.28.0 // indirect
-	go.opentelemetry.io/contrib/samplers/jaegerremote v0.20.0 // indirect
+	go.opentelemetry.io/contrib/samplers/jaegerremote v0.22.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.28.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.28.0 // indirect
 	go.opentelemetry.io/otel/metric v1.28.0 // indirect
@@ -130,7 +131,7 @@ require (
 	golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f // indirect
 	golang.org/x/mod v0.18.0 // indirect
 	golang.org/x/net v0.28.0 // indirect
-	golang.org/x/oauth2 v0.21.0 // indirect
+	golang.org/x/oauth2 v0.22.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.23.0 // indirect
 	golang.org/x/term v0.23.0 // indirect
@@ -149,7 +150,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.31.0 // indirect
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.30.3 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect

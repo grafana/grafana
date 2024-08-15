@@ -76,6 +76,7 @@ var (
 	_ = backend.CallResourceHandler(&Plugin{})
 	_ = backend.StreamHandler(&Plugin{})
 	_ = backend.AdmissionHandler(&Plugin{})
+	_ = backend.ConversionHandler(&Plugin{})
 )
 
 type AngularMeta struct {
@@ -391,12 +392,12 @@ func (p *Plugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequ
 }
 
 // ConvertObject implements backend.AdmissionHandler.
-func (p *Plugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+func (p *Plugin) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
 		return nil, ErrPluginUnavailable
 	}
-	return pluginClient.ConvertObject(ctx, req)
+	return pluginClient.ConvertObjects(ctx, req)
 }
 
 func (p *Plugin) File(name string) (fs.File, error) {
@@ -458,6 +459,7 @@ type PluginClient interface {
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.AdmissionHandler
+	backend.ConversionHandler
 	backend.StreamHandler
 }
 
