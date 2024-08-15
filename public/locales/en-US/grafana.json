@@ -864,6 +864,11 @@
     }
   },
   "explore-metrics": {
+    "breakdown": {
+      "clearFilter": "Clear filter",
+      "labelSelect": "Select",
+      "noMatchingValue": "No values found matching"
+    },
     "viewBy": "View by"
   },
   "export": {

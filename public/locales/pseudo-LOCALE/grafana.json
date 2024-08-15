@@ -864,6 +864,11 @@
     }
   },
   "explore-metrics": {
+    "breakdown": {
+      "clearFilter": "Cľęäř ƒįľŧęř",
+      "labelSelect": "Ŝęľęčŧ",
+      "noMatchingValue": "Ńő väľūęş ƒőūŉđ mäŧčĥįŉģ"
+    },
     "viewBy": "Vįęŵ þy"
   },
   "export": {

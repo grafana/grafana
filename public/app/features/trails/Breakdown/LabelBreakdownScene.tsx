@@ -24,6 +24,7 @@ import {
 } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
 import { AutoQueryDef } from '../AutomaticMetricQueries/types';
@@ -479,7 +480,7 @@ export class SelectLabelAction extends SceneObjectBase<SelectLabelActionState> {
   public static Component = ({ model }: SceneComponentProps<AddToFiltersGraphAction>) => {
     return (
       <Button variant="secondary" size="sm" fill="solid" onClick={model.onClick}>
-        Select
+        <Trans i18nKey="explore-metrics.breakdown.labelSelect">Select</Trans>
       </Button>
     );
   };
