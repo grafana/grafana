@@ -6,6 +6,7 @@ import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana
 import { config, reportInteraction } from '@grafana/runtime';
 import { LogsSortOrder, TimeZone } from '@grafana/schema';
 import { Button, Icon } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { LoadingIndicator } from './LoadingIndicator';
 
@@ -165,7 +166,9 @@ export const InfiniteScroll = ({
         <Button className={styles.navButton} variant="secondary" onClick={loadOlderLogs} disabled={loading}>
           <div className={styles.navButtonContent}>
             <Icon name="angle-up" size="lg" />
-            Older logs
+            <Trans i18nKey="logs.infinite-scroll.older-logs">
+              Older logs
+            </Trans>
           </div>
         </Button>
       )}
