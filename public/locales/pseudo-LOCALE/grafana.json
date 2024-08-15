@@ -2147,13 +2147,20 @@
   },
   "share-panel": {
     "drawer": {
-      "share-embed-title": "Ŝĥäřę ęmþęđ",
       "new-library-panel-title": "Ńęŵ ľįþřäřy päŉęľ",
+      "share-embed-title": "Ŝĥäřę ęmþęđ",
       "share-link-title": "Ŀįŉĸ şęŧŧįŉģş",
       "share-snapshot-title": "Ŝĥäřę şŉäpşĥőŧ"
     },
     "menu": {
-      "share-link-title": "Ŝĥäřę ľįŉĸ"
+      "new-library-panel-title": "Ńęŵ ľįþřäřy päŉęľ",
+      "share-embed-title": "Ŝĥäřę ęmþęđ",
+      "share-link-title": "Ŝĥäřę ľįŉĸ",
+      "share-snapshot-title": "Ŝĥäřę şŉäpşĥőŧ"
+    },
+    "new-library-panel": {
+      "cancel-button": "Cäŉčęľ",
+      "create-button": "Cřęäŧę ľįþřäřy päŉęľ"
     }
   },
   "share-playlist": {
