@@ -89,7 +89,7 @@ func (t *TemplateService) GetTemplate(ctx context.Context, orgID int64, name str
 	return definitions.NotificationTemplate{}, ErrTemplateNotFound.Errorf("")
 }
 
-func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error) {
+func (t *TemplateService) UpsertTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error) {
 	err := tmpl.Validate()
 	if err != nil {
 		return definitions.NotificationTemplate{}, MakeErrTemplateInvalid(err)

@@ -200,7 +200,7 @@ func TestGetTemplate(t *testing.T) {
 	})
 }
 
-func TestSetTemplate(t *testing.T) {
+func TestUpsertTemplate(t *testing.T) {
 	orgID := int64(1)
 	templateName := "template1"
 	currentTemplateContent := "test1"
@@ -240,7 +240,7 @@ func TestSetTemplate(t *testing.T) {
 			ResourceVersion: "",
 		}
 
-		result, err := sut.SetTemplate(context.Background(), orgID, tmpl)
+		result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 
 		require.NoError(t, err)
 		require.Equal(t, definitions.NotificationTemplate{
@@ -281,7 +281,7 @@ func TestSetTemplate(t *testing.T) {
 				ResourceVersion: calculateTemplateFingerprint("test1"),
 			}
 
-			result, err := sut.SetTemplate(context.Background(), orgID, tmpl)
+			result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 
 			require.NoError(t, err)
 			assert.Equal(t, definitions.NotificationTemplate{
@@ -317,7 +317,7 @@ func TestSetTemplate(t *testing.T) {
 				ResourceVersion: "",
 			}
 
-			result, err := sut.SetTemplate(context.Background(), orgID, tmpl)
+			result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 
 			require.NoError(t, err)
 			assert.Equal(t, definitions.NotificationTemplate{
@@ -351,7 +351,7 @@ func TestSetTemplate(t *testing.T) {
 			ResourceVersion: calculateTemplateFingerprint(currentTemplateContent),
 		}
 
-		result, _ := sut.SetTemplate(context.Background(), orgID, tmpl)
+		result, _ := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 
 		expectedContent := fmt.Sprintf("{{ define \"%s\" }}\n  content\n{{ end }}", templateName)
 		require.Equal(t, definitions.NotificationTemplate{
@@ -375,7 +375,7 @@ func TestSetTemplate(t *testing.T) {
 			Name:     "name",
 			Template: "{{ .NotAField }}",
 		}
-		_, err := sut.SetTemplate(context.Background(), 1, tmpl)
+		_, err := sut.UpsertTemplate(context.Background(), 1, tmpl)
 
 		require.NoError(t, err)
 	})
@@ -388,7 +388,7 @@ func TestSetTemplate(t *testing.T) {
 				Name:     "",
 				Template: "",
 			}
-			_, err := sut.SetTemplate(context.Background(), orgID, tmpl)
+			_, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 			require.ErrorIs(t, err, ErrTemplateInvalid)
 		})
 
@@ -397,7 +397,7 @@ func TestSetTemplate(t *testing.T) {
 				Name:     "",
 				Template: "{{ .MyField }",
 			}
-			_, err := sut.SetTemplate(context.Background(), orgID, tmpl)
+			_, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 			require.ErrorIs(t, err, ErrTemplateInvalid)
 		})
 
@@ -426,7 +426,7 @@ func TestSetTemplate(t *testing.T) {
 		}
 		template.Provenance = definitions.Provenance(models.ProvenanceNone)
 
-		_, err := sut.SetTemplate(context.Background(), orgID, template)
+		_, err := sut.UpsertTemplate(context.Background(), orgID, template)
 
 		require.ErrorIs(t, err, expectedErr)
 	})
@@ -445,7 +445,7 @@ func TestSetTemplate(t *testing.T) {
 			Provenance:      definitions.Provenance(models.ProvenanceNone),
 		}
 
-		_, err := sut.SetTemplate(context.Background(), orgID, template)
+		_, err := sut.UpsertTemplate(context.Background(), orgID, template)
 
 		require.ErrorIs(t, err, ErrVersionConflict)
 		prov.AssertExpectations(t)
@@ -462,7 +462,7 @@ func TestSetTemplate(t *testing.T) {
 			ResourceVersion: "version",
 			Provenance:      definitions.Provenance(models.ProvenanceNone),
 		}
-		_, err := sut.SetTemplate(context.Background(), orgID, template)
+		_, err := sut.UpsertTemplate(context.Background(), orgID, template)
 		require.ErrorIs(t, err, ErrTemplateNotFound)
 	})
 	t.Run("propagates errors", func(t *testing.T) {
@@ -478,7 +478,7 @@ func TestSetTemplate(t *testing.T) {
 				return nil, expectedErr
 			}
 
-			_, err := sut.SetTemplate(context.Background(), orgID, tmpl)
+			_, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 			require.ErrorIs(t, err, expectedErr)
 		})
 
@@ -490,7 +490,7 @@ func TestSetTemplate(t *testing.T) {
 			expectedErr := errors.New("test")
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, expectedErr)
 
-			_, err := sut.SetTemplate(context.Background(), orgID, tmpl)
+			_, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 
 			require.ErrorIs(t, err, expectedErr)
 
@@ -506,7 +506,7 @@ func TestSetTemplate(t *testing.T) {
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 			prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(expectedErr)
 
-			_, err := sut.SetTemplate(context.Background(), orgID, tmpl)
+			_, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 			require.ErrorIs(t, err, expectedErr)
 
 			prov.AssertExpectations(t)
@@ -524,7 +524,7 @@ func TestSetTemplate(t *testing.T) {
 			prov.EXPECT().SaveSucceeds()
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 
-			_, err := sut.SetTemplate(context.Background(), 1, tmpl)
+			_, err := sut.UpsertTemplate(context.Background(), 1, tmpl)
 			require.ErrorIs(t, err, expectedErr)
 		})
 	})
