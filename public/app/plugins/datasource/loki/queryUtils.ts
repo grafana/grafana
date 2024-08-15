@@ -23,7 +23,6 @@ import {
   OrFilter,
   FilterOp,
 } from '@grafana/lezer-logql';
-import { TemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
 import { getStreamSelectorPositions, NodePosition } from './modifyQuery';
@@ -34,8 +33,8 @@ import { LokiQuery, LokiQueryType } from './types';
  * Returns search terms from a LogQL query.
  * E.g., `{} |= "foo" |= "bar" != "baz"` returns `['foo', 'bar']`.
  */
-export function getHighlighterExpressionsFromQuery(input = '', templateSrv?: TemplateSrv): string[] {
-  const results: string[] = templateSrv ? getVariableHighlighterExpressionsFromQuery(input, templateSrv) : [];
+export function getHighlighterExpressionsFromQuery(input = ''): string[] {
+  const results: string[] = [];
 
   const filters = getNodesFromQuery(input, [LineFilter]);
 
@@ -77,21 +76,8 @@ export function getHighlighterExpressionsFromQuery(input = '', templateSrv?: Tem
   return results;
 }
 
-/**
- * Returns search terms from a LogQL query with variables.
- * Given a variable name $search with value foo:
- * E.g., `{} |= $search |= "bar" != "baz"` returns `['foo']`.
- */
-export function getVariableHighlighterExpressionsFromQuery(expr: string, templateSrv: TemplateSrv) {
-  const searchWords: string[] = [];
-
-  templateSrv.getVariables().forEach((variable) => {
-    if (templateSrv.containsTemplate(expr) && expr.includes(`$${variable.name}`)) {
-      searchWords.push(templateSrv.replace(`$${variable.name}`));
-    }
-  });
-
-  return searchWords;
+export function getExpressionFromExecutedQuery(executedQueryString: string) {
+  return executedQueryString.replace('Expr: ', '');
 }
 
 export function getStringsFromLineFilter(filter: SyntaxNode): SyntaxNode[] {

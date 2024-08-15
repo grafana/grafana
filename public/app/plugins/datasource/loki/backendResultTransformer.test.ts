@@ -1,7 +1,6 @@
 import { cloneDeep } from 'lodash';
 
 import { DataFrame, DataQueryResponse, Field, FieldType, TypedVariableModel } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
 
 import { transformBackendResult } from './backendResultTransformer';
 
@@ -66,16 +65,6 @@ const inputFrame: DataFrame = {
 };
 
 describe('backendResultTransformer', () => {
-  let templateSrvMock: TemplateSrv;
-  beforeEach(() => {
-    templateSrvMock = {
-      getVariables: jest.fn().mockReturnValue([]),
-      replace: jest.fn(),
-      containsTemplate: jest.fn().mockReturnValue(false),
-      updateTimeRange: jest.fn(),
-    };
-  });
-
   it('processes a logs dataframe correctly', () => {
     const response: DataQueryResponse = { data: [cloneDeep(inputFrame)] };
 
@@ -100,8 +89,7 @@ describe('backendResultTransformer', () => {
           expr: LOKI_EXPR,
         },
       ],
-      [],
-      templateSrvMock
+      []
     );
     expect(result).toEqual(expected);
   });
@@ -117,8 +105,7 @@ describe('backendResultTransformer', () => {
           expr: LOKI_EXPR,
         },
       ],
-      [],
-      templateSrvMock
+      []
     ).data[0];
 
     expect(frame1.meta?.limit).toBeUndefined();
@@ -132,8 +119,7 @@ describe('backendResultTransformer', () => {
           maxLines: 42,
         },
       ],
-      [],
-      templateSrvMock
+      []
     ).data[0];
 
     expect(frame2.meta?.limit).toBe(42);
@@ -167,8 +153,7 @@ describe('backendResultTransformer', () => {
           name: 'derived1',
           url: 'example.com',
         },
-      ],
-      templateSrvMock
+      ]
     );
 
     expect(
@@ -197,8 +182,7 @@ describe('backendResultTransformer', () => {
           expr: LOKI_EXPR,
         },
       ],
-      [],
-      templateSrvMock
+      []
     );
     expect(result.data[0]?.meta?.custom?.error).toBe('Error when parsing some of the logs');
   });
@@ -220,8 +204,7 @@ describe('backendResultTransformer', () => {
           expr: '{place="g\\arden"}',
         },
       ],
-      [],
-      templateSrvMock
+      []
     );
     expect(result.error?.message).toBe(
       `parse error at line 1, col 2: invalid char escape. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://grafana.com/docs/loki/latest/logql/.`
@@ -245,46 +228,28 @@ describe('backendResultTransformer', () => {
           expr: '{place="garden"}',
         },
       ],
-      [],
-      templateSrvMock
+      []
     );
     expect(result.error?.message).toBe('parse error at line 1, col 2: invalid char escape');
   });
 
-  it('resolves search words from template variables', () => {
-    jest.mocked(templateSrvMock.getVariables).mockReturnValue([
-      {
-        name: 'var1',
-      },
-      {
-        name: 'var2',
-      },
-    ] as TypedVariableModel[]);
-    jest.mocked(templateSrvMock.containsTemplate).mockReturnValue(true);
-    jest.mocked(templateSrvMock.replace).mockImplementation((target?: string) => {
-      if (target === '$var1') {
-        return 'template';
-      }
-      if (target === '$var2') {
-        return 'variable';
-      }
-      return '';
-    });
-
+  it('resolves search words from queries with template variables', () => {
+    const dataFrame = cloneDeep(inputFrame);
+    dataFrame.meta = {
+      executedQueryString: '{service_name="tns-app"} |~ "(?i)template" |= "variable"',
+    };
     const result = transformBackendResult(
-      { data: [cloneDeep(inputFrame)] },
+      { data: [dataFrame] },
       [
         {
           refId: 'A',
-          expr: `{test="test"} |= "thing1" |~ "$var1" |~ "$var2"`,
+          expr: `{service_name="tns-app"} |~ "(?i)$search"`,
         },
       ],
-      [],
-      templateSrvMock
+      []
     );
 
-    expect(result.data[0].meta.searchWords).toContain('thing1');
-    expect(result.data[0].meta.searchWords).toContain('template');
+    expect(result.data[0].meta.searchWords).toContain('(?i)template');
     expect(result.data[0].meta.searchWords).toContain('variable');
   });
 });

@@ -19,7 +19,6 @@ import {
   getNormalizedLokiQuery,
   getNodePositionsFromQuery,
   getLogQueryFromMetricsQueryAtPosition,
-  getVariableHighlighterExpressionsFromQuery,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -129,47 +128,6 @@ describe('getHighlighterExpressionsFromQuery', () => {
 
   it.each(['|=', '|~'])('returns multiple expressions when using or statements and ip filters', (op: string) => {
     expect(getHighlighterExpressionsFromQuery(`{app="frontend"} ${op} "line" or ip("10.0.0.1")`)).toEqual(['line']);
-  });
-});
-
-describe('getVariableHighlighterExpressionsFromQuery', () => {
-  let templateSrvMock: TemplateSrv;
-  beforeEach(() => {
-    templateSrvMock = {
-      getVariables: jest.fn().mockReturnValue([]),
-      replace: jest.fn(),
-      containsTemplate: jest.fn().mockReturnValue(false),
-      updateTimeRange: jest.fn(),
-    };
-  });
-
-  it('Returns an empty array if there are no search words from variables', () => {
-    expect(getVariableHighlighterExpressionsFromQuery('{level="info"} |= "thing1"', templateSrvMock)).toEqual([]);
-  });
-
-  it('Returns search words from variables', () => {
-    jest.mocked(templateSrvMock.getVariables).mockReturnValue([
-      {
-        name: 'var1',
-      },
-      {
-        name: 'var2',
-      },
-    ] as TypedVariableModel[]);
-    jest.mocked(templateSrvMock.containsTemplate).mockReturnValue(true);
-    jest.mocked(templateSrvMock.replace).mockImplementation((target?: string) => {
-      if (target === '$var1') {
-        return 'template';
-      }
-      if (target === '$var2') {
-        return 'variable';
-      }
-      return '';
-    });
-
-    expect(
-      getVariableHighlighterExpressionsFromQuery('{test="test"} |= "thing1" |~ "$var1" |~ "$var2"', templateSrvMock)
-    ).toEqual(['template', 'variable']);
   });
 });
 

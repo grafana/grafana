@@ -1,9 +1,8 @@
 import { DataQueryResponse, DataFrame, isDataFrame, FieldType, QueryResultMeta, DataQueryError } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
 
 import { getDerivedFields } from './getDerivedFields';
 import { makeTableFrames } from './makeTableFrames';
-import { getHighlighterExpressionsFromQuery } from './queryUtils';
+import { getExpressionFromExecutedQuery, getHighlighterExpressionsFromQuery } from './queryUtils';
 import { dataFrameHasLokiError } from './responseUtils';
 import { DerivedFieldConfig, LokiQuery, LokiQueryType } from './types';
 
@@ -25,8 +24,7 @@ function setFrameMeta(frame: DataFrame, meta: QueryResultMeta): DataFrame {
 function processStreamFrame(
   frame: DataFrame,
   query: LokiQuery | undefined,
-  derivedFieldConfigs: DerivedFieldConfig[],
-  templateSrv: TemplateSrv
+  derivedFieldConfigs: DerivedFieldConfig[]
 ): DataFrame {
   const custom: Record<string, string> = {
     ...frame.meta?.custom, // keep the original meta.custom
@@ -41,7 +39,7 @@ function processStreamFrame(
   const meta: QueryResultMeta = {
     preferredVisualisationType: 'logs',
     limit: query?.maxLines,
-    searchWords: query ? getHighlighterExpressionsFromQuery(query.expr, templateSrv) : undefined,
+    searchWords: query ? getHighlighterExpressionsFromQuery(query.expr) : undefined,
     custom,
   };
 
@@ -56,12 +54,11 @@ function processStreamFrame(
 function processStreamsFrames(
   frames: DataFrame[],
   queryMap: Map<string, LokiQuery>,
-  derivedFieldConfigs: DerivedFieldConfig[],
-  templateSrv: TemplateSrv
+  derivedFieldConfigs: DerivedFieldConfig[]
 ): DataFrame[] {
   return frames.map((frame) => {
     const query = frame.refId !== undefined ? queryMap.get(frame.refId) : undefined;
-    return processStreamFrame(frame, query, derivedFieldConfigs, templateSrv);
+    return processStreamFrame(frame, query, derivedFieldConfigs);
   });
 }
 
@@ -134,8 +131,7 @@ function improveError(error: DataQueryError | undefined, queryMap: Map<string, L
 export function transformBackendResult(
   response: DataQueryResponse,
   queries: LokiQuery[],
-  derivedFieldConfigs: DerivedFieldConfig[],
-  templateSrv: TemplateSrv
+  derivedFieldConfigs: DerivedFieldConfig[]
 ): DataQueryResponse {
   const { data, error, ...rest } = response;
 
@@ -149,7 +145,17 @@ export function transformBackendResult(
     return d;
   });
 
-  const queryMap = new Map(queries.map((query) => [query.refId, query]));
+  const queryMap = new Map(
+    queries.map((query) => {
+      const executedExpr = response.data.find((data) => data.refId === query.refId)?.meta.executedQueryString;
+      const executedQuery = {
+        ...query,
+        expr: executedExpr ? getExpressionFromExecutedQuery(executedExpr) : query.expr,
+      };
+
+      return [query.refId, executedQuery];
+    })
+  );
 
   const { streamsFrames, metricInstantFrames, metricRangeFrames } = groupFrames(dataFrames, queryMap);
 
@@ -159,7 +165,7 @@ export function transformBackendResult(
     data: [
       ...processMetricRangeFrames(metricRangeFrames),
       ...processMetricInstantFrames(metricInstantFrames),
-      ...processStreamsFrames(streamsFrames, queryMap, derivedFieldConfigs, templateSrv),
+      ...processStreamsFrames(streamsFrames, queryMap, derivedFieldConfigs),
     ],
   };
 }
