@@ -36,8 +36,43 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]defi
 		return nil, err
 	}
 
+	if len(revision.Config.TemplateFiles) == 0 {
+		return nil, nil
+	}
+
+	provenances, err := t.provenanceStore.GetProvenances(ctx, orgID, (&definitions.NotificationTemplate{}).ResourceType())
+	if err != nil {
+		return nil, err
+	}
+
 	templates := make([]definitions.NotificationTemplate, 0, len(revision.Config.TemplateFiles))
 	for name, tmpl := range revision.Config.TemplateFiles {
+		tmpl := definitions.NotificationTemplate{
+			Name:            name,
+			Template:        tmpl,
+			ResourceVersion: calculateTemplateFingerprint(tmpl),
+		}
+		provenance, ok := provenances[tmpl.ResourceID()]
+		if !ok {
+			provenance = models.ProvenanceNone
+		}
+		tmpl.Provenance = definitions.Provenance(provenance)
+		templates = append(templates, tmpl)
+	}
+
+	return templates, nil
+}
+
+func (t *TemplateService) GetTemplate(ctx context.Context, orgID int64, name string) (definitions.NotificationTemplate, error) {
+	revision, err := t.configStore.Get(ctx, orgID)
+	if err != nil {
+		return definitions.NotificationTemplate{}, err
+	}
+
+	for tmplName, tmpl := range revision.Config.TemplateFiles {
+		if tmplName != name {
+			continue
+		}
 		tmpl := definitions.NotificationTemplate{
 			Name:            name,
 			Template:        tmpl,
@@ -46,14 +81,12 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]defi
 
 		provenance, err := t.provenanceStore.GetProvenance(ctx, &tmpl, orgID)
 		if err != nil {
-			return nil, err
+			return definitions.NotificationTemplate{}, err
 		}
 		tmpl.Provenance = definitions.Provenance(provenance)
-
-		templates = append(templates, tmpl)
+		return tmpl, nil
 	}
-
-	return templates, nil
+	return definitions.NotificationTemplate{}, ErrTemplateNotFound.Errorf("")
 }
 
 func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error) {
