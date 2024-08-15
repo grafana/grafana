@@ -32,17 +32,6 @@ interface ActionEditorProps {
   suggestions: VariableSuggestion[];
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  listItem: css({
-    marginBottom: theme.spacing(),
-  }),
-  infoText: css({
-    paddingBottom: theme.spacing(2),
-    marginLeft: '66px',
-    color: theme.colors.text.secondary,
-  }),
-});
-
 const LABEL_WIDTH = 13;
 
 export const ActionEditor = memo(({ index, value, onChange, suggestions }: ActionEditorProps) => {
@@ -135,9 +124,10 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
         </InlineFieldRow>
       )}
 
-      <Field label="Query parameters">
+      <Field label="Query parameters" className={styles.fieldGap}>
         <ParamsEditor value={value?.queryParams ?? []} onChange={onQueryParamsChange} suggestions={suggestions} />
       </Field>
+
       <Field label="Headers">
         <ParamsEditor value={value?.headers ?? []} onChange={onHeadersChange} suggestions={suggestions} />
       </Field>
@@ -159,6 +149,20 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
         renderJSON(value?.body ?? '{}')}
     </div>
   );
+});
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  listItem: css({
+    marginBottom: theme.spacing(),
+  }),
+  infoText: css({
+    paddingBottom: theme.spacing(2),
+    marginLeft: '66px',
+    color: theme.colors.text.secondary,
+  }),
+  fieldGap: css({
+    marginTop: theme.spacing(2),
+  }),
 });
 
 ActionEditor.displayName = 'ActionEditor';

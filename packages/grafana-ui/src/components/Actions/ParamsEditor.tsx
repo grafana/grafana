@@ -51,12 +51,19 @@ export const ParamsEditor = ({ value, onChange, suggestions }: Props) => {
   return (
     <div>
       <Stack direction="row">
-        <SuggestionsInput value={paramName} onChange={changeParamName} suggestions={suggestions} placeholder="Key" />
+        <SuggestionsInput
+          value={paramName}
+          onChange={changeParamName}
+          suggestions={suggestions}
+          placeholder="Key"
+          style={{ width: 332 }}
+        />
         <SuggestionsInput
           value={paramValue}
           onChange={changeParamValue}
           suggestions={suggestions}
           placeholder="Value"
+          style={{ width: 332 }}
         />
         <IconButton aria-label="add" name="plus-circle" onClick={addParam} disabled={isAddParamsDisabled} />
       </Stack>

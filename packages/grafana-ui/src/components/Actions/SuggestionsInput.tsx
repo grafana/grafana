@@ -30,6 +30,7 @@ interface SuggestionsInputProps {
   error?: string;
   width?: number;
   type?: HTMLElementType;
+  style?: React.CSSProperties;
 }
 
 const getStyles = (theme: GrafanaTheme2, inputHeight: number) => {
@@ -58,6 +59,7 @@ export const SuggestionsInput = ({
   error,
   invalid,
   type = HTMLElementType.InputElement,
+  style,
 }: SuggestionsInputProps) => {
   const [showingSuggestions, setShowingSuggestions] = useState(false);
   const [suggestionsIndex, setSuggestionsIndex] = useState(0);
@@ -177,7 +179,7 @@ export const SuggestionsInput = ({
   }, []);
 
   return (
-    <div className={styles.inputWrapper}>
+    <div className={styles.inputWrapper} style={style ?? {}}>
       {showingSuggestions && (
         <Portal>
           <div ref={refs.setFloating} style={floatingStyles} className={styles.suggestionsWrapper}>
