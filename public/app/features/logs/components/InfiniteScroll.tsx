@@ -166,9 +166,7 @@ export const InfiniteScroll = ({
         <Button className={styles.navButton} variant="secondary" onClick={loadOlderLogs} disabled={loading}>
           <div className={styles.navButtonContent}>
             <Icon name="angle-up" size="lg" />
-            <Trans i18nKey="logs.infinite-scroll.older-logs">
-              Older logs
-            </Trans>
+            <Trans i18nKey="logs.infinite-scroll.older-logs">Older logs</Trans>
           </div>
         </Button>
       )}
