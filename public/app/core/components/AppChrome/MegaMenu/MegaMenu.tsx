@@ -49,11 +49,9 @@ export const MegaMenu = memo(
             return acc;
           }
           acc.push({
-            ...item,
-            children: undefined,
-            sortWeight: 0,
-            emptyMessageId: '',
-            emptyMessage: '',
+            id: item.id,
+            text: item.text,
+            url: item.url,
             parentItem: { id: 'bookmarks', text: 'Bookmarks' },
           });
           return acc;
