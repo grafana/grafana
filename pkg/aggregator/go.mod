@@ -4,7 +4,7 @@ go 1.22.4
 
 require (
 	github.com/emicklei/go-restful/v3 v3.11.0
-	github.com/grafana/grafana-plugin-sdk-go v0.242.1-0.20240815161100-14bb810398ea
+	github.com/grafana/grafana-plugin-sdk-go v0.243.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240808213237-f4d2e064f435
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20240808213237-f4d2e064f435
 	github.com/stretchr/testify v1.9.0

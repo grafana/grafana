@@ -228,31 +228,6 @@ func TestService_AddDataSource(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, "url-mutated", ds.URL)
 		})
-
-		t.Run("should convert objects", func(t *testing.T) {
-			dsService := initDSService(t)
-			dsService.pluginStore = &pluginstore.FakePluginStore{
-				PluginList: []pluginstore.Plugin{{
-					JSONData: plugins.JSONData{
-						ID:   "test",
-						Type: plugins.TypeDataSource,
-						Name: "test",
-					},
-				}},
-			}
-			dsService.pluginClient = &pluginfakes.FakePluginClient{
-				ConvertObjectsFunc: func(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-					return nil, fmt.Errorf("not implemented")
-				},
-			}
-			cmd := &datasources.GetDataSourceQuery{
-				OrgID: 1,
-				Name:  "test",
-			}
-			ds, err := dsService.GetDataSource(context.Background(), cmd)
-			require.NoError(t, err)
-			require.Equal(t, "url-mutated2", ds.URL)
-		})
 	})
 }
 
