@@ -2341,8 +2341,8 @@ github.com/grafana/grafana-google-sdk-go v0.1.0/go.mod h1:Vo2TKWfDVmNTELBUM+3lkr
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 h1:r+mU5bGMzcXCRVAuOrTn54S80qbfVkvTdUJZfSfTNbs=
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
-github.com/grafana/grafana-plugin-sdk-go v0.241.0 h1:zBcSW9xV9gA9hD8UN+HjJtD7tESMZcaQhA1BI76MTxM=
-github.com/grafana/grafana-plugin-sdk-go v0.241.0/go.mod h1:2HjNwzGCfaFAyR2HGoECTwAmq8vSIn2L1/1yOt4XRS4=
+github.com/grafana/grafana-plugin-sdk-go v0.243.0 h1:Xrkv7rN0aL5AK7b8zVsuD0ryCJX4HlaXUGGKjMuHeL4=
+github.com/grafana/grafana-plugin-sdk-go v0.243.0/go.mod h1:JDrwijH50ym2SxBd4zNoQ4K+sdC1VppH4kVS8B1Nh0U=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20240813192817-1b0e6b5c09b2 h1:2H9x4q53pkfUGtSNYD1qSBpNnxrFgylof/TYADb5xMI=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20240813192817-1b0e6b5c09b2/go.mod h1:gBLBniiSUQvyt4LRrpIeysj8Many0DV+hdUKifRE0Ec=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240808213237-f4d2e064f435 h1:lmw60EW7JWlAEvgggktOyVkH4hF1m/+LSF/Ap0NCyi8=
@@ -3456,8 +3456,8 @@ go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.53.0 h1:4K4tsIX
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.53.0/go.mod h1:jjdQuTGVsXV4vSs+CJ2qYDeDPf9yIJV23qlIzBm73Vg=
 go.opentelemetry.io/contrib/propagators/jaeger v1.28.0 h1:xQ3ktSVS128JWIaN1DiPGIjcH+GsvkibIAVRWFjS9eM=
 go.opentelemetry.io/contrib/propagators/jaeger v1.28.0/go.mod h1:O9HIyI2kVBrFoEwQZ0IN6PHXykGoit4mZV2aEjkTRH4=
-go.opentelemetry.io/contrib/samplers/jaegerremote v0.20.0 h1:ja+d7Aea/9PgGxB63+E0jtRFpma717wubS0KFkZpmYw=
-go.opentelemetry.io/contrib/samplers/jaegerremote v0.20.0/go.mod h1:Yc1eg51SJy7xZdOTyg1xyFcwE+ghcWh3/0hKeLo6Wlo=
+go.opentelemetry.io/contrib/samplers/jaegerremote v0.22.0 h1:OYxqumWcd1yaV/qvCt1B7Sru9OeUNGjeXq/oldx3AGk=
+go.opentelemetry.io/contrib/samplers/jaegerremote v0.22.0/go.mod h1:2tZTRqCbvx7nG57wUwd5NQpNVujOWnR84iPLllIH0Ok=
 go.opentelemetry.io/otel v1.17.0/go.mod h1:I2vmBGtFaODIVMBSTPVDlJSzBDNf93k60E6Ft0nyjo0=
 go.opentelemetry.io/otel v1.19.0/go.mod h1:i0QyjOq3UPoTzff0PJB2N66fb4S0+rSbSB15/oyH9fY=
 go.opentelemetry.io/otel v1.21.0/go.mod h1:QZzNPQPm1zLX4gZK4cMi+71eaorMSGT3A4znnUvNNEo=
@@ -3824,8 +3824,8 @@ golang.org/x/oauth2 v0.16.0/go.mod h1:hqZ+0LWXsiVoZpeld6jVt06P3adbS2Uu911W1SsJv2
 golang.org/x/oauth2 v0.17.0/go.mod h1:OzPDGQiuQMguemayvdylqddI7qcD9lnSDb+1FiwQ5HA=
 golang.org/x/oauth2 v0.18.0/go.mod h1:Wf7knwG0MPoWIMMBgFlEaSUDaKskp0dCfrlJRJXbBi8=
 golang.org/x/oauth2 v0.19.0/go.mod h1:vYi7skDa1x015PmRRYZ7+s1cWyPgrPiSYRe4rnsexc8=
-golang.org/x/oauth2 v0.21.0 h1:tsimM75w1tF/uws5rbeHzIWxEqElMehnc+iW793zsZs=
-golang.org/x/oauth2 v0.21.0/go.mod h1:XYTD2NtWslqkgxebSiOHnXEap4TF09sJSc7H1sXbhtI=
+golang.org/x/oauth2 v0.22.0 h1:BzDx2FehcG7jJwgWLELCdmLuxk2i+x9UDpSiss2u0ZA=
+golang.org/x/oauth2 v0.22.0/go.mod h1:XYTD2NtWslqkgxebSiOHnXEap4TF09sJSc7H1sXbhtI=
 golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20181108010431-42b317875d0f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
