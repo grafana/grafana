@@ -124,10 +124,12 @@ export function getFilters(scene: SceneObject) {
  * @param scene
  * @returns
  */
-export function getOtelFilters(scene: SceneObject): { labels: string; filters: string } {
+export function getOtelJoinQuery(scene: SceneObject): string {
   const otelResources = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, scene);
   // add deployment env to otel resource filters
   const otelDepEnv = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, scene);
+
+  let otelResourcesJoinQuery = '';
 
   if (otelResources instanceof AdHocFiltersVariable && otelDepEnv instanceof CustomVariable) {
     // get the collection of adhoc filters
@@ -157,8 +159,8 @@ export function getOtelFilters(scene: SceneObject): { labels: string; filters: s
       allLabels += `,${labelName}`;
     }
 
-    return { filters: allFilters, labels: allLabels };
+    otelResourcesJoinQuery = `* on (job, instance) group_left(${allLabels}) target_info{${allFilters}}`;
   }
 
-  return { labels: '', filters: '' };
+  return otelResourcesJoinQuery;
 }
