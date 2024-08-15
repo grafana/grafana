@@ -26,6 +26,11 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+const (
+	namespaceQueryTag = "QUERY_NAMESPACE"
+	groupQueryTag     = "QUERY_GROUP"
+)
+
 var searchRegex = regexp.MustCompile(`\{(\w+)\}`)
 
 func toMacaronPath(path string) string {
@@ -239,4 +244,30 @@ func getHash(hashSlice []string) uint64 {
 	}
 	hash := sum.Sum64()
 	return hash
+}
+
+func getRulesGroupParam(ctx *contextmodel.ReqContext, pathGroup string) (string, error) {
+	if pathGroup == groupQueryTag {
+		group := ctx.Query("group")
+		if group == "" {
+			return "", fmt.Errorf("group query parameter is empty")
+		}
+
+		return group, nil
+	}
+
+	return pathGroup, nil
+}
+
+func getRulesNamespaceParam(ctx *contextmodel.ReqContext, pathNamespace string) (string, error) {
+	if pathNamespace == namespaceQueryTag {
+		namespace := ctx.Query("namespace")
+		if namespace == "" {
+			return "", fmt.Errorf("namespace query parameter is empty")
+		}
+
+		return namespace, nil
+	}
+
+	return pathNamespace, nil
 }

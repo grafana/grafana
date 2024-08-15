@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardsV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
@@ -18,8 +19,7 @@ import (
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -46,13 +46,12 @@ type dashboardRow struct {
 }
 
 type dashboardSqlAccess struct {
-	sql          db.DB
+	sql          legacysql.NamespacedDBProvider
 	dialect      sqltemplate.Dialect
-	sess         *session.SessionDB
 	namespacer   request.NamespaceMapper
 	dashStore    dashboards.Store
 	provisioning provisioning.ProvisioningService
-	currentRV    func(ctx context.Context) (int64, error)
+	currentRV    legacysql.ResourceVersionLookup
 
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
@@ -71,38 +70,15 @@ func NewDashboardAccess(sql db.DB,
 		fmt.Printf("ERROR: NO DIALECT")
 	}
 
-	sess := sql.GetSqlxSession()
-	currentRV := func(ctx context.Context) (int64, error) {
-		t := time.Now()
-		max := ""
-		err := sess.Get(ctx, &max, "SELECT MAX(updated) FROM dashboard")
-		if err == nil && max != "" {
-			t, _ = time.Parse(time.DateTime, max) // ignore null errors
-		}
-		return t.UnixMilli(), nil
-	}
-	if sql.GetDBType() == migrator.Postgres {
-		currentRV = func(ctx context.Context) (int64, error) {
-			max := time.Now()
-			_ = sess.Get(ctx, &max, "SELECT MAX(updated) FROM dashboard")
-			return max.UnixMilli(), nil
-		}
-	} else if sql.GetDBType() == migrator.MySQL {
-		currentRV = func(ctx context.Context) (int64, error) {
-			max := time.Now().UnixMilli()
-			_ = sess.Get(ctx, &max, "SELECT UNIX_TIMESTAMP(MAX(updated)) FROM dashboard;")
-			return max, nil
-		}
-	}
+	nssql := func(ctx context.Context) (db.DB, error) { return sql, nil }
 
 	return &dashboardSqlAccess{
-		sql:          sql,
-		sess:         sess,
+		sql:          nssql,
 		dialect:      dialect,
 		namespacer:   namespacer,
 		dashStore:    dashStore,
 		provisioning: provisioning,
-		currentRV:    currentRV,
+		currentRV:    legacysql.GetResourceVersionLookup(nssql, "dashboard", "updated"),
 	}
 }
 
@@ -133,7 +109,11 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 	// q = sqltemplate.RemoveEmptyLines(rawQuery)
 	// fmt.Printf(">>%s [%+v]", q, req.GetArgs())
 
-	rows, err := a.sess.Query(ctx, q, req.GetArgs()...)
+	db, err := a.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := db.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	if err != nil {
 		if rows != nil {
 			_ = rows.Close()
@@ -338,10 +318,10 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 
 func getUserID(v sql.NullString, id sql.NullInt64) string {
 	if v.Valid && v.String != "" {
-		return identity.NewTypedIDString(identity.TypeUser, v.String).String()
+		return identity.NewTypedIDString(claims.TypeUser, v.String)
 	}
 	if id.Valid && id.Int64 == -1 {
-		return identity.NewTypedIDString(identity.TypeProvisioning, "").String()
+		return identity.NewTypedIDString(claims.TypeProvisioning, "")
 	}
 	return ""
 }
@@ -394,9 +374,12 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		dash.Spec.Remove("uid")
 	}
 
-	userID, err := user.GetID().UserID()
-	if err != nil {
-		return nil, false, err
+	var userID int64
+	if user.IsIdentityType(claims.TypeUser) {
+		userID, err = user.GetInternalID()
+		if err != nil {
+			return nil, false, err
+		}
 	}
 
 	meta, err := utils.MetaAccessor(dash)

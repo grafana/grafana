@@ -108,8 +108,8 @@ const (
 type RuleType string
 
 const (
-	RuleTypeAlerting  = "alerting"
-	RuleTypeRecording = "recording"
+	RuleTypeAlerting  RuleType = "alerting"
+	RuleTypeRecording RuleType = "recording"
 )
 
 func (r RuleType) String() string {
@@ -465,6 +465,11 @@ type AlertRuleGroupKey struct {
 	OrgID        int64
 	NamespaceUID string
 	RuleGroup    string
+}
+
+type AlertRuleGroupKeyWithFolderFullpath struct {
+	AlertRuleGroupKey
+	FolderFullpath string
 }
 
 func (k AlertRuleGroupKey) String() string {

@@ -457,15 +457,17 @@ DELETE /api/v1/provisioning/mute-timings/:name
 
 #### Parameters
 
-| Name | Source | Type   | Go type  | Separator | Required | Default | Description      |
-| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ---------------- |
-| name | `path` | string | `string` |           |    ✓     |         | Mute timing name |
+| Name    | Source  | Type   | Go type  | Separator | Required | Default | Description                                                                                                   |
+| ------- | ------- | ------ | -------- | --------- | :------: | ------- | ------------------------------------------------------------------------------------------------------------- |
+| name    | `path`  | string | `string` |           |    ✓     |         | Mute timing name                                                                                              |
+| version | `query` | string | `string` |           |          |         | Current version of the resource. Used for optimistic concurrency validation. Keep empty to bypass validation. |
 
 #### All responses
 
 | Code                                 | Status     | Description                               | Has headers | Schema                                         |
 | ------------------------------------ | ---------- | ----------------------------------------- | :---------: | ---------------------------------------------- |
 | [204](#route-delete-mute-timing-204) | No Content | The mute timing was deleted successfully. |             | [schema](#route-delete-mute-timing-204-schema) |
+| [409](#route-delete-mute-timing-409) | Conflict   | GenericPublicError                        |             | [schema](#route-delete-mute-timing-409-schema) |
 
 #### Responses
 
@@ -475,6 +477,14 @@ Status: No Content
 
 ###### <span id="route-delete-mute-timing-204-schema"></span> Schema
 
+##### <span id="route-delete-mute-timing-409"></span> 409 - Conflict
+
+Status: Conflict
+
+###### <span id="route-delete-mute-timing-409-schema"></span> Schema
+
+[GenericPublicError](#generic-public-error)
+
 ### <span id="route-delete-template"></span> Delete a template. (_RouteDeleteTemplate_)
 
 ```
@@ -483,15 +493,17 @@ DELETE /api/v1/provisioning/templates/:name
 
 #### Parameters
 
-| Name | Source | Type   | Go type  | Separator | Required | Default | Description   |
-| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ------------- |
-| name | `path` | string | `string` |           |    ✓     |         | Template Name |
+| Name    | Source  | Type   | Go type  | Separator | Required | Default | Description                                                                                                   |
+| ------- | ------- | ------ | -------- | --------- | :------: | ------- | ------------------------------------------------------------------------------------------------------------- |
+| name    | `path`  | string | `string` |           |    ✓     |         | Template Name                                                                                                 |
+| version | `query` | string | `string` |           |          |         | Current version of the resource. Used for optimistic concurrency validation. Keep empty to bypass validation. |
 
 #### All responses
 
 | Code                              | Status     | Description                            | Has headers | Schema                                      |
 | --------------------------------- | ---------- | -------------------------------------- | :---------: | ------------------------------------------- |
 | [204](#route-delete-template-204) | No Content | The template was deleted successfully. |             | [schema](#route-delete-template-204-schema) |
+| [409](#route-delete-template-409) | Conflict   | GenericPublicError                     |             | [schema](#route-delete-template-409-schema) |
 
 #### Responses
 
@@ -500,6 +512,14 @@ DELETE /api/v1/provisioning/templates/:name
 Status: No Content
 
 ###### <span id="route-delete-template-204-schema"></span> Schema
+
+##### <span id="route-delete-template-409"></span> 409 - Conflict
+
+Status: Conflict
+
+###### <span id="route-delete-template-409-schema"></span> Schema
+
+[GenericPublicError](#generic-public-error)
 
 ### <span id="route-get-alert-rule"></span> Get a specific alert rule by UID. (_RouteGetAlertRule_)
 
@@ -1040,7 +1060,7 @@ GET /api/v1/provisioning/templates/:name
 | Code                           | Status    | Description          | Has headers | Schema                                   |
 | ------------------------------ | --------- | -------------------- | :---------: | ---------------------------------------- |
 | [200](#route-get-template-200) | OK        | NotificationTemplate |             | [schema](#route-get-template-200-schema) |
-| [404](#route-get-template-404) | Not Found | Not found.           |             | [schema](#route-get-template-404-schema) |
+| [404](#route-get-template-404) | Not Found | GenericPublicError   |             | [schema](#route-get-template-404-schema) |
 
 #### Responses
 
@@ -1054,7 +1074,7 @@ Status: OK
 
 ##### <span id="route-get-template-404"></span> 404 - Not found.
 
-Status: Not Found
+[GenericPublicError](#generic-public-error)
 
 ###### <span id="route-get-template-404-schema"></span> Schema
 
@@ -1066,10 +1086,9 @@ GET /api/v1/provisioning/templates
 
 #### All responses
 
-| Code                            | Status    | Description           | Has headers | Schema                                    |
-| ------------------------------- | --------- | --------------------- | :---------: | ----------------------------------------- |
-| [200](#route-get-templates-200) | OK        | NotificationTemplates |             | [schema](#route-get-templates-200-schema) |
-| [404](#route-get-templates-404) | Not Found | Not found.            |             | [schema](#route-get-templates-404-schema) |
+| Code                            | Status | Description           | Has headers | Schema                                    |
+| ------------------------------- | ------ | --------------------- | :---------: | ----------------------------------------- |
+| [200](#route-get-templates-200) | OK     | NotificationTemplates |             | [schema](#route-get-templates-200-schema) |
 
 #### Responses
 
@@ -1080,12 +1099,6 @@ Status: OK
 ###### <span id="route-get-templates-200-schema"></span> Schema
 
 [NotificationTemplates](#notification-templates)
-
-##### <span id="route-get-templates-404"></span> 404 - Not found.
-
-Status: Not Found
-
-###### <span id="route-get-templates-404-schema"></span> Schema
 
 ### <span id="route-post-alert-rule"></span> Create a new alert rule. (_RoutePostAlertRule_)
 
@@ -1363,10 +1376,11 @@ PUT /api/v1/provisioning/mute-timings/:name
 
 #### All responses
 
-| Code                              | Status      | Description      | Has headers | Schema                                      |
-| --------------------------------- | ----------- | ---------------- | :---------: | ------------------------------------------- |
-| [200](#route-put-mute-timing-200) | OK          | MuteTimeInterval |             | [schema](#route-put-mute-timing-200-schema) |
-| [400](#route-put-mute-timing-400) | Bad Request | ValidationError  |             | [schema](#route-put-mute-timing-400-schema) |
+| Code                              | Status      | Description        | Has headers | Schema                                      |
+| --------------------------------- | ----------- | ------------------ | :---------: | ------------------------------------------- |
+| [200](#route-put-mute-timing-200) | OK          | MuteTimeInterval   |             | [schema](#route-put-mute-timing-200-schema) |
+| [400](#route-put-mute-timing-400) | Bad Request | ValidationError    |             | [schema](#route-put-mute-timing-400-schema) |
+| [409](#route-put-mute-timing-409) | Conflict    | GenericPublicError |             | [schema](#route-put-mute-timing-409-schema) |
 
 #### Responses
 
@@ -1385,6 +1399,14 @@ Status: Bad Request
 ###### <span id="route-put-mute-timing-400-schema"></span> Schema
 
 [ValidationError](#validation-error)
+
+##### <span id="route-put-mute-timing-409"></span> 409 - Conflict
+
+Status: Conflict
+
+###### <span id="route-put-mute-timing-409-schema"></span> Schema
+
+[GenericPublicError](#generic-public-error)
 
 ### <span id="route-put-policy-tree"></span> Sets the notification policy tree. (_RoutePutPolicyTree_)
 
@@ -1451,7 +1473,8 @@ PUT /api/v1/provisioning/templates/:name
 | Code                           | Status      | Description          | Has headers | Schema                                   |
 | ------------------------------ | ----------- | -------------------- | :---------: | ---------------------------------------- |
 | [202](#route-put-template-202) | Accepted    | NotificationTemplate |             | [schema](#route-put-template-202-schema) |
-| [400](#route-put-template-400) | Bad Request | ValidationError      |             | [schema](#route-put-template-400-schema) |
+| [400](#route-put-template-400) | Bad Request | GenericPublicError   |             | [schema](#route-put-template-400-schema) |
+| [409](#route-put-template-409) | Conflict    | GenericPublicError   |             | [schema](#route-put-template-409-schema) |
 
 #### Responses
 
@@ -1469,7 +1492,15 @@ Status: Bad Request
 
 ###### <span id="route-put-template-400-schema"></span> Schema
 
-[ValidationError](#validation-error)
+[GenericPublicError](#generic-public-error)
+
+##### <span id="route-put-template-409"></span> 409 - Conflict
+
+Status: Conflict
+
+###### <span id="route-put-template-409-schema"></span> Schema
+
+[GenericPublicError](#generic-public-error)
 
 ### <span id="route-reset-policy-tree"></span> Clears the notification policy tree. (_RouteResetPolicyTree_)
 
@@ -1685,10 +1716,11 @@ Status: Accepted
 
 {{% responsive-table %}}
 
-| Name           | Type                             | Go type           | Required | Default | Description | Example |
-| -------------- | -------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| name           | string                           | `string`          |          |         |             |         |
-| time_intervals | [][TimeInterval](#time-interval) | `[]*TimeInterval` |          |         |             |         |
+| Name           | Type                             | Go type           | Required | Default | Description         | Example |
+| -------------- | -------------------------------- | ----------------- | :------: | ------- | ------------------- | ------- |
+| name           | string                           | `string`          |          |         |                     |         |
+| time_intervals | [][TimeInterval](#time-interval) | `[]*TimeInterval` |          |         |                     |         |
+| version        | string                           | `string`          |          |         | Version of resource |         |
 
 {{% /responsive-table %}}
 
@@ -1723,11 +1755,12 @@ Status: Accepted
 
 {{% responsive-table %}}
 
-| Name       | Type                      | Go type      | Required | Default | Description | Example |
-| ---------- | ------------------------- | ------------ | :------: | ------- | ----------- | ------- |
-| name       | string                    | `string`     |          |         |             |         |
-| provenance | [Provenance](#provenance) | `Provenance` |          |         |             |         |
-| template   | string                    | `string`     |          |         |             |         |
+| Name       | Type                      | Go type      | Required | Default | Description         | Example |
+| ---------- | ------------------------- | ------------ | :------: | ------- | ------------------- | ------- |
+| name       | string                    | `string`     |          |         |                     |         |
+| provenance | [Provenance](#provenance) | `Provenance` |          |         |                     |         |
+| template   | string                    | `string`     |          |         |                     |         |
+| version    | string                    | `string`     |          |         | Version of resource |         |
 
 {{% /responsive-table %}}
 
@@ -1737,9 +1770,10 @@ Status: Accepted
 
 {{% responsive-table %}}
 
-| Name     | Type   | Go type  | Required | Default | Description | Example |
-| -------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| template | string | `string` |          |         |             |         |
+| Name     | Type   | Go type  | Required | Default | Description                                             | Example |
+| -------- | ------ | -------- | :------: | ------- | ------------------------------------------------------- | ------- |
+| template | string | `string` |          |         |                                                         |         |
+| version  | string | `string` |          |         | Version of resource. Should be empty for new templates. |         |
 
 {{% /responsive-table %}}
 
@@ -1925,5 +1959,20 @@ Status: Accepted
 | Name | Type   | Go type  | Required | Default | Description | Example         |
 | ---- | ------ | -------- | :------: | ------- | ----------- | --------------- |
 | msg  | string | `string` |          |         |             | `error message` |
+
+{{% /responsive-table %}}
+
+### <span id="generic-public-error"></span> GenericPublicError
+
+**Properties**
+
+{{% responsive-table %}}
+
+| Name       | Type       | Go type          | Required | Default | Description                                                              | Example |
+| ---------- | ---------- | ---------------- | :------: | ------- | ------------------------------------------------------------------------ | ------- |
+| statusCode | string     | `string`         |    ✓     |         | HTTP Status Code                                                         |         |
+| messageId  | string     | `string`         |    ✓     |         | Unique code of the error                                                 |         |
+| message    | string     | `string`         |          |         | Error message                                                            |         |
+| extra      | map of any | `map[string]any` |          |         | Extra information about the error. Format is specific to the error code. |         |
 
 {{% /responsive-table %}}

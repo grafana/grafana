@@ -41,6 +41,9 @@ composableKinds: PanelCfg: {
 					isFilterLabelActive?:    _
 					onClickFilterString?:    _
 					onClickFilterOutString?: _
+					onClickShowField?: _
+					onClickHideField?: _
+					displayedFields?: [...string]
 				} @cuetsy(kind="interface")
 			}
 		}]
