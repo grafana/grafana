@@ -653,30 +653,28 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 
 	t.Run("TestReceivers", func(tt *testing.T) {
 		// TestReceivers should be called only in the remote Alertmanager.
-		// TODO: change to remote AM once it's implemented there.
-		internal, _, forked := genTestAlertmanagers(tt, modeRemotePrimary)
-		internal.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, 0, nil).Once()
+		_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+		remote.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, 0, nil).Once()
 		_, _, err := forked.TestReceivers(ctx, apimodels.TestReceiversConfigBodyParams{})
 		require.NoError(tt, err)
 
 		// If there's an error in the remote Alertmanager, it should be returned.
-		internal, _, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		internal.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, 0, expErr).Once()
+		_, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
+		remote.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, 0, expErr).Once()
 		_, _, err = forked.TestReceivers(ctx, apimodels.TestReceiversConfigBodyParams{})
 		require.ErrorIs(tt, expErr, err)
 	})
 
 	t.Run("TestTemplate", func(tt *testing.T) {
 		// TestTemplate should be called only in the internal Alertmanager.
-		// TODO: change to remote AM once it's implemented there.
-		internal, _, forked := genTestAlertmanagers(tt, modeRemotePrimary)
-		internal.EXPECT().TestTemplate(mock.Anything, mock.Anything).Return(nil, nil).Once()
+		_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+		remote.EXPECT().TestTemplate(mock.Anything, mock.Anything).Return(nil, nil).Once()
 		_, err := forked.TestTemplate(ctx, apimodels.TestTemplatesConfigBodyParams{})
 		require.NoError(tt, err)
 
 		// If there's an error in the internal Alertmanager, it should be returned.
-		internal, _, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		internal.EXPECT().TestTemplate(mock.Anything, mock.Anything).Return(nil, expErr).Once()
+		_, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
+		remote.EXPECT().TestTemplate(mock.Anything, mock.Anything).Return(nil, expErr).Once()
 		_, err = forked.TestTemplate(ctx, apimodels.TestTemplatesConfigBodyParams{})
 		require.ErrorIs(tt, expErr, err)
 	})
