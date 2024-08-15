@@ -84,16 +84,12 @@ export function getHighlighterExpressionsFromQuery(input = '', templateSrv?: Tem
  */
 export function getVariableHighlighterExpressionsFromQuery(expr: string, templateSrv: TemplateSrv) {
   const searchWords: string[] = [];
-  
-  templateSrv.getVariables().forEach(variable => {
+
+  templateSrv.getVariables().forEach((variable) => {
     if (templateSrv.containsTemplate(expr) && expr.includes(`$${variable.name}`)) {
-      searchWords.push(
-        templateSrv.replace(`$${variable.name}`)
-      );
+      searchWords.push(templateSrv.replace(`$${variable.name}`));
     }
   });
-
-  console.log(searchWords);
 
   return searchWords;
 }

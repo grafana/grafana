@@ -57,7 +57,7 @@ function processStreamsFrames(
   frames: DataFrame[],
   queryMap: Map<string, LokiQuery>,
   derivedFieldConfigs: DerivedFieldConfig[],
-  templateSrv: TemplateSrv,
+  templateSrv: TemplateSrv
 ): DataFrame[] {
   return frames.map((frame) => {
     const query = frame.refId !== undefined ? queryMap.get(frame.refId) : undefined;
@@ -136,7 +136,6 @@ export function transformBackendResult(
   queries: LokiQuery[],
   derivedFieldConfigs: DerivedFieldConfig[],
   templateSrv: TemplateSrv
-
 ): DataQueryResponse {
   const { data, error, ...rest } = response;
 
