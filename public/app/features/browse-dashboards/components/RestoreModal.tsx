@@ -6,15 +6,15 @@ import { ConfirmModal, Text } from '@grafana/ui';
 import { FolderPicker } from '../../../core/components/Select/FolderPicker';
 import { Trans, t } from '../../../core/internationalization';
 
-export interface Props {
+export interface RestoreModalProps {
   isOpen: boolean;
-  onConfirm: () => Promise<void>;
+  onConfirm: (restoreTarget: string) => Promise<void>;
   onDismiss: () => void;
   selectedDashboards: string[];
   isLoading: boolean;
 }
 
-export const RestoreModal = ({ onConfirm, onDismiss, selectedDashboards, isLoading, ...props }: Props) => {
+export const RestoreModal = ({ onConfirm, onDismiss, selectedDashboards, isLoading, ...props }: RestoreModalProps) => {
   const [restoreTarget, setRestoreTarget] = useState<string>();
   const numberOfDashboards = selectedDashboards.length;
 

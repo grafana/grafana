@@ -42,7 +42,7 @@ export function RecentlyDeletedActions() {
     }
 
     const promises = selectedDashboards.map((uid) => {
-      return restoreDashboard({ dashboardUID: uid });
+      return restoreDashboard({ dashboardUID: uid, targetFolder: restoreTarget });
     });
 
     await Promise.all(promises);
