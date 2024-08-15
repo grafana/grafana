@@ -236,7 +236,7 @@ describe('backendResultTransformer', () => {
   it('resolves search words from queries with template variables', () => {
     const dataFrame = cloneDeep(inputFrame);
     dataFrame.meta = {
-      executedQueryString: '{service_name="tns-app"} |~ "(?i)template" |= "variable"',
+      executedQueryString: 'Expr: {service_name="tns-app"} |~ "(?i)template" |= "variable"',
     };
     const result = transformBackendResult(
       { data: [dataFrame] },
