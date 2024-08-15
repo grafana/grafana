@@ -152,6 +152,7 @@ export class ByFrameRepeater extends SceneObjectBase<ByFrameRepeaterState> {
   public clearFilter = () => {
     // FIXME implement the event
     // this.publishEvent(new BreakdownSearchReset(), true);
+    console.log('clear filter....');
   };
 
   public static Component = ({ model }: SceneComponentProps<SceneByFrameRepeater>) => {
@@ -170,8 +171,7 @@ function buildNoResultsScene(filter: string, clearFilter: () => void) {
             <div className={styles.alertContainer}>
               <Alert title="" severity="info" className={styles.noResultsAlert}>
                 <Trans i18nKey="explore-metrics.breakdown.noMatchingValue">
-                  No values found matching &ldquo;
-                  {{ filter }}&rdquo;
+                  No values found matching; {{ filter }}
                 </Trans>
                 <Button className={styles.clearButton} onClick={clearFilter}>
                   <Trans i18nKey="explore-metrics.breakdown.clearFilter">Clear filter</Trans>
