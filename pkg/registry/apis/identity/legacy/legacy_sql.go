@@ -124,7 +124,6 @@ func (s *legacySQLStore) queryUsers(ctx context.Context, t *template.Template, r
 	}
 	q := rawQuery
 
-	fmt.Printf("%s // %v\n", rawQuery, req.GetArgs())
 
 	res := &ListUserResult{}
 	rows, err := s.sess.Query(ctx, q, req.GetArgs()...)
