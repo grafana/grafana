@@ -30,6 +30,7 @@ module.exports = {
   },
   transformIgnorePatterns: [
     `/node_modules/(?!${esModules})`, // exclude es modules to prevent TS complaining
+    '@bsull/augurs',
   ],
   moduleDirectories: ['public', 'node_modules'],
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages', '<rootDir>/scripts/tests'],
