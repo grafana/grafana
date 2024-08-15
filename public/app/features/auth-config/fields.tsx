@@ -1,14 +1,11 @@
 import { validate as uuidValidate } from 'uuid';
 
-import { AppEvents } from '@grafana/data';
-import { config, getAppEvents } from '@grafana/runtime';
-import { Button, TextLink } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { TextLink } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 
-import { Trans } from '../../core/internationalization';
-
-import ServerDiscoveryModal from './components/ServerDiscoveryModal';
-import { FieldData, ServerDiscoveryFormData, SSOProvider, SSOSettingsField } from './types';
+import { ServerDiscoveryField } from './components/ServerDiscoveryField';
+import { FieldData, SSOProvider, SSOSettingsField } from './types';
 import { isSelectableValue } from './utils/guards';
 import { isUrlValid } from './utils/url';
 
@@ -21,8 +18,6 @@ type Section = Record<
     fields: SSOSettingsField[];
   }>
 >;
-
-const appEvents = getAppEvents();
 
 export const sectionFields: Section = {
   azuread: [
@@ -632,63 +627,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       description:
         'The .well-known/openid-configuration endpoint for your IdP. The info extracted from this URL will be used to populate the Auth URL, Token URL and API URL fields.',
       type: 'custom',
-      content: (setValue, watch) => {
-        const modalIsOpen = watch('serverDiscoveryModal');
-        const onClose = () => setValue('serverDiscoveryModal', false);
-        const onSuccess = async (data: ServerDiscoveryFormData) => {
-          try {
-            const wellKnownSuffix = '/.well-known/openid-configuration';
-            const url = new URL(data.url);
-            if (!url.pathname.includes(wellKnownSuffix)) {
-              data.url = url.origin + wellKnownSuffix;
-            }
-
-            const response = await fetch(data.url);
-            const res = await response.json();
-
-            if (!res['token_endpoint'] || !res['authorization_endpoint']) {
-              appEvents.publish({
-                type: AppEvents.alertWarning.name,
-                payload: ['The URL provided is not a valid .well-known/openid-configuration endpoint'],
-              });
-              return;
-            }
-
-            setValue('tokenUrl', res['token_endpoint']);
-            setValue('authUrl', res['authorization_endpoint']);
-            if (res['userinfo_endpoint']) {
-              setValue('apiUrl', res['userinfo_endpoint']);
-            }
-
-            appEvents.publish({
-              type: AppEvents.alertSuccess.name,
-              payload: ['OpenID Connect Discovery URL has been successfully fetched.'],
-            });
-          } catch (error) {
-            appEvents.publish({
-              type: AppEvents.alertWarning.name,
-              payload: ['Failed to fetch URL or invalid content'],
-            });
-          } finally {
-            onClose();
-          }
-        };
-        return (
-          <>
-            <Button
-              type="button"
-              fill="text"
-              variant="secondary"
-              onClick={() => {
-                setValue('serverDiscoveryModal', true);
-              }}
-            >
-              <Trans i18nKey={'oauth.form.server-discovery-action-button'}>Enter OpenID Connect Discovery URL</Trans>
-            </Button>
-            <ServerDiscoveryModal isOpen={modalIsOpen} onClose={onClose} onSuccess={onSuccess} />
-          </>
-        );
-      },
+      content: (setValue) => <ServerDiscoveryField setValue={setValue} />,
     },
   };
 }

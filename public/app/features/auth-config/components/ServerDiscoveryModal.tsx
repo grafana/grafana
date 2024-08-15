@@ -1,6 +1,4 @@
-import { JSX } from 'react';
 import { useForm } from 'react-hook-form';
-import { connect, ConnectedProps } from 'react-redux';
 
 import { Button, Input, Field, Modal } from '@grafana/ui';
 
@@ -8,17 +6,13 @@ import { Trans } from '../../../core/internationalization';
 import { ServerDiscoveryFormData } from '../types';
 import { isUrlValid } from '../utils/url';
 
-interface OwnProps {
+interface Props {
   isOpen: boolean | undefined;
   onClose: () => void;
   onSuccess: (data: ServerDiscoveryFormData) => void;
 }
 
-export type Props = OwnProps & ConnectedProps<typeof connector>;
-
-const connector = connect(undefined, {});
-
-export const ServerDiscoveryModalUnconnected = ({ isOpen, onClose, onSuccess }: Props): JSX.Element => {
+export const ServerDiscoveryModal = ({ isOpen, onClose, onSuccess }: Props) => {
   const {
     handleSubmit,
     register,
@@ -42,16 +36,12 @@ export const ServerDiscoveryModalUnconnected = ({ isOpen, onClose, onSuccess }: 
     return true;
   };
 
-  const onSubmit = (data: ServerDiscoveryFormData) => {
-    onSuccess(data);
-  };
-
   return (
     <Modal title="OpenID Connect Discovery URL" onDismiss={onClose} onClickBackdrop={onClose} isOpen={isOpen}>
       <form
         onSubmit={(e) => {
           e.stopPropagation();
-          return handleSubmit(onSubmit)(e);
+          return handleSubmit(onSuccess)(e);
         }}
       >
         <Field
@@ -63,10 +53,10 @@ export const ServerDiscoveryModalUnconnected = ({ isOpen, onClose, onSuccess }: 
           <Input {...register('url', { validate: validateUrl })} width={80} id="url" />
         </Field>
         <Modal.ButtonRow>
-          <Button type="submit" size="md" variant="primary">
+          <Button type="submit" variant="primary">
             <Trans i18nKey={'oauth.form.server-discovery-modal-submit'}>Submit</Trans>
           </Button>
-          <Button type="button" size="md" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="secondary" onClick={onClose}>
             <Trans i18nKey={'oauth.form.server-discovery-modal-close'}>Close</Trans>
           </Button>
         </Modal.ButtonRow>
@@ -74,5 +64,3 @@ export const ServerDiscoveryModalUnconnected = ({ isOpen, onClose, onSuccess }: 
     </Modal>
   );
 };
-
-export default connector(ServerDiscoveryModalUnconnected);

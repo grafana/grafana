@@ -150,7 +150,7 @@ export const FieldRenderer = ({
     case 'custom':
       return (
         <Field key={name} {...fieldProps}>
-          {fieldData.content ? fieldData.content(setValue, watch) : <></>}
+          {fieldData.content ? fieldData.content(setValue) : <></>}
         </Field>
       );
     default:
