@@ -1,4 +1,5 @@
 import { DataQueryResponse, DataFrame, isDataFrame, FieldType, QueryResultMeta, DataQueryError } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
 
 import { getDerivedFields } from './getDerivedFields';
 import { makeTableFrames } from './makeTableFrames';
@@ -24,7 +25,8 @@ function setFrameMeta(frame: DataFrame, meta: QueryResultMeta): DataFrame {
 function processStreamFrame(
   frame: DataFrame,
   query: LokiQuery | undefined,
-  derivedFieldConfigs: DerivedFieldConfig[]
+  derivedFieldConfigs: DerivedFieldConfig[],
+  templateSrv: TemplateSrv
 ): DataFrame {
   const custom: Record<string, string> = {
     ...frame.meta?.custom, // keep the original meta.custom
@@ -39,7 +41,7 @@ function processStreamFrame(
   const meta: QueryResultMeta = {
     preferredVisualisationType: 'logs',
     limit: query?.maxLines,
-    searchWords: query !== undefined ? getHighlighterExpressionsFromQuery(query.expr) : undefined,
+    searchWords: query !== undefined ? getHighlighterExpressionsFromQuery(query.expr, templateSrv) : undefined,
     custom,
   };
 
@@ -54,11 +56,12 @@ function processStreamFrame(
 function processStreamsFrames(
   frames: DataFrame[],
   queryMap: Map<string, LokiQuery>,
-  derivedFieldConfigs: DerivedFieldConfig[]
+  derivedFieldConfigs: DerivedFieldConfig[],
+  templateSrv: TemplateSrv,
 ): DataFrame[] {
   return frames.map((frame) => {
     const query = frame.refId !== undefined ? queryMap.get(frame.refId) : undefined;
-    return processStreamFrame(frame, query, derivedFieldConfigs);
+    return processStreamFrame(frame, query, derivedFieldConfigs, templateSrv);
   });
 }
 
@@ -131,7 +134,9 @@ function improveError(error: DataQueryError | undefined, queryMap: Map<string, L
 export function transformBackendResult(
   response: DataQueryResponse,
   queries: LokiQuery[],
-  derivedFieldConfigs: DerivedFieldConfig[]
+  derivedFieldConfigs: DerivedFieldConfig[],
+  templateSrv: TemplateSrv
+
 ): DataQueryResponse {
   const { data, error, ...rest } = response;
 
@@ -155,7 +160,7 @@ export function transformBackendResult(
     data: [
       ...processMetricRangeFrames(metricRangeFrames),
       ...processMetricInstantFrames(metricInstantFrames),
-      ...processStreamsFrames(streamsFrames, queryMap, derivedFieldConfigs),
+      ...processStreamsFrames(streamsFrames, queryMap, derivedFieldConfigs, templateSrv),
     ],
   };
 }

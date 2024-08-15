@@ -350,7 +350,7 @@ export class LokiDatasource
       .query(fixedRequest)
       .pipe(
         map((response) =>
-          transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
+          transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [], this.templateSrv)
         )
       );
   }
