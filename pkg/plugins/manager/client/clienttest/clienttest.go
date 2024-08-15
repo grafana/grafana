@@ -29,7 +29,7 @@ type TestClient struct {
 	RunStreamFunc         func(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error
 	ValidateAdmissionFunc backend.ValidateAdmissionFunc
 	MutateAdmissionFunc   backend.MutateAdmissionFunc
-	ConvertObjectFunc     backend.ConvertObjectFunc
+	ConvertObjectsFunc    backend.ConvertObjectsFunc
 }
 
 func (c *TestClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -102,8 +102,8 @@ func (c *TestClient) MutateAdmission(ctx context.Context, req *backend.Admission
 }
 
 func (c *TestClient) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	if c.ConvertObjectFunc != nil {
-		return c.ConvertObjectFunc(ctx, req)
+	if c.ConvertObjectsFunc != nil {
+		return c.ConvertObjectsFunc(ctx, req)
 	}
 	return nil, nil
 }
