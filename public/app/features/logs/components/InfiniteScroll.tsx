@@ -194,7 +194,7 @@ const styles = {
     lineHeight: '1',
     position: 'absolute',
     top: 0,
-    right: -2,
+    right: -3,
     zIndex: 1,
   }),
   navButtonContent: css({
