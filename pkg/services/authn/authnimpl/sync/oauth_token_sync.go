@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -70,7 +71,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 
 	ctxLogger := s.log.FromContext(ctx).New("userID", userID)
 
-	cacheKey := id.GetID()
+	cacheKey := fmt.Sprintf("token-check-%s", id.GetID())
 	if _, ok := s.cache.Get(cacheKey); ok {
 		ctxLogger.Debug("Expiration check has been cached, no need to refresh")
 		return nil
