@@ -88,8 +88,9 @@ require (
 	github.com/grafana/grafana-cloud-migration-snapshot v1.3.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-google-sdk-go v0.1.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
-	github.com/grafana/grafana-plugin-sdk-go v0.254.0 // @grafana/plugins-platform-backend
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240730185644-783ff7156079 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-plugin-sdk-go v0.243.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana/pkg/aggregator v0.0.0-20240813192817-1b0e6b5c09b2 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240808213237-f4d2e064f435 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20240708134731-e9876749d440 // @grafana/grafana-app-platform-squad
 	// This needs to be here for other projects that import grafana/grafana
 	// For local development grafana/grafana will always use the local files
@@ -159,9 +160,9 @@ require (
 	go.opentelemetry.io/collector/pdata v1.6.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.53.0 // @grafana/plugins-platform-backend
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.53.0 // @grafana/grafana-operator-experience-squad
-	go.opentelemetry.io/contrib/propagators/jaeger v1.29.0 // @grafana/grafana-backend-group
-	go.opentelemetry.io/contrib/samplers/jaegerremote v0.23.0 // @grafana/grafana-backend-group
-	go.opentelemetry.io/otel v1.31.0 // @grafana/grafana-backend-group
+	go.opentelemetry.io/contrib/propagators/jaeger v1.28.0 // @grafana/grafana-backend-group
+	go.opentelemetry.io/contrib/samplers/jaegerremote v0.22.0 // @grafana/grafana-backend-group
+	go.opentelemetry.io/otel v1.28.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/exporters/jaeger v1.17.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.31.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.31.0 // @grafana/grafana-backend-group
@@ -170,11 +171,11 @@ require (
 	go.uber.org/atomic v1.11.0 // @grafana/alerting-backend
 	go.uber.org/goleak v1.3.0 // @grafana/grafana-search-and-storage
 	gocloud.dev v0.25.0 // @grafana/grafana-app-platform-squad
-	golang.org/x/crypto v0.28.0 // @grafana/grafana-backend-group
-	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa // @grafana/alerting-backend
-	golang.org/x/mod v0.20.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/net v0.30.0 // @grafana/oss-big-tent @grafana/partner-datasources
-	golang.org/x/oauth2 v0.23.0 // @grafana/identity-access-team
+	golang.org/x/crypto v0.26.0 // @grafana/grafana-backend-group
+	golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f // @grafana/alerting-backend
+	golang.org/x/mod v0.18.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/net v0.28.0 // @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/oauth2 v0.22.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.8.0 // @grafana/alerting-backend
 	golang.org/x/text v0.19.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.5.0 // @grafana/grafana-backend-group
