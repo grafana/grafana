@@ -3,6 +3,7 @@ package migrator
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -36,6 +37,11 @@ func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...Tu
 		managedPermissionsCollector(store),
 		folderTreeCollector(store),
 		dashboardFolderCollector(store),
+		basicRolesCollector(store),
+		customRolesCollector(store),
+		basicRoleAssignemtCollector(store),
+		userRoleAssignemtCollector(store),
+		teamRoleAssignemtCollector(store),
 	)
 
 	return &ZanzanaSynchroniser{
@@ -187,7 +193,7 @@ func folderTreeCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "folder"
 		const query = `
-			SELECT uid, parent_uid, org_id FROM folder WHERE parent_uid IS NOT NULL
+			SELECT uid, parent_uid, org_id FROM folder
 		`
 		type folder struct {
 			OrgID     int64  `xorm:"org_id"`
@@ -205,12 +211,21 @@ func folderTreeCollector(store db.DB) TupleCollector {
 		}
 
 		for _, f := range folders {
-			tuple := &openfgav1.TupleKey{
-				User:     zanzana.NewScopedTupleEntry(zanzana.TypeFolder, f.ParentUID, "", strconv.FormatInt(f.OrgID, 10)),
-				Object:   zanzana.NewScopedTupleEntry(zanzana.TypeFolder, f.FolderUID, "", strconv.FormatInt(f.OrgID, 10)),
-				Relation: zanzana.RelationParent,
+			var tuple *openfgav1.TupleKey
+			if f.ParentUID != "" {
+				tuple = &openfgav1.TupleKey{
+					Object:   zanzana.NewScopedTupleEntry(zanzana.TypeFolder, f.FolderUID, "", strconv.FormatInt(f.OrgID, 10)),
+					Relation: zanzana.RelationParent,
+					User:     zanzana.NewScopedTupleEntry(zanzana.TypeFolder, f.ParentUID, "", strconv.FormatInt(f.OrgID, 10)),
+				}
+			} else {
+				// Map root folders to org
+				tuple = &openfgav1.TupleKey{
+					Object:   zanzana.NewScopedTupleEntry(zanzana.TypeFolder, f.FolderUID, "", strconv.FormatInt(f.OrgID, 10)),
+					Relation: zanzana.RelationOrg,
+					User:     zanzana.NewTupleEntry(zanzana.TypeOrg, strconv.FormatInt(f.OrgID, 10), ""),
+				}
 			}
-
 			tuples[collectorID] = append(tuples[collectorID], tuple)
 		}
 
@@ -248,6 +263,284 @@ func dashboardFolderCollector(store db.DB) TupleCollector {
 			}
 
 			tuples[collectorID] = append(tuples[collectorID], tuple)
+		}
+
+		return nil
+	}
+}
+
+// basicRolesCollector migrates basic roles to OpenFGA tuples
+func basicRolesCollector(store db.DB) TupleCollector {
+	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+		const collectorID = "basic_role"
+		const query = `
+			SELECT r.name, r.uid as role_uid, p.action, p.kind, p.identifier, r.org_id
+			FROM permission p
+			INNER JOIN role r ON p.role_id = r.id
+			LEFT JOIN builtin_role br ON r.id  = br.role_id
+			WHERE r.name LIKE 'basic:%'
+		`
+		type Permission struct {
+			RoleName   string `xorm:"role_name"`
+			OrgID      int64  `xorm:"org_id"`
+			Action     string `xorm:"action"`
+			Kind       string
+			Identifier string
+			RoleUID    string `xorm:"role_uid"`
+		}
+
+		var permissions []Permission
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(query).Find(&permissions)
+		})
+		if err != nil {
+			return err
+		}
+
+		for _, p := range permissions {
+			type Org struct {
+				Id   int64
+				Name string
+			}
+			var orgs []Org
+			orgsQuery := "SELECT id, name FROM org"
+			err := store.WithDbSession(ctx, func(sess *db.Session) error {
+				return sess.SQL(orgsQuery).Find(&orgs)
+			})
+			if err != nil {
+				return err
+			}
+
+			// Populate basic roles permissions for every org
+			for _, org := range orgs {
+				var subject string
+				if p.RoleUID != "" {
+					subject = zanzana.NewScopedTupleEntry(zanzana.TypeRole, p.RoleUID, "assignee", strconv.FormatInt(org.Id, 10))
+				} else {
+					continue
+				}
+
+				var tuple *openfgav1.TupleKey
+				ok := false
+				if p.Identifier == "" || p.Identifier == "*" {
+					tuple, ok = zanzana.TranslateToOrgTuple(subject, p.Action, org.Id)
+				} else {
+					tuple, ok = zanzana.TranslateToTuple(subject, p.Action, p.Kind, p.Identifier, org.Id)
+				}
+				if !ok {
+					continue
+				}
+
+				key := fmt.Sprintf("%s-%s", collectorID, p.Action)
+				if !slices.ContainsFunc(tuples[key], func(e *openfgav1.TupleKey) bool {
+					// skip duplicated tuples
+					return e.Object == tuple.Object && e.Relation == tuple.Relation && e.User == tuple.User
+				}) {
+					tuples[key] = append(tuples[key], tuple)
+				}
+			}
+		}
+
+		return nil
+	}
+}
+
+// customRolesCollector migrates custom roles to OpenFGA tuples
+func customRolesCollector(store db.DB) TupleCollector {
+	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+		const collectorID = "custom_role"
+		const query = `
+			SELECT r.name, r.uid as role_uid, p.action, p.kind, p.identifier, r.org_id
+			FROM permission p
+			INNER JOIN role r ON p.role_id = r.id
+			LEFT JOIN builtin_role br ON r.id  = br.role_id
+			WHERE r.name NOT LIKE 'basic:%'
+			AND r.name NOT LIKE 'fixed:%'
+			AND r.name NOT LIKE 'managed:%'
+		`
+		type Permission struct {
+			RoleName   string `xorm:"role_name"`
+			OrgID      int64  `xorm:"org_id"`
+			Action     string `xorm:"action"`
+			Kind       string
+			Identifier string
+			RoleUID    string `xorm:"role_uid"`
+		}
+
+		var permissions []Permission
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(query).Find(&permissions)
+		})
+		if err != nil {
+			return err
+		}
+
+		for _, p := range permissions {
+			var subject string
+			if p.RoleUID != "" {
+				subject = zanzana.NewScopedTupleEntry(zanzana.TypeRole, p.RoleUID, "assignee", strconv.FormatInt(p.OrgID, 10))
+			} else {
+				continue
+			}
+
+			var tuple *openfgav1.TupleKey
+			ok := false
+			if p.Identifier == "" || p.Identifier == "*" {
+				tuple, ok = zanzana.TranslateToOrgTuple(subject, p.Action, p.OrgID)
+			} else {
+				tuple, ok = zanzana.TranslateToTuple(subject, p.Action, p.Kind, p.Identifier, p.OrgID)
+			}
+			if !ok {
+				continue
+			}
+
+			key := fmt.Sprintf("%s-%s", collectorID, p.Action)
+			if !slices.ContainsFunc(tuples[key], func(e *openfgav1.TupleKey) bool {
+				// skip duplicated tuples
+				return e.Object == tuple.Object && e.Relation == tuple.Relation && e.User == tuple.User
+			}) {
+				tuples[key] = append(tuples[key], tuple)
+			}
+		}
+
+		return nil
+	}
+}
+
+func basicRoleAssignemtCollector(store db.DB) TupleCollector {
+	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+		const collectorID = "basic_role_assignment"
+		const query = `
+			SELECT ou.org_id, u.uid as user_uid, ou.role as org_role, u.is_admin
+			FROM org_user ou
+			LEFT JOIN user u ON u.id = ou.user_id
+		`
+		type Assignment struct {
+			OrgID   int64  `xorm:"org_id"`
+			UserUID string `xorm:"user_uid"`
+			OrgRole string `xorm:"org_role"`
+			IsAdmin bool   `xorm:"is_admin"`
+		}
+
+		var assignments []Assignment
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(query).Find(&assignments)
+		})
+
+		if err != nil {
+			return err
+		}
+
+		for _, a := range assignments {
+			var subject string
+			if a.UserUID != "" && a.OrgRole != "" {
+				subject = zanzana.NewTupleEntry(zanzana.TypeUser, a.UserUID, "")
+			} else {
+				continue
+			}
+
+			roleUID := zanzana.TranslateBasicRole(a.OrgRole)
+
+			tuple := &openfgav1.TupleKey{
+				User:     subject,
+				Relation: zanzana.RelationAssignee,
+				Object:   zanzana.NewScopedTupleEntry(zanzana.TypeRole, roleUID, "", strconv.FormatInt(a.OrgID, 10)),
+			}
+
+			key := fmt.Sprintf("%s-%s", collectorID, zanzana.RelationAssignee)
+			tuples[key] = append(tuples[key], tuple)
+		}
+
+		return nil
+	}
+}
+
+func userRoleAssignemtCollector(store db.DB) TupleCollector {
+	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+		const collectorID = "user_role_assignment"
+		const query = `
+			SELECT ur.org_id, u.uid AS user_uid, r.uid AS role_uid
+			FROM user_role ur
+			LEFT JOIN role r ON r.id = ur.role_id
+			LEFT JOIN user u ON u.id = ur.user_id
+		`
+
+		type Assignment struct {
+			OrgID   int64  `xorm:"org_id"`
+			UserUID string `xorm:"user_uid"`
+			RoleUID string `xorm:"role_uid"`
+		}
+
+		var assignments []Assignment
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(query).Find(&assignments)
+		})
+		if err != nil {
+			return err
+		}
+
+		for _, a := range assignments {
+			var subject string
+			if a.UserUID != "" && a.RoleUID != "" {
+				subject = zanzana.NewTupleEntry(zanzana.TypeUser, a.UserUID, "")
+			} else {
+				continue
+			}
+
+			tuple := &openfgav1.TupleKey{
+				User:     subject,
+				Relation: zanzana.RelationAssignee,
+				Object:   zanzana.NewScopedTupleEntry(zanzana.TypeRole, a.RoleUID, "", strconv.FormatInt(a.OrgID, 10)),
+			}
+
+			key := fmt.Sprintf("%s-%s", collectorID, zanzana.RelationAssignee)
+			tuples[key] = append(tuples[key], tuple)
+		}
+
+		return nil
+	}
+}
+
+func teamRoleAssignemtCollector(store db.DB) TupleCollector {
+	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+		const collectorID = "team_role_assignment"
+		const query = `
+			SELECT tr.org_id, t.uid AS team_uid, r.uid AS role_uid
+			FROM team_role tr
+			LEFT JOIN role r ON r.id = tr.role_id
+			LEFT JOIN team t ON t.id = tr.team_id
+		`
+
+		type Assignment struct {
+			OrgID   int64  `xorm:"org_id"`
+			TeamUID string `xorm:"team_uid"`
+			RoleUID string `xorm:"role_uid"`
+		}
+
+		var assignments []Assignment
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(query).Find(&assignments)
+		})
+		if err != nil {
+			return err
+		}
+
+		for _, a := range assignments {
+			var subject string
+			if a.TeamUID != "" && a.RoleUID != "" {
+				subject = zanzana.NewTupleEntry(zanzana.TypeTeam, a.TeamUID, "member")
+			} else {
+				continue
+			}
+
+			tuple := &openfgav1.TupleKey{
+				User:     subject,
+				Relation: zanzana.RelationAssignee,
+				Object:   zanzana.NewScopedTupleEntry(zanzana.TypeRole, a.RoleUID, "", strconv.FormatInt(a.OrgID, 10)),
+			}
+
+			key := fmt.Sprintf("%s-%s", collectorID, zanzana.RelationAssignee)
+			tuples[key] = append(tuples[key], tuple)
 		}
 
 		return nil
