@@ -190,7 +190,7 @@ func (c *Passwordless) startPasswordless(ctx context.Context, email string) (str
 				"Email":            email,
 				"ConfirmationCode": confirmationCode,
 				"Code":             code,
-				"Expire":           c.cfg.PasswordlessCodeExpiration,
+				"Expire":           c.cfg.PasswordlessCodeExpiration.Minutes(),
 			},
 		}
 	} else {
@@ -201,7 +201,7 @@ func (c *Passwordless) startPasswordless(ctx context.Context, email string) (str
 				"Email":            email,
 				"ConfirmationCode": confirmationCode,
 				"Code":             code,
-				"Expire":           c.cfg.PasswordlessCodeExpiration,
+				"Expire":           c.cfg.PasswordlessCodeExpiration.Minutes(),
 			},
 		}
 	}
