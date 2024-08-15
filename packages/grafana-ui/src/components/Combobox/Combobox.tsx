@@ -94,7 +94,6 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
       onChange(selectedItem);
     },
     onHighlightedIndexChange: ({ highlightedIndex, type }) => {
-      //console.log(highlightedIndex);
       if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
         rowVirtualizer.scrollToIndex(highlightedIndex);
       }
