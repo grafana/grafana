@@ -17,8 +17,11 @@ interface Props {
 export const ServerDiscoveryField = ({ setValue }: Props) => {
   const appEvents = getAppEvents();
   const [isModalOpen, setModalVisibility] = useState(false);
+  const [isLoading, setLoading] = useState(false);
+
   const onClose = () => setModalVisibility(false);
   const onSuccess = async (data: ServerDiscoveryFormData) => {
+    setLoading(true);
     try {
       const wellKnownSuffix = '/.well-known/openid-configuration';
       const url = new URL(data.url);
@@ -53,13 +56,13 @@ export const ServerDiscoveryField = ({ setValue }: Props) => {
       });
     } finally {
       onClose();
+      setLoading(false);
     }
   };
   return (
     <>
       <Button
         type="button"
-        fill="text"
         variant="secondary"
         onClick={() => {
           setModalVisibility(true);
@@ -67,7 +70,7 @@ export const ServerDiscoveryField = ({ setValue }: Props) => {
       >
         <Trans i18nKey={'oauth.form.server-discovery-action-button'}>Enter OpenID Connect Discovery URL</Trans>
       </Button>
-      <ServerDiscoveryModal isOpen={isModalOpen} onClose={onClose} onSuccess={onSuccess} />
+      <ServerDiscoveryModal isOpen={isModalOpen} onClose={onClose} onSuccess={onSuccess} isLoading={isLoading} />
     </>
   );
 };

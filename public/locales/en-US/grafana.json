@@ -1608,6 +1608,7 @@
     "form": {
       "server-discovery-action-button": "Enter OpenID Connect Discovery URL",
       "server-discovery-modal-close": "Close",
+      "server-discovery-modal-loading": "Loading...",
       "server-discovery-modal-submit": "Submit"
     }
   },

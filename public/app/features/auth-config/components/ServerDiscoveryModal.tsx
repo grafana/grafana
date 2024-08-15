@@ -10,9 +10,10 @@ interface Props {
   isOpen: boolean | undefined;
   onClose: () => void;
   onSuccess: (data: ServerDiscoveryFormData) => void;
+  isLoading: boolean;
 }
 
-export const ServerDiscoveryModal = ({ isOpen, onClose, onSuccess }: Props) => {
+export const ServerDiscoveryModal = ({ isOpen, onClose, onSuccess, isLoading }: Props) => {
   const {
     handleSubmit,
     register,
@@ -53,8 +54,12 @@ export const ServerDiscoveryModal = ({ isOpen, onClose, onSuccess }: Props) => {
           <Input {...register('url', { validate: validateUrl })} width={80} id="url" />
         </Field>
         <Modal.ButtonRow>
-          <Button type="submit" variant="primary">
-            <Trans i18nKey={'oauth.form.server-discovery-modal-submit'}>Submit</Trans>
+          <Button type="submit" variant="primary" disabled={isLoading}>
+            {isLoading ? (
+              <Trans i18nKey={'oauth.form.server-discovery-modal-loading'}>Loading...</Trans>
+            ) : (
+              <Trans i18nKey={'oauth.form.server-discovery-modal-submit'}>Submit</Trans>
+            )}
           </Button>
           <Button type="button" variant="secondary" onClick={onClose}>
             <Trans i18nKey={'oauth.form.server-discovery-modal-close'}>Close</Trans>
