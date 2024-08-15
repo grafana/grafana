@@ -101,7 +101,7 @@ func (c *TestClient) MutateAdmission(ctx context.Context, req *backend.Admission
 	return nil, nil
 }
 
-func (c *TestClient) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+func (c *TestClient) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	if c.ConvertObjectFunc != nil {
 		return c.ConvertObjectFunc(ctx, req)
 	}
@@ -119,7 +119,7 @@ type MiddlewareScenarioContext struct {
 	InstanceSettingsCallChain  []string
 	ValidateAdmissionCallChain []string
 	MutateAdmissionCallChain   []string
-	ConvertObjectCallChain     []string
+	ConvertObjectsCallChain    []string
 }
 
 func (ctx *MiddlewareScenarioContext) NewMiddleware(name string) plugins.ClientMiddleware {
@@ -173,10 +173,10 @@ func (m *TestMiddleware) MutateAdmission(ctx context.Context, req *backend.Admis
 	return res, err
 }
 
-func (m *TestMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	m.sCtx.ConvertObjectCallChain = append(m.sCtx.ConvertObjectCallChain, fmt.Sprintf("before %s", m.Name))
-	res, err := m.next.ConvertObject(ctx, req)
-	m.sCtx.ConvertObjectCallChain = append(m.sCtx.ConvertObjectCallChain, fmt.Sprintf("after %s", m.Name))
+func (m *TestMiddleware) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	m.sCtx.ConvertObjectsCallChain = append(m.sCtx.ConvertObjectsCallChain, fmt.Sprintf("before %s", m.Name))
+	res, err := m.next.ConvertObjects(ctx, req)
+	m.sCtx.ConvertObjectsCallChain = append(m.sCtx.ConvertObjectsCallChain, fmt.Sprintf("after %s", m.Name))
 	return res, err
 }
 
