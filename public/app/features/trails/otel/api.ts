@@ -73,12 +73,10 @@ export async function totalOtelResources(
 }
 
 /**
- * Check the total amount of otel resources to compare it
- * with the stadardized amount of resources. When standardized,
- * each job&instance pair in target info is a unique series.
- * Duplicated series cannot be used to filter metrics
- * by otel resources because the join required for filtering
- * cannot join series on many(metrics) to many(job&instance series on target_info) and breaks.
+ * Look for duplicated series in target_info metric by job and instance labels
+ * If each job&instance combo is unique, the data source is otel standardized.
+ * If there is a count by job&instance on target_info greater than one,
+ * the data source is not standardized
  *
  * @param dataSourceUid
  * @param timeRange
@@ -95,21 +93,19 @@ export async function isOtelStandardization(
   const start = getPrometheusTime(timeRange.from, false);
   const end = getPrometheusTime(timeRange.to, true);
 
-  const totalOtelResourcesAmount = await totalOtelResources(dataSourceUid, timeRange);
-
-  const paramsStandardTargets: Record<string, string | number> = {
+  const paramsTargets: Record<string, string | number> = {
     start,
     end,
-    query: `${OTEL_TARGET_INFO_QUERY} == 1`,
+    // any data source with duplicated series will have a count > 1
+    query: `${OTEL_TARGET_INFO_QUERY} > 1`,
   };
 
-  const responseStandard = await getBackendSrv().get<OtelResponse>(
-    url,
-    paramsStandardTargets,
-    'explore-metrics-otel-check-standard'
-  );
+  const response = await getBackendSrv().get<OtelResponse>(url, paramsTargets, 'explore-metrics-otel-check-standard');
 
-  return totalOtelResourcesAmount === responseStandard.data.result.length;
+  // the response should be not greater than zero if it is standard
+  const checkStandard = !(response.data.result.length > 0);
+
+  return checkStandard;
 }
 
 /**
