@@ -36,7 +36,7 @@ export const ShareLibraryPanel = ({
         initialFolderUid={initialFolderUid}
         onCreateLibraryPanel={onCreateLibraryPanel}
         onDismiss={onDismiss}
-        onCancelClick={onCancelClick}
+       
       />
     </>
   );

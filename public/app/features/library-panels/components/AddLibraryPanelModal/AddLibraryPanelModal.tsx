@@ -16,7 +16,6 @@ interface AddLibraryPanelContentsProps {
   panel: PanelModel;
   initialFolderUid?: string;
   onCreateLibraryPanel?: (libPanel: LibraryPanel) => void;
-  onCancelClick?: () => void;
 }
 
 export const AddLibraryPanelContents = ({
@@ -41,7 +40,7 @@ export const AddLibraryPanelContents = ({
 
     saveLibraryPanel(panel, folderUid!).then((res: LibraryPanel | FetchError) => {
       if (!isFetchError(res)) {
-        config.featureToggles.newDashboardSharingComponent ? onCancelClick?.() : onDismiss?.();
+       onDismiss?.();
         onCreateLibraryPanel?.(res);
       } else {
         panel.libraryPanel = undefined;
@@ -98,7 +97,7 @@ export const AddLibraryPanelContents = ({
           <Button onClick={onCreate} disabled={invalidInput}>
             <Trans i18nKey="share-panel.new-library-panel.create-button">Create library panel</Trans>
           </Button>
-          <Button variant="secondary" onClick={onCancelClick} fill="outline">
+          <Button variant="secondary" onClick={onDismiss} fill="outline">
             <Trans i18nKey="share-panel.new-library-panel.cancel-button">Cancel</Trans>
           </Button>
         </Stack>
