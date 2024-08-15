@@ -31,10 +31,10 @@ import { LokiQuery, LokiQueryType } from './types';
 
 /**
  * Returns search terms from a LogQL query.
- * E.g., `{} |= foo |=bar != baz` returns `['foo', 'bar']`.
+ * E.g., `{} |= "foo" |= "bar" != "baz"` returns `['foo', 'bar']`.
  */
 export function getHighlighterExpressionsFromQuery(input = ''): string[] {
-  const results = [];
+  const results: string[] = [];
 
   const filters = getNodesFromQuery(input, [LineFilter]);
 
@@ -74,6 +74,10 @@ export function getHighlighterExpressionsFromQuery(input = ''): string[] {
     }
   }
   return results;
+}
+
+export function getExpressionFromExecutedQuery(executedQueryString: string) {
+  return executedQueryString.replace('Expr: ', '');
 }
 
 export function getStringsFromLineFilter(filter: SyntaxNode): SyntaxNode[] {
