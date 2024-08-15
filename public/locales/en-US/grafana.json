@@ -1056,6 +1056,11 @@
       "new-to-question": "New to Grafana?"
     }
   },
+  "logs": {
+    "infinite-scroll": {
+      "older-logs": "Older logs"
+    }
+  },
   "migrate-to-cloud": {
     "build-snapshot": {
       "description": "This tool can migrate some resources from this installation to your cloud stack. To get started, you'll need to create a snapshot of this installation. Creating a snapshot typically takes less than two minutes. The snapshot is stored alongside this Grafana installation.",
