@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
 	v0alpha1helper "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1/helper"
-	"github.com/grafana/grafana/pkg/aggregator/apiserver/scheme"
 	clientset "github.com/grafana/grafana/pkg/aggregator/generated/clientset/versioned"
 	informers "github.com/grafana/grafana/pkg/aggregator/generated/informers/externalversions"
 	dataplaneservicerest "github.com/grafana/grafana/pkg/aggregator/registry/dataplaneservice/rest"
@@ -83,10 +82,7 @@ func (c completedConfig) NewWithDelegate(delegationTarget genericapiserver.Deleg
 		return nil, err
 	}
 
-	discoveryHandler := &apisProxyHandler{
-		delegationTarget: delegationTarget,
-		codecs:           scheme.Codecs,
-	}
+	discoveryHandler := newApisProxyHandler(delegationTarget.UnprotectedHandler())
 	genericServer.Handler.GoRestfulContainer.Filter(discoveryHandler.handle)
 
 	dataplaneServiceRegistrationControllerInitiated := make(chan struct{})

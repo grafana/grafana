@@ -47,7 +47,7 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
     });
 
     this.addActivationHandler(() => {
-      if (this.state.isPanelOpened) {
+      if (this.state.isEnabled && this.state.isPanelOpened) {
         this.fetchDashboards();
       }
 
@@ -57,6 +57,7 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
         this._subs.add(
           resolvedSelector.subscribeToState((newState, prevState) => {
             if (
+              this.state.isEnabled &&
               this.state.isPanelOpened &&
               !newState.isLoadingScopes &&
               (prevState.isLoadingScopes || newState.scopes !== prevState.scopes)
@@ -230,6 +231,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRight: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
       flexDirection: 'column',
+      height: '100%',
       gap: theme.spacing(1),
       padding: theme.spacing(2),
       width: theme.spacing(37.5),
