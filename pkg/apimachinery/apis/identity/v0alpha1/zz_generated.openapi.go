@@ -14,17 +14,17 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.IdentityDisplay":     schema_apimachinery_apis_identity_v0alpha1_IdentityDisplay(ref),
-		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.IdentityDisplayList": schema_apimachinery_apis_identity_v0alpha1_IdentityDisplayList(ref),
-		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.ServiceAccount":      schema_apimachinery_apis_identity_v0alpha1_ServiceAccount(ref),
-		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.ServiceAccountList":  schema_apimachinery_apis_identity_v0alpha1_ServiceAccountList(ref),
-		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.ServiceAccountSpec":  schema_apimachinery_apis_identity_v0alpha1_ServiceAccountSpec(ref),
-		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.Team":                schema_apimachinery_apis_identity_v0alpha1_Team(ref),
-		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.TeamList":            schema_apimachinery_apis_identity_v0alpha1_TeamList(ref),
-		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.TeamSpec":            schema_apimachinery_apis_identity_v0alpha1_TeamSpec(ref),
-		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.User":                schema_apimachinery_apis_identity_v0alpha1_User(ref),
-		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.UserList":            schema_apimachinery_apis_identity_v0alpha1_UserList(ref),
-		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.UserSpec":            schema_apimachinery_apis_identity_v0alpha1_UserSpec(ref),
+		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.IdentityDisplay":        schema_apimachinery_apis_identity_v0alpha1_IdentityDisplay(ref),
+		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.IdentityDisplayResults": schema_apimachinery_apis_identity_v0alpha1_IdentityDisplayResults(ref),
+		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.ServiceAccount":         schema_apimachinery_apis_identity_v0alpha1_ServiceAccount(ref),
+		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.ServiceAccountList":     schema_apimachinery_apis_identity_v0alpha1_ServiceAccountList(ref),
+		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.ServiceAccountSpec":     schema_apimachinery_apis_identity_v0alpha1_ServiceAccountSpec(ref),
+		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.Team":                   schema_apimachinery_apis_identity_v0alpha1_Team(ref),
+		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.TeamList":               schema_apimachinery_apis_identity_v0alpha1_TeamList(ref),
+		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.TeamSpec":               schema_apimachinery_apis_identity_v0alpha1_TeamSpec(ref),
+		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.User":                   schema_apimachinery_apis_identity_v0alpha1_User(ref),
+		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.UserList":               schema_apimachinery_apis_identity_v0alpha1_UserList(ref),
+		"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.UserSpec":               schema_apimachinery_apis_identity_v0alpha1_UserSpec(ref),
 	}
 }
 
@@ -63,7 +63,7 @@ func schema_apimachinery_apis_identity_v0alpha1_IdentityDisplay(ref common.Refer
 							Format: "",
 						},
 					},
-					"legacyId": {
+					"internalId": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Legacy internal ID -- usage of this value should be phased out",
 							Type:        []string{"integer"},
@@ -77,7 +77,7 @@ func schema_apimachinery_apis_identity_v0alpha1_IdentityDisplay(ref common.Refer
 	}
 }
 
-func schema_apimachinery_apis_identity_v0alpha1_IdentityDisplayList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_apimachinery_apis_identity_v0alpha1_IdentityDisplayResults(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -97,15 +97,35 @@ func schema_apimachinery_apis_identity_v0alpha1_IdentityDisplayList(ref common.R
 							Format:      "",
 						},
 					},
-					"metadata": {
+					"keys": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Description: "Request keys used to lookup the display value",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
 						},
 					},
-					"items": {
+					"display": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Matching items (the caller may need to remap from keys to results)",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -116,11 +136,32 @@ func schema_apimachinery_apis_identity_v0alpha1_IdentityDisplayList(ref common.R
 							},
 						},
 					},
+					"invalidKeys": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Input keys that were not useable",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
 				},
+				Required: []string{"keys", "display"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.IdentityDisplay", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1.IdentityDisplay"},
 	}
 }
 

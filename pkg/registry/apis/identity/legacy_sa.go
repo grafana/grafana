@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"strconv"
 
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/user"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
-
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var (
@@ -26,7 +26,7 @@ var (
 )
 
 type legacyServiceAccountStorage struct {
-	service        user.Service
+	service        legacy.LegacyIdentityStore
 	tableConverter rest.TableConvertor
 	resourceInfo   common.ResourceInfo
 }
@@ -58,7 +58,7 @@ func (s *legacyServiceAccountStorage) List(ctx context.Context, options *interna
 	if err != nil {
 		return nil, err
 	}
-	query := &user.ListUsersCommand{
+	query := legacy.ListUserQuery{
 		OrgID:            ns.OrgID,
 		Limit:            options.Limit,
 		IsServiceAccount: true,
@@ -70,13 +70,14 @@ func (s *legacyServiceAccountStorage) List(ctx context.Context, options *interna
 		}
 	}
 
-	found, err := s.service.List(ctx, query)
+	found, err := s.service.ListUsers(ctx, ns, query)
 	if err != nil {
 		return nil, err
 	}
+
 	list := &identity.ServiceAccountList{}
 	for _, item := range found.Users {
-		list.Items = append(list.Items, *toSAItem(item, ns.Value))
+		list.Items = append(list.Items, *toSAItem(&item, ns.Value))
 	}
 	if found.ContinueID > 0 {
 		list.ListMeta.Continue = strconv.FormatInt(found.ContinueID, 10)
@@ -116,15 +117,18 @@ func (s *legacyServiceAccountStorage) Get(ctx context.Context, name string, opti
 	if err != nil {
 		return nil, err
 	}
-	found, err := s.service.GetByUID(ctx, &user.GetUserByUIDQuery{
-		OrgID: ns.OrgID,
-		UID:   name,
-	})
+	query := legacy.ListUserQuery{
+		OrgID:            ns.OrgID,
+		Limit:            1,
+		IsServiceAccount: true,
+	}
+
+	found, err := s.service.ListUsers(ctx, ns, query)
 	if found == nil || err != nil {
 		return nil, s.resourceInfo.NewNotFound(name)
 	}
-	if !found.IsServiceAccount {
-		return nil, s.resourceInfo.NewNotFound(name) // looking up the wrong type
+	if len(found.Users) < 1 {
+		return nil, s.resourceInfo.NewNotFound(name)
 	}
-	return toUserItem(found, ns.Value), nil
+	return toSAItem(&found.Users[0], ns.Value), nil
 }

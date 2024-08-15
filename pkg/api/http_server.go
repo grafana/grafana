@@ -202,7 +202,7 @@ type HTTPServer struct {
 	tempUserService      tempUser.Service
 	loginAttemptService  loginAttempt.Service
 	orgService           org.Service
-	teamService          team.Service
+	TeamService          team.Service
 	accesscontrolService accesscontrol.Service
 	annotationsRepo      annotations.Repository
 	tagService           tag.Service
@@ -352,7 +352,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		tempUserService:              tempUserService,
 		loginAttemptService:          loginAttemptService,
 		orgService:                   orgService,
-		teamService:                  teamService,
+		TeamService:                  teamService,
 		navTreeService:               navTreeService,
 		accesscontrolService:         accesscontrolService,
 		annotationsRepo:              annotationRepo,

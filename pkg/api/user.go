@@ -401,7 +401,7 @@ func (hs *HTTPServer) GetUserTeams(c *contextmodel.ReqContext) response.Response
 func (hs *HTTPServer) getUserTeamList(c *contextmodel.ReqContext, orgID int64, userID int64) response.Response {
 	query := team.GetTeamsByUserQuery{OrgID: orgID, UserID: userID, SignedInUser: c.SignedInUser}
 
-	queryResult, err := hs.teamService.GetTeamsByUser(c.Req.Context(), &query)
+	queryResult, err := hs.TeamService.GetTeamsByUser(c.Req.Context(), &query)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get user teams", err)
 	}
