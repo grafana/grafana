@@ -6,8 +6,8 @@ package v0alpha1
 
 import (
 	v0alpha1 "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -24,25 +24,17 @@ type ReceiverLister interface {
 
 // receiverLister implements the ReceiverLister interface.
 type receiverLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v0alpha1.Receiver]
 }
 
 // NewReceiverLister returns a new ReceiverLister.
 func NewReceiverLister(indexer cache.Indexer) ReceiverLister {
-	return &receiverLister{indexer: indexer}
-}
-
-// List lists all Receivers in the indexer.
-func (s *receiverLister) List(selector labels.Selector) (ret []*v0alpha1.Receiver, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v0alpha1.Receiver))
-	})
-	return ret, err
+	return &receiverLister{listers.New[*v0alpha1.Receiver](indexer, v0alpha1.Resource("receiver"))}
 }
 
 // Receivers returns an object that can list and get Receivers.
 func (s *receiverLister) Receivers(namespace string) ReceiverNamespaceLister {
-	return receiverNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return receiverNamespaceLister{listers.NewNamespaced[*v0alpha1.Receiver](s.ResourceIndexer, namespace)}
 }
 
 // ReceiverNamespaceLister helps list and get Receivers.
@@ -60,26 +52,5 @@ type ReceiverNamespaceLister interface {
 // receiverNamespaceLister implements the ReceiverNamespaceLister
 // interface.
 type receiverNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all Receivers in the indexer for a given namespace.
-func (s receiverNamespaceLister) List(selector labels.Selector) (ret []*v0alpha1.Receiver, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v0alpha1.Receiver))
-	})
-	return ret, err
-}
-
-// Get retrieves the Receiver from the indexer for a given namespace and name.
-func (s receiverNamespaceLister) Get(name string) (*v0alpha1.Receiver, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v0alpha1.Resource("receiver"), name)
-	}
-	return obj.(*v0alpha1.Receiver), nil
+	listers.ResourceIndexer[*v0alpha1.Receiver]
 }

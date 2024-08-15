@@ -9,9 +9,9 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -43,7 +43,7 @@ func isDashboardKey(key *resource.ResourceKey, requireName bool) error {
 }
 
 func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.WriteEvent) (rv int64, err error) {
-	info, err := request.ParseNamespace(event.Key.Namespace)
+	info, err := claims.ParseNamespace(event.Key.Namespace)
 	if err == nil {
 		err = isDashboardKey(event.Key, true)
 	}
@@ -125,7 +125,7 @@ func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid 
 // Read implements ResourceStoreServer.
 func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.ReadResponse {
 	rsp := &resource.ReadResponse{}
-	info, err := request.ParseNamespace(req.Key.Namespace)
+	info, err := claims.ParseNamespace(req.Key.Namespace)
 	if err == nil {
 		err = isDashboardKey(req.Key, true)
 	}
@@ -160,7 +160,7 @@ func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.Rea
 // List implements AppendingStore.
 func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	opts := req.Options
-	info, err := request.ParseNamespace(opts.Key.Namespace)
+	info, err := claims.ParseNamespace(opts.Key.Namespace)
 	if err == nil {
 		err = isDashboardKey(opts.Key, false)
 	}
@@ -237,7 +237,7 @@ func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest
 }
 
 func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryRequest) (*resource.HistoryResponse, error) {
-	info, err := request.ParseNamespace(req.Key.Namespace)
+	info, err := claims.ParseNamespace(req.Key.Namespace)
 	if err == nil {
 		err = isDashboardKey(req.Key, false)
 	}
