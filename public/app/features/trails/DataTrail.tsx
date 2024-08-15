@@ -281,58 +281,58 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
       const isStandard = await isOtelStandardization(datasourceUid, timeRange);
 
-      if (isStandard) {
-        const excludedFilters = getOtelFilterKeys(otelResourcesVariable);
-        const resources = await getOtelResources(datasourceUid, timeRange, excludedFilters);
-        if (resources.length === 0) {
-          return;
-        }
-
-        const otelLabels = resources.map((resource) => {
-          return { text: resource };
-        });
-
-        this.setState({ otelResources: resources });
-
-        otelResourcesVariable?.setState({
-          defaultKeys: otelLabels,
-          hide: VariableHide.hideLabel,
-        });
-
-        const deployment_environments = await getDeploymentEnvironments(datasourceUid, timeRange);
-
-        let varQuery = '';
-        // let allValue = ''
-        const options = deployment_environments.map((env) => {
-          varQuery += env + ',';
-          // varQuery += env + '|';
-          return { value: env, label: env };
-        });
-
-        otelDepEnvVariable?.setState({
-          // cannot have an undefined custom value
-          // this breaks everything
-          // create an issue for this
-          value: options[0].value,
-          query: varQuery,
-          options: options,
-          hide: VariableHide.dontHide,
-          // this doesn;t work either
-          // create issue
-          // defaultToAll: false,
-        });
-      } else {
+      if (!isStandard) {
         const appEvents = getAppEvents();
         appEvents.publish({
-          type: AppEvents.alertError.name,
+          type: AppEvents.alertWarning.name,
           payload: [
             'The Prometheus data source is not standardized for joining OTel resources with metrics. The data source may be standardized in the future but currently this feature is disabled for your data source.',
           ],
         });
-
-        this.setState({ useOtelExperience: false });
-        otelResourcesVariable?.setState({ defaultKeys: [], hide: VariableHide.hideVariable });
       }
+
+      // get the labels for otel resources
+      const excludedFilters = getOtelFilterKeys(otelResourcesVariable);
+      const resources = await getOtelResources(datasourceUid, timeRange, excludedFilters);
+      if (resources.length === 0) {
+        return;
+      }
+
+      // make the variable options
+      const otelLabels = resources.map((resource) => {
+        return { text: resource };
+      });
+
+      // set the variable options
+      this.setState({ otelResources: resources });
+
+      otelResourcesVariable?.setState({
+        defaultKeys: otelLabels,
+        hide: VariableHide.hideLabel,
+      });
+
+      const deployment_environments = await getDeploymentEnvironments(datasourceUid, timeRange);
+
+      let varQuery = '';
+      // let allValue = ''
+      const options = deployment_environments.map((env) => {
+        varQuery += env + ',';
+        // varQuery += env + '|';
+        return { value: env, label: env };
+      });
+
+      otelDepEnvVariable?.setState({
+        // cannot have an undefined custom value
+        // this breaks everything
+        // create an issue for this
+        value: options[0].value,
+        query: varQuery,
+        options: options,
+        hide: VariableHide.dontHide,
+        // this doesn;t work either
+        // create issue
+        // defaultToAll: false,
+      });
     }
   }
 
