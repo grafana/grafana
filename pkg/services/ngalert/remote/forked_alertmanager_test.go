@@ -481,7 +481,8 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 		internal, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
 		remote.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return(newID, nil).Once()
 		internal.EXPECT().DeleteSilence(mock.Anything, mock.Anything).Return(nil).Once()
-		internal.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return(testSilence.ID, nil).Once()
+		// If internal.CreateSilence() returns a new id, it should be ignored.
+		internal.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return("random-id", nil).Once()
 		id, err = forked.CreateSilence(ctx, testSilence)
 		require.NoError(tt, err)
 		require.Equal(tt, newID, testSilence.ID)
@@ -494,7 +495,8 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 		internal, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
 		remote.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return(newID, nil).Once()
 		internal.EXPECT().DeleteSilence(mock.Anything, mock.Anything).Return(fmt.Errorf("test error")).Once()
-		internal.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return(testSilence.ID, nil).Once()
+		// If internal.CreateSilence() returns a new id, it should be ignored.
+		internal.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return("random-id", nil).Once()
 		id, err = forked.CreateSilence(ctx, testSilence)
 		require.NoError(tt, err)
 		require.Equal(tt, newID, testSilence.ID)
