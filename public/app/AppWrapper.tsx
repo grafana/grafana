@@ -13,7 +13,15 @@ import {
   navigationLogger,
   reportInteraction,
 } from '@grafana/runtime';
-import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, PortalContainer, Stack, IconButton } from '@grafana/ui';
+import {
+  ErrorBoundaryAlert,
+  GlobalStyles,
+  ModalRoot,
+  PortalContainer,
+  Stack,
+  IconButton,
+  useSplitter,
+} from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
@@ -173,57 +181,62 @@ function RouterTree(props: { routes?: JSX.Element | false }) {
 function ExperimentalSplitPaneTree(props: { routes?: JSX.Element | false }) {
   const { activePluginId, closeApp } = useSidecar();
 
+  let { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
+    direction: 'row',
+    initialSize: 0.6,
+    dragPosition: 'end',
+    allowOverflow: true,
+  });
+
   const memoryLocationService = new HistoryWrapper(H.createMemoryHistory({ initialEntries: ['/'] }));
 
-  if (!activePluginId) {
-    // This makes sure the splitPaneWrapper does not mess with the basic scroll functionality in non split scenario.
-    return <RouterTree routes={props.routes} />;
-  }
+  // if (!activePluginId) {
+  //   // This makes sure the splitPaneWrapper does not mess with the basic scroll functionality in non split scenario.
+  //   return <RouterTree routes={props.routes} />;
+  // }
 
   return (
-    <SplitPaneWrapper
-      splitOrientation="vertical"
-      paneSize={0.25}
-      minSize={200}
-      maxSize={200 * -1}
-      primary="second"
-      splitVisible={!!activePluginId}
-      paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
-    >
-      <RouterTree routes={props.routes} />
-
+    <div {...(activePluginId ? containerProps : { className: 'grafana-app' })}>
+      <div {...(activePluginId ? primaryProps : { className: 'grafana-app' })}>
+        <RouterTree routes={props.routes} />
+      </div>
       {/* Sidecar */}
       {activePluginId && (
-        <Router history={memoryLocationService.getHistory()}>
-          <LocationServiceProvider service={memoryLocationService}>
-            <CompatRouter>
-              <ModalsContextProvider>
-                <GlobalStyles />
-                <div
-                  style={{
-                    display: 'flex',
-                    height: '100%',
-                    paddingTop: TOP_BAR_LEVEL_HEIGHT * 2,
-                    flexGrow: 1,
-                    flexDirection: 'column',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <IconButton
-                      size={'lg'}
-                      style={{ margin: '8px' }}
-                      name={'times'}
-                      aria-label={'close'}
-                      onClick={() => closeApp(activePluginId)}
-                    />
-                  </div>
-                  <AppRootPage pluginId={activePluginId} />
-                </div>
-              </ModalsContextProvider>
-            </CompatRouter>
-          </LocationServiceProvider>
-        </Router>
+        <>
+          <div {...splitterProps} />
+          <div {...secondaryProps}>
+            <Router history={memoryLocationService.getHistory()}>
+              <LocationServiceProvider service={memoryLocationService}>
+                <CompatRouter>
+                  <ModalsContextProvider>
+                    <GlobalStyles />
+                    <div
+                      style={{
+                        display: 'flex',
+                        height: '100%',
+                        paddingTop: TOP_BAR_LEVEL_HEIGHT * 2,
+                        flexGrow: 1,
+                        flexDirection: 'column',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <IconButton
+                          size={'lg'}
+                          style={{ margin: '8px' }}
+                          name={'times'}
+                          aria-label={'close'}
+                          onClick={() => closeApp(activePluginId)}
+                        />
+                      </div>
+                      <AppRootPage pluginId={activePluginId} />
+                    </div>
+                  </ModalsContextProvider>
+                </CompatRouter>
+              </LocationServiceProvider>
+            </Router>
+          </div>
+        </>
       )}
-    </SplitPaneWrapper>
+    </div>
   );
 }

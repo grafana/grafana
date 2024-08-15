@@ -21,6 +21,7 @@ export interface UseSplitterOptions {
    */
   onSizeChanged?: (flexSize: number, pixelSize: number) => void;
   onResizing?: (flexSize: number, pixelSize: number) => void;
+  allowOverflow?: boolean;
 }
 
 const PIXELS_PER_MS = 0.3 as const;
@@ -309,8 +310,8 @@ export function useSplitter(options: UseSplitterOptions) {
       ref: firstPaneRef,
       className: styles.panel,
       style: {
-        [minDimProp]: 'min-content',
         flexGrow: clamp(initialSize ?? 0.5, 0, 1),
+        ...(options.allowOverflow ? { overflow: 'auto' } : { [minDimProp]: 'min-content' }),
       },
     },
     secondaryProps: {
@@ -318,7 +319,7 @@ export function useSplitter(options: UseSplitterOptions) {
       className: styles.panel,
       style: {
         flexGrow: clamp(1 - initialSize, 0, 1),
-        [minDimProp]: 'min-content',
+        ...(options.allowOverflow ? { overflow: 'auto' } : { [minDimProp]: 'min-content' }),
       },
     },
     splitterProps: {
