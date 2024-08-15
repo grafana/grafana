@@ -1,9 +1,8 @@
 package sql
 
 import (
-	"go.opentelemetry.io/otel/trace"
-
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -11,7 +10,7 @@ import (
 )
 
 // Creates a ResourceServer
-func ProvideResourceServer(db infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (resource.ResourceServer, error) {
+func ProvideResourceServer(db infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (resource.ResourceServer, error) {
 	opts := resource.ResourceServerOptions{
 		Tracer: tracer,
 	}

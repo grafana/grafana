@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -33,15 +32,13 @@ func newServer(t *testing.T) (sql.Backend, resource.ResourceServer) {
 	dbstore := infraDB.InitTestDB(t)
 	cfg := setting.NewCfg()
 	features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage)
-	tr := noop.NewTracerProvider().Tracer("integrationtests")
 
-	eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, features, tr)
+	eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, features, nil)
 	require.NoError(t, err)
 	require.NotNil(t, eDB)
 
 	ret, err := sql.NewBackend(sql.BackendOptions{
 		DBProvider: eDB,
-		Tracer:     tr,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, ret)
