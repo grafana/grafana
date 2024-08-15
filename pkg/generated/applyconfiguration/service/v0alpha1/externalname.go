@@ -10,7 +10,7 @@ import (
 	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
-// ExternalNameApplyConfiguration represents an declarative configuration of the ExternalName type for use
+// ExternalNameApplyConfiguration represents a declarative configuration of the ExternalName type for use
 // with apply.
 type ExternalNameApplyConfiguration struct {
 	v1.TypeMetaApplyConfiguration    `json:",inline"`
@@ -18,7 +18,7 @@ type ExternalNameApplyConfiguration struct {
 	Spec                             *ExternalNameSpecApplyConfiguration `json:"spec,omitempty"`
 }
 
-// ExternalName constructs an declarative configuration of the ExternalName type for use with
+// ExternalName constructs a declarative configuration of the ExternalName type for use with
 // apply.
 func ExternalName(name, namespace string) *ExternalNameApplyConfiguration {
 	b := &ExternalNameApplyConfiguration{}
@@ -193,4 +193,10 @@ func (b *ExternalNameApplyConfiguration) ensureObjectMetaApplyConfigurationExist
 func (b *ExternalNameApplyConfiguration) WithSpec(value *ExternalNameSpecApplyConfiguration) *ExternalNameApplyConfiguration {
 	b.Spec = value
 	return b
+}
+
+// GetName retrieves the value of the Name field in the declarative configuration.
+func (b *ExternalNameApplyConfiguration) GetName() *string {
+	b.ensureObjectMetaApplyConfigurationExists()
+	return b.Name
 }

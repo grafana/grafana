@@ -120,7 +120,7 @@ func AddKnownTypes(scheme *runtime.Scheme, version string) error {
 		&ServiceAccountList{},
 		&Team{},
 		&TeamList{},
-		&IdentityDisplayList{},
+		&IdentityDisplayResults{},
 	)
 	// metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil

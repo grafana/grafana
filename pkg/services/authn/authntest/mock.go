@@ -55,7 +55,7 @@ func (*MockService) Logout(_ context.Context, _ identity.Requester, _ *usertoken
 	panic("unimplemented")
 }
 
-func (m *MockService) ResolveIdentity(ctx context.Context, orgID int64, namespaceID identity.TypedID) (*authn.Identity, error) {
+func (m *MockService) ResolveIdentity(ctx context.Context, orgID int64, typedID string) (*authn.Identity, error) {
 	panic("unimplemented")
 }
 
@@ -79,7 +79,7 @@ type MockClient struct {
 	HookFunc            func(ctx context.Context, identity *authn.Identity, r *authn.Request) error
 	LogoutFunc          func(ctx context.Context, user identity.Requester) (*authn.Redirect, bool)
 	IdentityTypeFunc    func() claims.IdentityType
-	ResolveIdentityFunc func(ctx context.Context, orgID int64, namespaceID identity.TypedID) (*authn.Identity, error)
+	ResolveIdentityFunc func(ctx context.Context, orgID int64, typ claims.IdentityType, id string) (*authn.Identity, error)
 }
 
 func (m MockClient) Name() string {
@@ -136,9 +136,9 @@ func (m *MockClient) IdentityType() claims.IdentityType {
 }
 
 // ResolveIdentity implements authn.IdentityResolverClient.
-func (m *MockClient) ResolveIdentity(ctx context.Context, orgID int64, namespaceID identity.TypedID) (*authn.Identity, error) {
+func (m *MockClient) ResolveIdentity(ctx context.Context, orgID int64, typ claims.IdentityType, id string) (*authn.Identity, error) {
 	if m.ResolveIdentityFunc != nil {
-		return m.ResolveIdentityFunc(ctx, orgID, namespaceID)
+		return m.ResolveIdentityFunc(ctx, orgID, typ, id)
 	}
 	return nil, nil
 }
