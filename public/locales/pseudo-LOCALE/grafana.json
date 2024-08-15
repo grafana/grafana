@@ -1870,10 +1870,12 @@
   },
   "public-dashboard-users-access-list": {
     "dashboard-modal": {
+      "external-link": "Ēχŧęřŉäľ ľįŉĸ",
       "loading-text": "Ŀőäđįŉģ...",
       "open-dashboard-list-text": "Øpęŉ đäşĥþőäřđş ľįşŧ",
       "public-dashboard-link": "Pūþľįč đäşĥþőäřđ ŮŖĿ",
-      "public-dashboard-setting": "Pūþľįč đäşĥþőäřđ şęŧŧįŉģş"
+      "public-dashboard-setting": "Pūþľįč đäşĥþőäřđ şęŧŧįŉģş",
+      "sharing-setting": "Ŝĥäřįŉģ şęŧŧįŉģş"
     },
     "delete-user-modal": {
       "delete-user-button-text": "Đęľęŧę ūşęř",
@@ -1883,8 +1885,12 @@
       "revoke-user-access-modal-desc-line1": "Åřę yőū şūřę yőū ŵäŉŧ ŧő řęvőĸę äččęşş ƒőř {{email}}?",
       "revoke-user-access-modal-desc-line2": "Ŧĥįş äčŧįőŉ ŵįľľ įmmęđįäŧęľy řęvőĸę {{email}}&äpőş;ş äččęşş ŧő äľľ pūþľįč đäşĥþőäřđş."
     },
+    "delete-user-shared-dashboards-modal": {
+      "revoke-user-access-modal-desc-line2": "Ŧĥįş äčŧįőŉ ŵįľľ įmmęđįäŧęľy řęvőĸę {{email}}&äpőş;ş äččęşş ŧő äľľ şĥäřęđ đäşĥþőäřđş."
+    },
     "modal": {
-      "dashboard-modal-title": "Pūþľįč đäşĥþőäřđş"
+      "dashboard-modal-title": "Pūþľįč đäşĥþőäřđş",
+      "shared-dashboard-modal-title": "Ŝĥäřęđ đäşĥþőäřđş"
     },
     "table-header": {
       "activated-label": "Åčŧįväŧęđ",
@@ -2381,7 +2387,8 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Pūþľįč đäşĥþőäřđ ūşęřş"
+      "public-dashboard-users-tab-title": "Pūþľįč đäşĥþőäřđ ūşęřş",
+      "shared-dashboard-users-tab-title": "Ŝĥäřęđ đäşĥþőäřđ ūşęřş"
     }
   },
   "variable": {

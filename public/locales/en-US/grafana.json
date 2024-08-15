@@ -1870,10 +1870,12 @@
   },
   "public-dashboard-users-access-list": {
     "dashboard-modal": {
+      "external-link": "External link",
       "loading-text": "Loading...",
       "open-dashboard-list-text": "Open dashboards list",
       "public-dashboard-link": "Public dashboard URL",
-      "public-dashboard-setting": "Public dashboard settings"
+      "public-dashboard-setting": "Public dashboard settings",
+      "sharing-setting": "Sharing settings"
     },
     "delete-user-modal": {
       "delete-user-button-text": "Delete user",
@@ -1883,8 +1885,12 @@
       "revoke-user-access-modal-desc-line1": "Are you sure you want to revoke access for {{email}}?",
       "revoke-user-access-modal-desc-line2": "This action will immediately revoke {{email}}&apos;s access to all public dashboards."
     },
+    "delete-user-shared-dashboards-modal": {
+      "revoke-user-access-modal-desc-line2": "This action will immediately revoke {{email}}&apos;s access to all shared dashboards."
+    },
     "modal": {
-      "dashboard-modal-title": "Public dashboards"
+      "dashboard-modal-title": "Public dashboards",
+      "shared-dashboard-modal-title": "Shared dashboards"
     },
     "table-header": {
       "activated-label": "Activated",
@@ -2381,7 +2387,8 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Public dashboard users"
+      "public-dashboard-users-tab-title": "Public dashboard users",
+      "shared-dashboard-users-tab-title": "Shared dashboard users"
     }
   },
   "variable": {
