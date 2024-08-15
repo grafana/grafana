@@ -1,14 +1,11 @@
-import { render, screen } from '@testing-library/react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router';
-import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { screen } from '@testing-library/react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
-import { GrafanaContext } from 'app/core/context/GrafanaContext';
-import { configureStore } from 'app/store/configureStore';
+import { setChromeHeaderHeightHook } from '@grafana/runtime';
+import { useChromeHeaderHeight } from 'app/core/context/GrafanaContext';
 
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { render } from 'test/test-utils';
 
 describe('DashboardSceneRenderer', () => {
   it('should render Not Found notice when dashboard is not found', async () => {
@@ -46,18 +43,9 @@ describe('DashboardSceneRenderer', () => {
       },
     });
 
-    const store = configureStore({});
-    const context = getGrafanaContextMock();
+    setChromeHeaderHeightHook(useChromeHeaderHeight);
 
-    render(
-      <GrafanaContext.Provider value={context}>
-        <Provider store={store}>
-          <Router history={locationService.getHistory()}>
-            <scene.Component model={scene} />
-          </Router>
-        </Provider>
-      </GrafanaContext.Provider>
-    );
+    render(<scene.Component model={scene} />);
 
     expect(await screen.findByTestId(selectors.components.EntityNotFound.container)).toBeInTheDocument();
   });
