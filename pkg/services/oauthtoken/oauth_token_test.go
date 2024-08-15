@@ -131,6 +131,7 @@ func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *social
 		AuthInfoService:      authInfoService,
 		serverLock:           serverlock.ProvideService(store, tracing.InitializeTracerForTest()),
 		tokenRefreshDuration: newTokenRefreshDurationMetric(prometheus.NewRegistry()),
+		tracer:               tracing.InitializeTracerForTest(),
 	}, authInfoStore, socialConnector
 }
 
@@ -356,6 +357,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 				setting.NewCfg(),
 				prometheus.NewRegistry(),
 				env.serverLock,
+				tracing.InitializeTracerForTest(),
 			)
 
 			// token refresh
@@ -515,6 +517,7 @@ func TestOAuthTokenSync_tryGetOrRefreshOAuthToken(t *testing.T) {
 				setting.NewCfg(),
 				prometheus.NewRegistry(),
 				env.serverLock,
+				tracing.InitializeTracerForTest(),
 			)
 
 			token, err := env.service.tryGetOrRefreshOAuthToken(context.Background(), tt.usr)

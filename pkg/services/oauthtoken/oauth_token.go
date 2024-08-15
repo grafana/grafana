@@ -9,12 +9,15 @@ import (
 
 	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -37,6 +40,7 @@ type Service struct {
 	SocialService   social.Service
 	AuthInfoService login.AuthInfoService
 	serverLock      *serverlock.ServerLockService
+	tracer          tracing.Tracer
 
 	tokenRefreshDuration *prometheus.HistogramVec
 }
@@ -50,18 +54,23 @@ type OAuthTokenService interface {
 	InvalidateOAuthTokens(context.Context, *login.UserAuth) error
 }
 
-func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfg *setting.Cfg, registerer prometheus.Registerer, serverLockService *serverlock.ServerLockService) *Service {
+func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfg *setting.Cfg, registerer prometheus.Registerer,
+	serverLockService *serverlock.ServerLockService, tracer tracing.Tracer) *Service {
 	return &Service{
 		AuthInfoService:      authInfoService,
 		Cfg:                  cfg,
 		SocialService:        socialService,
 		serverLock:           serverLockService,
 		tokenRefreshDuration: newTokenRefreshDurationMetric(registerer),
+		tracer:               tracer,
 	}
 }
 
 // GetCurrentOAuthToken returns the OAuth token, if any, for the authenticated user. Will try to refresh the token if it has expired.
 func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Requester) *oauth2.Token {
+	ctx, span := o.tracer.Start(ctx, "oauthtoken.GetCurrentOAuthToken")
+	defer span.End()
+
 	authInfo, ok, _ := o.HasOAuthEntry(ctx, usr)
 	if !ok {
 		return nil
@@ -99,6 +108,9 @@ func (o *Service) IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
 
 // HasOAuthEntry returns true and the UserAuth object when OAuth info exists for the specified User
 func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*login.UserAuth, bool, error) {
+	ctx, span := o.tracer.Start(ctx, "oauthtoken.HasOAuthEntry")
+	defer span.End()
+
 	if usr == nil || usr.IsNil() {
 		// No user, therefore no token
 		return nil, false, nil
@@ -137,6 +149,9 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*l
 // TryTokenRefresh returns an error in case the OAuth token refresh was unsuccessful
 // It uses a server lock to prevent getting the Refresh Token multiple times for a given User
 func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) (*oauth2.Token, error) {
+	ctx, span := o.tracer.Start(ctx, "oauthtoken.TryTokenRefresh")
+	defer span.End()
+
 	ctxLogger := logger.FromContext(ctx)
 
 	if usr == nil || usr.IsNil() {
@@ -182,8 +197,8 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) (
 
 	lockTimeConfig := serverlock.LockTimeConfig{
 		MaxInterval: 30 * time.Second,
-		MinWait:     160 * time.Millisecond, // p95 for token refresh is ~800ms, so at least it should wait 800ms before it fails (5 retries with (at least) 160 ms)
-		MaxWait:     250 * time.Millisecond,
+		MinWait:     1000 * time.Millisecond, // p99 for token refresh is ~1s, but sometimes it goes up to 4-5s
+		MaxWait:     1500 * time.Millisecond,
 	}
 
 	retryOpt := func(attempts int) error {
@@ -197,6 +212,10 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) (
 	var cmdErr error
 
 	lockErr := o.serverLock.LockExecuteAndReleaseWithRetries(ctx, lockKey, lockTimeConfig, func(ctx context.Context) {
+		ctx, span := o.tracer.Start(ctx, "oauthtoken server lock",
+			trace.WithAttributes(attribute.Int64("userID", userID)))
+		defer span.End()
+
 		ctxLogger.Debug("Serverlock request for getting a new access token", "key", lockKey)
 
 		authInfo, exists, err := o.HasOAuthEntry(ctx, usr)
@@ -275,6 +294,10 @@ func (o *Service) InvalidateOAuthTokens(ctx context.Context, authInfo *login.Use
 }
 
 func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, authInfo *login.UserAuth) (*oauth2.Token, error) {
+	ctx, span := o.tracer.Start(ctx, "oauthtoken.tryGetOrRefreshOAuthToken",
+		trace.WithAttributes(attribute.Int64("userID", authInfo.UserId)))
+	defer span.End()
+
 	ctxLogger := logger.FromContext(ctx).New("userID", authInfo.UserId)
 
 	if err := checkOAuthRefreshToken(authInfo); err != nil {
