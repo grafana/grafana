@@ -1519,6 +1519,10 @@
       "subtitle": "Ůşę şęřvįčę äččőūŉŧş ŧő řūŉ äūŧőmäŧęđ ŵőřĸľőäđş įŉ Ğřäƒäŉä",
       "title": "Ŝęřvįčę äččőūŉŧş"
     },
+    "shared-dashboard": {
+      "subtitle": "Mäŉäģę yőūř őřģäŉįžäŧįőŉ'ş ęχŧęřŉäľľy şĥäřęđ đäşĥþőäřđş",
+      "title": "Ŝĥäřęđ đäşĥþőäřđş"
+    },
     "sign-out": {
       "title": "Ŝįģŉ őūŧ"
     },
@@ -1744,8 +1748,7 @@
       "welcome-title": "Ŵęľčőmę ŧő pūþľįč đäşĥþőäřđş!"
     },
     "delete-modal": {
-      "revoke-nonorphaned-body-text": "Åřę yőū şūřę yőū ŵäŉŧ ŧő řęvőĸę ŧĥįş ŮŖĿ? Ŧĥę đäşĥþőäřđ ŵįľľ ŉő ľőŉģęř þę pūþľįč.",
-      "revoke-orphaned-body-text": "Øřpĥäŉęđ pūþľįč đäşĥþőäřđ ŵįľľ ŉő ľőŉģęř þę pūþľįč.",
+      "revoke-body-text": "Åřę yőū şūřę yőū ŵäŉŧ ŧő řęvőĸę ŧĥįş ŮŖĿ? Ŧĥę đäşĥþőäřđ ŵįľľ ŉő ľőŉģęř þę pūþľįč.",
       "revoke-title": "Ŗęvőĸę pūþľįč ŮŖĿ"
     },
     "email-sharing": {
@@ -1843,10 +1846,6 @@
       "revoke-button-text": "Ŗęvőĸę pūþľįč ŮŖĿ",
       "revoke-button-tooltip": "Ŗęvőĸę pūþľįč đäşĥþőäřđ ŮŖĿ",
       "view-button-tooltip": "Vįęŵ pūþľįč đäşĥþőäřđ"
-    },
-    "dashboard-title": {
-      "orphaned-title": "<0>Øřpĥäŉęđ pūþľįč đäşĥþőäřđ</0>",
-      "orphaned-tooltip": "Ŧĥę ľįŉĸęđ đäşĥþőäřđ ĥäş äľřęäđy þęęŉ đęľęŧęđ"
     },
     "empty-state": {
       "message": "Ÿőū ĥävęŉ'ŧ čřęäŧęđ äŉy pūþľįč đäşĥþőäřđş yęŧ",
@@ -2160,8 +2159,23 @@
     }
   },
   "shared-dashboard": {
+    "delete-modal": {
+      "revoke-body-text": "Åřę yőū şūřę yőū ŵäŉŧ ŧő řęvőĸę ŧĥįş äččęşş? Ŧĥę đäşĥþőäřđ čäŉ ŉő ľőŉģęř þę şĥäřęđ.",
+      "revoke-title": "Ŗęvőĸę äččęşş"
+    },
     "fields": {
       "timezone-label": "Ŧįmęžőŉę"
+    }
+  },
+  "shared-dashboard-list": {
+    "button": {
+      "config-button-tooltip": "Cőŉƒįģūřę şĥäřęđ đäşĥþőäřđ",
+      "revoke-button-text": "Ŗęvőĸę äččęşş",
+      "revoke-button-tooltip": "Ŗęvőĸę äččęşş",
+      "view-button-tooltip": "Vįęŵ şĥäřęđ đäşĥþőäřđ"
+    },
+    "toggle": {
+      "pause-sharing-toggle-text": "Päūşę äččęşş"
     }
   },
   "shared-preferences": {
