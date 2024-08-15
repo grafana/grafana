@@ -55,7 +55,7 @@ cards:
 
 ## Overview
 
-Explore is your starting point for querying, analyzing, and aggregating data in Grafana. You can quickly begin creating queries to start analyzing data without having to create a dashboard or visualization.
+Explore is your starting point for querying, analyzing, and aggregating data in Grafana. You can quickly begin creating queries to start analyzing data without having to create a dashboard or customize a visualization.
 
 ## Explore
 
