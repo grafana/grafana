@@ -23,7 +23,6 @@ export const AddLibraryPanelContents = ({
   initialFolderUid,
   onCreateLibraryPanel,
   onDismiss,
-  onCancelClick,
 }: AddLibraryPanelContentsProps) => {
   const [folderUid, setFolderUid] = useState(initialFolderUid);
   const [panelName, setPanelName] = useState(panel.title);
@@ -40,13 +39,13 @@ export const AddLibraryPanelContents = ({
 
     saveLibraryPanel(panel, folderUid!).then((res: LibraryPanel | FetchError) => {
       if (!isFetchError(res)) {
-       onDismiss?.();
+        onDismiss?.();
         onCreateLibraryPanel?.(res);
       } else {
         panel.libraryPanel = undefined;
       }
     });
-  }, [panel, panelName, saveLibraryPanel, folderUid, onDismiss, onCreateLibraryPanel, onCancelClick]);
+  }, [panel, panelName, saveLibraryPanel, folderUid, onDismiss, onCreateLibraryPanel]);
 
   const isValidName = useAsync(async () => {
     try {
