@@ -59,8 +59,8 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
       {editPanel && <editPanel.Component model={editPanel} />}
       {!editPanel && (
-        <div className={cx(styles.pageContainer, hasControls && styles.pageContainerWithControls)}>
-          <NativeScrollbar divId="page-scrollbar" autoHeightMin={'100%'}>
+        <NativeScrollbar divId="page-scrollbar" autoHeightMin={'100%'}>
+          <div className={cx(styles.pageContainer, hasControls && styles.pageContainerWithControls)}>
             <NavToolbarActions dashboard={model} />
             {controls && (
               <div className={styles.controlsWrapper}>
@@ -68,8 +68,8 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
               </div>
             )}
             <div className={cx(styles.canvasContent)}>{body}</div>
-          </NativeScrollbar>
-        </div>
+          </div>
+        </NativeScrollbar>
       )}
       {overlay && <overlay.Component model={overlay} />}
     </Page>
@@ -84,7 +84,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number | undefined) {
   "panels"`,
       gridTemplateColumns: `1fr`,
       gridTemplateRows: '1fr',
-      height: '100%',
+      flexGrow: 1,
       [theme.breakpoints.down('sm')]: {
         display: 'flex',
         flexDirection: 'column',
@@ -95,9 +95,6 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number | undefined) {
         "controls"
         "panels"`,
       gridTemplateRows: 'auto 1fr',
-    }),
-    panelsContainer: css({
-      gridArea: 'panels',
     }),
     controlsWrapper: css({
       display: 'flex',
@@ -127,6 +124,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number | undefined) {
       flexDirection: 'column',
       padding: theme.spacing(0, 2),
       flexBasis: '100%',
+      gridArea: 'panels',
       flexGrow: 1,
       minWidth: 0,
     }),
