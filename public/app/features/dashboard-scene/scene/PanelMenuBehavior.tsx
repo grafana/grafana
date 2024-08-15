@@ -98,9 +98,13 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
 
       if (!(parent instanceof LibraryVizPanel)) {
         subMenu.push({
+          text: '',
+          type: 'divider',
+        });
+
+        subMenu.push({
           text: t('share-panel.menu.new-library-panel-title', 'New library panel'),
           iconClassName: 'library-panel',
-          shortcut: 'p u',
           onClick: () => {
             const drawer = new ShareDrawer({
               title: t('share-panel.drawer.new-library-panel-title', 'New library panel'),
