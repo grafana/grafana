@@ -236,7 +236,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) (
 		newToken, cmdErr = o.tryGetOrRefreshOAuthToken(ctx, authInfo)
 	}, retryOpt)
 	if lockErr != nil {
-		ctxLogger.Error("Failed to obtain token refresh lock", "error", err)
+		ctxLogger.Error("Failed to obtain token refresh lock", "error", lockErr)
 		return nil, lockErr
 	}
 
