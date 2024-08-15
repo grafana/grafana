@@ -954,7 +954,7 @@ services:
 - commands:
   - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
   environment: {}
-  image: grafana/mimir-alpine:r295-a23e559
+  image: us.gcr.io/kubernetes-dev/mimir:main-853a1baea
   name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
@@ -1402,7 +1402,7 @@ services:
 - commands:
   - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
   environment: {}
-  image: grafana/mimir-alpine:r295-a23e559
+  image: us.gcr.io/kubernetes-dev/mimir:main-853a1baea
   name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
@@ -2480,7 +2480,7 @@ services:
 - commands:
   - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
   environment: {}
-  image: grafana/mimir-alpine:r295-a23e559
+  image: us.gcr.io/kubernetes-dev/mimir:main-853a1baea
   name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
@@ -3112,7 +3112,7 @@ services:
 - commands:
   - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
   environment: {}
-  image: grafana/mimir-alpine:r295-a23e559
+  image: us.gcr.io/kubernetes-dev/mimir:main-853a1baea
   name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
@@ -5271,7 +5271,7 @@ services:
 - commands:
   - /bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled
   environment: {}
-  image: grafana/mimir-alpine:r295-a23e559
+  image: us.gcr.io/kubernetes-dev/mimir:main-853a1baea
   name: mimir_backend
 - environment: {}
   image: redis:6.2.11-alpine
@@ -5792,7 +5792,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM plugins/slack
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM python:3.8
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM postgres:12.3-alpine
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/mimir-alpine:r295-a23e559
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM us.gcr.io/kubernetes-dev/mimir:main-853a1baea
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:5.7.39
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:8.0.32
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM redis:6.2.11-alpine
@@ -5829,7 +5829,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL plugins/slack
   - trivy --exit-code 1 --severity HIGH,CRITICAL python:3.8
   - trivy --exit-code 1 --severity HIGH,CRITICAL postgres:12.3-alpine
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/mimir-alpine:r295-a23e559
+  - trivy --exit-code 1 --severity HIGH,CRITICAL us.gcr.io/kubernetes-dev/mimir:main-853a1baea
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:5.7.39
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:8.0.32
   - trivy --exit-code 1 --severity HIGH,CRITICAL redis:6.2.11-alpine
