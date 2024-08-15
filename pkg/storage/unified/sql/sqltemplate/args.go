@@ -2,6 +2,7 @@ package sqltemplate
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 )
@@ -18,6 +19,10 @@ var (
 type Args struct {
 	d      interface{ ArgPlaceholder(argNum int) string }
 	values []any
+
+	// For testing, we can write the values inline
+	// NOTE: this is private and only used to help verify SQL template rendering
+	inline bool
 }
 
 func NewArgs(d Dialect) *Args {
@@ -30,6 +35,25 @@ func NewArgs(d Dialect) *Args {
 // to use in the execution of the query.
 func (a *Args) Arg(x any) string {
 	a.values = append(a.values, x)
+
+	// only possible in tests
+	if a.inline {
+		switch val := x.(type) {
+		case bool:
+			if val {
+				return "TRUE"
+			}
+			return "FALSE"
+
+		case int, int16, int32, int64,
+			uint, uint16, uint32, uint64,
+			float32, float64:
+			return fmt.Sprintf("%v", x)
+
+		default:
+			return fmt.Sprintf("'%v'", x) // single quotes
+		}
+	}
 
 	return a.d.ArgPlaceholder(len(a.values))
 }
