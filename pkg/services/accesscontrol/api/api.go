@@ -51,7 +51,7 @@ func (api *AccessControlAPI) getUserActions(c *contextmodel.ReqContext) response
 	c.Req = c.Req.WithContext(ctx)
 
 	reloadCache := c.QueryBool("reloadcache")
-	permissions, err := api.Service.GetUserPermissions(c.Req.Context(),
+	permissions, err := api.Service.GetUserPermissions(ctx,
 		c.SignedInUser, ac.Options{ReloadCache: reloadCache})
 	if err != nil {
 		return response.JSON(http.StatusInternalServerError, err)
