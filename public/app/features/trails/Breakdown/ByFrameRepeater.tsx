@@ -169,8 +169,10 @@ function buildNoResultsScene(filter: string, clearFilter: () => void) {
           reactNode: (
             <div className={styles.alertContainer}>
               <Alert title="" severity="info" className={styles.noResultsAlert}>
-                <Trans i18nKey="explore-metrics.breakdown.noMatchingValue">No values found matching</Trans> &ldquo;
-                {filter}&rdquo;
+                <Trans i18nKey="explore-metrics.breakdown.noMatchingValue">
+                  No values found matching &ldquo;
+                  {{ filter }}&rdquo;
+                </Trans>
                 <Button className={styles.clearButton} onClick={clearFilter}>
                   <Trans i18nKey="explore-metrics.breakdown.clearFilter">Clear filter</Trans>
                 </Button>

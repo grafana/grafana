@@ -867,7 +867,7 @@
     "breakdown": {
       "clearFilter": "Cľęäř ƒįľŧęř",
       "labelSelect": "Ŝęľęčŧ",
-      "noMatchingValue": "Ńő väľūęş ƒőūŉđ mäŧčĥįŉģ"
+      "noMatchingValue": "Ńő väľūęş ƒőūŉđ mäŧčĥįŉģ &ľđqūő;{{filter}}&řđqūő;"
     },
     "viewBy": "Vįęŵ þy"
   },
