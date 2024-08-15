@@ -1,4 +1,6 @@
+import { TypedVariableModel } from '@grafana/data';
 import { String } from '@grafana/lezer-logql';
+import { TemplateSrv } from '@grafana/runtime';
 
 import {
   getHighlighterExpressionsFromQuery,
@@ -20,8 +22,6 @@ import {
   getVariableHighlighterExpressionsFromQuery,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
-import { TemplateSrv } from '@grafana/runtime';
-import { TypedVariableModel } from '@grafana/data';
 
 describe('getHighlighterExpressionsFromQuery', () => {
   it('returns no expressions for empty query', () => {
