@@ -3,6 +3,7 @@ package rest
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -446,6 +447,9 @@ func mode2DataSyncer(ctx context.Context, legacy LegacyStorage, storage Storage,
 
 	maxInterval := dataSyncerInterval + 5*time.Minute
 
+	var errSync error
+	const maxRecordsSync = 1000
+
 	// LockExecuteAndRelease ensures that just a single Grafana server acquires a lock at a time
 	// The parameter 'maxInterval' is a timeout safeguard, if the LastExecution in the
 	// database is older than maxInterval, we will assume the lock as timeouted. The 'maxInterval' parameter should be so long
@@ -461,19 +465,28 @@ func mode2DataSyncer(ctx context.Context, legacy LegacyStorage, storage Storage,
 		ctx = request.WithNamespace(ctx, requestInfo.Namespace)
 		ctx = request.WithRequestInfo(ctx, requestInfo)
 
+		storageList, err := getList(ctx, storage, &metainternalversion.ListOptions{
+			Limit: maxRecordsSync,
+		})
+		if err != nil {
+			log.Error(err, "unable to extract list from storage")
+			return
+		}
+
+		if len(storageList) >= maxRecordsSync {
+			errSync = fmt.Errorf("unified storage has more than %d records. Aborting sync", maxRecordsSync)
+			log.Error(errSync, "Unified storage has more records to be synced than allowed")
+			return
+		}
+
+		log.Info("got items from unified storage", "items", len(storageList))
+
 		legacyList, err := getList(ctx, legacy, &metainternalversion.ListOptions{})
 		if err != nil {
 			log.Error(err, "unable to extract list from legacy storage")
 			return
 		}
 		log.Info("got items from legacy storage", "items", len(legacyList))
-
-		storageList, err := getList(ctx, storage, &metainternalversion.ListOptions{})
-		if err != nil {
-			log.Error(err, "unable to extract list from storage")
-			return
-		}
-		log.Info("got items from unified storage", "items", len(storageList))
 
 		itemsByName := map[string]syncItem{}
 		for _, obj := range legacyList {
@@ -591,6 +604,10 @@ func mode2DataSyncer(ctx context.Context, legacy LegacyStorage, storage Storage,
 
 		log.Info("finished syncing items", "items", len(itemsByName), "updated", syncSuccess, "failed", syncErr, "outcome", everythingSynced)
 	})
+
+	if errSync != nil {
+		err = errSync
+	}
 
 	return everythingSynced, err
 }
