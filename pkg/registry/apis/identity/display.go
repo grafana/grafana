@@ -52,7 +52,7 @@ func (r *displayREST) ProducesMIMETypes(verb string) []string {
 	return []string{"application/json"} // and parquet!
 }
 
-func (r *displayREST) ProducesObject(verb string) interface{} {
+func (r *displayREST) ProducesObject(verb string) any {
 	return &identity.IdentityDisplayResults{}
 }
 
