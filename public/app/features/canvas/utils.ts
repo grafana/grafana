@@ -75,7 +75,7 @@ export const getActionsSupplier =
   };
 
 const buildActionOnClick = (action: Action, replaceVariables: InterpolateFunction) => {
-  const url = new URL(replaceVariables(action.endpoint));
+  const url = new URL(replaceVariables(action.url));
   const data = getData(action, replaceVariables);
 
   const requestHeaders: HeadersInit = [];
@@ -86,8 +86,8 @@ const buildActionOnClick = (action: Action, replaceVariables: InterpolateFunctio
     headers: requestHeaders,
   };
 
-  if (action.headerParams) {
-    action.headerParams.forEach((param) => {
+  if (action.headers) {
+    action.headers.forEach((param) => {
       requestHeaders.push([replaceVariables(param[0]), replaceVariables(param[1])]);
     });
   }
@@ -119,7 +119,7 @@ const buildActionOnClick = (action: Action, replaceVariables: InterpolateFunctio
 };
 
 const getData = (api: Action, replaceVariables: InterpolateFunction) => {
-  let data: string | undefined = api.data ? replaceVariables(api.data) : '{}';
+  let data: string | undefined = api.body ? replaceVariables(api.body) : '{}';
   if (api.method === HttpRequestMethod.GET) {
     data = undefined;
   }

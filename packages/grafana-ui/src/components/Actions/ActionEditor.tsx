@@ -52,15 +52,12 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
     onChange(index, { ...value, title: event.target.value });
   };
 
-  const onEndpointChange = (endpoint: string) => {
-    onChange(index, { ...value, endpoint });
+  const onUrlChange = (url: string) => {
+    onChange(index, { ...value, url });
   };
 
-  const onPayloadChange = (payload: string) => {
-    onChange(index, {
-      ...value,
-      data: payload,
-    });
+  const onBodyChange = (body: string) => {
+    onChange(index, { ...value, body });
   };
 
   const onMethodChange = (method: string) => {
@@ -88,10 +85,10 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
     });
   };
 
-  const onHeaderParamsChange = (headerParams: Array<[string, string]>) => {
+  const onHeadersChange = (headers: Array<[string, string]>) => {
     onChange(index, {
       ...value,
-      headerParams,
+      headers,
     });
   };
 
@@ -115,8 +112,8 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
       </Field>
       <Label>API</Label>
       <InlineFieldRow>
-        <InlineField label="Endpoint" labelWidth={LABEL_WIDTH} grow={true}>
-          <SuggestionsInput value={value.endpoint} onChange={onEndpointChange} suggestions={suggestions} />
+        <InlineField label="URL" labelWidth={LABEL_WIDTH} grow={true}>
+          <SuggestionsInput value={value.url} onChange={onUrlChange} suggestions={suggestions} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
@@ -141,15 +138,15 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
       <Field label="Query parameters">
         <ParamsEditor value={value?.queryParams ?? []} onChange={onQueryParamsChange} suggestions={suggestions} />
       </Field>
-      <Field label="Header parameters">
-        <ParamsEditor value={value?.headerParams ?? []} onChange={onHeaderParamsChange} suggestions={suggestions} />
+      <Field label="Headers">
+        <ParamsEditor value={value?.headers ?? []} onChange={onHeadersChange} suggestions={suggestions} />
       </Field>
 
       {value?.method !== HttpRequestMethod.GET && value?.contentType && (
-        <Field label="Payload">
+        <Field label="Body">
           <SuggestionsInput
-            value={value.data}
-            onChange={onPayloadChange}
+            value={value.body}
+            onChange={onBodyChange}
             suggestions={suggestions}
             type={HTMLElementType.TextAreaElement}
           />
@@ -159,7 +156,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
       <br />
       {value?.method !== HttpRequestMethod.GET &&
         value?.contentType === defaultActionConfig.contentType &&
-        renderJSON(value?.data ?? '{}')}
+        renderJSON(value?.body ?? '{}')}
     </div>
   );
 });

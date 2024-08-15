@@ -4,11 +4,11 @@ import { SelectableValue } from './select';
 export interface Action<T = any> {
   title: string;
   method: string;
-  endpoint: string;
-  data?: string;
+  url: string;
+  body?: string;
   contentType?: string;
   queryParams?: Array<[string, string]>;
-  headerParams?: Array<[string, string]>;
+  headers?: Array<[string, string]>;
 
   // If exists, handle click directly
   // Not saved in JSON/DTO
@@ -54,10 +54,10 @@ export const contentTypeOptions: SelectableValue[] = [
 
 export const defaultActionConfig: Action = {
   title: '',
-  endpoint: '',
+  url: '',
   method: HttpRequestMethod.POST,
-  data: '{}',
+  body: '{}',
   contentType: 'application/json',
   queryParams: [],
-  headerParams: [],
+  headers: [],
 };
