@@ -175,10 +175,6 @@ func (i *Identity) GetIDToken() string {
 	return i.IDToken
 }
 
-func (i *Identity) GetIDClaims() *authn.Claims[authn.IDTokenClaims] {
-	return i.IDTokenClaims
-}
-
 func (i *Identity) GetIsGrafanaAdmin() bool {
 	return i.IsGrafanaAdmin != nil && *i.IsGrafanaAdmin
 }

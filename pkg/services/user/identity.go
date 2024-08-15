@@ -323,7 +323,3 @@ func (u *SignedInUser) GetDisplayName() string {
 func (u *SignedInUser) GetIDToken() string {
 	return u.IDToken
 }
-
-func (u *SignedInUser) GetIDClaims() *authnlib.Claims[authnlib.IDTokenClaims] {
-	return u.IDTokenClaims
-}
