@@ -175,6 +175,11 @@ function ExperimentalSplitPaneTree(props: { routes?: JSX.Element | false }) {
 
   const memoryLocationService = new HistoryWrapper(H.createMemoryHistory({ initialEntries: ['/'] }));
 
+  if (!activePluginId) {
+    // This makes sure the splitPaneWrapper does not mess with the basic scroll functionality in non split scenario.
+    return <RouterTree routes={props.routes} />;
+  }
+
   return (
     <SplitPaneWrapper
       splitOrientation="vertical"
