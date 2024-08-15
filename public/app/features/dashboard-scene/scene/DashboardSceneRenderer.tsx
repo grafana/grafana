@@ -12,11 +12,13 @@ import { useSelector } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
-import { TOP_BAR_LEVEL_HEIGHT } from 'app/core/components/AppChrome/types';
+import NativeScrollbar from 'app/core/components/NativeScrollbar';
+import { useChromeHeaderHeight } from '@grafana/runtime';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const { controls, overlay, editview, editPanel, isEmpty, meta } = model.useState();
-  const styles = useStyles2(getStyles);
+  const headerHeight = useChromeHeaderHeight();
+  const styles = useStyles2(getStyles, headerHeight);
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
   const pageNav = model.getPageNav(location, navIndex);
@@ -58,21 +60,15 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       {editPanel && <editPanel.Component model={editPanel} />}
       {!editPanel && (
         <div className={cx(styles.pageContainer, hasControls && styles.pageContainerWithControls)}>
-          <NavToolbarActions dashboard={model} />
-          {controls && (
-            <div className={styles.controlsWrapper}>
-              <controls.Component model={controls} />
-            </div>
-          )}
-          {/* <PanelsContainer
-            // This id is used by the image renderer to scroll through the dashboard
-            id="page-scrollbar"
-            className={styles.panelsContainer}
-            testId={selectors.pages.Dashboard.DashNav.scrollContainer}
-          > */}
-          <div className={cx(styles.canvasContent)}>{body}</div>
-          {/* <div className={cx(styles.canvasContent)}>{body}</div>
-          </PanelsContainer> */}
+          <NativeScrollbar divId="page-scrollbar" autoHeightMin={'100%'}>
+            <NavToolbarActions dashboard={model} />
+            {controls && (
+              <div className={styles.controlsWrapper}>
+                <controls.Component model={controls} />
+              </div>
+            )}
+            <div className={cx(styles.canvasContent)}>{body}</div>
+          </NativeScrollbar>
         </div>
       )}
       {overlay && <overlay.Component model={overlay} />}
@@ -80,26 +76,20 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   );
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, headerHeight: number | undefined) {
   return {
-    pageContainer: css(
-      {
-        display: 'grid',
-        gridTemplateAreas: `
+    pageContainer: css({
+      display: 'grid',
+      gridTemplateAreas: `
   "panels"`,
-        gridTemplateColumns: `1fr`,
-        gridTemplateRows: '1fr',
-        height: '100%',
-        [theme.breakpoints.down('sm')]: {
-          display: 'flex',
-          flexDirection: 'column',
-        },
-      }
-      // config.featureToggles.bodyScrolling && {
-      //   position: 'absolute',
-      //   width: '100%',
-      // }
-    ),
+      gridTemplateColumns: `1fr`,
+      gridTemplateRows: '1fr',
+      height: '100%',
+      [theme.breakpoints.down('sm')]: {
+        display: 'flex',
+        flexDirection: 'column',
+      },
+    }),
     pageContainerWithControls: css({
       gridTemplateAreas: `
         "controls"
@@ -114,16 +104,16 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       flexGrow: 0,
       gridArea: 'controls',
-      top: TOP_BAR_LEVEL_HEIGHT * 2,
       padding: theme.spacing(2),
       ':empty': {
         display: 'none',
       },
       // Make controls sticky on larger screens (> mobile)
-      [theme.breakpoints.up('sm')]: {
+      [theme.breakpoints.up('md')]: {
         position: 'sticky',
         zIndex: theme.zIndex.activePanel,
         background: theme.colors.background.canvas,
+        top: headerHeight,
       },
     }),
     // TODO use
@@ -138,6 +128,7 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(0, 2),
       flexBasis: '100%',
       flexGrow: 1,
+      minWidth: 0,
     }),
     body: css({
       label: 'body',
