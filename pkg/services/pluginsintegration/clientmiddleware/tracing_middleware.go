@@ -155,10 +155,10 @@ func (m *TracingMiddleware) MutateAdmission(ctx context.Context, req *backend.Ad
 }
 
 // ConvertObject implements backend.AdmissionHandler.
-func (m *TracingMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+func (m *TracingMiddleware) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext)
 	defer func() { end(err) }()
-	resp, err := m.next.ConvertObject(ctx, req)
+	resp, err := m.next.ConvertObjects(ctx, req)
 	return resp, err
 }
