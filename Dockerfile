@@ -20,6 +20,7 @@ COPY packages packages
 COPY plugins-bundled plugins-bundled
 COPY public public
 COPY LICENSE ./
+COPY conf/defaults.ini ./conf/defaults.ini
 
 RUN apk add --no-cache make build-base python3
 
@@ -44,6 +45,7 @@ RUN if grep -i -q alpine /etc/issue; then \
       apk add --no-cache \
           # This is required to allow building on arm64 due to https://github.com/golang/go/issues/22040
           binutils-gold \
+          bash \
           # Install build dependencies
           gcc g++ make git; \
     fi
@@ -62,6 +64,7 @@ COPY pkg/build/wire/go.* pkg/build/wire/
 COPY pkg/promlib/go.* pkg/promlib/
 COPY pkg/storage/unified/resource/go.* pkg/storage/unified/resource/
 COPY pkg/semconv/go.* pkg/semconv/
+COPY pkg/aggregator/go.* pkg/aggregator/
 
 RUN go mod download
 RUN if [[ "$BINGO" = "true" ]]; then \
