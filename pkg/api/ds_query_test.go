@@ -13,6 +13,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
@@ -258,7 +260,10 @@ func TestDataSourceQueryError(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
+
 		t.Run(fmt.Sprintf("Plugin client error %q should propagate to API", tc.clientErr), func(t *testing.T) {
+			otel.SetTracerProvider(noop.NewTracerProvider())
+
 			p := &plugins.Plugin{
 				JSONData: plugins.JSONData{
 					ID: "grafana",
@@ -291,6 +296,7 @@ func TestDataSourceQueryError(t *testing.T) {
 				hs.QuotaService = quotatest.New(false, nil)
 			})
 			req := srv.NewPostRequest("/api/ds/query", strings.NewReader(tc.request))
+
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {datasources.ActionQuery: []string{datasources.ScopeAll}}}})
 			resp, err := srv.SendJSON(req)
 			require.NoError(t, err)
