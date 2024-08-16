@@ -125,38 +125,39 @@ export function formValuesToCloudReceiver(
 export function updateConfigWithReceiver(
   config: AlertManagerCortexConfig,
   receiver: Receiver,
-  replaceReceiverName?: string
+  existingReceiverName?: string
 ): AlertManagerCortexConfig {
-  const oldReceivers = config.alertmanager_config.receivers ?? [];
+  const existingReceivers = config.alertmanager_config.receivers ?? [];
+
+  const receiverWasRenamed = existingReceiverName && receiver.name !== existingReceiverName;
 
   // sanity check that name is not duplicated
-  if (receiver.name !== replaceReceiverName && !!oldReceivers.find(({ name }) => name === receiver.name)) {
+  if (!existingReceiverName && !!existingReceivers.find(({ name }) => name === receiver.name)) {
     throw new Error(`Duplicate receiver name ${receiver.name}`);
   }
 
   // sanity check that existing receiver exists
-  if (replaceReceiverName && !oldReceivers.find(({ name }) => name === replaceReceiverName)) {
-    throw new Error(`Expected receiver ${replaceReceiverName} to exist, but did not find it in the config`);
+  if (existingReceiverName && !existingReceivers.find(({ name }) => name === existingReceiverName)) {
+    throw new Error(`Expected receiver ${existingReceiverName} to exist, but did not find it in the config`);
   }
 
   const updated: AlertManagerCortexConfig = {
     ...config,
     alertmanager_config: {
-      // @todo rename receiver on routes as necessary
       ...config.alertmanager_config,
-      receivers: replaceReceiverName
-        ? oldReceivers.map((existingReceiver) =>
-            existingReceiver.name === replaceReceiverName ? receiver : existingReceiver
+      receivers: existingReceiverName
+        ? existingReceivers.map((existingReceiver) =>
+            existingReceiver.name === existingReceiverName ? receiver : existingReceiver
           )
-        : [...oldReceivers, receiver],
+        : [...existingReceivers, receiver],
     },
   };
 
   // if receiver was renamed, rename it in routes as well
-  if (updated.alertmanager_config.route && replaceReceiverName && receiver.name !== replaceReceiverName) {
+  if (updated.alertmanager_config.route && receiverWasRenamed) {
     updated.alertmanager_config.route = renameReceiverInRoute(
       updated.alertmanager_config.route,
-      replaceReceiverName,
+      existingReceiverName,
       receiver.name
     );
   }

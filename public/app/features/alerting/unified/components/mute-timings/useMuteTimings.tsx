@@ -8,8 +8,12 @@ import {
   ReadNamespacedTimeIntervalApiResponse,
 } from 'app/features/alerting/unified/openapi/timeIntervalsApi.gen';
 import { BaseAlertmanagerArgs } from 'app/features/alerting/unified/types/hooks';
-import { PROVENANCE_ANNOTATION, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
-import { getK8sNamespace, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
+import { PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
+import {
+  getK8sNamespace,
+  isK8sEntityProvisioned,
+  shouldUseK8sApi,
+} from 'app/features/alerting/unified/utils/k8s/utils';
 import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
 import { useAsync } from '../../hooks/useAsync';
@@ -48,7 +52,7 @@ const parseK8sTimeInterval: (item: TimeIntervalV0Alpha1) => MuteTiming = (item) 
     ...spec,
     id: spec.name,
     metadata,
-    provisioned: metadata.annotations?.[PROVENANCE_ANNOTATION] !== PROVENANCE_NONE,
+    provisioned: isK8sEntityProvisioned(item),
   };
 };
 
