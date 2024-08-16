@@ -27,9 +27,8 @@ type SSOSettingList struct {
 
 // Spec defines model for Spec.
 type Spec struct {
-	Provider string              `json:"provider"`
-	Settings common.Unstructured `json:"settings"`
 	Source   Source              `json:"source"`
+	Settings common.Unstructured `json:"settings"`
 }
 
 // Source for settings.
@@ -38,6 +37,7 @@ type Source string
 
 // Defines values for ItemType.
 const (
-	SourceDB     Source = "db"
+	SourceDB Source = "db"
+	// system is from config file, env or argument
 	SourceSystem Source = "system"
 )

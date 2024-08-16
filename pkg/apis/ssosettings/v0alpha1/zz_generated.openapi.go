@@ -115,11 +115,13 @@ func schema_pkg_apis_ssosettings_v0alpha1_Spec(ref common.ReferenceCallback) com
 				Description: "Spec defines model for Spec.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"provider": {
+					"source": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "Possible enum values:\n - `\"db\"`\n - `\"system\"` system is from config file, env or argument",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"db", "system"},
 						},
 					},
 					"settings": {
@@ -127,17 +129,8 @@ func schema_pkg_apis_ssosettings_v0alpha1_Spec(ref common.ReferenceCallback) com
 							Ref: ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
 						},
 					},
-					"source": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Possible enum values:\n - `\"db\"`\n - `\"system\"`",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-							Enum:        []interface{}{"db", "system"},
-						},
-					},
 				},
-				Required: []string{"provider", "settings", "source"},
+				Required: []string{"source", "settings"},
 			},
 		},
 		Dependencies: []string{

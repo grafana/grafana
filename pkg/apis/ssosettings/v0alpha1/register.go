@@ -26,6 +26,7 @@ var SSOSettingResourceInfo = common.NewResourceInfo(
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Source", Type: "string", Format: "source"},
 			{Name: "Created At", Type: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
@@ -35,6 +36,7 @@ var SSOSettingResourceInfo = common.NewResourceInfo(
 			}
 			return []interface{}{
 				m.Name,
+				m.Spec.Source,
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
 			}, nil
 		},
@@ -45,3 +47,18 @@ var (
 	// SchemeGroupVersion is group version used to register these objects
 	SchemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}
 )
+
+// Adds the list of known types to the given scheme.
+func AddKnownTypes(gv schema.GroupVersion, scheme *runtime.Scheme) error {
+	scheme.AddKnownTypes(gv,
+		&SSOSetting{},
+		&SSOSettingList{},
+	)
+	metav1.AddToGroupVersion(scheme, gv)
+	return nil
+}
+
+// Resource takes an unqualified resource and returns a Group qualified GroupResource
+func Resource(resource string) schema.GroupResource {
+	return SchemeGroupVersion.WithResource(resource).GroupResource()
+}
