@@ -1,4 +1,4 @@
-package apiserver
+package plugin
 
 import (
 	"bytes"
@@ -59,7 +59,7 @@ func TestQueryDataHandler(t *testing.T) {
 	}
 
 	delegate := newFakeHTTPHandler(http.StatusNotFound, []byte(`Not Found`))
-	handler := newPluginHandler(pc, dps, contextProvider, delegate)
+	handler := NewPluginHandler(pc, dps, contextProvider, delegate)
 
 	qdr := datav0alpha1.QueryDataRequest{
 		TimeRange: datav0alpha1.TimeRange{},
