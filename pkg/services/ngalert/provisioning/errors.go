@@ -2,7 +2,6 @@ package provisioning
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -19,8 +18,8 @@ var (
 	ErrTimeIntervalInvalid                      = errutil.BadRequest("alerting.notifications.time-intervals.invalidFormat").MustTemplate("Invalid format of the submitted time interval", errutil.WithPublic("Time interval is in invalid format. Correct the payload and try again."))
 	ErrTimeIntervalInUse                        = errutil.Conflict("alerting.notifications.time-intervals.used").MustTemplate("Time interval is used")
 	ErrTimeIntervalDependentResourcesProvenance = errutil.Conflict("alerting.notifications.time-intervals.usedProvisioned").MustTemplate(
-		"Time interval cannot be renamed because it is used by a provisioned {{.Private.Resource}}",
-		errutil.WithPublic("Time interval cannot be renamed because it is used by provisioned {{.Private.Resource}}. You must update those resources first using the original provision method"),
+		"Time interval cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}",
+		errutil.WithPublic(`Time interval cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}. You must update those resources first using the original provision method.`),
 	)
 
 	ErrTemplateNotFound = errutil.NotFound("alerting.notifications.templates.notFound")
@@ -79,20 +78,14 @@ func MakeErrTimeIntervalDependentResourcesProvenance(usedByRoutes bool, rules []
 		uids = append(uids, key.UID)
 	}
 	data := make(map[string]any, 2)
-	resource := make([]string, 0, 2)
 	if len(uids) > 0 {
-		resource = append(resource, "alert rules")
 		data["UsedByRules"] = uids
 	}
 	if usedByRoutes {
-		resource = append(resource, "notification policies")
 		data["UsedByRoutes"] = true
 	}
 
 	return ErrTimeIntervalDependentResourcesProvenance.Build(errutil.TemplateData{
 		Public: data,
-		Private: map[string]any{
-			"Resource": strings.Join(resource, " and "),
-		},
 	})
 }
