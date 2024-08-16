@@ -77,7 +77,7 @@ Effective starting in Grafana v11, anonymous users are counted and charged as us
 
 #### Migration/mitigation
 
-Turn off anonymous access, and consider sharing dashboards externally to allow view-only access to publicly-accessible dashboards.
+Turn off anonymous access, and consider using public dashboards to allow view-only access to publicly-accessible dashboards.
 
 #### Learn more
 
