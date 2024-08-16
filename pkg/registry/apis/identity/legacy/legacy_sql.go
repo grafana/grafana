@@ -44,11 +44,7 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 		return nil, err
 	}
 
-	req := sqlQueryListTeams{
-		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
-		Query:       &query,
-	}
-
+	req := newListTeams(sql, &query)
 	rawQuery, err := sqltemplate.Execute(sqlQueryTeams, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeams.Name(), err)
@@ -106,10 +102,7 @@ func (s *legacySQLStore) ListUsers(ctx context.Context, ns claims.NamespaceInfo,
 		return nil, err
 	}
 
-	res, err := s.queryUsers(ctx, sql, sqlQueryUsers, sqlQueryListUsers{
-		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
-		Query:       &query,
-	}, limit)
+	res, err := s.queryUsers(ctx, sql, sqlQueryUsers, newListUser(sql, &query), limit)
 
 	if err == nil && query.UID != "" {
 		res.RV, err = sql.GetResourceVersion(ctx, "user", "updated")
@@ -129,10 +122,7 @@ func (s *legacySQLStore) GetDisplay(ctx context.Context, ns claims.NamespaceInfo
 		return nil, err
 	}
 
-	return s.queryUsers(ctx, sql, sqlQueryDisplay, sqlQueryGetDisplay{
-		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
-		Query:       &query,
-	}, 10000)
+	return s.queryUsers(ctx, sql, sqlQueryDisplay, newGetDisplay(sql, &query), 10000)
 }
 
 func (s *legacySQLStore) queryUsers(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, t *template.Template, req sqltemplate.ArgsIface, limit int) (*ListUserResult, error) {

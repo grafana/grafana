@@ -34,6 +34,10 @@ func writeTestData(filename, value string) {
 func TestQueries(t *testing.T) {
 	t.Parallel()
 
+	userTableValue := "grafana.user"
+	teamTableValue := "grafana.team"
+	orgUserTableValue := "grafana.org_user"
+
 	// Check each dialect
 	dialects := []sqltemplate.Dialect{
 		sqltemplate.MySQL,
@@ -82,6 +86,7 @@ func TestQueries(t *testing.T) {
 					Query: &ListTeamQuery{
 						UID: "abc",
 					},
+					TeamTable: teamTableValue,
 				},
 			},
 			{
@@ -91,6 +96,7 @@ func TestQueries(t *testing.T) {
 					Query: &ListTeamQuery{
 						Limit: 5,
 					},
+					TeamTable: teamTableValue,
 				},
 			},
 			{
@@ -101,6 +107,7 @@ func TestQueries(t *testing.T) {
 						ContinueID: 1,
 						Limit:      2,
 					},
+					TeamTable: teamTableValue,
 				},
 			},
 		},
@@ -112,6 +119,8 @@ func TestQueries(t *testing.T) {
 					Query: &ListUserQuery{
 						UID: "abc",
 					},
+					UserTable:    userTableValue,
+					OrgUserTable: orgUserTableValue,
 				},
 			},
 			{
@@ -121,6 +130,8 @@ func TestQueries(t *testing.T) {
 					Query: &ListUserQuery{
 						Limit: 5,
 					},
+					UserTable:    userTableValue,
+					OrgUserTable: orgUserTableValue,
 				},
 			},
 			{
@@ -131,6 +142,8 @@ func TestQueries(t *testing.T) {
 						ContinueID: 1,
 						Limit:      2,
 					},
+					UserTable:    userTableValue,
+					OrgUserTable: orgUserTableValue,
 				},
 			},
 		},
@@ -143,6 +156,8 @@ func TestQueries(t *testing.T) {
 						OrgID: 2,
 						UIDs:  []string{"a", "b"},
 					},
+					UserTable:    userTableValue,
+					OrgUserTable: orgUserTableValue,
 				},
 			},
 			{
@@ -153,6 +168,8 @@ func TestQueries(t *testing.T) {
 						OrgID: 2,
 						IDs:   []int64{1, 2},
 					},
+					UserTable:    userTableValue,
+					OrgUserTable: orgUserTableValue,
 				},
 			},
 			{
@@ -164,6 +181,8 @@ func TestQueries(t *testing.T) {
 						UIDs:  []string{"a", "b"},
 						IDs:   []int64{1, 2},
 					},
+					UserTable:    userTableValue,
+					OrgUserTable: orgUserTableValue,
 				},
 			},
 		},
