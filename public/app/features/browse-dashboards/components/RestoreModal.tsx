@@ -27,7 +27,7 @@ export const RestoreModal = ({
   const numberOfDashboards = selectedDashboards.length;
 
   useEffect(() => {
-    if (dashboardOrigin[selectedDashboards[0]] !== 'general') {
+    if (Object.entries(dashboardOrigin).length === 1 && dashboardOrigin[selectedDashboards[0]] !== 'general') {
       setRestoreTarget(dashboardOrigin[selectedDashboards[0]]);
     }
   }, [dashboardOrigin, selectedDashboards]);
