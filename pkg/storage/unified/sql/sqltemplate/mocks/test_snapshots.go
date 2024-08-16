@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"text/template"
@@ -26,16 +27,15 @@ func (t *testingSQLTemplate) Arg(x any) string {
 	t.SQLTemplate.Arg(x) // discard the output
 
 	// Return the raw values in the template
-	switch val := x.(type) {
-	case bool:
-		if val {
+	switch reflect.ValueOf(x).Kind() {
+	case reflect.Bool:
+		if reflect.ValueOf(x).Bool() {
 			return "TRUE"
 		}
 		return "FALSE"
 
-	case int, int16, int32, int64,
-		uint, uint16, uint32, uint64,
-		float32, float64:
+	case reflect.Int, reflect.Int16, reflect.Int64,
+		reflect.Float32, reflect.Float64:
 		return fmt.Sprintf("%v", x)
 
 	default:
