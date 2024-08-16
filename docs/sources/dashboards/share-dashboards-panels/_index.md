@@ -49,6 +49,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/grafana-cloud/visualizations/dashboards/share-dashboards-panels/shared-dashboards/
+  configure-report:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/create-reports/#create-or-update-a-report
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/create-reports/#create-or-update-a-report
 ---
 
 # Share dashboards and panels
@@ -75,8 +80,8 @@ As of Grafana 8.0, anonymous access permission is not available in Grafana Cloud
 
 You can share dashboards in the following ways:
 
-- [Internally with a link](#share-internally)
-- [Externally with anyone or specific people](#share-externally)
+- [Internally with a link](#share-an-internal-link)
+- [Externally with anyone or specific people](#share-an-external-link)
 - [As a report](#schedule-a-report)
 - [As a snapshot](#share-a-snapshot)
 - [As a PDF export](#export-a-dashboard-as-pdf)
@@ -207,7 +212,7 @@ You can share a panels in the following ways:
 
 - [Internally with a link](#share-an-internal-link)
 - [As an embed](#share-an-embed)
-- [As a snapshot](#share-a-snapshot-panel-snapshot)
+- [As a snapshot](#panel-snapshot)
 - [As a library panel](#share-a-library-panel)
 
 ### Share an internal link
