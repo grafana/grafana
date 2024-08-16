@@ -1,6 +1,7 @@
 export const availableIconsIndex = {
   google: true,
   microsoft: true,
+  gcr: true,
   github: true,
   gitlab: true,
   okta: true,
