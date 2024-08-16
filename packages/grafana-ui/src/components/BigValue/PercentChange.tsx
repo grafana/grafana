@@ -1,4 +1,4 @@
-import { IconName } from '@grafana/data/src/types/icon';
+import { IconName } from '@grafana/data';
 
 import { Icon } from '../Icon/Icon';
 
