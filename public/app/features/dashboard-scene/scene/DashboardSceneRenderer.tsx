@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 import { useMedia } from 'react-use';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
