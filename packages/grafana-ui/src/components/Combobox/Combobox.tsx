@@ -48,7 +48,11 @@ function estimateSize() {
 export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxProps) => {
   const MIN_WIDTH = 400;
   const [items, setItems] = useState(options);
-  const selectedItem = useMemo(() => options.find((option) => option.value === value) || null, [options, value]);
+  const selectedItemIndex = useMemo(
+    () => options.findIndex((option) => option.value === value) || null,
+    [options, value]
+  );
+  const selectedItem = selectedItemIndex ? options[selectedItemIndex] : null;
 
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef(null);
@@ -66,6 +70,7 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
       items,
       itemToString,
       selectedItem,
+      defaultHighlightedIndex: selectedItemIndex ?? undefined,
       scrollIntoView: () => {},
       onInputValueChange: ({ inputValue }) => {
         setItems(options.filter(itemFilter(inputValue)));
