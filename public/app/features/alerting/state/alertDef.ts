@@ -48,6 +48,7 @@ const evalFunctions = [
 const evalOperators = [
   { text: 'OR', value: 'or' },
   { text: 'AND', value: 'and' },
+  { text: 'LOGIC OR', value: 'logic-or' },
 ];
 
 const reducerTypes = [

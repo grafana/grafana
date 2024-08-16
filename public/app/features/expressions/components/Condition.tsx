@@ -65,7 +65,7 @@ export const Condition = ({ condition, index, onChange, onRemoveCondition, refId
   };
 
   const buttonWidth = css`
-    width: 60px;
+    width: 75px;
   `;
 
   const isRange =
