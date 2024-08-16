@@ -43,13 +43,6 @@ type Dialect interface {
 	// names are all examples of identifiers.
 	Ident(string) (string, error)
 
-	// Table returns the given string quoted in a way that will identify a table.
-	// When the table lookup callback is set, will be called first
-	Table(string) (string, error)
-
-	// Optionally specify a table transform function
-	TableLookup(func(string) string)
-
 	// ArgPlaceholder returns a safe argument suitable to be used in a SQL
 	// prepared statement for the argNum-eth argument passed in execution
 	// (starting at 1). The SQL92 Standard specifies the question mark ('?')
@@ -130,8 +123,6 @@ var rowLockingClauseAll = rowLockingClauseMap{
 	SelectForUpdateSkipLocked: SelectForUpdateSkipLocked,
 }
 
-type identFunc = func(s string) (string, error)
-
 // standardIdent provides standard SQL escaping of identifiers.
 type standardIdent struct{}
 
@@ -140,26 +131,6 @@ func (standardIdent) Ident(s string) (string, error) {
 		return "", ErrEmptyIdent
 	}
 	return `"` + strings.ReplaceAll(s, `"`, `""`) + `"`, nil
-}
-
-// standardIdent provides standard SQL escaping of identifiers.
-type standardTable struct {
-	ident  identFunc
-	lookup func(string) string
-}
-
-func (v *standardTable) TableLookup(cb func(string) string) {
-	v.lookup = cb
-}
-
-func (v *standardTable) Table(s string) (string, error) {
-	if v.lookup != nil {
-		found := v.lookup(s)
-		if found != "" {
-			s = found
-		}
-	}
-	return v.ident(s)
 }
 
 type argPlaceholderFunc func(int) string
