@@ -58,7 +58,7 @@ var (
 )
 
 type sqlResourceRequest struct {
-	sqltemplate.SQLTemplateIface
+	sqltemplate.SQLTemplate
 	GUID       string
 	WriteEvent resource.WriteEvent
 }
@@ -80,7 +80,7 @@ func (r *historyPollResponse) Results() (*historyPollResponse, error) {
 
 type groupResourceRV map[string]map[string]int64
 type sqlResourceHistoryPollRequest struct {
-	sqltemplate.SQLTemplateIface
+	sqltemplate.SQLTemplate
 	Resource             string
 	Group                string
 	SinceResourceVersion int64
@@ -102,7 +102,7 @@ func (r *readResponse) Results() (*readResponse, error) {
 }
 
 type sqlResourceReadRequest struct {
-	sqltemplate.SQLTemplateIface
+	sqltemplate.SQLTemplate
 	Request *resource.ReadRequest
 	*readResponse
 }
@@ -113,7 +113,7 @@ func (r sqlResourceReadRequest) Validate() error {
 
 // List
 type sqlResourceListRequest struct {
-	sqltemplate.SQLTemplateIface
+	sqltemplate.SQLTemplate
 	Request *resource.ListRequest
 }
 
@@ -126,7 +126,7 @@ type historyListRequest struct {
 	Options                        *resource.ListOptions
 }
 type sqlResourceHistoryListRequest struct {
-	sqltemplate.SQLTemplateIface
+	sqltemplate.SQLTemplate
 	Request  *historyListRequest
 	Response *resource.ResourceWrapper
 }
@@ -150,7 +150,7 @@ func (r sqlResourceHistoryListRequest) Results() (*resource.ResourceWrapper, err
 // update RV
 
 type sqlResourceUpdateRVRequest struct {
-	sqltemplate.SQLTemplateIface
+	sqltemplate.SQLTemplate
 	GUID            string
 	ResourceVersion int64
 }
@@ -174,7 +174,7 @@ func (r *resourceVersion) Results() (*resourceVersion, error) {
 }
 
 type sqlResourceVersionRequest struct {
-	sqltemplate.SQLTemplateIface
+	sqltemplate.SQLTemplate
 	Group, Resource string
 	ReadOnly        bool
 	*resourceVersion
@@ -185,7 +185,7 @@ func (r sqlResourceVersionRequest) Validate() error {
 }
 
 type sqlResourceVersionListRequest struct {
-	sqltemplate.SQLTemplateIface
+	sqltemplate.SQLTemplate
 	*groupResourceVersion
 }
 

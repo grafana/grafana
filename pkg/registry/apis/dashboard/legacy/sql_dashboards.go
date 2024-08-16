@@ -92,8 +92,8 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 	}
 
 	req := sqlQuery{
-		SQLTemplateIface: sqltemplate.New(a.dialect),
-		Query:            query,
+		SQLTemplate: sqltemplate.New(a.dialect),
+		Query:       query,
 	}
 
 	tmpl := sqlQueryDashboards

@@ -31,7 +31,7 @@ var (
 )
 
 type sqlQueryListUsers struct {
-	sqltemplate.SQLTemplateIface
+	sqltemplate.SQLTemplate
 	Query *ListUserQuery
 }
 
@@ -40,7 +40,7 @@ func (r sqlQueryListUsers) Validate() error {
 }
 
 type sqlQueryListTeams struct {
-	sqltemplate.SQLTemplateIface
+	sqltemplate.SQLTemplate
 	Query *ListTeamQuery
 }
 
@@ -49,7 +49,7 @@ func (r sqlQueryListTeams) Validate() error {
 }
 
 type sqlQueryGetDisplay struct {
-	sqltemplate.SQLTemplateIface
+	sqltemplate.SQLTemplate
 	Query *GetUserDisplayQuery
 }
 

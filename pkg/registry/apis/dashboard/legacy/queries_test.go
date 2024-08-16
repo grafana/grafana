@@ -15,7 +15,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "history_uid",
 					Data: &sqlQuery{
-						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Query: &DashboardQuery{
 							OrgID: 2,
 							UID:   "UUU",
@@ -25,7 +25,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "history_uid_at_version",
 					Data: &sqlQuery{
-						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Query: &DashboardQuery{
 							OrgID:   2,
 							UID:     "UUU",
@@ -36,7 +36,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "history_uid_second_page",
 					Data: &sqlQuery{
-						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Query: &DashboardQuery{
 							OrgID:  2,
 							UID:    "UUU",
@@ -47,7 +47,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "dashboard",
 					Data: &sqlQuery{
-						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Query: &DashboardQuery{
 							OrgID: 2,
 						},
@@ -56,7 +56,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "dashboard_next_page",
 					Data: &sqlQuery{
-						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Query: &DashboardQuery{
 							OrgID:  2,
 							LastID: 22,
