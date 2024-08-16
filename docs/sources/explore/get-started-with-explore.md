@@ -188,8 +188,6 @@ A shortened link that's not accessed automatically gets deleted after a [configu
 Available in Grafana 10.3 and later versions.
 {{< /admonition >}}
 
-<!-- Short links have two options: keeping relative time (for example, from two hours ago to now) or absolute time (for example, from 8am to 10am). Sharing a shortened link by default will copy the time range selected, relative or absolute. Clicking the dropdown button next to the share shortened link button and selecting one of the options under "Time-Sync URL Links" will allow you to create a short link with the absolute time - meaning anyone receiving the link will see the same data you are seeing, even if they open the link at another time. This will not affect your selected time range. -->
-
 Shortened links have two options: relative time (e.g., from two hours ago to now) or absolute time (e.g., from 8am to 10am). By default, sharing a shortened link copies the selected time range, whether it's relative or absolute.
 
 To create a short link with an absolute time:
