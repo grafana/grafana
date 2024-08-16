@@ -1,5 +1,6 @@
 import { produce } from 'immer';
 import { useEffect } from 'react';
+import { Validate } from 'react-hook-form';
 
 import { useDispatch } from 'app/types';
 
@@ -28,7 +29,6 @@ export interface NotificationTemplate {
   template: string;
   provenance: string;
 }
-
 export function useNotificationTemplates({ alertmanager }: BaseAlertmanagerArgs) {
   const { useGetAlertmanagerConfigurationQuery } = alertmanagerApi;
   const { useListNamespacedTemplateGroupQuery } = templatesApi;
@@ -170,13 +170,13 @@ export function useCreateNotificationTemplate({ alertmanager }: BaseAlertmanager
   async function createUsingK8sApi({ templateValues }: CreateTemplateParams) {
     const content = ensureDefine(templateValues.name, templateValues.content);
 
-    await createNamespacedTemplateGroup({
+    return createNamespacedTemplateGroup({
       namespace: getK8sNamespace(),
       comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup: {
         spec: { title: templateValues.name, content },
         metadata: {},
       },
-    });
+    }).unwrap();
   }
 
   return k8sApiSupported ? createUsingK8sApi : createUsingConfigFileApi;
@@ -230,14 +230,14 @@ export function useUpdateNotificationTemplate({ alertmanager }: BaseAlertmanager
   async function updateUsingK8sApi({ template, patch }: UpdateTemplateParams) {
     const content = ensureDefine(patch.name, patch.content);
 
-    await replaceNamespacedTemplateGroup({
+    return replaceNamespacedTemplateGroup({
       namespace: getK8sNamespace(),
       name: template.uid,
       comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup: {
         spec: { title: patch.name, content },
         metadata: { name: template.uid },
       },
-    });
+    }).unwrap();
   }
 
   return k8sApiSupported ? updateUsingK8sApi : updateUsingConfigFileApi;
@@ -270,13 +270,39 @@ export function useDeleteNotificationTemplate({ alertmanager }: BaseAlertmanager
   }
 
   async function deleteUsingK8sApi({ uid }: { uid: string }) {
-    await deleteNamespacedTemplateGroup({
+    return deleteNamespacedTemplateGroup({
       namespace: getK8sNamespace(),
       name: uid,
       ioK8SApimachineryPkgApisMetaV1DeleteOptions: {},
-    });
+    }).unwrap();
   }
 
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
   return k8sApiSupported ? deleteUsingK8sApi : deleteUsingConfigFileApi;
+}
+
+export function useValidateNotificationTemplate({ alertmanager }: BaseAlertmanagerArgs) {
+  const { useLazyGetAlertmanagerConfigurationQuery } = alertmanagerApi;
+  const [fetchAmConfig] = useLazyGetAlertmanagerConfigurationQuery();
+
+  const nameIsUnique: Validate<string, TemplateFormValues> = async (name) => {
+    const k8sApiSupported = shouldUseK8sApi(alertmanager);
+
+    if (!k8sApiSupported) {
+      const amConfig = await fetchAmConfig(alertmanager).unwrap();
+      const templates = amConfigToTemplates(amConfig);
+      const templateOfThisNameExists = templates.some((t) => t.name === name);
+
+      if (templateOfThisNameExists) {
+        return 'Another template with this name already exists';
+      }
+    }
+
+    // K8s API handle validation for us, so we can just return true
+    return true;
+  };
+
+  return {
+    nameIsUnique,
+  };
 }

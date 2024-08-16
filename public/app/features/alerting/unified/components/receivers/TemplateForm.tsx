@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { addMinutes, subDays, subHours } from 'date-fns';
 import { Location } from 'history';
 import { useRef, useState } from 'react';
-import { FormProvider, useForm, Validate } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import { useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -38,6 +38,7 @@ import {
   NotificationTemplate,
   useCreateNotificationTemplate,
   useUpdateNotificationTemplate,
+  useValidateNotificationTemplate,
 } from '../contact-points/useNotificationTemplates';
 
 import { PayloadEditor } from './PayloadEditor';
@@ -91,6 +92,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertManagerSourceName
 
   const createNewTemplate = useCreateNotificationTemplate({ alertmanager: alertManagerSourceName });
   const updateTemplate = useUpdateNotificationTemplate({ alertmanager: alertManagerSourceName });
+  const { nameIsUnique } = useValidateNotificationTemplate({ alertmanager: alertManagerSourceName });
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
   const formRef = useRef<HTMLFormElement>(null);
@@ -154,13 +156,6 @@ export const TemplateForm = ({ originalTemplate, prefill, alertManagerSourceName
     }
   };
 
-  // TODO Bring it back using async validation
-  // const validateNameIsUnique: Validate<string, TemplateFormValues> = (name: string) => {
-  //   return !config.template_files[name] || existing?.name === name
-  //     ? true
-  //     : 'Another template with this name already exists.';
-  // };
-
   const actionButtons = (
     <Stack>
       <Button onClick={() => formRef.current?.requestSubmit()} variant="primary" size="sm" disabled={isSubmitting}>
@@ -209,7 +204,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertManagerSourceName
               <Input
                 {...register('name', {
                   required: { value: true, message: 'Required.' },
-                  // validate: { nameIsUnique: validateNameIsUnique },
+                  validate: { nameIsUnique },
                 })}
                 placeholder="Give your template a name"
                 width={42}
