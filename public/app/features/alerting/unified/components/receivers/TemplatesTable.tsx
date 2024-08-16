@@ -26,11 +26,11 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
   const [expandedTemplates, setExpandedTemplates] = useState<Record<string, boolean>>({});
   const tableStyles = useStyles2(getAlertTableStyles);
 
-  const [templateToDelete, setTemplateToDelete] = useState<string>();
+  const [templateToDelete, setTemplateToDelete] = useState<NotificationTemplate | undefined>();
 
   const onDeleteTemplate = async () => {
     if (templateToDelete) {
-      await deleteTemplate({ name: templateToDelete });
+      await deleteTemplate({ uid: templateToDelete.uid });
     }
     setTemplateToDelete(undefined);
   };
@@ -64,16 +64,18 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
               <td colSpan={3}>No templates defined.</td>
             </tr>
           )}
-          {templates.map(({ name, template, provenance }, idx) => {
+          {templates.map((notificationTemplate, idx) => {
+            const { uid, name, template, provenance } = notificationTemplate;
+
             const isProvisioned = provenance !== PROVENANCE_NONE;
-            const isExpanded = expandedTemplates[name];
+            const isExpanded = expandedTemplates[uid];
             return (
-              <Fragment key={name}>
-                <tr key={name} className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
+              <Fragment key={uid}>
+                <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
                   <td>
                     <CollapseToggle
-                      isCollapsed={!expandedTemplates[name]}
-                      onToggle={() => setExpandedTemplates({ ...expandedTemplates, [name]: !isExpanded })}
+                      isCollapsed={!expandedTemplates[uid]}
+                      onToggle={() => setExpandedTemplates({ ...expandedTemplates, [uid]: !isExpanded })}
                     />
                   </td>
                   <td>
@@ -83,7 +85,7 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
                     {isProvisioned && (
                       <ActionIcon
                         to={makeAMLink(
-                          `/alerting/notifications/templates/${encodeURIComponent(name)}/edit`,
+                          `/alerting/notifications/templates/${encodeURIComponent(uid)}/edit`,
                           alertManagerName
                         )}
                         tooltip="view template"
@@ -94,7 +96,7 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
                       <Authorize actions={[AlertmanagerAction.UpdateNotificationTemplate]}>
                         <ActionIcon
                           to={makeAMLink(
-                            `/alerting/notifications/templates/${encodeURIComponent(name)}/edit`,
+                            `/alerting/notifications/templates/${encodeURIComponent(uid)}/edit`,
                             alertManagerName
                           )}
                           tooltip="edit template"
@@ -105,7 +107,7 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
                     <Authorize actions={[AlertmanagerAction.CreateContactPoint]}>
                       <ActionIcon
                         to={makeAMLink(
-                          `/alerting/notifications/templates/${encodeURIComponent(name)}/duplicate`,
+                          `/alerting/notifications/templates/${encodeURIComponent(uid)}/duplicate`,
                           alertManagerName
                         )}
                         tooltip="Copy template"
@@ -115,7 +117,7 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
                     {!isProvisioned && (
                       <Authorize actions={[AlertmanagerAction.DeleteNotificationTemplate]}>
                         <ActionIcon
-                          onClick={() => setTemplateToDelete(name)}
+                          onClick={() => setTemplateToDelete(notificationTemplate)}
                           tooltip="delete template"
                           icon="trash-alt"
                         />
@@ -153,7 +155,7 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
         <ConfirmModal
           isOpen={true}
           title="Delete template"
-          body={`Are you sure you want to delete template "${templateToDelete}"?`}
+          body={`Are you sure you want to delete template "${templateToDelete.name}"?`}
           confirmText="Yes, delete"
           onConfirm={onDeleteTemplate}
           onDismiss={() => setTemplateToDelete(undefined)}

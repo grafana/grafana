@@ -1,40 +1,69 @@
 import { RouteChildrenProps } from 'react-router-dom';
 
+import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
-import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { DuplicateTemplateView } from '../receivers/DuplicateTemplateView';
+import { generateCopiedName } from '../../utils/duplicate';
+import { stringifyErrorLike } from '../../utils/misc';
+import { updateDefinesWithUniqueValue } from '../../utils/templates';
+import { TemplateForm } from '../receivers/TemplateForm';
+
+import { useGetNotificationTemplate, useNotificationTemplates } from './useNotificationTemplates';
 
 type Props = RouteChildrenProps<{ name: string }>;
 
 const NewMessageTemplate = ({ match }: Props) => {
   const { selectedAlertmanager } = useAlertmanager();
-  const { data, isLoading, error } = useAlertmanagerConfig(selectedAlertmanager);
+  const templateUid = match?.params.name;
 
-  const name = match?.params.name;
-  if (!name) {
+  const {
+    currentData: template,
+    isLoading,
+    error,
+  } = useGetNotificationTemplate({ alertmanager: selectedAlertmanager ?? '', uid: templateUid ?? '' });
+
+  const {
+    currentData: templates,
+    isLoading: templatesLoading,
+    error: templatesError,
+  } = useNotificationTemplates({ alertmanager: selectedAlertmanager ?? '' });
+
+  if (!selectedAlertmanager) {
+    return <EntityNotFound entity="Alertmanager" />;
+  }
+
+  if (!templateUid) {
     return <EntityNotFound entity="Notification template" />;
   }
 
-  if (isLoading && !data) {
-    return 'loading...';
+  if (isLoading || templatesLoading) {
+    return <LoadingPlaceholder text="Loading notification template" />;
   }
 
-  // TODO decent error handling
-  if (error) {
-    return String(error);
+  if (error || templatesError) {
+    return (
+      <Alert title="Error loading notification template" severity="error">
+        {stringifyErrorLike(error)}
+      </Alert>
+    );
   }
 
-  if (!data) {
-    return null;
+  // In theory this should never happen. If not loading nor error, then we should have data.
+  if (!template) {
+    return (
+      <Alert title="Unable to load notification template" severity="error">
+        Unknown error. Could not load notification template.
+      </Alert>
+    );
   }
+
+  const duplicatedName = generateCopiedName(template.name, templates?.map((t) => t.name) ?? []);
 
   return (
-    <DuplicateTemplateView
-      alertManagerSourceName={selectedAlertmanager!}
-      config={data}
-      templateName={decodeURIComponent(name)}
+    <TemplateForm
+      alertManagerSourceName={selectedAlertmanager}
+      prefill={{ name: duplicatedName, content: updateDefinesWithUniqueValue(template.template) }}
     />
   );
 };

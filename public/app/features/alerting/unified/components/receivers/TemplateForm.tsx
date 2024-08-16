@@ -24,7 +24,7 @@ import {
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
-import { AlertManagerCortexConfig, TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
+import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { AppChromeUpdate } from '../../../../../core/components/AppChrome/AppChromeUpdate';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -35,6 +35,7 @@ import { initialAsyncRequestState } from '../../utils/redux';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHeader';
 import {
+  NotificationTemplate,
   useCreateNotificationTemplate,
   useUpdateNotificationTemplate,
 } from '../contact-points/useNotificationTemplates';
@@ -56,11 +57,11 @@ export const defaults: TemplateFormValues = Object.freeze({
 });
 
 interface Props {
-  existing?: TemplateFormValues;
-  // config: AlertManagerCortexConfig;
+  originalTemplate?: NotificationTemplate;
+  prefill?: TemplateFormValues;
   alertManagerSourceName: string;
-  provenance: string;
 }
+
 export const isDuplicating = (location: Location) => location.pathname.endsWith('/duplicate');
 
 /**
@@ -83,7 +84,7 @@ export const isDuplicating = (location: Location) => location.pathname.endsWith(
  * │                   ││           │
  * └───────────────────┘└───────────┘
  */
-export const TemplateForm = ({ existing, alertManagerSourceName, provenance }: Props) => {
+export const TemplateForm = ({ originalTemplate, prefill, alertManagerSourceName }: Props) => {
   const styles = useStyles2(getStyles);
 
   const appNotification = useAppNotification();
@@ -102,7 +103,10 @@ export const TemplateForm = ({ existing, alertManagerSourceName, provenance }: P
   const [payload, setPayload] = useState(defaultPayloadString);
   const [payloadFormatError, setPayloadFormatError] = useState<string | null>(null);
 
-  const isProvisioned = provenance !== PROVENANCE_NONE;
+  const isProvisioned = Boolean(originalTemplate?.provenance) && originalTemplate?.provenance !== PROVENANCE_NONE;
+  const originalTemplatePrefill = originalTemplate
+    ? { name: originalTemplate.name, content: originalTemplate.template }
+    : undefined;
 
   // splitter for template and payload editor
   const columnSplitter = useSplitter({
@@ -122,7 +126,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, provenance }: P
 
   const formApi = useForm<TemplateFormValues>({
     mode: 'onSubmit',
-    defaultValues: existing ?? defaults,
+    defaultValues: prefill ?? originalTemplatePrefill ?? defaults,
   });
   const {
     handleSubmit,
@@ -139,10 +143,10 @@ export const TemplateForm = ({ existing, alertManagerSourceName, provenance }: P
     });
 
     try {
-      if (!existing) {
-        await createNewTemplate({ template: values });
+      if (!originalTemplate) {
+        await createNewTemplate({ templateValues: values });
       } else {
-        await updateTemplate({ originalName: existing.name, template: values });
+        await updateTemplate({ template: originalTemplate, patch: values });
       }
       locationService.push(returnLink);
     } catch (error) {

@@ -17,7 +17,7 @@ const EditMessageTemplate = ({ match }: Props) => {
   const { selectedAlertmanager } = useAlertmanager();
   const { currentData, isLoading, error } = useGetNotificationTemplate({
     alertmanager: selectedAlertmanager ?? '',
-    name: templateName ?? '',
+    uid: templateName ?? '',
   });
 
   if (!templateName) {
@@ -40,15 +40,7 @@ const EditMessageTemplate = ({ match }: Props) => {
     return <EntityNotFound entity="Notification template" />;
   }
 
-  const { name, template, provenance } = currentData;
-  return (
-    <TemplateForm
-      alertManagerSourceName={selectedAlertmanager ?? ''}
-      // config={config}
-      existing={{ name, content: template }}
-      provenance={provenance}
-    />
-  );
+  return <TemplateForm alertManagerSourceName={selectedAlertmanager ?? ''} originalTemplate={currentData} />;
 };
 
 export default EditMessageTemplate;
