@@ -19,7 +19,7 @@ export type Option = {
 };
 
 interface ComboboxProps
-  extends Omit<InputProps, 'width' | 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange'> {
+  extends Omit<InputProps, 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange'> {
   onChange: (val: Option | null) => void;
   value: Value | null;
   options: Option[];
@@ -45,7 +45,7 @@ function estimateSize() {
   return 60;
 }
 
-export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxProps) => {
+export const Combobox = ({ options, onChange, value, id, ...restProps }: ComboboxProps) => {
   const MIN_WIDTH = 400;
   const [items, setItems] = useState(options);
   const selectedItem = useMemo(() => options.find((option) => option.value === value) || null, [options, value]);
@@ -61,31 +61,41 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
     overscan: 2,
   });
 
-  const { getInputProps, getMenuProps, getItemProps, isOpen, highlightedIndex, setInputValue, selectItem } =
-    useCombobox({
-      items,
-      itemToString,
-      selectedItem,
-      scrollIntoView: () => {},
-      onInputValueChange: ({ inputValue }) => {
-        setItems(options.filter(itemFilter(inputValue)));
-      },
-      onIsOpenChange: ({ isOpen }) => {
-        // Default to displaying all values when opening
-        if (isOpen) {
-          setItems(options);
-          return;
-        }
-      },
-      onSelectedItemChange: ({ selectedItem }) => {
-        onChange(selectedItem);
-      },
-      onHighlightedIndexChange: ({ highlightedIndex, type }) => {
-        if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
-          rowVirtualizer.scrollToIndex(highlightedIndex);
-        }
-      },
-    });
+  const {
+    getInputProps,
+    getMenuProps,
+    getItemProps,
+    isOpen,
+    highlightedIndex,
+    setInputValue,
+    selectItem,
+    openMenu,
+    closeMenu,
+  } = useCombobox({
+    inputId: id,
+    items,
+    itemToString,
+    selectedItem,
+    scrollIntoView: () => {},
+    onInputValueChange: ({ inputValue }) => {
+      setItems(options.filter(itemFilter(inputValue)));
+    },
+    onIsOpenChange: ({ isOpen }) => {
+      // Default to displaying all values when opening
+      if (isOpen) {
+        setItems(options);
+        return;
+      }
+    },
+    onSelectedItemChange: ({ selectedItem }) => {
+      onChange(selectedItem);
+    },
+    onHighlightedIndexChange: ({ highlightedIndex, type }) => {
+      if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
+        rowVirtualizer.scrollToIndex(highlightedIndex);
+      }
+    },
+  });
 
   const onBlur = useCallback(() => {
     setInputValue(selectedItem?.label ?? '');
@@ -122,6 +132,7 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
                 className={styles.clear}
                 title={t('combobox.clear.title', 'Clear value')}
                 tabIndex={0}
+                role="button"
                 onClick={() => {
                   selectItem(null);
                 }}
@@ -132,7 +143,16 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
                 }}
               />
             )}
-            <Icon name={isOpen ? 'search' : 'angle-down'} />
+            <Icon
+              name={isOpen ? 'search' : 'angle-down'}
+              onClick={() => {
+                if (isOpen) {
+                  openMenu();
+                } else {
+                  closeMenu();
+                }
+              }}
+            />
           </>
         }
         {...restProps}
