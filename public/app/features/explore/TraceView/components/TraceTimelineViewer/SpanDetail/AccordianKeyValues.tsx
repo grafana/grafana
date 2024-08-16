@@ -89,6 +89,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
 export type AccordianKeyValuesProps = {
   className?: string | TNil;
   data: TraceKeyValuePair[];
+  logName?: string;
   highContrast?: boolean;
   interactive?: boolean;
   isOpen: boolean;
@@ -126,6 +127,7 @@ export function KeyValuesSummary({ data = null }: KeyValuesSummaryProps) {
 export default function AccordianKeyValues({
   className = null,
   data,
+  logName,
   highContrast = false,
   interactive = true,
   isOpen,
@@ -138,6 +140,7 @@ export default function AccordianKeyValues({
   const iconCls = cx(alignIcon, { [styles.emptyIcon]: isEmpty });
   let arrow: React.ReactNode | null = null;
   let headerProps: {} | null = null;
+  const tableFields = logName ? [{ key: 'event name', value: logName }, ...data] : data;
   if (interactive) {
     arrow = isOpen ? (
       <Icon name={'angle-down'} className={iconCls} />
@@ -174,7 +177,7 @@ export default function AccordianKeyValues({
           </span>
         )}
       </div>
-      {isOpen && <KeyValuesTable data={data} linksGetter={linksGetter} />}
+      {isOpen && <KeyValuesTable data={tableFields} linksGetter={linksGetter} />}
     </div>
   );
 }
