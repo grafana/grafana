@@ -29,7 +29,7 @@ var (
 )
 
 type sqlQuery struct {
-	*sqltemplate.SQLTemplate
+	sqltemplate.SQLTemplateIface
 	Query *DashboardQuery
 }
 

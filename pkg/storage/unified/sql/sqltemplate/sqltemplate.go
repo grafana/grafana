@@ -11,21 +11,25 @@ import (
 var (
 	ErrValidationNotImplemented = errors.New("validation not implemented")
 	ErrSQLTemplateNoSerialize   = errors.New("SQLTemplate should not be serialized")
+
+	// Make sure SQLTemplate implements the interface
+	_ SQLTemplateIface = (*SQLTemplate)(nil)
 )
 
 // SQLTemplate provides comprehensive support for SQL templating, handling
 // dialect traits, execution arguments and scanning arguments.
 type SQLTemplate struct {
 	Dialect
-	Args
-	ScanDest
+	*Args
+	*ScanDest
 }
 
 // New returns a nee *SQLTemplate that will use the given dialect.
 func New(d Dialect) *SQLTemplate {
 	ret := new(SQLTemplate)
+	ret.ScanDest = new(ScanDest)
+	ret.Args = NewArgs(d)
 	ret.SetDialect(d)
-
 	return ret
 }
 

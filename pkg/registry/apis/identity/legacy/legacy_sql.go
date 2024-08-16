@@ -55,8 +55,8 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 	}
 
 	req := sqlQueryListTeams{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Query:       &query,
+		SQLTemplateIface: sqltemplate.New(s.dialect),
+		Query:            &query,
 	}
 
 	rawQuery, err := sqltemplate.Execute(sqlQueryTeams, req)
@@ -117,8 +117,8 @@ func (s *legacySQLStore) ListUsers(ctx context.Context, ns claims.NamespaceInfo,
 	}
 
 	return s.queryUsers(ctx, sqlQueryUsers, sqlQueryListUsers{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Query:       &query,
+		SQLTemplateIface: sqltemplate.New(s.dialect),
+		Query:            &query,
 	}, limit, query.UID != "")
 }
 
@@ -180,7 +180,7 @@ func (s *legacySQLStore) GetDisplay(ctx context.Context, ns claims.NamespaceInfo
 	}
 
 	return s.queryUsers(ctx, sqlQueryDisplay, sqlQueryGetDisplay{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Query:       &query,
+		SQLTemplateIface: sqltemplate.New(s.dialect),
+		Query:            &query,
 	}, 10000, false)
 }
