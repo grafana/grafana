@@ -19,6 +19,7 @@ type corePlugin struct {
 	backend.QueryDataHandler
 	backend.StreamHandler
 	backend.AdmissionHandler
+	backend.ConversionHandler
 }
 
 // New returns a new backendplugin.PluginFactoryFunc for creating a core (built-in) backendplugin.Plugin.
@@ -143,10 +144,10 @@ func (cp *corePlugin) ValidateAdmission(ctx context.Context, req *backend.Admiss
 	return nil, plugins.ErrMethodNotImplemented
 }
 
-func (cp *corePlugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+func (cp *corePlugin) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	if cp.AdmissionHandler != nil {
 		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
-		return cp.AdmissionHandler.ConvertObject(ctx, req)
+		return cp.ConversionHandler.ConvertObjects(ctx, req)
 	}
 	return nil, plugins.ErrMethodNotImplemented
 }
