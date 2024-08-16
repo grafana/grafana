@@ -299,6 +299,8 @@ export * from './PanelChrome/types';
 export { Label as BrowserLabel } from './BrowserLabel/Label';
 export { PanelContainer } from './PanelContainer/PanelContainer';
 
+export { Combobox } from './Combobox/Combobox';
+
 // -----------------------------------------------------
 // Graveyard: exported, but no longer used internally
 // These will be removed in the future

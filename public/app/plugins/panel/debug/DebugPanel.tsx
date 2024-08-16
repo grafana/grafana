@@ -1,30 +1,55 @@
-import { Component } from 'react';
+import { useMemo, useState } from 'react';
 
-import { PanelProps } from '@grafana/data';
+import { PanelProps, SelectableValue } from '@grafana/data';
+import { RadioButtonGroup } from '@grafana/ui';
 
-import { CursorView } from './CursorView';
-import { EventBusLoggerPanel } from './EventBusLogger';
-import { RenderInfoViewer } from './RenderInfoViewer';
-import { StateView } from './StateView';
-import { Options, DebugMode } from './panelcfg.gen';
+import { ComboBox } from './ComboBox';
+import { ReactWindow } from './ReactWindow';
+import { ReactWindowNativeScroll } from './ReactWindowNativeScroll';
+import { SelectThing } from './SelectThing';
+import { Options } from './panelcfg.gen';
 
 type Props = PanelProps<Options>;
 
-export class DebugPanel extends Component<Props> {
-  render() {
-    const { options } = this.props;
+const randStr = (len = 7) => Math.random().toString(36).slice(-len);
 
-    switch (options.mode) {
-      case DebugMode.Events:
-        return <EventBusLoggerPanel eventBus={this.props.eventBus} />;
-      case DebugMode.Cursor:
-        return <CursorView eventBus={this.props.eventBus} />;
-      case DebugMode.State:
-        return <StateView {...this.props} />;
-      case DebugMode.ThrowError:
-        throw new Error('I failed you and for that i am deeply sorry');
-      default:
-        return <RenderInfoViewer {...this.props} />;
-    }
-  }
-}
+const radioOpts: SelectableValue[] = [
+  { label: 'Nothing', value: 'nothing' },
+  { label: 'Select', value: 'select' },
+  { label: 'Combobox', value: 'combobox' },
+  { label: 'react-window', value: 'reactwindow' },
+  { label: 'react-window-native', value: 'reactwindow2' },
+];
+
+const genData = (length = 200_000) => {
+  console.time('gen options');
+
+  let list = Array.from({ length }, (_, i) => `${i + 1}: ${randStr()}`);
+  let opts = list.map((v) => ({ label: v, value: v }));
+
+  console.timeEnd('gen options');
+
+  return { list, opts };
+};
+
+export const DebugPanel = (props: Props) => {
+  const [selected, setSelected] = useState('nothing');
+
+  const { list, opts } = useMemo(
+    () => genData(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [props.data]
+  );
+
+  return (
+    <>
+      <div>
+        <RadioButtonGroup options={radioOpts} value={selected} onChange={setSelected} />
+      </div>
+      {selected === 'select' && <SelectThing data={opts} />}
+      {selected === 'combobox' && <ComboBox data={opts} />}
+      {selected === 'reactwindow' && <ReactWindow data={list} />}
+      {selected === 'reactwindow2' && <ReactWindowNativeScroll data={list} />}
+    </>
+  );
+};

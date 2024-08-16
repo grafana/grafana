@@ -68,7 +68,10 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
       selectedItem,
       scrollIntoView: () => {},
       onInputValueChange: ({ inputValue }) => {
-        setItems(options.filter(itemFilter(inputValue)));
+        console.time('filter');
+        let items = options.filter(itemFilter(inputValue));
+        setItems(items);
+        console.timeEnd('filter');
       },
       onIsOpenChange: ({ isOpen }) => {
         // Default to displaying all values when opening
