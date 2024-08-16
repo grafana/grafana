@@ -3,6 +3,7 @@ package schema
 import (
 	"testing"
 
+	"github.com/openfga/language/pkg/go/transformer"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -125,7 +126,13 @@ type role
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			assert.Equal(t, tt.expected, EqualModels(tt.a, tt.b))
+			modelA, err := transformer.TransformDSLToProto(tt.a)
+			assert.NoError(t, err)
+
+			modelB, err := transformer.TransformDSLToProto(tt.b)
+			assert.NoError(t, err)
+
+			assert.Equal(t, tt.expected, EqualModels(modelA, modelB))
 		})
 	}
 }
