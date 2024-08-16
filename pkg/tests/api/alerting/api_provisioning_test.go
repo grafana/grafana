@@ -780,7 +780,7 @@ func TestMuteTimings(t *testing.T) {
 			},
 			MuteTimeIntervals: []string{anotherMuteTiming.Name},
 		})
-		status, response = apiClient.UpdateRouteWithStatus(t, route)
+		status, response = apiClient.UpdateRouteWithStatus(t, route, false)
 		requireStatusCode(t, http.StatusAccepted, status, response)
 
 		status, response = apiClient.DeleteMuteTimingWithStatus(t, anotherMuteTiming.Name)

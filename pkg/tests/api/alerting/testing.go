@@ -783,7 +783,15 @@ func (a apiClient) GetRouteWithStatus(t *testing.T) (apimodels.Route, int, strin
 	return sendRequest[apimodels.Route](t, req, http.StatusOK)
 }
 
-func (a apiClient) UpdateRouteWithStatus(t *testing.T, route apimodels.Route) (int, string) {
+func (a apiClient) GetRoute(t *testing.T) apimodels.Route {
+	t.Helper()
+
+	route, status, data := a.GetRouteWithStatus(t)
+	requireStatusCode(t, http.StatusOK, status, data)
+	return route
+}
+
+func (a apiClient) UpdateRouteWithStatus(t *testing.T, route apimodels.Route, noProvenance bool) (int, string) {
 	t.Helper()
 
 	buf := bytes.Buffer{}
@@ -793,6 +801,9 @@ func (a apiClient) UpdateRouteWithStatus(t *testing.T, route apimodels.Route) (i
 
 	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/v1/provisioning/policies", a.url), &buf)
 	req.Header.Add("Content-Type", "application/json")
+	if noProvenance {
+		req.Header.Add("X-Disable-Provenance", "true")
+	}
 	require.NoError(t, err)
 
 	client := &http.Client{}
@@ -805,6 +816,12 @@ func (a apiClient) UpdateRouteWithStatus(t *testing.T, route apimodels.Route) (i
 	require.NoError(t, err)
 
 	return resp.StatusCode, string(body)
+}
+
+func (a apiClient) UpdateRoute(t *testing.T, route apimodels.Route, noProvenance bool) {
+	t.Helper()
+	status, data := a.UpdateRouteWithStatus(t, route, noProvenance)
+	requireStatusCode(t, http.StatusAccepted, status, data)
 }
 
 func (a apiClient) GetRuleHistoryWithStatus(t *testing.T, ruleUID string) (data.Frame, int, string) {
@@ -877,6 +894,7 @@ func (a apiClient) GetActiveAlertsWithStatus(t *testing.T) (apimodels.AlertGroup
 }
 
 func sendRequest[T any](t *testing.T, req *http.Request, successStatusCode int) (T, int, string) {
+	t.Helper()
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	require.NoError(t, err)
@@ -898,5 +916,6 @@ func sendRequest[T any](t *testing.T, req *http.Request, successStatusCode int) 
 }
 
 func requireStatusCode(t *testing.T, expected, actual int, response string) {
+	t.Helper()
 	require.Equalf(t, expected, actual, "Unexpected status. Response: %s", response)
 }
