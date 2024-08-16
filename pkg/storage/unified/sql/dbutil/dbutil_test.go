@@ -441,7 +441,7 @@ func TestExec(t *testing.T) {
 
 		// test declarations
 		ctx := testutil.NewDefaultTestContext(t)
-		req := sqltemplateMocks.NewSQLTemplateIface(t)
+		req := sqltemplateMocks.NewSQLTemplate(t)
 		rdb := test.NewDBProviderNopSQL(t)
 
 		// setup expectations
@@ -460,7 +460,7 @@ func TestExec(t *testing.T) {
 
 		// test declarations
 		ctx := testutil.NewDefaultTestContext(t)
-		req := sqltemplateMocks.NewSQLTemplateIface(t)
+		req := sqltemplateMocks.NewSQLTemplate(t)
 		rdb := test.NewDBProviderNopSQL(t)
 
 		// setup expectations
@@ -478,7 +478,7 @@ func TestExec(t *testing.T) {
 
 		// test declarations
 		ctx := testutil.NewDefaultTestContext(t)
-		req := sqltemplateMocks.NewSQLTemplateIface(t)
+		req := sqltemplateMocks.NewSQLTemplate(t)
 		rdb := test.NewDBProviderNopSQL(t)
 
 		// setup expectations
@@ -496,7 +496,7 @@ func TestExec(t *testing.T) {
 
 		// test declarations
 		ctx := testutil.NewDefaultTestContext(t)
-		req := sqltemplateMocks.NewSQLTemplateIface(t)
+		req := sqltemplateMocks.NewSQLTemplate(t)
 		rdb := test.NewDBProviderNopSQL(t)
 
 		// setup expectations

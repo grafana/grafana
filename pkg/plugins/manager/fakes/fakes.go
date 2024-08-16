@@ -72,7 +72,7 @@ type FakePluginClient struct {
 	backend.CallResourceHandlerFunc
 	backend.MutateAdmissionFunc
 	backend.ValidateAdmissionFunc
-	backend.ConvertObjectFunc
+	backend.ConvertObjectsFunc
 	mutex sync.RWMutex
 
 	backendplugin.Plugin
@@ -185,9 +185,9 @@ func (pc *FakePluginClient) MutateAdmission(ctx context.Context, req *backend.Ad
 	return nil, plugins.ErrMethodNotImplemented
 }
 
-func (pc *FakePluginClient) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	if pc.ConvertObjectFunc != nil {
-		return pc.ConvertObjectFunc(ctx, req)
+func (pc *FakePluginClient) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	if pc.ConvertObjectsFunc != nil {
+		return pc.ConvertObjectsFunc(ctx, req)
 	}
 
 	return nil, plugins.ErrMethodNotImplemented
