@@ -5,7 +5,6 @@ import (
 	"text/template"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 )
 
@@ -17,7 +16,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "simple",
 					Data: &sqlResourceRequest{
-						SQLTemplateIface: &mocks.SQLTemplateIface{},
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
 						WriteEvent: resource.WriteEvent{
 							Key: &resource.ResourceKey{
 								Namespace: "nn",
@@ -33,7 +32,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "simple",
 					Data: &sqlResourceRequest{
-						SQLTemplateIface: &mocks.SQLTemplateIface{},
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
 						WriteEvent: resource.WriteEvent{
 							Key: &resource.ResourceKey{
 								Namespace: "nn",
@@ -51,7 +50,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "single path",
 					Data: &sqlResourceRequest{
-						SQLTemplateIface: &mocks.SQLTemplateIface{},
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
 						WriteEvent: resource.WriteEvent{
 							Key: &resource.ResourceKey{},
 						},
@@ -62,7 +61,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "without_resource_version",
 					Data: &sqlResourceReadRequest{
-						SQLTemplate: new(sqltemplate.SQLTemplate),
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
 						Request: &resource.ReadRequest{
 							Key: &resource.ResourceKey{},
 						},
@@ -75,7 +74,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "filter_on_namespace",
 					Data: &sqlResourceListRequest{
-						SQLTemplate: new(sqltemplate.SQLTemplate),
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
 						Request: &resource.ListRequest{
 							Limit: 10,
 							Options: &resource.ListOptions{
@@ -92,7 +91,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "single path",
 					Data: &sqlResourceHistoryListRequest{
-						SQLTemplate: new(sqltemplate.SQLTemplate),
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
 						Request: &historyListRequest{
 							Limit: 10,
 							Options: &resource.ListOptions{
@@ -110,7 +109,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "single path",
 					Data: &sqlResourceUpdateRVRequest{
-						SQLTemplate: new(sqltemplate.SQLTemplate),
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
 					},
 				},
 			},
@@ -119,7 +118,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "single path",
 					Data: &sqlResourceReadRequest{
-						SQLTemplate: new(sqltemplate.SQLTemplate),
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
 						Request: &resource.ReadRequest{
 							ResourceVersion: 123,
 							Key:             &resource.ResourceKey{},
@@ -133,7 +132,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "single path",
 					Data: &sqlResourceUpdateRVRequest{
-						SQLTemplate: new(sqltemplate.SQLTemplate),
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
 					},
 				},
 			},
@@ -142,7 +141,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "insert into resource_history",
 					Data: &sqlResourceRequest{
-						SQLTemplateIface: &mocks.SQLTemplateIface{},
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
 						WriteEvent: resource.WriteEvent{
 							Key: &resource.ResourceKey{},
 						},
@@ -154,9 +153,9 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "single path",
 					Data: &sqlResourceVersionRequest{
-						SQLTemplate:     new(sqltemplate.SQLTemplate),
-						resourceVersion: new(resourceVersion),
-						ReadOnly:        false,
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						resourceVersion:  new(resourceVersion),
+						ReadOnly:         false,
 					},
 				},
 			},
@@ -165,7 +164,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "increment resource version",
 					Data: &sqlResourceVersionRequest{
-						SQLTemplate: new(sqltemplate.SQLTemplate),
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
 						resourceVersion: &resourceVersion{
 							ResourceVersion: 123,
 						},
@@ -177,7 +176,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "single path",
 					Data: &sqlResourceVersionRequest{
-						SQLTemplate: new(sqltemplate.SQLTemplate),
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
 					},
 				},
 			},
