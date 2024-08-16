@@ -10,8 +10,6 @@ import { AsyncSelect, Select } from '@grafana/ui';
 import { truncateResult } from '../../language_utils';
 import { QueryBuilderLabelFilter } from '../shared/types';
 
-import { PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './MetricSelect';
-
 export interface LabelFilterItemProps {
   defaultOp: string;
   item: Partial<QueryBuilderLabelFilter>;
