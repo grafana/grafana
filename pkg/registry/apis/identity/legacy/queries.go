@@ -32,7 +32,7 @@ var (
 )
 
 type sqlQueryListUsers struct {
-	*sqltemplate.SQLTemplate
+	sqltemplate.SQLTemplate
 	Query        *ListUserQuery
 	UserTable    string
 	OrgUserTable string
@@ -52,7 +52,7 @@ func (r sqlQueryListUsers) Validate() error {
 }
 
 type sqlQueryListTeams struct {
-	*sqltemplate.SQLTemplate
+	sqltemplate.SQLTemplate
 	Query     *ListTeamQuery
 	TeamTable string
 }

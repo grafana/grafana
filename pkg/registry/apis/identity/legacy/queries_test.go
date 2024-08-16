@@ -1,37 +1,14 @@
 package legacy
 
 import (
-	"embed"
-	"os"
-	"path/filepath"
 	"testing"
 	"text/template"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 )
 
-//go:embed testdata/*
-var testdataFS embed.FS
-
-func testdata(t *testing.T, filename string) []byte {
-	t.Helper()
-	b, err := testdataFS.ReadFile(`testdata/` + filename)
-	if err != nil {
-		writeTestData(filename, "<empty>")
-		assert.Fail(t, "missing test file")
-	}
-	return b
-}
-
-func writeTestData(filename, value string) {
-	_ = os.WriteFile(filepath.Join("testdata", filename), []byte(value), 0777)
-}
-
 func TestQueries(t *testing.T) {
+<<<<<<< HEAD
 	t.Parallel()
 
 	userTableValue := "grafana.user"
@@ -85,32 +62,109 @@ func TestQueries(t *testing.T) {
 					SQLTemplate: new(sqltemplate.SQLTemplate),
 					Query: &ListTeamQuery{
 						UID: "abc",
+=======
+	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
+		RootDir: "testdata",
+		Templates: map[*template.Template][]mocks.TemplateTestCase{
+			sqlQueryTeams: {
+				{
+					Name: "teams_uid",
+					Data: &sqlQueryListTeams{
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						Query: &ListTeamQuery{
+							UID: "abc",
+						},
+					},
+				},
+				{
+					Name: "teams_page_1",
+					Data: &sqlQueryListTeams{
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						Query: &ListTeamQuery{
+							Limit: 5,
+						},
+					},
+				},
+				{
+					Name: "teams_page_2",
+					Data: &sqlQueryListTeams{
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						Query: &ListTeamQuery{
+							ContinueID: 1,
+							Limit:      2,
+						},
+>>>>>>> origin/main
 					},
 					TeamTable: teamTableValue,
 				},
 			},
-			{
-				Name: "teams_page_1",
-				Data: &sqlQueryListTeams{
-					SQLTemplate: new(sqltemplate.SQLTemplate),
-					Query: &ListTeamQuery{
-						Limit: 5,
+			sqlQueryUsers: {
+				{
+					Name: "users_uid",
+					Data: &sqlQueryListUsers{
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						Query: &ListUserQuery{
+							UID: "abc",
+						},
+					},
+				},
+				{
+					Name: "users_page_1",
+					Data: &sqlQueryListUsers{
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						Query: &ListUserQuery{
+							Limit: 5,
+						},
+					},
+				},
+				{
+					Name: "users_page_2",
+					Data: &sqlQueryListUsers{
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						Query: &ListUserQuery{
+							ContinueID: 1,
+							Limit:      2,
+						},
 					},
 					TeamTable: teamTableValue,
 				},
 			},
-			{
-				Name: "teams_page_2",
-				Data: &sqlQueryListTeams{
-					SQLTemplate: new(sqltemplate.SQLTemplate),
-					Query: &ListTeamQuery{
-						ContinueID: 1,
-						Limit:      2,
+			sqlQueryDisplay: {
+				{
+					Name: "display_uids",
+					Data: &sqlQueryGetDisplay{
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						Query: &GetUserDisplayQuery{
+							OrgID: 2,
+							UIDs:  []string{"a", "b"},
+						},
+					},
+				},
+				{
+					Name: "display_ids",
+					Data: &sqlQueryGetDisplay{
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						Query: &GetUserDisplayQuery{
+							OrgID: 2,
+							IDs:   []int64{1, 2},
+						},
+					},
+				},
+				{
+					Name: "display_ids_uids",
+					Data: &sqlQueryGetDisplay{
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						Query: &GetUserDisplayQuery{
+							OrgID: 2,
+							UIDs:  []string{"a", "b"},
+							IDs:   []int64{1, 2},
+						},
 					},
 					TeamTable: teamTableValue,
 				},
 			},
 		},
+<<<<<<< HEAD
 		sqlQueryUsers: {
 			{
 				Name: "users_uid",
@@ -223,4 +277,7 @@ func TestQueries(t *testing.T) {
 			}
 		})
 	}
+=======
+	})
+>>>>>>> origin/main
 }
