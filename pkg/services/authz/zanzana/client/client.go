@@ -29,16 +29,15 @@ func WithLogger(logger log.Logger) ClientOption {
 	}
 }
 
-func WithSchema(dsl string) ClientOption {
+func WithSchema(modules []transformer.ModuleFile) ClientOption {
 	return func(c *Client) {
-		c.dsl = dsl
+		c.modules = modules
 	}
 }
 
 type Client struct {
 	logger   log.Logger
 	client   openfgav1.OpenFGAServiceClient
-	dsl      string
 	modules  []transformer.ModuleFile
 	tenantID string
 	storeID  string
@@ -62,11 +61,7 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 		c.tenantID = "stack-default"
 	}
 
-	// if c.dsl == "" {
-	// 	c.dsl = schema.DSL
-	// }
-
-	if len(c.modules) == 0 {
+	if c.modules == nil || len(c.modules) == 0 {
 		c.modules = schema.SchemaModules
 	}
 
