@@ -18,7 +18,7 @@ import { RestoreModal } from './RestoreModal';
 export function RecentlyDeletedActions() {
   const dispatch = useDispatch();
   const selectedItemsState = useActionSelectionState();
-  const [, stateManager] = useRecentlyDeletedStateManager();
+  const [searchState, stateManager] = useRecentlyDeletedStateManager();
 
   const [restoreDashboard, { isLoading: isRestoreLoading }] = useRestoreDashboardMutation();
   const [deleteDashboard, { isLoading: isDeleteLoading }] = useHardDeleteDashboardMutation();
@@ -28,6 +28,17 @@ export function RecentlyDeletedActions() {
       .filter(([_, selected]) => selected)
       .map(([uid]) => uid);
   }, [selectedItemsState.dashboard]);
+
+  const dashboardOrigin: { [key: string]: string } = {};
+  if (searchState.result) {
+    const originalLocations = selectedDashboards.map((selectedDashboard) => {
+      const index = searchState.result.view.fields.uid.values.findIndex((e) => e === selectedDashboard);
+      return searchState.result?.view.fields.location.values[index];
+    });
+    selectedDashboards.map((selectedDashboard, index) => {
+      dashboardOrigin[selectedDashboard] = originalLocations[index];
+    });
+  }
 
   const onActionComplete = () => {
     dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
@@ -82,6 +93,7 @@ export function RecentlyDeletedActions() {
         component: RestoreModal,
         props: {
           selectedDashboards,
+          dashboardOrigin,
           onConfirm: onRestore,
           isLoading: isRestoreLoading,
         },

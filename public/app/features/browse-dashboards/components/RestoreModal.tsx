@@ -11,12 +11,28 @@ export interface RestoreModalProps {
   onConfirm: (restoreTarget: string) => Promise<void>;
   onDismiss: () => void;
   selectedDashboards: string[];
+  dashboardOrigin: { [key: string]: string };
   isLoading: boolean;
 }
 
-export const RestoreModal = ({ onConfirm, onDismiss, selectedDashboards, isLoading, ...props }: RestoreModalProps) => {
+export const RestoreModal = ({
+  onConfirm,
+  onDismiss,
+  selectedDashboards,
+  dashboardOrigin,
+  isLoading,
+  ...props
+}: RestoreModalProps) => {
   const [restoreTarget, setRestoreTarget] = useState<string>();
   const numberOfDashboards = selectedDashboards.length;
+
+  console.log(dashboardOrigin);
+  // console.log(dashboardOrigin.selectedDashboards[0])
+  // useEffect(()=>{
+  //    if (dashboardOrigin.selectedDashboards[0] !== 'general'){
+  //    setRestoreTarget(dashboardOrigin.selectedDashboards[0])
+  //   }
+  // },[dashboardOrigin, selectedDashboards])
 
   const onRestore = async () => {
     reportInteraction('grafana_restore_confirm_clicked', {
