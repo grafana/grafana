@@ -362,7 +362,7 @@ func (ng *AlertNG) init() error {
 		AppURL:               appUrl,
 		EvaluatorFactory:     evalFactory,
 		RuleStore:            ng.store,
-		FeatureToggles:       ng.FeatureToggles,
+		RecordingRulesCfg:    ng.Cfg.UnifiedAlerting.RecordingRules,
 		Metrics:              ng.Metrics.GetSchedulerMetrics(),
 		AlertSender:          alertsRouter,
 		Tracer:               ng.tracer,
@@ -667,7 +667,7 @@ func createRemoteAlertmanager(cfg remote.AlertmanagerConfig, kvstore kvstore.KVS
 func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, clock clock.Clock, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {
 	logger := log.New("ngalert.writer")
 
-	if featureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
+	if settings.Enabled {
 		return writer.NewPrometheusWriter(settings, httpClientProvider, clock, logger, m)
 	}
 
