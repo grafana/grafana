@@ -67,7 +67,7 @@ func authorize(c *contextmodel.ReqContext, ac AccessControl, user identity.Reque
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
 
-	injected, err := evaluator.MutateScopes(c.Req.Context(), scopeInjector(scopeParams{
+	injected, err := evaluator.MutateScopes(ctx, scopeInjector(scopeParams{
 		OrgID:     user.GetOrgID(),
 		URLParams: web.Params(c.Req),
 	}))
@@ -76,7 +76,7 @@ func authorize(c *contextmodel.ReqContext, ac AccessControl, user identity.Reque
 		return
 	}
 
-	hasAccess, err := ac.Evaluate(c.Req.Context(), user, injected)
+	hasAccess, err := ac.Evaluate(ctx, user, injected)
 	if !hasAccess || err != nil {
 		deny(c, injected, err)
 		return
