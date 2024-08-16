@@ -11,11 +11,17 @@ import { ShareSnapshotTab } from '../../ShareSnapshotTab';
 
 import { CreateSnapshot } from './CreateSnapshot';
 import { SnapshotActions } from './SnapshotActions';
+import { ShareView } from '../../types';
+import { locationService } from '@grafana/runtime';
 
 const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareSnapshot;
 
-export class ShareSnapshot extends ShareSnapshotTab {
+export class ShareSnapshot extends ShareSnapshotTab implements ShareView {
   static Component = ShareSnapshotRenderer;
+
+  public getTabLabel() {
+    return t('share-dashboard.menu.share-externally-title', 'Share externally');
+  }
 }
 
 function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
@@ -23,7 +29,7 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
   const [showDeletedAlert, setShowDeletedAlert] = useState(false);
   const [step, setStep] = useState(1);
 
-  const { snapshotName, snapshotSharingOptions, selectedExpireOption, dashboardRef, panelRef } = model.useState();
+  const { snapshotName, snapshotSharingOptions, selectedExpireOption, panelRef } = model.useState();
 
   const [snapshotResult, createSnapshot] = useAsyncFn(async (external = false) => {
     const response = await model.onSnapshotCreate(external);
@@ -39,7 +45,7 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
   });
 
   const onCancelClick = () => {
-    dashboardRef.resolve().closeModal();
+    locationService.partial({ shareView: null });
   };
 
   if (showDeleteConfirmation) {

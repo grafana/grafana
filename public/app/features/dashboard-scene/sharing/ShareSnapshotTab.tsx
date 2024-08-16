@@ -16,7 +16,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { transformSceneToSaveModel, trimDashboardForSnapshot } from '../serialization/transformSceneToSaveModel';
 import { DashboardInteractions } from '../utils/interactions';
 
-import { SceneShareTabState } from './types';
+import { SceneShareTabState, ShareView } from './types';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.SnapshotScene;
 
@@ -55,7 +55,7 @@ export interface ShareSnapshotTabState extends SceneShareTabState {
   snapshotSharingOptions?: SnapshotSharingOptions;
 }
 
-export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
+export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> implements ShareView {
   public tabId = shareDashboardType.snapshot;
   static Component = ShareSnapshotTabRenderer;
 

@@ -19,3 +19,7 @@ export interface SceneShareDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
   panelRef?: SceneObjectRef<VizPanel>;
 }
+
+export interface ShareView extends SceneObject {
+  getTabLabel(): string;
+}

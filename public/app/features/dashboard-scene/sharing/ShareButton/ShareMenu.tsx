@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { SceneObject, VizPanel } from '@grafana/scenes';
 import { IconName, Menu } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
@@ -11,12 +11,7 @@ import { isPublicDashboardsEnabled } from '../../../dashboard/components/ShareMo
 import { getTrackingSource, shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
-import { ShareDrawer } from '../ShareDrawer/ShareDrawer';
 import { SceneShareDrawerState } from '../types';
-
-import { ShareExternally } from './share-externally/ShareExternally';
-import { ShareInternally } from './share-internally/ShareInternally';
-import { ShareSnapshot } from './share-snapshot/ShareSnapshot';
 
 const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButton.menu;
 
@@ -39,17 +34,9 @@ export function addDashboardShareDrawerItem(item: ShareDrawerMenuItem) {
 }
 
 export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardScene; panel?: VizPanel }) {
-  const onMenuItemClick = useCallback(
-    (title: string, component: CustomDashboardDrawer) => {
-      const drawer = new ShareDrawer({
-        title,
-        body: new component({ dashboardRef: dashboard.getRef(), panelRef: panel?.getRef() }),
-      });
-
-      dashboard.showModal(drawer);
-    },
-    [dashboard, panel]
-  );
+  const onMenuItemClick = (shareView: string) => {
+    locationService.partial({ shareView });
+  };
 
   const buildMenuItems = useCallback(() => {
     const menuItems: ShareDrawerMenuItem[] = [];
@@ -61,8 +48,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       label: t('share-dashboard.menu.share-internally-title', 'Share internally'),
       description: t('share-dashboard.menu.share-internally-description', 'Advanced settings'),
       renderCondition: true,
-      onClick: () =>
-        onMenuItemClick(t('share-dashboard.menu.share-internally-title', 'Share internally'), ShareInternally),
+      onClick: () => onMenuItemClick('link'),
     });
 
     menuItems.push({
@@ -72,7 +58,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       label: t('share-dashboard.menu.share-externally-title', 'Share externally'),
       renderCondition: !panel && isPublicDashboardsEnabled(),
       onClick: () => {
-        onMenuItemClick(t('share-dashboard.menu.share-externally-title', 'Share externally'), ShareExternally);
+        onMenuItemClick('public_dashboard');
       },
     });
 
@@ -85,12 +71,12 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       label: t('share-dashboard.menu.share-snapshot-title', 'Share snapshot'),
       renderCondition: contextSrv.isSignedIn && config.snapshotEnabled && dashboard.canEditDashboard(),
       onClick: () => {
-        onMenuItemClick(t('share-dashboard.menu.share-snapshot-title', 'Share snapshot'), ShareSnapshot);
+        onMenuItemClick('snapshot');
       },
     });
 
     return menuItems.filter((item) => item.renderCondition);
-  }, [onMenuItemClick, dashboard, panel]);
+  }, [panel, dashboard]);
 
   const onClick = (item: ShareDrawerMenuItem) => {
     DashboardInteractions.sharingCategoryClicked({

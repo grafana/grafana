@@ -1,7 +1,7 @@
 import { Unsubscribable } from 'rxjs';
 
 import { AppEvents } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   SceneGridLayout,
   SceneObjectBase,
@@ -23,6 +23,7 @@ import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
 import { ViewPanelScene } from './ViewPanelScene';
 import { DashboardRepeatsProcessedEvent } from './types';
+import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   private _eventSub?: Unsubscribable;
@@ -157,9 +158,13 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
     if (typeof values.shareView === 'string') {
       update.shareView = values.shareView;
-      update.overlay = new ShareModal({
-        activeTab: values.shareView,
-      });
+      update.overlay = config.featureToggles.newDashboardSharingComponent
+        ? new ShareDrawer({
+            shareView: values.shareView,
+          })
+        : new ShareModal({
+            activeTab: values.shareView,
+          });
     } else if (shareView && values.shareView === null) {
       update.overlay = undefined;
       update.shareView = undefined;

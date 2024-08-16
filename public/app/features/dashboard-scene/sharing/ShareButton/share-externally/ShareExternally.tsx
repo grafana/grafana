@@ -22,9 +22,9 @@ import {
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { AccessControlAction } from 'app/types';
 
-import { getDashboardSceneFor } from '../../../utils/utils';
 import { ShareDrawerConfirmAction } from '../../ShareDrawer/ShareDrawerConfirmAction';
 import { useShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';
+import { ShareView } from '../../types';
 
 import { EmailSharing } from './EmailShare/EmailSharing';
 import { PublicSharing } from './PublicShare/PublicSharing';
@@ -61,15 +61,19 @@ const getShareExternallyOptions = () => {
     : [getAnyOneWithTheLinkShareOption()];
 };
 
-export class ShareExternally extends SceneObjectBase {
+export class ShareExternally extends SceneObjectBase implements ShareView {
   static Component = ShareExternallyRenderer;
+
+  public getTabLabel() {
+    return t('share-dashboard.menu.share-externally-title', 'Share externally');
+  }
 }
 
 function ShareExternallyRenderer({ model }: SceneComponentProps<ShareExternally>) {
   const [showRevokeAccess, setShowRevokeAccess] = useState(false);
 
   const styles = useStyles2(getStyles);
-  const dashboard = getDashboardSceneFor(model);
+  const { dashboard } = useShareDrawerContext();
 
   const { data: publicDashboard, isLoading } = useGetPublicDashboardQuery(dashboard.state.uid!);
   const [deletePublicDashboard, { isLoading: isDeleteLoading }] = useDeletePublicDashboardMutation();
