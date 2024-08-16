@@ -155,7 +155,7 @@ To share your dashboard with anyone as a snapshot, follow these steps.
    - **Never**
 1. Click **Publish snapshot** or **Publish to snapshots.raintank.io**.
 
-   Grafana generates the link of the snapshot.
+   Grafana generates the link of the snapshot. Note that you can't publish dashboards containing custom panels to snapshot.raintank.io.
 
 1. Click **Copy link**, and share it either within your organization or publicly on the web.
 1. Click the **X** at the top-right corner to close the share drawer.
@@ -296,7 +296,7 @@ To share your panel with anyone as a snapshot, follow these steps:
    - **Never**
 1. Click **Publish snapshot** or **Publish to snapshots.raintank.io**.
 
-   Grafana generates the link of the snapshot.
+   Grafana generates the link of the snapshot. Note that you can't publish custom panels to snapshot.raintank.io.
 
 1. Click **Copy link**, and share it either within your organization or publicly on the web.
 1. Click the **X** at the top-right corner to close the share drawer.
