@@ -10,10 +10,11 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "11.2.0-pre";
+export const pluginVersion = "11.3.0-pre";
 
 export interface Options {
   dedupStrategy: common.LogsDedupStrategy;
+  displayedFields?: Array<string>;
   enableLogDetails: boolean;
   isFilterLabelActive?: unknown;
   /**
@@ -23,6 +24,8 @@ export interface Options {
   onClickFilterOutLabel?: unknown;
   onClickFilterOutString?: unknown;
   onClickFilterString?: unknown;
+  onClickHideField?: unknown;
+  onClickShowField?: unknown;
   prettifyLogMessage: boolean;
   showCommonLabels: boolean;
   showLabels: boolean;
@@ -31,3 +34,7 @@ export interface Options {
   sortOrder: common.LogsSortOrder;
   wrapLogMessage: boolean;
 }
+
+export const defaultOptions: Partial<Options> = {
+  displayedFields: [],
+};
