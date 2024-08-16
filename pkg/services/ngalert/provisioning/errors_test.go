@@ -1,9 +1,11 @@
 package provisioning
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -43,7 +45,8 @@ func TestMakeErrTimeIntervalDependentResourcesProvenance(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := MakeErrTimeIntervalDependentResourcesProvenance(tt.usedByRoutes, tt.rules)
 			assert.Equal(t, tt.expectedPrivateMessage, err.Error())
-			e := err.(errutil.Error)
+			var e errutil.Error
+			require.True(t, errors.As(err, &e))
 			assert.Equal(t, tt.expectedPublicMessage, e.PublicMessage)
 		})
 	}
