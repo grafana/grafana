@@ -138,7 +138,7 @@ A dashboard snapshot publicly shares a dashboard while removing sensitive data s
 You can publish snapshots to your local instance or to [snapshots.raintank.io](http://snapshots.raintank.io). The latter is a free service provided by Grafana Labs that enables you to publish dashboard snapshots to an external Grafana instance. Anyone with the link can view it. You can set an expiration time if you want the snapshot removed after a certain time period.
 
 {{< admonition type=note >}}
-The snapshots.raintank.io option is disabled by default in Grafana Cloud. To enable it...
+The snapshots.raintank.io option is disabled by default in Grafana Cloud. You can update [this setting](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#external_enabled) in your configuration file.
 {{< /admonition >}}
 
 To see the other snapshots shared from your organization, navigate to **Dashboards > Snapshots** in the main menu.
@@ -282,8 +282,8 @@ A panel snapshot shares an interactive panel publicly while removing sensitive d
 
 You can publish snapshots to your local instance or to [snapshots.raintank.io](http://snapshots.raintank.io). The latter is a free service provided by Grafana Labs that enables you to publish dashboard snapshots to an external Grafana instance. Anyone with the link can view it. You can set an expiration time if you want the snapshot removed after a certain time period.
 
-{{< admonition type="note" >}}
-The snapshots.raintank.io option is disabled by default in Grafana Cloud. To enable it...
+{{< admonition type=note >}}
+The snapshots.raintank.io option is disabled by default in Grafana Cloud. You can update [this setting](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#external_enabled) in your configuration file.
 {{< /admonition >}}
 
 To see the other snapshots shared from your organization, navigate to **Dashboards > Snapshots** in the main menu.
