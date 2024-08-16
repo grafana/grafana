@@ -1,37 +1,53 @@
-package sqltemplate
+package mocks
 
 import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"testing"
 	"text/template"
 
 	"github.com/google/go-cmp/cmp"
+	sqltemplate "github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/stretchr/testify/require"
 )
 
-// func testdata(t *testing.T, filename string) []byte {
-// 	t.Helper()
-// 	b, err := testdataFS.ReadFile(`testdata/` + filename)
-// 	if err != nil {
-// 		writeTestData(filename, "<empty>")
-// 		assert.Fail(t, "missing test file")
-// 	}
-// 	return b
-// }
+func NewTestingSQLTemplate() sqltemplate.SQLTemplateIface {
+	standard := sqltemplate.New(nil) // dialect gets replaced at each iteration
+	return &testingSQLTemplate{standard}
+}
 
-// func writeTestData(filename, value string) {
-// 	_ = os.WriteFile(filepath.Join("testdata", filename), []byte(value), 0777)
-// }
+type testingSQLTemplate struct {
+	*sqltemplate.SQLTemplate
+}
+
+func (t *testingSQLTemplate) Arg(x any) string {
+	t.SQLTemplate.Arg(x) // discard the output
+
+	// Return the raw values in the template
+	switch val := x.(type) {
+	case bool:
+		if val {
+			return "TRUE"
+		}
+		return "FALSE"
+
+	case int, int16, int32, int64,
+		uint, uint16, uint32, uint64,
+		float32, float64:
+		return fmt.Sprintf("%v", x)
+
+	default:
+		return fmt.Sprintf("'%v'", x) // single quotes
+	}
+}
 
 type TemplateTestCase struct {
 	Name string
 
 	// Data should be the struct passed to the template.
-	Data SQLTemplateIface
+	Data sqltemplate.SQLTemplateIface
 }
 
 type TemplateTestSetup struct {
@@ -39,7 +55,7 @@ type TemplateTestSetup struct {
 	RootDir string
 
 	// The template will be run through each dialect
-	Dialects []Dialect
+	Dialects []sqltemplate.Dialect
 
 	// Check a set of templates against example inputs
 	Templates map[*template.Template][]TemplateTestCase
@@ -50,10 +66,10 @@ func CheckQuerySnapshots(t *testing.T, setup TemplateTestSetup) {
 	t.Parallel()
 
 	if len(setup.Dialects) < 1 {
-		setup.Dialects = []Dialect{
-			MySQL,
-			SQLite,
-			PostgreSQL,
+		setup.Dialects = []sqltemplate.Dialect{
+			sqltemplate.MySQL,
+			sqltemplate.SQLite,
+			sqltemplate.PostgreSQL,
 		}
 	}
 
@@ -66,15 +82,6 @@ func CheckQuerySnapshots(t *testing.T, setup TemplateTestSetup) {
 				t.Run(input.Name, func(t *testing.T) {
 					t.Parallel()
 
-					// If we have an inline raw Args field we can render an inline value
-					f := reflect.ValueOf(input.Data).Elem().FieldByName("Args")
-					if f.IsValid() {
-						a, ok := f.Addr().Interface().(*Args)
-						if ok {
-							a.inline = true
-						}
-					}
-
 					for _, dialect := range setup.Dialects {
 						t.Run(dialect.DialectName(), func(t *testing.T) {
 							// not parallel because we're sharing tc.Data,
@@ -83,10 +90,10 @@ func CheckQuerySnapshots(t *testing.T, setup TemplateTestSetup) {
 							err := input.Data.Validate()
 
 							require.NoError(t, err)
-							got, err := Execute(tmpl, input.Data)
+							got, err := sqltemplate.Execute(tmpl, input.Data)
 							require.NoError(t, err)
 
-							clean := RemoveEmptyLines(got)
+							clean := sqltemplate.RemoveEmptyLines(got)
 
 							update := false
 							fname := fmt.Sprintf("%s--%s-%s.sql", dialect.DialectName(), tname, input.Name)

@@ -58,7 +58,7 @@ var (
 )
 
 type sqlResourceRequest struct {
-	*sqltemplate.SQLTemplate
+	sqltemplate.SQLTemplateIface
 	GUID       string
 	WriteEvent resource.WriteEvent
 }

@@ -136,18 +136,18 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 
 		// 1. Insert into resource
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceInsert, sqlResourceRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			WriteEvent:  event,
-			GUID:        guid,
+			SQLTemplateIface: sqltemplate.New(b.dialect),
+			WriteEvent:       event,
+			GUID:             guid,
 		}); err != nil {
 			return fmt.Errorf("insert into resource: %w", err)
 		}
 
 		// 2. Insert into resource history
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			WriteEvent:  event,
-			GUID:        guid,
+			SQLTemplateIface: sqltemplate.New(b.dialect),
+			WriteEvent:       event,
+			GUID:             guid,
 		}); err != nil {
 			return fmt.Errorf("insert into resource history: %w", err)
 		}
@@ -194,9 +194,9 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 
 		// 1. Update resource
 		_, err := dbutil.Exec(ctx, tx, sqlResourceUpdate, sqlResourceRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			WriteEvent:  event,
-			GUID:        guid,
+			SQLTemplateIface: sqltemplate.New(b.dialect),
+			WriteEvent:       event,
+			GUID:             guid,
 		})
 		if err != nil {
 			return fmt.Errorf("initial resource update: %w", err)
@@ -204,9 +204,9 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 
 		// 2. Insert into resource history
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			WriteEvent:  event,
-			GUID:        guid,
+			SQLTemplateIface: sqltemplate.New(b.dialect),
+			WriteEvent:       event,
+			GUID:             guid,
 		}); err != nil {
 			return fmt.Errorf("insert into resource history: %w", err)
 		}
@@ -254,9 +254,9 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 
 		// 1. delete from resource
 		_, err := dbutil.Exec(ctx, tx, sqlResourceDelete, sqlResourceRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			WriteEvent:  event,
-			GUID:        guid,
+			SQLTemplateIface: sqltemplate.New(b.dialect),
+			WriteEvent:       event,
+			GUID:             guid,
 		})
 		if err != nil {
 			return fmt.Errorf("delete resource: %w", err)
@@ -264,9 +264,9 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 
 		// 2. Add event to resource history
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
-			SQLTemplate: sqltemplate.New(b.dialect),
-			WriteEvent:  event,
-			GUID:        guid,
+			SQLTemplateIface: sqltemplate.New(b.dialect),
+			WriteEvent:       event,
+			GUID:             guid,
 		}); err != nil {
 			return fmt.Errorf("insert into resource history: %w", err)
 		}

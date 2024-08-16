@@ -6,17 +6,18 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 )
 
 func TestQueries(t *testing.T) {
-	sqltemplate.CheckQuerySnapshots(t, sqltemplate.TemplateTestSetup{
+	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
-		Templates: map[*template.Template][]sqltemplate.TemplateTestCase{
+		Templates: map[*template.Template][]mocks.TemplateTestCase{
 			sqlResourceDelete: {
 				{
 					Name: "simple",
 					Data: &sqlResourceRequest{
-						SQLTemplate: new(sqltemplate.SQLTemplate),
+						SQLTemplateIface: &mocks.SQLTemplateIface{},
 						WriteEvent: resource.WriteEvent{
 							Key: &resource.ResourceKey{
 								Namespace: "nn",
@@ -32,7 +33,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "simple",
 					Data: &sqlResourceRequest{
-						SQLTemplate: new(sqltemplate.SQLTemplate),
+						SQLTemplateIface: &mocks.SQLTemplateIface{},
 						WriteEvent: resource.WriteEvent{
 							Key: &resource.ResourceKey{
 								Namespace: "nn",
@@ -50,7 +51,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "single path",
 					Data: &sqlResourceRequest{
-						SQLTemplate: new(sqltemplate.SQLTemplate),
+						SQLTemplateIface: &mocks.SQLTemplateIface{},
 						WriteEvent: resource.WriteEvent{
 							Key: &resource.ResourceKey{},
 						},
@@ -141,7 +142,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "insert into resource_history",
 					Data: &sqlResourceRequest{
-						SQLTemplate: new(sqltemplate.SQLTemplate),
+						SQLTemplateIface: &mocks.SQLTemplateIface{},
 						WriteEvent: resource.WriteEvent{
 							Key: &resource.ResourceKey{},
 						},

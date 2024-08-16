@@ -4,18 +4,18 @@ import (
 	"testing"
 	"text/template"
 
-	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 )
 
 func TestQueries(t *testing.T) {
-	sqltemplate.CheckQuerySnapshots(t, sqltemplate.TemplateTestSetup{
+	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
-		Templates: map[*template.Template][]sqltemplate.TemplateTestCase{
+		Templates: map[*template.Template][]mocks.TemplateTestCase{
 			sqlQueryDashboards: {
 				{
 					Name: "history_uid",
 					Data: &sqlQuery{
-						SQLTemplate: new(sqltemplate.SQLTemplate),
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
 						Query: &DashboardQuery{
 							OrgID: 2,
 							UID:   "UUU",
@@ -25,7 +25,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "history_uid_at_version",
 					Data: &sqlQuery{
-						SQLTemplate: new(sqltemplate.SQLTemplate),
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
 						Query: &DashboardQuery{
 							OrgID:   2,
 							UID:     "UUU",
@@ -36,7 +36,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "history_uid_second_page",
 					Data: &sqlQuery{
-						SQLTemplate: new(sqltemplate.SQLTemplate),
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
 						Query: &DashboardQuery{
 							OrgID:  2,
 							UID:    "UUU",
@@ -47,7 +47,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "dashboard",
 					Data: &sqlQuery{
-						SQLTemplate: new(sqltemplate.SQLTemplate),
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
 						Query: &DashboardQuery{
 							OrgID: 2,
 						},
@@ -56,7 +56,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "dashboard_next_page",
 					Data: &sqlQuery{
-						SQLTemplate: new(sqltemplate.SQLTemplate),
+						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
 						Query: &DashboardQuery{
 							OrgID:  2,
 							LastID: 22,
