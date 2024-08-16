@@ -46,12 +46,15 @@ func ProvideTeamPermissions(
 		ResourceAttribute: "id",
 		OnlyManaged:       true,
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
+			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideTeamerPermissions.ResourceValidator")
+			defer span.End()
+
 			id, err := strconv.ParseInt(resourceID, 10, 64)
 			if err != nil {
 				return err
 			}
 
-			_, err = teamService.GetTeamByID(context.Background(), &team.GetTeamByIDQuery{
+			_, err = teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
 				OrgID: orgID,
 				ID:    id,
 			})

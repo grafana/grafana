@@ -44,6 +44,9 @@ func ProvideServiceAccountPermissions(
 		Resource:          "serviceaccounts",
 		ResourceAttribute: "id",
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
+			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideServiceAccountPermissions.ResourceValidator")
+			defer span.End()
+
 			id, err := strconv.ParseInt(resourceID, 10, 64)
 			if err != nil {
 				return err

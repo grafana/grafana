@@ -138,6 +138,9 @@ type Service struct {
 }
 
 func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontroll.resourcepermissions.GetPermissions")
+	defer span.End()
+
 	var inheritedScopes []string
 	if s.options.InheritedScopesSolver != nil {
 		var err error
@@ -206,6 +209,9 @@ func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, r
 }
 
 func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user accesscontrol.User, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontroll.resourcepermissions.SetUserPermission")
+	defer span.End()
+
 	actions, err := s.mapPermission(permission)
 	if err != nil {
 		return nil, err
@@ -229,6 +235,9 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 }
 
 func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontroll.resourcepermissions.SetTeamPermission")
+	defer span.End()
+
 	actions, err := s.mapPermission(permission)
 	if err != nil {
 		return nil, err
@@ -252,6 +261,9 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 }
 
 func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontroll.resourcepermissions.SetBuiltInRolePermission")
+	defer span.End()
+
 	actions, err := s.mapPermission(permission)
 	if err != nil {
 		return nil, err
@@ -278,6 +290,9 @@ func (s *Service) SetPermissions(
 	ctx context.Context, orgID int64, resourceID string,
 	commands ...accesscontrol.SetResourcePermissionCommand,
 ) ([]accesscontrol.ResourcePermission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontroll.resourcepermissions.SetPermissions")
+	defer span.End()
+
 	if err := s.validateResource(ctx, orgID, resourceID); err != nil {
 		return nil, err
 	}
@@ -355,6 +370,9 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 }
 
 func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID string) error {
+	ctx, span := tracer.Start(ctx, "accesscontroll.resourcepermissions.validateResource")
+	defer span.End()
+
 	if s.options.ResourceValidator != nil {
 		return s.options.ResourceValidator(ctx, orgID, resourceID)
 	}
@@ -362,6 +380,9 @@ func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID 
 }
 
 func (s *Service) validateUser(ctx context.Context, orgID, userID int64) error {
+	ctx, span := tracer.Start(ctx, "accesscontroll.resourcepermissions.validateUser")
+	defer span.End()
+
 	if !s.options.Assignments.Users {
 		return ErrInvalidAssignment.Build(ErrInvalidAssignmentData("users"))
 	}
@@ -376,6 +397,9 @@ func (s *Service) validateUser(ctx context.Context, orgID, userID int64) error {
 }
 
 func (s *Service) validateTeam(ctx context.Context, orgID, teamID int64) error {
+	ctx, span := tracer.Start(ctx, "accesscontroll.resourcepermissions.validateTeam")
+	defer span.End()
+
 	if !s.options.Assignments.Teams {
 		return ErrInvalidAssignment.Build(ErrInvalidAssignmentData("teams"))
 	}
@@ -391,7 +415,10 @@ func (s *Service) validateTeam(ctx context.Context, orgID, teamID int64) error {
 	return nil
 }
 
-func (s *Service) validateBuiltinRole(_ context.Context, builtinRole string) error {
+func (s *Service) validateBuiltinRole(ctx context.Context, builtinRole string) error {
+	_, span := tracer.Start(ctx, "accesscontroll.resourcepermissions.validateBuiltinRole")
+	defer span.End()
+
 	if !s.options.Assignments.BuiltInRoles {
 		return ErrInvalidAssignment.Build(ErrInvalidAssignmentData("builtInRoles"))
 	}
@@ -553,6 +580,9 @@ func (a *ActionSetSvc) ExpandActionSetsWithFilter(permissions []accesscontrol.Pe
 // RegisterActionSets allow the caller to expand the existing action sets with additional permissions
 // This is intended to be used by plugins, and currently supports extending folder and dashboard action sets
 func (a *ActionSetSvc) RegisterActionSets(ctx context.Context, pluginID string, registrations []plugins.ActionSet) error {
+	ctx, span := tracer.Start(ctx, "accesscontroll.resourcepermissions.RegisterActionSets")
+	defer span.End()
+
 	if !a.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) || !a.features.IsEnabled(ctx, featuremgmt.FlagAccessControlOnCall) {
 		return nil
 	}

@@ -42,7 +42,6 @@ func setupTestEnv(t testing.TB) *Service {
 		log:           log.New("accesscontrol"),
 		registrations: accesscontrol.RegistrationList{},
 		roles:         accesscontrol.BuildBasicRoleDefinitions(),
-		tracer:        tracing.InitializeTracerForTest(),
 		store:         database.ProvideService(db.InitTestReplDB(t)),
 		permRegistry:  permreg.ProvidePermissionRegistry(),
 	}
