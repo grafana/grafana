@@ -1,7 +1,7 @@
 import { act, cleanup, waitFor } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
 
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, setPluginImportUtils } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import { getDashboardAPI, setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
@@ -58,20 +58,35 @@ import {
   resetScenes,
 } from './testUtils';
 import { getClosestScopesFacade } from './utils';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
+  useChromeHeaderHeight: jest.fn(),
   getBackendSrv: () => ({
     get: getMock,
   }),
   usePluginLinkExtensions: jest.fn().mockReturnValue({ extensions: [] }),
 }));
 
+const panelPlugin = getPanelPlugin({
+  id: 'table',
+  skipDataQuery: true,
+});
+
+config.panels['table'] = panelPlugin.meta;
+
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(panelPlugin),
+  getPanelPluginFromCache: (id: string) => undefined,
+});
+
 describe('Scopes', () => {
   describe('Feature flag off', () => {
     beforeAll(() => {
       config.featureToggles.scopeFilters = false;
+      config.featureToggles.groupByVariable = true;
 
       initializeScopes();
     });
@@ -88,6 +103,7 @@ describe('Scopes', () => {
 
     beforeAll(() => {
       config.featureToggles.scopeFilters = true;
+      config.featureToggles.groupByVariable = true;
     });
 
     beforeEach(() => {

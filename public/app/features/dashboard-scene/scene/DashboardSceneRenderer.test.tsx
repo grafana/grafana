@@ -1,11 +1,14 @@
 import { screen } from '@testing-library/react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { setChromeHeaderHeightHook } from '@grafana/runtime';
-import { useChromeHeaderHeight } from 'app/core/context/GrafanaContext';
 
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { render } from 'test/test-utils';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  useChromeHeaderHeight: jest.fn(),
+}));
 
 describe('DashboardSceneRenderer', () => {
   it('should render Not Found notice when dashboard is not found', async () => {
@@ -42,8 +45,6 @@ describe('DashboardSceneRenderer', () => {
         },
       },
     });
-
-    setChromeHeaderHeightHook(useChromeHeaderHeight);
 
     render(<scene.Component model={scene} />);
 
