@@ -1514,14 +1514,26 @@ func GetSecretKeysForContactPointType(contactPointType string) ([]string, error)
 	notifiers := GetAvailableNotifiers()
 	for _, n := range notifiers {
 		if n.Type == contactPointType {
-			var secureFields []string
-			for _, field := range n.Options {
-				if field.Secure {
-					secureFields = append(secureFields, field.PropertyName)
-				}
-			}
-			return secureFields, nil
+			return getSecretFields("", n.Options), nil
 		}
 	}
 	return nil, fmt.Errorf("no secrets configured for type '%s'", contactPointType)
+}
+
+func getSecretFields(parentPath string, options []NotifierOption) []string {
+	var secureFields []string
+	for _, field := range options {
+		if field.Secure {
+			name := field.PropertyName
+			if parentPath != "" {
+				name = parentPath + "." + name
+			}
+			secureFields = append(secureFields, name)
+			continue
+		}
+		if len(field.SubformOptions) > 0 {
+			secureFields = append(secureFields, getSecretFields(field.PropertyName, field.SubformOptions)...)
+		}
+	}
+	return secureFields
 }
