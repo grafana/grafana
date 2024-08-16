@@ -436,6 +436,11 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
             xAdjust = value < 0 ? textMetrics.width * scaleFactor : 0;
           }
 
+          // Force label bounding box y position to not be negative
+          if (y - yAdjust < 0) {
+            y = yAdjust;
+          }
+
           // Construct final bounding box for the label text
           labels[dataIdx][seriesIdx].x = x;
           labels[dataIdx][seriesIdx].y = y;
