@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -211,7 +211,6 @@ var reqDatasourceByIdNotFound = `{
 }`
 
 func TestDataSourceQueryError(t *testing.T) {
-
 	type body struct {
 		Message    string `json:"message"`
 		MessageId  string `json:"messageId"`
@@ -289,9 +288,7 @@ func TestDataSourceQueryError(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-
 		t.Run(fmt.Sprintf("Plugin client error %q should propagate to API", tc.clientErr), func(t *testing.T) {
-
 			p := &plugins.Plugin{
 				JSONData: plugins.JSONData{
 					ID: "grafana",
@@ -331,7 +328,7 @@ func TestDataSourceQueryError(t *testing.T) {
 
 			require.Equal(t, tc.expectedStatus, resp.StatusCode)
 
-			bodyBytes, err := ioutil.ReadAll(resp.Body)
+			bodyBytes, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 
 			var responseBody body
