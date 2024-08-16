@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 )
 
 func TestGetMuteTimings(t *testing.T) {
@@ -717,7 +716,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 			})
 
 		ruleStore := &fakeAlertRuleNotificationStore{
-			RenameTimeIntervalInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, allowedProvenances []models.Provenance, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
+			RenameTimeIntervalInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, validate func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
 				assertInTransaction(t, ctx)
 				return nil, nil, nil
 			},
@@ -746,7 +745,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 		assert.Equal(t, orgID, ruleStore.Calls[0].Args[1])
 		assert.Equal(t, original.Name, ruleStore.Calls[0].Args[2])
 		assert.Equal(t, interval.Name, ruleStore.Calls[0].Args[3])
-		assert.Equal(t, validation.GetAllowedProvenanceForDependentResources(expectedProvenance), ruleStore.Calls[0].Args[4])
+		assert.NotNil(t, ruleStore.Calls[0].Args[4])
 		assert.False(t, ruleStore.Calls[0].Args[5].(bool))
 
 		prov.AssertCalled(t, "SetProvenance", mock.Anything, mock.MatchedBy(func(m *definitions.MuteTimeInterval) bool {
@@ -780,7 +779,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(expectedProvenance, nil)
 
 		ruleStore := &fakeAlertRuleNotificationStore{
-			RenameTimeIntervalInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, allowedProvenances []models.Provenance, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
+			RenameTimeIntervalInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, validate func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
 				assertInTransaction(t, ctx)
 				return nil, nil, nil
 			},
@@ -804,7 +803,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 		assert.Equal(t, orgID, ruleStore.Calls[0].Args[1])
 		assert.Equal(t, original.Name, ruleStore.Calls[0].Args[2])
 		assert.Equal(t, interval.Name, ruleStore.Calls[0].Args[3])
-		assert.Equal(t, validation.GetAllowedProvenanceForDependentResources(expectedProvenance), ruleStore.Calls[0].Args[4])
+		assert.NotNil(t, ruleStore.Calls[0].Args[4])
 		assert.True(t, ruleStore.Calls[0].Args[5].(bool)) // still check if there are rules that have incompatible provenance
 	})
 
@@ -818,7 +817,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(expectedProvenance, nil)
 
 		ruleStore := &fakeAlertRuleNotificationStore{
-			RenameTimeIntervalInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, allowedProvenances []models.Provenance, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
+			RenameTimeIntervalInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, validate func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
 				assertInTransaction(t, ctx)
 				return nil, []models.AlertRuleKey{models.GenerateRuleKey(orgID)}, nil
 			},
@@ -842,7 +841,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 		assert.Equal(t, orgID, ruleStore.Calls[0].Args[1])
 		assert.Equal(t, original.Name, ruleStore.Calls[0].Args[2])
 		assert.Equal(t, interval.Name, ruleStore.Calls[0].Args[3])
-		assert.Equal(t, validation.GetAllowedProvenanceForDependentResources(expectedProvenance), ruleStore.Calls[0].Args[4])
+		assert.NotNil(t, ruleStore.Calls[0].Args[4])
 		assert.False(t, ruleStore.Calls[0].Args[5].(bool))
 	})
 
@@ -917,7 +916,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 			expectedErr := errors.New("test-err")
 
 			ruleStore := &fakeAlertRuleNotificationStore{
-				RenameTimeIntervalInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, allowedProvenances []models.Provenance, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
+				RenameTimeIntervalInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, validate func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
 					return nil, nil, expectedErr
 				},
 			}

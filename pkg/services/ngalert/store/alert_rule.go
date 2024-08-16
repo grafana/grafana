@@ -844,9 +844,15 @@ func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgI
 // if at least one rule does not have allowed provenance.
 // It returns a tuple:
 // - a collection of models.AlertRuleKey of rules that were updated,
-// - a collection of rules that do not have allowed provenance status,
+// - a collection of rules that have invalid provenance status,
 // - database error
-func (st DBstore) RenameTimeIntervalInNotificationSettings(ctx context.Context, orgID int64, oldTimeInterval, newTimeInterval string, allowedProvenances []ngmodels.Provenance, dryRun bool) ([]ngmodels.AlertRuleKey, []ngmodels.AlertRuleKey, error) {
+func (st DBstore) RenameTimeIntervalInNotificationSettings(
+	ctx context.Context,
+	orgID int64,
+	oldTimeInterval, newTimeInterval string,
+	validateProvenance func(ngmodels.Provenance) bool,
+	dryRun bool,
+) ([]ngmodels.AlertRuleKey, []ngmodels.AlertRuleKey, error) {
 	// fetch entire rules because Update method requires it because it copies rules to version table
 	rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
 		OrgID:            orgID,
@@ -872,7 +878,7 @@ func (st DBstore) RenameTimeIntervalInNotificationSettings(ctx context.Context, 
 		if !ok {
 			provenance = ngmodels.ProvenanceNone
 		}
-		if !slices.Contains(allowedProvenances, provenance) {
+		if !validateProvenance(provenance) {
 			invalidProvenance = append(invalidProvenance, rule.GetKey())
 		}
 		if len(invalidProvenance) > 0 { // do not do any fixes if there is at least one rule with not allowed provenance
