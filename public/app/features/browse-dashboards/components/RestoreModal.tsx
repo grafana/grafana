@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
 import { ConfirmModal, Text } from '@grafana/ui';
@@ -26,13 +26,11 @@ export const RestoreModal = ({
   const [restoreTarget, setRestoreTarget] = useState<string>();
   const numberOfDashboards = selectedDashboards.length;
 
-  console.log(dashboardOrigin);
-  // console.log(dashboardOrigin.selectedDashboards[0])
-  // useEffect(()=>{
-  //    if (dashboardOrigin.selectedDashboards[0] !== 'general'){
-  //    setRestoreTarget(dashboardOrigin.selectedDashboards[0])
-  //   }
-  // },[dashboardOrigin, selectedDashboards])
+  useEffect(() => {
+    if (dashboardOrigin[selectedDashboards[0]] !== 'general') {
+      setRestoreTarget(dashboardOrigin[selectedDashboards[0]]);
+    }
+  }, [dashboardOrigin, selectedDashboards]);
 
   const onRestore = async () => {
     reportInteraction('grafana_restore_confirm_clicked', {
