@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { DataQuery, SelectableValue } from '@grafana/data';
-import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InputActionMeta, Select } from '@grafana/ui';
 
+import { maxOptions } from './SearchTraceQLEditor/SearchField';
 import { TempoDatasource } from './datasource';
 
 export enum TempoVariableQueryType {
@@ -33,6 +34,7 @@ export const TempoVariableQueryEditor = ({ onChange, query, datasource }: TempoV
   const [label, setLabel] = useState(query.label || '');
   const [type, setType] = useState<number | undefined>(query.type);
   const [labelOptions, setLabelOptions] = useState<Array<SelectableValue<string>>>([]);
+  const [labelQuery, setLabelQuery] = useState<string>('');
 
   useEffect(() => {
     if (type === TempoVariableQueryType.LabelValues) {
@@ -41,6 +43,22 @@ export const TempoVariableQueryEditor = ({ onChange, query, datasource }: TempoV
       });
     }
   }, [datasource, query, type]);
+
+  const options = useMemo(() => {
+    if (labelQuery.length === 0) {
+      return labelOptions.slice(0, maxOptions);
+    }
+
+    const queryLowerCase = labelQuery.toLowerCase();
+    return labelOptions
+      .filter((tag) => {
+        if (tag.value && tag.value.length > 0) {
+          return tag.value.toLowerCase().includes(queryLowerCase);
+        }
+        return false;
+      })
+      .slice(0, maxOptions);
+  }, [labelQuery, labelOptions]);
 
   const onQueryTypeChange = (newType: SelectableValue<TempoVariableQueryType>) => {
     setType(newType.value);
@@ -93,10 +111,17 @@ export const TempoVariableQueryEditor = ({ onChange, query, datasource }: TempoV
               aria-label="Label"
               onChange={onLabelChange}
               onBlur={handleBlur}
+              onInputChange={(value: string, { action }: InputActionMeta) => {
+                if (action === 'input-change') {
+                  setLabelQuery(value);
+                }
+              }}
+              onCloseMenu={() => setLabelQuery('')}
               value={{ label, value: label }}
-              options={labelOptions}
+              options={options}
               width={32}
               allowCustomValue
+              virtualized
             />
           </InlineField>
         </InlineFieldRow>
