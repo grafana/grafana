@@ -399,7 +399,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           // Calculate final co-ordinates for text position
           const x =
             u.bbox.left + (isXHorizontal ? lft + wid / 2 : value < 0 ? lft - labelOffset : lft + wid + labelOffset);
-          const y =
+          let y =
             u.bbox.top +
             (isXHorizontal ? (value < 0 ? top + hgt + labelOffset : top - labelOffset) : top + hgt / 2 - middleShift);
 
