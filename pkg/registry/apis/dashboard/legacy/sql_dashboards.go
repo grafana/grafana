@@ -80,13 +80,8 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyD
 	}
 
 	req := sqlQuery{
-<<<<<<< HEAD
 		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
 		Query:       query,
-=======
-		SQLTemplateIface: sqltemplate.New(a.dialect),
-		Query:            query,
->>>>>>> origin/main
 	}
 
 	tmpl := sqlQueryDashboards

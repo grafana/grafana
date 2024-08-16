@@ -125,7 +125,7 @@ func (s *legacySQLStore) GetDisplay(ctx context.Context, ns claims.NamespaceInfo
 	return s.queryUsers(ctx, sql, sqlQueryDisplay, newGetDisplay(sql, &query), 10000)
 }
 
-func (s *legacySQLStore) queryUsers(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, t *template.Template, req sqltemplate.ArgsIface, limit int) (*ListUserResult, error) {
+func (s *legacySQLStore) queryUsers(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, t *template.Template, req sqltemplate.Args, limit int) (*ListUserResult, error) {
 	rawQuery, err := sqltemplate.Execute(t, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", sqlQueryUsers.Name(), err)
@@ -167,19 +167,3 @@ func (s *legacySQLStore) queryUsers(ctx context.Context, sql *legacysql.LegacyDa
 func (s *legacySQLStore) GetUserTeams(ctx context.Context, ns claims.NamespaceInfo, uid string) ([]team.Team, error) {
 	panic("unimplemented")
 }
-<<<<<<< HEAD
-=======
-
-// GetDisplay implements LegacyIdentityStore.
-func (s *legacySQLStore) GetDisplay(ctx context.Context, ns claims.NamespaceInfo, query GetUserDisplayQuery) (*ListUserResult, error) {
-	query.OrgID = ns.OrgID
-	if ns.OrgID == 0 {
-		return nil, fmt.Errorf("expected non zero orgID")
-	}
-
-	return s.queryUsers(ctx, sqlQueryDisplay, sqlQueryGetDisplay{
-		SQLTemplateIface: sqltemplate.New(s.dialect),
-		Query:            &query,
-	}, 10000, false)
-}
->>>>>>> origin/main

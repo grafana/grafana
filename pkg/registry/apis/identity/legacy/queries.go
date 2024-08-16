@@ -70,7 +70,7 @@ func (r sqlQueryListTeams) Validate() error {
 }
 
 type sqlQueryGetDisplay struct {
-	*sqltemplate.SQLTemplate
+	sqltemplate.SQLTemplate
 	Query        *GetUserDisplayQuery
 	UserTable    string
 	OrgUserTable string
