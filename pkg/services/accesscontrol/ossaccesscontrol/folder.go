@@ -95,6 +95,9 @@ func ProvideFolderPermissions(
 		Resource:          "folders",
 		ResourceAttribute: "uid",
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
+			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideFolderPermissions.ResourceValidator")
+			defer span.End()
+
 			query := &dashboards.GetDashboardQuery{UID: resourceID, OrgID: orgID}
 			queryResult, err := dashboardStore.GetDashboard(ctx, query)
 			if err != nil {
