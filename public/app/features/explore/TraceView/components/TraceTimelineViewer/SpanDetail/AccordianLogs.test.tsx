@@ -77,7 +77,9 @@ describe('AccordianLogs tests', () => {
   it('renders event name and duration when events list is closed', () => {
     setup({ isOpen: true, openedItems: new Set() } as AccordianLogsProps);
     expect(
-      screen.getByRole('switch', { name: 'foo event name (15μs): message = oh the next log message more = stuff' })
+      screen.getByRole('switch', {
+        name: 'foo event name ( duration = 15μs) : message = oh the next log message more = stuff',
+      })
     ).toBeInTheDocument();
     expect(
       screen.getByRole('switch', { name: '5μs: message = oh the log message something = else' })
@@ -86,7 +88,7 @@ describe('AccordianLogs tests', () => {
 
   it('renders event name and duration when events list is open', () => {
     setup({ isOpen: true, openedItems: new Set(logs) } as AccordianLogsProps);
-    expect(screen.getByRole('switch', { name: 'foo event name (15μs)' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'foo event name ( duration = 15μs)' })).toBeInTheDocument();
     expect(screen.getByRole('switch', { name: '5μs' })).toBeInTheDocument();
   });
 });
