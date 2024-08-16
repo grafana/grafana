@@ -14,13 +14,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func NewTestingSQLTemplate() sqltemplate.SQLTemplateIface {
+func NewTestingSQLTemplate() sqltemplate.SQLTemplate {
 	standard := sqltemplate.New(sqltemplate.MySQL) // dialect gets replaced at each iteration
 	return &testingSQLTemplate{standard}
 }
 
 type testingSQLTemplate struct {
-	*sqltemplate.SQLTemplate
+	sqltemplate.SQLTemplate
 }
 
 func (t *testingSQLTemplate) Arg(x any) string {
@@ -69,7 +69,7 @@ type TemplateTestCase struct {
 	Name string
 
 	// Data should be the struct passed to the template.
-	Data sqltemplate.SQLTemplateIface
+	Data sqltemplate.SQLTemplate
 }
 
 type TemplateTestSetup struct {

@@ -15,7 +15,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "teams_uid",
 					Data: &sqlQueryListTeams{
-						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Query: &ListTeamQuery{
 							UID: "abc",
 						},
@@ -24,7 +24,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "teams_page_1",
 					Data: &sqlQueryListTeams{
-						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Query: &ListTeamQuery{
 							Limit: 5,
 						},
@@ -33,7 +33,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "teams_page_2",
 					Data: &sqlQueryListTeams{
-						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Query: &ListTeamQuery{
 							ContinueID: 1,
 							Limit:      2,
@@ -45,7 +45,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "users_uid",
 					Data: &sqlQueryListUsers{
-						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Query: &ListUserQuery{
 							UID: "abc",
 						},
@@ -54,7 +54,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "users_page_1",
 					Data: &sqlQueryListUsers{
-						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Query: &ListUserQuery{
 							Limit: 5,
 						},
@@ -63,7 +63,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "users_page_2",
 					Data: &sqlQueryListUsers{
-						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Query: &ListUserQuery{
 							ContinueID: 1,
 							Limit:      2,
@@ -75,7 +75,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "display_uids",
 					Data: &sqlQueryGetDisplay{
-						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Query: &GetUserDisplayQuery{
 							OrgID: 2,
 							UIDs:  []string{"a", "b"},
@@ -85,7 +85,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "display_ids",
 					Data: &sqlQueryGetDisplay{
-						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Query: &GetUserDisplayQuery{
 							OrgID: 2,
 							IDs:   []int64{1, 2},
@@ -95,7 +95,7 @@ func TestQueries(t *testing.T) {
 				{
 					Name: "display_ids_uids",
 					Data: &sqlQueryGetDisplay{
-						SQLTemplateIface: mocks.NewTestingSQLTemplate(),
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Query: &GetUserDisplayQuery{
 							OrgID: 2,
 							UIDs:  []string{"a", "b"},
