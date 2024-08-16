@@ -20,14 +20,14 @@ var (
 // dialect traits, execution arguments and scanning arguments.
 type sqlTemplate struct {
 	Dialect
-	*Args
-	*ScanDest
+	Args
+	ScanDest
 }
 
 // New returns a nee *SQLTemplate that will use the given dialect.
 func New(d Dialect) SQLTemplate {
 	ret := new(sqlTemplate)
-	ret.ScanDest = new(ScanDest)
+	ret.ScanDest = new(scanDest)
 	ret.Args = NewArgs(d)
 	ret.SetDialect(d)
 	return ret
@@ -41,7 +41,7 @@ func (t *sqlTemplate) Reset() {
 func (t *sqlTemplate) SetDialect(d Dialect) {
 	t.Reset()
 	t.Dialect = d
-	t.Args.d = d
+	t.Args = NewArgs(d)
 }
 
 func (t *sqlTemplate) Validate() error {
@@ -62,9 +62,9 @@ func (t *sqlTemplate) UnmarshalJSON([]byte) error {
 // expecting a struct embedding *SQLTemplate.
 type SQLTemplate interface {
 	Dialect
-	ArgsIface
-	ScanDestIface
-	// Reset calls the Reset method of ArgsIface and ScanDestIface.
+	Args
+	ScanDest
+	// Reset calls the Reset method of Args and ScanDest.
 	Reset()
 	// SetDialect allows reusing the template components. It should first call
 	// Reset.
