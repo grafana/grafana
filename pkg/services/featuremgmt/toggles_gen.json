@@ -6,12 +6,15 @@
     {
       "metadata": {
         "name": "accessActionSets",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-04-12T16:19:25Z"
+        "resourceVersion": "1723737724157",
+        "creationTimestamp": "2024-04-12T16:19:25Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-15 16:02:04.157828 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Introduces action sets for resource permissions",
-        "stage": "experimental",
+        "description": "Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions.",
+        "stage": "preview",
         "codeowner": "@grafana/identity-access-team"
       }
     },
@@ -1438,7 +1441,6 @@
         "name": "kubernetesPlaylists",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-10-05T19:00:36Z",
-        "deletionTimestamp": "2024-07-30T19:34:12Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
