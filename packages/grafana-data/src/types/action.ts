@@ -1,18 +1,12 @@
+import { ScopedVars } from './ScopedVars';
+import { DataFrame, Field, ValueLinkConfig } from './dataFrame';
 import { InterpolateFunction } from './panel';
 import { SelectableValue } from './select';
 
-export interface Action<T = any> {
+export interface Action<T = ActionType.Fetch, TOptions = FetchOptions> {
+  type: T;
   title: string;
-  method: string;
-  url: string;
-  body?: string;
-  contentType?: string;
-  queryParams?: Array<[string, string]>;
-  headers?: Array<[string, string]>;
-
-  // If exists, handle click directly
-  // Not saved in JSON/DTO
-  onClick?: (event: ActionClickEvent) => T;
+  options: TOptions;
 }
 
 /**
@@ -20,15 +14,20 @@ export interface Action<T = any> {
  */
 export interface ActionModel<T = any> {
   title: string;
-
-  // When a click callback exists, this is passed the raw mouse|react event
-  onClick?: (e: any, origin?: any) => void;
+  onClick: (event: any, origin?: any) => void;
 }
 
-export interface ActionClickEvent<T = any> {
-  origin: T;
-  replaceVariables: InterpolateFunction | undefined;
-  clickEvent?: any; // mouse|react event
+interface FetchOptions {
+  method: HttpRequestMethod;
+  url: string;
+  body?: string;
+  contentType?: string;
+  queryParams?: Array<[string, string]>;
+  headers?: Array<[string, string]>;
+}
+
+export enum ActionType {
+  Fetch = 'fetch',
 }
 
 export enum HttpRequestMethod {
@@ -53,11 +52,23 @@ export const contentTypeOptions: SelectableValue[] = [
 ];
 
 export const defaultActionConfig: Action = {
+  type: ActionType.Fetch,
   title: '',
-  url: '',
-  method: HttpRequestMethod.POST,
-  body: '{}',
-  contentType: 'application/json',
-  queryParams: [],
-  headers: [],
+  options: {
+    url: '',
+    method: HttpRequestMethod.GET,
+    body: '{}',
+    contentType: 'application/json',
+    queryParams: [],
+    headers: [],
+  },
+};
+
+export type ActionsArgs = {
+  frame: DataFrame;
+  field: Field;
+  fieldScopedVars: ScopedVars;
+  replaceVariables: InterpolateFunction;
+  actions: Action[];
+  config: ValueLinkConfig;
 };

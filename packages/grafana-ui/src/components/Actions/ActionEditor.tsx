@@ -42,24 +42,42 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
   };
 
   const onUrlChange = (url: string) => {
-    onChange(index, { ...value, url });
+    onChange(index, {
+      ...value,
+      options: {
+        ...value.options,
+        url,
+      },
+    });
   };
 
   const onBodyChange = (body: string) => {
-    onChange(index, { ...value, body });
-  };
-
-  const onMethodChange = (method: string) => {
     onChange(index, {
       ...value,
-      method,
+      options: {
+        ...value.options,
+        body,
+      },
+    });
+  };
+
+  const onMethodChange = (method: HttpRequestMethod) => {
+    onChange(index, {
+      ...value,
+      options: {
+        ...value.options,
+        method,
+      },
     });
   };
 
   const onContentTypeChange = (contentType: SelectableValue<string>) => {
     onChange(index, {
       ...value,
-      contentType: contentType?.value,
+      options: {
+        ...value.options,
+        contentType: contentType?.value,
+      },
     });
   };
 
@@ -70,14 +88,20 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
   const onQueryParamsChange = (queryParams: Array<[string, string]>) => {
     onChange(index, {
       ...value,
-      queryParams,
+      options: {
+        ...value.options,
+        queryParams,
+      },
     });
   };
 
   const onHeadersChange = (headers: Array<[string, string]>) => {
     onChange(index, {
       ...value,
-      headers,
+      options: {
+        ...value.options,
+        headers,
+      },
     });
   };
 
@@ -102,22 +126,27 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
       <Label>API</Label>
       <InlineFieldRow>
         <InlineField label="URL" labelWidth={LABEL_WIDTH} grow={true}>
-          <SuggestionsInput value={value.url} onChange={onUrlChange} suggestions={suggestions} />
+          <SuggestionsInput value={value.options.url} onChange={onUrlChange} suggestions={suggestions} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField label="Method" labelWidth={LABEL_WIDTH} grow={true}>
-          <RadioButtonGroup value={value?.method} options={httpMethodOptions} onChange={onMethodChange} fullWidth />
+          <RadioButtonGroup
+            value={value?.options.method}
+            options={httpMethodOptions}
+            onChange={onMethodChange}
+            fullWidth
+          />
         </InlineField>
       </InlineFieldRow>
-      {value?.method !== HttpRequestMethod.GET && (
+      {value?.options.method !== HttpRequestMethod.GET && (
         <InlineFieldRow>
           <InlineField label="Content-Type" labelWidth={LABEL_WIDTH} grow={true}>
             <Select
               options={contentTypeOptions}
               allowCustomValue={true}
               formatCreateLabel={formatCreateLabel}
-              value={value?.contentType}
+              value={value?.options.contentType}
               onChange={onContentTypeChange}
             />
           </InlineField>
@@ -125,17 +154,21 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
       )}
 
       <Field label="Query parameters" className={styles.fieldGap}>
-        <ParamsEditor value={value?.queryParams ?? []} onChange={onQueryParamsChange} suggestions={suggestions} />
+        <ParamsEditor
+          value={value?.options.queryParams ?? []}
+          onChange={onQueryParamsChange}
+          suggestions={suggestions}
+        />
       </Field>
 
       <Field label="Headers">
-        <ParamsEditor value={value?.headers ?? []} onChange={onHeadersChange} suggestions={suggestions} />
+        <ParamsEditor value={value?.options.headers ?? []} onChange={onHeadersChange} suggestions={suggestions} />
       </Field>
 
-      {value?.method !== HttpRequestMethod.GET && value?.contentType && (
+      {value?.options.method !== HttpRequestMethod.GET && value?.options.contentType && (
         <Field label="Body">
           <SuggestionsInput
-            value={value.body}
+            value={value.options.body}
             onChange={onBodyChange}
             suggestions={suggestions}
             type={HTMLElementType.TextAreaElement}
@@ -144,9 +177,9 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
       )}
 
       <br />
-      {value?.method !== HttpRequestMethod.GET &&
-        value?.contentType === defaultActionConfig.contentType &&
-        renderJSON(value?.body ?? '{}')}
+      {value?.options.method !== HttpRequestMethod.GET &&
+        value?.options.contentType === defaultActionConfig.options.contentType &&
+        renderJSON(value?.options.body ?? '{}')}
     </div>
   );
 });

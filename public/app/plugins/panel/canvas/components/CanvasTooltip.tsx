@@ -10,6 +10,7 @@ import {
   GrafanaTheme2,
   formattedValueToString,
   getFieldDisplayName,
+  ScopedVars,
 } from '@grafana/data/src';
 import { ActionModel } from '@grafana/data/src/types/action';
 import { Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
@@ -18,6 +19,7 @@ import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizToolt
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
 import { VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 import { CloseButton } from '@grafana/ui/src/components/uPlot/plugins/CloseButton';
+import { getActions, getActionsDefaultField } from 'app/features/actions/utils';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { getRowIndex } from '../utils';
@@ -88,9 +90,31 @@ export const CanvasTooltip = ({ scene }: Props) => {
   const actionLookup = new Set<string>();
 
   const elementHasActions = (element.options.actions?.length ?? 0) > 0;
+  const frames = scene.data?.series;
 
-  if (elementHasActions && element.getActions) {
-    element.getActions({}).forEach((action) => {
+  if (elementHasActions && frames) {
+    const defaultField = getActionsDefaultField(element.options.links ?? [], element.options.actions ?? []);
+    const scopedVars: ScopedVars = {
+      __dataContext: {
+        value: {
+          data: frames,
+          field: defaultField,
+          frame: frames[0],
+          frameIndex: 0,
+        },
+      },
+    };
+
+    const actionsModel = getActions(
+      frames[0],
+      defaultField,
+      scopedVars,
+      scene.panel.props.replaceVariables!,
+      element.options.actions ?? [],
+      {}
+    );
+
+    actionsModel.forEach((action) => {
       const key = `${action.title}/${Math.random()}`;
       if (!actionLookup.has(key)) {
         actions.push(action);

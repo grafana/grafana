@@ -2,8 +2,7 @@ import * as React from 'react';
 import { CSSProperties } from 'react';
 import { OnDrag, OnResize, OnRotate } from 'react-moveable/declaration/types';
 
-import { FieldType, getLinksSupplier, LinkModel, OneClickMode, ValueLinkConfig } from '@grafana/data';
-import { ActionModel } from '@grafana/data/src/types/action';
+import { FieldType, getLinksSupplier, LinkModel, OneClickMode, ScopedVars, ValueLinkConfig } from '@grafana/data';
 import { LayerElement } from 'app/core/components/Layers/types';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
@@ -16,9 +15,9 @@ import {
 } from 'app/plugins/panel/canvas/panelcfg.gen';
 import { getConnectionsByTarget, getRowIndex, isConnectionTarget } from 'app/plugins/panel/canvas/utils';
 
+import { getActions, getActionsDefaultField } from '../../actions/utils';
 import { CanvasElementItem, CanvasElementOptions } from '../element';
 import { canvasElementRegistry } from '../registry';
-import { getActionsSupplier } from '../utils';
 
 import { FrameState } from './frame';
 import { RootElement } from './root';
@@ -46,7 +45,6 @@ export class ElementState implements LayerElement {
   data?: any; // depends on the type
 
   getLinks?: (config: ValueLinkConfig) => LinkModel[];
-  getActions?: (config: ValueLinkConfig) => ActionModel[];
 
   constructor(
     public item: CanvasElementItem,
@@ -401,23 +399,6 @@ export class ElementState implements LayerElement {
         },
         scene?.panel.props.replaceVariables!
       );
-
-      this.getActions = getActionsSupplier(
-        frames[0],
-        defaultField,
-        {
-          __dataContext: {
-            value: {
-              data: frames,
-              field: defaultField,
-              frame: frames[0],
-              frameIndex: 0,
-            },
-          },
-        },
-        scene?.panel.props.replaceVariables!,
-        this.options.actions ?? []
-      );
     }
 
     const { background, border } = this.options;
@@ -645,8 +626,31 @@ export class ElementState implements LayerElement {
   };
 
   getPrimaryAction = () => {
-    if (this.getActions) {
-      const actions = this.getActions({ valueRowIndex: getRowIndex(this.data.field, this.getScene()!) });
+    const config: ValueLinkConfig = { valueRowIndex: getRowIndex(this.data.field, this.getScene()!) };
+    const actionsDefaultFieldConfig = { links: this.options.links ?? [], actions: this.options.actions ?? [] };
+    const frames = this.getScene()?.data?.series;
+
+    if (frames) {
+      const defaultField = getActionsDefaultField(actionsDefaultFieldConfig.links, actionsDefaultFieldConfig.actions);
+      const scopedVars: ScopedVars = {
+        __dataContext: {
+          value: {
+            data: frames,
+            field: defaultField,
+            frame: frames[0],
+            frameIndex: 0,
+          },
+        },
+      };
+
+      const actions = getActions(
+        frames[0],
+        defaultField,
+        scopedVars,
+        this.getScene()?.panel.props.replaceVariables!,
+        actionsDefaultFieldConfig.actions,
+        config
+      );
       return actions[0];
     }
 
