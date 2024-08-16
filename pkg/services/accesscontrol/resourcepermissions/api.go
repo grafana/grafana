@@ -400,7 +400,6 @@ type SetResourcePermissionsParams struct {
 func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 	ctx, span := tracer.Start(c.Req.Context(), "accesscontrol.resourcepermissions.setPermissions")
 	defer span.End()
-	c.Req = c.Req.WithContext(ctx)
 
 	resourceID := web.Params(c.Req)[":resourceID"]
 
@@ -409,7 +408,7 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "Bad request data: "+err.Error(), err)
 	}
 
-	_, err := a.service.SetPermissions(c.Req.Context(), c.SignedInUser.GetOrgID(), resourceID, cmd.Permissions...)
+	_, err := a.service.SetPermissions(ctx, c.SignedInUser.GetOrgID(), resourceID, cmd.Permissions...)
 	if err != nil {
 		return response.Err(err)
 	}
