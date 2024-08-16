@@ -145,7 +145,7 @@ func (cp *corePlugin) ValidateAdmission(ctx context.Context, req *backend.Admiss
 }
 
 func (cp *corePlugin) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	if cp.AdmissionHandler != nil {
+	if cp.ConversionHandler != nil {
 		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
 		return cp.ConversionHandler.ConvertObjects(ctx, req)
 	}

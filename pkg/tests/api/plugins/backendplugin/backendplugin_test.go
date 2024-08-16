@@ -955,7 +955,7 @@ func (tp *testPlugin) MutateAdmission(ctx context.Context, req *backend.Admissio
 
 // ConvertObject implements backend.AdmissionHandler.
 func (tp *testPlugin) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	if tp.AdmissionHandler != nil {
+	if tp.ConversionHandler != nil {
 		return tp.ConversionHandler.ConvertObjects(ctx, req)
 	}
 
