@@ -23,7 +23,7 @@ import (
 )
 
 // Used in logging to mark a stage
-var (
+const (
 	StagePrepareRequest  = "prepareRequest"
 	StageDatabaseRequest = "databaseRequest"
 	StageParseResponse   = "parseResponse"
