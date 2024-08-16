@@ -61,6 +61,7 @@ Grafana enables you to share dashboards and panels with other users within an or
 - PDFs
 - JSON files
 - Reports
+- Library panels
 
 You must have an authorized viewer permission to see an image rendered by a direct link.
 
@@ -202,9 +203,12 @@ Export a Grafana JSON file that contains everything you need, including layout, 
 
 ## Share a panel
 
-You can share a panel as a direct link, as a snapshot, or as an embedded link. You can also create library panels using the **Share** option on any panel.
+You can share a panels in the following ways:
 
-The share dialog opens and shows the **Link** tab.
+- [Internally with a link](#share-an-internal-link)
+- [As an embed](#share-an-embed)
+- [As a snapshot](#share-a-snapshot-panel-snapshot)
+- [As a library panel](#share-a-library-panel)
 
 ### Share an internal link
 
@@ -272,7 +276,7 @@ Here's an example of what the HTML code might look like:
 
 The result is an interactive Grafana visualization embedded in an iframe.
 
-### Share a snapshot
+### Share a snapshot {#panel-snapshot}
 
 A panel snapshot shares an interactive panel publicly while removing sensitive data such as queries and panel links, leaving only visible metrics and series names. Anyone with the link can access the snapshot.
 
