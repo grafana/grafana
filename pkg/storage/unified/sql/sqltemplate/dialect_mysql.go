@@ -14,25 +14,26 @@ var MySQL = mysql{
 var _ Dialect = MySQL
 
 type mysql struct {
-	backtickIdent
+	standardTable
+	standardIdent
 	rowLockingClauseMap
 	argPlaceholderFunc
 	name
 }
 
-// standardIdent provides standard SQL escaping of identifiers.
-type backtickIdent struct{}
+// // standardIdent provides standard SQL escaping of identifiers.
+// type backtickIdent struct{}
 
-var standardFallback = standardIdent{}
+// var standardFallback = standardIdent{}
 
-func (backtickIdent) Ident(s string) (string, error) {
-	switch s {
-	// Internal identifiers require backticks to work properly
-	case "user":
-		return "`" + s + "`", nil
-	case "":
-		return "", ErrEmptyIdent
-	}
-	// standard
-	return standardFallback.Ident(s)
-}
+// func (backtickIdent) Ident(s string) (string, error) {
+// 	switch s {
+// 	// Internal identifiers require backticks to work properly
+// 	case "user":
+// 		return "`" + s + "`", nil
+// 	case "":
+// 		return "", ErrEmptyIdent
+// 	}
+// 	// standard
+// 	return standardFallback.Ident(s)
+// }
