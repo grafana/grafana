@@ -6,9 +6,9 @@ SELECT
         {{ .Ident "is_dirty"   | .Into .Entry.Succeeded }},
         {{ .Ident "error"      | .Into .Entry.Error }},
         {{ .Ident "statements" | .Into .Entry.Statements }}
-    FROM {{ .Ident "migrations_log" }}
+    FROM {{ .Ident .MigrationsLogTableName }}
     WHERE
         {{ .Ident "ts" }} = (
             SELECT max({{ .Ident "ts" }})
-                FROM {{ .Ident "migrations_log" }}
+                FROM {{ .Ident .MigrationsLogTableName }}
         )

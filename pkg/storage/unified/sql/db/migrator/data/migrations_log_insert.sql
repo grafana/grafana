@@ -1,4 +1,4 @@
-INSERT INTO {{ .Ident "migrations_log" }} (
+INSERT INTO {{ .Ident .MigrationsLogTableName }} (
         {{ .Ident "id" }},
         {{ .Ident "version" }},
         {{ .Ident "ts" }},

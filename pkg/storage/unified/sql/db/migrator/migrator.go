@@ -1,86 +1,3 @@
-// Package migrator ... TODO: high level, obvious description
-//
-// The main interfaces of this package are [Migrator], [Step], and [Statement].
-// They are designed to be loosely coupled for ease of extensibility and testing
-// purposes.
-//
-// The package will try to provide as much information in errors as possible, so
-// as to collect all possible errors found when doing checks and only fail
-// before doing any meaningful work (instead of returning upon the first error
-// found). This is because development with migrations can be tricky sometimes,
-// and we may need all the information we can gather as possible to provide the
-// best support.
-//
-// DDL operations considered to be safe when used with this package's utilities:
-//   - Creating a table or an index.
-//   - Dropping an index.
-//   - Adding a column with a default value to an existing table.
-//   - Renaming a table, an index or a column.
-//
-// Considerations for backwards compatibility:
-//   - Don't create any other top level database objects other than tables and
-//     indexes.
-//   - Never use the same name for the top level database objects mentioned
-//     above. Consider them to share the same namespace.
-//   - Never drop tables or columns once added to production.
-//   - Never change the type of a column once added to production.
-//   - Never change constraints of a column once added to production. Very few
-//     exceptions may apply, and under very strict conditions, and may not be
-//     worth the effort, so use application logic by default.
-//
-// Considerations for database interoperability that are enforced by this
-// package:
-//  1. Combininig multiple SQL statements in a single database call. Support for
-//     this is patchy and requires great considerations. The saved roundtrips
-//     are not worth for the migrations use case.
-//  2. Avoid unquoted identifiers (i.e. table names, column names, index names,
-//     etc.). TODO: explain this
-//  3. Table constraints and other table features:
-//     - Foreign Keys are not supported by all engines, and how they work
-//     differs in ways that are hard to predict. Replace them with application
-//     logic with appropriate testing.
-//     - Unique Key constraints ... TODO: example of PostgreSQL treating
-//     specially this
-//     - Don't use Primary Keys. Instead, create a separate Unique Index and set
-//     all its columns to be NOT NULL. This can help change indexing without
-//     using ALTER TABLE. Some database systems treat Primary Keys differently
-//     (like PostgrerSQL). TODO: add more details
-//     - Don't use CHECK constraints, they are hard to make consistent across
-//     all implementations. TODO: some exceptions may apply, which could be
-//     added as extensions of this package after VERY CAREFUL design and reading
-//     lots of docs
-//     - Other: just don't (for example, partitions, remote tables, etc.).
-//  4. Indexes:
-//     - Only use column names, don't use expressions.
-//     - Avoid indexing parameters and specific algorithms.
-//     - Avoid partial indexes, not all engines support them. TODO: may have a
-//     - Other: TODO
-//     sensitive workaround, but not all considerations were researched yet.
-//  5. Column constraints: anything else other than NULL/NOT NULL/DEFAULT. TODO:
-//     explain.
-//  6. Column data types other than the ones provided in this package:
-//     - Unsigned integers are not supported in all databases, most notably in
-//     PostgreSQL, so avoid them.
-//  7. Special note about date, time and timestamp column data types: native
-//     types can have very intricate and surprising logic, and it will be very
-//     hard to make that logic match among different database implementations.
-//     Consider the following alternatives instead:
-//     - Store timestamps as a BIGINT representing a Unix Time.
-//     - If sub-second precision is needed, add an additional BIGINT column to
-//     represent nanoseconds.
-//     - If timezone is needed, add a new column for it. Prefer a column of type
-//     TEXT or an appropriately sized VARCHAR/CHAR, so that the timezone can be
-//     stored in a IANA timezone db string (like
-//     "America/Argentina/Buenos_Aires") to account for daylight saving and
-//     political timezone decisions in the region. If you don't have a
-//     colloquial string and only have the time offset as a number instead (like
-//     just UTC-3), convert the offset to seconds and then to string, and then
-//     add the logic in your application to handle it (Go has the
-//     `time.FixedZone` function to help with this).
-//
-// TODO: add recommendations about DML to use a separate table for each created
-// table to log all changed rows for reference. In a followup version, we could
-// provide utilities to automate some parts of this.
 package migrator
 
 import (
@@ -232,18 +149,18 @@ type Statement interface {
 
 // MigratorOptions are the options to create a default [Migrator].
 type MigratorOptions struct {
-	DB                  db.DB  // must be non-nil
-	Migrations          []Step // must have at least one element, and none should be nil
-	MigrationsTableName string // if empty, defaults to DefaultMigrationsLogTableName
+	DB                     db.DB  // must be non-nil
+	Migrations             []Step // must have at least one element, and none should be nil
+	MigrationsLogTableName string // if empty, defaults to DefaultMigrationsLogTableName
 }
 
 func (o MigratorOptions) newBuiltinMigrations() []Step {
 	return []Step{
 		NewStep(
 			fmt.Sprintf("create %q table for migrations log",
-				o.MigrationsTableName),
+				o.MigrationsLogTableName),
 			[]Statement{
-				CreateTable(o.MigrationsTableName, []Column{
+				CreateTable(o.MigrationsLogTableName, []Column{
 					NewColumn("id").Char(36).NotNull(),
 					NewColumn("ts").BigInt().NotNull(),
 					NewColumn("version").Int().NotNull(),
@@ -252,9 +169,9 @@ func (o MigratorOptions) newBuiltinMigrations() []Step {
 					NewColumn("statements").Text().NotNull(),
 				}),
 
-				CreateIndex(true, "id", o.MigrationsTableName, "id"),
-				CreateIndex(true, "ts", o.MigrationsTableName, "ts"),
-				CreateIndex(false, "version", o.MigrationsTableName, "version"),
+				CreateIndex(true, "id", o.MigrationsLogTableName, "id"),
+				CreateIndex(true, "ts", o.MigrationsLogTableName, "ts"),
+				CreateIndex(false, "version", o.MigrationsLogTableName, "version"),
 			}),
 	}
 }
@@ -275,9 +192,13 @@ func New(o MigratorOptions) (Migrator, error) {
 // use. The implementation will use transactions whenever available in the
 // database engine (refer to [Migratior] for more informtation). A [][Step] to
 // will be prepended to the provided list of migrations to run in `o`. This is
-// needed to create the o.MigrationsTableName table to keep track of migrations
-// and database state.
+// needed to create the o.MigrationsLogTableName table to keep track of
+// migrations and database state.
 func NewWithDialect(o MigratorOptions, dl sqltemplate.Dialect) (Migrator, error) {
+	if o.MigrationsLogTableName == "" {
+		o.MigrationsLogTableName = DefaultMigrationsLogTableName
+	}
+
 	err := appendErr(nil, len(o.Migrations) == 0, "no migrations defined")
 
 	for i, m := range o.Migrations {
@@ -411,8 +332,9 @@ func (m migrator) step(ctx context.Context, isUp bool) error {
 		// rolled back, which is fine. Otherwise, we will be inserting the log
 		// entry with `is_dirty` set to true
 		_, err = dbutil.Exec(ctx, tx, migrationsLogInsert, migrationsLogReq{
-			SQLTemplate: sqltemplate.New(m.dialect),
-			Entry:       newEntry,
+			SQLTemplate:            sqltemplate.New(m.dialect),
+			Entry:                  newEntry,
+			MigrationsLogTableName: m.MigrationsLogTableName,
 		})
 
 		return appendErr(migErr, err != nil, "insert migrations log entry: %w", err)
@@ -425,19 +347,20 @@ func (m migrator) last(ctx context.Context, x db.ContextExecer, now int64) (*mig
 	migrationsLogExists, err := dbutil.QueryRow(ctx, m.DB, checkIfATableExists,
 		&checkIfTableExistsReq{
 			SQLTemplate: sqltemplate.New(m.dialect),
-			TableName:   m.MigrationsTableName,
+			TableName:   m.MigrationsLogTableName,
 		})
 	if err != nil {
 		return nil, fmt.Errorf("check if %q table exists: %w",
-			m.MigrationsTableName, err)
+			m.MigrationsLogTableName, err)
 	}
 	if !migrationsLogExists {
 		return nil, nil
 	}
 
 	entry, err := dbutil.QueryRow(ctx, m.DB, migrationsLogGet, migrationsLogReq{
-		SQLTemplate: sqltemplate.New(m.dialect),
-		Entry:       new(migrationsLog),
+		SQLTemplate:            sqltemplate.New(m.dialect),
+		Entry:                  new(migrationsLog),
+		MigrationsLogTableName: m.MigrationsLogTableName,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("get last migration log entry: %w", err)
@@ -830,7 +753,8 @@ type migrationsLog struct {
 
 type migrationsLogReq struct {
 	sqltemplate.SQLTemplate
-	Entry *migrationsLog
+	Entry                  *migrationsLog
+	MigrationsLogTableName string
 }
 
 func (m migrationsLogReq) Results() (*migrationsLog, error) {
