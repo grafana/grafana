@@ -1,8 +1,0 @@
-{
-  BasedOnStyle: Google,
-  AlignConsecutiveDeclarations: true,
-  AlignConsecutiveAssignments: true,
-  ColumnLimit: 0,
-  IndentWidth: 4,
-  AllowShortFunctionsOnASingleLine: Empty,
-}
