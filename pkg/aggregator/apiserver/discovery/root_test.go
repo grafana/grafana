@@ -1,4 +1,4 @@
-package apiserver
+package discovery
 
 import (
 	"encoding/json"
@@ -16,7 +16,7 @@ import (
 	aggregationv0alpha1api "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
 )
 
-func TestApisProxyHandler_Handle(t *testing.T) {
+func TestRootDiscoveryHandler_Handle(t *testing.T) {
 	v1Discovery := metav1.APIGroup{
 		Name: aggregationv0alpha1api.SchemeGroupVersion.Group,
 		Versions: []metav1.GroupVersionForDiscovery{
@@ -107,7 +107,7 @@ func TestApisProxyHandler_Handle(t *testing.T) {
 		}
 	})
 
-	handler := newApisProxyHandler(delegationTarget)
+	handler := NewRootDiscoveryHandler(delegationTarget)
 
 	chain := &restful.FilterChain{
 		Target: func(req *restful.Request, resp *restful.Response) {
@@ -152,7 +152,7 @@ func TestApisProxyHandler_Handle(t *testing.T) {
 			ResponseWriter: rec,
 		}
 
-		handler.handle(req, resp, chain)
+		handler.Handle(req, resp, chain)
 		require.Equal(t, http.StatusOK, resp.StatusCode())
 		require.NoError(t, resp.Error())
 		require.Equal(t, "application/json", resp.Header().Get("Content-Type"))
@@ -182,7 +182,7 @@ func TestApisProxyHandler_Handle(t *testing.T) {
 			ResponseWriter: rec,
 		}
 
-		handler.handle(req, resp, chain)
+		handler.Handle(req, resp, chain)
 		require.Equal(t, http.StatusOK, resp.StatusCode())
 		require.Equal(t, "application/json;g=apidiscovery.k8s.io;v=v2;as=APIGroupDiscoveryList", resp.Header().Get("Content-Type"))
 
@@ -226,7 +226,7 @@ func TestApisProxyHandler_Handle(t *testing.T) {
 			ResponseWriter: rec,
 		}
 
-		handler.handle(req, resp, chain)
+		handler.Handle(req, resp, chain)
 		require.Equal(t, http.StatusOK, rec.Code)
 		require.Equal(t, "v0alpha1", rec.Body.String())
 	})
