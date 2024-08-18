@@ -27,6 +27,7 @@ When a trace ID is propagated, it is reported with operation 'HTTP /datasources/
 Refer to [Configuration's OpenTelemetry section]({{< relref "./configure-grafana#tracingopentelemetry" >}}) for a reference of tracing options available in Grafana.
 
 ## View Grafana internal metrics
+other modification
 
 Grafana collects some metrics about itself internally. Grafana supports pushing metrics to Graphite or exposing them to be scraped by Prometheus.
 
