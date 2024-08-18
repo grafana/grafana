@@ -87,6 +87,8 @@ These instructions assume you have already added Prometheus as a data source in 
 
 ### View Grafana metrics in Graphite
 
+THIS IS A TEST FOR COS
+
 These instructions assume you have already added Graphite as a data source in Grafana.
 
 1. Enable sending metrics to Graphite. In your configuration file (`grafana.ini` or `custom.ini` depending on your operating system) remove the semicolon to enable the following configuration options:
