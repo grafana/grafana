@@ -20,6 +20,7 @@ import {
   PublicDashboardShareType,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 import { AccessControlAction } from 'app/types';
 
 import { ShareDrawerConfirmAction } from '../../ShareDrawer/ShareDrawerConfirmAction';
@@ -73,7 +74,7 @@ function ShareExternallyRenderer({ model }: SceneComponentProps<ShareExternally>
   const [showRevokeAccess, setShowRevokeAccess] = useState(false);
 
   const styles = useStyles2(getStyles);
-  const { dashboard } = useShareDrawerContext();
+  const dashboard = getDashboardSceneFor(model);
 
   const { data: publicDashboard, isLoading } = useGetPublicDashboardQuery(dashboard.state.uid!);
   const [deletePublicDashboard, { isLoading: isDeleteLoading }] = useDeletePublicDashboardMutation();
