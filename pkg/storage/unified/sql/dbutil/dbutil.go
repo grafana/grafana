@@ -79,7 +79,7 @@ func Debug(err error) error {
 
 // Exec uses `req` as input for a non-data returning query generated with
 // `tmpl`, and executed in `x`.
-func Exec(ctx context.Context, x db.ContextExecer, tmpl *template.Template, req sqltemplate.SQLTemplateIface) (sql.Result, error) {
+func Exec(ctx context.Context, x db.ContextExecer, tmpl *template.Template, req sqltemplate.SQLTemplate) (sql.Result, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("Exec: invalid request for template %q: %w",
 			tmpl.Name(), err)
@@ -108,7 +108,7 @@ func Exec(ctx context.Context, x db.ContextExecer, tmpl *template.Template, req 
 
 // Query uses `req` as input for a single-statement, set-returning query
 // generated with `tmpl`, and executed in `x`.
-func QueryRows(ctx context.Context, x db.ContextExecer, tmpl *template.Template, req sqltemplate.SQLTemplateIface) (*sql.Rows, error) {
+func QueryRows(ctx context.Context, x db.ContextExecer, tmpl *template.Template, req sqltemplate.SQLTemplate) (*sql.Rows, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("Query: invalid request for template %q: %w",
 			tmpl.Name(), err)
