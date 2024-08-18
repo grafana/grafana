@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
-import { SceneObject, VizPanel } from '@grafana/scenes';
+import { VizPanel } from '@grafana/scenes';
 import { IconName, Menu } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
@@ -11,11 +11,8 @@ import { isPublicDashboardsEnabled } from '../../../dashboard/components/ShareMo
 import { getTrackingSource, shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
-import { SceneShareDrawerState } from '../types';
 
 const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButton.menu;
-
-type CustomDashboardDrawer = new (...args: SceneShareDrawerState[]) => SceneObject;
 
 export interface ShareDrawerMenuItem {
   shareId: string;

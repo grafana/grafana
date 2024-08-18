@@ -4,13 +4,13 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Label, Spinner, Stack, Switch, useStyles2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { t, Trans } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
+
 import { ShareExportTab } from '../ShareExportTab';
 
 const selector = e2eSelectors.pages.ExportDashboardDrawer.ExportAsJson;
@@ -98,7 +98,7 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
           <Button
             data-testid={selector.cancelButton}
             variant="secondary"
-            onClick={() => locationService.partial({ shareView: null })}
+            onClick={model.useState().onDismiss}
             fill="outline"
           >
             <Trans i18nKey="export.json.cancel-button">Cancel</Trans>

@@ -55,10 +55,6 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
     this.onThemeChange = this.onThemeChange.bind(this);
   }
 
-  public getTitle() {
-    return t('share-dashboard.menu.share-internally-title', 'Share internally');
-  }
-
   async buildUrl() {
     this.setState({ isBuildUrlLoading: true });
     const { panelRef, useLockedTime: useAbsoluteTimeRange, useShortUrl, selectedTheme } = this.state;

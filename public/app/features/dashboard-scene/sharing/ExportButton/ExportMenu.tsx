@@ -2,18 +2,14 @@ import { useCallback } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
-import { SceneObject } from '@grafana/scenes';
 import { IconName, Menu } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
-import { SceneShareDrawerState } from '../types';
 
 const newExportButtonSelector = e2eSelectors.pages.Dashboard.DashNav.NewExportButton.Menu;
-
-type CustomDashboardDrawer = new (...args: SceneShareDrawerState[]) => SceneObject;
 
 export interface ExportDrawerMenuItem {
   shareId: string;
