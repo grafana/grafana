@@ -67,7 +67,7 @@ Since gossiping of notifications and silences uses both TCP and UDP port `9094`,
    By default, it is set to listen to all interfaces (`0.0.0.0`).
 1. Set `[ha_peer_timeout]` in the `[unified_alerting]` section of the custom.ini to specify the time to wait for an instance to send a notification via the Alertmanager. The default value is 15s, but it may increase if Grafana servers are located in different geographic regions or if the network latency between them is high.
 
-For a demo, see this [example](https://github.com/grafana/alerting-ha-docker-examples/tree/main/memberlist) of alerting high availability using Memberlist and Docker Compose.
+For a demo, see this [example using Docker Compose](https://github.com/grafana/alerting-ha-docker-examples/tree/main/memberlist).
 
 ## Enable alerting high availability using Redis
 
@@ -81,7 +81,7 @@ database for HA and cannot support the meshing of all Grafana servers.
 1. Optional: Set `ha_redis_prefix` to something unique if you plan to share the Redis server with multiple Grafana instances.
 1. Optional: Set `ha_redis_tls_enabled` to `true` and configure the corresponding `ha_redis_tls_*` fields to secure communications between Grafana and Redis with Transport Layer Security (TLS).
 
-For a demo, see this [example of alerting high availability using Redis and Docker Compose](https://github.com/grafana/alerting-ha-docker-examples/tree/main/redis).
+For a demo, see this [example using Docker Compose](https://github.com/grafana/alerting-ha-docker-examples/tree/main/redis).
 
 ## Enable alerting high availability using Kubernetes
 
