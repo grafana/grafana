@@ -126,11 +126,19 @@ export const LdapSettingsPage = (): JSX.Element => {
         payload: [t('ldap-settings-page.alert.saved', 'LDAP settings saved')],
       });
     } catch (error) {
-      console.error('Error saving LDAP settings', error);
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: [t('ldap-settings-page.alert.error-saving', 'Error saving LDAP settings')],
+      });
     }
   };
 
-  const onErrors = (errors: any) => console.error(errors);
+  const onErrors = (errors: any) => {
+    appEvents.publish({
+      type: AppEvents.alertError.name,
+      payload: [t('ldap-settings-page.alert.error-validate-form', 'Error validating LDAP settings')],
+    });
+  }; 
 
   // Button's Actions
   const saveForm = async () => {
@@ -147,7 +155,10 @@ export const LdapSettingsPage = (): JSX.Element => {
         payload: [t('ldap-settings-page.alert.saved', 'LDAP settings saved')],
       });
     } catch (error) {
-      console.error('Error saving LDAP settings', error);
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: [t('ldap-settings-page.alert.error-saving', 'Error saving LDAP settings')],
+      });
     }
   };
   const discardForm = async () => {
@@ -156,7 +167,10 @@ export const LdapSettingsPage = (): JSX.Element => {
       await getBackendSrv().delete('/api/v1/sso-settings/ldap');
       const payload = await getBackendSrv().get<LdapPayload>('/api/v1/sso-settings/ldap');
       if (!payload) {
-        console.error('Error fetching LDAP settings');
+        appEvents.publish({
+          type: AppEvents.alertError.name,
+          payload: [t('ldap-settings-page.alert.error-update', 'Error updating LDAP settings')],
+        });
         return;
       }
 
