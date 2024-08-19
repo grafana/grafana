@@ -128,26 +128,6 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         });
       }
 
-      if (!(parent instanceof LibraryVizPanel)) {
-        subMenu.push({
-          text: '',
-          type: 'divider',
-        });
-
-        subMenu.push({
-          text: t('share-panel.menu.new-library-panel-title', 'New library panel'),
-          iconClassName: 'library-panel',
-          onClick: () => {
-            const drawer = new ShareDrawer({
-              title: t('share-panel.drawer.new-library-panel-title', 'New library panel'),
-              body: new ShareLibraryPanelTab({ panelRef: panel.getRef() }),
-            });
-
-            dashboard.showModal(drawer);
-          },
-        });
-      }
-
       items.push({
         type: 'submenu',
         text: t('panel.header-menu.share', 'Share'),
@@ -207,17 +187,31 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
           },
         });
       } else {
-        moreSubMenu.push({
-          text: t('panel.header-menu.create-library-panel', `Create library panel`),
-          onClick: () => {
-            dashboard.showModal(
-              new ShareModal({
-                panelRef: panel.getRef(),
-                activeTab: shareDashboardType.libraryPanel,
-              })
-            );
-          },
-        });
+        if (config.featureToggles.newDashboardSharingComponent) {
+          moreSubMenu.push({
+            text: t('share-panel.menu.new-library-panel-title', 'New library panel'),
+            onClick: () => {
+              const drawer = new ShareDrawer({
+                title: t('share-panel.drawer.new-library-panel-title', 'New library panel'),
+                body: new ShareLibraryPanelTab({ panelRef: panel.getRef() }),
+              });
+
+              dashboard.showModal(drawer);
+            },
+          });
+        } else {
+          moreSubMenu.push({
+            text: t('panel.header-menu.create-library-panel', `Create library panel`),
+            onClick: () => {
+              dashboard.showModal(
+                new ShareModal({
+                  panelRef: panel.getRef(),
+                  activeTab: shareDashboardType.libraryPanel,
+                })
+              );
+            },
+          });
+        }
       }
     }
 
