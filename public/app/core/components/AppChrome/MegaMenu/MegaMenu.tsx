@@ -182,6 +182,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(1, 1, 2, 1),
     [theme.breakpoints.up('md')]: {
       width: MENU_WIDTH,
+      borderRight: `1px solid ${theme.colors.border.weak}`,
     },
   }),
   dockMenuButton: css({

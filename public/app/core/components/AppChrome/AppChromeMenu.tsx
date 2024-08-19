@@ -109,7 +109,6 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
 
       [theme.breakpoints.up('md')]: {
         right: 'unset',
-        borderRight: `1px solid ${theme.colors.border.weak}`,
         top: topPosition,
       },
     }),
