@@ -2,13 +2,13 @@ Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 disableEnvelopeEncryption,GA,@grafana/grafana-as-code,false,false,false
 live-service-web-worker,experimental,@grafana/grafana-app-platform-squad,false,false,true
 queryOverLive,experimental,@grafana/grafana-app-platform-squad,false,false,true
-panelTitleSearch,preview,@grafana/grafana-app-platform-squad,false,false,false
+panelTitleSearch,preview,@grafana/search-and-storage,false,false,false
 publicDashboards,GA,@grafana/sharing-squad,false,false,false
 publicDashboardsEmailSharing,preview,@grafana/sharing-squad,false,false,false
 publicDashboardsScene,experimental,@grafana/sharing-squad,false,false,true
 lokiExperimentalStreaming,experimental,@grafana/observability-logs,false,false,false
 featureHighlights,GA,@grafana/grafana-as-code,false,false,false
-storage,experimental,@grafana/grafana-app-platform-squad,false,false,false
+storage,experimental,@grafana/search-and-storage,false,false,false
 correlations,GA,@grafana/explore-squad,false,false,false
 autoMigrateOldPanels,preview,@grafana/dataviz-squad,false,false,true
 autoMigrateGraphPanel,preview,@grafana/dataviz-squad,false,false,true
@@ -22,8 +22,8 @@ canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
 disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,true,false
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false
 topnav,deprecated,@grafana/grafana-frontend-platform,false,false,false
-grpcServer,preview,@grafana/grafana-app-platform-squad,false,false,false
-unifiedStorage,experimental,@grafana/grafana-app-platform-squad,false,true,false
+grpcServer,preview,@grafana/search-and-storage,false,false,false
+unifiedStorage,experimental,@grafana/search-and-storage,false,true,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false
 mysqlAnsiQuotes,experimental,@grafana/search-and-storage,false,false,false
