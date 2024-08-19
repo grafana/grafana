@@ -52,7 +52,7 @@ Template variables are now supported for the **Limit**, **Sort by**, **Filter da
 
 **New transpose transformation**
 
-We're excited to announce the new transpose transformation, which allows you to pivot the data frame, converting rows into columns and columns into rows. This feature is particularly useful for data sources that don't support pivot queries, enabling more flexible and insightful data visualizations.
+We're excited to announce the new **Transpose** transformation, which allows you to pivot the data frame, converting rows into columns and columns into rows. This feature is particularly useful for data sources that don't support pivot queries, enabling more flexible and insightful data visualizations.
 
 For more information, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#transpose).
 
@@ -134,7 +134,7 @@ An alert event is displayed each time an alert instance changes its state over a
 
 For Grafana Enterprise and OSS users:
 
-To try out the new alert history page, enable the alertingCentralAlertHistory feature toggle and [configure Loki annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alert-state-history/).
+To try out the new alert history page, enable the `alertingCentralAlertHistory` feature toggle and [configure Loki annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alert-state-history/).
 
 {{< figure src="/media/docs/alerting/alert-state-history.png" >}}
 
@@ -154,7 +154,7 @@ Grafana Explore now allows for logs filtering and pinning in content outline.
 
 **Filtering Logs:** All log levels are now automatically available in the content outline. You can filter by log level, currently supported for Elasticsearch and Loki data sources. To select multiple filters, hold down the command key on Mac or the control key on Windows while clicking.
 
-**Pinning Logs:** The new pinning feature allows users to pin logs to the content outline, making them easily accessible for quick reference during investigations. To pin a log, hover over a log in the logs panel and click on the _Pin to content outline_ icon in the log row menu. Clicking on a pinned log will open the log context modal, showing the log highlighted in context with other logs. From here, you can also open the log in split mode to preserve the time range in the left pane while having the time range specific to that log in the right pane.
+**Pinning Logs:** The new pinning feature allows users to pin logs to the content outline, making them easily accessible for quick reference during investigations. To pin a log, hover over a log in the logs panel and click on the **Pin to content outline** icon in the log row menu. Clicking on a pinned log will open the log context modal, showing the log highlighted in context with other logs. From here, you can also open the log in split mode to preserve the time range in the left pane while having the time range specific to that log in the right pane.
 
 ### Forward direction search for Loki
 
@@ -176,7 +176,7 @@ _Generally available in all editions of Grafana_
 
 We are excited to announce support for cross-account querying in Metric Insights query builder for AWS Cloudwatch Plugin. This enables building SQL queries to monitor across multiple accounts in the same region in AWS Cloudwatch.
 
-This feature introduces an account dropdown for selecting one or all of your source accounts and builds a query that targets them. Furthermore, results can be grouped by account ID by selecting "Account ID" in the Group By dropdown.
+This feature introduces an account drop-down for selecting one or all of your source accounts and builds a query that targets them. Furthermore, results can be grouped by account ID by selecting **Account ID** in the **Group By** drop-down.
 
 For more complex queries that are not covered by the options in the builder you can switch to the manual Code editor and edit the query.
 
@@ -208,9 +208,7 @@ When setting up Grafana with Azure AD using the SAML protocol, the Azure AD Grap
 
 With Grafana 11.2, we offer a mechanism for setting up an application as a Service Account in Azure AD and retrieving information from Graph API.
 
-Please refer to our documentation on how to set up an Azure AD registered application for this setup.
-
-[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/#configure-a-graph-api-application-in-azure-ad)
+Please refer to our [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/#configure-a-graph-api-application-in-azure-ad) on how to set up an Azure AD registered application for this setup.
 
 ### API support for LDAP configuration
 
@@ -218,6 +216,6 @@ Please refer to our documentation on how to set up an Azure AD registered applic
 
 _Available in public preview in all editions of Grafana_
 
-[The SSO settings API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/sso-settings/) has been updated to include support for LDAP settings. This feature is experimental behind the feature flag **ssoSettingsLDAP**.
+[The SSO settings API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/sso-settings/) has been updated to include support for LDAP settings. This feature is experimental behind the feature flag `ssoSettingsLDAP`.
 
 You will soon be able to configure LDAP from the UI and Terraform.
