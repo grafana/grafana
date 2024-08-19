@@ -51,8 +51,9 @@ func getEngineMySQL(getter *sectionGetter, tracer tracing.Tracer) (*xorm.Engine,
 	}
 
 	// FIXME: get rid of xorm
-	driverName := sqlstore.WrapDatabaseDriverWithHooks(db.DriverMySQL, tracer)
-	engine, err := xorm.NewEngine(driverName, config.FormatDSN())
+	// TODO figure out why wrapping the db driver with hooks causes mysql errors when writing
+	//driverName := sqlstore.WrapDatabaseDriverWithHooks(db.DriverMySQL, tracer)
+	engine, err := xorm.NewEngine(db.DriverMySQL, config.FormatDSN())
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
