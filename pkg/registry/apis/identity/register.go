@@ -42,7 +42,7 @@ func RegisterAPIService(
 	}
 
 	builder := &IdentityAPIBuilder{
-		Store: legacy.NewLegacySQLStores(legacysql.NewLegacyDatabaseProvider(sql)),
+		Store: legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql)),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder, nil

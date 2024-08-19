@@ -56,7 +56,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		return nil // skip registration unless opting into experimental apis
 	}
 
-	dbp := legacysql.NewLegacyDatabaseProvider(sql)
+	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	builder := &DashboardsAPIBuilder{
 		log: log.New("grafana-apiserver.dashboards"),
