@@ -7,6 +7,7 @@ import (
 
 	commonv1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -26,6 +27,7 @@ var (
 	_ rest.Lister               = (*legacyStorage)(nil)
 	_ rest.Updater              = (*legacyStorage)(nil)
 	_ rest.SingularNameProvider = (*legacyStorage)(nil)
+	_ rest.GracefulDeleter      = (*legacyStorage)(nil)
 )
 
 var resource = ssov0.SSOSettingResourceInfo
@@ -45,6 +47,11 @@ func (s *legacyStorage) Destroy() {}
 func (s *legacyStorage) NamespaceScoped() bool {
 	// this is maybe incorrect
 	return true
+}
+
+// GetSingularName implements rest.SingularNameProvider.
+func (s *legacyStorage) GetSingularName() string {
+	return resource.GetSingularName()
 }
 
 // New implements rest.Storage.
@@ -88,6 +95,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		if errors.Is(err, ssosettings.ErrNotFound) {
 			return nil, resource.NewNotFound(name)
 		}
+		return nil, err
 	}
 
 	object := mapToObject(ns.Value, setting)
@@ -101,8 +109,8 @@ func (s *legacyStorage) Update(
 	objInfo rest.UpdatedObjectInfo,
 	_ rest.ValidateObjectFunc,
 	_ rest.ValidateObjectUpdateFunc,
-	forceAllowCreate bool,
-	options *metav1.UpdateOptions,
+	_ bool,
+	_ *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
 	const created = false
 	ident, err := identity.GetRequester(ctx)
@@ -133,9 +141,45 @@ func (s *legacyStorage) Update(
 	return updated, created, err
 }
 
-// GetSingularName implements rest.SingularNameProvider.
-func (s *legacyStorage) GetSingularName() string {
-	return resource.GetSingularName()
+// Delete implements rest.GracefulDeleter.
+func (s *legacyStorage) Delete(
+	ctx context.Context,
+	name string,
+	_ rest.ValidateObjectFunc,
+	options *metav1.DeleteOptions,
+) (runtime.Object, bool, error) {
+	obj, err := s.Get(ctx, name, nil)
+	if err != nil {
+		return obj, false, err
+	}
+
+	old, ok := obj.(*ssov0.SSOSetting)
+	if !ok {
+		return obj, false, errors.New("expected ssosetting")
+	}
+
+	// FIXME(kalleep): this should probably be validated in transaction
+	if options.Preconditions != nil && options.Preconditions.ResourceVersion != nil {
+		if *options.Preconditions.ResourceVersion != old.GetResourceVersion() {
+			return old, false, apierrors.NewConflict(
+				resource.GroupResource(),
+				name,
+				fmt.Errorf(
+					"the ResourceVersion in the precondition (%s) does not match the ResourceVersion in record (%s). The object might have been modified",
+					*options.Preconditions.ResourceVersion,
+					old.GetResourceVersion(),
+				),
+			)
+		}
+	}
+
+	if err := s.service.Delete(ctx, name); err != nil {
+		return old, false, err
+	}
+
+	// If settings for a provider is deleted from db they will fallback to settings from config file, env or arguments.
+	afterDelete, err := s.Get(ctx, name, nil)
+	return afterDelete, false, err
 }
 
 func mapToObject(ns string, s *ssomodels.SSOSettings) ssov0.SSOSetting {
