@@ -39,18 +39,13 @@ Grafana Alerting uses the Prometheus model of separating the evaluation of alert
 
 When running multiple instances of Grafana, all alert rules are evaluated on all instances. You can think of the evaluation of alert rules as being duplicated by the number of running Grafana instances. This is how Grafana Alerting makes sure that as long as at least one Grafana instance is working, alert rules are still be evaluated and notifications for alerts are still sent.
 
-You can find this duplication in state history and it is a good way to confirm if you are using high availability.
+You can find this duplication in state history and it is a good way to [verify your high availability setup](#verify-your-high-availability-setup).
 
-While the alert generator evaluates all alert rules on all instances, the alert receiver makes a best-effort attempt to avoid sending duplicate notifications. Alertmanager chooses availability over consistency, which may result in occasional duplicated or out-of-order notifications. It takes the opinion that duplicate or out-of-order notifications are better than no notifications.
+While the alert generator evaluates all alert rules on all instances, the alert receiver makes a best-effort attempt to avoid duplicate notifications. The alertmanagers use a gossip protocol to share information between them to prevent sending duplicated notifications.
 
-The Alertmanager uses a gossip protocol to share information about notifications between Grafana instances. It also gossips silences, which means a silence created on one Grafana instance is replicated to all other Grafana instances. Both notifications and silences are persisted to the database periodically, and during graceful shut down.
+Alertmanager chooses availability over consistency, which may result in occasional duplicated or out-of-order notifications. It takes the opinion that duplicate or out-of-order notifications are better than no notifications.
 
-{{% admonition type="note" %}}
-
-If using a mix of `execute_alerts=false` and `execute_alerts=true` on the HA nodes, since the alert state is not shared amongst the Grafana instances, the instances with `execute_alerts=false` do not show any alert status.
-This is because the HA settings (`ha_peers`, etc) only apply to the alert notification delivery (i.e. de-duplication of alert notifications, and silences, as mentioned above).
-
-{{% /admonition %}}
+Alertmanagers also gossip silences, which means a silence created on one Grafana instance is replicated to all other Grafana instances. Both notifications and silences are persisted to the database periodically, and during graceful shut down.
 
 ## Enable alerting high availability using Memberlist
 
@@ -151,9 +146,17 @@ For a demo, see this [example using Docker Compose](https://github.com/grafana/a
    ha_reconnect_timeout = 2m
    ```
 
-## Monitor your high availability setup
+## Verify your high availability setup
 
 When running multiple Grafana instances, all alert rules are evaluated on every instance. This multiple evaluation of alert rules is visible in the [state history](ref:state-history) and provides a straightforward way to verify that your high availability configuration is working correctly.
+
+{{% admonition type="note" %}}
+
+If using a mix of `execute_alerts=false` and `execute_alerts=true` on the HA nodes, since the alert state is not shared amongst the Grafana instances, the instances with `execute_alerts=false` do not show any alert status.
+
+The HA settings (`ha_peers`, etc.) apply only to communication between alertmanagers, synchronizing silences and attempting to avoid duplicate notifications, as described in the introduction.
+
+{{% /admonition %}}
 
 You can also confirm your high availability setup by monitoring Alertmanager metrics exposed by Grafana.
 
