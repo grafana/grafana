@@ -25,6 +25,7 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   setPluginExtensionGetter: jest.fn(),
   getPluginLinkExtensions: jest.fn(),
+  useChromeHeaderHeight: jest.fn().mockReturnValue(80),
   getBackendSrv: () => {
     return {
       get: jest.fn().mockResolvedValue({ dashboard: simpleDashboard, meta: { url: '' } }),
