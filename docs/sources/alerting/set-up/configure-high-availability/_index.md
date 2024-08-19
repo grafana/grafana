@@ -18,6 +18,17 @@ labels:
     - oss
 title: Configure high availability
 weight: 600
+refs:
+  state-history:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/view-state-health/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/view-state-health/
+  meta-monitoring:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor/
 ---
 
 # Configure high availability
@@ -56,6 +67,8 @@ Since gossiping of notifications and silences uses both TCP and UDP port `9094`,
    By default, it is set to listen to all interfaces (`0.0.0.0`).
 1. Set `[ha_peer_timeout]` in the `[unified_alerting]` section of the custom.ini to specify the time to wait for an instance to send a notification via the Alertmanager. The default value is 15s, but it may increase if Grafana servers are located in different geographic regions or if the network latency between them is high.
 
+For a demo, see this [example of alerting high availability using Memberlist and Docker Compose](https://github.com/grafana/alerting-ha-docker-examples/tree/main/memberlist).
+
 ## Enable alerting high availability using Redis
 
 As an alternative to Memberlist, you can use Redis for high availability. This is useful if you want to have a central
@@ -68,19 +81,7 @@ database for HA and cannot support the meshing of all Grafana servers.
 1. Optional: Set `ha_redis_prefix` to something unique if you plan to share the Redis server with multiple Grafana instances.
 1. Optional: Set `ha_redis_tls_enabled` to `true` and configure the corresponding `ha_redis_tls_*` fields to secure communications between Grafana and Redis with Transport Layer Security (TLS).
 
-The following metrics can be used for meta monitoring, exposed by the `/metrics` endpoint in Grafana:
-
-| Metric                                               | Description                                                                                                    |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| alertmanager_cluster_messages_received_total         | Total number of cluster messages received.                                                                     |
-| alertmanager_cluster_messages_received_size_total    | Total size of cluster messages received.                                                                       |
-| alertmanager_cluster_messages_sent_total             | Total number of cluster messages sent.                                                                         |
-| alertmanager_cluster_messages_sent_size_total        | Total number of cluster messages received.                                                                     |
-| alertmanager_cluster_messages_publish_failures_total | Total number of messages that failed to be published.                                                          |
-| alertmanager_cluster_members                         | Number indicating current number of members in cluster.                                                        |
-| alertmanager_peer_position                           | Position the Alertmanager instance believes it's in. The position determines a peer's behavior in the cluster. |
-| alertmanager_cluster_pings_seconds                   | Histogram of latencies for ping messages.                                                                      |
-| alertmanager_cluster_pings_failures_total            | Total number of failed pings.                                                                                  |
+For a demo, see this [example of alerting high availability using Redis and Docker Compose](https://github.com/grafana/alerting-ha-docker-examples/tree/main/redis).
 
 ## Enable alerting high availability using Kubernetes
 
@@ -149,3 +150,40 @@ The following metrics can be used for meta monitoring, exposed by the `/metrics`
    ha_peer_timeout = 15s
    ha_reconnect_timeout = 2m
    ```
+
+## Monitor your high availability setup
+
+When running multiple Grafana instances, all alert rules are evaluated on every instance. This multiple evaluation of alert rules is visible in the [state history](ref:state-history) and provides a straightforward way to verify that your high availability configuration is working correctly.
+
+You can also confirm your high availability setup by monitoring alertmanager metrics exposed by Grafana:
+
+| Metric                                               | Description                                                                                                    |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| alertmanager_cluster_members                         | Number indicating current number of members in cluster.                                                        |
+| alertmanager_cluster_messages_received_total         | Total number of cluster messages received.                                                                     |
+| alertmanager_cluster_messages_received_size_total    | Total size of cluster messages received.                                                                       |
+| alertmanager_cluster_messages_sent_total             | Total number of cluster messages sent.                                                                         |
+| alertmanager_cluster_messages_sent_size_total        | Total number of cluster messages received.                                                                     |
+| alertmanager_cluster_messages_publish_failures_total | Total number of messages that failed to be published.                                                          |
+| alertmanager_cluster_pings_seconds                   | Histogram of latencies for ping messages.                                                                      |
+| alertmanager_cluster_pings_failures_total            | Total number of failed pings.                                                                                  |
+| alertmanager_peer_position                           | Position the Alertmanager instance believes it's in. The position determines a peer's behavior in the cluster. |
+
+You can confirm the number of Grafana instances in your alerting high availability setup by querying the `alertmanager_cluster_members` and `alertmanager_peer_position` metrics.
+
+But note that these alerting high availability metrics are exposed via the `/metrics` endpoint in Grafana, and are not automatically collected or displayed. If you have a Prometheus instance connected to Grafana, you can add a `scrape_config` to scrape Grafana metrics and then query these metrics in Explore.
+
+```yaml
+- job_name: grafana
+  honor_timestamps: true
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  metrics_path: /metrics
+  scheme: http
+  follow_redirects: true
+  static_configs:
+    - targets:
+        - grafana:3000
+```
+
+For more details about monitoring alerting metrics, refer to [Alerting meta-monitoring](ref:meta-monitoring). For a demo, see the [alerting high availability examples using Docker Compose](https://github.com/grafana/alerting-ha-docker-examples/).
