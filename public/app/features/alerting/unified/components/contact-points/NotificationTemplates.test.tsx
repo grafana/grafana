@@ -1,5 +1,6 @@
 import { render, screen, within } from 'test/test-utils';
 
+import { config } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types';
 
 import { setupMswServer } from '../../mockApi';
@@ -69,5 +70,35 @@ describe('NotificationTemplates', () => {
 
     const provisionedRow = await screen.findByRole('row', { name: /provisioned-template/i });
     expect(within(provisionedRow).getByText('Provisioned')).toBeInTheDocument();
+  });
+
+  describe('k8s API', () => {
+    beforeAll(() => {
+      config.featureToggles.alertingApiServer = true;
+    });
+
+    afterAll(() => {
+      config.featureToggles.alertingApiServer = false;
+    });
+
+    it('Should render templates table with the correct rows', async () => {
+      renderWithProvider();
+
+      const slackRow = await screen.findByRole('row', { name: /slack-template/i });
+      expect(within(slackRow).getByRole('cell', { name: /slack-template/i })).toBeInTheDocument();
+
+      const emailRow = await screen.findByRole('row', { name: /custom-email/i });
+      expect(within(emailRow).getByRole('cell', { name: /custom-email/i })).toBeInTheDocument();
+
+      const provisionedRow = await screen.findByRole('row', { name: /provisioned-template/i });
+      expect(within(provisionedRow).getByRole('cell', { name: /provisioned-template/i })).toBeInTheDocument();
+    });
+
+    it('Should provisioned badge for provisioned template', async () => {
+      renderWithProvider();
+
+      const provisionedRow = await screen.findByRole('row', { name: /provisioned-template/i });
+      expect(within(provisionedRow).getByText('Provisioned')).toBeInTheDocument();
+    });
   });
 });
