@@ -3,16 +3,16 @@ import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { connect } from 'react-redux';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { AppEvents, GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { getBackendSrv, getAppEvents } from '@grafana/runtime';
 import { useStyles2, Alert, Box, Button, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
 import { Loader } from 'app/features/plugins/admin/components/Loader';
-import { LdapPayload, LdapSettings, StoreState } from 'app/types';
+import { LdapPayload, StoreState } from 'app/types';
 
-import { LdapDrawer } from './LdapDrawer';
+const appEvents = getAppEvents();
 
 const mapStateToProps = (state: StoreState) => ({
   ldapSsoSettings: state.ldap.ldapSsoSettings,
@@ -71,32 +71,33 @@ const emptySettings: LdapPayload = {
 
 export const LdapSettingsPage = (): JSX.Element => {
   const [isLoading, setIsLoading] = useState(true);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [formSettings, setFormSettings] = useState<LdapPayload>(emptySettings);
-  // const { register, handleSubmit } = useForm<LdapPayload>();
-  const methods = useForm<LdapPayload>();
-  const { register, handleSubmit } = methods;
+
+  const methods = useForm<LdapPayload>({defaultValues: formSettings});
+  const { handleSubmit, register } = methods;
+
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
     async function init() {
       const payload = await getBackendSrv().get<LdapPayload>('/api/v1/sso-settings/ldap');
-      if (!payload) {
-        console.error('Error fetching LDAP settings'); // TODO:  add error handling
+      if (!payload || !payload.settings || !payload.settings.config) {
+        appEvents.publish({
+          type: AppEvents.alertError.name,
+          payload: [t('ldap-settings-page.alert.error-fetching', 'Error fetching LDAP settings')],
+        });
         return;
       }
 
-      if (!payload.settings || !payload.settings.config) {
-        setIsLoading(false);
-        return;
-      }
       setFormSettings(payload);
       setIsLoading(false);
     }
     init();
   }, []);
 
-  // Display warning if the feature flag is disabled
+  /**
+   * Display warning if the feature flag is disabled
+   */
   if (!config.featureToggles.ssoSettingsLDAP) {
     return (
       <Alert title="invalid configuration">
@@ -109,36 +110,14 @@ export const LdapSettingsPage = (): JSX.Element => {
 
   const submitAndEnableLdapSettings = async (fm: LdapPayload) => {
     try {
-      fm.settings.enabled = true;
-      fm.id = formSettings.id;
-      fm.provider = formSettings.provider;
-      fm.source = formSettings.source;
-      // fm.settings.config.servers[0].search_base_dns = formSettings.settings.config.servers[0].search_base_dns;
-      fm.settings.allowSignUp = formSettings.settings.allowSignUp;
-      fm.settings.activeSyncEnabled = formSettings.settings.activeSyncEnabled;
-      fm.settings.skipOrgRoleSync = formSettings.settings.skipOrgRoleSync;
-      fm.settings.syncCron = formSettings.settings.syncCron;
-      fm.settings.config.servers[0].attributes = formSettings.settings.config.servers[0].attributes;
-      // fm.settings.config.servers[0].group_mappings = formSettings.settings.config.servers[0].group_mappings;
-      fm.settings.config.servers[0].group_search_base_dns = formSettings.settings.config.servers[0].group_search_base_dns;
-      fm.settings.config.servers[0].group_search_filter = formSettings.settings.config.servers[0].group_search_filter;
-      fm.settings.config.servers[0].group_search_filter_user_attribute = formSettings.settings.config.servers[0].group_search_filter_user_attribute;
-      fm.settings.config.servers[0].min_tls_version = formSettings.settings.config.servers[0].min_tls_version;
-      fm.settings.config.servers[0].root_ca_cert = formSettings.settings.config.servers[0].root_ca_cert;
-      fm.settings.config.servers[0].skip_org_role_sync = formSettings.settings.config.servers[0].skip_org_role_sync;
-      fm.settings.config.servers[0].ssl_skip_verify = formSettings.settings.config.servers[0].ssl_skip_verify;
-      fm.settings.config.servers[0].start_tls = formSettings.settings.config.servers[0].start_tls;
-      fm.settings.config.servers[0].timeout = formSettings.settings.config.servers[0].timeout;
-      fm.settings.config.servers[0].tls_ciphers = formSettings.settings.config.servers[0].tls_ciphers;
-      fm.settings.config.servers[0].tls_skip_verify = formSettings.settings.config.servers[0].tls_skip_verify;
-      fm.settings.config.servers[0].use_ssl = formSettings.settings.config.servers[0].use_ssl;
-      fm.settings.config.servers[0].client_cert = formSettings.settings.config.servers[0].client_cert;
-      fm.settings.config.servers[0].client_key = formSettings.settings.config.servers[0].client_key;
       const result = await getBackendSrv().put('/api/v1/sso-settings/ldap', fm);
       if (result) {
         console.error('Error saving LDAP settings');
       }
-      // TODO: add success message
+      appEvents.publish({
+        type: AppEvents.alertSuccess.name,
+        payload: [t('ldap-settings-page.alert.saved', 'LDAP settings saved')],
+      });
     } catch (error) {
       console.error('Error saving LDAP settings', error);
     }
@@ -153,7 +132,10 @@ export const LdapSettingsPage = (): JSX.Element => {
       if (result) {
         console.error('Error saving LDAP settings');
       }
-      // TODO: add success message
+      appEvents.publish({
+        type: AppEvents.alertSuccess.name,
+        payload: [t('ldap-settings-page.alert.saved', 'LDAP settings saved')],
+      });
     } catch (error) {
       console.error('Error saving LDAP settings', error);
     }
@@ -174,18 +156,13 @@ export const LdapSettingsPage = (): JSX.Element => {
       }
       setFormSettings(payload);
     } catch (error) {
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: [t('ldap-settings-page.alert.error-saving', 'Error saving LDAP settings')],
+      });
     } finally {
       setIsLoading(false);
     }
-  };
-  const onChange = (ldapSettings: LdapSettings) => {
-    setFormSettings({
-      ...formSettings,
-      settings: {
-        ...formSettings.settings,
-        ...ldapSettings,
-      },
-    });
   };
 
   const documentation = (
@@ -206,14 +183,14 @@ export const LdapSettingsPage = (): JSX.Element => {
   return (
     <Page navId="authentication" pageNav={pageNav} subTitle={subTitle}>
       <Page.Contents>
-        {isLoading && <Loader />}
-        {!isLoading && formSettings && (
-          <section className={styles.form}>
-            <h3>
-              <Trans i18nKey="ldap-settings-page.title">Basic Settings</Trans>
-            </h3>
-            <FormProvider {...methods}>
-              <form onSubmit={handleSubmit(submitAndEnableLdapSettings, onErrors)}>
+        <FormProvider {...methods}>
+          <form onSubmit={handleSubmit(submitAndEnableLdapSettings, onErrors)}>
+            {isLoading && <Loader />}
+            {!isLoading && formSettings && (
+              <section className={styles.form}>
+                <h3>
+                  <Trans i18nKey="ldap-settings-page.title">Basic Settings</Trans>
+                </h3>
                 <Field
                   htmlFor="host"
                   label={t('ldap-settings-page.host.label', 'Server host')}
@@ -243,7 +220,7 @@ export const LdapSettingsPage = (): JSX.Element => {
                     placeholder={t('ldap-settings-page.bind-dn.placeholder', 'example: cn=admin,dc=grafana,dc=org')}
                     type="text"
                     defaultValue={formSettings.settings.config.servers[0].bind_dn}
-                    {...register('settings.config.servers.0.bind_dn', { required: false })}
+                    {...register('settings.config.servers.0.bind_dn')}
                   />
                 </Field>
                 <Field htmlFor="bind-password" label={t('ldap-settings-page.bind-password.label', 'Bind password')}>
@@ -283,7 +260,7 @@ export const LdapSettingsPage = (): JSX.Element => {
                     placeholder={t('ldap-settings-page.search-base-dns.placeholder', 'example: "dc=grafana.dc=org"')}
                     type="text"
                     defaultValue={formSettings.settings.config.servers[0].search_base_dns}
-                    {...register('settings.config.servers.0.search_base_dns', { required: true })}
+                    {...register('settings.config.servers.0.search_base_dns', { required: true, setValueAs: (value) => [value] })}
                   />
                 </Field>
                 <Box borderColor="strong" borderStyle="solid" padding={2} width={68}>
@@ -298,7 +275,7 @@ export const LdapSettingsPage = (): JSX.Element => {
                         </Trans>
                       </Text>
                     </Stack>
-                    <Button variant="secondary" onClick={() => setIsDrawerOpen(true)}>
+                    <Button variant="secondary">
                       <Trans i18nKey="ldap-settings-page.advanced-settings-section.edit.button">Edit</Trans>
                     </Button>
                   </Stack>
@@ -316,14 +293,10 @@ export const LdapSettingsPage = (): JSX.Element => {
                     </Button>
                   </Stack>
                 </Box>
-              </form>
-            </FormProvider>
-          </section>
-        )}
-        {isDrawerOpen && (
-          <LdapDrawer ldapSettings={formSettings.settings} onChange={onChange} onClose={() => setIsDrawerOpen(false)}
-          />
-        )}
+              </section>
+            )}
+        </form>
+      </FormProvider>
       </Page.Contents>
     </Page>
   );
@@ -331,14 +304,6 @@ export const LdapSettingsPage = (): JSX.Element => {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    box: css({
-      marginTop: theme.spacing(5),
-      padding: theme.spacing(2),
-      width: theme.spacing(68),
-    }),
-    disabledSection: css({
-      padding: theme.spacing(2),
-    }),
     form: css({
       input: css({
         width: theme.spacing(68),

@@ -82,7 +82,7 @@ export interface LdapAttributes {
 export interface LdapServerConfig {
   attributes: LdapAttributes;
   bind_dn: string;
-  bind_password: string;
+  bind_password?: string;
   client_cert: string;
   client_key: string;
   group_mappings: GroupMapping[];
