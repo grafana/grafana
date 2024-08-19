@@ -124,7 +124,7 @@ export function getFilters(scene: SceneObject) {
  * @param scene
  * @returns
  */
-export function getOtelJoinQuery(scene: SceneObject): string {
+export function getOtelJoinQuery(scene: SceneObject, firstQueryVal?: string): string {
   const otelResources = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, scene);
   // add deployment env to otel resource filters
   const otelDepEnv = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, scene);
@@ -135,12 +135,14 @@ export function getOtelJoinQuery(scene: SceneObject): string {
     // get the collection of adhoc filters
     const otelFilters = otelResources.state.filters;
 
-    // get the value for deployment_environment
+    // get the value for deployment_environment variable
     let otelDepEnvValue = String(otelDepEnv.getValue());
+    // check if there are multiple environments
     const isMulti = otelDepEnvValue.includes(',');
+    // start with the default label filters for deployment_environment
     let op = '=';
-    let val = otelDepEnvValue;
-
+    let val = firstQueryVal ? firstQueryVal : otelDepEnvValue;
+    // update the filters if multiple deployment environments selected
     if (isMulti) {
       op = '=~';
       val = val.split(',').join('|');
@@ -150,6 +152,7 @@ export function getOtelJoinQuery(scene: SceneObject): string {
     let allFilters = `deployment_environment${op}"${val}"`;
     let allLabels = 'deployment_environment';
 
+    // add the other OTEL resource filters
     for (let i = 0; i < otelFilters?.length; i++) {
       const labelName = otelFilters[i].key;
       const op = otelFilters[i].operator;
@@ -159,7 +162,8 @@ export function getOtelJoinQuery(scene: SceneObject): string {
       allLabels += `,${labelName}`;
     }
 
-    otelResourcesJoinQuery = `* on (job, instance) group_left(${allLabels}) target_info{${allFilters}}`;
+    // add support for otel data sources that are not standardized, i.e., have non unique target_info series by job, instance
+    otelResourcesJoinQuery = `* on (job, instance) group_left(${allLabels}) topk by (job, instance) (1, target_info{${allFilters}})`;
   }
 
   return otelResourcesJoinQuery;
