@@ -6,6 +6,7 @@ import { useExportMuteTimingsDrawer } from 'app/features/alerting/unified/compon
 
 import { Authorize } from '../../components/Authorize';
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { isLoading } from '../../hooks/useAsync';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { isDisabled } from '../../utils/mute-timings';
@@ -18,7 +19,9 @@ interface MuteTimingActionsButtonsProps {
 }
 
 export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }: MuteTimingActionsButtonsProps) => {
-  const deleteMuteTiming = useDeleteMuteTiming({ alertmanager: alertManagerSourceName! });
+  const [deleteMuteTiming, deleteMuteTimingRequestState] = useDeleteMuteTiming({
+    alertmanager: alertManagerSourceName!,
+  });
   const [showDeleteDrawer, setShowDeleteDrawer] = useState(false);
   const [ExportDrawer, showExportDrawer] = useExportMuteTimingsDrawer();
   const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportMuteTimings);
@@ -27,11 +30,17 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
 
   const isGrafanaDataSource = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
   const viewOrEditHref = makeAMLink(`/alerting/routes/mute-timing/edit`, alertManagerSourceName, {
-    muteName: muteTiming?.metadata?.name || muteTiming.name,
+    muteName: muteTiming.id,
   });
 
   const viewOrEditButton = (
-    <LinkButton href={viewOrEditHref} variant="secondary" size="sm" icon={muteTiming.provisioned ? 'eye' : 'pen'}>
+    <LinkButton
+      href={viewOrEditHref}
+      variant="secondary"
+      size="sm"
+      icon={muteTiming.provisioned ? 'eye' : 'pen'}
+      disabled={isLoading(deleteMuteTimingRequestState)}
+    >
       {muteTiming.provisioned ? (
         <Trans i18nKey="alerting.common.view">View</Trans>
       ) : (
@@ -52,7 +61,7 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
             variant="secondary"
             size="sm"
             data-testid="export"
-            disabled={!exportAllowed}
+            disabled={!exportAllowed || isLoading(deleteMuteTimingRequestState)}
             onClick={() => showExportDrawer(muteTiming.name)}
           >
             <Trans i18nKey="alerting.common.export">Export</Trans>
@@ -61,7 +70,13 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
 
         {!muteTiming.provisioned && (
           <Authorize actions={[AlertmanagerAction.DeleteMuteTiming]}>
-            <LinkButton icon="trash-alt" variant="secondary" size="sm" onClick={() => setShowDeleteDrawer(true)}>
+            <LinkButton
+              icon="trash-alt"
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowDeleteDrawer(true)}
+              disabled={isLoading(deleteMuteTimingRequestState)}
+            >
               <Trans i18nKey="alerting.common.delete">Delete</Trans>
             </LinkButton>
           </Authorize>
@@ -73,8 +88,8 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
         body={`Are you sure you would like to delete "${muteTiming.name}"?`}
         confirmText={t('alerting.common.delete', 'Delete')}
         onConfirm={async () => {
-          await deleteMuteTiming({
-            name: muteTiming?.metadata?.name || muteTiming.name,
+          await deleteMuteTiming.execute({
+            name: muteTiming?.metadata?.name ?? muteTiming.name,
           });
 
           closeDeleteModal();

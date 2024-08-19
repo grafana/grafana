@@ -1,6 +1,3 @@
-// MIXINS
-@import 'mixins/breakpoints';
-
 // BASE
 @import 'base/reboot';
 @import 'base/forms';
@@ -13,10 +10,7 @@
 
 // COMPONENTS
 @import 'components/buttons';
-@import 'components/gf-form';
-@import 'components/modals';
 @import 'components/dropdown';
-@import 'components/dashboard_grid';
 
 // ANGULAR
 @import 'angular';

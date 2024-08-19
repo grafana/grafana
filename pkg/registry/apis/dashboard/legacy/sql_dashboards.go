@@ -14,13 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardsV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -47,67 +45,32 @@ type dashboardRow struct {
 }
 
 type dashboardSqlAccess struct {
-	sql          db.DB
-	dialect      sqltemplate.Dialect
-	sess         *session.SessionDB
+	sql          legacysql.LegacyDatabaseProvider
 	namespacer   request.NamespaceMapper
-	dashStore    dashboards.Store
 	provisioning provisioning.ProvisioningService
-	currentRV    func(ctx context.Context) (int64, error)
+
+	// Use for writing (not reading)
+	dashStore dashboards.Store
 
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
 	mutex       sync.Mutex
 }
 
-func NewDashboardAccess(sql db.DB,
+func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	namespacer request.NamespaceMapper,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
 ) DashboardAccess {
-	dialect := sqltemplate.DialectForDriver(string(sql.GetDBType()))
-	if dialect == nil {
-		// panic?
-		// fmt.Errorf("no dialect for driver %q", driverName)
-		fmt.Printf("ERROR: NO DIALECT")
-	}
-
-	sess := sql.GetSqlxSession()
-	currentRV := func(ctx context.Context) (int64, error) {
-		t := time.Now()
-		max := ""
-		err := sess.Get(ctx, &max, "SELECT MAX(updated) FROM dashboard")
-		if err == nil && max != "" {
-			t, _ = time.Parse(time.DateTime, max) // ignore null errors
-		}
-		return t.UnixMilli(), nil
-	}
-	if sql.GetDBType() == migrator.Postgres {
-		currentRV = func(ctx context.Context) (int64, error) {
-			max := time.Now()
-			_ = sess.Get(ctx, &max, "SELECT MAX(updated) FROM dashboard")
-			return max.UnixMilli(), nil
-		}
-	} else if sql.GetDBType() == migrator.MySQL {
-		currentRV = func(ctx context.Context) (int64, error) {
-			max := time.Now().UnixMilli()
-			_ = sess.Get(ctx, &max, "SELECT UNIX_TIMESTAMP(MAX(updated)) FROM dashboard;")
-			return max, nil
-		}
-	}
-
 	return &dashboardSqlAccess{
 		sql:          sql,
-		sess:         sess,
-		dialect:      dialect,
 		namespacer:   namespacer,
 		dashStore:    dashStore,
 		provisioning: provisioning,
-		currentRV:    currentRV,
 	}
 }
 
-func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery) (*rowsWrapper, error) {
+func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, query *DashboardQuery) (*rowsWrapper, error) {
 	if len(query.Labels) > 0 {
 		return nil, fmt.Errorf("labels not yet supported")
 		// if query.Requirements.Folder != nil {
@@ -116,10 +79,7 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 		// }
 	}
 
-	req := sqlQuery{
-		SQLTemplate: sqltemplate.New(a.dialect),
-		Query:       query,
-	}
+	req := newQueryReq(sql, query)
 
 	tmpl := sqlQueryDashboards
 	if query.UseHistoryTable() && query.GetTrash {
@@ -134,7 +94,7 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 	// q = sqltemplate.RemoveEmptyLines(rawQuery)
 	// fmt.Printf(">>%s [%+v]", q, req.GetArgs())
 
-	rows, err := a.sess.Query(ctx, q, req.GetArgs()...)
+	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	if err != nil {
 		if rows != nil {
 			_ = rows.Close()
@@ -339,10 +299,10 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 
 func getUserID(v sql.NullString, id sql.NullInt64) string {
 	if v.Valid && v.String != "" {
-		return identity.NewTypedIDString(claims.TypeUser, v.String).String()
+		return identity.NewTypedIDString(claims.TypeUser, v.String)
 	}
 	if id.Valid && id.Int64 == -1 {
-		return identity.NewTypedIDString(claims.TypeProvisioning, "").String()
+		return identity.NewTypedIDString(claims.TypeProvisioning, "")
 	}
 	return ""
 }
@@ -395,9 +355,12 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		dash.Spec.Remove("uid")
 	}
 
-	userID, err := user.GetID().UserID()
-	if err != nil {
-		return nil, false, err
+	var userID int64
+	if user.IsIdentityType(claims.TypeUser) {
+		userID, err = user.GetInternalID()
+		if err != nil {
+			return nil, false, err
+		}
 	}
 
 	meta, err := utils.MetaAccessor(dash)

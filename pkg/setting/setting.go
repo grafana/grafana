@@ -197,6 +197,7 @@ type Cfg struct {
 	HideAngularDeprecation           []string
 	PluginInstallToken               string
 	ForwardHostEnvVars               []string
+	InstallPlugins                   []InstallPlugin
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
@@ -257,9 +258,10 @@ type Cfg struct {
 	AuthProxy AuthProxySettings
 
 	// OAuth
-	OAuthAutoLogin                bool
-	OAuthCookieMaxAge             int
-	OAuthAllowInsecureEmailLookup bool
+	OAuthAutoLogin                       bool
+	OAuthCookieMaxAge                    int
+	OAuthAllowInsecureEmailLookup        bool
+	OAuthRefreshTokenServerLockMinWaitMs int64
 
 	JWTAuth    AuthJWTSettings
 	ExtJWTAuth ExtJWTSettings
@@ -520,6 +522,11 @@ type Cfg struct {
 
 	//Short Links
 	ShortLinkExpiration int
+}
+
+type InstallPlugin struct {
+	ID      string `json:"id"`
+	Version string `json:"version"`
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -1597,6 +1604,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	}
 
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
+	cfg.OAuthRefreshTokenServerLockMinWaitMs = auth.Key("oauth_refresh_token_server_lock_min_wait_ms").MustInt64(1000)
 	cfg.SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
 
 	// Deprecated
