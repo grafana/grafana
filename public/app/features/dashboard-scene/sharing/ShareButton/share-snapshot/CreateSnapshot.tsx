@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { SceneObjectRef, VizPanel } from '@grafana/scenes';
 import {
   Alert,
   Button,
@@ -20,7 +21,10 @@ import { Trans } from 'app/core/internationalization';
 import { SnapshotSharingOptions } from '../../../../dashboard/services/SnapshotSrv';
 import { getExpireOptions } from '../../ShareSnapshotTab';
 
-const SNAPSHOT_URL = 'https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#publish-a-snapshot';
+const DASHBOARD_SNAPSHOT_URL =
+  'https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#publish-a-snapshot';
+const PANEL_SNAPSHOT_URL =
+  'https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#publish-a-snapshot-1';
 
 interface Props {
   isLoading: boolean;
@@ -31,6 +35,7 @@ interface Props {
   onCreateClick: (isExternal?: boolean) => void;
   onNameChange: (v: string) => void;
   onExpireChange: (v: number) => void;
+  panelRef?: SceneObjectRef<VizPanel>;
 }
 export function CreateSnapshot({
   name,
@@ -41,6 +46,7 @@ export function CreateSnapshot({
   onCancelClick,
   onCreateClick,
   isLoading,
+  panelRef,
 }: Props) {
   const styles = useStyles2(getStyles);
 
@@ -49,18 +55,30 @@ export function CreateSnapshot({
       <Alert severity="info" title={''}>
         <Stack justifyContent="space-between" gap={2} alignItems="center">
           <Text>
-            <Trans i18nKey="snapshot.share.info-alert">
-              A Grafana dashboard snapshot publicly shares a dashboard while removing sensitive data such as queries and
-              panel links, leaving only visible metrics and series names. Anyone with the link can access the snapshot.
-            </Trans>
+            {panelRef ? (
+              <Trans i18nKey="snapshot.share-panel.info-alert">
+                A Grafana panel snapshot publicly shares a panel while removing sensitive data such as queries and panel
+                links, leaving only visible metrics and series names. Anyone with the link can access the snapshot.
+              </Trans>
+            ) : (
+              <Trans i18nKey="snapshot.share.info-alert">
+                A Grafana dashboard snapshot publicly shares a dashboard while removing sensitive data such as queries
+                and panel links, leaving only visible metrics and series names. Anyone with the link can access the
+                snapshot.
+              </Trans>
+            )}
           </Text>
-          <Button variant="secondary" onClick={() => window.open(SNAPSHOT_URL, '_blank')} type="button">
+          <Button
+            variant="secondary"
+            onClick={() => window.open(panelRef ? PANEL_SNAPSHOT_URL : DASHBOARD_SNAPSHOT_URL, '_blank')}
+            type="button"
+          >
             <Trans i18nKey="snapshot.share.learn-more-button">Learn more</Trans>
           </Button>
         </Stack>
       </Alert>
-      <Field label={t('snapshot.share.name-label', 'Snapshot name*')}>
-        <Input id="snapshot-name-input" defaultValue={name} onBlur={(e) => onNameChange(e.target.value)} />
+      <Field label={t('snapshot.share.name-label', 'Snapshot name')}>
+        <Input id="snapshot-name-input" defaultValue={name} onChange={(e) => onNameChange(e.currentTarget.value)} />
       </Field>
       <Field label={t('snapshot.share.expiration-label', 'Expires in')}>
         <RadioButtonGroup<number>

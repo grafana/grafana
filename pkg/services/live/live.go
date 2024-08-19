@@ -284,9 +284,10 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 	g.websocketHandler = func(ctx *contextmodel.ReqContext) {
 		user := ctx.SignedInUser
+		id, _ := user.GetInternalID()
 		// Centrifuge expects Credentials in context with a current user ID.
 		cred := &centrifuge.Credentials{
-			UserID: user.GetID().ID(),
+			UserID: strconv.FormatInt(id, 10),
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
 		newCtx = livecontext.SetContextSignedUser(newCtx, user)

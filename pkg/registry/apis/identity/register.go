@@ -16,37 +16,42 @@ import (
 	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
 	identityapi "github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/team"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var _ builder.APIGroupBuilder = (*IdentityAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type IdentityAPIBuilder struct {
-	svcTeam team.Service
-	svcUser user.Service
+	Store legacy.LegacyIdentityStore
 }
 
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
-	svcTeam team.Service,
-	svcUser user.Service,
-
-) *IdentityAPIBuilder {
+	// svcTeam team.Service,
+	// svcUser user.Service,
+	sql db.DB,
+) (*IdentityAPIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil // skip registration unless opting into experimental apis
+		return nil, nil // skip registration unless opting into experimental apis
+	}
+
+	store, err := legacy.NewLegacySQLStores(func(context.Context) (db.DB, error) {
+		return sql, nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	builder := &IdentityAPIBuilder{
-		svcTeam: svcTeam,
-		svcUser: svcUser,
+		Store: store,
 	}
 	apiregistration.RegisterAPI(builder)
-	return builder
+	return builder, nil
 }
 
 func (b *IdentityAPIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -84,7 +89,7 @@ func (b *IdentityAPIBuilder) GetAPIGroupInfo(
 
 	team := identity.TeamResourceInfo
 	teamStore := &legacyTeamStorage{
-		service:        b.svcTeam,
+		service:        b.Store,
 		resourceInfo:   team,
 		tableConverter: team.TableConverter(),
 	}
@@ -92,19 +97,23 @@ func (b *IdentityAPIBuilder) GetAPIGroupInfo(
 
 	user := identity.UserResourceInfo
 	userStore := &legacyUserStorage{
-		service:        b.svcUser,
+		service:        b.Store,
 		resourceInfo:   user,
 		tableConverter: user.TableConverter(),
 	}
 	storage[user.StoragePath()] = userStore
+	storage[user.StoragePath("teams")] = newUserTeamsREST(b.Store)
 
 	sa := identity.ServiceAccountResourceInfo
 	saStore := &legacyServiceAccountStorage{
-		service:        b.svcUser,
+		service:        b.Store,
 		resourceInfo:   sa,
 		tableConverter: sa.TableConverter(),
 	}
 	storage[sa.StoragePath()] = saStore
+
+	// The display endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
+	storage["display"] = newDisplayREST(b.Store)
 
 	apiGroupInfo.VersionedResourcesStorageMap[identity.VERSION] = storage
 	return &apiGroupInfo, nil

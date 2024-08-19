@@ -17,7 +17,7 @@ type Service struct {
 	tracer tracing.Tracer
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
+func ProvideService(db db.ReplDB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
 	return &Service{
 		store:  &xormStore{db: db, cfg: cfg, deletes: []string{}},
 		tracer: tracer,
@@ -49,14 +49,6 @@ func (s *Service) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) e
 	))
 	defer span.End()
 	return s.store.Delete(ctx, cmd)
-}
-
-func (s *Service) ListTeams(ctx context.Context, query *team.ListTeamsCommand) ([]*team.Team, error) {
-	ctx, span := s.tracer.Start(ctx, "team.ListTeams", trace.WithAttributes(
-		attribute.Int64("orgID", query.OrgID),
-	))
-	defer span.End()
-	return s.store.ListTeams(ctx, query)
 }
 
 func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {

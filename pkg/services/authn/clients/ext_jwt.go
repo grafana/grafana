@@ -9,6 +9,7 @@ import (
 	"github.com/go-jose/go-jose/v3/jwt"
 	authlib "github.com/grafana/authlib/authn"
 	authlibclaims "github.com/grafana/authlib/claims"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -109,22 +110,22 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTMisMatchedNamespaceClaims.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
 	}
 
-	accessID, err := identity.ParseTypedID(accessTokenClaims.Subject)
+	accessType, _, err := identity.ParseTypeAndID(accessTokenClaims.Subject)
 	if err != nil {
-		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", accessID.String())
+		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
 	}
 
-	if !accessID.IsType(authlibclaims.TypeAccessPolicy) {
-		return nil, errExtJWTInvalid.Errorf("unexpected identity: %s", accessID.String())
+	if !authlibclaims.IsIdentityType(accessType, authlibclaims.TypeAccessPolicy) {
+		return nil, errExtJWTInvalid.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
 	}
 
-	userID, err := identity.ParseTypedID(idTokenClaims.Subject)
+	t, id, err := identity.ParseTypeAndID(idTokenClaims.Subject)
 	if err != nil {
 		return nil, errExtJWTInvalid.Errorf("failed to parse id token subject: %w", err)
 	}
 
-	if !userID.IsType(authlibclaims.TypeUser) {
-		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", userID.String())
+	if !authlibclaims.IsIdentityType(t, authlibclaims.TypeUser) {
+		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", idTokenClaims.Subject)
 	}
 
 	// For use in service layer, allow higher privilege
@@ -135,10 +136,11 @@ func (s *ExtendedJWT) authenticateAsUser(
 	}
 
 	return &authn.Identity{
-		ID:                         userID,
+		ID:                         id,
+		Type:                       t,
 		OrgID:                      s.getDefaultOrgID(),
 		AuthenticatedBy:            login.ExtendedJWTModule,
-		AuthID:                     accessID.String(),
+		AuthID:                     accessTokenClaims.Subject,
 		AllowedKubernetesNamespace: allowedKubernetesNamespace,
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,
@@ -155,18 +157,19 @@ func (s *ExtendedJWT) authenticateAsService(claims *authlib.Claims[authlib.Acces
 		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected access token namespace: %s", claims.Rest.Namespace)
 	}
 
-	id, err := identity.ParseTypedID(claims.Subject)
+	t, id, err := identity.ParseTypeAndID(claims.Subject)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse access token subject: %w", err)
 	}
 
-	if !id.IsType(authlibclaims.TypeAccessPolicy) {
-		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", id.String())
+	if !authlibclaims.IsIdentityType(t, authlibclaims.TypeAccessPolicy) {
+		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", claims.Subject)
 	}
 
 	return &authn.Identity{
 		ID:                         id,
 		UID:                        id,
+		Type:                       t,
 		OrgID:                      s.getDefaultOrgID(),
 		AuthenticatedBy:            login.ExtendedJWTModule,
 		AuthID:                     claims.Subject,

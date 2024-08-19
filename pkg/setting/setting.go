@@ -197,6 +197,7 @@ type Cfg struct {
 	HideAngularDeprecation           []string
 	PluginInstallToken               string
 	ForwardHostEnvVars               []string
+	InstallPlugins                   []InstallPlugin
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
@@ -520,6 +521,11 @@ type Cfg struct {
 
 	//Short Links
 	ShortLinkExpiration int
+}
+
+type InstallPlugin struct {
+	ID      string `json:"id"`
+	Version string `json:"version"`
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
