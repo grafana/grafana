@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	commonv1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -23,6 +24,7 @@ var (
 	_ rest.Scoper               = (*legacyStorage)(nil)
 	_ rest.Getter               = (*legacyStorage)(nil)
 	_ rest.Lister               = (*legacyStorage)(nil)
+	_ rest.Updater              = (*legacyStorage)(nil)
 	_ rest.SingularNameProvider = (*legacyStorage)(nil)
 )
 
@@ -92,6 +94,45 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 	return &object, nil
 }
 
+// Update implements rest.Updater.
+func (s *legacyStorage) Update(
+	ctx context.Context,
+	name string,
+	objInfo rest.UpdatedObjectInfo,
+	_ rest.ValidateObjectFunc,
+	_ rest.ValidateObjectUpdateFunc,
+	forceAllowCreate bool,
+	options *metav1.UpdateOptions,
+) (runtime.Object, bool, error) {
+	const created = false
+	ident, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, created, err
+	}
+
+	old, err := s.Get(ctx, name, nil)
+	if err != nil {
+		return old, created, err
+	}
+
+	obj, err := objInfo.UpdatedObject(ctx, old)
+	if err != nil {
+		return old, created, err
+	}
+
+	setting, ok := obj.(*ssov0.SSOSetting)
+	if !ok {
+		return old, created, errors.New("expected ssosetting after update")
+	}
+
+	if err := s.service.Upsert(ctx, mapToModel(setting), ident); err != nil {
+		return old, created, err
+	}
+
+	updated, err := s.Get(ctx, name, nil)
+	return updated, created, err
+}
+
 // GetSingularName implements rest.SingularNameProvider.
 func (s *legacyStorage) GetSingularName() string {
 	return resource.GetSingularName()
@@ -123,4 +164,11 @@ func mapToObject(ns string, s *ssomodels.SSOSettings) ssov0.SSOSetting {
 	}
 
 	return object
+}
+
+func mapToModel(obj *ssov0.SSOSetting) *ssomodels.SSOSettings {
+	return &ssomodels.SSOSettings{
+		Provider: obj.Name,
+		Settings: obj.Spec.Settings.Object,
+	}
 }

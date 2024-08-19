@@ -1,4 +1,4 @@
-package ssosettings
+package sso
 
 import (
 	"context"

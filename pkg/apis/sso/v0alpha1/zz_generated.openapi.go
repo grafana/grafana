@@ -14,13 +14,13 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/ssosettings/v0alpha1.SSOSetting":     schema_pkg_apis_ssosettings_v0alpha1_SSOSetting(ref),
-		"github.com/grafana/grafana/pkg/apis/ssosettings/v0alpha1.SSOSettingList": schema_pkg_apis_ssosettings_v0alpha1_SSOSettingList(ref),
-		"github.com/grafana/grafana/pkg/apis/ssosettings/v0alpha1.Spec":           schema_pkg_apis_ssosettings_v0alpha1_Spec(ref),
+		"github.com/grafana/grafana/pkg/apis/sso/v0alpha1.SSOSetting":     schema_pkg_apis_sso_v0alpha1_SSOSetting(ref),
+		"github.com/grafana/grafana/pkg/apis/sso/v0alpha1.SSOSettingList": schema_pkg_apis_sso_v0alpha1_SSOSettingList(ref),
+		"github.com/grafana/grafana/pkg/apis/sso/v0alpha1.Spec":           schema_pkg_apis_sso_v0alpha1_Spec(ref),
 	}
 }
 
-func schema_pkg_apis_ssosettings_v0alpha1_SSOSetting(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_sso_v0alpha1_SSOSetting(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -50,18 +50,18 @@ func schema_pkg_apis_ssosettings_v0alpha1_SSOSetting(ref common.ReferenceCallbac
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/ssosettings/v0alpha1.Spec"),
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/sso/v0alpha1.Spec"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/ssosettings/v0alpha1.Spec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/sso/v0alpha1.Spec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_ssosettings_v0alpha1_SSOSettingList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_sso_v0alpha1_SSOSettingList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -94,7 +94,7 @@ func schema_pkg_apis_ssosettings_v0alpha1_SSOSettingList(ref common.ReferenceCal
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/ssosettings/v0alpha1.SSOSetting"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/sso/v0alpha1.SSOSetting"),
 									},
 								},
 							},
@@ -104,11 +104,11 @@ func schema_pkg_apis_ssosettings_v0alpha1_SSOSettingList(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/ssosettings/v0alpha1.SSOSetting", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/sso/v0alpha1.SSOSetting", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_ssosettings_v0alpha1_Spec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_sso_v0alpha1_Spec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
