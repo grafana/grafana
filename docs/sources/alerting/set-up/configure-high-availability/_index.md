@@ -186,4 +186,4 @@ Note that these alerting high availability metrics are exposed via the `/metrics
         - grafana:3000
 ```
 
-For more details about monitoring alerting metrics, refer to [Alerting meta-monitoring](ref:meta-monitoring). For a demo, see the [alerting high availability examples using Docker Compose](https://github.com/grafana/alerting-ha-docker-examples/).
+For more information on monitoring alerting metrics, refer to [Alerting meta-monitoring](ref:meta-monitoring). For a demo, see [alerting high availability examples using Docker Compose](https://github.com/grafana/alerting-ha-docker-examples/).
