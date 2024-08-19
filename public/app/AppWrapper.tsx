@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import * as H from 'history';
 import { Action, KBarProvider } from 'kbar';
 import { Component, ComponentType } from 'react';
@@ -21,6 +22,7 @@ import {
   Stack,
   IconButton,
   useSplitter,
+  useStyles2,
 } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
@@ -31,7 +33,6 @@ import { GrafanaApp } from './app';
 import { AppChrome } from './core/components/AppChrome/AppChrome';
 import { TOP_BAR_LEVEL_HEIGHT } from './core/components/AppChrome/types';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
-import { SplitPaneWrapper } from './core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { GrafanaContext } from './core/context/GrafanaContext';
 import { ModalsContextProvider } from './core/context/ModalsContextProvider';
 import { SidecarContext, useSidecar } from './core/context/SidecarContext';
@@ -188,12 +189,8 @@ function ExperimentalSplitPaneTree(props: { routes?: JSX.Element | false }) {
     allowOverflow: true,
   });
 
+  const styles = useStyles2(getStyles);
   const memoryLocationService = new HistoryWrapper(H.createMemoryHistory({ initialEntries: ['/'] }));
-
-  // if (!activePluginId) {
-  //   // This makes sure the splitPaneWrapper does not mess with the basic scroll functionality in non split scenario.
-  //   return <RouterTree routes={props.routes} />;
-  // }
 
   return (
     <div {...(activePluginId ? containerProps : { className: 'grafana-app' })}>
@@ -210,16 +207,8 @@ function ExperimentalSplitPaneTree(props: { routes?: JSX.Element | false }) {
                 <CompatRouter>
                   <ModalsContextProvider>
                     <GlobalStyles />
-                    <div
-                      style={{
-                        display: 'flex',
-                        height: '100%',
-                        paddingTop: TOP_BAR_LEVEL_HEIGHT * 2,
-                        flexGrow: 1,
-                        flexDirection: 'column',
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <div className={styles.secondAppWrapper}>
+                      <div className={styles.secondAppToolbar}>
                         <IconButton
                           size={'lg'}
                           style={{ margin: '8px' }}
@@ -240,3 +229,22 @@ function ExperimentalSplitPaneTree(props: { routes?: JSX.Element | false }) {
     </div>
   );
 }
+
+const getStyles = () => {
+  return {
+    secondAppWrapper: css({
+      label: 'secondAppWrapper',
+      display: 'flex',
+      height: '100%',
+      paddingTop: TOP_BAR_LEVEL_HEIGHT * 2,
+      flexGrow: 1,
+      flexDirection: 'column',
+    }),
+
+    secondAppToolbar: css({
+      label: 'secondAppToolbar',
+      display: 'flex',
+      justifyContent: 'flex-end',
+    }),
+  };
+};
