@@ -1,7 +1,7 @@
 import { ComponentProps } from 'react';
 
-import { config } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel, SceneObjectRef } from '@grafana/scenes';
+import { config, locationService } from '@grafana/runtime';
+import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
@@ -45,10 +45,10 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
       ...state,
     });
 
-    this.addActivationHandler(() => this.buildTabs());
+    this.addActivationHandler(() => this.buildTabs(state.activeTab));
   }
 
-  private buildTabs() {
+  private buildTabs(activeTab?: string) {
     const { panelRef } = this.state;
     const modalRef = this.getRef();
 
@@ -82,12 +82,13 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
       }
     }
 
-    this.setState({ tabs });
+    const at = tabs.find((t) => t.tabId === activeTab);
+
+    this.setState({ activeTab: at?.tabId ?? tabs[0].tabId, tabs });
   }
 
   onDismiss = () => {
-    const dashboard = getDashboardSceneFor(this);
-    dashboard.closeModal();
+    locationService.partial({ shareView: null });
   };
 
   onChangeTab: ComponentProps<typeof ModalTabsHeader>['onChangeTab'] = (tab) => {
