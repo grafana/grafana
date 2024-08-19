@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 var _ builder.APIGroupBuilder = (*IdentityAPIBuilder)(nil)
@@ -40,15 +41,8 @@ func RegisterAPIService(
 		return nil, nil // skip registration unless opting into experimental apis
 	}
 
-	store, err := legacy.NewLegacySQLStores(func(context.Context) (db.DB, error) {
-		return sql, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	builder := &IdentityAPIBuilder{
-		Store: store,
+		Store: legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql)),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder, nil

@@ -125,6 +125,8 @@ export interface DashboardSceneState extends SceneObjectState {
   isEmpty?: boolean;
   /** Kiosk mode */
   kioskMode?: KioskMode;
+  /** Share view */
+  shareView?: string;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -312,6 +314,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         editview: null,
         inspect: null,
         inspectTab: null,
+        shareView: null,
       })
     );
 
@@ -412,7 +415,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         uid: this.state.uid,
         slug: meta.slug,
         currentQueryParams: location.search,
-        updateQuery: { viewPanel: null, inspect: null, editview: null, editPanel: null, tab: null },
+        updateQuery: { viewPanel: null, inspect: null, editview: null, editPanel: null, tab: null, shareView: null },
         isHomeDashboard: !meta.url && !meta.slug && !meta.isNew,
       }),
     };
