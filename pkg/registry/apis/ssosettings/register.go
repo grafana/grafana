@@ -89,7 +89,6 @@ func (b *SSOSettingAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			}
 			if !user.GetIsGrafanaAdmin() {
 				return authorizer.DecisionDeny, "only grafana admins have access for now", nil
-
 			}
 			return authorizer.DecisionAllow, "", nil
 		},

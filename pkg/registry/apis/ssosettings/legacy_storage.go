@@ -8,7 +8,6 @@ import (
 	commonv1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -79,7 +78,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 }
 
 // Get implements rest.Getter.
-func (s *legacyStorage) Get(ctx context.Context, name string, options *v1.GetOptions) (runtime.Object, error) {
+func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	ns, _ := request.NamespaceInfoFrom(ctx, false)
 
 	setting, err := s.service.GetForProviderWithRedactedSecrets(ctx, name)
@@ -110,7 +109,7 @@ func mapToObject(ns string, s *ssomodels.SSOSettings) ssov0.SSOSetting {
 	}
 
 	object := ssov0.SSOSetting{
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:              s.Provider,
 			Namespace:         ns,
 			UID:               types.UID(s.Provider),
