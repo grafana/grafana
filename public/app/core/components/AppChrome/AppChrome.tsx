@@ -159,7 +159,9 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
     dockedMegaMenu: css(
       {
         background: theme.colors.background.primary,
+        borderRight: `1px solid ${theme.colors.border.weak}`,
         display: 'none',
+        width: MENU_WIDTH,
 
         [theme.breakpoints.up('xl')]: {
           display: 'block',
