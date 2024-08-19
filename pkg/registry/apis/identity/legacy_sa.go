@@ -5,16 +5,17 @@ import (
 	"fmt"
 	"strconv"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/user"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	identityv0 "github.com/grafana/grafana/pkg/apis/identity/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var (
@@ -75,7 +76,7 @@ func (s *legacyServiceAccountStorage) List(ctx context.Context, options *interna
 		return nil, err
 	}
 
-	list := &identity.ServiceAccountList{}
+	list := &identityv0.ServiceAccountList{}
 	for _, item := range found.Users {
 		list.Items = append(list.Items, *toSAItem(&item, ns.Value))
 	}
@@ -88,15 +89,15 @@ func (s *legacyServiceAccountStorage) List(ctx context.Context, options *interna
 	return list, err
 }
 
-func toSAItem(u *user.User, ns string) *identity.ServiceAccount {
-	item := &identity.ServiceAccount{
+func toSAItem(u *user.User, ns string) *identityv0.ServiceAccount {
+	item := &identityv0.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              u.UID,
 			Namespace:         ns,
 			ResourceVersion:   fmt.Sprintf("%d", u.Updated.UnixMilli()),
 			CreationTimestamp: metav1.NewTime(u.Created),
 		},
-		Spec: identity.ServiceAccountSpec{
+		Spec: identityv0.ServiceAccountSpec{
 			Name:          u.Name,
 			Email:         u.Email,
 			EmailVerified: u.EmailVerified,

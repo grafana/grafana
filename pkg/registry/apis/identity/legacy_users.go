@@ -5,16 +5,17 @@ import (
 	"fmt"
 	"strconv"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/user"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	identityv0 "github.com/grafana/grafana/pkg/apis/identity/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var (
@@ -75,7 +76,7 @@ func (s *legacyUserStorage) List(ctx context.Context, options *internalversion.L
 		return nil, err
 	}
 
-	list := &identity.UserList{}
+	list := &identityv0.UserList{}
 	for _, item := range found.Users {
 		list.Items = append(list.Items, *toUserItem(&item, ns.Value))
 	}
@@ -88,15 +89,15 @@ func (s *legacyUserStorage) List(ctx context.Context, options *internalversion.L
 	return list, err
 }
 
-func toUserItem(u *user.User, ns string) *identity.User {
-	item := &identity.User{
+func toUserItem(u *user.User, ns string) *identityv0.User {
+	item := &identityv0.User{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              u.UID,
 			Namespace:         ns,
 			ResourceVersion:   fmt.Sprintf("%d", u.Updated.UnixMilli()),
 			CreationTimestamp: metav1.NewTime(u.Created),
 		},
-		Spec: identity.UserSpec{
+		Spec: identityv0.UserSpec{
 			Name:          u.Name,
 			Login:         u.Login,
 			Email:         u.Email,

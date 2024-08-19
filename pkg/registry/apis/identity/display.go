@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
+	identity "github.com/grafana/grafana/pkg/apis/identity/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"

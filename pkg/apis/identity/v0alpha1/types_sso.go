@@ -13,7 +13,13 @@ type SSOSetting struct {
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec Spec `json:"spec,omitempty"`
+	Spec SSOSettingSpec `json:"spec,omitempty"`
+}
+
+// SSOSettingSpec defines model for SSOSettingSpec.
+type SSOSettingSpec struct {
+	Source   Source              `json:"source"`
+	Settings common.Unstructured `json:"settings"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -23,12 +29,6 @@ type SSOSettingList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []SSOSetting `json:"items,omitempty"`
-}
-
-// Spec defines model for Spec.
-type Spec struct {
-	Source   Source              `json:"source"`
-	Settings common.Unstructured `json:"settings"`
 }
 
 // Source for settings.

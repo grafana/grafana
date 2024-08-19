@@ -13,13 +13,14 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 
-	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
-	identityapi "github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	identityv0 "github.com/grafana/grafana/pkg/apis/identity/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
@@ -27,14 +28,14 @@ var _ builder.APIGroupBuilder = (*IdentityAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type IdentityAPIBuilder struct {
-	Store legacy.LegacyIdentityStore
+	store      legacy.LegacyIdentityStore
+	ssoService ssosettings.Service
 }
 
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
-	// svcTeam team.Service,
-	// svcUser user.Service,
+	ssoService ssosettings.Service,
 	sql db.DB,
 ) (*IdentityAPIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
@@ -42,34 +43,29 @@ func RegisterAPIService(
 	}
 
 	builder := &IdentityAPIBuilder{
-		Store: legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql)),
+		store:      legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql)),
+		ssoService: ssoService,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
 
 func (b *IdentityAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return identity.SchemeGroupVersion
+	return identityv0.SchemeGroupVersion
 }
 
 func (b *IdentityAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	if err := identity.AddKnownTypes(scheme, identity.VERSION); err != nil {
-		return err
-	}
+	identityv0.AddKnownTypes(scheme, identityv0.VERSION)
 
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
-	//   "no kind is registered for the type"
-	if err := identity.AddKnownTypes(scheme, runtime.APIVersionInternal); err != nil {
-		return err
-	}
+	// "no kind is registered for the type"
 
-	// If multiple versions exist, then register conversions from zz_generated.conversion.go
-	// if err := playlist.RegisterConversions(scheme); err != nil {
-	//   return err
-	// }
-	metav1.AddToGroupVersion(scheme, identity.SchemeGroupVersion)
-	return scheme.SetVersionPriority(identity.SchemeGroupVersion)
+	identityv0.AddKnownTypes(scheme, runtime.APIVersionInternal)
+
+	metav1.AddToGroupVersion(scheme, identityv0.SchemeGroupVersion)
+
+	return scheme.SetVersionPriority(identityv0.SchemeGroupVersion)
 }
 
 func (b *IdentityAPIBuilder) GetAPIGroupInfo(
@@ -78,43 +74,46 @@ func (b *IdentityAPIBuilder) GetAPIGroupInfo(
 	optsGetter generic.RESTOptionsGetter,
 	dualWriteBuilder grafanarest.DualWriteBuilder,
 ) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(identity.GROUP, scheme, metav1.ParameterCodec, codecs)
+	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(identityv0.GROUP, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
 
-	team := identity.TeamResourceInfo
+	team := identityv0.TeamResourceInfo
 	teamStore := &legacyTeamStorage{
-		service:        b.Store,
+		service:        b.store,
 		resourceInfo:   team,
 		tableConverter: team.TableConverter(),
 	}
 	storage[team.StoragePath()] = teamStore
 
-	user := identity.UserResourceInfo
+	user := identityv0.UserResourceInfo
 	userStore := &legacyUserStorage{
-		service:        b.Store,
+		service:        b.store,
 		resourceInfo:   user,
 		tableConverter: user.TableConverter(),
 	}
 	storage[user.StoragePath()] = userStore
-	storage[user.StoragePath("teams")] = newUserTeamsREST(b.Store)
+	storage[user.StoragePath("teams")] = newUserTeamsREST(b.store)
 
-	sa := identity.ServiceAccountResourceInfo
+	sa := identityv0.ServiceAccountResourceInfo
 	saStore := &legacyServiceAccountStorage{
-		service:        b.Store,
+		service:        b.store,
 		resourceInfo:   sa,
 		tableConverter: sa.TableConverter(),
 	}
 	storage[sa.StoragePath()] = saStore
 
-	// The display endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
-	storage["display"] = newDisplayREST(b.Store)
+	sso := identityv0.SSOSettingResourceInfo
+	storage[sso.StoragePath()] = newLegacySSOStore(b.ssoService)
 
-	apiGroupInfo.VersionedResourcesStorageMap[identity.VERSION] = storage
+	// The display endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
+	storage["display"] = newDisplayREST(b.store)
+
+	apiGroupInfo.VersionedResourcesStorageMap[identityv0.VERSION] = storage
 	return &apiGroupInfo, nil
 }
 
 func (b *IdentityAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return identity.GetOpenAPIDefinitions
+	return identityv0.GetOpenAPIDefinitions
 }
 
 func (b *IdentityAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
@@ -124,7 +123,7 @@ func (b *IdentityAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 func (b *IdentityAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
-			user, err := identityapi.GetRequester(ctx)
+			user, err := identity.GetRequester(ctx)
 			if err != nil {
 				return authorizer.DecisionDeny, "no identity found", err
 			}

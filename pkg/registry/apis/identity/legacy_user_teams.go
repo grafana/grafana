@@ -4,12 +4,13 @@ import (
 	"context"
 	"net/http"
 
-	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/registry/rest"
+
+	identityv0 "github.com/grafana/grafana/pkg/apis/identity/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/registry/rest"
 )
 
 type userTeamsREST struct {
@@ -33,7 +34,7 @@ func newUserTeamsREST(store legacy.LegacyIdentityStore) *userTeamsREST {
 }
 
 func (r *userTeamsREST) New() runtime.Object {
-	return &identity.TeamList{}
+	return &identityv0.TeamList{}
 }
 
 func (r *userTeamsREST) Destroy() {}
@@ -51,7 +52,7 @@ func (r *userTeamsREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *userTeamsREST) ProducesObject(verb string) interface{} {
-	return &identity.TeamList{}
+	return &identityv0.TeamList{}
 }
 
 func (r *userTeamsREST) ConnectMethods() []string {
@@ -73,7 +74,7 @@ func (r *userTeamsREST) Connect(ctx context.Context, name string, _ runtime.Obje
 	}
 
 	return http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
-		list := &identity.TeamList{}
+		list := &identityv0.TeamList{}
 		for _, team := range teams {
 			t, err := asTeam(&team, ns.Value)
 			if err != nil {

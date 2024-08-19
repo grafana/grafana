@@ -1,4 +1,4 @@
-package sso
+package identity
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	ssov0 "github.com/grafana/grafana/pkg/apis/sso/v0alpha1"
+	identityv0 "github.com/grafana/grafana/pkg/apis/identity/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssomodels "github.com/grafana/grafana/pkg/services/ssosettings/models"
@@ -30,9 +30,9 @@ var (
 	_ rest.GracefulDeleter      = (*legacyStorage)(nil)
 )
 
-var resource = ssov0.SSOSettingResourceInfo
+var resource = identityv0.SSOSettingResourceInfo
 
-func newLegacyStorage(service ssosettings.Service) *legacyStorage {
+func newLegacySSOStore(service ssosettings.Service) *legacyStorage {
 	return &legacyStorage{service}
 }
 
@@ -78,7 +78,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, fmt.Errorf("failed to list sso settings: %w", err)
 	}
 
-	list := &ssov0.SSOSettingList{}
+	list := &identityv0.SSOSettingList{}
 	for _, s := range settings {
 		list.Items = append(list.Items, mapToObject(ns.Value, s))
 	}
@@ -128,7 +128,7 @@ func (s *legacyStorage) Update(
 		return old, created, err
 	}
 
-	setting, ok := obj.(*ssov0.SSOSetting)
+	setting, ok := obj.(*identityv0.SSOSetting)
 	if !ok {
 		return old, created, errors.New("expected ssosetting after update")
 	}
@@ -153,7 +153,7 @@ func (s *legacyStorage) Delete(
 		return obj, false, err
 	}
 
-	old, ok := obj.(*ssov0.SSOSetting)
+	old, ok := obj.(*identityv0.SSOSetting)
 	if !ok {
 		return obj, false, errors.New("expected ssosetting")
 	}
@@ -182,10 +182,10 @@ func (s *legacyStorage) Delete(
 	return afterDelete, false, err
 }
 
-func mapToObject(ns string, s *ssomodels.SSOSettings) ssov0.SSOSetting {
-	source := ssov0.SourceDB
+func mapToObject(ns string, s *ssomodels.SSOSettings) identityv0.SSOSetting {
+	source := identityv0.SourceDB
 	if s.Source == ssomodels.System {
-		source = ssov0.SourceSystem
+		source = identityv0.SourceSystem
 	}
 
 	version := "0"
@@ -193,7 +193,7 @@ func mapToObject(ns string, s *ssomodels.SSOSettings) ssov0.SSOSetting {
 		version = fmt.Sprintf("%d", s.Updated.UnixMilli())
 	}
 
-	object := ssov0.SSOSetting{
+	object := identityv0.SSOSetting{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              s.Provider,
 			Namespace:         ns,
@@ -201,7 +201,7 @@ func mapToObject(ns string, s *ssomodels.SSOSettings) ssov0.SSOSetting {
 			ResourceVersion:   version,
 			CreationTimestamp: metav1.NewTime(s.Updated),
 		},
-		Spec: ssov0.Spec{
+		Spec: identityv0.SSOSettingSpec{
 			Source:   source,
 			Settings: commonv1.Unstructured{Object: s.Settings},
 		},
@@ -210,7 +210,7 @@ func mapToObject(ns string, s *ssomodels.SSOSettings) ssov0.SSOSetting {
 	return object
 }
 
-func mapToModel(obj *ssov0.SSOSetting) *ssomodels.SSOSettings {
+func mapToModel(obj *identityv0.SSOSetting) *ssomodels.SSOSettings {
 	return &ssomodels.SSOSettings{
 		Provider: obj.Name,
 		Settings: obj.Spec.Settings.Object,
