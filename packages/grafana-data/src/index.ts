@@ -246,7 +246,7 @@ export {
 } from './utils/csv';
 export { parseLabels, findCommonLabels, findUniqueLabels, matchAllLabels, formatLabels } from './utils/labels';
 export { roundDecimals, guessDecimals } from './utils/numbers';
-export { objRemoveUndefined, isEmptyObject, safeStringifyValue } from './utils/object';
+export { objRemoveUndefined, isEmptyObject } from './utils/object';
 export { classicColors } from './utils/namedColorsPalette';
 export { getSeriesTimeStep, hasMsResolution } from './utils/series';
 export { BinaryOperationID, type BinaryOperation, binaryOperators } from './utils/binaryOperators';
@@ -554,6 +554,7 @@ export {
   type PluginExtensionDataSourceConfigContext,
   type PluginExtensionCommandPaletteContext,
   type PluginExtensionOpenModalOptions,
+  type PluginExposedComponentConfig,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,
@@ -793,6 +794,7 @@ export {
   VariableOrigin,
   type VariableSuggestion,
   VariableSuggestionsScope,
+  OneClickMode,
 } from './types/dataLink';
 export { DataFrameType } from './types/dataFrameTypes';
 export {

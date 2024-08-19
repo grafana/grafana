@@ -3,18 +3,19 @@ import { DOMAttributes } from '@react-types/shared';
 import { memo, forwardRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
 import { CustomScrollbar, Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
+import { setBookmark } from 'app/core/reducers/navBarTree';
 import { usePatchUserPreferencesMutation } from 'app/features/preferences/api/index';
-import { useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types';
 
 import { MegaMenuItem } from './MegaMenuItem';
 import { usePinnedItems } from './hooks';
-import { enrichWithInteractionTracking, getActiveItem } from './utils';
+import { enrichWithInteractionTracking, findByUrl, getActiveItem } from './utils';
 
 export const MENU_WIDTH = '300px';
 
@@ -28,6 +29,7 @@ export const MegaMenu = memo(
     const styles = useStyles2(getStyles);
     const location = useLocation();
     const { chrome } = useGrafana();
+    const dispatch = useDispatch();
     const state = chrome.useState();
     const [patchPreferences] = usePatchUserPreferencesMutation();
     const pinnedItems = usePinnedItems();
@@ -36,6 +38,26 @@ export const MegaMenu = memo(
     const navItems = navTree
       .filter((item) => item.id !== 'profile' && item.id !== 'help')
       .map((item) => enrichWithInteractionTracking(item, state.megaMenuDocked));
+
+    if (config.featureToggles.pinNavItems) {
+      const bookmarksItem = findByUrl(navItems, '/bookmarks');
+      if (bookmarksItem) {
+        // Add children to the bookmarks section
+        bookmarksItem.children = pinnedItems.reduce((acc: NavModelItem[], url) => {
+          const item = findByUrl(navItems, url);
+          if (!item) {
+            return acc;
+          }
+          acc.push({
+            id: item.id,
+            text: item.text,
+            url: item.url,
+            parentItem: { id: 'bookmarks', text: 'Bookmarks' },
+          });
+          return acc;
+        }, []);
+      }
+    }
 
     const activeItem = getActiveItem(navItems, state.sectionNav.node, location.pathname);
 
@@ -52,30 +74,34 @@ export const MegaMenu = memo(
     };
 
     const isPinned = useCallback(
-      (id?: string) => {
-        if (!id || !pinnedItems?.length) {
+      (url?: string) => {
+        if (!url || !pinnedItems?.length) {
           return false;
         }
-        return pinnedItems?.includes(id);
+        return pinnedItems?.includes(url);
       },
       [pinnedItems]
     );
 
-    const onPinItem = (id?: string) => {
-      if (id && config.featureToggles.pinNavItems) {
-        const navItem = navTree.find((item) => item.id === id);
-        const isSaved = isPinned(id);
-        const newItems = isSaved ? pinnedItems.filter((i) => id !== i) : [...pinnedItems, id];
+    const onPinItem = (item: NavModelItem) => {
+      const url = item.url;
+      if (url && config.featureToggles.pinNavItems) {
+        const isSaved = isPinned(url);
+        const newItems = isSaved ? pinnedItems.filter((i) => url !== i) : [...pinnedItems, url];
         const interactionName = isSaved ? 'grafana_nav_item_unpinned' : 'grafana_nav_item_pinned';
         reportInteraction(interactionName, {
-          path: navItem?.url ?? id,
+          path: url,
         });
         patchPreferences({
           patchPrefsCmd: {
             navbar: {
-              savedItemIds: newItems,
+              bookmarkUrls: newItems,
             },
           },
+        }).then((data) => {
+          if (!data.error) {
+            dispatch(setBookmark({ item: item, isSaved: !isSaved }));
+          }
         });
       }
     };

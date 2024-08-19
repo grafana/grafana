@@ -46,6 +46,7 @@ describe('usePluginExtensions()', () => {
           path: `/a/${pluginId}/2`,
         },
       ],
+      exposedComponentConfigs: [],
     });
 
     const usePluginExtensions = createUsePluginExtensions(reactiveRegistry);
@@ -85,6 +86,7 @@ describe('usePluginExtensions()', () => {
             path: `/a/${pluginId}/2`,
           },
         ],
+        exposedComponentConfigs: [],
       });
     });
 
@@ -130,6 +132,7 @@ describe('usePluginExtensions()', () => {
             path: `/a/${pluginId}/2`,
           },
         ],
+        exposedComponentConfigs: [],
       });
     });
 
@@ -165,6 +168,7 @@ describe('usePluginExtensions()', () => {
             path: `/a/${pluginId}/2`,
           },
         ],
+        exposedComponentConfigs: [],
       });
     });
 
@@ -193,6 +197,7 @@ describe('usePluginExtensions()', () => {
             path: `/a/${pluginId}/2`,
           },
         ],
+        exposedComponentConfigs: [],
       });
     });
 
@@ -213,6 +218,7 @@ describe('usePluginExtensions()', () => {
             path: `/a/${pluginId}/2`,
           },
         ],
+        exposedComponentConfigs: [],
       });
     });
 

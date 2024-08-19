@@ -33,6 +33,8 @@ describe('PluginListItemBadges', () => {
     isDisabled: false,
     isDeprecated: false,
     isPublished: true,
+    isManaged: false,
+    isPreinstalled: { found: false, withVersion: false },
   };
 
   afterEach(() => {
@@ -74,6 +76,27 @@ describe('PluginListItemBadges', () => {
   it('renders an upgrade badge (when plugin has an available update)', () => {
     render(<PluginListItemBadges plugin={{ ...plugin, hasUpdate: true, installedVersion: '0.0.9' }} />);
     expect(screen.getByText(/update available/i)).toBeVisible();
+  });
+
+  it('does not render an upgrade badge (when plugin has an available update and is managed)', () => {
+    render(
+      <PluginListItemBadges plugin={{ ...plugin, hasUpdate: true, installedVersion: '0.0.9', isManaged: true }} />
+    );
+    expect(screen.queryByText(/update available/i)).toBeNull();
+  });
+
+  it('does not render an upgrade badge (when plugin is preinstalled with a version)', () => {
+    render(
+      <PluginListItemBadges
+        plugin={{
+          ...plugin,
+          hasUpdate: true,
+          installedVersion: '0.0.9',
+          isPreinstalled: { found: true, withVersion: true },
+        }}
+      />
+    );
+    expect(screen.queryByText(/update available/i)).toBeNull();
   });
 
   it('renders an angular badge (when plugin is angular)', () => {

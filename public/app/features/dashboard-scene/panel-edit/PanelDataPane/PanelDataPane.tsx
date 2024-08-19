@@ -9,10 +9,12 @@ import {
   SceneObjectState,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
-  VizPanel,
 } from '@grafana/scenes';
 import { Container, CustomScrollbar, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
-import { shouldShowAlertingTab } from 'app/features/dashboard/components/PanelEditor/state/selectors';
+import { config, getConfig } from 'app/core/config';
+import { contextSrv } from 'app/core/core';
+import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
 import { VizPanelManager } from '../VizPanelManager';
 
@@ -29,7 +31,6 @@ export interface PanelDataPaneState extends SceneObjectState {
 export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   static Component = PanelDataPaneRendered;
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['tab'] });
-  private _initialTabsBuilt = false;
   private panelSubscription: Unsubscribable | undefined;
   public panelManager: VizPanelManager;
 
@@ -59,16 +60,13 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   }
 
   private onActivate() {
-    const panel = this.panelManager.state.panel;
-    this.setupPanelSubscription(panel);
     this.buildTabs();
 
     this._subs.add(
       // Setup subscription for the case when panel type changed
       this.panelManager.subscribeToState((n, p) => {
-        if (n.panel !== p.panel) {
+        if (n.pluginId !== p.pluginId) {
           this.buildTabs();
-          this.setupPanelSubscription(n.panel);
         }
       })
     );
@@ -81,35 +79,16 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
     };
   }
 
-  private setupPanelSubscription(panel: VizPanel) {
-    if (this.panelSubscription) {
-      this._initialTabsBuilt = false;
-      this.panelSubscription.unsubscribe();
-    }
-
-    this.panelSubscription = panel.subscribeToState(() => {
-      if (panel.getPlugin() && !this._initialTabsBuilt) {
-        this.buildTabs();
-        this._initialTabsBuilt = true;
-      }
-    });
-  }
-
   private buildTabs() {
     const panelManager = this.panelManager;
     const panel = panelManager.state.panel;
+    const pluginId = panelManager.state.pluginId;
 
     const runner = this.panelManager.queryRunner;
     const tabs: PanelDataPaneTab[] = [];
 
     if (panel) {
-      const plugin = panel.getPlugin();
-
-      if (!plugin) {
-        return;
-      }
-
-      if (plugin.meta.skipDataQuery) {
+      if (config.panels[pluginId]?.skipDataQuery) {
         this.setState({ tabs });
         return;
       } else {
@@ -119,7 +98,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
 
         tabs.push(new PanelDataTransformationsTab(this.panelManager));
 
-        if (shouldShowAlertingTab(plugin)) {
+        if (shouldShowAlertingTab(panelManager.state.pluginId)) {
           tabs.push(new PanelDataAlertingTab(this.panelManager));
         }
       }
@@ -137,7 +116,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const { tab, tabs } = model.useState();
   const styles = useStyles2(getStyles);
 
-  if (!tabs) {
+  if (!tabs || !tabs.length) {
     return;
   }
 
@@ -163,6 +142,20 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
       </CustomScrollbar>
     </div>
   );
+}
+
+export function shouldShowAlertingTab(pluginId: string) {
+  const { unifiedAlertingEnabled = false } = getConfig();
+  const hasRuleReadPermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).read);
+  const isAlertingAvailable = unifiedAlertingEnabled && hasRuleReadPermissions;
+  if (!isAlertingAvailable) {
+    return false;
+  }
+
+  const isGraph = pluginId === 'graph';
+  const isTimeseries = pluginId === 'timeseries';
+
+  return isGraph || isTimeseries;
 }
 
 function getStyles(theme: GrafanaTheme2) {

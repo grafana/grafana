@@ -1,5 +1,4 @@
 import { render, RenderResult, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginType, escapeStringForRegex } from '@grafana/data';
@@ -94,6 +93,21 @@ describe('Browse list of plugins', () => {
       expect(queryByText('Plugin 2')).not.toBeInTheDocument();
     });
 
+    it('should list plugins with update when filtering by update', async () => {
+      const { queryByText } = renderBrowse('/plugins?filterBy=has-update', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true, hasUpdate: true }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: false }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', isInstalled: true, hasUpdate: true }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', isInstalled: true, isCore: true }),
+      ]);
+
+      await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
+      expect(queryByText('Plugin 3')).toBeInTheDocument();
+
+      expect(queryByText('Plugin 2')).not.toBeInTheDocument();
+      expect(queryByText('Plugin 4')).not.toBeInTheDocument();
+    });
+
     it('should list all plugins (including disabled plugins) when filtering by all', async () => {
       const { queryByText } = renderBrowse('/plugins?filterBy=all&filterByType=all', [
         getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),
@@ -179,6 +193,17 @@ describe('Browse list of plugins', () => {
       // Other plugin types shouldn't be shown
       expect(queryByText('Plugin 2')).not.toBeInTheDocument();
       expect(queryByText('Plugin 3')).not.toBeInTheDocument();
+    });
+
+    test('Show request data source and roadmap links', async () => {
+      const { queryByText } = renderBrowse('/plugins', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', type: PluginType.datasource }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', type: PluginType.panel }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', type: PluginType.datasource }),
+      ]);
+
+      expect(queryByText('Request a new data source')).toBeInTheDocument();
+      expect(queryByText('View roadmap')).toBeInTheDocument();
     });
   });
 
@@ -379,40 +404,5 @@ describe('Browse list of plugins', () => {
       const { getByRole } = renderBrowse('/plugins', [], stateOverride);
       await waitFor(() => expect(getByRole('radio', { name: 'Installed' })).toBeDisabled());
     });
-  });
-
-  it('should be possible to switch between display modes', async () => {
-    const { findByTestId, getByRole, getByTitle, queryByText } = renderBrowse('/plugins?filterBy=all', [
-      getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1' }),
-      getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2' }),
-      getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3' }),
-    ]);
-
-    await findByTestId('plugin-list');
-
-    const listOptionTitle = 'Display plugins in list';
-    const gridOptionTitle = 'Display plugins in a grid layout';
-    const listOption = getByRole('radio', { name: listOptionTitle });
-    const listOptionLabel = getByTitle(listOptionTitle);
-    const gridOption = getByRole('radio', { name: gridOptionTitle });
-    const gridOptionLabel = getByTitle(gridOptionTitle);
-
-    // All options should be visible
-    expect(listOptionLabel).toBeVisible();
-    expect(gridOptionLabel).toBeVisible();
-
-    // The default display mode should be "grid"
-    expect(gridOption).toBeChecked();
-    expect(listOption).not.toBeChecked();
-
-    // Switch to "list" view
-    await userEvent.click(listOption);
-    expect(gridOption).not.toBeChecked();
-    expect(listOption).toBeChecked();
-
-    // All plugins are still visible
-    expect(queryByText('Plugin 1')).toBeInTheDocument();
-    expect(queryByText('Plugin 2')).toBeInTheDocument();
-    expect(queryByText('Plugin 3')).toBeInTheDocument();
   });
 });

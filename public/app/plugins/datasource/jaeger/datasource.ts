@@ -76,7 +76,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
       return of({ error: { message: 'You must select a service.' }, data: [] });
     }
 
-    let { start, end } = this.getTimeRange();
+    let { start, end } = this.getTimeRange(options.range);
 
     if (target.queryType !== 'search' && target.query) {
       let url = `/api/traces/${encodeURIComponent(this.templateSrv.replace(target.query, options.scopedVars))}`;
@@ -143,7 +143,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
     return this._request(`/api/traces`, {
       ...jaegerQuery,
-      ...this.getTimeRange(),
+      ...this.getTimeRange(options.range),
       lookback: 'custom',
     }).pipe(
       map((response) => {
@@ -225,8 +225,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     );
   }
 
-  getTimeRange(): { start: number; end: number } {
-    const range = getDefaultTimeRange();
+  getTimeRange(range = getDefaultTimeRange()): { start: number; end: number } {
     return {
       start: getTime(range.from, false),
       end: getTime(range.to, true),

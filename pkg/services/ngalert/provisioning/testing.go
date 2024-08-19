@@ -70,25 +70,6 @@ func (n *NopTransactionManager) InTransaction(ctx context.Context, work func(ctx
 	return work(context.WithValue(ctx, NopTransactionManager{}, struct{}{}))
 }
 
-func (m *MockAMConfigStore_Expecter) GetsConfig(ac models.AlertConfiguration) *MockAMConfigStore_Expecter {
-	m.GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(&ac, nil)
-	return m
-}
-
-func (m *MockAMConfigStore_Expecter) SaveSucceeds() *MockAMConfigStore_Expecter {
-	m.UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(nil)
-	return m
-}
-
-func (m *MockAMConfigStore_Expecter) SaveSucceedsIntercept(intercepted *models.SaveAlertmanagerConfigurationCmd) *MockAMConfigStore_Expecter {
-	m.UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
-		Return(nil).
-		Run(func(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) {
-			*intercepted = *cmd
-		})
-	return m
-}
-
 func (m *MockProvisioningStore_Expecter) GetReturns(p models.Provenance) *MockProvisioningStore_Expecter {
 	m.GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(p, nil)
 	m.GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
@@ -109,39 +90,6 @@ func (m *MockQuotaChecker_Expecter) LimitOK() *MockQuotaChecker_Expecter {
 func (m *MockQuotaChecker_Expecter) LimitExceeded() *MockQuotaChecker_Expecter {
 	m.CheckQuotaReached(mock.Anything, mock.Anything, mock.Anything).Return(true, nil)
 	return m
-}
-
-type methodCall struct {
-	Method string
-	Args   []interface{}
-}
-
-type alertmanagerConfigStoreFake struct {
-	Calls  []methodCall
-	GetFn  func(ctx context.Context, orgID int64) (*cfgRevision, error)
-	SaveFn func(ctx context.Context, revision *cfgRevision) error
-}
-
-func (a *alertmanagerConfigStoreFake) Get(ctx context.Context, orgID int64) (*cfgRevision, error) {
-	a.Calls = append(a.Calls, methodCall{
-		Method: "Get",
-		Args:   []interface{}{ctx, orgID},
-	})
-	if a.GetFn != nil {
-		return a.GetFn(ctx, orgID)
-	}
-	return nil, nil
-}
-
-func (a *alertmanagerConfigStoreFake) Save(ctx context.Context, revision *cfgRevision, orgID int64) error {
-	a.Calls = append(a.Calls, methodCall{
-		Method: "Save",
-		Args:   []interface{}{ctx, revision, orgID},
-	})
-	if a.SaveFn != nil {
-		return a.SaveFn(ctx, revision)
-	}
-	return nil
 }
 
 type NotificationSettingsValidatorProviderFake struct {
@@ -216,4 +164,57 @@ func (s *fakeRuleAccessControlService) CanWriteAllRules(ctx context.Context, use
 		return s.CanWriteAllRulesFunc(ctx, user)
 	}
 	return false, nil
+}
+
+type fakeAlertRuleNotificationStore struct {
+	Calls []call
+
+	RenameReceiverInNotificationSettingsFn     func(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error)
+	RenameTimeIntervalInNotificationSettingsFn func(ctx context.Context, orgID int64, old, new string, validate func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
+	ListNotificationSettingsFn                 func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
+}
+
+func (f *fakeAlertRuleNotificationStore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error) {
+	call := call{
+		Method: "RenameReceiverInNotificationSettings",
+		Args:   []interface{}{ctx, orgID, oldReceiver, newReceiver},
+	}
+	f.Calls = append(f.Calls, call)
+
+	if f.RenameReceiverInNotificationSettingsFn != nil {
+		return f.RenameReceiverInNotificationSettingsFn(ctx, orgID, oldReceiver, newReceiver)
+	}
+
+	// Default values when no function hook is provided
+	return 0, nil
+}
+
+func (f *fakeAlertRuleNotificationStore) RenameTimeIntervalInNotificationSettings(ctx context.Context, orgID int64, oldTimeInterval, newTimeInterval string, validate func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
+	call := call{
+		Method: "RenameTimeIntervalInNotificationSettings",
+		Args:   []interface{}{ctx, orgID, oldTimeInterval, newTimeInterval, validate, dryRun},
+	}
+	f.Calls = append(f.Calls, call)
+
+	if f.RenameTimeIntervalInNotificationSettingsFn != nil {
+		return f.RenameTimeIntervalInNotificationSettingsFn(ctx, orgID, oldTimeInterval, newTimeInterval, validate, dryRun)
+	}
+
+	// Default values when no function hook is provided
+	return nil, nil, nil
+}
+
+func (f *fakeAlertRuleNotificationStore) ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
+	call := call{
+		Method: "ListNotificationSettings",
+		Args:   []interface{}{ctx, q},
+	}
+	f.Calls = append(f.Calls, call)
+
+	if f.ListNotificationSettingsFn != nil {
+		return f.ListNotificationSettingsFn(ctx, q)
+	}
+
+	// Default values when no function hook is provided
+	return nil, nil
 }

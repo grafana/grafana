@@ -29,6 +29,10 @@ import (
 func Middleware(ac AccessControl) func(Evaluator) web.Handler {
 	return func(evaluator Evaluator) web.Handler {
 		return func(c *contextmodel.ReqContext) {
+			ctx, span := tracer.Start(c.Req.Context(), "accesscontrol.Middleware")
+			defer span.End()
+			c.Req = c.Req.WithContext(ctx)
+
 			if c.AllowAnonymous {
 				forceLogin, _ := strconv.ParseBool(c.Req.URL.Query().Get("forceLogin")) // ignoring error, assuming false for non-true values is ok.
 				orgID, err := strconv.ParseInt(c.Req.URL.Query().Get("orgId"), 10, 64)
@@ -59,7 +63,11 @@ func Middleware(ac AccessControl) func(Evaluator) web.Handler {
 }
 
 func authorize(c *contextmodel.ReqContext, ac AccessControl, user identity.Requester, evaluator Evaluator) {
-	injected, err := evaluator.MutateScopes(c.Req.Context(), scopeInjector(scopeParams{
+	ctx, span := tracer.Start(c.Req.Context(), "accesscontrol.authorize")
+	defer span.End()
+	c.Req = c.Req.WithContext(ctx)
+
+	injected, err := evaluator.MutateScopes(ctx, scopeInjector(scopeParams{
 		OrgID:     user.GetOrgID(),
 		URLParams: web.Params(c.Req),
 	}))
@@ -68,7 +76,7 @@ func authorize(c *contextmodel.ReqContext, ac AccessControl, user identity.Reque
 		return
 	}
 
-	hasAccess, err := ac.Evaluate(c.Req.Context(), user, injected)
+	hasAccess, err := ac.Evaluate(ctx, user, injected)
 	if !hasAccess || err != nil {
 		deny(c, injected, err)
 		return
@@ -80,11 +88,9 @@ func deny(c *contextmodel.ReqContext, evaluator Evaluator, err error) {
 	if err != nil {
 		c.Logger.Error("Error from access control system", "error", err, "accessErrorID", id)
 	} else {
-		namespace, identifier := c.SignedInUser.GetNamespacedID()
 		c.Logger.Info(
 			"Access denied",
-			"namespace", namespace,
-			"userID", identifier,
+			"id", c.SignedInUser.GetID(),
 			"accessErrorID", id,
 			"permissions", evaluator.GoString(),
 		)
@@ -179,6 +185,10 @@ type OrgIDGetter func(c *contextmodel.ReqContext) (int64, error)
 func AuthorizeInOrgMiddleware(ac AccessControl, authnService authn.Service) func(OrgIDGetter, Evaluator) web.Handler {
 	return func(getTargetOrg OrgIDGetter, evaluator Evaluator) web.Handler {
 		return func(c *contextmodel.ReqContext) {
+			ctx, span := tracer.Start(c.Req.Context(), "accesscontrol.AuthorizeInOrgMiddleware")
+			defer span.End()
+			c.Req = c.Req.WithContext(ctx)
+
 			targetOrgID, err := getTargetOrg(c)
 			if err != nil {
 				if errors.Is(err, ErrInvalidRequestBody) {
@@ -233,7 +243,7 @@ func UseGlobalOrg(c *contextmodel.ReqContext) (int64, error) {
 // UseGlobalOrSingleOrg returns the global organization or the current organization in a single organization setup
 func UseGlobalOrSingleOrg(cfg *setting.Cfg) OrgIDGetter {
 	return func(c *contextmodel.ReqContext) (int64, error) {
-		if cfg.RBACSingleOrganization {
+		if cfg.RBAC.SingleOrganization {
 			return c.GetOrgID(), nil
 		}
 		return GlobalOrgID, nil
@@ -271,7 +281,7 @@ func UseGlobalOrgFromRequestData(cfg *setting.Cfg) OrgIDGetter {
 
 		// We only check permissions in the global organization if we are not running a SingleOrganization setup
 		// That allows Organization Admins to modify global roles and make global assignments.
-		if query.Global && !cfg.RBACSingleOrganization {
+		if query.Global && !cfg.RBAC.SingleOrganization {
 			return GlobalOrgID, nil
 		}
 
@@ -284,7 +294,7 @@ func UseGlobalOrgFromRequestParams(cfg *setting.Cfg) OrgIDGetter {
 	return func(c *contextmodel.ReqContext) (int64, error) {
 		// We only check permissions in the global organization if we are not running a SingleOrganization setup
 		// That allows Organization Admins to modify global roles and make global assignments, and is intended for use in hosted Grafana.
-		if c.QueryBool("global") && !cfg.RBACSingleOrganization {
+		if c.QueryBool("global") && !cfg.RBAC.SingleOrganization {
 			return GlobalOrgID, nil
 		}
 

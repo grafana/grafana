@@ -1,7 +1,7 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn, StoryObj } from '@storybook/react';
 import { Chance } from 'chance';
-import { ComponentProps, useMemo, useState } from 'react';
+import { ComponentProps, useEffect, useState } from 'react';
 
 import { Combobox, Option, Value } from './Combobox';
 
@@ -44,7 +44,7 @@ const BasicWithState: StoryFn<typeof Combobox> = (args) => {
       {...args}
       value={value}
       onChange={(val) => {
-        setValue(val.value);
+        setValue(val?.value || null);
         action('onChange')(val);
       }}
     />
@@ -55,7 +55,7 @@ type Story = StoryObj<typeof Combobox>;
 
 export const Basic: Story = {};
 
-function generateOptions(amount: number): Option[] {
+async function generateOptions(amount: number): Promise<Option[]> {
   return Array.from({ length: amount }, () => ({
     label: chance.name(),
     value: chance.guid(),
@@ -63,18 +63,30 @@ function generateOptions(amount: number): Option[] {
   }));
 }
 
-const manyOptions = generateOptions(1e5);
-manyOptions.push({ label: 'Banana', value: 'banana', description: 'A yellow fruit' });
+const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions, ...args }) => {
+  const [value, setValue] = useState<Value | null>(null);
+  const [options, setOptions] = useState<Option[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions }) => {
-  const [value, setValue] = useState<Value>(manyOptions[5].value);
-  const options = useMemo(() => generateOptions(numberOfOptions), [numberOfOptions]);
+  useEffect(() => {
+    setTimeout(() => {
+      generateOptions(numberOfOptions).then((options) => {
+        setIsLoading(false);
+        setOptions(options);
+        setValue(options[5].value);
+        console.log("I've set stuff");
+      });
+    }, 1000);
+  }, [numberOfOptions]);
+
   return (
     <Combobox
+      {...args}
+      loading={isLoading}
       options={options}
       value={value}
       onChange={(val) => {
-        setValue(val.value);
+        setValue(val?.value || null);
         action('onChange')(val);
       }}
     />

@@ -1,3 +1,87 @@
+<!-- 11.1.4 START -->
+
+# 11.1.4 (2024-08-14)
+
+### Bug fixes
+
+- **Swagger:** Fixed CVE-2024-6837.
+
+<!-- 11.1.4 END -->
+<!-- 11.0.3 START -->
+
+# 11.0.3 (2024-08-14)
+
+### Bug fixes
+
+- **Swagger:** Fixed CVE-2024-6837.
+
+<!-- 11.0.3 END -->
+<!-- 10.4.7 START -->
+
+# 10.4.7 (2024-08-14)
+
+### Bug fixes
+
+- **Swagger:** Fixed CVE-2024-6837.
+
+<!-- 10.4.7 END -->
+<!-- 11.1.3 START -->
+
+# 11.1.3 (2024-07-26)
+
+### Bug fixes
+
+- **RBAC**: Allow plugins to use scoped actions [#90946](https://github.com/grafana/grafana/pull/90946), [@gamab](https://github.com/gamab)
+
+<!-- 11.1.3 END -->
+<!-- 11.0.2 START -->
+
+# 11.0.2 (2024-07-25)
+
+### Features and enhancements
+
+- **Alerting:** Update grafana/alerting to c340765c985a12603bbdfcd10576ddfdbf9dc284 [#90388](https://github.com/grafana/grafana/pull/90388), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Prometheus:** Reintroduce Azure audience override feature flag [#90558](https://github.com/grafana/grafana/pull/90558), [@aangelisc](https://github.com/aangelisc)
+
+### Bug fixes
+
+- **Alerting:** Skip loading alert rules for dashboards when disabled [#89904](https://github.com/grafana/grafana/pull/89904), [@gillesdemey](https://github.com/gillesdemey)
+- **Folders:** Improve folder move permission checks [#90849](https://github.com/grafana/grafana/pull/90849), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **Folders:** Improve folder move permission checks [#90849](https://github.com/grafana/grafana/pull/90849), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **Folders:** Improve folder move permission checks [#90849](https://github.com/grafana/grafana/pull/90849), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+
+<!-- 11.0.2 END -->
+<!-- 10.4.6 START -->
+
+# 10.4.6 (2024-07-25)
+
+### Features and enhancements
+
+- **Alerting:** Update grafana/alerting to ce0d024b67ea714b06d0f5309025466f50e381ef [#90389](https://github.com/grafana/grafana/pull/90389), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Prometheus:** Reintroduce Azure audience override feature flag [#90557](https://github.com/grafana/grafana/pull/90557), [@aangelisc](https://github.com/aangelisc)
+
+### Bug fixes
+
+- **Alerting:** Fix panic in provisioning filter contacts by unknown name [#90440](https://github.com/grafana/grafana/pull/90440), [@JacobsonMT](https://github.com/JacobsonMT)
+- **Alerting:** Skip loading alert rules for dashboards when disabled [v10.4.x] [#90331](https://github.com/grafana/grafana/pull/90331), [@gillesdemey](https://github.com/gillesdemey)
+- **Echo:** Suppress errors from frontend-metrics API call failing [#89498](https://github.com/grafana/grafana/pull/89498), [@joshhunt](https://github.com/joshhunt)
+
+<!-- 10.4.6 END -->
+<!-- 11.1.1 START -->
+
+# 11.1.1 (2024-07-25)
+
+### Bug fixes
+
+- **Alerting:** Skip fetching alerts for unsaved dashboards [#90074](https://github.com/grafana/grafana/pull/90074), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Skip loading alert rules for dashboards when disabled [#89905](https://github.com/grafana/grafana/pull/89905), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Support `utf8_strict_mode: false` in Mimir [#90148](https://github.com/grafana/grafana/pull/90148), [@gillesdemey](https://github.com/gillesdemey)
+- **Scenes:** Fixes issue with panel repeat height calculation [#90232](https://github.com/grafana/grafana/pull/90232), [@kaydelaney](https://github.com/kaydelaney)
+- **Table Panel:** Fix Image hover without datalinks [#89922](https://github.com/grafana/grafana/pull/89922), [@codeincarnate](https://github.com/codeincarnate)
+- **Tempo:** Fix grpc streaming support over pdc-agent [#90055](https://github.com/grafana/grafana/pull/90055), [@taylor-s-dean](https://github.com/taylor-s-dean)
+- **RBAC**: Allow plugins to use scoped actions [#90946](https://github.com/grafana/grafana/pull/90946), [@gamab](https://github.com/gamab)
+
+<!-- 11.1.1 END -->
 <!-- 11.1.0 START -->
 
 # 11.1.0 (2024-06-21)

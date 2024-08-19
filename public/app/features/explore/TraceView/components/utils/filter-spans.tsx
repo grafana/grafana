@@ -110,25 +110,14 @@ const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
       return tags.every((tag: Tag) => {
         if (tag.key && tag.value) {
           if (
-            span.tags.some((kv) => checkKeyAndValueForMatch(tag, kv)) ||
-            span.process.tags.some((kv) => checkKeyAndValueForMatch(tag, kv)) ||
-            (span.logs && span.logs.some((log) => log.fields.some((kv) => checkKeyAndValueForMatch(tag, kv)))) ||
-            (span.kind && tag.key === KIND && tag.value === span.kind) ||
-            (span.statusCode !== undefined &&
-              tag.key === STATUS &&
-              tag.value === SpanStatusCode[span.statusCode].toLowerCase()) ||
-            (span.statusMessage && tag.key === STATUS_MESSAGE && tag.value === span.statusMessage) ||
-            (span.instrumentationLibraryName &&
-              tag.key === LIBRARY_NAME &&
-              tag.value === span.instrumentationLibraryName) ||
-            (span.instrumentationLibraryVersion &&
-              tag.key === LIBRARY_VERSION &&
-              tag.value === span.instrumentationLibraryVersion) ||
-            (span.traceState && tag.key === TRACE_STATE && tag.value === span.traceState) ||
-            (tag.key === ID && tag.value === span.spanID)
+            (tag.operator === '=' && checkKeyValConditionForMatch(tag, span)) ||
+            (tag.operator === '=~' && checkKeyValConditionForRegex(tag, span)) ||
+            (tag.operator === '!=' && !checkKeyValConditionForMatch(tag, span)) ||
+            (tag.operator === '!~' && !checkKeyValConditionForRegex(tag, span))
           ) {
-            return getReturnValue(tag.operator, true);
+            return true;
           }
+          return false;
         } else if (tag.key) {
           if (
             span.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key)) ||
@@ -142,26 +131,67 @@ const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
             (span.traceState && tag.key === TRACE_STATE) ||
             tag.key === ID
           ) {
-            return getReturnValue(tag.operator, true);
+            return tag.operator === '=' || tag.operator === '=~' ? true : false;
           }
+          return tag.operator === '=' || tag.operator === '=~' ? false : true;
         }
-        return getReturnValue(tag.operator, false);
+        return false;
       });
     });
   }
   return undefined;
 };
 
+const checkKeyValConditionForRegex = (tag: Tag, span: TraceSpan) => {
+  return (
+    span.tags.some((kv) => checkKeyAndValueForRegex(tag, kv)) ||
+    span.process.tags.some((kv) => checkKeyAndValueForRegex(tag, kv)) ||
+    (span.logs && span.logs.some((log) => log.fields.some((kv) => checkKeyAndValueForRegex(tag, kv)))) ||
+    (span.kind && tag.key === KIND && tag.value?.includes(span.kind)) ||
+    (span.statusCode !== undefined &&
+      tag.key === STATUS &&
+      tag.value?.includes(SpanStatusCode[span.statusCode].toLowerCase())) ||
+    (span.statusMessage && tag.key === STATUS_MESSAGE && tag.value?.includes(span.statusMessage)) ||
+    (span.instrumentationLibraryName &&
+      tag.key === LIBRARY_NAME &&
+      tag.value?.includes(span.instrumentationLibraryName)) ||
+    (span.instrumentationLibraryVersion &&
+      tag.key === LIBRARY_VERSION &&
+      tag.value?.includes(span.instrumentationLibraryVersion)) ||
+    (span.traceState && tag.key === TRACE_STATE && tag.value?.includes(span.traceState)) ||
+    (tag.key === ID && tag.value?.includes(span.spanID))
+  );
+};
+
+const checkKeyValConditionForMatch = (tag: Tag, span: TraceSpan) => {
+  return (
+    span.tags.some((kv) => checkKeyAndValueForMatch(tag, kv)) ||
+    span.process.tags.some((kv) => checkKeyAndValueForMatch(tag, kv)) ||
+    (span.logs && span.logs.some((log) => log.fields.some((kv) => checkKeyAndValueForMatch(tag, kv)))) ||
+    (span.kind && tag.key === KIND && tag.value === span.kind) ||
+    (span.statusCode !== undefined &&
+      tag.key === STATUS &&
+      tag.value === SpanStatusCode[span.statusCode].toLowerCase()) ||
+    (span.statusMessage && tag.key === STATUS_MESSAGE && tag.value === span.statusMessage) ||
+    (span.instrumentationLibraryName && tag.key === LIBRARY_NAME && tag.value === span.instrumentationLibraryName) ||
+    (span.instrumentationLibraryVersion &&
+      tag.key === LIBRARY_VERSION &&
+      tag.value === span.instrumentationLibraryVersion) ||
+    (span.traceState && tag.key === TRACE_STATE && tag.value === span.traceState) ||
+    (tag.key === ID && tag.value === span.spanID)
+  );
+};
+
 const checkKeyForMatch = (tagKey: string, key: string) => {
-  return tagKey === key.toString() ? true : false;
+  return tagKey === key.toString();
 };
 
 const checkKeyAndValueForMatch = (tag: Tag, kv: TraceKeyValuePair) => {
-  return tag.key === kv.key.toString() && tag.value === kv.value.toString() ? true : false;
+  return tag.key === kv.key.toString() && tag.value === kv.value.toString();
 };
 
-const getReturnValue = (operator: string, found: boolean) => {
-  return operator === '=' ? found : !found;
+const checkKeyAndValueForRegex = (tag: Tag, kv: TraceKeyValuePair) => {
+  return kv.key.toString().includes(tag.key || '') && kv.value.toString().includes(tag.value || '');
 };
 
 const getServiceNameMatches = (spans: TraceSpan[], searchProps: SearchProps) => {

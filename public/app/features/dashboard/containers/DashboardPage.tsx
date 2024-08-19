@@ -1,8 +1,8 @@
-import { cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil } from '@grafana/data';
+import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
@@ -44,6 +44,9 @@ import { initDashboard } from '../state/initDashboard';
 
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from './types';
 
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
+
 export const mapStateToProps = (state: StoreState) => ({
   initPhase: state.dashboard.initPhase,
   initError: state.dashboard.initError,
@@ -68,6 +71,7 @@ export type Props = Themeable2 &
 export interface State {
   editPanel: PanelModel | null;
   viewPanel: PanelModel | null;
+  editView: string | null;
   updateScrollTop?: number;
   rememberScrollTop?: number;
   showLoadingState: boolean;
@@ -78,6 +82,40 @@ export interface State {
   sectionNav?: NavModel;
 }
 
+const getStyles = (theme: GrafanaTheme2) => ({
+  fullScreenPanel: css({
+    '.react-grid-layout': {
+      height: 'auto !important',
+      transitionProperty: 'none',
+    },
+    '.react-grid-item': {
+      display: 'none !important',
+      transitionProperty: 'none !important',
+
+      '&--fullscreen': {
+        display: 'block !important',
+        // can't avoid type assertion here due to !important
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        position: 'unset !important' as 'unset',
+        transform: 'translate(0px, 0px) !important',
+      },
+    },
+
+    // Disable grid interaction indicators in fullscreen panels
+    '.panel-header:hover': {
+      backgroundColor: 'inherit',
+    },
+
+    '.panel-title-container': {
+      cursor: 'pointer',
+    },
+
+    '.react-resizable-handle': {
+      display: 'none',
+    },
+  }),
+});
+
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
   declare context: GrafanaContextType;
   static contextType = GrafanaContext;
@@ -87,6 +125,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
   getCleanState(): State {
     return {
+      editView: null,
       editPanel: null,
       viewPanel: null,
       showLoadingState: false,
@@ -194,6 +233,13 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       this.props.notifyApp(createErrorNotification(`Panel not found`));
       locationService.partial({ editPanel: null, viewPanel: null });
     }
+
+    if (config.featureToggles.bodyScrolling) {
+      // Update window scroll position
+      if (this.state.updateScrollTop !== undefined && this.state.updateScrollTop !== prevState.updateScrollTop) {
+        window.scrollTo(0, this.state.updateScrollTop);
+      }
+    }
   }
 
   updateLiveTimer = () => {
@@ -209,6 +255,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     const urlEditPanelId = queryParams.editPanel;
     const urlViewPanelId = queryParams.viewPanel;
+    const urlEditView = queryParams.editview;
 
     if (!dashboard) {
       return state;
@@ -216,13 +263,33 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     const updatedState = { ...state };
 
+    if (config.featureToggles.bodyScrolling) {
+      // Entering settings view
+      if (!state.editView && urlEditView) {
+        updatedState.editView = urlEditView;
+        updatedState.rememberScrollTop = window.scrollY;
+        updatedState.updateScrollTop = 0;
+      }
+
+      // Leaving settings view
+      else if (state.editView && !urlEditView) {
+        updatedState.updateScrollTop = state.rememberScrollTop;
+        updatedState.editView = null;
+      }
+    }
+
     // Entering edit mode
     if (!state.editPanel && urlEditPanelId) {
       const panel = dashboard.getPanelByUrlId(urlEditPanelId);
       if (panel) {
         if (dashboard.canEditPanel(panel)) {
           updatedState.editPanel = panel;
-          updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
+          updatedState.rememberScrollTop = config.featureToggles.bodyScrolling
+            ? window.scrollY
+            : state.scrollElement?.scrollTop;
+          if (config.featureToggles.bodyScrolling) {
+            updatedState.updateScrollTop = 0;
+          }
         } else {
           updatedState.editPanelAccessDenied = true;
         }
@@ -244,7 +311,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         // Should move this state out of dashboard in the future
         dashboard.initViewPanel(panel);
         updatedState.viewPanel = panel;
-        updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
+        updatedState.rememberScrollTop = config.featureToggles.bodyScrolling
+          ? window.scrollY
+          : state.scrollElement?.scrollTop;
         updatedState.updateScrollTop = 0;
       } else {
         updatedState.panelNotFound = true;
@@ -296,9 +365,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   };
 
   render() {
-    const { dashboard, initError, queryParams } = this.props;
+    const { dashboard, initError, queryParams, theme } = this.props;
     const { editPanel, viewPanel, updateScrollTop, pageNav, sectionNav } = this.state;
     const kioskMode = getKioskMode(this.props.queryParams);
+    const styles = getStyles(theme);
 
     if (!dashboard || !pageNav || !sectionNav) {
       return <DashboardLoading initPhase={this.props.initPhase} />;
@@ -310,7 +380,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const showToolbar = kioskMode !== KioskMode.Full && !queryParams.editview;
 
     const pageClassName = cx({
-      'panel-in-fullscreen': Boolean(viewPanel),
+      [styles.fullScreenPanel]: Boolean(viewPanel),
       'page-hidden': Boolean(queryParams.editview || editPanel),
     });
 
@@ -412,7 +482,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           />
 
           {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
-          {queryParams.shareView && <ShareModal dashboard={dashboard} onDismiss={this.onCloseShareModal} />}
+          {queryParams.shareView && (
+            <ShareModal dashboard={dashboard} onDismiss={this.onCloseShareModal} activeTab={queryParams.shareView} />
+          )}
         </Page>
         {editPanel && (
           <PanelEditor

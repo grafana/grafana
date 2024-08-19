@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"net/http"
 
-	authnClients "github.com/grafana/grafana/pkg/services/authn/clients"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/authlib/claims"
+	authnClients "github.com/grafana/grafana/pkg/services/authn/clients"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -153,22 +155,21 @@ func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) w
 			return
 		}
 
-		namespace, id := ident.GetNamespacedID()
-		if !identity.IsNamespace(
-			namespace,
-			identity.NamespaceUser,
-			identity.NamespaceServiceAccount,
-			identity.NamespaceAPIKey,
-		) || id == "0" {
+		id, _ := ident.GetInternalID()
+		if !ident.IsIdentityType(
+			claims.TypeUser,
+			claims.TypeServiceAccount,
+			claims.TypeAPIKey,
+		) || id == 0 {
 			return
 		}
 
-		if _, ok := h.Cfg.IDResponseHeaderNamespaces[namespace.String()]; !ok {
+		if _, ok := h.Cfg.IDResponseHeaderNamespaces[string(ident.GetIdentityType())]; !ok {
 			return
 		}
 
 		headerName := fmt.Sprintf("%s-Identity-Id", h.Cfg.IDResponseHeaderPrefix)
-		w.Header().Add(headerName, fmt.Sprintf("%s:%s", namespace, id))
+		w.Header().Add(headerName, ident.GetID())
 	}
 }
 

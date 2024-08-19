@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, ToolbarButton, useStyles2 } from '@grafana/ui';
 
@@ -32,7 +33,13 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
   return (
     <>
       <NavToolbarActions dashboard={dashboard} />
-      <div {...containerProps} data-testid={selectors.components.PanelEditor.General.content}>
+      <div
+        {...containerProps}
+        className={cx(containerProps.className, {
+          [styles.content]: config.featureToggles.bodyScrolling,
+        })}
+        data-testid={selectors.components.PanelEditor.General.content}
+      >
         <div {...primaryProps} className={cx(primaryProps.className, styles.body)}>
           <VizAndDataPane model={model} />
         </div>
@@ -62,7 +69,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const { vizManager, dataPane, showLibraryPanelSaveModal, showLibraryPanelUnlinkModal } = model.useState();
   const { sourcePanel } = vizManager.useState();
   const libraryPanel = getLibraryPanel(sourcePanel.resolve());
-  const { controls, scopes } = dashboard.useState();
+  const { controls } = dashboard.useState();
   const styles = useStyles2(getStyles);
 
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
@@ -82,16 +89,9 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   }
 
   return (
-    <div
-      className={cx(
-        styles.pageContainer,
-        controls && !scopes && styles.pageContainerWithControls,
-        scopes && styles.pageContainerWithScopes
-      )}
-    >
-      {scopes && <scopes.Component model={scopes} />}
+    <div className={cx(styles.pageContainer, controls && styles.pageContainerWithControls)}>
       {controls && (
-        <div className={cx(styles.controlsWrapper, scopes && styles.controlsWrapperWithScopes)}>
+        <div className={styles.controlsWrapper}>
           <controls.Component model={controls} />
         </div>
       )}
@@ -156,13 +156,6 @@ function getStyles(theme: GrafanaTheme2) {
         "panels"`,
       gridTemplateRows: 'auto 1fr',
     }),
-    pageContainerWithScopes: css({
-      gridTemplateAreas: `
-        "scopes controls"
-        "panels panels"`,
-      gridTemplateColumns: `${theme.spacing(32)} 1fr`,
-      gridTemplateRows: 'auto 1fr',
-    }),
     container: css({
       gridArea: 'panels',
       height: '100%',
@@ -175,6 +168,11 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       minHeight: 0,
       width: '100%',
+    }),
+    content: css({
+      position: 'absolute',
+      width: '100%',
+      height: '100%',
     }),
     body: css({
       label: 'body',
@@ -212,9 +210,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 0,
       gridArea: 'controls',
       padding: theme.spacing(2, 0, 2, 2),
-    }),
-    controlsWrapperWithScopes: css({
-      padding: theme.spacing(2, 0),
     }),
     openDataPaneButton: css({
       width: theme.spacing(8),

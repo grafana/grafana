@@ -116,7 +116,6 @@ export const TagFilter = ({
   };
 
   const selectOptions = {
-    key: selectKey,
     onFocus,
     isLoading,
     options,
@@ -160,7 +159,7 @@ export const TagFilter = ({
           Clear tags
         </button>
       )}
-      <MultiSelect {...selectOptions} prefix={<Icon name="tag-alt" />} aria-label="Tag filter" />
+      <MultiSelect key={selectKey} {...selectOptions} prefix={<Icon name="tag-alt" />} aria-label="Tag filter" />
     </div>
   );
 };

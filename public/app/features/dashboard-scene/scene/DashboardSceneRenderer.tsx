@@ -2,9 +2,10 @@ import { css, cx } from '@emotion/css';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
+import { useChromeHeaderHeight } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
-import { CustomScrollbar, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
+import NativeScrollbar from 'app/core/components/NativeScrollbar';
 import { Page } from 'app/core/components/Page/Page';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -15,9 +16,9 @@ import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, editview, editPanel, isEmpty, scopes, meta } = model.useState();
-  const { isExpanded: isScopesExpanded } = scopes?.useState() ?? {};
-  const styles = useStyles2(getStyles);
+  const { controls, overlay, editview, editPanel, isEmpty, meta } = model.useState();
+  const headerHeight = useChromeHeaderHeight();
+  const styles = useStyles2(getStyles, headerHeight);
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
   const pageNav = model.getPageNav(location, navIndex);
@@ -58,69 +59,42 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
       {editPanel && <editPanel.Component model={editPanel} />}
       {!editPanel && (
-        <div
-          className={cx(
-            styles.pageContainer,
-            hasControls && !scopes && styles.pageContainerWithControls,
-            scopes && styles.pageContainerWithScopes,
-            scopes && isScopesExpanded && styles.pageContainerWithScopesExpanded
-          )}
-        >
-          {scopes && !meta.dashboardNotFound && <scopes.Component model={scopes} />}
-          <NavToolbarActions dashboard={model} />
-          {controls && (
-            <div
-              className={cx(styles.controlsWrapper, scopes && !isScopesExpanded && styles.controlsWrapperWithScopes)}
-            >
-              <controls.Component model={controls} />
-            </div>
-          )}
-          <CustomScrollbar
-            // This id is used by the image renderer to scroll through the dashboard
-            divId="page-scrollbar"
-            autoHeightMin={'100%'}
-            className={styles.scrollbarContainer}
-            testId={selectors.pages.Dashboard.DashNav.scrollContainer}
-          >
+        <NativeScrollbar divId="page-scrollbar" autoHeightMin={'100%'}>
+          <div className={cx(styles.pageContainer, hasControls && styles.pageContainerWithControls)}>
+            <NavToolbarActions dashboard={model} />
+            {controls && (
+              <div className={styles.controlsWrapper}>
+                <controls.Component model={controls} />
+              </div>
+            )}
             <div className={cx(styles.canvasContent)}>{body}</div>
-          </CustomScrollbar>
-        </div>
+          </div>
+        </NativeScrollbar>
       )}
       {overlay && <overlay.Component model={overlay} />}
     </Page>
   );
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, headerHeight: number | undefined) {
   return {
     pageContainer: css({
       display: 'grid',
       gridTemplateAreas: `
-        "panels"`,
+  "panels"`,
       gridTemplateColumns: `1fr`,
       gridTemplateRows: '1fr',
-      height: '100%',
+      flexGrow: 1,
+      [theme.breakpoints.down('sm')]: {
+        display: 'flex',
+        flexDirection: 'column',
+      },
     }),
     pageContainerWithControls: css({
       gridTemplateAreas: `
         "controls"
         "panels"`,
       gridTemplateRows: 'auto 1fr',
-    }),
-    pageContainerWithScopes: css({
-      gridTemplateAreas: `
-        "scopes controls"
-        "panels panels"`,
-      gridTemplateColumns: `${theme.spacing(32)} 1fr`,
-      gridTemplateRows: 'auto 1fr',
-    }),
-    pageContainerWithScopesExpanded: css({
-      gridTemplateAreas: `
-        "scopes controls"
-        "scopes panels"`,
-    }),
-    scrollbarContainer: css({
-      gridArea: 'panels',
     }),
     controlsWrapper: css({
       display: 'flex',
@@ -131,9 +105,13 @@ function getStyles(theme: GrafanaTheme2) {
       ':empty': {
         display: 'none',
       },
-    }),
-    controlsWrapperWithScopes: css({
-      padding: theme.spacing(2, 2, 2, 0),
+      // Make controls sticky on larger screens (> mobile)
+      [theme.breakpoints.up('md')]: {
+        position: 'sticky',
+        zIndex: theme.zIndex.activePanel,
+        background: theme.colors.background.canvas,
+        top: headerHeight,
+      },
     }),
     canvasContent: css({
       label: 'canvas-content',
@@ -141,7 +119,9 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       padding: theme.spacing(0, 2),
       flexBasis: '100%',
+      gridArea: 'panels',
       flexGrow: 1,
+      minWidth: 0,
     }),
     body: css({
       label: 'body',

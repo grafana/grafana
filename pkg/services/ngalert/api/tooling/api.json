@@ -14,10 +14,10 @@
      "type": "string"
     },
     "annotations": {
-     "$ref": "#/definitions/overrideLabels"
+     "$ref": "#/definitions/Labels"
     },
     "labels": {
-     "$ref": "#/definitions/overrideLabels"
+     "$ref": "#/definitions/Labels"
     },
     "state": {
      "type": "string"
@@ -430,7 +430,7 @@
      "type": "array"
     },
     "annotations": {
-     "$ref": "#/definitions/overrideLabels"
+     "$ref": "#/definitions/Labels"
     },
     "duration": {
      "format": "double",
@@ -444,7 +444,7 @@
      "type": "string"
     },
     "labels": {
-     "$ref": "#/definitions/overrideLabels"
+     "$ref": "#/definitions/Labels"
     },
     "lastError": {
      "type": "string"
@@ -549,6 +549,10 @@
     "credentials_file": {
      "type": "string"
     },
+    "credentials_ref": {
+     "description": "CredentialsRef is the name of the secret within the secret manager to use as credentials.",
+     "type": "string"
+    },
     "type": {
      "type": "string"
     }
@@ -618,10 +622,18 @@
     "password_file": {
      "type": "string"
     },
+    "password_ref": {
+     "description": "PasswordRef is the name of the secret within the secret manager to use as the password.",
+     "type": "string"
+    },
     "username": {
      "type": "string"
     },
     "username_file": {
+     "type": "string"
+    },
+    "username_ref": {
+     "description": "UsernameRef is the name of the secret within the secret manager to use as the username.",
      "type": "string"
     }
    },
@@ -1846,6 +1858,9 @@
      "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
      "type": "boolean"
     },
+    "http_headers": {
+     "$ref": "#/definitions/Headers"
+    },
     "no_proxy": {
      "description": "NoProxy contains addresses that should not use a proxy.",
      "type": "string"
@@ -1854,7 +1869,7 @@
      "$ref": "#/definitions/OAuth2"
     },
     "proxy_connect_header": {
-     "$ref": "#/definitions/Header"
+     "$ref": "#/definitions/ProxyHeader"
     },
     "proxy_from_environment": {
      "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
@@ -1871,12 +1886,39 @@
    "type": "object"
   },
   "Header": {
-   "additionalProperties": {
-    "items": {
-     "$ref": "#/definitions/Secret"
+   "properties": {
+    "files": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
     },
-    "type": "array"
+    "secrets": {
+     "items": {
+      "$ref": "#/definitions/Secret"
+     },
+     "type": "array"
+    },
+    "values": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    }
    },
+   "title": "Header represents the configuration for a single HTTP header.",
+   "type": "object"
+  },
+  "Headers": {
+   "properties": {
+    "Headers": {
+     "additionalProperties": {
+      "$ref": "#/definitions/Header"
+     },
+     "type": "object"
+    }
+   },
+   "title": "Headers represents the configuration for HTTP headers.",
    "type": "object"
   },
   "HostPort": {
@@ -2222,6 +2264,9 @@
     },
     "template": {
      "type": "string"
+    },
+    "version": {
+     "type": "string"
     }
    },
    "type": "object"
@@ -2229,6 +2274,9 @@
   "NotificationTemplateContent": {
    "properties": {
     "template": {
+     "type": "string"
+    },
+    "version": {
      "type": "string"
     }
    },
@@ -2263,6 +2311,10 @@
     "client_secret_file": {
      "type": "string"
     },
+    "client_secret_ref": {
+     "description": "ClientSecretRef is the name of the secret within the secret manager to use as the client\nsecret.",
+     "type": "string"
+    },
     "endpoint_params": {
      "additionalProperties": {
       "type": "string"
@@ -2274,7 +2326,7 @@
      "type": "string"
     },
     "proxy_connect_header": {
-     "$ref": "#/definitions/Header"
+     "$ref": "#/definitions/ProxyHeader"
     },
     "proxy_from_environment": {
      "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
@@ -2998,7 +3050,7 @@
      "type": "string"
     },
     "proxy_connect_header": {
-     "$ref": "#/definitions/Header"
+     "$ref": "#/definitions/ProxyHeader"
     },
     "proxy_from_environment": {
      "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
@@ -3007,6 +3059,15 @@
     "proxy_url": {
      "$ref": "#/definitions/URL"
     }
+   },
+   "type": "object"
+  },
+  "ProxyHeader": {
+   "additionalProperties": {
+    "items": {
+     "$ref": "#/definitions/Secret"
+    },
+    "type": "array"
    },
    "type": "object"
   },
@@ -3342,6 +3403,12 @@
   "Route": {
    "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
    "properties": {
+    "active_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
     "continue": {
      "type": "boolean"
     },
@@ -3463,7 +3530,7 @@
      "type": "string"
     },
     "labels": {
-     "$ref": "#/definitions/overrideLabels"
+     "$ref": "#/definitions/Labels"
     },
     "lastError": {
      "type": "string"
@@ -3884,12 +3951,20 @@
      "description": "The CA cert to use for the targets.",
      "type": "string"
     },
+    "ca_ref": {
+     "description": "CARef is the name of the secret within the secret manager to use as the CA cert for the\ntargets.",
+     "type": "string"
+    },
     "cert": {
      "description": "Text of the client cert file for the targets.",
      "type": "string"
     },
     "cert_file": {
      "description": "The client cert file for the targets.",
+     "type": "string"
+    },
+    "cert_ref": {
+     "description": "CertRef is the name of the secret within the secret manager to use as the client cert for\nthe targets.",
      "type": "string"
     },
     "insecure_skip_verify": {
@@ -3901,6 +3976,10 @@
     },
     "key_file": {
      "description": "The client key file for the targets.",
+     "type": "string"
+    },
+    "key_ref": {
+     "description": "KeyRef is the name of the secret within the secret manager to use as the client key for\nthe targets.",
      "type": "string"
     },
     "max_version": {
@@ -4237,7 +4316,6 @@
    "type": "object"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nThe Host field contains the host and port subcomponents of the URL.\nWhen the port is present, it is separated from the host with a colon.\nWhen the host is an IPv6 address, it must be enclosed in square brackets:\n\"[fe80::1]:80\". The [net.JoinHostPort] function combines a host and port\ninto a string suitable for the Host field, adding square brackets to\nthe host when necessary.\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the [URL.EscapedPath] method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -4273,7 +4351,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object"
   },
   "UpdateRuleGroupResponse": {
@@ -4503,6 +4581,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup",
     "type": "object"
@@ -4664,6 +4743,7 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert",
     "type": "object"
@@ -4738,31 +4818,6 @@
    },
    "type": "array"
   },
-  "gettableGrafanaSilence": {
-   "properties": {
-    "accessControl": {
-     "additionalProperties": {
-      "type": "boolean"
-     },
-     "example": {
-      "create": false,
-      "read": true,
-      "write": false
-     },
-     "type": "object"
-    },
-    "metadata": {
-     "$ref": "#/definitions/SilenceMetadata"
-    }
-   },
-   "type": "object"
-  },
-  "gettableGrafanaSilences": {
-   "items": {
-    "$ref": "#/definitions/gettableGrafanaSilence"
-   },
-   "type": "array"
-  },
   "gettableSilence": {
    "description": "GettableSilence gettable silence",
    "properties": {
@@ -4813,42 +4868,12 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence",
     "type": "object"
    },
    "type": "array"
-  },
-  "integration": {
-   "description": "Integration integration",
-   "properties": {
-    "lastNotifyAttempt": {
-     "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
-     "format": "date-time",
-     "type": "string"
-    },
-    "lastNotifyAttemptDuration": {
-     "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
-     "type": "string"
-    },
-    "lastNotifyAttemptError": {
-     "description": "Error string for the last attempt to deliver a notification. Empty if the last attempt was successful.",
-     "type": "string"
-    },
-    "name": {
-     "description": "name",
-     "type": "string"
-    },
-    "sendResolved": {
-     "description": "send resolved",
-     "type": "boolean"
-    }
-   },
-   "required": [
-    "name",
-    "sendResolved"
-   ],
-   "type": "object"
   },
   "labelSet": {
    "additionalProperties": {
@@ -4890,14 +4915,6 @@
     "$ref": "#/definitions/matcher"
    },
    "type": "array"
-  },
-  "overrideLabels": {
-   "additionalProperties": {
-    "type": "string"
-   },
-   "description": "The custom marshaling for labels.Labels ends up doing this anyways.",
-   "title": "override the labels type with a map for generation.",
-   "type": "object"
   },
   "peerStatus": {
    "description": "PeerStatus peer status",
@@ -5004,25 +5021,12 @@
   "receiver": {
    "description": "Receiver receiver",
    "properties": {
-    "active": {
-     "description": "active",
-     "type": "boolean"
-    },
-    "integrations": {
-     "description": "integrations",
-     "items": {
-      "$ref": "#/definitions/integration"
-     },
-     "type": "array"
-    },
     "name": {
      "description": "name",
      "type": "string"
     }
    },
    "required": [
-    "active",
-    "integrations",
     "name"
    ],
    "type": "object"
@@ -6176,9 +6180,6 @@
       "schema": {
        "$ref": "#/definitions/NotificationTemplates"
       }
-     },
-     "404": {
-      "description": " Not found."
      }
     },
     "summary": "Get all notification templates.",
@@ -6192,16 +6193,28 @@
     "operationId": "RouteDeleteTemplate",
     "parameters": [
      {
-      "description": "Template Name",
+      "description": "Template name",
       "in": "path",
       "name": "name",
       "required": true,
+      "type": "string"
+     },
+     {
+      "description": "Version of template to use for optimistic concurrency. Leave empty to disable validation",
+      "in": "query",
+      "name": "version",
       "type": "string"
      }
     ],
     "responses": {
      "204": {
       "description": " The template was deleted successfully."
+     },
+     "409": {
+      "description": "GenericPublicError",
+      "schema": {
+       "$ref": "#/definitions/GenericPublicError"
+      }
      }
     },
     "summary": "Delete a template.",
@@ -6228,7 +6241,10 @@
       }
      },
      "404": {
-      "description": " Not found."
+      "description": "GenericPublicError",
+      "schema": {
+       "$ref": "#/definitions/GenericPublicError"
+      }
      }
     },
     "summary": "Get a notification template.",
@@ -6270,9 +6286,15 @@
       }
      },
      "400": {
-      "description": "ValidationError",
+      "description": "GenericPublicError",
       "schema": {
-       "$ref": "#/definitions/ValidationError"
+       "$ref": "#/definitions/GenericPublicError"
+      }
+     },
+     "409": {
+      "description": "GenericPublicError",
+      "schema": {
+       "$ref": "#/definitions/GenericPublicError"
       }
      }
     },
@@ -6345,7 +6367,7 @@
    "description": "",
    "schema": {
     "items": {
-     "$ref": "#/definitions/receiver"
+     "$ref": "#/definitions/Receiver"
     },
     "type": "array"
    }

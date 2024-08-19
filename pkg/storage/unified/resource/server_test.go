@@ -8,25 +8,25 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/stretchr/testify/require"
 	"gocloud.dev/blob/fileblob"
 	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func TestSimpleServer(t *testing.T) {
 	testUserA := &identity.StaticRequester{
-		Namespace:      identity.NamespaceUser,
+		Type:           claims.TypeUser,
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
 		OrgRole:        identity.RoleAdmin,
 		IsGrafanaAdmin: true, // can do anything
 	}
-	ctx := identity.WithRequester(context.Background(), testUserA)
+	ctx := claims.WithClaims(context.Background(), testUserA)
 
 	bucket := memblob.OpenBucket(nil)
 	if false {
@@ -97,18 +97,18 @@ func TestSimpleServer(t *testing.T) {
 			Key:   key,
 		})
 		require.NoError(t, err)
-		require.Nil(t, created.Status)
+		require.Nil(t, created.Error)
 		require.True(t, created.ResourceVersion > 0)
 
 		// The key does not include resource version
 		found, err := server.Read(ctx, &ReadRequest{Key: key})
 		require.NoError(t, err)
-		require.Nil(t, found.Status)
+		require.Nil(t, found.Error)
 		require.Equal(t, created.ResourceVersion, found.ResourceVersion)
 
 		// Now update the value
 		tmp := &unstructured.Unstructured{}
-		err = json.Unmarshal(created.Value, tmp)
+		err = json.Unmarshal(found.Value, tmp)
 		require.NoError(t, err)
 
 		now := time.Now().UnixMilli()
@@ -116,7 +116,7 @@ func TestSimpleServer(t *testing.T) {
 		require.NoError(t, err)
 		obj.SetAnnotation("test", "hello")
 		obj.SetUpdatedTimestampMillis(now)
-		obj.SetUpdatedBy(testUserA.GetUID().String())
+		obj.SetUpdatedBy(testUserA.GetUID())
 		raw, err = json.Marshal(tmp)
 		require.NoError(t, err)
 
@@ -125,13 +125,13 @@ func TestSimpleServer(t *testing.T) {
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
 		require.NoError(t, err)
-		require.Nil(t, updated.Status)
+		require.Nil(t, updated.Error)
 		require.True(t, updated.ResourceVersion > created.ResourceVersion)
 
 		// We should still get the latest
 		found, err = server.Read(ctx, &ReadRequest{Key: key})
 		require.NoError(t, err)
-		require.Nil(t, found.Status)
+		require.Nil(t, found.Error)
 		require.Equal(t, updated.ResourceVersion, found.ResourceVersion)
 
 		all, err = server.List(ctx, &ListRequest{Options: &ListOptions{
@@ -151,8 +151,8 @@ func TestSimpleServer(t *testing.T) {
 		// We should get not found status when trying to read the latest value
 		found, err = server.Read(ctx, &ReadRequest{Key: key})
 		require.NoError(t, err)
-		require.NotNil(t, found.Status)
-		require.Equal(t, int32(404), found.Status.Code)
+		require.NotNil(t, found.Error)
+		require.Equal(t, int32(404), found.Error.Code)
 
 		// And the deleted value should not be in the results
 		all, err = server.List(ctx, &ListRequest{Options: &ListOptions{
