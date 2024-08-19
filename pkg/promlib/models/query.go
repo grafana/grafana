@@ -238,9 +238,11 @@ func Parse(span trace.Span, query backend.DataQuery, dsScrapeInterval string, in
 			}()))
 		}
 
-		expr, err = ApplyFiltersAndGroupBy(expr, scopeFilters, model.AdhocFilters, model.GroupByKeys)
-		if err != nil {
-			return nil, err
+		if len(scopeFilters) > 0 || len(model.AdhocFilters) > 0 || len(model.GroupByKeys) > 0 {
+			expr, err = ApplyFiltersAndGroupBy(expr, scopeFilters, model.AdhocFilters, model.GroupByKeys)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
