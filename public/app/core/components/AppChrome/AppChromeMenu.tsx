@@ -104,12 +104,10 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
       position: 'fixed',
       top: searchBarHidden ? 0 : TOP_BAR_LEVEL_HEIGHT,
       backgroundColor: theme.colors.background.primary,
-      boxSizing: 'content-box',
       flex: '1 1 0',
 
       [theme.breakpoints.up('md')]: {
         right: 'unset',
-        borderRight: `1px solid ${theme.colors.border.weak}`,
         top: topPosition,
       },
     }),
@@ -151,6 +149,7 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
   const overlayOpen = {
     width: '100%',
     [theme.breakpoints.up('md')]: {
+      borderRight: `1px solid ${theme.colors.border.weak}`,
       boxShadow: theme.shadows.z3,
       width: MENU_WIDTH,
     },
