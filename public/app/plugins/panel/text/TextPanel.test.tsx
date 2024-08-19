@@ -60,6 +60,15 @@ describe('TextPanel', () => {
     expect(() => setup()).not.toThrow();
   });
 
+  it('should not throw an error when interpolating variables results in empty content', () => {
+    const contentTest = '${__all_variables}';
+    const props = Object.assign({}, defaultProps, {
+      options: { content: contentTest, mode: TextMode.HTML },
+    });
+
+    expect(() => setup(props)).not.toThrow();
+  });
+
   it('sanitizes content in html mode', () => {
     const contentTest = '<form><p>Form tags are sanitized.</p></form>\n<script>Script tags are sanitized.</script>';
     replaceVariablesMock.mockReturnValueOnce(contentTest);
