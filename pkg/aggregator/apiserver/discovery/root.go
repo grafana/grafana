@@ -1,4 +1,4 @@
-package apiserver
+package discovery
 
 import (
 	"encoding/json"
@@ -18,13 +18,13 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 )
 
-// apisProxyHandler serves the `/apis` endpoint.
-type apisProxyHandler struct {
+// RootDiscoveryHandler serves the `/apis` endpoint.
+type RootDiscoveryHandler struct {
 	delegate http.Handler
 	codecs   serializer.CodecFactory
 }
 
-func newApisProxyHandler(delegate http.Handler) *apisProxyHandler {
+func NewRootDiscoveryHandler(delegate http.Handler) *RootDiscoveryHandler {
 	scheme := runtime.NewScheme()
 	metav1.AddToGroupVersion(scheme, schema.GroupVersion{Version: "v1"})
 
@@ -40,13 +40,13 @@ func newApisProxyHandler(delegate http.Handler) *apisProxyHandler {
 	utilruntime.Must(apidiscoveryv2.AddToScheme(scheme))
 	utilruntime.Must(apidiscoveryv2beta1.AddToScheme(scheme))
 	codecs := serializer.NewCodecFactory(scheme)
-	return &apisProxyHandler{
+	return &RootDiscoveryHandler{
 		delegate: delegate,
 		codecs:   codecs,
 	}
 }
 
-func (a *apisProxyHandler) handle(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
+func (a *RootDiscoveryHandler) Handle(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
 	if req.Request.URL.Path != "/apis" && req.Request.URL.Path != "/apis/" {
 		chain.ProcessFilter(req, resp)
 		return
@@ -55,49 +55,15 @@ func (a *apisProxyHandler) handle(req *restful.Request, resp *restful.Response, 
 	apisHandlerWithAggregationSupport.ServeHTTP(resp.ResponseWriter, req.Request)
 }
 
-func (a *apisProxyHandler) v2handler(chain *restful.FilterChain) http.HandlerFunc {
+func (a *RootDiscoveryHandler) v2handler(chain *restful.FilterChain) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		clonedReq := req.Clone(req.Context())
-		newReq := restful.NewRequest(clonedReq)
-		rw := httptest.NewRecorder()
-		newRes := restful.NewResponse(rw)
-
+		newReq := restful.NewRequest(req)
+		newRes := restful.NewResponse(w)
 		chain.ProcessFilter(newReq, newRes)
-		if rw.Code != http.StatusOK {
-			http.Error(w, rw.Body.String(), rw.Code)
-			return
-		}
-
-		v2Discovery := apidiscoveryv2.APIGroupDiscoveryList{}
-		if err := json.Unmarshal(rw.Body.Bytes(), &v2Discovery); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		clonedReq = req.Clone(req.Context())
-		rw = httptest.NewRecorder()
-
-		a.delegate.ServeHTTP(rw, clonedReq)
-		if rw.Code != http.StatusOK {
-			http.Error(w, rw.Body.String(), rw.Code)
-			return
-		}
-
-		proxiedDiscovery := apidiscoveryv2.APIGroupDiscoveryList{}
-		if err := json.Unmarshal(rw.Body.Bytes(), &proxiedDiscovery); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		v2Discovery.Items = append(v2Discovery.Items, proxiedDiscovery.Items...)
-		responsewriters.WriteObjectNegotiated(a.codecs, aggregated.DiscoveryEndpointRestrictions, schema.GroupVersion{
-			Group:   apidiscoveryv2.SchemeGroupVersion.Group,
-			Version: apidiscoveryv2.SchemeGroupVersion.Version,
-		}, w, req, http.StatusOK, &v2Discovery, true)
 	}
 }
 
-func (a *apisProxyHandler) v1handler(chain *restful.FilterChain) http.HandlerFunc {
+func (a *RootDiscoveryHandler) v1handler(chain *restful.FilterChain) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		clonedReq := req.Clone(req.Context())
 		clonedReq.Header.Set("Accept", "application/json")
