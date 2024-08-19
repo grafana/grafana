@@ -1,9 +1,9 @@
 import { screen } from '@testing-library/react';
+import { render } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { render } from 'test/test-utils';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

@@ -1,6 +1,7 @@
 import { act, cleanup, waitFor } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
 
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config, locationService, setPluginImportUtils } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import { getDashboardAPI, setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
@@ -58,7 +59,6 @@ import {
   resetScenes,
 } from './testUtils';
 import { getClosestScopesFacade } from './utils';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
