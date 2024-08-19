@@ -292,7 +292,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingSpec(ref common.Referen
 						},
 					},
 				},
-				Required: []string{"dashboard", "dashboardTitle", "groups", "scope"},
+				Required: []string{"dashboard", "dashboardTitle", "scope"},
 			},
 		},
 	}
