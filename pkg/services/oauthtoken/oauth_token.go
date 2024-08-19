@@ -197,7 +197,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) (
 
 	lockTimeConfig := serverlock.LockTimeConfig{
 		MaxInterval: 30 * time.Second,
-		MinWait:     time.Duration(o.Cfg.OAuthRefreshTokenServerLockMinWaitMs) * time.Millisecond, // p99 for token refresh is ~1s, but sometimes it goes up to 4-5s
+		MinWait:     time.Duration(o.Cfg.OAuthRefreshTokenServerLockMinWaitMs) * time.Millisecond,
 		MaxWait:     time.Duration(o.Cfg.OAuthRefreshTokenServerLockMinWaitMs+500) * time.Millisecond,
 	}
 
