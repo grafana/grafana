@@ -11,7 +11,6 @@ import {
   useUpdateMuteTiming,
   useValidateMuteTiming,
 } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
-import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { MuteTimingFields } from '../../types/mute-timing-form';
@@ -65,13 +64,6 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provisioned, editMode 
   const [updateTimeInterval] = useUpdateMuteTiming(hookArgs);
   const validateMuteTiming = useValidateMuteTiming(hookArgs);
 
-  /**
-   * The k8s API approach does not support renaming an entity at this time,
-   * as it requires renaming all other references of this entity.
-   *
-   * For now, the cleanest solution is to disabled renaming the field in this scenario
-   */
-  const disableNameField = editMode && shouldUseK8sApi(selectedAlertmanager!);
   const styles = useStyles2(getStyles);
   const defaultValues = useDefaultValues(muteTiming);
 
@@ -115,7 +107,6 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provisioned, editMode 
               description="A unique name for the mute timing"
               invalid={!!formApi.formState.errors?.name}
               error={formApi.formState.errors.name?.message}
-              disabled={disableNameField}
             >
               <Input
                 {...formApi.register('name', {
