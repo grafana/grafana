@@ -7,6 +7,7 @@ import { Button, clearLinkButtonStyles } from '../Button';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
+import { TableCellInspectorMode } from './TableCellInspector';
 import { TableCellProps } from './types';
 
 export function JSONViewCell(props: TableCellProps): JSX.Element {
@@ -51,7 +52,7 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
           </DataLinksContextMenu>
         )}
       </div>
-      {inspectEnabled && <CellActions {...props} previewMode="code" />}
+      {inspectEnabled && <CellActions {...props} previewMode={TableCellInspectorMode.code} />}
     </div>
   );
 }

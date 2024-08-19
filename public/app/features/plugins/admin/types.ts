@@ -13,11 +13,6 @@ import { StoreState, PluginsState } from 'app/types';
 
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
 
-export enum PluginListDisplayMode {
-  Grid = 'grid',
-  List = 'list',
-}
-
 export enum PluginAdminRoutes {
   Home = 'plugins-home',
   Browse = 'plugins-browse',
@@ -45,6 +40,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   isDisabled: boolean;
   isDeprecated: boolean;
   isManaged: boolean; // Indicates that the plugin version is managed by Grafana
+  isPreinstalled: { found: boolean; withVersion: boolean }; // Indicates that the plugin is pre-installed
   // `isPublished` is TRUE if the plugin is published to grafana.com
   isPublished: boolean;
   name: string;
@@ -296,9 +292,6 @@ export type PluginDetailsTab = {
 export type ReducerState = PluginsState & {
   items: EntityState<CatalogPlugin, string>;
   requests: Record<string, RequestInfo>;
-  settings: {
-    displayMode: PluginListDisplayMode;
-  };
 };
 
 // TODO<remove when the "plugin_admin_enabled" feature flag is removed>

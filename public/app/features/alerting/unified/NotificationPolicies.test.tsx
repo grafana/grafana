@@ -4,6 +4,7 @@ import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector'
 
 import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   AlertManagerCortexConfig,
   AlertManagerDataSourceJsonData,
@@ -19,7 +20,6 @@ import NotificationPolicies, { findRoutesMatchingFilters } from './NotificationP
 import { fetchAlertManagerConfig, fetchStatus, updateAlertManagerConfig } from './api/alertmanager';
 import { alertmanagerApi } from './api/alertmanagerApi';
 import { discoverAlertmanagerFeatures } from './api/buildInfo';
-import * as grafanaApp from './components/receivers/grafanaAppReceivers/grafanaApp';
 import { MockDataSourceSrv, mockDataSource, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
 import { defaultGroupBy } from './utils/amroutes';
 import { getAllDataSources } from './utils/config';
@@ -45,7 +45,8 @@ const mocks = {
   },
   contextSrv: jest.mocked(contextSrv),
 };
-const useGetGrafanaReceiverTypeCheckerMock = jest.spyOn(grafanaApp, 'useGetGrafanaReceiverTypeChecker');
+
+setupMswServer();
 
 const renderNotificationPolicies = (alertManagerSourceName?: string) => {
   return render(<NotificationPolicies />, {
@@ -195,7 +196,6 @@ describe('NotificationPolicies', () => {
     mocks.contextSrv.evaluatePermission.mockImplementation(() => []);
     mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: false });
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
-    useGetGrafanaReceiverTypeCheckerMock.mockReturnValue(() => undefined);
   });
 
   afterEach(() => {
