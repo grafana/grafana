@@ -122,7 +122,7 @@ type UnifiedAlertingSettings struct {
 
 	// RuleVersionRecordLimit defines the limit of how many alert rule versions
 	// should be stored in the database for each alert_rule in an organization including the current one.
-	// Has to be > 0
+	// 0 value means no limit
 	RuleVersionRecordLimit int
 }
 
