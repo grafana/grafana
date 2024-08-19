@@ -60,8 +60,9 @@ type ScopeDashboardBinding struct {
 }
 
 type ScopeDashboardBindingSpec struct {
-	Dashboard      string `json:"dashboard"`
-	DashboardTitle string `json:"dashboardTitle"`
+	Dashboard      string   `json:"dashboard"`
+	DashboardTitle string   `json:"dashboardTitle"`
+	Groups         []string `json:"groups,omitempty"`
 
 	Scope string `json:"scope"`
 }

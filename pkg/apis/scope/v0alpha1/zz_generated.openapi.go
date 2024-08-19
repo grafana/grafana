@@ -270,6 +270,20 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingSpec(ref common.Referen
 							Format:  "",
 						},
 					},
+					"groups": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
 					"scope": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -278,7 +292,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingSpec(ref common.Referen
 						},
 					},
 				},
-				Required: []string{"dashboard", "dashboardTitle", "scope"},
+				Required: []string{"dashboard", "dashboardTitle", "groups", "scope"},
 			},
 		},
 	}
