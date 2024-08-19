@@ -33,13 +33,14 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 		}),
 	}
 
-	dash, err := dashboardStore.SaveDashboard(context.Background(), folderCmd)
+	folder, err := dashboardStore.SaveDashboard(context.Background(), folderCmd)
 	require.Nil(t, err)
 
 	saveDashboardCmd := dashboards.SaveDashboardCommand{
 		OrgID:     1,
 		IsFolder:  false,
-		FolderUID: dash.UID,
+		FolderUID: folder.UID,
+		FolderID:  folder.ID,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
 			"title": "test dashboard 2",
@@ -119,7 +120,7 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 
 		t.Run("Deleting folder should delete provision meta data", func(t *testing.T) {
 			deleteCmd := &dashboards.DeleteDashboardCommand{
-				ID:    dash.ID,
+				ID:    folder.ID,
 				OrgID: 1,
 			}
 
