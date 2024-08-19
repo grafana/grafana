@@ -116,7 +116,10 @@ export const LdapSettingsPage = (): JSX.Element => {
     try {
       const result = await getBackendSrv().put('/api/v1/sso-settings/ldap', fm);
       if (result) {
-        console.error('Error saving LDAP settings');
+        appEvents.publish({
+          type: AppEvents.alertError.name,
+          payload: [t('ldap-settings-page.alert.error-saving', 'Error saving LDAP settings')],
+        });
       }
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
@@ -134,7 +137,10 @@ export const LdapSettingsPage = (): JSX.Element => {
     try {
       const result = await getBackendSrv().put('/api/v1/sso-settings/ldap', formSettings);
       if (result) {
-        console.error('Error saving LDAP settings');
+        appEvents.publish({
+          type: AppEvents.alertError.name,
+          payload: [t('ldap-settings-page.alert.error-saving', 'Error saving LDAP settings')],
+        });
       }
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
