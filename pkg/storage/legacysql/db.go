@@ -12,9 +12,8 @@ import (
 // The database may depend on the request context
 type LegacyDatabaseProvider func(ctx context.Context) (*LegacyDatabaseHelper, error)
 
-var startup = time.Now().UnixMilli()
-
-func NewLegacyDatabaseProvider(db db.DB) LegacyDatabaseProvider {
+// NewDatabaseProvider returns a simple provider that always uses the same database implementation
+func NewDatabaseProvider(db db.DB) LegacyDatabaseProvider {
 	helper := &LegacyDatabaseHelper{
 		DB: db,
 		Table: func(n string) string {
@@ -66,3 +65,5 @@ func (h *LegacyDatabaseHelper) GetResourceVersion(ctx context.Context, table str
 	}
 	return rv, nil
 }
+
+var startup = time.Now().UnixMilli()
