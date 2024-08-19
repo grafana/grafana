@@ -1158,7 +1158,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 			},
 		},
 		{
-			Type:        "LINE",
+			Type:        "line",
 			Name:        "LINE",
 			Description: "Send notifications to LINE notify",
 			Heading:     "LINE notify settings",

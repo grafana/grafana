@@ -27,7 +27,7 @@ func TestGetSecretKeysForContactPointType(t *testing.T) {
 		{receiverType: "prometheus-alertmanager", expectedSecretFields: []string{"basicAuthPassword"}},
 		{receiverType: "discord", expectedSecretFields: []string{"url"}},
 		{receiverType: "googlechat", expectedSecretFields: []string{}},
-		{receiverType: "LINE", expectedSecretFields: []string{"token"}},
+		{receiverType: "line", expectedSecretFields: []string{"token"}},
 		{receiverType: "threema", expectedSecretFields: []string{"api_secret"}},
 		{receiverType: "opsgenie", expectedSecretFields: []string{"apiKey"}},
 		{receiverType: "webex", expectedSecretFields: []string{"bot_token"}},
