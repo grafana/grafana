@@ -65,7 +65,15 @@ The first option to configure is the name of your connection:
 
 ### Connection section
 
-- **Prometheus server URL** - The URL of your Prometheus server. If your Prometheus server is local, use `<http://localhost:9090>`. If it is on a server within a network, this is the URL with port where you are running Prometheus. Example: `<http://prometheus.example.orgname:9090>`.
+- **Prometheus server URL** - The URL of your Prometheus server. If your Prometheus server is local, use `http://localhost:9090`. If it is on a server within a network, this is the URL with port where you are running Prometheus. Example: `http://prometheus.example.orgname:9090`.
+
+{{< admonition type="note" >}}
+
+If you're running Grafana and Prometheus together in different container environments, each localhost refers to its own container - if the server URL is localhost:9090, that means port 9090 inside the Grafana container, not port 9090 on the host machine.
+
+You should use the IP address of the Prometheus container, or the hostname if you are using Docker Compose. Alternatively, you can consider `http://host.docker.internal:9090`.
+
+{{< /admonition >}}
 
 ### Authentication section
 
@@ -109,7 +117,7 @@ Following are additional configuration options.
 
 - **Manage alerts via Alerting UI** - Toggle to enable `Alertmanager` integration for this data source.
 
-### Interval behaviour
+### Interval behavior
 
 - **Scrape interval** - Set this to the typical scrape and evaluation interval configured in Prometheus. The default is `15s`.
 
@@ -123,9 +131,9 @@ Following are additional configuration options.
 
 ### Performance
 
-- **Prometheus type** - The type of your Prometheus server. There are four options: `Prometheus`, `Cortex`, `Mimir`, `Thanos`.
+- **Prometheus type** - The type of your Prometheus server. There are four options: `Prometheus`, `Cortex`, `Mimir`, and `Thanos`.
 
-- **Cache level** - The browser caching level for editor queries. There are four options: `Low`, `Medium`, `High`, `None`.
+- **Cache level** - The browser caching level for editor queries. There are four options: `Low`, `Medium`, `High`, or `None`.
 
 - **Incremental querying (beta)** - Changes the default behavior of relative queries to always request fresh data from the Prometheus instance. Enable this option to decrease database and network load.
 
