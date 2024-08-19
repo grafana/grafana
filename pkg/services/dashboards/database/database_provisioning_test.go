@@ -118,6 +118,18 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 			require.Nil(t, data)
 		})
 
+		t.Run("Deleting folder should fail when we check for provisioned dashboards", func(t *testing.T) {
+			deleteCmd := &dashboards.DeleteDashboardCommand{
+				ID:                folder.ID,
+				UID:               folder.UID,
+				OrgID:             1,
+				CheckProvisioning: true,
+			}
+
+			err := dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
+			require.Equal(t, err, dashboards.ErrDashboardCannotDeleteProvisionedDashboard)
+		})
+
 		t.Run("Deleting folder should delete provision meta data", func(t *testing.T) {
 			deleteCmd := &dashboards.DeleteDashboardCommand{
 				ID:    folder.ID,
