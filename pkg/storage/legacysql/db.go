@@ -12,6 +12,8 @@ import (
 // The database may depend on the request context
 type LegacyDatabaseProvider func(ctx context.Context) (*LegacyDatabaseHelper, error)
 
+var startup = time.Now().UnixMilli()
+
 func NewLegacyDatabaseProvider(db db.DB) LegacyDatabaseProvider {
 	helper := &LegacyDatabaseHelper{
 		DB: db,
@@ -58,9 +60,9 @@ func (h *LegacyDatabaseHelper) GetResourceVersion(ctx context.Context, table str
 		return err
 	})
 
-	// No RV when empty
-	if rv < 0 {
-		rv = 0
+	// When no RV, use a stable non-zero number
+	if rv < 1 {
+		return startup, nil
 	}
 	return rv, nil
 }
