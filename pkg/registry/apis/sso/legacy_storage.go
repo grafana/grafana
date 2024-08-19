@@ -32,7 +32,7 @@ var (
 
 var resource = ssov0.SSOSettingResourceInfo
 
-func newLegacyStore(service ssosettings.Service) *legacyStorage {
+func newLegacyStorage(service ssosettings.Service) *legacyStorage {
 	return &legacyStorage{service}
 }
 

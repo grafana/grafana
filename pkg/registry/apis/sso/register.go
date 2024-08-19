@@ -38,7 +38,7 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
-	store := newLegacyStore(service)
+	store := newLegacyStorage(service)
 
 	builder := &SSOSettingAPIBuilder{
 		store: store,
