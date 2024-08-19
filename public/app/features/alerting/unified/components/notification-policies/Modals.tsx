@@ -2,19 +2,12 @@ import { groupBy } from 'lodash';
 import { FC, useCallback, useMemo, useState } from 'react';
 
 import { Button, Icon, Modal, ModalProps, Spinner, Stack } from '@grafana/ui';
-import {
-  AlertmanagerGroup,
-  AlertState,
-  ObjectMatcher,
-  Receiver,
-  RouteWithID,
-} from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerGroup, AlertState, ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../../types/amroutes';
 import { MatcherFormatter } from '../../utils/matchers';
 import { InsertPosition } from '../../utils/routeTree';
 import { AlertGroup } from '../alert-groups/AlertGroup';
-import { useGetAmRouteReceiverWithGrafanaAppTypes } from '../receivers/grafanaAppReceivers/grafanaApp';
 
 import { AlertGroupsSummary } from './AlertGroupsSummary';
 import { AmRootRouteForm } from './EditDefaultPolicyForm';
@@ -26,14 +19,12 @@ type AddModalHook<T = undefined> = [JSX.Element, (item: T, position: InsertPosit
 type EditModalHook = [JSX.Element, (item: RouteWithID, isDefaultRoute?: boolean) => void, () => void];
 
 const useAddPolicyModal = (
-  receivers: Receiver[] = [],
   handleAdd: (route: Partial<FormAmRoute>, referenceRoute: RouteWithID, position: InsertPosition) => void,
   loading: boolean
 ): AddModalHook<RouteWithID> => {
   const [showModal, setShowModal] = useState(false);
   const [insertPosition, setInsertPosition] = useState<InsertPosition | undefined>(undefined);
   const [referenceRoute, setReferenceRoute] = useState<RouteWithID>();
-  const AmRouteReceivers = useGetAmRouteReceiverWithGrafanaAppTypes(receivers);
 
   const handleDismiss = useCallback(() => {
     setReferenceRoute(undefined);
@@ -60,7 +51,6 @@ const useAddPolicyModal = (
           title="Add notification policy"
         >
           <AmRoutesExpandedForm
-            receivers={AmRouteReceivers}
             defaults={{
               groupBy: referenceRoute?.group_by,
             }}
@@ -80,7 +70,7 @@ const useAddPolicyModal = (
           />
         </Modal>
       ),
-    [AmRouteReceivers, handleAdd, handleDismiss, insertPosition, loading, referenceRoute, showModal]
+    [handleAdd, handleDismiss, insertPosition, loading, referenceRoute, showModal]
   );
 
   return [modalElement, handleShow, handleDismiss];
@@ -88,14 +78,12 @@ const useAddPolicyModal = (
 
 const useEditPolicyModal = (
   alertManagerSourceName: string,
-  receivers: Receiver[],
   handleSave: (route: Partial<FormAmRoute>) => void,
   loading: boolean
 ): EditModalHook => {
   const [showModal, setShowModal] = useState(false);
   const [isDefaultPolicy, setIsDefaultPolicy] = useState(false);
   const [route, setRoute] = useState<RouteWithID>();
-  const AmRouteReceivers = useGetAmRouteReceiverWithGrafanaAppTypes(receivers);
 
   const handleDismiss = useCallback(() => {
     setRoute(undefined);
@@ -126,7 +114,6 @@ const useEditPolicyModal = (
               // passing it down all the way here is a code smell
               alertManagerSourceName={alertManagerSourceName}
               onSubmit={handleSave}
-              receivers={AmRouteReceivers}
               route={route}
               actionButtons={
                 <Modal.ButtonRow>
@@ -140,7 +127,6 @@ const useEditPolicyModal = (
           )}
           {!isDefaultPolicy && (
             <AmRoutesExpandedForm
-              receivers={AmRouteReceivers}
               route={route}
               onSubmit={handleSave}
               actionButtons={
@@ -155,7 +141,7 @@ const useEditPolicyModal = (
           )}
         </Modal>
       ),
-    [AmRouteReceivers, alertManagerSourceName, handleDismiss, handleSave, isDefaultPolicy, loading, route, showModal]
+    [alertManagerSourceName, handleDismiss, handleSave, isDefaultPolicy, loading, route, showModal]
   );
 
   return [modalElement, handleShow, handleDismiss];
@@ -212,11 +198,9 @@ const useDeletePolicyModal = (handleDelete: (route: RouteWithID) => void, loadin
   return [modalElement, handleShow, handleDismiss];
 };
 
-const useAlertGroupsModal = (): [
-  JSX.Element,
-  (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[]) => void,
-  () => void,
-] => {
+const useAlertGroupsModal = (
+  alertManagerSourceName: string
+): [JSX.Element, (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[]) => void, () => void] => {
   const [showModal, setShowModal] = useState(false);
   const [alertGroups, setAlertGroups] = useState<AlertmanagerGroup[]>([]);
   const [matchers, setMatchers] = useState<ObjectMatcher[]>([]);
@@ -271,7 +255,7 @@ const useAlertGroupsModal = (): [
           />
           <div>
             {alertGroups.map((group, index) => (
-              <AlertGroup key={index} alertManagerSourceName={''} group={group} />
+              <AlertGroup key={index} alertManagerSourceName={alertManagerSourceName} group={group} />
             ))}
           </div>
         </Stack>
@@ -282,7 +266,7 @@ const useAlertGroupsModal = (): [
         </Modal.ButtonRow>
       </Modal>
     ),
-    [alertGroups, handleDismiss, instancesByState, matchers, formatter, showModal]
+    [alertGroups, handleDismiss, instancesByState, matchers, formatter, showModal, alertManagerSourceName]
   );
 
   return [modalElement, handleShow, handleDismiss];

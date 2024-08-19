@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-jose/go-jose/v3/jwt"
 	authnlib "github.com/grafana/authlib/authn"
+	authnlibclaims "github.com/grafana/authlib/claims"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/singleflight"
 
@@ -58,64 +59,66 @@ type Service struct {
 	nsMapper request.NamespaceMapper
 }
 
-func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (string, error) {
+func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (string, *authnlib.Claims[authnlib.IDTokenClaims], error) {
 	defer func(t time.Time) {
 		s.metrics.tokenSigningDurationHistogram.Observe(time.Since(t).Seconds())
 	}(time.Now())
 
 	cacheKey := prefixCacheKey(id.GetCacheKey())
 
-	result, err, _ := s.si.Do(cacheKey, func() (interface{}, error) {
-		namespace, identifier := id.GetNamespacedID()
-
+	type resultType struct {
+		token    string
+		idClaims *auth.IDClaims
+	}
+	result, err, _ := s.si.Do(cacheKey, func() (any, error) {
 		cachedToken, err := s.cache.Get(ctx, cacheKey)
 		if err == nil {
 			s.metrics.tokenSigningFromCacheCounter.Inc()
-			s.logger.FromContext(ctx).Debug("Cached token found", "namespace", namespace, "id", identifier)
-			return string(cachedToken), nil
+			s.logger.FromContext(ctx).Debug("Cached token found", "id", id.GetID())
+
+			tokenClaims, err := s.extractTokenClaims(string(cachedToken))
+			if err != nil {
+				return resultType{}, err
+			}
+			return resultType{token: string(cachedToken), idClaims: tokenClaims}, nil
 		}
 
 		s.metrics.tokenSigningCounter.Inc()
-		s.logger.FromContext(ctx).Debug("Sign new id token", "namespace", namespace, "id", identifier)
+		s.logger.FromContext(ctx).Debug("Sign new id token", "id", id.GetID())
 
 		now := time.Now()
 		claims := &auth.IDClaims{
 			Claims: &jwt.Claims{
 				Issuer:   s.cfg.AppURL,
 				Audience: getAudience(id.GetOrgID()),
-				Subject:  getSubject(namespace.String(), identifier),
+				Subject:  id.GetID(),
 				Expiry:   jwt.NewNumericDate(now.Add(tokenTTL)),
 				IssuedAt: jwt.NewNumericDate(now),
 			},
 			Rest: authnlib.IDTokenClaims{
-				Namespace: s.nsMapper(id.GetOrgID()),
+				Namespace:  s.nsMapper(id.GetOrgID()),
+				Identifier: id.GetRawIdentifier(),
+				Type:       id.GetIdentityType(),
 			},
 		}
 
-		if identity.IsNamespace(namespace, identity.NamespaceUser) {
+		if id.IsIdentityType(authnlibclaims.TypeUser) {
 			claims.Rest.Email = id.GetEmail()
 			claims.Rest.EmailVerified = id.IsEmailVerified()
 			claims.Rest.AuthenticatedBy = id.GetAuthenticatedBy()
+			claims.Rest.Username = id.GetLogin()
+			claims.Rest.DisplayName = id.GetDisplayName()
 		}
 
 		token, err := s.signer.SignIDToken(ctx, claims)
 		if err != nil {
 			s.metrics.failedTokenSigningCounter.Inc()
-			return "", err
+			return resultType{}, nil
 		}
 
-		parsed, err := jwt.ParseSigned(token)
+		extracted, err := s.extractTokenClaims(token)
 		if err != nil {
-			s.metrics.failedTokenSigningCounter.Inc()
-			return "", err
-		}
-
-		extracted := auth.IDClaims{}
-		// We don't need to verify the signature here, we are only interested in checking
-		// when the token expires.
-		if err := parsed.UnsafeClaimsWithoutVerification(&extracted); err != nil {
-			s.metrics.failedTokenSigningCounter.Inc()
-			return "", err
+			return resultType{}, err
 		}
 
 		expires := time.Until(extracted.Expiry.Time())
@@ -123,14 +126,14 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			s.logger.FromContext(ctx).Error("Failed to add id token to cache", "error", err)
 		}
 
-		return token, nil
+		return resultType{token: token, idClaims: claims}, nil
 	})
 
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
-	return result.(string), nil
+	return result.(resultType).token, result.(resultType).idClaims, nil
 }
 
 func (s *Service) RemoveIDToken(ctx context.Context, id identity.Requester) error {
@@ -139,26 +142,40 @@ func (s *Service) RemoveIDToken(ctx context.Context, id identity.Requester) erro
 
 func (s *Service) hook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
 	// FIXME(kalleep): we should probably lazy load this
-	token, err := s.SignIdentity(ctx, identity)
+	token, claims, err := s.SignIdentity(ctx, identity)
 	if err != nil {
 		if shouldLogErr(err) {
-			namespace, id := identity.GetNamespacedID()
-			s.logger.FromContext(ctx).Error("Failed to sign id token", "err", err, "namespace", namespace, "id", id)
+			s.logger.FromContext(ctx).Error("Failed to sign id token", "err", err, "id", identity.GetID())
 		}
 		// for now don't return error so we don't break authentication from this hook
 		return nil
 	}
 
 	identity.IDToken = token
+	identity.IDTokenClaims = claims
 	return nil
+}
+
+func (s *Service) extractTokenClaims(token string) (*authnlib.Claims[authnlib.IDTokenClaims], error) {
+	parsed, err := jwt.ParseSigned(token)
+	if err != nil {
+		s.metrics.failedTokenSigningCounter.Inc()
+		return nil, err
+	}
+
+	extracted := authnlib.Claims[authnlib.IDTokenClaims]{}
+	// We don't need to verify the signature here, we are only interested in checking
+	// when the token expires.
+	if err := parsed.UnsafeClaimsWithoutVerification(&extracted); err != nil {
+		s.metrics.failedTokenSigningCounter.Inc()
+		return nil, err
+	}
+
+	return &extracted, nil
 }
 
 func getAudience(orgID int64) jwt.Audience {
 	return jwt.Audience{fmt.Sprintf("org:%d", orgID)}
-}
-
-func getSubject(namespace, identifier string) string {
-	return fmt.Sprintf("%s:%s", namespace, identifier)
 }
 
 func prefixCacheKey(key string) string {

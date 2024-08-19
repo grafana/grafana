@@ -27,6 +27,12 @@ refs:
 
 Pie charts display reduced series, or values in a series, from one or more queries, as they relate to each other, in the form of slices of a pie. The arc length, area and central angle of a slice are all proportional to the slices value, as it relates to the sum of all values. This type of chart is best used when you want a quick comparison of a small set of values in an aesthetically pleasing form.
 
+## Configure a pie chart visualization
+
+The following video guides you through the creation steps and common customizations of pie chart visualizations and is great for beginners:
+
+{{< youtube id="A_lDhM9w4_g" >}}
+
 {{< docs/play title="Grafana Bar Charts and Pie Charts" url="https://play.grafana.org/d/ktMs4D6Mk/" >}}
 
 ## Panel options

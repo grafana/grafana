@@ -41,7 +41,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sql := db.InitTestDB(t)
+	sql := db.InitTestReplDB(t)
 
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 60
@@ -188,8 +188,6 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 	permissions := []accesscontrol.Permission{
 		{
 			Action: dashboards.ActionFoldersCreate,
-		}, {
-			Action: dashboards.ActionFoldersWrite,
 			Scope:  dashboards.ScopeFoldersAll,
 		},
 	}
@@ -210,7 +208,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 	annotationsTexts := make([]string, 0, folder.MaxNestedFolderDepth+1)
 
 	setupFolderStructure := func() db.DB {
-		sql, cfg := db.InitTestDBWithCfg(t)
+		sql, cfg := db.InitTestReplDBWithCfg(t)
 
 		// enable nested folders so that the folder table is populated for all the tests
 		features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
@@ -227,7 +225,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		})
 
 		ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
-		folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderimpl.ProvideDashboardFolderStore(sql), sql, features, supportbundlestest.NewFakeBundleService(), nil)
+		folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderimpl.ProvideDashboardFolderStore(sql), sql, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 		cfg.AnnotationMaximumTagsLength = 60
 

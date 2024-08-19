@@ -7,9 +7,14 @@ import { EditorField, EditorRow, QueryOptionGroup } from '@grafana/experimental'
 import { config, reportInteraction } from '@grafana/runtime';
 import { Alert, AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
 
-import { preprocessMaxLines, queryTypeOptions, RESOLUTION_OPTIONS } from '../../components/LokiOptionFields';
+import {
+  preprocessMaxLines,
+  queryDirections,
+  queryTypeOptions,
+  RESOLUTION_OPTIONS,
+} from '../../components/LokiOptionFields';
 import { getLokiQueryType, isLogsQuery } from '../../queryUtils';
-import { LokiQuery, LokiQueryType, QueryStats } from '../../types';
+import { LokiQuery, LokiQueryDirection, LokiQueryType, QueryStats } from '../../types';
 
 export interface Props {
   query: LokiQuery;
@@ -26,6 +31,11 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
 
     const onQueryTypeChange = (value: LokiQueryType) => {
       onChange({ ...query, queryType: value });
+      onRunQuery();
+    };
+
+    const onQueryDirectionChange = (value: LokiQueryDirection) => {
+      onChange({ ...query, direction: value });
       onRunQuery();
     };
 
@@ -67,8 +77,19 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       onRunQuery();
     }
 
-    const queryType = getLokiQueryType(query);
+    let queryType = getLokiQueryType(query);
     const isLogQuery = isLogsQuery(query.expr);
+    const filteredQueryTypeOptions = isLogQuery
+      ? queryTypeOptions.filter((o) => o.value !== LokiQueryType.Instant)
+      : queryTypeOptions;
+
+    const queryDirection = query.direction ?? LokiQueryDirection.Backward;
+
+    // if the state's queryType is still Instant, trigger a change to range for log queries
+    if (isLogQuery && queryType === LokiQueryType.Instant) {
+      onChange({ ...query, queryType: LokiQueryType.Range });
+      queryType = LokiQueryType.Range;
+    }
 
     const isValidStep = useMemo(() => {
       if (!query.step || isValidGrafanaDuration(query.step) || !isNaN(Number(query.step))) {
@@ -96,20 +117,27 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
               onCommitChange={onLegendFormatChanged}
             />
           </EditorField>
-          <EditorField label="Type">
-            <RadioButtonGroup options={queryTypeOptions} value={queryType} onChange={onQueryTypeChange} />
-          </EditorField>
-          {isLogQuery && (
-            <EditorField label="Line limit" tooltip="Upper limit for number of log lines returned by query.">
-              <AutoSizeInput
-                className="width-4"
-                placeholder={maxLines.toString()}
-                type="number"
-                min={0}
-                defaultValue={query.maxLines?.toString() ?? ''}
-                onCommitChange={onMaxLinesChange}
-              />
+          {filteredQueryTypeOptions.length > 1 && (
+            <EditorField label="Type">
+              <RadioButtonGroup options={filteredQueryTypeOptions} value={queryType} onChange={onQueryTypeChange} />
             </EditorField>
+          )}
+          {isLogQuery && (
+            <>
+              <EditorField label="Line limit" tooltip="Upper limit for number of log lines returned by query.">
+                <AutoSizeInput
+                  className="width-4"
+                  placeholder={maxLines.toString()}
+                  type="number"
+                  min={0}
+                  defaultValue={query.maxLines?.toString() ?? ''}
+                  onCommitChange={onMaxLinesChange}
+                />
+              </EditorField>
+              <EditorField label="Direction" tooltip="Direction to search for logs.">
+                <RadioButtonGroup options={queryDirections} value={queryDirection} onChange={onQueryDirectionChange} />
+              </EditorField>
+            </>
           )}
           {!isLogQuery && (
             <>

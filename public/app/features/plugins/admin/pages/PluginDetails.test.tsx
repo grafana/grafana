@@ -215,7 +215,7 @@ describe('Plugin details page', () => {
     it('should display a "Signed" badge if the plugin signature is verified', async () => {
       const { queryByText } = renderPluginDetails({ id, signature: PluginSignatureStatus.valid });
 
-      expect(await queryByText('Signed')).toBeInTheDocument();
+      expect(await queryByText('community')).toBeInTheDocument();
     });
 
     it('should display a "Missing signature" badge if the plugin signature is missing', async () => {
@@ -315,6 +315,35 @@ describe('Plugin details page', () => {
       expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
     });
 
+    it('should not display an update button for a plugin that is managed', async () => {
+      const { queryByRole } = renderPluginDetails({ id, isInstalled: true, hasUpdate: true, isManaged: true });
+
+      // Does not display an "update" button
+      expect(await queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
+      expect(queryByRole('button', { name: /uninstall/i })).toBeInTheDocument();
+
+      // Does not display "install" button
+      expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
+    });
+
+    it('should not display an update button for a plugin that is pre installed', async () => {
+      const { queryByRole, getByText } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        hasUpdate: true,
+        isPreinstalled: { found: true, withVersion: true },
+      });
+
+      // Does not display an "update" button
+      expect(await queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
+
+      // Does not display "install" button
+      expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
+
+      // Display an uninstall button but disabled
+      expect(getByText(/Uninstall/i).closest('button')).toBeDisabled();
+    });
+
     it('should display an install button for enterprise plugins if license is valid', async () => {
       config.licenseInfo.enabledFeatures = { 'enterprise.plugins': true };
 
@@ -350,6 +379,13 @@ describe('Plugin details page', () => {
 
     it('should not display install / uninstall buttons for renderer plugins', async () => {
       const { queryByRole } = renderPluginDetails({ id, type: PluginType.renderer });
+
+      expect(await queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
+      expect(await queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument();
+    });
+
+    it('should not display install / uninstall buttons for provisioned plugins', async () => {
+      const { queryByRole } = renderPluginDetails({ id, isProvisioned: true });
 
       expect(await queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
       expect(await queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument();
@@ -860,6 +896,44 @@ describe('Plugin details page', () => {
 
       await waitFor(() => queryByText('Uninstall'));
       expect(queryByText('Add new data source')).toBeNull();
+    });
+  });
+
+  describe('Display plugin details right panel', () => {
+    beforeAll(() => {
+      mockUserPermissions({
+        isAdmin: true,
+        isDataSourceEditor: false,
+        isOrgAdmin: true,
+      });
+      config.featureToggles.pluginsDetailsRightPanel = true;
+    });
+
+    afterAll(() => {
+      config.featureToggles.pluginsDetailsRightPanel = false;
+    });
+
+    it('should display Last updated and report abuse information', async () => {
+      const id = 'right-panel-test-plugin';
+      const updatedAt = '2023-10-26T16:54:55.000Z';
+      const { queryByText } = renderPluginDetails({ id, updatedAt });
+      expect(queryByText('Last updated:')).toBeVisible();
+      expect(queryByText('10/26/2023')).toBeVisible();
+      expect(queryByText('Report Abuse')).toBeVisible();
+    });
+
+    it('should not display Last updated if there is no updated At data', async () => {
+      const id = 'right-panel-test-plugin';
+      const updatedAt = undefined;
+      const { queryByText } = renderPluginDetails({ id, updatedAt });
+      expect(queryByText('Last updated:')).toBeNull();
+    });
+
+    it('should not display Report Abuse if the plugin is Core', async () => {
+      const id = 'right-panel-test-plugin';
+      const isCore = true;
+      const { queryByText } = renderPluginDetails({ id, isCore });
+      expect(queryByText('Report Abuse')).toBeNull();
     });
   });
 });

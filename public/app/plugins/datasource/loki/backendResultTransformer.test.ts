@@ -64,8 +64,8 @@ const inputFrame: DataFrame = {
   length: 5,
 };
 
-describe('loki backendResultTransformer', () => {
-  it('processes a logs-dataframe correctly', () => {
+describe('backendResultTransformer', () => {
+  it('processes a logs dataframe correctly', () => {
     const response: DataQueryResponse = { data: [cloneDeep(inputFrame)] };
 
     const expectedFrame = cloneDeep(inputFrame);
@@ -231,5 +231,25 @@ describe('loki backendResultTransformer', () => {
       []
     );
     expect(result.error?.message).toBe('parse error at line 1, col 2: invalid char escape');
+  });
+
+  it('resolves search words from queries with template variables', () => {
+    const dataFrame = cloneDeep(inputFrame);
+    dataFrame.meta = {
+      executedQueryString: 'Expr: {service_name="tns-app"} |~ "(?i)template" |= "variable"',
+    };
+    const result = transformBackendResult(
+      { data: [dataFrame] },
+      [
+        {
+          refId: 'A',
+          expr: `{service_name="tns-app"} |~ "(?i)$search"`,
+        },
+      ],
+      []
+    );
+
+    expect(result.data[0].meta.searchWords).toContain('(?i)template');
+    expect(result.data[0].meta.searchWords).toContain('variable');
   });
 });

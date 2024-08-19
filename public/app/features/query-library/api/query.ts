@@ -1,6 +1,7 @@
 import { BaseQueryFn } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
+import { config } from '@grafana/runtime';
 import { BackendSrvRequest, getBackendSrv, isFetchError } from '@grafana/runtime/src/services/backendSrv';
 
 import { DataQuerySpecResponse } from './types';
@@ -22,11 +23,12 @@ export enum QueryTemplateKinds {
  *
  * @alpha
  */
-export const BASE_URL = `/apis/${API_VERSION}/namespaces/default/querytemplates/`;
+export const BASE_URL = `/apis/${API_VERSION}/namespaces/${config.namespace}/querytemplates/`;
 
 // URL is optional for these requests
 interface QueryLibraryBackendRequest extends Pick<BackendSrvRequest, 'data' | 'method'> {
   url?: string;
+  headers?: { [key: string]: string };
 }
 
 /**
@@ -41,6 +43,7 @@ export const baseQuery: BaseQueryFn<QueryLibraryBackendRequest, DataQuerySpecRes
       showErrorAlert: true,
       method: requestOptions.method || 'GET',
       data: requestOptions.data,
+      headers: { ...requestOptions.headers },
     });
     return await lastValueFrom(responseObservable);
   } catch (error) {

@@ -1,3 +1,4 @@
+import { reportInteraction } from '@grafana/runtime';
 import { ConfirmModal, Text } from '@grafana/ui';
 
 import { Trans, t } from '../../../core/internationalization';
@@ -14,6 +15,11 @@ export const PermanentlyDeleteModal = ({
   const numberOfDashboards = selectedDashboards.length;
 
   const onDelete = async () => {
+    reportInteraction('grafana_delete_permanently_confirm_clicked', {
+      item_counts: {
+        dashboard: numberOfDashboards,
+      },
+    });
     await onConfirm();
     onDismiss();
   };

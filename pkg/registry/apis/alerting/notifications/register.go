@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -14,6 +13,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	notificationsModels "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -37,11 +37,6 @@ type NotificationsAPIBuilder struct {
 	gv         schema.GroupVersion
 }
 
-func (t NotificationsAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, toMode map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
-	return grafanarest.Mode0
-}
-
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
@@ -61,11 +56,11 @@ func RegisterAPIService(
 	return builder
 }
 
-func (t NotificationsAPIBuilder) GetGroupVersion() schema.GroupVersion {
+func (t *NotificationsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return t.gv
 }
 
-func (t NotificationsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+func (t *NotificationsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	err := notificationsModels.AddToScheme(scheme)
 	if err != nil {
 		return err
@@ -73,21 +68,20 @@ func (t NotificationsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(notificationsModels.SchemeGroupVersion)
 }
 
-func (t NotificationsAPIBuilder) GetAPIGroupInfo(
+func (t *NotificationsAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory,
 	optsGetter generic.RESTOptionsGetter,
-	desiredMode grafanarest.DualWriterMode,
-	reg prometheus.Registerer,
+	dualWriteBuilder grafanarest.DualWriteBuilder,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(notificationsModels.GROUP, scheme, metav1.ParameterCodec, codecs)
 
-	intervals, err := timeInterval.NewStorage(t.ng.Api.MuteTimings, t.namespacer, scheme, desiredMode, optsGetter, reg)
+	intervals, err := timeInterval.NewStorage(t.ng.Api.MuteTimings, t.namespacer, scheme, optsGetter, dualWriteBuilder)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize time-interval storage: %w", err)
 	}
 
-	recvStorage, err := receiver.NewStorage(nil, t.namespacer, scheme, desiredMode, optsGetter, reg) // TODO: add receiver service
+	recvStorage, err := receiver.NewStorage(t.ng.Api.ReceiverService, t.namespacer, scheme, optsGetter, dualWriteBuilder)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize receiver storage: %w", err)
 	}
@@ -99,15 +93,35 @@ func (t NotificationsAPIBuilder) GetAPIGroupInfo(
 	return &apiGroupInfo, nil
 }
 
-func (t NotificationsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
+func (t *NotificationsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return notificationsModels.GetOpenAPIDefinitions
 }
 
-func (t NotificationsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+func (t *NotificationsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil
 }
 
-func (t NotificationsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+// PostProcessOpenAPI is a hook to alter OpenAPI3 specification of the API server.
+func (t *NotificationsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	// The plugin description
+	oas.Info.Description = "Grafana Alerting Notification resources"
+
+	// The root api URL
+	root := "/apis/" + t.GetGroupVersion().String() + "/"
+
+	// Hide the ability to list or watch across all tenants
+	delete(oas.Paths.Paths, root+notificationsModels.ReceiverResourceInfo.GroupResource().Resource)
+	delete(oas.Paths.Paths, root+notificationsModels.TimeIntervalResourceInfo.GroupResource().Resource)
+
+	// The root API discovery list
+	sub := oas.Paths.Paths[root]
+	if sub != nil && sub.Get != nil {
+		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
+	}
+	return oas, nil
+}
+
+func (t *NotificationsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 			switch a.GetResource() {

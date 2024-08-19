@@ -47,9 +47,9 @@ func (hs *HTTPServer) SignUp(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusUnprocessableEntity, "User with same email address already exists", nil)
 	}
 
-	userID, errID := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
-	if errID != nil {
-		hs.log.Error("Failed to parse user id", "err", errID)
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	if err != nil {
+		hs.log.Debug("Failed to parse user id", "err", err)
 	}
 
 	cmd := tempuser.CreateTempUserCommand{}

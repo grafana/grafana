@@ -4,10 +4,9 @@ import { Props } from 'react-virtualized-auto-sizer';
 import { render, waitFor, waitForElementToBeRemoved, userEvent } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { DashboardSearchItemType } from '../../../../search/types';
-import { mockExportApi, mockSearchApi, setupMswServer } from '../../mockApi';
-import { mockDashboardSearchItem, mockDataSource } from '../../mocks';
-import { grafanaRulerRule } from '../../mocks/alertRuleApi';
+import { mockExportApi, setupMswServer } from '../../mockApi';
+import { mockDataSource } from '../../mocks';
+import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
 import { setupDataSources } from '../../testSetup/datasources';
 
 import GrafanaModifyExport from './GrafanaModifyExport';
@@ -67,15 +66,6 @@ describe('GrafanaModifyExport', () => {
   setupDataSources(dataSources.default);
 
   it('Should render edit form for the specified rule', async () => {
-    mockSearchApi(server).search([
-      mockDashboardSearchItem({
-        title: grafanaRulerRule.grafana_alert.title,
-        uid: grafanaRulerRule.grafana_alert.namespace_uid,
-        url: '',
-        tags: [],
-        type: DashboardSearchItemType.DashFolder,
-      }),
-    ]);
     mockExportApi(server).modifiedExport(grafanaRulerRule.grafana_alert.namespace_uid, {
       yaml: 'Yaml Export Content',
       json: 'Json Export Content',

@@ -32,6 +32,8 @@ const plugin: CatalogPlugin = {
   isDisabled: false,
   isDeprecated: false,
   isPublished: true,
+  isManaged: false,
+  isPreinstalled: { found: false, withVersion: false },
 };
 
 function setup(opts: { angularSupportEnabled: boolean; angularDetected: boolean }) {
@@ -240,6 +242,29 @@ describe('InstallControlsButton', () => {
       );
       const button = screen.getByText('Uninstall').closest('button');
       expect(button).toBeEnabled();
+    });
+  });
+
+  describe('update button', () => {
+    it('should be hidden when plugin is managed', () => {
+      render(
+        <TestProvider>
+          <InstallControlsButton plugin={{ ...plugin, isManaged: true }} pluginStatus={PluginStatus.UPDATE} />
+        </TestProvider>
+      );
+      expect(screen.queryByText('Update')).not.toBeInTheDocument();
+    });
+
+    it('should be hidden when plugin is preinstalled with a specific version', () => {
+      render(
+        <TestProvider>
+          <InstallControlsButton
+            plugin={{ ...plugin, isPreinstalled: { found: true, withVersion: true } }}
+            pluginStatus={PluginStatus.UPDATE}
+          />
+        </TestProvider>
+      );
+      expect(screen.queryByText('Update')).not.toBeInTheDocument();
     });
   });
 });

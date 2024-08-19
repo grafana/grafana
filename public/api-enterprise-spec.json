@@ -1489,7 +1489,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateReportConfig"
+              "$ref": "#/definitions/CreateOrUpdateReport"
             }
           }
         ],
@@ -1763,7 +1763,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateReportConfig"
+              "$ref": "#/definitions/CreateOrUpdateReport"
             }
           }
         ],
@@ -1842,7 +1842,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateReportConfig"
+              "$ref": "#/definitions/CreateOrUpdateReport"
             }
           },
           {
@@ -3522,7 +3522,7 @@
         }
       }
     },
-    "CreateOrUpdateReportConfig": {
+    "CreateOrUpdateReport": {
       "type": "object",
       "properties": {
         "dashboards": {
@@ -4793,6 +4793,9 @@
         "sessionUid": {
           "type": "string"
         },
+        "stats": {
+          "$ref": "#/definitions/SnapshotResourceStats"
+        },
         "status": {
           "type": "string",
           "enum": [
@@ -4803,6 +4806,7 @@
             "PENDING_PROCESSING",
             "PROCESSING",
             "FINISHED",
+            "CANCELED",
             "ERROR",
             "UNKNOWN"
           ]
@@ -5487,7 +5491,7 @@
       "type": "object",
       "title": "NavbarPreference defines model for NavbarPreference.",
       "properties": {
-        "savedItemIds": {
+        "bookmarkIds": {
           "type": "array",
           "items": {
             "type": "string"
@@ -6399,7 +6403,6 @@
       }
     },
     "Report": {
-      "description": "ConfigDTO is model representation in transfer",
       "type": "object",
       "properties": {
         "created": {
@@ -7215,6 +7218,7 @@
             "PENDING_PROCESSING",
             "PROCESSING",
             "FINISHED",
+            "CANCELED",
             "ERROR",
             "UNKNOWN"
           ]
@@ -7231,6 +7235,29 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/SnapshotDTO"
+          }
+        }
+      }
+    },
+    "SnapshotResourceStats": {
+      "type": "object",
+      "properties": {
+        "statuses": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "types": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       }
@@ -8355,6 +8382,23 @@
           "format": "date-time"
         },
         "userAgent": {
+          "type": "string"
+        }
+      }
+    },
+    "healthResponse": {
+      "type": "object",
+      "properties": {
+        "commit": {
+          "type": "string"
+        },
+        "database": {
+          "type": "string"
+        },
+        "enterpriseCommit": {
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         }
       }

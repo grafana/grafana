@@ -43,7 +43,7 @@ func TestDecorator(t *testing.T) {
 	_, _ = d.QueryData(context.Background(), &backend.QueryDataRequest{})
 	require.True(t, queryDataCalled)
 
-	sender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 		return nil
 	})
 
@@ -239,9 +239,9 @@ func (m *TestMiddleware) MutateAdmission(ctx context.Context, req *backend.Admis
 	return res, err
 }
 
-func (m *TestMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+func (m *TestMiddleware) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	m.sCtx.ConvertObjectCallChain = append(m.sCtx.ConvertObjectCallChain, fmt.Sprintf("before %s", m.Name))
-	res, err := m.next.ConvertObject(ctx, req)
+	res, err := m.next.ConvertObjects(ctx, req)
 	m.sCtx.ConvertObjectCallChain = append(m.sCtx.ConvertObjectCallChain, fmt.Sprintf("after %s", m.Name))
 	return res, err
 }

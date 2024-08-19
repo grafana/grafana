@@ -129,7 +129,8 @@ class UnthemedCodeEditor extends PureComponent<Props> {
   };
 
   render() {
-    const { theme, language, width, height, showMiniMap, showLineNumbers, readOnly, monacoOptions } = this.props;
+    const { theme, language, width, height, showMiniMap, showLineNumbers, readOnly, wordWrap, monacoOptions } =
+      this.props;
     const { alwaysConsumeMouseWheel, ...restMonacoOptions } = monacoOptions ?? {};
 
     const value = this.props.value ?? '';
@@ -138,7 +139,7 @@ class UnthemedCodeEditor extends PureComponent<Props> {
     const containerStyles = this.props.containerStyles ?? getStyles(theme).container;
 
     const options: MonacoOptions = {
-      wordWrap: 'off',
+      wordWrap: wordWrap ? 'on' : 'off',
       tabSize: 2,
       codeLens: false,
       contextmenu: false,

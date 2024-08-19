@@ -35,10 +35,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -760,7 +762,7 @@ func TestProvisioningApi(t *testing.T) {
 				insertRule(t, sut, rule1)
 				insertRule(t, sut, createTestAlertRule("rule2", 1))
 
-				expectedResponse := `resource "grafana_rule_group" "rule_group_0000" {
+				expectedResponse := `resource "grafana_rule_group" "rule_group_cc0954af8a53fa18" {
   org_id           = 1
   name             = "my-cool-group"
   folder_uid       = "folder-uid"
@@ -1473,9 +1475,26 @@ func TestProvisioningApi(t *testing.T) {
 }
 
 func TestProvisioningApiContactPointExport(t *testing.T) {
+	createTestEnv := func(t *testing.T, testConfig string) testEnvironment {
+		env := createTestEnv(t, testConfig)
+		env.ac = &recordingAccessControlFake{
+			Callback: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+				if strings.Contains(evaluator.String(), accesscontrol.ActionAlertingNotificationsRead) {
+					return true, nil
+				}
+				if strings.Contains(evaluator.String(), accesscontrol.ActionAlertingReceiversList) {
+					return true, nil
+				}
+				return false, nil
+			},
+		}
+		return env
+	}
+
 	t.Run("contact point export", func(t *testing.T) {
 		t.Run("are present, GET returns 200", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
+			env := createTestEnv(t, testConfig)
+			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
 			response := sut.RouteGetContactPointsExport(&rc)
@@ -1484,7 +1503,8 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 		})
 
 		t.Run("accept header contains yaml, GET returns text yaml", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
+			env := createTestEnv(t, testConfig)
+			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
 			rc.Context.Req.Header.Add("Accept", "application/yaml")
@@ -1496,7 +1516,8 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 		})
 
 		t.Run("accept header contains json, GET returns json", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
+			env := createTestEnv(t, testConfig)
+			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
 			rc.Context.Req.Header.Add("Accept", "application/json")
@@ -1508,7 +1529,8 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 		})
 
 		t.Run("accept header contains json and yaml, GET returns json", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
+			env := createTestEnv(t, testConfig)
+			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
 			rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
@@ -1520,7 +1542,8 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 		})
 
 		t.Run("query param download=true, GET returns content disposition attachment", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
+			env := createTestEnv(t, testConfig)
+			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
 			rc.Context.Req.Form.Set("download", "true")
@@ -1532,7 +1555,8 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 		})
 
 		t.Run("query param download=false, GET returns empty content disposition", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
+			env := createTestEnv(t, testConfig)
+			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
 			rc.Context.Req.Form.Set("download", "false")
@@ -1544,7 +1568,8 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 		})
 
 		t.Run("query param download not set, GET returns empty content disposition", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
+			env := createTestEnv(t, testConfig)
+			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
 			response := sut.RouteGetContactPointsExport(&rc)
@@ -1559,6 +1584,9 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			env := createTestEnv(t, testConfig)
 			env.ac = &recordingAccessControlFake{
 				Callback: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+					if strings.Contains(evaluator.String(), accesscontrol.ActionAlertingReceiversList) {
+						return true, nil
+					}
 					if strings.Contains(evaluator.String(), accesscontrol.ActionAlertingProvisioningReadSecrets) {
 						recPermCheck = true
 					}
@@ -1730,7 +1758,7 @@ type testEnvironment struct {
 	store            store.DBstore
 	folderService    folder.Service
 	dashboardService dashboards.DashboardService
-	configs          provisioning.AMConfigStore
+	configs          legacy_storage.AMConfigStore
 	xact             provisioning.TransactionManager
 	quotas           provisioning.QuotaChecker
 	prov             provisioning.ProvisioningStore
@@ -1757,12 +1785,13 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	require.NoError(t, err)
 
 	log := log.NewNopLogger()
-	configs := &provisioning.MockAMConfigStore{}
+	configs := &legacy_storage.MockAMConfigStore{}
 	configs.EXPECT().
 		GetsConfig(models.AlertConfiguration{
 			AlertmanagerConfiguration: string(raw),
 		})
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	replDB, cfg := db.InitTestReplDBWithCfg(t)
+	sqlStore := replDB.DB()
 
 	quotas := &provisioning.MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
@@ -1786,11 +1815,11 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		}}, nil).Maybe()
 
 	ac := &recordingAccessControlFake{}
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
+	dashboardStore, err := database.ProvideDashboardStore(replDB, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
 	require.NoError(t, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	folderService := folderimpl.ProvideService(actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil)
+	folderService := folderimpl.ProvideService(actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 	store := store.DBstore{
 		Logger:   log,
 		SQLStore: sqlStore,
@@ -1861,13 +1890,21 @@ func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
 func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) ProvisioningSrv {
 	t.Helper()
 
-	receiverSvc := notifier.NewReceiverService(env.ac, env.configs, env.prov, env.secrets, env.xact, env.log)
+	configStore := legacy_storage.NewAlertmanagerConfigStore(env.configs)
+	receiverSvc := notifier.NewReceiverService(
+		ac.NewReceiverAccess[*models.Receiver](env.ac, true),
+		configStore,
+		env.prov,
+		env.secrets,
+		env.xact,
+		env.log,
+	)
 	return ProvisioningSrv{
 		log:                 env.log,
 		policies:            newFakeNotificationPolicyService(),
-		contactPointService: provisioning.NewContactPointService(env.configs, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store),
-		templates:           provisioning.NewTemplateService(env.configs, env.prov, env.xact, env.log),
-		muteTimings:         provisioning.NewMuteTimingService(env.configs, env.prov, env.xact, env.log),
+		contactPointService: provisioning.NewContactPointService(configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store),
+		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log),
+		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.store),
 		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, &provisioning.NotificationSettingsValidatorProviderFake{}, env.rulesAuthz),
 		folderSvc:           env.folderService,
 		featureManager:      env.features,
@@ -2176,10 +2213,10 @@ var testConfig = `
 			}]
 		}],
 		"mute_time_intervals": [{
-			"name": "interval",
+			"name": "interval-1",
 			"time_intervals": []
 		}, {
-                "name": "full-interval",
+                "name": "interval-2",
                 "time_intervals": [
                     {
                         "times": [

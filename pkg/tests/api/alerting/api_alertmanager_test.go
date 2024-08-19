@@ -1974,7 +1974,7 @@ func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
 				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
 			},
 		},
-		expErr: "unable to upsert silence: silence invalid: invalid label matcher 0: invalid label name \"\": unable to create silence",
+		expErr: "unable to upsert silence: invalid silence: invalid label matcher 0: invalid label name \"\": unable to create silence",
 	}, {
 		name: "can't create silence for missing label value",
 		silence: apimodels.PostableSilence{
@@ -1991,7 +1991,7 @@ func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
 				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
 			},
 		},
-		expErr: "unable to upsert silence: silence invalid: at least one matcher must not match the empty string: unable to create silence",
+		expErr: "unable to upsert silence: invalid silence: at least one matcher must not match the empty string: unable to create silence",
 	}}
 
 	for _, tc := range cases {
@@ -2419,7 +2419,11 @@ func TestIntegrationEval(t *testing.T) {
 								"nullable": true
 							  }
 							}
-						  ]
+						  ],
+						  "meta": {
+						    "type": "numeric-multi",
+							"typeVersion": [0, 1]
+						  }
 						},
 						"data": {
 						  "values": [
@@ -2477,7 +2481,11 @@ func TestIntegrationEval(t *testing.T) {
 								"nullable": true
 							  }
 							}
-						  ]
+						  ],
+						  "meta": {
+						    "type": "numeric-multi",
+							"typeVersion": [0, 1]
+						  }
 						},
 						"data": {
 						  "values": [
@@ -2568,7 +2576,11 @@ func TestIntegrationEval(t *testing.T) {
 								"nullable": true
 							  }
 							}
-						  ]
+						  ],
+						  "meta": {
+						    "type": "numeric-multi",
+							"typeVersion": [0, 1]
+						  }
 						},
 						"data": {
 						  "values": [
@@ -2644,17 +2656,17 @@ func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) (string, map[st
 	return string(json), m
 }
 
-func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
+func createUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
 	t.Helper()
 
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = 1
 
-	quotaService := quotaimpl.ProvideService(db, cfg)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(db.FakeReplDBFromDB(store), cfg)
+	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)

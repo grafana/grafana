@@ -29,6 +29,10 @@ export const interpolateFilters = (filters: TraceqlFilter[], scopedVars?: Scoped
 };
 
 export const generateQueryFromFilters = (filters: TraceqlFilter[]) => {
+  if (!filters) {
+    return '';
+  }
+
   return `{${filters
     .filter((f) => f.tag && f.operator && f.value?.length)
     .map((f) => `${scopeHelper(f)}${tagHelper(f, filters)}${f.operator}${valueHelper(f)}`)
@@ -77,7 +81,14 @@ const adHocValueHelper = (f: AdHocVariableFilter) => {
   if (intrinsics.find((t) => t === f.key)) {
     return f.value;
   }
+  if (parseInt(f.value, 10).toString() === f.value) {
+    return f.value;
+  }
   return `"${f.value}"`;
+};
+
+export const getTagWithoutScope = (tag: string) => {
+  return tag.replace(/^(event|link|resource|span)\./, '');
 };
 
 export const filterScopedTag = (f: TraceqlFilter) => {

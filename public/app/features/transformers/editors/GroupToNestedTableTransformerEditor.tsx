@@ -10,6 +10,7 @@ import {
   TransformerUIProps,
   TransformerCategory,
   GrafanaTheme2,
+  PluginState,
 } from '@grafana/data';
 import {
   GroupByFieldOptions,
@@ -20,8 +21,7 @@ import {
   GroupToNestedTableTransformerOptions,
   SHOW_NESTED_HEADERS_DEFAULT,
 } from '@grafana/data/src/transformations/transformers/groupToNestedTable';
-import { Stack } from '@grafana/experimental';
-import { useTheme2, Select, StatsPicker, InlineField, Field, Switch, Alert } from '@grafana/ui';
+import { useTheme2, Select, StatsPicker, InlineField, Field, Switch, Alert, Stack } from '@grafana/ui';
 
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
@@ -182,4 +182,5 @@ export const groupToNestedTableTransformRegistryItem: TransformerRegistryItem<Gr
     TransformerCategory.CalculateNewFields,
     TransformerCategory.Reformat,
   ]),
+  state: PluginState.beta,
 };

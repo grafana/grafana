@@ -16,7 +16,7 @@ import { MatcherFieldValue } from '../types/silence-form';
 
 import { getAllDataSources } from './config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './datasource';
-import { MatcherFormatter, unquoteWithUnescape } from './matchers';
+import { MatcherFormatter, parsePromQLStyleMatcherLooseSafe, unquoteWithUnescape } from './matchers';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
@@ -35,22 +35,22 @@ export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig
   return config;
 }
 
-export function removeMuteTimingFromRoute(muteTiming: string, route: Route): Route {
+export function removeTimeIntervalFromRoute(muteTiming: string, route: Route): Route {
   const newRoute: Route = {
     ...route,
     mute_time_intervals: route.mute_time_intervals?.filter((muteName) => muteName !== muteTiming) ?? [],
-    routes: route.routes?.map((subRoute) => removeMuteTimingFromRoute(muteTiming, subRoute)),
+    active_time_intervals: route.active_time_intervals?.filter((muteName) => muteName !== muteTiming) ?? [],
+    routes: route.routes?.map((subRoute) => removeTimeIntervalFromRoute(muteTiming, subRoute)),
   };
   return newRoute;
 }
 
-export function renameMuteTimings(newMuteTimingName: string, oldMuteTimingName: string, route: Route): Route {
+export function renameTimeInterval(newName: string, oldName: string, route: Route): Route {
   return {
     ...route,
-    mute_time_intervals: route.mute_time_intervals?.map((name) =>
-      name === oldMuteTimingName ? newMuteTimingName : name
-    ),
-    routes: route.routes?.map((subRoute) => renameMuteTimings(newMuteTimingName, oldMuteTimingName, subRoute)),
+    mute_time_intervals: route.mute_time_intervals?.map((name) => (name === oldName ? newName : name)),
+    active_time_intervals: route.active_time_intervals?.map((name) => (name === oldName ? newName : name)),
+    routes: route.routes?.map((subRoute) => renameTimeInterval(newName, oldName, subRoute)),
   };
 }
 
@@ -106,10 +106,10 @@ export function matchersToString(matchers: Matcher[]) {
 
   const combinedMatchers = matcherFields.reduce((acc, current) => {
     const currentMatcherString = `${current.name}${current.operator}"${current.value}"`;
-    return acc ? `${acc},${currentMatcherString}` : currentMatcherString;
+    return acc ? `${acc}, ${currentMatcherString}` : currentMatcherString;
   }, '');
 
-  return `{${combinedMatchers}}`;
+  return `{ ${combinedMatchers} }`;
 }
 
 export const matcherFieldOptions: SelectableValue[] = [
@@ -122,35 +122,6 @@ export const matcherFieldOptions: SelectableValue[] = [
 export function matcherToObjectMatcher(matcher: Matcher): ObjectMatcher {
   const operator = matcherToOperator(matcher);
   return [matcher.name, operator, matcher.value];
-}
-
-export function parseMatchers(matcherQueryString: string): Matcher[] {
-  const matcherRegExp = /\b([\w.-]+)(=~|!=|!~|=(?="?\w))"?([^"\n,}]*)"?/g;
-  const matchers: Matcher[] = [];
-
-  matcherQueryString.replace(matcherRegExp, (_, key, operator, value) => {
-    const isEqual = operator === MatcherOperator.equal || operator === MatcherOperator.regex;
-    const isRegex = operator === MatcherOperator.regex || operator === MatcherOperator.notRegex;
-    matchers.push({
-      name: key,
-      value: isRegex ? getValidRegexString(value.trim()) : value.trim(),
-      isEqual,
-      isRegex,
-    });
-    return '';
-  });
-
-  return matchers;
-}
-
-function getValidRegexString(regex: string): string {
-  // Regexes provided by users might be invalid, so we need to catch the error
-  try {
-    new RegExp(regex);
-    return regex;
-  } catch (error) {
-    return '';
-  }
 }
 
 export function labelsMatchMatchers(labels: Labels, matchers: Matcher[]): boolean {
@@ -177,7 +148,7 @@ export function labelsMatchMatchers(labels: Labels, matchers: Matcher[]): boolea
 }
 
 export function combineMatcherStrings(...matcherStrings: string[]): string {
-  const matchers = matcherStrings.map(parseMatchers).flat();
+  const matchers = matcherStrings.map(parsePromQLStyleMatcherLooseSafe).flat();
   const uniqueMatchers = uniqWith(matchers, isEqual);
   return matchersToString(uniqueMatchers);
 }

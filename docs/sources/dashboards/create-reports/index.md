@@ -76,9 +76,9 @@ refs:
       destination: /docs/grafana-cloud/visualizations/dashboards/use-dashboards/#set-dashboard-time-range
   send-report:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/reporting/#send-a-report
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/
+      destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/reporting/#send-a-report
   smtp:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#smtp
@@ -129,6 +129,7 @@ Only organization administrators can create reports by default. You can customiz
    - If you selected the PDF format option:
      - Select an orientation for the report: **Portrait** or **Landscape**.
      - Select a layout for the generated report: **Simple** or **Grid**. The simple layout renders each panel as full-width across the PDF. The grid layout renders the PDF with the same panel arrangement and width as the source dashboard.
+     - Select a zoom level for the report. Zoom in to enlarge text in your PDF, or zoom out to see more data (like table columns) per panel.
      - Click **Preview PDF** to view a rendered PDF with the options you selected.
 1. Schedule report.
    - Enter scheduling information. Options vary depending on the frequency selected.
@@ -334,11 +335,11 @@ You can customize the branding options.
 
 Report branding:
 
-- **Company logo:** Company logo displayed in the report PDF. It can be configured by specifying a URL, or by uploading a file. Defaults to the Grafana logo.
+- **Company logo:** Company logo displayed in the report PDF. It can be configured by specifying a URL, or by uploading a file. The maximum file size is 16 MB. Defaults to the Grafana logo.
 
 Email branding:
 
-- **Company logo:** Company logo displayed in the report email. It can be configured by specifying a URL, or by uploading a file. Defaults to the Grafana logo.
+- **Company logo:** Company logo displayed in the report email. It can be configured by specifying a URL, or by uploading a file. The maximum file size is 16 MB. Defaults to the Grafana logo.
 - **Email footer:** Toggle to enable the report email footer. Select **Sent by** or **None**.
 - **Footer link text:** Text of the link in the report email footer. Defaults to `Grafana`.
 - **Footer link URL:** Link of the report email footer.

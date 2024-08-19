@@ -41,10 +41,10 @@ import {
   getFieldConfig,
   getEscapedSpanNames,
 } from './datasource';
-import mockJson from './mockJsonResponse.json';
-import mockServiceGraph from './mockServiceGraph.json';
-import { createMetadataRequest, createTempoDatasource } from './mocks';
-import { initTemplateSrv } from './test_utils';
+import mockJson from './test/mockJsonResponse.json';
+import mockServiceGraph from './test/mockServiceGraph.json';
+import { createMetadataRequest, createTempoDatasource } from './test/mocks';
+import { initTemplateSrv } from './test/test_utils';
 import { TempoJsonData, TempoQuery } from './types';
 
 let mockObservable: () => Observable<unknown>;
@@ -68,14 +68,14 @@ describe('Tempo data source', () => {
   describe('runs correctly', () => {
     config.featureToggles.traceQLStreaming = true;
     jest.spyOn(TempoDatasource.prototype, 'isFeatureAvailable').mockImplementation(() => true);
-    const handleStreamingSearch = jest.spyOn(TempoDatasource.prototype, 'handleStreamingSearch');
+    const handleStreamingQuery = jest.spyOn(TempoDatasource.prototype, 'handleStreamingQuery');
     const request = jest.spyOn(TempoDatasource.prototype, '_request');
     const templateSrv: TemplateSrv = { replace: (s: string) => s } as unknown as TemplateSrv;
 
     const range = {
       from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
       to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
-      raw: { from: '15m', to: 'now' },
+      raw: { from: 'now-15m', to: 'now' },
     };
     const traceqlQuery = {
       targets: [{ refId: 'refid1', queryType: 'traceql', query: '{}' }],
@@ -104,7 +104,7 @@ describe('Tempo data source', () => {
       config.liveEnabled = true;
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlQuery as DataQueryRequest<TempoQuery>));
-      expect(handleStreamingSearch).toHaveBeenCalledTimes(1);
+      expect(handleStreamingQuery).toHaveBeenCalledTimes(1);
       expect(request).toHaveBeenCalledTimes(0);
     });
 
@@ -112,7 +112,7 @@ describe('Tempo data source', () => {
       config.liveEnabled = true;
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlSearchQuery as DataQueryRequest<TempoQuery>));
-      expect(handleStreamingSearch).toHaveBeenCalledTimes(1);
+      expect(handleStreamingQuery).toHaveBeenCalledTimes(1);
       expect(request).toHaveBeenCalledTimes(0);
     });
 
@@ -120,7 +120,7 @@ describe('Tempo data source', () => {
       config.liveEnabled = false;
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlQuery as DataQueryRequest<TempoQuery>));
-      expect(handleStreamingSearch).toHaveBeenCalledTimes(1);
+      expect(handleStreamingQuery).toHaveBeenCalledTimes(1);
       expect(request).toHaveBeenCalledTimes(1);
     });
 
@@ -128,7 +128,7 @@ describe('Tempo data source', () => {
       config.liveEnabled = false;
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlSearchQuery as DataQueryRequest<TempoQuery>));
-      expect(handleStreamingSearch).toHaveBeenCalledTimes(1);
+      expect(handleStreamingQuery).toHaveBeenCalledTimes(1);
       expect(request).toHaveBeenCalledTimes(1);
     });
   });
@@ -365,9 +365,14 @@ describe('Tempo data source', () => {
   describe('test the testDatasource function', () => {
     it('should return a success msg if response.ok is true', async () => {
       mockObservable = () => of({ ok: true });
+      const handleStreamingQuery = jest
+        .spyOn(TempoDatasource.prototype, 'handleStreamingQuery')
+        .mockImplementation(() => of({ data: [] }));
+
       const ds = new TempoDatasource(defaultSettings);
       const response = await ds.testDatasource();
       expect(response.status).toBe('success');
+      expect(handleStreamingQuery).toHaveBeenCalled();
     });
   });
 
@@ -389,10 +394,10 @@ describe('Tempo data source', () => {
     const range = {
       from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
       to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
-      raw: { from: '15m', to: 'now' },
+      raw: { from: 'now-15m', to: 'now' },
     };
 
-    const request = ds.traceIdQueryRequest(
+    const request = ds.makeTraceIdRequest(
       {
         requestId: 'test',
         interval: '',
@@ -421,7 +426,7 @@ describe('Tempo data source', () => {
       jsonData: { traceQuery: { timeShiftEnabled: false, spanStartTimeShift: '2m', spanEndTimeShift: '4m' } },
     });
 
-    const request = ds.traceIdQueryRequest(
+    const request = ds.makeTraceIdRequest(
       {
         requestId: 'test',
         interval: '',
@@ -434,7 +439,7 @@ describe('Tempo data source', () => {
         range: {
           from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
           to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
-          raw: { from: '15m', to: 'now' },
+          raw: { from: 'now-15m', to: 'now' },
         },
       },
       [{ refId: 'refid1', queryType: 'traceql', query: '' } as TempoQuery]
@@ -1187,10 +1192,7 @@ describe('should provide functionality for ad-hoc filters', () => {
       },
     };
     const response = await datasource.getTagValues(options);
-    expect(response).toEqual([
-      { text: { type: 'value1', value: 'value1', label: 'value1' } },
-      { text: { type: 'value2', value: 'value2', label: 'value2' } },
-    ]);
+    expect(response).toEqual([{ text: 'value1' }, { text: 'value2' }]);
   });
 });
 
@@ -1263,6 +1265,9 @@ export const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
   jsonData: {
     nodeGraph: {
       enabled: true,
+    },
+    streamingEnabled: {
+      search: true,
     },
   },
   readOnly: false,

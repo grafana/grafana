@@ -21,7 +21,7 @@ import (
 type FakePluginInstaller struct {
 	AddFunc func(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error
 	// Remove removes a plugin from the store.
-	RemoveFunc func(ctx context.Context, pluginID string) error
+	RemoveFunc func(ctx context.Context, pluginID, version string) error
 }
 
 func (i *FakePluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
@@ -31,9 +31,9 @@ func (i *FakePluginInstaller) Add(ctx context.Context, pluginID, version string,
 	return nil
 }
 
-func (i *FakePluginInstaller) Remove(ctx context.Context, pluginID string) error {
+func (i *FakePluginInstaller) Remove(ctx context.Context, pluginID, version string) error {
 	if i.RemoveFunc != nil {
-		return i.RemoveFunc(ctx, pluginID)
+		return i.RemoveFunc(ctx, pluginID, version)
 	}
 	return nil
 }
@@ -72,7 +72,7 @@ type FakePluginClient struct {
 	backend.CallResourceHandlerFunc
 	backend.MutateAdmissionFunc
 	backend.ValidateAdmissionFunc
-	backend.ConvertObjectFunc
+	backend.ConvertObjectsFunc
 	mutex sync.RWMutex
 
 	backendplugin.Plugin
@@ -185,9 +185,9 @@ func (pc *FakePluginClient) MutateAdmission(ctx context.Context, req *backend.Ad
 	return nil, plugins.ErrMethodNotImplemented
 }
 
-func (pc *FakePluginClient) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	if pc.ConvertObjectFunc != nil {
-		return pc.ConvertObjectFunc(ctx, req)
+func (pc *FakePluginClient) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	if pc.ConvertObjectsFunc != nil {
+		return pc.ConvertObjectsFunc(ctx, req)
 	}
 
 	return nil, plugins.ErrMethodNotImplemented
@@ -388,6 +388,18 @@ func NewFakeRoleRegistry() *FakeRoleRegistry {
 }
 
 func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ string, _ []plugins.RoleRegistration) error {
+	return f.ExpectedErr
+}
+
+type FakeActionSetRegistry struct {
+	ExpectedErr error
+}
+
+func NewFakeActionSetRegistry() *FakeActionSetRegistry {
+	return &FakeActionSetRegistry{}
+}
+
+func (f *FakeActionSetRegistry) RegisterActionSets(_ context.Context, _ string, _ []plugins.ActionSet) error {
 	return f.ExpectedErr
 }
 

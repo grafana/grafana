@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 import { AppEvents } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { Button, HorizontalGroup, ConfirmModal } from '@grafana/ui';
+import { Button, ConfirmModal, Stack } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import configCore from 'app/core/config';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -113,12 +113,17 @@ export function InstallControlsButton({
     }
   };
 
-  if (pluginStatus === PluginStatus.UNINSTALL) {
-    const disableUninstall =
-      config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
-        ? plugin.isUninstallingFromInstance
-        : isUninstalling;
+  let disableUninstall =
+    config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
+      ? plugin.isUninstallingFromInstance
+      : isUninstalling;
+  let uninstallTitle = '';
+  if (plugin.isPreinstalled.found) {
+    disableUninstall = true;
+    uninstallTitle = 'Preinstalled plugin. Remove from Grafana config before uninstalling.';
+  }
 
+  if (pluginStatus === PluginStatus.UNINSTALL) {
     return (
       <>
         <ConfirmModal
@@ -130,11 +135,11 @@ export function InstallControlsButton({
           onConfirm={onUninstall}
           onDismiss={hideConfirmModal}
         />
-        <HorizontalGroup align="flex-start" width="auto" height="auto">
-          <Button variant="destructive" disabled={disableUninstall} onClick={showConfirmModal}>
+        <Stack alignItems="flex-start" width="auto" height="auto">
+          <Button variant="destructive" disabled={disableUninstall} onClick={showConfirmModal} title={uninstallTitle}>
             {uninstallBtnText}
           </Button>
-        </HorizontalGroup>
+        </Stack>
       </>
     );
   }
@@ -151,14 +156,16 @@ export function InstallControlsButton({
         : isInstalling;
 
     return (
-      <HorizontalGroup align="flex-start" width="auto" height="auto">
-        <Button disabled={disableUpdate} onClick={onUpdate}>
-          {isInstalling ? 'Updating' : 'Update'}
-        </Button>
-        <Button variant="destructive" disabled={isUninstalling} onClick={onUninstall}>
+      <Stack alignItems="flex-start" width="auto" height="auto">
+        {!plugin.isManaged && !plugin.isPreinstalled.withVersion && (
+          <Button disabled={disableUpdate} onClick={onUpdate}>
+            {isInstalling ? 'Updating' : 'Update'}
+          </Button>
+        )}
+        <Button variant="destructive" disabled={disableUninstall} onClick={onUninstall} title={uninstallTitle}>
           {uninstallBtnText}
         </Button>
-      </HorizontalGroup>
+      </Stack>
     );
   }
   const shouldDisable = isInstalling || errorInstalling || (!config.angularSupportEnabled && plugin.angularDetected);

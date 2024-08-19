@@ -442,11 +442,7 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
-	if err != nil {
-		return response.Error(http.StatusInternalServerError,
-			"Failed to add datasource", err)
-	}
+	userID, _ := identity.UserIdentifier(c.SignedInUser.GetID())
 
 	datasourcesLogger.Debug("Received command to add data source", "url", cmd.URL)
 	cmd.OrgID = c.SignedInUser.GetOrgID()

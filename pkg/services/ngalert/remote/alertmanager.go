@@ -19,6 +19,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
+	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 
 	"gopkg.in/yaml.v3"
@@ -467,6 +468,16 @@ func (am *Alertmanager) GetAlertGroups(ctx context.Context, active, silenced, in
 }
 
 func (am *Alertmanager) PutAlerts(ctx context.Context, alerts apimodels.PostableAlerts) error {
+	for _, a := range alerts.PostableAlerts {
+		for k, v := range a.Labels {
+			// The Grafana Alertmanager skips empty and namespace UID labels.
+			// To get the same alert fingerprint we need to remove these labels too.
+			// https://github.com/grafana/alerting/blob/2dda1c67ec02625ac9fc8607157b3d5825d47919/notify/grafana_alertmanager.go#L722-L724
+			if len(v) == 0 || k == alertingModels.NamespaceUIDLabel {
+				delete(a.Labels, k)
+			}
+		}
+	}
 	am.log.Debug("Sending alerts to a remote alertmanager", "url", am.url, "alerts", len(alerts.PostableAlerts))
 	am.sender.SendAlerts(alerts)
 	return nil
@@ -498,12 +509,48 @@ func (am *Alertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver,
 	return am.mimirClient.GetReceivers(ctx)
 }
 
-func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error) {
-	return &notifier.TestReceiversResult{}, nil
+func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
+	receivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
+	for _, r := range c.Receivers {
+		integrations := make([]*alertingNotify.GrafanaIntegrationConfig, 0, len(r.GrafanaManagedReceivers))
+		for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+			integrations = append(integrations, &alertingNotify.GrafanaIntegrationConfig{
+				UID:                   gr.UID,
+				Name:                  gr.Name,
+				Type:                  gr.Type,
+				DisableResolveMessage: gr.DisableResolveMessage,
+				Settings:              json.RawMessage(gr.Settings),
+				SecureSettings:        gr.SecureSettings,
+			})
+		}
+		receivers = append(receivers, &alertingNotify.APIReceiver{
+			ConfigReceiver: r.Receiver,
+			GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
+				Integrations: integrations,
+			},
+		})
+	}
+	var alert *alertingNotify.TestReceiversConfigAlertParams
+	if c.Alert != nil {
+		alert = &alertingNotify.TestReceiversConfigAlertParams{Annotations: c.Alert.Annotations, Labels: c.Alert.Labels}
+	}
+
+	return am.mimirClient.TestReceivers(ctx, alertingNotify.TestReceiversConfigBodyParams{
+		Alert:     alert,
+		Receivers: receivers,
+	})
 }
 
 func (am *Alertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
-	return &notifier.TestTemplatesResults{}, nil
+	for _, alert := range c.Alerts {
+		notifier.AddDefaultLabelsAndAnnotations(alert)
+	}
+
+	return am.mimirClient.TestTemplate(ctx, alertingNotify.TestTemplatesConfigBodyParams{
+		Alerts:   c.Alerts,
+		Template: c.Template,
+		Name:     c.Name,
+	})
 }
 
 // StopAndWait is called when the grafana server is instructed to shut down or an org is deleted.

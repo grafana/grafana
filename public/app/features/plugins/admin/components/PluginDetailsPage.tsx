@@ -4,8 +4,7 @@ import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useStyles2, TabContent, Alert } from '@grafana/ui';
-import { Layout } from '@grafana/ui/src/components/Layout/Layout';
+import { Alert, Box, Stack, TabContent, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { AppNotificationSeverity } from 'app/types';
 
@@ -13,6 +12,7 @@ import { AngularDeprecationPluginNotice } from '../../angularDeprecation/Angular
 import { Loader } from '../components/Loader';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { PluginDetailsDisabledError } from '../components/PluginDetailsDisabledError';
+import { PluginDetailsRightPanel } from '../components/PluginDetailsRightPanel';
 import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
 import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
 import { usePluginPageExtensions } from '../hooks/usePluginPageExtensions';
@@ -73,56 +73,67 @@ export function PluginDetailsPage({
     );
   }
 
+  const conditionalProps = !config.featureToggles.pluginsDetailsRightPanel ? { info: info } : {};
+
   return (
-    <Page navId={navId} pageNav={navModel} actions={actions} subTitle={subtitle} info={info}>
-      <Page.Contents>
-        <TabContent className={styles.tabContent}>
-          {plugin.angularDetected && (
-            <AngularDeprecationPluginNotice
-              className={styles.alert}
-              angularSupportEnabled={config?.angularSupportEnabled}
-              pluginId={plugin.id}
-              pluginType={plugin.type}
-              showPluginDetailsLink={false}
-              interactionElementId="plugin-details-page"
-            />
-          )}
-          <PluginDetailsSignature plugin={plugin} className={styles.alert} />
-          <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
-          <PluginDetailsDeprecatedWarning plugin={plugin} className={styles.alert} />
-          <PluginDetailsBody queryParams={Object.fromEntries(queryParams)} plugin={plugin} pageId={activePageId} />
-        </TabContent>
-      </Page.Contents>
+    <Page navId={navId} pageNav={navModel} actions={actions} subTitle={subtitle} {...conditionalProps}>
+      <Stack gap={4} justifyContent="space-between" direction={{ xs: 'column-reverse', sm: 'row' }}>
+        <Page.Contents>
+          <TabContent className={styles.tabContent}>
+            {plugin.angularDetected && (
+              <AngularDeprecationPluginNotice
+                className={styles.alert}
+                angularSupportEnabled={config?.angularSupportEnabled}
+                pluginId={plugin.id}
+                pluginType={plugin.type}
+                showPluginDetailsLink={false}
+                interactionElementId="plugin-details-page"
+              />
+            )}
+            <PluginDetailsSignature plugin={plugin} className={styles.alert} />
+            <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
+            <PluginDetailsDeprecatedWarning plugin={plugin} className={styles.alert} />
+            <PluginDetailsBody queryParams={Object.fromEntries(queryParams)} plugin={plugin} pageId={activePageId} />
+          </TabContent>
+        </Page.Contents>
+        {config.featureToggles.pluginsDetailsRightPanel && <PluginDetailsRightPanel info={info} plugin={plugin} />}
+      </Stack>
     </Page>
   );
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    alert: css`
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    subtitle: css`
-      display: flex;
-      flex-direction: column;
-      gap: ${theme.spacing(1)};
-    `,
+    alert: css({
+      marginBottom: theme.spacing(2),
+    }),
+    subtitle: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
+    }),
     // Needed due to block formatting context
-    tabContent: css`
-      overflow: auto;
-      height: 100%;
-      padding-left: 5px;
-    `,
+    tabContent: config.featureToggles.bodyScrolling
+      ? css({
+          paddingLeft: '5px',
+        })
+      : css({
+          overflow: 'auto',
+          height: '100%',
+          paddingLeft: '5px',
+        }),
   };
 };
 
 function NotFoundPlugin() {
   return (
-    <Layout justify="center" align="center">
-      <Alert severity={AppNotificationSeverity.Warning} title="Plugin not found">
-        That plugin cannot be found. Please check the url is correct or <br />
-        go to the <a href="/plugins">plugin catalog</a>.
-      </Alert>
-    </Layout>
+    <Stack justifyContent="center" alignItems="center" height="100%">
+      <Box>
+        <Alert severity={AppNotificationSeverity.Warning} title="Plugin not found">
+          That plugin cannot be found. Please check the url is correct or <br />
+          go to the <a href="/plugins">plugin catalog</a>.
+        </Alert>
+      </Box>
+    </Stack>
   );
 }

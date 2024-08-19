@@ -435,11 +435,23 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 	dtoResults := make([]MigrateDataResponseItemDTO, len(results))
 	for i := 0; i < len(results); i++ {
 		dtoResults[i] = MigrateDataResponseItemDTO{
-			Type:   MigrateDataType(results[i].Type),
-			RefID:  results[i].RefID,
-			Status: ItemStatus(results[i].Status),
-			Error:  results[i].Error,
+			Type:    MigrateDataType(results[i].Type),
+			RefID:   results[i].RefID,
+			Status:  ItemStatus(results[i].Status),
+			Message: results[i].Error,
 		}
+	}
+
+	dtoStats := SnapshotResourceStats{
+		Types:    make(map[MigrateDataType]int, len(snapshot.StatsRollup.CountsByStatus)),
+		Statuses: make(map[ItemStatus]int, len(snapshot.StatsRollup.CountsByType)),
+		Total:    snapshot.StatsRollup.Total,
+	}
+	for s, c := range snapshot.StatsRollup.CountsByStatus {
+		dtoStats.Statuses[ItemStatus(s)] = c
+	}
+	for s, c := range snapshot.StatsRollup.CountsByType {
+		dtoStats.Types[MigrateDataType(s)] = c
 	}
 
 	respDto := GetSnapshotResponseDTO{
@@ -450,7 +462,8 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 			Created:     snapshot.Created,
 			Finished:    snapshot.Finished,
 		},
-		Results: dtoResults,
+		Results:     dtoResults,
+		StatsRollup: dtoStats,
 	}
 
 	return response.JSON(http.StatusOK, respDto)
@@ -467,7 +480,7 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 // 403: forbiddenError
 // 500: internalServerError
 func (cma *CloudMigrationAPI) GetSnapshotList(c *contextmodel.ReqContext) response.Response {
-	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetShapshotList")
+	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetSnapshotList")
 	defer span.End()
 
 	uid := web.Params(c.Req)[":uid"]

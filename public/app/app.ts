@@ -39,6 +39,7 @@ import {
   setPluginExtensionsHook,
   setPluginComponentHook,
   setCurrentUser,
+  setChromeHeaderHeightHook,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -54,7 +55,7 @@ import appEvents from './core/app_events';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/Page/PluginPage';
-import { GrafanaContextType, useReturnToPreviousInternal } from './core/context/GrafanaContext';
+import { GrafanaContextType, useChromeHeaderHeight, useReturnToPreviousInternal } from './core/context/GrafanaContext';
 import { initIconCache } from './core/icons/iconBundle';
 import { initializeI18n } from './core/internationalization';
 import { setMonacoEnv } from './core/monacoEnv';
@@ -84,6 +85,7 @@ import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { getCoreExtensionConfigurations } from './features/plugins/extensions/getCoreExtensionConfigurations';
 import { createPluginExtensionsGetter } from './features/plugins/extensions/getPluginExtensions';
 import { ReactivePluginExtensionsRegistry } from './features/plugins/extensions/reactivePluginExtensionRegistry';
+import { ExposedComponentsRegistry } from './features/plugins/extensions/registry/ExposedComponentsRegistry';
 import { createUsePluginComponent } from './features/plugins/extensions/usePluginComponent';
 import { createUsePluginExtensions } from './features/plugins/extensions/usePluginExtensions';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
@@ -91,6 +93,7 @@ import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
+import { initializeScopes } from './features/scopes';
 import { cleanupOldExpandedFolders } from './features/search/utils';
 import { variableAdapters } from './features/variables/adapters';
 import { createAdHocVariableAdapter } from './features/variables/adhoc/adapter';
@@ -211,7 +214,10 @@ export class GrafanaApp {
       extensionsRegistry.register({
         pluginId: 'grafana',
         extensionConfigs: getCoreExtensionConfigurations(),
+        exposedComponentConfigs: [],
       });
+
+      const exposedComponentsRegistry = new ExposedComponentsRegistry();
 
       if (contextSrv.user.orgRole !== '') {
         // The "cloud-home-app" is registering banners once it's loaded, and this can cause a rerender in the AppChrome if it's loaded after the Grafana app init.
@@ -220,13 +226,18 @@ export class GrafanaApp {
         const awaitedAppPlugins = Object.values(config.apps).filter((app) => awaitedAppPluginIds.includes(app.id));
         const appPlugins = Object.values(config.apps).filter((app) => !awaitedAppPluginIds.includes(app.id));
 
-        preloadPlugins(appPlugins, extensionsRegistry);
-        await preloadPlugins(awaitedAppPlugins, extensionsRegistry, 'frontend_awaited_plugins_preload');
+        preloadPlugins(appPlugins, extensionsRegistry, exposedComponentsRegistry);
+        await preloadPlugins(
+          awaitedAppPlugins,
+          extensionsRegistry,
+          exposedComponentsRegistry,
+          'frontend_awaited_plugins_preload'
+        );
       }
 
       setPluginExtensionGetter(createPluginExtensionsGetter(extensionsRegistry));
       setPluginExtensionsHook(createUsePluginExtensions(extensionsRegistry));
-      setPluginComponentHook(createUsePluginComponent(extensionsRegistry));
+      setPluginComponentHook(createUsePluginComponent(exposedComponentsRegistry));
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();
@@ -255,6 +266,9 @@ export class GrafanaApp {
       };
 
       setReturnToPreviousHook(useReturnToPreviousInternal);
+      setChromeHeaderHeightHook(useChromeHeaderHeight);
+
+      initializeScopes();
 
       const root = createRoot(document.getElementById('reactRoot')!);
       root.render(

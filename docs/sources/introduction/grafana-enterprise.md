@@ -74,17 +74,23 @@ Grafana Enterprise adds the following features:
 
 With a Grafana Enterprise license, you also get access to premium data sources, including:
 
+- [Adobe Analytics](/grafana/plugins/grafana-adobeanalytics-datasource)
 - [AppDynamics](/grafana/plugins/dlopes7-appdynamics-datasource)
+- [Atlassian Statuspage](/grafana/plugins/grafana-atlassianstatuspage-datasource)
 - [Azure CosmosDB](/grafana/plugins/grafana-azurecosmosdb-datasource)
 - [Azure Devops](/grafana/plugins/grafana-azuredevops-datasource)
 - [Catchpoint](/grafana/plugins/grafana-catchpoint-datasource)
+- [Cloudflare](/grafana/plugins/grafana-cloudflare-datasource)
+- [CockroachDB](/grafana/plugins/grafana-cockroachdb-datasource)
 - [Databricks](/grafana/plugins/grafana-databricks-datasource)
 - [DataDog](/grafana/plugins/grafana-datadog-datasource)
+- [Drone](/grafana/plugins/grafana-drone-datasource)
 - [Dynatrace](/grafana/plugins/grafana-dynatrace-datasource)
 - [Gitlab](/grafana/plugins/grafana-gitlab-datasource)
 - [Honeycomb](/grafana/plugins/grafana-honeycomb-datasource)
 - [Jira](/grafana/plugins/grafana-jira-datasource)
 - [MongoDB](/grafana/plugins/grafana-mongodb-datasource)
+- [Netlify](/grafana/plugins/grafana-netlify-datasource)
 - [New Relic](/grafana/plugins/grafana-newrelic-datasource)
 - [Oracle Database](/grafana/plugins/grafana-oracle-datasource)
 - [PagerDuty](/grafana/plugins/grafana-pagerduty-datasource)

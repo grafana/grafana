@@ -8,8 +8,10 @@ import (
 
 	"github.com/go-jose/go-jose/v3/jwt"
 	authlib "github.com/grafana/authlib/authn"
+	authlibclaims "github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -20,9 +22,8 @@ import (
 var _ authn.Client = new(ExtendedJWT)
 
 const (
-	extJWTAuthenticationHeaderName  = "X-Access-Token"
-	extJWTAuthorizationHeaderName   = "X-Grafana-Id"
-	extJWTAccessTokenExpectAudience = "grafana"
+	ExtJWTAuthenticationHeaderName = "X-Access-Token"
+	ExtJWTAuthorizationHeaderName  = "X-Grafana-Id"
 )
 
 var (
@@ -46,7 +47,7 @@ func ProvideExtendedJWT(cfg *setting.Cfg) *ExtendedJWT {
 	})
 
 	accessTokenVerifier := authlib.NewAccessTokenVerifier(authlib.VerifierConfig{
-		AllowedAudiences: []string{extJWTAccessTokenExpectAudience},
+		AllowedAudiences: cfg.ExtJWTAuth.Audiences,
 	}, keys)
 
 	// For ID tokens, we explicitly do not validate audience, hence an empty AllowedAudiences
@@ -75,7 +76,6 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 
 	claims, err := s.accessTokenVerifier.Verify(ctx, jwtToken)
 	if err != nil {
-		s.log.Error("Failed to verify access token", "error", err)
 		return nil, errExtJWTInvalid.Errorf("failed to verify access token: %w", err)
 	}
 
@@ -83,7 +83,6 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	if idToken != "" {
 		idTokenClaims, err := s.idTokenVerifier.Verify(ctx, idToken)
 		if err != nil {
-			s.log.Error("Failed to verify id token", "error", err)
 			return nil, errExtJWTInvalid.Errorf("failed to verify id token: %w", err)
 		}
 
@@ -111,29 +110,38 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTMisMatchedNamespaceClaims.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
 	}
 
-	accessID, err := authn.ParseNamespaceID(accessTokenClaims.Subject)
+	accessType, _, err := identity.ParseTypeAndID(accessTokenClaims.Subject)
 	if err != nil {
-		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", accessID.String())
+		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
 	}
 
-	if !accessID.IsNamespace(authn.NamespaceAccessPolicy) {
-		return nil, errExtJWTInvalid.Errorf("unexpected identity: %s", accessID.String())
+	if !authlibclaims.IsIdentityType(accessType, authlibclaims.TypeAccessPolicy) {
+		return nil, errExtJWTInvalid.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
 	}
 
-	userID, err := authn.ParseNamespaceID(idTokenClaims.Subject)
+	t, id, err := identity.ParseTypeAndID(idTokenClaims.Subject)
 	if err != nil {
 		return nil, errExtJWTInvalid.Errorf("failed to parse id token subject: %w", err)
 	}
 
-	if !userID.IsNamespace(authn.NamespaceUser) {
-		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", userID.String())
+	if !authlibclaims.IsIdentityType(t, authlibclaims.TypeUser) {
+		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", idTokenClaims.Subject)
+	}
+
+	// For use in service layer, allow higher privilege
+	allowedKubernetesNamespace := accessTokenClaims.Rest.Namespace
+	if len(s.cfg.StackID) > 0 {
+		// For single-tenant cloud use, choose the lower of the two (id token will always have the specific namespace)
+		allowedKubernetesNamespace = idTokenClaims.Rest.Namespace
 	}
 
 	return &authn.Identity{
-		ID:              userID,
-		OrgID:           s.getDefaultOrgID(),
-		AuthenticatedBy: login.ExtendedJWTModule,
-		AuthID:          accessID.String(),
+		ID:                         id,
+		Type:                       t,
+		OrgID:                      s.getDefaultOrgID(),
+		AuthenticatedBy:            login.ExtendedJWTModule,
+		AuthID:                     accessTokenClaims.Subject,
+		AllowedKubernetesNamespace: allowedKubernetesNamespace,
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,
 			FetchPermissionsParams: authn.FetchPermissionsParams{
@@ -149,21 +157,23 @@ func (s *ExtendedJWT) authenticateAsService(claims *authlib.Claims[authlib.Acces
 		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected access token namespace: %s", claims.Rest.Namespace)
 	}
 
-	id, err := authn.ParseNamespaceID(claims.Subject)
+	t, id, err := identity.ParseTypeAndID(claims.Subject)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse access token subject: %w", err)
 	}
 
-	if !id.IsNamespace(authn.NamespaceAccessPolicy) {
-		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", id.String())
+	if !authlibclaims.IsIdentityType(t, authlibclaims.TypeAccessPolicy) {
+		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", claims.Subject)
 	}
 
 	return &authn.Identity{
-		ID:              id,
-		UID:             id,
-		OrgID:           s.getDefaultOrgID(),
-		AuthenticatedBy: login.ExtendedJWTModule,
-		AuthID:          claims.Subject,
+		ID:                         id,
+		UID:                        id,
+		Type:                       t,
+		OrgID:                      s.getDefaultOrgID(),
+		AuthenticatedBy:            login.ExtendedJWTModule,
+		AuthID:                     claims.Subject,
+		AllowedKubernetesNamespace: claims.Rest.Namespace,
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,
 			FetchPermissionsParams: authn.FetchPermissionsParams{
@@ -208,7 +218,7 @@ func (s *ExtendedJWT) Priority() uint {
 
 // retrieveAuthenticationToken retrieves the JWT token from the request.
 func (s *ExtendedJWT) retrieveAuthenticationToken(httpRequest *http.Request) string {
-	jwtToken := httpRequest.Header.Get(extJWTAuthenticationHeaderName)
+	jwtToken := httpRequest.Header.Get(ExtJWTAuthenticationHeaderName)
 
 	// Strip the 'Bearer' prefix if it exists.
 	return strings.TrimPrefix(jwtToken, "Bearer ")
@@ -216,7 +226,7 @@ func (s *ExtendedJWT) retrieveAuthenticationToken(httpRequest *http.Request) str
 
 // retrieveAuthorizationToken retrieves the JWT token from the request.
 func (s *ExtendedJWT) retrieveAuthorizationToken(httpRequest *http.Request) string {
-	jwtToken := httpRequest.Header.Get(extJWTAuthorizationHeaderName)
+	jwtToken := httpRequest.Header.Get(ExtJWTAuthorizationHeaderName)
 
 	// Strip the 'Bearer' prefix if it exists.
 	return strings.TrimPrefix(jwtToken, "Bearer ")

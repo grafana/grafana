@@ -3,23 +3,22 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
-  SceneObjectState,
-  SceneObjectBase,
+  QueryVariable,
   SceneComponentProps,
+  sceneGraph,
+  SceneObjectBase,
+  SceneObjectState,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
-  sceneGraph,
   SceneVariableSet,
-  QueryVariable,
 } from '@grafana/scenes';
-import { ToolbarButton, Box, Stack, Icon, TabsBar, Tab, useStyles2, LinkButton, Tooltip } from '@grafana/ui';
+import { Box, Icon, LinkButton, Stack, Tab, TabsBar, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { getExploreUrl } from '../../core/utils/explore';
 
 import { buildBreakdownActionScene } from './ActionTabs/BreakdownScene';
 import { buildMetricOverviewScene } from './ActionTabs/MetricOverviewScene';
 import { buildRelatedMetricsScene } from './ActionTabs/RelatedMetricsScene';
-import { LayoutType } from './ActionTabs/types';
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { AutoQueryDef, AutoQueryInfo } from './AutomaticMetricQueries/types';
 import { MAIN_PANEL_MAX_HEIGHT, MAIN_PANEL_MIN_HEIGHT, MetricGraphScene } from './MetricGraphScene';
@@ -42,23 +41,21 @@ export interface MetricSceneState extends SceneObjectState {
   body: MetricGraphScene;
   metric: string;
   actionView?: string;
-  layout: LayoutType;
 
   autoQuery: AutoQueryInfo;
   queryDef?: AutoQueryDef;
 }
 
 export class MetricScene extends SceneObjectBase<MetricSceneState> {
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['actionView', 'layout'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['actionView'] });
 
-  public constructor(state: MakeOptional<MetricSceneState, 'body' | 'autoQuery' | 'layout'>) {
+  public constructor(state: MakeOptional<MetricSceneState, 'body' | 'autoQuery'>) {
     const autoQuery = state.autoQuery ?? getAutoQueriesForMetric(state.metric);
     super({
       $variables: state.$variables ?? getVariableSet(state.metric),
       body: state.body ?? new MetricGraphScene({}),
       autoQuery,
       queryDef: state.queryDef ?? autoQuery.main,
-      layout: state.layout ?? 'grid',
       ...state,
     });
 
@@ -72,7 +69,7 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
   }
 
   getUrlState() {
-    return { actionView: this.state.actionView, layout: this.state.layout };
+    return { actionView: this.state.actionView };
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
@@ -85,13 +82,6 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
       }
     } else if (values.actionView === null) {
       this.setActionView(undefined);
-    }
-
-    if (typeof values.layout === 'string') {
-      const newLayout = values.layout as LayoutType;
-      if (this.state.layout !== newLayout) {
-        this.setState({ layout: newLayout });
-      }
     }
   }
 

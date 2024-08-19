@@ -1,56 +1,85 @@
 import { SelectableValue } from '@grafana/data';
-import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneObject,
+  SceneObjectBase,
+  SceneObjectState,
+  SceneObjectUrlSyncConfig,
+  SceneObjectUrlValues,
+  SceneObjectWithUrlSync,
+} from '@grafana/scenes';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
-import { MetricScene } from '../MetricScene';
 import { reportExploreMetrics } from '../interactions';
+import { MakeOptional, TRAIL_BREAKDOWN_VIEW_KEY } from '../shared';
 
-import { LayoutType } from './types';
+import { isBreakdownLayoutType, BreakdownLayoutChangeCallback, BreakdownLayoutType } from './types';
 
 export interface LayoutSwitcherState extends SceneObjectState {
-  layouts: SceneObject[];
-  options: Array<SelectableValue<LayoutType>>;
+  activeBreakdownLayout: BreakdownLayoutType;
+  breakdownLayouts: SceneObject[];
+  breakdownLayoutOptions: Array<SelectableValue<BreakdownLayoutType>>;
+  onBreakdownLayoutChange: BreakdownLayoutChangeCallback;
 }
 
-export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> {
-  private getMetricScene() {
-    return sceneGraph.getAncestor(this, MetricScene);
+export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> implements SceneObjectWithUrlSync {
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['breakdownLayout'] });
+
+  public constructor(state: MakeOptional<LayoutSwitcherState, 'activeBreakdownLayout'>) {
+    const storedBreakdownLayout = localStorage.getItem(TRAIL_BREAKDOWN_VIEW_KEY);
+    super({
+      activeBreakdownLayout: isBreakdownLayoutType(storedBreakdownLayout) ? storedBreakdownLayout : 'grid',
+      ...state,
+    });
+  }
+
+  getUrlState() {
+    return { breakdownLayout: this.state.activeBreakdownLayout };
+  }
+
+  updateFromUrl(values: SceneObjectUrlValues) {
+    const newBreakdownLayout = values.breakdownLayout;
+    if (newBreakdownLayout === 'string' && isBreakdownLayoutType(newBreakdownLayout)) {
+      if (this.state.activeBreakdownLayout !== newBreakdownLayout) {
+        this.setState({ activeBreakdownLayout: newBreakdownLayout });
+      }
+    }
   }
 
   public Selector({ model }: { model: LayoutSwitcher }) {
-    const { options } = model.useState();
-    const activeLayout = model.useActiveLayout();
+    const { activeBreakdownLayout, breakdownLayoutOptions } = model.useState();
 
     return (
       <Field label="View">
-        <RadioButtonGroup options={options} value={activeLayout} onChange={model.onLayoutChange} />
+        <RadioButtonGroup
+          options={breakdownLayoutOptions}
+          value={activeBreakdownLayout}
+          onChange={model.onLayoutChange}
+        />
       </Field>
     );
   }
 
-  private useActiveLayout() {
-    const { options } = this.useState();
-    const { layout } = this.getMetricScene().useState();
+  public onLayoutChange = (active: BreakdownLayoutType) => {
+    if (this.state.activeBreakdownLayout === active) {
+      return;
+    }
 
-    const activeLayout = options.map((option) => option.value).includes(layout) ? layout : options[0].value;
-    return activeLayout;
-  }
-
-  public onLayoutChange = (layout: LayoutType) => {
-    reportExploreMetrics('breakdown_layout_changed', { layout });
-    this.getMetricScene().setState({ layout });
+    reportExploreMetrics('breakdown_layout_changed', { layout: active });
+    localStorage.setItem(TRAIL_BREAKDOWN_VIEW_KEY, active);
+    this.setState({ activeBreakdownLayout: active });
+    this.state.onBreakdownLayoutChange(active);
   };
 
   public static Component = ({ model }: SceneComponentProps<LayoutSwitcher>) => {
-    const { layouts, options } = model.useState();
-    const activeLayout = model.useActiveLayout();
+    const { breakdownLayouts, breakdownLayoutOptions, activeBreakdownLayout } = model.useState();
 
-    const index = options.findIndex((o) => o.value === activeLayout);
+    const index = breakdownLayoutOptions.findIndex((o) => o.value === activeBreakdownLayout);
     if (index === -1) {
       return null;
     }
 
-    const layout = layouts[index];
+    const layout = breakdownLayouts[index];
 
     return <layout.Component model={layout} />;
   };

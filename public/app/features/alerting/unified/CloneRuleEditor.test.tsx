@@ -1,13 +1,11 @@
-import { render, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import * as React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { getWrapper, render, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors/src';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { DashboardSearchItem, DashboardSearchItemType } from 'app/features/search/types';
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
 import { AccessControlAction } from '../../../types';
@@ -29,15 +27,13 @@ import {
   mockRulerGrafanaRule,
   mockRulerRuleGroup,
 } from './mocks';
-import { grafanaRulerRule } from './mocks/alertRuleApi';
-import { mockAlertmanagerConfigResponse } from './mocks/alertmanagerApi';
+import { grafanaRulerRule } from './mocks/grafanaRulerApi';
 import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from './mocks/rulerApi';
 import { AlertingQueryRunner } from './state/AlertingQueryRunner';
 import { setupDataSources } from './testSetup/datasources';
 import { buildInfoResponse } from './testSetup/featureDiscovery';
 import { RuleFormValues } from './types/rule-form';
 import { Annotation } from './utils/constants';
-import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { getDefaultFormValues } from './utils/rule-form';
 import { hashRulerRule } from './utils/rule-id';
 
@@ -71,31 +67,15 @@ const ui = {
   loadingIndicator: byText('Loading the rule...'),
 };
 
+const Providers = getWrapper({ renderWithRouter: true });
 function Wrapper({ children }: React.PropsWithChildren<{}>) {
   const formApi = useForm<RuleFormValues>({ defaultValues: getDefaultFormValues() });
   return (
-    <TestProvider>
+    <Providers>
       <FormProvider {...formApi}>{children}</FormProvider>
-    </TestProvider>
+    </Providers>
   );
 }
-
-const amConfig: AlertManagerCortexConfig = {
-  alertmanager_config: {
-    receivers: [{ name: 'default' }, { name: 'critical' }],
-    route: {
-      receiver: 'default',
-      group_by: ['alertname'],
-      routes: [
-        {
-          matchers: ['env=prod', 'region!=EU'],
-        },
-      ],
-    },
-    templates: [],
-  },
-  template_files: {},
-};
 
 describe('CloneRuleEditor', function () {
   grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
@@ -111,7 +91,6 @@ describe('CloneRuleEditor', function () {
           type: DashboardSearchItemType.DashDB,
         }),
       ]);
-      mockAlertmanagerConfigResponse(server, GRAFANA_RULES_SOURCE_NAME, amConfig);
 
       render(
         <CloneRuleEditor sourceRuleId={{ uid: grafanaRulerRule.grafana_alert.uid, ruleSourceName: 'grafana' }} />,
@@ -125,20 +104,20 @@ describe('CloneRuleEditor', function () {
 
       await waitFor(() => {
         expect(ui.inputs.name.get()).toHaveValue(`${grafanaRulerRule.grafana_alert.title} (copy)`);
-        expect(ui.inputs.folderContainer.get()).toHaveTextContent('folder-one');
-        expect(ui.inputs.group.get()).toHaveTextContent(grafanaRulerRule.grafana_alert.rule_group);
-        expect(
-          byRole('listitem', {
-            name: 'severity: critical',
-          }).get()
-        ).toBeInTheDocument();
-        expect(
-          byRole('listitem', {
-            name: 'region: nasa',
-          }).get()
-        ).toBeInTheDocument();
-        expect(ui.inputs.annotationValue(0).get()).toHaveTextContent(grafanaRulerRule.annotations[Annotation.summary]);
       });
+      expect(ui.inputs.folderContainer.get()).toHaveTextContent('folder-one');
+      expect(ui.inputs.group.get()).toHaveTextContent(grafanaRulerRule.grafana_alert.rule_group);
+      expect(
+        byRole('listitem', {
+          name: 'severity: critical',
+        }).get()
+      ).toBeInTheDocument();
+      expect(
+        byRole('listitem', {
+          name: 'region: nasa',
+        }).get()
+      ).toBeInTheDocument();
+      expect(ui.inputs.annotationValue(0).get()).toHaveTextContent(grafanaRulerRule.annotations[Annotation.summary]);
     });
   });
 
@@ -177,7 +156,6 @@ describe('CloneRuleEditor', function () {
           folderUid: '123',
         }),
       ]);
-      mockAlertmanagerConfigResponse(server, GRAFANA_RULES_SOURCE_NAME, amConfig);
 
       render(
         <CloneRuleEditor
@@ -196,21 +174,21 @@ describe('CloneRuleEditor', function () {
 
       await waitFor(() => {
         expect(ui.inputs.name.get()).toHaveValue('First Ruler Rule (copy)');
-        expect(ui.inputs.expr.get()).toHaveValue('vector(1) > 0');
-        expect(ui.inputs.namespace.get()).toHaveTextContent('namespace-one');
-        expect(ui.inputs.group.get()).toHaveTextContent('group1');
-        expect(
-          byRole('listitem', {
-            name: 'severity: critical',
-          }).get()
-        ).toBeInTheDocument();
-        expect(
-          byRole('listitem', {
-            name: 'region: nasa',
-          }).get()
-        ).toBeInTheDocument();
-        expect(ui.inputs.annotationValue(0).get()).toHaveTextContent('This is a very important alert rule');
       });
+      expect(ui.inputs.expr.get()).toHaveValue('vector(1) > 0');
+      expect(ui.inputs.namespace.get()).toHaveTextContent('namespace-one');
+      expect(ui.inputs.group.get()).toHaveTextContent('group1');
+      expect(
+        byRole('listitem', {
+          name: 'severity: critical',
+        }).get()
+      ).toBeInTheDocument();
+      expect(
+        byRole('listitem', {
+          name: 'region: nasa',
+        }).get()
+      ).toBeInTheDocument();
+      expect(ui.inputs.annotationValue(0).get()).toHaveTextContent('This is a very important alert rule');
     });
   });
 
