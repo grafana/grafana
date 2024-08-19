@@ -1,5 +1,5 @@
 SELECT id, uid, name, email, created, updated
-  FROM "team"
+  FROM "grafana.team"
  WHERE org_id = 0
    AND uid = 'abc'
  ORDER BY id asc
