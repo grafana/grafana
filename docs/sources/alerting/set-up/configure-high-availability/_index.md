@@ -155,7 +155,7 @@ For a demo, see this [example of alerting high availability using Redis and Dock
 
 When running multiple Grafana instances, all alert rules are evaluated on every instance. This multiple evaluation of alert rules is visible in the [state history](ref:state-history) and provides a straightforward way to verify that your high availability configuration is working correctly.
 
-You can also confirm your high availability setup by monitoring alertmanager metrics exposed by Grafana:
+You can also confirm your high availability setup by monitoring Alertmanager metrics exposed by Grafana.
 
 | Metric                                               | Description                                                                                                    |
 | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
