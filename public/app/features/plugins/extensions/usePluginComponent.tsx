@@ -3,39 +3,30 @@ import { useObservable } from 'react-use';
 
 import { UsePluginComponentResult } from '@grafana/runtime';
 
-import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
-import { isPluginExtensionComponentConfig, wrapWithPluginContext } from './utils';
+import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
+import { wrapWithPluginContext } from './utils';
 
 // Returns a component exposed by a plugin.
 // (Exposed components can be defined in plugins by calling .exposeComponent() on the AppPlugin instance.)
-export function createUsePluginComponent(extensionsRegistry: ReactivePluginExtensionsRegistry) {
-  const observableRegistry = extensionsRegistry.asObservable();
+export function createUsePluginComponent(registry: ExposedComponentsRegistry) {
+  const observableRegistry = registry.asObservable();
 
   return function usePluginComponent<Props extends object = {}>(id: string): UsePluginComponentResult<Props> {
     const registry = useObservable(observableRegistry);
 
     return useMemo(() => {
-      if (!registry) {
+      if (!registry || !registry[id]) {
         return {
           isLoading: false,
           component: null,
         };
       }
 
-      const registryId = `capabilities/${id}`;
-      const registryItems = registry.extensions[registryId];
-      const registryItem = Array.isArray(registryItems) ? registryItems[0] : null;
-
-      if (registryItem && isPluginExtensionComponentConfig<Props>(registryItem.config)) {
-        return {
-          isLoading: false,
-          component: wrapWithPluginContext(registryItem.pluginId, registryItem.config.component),
-        };
-      }
+      const registryItem = registry[id];
 
       return {
         isLoading: false,
-        component: null,
+        component: wrapWithPluginContext(registryItem.pluginId, registryItem.config.component),
       };
     }, [id, registry]);
   };

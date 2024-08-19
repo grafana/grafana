@@ -37,17 +37,6 @@ export function isPluginExtensionComponentConfig<Props extends object>(
   return typeof extension === 'object' && 'type' in extension && extension['type'] === PluginExtensionTypes.component;
 }
 
-export function isPluginCapability(
-  extension: PluginExtensionConfig | undefined
-): extension is PluginExtensionComponentConfig {
-  return (
-    typeof extension === 'object' &&
-    'type' in extension &&
-    extension['type'] === PluginExtensionTypes.component &&
-    extension.extensionPointId.startsWith('capabilities/')
-  );
-}
-
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
   return (...args: unknown[]) => {
     try {
