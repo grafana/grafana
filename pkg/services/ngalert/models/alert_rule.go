@@ -199,6 +199,21 @@ type AlertRuleGroup struct {
 	Rules      []AlertRule
 }
 
+func (g *AlertRuleGroup) GetGroupKey() AlertRuleGroupKey {
+	return AlertRuleGroupKey{
+		OrgID:        g.Rules[0].OrgID,
+		NamespaceUID: g.FolderUID,
+		RuleGroup:    g.Title,
+	}
+}
+
+func (g *AlertRuleGroup) GetFolderKey() FolderKey {
+	return FolderKey{
+		OrgID: g.Rules[0].OrgID,
+		UID:   g.FolderUID,
+	}
+}
+
 // AlertRuleGroupWithFolderFullpath extends AlertRuleGroup with orgID and folder title
 type AlertRuleGroupWithFolderFullpath struct {
 	*AlertRuleGroup
@@ -460,6 +475,27 @@ type AlertRuleKeyWithId struct {
 	ID int64
 }
 
+func (a *AlertRule) GetScheduleKey() AlertRuleScheduleKey {
+	return AlertRuleScheduleKey{
+		GroupName:    a.RuleGroup,
+		NamespaceUID: a.NamespaceUID,
+		AlertRuleKeyWithVersion: AlertRuleKeyWithVersion{
+			Version: a.Version,
+			AlertRuleKey: AlertRuleKey{
+				OrgID: a.OrgID,
+				UID:   a.UID,
+			},
+		},
+	}
+}
+
+type AlertRuleScheduleKey struct {
+	GroupName               string
+	NamespaceUID            string
+	GroupIndex              int
+	AlertRuleKeyWithVersion `xorm:"extends"`
+}
+
 // AlertRuleGroupKey is the identifier of a group of alerts
 type AlertRuleGroupKey struct {
 	OrgID        int64
@@ -502,6 +538,11 @@ type AlertRuleGroupKeySorter struct {
 func (s AlertRuleGroupKeySorter) Len() int           { return len(s.keys) }
 func (s AlertRuleGroupKeySorter) Swap(i, j int)      { s.keys[i], s.keys[j] = s.keys[j], s.keys[i] }
 func (s AlertRuleGroupKeySorter) Less(i, j int) bool { return s.by(&s.keys[i], &s.keys[j]) }
+
+type GroupRuleKey struct {
+	GroupName               string
+	AlertRuleKeyWithVersion `xorm:"extends"`
+}
 
 // GetKey returns the alert definitions identifier
 func (alertRule *AlertRule) GetKey() AlertRuleKey {
@@ -832,6 +873,17 @@ const (
 	QuotaTargetSrv quota.TargetSrv = "ngalert"
 	QuotaTarget    quota.Target    = "alert_rule"
 )
+
+type ruleGroupKeyContextKey struct{}
+
+func WithRuleGroupKey(ctx context.Context, ruleGroupKey AlertRuleGroupKey) context.Context {
+	return context.WithValue(ctx, ruleGroupKeyContextKey{}, ruleGroupKey)
+}
+
+func RuleGroupKeyFromContext(ctx context.Context) (AlertRuleGroupKey, bool) {
+	key, ok := ctx.Value(ruleGroupKeyContextKey{}).(AlertRuleGroupKey)
+	return key, ok
+}
 
 type ruleKeyContextKey struct{}
 

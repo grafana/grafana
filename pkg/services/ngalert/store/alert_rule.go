@@ -952,3 +952,18 @@ func getINSubQueryArgs[T any](inputSlice []T) ([]any, []string) {
 
 	return args, in
 }
+
+func (st DBstore) GetAlertRuleScheduleKeys(ctx context.Context) ([]ngmodels.AlertRuleScheduleKey, error) {
+	// TODO: implement
+	return nil, nil
+}
+
+type GetScheduleDataQuery struct {
+	PopulateFolders bool
+	RuleGroups      []string
+}
+
+func (st DBstore) GetScheduleData(ctx context.Context, q GetScheduleDataQuery) ([]*ngmodels.AlertRule, map[ngmodels.FolderKey]string, error) {
+	// TODO: implement
+	return nil, nil, nil
+}

@@ -154,6 +154,8 @@ type AlertNG struct {
 	bus          bus.Bus
 	pluginsStore pluginstore.Store
 	tracer       tracing.Tracer
+
+	ruleManager *schedule.Manager
 }
 
 func (ng *AlertNG) init() error {
@@ -352,23 +354,23 @@ func (ng *AlertNG) init() error {
 	}
 	ng.RecordingWriter = recordingWriter
 
-	schedCfg := schedule.SchedulerCfg{
-		MaxAttempts:          ng.Cfg.UnifiedAlerting.MaxAttempts,
-		C:                    clk,
-		BaseInterval:         ng.Cfg.UnifiedAlerting.BaseInterval,
-		MinRuleInterval:      ng.Cfg.UnifiedAlerting.MinInterval,
-		DisableGrafanaFolder: ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel),
-		JitterEvaluations:    schedule.JitterStrategyFrom(ng.Cfg.UnifiedAlerting, ng.FeatureToggles),
-		AppURL:               appUrl,
-		EvaluatorFactory:     evalFactory,
-		RuleStore:            ng.store,
-		FeatureToggles:       ng.FeatureToggles,
-		Metrics:              ng.Metrics.GetSchedulerMetrics(),
-		AlertSender:          alertsRouter,
-		Tracer:               ng.tracer,
-		Log:                  log.New("ngalert.scheduler"),
-		RecordingWriter:      ng.RecordingWriter,
-	}
+	// schedCfg := schedule.SchedulerCfg{
+	// 	MaxAttempts:          ng.Cfg.UnifiedAlerting.MaxAttempts,
+	// 	C:                    clk,
+	// 	BaseInterval:         ng.Cfg.UnifiedAlerting.BaseInterval,
+	// 	MinRuleInterval:      ng.Cfg.UnifiedAlerting.MinInterval,
+	// 	DisableGrafanaFolder: ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel),
+	// 	JitterEvaluations:    schedule.JitterStrategyFrom(ng.Cfg.UnifiedAlerting, ng.FeatureToggles),
+	// 	AppURL:               appUrl,
+	// 	EvaluatorFactory:     evalFactory,
+	// 	RuleStore:            ng.store,
+	// 	FeatureToggles:       ng.FeatureToggles,
+	// 	Metrics:              ng.Metrics.GetSchedulerMetrics(),
+	// 	AlertSender:          alertsRouter,
+	// 	Tracer:               ng.tracer,
+	// 	Log:                  log.New("ngalert.scheduler"),
+	// 	RecordingWriter:      ng.RecordingWriter,
+	// }
 
 	// There are a set of feature toggles available that act as short-circuits for common configurations.
 	// If any are set, override the config accordingly.
@@ -400,7 +402,8 @@ func (ng *AlertNG) init() error {
 		statePersister = state.NewAsyncStatePersister(logger, ticker, cfg)
 	}
 	stateManager := state.NewManager(cfg, statePersister)
-	scheduler := schedule.NewScheduler(schedCfg, stateManager)
+
+	// scheduler := schedule.NewScheduler(schedCfg, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
 	if !ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel) {
@@ -408,7 +411,44 @@ func (ng *AlertNG) init() error {
 	}
 
 	ng.stateManager = stateManager
-	ng.schedule = scheduler
+	// ng.schedule = scheduler
+
+	ruleFactory := schedule.NewRuleFactory(
+		appUrl,
+		ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel),
+		ng.Cfg.UnifiedAlerting.MaxAttempts,
+		alertsRouter,
+		stateManager,
+		evalFactory,
+		clk,
+		ng.FeatureToggles,
+		ng.Metrics.GetSchedulerMetrics(),
+		ng.Log,
+		ng.tracer,
+		ng.RecordingWriter,
+	)
+
+	groupFactory := schedule.NewGroupFactory(
+		ruleFactory,
+		clk,
+		ng.Cfg.UnifiedAlerting.BaseInterval,
+		ng.Metrics.GetSchedulerMetrics(),
+		ng.Log,
+		false,
+		schedule.JitterStrategyFrom(ng.Cfg.UnifiedAlerting, ng.FeatureToggles),
+	)
+
+	ruleManagerCfg := schedule.ManagerCfg{
+		BaseInterval:         ng.Cfg.UnifiedAlerting.BaseInterval,
+		GroupFactory:         groupFactory,
+		RuleStore:            ng.store,
+		DisableGrafanaFolder: ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel),
+		Logger:               log.New("ngalert.rule.manager"),
+		Metrics:              ng.Metrics.GetSchedulerMetrics(),
+	}
+
+	manager := schedule.NewManager(ruleManagerCfg)
+	ng.ruleManager = manager
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store)
 	receiverService := notifier.NewReceiverService(
@@ -527,7 +567,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		ng.stateManager.Warm(ctx, ng.store)
 
 		children.Go(func() error {
-			return ng.schedule.Run(subCtx)
+			return ng.ruleManager.Run(subCtx)
 		})
 		children.Go(func() error {
 			return ng.stateManager.Run(subCtx)
