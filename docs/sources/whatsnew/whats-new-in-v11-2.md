@@ -24,6 +24,18 @@ Welcome to Grafana 11.2!
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v11.2, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.2/).
 
+## Grafana Cloud Migration Assistant is in public preview
+
+<!-- #wg-everyone-to-cloud -->
+
+_Available in public preview in Grafana Open Source and Enterprise_
+
+Migrating from OSS or Enterprise Grafana to Grafana Cloud has traditionally been complex, requiring technical knowledge of Grafana's HTTP API and time-consuming manual processes. The new Grafana Cloud Migration Assistant changes this by providing a user-friendly interface that automates the migration of your resources. No coding required, it securely handles the transfer in just a few easy steps.
+
+This intuitive UI offers real-time updates on your migration status, making your migration journey faster, more efficient, and less error-prone. Initially, the Cloud Migration Assistant supports dashboards, folders, and core data sources, with plans to include alerting, app plugins, and panel plugins in future updates.
+
+Ready to make the move? Explore our [migration guide](https://grafana.com/docs/grafana-cloud/account-management/migration-guide/) to learn more about the Cloud Migration Assistant today and begin your effortless transition to Grafana Cloud.
+
 ## Dashboards and visualizations
 
 ### Transformation updates
