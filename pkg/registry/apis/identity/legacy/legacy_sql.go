@@ -17,28 +17,13 @@ var (
 )
 
 type legacySQLStore struct {
-	dialect sqltemplate.Dialect
-	sql     legacysql.NamespacedDBProvider
-	teamsRV legacysql.ResourceVersionLookup
-	usersRV legacysql.ResourceVersionLookup
+	sql legacysql.LegacyDatabaseProvider
 }
 
-func NewLegacySQLStores(sql legacysql.NamespacedDBProvider) (LegacyIdentityStore, error) {
-	db, err := sql(context.Background())
-	if err != nil {
-		return nil, err
-	}
-	dialect := sqltemplate.DialectForDriver(string(db.GetDBType()))
-	if dialect == nil {
-		return nil, fmt.Errorf("unknown dialect")
-	}
-
+func NewLegacySQLStores(sql legacysql.LegacyDatabaseProvider) LegacyIdentityStore {
 	return &legacySQLStore{
-		sql:     sql,
-		dialect: dialect,
-		teamsRV: legacysql.GetResourceVersionLookup(sql, "team", "updated"),
-		usersRV: legacysql.GetResourceVersionLookup(sql, "user", "updated"),
-	}, nil
+		sql: sql,
+	}
 }
 
 // ListTeams implements LegacyIdentityStore.
@@ -54,11 +39,12 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 		return nil, fmt.Errorf("expected non zero orgID")
 	}
 
-	req := sqlQueryListTeams{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Query:       &query,
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
 	}
 
+	req := newListTeams(sql, &query)
 	rawQuery, err := sqltemplate.Execute(sqlQueryTeams, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeams.Name(), err)
@@ -67,13 +53,8 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 
 	// fmt.Printf("%s // %v\n", rawQuery, req.GetArgs())
 
-	db, err := s.sql(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	res := &ListTeamResult{}
-	rows, err := db.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	defer func() {
 		if rows != nil {
 			_ = rows.Close()
@@ -97,7 +78,7 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 			}
 		}
 		if query.UID == "" {
-			res.RV, err = s.teamsRV(ctx)
+			res.RV, err = sql.GetResourceVersion(ctx, "team", "updated")
 		}
 	}
 	return res, err
@@ -116,13 +97,35 @@ func (s *legacySQLStore) ListUsers(ctx context.Context, ns claims.NamespaceInfo,
 		return nil, fmt.Errorf("expected non zero orgID")
 	}
 
-	return s.queryUsers(ctx, sqlQueryUsers, sqlQueryListUsers{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Query:       &query,
-	}, limit, query.UID != "")
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := s.queryUsers(ctx, sql, sqlQueryUsers, newListUser(sql, &query), limit)
+
+	if err == nil && query.UID != "" {
+		res.RV, err = sql.GetResourceVersion(ctx, "user", "updated")
+	}
+	return res, err
 }
 
-func (s *legacySQLStore) queryUsers(ctx context.Context, t *template.Template, req sqltemplate.Args, limit int, getRV bool) (*ListUserResult, error) {
+// GetDisplay implements LegacyIdentityStore.
+func (s *legacySQLStore) GetDisplay(ctx context.Context, ns claims.NamespaceInfo, query GetUserDisplayQuery) (*ListUserResult, error) {
+	query.OrgID = ns.OrgID
+	if ns.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero orgID")
+	}
+
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.queryUsers(ctx, sql, sqlQueryDisplay, newGetDisplay(sql, &query), 10000)
+}
+
+func (s *legacySQLStore) queryUsers(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, t *template.Template, req sqltemplate.Args, limit int) (*ListUserResult, error) {
 	rawQuery, err := sqltemplate.Execute(t, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", sqlQueryUsers.Name(), err)
@@ -130,13 +133,9 @@ func (s *legacySQLStore) queryUsers(ctx context.Context, t *template.Template, r
 	q := rawQuery
 
 	// fmt.Printf("%s // %v\n", rawQuery, req.GetArgs())
-	db, err := s.sql(ctx)
-	if err != nil {
-		return nil, err
-	}
 
 	res := &ListUserResult{}
-	rows, err := db.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	defer func() {
 		if rows != nil {
 			_ = rows.Close()
@@ -160,9 +159,6 @@ func (s *legacySQLStore) queryUsers(ctx context.Context, t *template.Template, r
 				break
 			}
 		}
-		if getRV {
-			res.RV, err = s.usersRV(ctx)
-		}
 	}
 	return res, err
 }
@@ -170,17 +166,4 @@ func (s *legacySQLStore) queryUsers(ctx context.Context, t *template.Template, r
 // GetUserTeams implements LegacyIdentityStore.
 func (s *legacySQLStore) GetUserTeams(ctx context.Context, ns claims.NamespaceInfo, uid string) ([]team.Team, error) {
 	panic("unimplemented")
-}
-
-// GetDisplay implements LegacyIdentityStore.
-func (s *legacySQLStore) GetDisplay(ctx context.Context, ns claims.NamespaceInfo, query GetUserDisplayQuery) (*ListUserResult, error) {
-	query.OrgID = ns.OrgID
-	if ns.OrgID == 0 {
-		return nil, fmt.Errorf("expected non zero orgID")
-	}
-
-	return s.queryUsers(ctx, sqlQueryDisplay, sqlQueryGetDisplay{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Query:       &query,
-	}, 10000, false)
 }
