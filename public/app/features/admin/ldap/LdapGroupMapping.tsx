@@ -1,12 +1,9 @@
-import { JSX } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
-
 import { SelectableValue } from '@grafana/data';
 import { Box, Button, Field, Input, RadioButtonGroup, Switch } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { GroupMapping, OrgRole } from 'app/types';
 
-const roleOptions: Array<SelectableValue<string>> = Object.keys(OrgRole).map((key) => {
+const roleOptions: Array<SelectableValue<string>> = Object.keys(OrgRole).map(key => {
   return { label: key, value: key };
 });
 
@@ -16,13 +13,7 @@ interface GroupMappingProps {
   groupMapping: GroupMapping;
 }
 
-const mapStateToProps = () => ({});
-const mapActionsToProps = {};
-
-const connector = connect(mapStateToProps, mapActionsToProps);
-export type Props = GroupMappingProps & ConnectedProps<typeof connector>;
-
-export const GroupMappingUnconnected = ({ onRemove, onChange, groupMapping }: Props): JSX.Element => {
+export const GroupMappingUnconnected = ({ groupMapping, onRemove, onChange }: GroupMappingProps) => {
   return (
     <Box borderColor="strong" borderStyle="solid" padding={2} marginBottom={2}>
       <Field
@@ -35,16 +26,14 @@ export const GroupMappingUnconnected = ({ onRemove, onChange, groupMapping }: Pr
       >
         <Input
           id="group-dn"
-          defaultValue={groupMapping.groupDn}
-          onChange={({ currentTarget: { value } }) => onChange({ ...groupMapping, groupDn: value })}
-        ></Input>
+          defaultValue={groupMapping.group_dn}
+        />
       </Field>
       <Field htmlFor="org-role" label={t('ldap-drawer.group-mapping.org-role.label', 'Org role *')}>
         <RadioButtonGroup
           id="org-role"
           options={roleOptions}
-          value={groupMapping.orgRole}
-          onChange={(role) => onChange({ ...groupMapping, orgRole: role })}
+          value={groupMapping.org_role}
         />
       </Field>
       <Field
@@ -57,8 +46,8 @@ export const GroupMappingUnconnected = ({ onRemove, onChange, groupMapping }: Pr
       >
         <Input
           id="org-id"
-          defaultValue={groupMapping.orgId}
-          onChange={({ currentTarget: { value } }) => onChange({ ...groupMapping, orgId: +value })}
+          defaultValue={groupMapping.org_id}
+          onChange={({ currentTarget: { value } }) => onChange({ ...groupMapping, org_id: +value })}
         />
       </Field>
       <Field
@@ -71,8 +60,8 @@ export const GroupMappingUnconnected = ({ onRemove, onChange, groupMapping }: Pr
       >
         <Switch
           id="grafana-admin"
-          value={groupMapping.grafanaAdmin}
-          onChange={() => onChange({ ...groupMapping, grafanaAdmin: !groupMapping.grafanaAdmin })}
+          value={groupMapping.grafana_admin}
+          onChange={() => onChange({ ...groupMapping, grafana_admin: !groupMapping.grafana_admin })}
         />
       </Field>
       <Button variant="secondary" fill="outline" icon="trash-alt" onClick={onRemove}>
@@ -82,4 +71,4 @@ export const GroupMappingUnconnected = ({ onRemove, onChange, groupMapping }: Pr
   );
 };
 
-export const GroupMappingComponent = connector(GroupMappingUnconnected);
+export const GroupMappingComponent = GroupMappingUnconnected;

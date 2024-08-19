@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
-import { JSX } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
@@ -16,7 +15,7 @@ import {
   Text,
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
-import { GroupMapping, LdapServerConfig, LdapSettings, OrgRole } from 'app/types';
+import { GroupMapping, LdapServerConfig, LdapPayload, LdapSettings } from 'app/types';
 
 import { GroupMappingUnconnected } from './LdapGroupMapping';
 
@@ -26,52 +25,21 @@ interface OwnProps {
   ldapSettings: LdapSettings;
 }
 
-const mapStateToProps = () => ({});
-const mapActionsToProps = {};
-
-const connector = connect(mapStateToProps, mapActionsToProps);
-export type Props = OwnProps & ConnectedProps<typeof connector>;
-
 const tlsOptions: Array<SelectableValue<string>> = ['TLS1.2', 'TLS1.3'].map((v) => {
   return { label: v, value: v };
 });
 
-export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props): JSX.Element => {
+export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: OwnProps) => {
   const styles = useStyles2(getStyles);
-
+  const {register} = useFormContext<LdapPayload>();
   const onAddGroupMapping = () => {
     onChange({
       ...ldapSettings,
-      config: {
-        ...ldapSettings.config,
-        server: {
-          ...ldapSettings.config.server,
-          groupMappings: [
-            ...ldapSettings.config.server.groupMappings,
-            {
-              groupDn: '',
-              orgId: 1,
-              orgRole: OrgRole.Viewer,
-              grafanaAdmin: false,
-            },
-          ],
-        },
-      },
     });
   };
   const onAttributeChange = (attribute: string, value: string) => {
     onChange({
       ...ldapSettings,
-      config: {
-        ...ldapSettings.config,
-        server: {
-          ...ldapSettings.config.server,
-          attributes: {
-            ...ldapSettings.config.server.attributes,
-            [attribute]: value,
-          },
-        },
-      },
     });
   };
   const onServerConfigChange = (serverConfig: Partial<LdapServerConfig>) => {
@@ -79,8 +47,8 @@ export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props
       ...ldapSettings,
       config: {
         ...ldapSettings.config,
-        server: {
-          ...ldapSettings.config.server,
+        servers: {
+          ...ldapSettings.config.servers,
           ...serverConfig,
         },
       },
@@ -89,13 +57,6 @@ export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props
   const onGroupMappingsChange = (groupMappings: GroupMapping[]) => {
     onChange({
       ...ldapSettings,
-      config: {
-        ...ldapSettings.config,
-        server: {
-          ...ldapSettings.config.server,
-          groupMappings: groupMappings,
-        },
-      },
     });
   };
 
@@ -132,14 +93,14 @@ export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props
           <Input
             id="port"
             placeholder={t('ldap-drawer.misc-section.port.placeholder', '389')}
-            defaultValue={ldapSettings.config.server.port.toString()}
+            defaultValue={ldapSettings.config.servers[0].port}
             type="number"
             onChange={({ currentTarget: { value } }) => onServerConfigChange({ port: +value })}
           />
         </Field>
         <Field
           htmlFor="timeout"
-          label={t('ldap-drawer.misc-section.timeout.labe', 'Timeout')}
+          label={t('ldap-drawer.misc-section.timeout.label', 'Timeout')}
           description={t(
             'ldap-drawer.misc-section.timeout.description',
             'Timeout in seconds for the connection to the LDAP server'
@@ -148,7 +109,7 @@ export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props
           <Input
             id="timeout"
             placeholder={t('ldap-drawer.misc-section.timeout.placeholder', '389')}
-            defaultValue={ldapSettings.config.server.timeout.toString()}
+            defaultValue={ldapSettings.config.servers[0].timeout.toString()}
             type="number"
             onChange={({ currentTarget: { value } }) => onServerConfigChange({ timeout: +value })}
           />
@@ -164,35 +125,35 @@ export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props
         <Field htmlFor="name" label={t('ldap-drawer.attributes-section.name.label', 'Name')}>
           <Input
             id="name"
-            defaultValue={ldapSettings.config.server?.attributes.name}
+            defaultValue={ldapSettings.config.servers[0]?.attributes.name}
             onChange={({ currentTarget: { value } }) => onAttributeChange('name', value)}
           />
         </Field>
         <Field htmlFor="surname" label={t('ldap-drawer.attributes-section.surname.label', 'Surname')}>
           <Input
             id="surname"
-            defaultValue={ldapSettings.config.server?.attributes.surname}
+            defaultValue={ldapSettings.config.servers[0]?.attributes.surname}
             onChange={({ currentTarget: { value } }) => onAttributeChange('surname', value)}
           />
         </Field>
         <Field htmlFor="username" label={t('ldap-drawer.attributes-section.username.label', 'Username')}>
           <Input
             id="username"
-            defaultValue={ldapSettings.config.server?.attributes.username}
+            defaultValue={ldapSettings.config.servers[0]?.attributes.username}
             onChange={({ currentTarget: { value } }) => onAttributeChange('username', value)}
           />
         </Field>
         <Field htmlFor="member-of" label={t('ldap-drawer.attributes-section.member-of.label', 'Member Of')}>
           <Input
             id="member-of"
-            defaultValue={ldapSettings.config.server?.attributes.memberOf}
+            defaultValue={ldapSettings.config.servers[0]?.attributes.member_of}
             onChange={({ currentTarget: { value } }) => onAttributeChange('memberOf', value)}
           />
         </Field>
         <Field htmlFor="email" label={t('ldap-drawer.attributes-section.email.label', 'Email')}>
           <Input
             id="email"
-            defaultValue={ldapSettings.config.server?.attributes.email}
+            defaultValue={ldapSettings.config.servers[0]?.attributes.email}
             onChange={({ currentTarget: { value } }) => onAttributeChange('email', value)}
           />
         </Field>
@@ -211,8 +172,8 @@ export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props
         >
           <Switch
             id="skip-org-role-sync"
-            value={ldapSettings.config.server.skipOrgRoleSync}
-            onChange={() => onServerConfigChange({ skipOrgRoleSync: !ldapSettings.config.server.skipOrgRoleSync })}
+            value={ldapSettings.config.servers[0].skip_org_role_sync}
+            onChange={() => onServerConfigChange({ skip_org_role_sync: !ldapSettings.config.servers[0].skip_org_role_sync })}
           />
         </Field>
         <Field
@@ -225,8 +186,8 @@ export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props
         >
           <Input
             id="group-search-filter"
-            defaultValue={ldapSettings.config.server.groupSearchFilter}
-            onChange={({ currentTarget: { value } }) => onServerConfigChange({ groupSearchFilter: value })}
+            defaultValue={ldapSettings.config.servers[0].group_search_filter}
+            onChange={({ currentTarget: { value } }) => onServerConfigChange({ group_search_filter: value })}
           />
         </Field>
         <Field
@@ -239,8 +200,8 @@ export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props
         >
           <Input
             id="group-search-base-dns"
-            defaultValue={ldapSettings.config.server.groupSearchBaseDns?.join(' ')}
-            onChange={({ currentTarget: { value } }) => onServerConfigChange({ groupSearchBaseDns: value.split(' ') })}
+            defaultValue={ldapSettings.config.servers[0].group_search_base_dns}
+            onChange={({ currentTarget: { value } }) => onServerConfigChange({ group_search_base_dns: value.split(' ') })}
           />
         </Field>
         <Field
@@ -256,8 +217,8 @@ export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props
         >
           <Input
             id="group-search-filter-user-attribute"
-            defaultValue={ldapSettings.config.server.groupSearchFilterUserAttribute}
-            onChange={({ currentTarget: { value } }) => onServerConfigChange({ groupSearchFilterUserAttribute: value })}
+            defaultValue={ldapSettings.config.servers[0].group_search_filter_user_attribute}
+            onChange={({ currentTarget: { value } }) => onServerConfigChange({ group_search_filter_user_attribute: value })}
           />
         </Field>
         {ldapSettings.config.server.groupMappings.map((gp, i) => (
@@ -265,15 +226,15 @@ export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props
             key={i}
             groupMapping={gp}
             onRemove={() => {
-              ldapSettings.config.server.groupMappings!.splice(i, 1);
-              onGroupMappingsChange([...ldapSettings.config.server.groupMappings!]);
+              ldapSettings.config.servers[0].group_mappings!.splice(i, 1);
+              onGroupMappingsChange([...ldapSettings.config.servers[0].group_mappings!]);
             }}
             onChange={(updatedGroupMapping) => {
-              ldapSettings.config.server.groupMappings![i] = {
-                ...ldapSettings.config.server.groupMappings![i],
+              ldapSettings.config.servers[0].group_mappings![i] = {
+                ...ldapSettings.config.servers[0].group_mappings![i],
                 ...updatedGroupMapping,
               };
-              onGroupMappingsChange([...ldapSettings.config.server.groupMappings!]);
+              onGroupMappingsChange([...ldapSettings.config.servers[0].group_mappings!]);
             }}
           />
         ))}
@@ -297,11 +258,11 @@ export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props
         >
           <Switch
             id="use-ssl"
-            value={ldapSettings.config.server.useSsl}
-            onChange={() => onServerConfigChange({ useSsl: !ldapSettings.config.server.useSsl })}
+            value={ldapSettings.config.servers[0].use_ssl}
+            onChange={() => onServerConfigChange({ use_ssl: !ldapSettings.config.servers[0].use_ssl })}
           />
         </Field>
-        {ldapSettings.config.server.useSsl && (
+        {ldapSettings.config.servers[0].use_ssl && (
           <>
             <Field
               htmlFor="start-tls"
@@ -313,8 +274,8 @@ export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props
             >
               <Switch
                 id="start-tls"
-                value={ldapSettings.config.server.startTls}
-                onChange={() => onServerConfigChange({ startTls: !ldapSettings.config.server.startTls })}
+                value={ldapSettings.config.servers[0].start_tls}
+                onChange={() => onServerConfigChange({ start_tls: !ldapSettings.config.servers[0].start_tls })}
               />
             </Field>
             <Field
@@ -328,8 +289,8 @@ export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props
               <Select
                 id="min-tls-version"
                 options={tlsOptions}
-                value={ldapSettings.config.server.minTlsVersion}
-                onChange={(v) => onServerConfigChange({ minTlsVersion: v.value })}
+                value={ldapSettings.config.servers[0].min_tls_version}
+                onChange={(v) => onServerConfigChange({ min_tls_version: v.value })}
               />
             </Field>
             <Field
@@ -346,8 +307,8 @@ export const LdapDrawerUnconnected = ({ ldapSettings, onChange, onClose }: Props
                   'ldap-drawer.extra-security-section.tls-ciphers.placeholder',
                   'e.g. ["TLS_AES_256_GCM_SHA384"]'
                 )}
-                defaultValue={ldapSettings.config.server.tlsCiphers?.join(' ')}
-                onChange={({ currentTarget: { value } }) => onServerConfigChange({ tlsCiphers: value.split(' ') })}
+                defaultValue={ldapSettings.config.servers[0].tls_ciphers?.join(' ')}
+                onChange={({ currentTarget: { value } }) => onServerConfigChange({ tls_ciphers: value.split(' ') })}
               />
             </Field>
           </>
@@ -389,4 +350,4 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-export const LdapDrawer = connector(LdapDrawerUnconnected);
+export const LdapDrawer = LdapDrawerUnconnected;

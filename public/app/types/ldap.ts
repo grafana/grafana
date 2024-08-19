@@ -65,15 +65,15 @@ export interface LdapServerInfo {
 }
 
 export interface GroupMapping {
-  groupDn?: string;
-  orgId?: number;
-  orgRole?: string;
-  grafanaAdmin?: boolean;
+  group_dn?: string;
+  org_id?: number;
+  org_role?: string;
+  grafana_admin?: boolean;
 }
 
 export interface LdapAttributes {
   email?: string;
-  memberOf?: string;
+  member_of?: string;
   name?: string;
   surname?: string;
   username?: string;
@@ -81,27 +81,27 @@ export interface LdapAttributes {
 
 export interface LdapServerConfig {
   attributes: LdapAttributes;
-  bindDn: string;
-  bindPassword: string;
-  clientCert: string;
-  clientKey: string;
-  groupMappings: GroupMapping[];
-  groupSearchBaseDns: string[];
-  groupSearchFilter: string;
-  groupSearchFilterUserAttribute: string;
+  bind_dn: string;
+  bind_password: string;
+  client_cert: string;
+  client_key: string;
+  group_mappings: GroupMapping[];
+  group_search_base_dns: string[];
+  group_search_filter: string;
+  group_search_filter_user_attribute: string;
   host: string;
-  minTlsVersion: string;
+  min_tls_version: string;
   port: number;
-  rootCaCert: string;
-  searchBaseDn: string[];
-  searchFilter: string;
-  skipOrgRoleSync: boolean;
-  sslSkipVerify: boolean;
-  startTls: boolean;
+  root_ca_cert: string;
+  search_base_dns: string[];
+  search_filter: string;
+  skip_org_role_sync: boolean;
+  ssl_skip_verify: boolean;
+  start_tls: boolean;
   timeout: number;
-  tlsCiphers: string[];
-  tlsSkipVerify: boolean;
-  useSsl: boolean;
+  tls_ciphers: string[];
+  tls_skip_verify: boolean;
+  use_ssl: boolean;
 }
 
 export type LdapConnectionInfo = LdapServerInfo[];
@@ -117,7 +117,7 @@ export interface LdapState {
 }
 
 export interface LdapConfig {
-  server: LdapServerConfig;
+  servers: LdapServerConfig[];
 }
 
 export interface LdapSettings {
