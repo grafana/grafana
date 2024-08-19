@@ -12,15 +12,15 @@ import { useGetNotificationTemplate } from './useNotificationTemplates';
 type Props = RouteChildrenProps<{ name: string }>;
 
 const EditMessageTemplate = ({ match }: Props) => {
-  const templateName = match?.params.name;
+  const templateUid = match?.params.name ? decodeURIComponent(match?.params.name) : undefined;
 
   const { selectedAlertmanager } = useAlertmanager();
   const { currentData, isLoading, error } = useGetNotificationTemplate({
     alertmanager: selectedAlertmanager ?? '',
-    uid: templateName ?? '',
+    uid: templateUid ?? '',
   });
 
-  if (!templateName) {
+  if (!templateUid) {
     return <EntityNotFound entity="Notification template" />;
   }
 

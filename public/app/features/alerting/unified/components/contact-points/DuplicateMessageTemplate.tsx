@@ -13,9 +13,9 @@ import { useGetNotificationTemplate, useNotificationTemplates } from './useNotif
 
 type Props = RouteChildrenProps<{ name: string }>;
 
-const NewMessageTemplate = ({ match }: Props) => {
+const DuplicateMessageTemplate = ({ match }: Props) => {
   const { selectedAlertmanager } = useAlertmanager();
-  const templateUid = match?.params.name;
+  const templateUid = match?.params.name ? decodeURIComponent(match?.params.name) : undefined;
 
   const {
     currentData: template,
@@ -68,4 +68,4 @@ const NewMessageTemplate = ({ match }: Props) => {
   );
 };
 
-export default NewMessageTemplate;
+export default DuplicateMessageTemplate;

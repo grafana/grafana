@@ -178,7 +178,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertManagerSourceName
     <>
       <FormProvider {...formApi}>
         <AppChromeUpdate actions={actionButtons} />
-        <form onSubmit={handleSubmit(submit)} ref={formRef} className={styles.form}>
+        <form onSubmit={handleSubmit(submit)} ref={formRef} className={styles.form} aria-label="Template form">
           {/* error message */}
           {error && (
             <Alert severity="error" title="Error saving template">
