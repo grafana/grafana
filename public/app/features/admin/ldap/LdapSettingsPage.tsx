@@ -69,11 +69,11 @@ const emptySettings: LdapPayload = {
   },
 };
 
-export const LdapSettingsPage = (): JSX.Element => {
+export const LdapSettingsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [formSettings, setFormSettings] = useState<LdapPayload>();
 
-  const methods = useForm<LdapPayload>({defaultValues: emptySettings});
+  const methods = useForm<LdapPayload>({ defaultValues: emptySettings });
   const { handleSubmit, register, reset } = methods;
 
   const styles = useStyles2(getStyles);
@@ -105,7 +105,7 @@ export const LdapSettingsPage = (): JSX.Element => {
   if (!config.featureToggles.ssoSettingsLDAP) {
     return (
       <Alert title="invalid configuration">
-        <Trans i18nKey="ldap-settings-page.alert">
+        <Trans i18nKey="ldap-settings-page.alert.feature-flag-disabled">
           This page is only accessible by enabling the <strong>ssoSettingsLDAP</strong> feature flag.
         </Trans>
       </Alert>
@@ -133,14 +133,16 @@ export const LdapSettingsPage = (): JSX.Element => {
     }
   };
 
-  const onErrors = (errors: any) => {
+  const onErrors = () => {
     appEvents.publish({
       type: AppEvents.alertError.name,
       payload: [t('ldap-settings-page.alert.error-validate-form', 'Error validating LDAP settings')],
     });
-  }; 
+  };
 
-  // Button's Actions
+  /**
+   * Button's Actions
+   */
   const saveForm = async () => {
     try {
       const result = await getBackendSrv().put('/api/v1/sso-settings/ldap', formSettings);
@@ -166,7 +168,7 @@ export const LdapSettingsPage = (): JSX.Element => {
       setIsLoading(true);
       await getBackendSrv().delete('/api/v1/sso-settings/ldap');
       const payload = await getBackendSrv().get<LdapPayload>('/api/v1/sso-settings/ldap');
-      if (!payload) {
+      if (!payload || !payload.settings || !payload.settings.config) {
         appEvents.publish({
           type: AppEvents.alertError.name,
           payload: [t('ldap-settings-page.alert.error-update', 'Error updating LDAP settings')],
@@ -174,10 +176,6 @@ export const LdapSettingsPage = (): JSX.Element => {
         return;
       }
 
-      if (!payload.settings || !payload.settings.config) {
-        setIsLoading(false);
-        return;
-      }
       setFormSettings(payload);
     } catch (error) {
       appEvents.publish({
@@ -297,8 +295,8 @@ export const LdapSettingsPage = (): JSX.Element => {
                 </Box>
               </section>
             )}
-        </form>
-      </FormProvider>
+          </form>
+        </FormProvider>
       </Page.Contents>
     </Page>
   );
