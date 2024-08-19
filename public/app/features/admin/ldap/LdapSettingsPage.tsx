@@ -97,7 +97,7 @@ export const LdapSettingsPage = () => {
 
   useEffect(() => {
     reset(formSettings);
-  }, [formSettings]);
+  }, [reset, formSettings]);
 
   /**
    * Display warning if the feature flag is disabled
