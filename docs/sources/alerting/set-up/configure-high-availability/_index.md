@@ -171,7 +171,7 @@ You can also confirm your high availability setup by monitoring Alertmanager met
 
 You can confirm the number of Grafana instances in your alerting high availability setup by querying the `alertmanager_cluster_members` and `alertmanager_peer_position` metrics.
 
-But note that these alerting high availability metrics are exposed via the `/metrics` endpoint in Grafana, and are not automatically collected or displayed. If you have a Prometheus instance connected to Grafana, you can add a `scrape_config` to scrape Grafana metrics and then query these metrics in Explore.
+Note that these alerting high availability metrics are exposed via the `/metrics` endpoint in Grafana, and are not automatically collected or displayed. If you have a Prometheus instance connected to Grafana, add a `scrape_config` to scrape Grafana metrics and then query these metrics in Explore.
 
 ```yaml
 - job_name: grafana
