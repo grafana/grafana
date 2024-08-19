@@ -277,7 +277,7 @@ describe('Language completion provider', () => {
       const promise2 = provider.fetchLabelValues('testkey');
       const promise3 = provider.fetchLabelValues('testkeyNOPE');
       expect(requestSpy).toHaveBeenCalledTimes(2);
-      
+
       const values1 = await promise1;
       const values2 = await promise2;
       const values3 = await promise3;
