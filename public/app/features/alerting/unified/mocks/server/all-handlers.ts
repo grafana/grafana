@@ -9,6 +9,7 @@ import evalHandlers from 'app/features/alerting/unified/mocks/server/handlers/ev
 import folderHandlers from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import grafanaRulerHandlers from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
 import receiverK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/receivers.k8s';
+import templatesK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/templates.k8s';
 import timeIntervalK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
 import mimirRulerHandlers from 'app/features/alerting/unified/mocks/server/handlers/mimirRuler';
 import notificationsHandlers from 'app/features/alerting/unified/mocks/server/handlers/notifications';
@@ -17,7 +18,6 @@ import allPluginHandlers from 'app/features/alerting/unified/mocks/server/handle
 import provisioningHandlers from 'app/features/alerting/unified/mocks/server/handlers/provisioning';
 import searchHandlers from 'app/features/alerting/unified/mocks/server/handlers/search';
 import silenceHandlers from 'app/features/alerting/unified/mocks/server/handlers/silences';
-
 /**
  * Array of all mock handlers that are required across Alerting tests
  */
@@ -40,6 +40,7 @@ const allHandlers = [
   // Kubernetes-style handlers
   ...timeIntervalK8sHandlers,
   ...receiverK8sHandlers,
+  ...templatesK8sHandlers,
 ];
 
 export default allHandlers;
