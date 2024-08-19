@@ -1,4 +1,4 @@
-import { render, userEvent } from 'test/test-utils';
+import { render } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { AccessControlAction } from 'app/types/accessControl';
@@ -39,8 +39,8 @@ describe('data-source managed', () => {
       namespaceName: NAMESPACE_1,
     };
 
-    render(<DeleteTestComponent ruleGroupIdentifier={ruleGroupID} />);
-    await userEvent.click(byRole('button').get());
+    const { user } = render(<DeleteTestComponent ruleGroupIdentifier={ruleGroupID} />);
+    await user.click(byRole('button').get());
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
@@ -60,8 +60,8 @@ describe('Grafana managed', () => {
       namespaceName: grafanaRulerNamespace.uid,
     };
 
-    render(<DeleteTestComponent ruleGroupIdentifier={ruleGroupID} />);
-    await userEvent.click(byRole('button').get());
+    const { user } = render(<DeleteTestComponent ruleGroupIdentifier={ruleGroupID} />);
+    await user.click(byRole('button').get());
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 

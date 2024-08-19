@@ -1,4 +1,3 @@
-import userEvent from '@testing-library/user-event';
 import { produce } from 'immer';
 import { render } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
@@ -59,7 +58,7 @@ describe('Moving a Grafana managed rule', () => {
 
     const ruleID = fromRulerRuleAndRuleGroupIdentifier(currentRuleGroupID, ruleToMove);
 
-    render(
+    const { user } = render(
       <MoveRuleTestComponent
         currentRuleGroupIdentifier={currentRuleGroupID}
         targetRuleGroupIdentifier={targetRuleGroupID}
@@ -67,7 +66,7 @@ describe('Moving a Grafana managed rule', () => {
         rule={ruleToMove}
       />
     );
-    await userEvent.click(byRole('button').get());
+    await user.click(byRole('button').get());
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
@@ -88,7 +87,7 @@ describe('Moving a Grafana managed rule', () => {
       uid: 'does-not-exist',
     };
 
-    render(
+    const { user } = render(
       <MoveRuleTestComponent
         currentRuleGroupIdentifier={currentRuleGroupID}
         targetRuleGroupIdentifier={currentRuleGroupID}
@@ -96,7 +95,7 @@ describe('Moving a Grafana managed rule', () => {
         rule={grafanaRulerRule}
       />
     );
-    await userEvent.click(byRole('button').get());
+    await user.click(byRole('button').get());
 
     expect(await byText(/error/i).find()).toBeInTheDocument();
   });
@@ -131,7 +130,7 @@ describe('Moving a Data source managed rule', () => {
       draft.grafana_alert.title = 'updated rule title';
     });
 
-    render(
+    const { user } = render(
       <MoveRuleTestComponent
         currentRuleGroupIdentifier={currentRuleGroupID}
         targetRuleGroupIdentifier={targetRuleGroupID}
@@ -139,7 +138,7 @@ describe('Moving a Data source managed rule', () => {
         rule={newRule}
       />
     );
-    await userEvent.click(byRole('button').get());
+    await user.click(byRole('button').get());
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
@@ -168,7 +167,7 @@ describe('Moving a Data source managed rule', () => {
 
     const ruleID = fromRulerRuleAndRuleGroupIdentifier(currentRuleGroupID, ruleToMove);
 
-    render(
+    const { user } = render(
       <MoveRuleTestComponent
         currentRuleGroupIdentifier={currentRuleGroupID}
         targetRuleGroupIdentifier={targetRuleGroupID}
@@ -176,7 +175,7 @@ describe('Moving a Data source managed rule', () => {
         rule={ruleToMove}
       />
     );
-    await userEvent.click(byRole('button').get());
+    await user.click(byRole('button').get());
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
@@ -201,7 +200,7 @@ describe('Moving a Data source managed rule', () => {
       draft.grafana_alert.title = 'updated rule title';
     });
 
-    render(
+    const { user } = render(
       <MoveRuleTestComponent
         currentRuleGroupIdentifier={curentRuleGroupID}
         targetRuleGroupIdentifier={curentRuleGroupID}
@@ -209,7 +208,7 @@ describe('Moving a Data source managed rule', () => {
         rule={newRule}
       />
     );
-    await userEvent.click(byRole('button').get());
+    await user.click(byRole('button').get());
 
     expect(await byText(/error/i).find()).toBeInTheDocument();
   });

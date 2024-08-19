@@ -1,5 +1,5 @@
 import { produce } from 'immer';
-import { render, userEvent } from 'test/test-utils';
+import { render } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { AccessControlAction } from 'app/types/accessControl';
@@ -54,8 +54,10 @@ describe('Updating a Grafana managed rule', () => {
       draft.grafana_alert.title = 'updated rule title';
     });
 
-    render(<UpdateRuleTestComponent ruleGroupIdentifier={ruleGroupID} ruleID={ruleID} rule={newRule} />);
-    await userEvent.click(byRole('button').get());
+    const { user } = render(
+      <UpdateRuleTestComponent ruleGroupIdentifier={ruleGroupID} ruleID={ruleID} rule={newRule} />
+    );
+    await user.click(byRole('button').get());
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
@@ -88,7 +90,7 @@ describe('Updating a Grafana managed rule', () => {
       draft.grafana_alert.title = 'updated rule title';
     });
 
-    render(
+    const { user } = render(
       <UpdateRuleTestComponent
         ruleGroupIdentifier={ruleGroupID}
         targetRuleGroupIdentifier={targetRuleGroupID}
@@ -96,7 +98,7 @@ describe('Updating a Grafana managed rule', () => {
         rule={newRule}
       />
     );
-    await userEvent.click(byRole('button').get());
+    await user.click(byRole('button').get());
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
@@ -121,8 +123,10 @@ describe('Updating a Grafana managed rule', () => {
       draft.grafana_alert.title = 'updated rule title';
     });
 
-    render(<UpdateRuleTestComponent ruleGroupIdentifier={ruleGroupID} ruleID={ruleID} rule={newRule} />);
-    await userEvent.click(byRole('button').get());
+    const { user } = render(
+      <UpdateRuleTestComponent ruleGroupIdentifier={ruleGroupID} ruleID={ruleID} rule={newRule} />
+    );
+    await user.click(byRole('button').get());
 
     expect(await byText(/error: no rule matching identifier found/i).find()).toBeInTheDocument();
   });
@@ -143,8 +147,10 @@ describe('Updating a Grafana managed rule', () => {
       draft.grafana_alert.title = 'updated rule title';
     });
 
-    render(<UpdateRuleTestComponent ruleGroupIdentifier={ruleGroupID} ruleID={ruleID} rule={newRule} />);
-    await userEvent.click(byRole('button').get());
+    const { user } = render(
+      <UpdateRuleTestComponent ruleGroupIdentifier={ruleGroupID} ruleID={ruleID} rule={newRule} />
+    );
+    await user.click(byRole('button').get());
 
     expect(await byText(/error/i).find()).toBeInTheDocument();
   });
@@ -173,8 +179,10 @@ describe('Updating a Data source managed rule', () => {
       draft.grafana_alert.title = 'updated rule title';
     });
 
-    render(<UpdateRuleTestComponent ruleGroupIdentifier={ruleGroupID} ruleID={ruleID} rule={newRule} />);
-    await userEvent.click(byRole('button').get());
+    const { user } = render(
+      <UpdateRuleTestComponent ruleGroupIdentifier={ruleGroupID} ruleID={ruleID} rule={newRule} />
+    );
+    await user.click(byRole('button').get());
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
@@ -207,7 +215,7 @@ describe('Updating a Data source managed rule', () => {
       draft.grafana_alert.title = 'updated rule title';
     });
 
-    render(
+    const { user } = render(
       <UpdateRuleTestComponent
         ruleGroupIdentifier={ruleGroupID}
         targetRuleGroupIdentifier={targetRuleGroupID}
@@ -215,7 +223,7 @@ describe('Updating a Data source managed rule', () => {
         rule={newRule}
       />
     );
-    await userEvent.click(byRole('button').get());
+    await user.click(byRole('button').get());
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
@@ -239,8 +247,10 @@ describe('Updating a Data source managed rule', () => {
 
     const ruleID = fromRulerRuleAndRuleGroupIdentifier(ruleGroupID, newRule);
 
-    render(<UpdateRuleTestComponent ruleGroupIdentifier={ruleGroupID} ruleID={ruleID} rule={newRule} />);
-    await userEvent.click(byRole('button').get());
+    const { user } = render(
+      <UpdateRuleTestComponent ruleGroupIdentifier={ruleGroupID} ruleID={ruleID} rule={newRule} />
+    );
+    await user.click(byRole('button').get());
 
     expect(await byText(/error: no rule matching identifier found/i).find()).toBeInTheDocument();
   });
@@ -261,8 +271,10 @@ describe('Updating a Data source managed rule', () => {
       draft.grafana_alert.title = 'updated rule title';
     });
 
-    render(<UpdateRuleTestComponent ruleGroupIdentifier={ruleGroupID} ruleID={ruleID} rule={newRule} />);
-    await userEvent.click(byRole('button').get());
+    const { user } = render(
+      <UpdateRuleTestComponent ruleGroupIdentifier={ruleGroupID} ruleID={ruleID} rule={newRule} />
+    );
+    await user.click(byRole('button').get());
 
     expect(await byText(/error/i).find()).toBeInTheDocument();
   });

@@ -1,4 +1,4 @@
-import { render, userEvent } from 'test/test-utils';
+import { render } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { AccessControlAction } from 'app/types/accessControl';
@@ -40,8 +40,8 @@ describe('Creating a Grafana managed rule', () => {
 
     const rule = mockGrafanaRulerRule({ title: 'my new rule' });
 
-    render(<AddRuleTestComponent ruleGroupIdentifier={ruleGroupID} rule={rule} />);
-    await userEvent.click(byRole('button').get());
+    const { user } = render(<AddRuleTestComponent ruleGroupIdentifier={ruleGroupID} rule={rule} />);
+    await user.click(byRole('button').get());
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
@@ -61,8 +61,8 @@ describe('Creating a Grafana managed rule', () => {
 
     const rule = mockGrafanaRulerRule({ title: 'my new rule' });
 
-    render(<AddRuleTestComponent ruleGroupIdentifier={ruleGroupID} rule={rule} interval="15m" />);
-    await userEvent.click(byRole('button').get());
+    const { user } = render(<AddRuleTestComponent ruleGroupIdentifier={ruleGroupID} rule={rule} interval="15m" />);
+    await user.click(byRole('button').get());
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
@@ -80,8 +80,8 @@ describe('Creating a Grafana managed rule', () => {
 
     const rule = mockGrafanaRulerRule({ title: 'my new rule' });
 
-    render(<AddRuleTestComponent ruleGroupIdentifier={ruleGroupID} rule={rule} />);
-    await userEvent.click(byRole('button').get());
+    const { user } = render(<AddRuleTestComponent ruleGroupIdentifier={ruleGroupID} rule={rule} />);
+    await user.click(byRole('button').get());
 
     expect(await byText(/error/i).find()).toBeInTheDocument();
   });
@@ -103,8 +103,8 @@ describe('Creating a Data source managed rule', () => {
 
     const rule = mockRulerAlertingRule({ alert: 'my new rule' });
 
-    render(<AddRuleTestComponent ruleGroupIdentifier={ruleGroupID} rule={rule} />);
-    await userEvent.click(byRole('button').get());
+    const { user } = render(<AddRuleTestComponent ruleGroupIdentifier={ruleGroupID} rule={rule} />);
+    await user.click(byRole('button').get());
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
@@ -124,8 +124,8 @@ describe('Creating a Data source managed rule', () => {
 
     const rule = mockGrafanaRulerRule({ title: 'my new rule' });
 
-    render(<AddRuleTestComponent ruleGroupIdentifier={ruleGroupID} rule={rule} interval="15m" />);
-    await userEvent.click(byRole('button').get());
+    const { user } = render(<AddRuleTestComponent ruleGroupIdentifier={ruleGroupID} rule={rule} interval="15m" />);
+    await user.click(byRole('button').get());
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
