@@ -228,7 +228,7 @@
     {
       "metadata": {
         "name": "classic_conditions",
-        "resourceVersion": "1709915973363",
+        "resourceVersion": "1723675389127",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -273,7 +273,8 @@
                       "type": {
                         "enum": [
                           "and",
-                          "or"
+                          "or",
+                          "logic-or"
                         ],
                         "type": "string",
                         "x-enum-description": {}

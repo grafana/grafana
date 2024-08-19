@@ -6,12 +6,15 @@
     {
       "metadata": {
         "name": "accessActionSets",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-04-12T16:19:25Z"
+        "resourceVersion": "1723737724157",
+        "creationTimestamp": "2024-04-12T16:19:25Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-15 16:02:04.157828 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Introduces action sets for resource permissions",
-        "stage": "experimental",
+        "description": "Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions.",
+        "stage": "preview",
         "codeowner": "@grafana/identity-access-team"
       }
     },
@@ -527,6 +530,19 @@
         "description": "Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars",
         "stage": "preview",
         "codeowner": "@grafana/partner-datasources"
+      }
+    },
+    {
+      "metadata": {
+        "name": "backgroundPluginInstaller",
+        "resourceVersion": "1723202510081",
+        "creationTimestamp": "2024-08-09T11:21:50Z"
+      },
+      "spec": {
+        "description": "Enable background plugin installer",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true
       }
     },
     {
@@ -2026,6 +2042,22 @@
     },
     {
       "metadata": {
+        "name": "pluginsDetailsRightPanel",
+        "resourceVersion": "1720788722220",
+        "creationTimestamp": "2024-07-12T08:39:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-07-12 12:52:02.22099 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables right panel for the plugins details page",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginsFrontendSandbox",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-06-05T08:51:36Z"
@@ -2181,6 +2213,18 @@
         "stage": "experimental",
         "codeowner": "@grafana/observability-metrics",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "prometheusRunQueriesInParallel",
+        "resourceVersion": "1720677541862",
+        "creationTimestamp": "2024-07-11T05:59:01Z"
+      },
+      "spec": {
+        "description": "Enables running Prometheus queries in parallel",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/observability-metrics"
       }
     },
     {

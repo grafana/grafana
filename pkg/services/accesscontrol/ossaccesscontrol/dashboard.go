@@ -113,6 +113,9 @@ func ProvideDashboardPermissions(
 		Resource:          "dashboards",
 		ResourceAttribute: "uid",
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
+			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideDashboardPermissions.ResourceValidator")
+			defer span.End()
+
 			dashboard, err := getDashboard(ctx, orgID, resourceID)
 			if err != nil {
 				return err

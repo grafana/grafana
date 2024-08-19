@@ -207,15 +207,15 @@ func (m *LoggerMiddleware) MutateAdmission(ctx context.Context, req *backend.Adm
 	return resp, err
 }
 
-func (m *LoggerMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+func (m *LoggerMiddleware) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	if req == nil {
-		return m.next.ConvertObject(ctx, req)
+		return m.next.ConvertObjects(ctx, req)
 	}
 
 	var resp *backend.ConversionResponse
 	err := m.logRequest(ctx, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
 		var innerErr error
-		resp, innerErr = m.next.ConvertObject(ctx, req)
+		resp, innerErr = m.next.ConvertObjects(ctx, req)
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
 
