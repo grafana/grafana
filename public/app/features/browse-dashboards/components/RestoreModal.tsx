@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
-import { ConfirmModal, Text } from '@grafana/ui';
+import { ConfirmModal, Space, Text } from '@grafana/ui';
 
 import { FolderPicker } from '../../../core/components/Select/FolderPicker';
 import { Trans, t } from '../../../core/internationalization';
@@ -53,11 +53,13 @@ export const RestoreModal = ({
               This action will restore {{ numberOfDashboards }} dashboards.
             </Trans>
           </Text>
+          <Space v={3} />
           <Text element="p">
-            <Trans i18nKey="recently-deleted.restore-modal.folder-picker-text">
+            <Trans i18nKey="recently-deleted.restore-modal.folder-picker-text" count={numberOfDashboards}>
               Please choose a folder where your dashboards will be restored.
             </Trans>
           </Text>
+          <Space v={1} />
           <FolderPicker onChange={setRestoreTarget} value={restoreTarget} />
         </>
         // TODO: replace by list of dashboards (list up to 5 dashboards) or number (from 6 dashboards)?
