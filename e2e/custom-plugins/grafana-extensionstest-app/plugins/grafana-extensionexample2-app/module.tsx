@@ -1,4 +1,3 @@
-import React from 'react';
 import { AppPlugin } from '@grafana/data';
 import { App } from './components/App';
 import { testIds } from './testIds';

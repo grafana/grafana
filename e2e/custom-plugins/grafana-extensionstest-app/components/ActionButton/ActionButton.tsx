@@ -1,9 +1,9 @@
 import { PluginExtension, PluginExtensionLink, SelectableValue, locationUtil } from '@grafana/data';
 import { isPluginExtensionLink, locationService } from '@grafana/runtime';
 import { Button, ButtonGroup, ButtonSelect, Modal, Stack, ToolbarButton } from '@grafana/ui';
-import { testIds } from 'components/testIds';
+import { testIds } from '../testIds';
 
-import React, { ReactElement, useMemo, useState } from 'react';
+import { ReactElement, useMemo, useState } from 'react';
 
 type Props = {
   extensions: PluginExtension[];

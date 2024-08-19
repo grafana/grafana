@@ -1,4 +1,3 @@
-import React from 'react';
 import { testIds } from '../components/testIds';
 import { PluginPage, usePluginComponent } from '@grafana/runtime';
 

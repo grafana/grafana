@@ -1,7 +1,6 @@
-import React from 'react';
 import { testIds } from '../components/testIds';
 import { PluginPage, getPluginComponentExtensions, getPluginExtensions } from '@grafana/runtime';
-import { ActionButton } from 'components/ActionButton';
+import { ActionButton } from '../components/ActionButton';
 import { Stack } from '@grafana/ui';
 
 type AppExtensionContext = {};

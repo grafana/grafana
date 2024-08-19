@@ -1,9 +1,8 @@
 import { AppPlugin, PluginExtensionPanelContext, PluginExtensionPoints } from '@grafana/data';
 import { App } from './components/App';
-import React from 'react';
-import pluginJson from 'plugin.json';
-import { QueryModal } from 'components/QueryModal';
-import { selectQuery } from 'utils/utils';
+import { QueryModal } from './components/QueryModal';
+import { selectQuery } from './utils/utils';
+import pluginJson from './plugin.json';
 
 export const plugin = new AppPlugin<{}>()
   .setRootPage(App)

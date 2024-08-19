@@ -1,7 +1,7 @@
 import { DataQuery } from '@grafana/data';
 import { Button, FilterPill, Modal, Stack } from '@grafana/ui';
-import { testIds } from 'components/testIds';
-import React, { ReactElement, useState } from 'react';
+import { testIds } from '../testIds';
+import { ReactElement, useState } from 'react';
 import { selectQuery } from '../../utils/utils';
 
 type Props = {
