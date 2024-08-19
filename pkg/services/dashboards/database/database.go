@@ -618,7 +618,7 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 		if !d.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
 			sqlStatements = append(sqlStatements, statement{SQL: "DELETE FROM dashboard WHERE org_id = ? AND folder_uid = ? AND is_folder = ? AND deleted IS NULL", args: []any{dashboard.OrgID, dashboard.UID, d.store.DB().GetDialect().BooleanStr(false)}})
 
-			if err := d.deleteChildrenDashboardAssociations(sess, &dashboard); err != nil {
+			if err := d.deleteChildrenDashboardAssociations(sess, &dashboard, cmd.CheckProvisioning); err != nil {
 				return err
 			}
 		} else {
@@ -676,7 +676,7 @@ func (d *dashboardStore) deleteResourcePermissions(sess *db.Session, orgID int64
 	return err
 }
 
-func (d *dashboardStore) deleteChildrenDashboardAssociations(sess *db.Session, dashboard *dashboards.Dashboard) error {
+func (d *dashboardStore) deleteChildrenDashboardAssociations(sess *db.Session, dashboard *dashboards.Dashboard, checkProvisioning bool) error {
 	var dashIds []struct {
 		Id  int64
 		Uid string
@@ -688,9 +688,12 @@ func (d *dashboardStore) deleteChildrenDashboardAssociations(sess *db.Session, d
 
 	if len(dashIds) > 0 {
 		for _, dash := range dashIds {
-			provisioningData, _ := d.GetProvisionedDataByDashboardID(context.Background(), dash.Id)
-			if provisioningData != nil {
-				return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
+			if checkProvisioning {
+				// #TODO do a batch check for provisioning data
+				// Allow GetProvisionedDataByDashboardID to accept a slice or do a direct sql query
+				if provisioningData, _ := d.GetProvisionedDataByDashboardID(context.Background(), dash.Id); provisioningData != nil {
+					return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
+				}
 			}
 
 			// remove all access control permission with child dashboard scopes
@@ -984,7 +987,7 @@ func (d *dashboardStore) DeleteDashboardsInFolders(
 				return dashboards.ErrFolderNotFound
 			}
 
-			if err := d.deleteChildrenDashboardAssociations(sess, &dashboard); err != nil {
+			if err := d.deleteChildrenDashboardAssociations(sess, &dashboard, true); err != nil {
 				return err
 			}
 
