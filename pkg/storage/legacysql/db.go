@@ -30,13 +30,13 @@ type LegacyDatabaseHelper struct {
 
 	// table name locator
 	Table func(n string) string
-
-	// Indicate if the table space is prefixed
-	Prefixed bool
 }
 
 // Helper to pick the correct dialect
 func (h *LegacyDatabaseHelper) DialectForDriver() sqltemplate.Dialect {
+	if h.DB == nil {
+		return nil
+	}
 	return sqltemplate.DialectForDriver(string(h.DB.GetDBType()))
 }
 
