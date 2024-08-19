@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/apimachinery
 
-go 1.22.4
+go 1.23.0
 
 require (
 	github.com/grafana/authlib v0.0.0-20240814074258-eae7d47f01db // @grafana/identity-access-team
