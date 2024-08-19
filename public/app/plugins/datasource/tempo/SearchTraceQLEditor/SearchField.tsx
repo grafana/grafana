@@ -268,6 +268,6 @@ export const withTemplateVariableOptions = (options: SelectableValue[] | undefin
 };
 
 // Limit maximum options in select dropdowns for performance reasons
-export const maxOptions = 10000;
+export const maxOptions = 2000;
 
 export default SearchField;
