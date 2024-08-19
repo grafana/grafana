@@ -29,16 +29,17 @@ export function RecentlyDeletedActions() {
       .map(([uid]) => uid);
   }, [selectedItemsState.dashboard]);
 
-  const dashboardOrigin: { [key: string]: string } = {};
+  const dashboardOrigin: Record<string, string> = {};
   if (searchState.result) {
     const originalLocations = selectedDashboards.map((selectedDashboard) => {
       const index = searchState.result.view.fields.uid.values.findIndex((e) => e === selectedDashboard);
       return searchState.result?.view.fields.location.values[index];
     });
-    selectedDashboards.map((selectedDashboard, index) => {
+    selectedDashboards.forEach((selectedDashboard, index) => {
       dashboardOrigin[selectedDashboard] = originalLocations[index];
     });
   }
+  console.log(dashboardOrigin);
 
   const onActionComplete = () => {
     dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
@@ -53,7 +54,7 @@ export function RecentlyDeletedActions() {
     }
 
     const promises = selectedDashboards.map((uid) => {
-      return restoreDashboard({ dashboardUID: uid, targetFolder: restoreTarget });
+      return restoreDashboard({ dashboardUID: uid, targetFolderUID: restoreTarget });
     });
 
     await Promise.all(promises);

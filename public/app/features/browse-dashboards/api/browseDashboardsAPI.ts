@@ -57,7 +57,7 @@ interface ImportOptions {
 
 interface RestoreDashboardArgs {
   dashboardUID: string;
-  targetFolder: string;
+  targetFolderUID: string;
 }
 
 interface HardDeleteDashboardArgs {
@@ -395,10 +395,10 @@ export const browseDashboardsAPI = createApi({
 
     // restore a dashboard that got soft deleted
     restoreDashboard: builder.mutation<void, RestoreDashboardArgs>({
-      query: ({ dashboardUID, targetFolder }) => ({
+      query: ({ dashboardUID, targetFolderUID }) => ({
         url: `/dashboards/uid/${dashboardUID}/trash`,
         data: {
-          folderUid: targetFolder,
+          folderUid: targetFolderUID,
         },
         method: 'PATCH',
       }),
