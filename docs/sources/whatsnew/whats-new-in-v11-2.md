@@ -148,8 +148,6 @@ To try out the new alert history page, enable the `alertingCentralAlertHistory` 
 
 _Generally available in all editions of Grafana_
 
-<!-- Fix availability tags in WNIC-->
-
 Grafana Explore now allows for logs filtering and pinning in content outline.
 
 **Filtering Logs:** All log levels are now automatically available in the content outline. You can filter by log level, currently supported for Elasticsearch and Loki data sources. To select multiple filters, hold down the command key on Mac or the control key on Windows while clicking.
