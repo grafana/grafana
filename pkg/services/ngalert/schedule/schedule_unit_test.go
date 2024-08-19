@@ -65,18 +65,21 @@ func TestProcessTicks(t *testing.T) {
 
 	cacheServ := &datasources.FakeCacheService{}
 	evaluator := eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheServ, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest()))
+	rrSet := setting.RecordingRuleSettings{
+		Enabled: true,
+	}
 
 	schedCfg := SchedulerCfg{
-		BaseInterval:     cfg.BaseInterval,
-		C:                mockedClock,
-		AppURL:           appUrl,
-		EvaluatorFactory: evaluator,
-		RuleStore:        ruleStore,
-		Metrics:          testMetrics.GetSchedulerMetrics(),
-		AlertSender:      notifier,
-		FeatureToggles:   featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules),
-		Tracer:           testTracer,
-		Log:              log.New("ngalert.scheduler"),
+		BaseInterval:      cfg.BaseInterval,
+		C:                 mockedClock,
+		AppURL:            appUrl,
+		EvaluatorFactory:  evaluator,
+		RuleStore:         ruleStore,
+		Metrics:           testMetrics.GetSchedulerMetrics(),
+		AlertSender:       notifier,
+		RecordingRulesCfg: rrSet,
+		Tracer:            testTracer,
+		Log:               log.New("ngalert.scheduler"),
 	}
 	managerCfg := state.ManagerCfg{
 		Metrics:       testMetrics.GetStateMetrics(),
@@ -854,23 +857,26 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 	cfg := setting.UnifiedAlertingSettings{
 		BaseInterval: time.Second,
 		MaxAttempts:  1,
+		RecordingRules: setting.RecordingRuleSettings{
+			Enabled: true,
+		},
 	}
 
 	fakeRecordingWriter := writer.FakeWriter{}
 
 	schedCfg := SchedulerCfg{
-		BaseInterval:     cfg.BaseInterval,
-		MaxAttempts:      cfg.MaxAttempts,
-		C:                mockedClock,
-		AppURL:           appUrl,
-		EvaluatorFactory: evaluator,
-		RuleStore:        rs,
-		FeatureToggles:   featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules),
-		Metrics:          m.GetSchedulerMetrics(),
-		AlertSender:      senderMock,
-		Tracer:           testTracer,
-		Log:              log.New("ngalert.scheduler"),
-		RecordingWriter:  fakeRecordingWriter,
+		BaseInterval:      cfg.BaseInterval,
+		MaxAttempts:       cfg.MaxAttempts,
+		C:                 mockedClock,
+		AppURL:            appUrl,
+		EvaluatorFactory:  evaluator,
+		RuleStore:         rs,
+		RecordingRulesCfg: cfg.RecordingRules,
+		Metrics:           m.GetSchedulerMetrics(),
+		AlertSender:       senderMock,
+		Tracer:            testTracer,
+		Log:               log.New("ngalert.scheduler"),
+		RecordingWriter:   fakeRecordingWriter,
 	}
 	managerCfg := state.ManagerCfg{
 		Metrics:                 m.GetStateMetrics(),
