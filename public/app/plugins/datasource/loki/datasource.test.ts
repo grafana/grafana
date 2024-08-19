@@ -1566,6 +1566,7 @@ describe('LokiDatasource', () => {
           expr: '{label="value"}',
           queryType: LokiQueryType.Range,
           refId: 'log-sample-A',
+          supportingQueryType: SupportingQueryType.LogsSample,
           maxLines: 5,
         });
       });
