@@ -24,7 +24,7 @@ echo starting server
 
 cp -r ./bin $RUNDIR
 cp -r ./tools $RUNDIR
-ln -s $(realpath ./public) scripts/grafana-server/tmp
+ln -s $(realpath ./public) $RUNDIR
 
 
 mkdir $RUNDIR/conf
