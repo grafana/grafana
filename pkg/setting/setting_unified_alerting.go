@@ -124,6 +124,7 @@ type UnifiedAlertingSettings struct {
 }
 
 type RecordingRuleSettings struct {
+	Enabled           bool
 	URL               string
 	BasicAuthUsername string
 	BasicAuthPassword string
@@ -421,6 +422,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	rr := iniFile.Section("recording_rules")
 	uaCfgRecordingRules := RecordingRuleSettings{
+		Enabled:           rr.Key("enabled").MustBool(false),
 		URL:               rr.Key("url").MustString(""),
 		BasicAuthUsername: rr.Key("basic_auth_username").MustString(""),
 		BasicAuthPassword: rr.Key("basic_auth_password").MustString(""),
