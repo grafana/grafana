@@ -69,8 +69,13 @@ The first option to configure is the name of your connection:
 
 {{< admonition type="note" >}}
 
-- **Timeout** - The HTTP request timeout. This must be in seconds. Default is 30 seconds.
-### Auth section
+If you're running Grafana and Prometheus together in different container environments, each localhost refers to its own container - if the server URL is localhost:9090, that means port 9090 inside the Grafana container, not port 9090 on the host machine.
+
+You should use the IP address of the Prometheus container, or the hostname if you are using Docker Compose. Alternatively, you can consider `http://host.docker.internal:9090`.
+
+{{< /admonition >}}
+
+### Authentication section
 
 There are several authentication methods you can choose in the Authentication section.
 
