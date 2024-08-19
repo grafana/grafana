@@ -1,4 +1,4 @@
-package ssosettings
+package sso
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	ssov0 "github.com/grafana/grafana/pkg/apis/ssosettings/v0alpha1"
+	ssov0 "github.com/grafana/grafana/pkg/apis/sso/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssomodels "github.com/grafana/grafana/pkg/services/ssosettings/models"

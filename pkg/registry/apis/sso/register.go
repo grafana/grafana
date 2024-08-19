@@ -14,7 +14,7 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	ssov0 "github.com/grafana/grafana/pkg/apis/ssosettings/v0alpha1"
+	ssov0 "github.com/grafana/grafana/pkg/apis/sso/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
