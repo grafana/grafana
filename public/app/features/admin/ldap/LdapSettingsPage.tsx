@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 
 import { AppEvents, GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { getBackendSrv, getAppEvents } from '@grafana/runtime';
-import { useStyles2, Alert, Box, Button, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
+import { useStyles2, Alert, Box, Button, Field, Input, Stack, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
@@ -71,10 +71,10 @@ const emptySettings: LdapPayload = {
 
 export const LdapSettingsPage = (): JSX.Element => {
   const [isLoading, setIsLoading] = useState(true);
-  const [formSettings, setFormSettings] = useState<LdapPayload>(emptySettings);
+  const [formSettings, setFormSettings] = useState<LdapPayload>();
 
-  const methods = useForm<LdapPayload>({defaultValues: formSettings});
-  const { handleSubmit, register } = methods;
+  const methods = useForm<LdapPayload>({defaultValues: emptySettings});
+  const { handleSubmit, register, reset } = methods;
 
   const styles = useStyles2(getStyles);
 
@@ -94,6 +94,10 @@ export const LdapSettingsPage = (): JSX.Element => {
     }
     init();
   }, []);
+
+  useEffect(() => {
+    reset(formSettings);
+  }, [formSettings]);
 
   /**
    * Display warning if the feature flag is disabled
@@ -203,7 +207,6 @@ export const LdapSettingsPage = (): JSX.Element => {
                     id="host"
                     placeholder={t('ldap-settings-page.host.placeholder', 'example: 127.0.0.1')}
                     type="text"
-                    defaultValue={formSettings.settings?.config?.servers[0]?.host}
                     {...register('settings.config.servers.0.host', { required: true })}
                   />
                 </Field>
@@ -219,7 +222,6 @@ export const LdapSettingsPage = (): JSX.Element => {
                     id="bind-dn"
                     placeholder={t('ldap-settings-page.bind-dn.placeholder', 'example: cn=admin,dc=grafana,dc=org')}
                     type="text"
-                    defaultValue={formSettings.settings.config.servers[0].bind_dn}
                     {...register('settings.config.servers.0.bind_dn')}
                   />
                 </Field>
@@ -227,7 +229,6 @@ export const LdapSettingsPage = (): JSX.Element => {
                   <Input
                     id="bind-password"
                     type="text"
-                    defaultValue={formSettings.settings.config.servers[0].bind_password}
                     {...register('settings.config.servers.0.bind_password', { required: false })}
                   />
                 </Field>
@@ -243,7 +244,6 @@ export const LdapSettingsPage = (): JSX.Element => {
                     id="search_filter"
                     placeholder={t('ldap-settings-page.search_filter.placeholder', 'example: cn=%s')}
                     type="text"
-                    defaultValue={formSettings.settings.config.servers[0].search_filter}
                     {...register('settings.config.servers.0.search_filter', { required: true })}
                   />
                 </Field>
@@ -259,27 +259,9 @@ export const LdapSettingsPage = (): JSX.Element => {
                     id="search-base-dns"
                     placeholder={t('ldap-settings-page.search-base-dns.placeholder', 'example: "dc=grafana.dc=org"')}
                     type="text"
-                    defaultValue={formSettings.settings.config.servers[0].search_base_dns}
-                    {...register('settings.config.servers.0.search_base_dns', { required: true, setValueAs: (value) => [value] })}
+                    {...register('settings.config.servers.0.search_base_dns', { required: true })}
                   />
                 </Field>
-                <Box borderColor="strong" borderStyle="solid" padding={2} width={68}>
-                  <Stack alignItems={'center'} direction={'row'} gap={2} justifyContent={'space-between'}>
-                    <Stack alignItems={'start'} direction={'column'}>
-                      <Text element="h2">
-                        <Trans i18nKey="ldap-settings-page.advanced-settings-section.title">Advanced Settings</Trans>
-                      </Text>
-                      <Text>
-                        <Trans i18nKey="ldap-settings-page.advanced-settings-section.subtitle">
-                          Mappings, extra security measures, and more.
-                        </Trans>
-                      </Text>
-                    </Stack>
-                    <Button variant="secondary">
-                      <Trans i18nKey="ldap-settings-page.advanced-settings-section.edit.button">Edit</Trans>
-                    </Button>
-                  </Stack>
-                </Box>
                 <Box display={'flex'} gap={2} marginTop={5}>
                   <Stack alignItems={'center'} gap={2}>
                     <Button type={'submit'}>
