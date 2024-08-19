@@ -17,10 +17,10 @@ var (
 )
 
 type legacySQLStore struct {
-	sql legacysql.LegacyDatabaseInfoProvider
+	sql legacysql.LegacyDatabaseProvider
 }
 
-func NewLegacySQLStores(sql legacysql.LegacyDatabaseInfoProvider) LegacyIdentityStore {
+func NewLegacySQLStores(sql legacysql.LegacyDatabaseProvider) LegacyIdentityStore {
 	return &legacySQLStore{
 		sql: sql,
 	}

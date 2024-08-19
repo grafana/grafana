@@ -10,9 +10,9 @@ import (
 )
 
 // The database may depend on the request context
-type LegacyDatabaseInfoProvider func(ctx context.Context) (*LegacyDatabaseHelper, error)
+type LegacyDatabaseProvider func(ctx context.Context) (*LegacyDatabaseHelper, error)
 
-func NewLegacyDatabaseInfoProvider(db db.DB) LegacyDatabaseInfoProvider {
+func NewLegacyDatabaseProvider(db db.DB) LegacyDatabaseProvider {
 	helper := &LegacyDatabaseHelper{
 		DB: db,
 		Table: func(n string) string {
@@ -57,5 +57,10 @@ func (h *LegacyDatabaseHelper) GetResourceVersion(ctx context.Context, table str
 		}
 		return err
 	})
+
+	// No RV when empty
+	if rv < 0 {
+		rv = 0
+	}
 	return rv, nil
 }

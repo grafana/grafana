@@ -45,7 +45,7 @@ type dashboardRow struct {
 }
 
 type dashboardSqlAccess struct {
-	sql          legacysql.LegacyDatabaseInfoProvider
+	sql          legacysql.LegacyDatabaseProvider
 	namespacer   request.NamespaceMapper
 	provisioning provisioning.ProvisioningService
 
@@ -57,7 +57,7 @@ type dashboardSqlAccess struct {
 	mutex       sync.Mutex
 }
 
-func NewDashboardAccess(sql legacysql.LegacyDatabaseInfoProvider,
+func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	namespacer request.NamespaceMapper,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
@@ -79,10 +79,7 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyD
 		// }
 	}
 
-	req := sqlQuery{
-		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
-		Query:       query,
-	}
+	req := newQueryReq(sql, query)
 
 	tmpl := sqlQueryDashboards
 	if query.UseHistoryTable() && query.GetTrash {
