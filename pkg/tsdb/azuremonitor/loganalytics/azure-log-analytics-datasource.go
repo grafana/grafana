@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -144,7 +145,7 @@ func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context
 	for _, query := range queries {
 		res, err := e.executeQuery(ctx, query, dsInfo, client, url)
 		if err != nil {
-			result.Responses[query.RefID] = backend.DataResponse{Error: err}
+			errorsource.AddErrorToResponse(query.RefID, result, err)
 			continue
 		}
 		result.Responses[query.RefID] = *res
@@ -262,7 +263,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.DataResponse, error) {
 	// If azureLogAnalyticsSameAs is defined and set to false, return an error
 	if sameAs, ok := dsInfo.JSONData["azureLogAnalyticsSameAs"]; ok && !sameAs.(bool) {
-		return nil, fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials")
+		return nil, errorsource.DownstreamError(fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials"), false)
 	}
 
 	queryJSONModel := dataquery.AzureMonitorQuery{}
@@ -273,7 +274,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	if query.QueryType == dataquery.AzureQueryTypeAzureTraces {
 		if query.ResultFormat == dataquery.ResultFormatTrace && query.Query == "" {
-			return nil, fmt.Errorf("cannot visualise trace events using the trace visualiser")
+			return nil, errorsource.DownstreamError(fmt.Errorf("cannot visualise trace events using the trace visualiser"), false)
 		}
 	}
 
@@ -294,7 +295,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	res, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, errorsource.DownstreamError(err, false)
 	}
 
 	defer func() {
@@ -675,7 +676,7 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	}()
 
 	if res.StatusCode/100 != 2 {
-		return AzureLogAnalyticsResponse{}, fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body))
+		return AzureLogAnalyticsResponse{}, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body)), false)
 	}
 
 	var data AzureLogAnalyticsResponse

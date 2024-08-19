@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -59,7 +60,7 @@ func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, ori
 	for _, query := range queries {
 		res, err := e.executeQuery(ctx, query, dsInfo, client, url)
 		if err != nil {
-			result.Responses[query.RefID] = backend.DataResponse{Error: err}
+			errorsource.AddErrorToResponse(query.RefID, result, err)
 			continue
 		}
 		result.Responses[query.RefID] = *res
@@ -288,7 +289,7 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 	}
 
 	if res.StatusCode/100 != 2 {
-		return "", fmt.Errorf("request failed, status: %s, error: %s", res.Status, string(body))
+		return "", errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("request failed, status: %s, error: %s", res.Status, string(body)), false)
 	}
 
 	var data types.SubscriptionsResponse
@@ -325,7 +326,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.
 
 	res, err := cli.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, errorsource.DownstreamError(err, false)
 	}
 
 	defer func() {
@@ -370,7 +371,7 @@ func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (types.Az
 	}
 
 	if res.StatusCode/100 != 2 {
-		return types.AzureMonitorResponse{}, fmt.Errorf("request failed, status: %s, error: %s", res.Status, string(body))
+		return types.AzureMonitorResponse{}, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body)), false)
 	}
 
 	var data types.AzureMonitorResponse

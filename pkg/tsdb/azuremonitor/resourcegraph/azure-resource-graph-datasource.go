@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -71,7 +72,7 @@ func (e *AzureResourceGraphDatasource) ExecuteTimeSeriesQuery(ctx context.Contex
 	for _, query := range queries {
 		res, err := e.executeQuery(ctx, query, dsInfo, client, url)
 		if err != nil {
-			result.Responses[query.RefID] = backend.DataResponse{Error: err}
+			errorsource.AddErrorToResponse(query.RefID, result, err)
 			continue
 		}
 		result.Responses[query.RefID] = *res
@@ -164,7 +165,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 
 	res, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, errorsource.DownstreamError(err, false)
 	}
 
 	defer func() {
@@ -224,7 +225,7 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (Az
 	}()
 
 	if res.StatusCode/100 != 2 {
-		return AzureResourceGraphResponse{}, fmt.Errorf("%s. Azure Resource Graph error: %s", res.Status, string(body))
+		return AzureResourceGraphResponse{}, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("%s. Azure Resource Graph error: %s", res.Status, string(body)), false)
 	}
 
 	var data AzureResourceGraphResponse
