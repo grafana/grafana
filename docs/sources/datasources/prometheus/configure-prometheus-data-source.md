@@ -69,8 +69,7 @@ The first option to configure is the name of your connection:
 
 - **Allowed cookies** - Specify cookies by name that should be forwarded to the data source. The Grafana proxy deletes all forwarded cookies by default.
 
-- **Timeout** - The HTTP request timeout. This must be in seconds. There is no default, so this setting is up to you.
-
+- **Timeout** - The HTTP request timeout. This must be in seconds. Default is 30 seconds.
 ### Auth section
 
 There are several authentication methods you can choose in the Authentication section.
