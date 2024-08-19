@@ -1,6 +1,8 @@
 package provisioning
 
 import (
+	"strings"
+
 	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -41,7 +43,7 @@ func PostableGrafanaReceiverToEmbeddedContactPoint(contactPoint *definitions.Pos
 		if decryptedValue == "" {
 			continue
 		}
-		embeddedContactPoint.Settings.Set(k, decryptedValue)
+		embeddedContactPoint.Settings.SetPath(strings.Split(k, "."), decryptedValue)
 	}
 	return embeddedContactPoint, nil
 }
