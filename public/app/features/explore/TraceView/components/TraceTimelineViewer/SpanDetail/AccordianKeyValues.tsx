@@ -135,7 +135,7 @@ export default function AccordianKeyValues({
   linksGetter,
   onToggle = null,
 }: AccordianKeyValuesProps) {
-  const isEmpty = !Array.isArray(data) || !data.length;
+  const isEmpty = (!Array.isArray(data) || !data.length) && !logName;
   const styles = useStyles2(getStyles);
   const iconCls = cx(alignIcon, { [styles.emptyIcon]: isEmpty });
   let arrow: React.ReactNode | null = null;

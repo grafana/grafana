@@ -113,7 +113,8 @@ export default function AccordianLogs({
             const duration = (
               <KeyValuesSummary data={[{ key: 'duration', value: formattedDuration }]}></KeyValuesSummary>
             );
-            const formattedLogName = log.name && log.name.length > 20 ? log.name.slice(0, 20) + '...' : log.name;
+            const truncateLogNameInSummary = log.name && log.name.length > 20;
+            const formattedLogName = log.name && truncateLogNameInSummary ? log.name.slice(0, 20) + '...' : log.name;
             const label = formattedLogName ? (
               <span>
                 {formattedLogName} ({duration})
@@ -127,7 +128,7 @@ export default function AccordianLogs({
                 key={`${log.timestamp}-${i}`}
                 className={i < logs.length - 1 ? styles.AccordianKeyValuesItem : null}
                 data={log.fields || []}
-                logName={log.name}
+                logName={truncateLogNameInSummary ? log.name : undefined}
                 highContrast
                 interactive={interactive}
                 isOpen={openedItems ? openedItems.has(log) : false}

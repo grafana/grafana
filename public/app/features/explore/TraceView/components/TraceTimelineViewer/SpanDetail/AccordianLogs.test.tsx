@@ -74,6 +74,31 @@ describe('AccordianLogs tests', () => {
     expect(screen.getByText(/^else$/)).toBeInTheDocument();
   });
 
+  it('shows log entries and long event name when expanded', () => {
+    const longNameLog = {
+      timestamp: 20,
+      name: 'This is a very very very very very very very long name',
+      fields: [{ key: 'foo', value: 'test' }],
+    };
+
+    setup({
+      isOpen: true,
+      logs: [longNameLog],
+      openedItems: new Set([longNameLog]),
+    } as AccordianLogsProps);
+
+    expect(
+      screen.getByRole('switch', {
+        name: 'This is a very very ... ( duration = 15μs)',
+      })
+    ).toBeInTheDocument();
+
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.queryAllByRole('cell')).toHaveLength(6);
+    expect(screen.getByText(/^event name$/)).toBeInTheDocument();
+    expect(screen.getByText(/This is a very very very very very very very long name/)).toBeInTheDocument();
+  });
+
   it('renders event name and duration when events list is closed', () => {
     setup({ isOpen: true, openedItems: new Set() } as AccordianLogsProps);
     expect(
