@@ -31,15 +31,11 @@ export function RecentlyDeletedActions() {
 
   const dashboardOrigin: Record<string, string> = {};
   if (searchState.result) {
-    const originalLocations = selectedDashboards.map((selectedDashboard) => {
+    for (const selectedDashboard of selectedDashboards) {
       const index = searchState.result.view.fields.uid.values.findIndex((e) => e === selectedDashboard);
-      return searchState.result?.view.fields.location.values[index];
-    });
-    selectedDashboards.forEach((selectedDashboard, index) => {
-      dashboardOrigin[selectedDashboard] = originalLocations[index];
-    });
+      dashboardOrigin[selectedDashboard] = searchState.result.view.fields.location.values[index];
+    }
   }
-  console.log(dashboardOrigin);
 
   const onActionComplete = () => {
     dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
