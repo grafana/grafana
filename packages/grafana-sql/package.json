@@ -34,7 +34,7 @@
     "uuid": "9.0.1"
   },
   "devDependencies": {
-    "@grafana/tsconfig": "^1.3.0-rc1",
+    "@grafana/tsconfig": "^2.0.0",
     "@testing-library/dom": "10.0.0",
     "@testing-library/jest-dom": "^6.1.2",
     "@testing-library/react": "15.0.2",

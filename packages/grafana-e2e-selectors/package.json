@@ -49,7 +49,7 @@
     "rollup-plugin-node-externals": "^5.0.0"
   },
   "dependencies": {
-    "@grafana/tsconfig": "^1.3.0-rc1",
+    "@grafana/tsconfig": "^2.0.0",
     "tslib": "2.6.3",
     "typescript": "5.4.5"
   }
