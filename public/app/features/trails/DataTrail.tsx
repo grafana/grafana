@@ -89,7 +89,7 @@ export interface DataTrailState extends SceneObjectState {
 // - [x] filter for metrics that are related to otel resources
 // - [x] refilter metrics, build layout on change of otel targets
 // - [x] move the toggle into the settings
-// - [ ] default to otel experience on if DS has otel resources
+// - [x] default to otel experience on if DS has otel resources
 // - [ ] show the labels in the breakdown
 // - [ ] order the labels by importance
 // - [ ] clear otel filters and otel join query on changing data source
@@ -292,27 +292,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     this.setState(stateUpdate);
   }
 
-  // public async checkDataSourceForOTelResources() {
-  //   // make sure to turn hasOtelResources and useOtelResources flags off if we change the data source
-  //   // call up in to the parent trail
-  //   const trail = getTrailFor(this);
-
-  //   // get the time range
-  //   const timeRange: RawTimeRange | undefined = trail.state.$timeRange?.state;
-
-  //   const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
-
-  //   if (timeRange) {
-  //     const otelTargets = await totalOtelResources(datasourceUid, timeRange);
-
-  //     const hasOtelResources = otelTargets.job !== '' && otelTargets.instance !== '';
-
-  //     // default otel experience to false, then update later when we check standardization
-  //     // can't set the targets here, there are too many, will break the metrics query
-  //     this.setState({ hasOtelResources, useOtelExperience: hasOtelResources });
-  //   }
-  // }
-
   /**
    * Check that the data source has otel resources
    * Check that the data source is standard for OTEL
@@ -414,35 +393,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       } else {
         this.setState({ hasOtelResources, useOtelExperience: false });
       }
-    }
-  }
-
-  public async loadOtelResources() {
-    // call up in to the parent trail
-    const trail = getTrailFor(this);
-    // get the otel resources variable
-    const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, this);
-    // get the time range
-    const timeRange: RawTimeRange | undefined = trail.state.$timeRange?.state;
-
-    if (timeRange && otelResourcesVariable instanceof AdHocFiltersVariable) {
-      // get the data source UID for making calls to the DS
-      const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
-      const excludedFilters = getOtelFilterKeys(otelResourcesVariable);
-      // get a list of labels for target info
-      const resources = await getOtelResources(datasourceUid, timeRange, excludedFilters);
-
-      if (resources.length === 0) {
-        return;
-      }
-
-      const otelLabels = resources.map((resource) => {
-        return { text: resource };
-      });
-
-      this.setState({ otelResources: resources });
-
-      otelResourcesVariable?.setState({ defaultKeys: otelLabels, hide: VariableHide.hideLabel });
     }
   }
 
