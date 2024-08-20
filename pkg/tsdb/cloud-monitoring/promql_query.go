@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/converter"
 	jsoniter "github.com/json-iterator/go"
 )
@@ -22,8 +23,7 @@ func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryD
 	dr := &backend.DataResponse{}
 	projectName, err := s.ensureProject(ctx, dsInfo, promQLQ.parameters.ProjectName)
 	if err != nil {
-		dr.Error = err
-		return dr, backend.DataResponse{}, "", nil
+		return dr, backend.DataResponse{}, "", err
 	}
 	r, err := createRequest(ctx, &dsInfo, path.Join("/v1/projects", projectName, "location/global/prometheus/api/v1/query_range"), nil)
 	if err != nil {
@@ -43,8 +43,7 @@ func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryD
 
 	res, err := doRequestProm(r, dsInfo, requestBody)
 	if err != nil {
-		dr.Error = err
-		return dr, backend.DataResponse{}, "", nil
+		return dr, backend.DataResponse{}, "", err
 	}
 
 	defer func() {
@@ -67,7 +66,7 @@ func doRequestProm(r *http.Request, dsInfo datasourceInfo, body map[string]any) 
 	}
 	res, err := dsInfo.services[cloudMonitor].client.Do(r)
 	if err != nil {
-		return res, err
+		return res, errorsource.DownstreamError(err, false)
 	}
 
 	return res, nil

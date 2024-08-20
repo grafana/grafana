@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -84,7 +85,7 @@ func doRequestPage(ctx context.Context, r *http.Request, dsInfo datasourceInfo, 
 	}
 	res, err := dsInfo.services[cloudMonitor].client.Do(r)
 	if err != nil {
-		return cloudMonitoringResponse{}, err
+		return cloudMonitoringResponse{}, errorsource.DownstreamError(err, false)
 	}
 
 	defer func() {
@@ -141,8 +142,7 @@ func runTimeSeriesRequest(ctx context.Context, req *backend.QueryDataRequest,
 	dr := &backend.DataResponse{}
 	projectName, err := s.ensureProject(ctx, dsInfo, projectName)
 	if err != nil {
-		dr.Error = err
-		return dr, cloudMonitoringResponse{}, "", nil
+		return dr, cloudMonitoringResponse{}, "", err
 	}
 	timeSeriesMethod := "timeSeries"
 	if body != nil {
@@ -150,8 +150,7 @@ func runTimeSeriesRequest(ctx context.Context, req *backend.QueryDataRequest,
 	}
 	r, err := createRequest(ctx, &dsInfo, path.Join("/v3/projects", projectName, timeSeriesMethod), nil)
 	if err != nil {
-		dr.Error = err
-		return dr, cloudMonitoringResponse{}, "", nil
+		return dr, cloudMonitoringResponse{}, "", err
 	}
 
 	span := traceReq(ctx, req, dsInfo, r, params.Encode())
@@ -159,8 +158,7 @@ func runTimeSeriesRequest(ctx context.Context, req *backend.QueryDataRequest,
 
 	d, err := doRequestWithPagination(ctx, r, dsInfo, params, body, logger)
 	if err != nil {
-		dr.Error = err
-		return dr, cloudMonitoringResponse{}, "", nil
+		return dr, cloudMonitoringResponse{}, "", err
 	}
 
 	return dr, d, r.URL.RawQuery, nil
