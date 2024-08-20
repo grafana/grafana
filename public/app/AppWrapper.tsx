@@ -186,8 +186,18 @@ function ExperimentalSplitPaneTree(props: { routes?: JSX.Element | false }) {
     direction: 'row',
     initialSize: 0.6,
     dragPosition: 'end',
-    allowOverflow: true,
   });
+
+  // The style changes allow the resizing to be more flexible and not constrained by the content dimensions. In the
+  // future this could be a switch in the useSplitter but for now it's here until this feature is more final.
+  function alterStyles<T extends { style: React.CSSProperties }>(props: T): T {
+    return {
+      ...props,
+      style: { ...props.style, overflow: 'auto', minWidth: 'unset', minHeight: 'unset' },
+    };
+  }
+  primaryProps = alterStyles(primaryProps);
+  secondaryProps = alterStyles(secondaryProps);
 
   const styles = useStyles2(getStyles);
   const memoryLocationService = new HistoryWrapper(H.createMemoryHistory({ initialEntries: ['/'] }));

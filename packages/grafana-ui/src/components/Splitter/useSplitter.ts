@@ -21,7 +21,6 @@ export interface UseSplitterOptions {
    */
   onSizeChanged?: (flexSize: number, pixelSize: number) => void;
   onResizing?: (flexSize: number, pixelSize: number) => void;
-  allowOverflow?: boolean;
 }
 
 const PIXELS_PER_MS = 0.3 as const;
@@ -303,12 +302,12 @@ export function useSplitter(options: UseSplitterOptions) {
 
   const primaryStyles: React.CSSProperties = {
     flexGrow: clamp(initialSize ?? 0.5, 0, 1),
-    ...(options.allowOverflow ? { overflow: 'auto' } : { [minDimProp]: 'min-content' }),
+    [minDimProp]: 'min-content',
   };
 
   const secondaryStyles: React.CSSProperties = {
     flexGrow: clamp(1 - initialSize, 0, 1),
-    ...(options.allowOverflow ? { overflow: 'auto' } : { [minDimProp]: 'min-content' }),
+    [minDimProp]: 'min-content',
   };
 
   return {
