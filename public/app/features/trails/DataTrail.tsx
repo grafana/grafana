@@ -48,6 +48,7 @@ import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { reportChangeInLabelFilters } from './interactions';
 import { getDeploymentEnvironments, getOtelResources, isOtelStandardization, totalOtelResources } from './otel/api';
 import { OtelResourcesObject, OtelTargetType } from './otel/types';
+import { sortResources } from './otel/util';
 import {
   getVariablesWithOtelJoinQueryConstant,
   MetricSelectedEvent,
@@ -90,10 +91,10 @@ export interface DataTrailState extends SceneObjectState {
 // - [x] refilter metrics, build layout on change of otel targets
 // - [x] move the toggle into the settings
 // - [x] default to otel experience on if DS has otel resources
-// - [ ] show the labels in the breakdown
-// - [ ] order the labels by importance
+// - [x] sort the labels by blessed list
 // - [ ] clear otel filters and otel join query on changing data source
 // - [ ] clear state checks like hasOtelResources when data source is changed
+// - [ ] show the labels in the breakdown
 // - [ ] update the url by all the state
 // - [ ] test the limit of a match string when filtering metrics in MetricSelectScene
 
@@ -337,10 +338,12 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
         // get the labels for otel resources
         const excludedFilters = getOtelFilterKeys(otelResourcesVariable);
-        const resources = await getOtelResources(datasourceUid, timeRange, excludedFilters);
+        let resources = await getOtelResources(datasourceUid, timeRange, excludedFilters);
         if (resources.length === 0) {
           return;
         }
+
+        resources = sortResources(resources);
 
         // make the variable options
         const otelLabels = resources.map((resource) => {
