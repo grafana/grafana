@@ -86,9 +86,8 @@ export interface DataTrailState extends SceneObjectState {
 }
 
 // NEXT WORK,
-// - [ ] build layout on change of otel things
 // - [x] filter for metrics that are related to otel resources
-// - [ ] requery panels on change of otel variables
+// - [x] refilter metrics, build layout on change of otel targets
 // - [ ] move the toggle into the settings
 // - [ ] show the labels in the breakdown
 // - [ ] order the labels by importance

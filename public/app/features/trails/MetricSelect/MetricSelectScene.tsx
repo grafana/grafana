@@ -208,14 +208,24 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
 
     const matchTerms = [];
 
+    let noOtelMetrics = false;
+
     if (trail.state.useOtelExperience) {
-      // add the job and instance filters
-      // but be careful, because these might get overriden
-      // I think it will be fine that they are overidden
-      // NOTE: test the limit of size of filters we can add, limit otel filters if there are too many
-      // test this with a customer with a larger amount of targets
-      matchTerms.push(`job=~${trail.state.otelTargets?.job}`);
-      matchTerms.push(`instance=~${trail.state.otelTargets?.instance}`);
+      const jobsRegex = trail.state.otelTargets?.job;
+      const instancesRegex = trail.state.otelTargets?.instance;
+      // no targets have this combination of filters so there are no metrics that can be joined
+      // show no metrics
+      if (jobsRegex && instancesRegex) {
+        // add the job and instance filters
+        // but be careful, because these might get overriden
+        // I think it will be fine that they are overidden
+        // NOTE: test the limit of size of filters we can add, limit otel filters if there are too many
+        // test this with a customer with a larger amount of targets
+        matchTerms.push(`job=~${trail.state.otelTargets?.job}`);
+        matchTerms.push(`instance=~${trail.state.otelTargets?.instance}`);
+      } else {
+        noOtelMetrics = true;
+      }
     }
 
     const filtersVar = sceneGraph.lookupVariable(VAR_FILTERS, this);
@@ -236,15 +246,21 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     try {
       const response = await getMetricNames(datasourceUid, timeRange, match, MAX_METRIC_NAMES);
       const searchRegex = createJSRegExpFromSearchTerms(getMetricSearch(this));
-      const metricNames = searchRegex
+      let metricNames = searchRegex
         ? response.data.filter((metric) => !searchRegex || searchRegex.test(metric))
         : response.data;
 
-      const metricNamesWarning = response.limitReached
+      let metricNamesWarning = response.limitReached
         ? `This feature will only return up to ${MAX_METRIC_NAMES} metric names for performance reasons. ` +
           `This limit is being exceeded for the current data source. ` +
           `Add search terms or label filters to narrow down the number of metric names returned.`
         : undefined;
+
+      // if there are no otel targets for otel resources, there will be no labels
+      if (noOtelMetrics) {
+        metricNames = [];
+        metricNamesWarning = undefined;
+      }
 
       let bodyLayout = this.state.body;
       const rootGroupNode = await this.generateGroups(metricNames);
