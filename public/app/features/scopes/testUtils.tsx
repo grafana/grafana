@@ -467,12 +467,7 @@ export function renderDashboard(dashboardScene: DashboardScene) {
       <AppChrome>
         <dashboardScene.Component model={dashboardScene} />
       </AppChrome>
-    </KBarProvider>,
-    {
-      historyOptions: {
-        initialEntries: ['/'],
-      },
-    }
+    </KBarProvider>
   );
 }
 
