@@ -15,7 +15,7 @@ type sqlStore struct {
 	db db.DB
 }
 
-const MAX_PLAYLISTS = 250
+const MAX_PLAYLISTS = 1000
 
 var _ store = &sqlStore{}
 
@@ -176,6 +176,10 @@ func (s *sqlStore) List(ctx context.Context, query *playlist.GetPlaylistsQuery) 
 		return playlists, playlist.ErrCommandValidationFailed
 	}
 
+	if query.Limit > MAX_PLAYLISTS || query.Limit < 1 {
+		query.Limit = MAX_PLAYLISTS
+	}
+
 	err := s.db.WithDbSession(ctx, func(dbSess *db.Session) error {
 		sess := dbSess.Limit(query.Limit)
 
@@ -183,7 +187,7 @@ func (s *sqlStore) List(ctx context.Context, query *playlist.GetPlaylistsQuery) 
 			sess.Where("name LIKE ?", "%"+query.Name+"%")
 		}
 
-		sess.Where("org_id = ?", query.OrgId).Limit(MAX_PLAYLISTS)
+		sess.Where("org_id = ?", query.OrgId)
 		err := sess.Find(&playlists)
 
 		return err
