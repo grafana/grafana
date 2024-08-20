@@ -6,7 +6,7 @@ import (
 	"crypto/rsa"
 	"errors"
 
-	"gopkg.in/square/go-jose.v2"
+	"github.com/go-jose/go-jose/v3"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
