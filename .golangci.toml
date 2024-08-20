@@ -79,13 +79,13 @@ enable = [
   "goimports",
   "goprintffuncname",
   "gosec",
-  "gosimple",
-  "govet",
+  # "gosimple", # Disabled for security support branch to avoid breaking backports
+  # "govet", # Disabled for security support branch to avoid breaking backports
   "ineffassign",
   "misspell",
   "nakedret",
   "exportloopref",
-  "staticcheck",
+  # "staticcheck", # Disabled for security support branch to avoid breaking backports
   "stylecheck",
   "typecheck",
   "unconvert",
