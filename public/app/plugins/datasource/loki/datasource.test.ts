@@ -31,6 +31,7 @@ import {
   setBackendSrv,
   TemplateSrv,
 } from '@grafana/runtime';
+import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { LokiVariableSupport } from './LokiVariableSupport';
 import { createLokiDatasource } from './__mocks__/datasource';
@@ -1666,7 +1667,7 @@ describe('LokiDatasource', () => {
   describe('Query splitting', () => {
     beforeAll(() => {
       config.featureToggles.lokiQuerySplitting = true;
-      jest.mocked(runSplitQuery).mockReturnValue(
+      jest.mocked(runQuery).mockReturnValue(
         of({
           data: [],
         })
@@ -1693,7 +1694,54 @@ describe('LokiDatasource', () => {
       };
 
       await expect(ds.query(query)).toEmitValuesWith(() => {
-        expect(runSplitQuery).toHaveBeenCalled();
+        expect(runQuery).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('query', () => {
+    let getCurrentSpy: jest.Mock;
+    let featureToggleVal = config.featureToggles.lokiSendDashboardPanelNames;
+    beforeEach(() => {
+      getCurrentSpy = jest.fn();
+      setDashboardSrv({
+        getCurrent: () => ({
+          title: 'dashboard_title',
+          panels: [{ title: 'panel_title', id: 0 }],
+        }),
+      } as unknown as DashboardSrv);
+      const fetchMock = jest.fn().mockReturnValue(of({ data: testLogsResponse }));
+      setBackendSrv({ ...origBackendSrv, fetch: fetchMock });
+      config.featureToggles.lokiSendDashboardPanelNames = true;
+      jest.mocked(runSplitQuery).mockReturnValue(
+        of({
+          data: [],
+        })
+      );
+    });
+    afterEach(() => {
+      config.featureToggles.lokiSendDashboardPanelNames = featureToggleVal;
+    });
+
+    it('adds dashboard headers', async () => {
+      const ds = createLokiDatasource(templateSrvStub);
+      jest.spyOn(ds, 'runQuery');
+      const query: DataQueryRequest<LokiQuery> = {
+        ...baseRequestOptions,
+        panelId: 0,
+        targets: [{ expr: '{a="b"}', refId: 'A' }],
+        app: CoreApp.Dashboard,
+      };
+
+      await expect(ds.query(query)).toEmitValuesWith(() => {
+        expect(ds.runQuery).toHaveBeenCalledWith(
+          expect.objectContaining({
+            headers: expect.objectContaining({
+              'X-Dashboard-Title': 'dashboard_title',
+              'X-Panel-Title': 'panel_title',
+            }),
+          })
+        );
       });
     });
   });
