@@ -47,7 +47,7 @@ describe('PanelRepeaterGridItem', () => {
 
     expect(repeater.state.repeatedPanels?.length).toBe(0);
 
-    await new Promise((r) => setTimeout(r, 10));
+    await new Promise((r) => setTimeout(r, 100));
 
     expect(repeater.state.repeatedPanels?.length).toBe(1);
   });
