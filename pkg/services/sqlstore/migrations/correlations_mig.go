@@ -64,6 +64,6 @@ func addCorrelationsMigrations(mg *Migrator) {
 	}))
 
 	mg.AddMigration("add type column", NewAddColumnMigration(correlationsV2, &Column{
-		Name: "type", Type: DB_NVarchar, Length: 40, Nullable: true,
+		Name: "type", Type: DB_NVarchar, Length: 40, Nullable: false, Default: "`query`",
 	}))
 }
