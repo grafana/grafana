@@ -169,15 +169,14 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
         // fresh check for otel experience
         this.checkDataSourceForOTelResources();
-        // clear filters on restting the data source
+        // clear filters on resetting the data source
         const adhocVariable = sceneGraph.lookupVariable(VAR_FILTERS, this);
-        const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, this);
-        if (adhocVariable instanceof AdHocFiltersVariable && otelResourcesVariable instanceof AdHocFiltersVariable) {
-          adhocVariable?.setState({ filters: [] });
-          otelResourcesVariable?.setState({ filters: [], hide: VariableHide.hideVariable });
+        if (adhocVariable instanceof AdHocFiltersVariable) {
+          adhocVariable.setState({ filters: [] });
         }
       }
 
+      // update otel variables when changed
       if (this.state.useOtelExperience && (name === VAR_OTEL_DEPLOYMENT_ENV || name === VAR_OTEL_RESOURCES)) {
         const resourcesObject: OtelResourcesObject = getOtelResourcesObject(this);
         const otelJoinQuery = getOtelJoinQuery(resourcesObject);
@@ -309,21 +308,24 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
     const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, this);
     const otelDepEnvVariable = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, this);
+    const otelJoinQueryVariable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, this);
     // get the time range
     const timeRange: RawTimeRange | undefined = trail.state.$timeRange?.state;
 
     if (
       timeRange &&
       otelResourcesVariable instanceof AdHocFiltersVariable &&
-      otelDepEnvVariable instanceof CustomVariable
+      otelDepEnvVariable instanceof CustomVariable &&
+      otelJoinQueryVariable instanceof ConstantVariable
     ) {
       const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
 
       const otelTargets = await totalOtelResources(datasourceUid, timeRange);
+      const deploymentEnvironments = await getDeploymentEnvironments(datasourceUid, timeRange);
 
       const hasOtelResources = otelTargets.job !== '' && otelTargets.instance !== '';
 
-      if (hasOtelResources) {
+      if (hasOtelResources && deploymentEnvironments.length > 0) {
         const isStandard = await isOtelStandardization(datasourceUid, timeRange);
 
         if (!isStandard) {
@@ -355,13 +357,9 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
           hide: VariableHide.hideLabel,
         });
 
-        const deployment_environments = await getDeploymentEnvironments(datasourceUid, timeRange);
-
         let varQuery = '';
-        // let allValue = ''
-        const options = deployment_environments.map((env) => {
+        const options = deploymentEnvironments.map((env) => {
           varQuery += env + ',';
-          // varQuery += env + '|';
           return { value: env, label: env };
         });
 
@@ -373,9 +371,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
           query: varQuery,
           options: options,
           hide: VariableHide.dontHide,
-          // this doesn;t work either
-          // create issue
-          // defaultToAll: false,
         });
 
         // Because we need to define the deployment environment variable
@@ -384,10 +379,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         const otelJoinQuery = getOtelJoinQuery(resourcesObject);
         this.setState({ otelJoinQuery });
         // update the otel join query variable too
-        const otelJoinQueryVariable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, this);
-        if (otelJoinQueryVariable instanceof ConstantVariable) {
-          otelJoinQueryVariable.setState({ value: otelJoinQuery });
-        }
+        otelJoinQueryVariable.setState({ value: otelJoinQuery });
 
         // now we can filter target_info targets by deployment_environment="somevalue"
         // and use these new targets to reduce the metrics
@@ -399,7 +391,26 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
           useOtelExperience: true,
         });
       } else {
-        this.setState({ hasOtelResources, useOtelExperience: false });
+        // if there are no resources reset the otel variables and otel state
+        otelResourcesVariable.setState({
+          defaultKeys: [],
+          hide: VariableHide.hideVariable,
+        });
+
+        otelDepEnvVariable.setState({
+          value: '',
+          hide: VariableHide.hideVariable,
+        });
+
+        otelJoinQueryVariable.setState({ value: '' });
+
+        this.setState({
+          hasOtelResources: false,
+          useOtelExperience: false,
+          otelTargets: { job: '', instance: '' },
+          otelResources: [],
+          otelJoinQuery: '',
+        });
       }
     }
   }
@@ -435,6 +446,12 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
           });
 
           otelJoinQueryVariable.setState({ value: '' });
+
+          model.setState({
+            otelTargets: { job: '', instance: '' },
+            otelResources: [],
+            otelJoinQuery: '',
+          });
         }
       } else {
         // if experience is enabled, check standardization and update the otel variables
