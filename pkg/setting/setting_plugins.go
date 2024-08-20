@@ -52,6 +52,7 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 			}
 			cfg.InstallPlugins[i] = InstallPlugin{id, v}
 		}
+		cfg.InstallPluginsBlock = pluginsSection.Key("preinstall_block").MustBool(false)
 	}
 
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")

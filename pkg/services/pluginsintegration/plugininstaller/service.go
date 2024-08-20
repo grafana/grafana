@@ -3,6 +3,7 @@ package plugininstaller
 import (
 	"context"
 	"errors"
+	"fmt"
 	"runtime"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -20,7 +21,7 @@ type Service struct {
 	pluginStore     pluginstore.Store
 }
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, pluginStore pluginstore.Store, pluginInstaller plugins.Installer) *Service {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, pluginStore pluginstore.Store, pluginInstaller plugins.Installer) (*Service, error) {
 	s := &Service{
 		features:        features,
 		log:             log.New("plugin.backgroundinstaller"),
@@ -28,16 +29,24 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, plugi
 		pluginInstaller: pluginInstaller,
 		pluginStore:     pluginStore,
 	}
-	return s
+	if cfg.InstallPluginsBlock {
+		// Block initialization process until plugins are installed
+		err := s.installPlugins(context.Background(), true)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return s, nil
 }
 
 // IsDisabled disables background installation of plugins.
 func (s *Service) IsDisabled() bool {
 	return !s.features.IsEnabled(context.Background(), featuremgmt.FlagBackgroundPluginInstaller) ||
-		len(s.cfg.InstallPlugins) == 0
+		len(s.cfg.InstallPlugins) == 0 ||
+		s.cfg.InstallPluginsBlock
 }
 
-func (s *Service) Run(ctx context.Context) error {
+func (s *Service) installPlugins(ctx context.Context, block bool) error {
 	compatOpts := plugins.NewCompatOpts(s.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 
 	for _, installPlugin := range s.cfg.InstallPlugins {
@@ -59,6 +68,9 @@ func (s *Service) Run(ctx context.Context) error {
 				s.log.Debug("Plugin already installed", "pluginId", installPlugin.ID, "version", installPlugin.Version)
 				continue
 			}
+			if block {
+				return fmt.Errorf("failed to install plugin %s@%s: %w", installPlugin.ID, installPlugin.Version, err)
+			}
 			s.log.Error("Failed to install plugin", "pluginId", installPlugin.ID, "version", installPlugin.Version, "error", err)
 			continue
 		}
@@ -66,4 +78,8 @@ func (s *Service) Run(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (s *Service) Run(ctx context.Context) error {
+	return s.installPlugins(ctx, false)
 }

@@ -16,7 +16,7 @@ import (
 // Test if the service is disabled
 func TestService_IsDisabled(t *testing.T) {
 	// Create a new service
-	s := ProvideService(
+	s, err := ProvideService(
 		&setting.Cfg{
 			InstallPlugins: []setting.InstallPlugin{{ID: "myplugin"}},
 		},
@@ -24,6 +24,7 @@ func TestService_IsDisabled(t *testing.T) {
 		pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
 		&fakes.FakePluginInstaller{},
 	)
+	require.NoError(t, err)
 
 	// Check if the service is disabled
 	if s.IsDisabled() {
@@ -34,7 +35,7 @@ func TestService_IsDisabled(t *testing.T) {
 func TestService_Run(t *testing.T) {
 	t.Run("Installs a plugin", func(t *testing.T) {
 		installed := false
-		s := ProvideService(
+		s, err := ProvideService(
 			&setting.Cfg{
 				InstallPlugins: []setting.InstallPlugin{{ID: "myplugin"}},
 			},
@@ -47,15 +48,16 @@ func TestService_Run(t *testing.T) {
 				},
 			},
 		)
+		require.NoError(t, err)
 
-		err := s.Run(context.Background())
+		err = s.Run(context.Background())
 		require.NoError(t, err)
 		require.True(t, installed)
 	})
 
 	t.Run("Install a plugin with version", func(t *testing.T) {
 		installed := false
-		s := ProvideService(
+		s, err := ProvideService(
 			&setting.Cfg{
 				InstallPlugins: []setting.InstallPlugin{{ID: "myplugin", Version: "1.0.0"}},
 			},
@@ -70,8 +72,9 @@ func TestService_Run(t *testing.T) {
 				},
 			},
 		)
+		require.NoError(t, err)
 
-		err := s.Run(context.Background())
+		err = s.Run(context.Background())
 		require.NoError(t, err)
 		require.True(t, installed)
 	})
@@ -84,7 +87,7 @@ func TestService_Run(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		s := ProvideService(
+		s, err := ProvideService(
 			&setting.Cfg{
 				InstallPlugins: []setting.InstallPlugin{{ID: "myplugin"}},
 			},
@@ -97,6 +100,7 @@ func TestService_Run(t *testing.T) {
 				},
 			},
 		)
+		require.NoError(t, err)
 
 		err = s.Run(context.Background())
 		require.NoError(t, err)
@@ -114,7 +118,7 @@ func TestService_Run(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		s := ProvideService(
+		s, err := ProvideService(
 			&setting.Cfg{
 				InstallPlugins: []setting.InstallPlugin{{ID: "myplugin", Version: "2.0.0"}},
 			},
@@ -127,6 +131,7 @@ func TestService_Run(t *testing.T) {
 				},
 			},
 		)
+		require.NoError(t, err)
 
 		err = s.Run(context.Background())
 		require.NoError(t, err)
@@ -135,7 +140,7 @@ func TestService_Run(t *testing.T) {
 
 	t.Run("Install multiple plugins", func(t *testing.T) {
 		installed := 0
-		s := ProvideService(
+		s, err := ProvideService(
 			&setting.Cfg{
 				InstallPlugins: []setting.InstallPlugin{{ID: "myplugin1"}, {ID: "myplugin2"}},
 			},
@@ -148,15 +153,16 @@ func TestService_Run(t *testing.T) {
 				},
 			},
 		)
+		require.NoError(t, err)
 
-		err := s.Run(context.Background())
+		err = s.Run(context.Background())
 		require.NoError(t, err)
 		require.Equal(t, 2, installed)
 	})
 
 	t.Run("Fails to install a plugin but install the rest", func(t *testing.T) {
 		installed := 0
-		s := ProvideService(
+		s, err := ProvideService(
 			&setting.Cfg{
 				InstallPlugins: []setting.InstallPlugin{{ID: "myplugin1"}, {ID: "myplugin2"}},
 			},
@@ -172,8 +178,46 @@ func TestService_Run(t *testing.T) {
 				},
 			},
 		)
-		err := s.Run(context.Background())
+		require.NoError(t, err)
+		err = s.Run(context.Background())
 		require.NoError(t, err)
 		require.Equal(t, 1, installed)
+	})
+
+	t.Run("Install a blocking plugin", func(t *testing.T) {
+		installed := false
+		_, err := ProvideService(
+			&setting.Cfg{
+				InstallPlugins:      []setting.InstallPlugin{{ID: "myplugin"}},
+				InstallPluginsBlock: true,
+			},
+			featuremgmt.WithFeatures(),
+			pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
+			&fakes.FakePluginInstaller{
+				AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {
+					installed = true
+					return nil
+				},
+			},
+		)
+		require.NoError(t, err)
+		require.True(t, installed)
+	})
+
+	t.Run("Fails to install a blocking plugin", func(t *testing.T) {
+		_, err := ProvideService(
+			&setting.Cfg{
+				InstallPlugins:      []setting.InstallPlugin{{ID: "myplugin"}},
+				InstallPluginsBlock: true,
+			},
+			featuremgmt.WithFeatures(),
+			pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
+			&fakes.FakePluginInstaller{
+				AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {
+					return plugins.NotFoundError{}
+				},
+			},
+		)
+		require.ErrorAs(t, err, &plugins.NotFoundError{})
 	})
 }
