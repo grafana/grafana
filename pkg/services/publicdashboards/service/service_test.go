@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -1548,7 +1547,7 @@ func TestPublicDashboardServiceImpl_NewPublicDashboardUid(t *testing.T) {
 			store.On("Find", mock.Anything, mock.Anything).
 				Return(tt.mockStore.PublicDashboard, tt.mockStore.Err)
 
-			pd := &PublicDashboardServiceImpl{store: store, tracer: noop.NewTracerProvider().Tracer("test")}
+			pd := &PublicDashboardServiceImpl{store: store}
 
 			got, err := pd.NewPublicDashboardUid(tt.args.ctx)
 			if !tt.wantErr(t, err, fmt.Sprintf("NewPublicDashboardUid(%v)", tt.args.ctx)) {
