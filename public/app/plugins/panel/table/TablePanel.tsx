@@ -29,6 +29,7 @@ export function TablePanel(props: Props) {
   const hasFields = frames.some((frame) => frame.fields.length > 0);
   const currentIndex = getCurrentFrameIndex(frames, options);
   const main = frames[currentIndex];
+  const useTableNg = config.featureToggles.tableNG;
 
   let tableHeight = height;
 
@@ -63,7 +64,7 @@ export function TablePanel(props: Props) {
       timeRange={timeRange}
       enableSharedCrosshair={config.featureToggles.tableSharedCrosshair && enableSharedCrosshair}
       fieldConfig={fieldConfig}
-      useTableNg={true}
+      useTableNg={useTableNg}
     />
   );
 

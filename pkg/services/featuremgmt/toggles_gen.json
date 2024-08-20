@@ -2554,6 +2554,18 @@
     },
     {
       "metadata": {
+        "name": "tableNG",
+        "resourceVersion": "1724179006604",
+        "creationTimestamp": "2024-08-20T18:36:46Z"
+      },
+      "spec": {
+        "description": "Allows access to the new react-data-grid based table component.",
+        "stage": "experimental",
+        "codeowner": "@grafana/mesa-verde"
+      }
+    },
+    {
+      "metadata": {
         "name": "tableSharedCrosshair",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-12-13T09:33:14Z"

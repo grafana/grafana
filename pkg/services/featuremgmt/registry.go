@@ -1406,6 +1406,12 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
 		},
+		{
+			Name:        "tableNG",
+			Description: "Allows access to the new react-data-grid based table component.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaMesaVerde,
+		},
 	}
 )
 
