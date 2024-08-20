@@ -45,7 +45,7 @@ var (
 			Name:              "panelTitleSearch",
 			Description:       "Search for dashboards using panel title",
 			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaAppPlatformSquad,
+			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
 		},
 		{
@@ -89,7 +89,7 @@ var (
 			Name:        "storage",
 			Description: "Configurable storage for dashboards, datasources, and resources",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAppPlatformSquad,
+			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
 			Name:           "correlations",
@@ -191,7 +191,7 @@ var (
 			Name:              "grpcServer",
 			Description:       "Run the GRPC server",
 			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaAppPlatformSquad,
+			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
 		},
 		{
@@ -200,7 +200,7 @@ var (
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: false,
 			RequiresRestart: true, // new SQL tables created
-			Owner:           grafanaAppPlatformSquad,
+			Owner:           grafanaSearchAndStorageSquad,
 		},
 		{
 			Name:           "cloudWatchCrossAccountQuerying",
@@ -439,6 +439,13 @@ var (
 		{
 			Name:         "frontendSandboxMonitorOnly",
 			Description:  "Enables monitor only in the plugin frontend sandbox (if enabled)",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "pluginsDetailsRightPanel",
+			Description:  "Enables right panel for the plugins details page",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
@@ -713,6 +720,14 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaDatavizSquad,
 			Expression:   "true", // Enabled by default
+		},
+		{
+			Name:            "kubernetesPlaylists",
+			Description:     "Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s",
+			Stage:           FeatureStageGeneralAvailability,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "true",
+			RequiresRestart: true, // changes the API routing
 		},
 		{
 			Name:            "kubernetesSnapshots",
@@ -1156,8 +1171,8 @@ var (
 		},
 		{
 			Name:        "accessActionSets",
-			Description: "Introduces action sets for resource permissions",
-			Stage:       FeatureStageExperimental,
+			Description: "Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions.",
+			Stage:       FeatureStagePublicPreview,
 			Owner:       identityAccessTeam,
 		},
 		{

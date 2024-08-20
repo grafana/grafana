@@ -92,6 +92,7 @@ type Client interface {
 	backend.CheckHealthHandler
 	backend.StreamHandler
 	backend.AdmissionHandler
+	backend.ConversionHandler
 	backend.CallResourceHandler
 	backend.CollectMetricsHandler
 }
