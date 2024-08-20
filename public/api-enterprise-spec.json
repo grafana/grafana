@@ -5404,7 +5404,7 @@
         "status"
       ],
       "properties": {
-        "error": {
+        "message": {
           "type": "string"
         },
         "refId": {
@@ -5414,6 +5414,7 @@
           "type": "string",
           "enum": [
             "OK",
+            "WARNING",
             "ERROR",
             "PENDING",
             "UNKNOWN"
@@ -5491,7 +5492,7 @@
       "type": "object",
       "title": "NavbarPreference defines model for NavbarPreference.",
       "properties": {
-        "bookmarkIds": {
+        "bookmarkUrls": {
           "type": "array",
           "items": {
             "type": "string"
@@ -6548,6 +6549,9 @@
         },
         "orientation": {
           "type": "string"
+        },
+        "pdfShowTemplateVariables": {
+          "type": "boolean"
         },
         "timeRange": {
           "$ref": "#/definitions/ReportTimeRange"
