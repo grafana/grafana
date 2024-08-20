@@ -63,6 +63,9 @@ type DeleteResourcePermissionsCmd struct {
 }
 
 func (s *store) DeleteResourcePermissions(ctx context.Context, orgID int64, cmd *DeleteResourcePermissionsCmd) error {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.DeleteResourcePermissions")
+	defer span.End()
+
 	scope := accesscontrol.Scope(cmd.Resource, cmd.ResourceAttribute, cmd.ResourceID)
 
 	err := s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
@@ -88,6 +91,9 @@ func (s *store) SetUserResourcePermission(
 	cmd SetResourcePermissionCommand,
 	hook UserResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetUserResourcePermission")
+	defer span.End()
+
 	if usr.ID == 0 {
 		return nil, user.ErrUserNotFound
 	}
@@ -125,6 +131,9 @@ func (s *store) SetTeamResourcePermission(
 	cmd SetResourcePermissionCommand,
 	hook TeamResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetTeamResourcePermission")
+	defer span.End()
+
 	if teamID == 0 {
 		return nil, team.ErrTeamNotFound
 	}
@@ -164,6 +173,9 @@ func (s *store) SetBuiltInResourcePermission(
 	cmd SetResourcePermissionCommand,
 	hook BuiltinResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetBuiltInResourcePermission")
+	defer span.End()
+
 	if !org.RoleType(builtInRole).IsValid() || builtInRole == accesscontrol.RoleGrafanaAdmin {
 		return nil, fmt.Errorf("invalid role: %s", builtInRole)
 	}
@@ -207,6 +219,9 @@ func (s *store) SetResourcePermissions(
 	commands []SetResourcePermissionsCommand,
 	hooks ResourceHooks,
 ) ([]accesscontrol.ResourcePermission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetResourcePermissions")
+	defer span.End()
+
 	var err error
 	var permissions []accesscontrol.ResourcePermission
 
@@ -288,6 +303,9 @@ func (s *store) setResourcePermission(
 }
 
 func (s *store) GetResourcePermissions(ctx context.Context, orgID int64, query GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.GetResourcePermissions")
+	defer span.End()
+
 	var result []accesscontrol.ResourcePermission
 
 	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
