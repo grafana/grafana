@@ -136,7 +136,7 @@ const alertTests = () => {
     });
 
     await renderSharePublicDashboard({ dashboard });
-    expect(screen.queryByTestId(selectors.UnsupportedDataSourcesWarningAlert)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByTestId(selectors.UnsupportedDataSourcesWarningAlert)).toBeInTheDocument());
   });
 };
 
