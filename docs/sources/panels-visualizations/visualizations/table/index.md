@@ -103,7 +103,7 @@ value4 , value5 , value6
 
 If you need to hide columns, you can do so using [data transformations](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/), [field overrides](#field-overrides) or [building a query](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/) that returns only the needed columns.
 
-If you’re using a cell type such as sparkline or JSON, the data needs may differ in a way that’s specific to that type. For more info refer to [Cell type](#cell-type)
+If you’re using a cell type such as sparkline or JSON, the data needs may differ in a way that’s specific to that type. For more info refer to [Cell type](#cell-type).
 
 ## Debugging in tables
 
