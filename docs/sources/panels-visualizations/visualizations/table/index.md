@@ -62,6 +62,13 @@ Tables are a highly flexible visualization designed to display data in columns a
 
 {{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" lightbox="true" caption="Table visualization" >}}
 
+You can use the table visualization any time you need to visualize data as column-row format.
+This is useful for visualizing almost any type of queried data and datasets ranging from common database queries, logs, traces, and metrics to financial reports, customer lists, and product catalogs. Any information you might want to put in a spreadsheet can often be best visualized in a table. 
+
+Tables also provide different styles to visualize data inside the table cells such as coloring text and cell backgrounds, gauges, sparklines, data links, JSON code and images.
+
+## Configure a table visualization
+
 The following video provides a visual walkthrough of the options you can set in a table visualization. If you want to see a configuration in action, check out the video:
 
 {{< youtube id="PCY7O8EJeJY" >}}
@@ -71,6 +78,36 @@ The following video provides a visual walkthrough of the options you can set in 
 {{< admonition type="note" >}}
 Annotations and alerts are not currently supported for tables.
 {{< /admonition >}}
+
+## Supported data formats
+
+The table visualization works as long as the data has the column-row structure.
+
+### Example
+
+```
+Column1, Column2, Column3
+value1 , value2 , value3
+value4 , value5 , value6
+value7 , value8 , value9
+```
+
+If a cell is missing or the table cell-row structure is not complete, the table panel won’t display it.
+
+```
+Column1, Column2, Column3
+value1 , value2 , value3
+gap1   , gap2
+value4 , value5 , value6
+```
+
+If you need to hide columns, you can do so using [data transformations](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/), [field overrides](#field-overrides) or [building a query](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/) that returns only the needed columns.
+
+If you’re using a cell type such as sparkline or JSON, the data needs may differ in a way that’s specific to that type. For more info refer to [Cell type](#cell-type)
+
+## Debugging in tables
+
+The table visualization also helps with debugging when you need to know what your query is returning and why other visualizations may not be working. This functionality is easily accessible in most visualizations by using the **Table view** toggle at the top of the panel.
 
 ## Sort column
 
