@@ -19,7 +19,7 @@ type Service struct {
 	log             log.Logger
 	pluginInstaller plugins.Installer
 	pluginStore     pluginstore.Store
-	async           bool
+	failOnErr       bool
 }
 
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, pluginStore pluginstore.Store, pluginInstaller plugins.Installer) (*Service, error) {
@@ -29,9 +29,9 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, plugi
 		cfg:             cfg,
 		pluginInstaller: pluginInstaller,
 		pluginStore:     pluginStore,
-		async:           cfg.InstallPluginsAsync,
+		failOnErr:       !cfg.PreinstallPluginsAsync, // Fail on error if preinstall is synchronous
 	}
-	if !cfg.InstallPluginsAsync {
+	if !cfg.PreinstallPluginsAsync {
 		// Block initialization process until plugins are installed
 		err := s.installPlugins(context.Background())
 		if err != nil {
@@ -44,14 +44,14 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, plugi
 // IsDisabled disables background installation of plugins.
 func (s *Service) IsDisabled() bool {
 	return !s.features.IsEnabled(context.Background(), featuremgmt.FlagBackgroundPluginInstaller) ||
-		len(s.cfg.InstallPlugins) == 0 ||
-		!s.cfg.InstallPluginsAsync
+		len(s.cfg.PreinstallPlugins) == 0 ||
+		!s.cfg.PreinstallPluginsAsync
 }
 
 func (s *Service) installPlugins(ctx context.Context) error {
 	compatOpts := plugins.NewCompatOpts(s.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 
-	for _, installPlugin := range s.cfg.InstallPlugins {
+	for _, installPlugin := range s.cfg.PreinstallPlugins {
 		// Check if the plugin is already installed
 		p, exists := s.pluginStore.Plugin(ctx, installPlugin.ID)
 		if exists {
@@ -70,7 +70,7 @@ func (s *Service) installPlugins(ctx context.Context) error {
 				s.log.Debug("Plugin already installed", "pluginId", installPlugin.ID, "version", installPlugin.Version)
 				continue
 			}
-			if !s.async {
+			if s.failOnErr {
 				// Halt execution in the synchronous scenario
 				return fmt.Errorf("failed to install plugin %s@%s: %w", installPlugin.ID, installPlugin.Version, err)
 			}
@@ -84,5 +84,10 @@ func (s *Service) installPlugins(ctx context.Context) error {
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	return s.installPlugins(ctx)
+	err := s.installPlugins(ctx)
+	if err != nil {
+		// Unexpected error, asynchronous installation should not return errors
+		s.log.Error("Failed to install plugins", "error", err)
+	}
+	return nil
 }
