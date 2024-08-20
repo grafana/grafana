@@ -2156,14 +2156,20 @@
   },
   "share-panel": {
     "drawer": {
+      "new-library-panel-title": "New library panel",
       "share-embed-title": "Share embed",
       "share-link-title": "Link settings",
       "share-snapshot-title": "Share snapshot"
     },
     "menu": {
+      "new-library-panel-title": "New library panel",
       "share-embed-title": "Share embed",
       "share-link-title": "Share link",
       "share-snapshot-title": "Share snapshot"
+    },
+    "new-library-panel": {
+      "cancel-button": "Cancel",
+      "create-button": "Create library panel"
     }
   },
   "share-playlist": {
