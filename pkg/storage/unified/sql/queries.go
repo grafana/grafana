@@ -95,10 +95,10 @@ func (r *sqlResourceHistoryPollRequest) Validate() error {
 func (r *sqlResourceHistoryPollRequest) Results() (*historyPollResponse, error) {
 	return &historyPollResponse{
 		Key: resource.ResourceKey{
-			Namespace: r.Response.Namespace,
-			Group:     r.Response.Group,
-			Resource:  r.Response.Resource,
-			Name:      r.Response.Name,
+			Namespace: r.Response.Key.Namespace,
+			Group:     r.Response.Key.Group,
+			Resource:  r.Response.Key.Resource,
+			Name:      r.Response.Key.Name,
 		},
 		ResourceVersion: r.Response.ResourceVersion,
 		Value:           r.Response.Value,
@@ -128,9 +128,11 @@ func (r *sqlResourceReadRequest) Validate() error {
 
 func (r *sqlResourceReadRequest) Results() (*readResponse, error) {
 	return &readResponse{
-		Error:           r.readResponse.Error,
-		ResourceVersion: r.readResponse.ResourceVersion,
-		Value:           r.readResponse.Value,
+		ReadResponse: resource.ReadResponse{
+			Error:           r.ReadResponse.Error,
+			ResourceVersion: r.ReadResponse.ResourceVersion,
+			Value:           r.ReadResponse.Value,
+		},
 	}, nil
 }
 
