@@ -55,7 +55,7 @@
     "glob": "10.4.1",
     "react-select-event": "5.5.1",
     "ts-node": "10.9.2",
-    "typescript": "5.4.5",
+    "typescript": "5.5.4",
     "webpack": "5.91.0"
   },
   "peerDependencies": {
