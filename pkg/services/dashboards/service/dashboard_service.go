@@ -750,9 +750,8 @@ func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64
 	}
 
 	return dr.dashboardStore.DeleteDashboardsInFolders(ctx, &dashboards.DeleteDashboardsInFolderRequest{
-		FolderUIDs:        folderUIDs,
-		OrgID:             orgID,
-		CheckProvisioning: true,
+		FolderUIDs: folderUIDs,
+		OrgID:      orgID,
 	})
 }
 

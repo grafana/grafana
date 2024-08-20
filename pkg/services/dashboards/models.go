@@ -352,9 +352,8 @@ func FromDashboard(dash *Dashboard) *folder.Folder {
 }
 
 type DeleteDashboardsInFolderRequest struct {
-	FolderUIDs        []string
-	OrgID             int64
-	CheckProvisioning bool
+	FolderUIDs []string
+	OrgID      int64
 }
 
 //
