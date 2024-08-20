@@ -88,10 +88,10 @@ export interface DataTrailState extends SceneObjectState {
 // - [x] move the toggle into the settings
 // - [x] default to otel experience on if DS has otel resources
 // - [x] sort the labels by blessed list
-// - [ ] clear otel filters and otel join query on changing data source
-// - [ ] clear state checks like hasOtelResources when data source is changed
-// - [ ] show the labels in the breakdown
+// - [x] clear otel filters and otel join query on changing data source
+// - [x] clear state checks like hasOtelResources when data source is changed
 // - [ ] update the url by all the state
+// - [ ] show the labels in the breakdown
 // - [ ] test the limit of a match string when filtering metrics in MetricSelectScene
 
 export class DataTrail extends SceneObjectBase<DataTrailState> {
@@ -329,8 +329,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         if (resources.length === 0) {
           return;
         }
-
-        resources = sortResources(resources);
+        // make sure not to re-add filters from the blessed list
+        resources = sortResources(resources, excludedFilters);
 
         // make the variable options
         const otelLabels = resources.map((resource) => {
@@ -561,7 +561,7 @@ function getBaseFiltersForMetric(metric?: string): AdHocVariableFilter[] {
 }
 
 function getOtelFilterKeys(variable: SceneVariable<SceneVariableState> | null) {
-  if (!variable || variable instanceof AdHocFiltersVariable) {
+  if (!variable) {
     return [];
   }
 

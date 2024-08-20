@@ -1,4 +1,4 @@
-export const blessedList = {
+export const blessedList: Record<string, number> = {
   cloud_availability_zone: 1,
   cloud_region: 2,
   container_name: 3,
@@ -17,9 +17,9 @@ export const blessedList = {
   service_namespace: 16,
 };
 
-export function sortResources(resources: string[]) {
-  const blessed = Object.keys(blessedList);
-
+export function sortResources(resources: string[], excluded: string[]) {
+  // these may be filtered
+  const blessed = Object.keys(blessedList).filter((resource) => !excluded.includes(resource));
   resources.filter((resource) => {
     // if not in the list keep it
     if (!blessed.includes(resource)) {
