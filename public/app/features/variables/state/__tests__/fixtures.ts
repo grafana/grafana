@@ -10,6 +10,7 @@ import {
   LoadingState,
   OrgVariableModel,
   QueryVariableModel,
+  SnapshotVariableModel,
   TextBoxVariableModel,
   UserVariableModel,
   VariableHide,
@@ -195,6 +196,16 @@ export function createCustomVariable(input: Partial<CustomVariableModel> = {}): 
     current: createVariableOption('prom-prod', { text: 'Prometheus (main)', selected: true }),
     options: [],
     query: '',
+    ...input,
+  };
+}
+
+export function createSnapshotVariable(input: Partial<SnapshotVariableModel> = {}): SnapshotVariableModel {
+  return {
+    ...createBaseVariableModel('snapshot'),
+    query: '',
+    current: createVariableOption('prom-prod', { text: 'Prometheus (main)', selected: true }),
+    options: [],
     ...input,
   };
 }
