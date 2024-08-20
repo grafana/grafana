@@ -21,12 +21,12 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-  service-graph:
+  explore:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-  explore:
+  service-graph:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/service-graph/
     - pattern: /docs/grafana-cloud/
