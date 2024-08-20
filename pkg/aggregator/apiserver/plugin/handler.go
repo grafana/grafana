@@ -14,10 +14,7 @@ import (
 
 type PluginClient interface {
 	backend.QueryDataHandler
-	backend.StreamHandler
 	backend.AdmissionHandler
-	backend.CallResourceHandler
-	backend.ConversionHandler
 }
 
 type PluginContextProvider interface {
