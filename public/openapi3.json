@@ -7398,10 +7398,6 @@
         "title": "OAuth2 is the oauth2 client configuration.",
         "type": "object"
       },
-      "OID": {
-        "title": "An OID represents an ASN.1 OBJECT IDENTIFIER.",
-        "type": "object"
-      },
       "ObjectIdentifier": {
         "items": {
           "format": "int64",

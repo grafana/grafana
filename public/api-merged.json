@@ -17338,10 +17338,6 @@
         }
       }
     },
-    "OID": {
-      "type": "object",
-      "title": "An OID represents an ASN.1 OBJECT IDENTIFIER."
-    },
     "ObjectIdentifier": {
       "type": "array",
       "title": "An ObjectIdentifier represents an ASN.1 OBJECT IDENTIFIER.",
