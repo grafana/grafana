@@ -2,10 +2,10 @@
     "name": "@grafana-plugins/mssql",
     "description": "MSSQL data source plugin",
     "private": true,
-    "version": "11.2.0-pre",
+    "version": "11.3.0-pre",
     "dependencies": {
         "@emotion/css": "11.11.2",
-        "@grafana/data": "11.2.0-pre",
+        "@grafana/data": "workspace:*",
         "@grafana/experimental": "1.7.12",
         "@grafana/runtime": "11.2.0-pre",
         "@grafana/sql": "11.2.0-pre",
@@ -16,8 +16,8 @@
         "tslib": "2.6.3"
     },
     "devDependencies": {
-        "@grafana/e2e-selectors": "11.2.0-pre",
-        "@grafana/plugin-configs": "11.2.0-pre",
+        "@grafana/e2e-selectors": "workspace:*",
+        "@grafana/plugin-configs": "workspace:*",
         "@testing-library/react": "15.0.2",
         "@testing-library/user-event": "14.5.2",
         "@types/jest": "29.5.12",
@@ -37,5 +37,5 @@
         "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
         "dev": "webpack -w -c ./webpack.config.ts --env development"
     },
-    "packageManager": "yarn@4.2.2"
+    "packageManager": "yarn@4.4.0"
 }
