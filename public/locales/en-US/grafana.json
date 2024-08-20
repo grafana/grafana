@@ -977,6 +977,53 @@
       "refresh": "Refresh"
     }
   },
+  "ldap-settings-page": {
+    "alert": {
+      "error-fetching": "Error fetching LDAP settings",
+      "error-saving": "Error saving LDAP settings",
+      "error-update": "Error updating LDAP settings",
+      "error-validate-form": "Error validating LDAP settings",
+      "feature-flag-disabled": "This page is only accessible by enabling the <1>ssoSettingsLDAP</1> feature flag.",
+      "saved": "LDAP settings saved"
+    },
+    "bind-dn": {
+      "description": "Distinguished name of the account used to bind and authenticate to the LDAP server.",
+      "label": "Bind DN",
+      "placeholder": "example: cn=admin,dc=grafana,dc=org"
+    },
+    "bind-password": {
+      "label": "Bind password"
+    },
+    "buttons-section": {
+      "discard": {
+        "button": "Discard"
+      },
+      "save": {
+        "button": "Save"
+      },
+      "save-and-enable": {
+        "button": "Save and enable"
+      }
+    },
+    "documentation": "documentation",
+    "host": {
+      "description": "Hostname or IP address of the LDAP server you wish to connect to.",
+      "label": "Server host",
+      "placeholder": "example: 127.0.0.1"
+    },
+    "search_filter": {
+      "description": "LDAP search filter used to locate specific entries within the directory.",
+      "label": "Search filter*",
+      "placeholder": "example: cn=%s"
+    },
+    "search-base-dns": {
+      "description": "An array of base dns to search through; separate by commas or spaces.",
+      "label": "Search base DNS *",
+      "placeholder": "example: \"dc=grafana.dc=org\""
+    },
+    "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our {documentation}.",
+    "title": "Basic Settings"
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "Cancel",

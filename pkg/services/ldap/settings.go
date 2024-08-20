@@ -114,11 +114,7 @@ func GetLDAPConfig(cfg *setting.Cfg) *Config {
 // GetConfig returns the LDAP config if LDAP is enabled otherwise it returns nil. It returns either cached value of
 // the config or it reads it and caches it first.
 func GetConfig(cfg *Config) (*ServersConfig, error) {
-	if cfg != nil {
-		if !cfg.Enabled {
-			return nil, nil
-		}
-	} else if !cfg.Enabled {
+	if cfg == nil || !cfg.Enabled {
 		return nil, nil
 	}
 
