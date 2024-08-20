@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models" // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -353,7 +354,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	for k, v := range req.Headers {
 		logzHeaders[k] = []string{v}
 	}
-	ctxWithLogzio := context.WithValue(ctx, "logzioHeaders", logzHeaders)
+	ctxWithLogzio := models.WithLogzHeaders(ctx, logzHeaders)
 
 	resp, err := s.dataService.QueryData(ctxWithLogzio, req)
 	// LOGZ.IO GRAFANA CHANGE :: End

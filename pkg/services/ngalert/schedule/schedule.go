@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models" // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -373,13 +374,13 @@ func (sch *schedule) RunRuleEvaluation(ctx context.Context, evalReq ngmodels.Ext
 		// since we only get if exists then it shouldn't create and routine should exist
 		ruleInfo, newRoutine := sch.registry.getOrCreateInfo(ctx, alertKey)
 		if !newRoutine {
-			logger.Debug("RunRuleEvaluation: sending ruleInfo.eval")
+			logger.Debug("RunRuleEvaluation: sending ruleInfo.eval", alertKey.LogContext()...)
 			sent, dropped := ruleInfo.eval(&ev)
 			if !sent {
-				return fmt.Errorf("evaluation was not sent")
+				return fmt.Errorf("evaluation was not sent for alert key %s", alertKey)
 			}
 			if dropped != nil {
-				logger.Warn("RunRuleEvaluation: got dropped eval", "dropped", dropped)
+				logger.Warn("RunRuleEvaluation: got dropped eval", "dropped", dropped, "rule_uid", alertKey.UID, "org_id", alertKey.OrgID)
 			}
 		}
 	} else {
@@ -426,7 +427,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		start := sch.clock.Now()
 
 		// LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
-		ctxWithLogzHeaders := context.WithValue(ctx, "logzioHeaders", e.logzHeaders)
+		ctxWithLogzHeaders := models.WithLogzHeaders(ctx, e.logzHeaders)
 		evalCtx := eval.NewContextWithPreviousResults(ctxWithLogzHeaders, SchedulerUserFor(e.rule.OrgID), sch.newLoadedMetricsReader(e.rule))
 		// LOGZ.IO GRAFANA CHANGE :: End
 		if sch.evaluatorFactory == nil {

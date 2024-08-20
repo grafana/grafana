@@ -2,6 +2,7 @@
 package models
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 )
@@ -10,10 +11,21 @@ type LogzIoHeaders struct {
 	RequestHeaders http.Header
 }
 
+type logzHeaders struct{}
+
 var logzioHeadersWhitelist = []string{
 	"user-context",
 	"X-Logz-Query-Context",
 	"Query-Source",
+}
+
+func WithLogzHeaders(ctx context.Context, requestHeaders http.Header) context.Context {
+	return context.WithValue(ctx, logzHeaders{}, &LogzIoHeaders{RequestHeaders: requestHeaders})
+}
+
+func LogzIoHeadersFromContext(ctx context.Context) (*LogzIoHeaders, bool) {
+	key, ok := ctx.Value(logzHeaders{}).(*LogzIoHeaders)
+	return key, ok
 }
 
 func (logzioHeaders *LogzIoHeaders) GetDatasourceQueryHeaders(grafanaGeneratedHeaders http.Header) http.Header {

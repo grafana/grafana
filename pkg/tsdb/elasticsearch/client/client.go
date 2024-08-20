@@ -73,13 +73,9 @@ var NewClient = func(ctx context.Context, ds *DatasourceInfo, timeRange backend.
 	logger.Debug("Creating new client", "configuredFields", fmt.Sprintf("%#v", ds.ConfiguredFields), "indices", strings.Join(indices, ", "), "interval", ds.Interval, "index", ds.Database)
 
 	// LOGZ.IO GRAFANA CHANGE :: DEV-43883 - add LogzIoHeaders
-	logzIoHeaders := &models.LogzIoHeaders{}
-	headers := ctx.Value("logzioHeaders")
-	if headers != nil {
-		logzIoHeaders.RequestHeaders = http.Header{}
-		for k, v := range headers.(http.Header) {
-			logzIoHeaders.RequestHeaders[k] = v
-		}
+	logzIoHeaders, ok := models.LogzIoHeadersFromContext(ctx)
+	if !ok {
+		logzIoHeaders = &models.LogzIoHeaders{}
 	}
 	// LOGZ.IO GRAFANA CHANGE :: End
 

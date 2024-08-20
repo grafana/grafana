@@ -169,14 +169,8 @@ func createRequest(ctx context.Context, method string, u *url.URL, bodyReader io
 
 	// LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 	logger := log.New(ctx)
-	logzHeaders := ctx.Value("logzioHeaders")
-	if logzHeaders != nil {
-		logzIoHeaders := &m.LogzIoHeaders{}
-		logzIoHeaders.RequestHeaders = http.Header{}
-		for k, v := range logzHeaders.(http.Header) {
-			logzIoHeaders.RequestHeaders[k] = v
-		}
-
+	logzIoHeaders, ok := m.LogzIoHeadersFromContext(ctx)
+	if ok {
 		request.Header = logzIoHeaders.GetDatasourceQueryHeaders(request.Header)
 	}
 	if request.Header.Get("Query-Source") == "" {

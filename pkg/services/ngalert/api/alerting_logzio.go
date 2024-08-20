@@ -45,7 +45,7 @@ func (srv *LogzioAlertingService) RouteEvaluateAlert(c *contextmodel.ReqContext,
 	var evaluationsErrors []apimodels.AlertEvalRunResult
 
 	for _, evalRequest := range evalRequests {
-		c.Logger.Info("Evaluate Alert API", "evalTime", evalRequest.EvalTime, "ruleTitle", evalRequest.AlertRule.Title, "ruleUID", evalRequest.AlertRule.UID)
+		c.Logger.Info("Evaluate Alert API", "eval_time", evalRequest.EvalTime, "rule_title", evalRequest.AlertRule.Title, "rule_uid", evalRequest.AlertRule.UID, "org_id", evalRequest.AlertRule.OrgID)
 
 		evalReq := ngmodels.ExternalAlertEvaluationRequest{
 			AlertRule:   evalRequest.AlertRule,
@@ -67,7 +67,7 @@ func (srv *LogzioAlertingService) RouteEvaluateAlert(c *contextmodel.ReqContext,
 }
 
 func (srv *LogzioAlertingService) addQuerySourceHeader(c *contextmodel.ReqContext) http.Header {
-	requestHeaders := c.Req.Header
+	requestHeaders := c.Req.Header.Clone()
 	requestHeaders.Set("Query-Source", "METRICS_ALERTS")
 	return requestHeaders
 }

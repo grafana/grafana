@@ -294,7 +294,7 @@ func ParseStateString(repr string) (State, error) {
 	}
 }
 
-func buildDatasourceHeaders(ctx EvaluationContext) map[string]string { // LOGZ.IO GRAFANA CHANGE :: DEV-43744 - change to EvaluationContext
+func buildDatasourceHeaders(ctx context.Context) map[string]string {
 	headers := map[string]string{
 		// Many data sources check this in query method as sometimes alerting needs special considerations.
 		// Several existing systems also compare against the value of this header. Altering this constitutes a breaking change.
@@ -307,20 +307,15 @@ func buildDatasourceHeaders(ctx EvaluationContext) map[string]string { // LOGZ.I
 		models.CacheSkipHeaderName: "true",
 	}
 
-	key, ok := models.RuleKeyFromContext(ctx.Ctx) // LOGZ.IO GRAFANA CHANGE :: DEV-43744 - change to EvaluationContext
+	key, ok := models.RuleKeyFromContext(ctx)
 	if ok {
 		headers["X-Rule-Uid"] = key.UID
 		headers["X-Grafana-Org-Id"] = strconv.FormatInt(key.OrgID, 10)
 	}
 
 	// LOGZ.IO GRAFANA CHANGE :: DEV-43744 - Pass headers and custom datasource to evaluate alerts
-	logzIoHeaders := &m.LogzIoHeaders{}
-	logzHeaders := ctx.Ctx.Value("logzioHeaders")
-	if logzHeaders != nil {
-		logzIoHeaders.RequestHeaders = http.Header{}
-		for k, v := range logzHeaders.(http.Header) {
-			logzIoHeaders.RequestHeaders[k] = v
-		}
+	logzIoHeaders, ok := m.LogzIoHeadersFromContext(ctx)
+	if ok {
 		newHeaders := http.Header{}
 		for k, v := range headers {
 			newHeaders[k] = []string{v}
@@ -331,7 +326,7 @@ func buildDatasourceHeaders(ctx EvaluationContext) map[string]string { // LOGZ.I
 		}
 	}
 
-	logger.Debug("Added following headers to request", "headers", headers)
+	logger.Debug("Added following headers to request", "headers", headers, "rule_uid", key.UID, "org_id", key.OrgID)
 	// LOGZ.IO GRAFANA CHANGE :: End
 
 	return headers
@@ -341,7 +336,7 @@ func buildDatasourceHeaders(ctx EvaluationContext) map[string]string { // LOGZ.I
 func getExprRequest(ctx EvaluationContext, condition models.Condition, dsCacheService datasources.CacheService, reader AlertingResultsReader) (*expr.Request, error) {
 	req := &expr.Request{
 		OrgId:   ctx.User.GetOrgID(),
-		Headers: buildDatasourceHeaders(ctx), // LOGZ.IO GRAFANA CHANGE :: DEV-43883 - Change to EvaluationContext
+		Headers: buildDatasourceHeaders(ctx.Ctx),
 		User:    ctx.User,
 	}
 	datasources := make(map[string]*datasources.DataSource, len(condition.Data))
