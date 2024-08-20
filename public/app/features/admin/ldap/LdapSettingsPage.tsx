@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 
 import { AppEvents, GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { getBackendSrv, getAppEvents } from '@grafana/runtime';
-import { useStyles2, Alert, Box, Button, Field, Input, Stack, TextLink } from '@grafana/ui';
+import { useStyles2, Alert, Box, Button, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
@@ -164,6 +164,10 @@ export const LdapSettingsPage = () => {
         });
         return;
       }
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: [t('ldap-settings-page.alert.discard-success', 'Ldap settings discarded')],
+      });
       reset(payload);
     } catch (error) {
       appEvents.publish({
