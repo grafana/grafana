@@ -19,6 +19,7 @@ type Service struct {
 	log             log.Logger
 	pluginInstaller plugins.Installer
 	pluginStore     pluginstore.Store
+	async           bool
 }
 
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, pluginStore pluginstore.Store, pluginInstaller plugins.Installer) (*Service, error) {
@@ -28,10 +29,11 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, plugi
 		cfg:             cfg,
 		pluginInstaller: pluginInstaller,
 		pluginStore:     pluginStore,
+		async:           cfg.InstallPluginsAsync,
 	}
-	if cfg.InstallPluginsBlock {
+	if !cfg.InstallPluginsAsync {
 		// Block initialization process until plugins are installed
-		err := s.installPlugins(context.Background(), true)
+		err := s.installPlugins(context.Background())
 		if err != nil {
 			return nil, err
 		}
@@ -43,10 +45,10 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, plugi
 func (s *Service) IsDisabled() bool {
 	return !s.features.IsEnabled(context.Background(), featuremgmt.FlagBackgroundPluginInstaller) ||
 		len(s.cfg.InstallPlugins) == 0 ||
-		s.cfg.InstallPluginsBlock
+		!s.cfg.InstallPluginsAsync
 }
 
-func (s *Service) installPlugins(ctx context.Context, block bool) error {
+func (s *Service) installPlugins(ctx context.Context) error {
 	compatOpts := plugins.NewCompatOpts(s.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 
 	for _, installPlugin := range s.cfg.InstallPlugins {
@@ -68,7 +70,8 @@ func (s *Service) installPlugins(ctx context.Context, block bool) error {
 				s.log.Debug("Plugin already installed", "pluginId", installPlugin.ID, "version", installPlugin.Version)
 				continue
 			}
-			if block {
+			if !s.async {
+				// Halt execution in the synchronous scenario
 				return fmt.Errorf("failed to install plugin %s@%s: %w", installPlugin.ID, installPlugin.Version, err)
 			}
 			s.log.Error("Failed to install plugin", "pluginId", installPlugin.ID, "version", installPlugin.Version, "error", err)
@@ -81,5 +84,5 @@ func (s *Service) installPlugins(ctx context.Context, block bool) error {
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	return s.installPlugins(ctx, false)
+	return s.installPlugins(ctx)
 }

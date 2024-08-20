@@ -198,7 +198,7 @@ type Cfg struct {
 	PluginInstallToken               string
 	ForwardHostEnvVars               []string
 	InstallPlugins                   []InstallPlugin
-	InstallPluginsBlock              bool
+	InstallPluginsAsync              bool
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool

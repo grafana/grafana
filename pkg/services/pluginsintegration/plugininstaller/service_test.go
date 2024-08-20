@@ -18,7 +18,8 @@ func TestService_IsDisabled(t *testing.T) {
 	// Create a new service
 	s, err := ProvideService(
 		&setting.Cfg{
-			InstallPlugins: []setting.InstallPlugin{{ID: "myplugin"}},
+			InstallPlugins:      []setting.InstallPlugin{{ID: "myplugin"}},
+			InstallPluginsAsync: true,
 		},
 		featuremgmt.WithFeatures(featuremgmt.FlagBackgroundPluginInstaller),
 		pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
@@ -59,7 +60,8 @@ func TestService_Run(t *testing.T) {
 		installed := false
 		s, err := ProvideService(
 			&setting.Cfg{
-				InstallPlugins: []setting.InstallPlugin{{ID: "myplugin", Version: "1.0.0"}},
+				InstallPlugins:      []setting.InstallPlugin{{ID: "myplugin", Version: "1.0.0"}},
+				InstallPluginsAsync: true,
 			},
 			featuremgmt.WithFeatures(),
 			pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
@@ -89,7 +91,8 @@ func TestService_Run(t *testing.T) {
 		require.NoError(t, err)
 		s, err := ProvideService(
 			&setting.Cfg{
-				InstallPlugins: []setting.InstallPlugin{{ID: "myplugin"}},
+				InstallPlugins:      []setting.InstallPlugin{{ID: "myplugin"}},
+				InstallPluginsAsync: true,
 			},
 			featuremgmt.WithFeatures(),
 			pluginstore.New(preg, &fakes.FakeLoader{}),
@@ -120,7 +123,8 @@ func TestService_Run(t *testing.T) {
 		require.NoError(t, err)
 		s, err := ProvideService(
 			&setting.Cfg{
-				InstallPlugins: []setting.InstallPlugin{{ID: "myplugin", Version: "2.0.0"}},
+				InstallPlugins:      []setting.InstallPlugin{{ID: "myplugin", Version: "2.0.0"}},
+				InstallPluginsAsync: true,
 			},
 			featuremgmt.WithFeatures(),
 			pluginstore.New(preg, &fakes.FakeLoader{}),
@@ -142,7 +146,8 @@ func TestService_Run(t *testing.T) {
 		installed := 0
 		s, err := ProvideService(
 			&setting.Cfg{
-				InstallPlugins: []setting.InstallPlugin{{ID: "myplugin1"}, {ID: "myplugin2"}},
+				InstallPlugins:      []setting.InstallPlugin{{ID: "myplugin1"}, {ID: "myplugin2"}},
+				InstallPluginsAsync: true,
 			},
 			featuremgmt.WithFeatures(),
 			pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
@@ -164,7 +169,8 @@ func TestService_Run(t *testing.T) {
 		installed := 0
 		s, err := ProvideService(
 			&setting.Cfg{
-				InstallPlugins: []setting.InstallPlugin{{ID: "myplugin1"}, {ID: "myplugin2"}},
+				InstallPlugins:      []setting.InstallPlugin{{ID: "myplugin1"}, {ID: "myplugin2"}},
+				InstallPluginsAsync: true,
 			},
 			featuremgmt.WithFeatures(),
 			pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
@@ -189,7 +195,7 @@ func TestService_Run(t *testing.T) {
 		_, err := ProvideService(
 			&setting.Cfg{
 				InstallPlugins:      []setting.InstallPlugin{{ID: "myplugin"}},
-				InstallPluginsBlock: true,
+				InstallPluginsAsync: false,
 			},
 			featuremgmt.WithFeatures(),
 			pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
@@ -208,7 +214,7 @@ func TestService_Run(t *testing.T) {
 		_, err := ProvideService(
 			&setting.Cfg{
 				InstallPlugins:      []setting.InstallPlugin{{ID: "myplugin"}},
-				InstallPluginsBlock: true,
+				InstallPluginsAsync: false,
 			},
 			featuremgmt.WithFeatures(),
 			pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
