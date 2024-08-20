@@ -18,6 +18,10 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/identity/serviceaccount"
+	"github.com/grafana/grafana/pkg/registry/apis/identity/sso"
+	"github.com/grafana/grafana/pkg/registry/apis/identity/team"
+	"github.com/grafana/grafana/pkg/registry/apis/identity/user"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -29,6 +33,7 @@ var _ builder.APIGroupBuilder = (*IdentityAPIBuilder)(nil)
 // This is used just so wire has something unique to return
 type IdentityAPIBuilder struct {
 	store      legacy.LegacyIdentityStore
+	ssoEnabled bool
 	ssoService ssosettings.Service
 }
 
@@ -44,10 +49,18 @@ func RegisterAPIService(
 
 	builder := &IdentityAPIBuilder{
 		store:      legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql)),
+		ssoEnabled: true,
 		ssoService: ssoService,
 	}
 	apiregistration.RegisterAPI(builder)
+
 	return builder, nil
+}
+
+func NewAPIBuilder(sql db.DB) *IdentityAPIBuilder {
+	return &IdentityAPIBuilder{
+		store: legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql)),
+	}
 }
 
 func (b *IdentityAPIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -60,11 +73,9 @@ func (b *IdentityAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	// "no kind is registered for the type"
-
 	identityv0.AddKnownTypes(scheme, runtime.APIVersionInternal)
 
 	metav1.AddToGroupVersion(scheme, identityv0.SchemeGroupVersion)
-
 	return scheme.SetVersionPriority(identityv0.SchemeGroupVersion)
 }
 
@@ -77,36 +88,23 @@ func (b *IdentityAPIBuilder) GetAPIGroupInfo(
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(identityv0.GROUP, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
 
-	team := identityv0.TeamResourceInfo
-	teamStore := &legacyTeamStorage{
-		service:        b.store,
-		resourceInfo:   team,
-		tableConverter: team.TableConverter(),
-	}
-	storage[team.StoragePath()] = teamStore
+	teamResource := identityv0.TeamResourceInfo
+	storage[teamResource.StoragePath()] = team.NewLegacyStore(b.store)
 
-	user := identityv0.UserResourceInfo
-	userStore := &legacyUserStorage{
-		service:        b.store,
-		resourceInfo:   user,
-		tableConverter: user.TableConverter(),
-	}
-	storage[user.StoragePath()] = userStore
-	storage[user.StoragePath("teams")] = newUserTeamsREST(b.store)
+	userResource := identityv0.UserResourceInfo
+	storage[userResource.StoragePath()] = user.NewLegacyStore(b.store)
+	storage[userResource.StoragePath("teams")] = team.NewLegacyUserTeamsStore(b.store)
 
-	sa := identityv0.ServiceAccountResourceInfo
-	saStore := &legacyServiceAccountStorage{
-		service:        b.store,
-		resourceInfo:   sa,
-		tableConverter: sa.TableConverter(),
-	}
-	storage[sa.StoragePath()] = saStore
+	serviceaccountResource := identityv0.ServiceAccountResourceInfo
+	storage[serviceaccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.store)
 
-	sso := identityv0.SSOSettingResourceInfo
-	storage[sso.StoragePath()] = newLegacySSOStore(b.ssoService)
+	if b.ssoEnabled {
+		ssoResource := identityv0.SSOSettingResourceInfo
+		storage[ssoResource.StoragePath()] = sso.NewLegacyStore(b.ssoService)
+	}
 
 	// The display endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
-	storage["display"] = newDisplayREST(b.store)
+	storage["display"] = user.NewLegacyDisplayStore(b.store)
 
 	apiGroupInfo.VersionedResourcesStorageMap[identityv0.VERSION] = storage
 	return &apiGroupInfo, nil
@@ -117,10 +115,12 @@ func (b *IdentityAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinition
 }
 
 func (b *IdentityAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil // no custom API routes
+	// no custom API routes
+	return nil
 }
 
 func (b *IdentityAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+	// TODO: handle authorization based in entity.
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 			user, err := identity.GetRequester(ctx)

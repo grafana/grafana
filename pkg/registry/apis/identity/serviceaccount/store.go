@@ -1,4 +1,4 @@
-package identity
+package serviceaccount
 
 import (
 	"context"
@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	identityv0 "github.com/grafana/grafana/pkg/apis/identity/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
@@ -19,42 +18,46 @@ import (
 )
 
 var (
-	_ rest.Scoper               = (*legacyUserStorage)(nil)
-	_ rest.SingularNameProvider = (*legacyUserStorage)(nil)
-	_ rest.Getter               = (*legacyUserStorage)(nil)
-	_ rest.Lister               = (*legacyUserStorage)(nil)
-	_ rest.Storage              = (*legacyUserStorage)(nil)
+	_ rest.Scoper               = (*LegacyStore)(nil)
+	_ rest.SingularNameProvider = (*LegacyStore)(nil)
+	_ rest.Getter               = (*LegacyStore)(nil)
+	_ rest.Lister               = (*LegacyStore)(nil)
+	_ rest.Storage              = (*LegacyStore)(nil)
 )
 
-type legacyUserStorage struct {
-	service        legacy.LegacyIdentityStore
-	tableConverter rest.TableConvertor
-	resourceInfo   common.ResourceInfo
+var resource = identityv0.ServiceAccountResourceInfo
+
+func NewLegacyStore(store legacy.LegacyIdentityStore) *LegacyStore {
+	return &LegacyStore{store}
 }
 
-func (s *legacyUserStorage) New() runtime.Object {
-	return s.resourceInfo.NewFunc()
+type LegacyStore struct {
+	store legacy.LegacyIdentityStore
 }
 
-func (s *legacyUserStorage) Destroy() {}
+func (s *LegacyStore) New() runtime.Object {
+	return resource.NewFunc()
+}
 
-func (s *legacyUserStorage) NamespaceScoped() bool {
+func (s *LegacyStore) Destroy() {}
+
+func (s *LegacyStore) NamespaceScoped() bool {
 	return true // namespace == org
 }
 
-func (s *legacyUserStorage) GetSingularName() string {
-	return s.resourceInfo.GetSingularName()
+func (s *LegacyStore) GetSingularName() string {
+	return resource.GetSingularName()
 }
 
-func (s *legacyUserStorage) NewList() runtime.Object {
-	return s.resourceInfo.NewListFunc()
+func (s *LegacyStore) NewList() runtime.Object {
+	return resource.NewListFunc()
 }
 
-func (s *legacyUserStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
+func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	return resource.TableConverter().ConvertToTable(ctx, object, tableOptions)
 }
 
-func (s *legacyUserStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -62,7 +65,7 @@ func (s *legacyUserStorage) List(ctx context.Context, options *internalversion.L
 	query := legacy.ListUserQuery{
 		OrgID:            ns.OrgID,
 		Limit:            options.Limit,
-		IsServiceAccount: false,
+		IsServiceAccount: true,
 	}
 	if options.Continue != "" {
 		query.ContinueID, err = strconv.ParseInt(options.Continue, 10, 64)
@@ -71,14 +74,14 @@ func (s *legacyUserStorage) List(ctx context.Context, options *internalversion.L
 		}
 	}
 
-	found, err := s.service.ListUsers(ctx, ns, query)
+	found, err := s.store.ListUsers(ctx, ns, query)
 	if err != nil {
 		return nil, err
 	}
 
-	list := &identityv0.UserList{}
+	list := &identityv0.ServiceAccountList{}
 	for _, item := range found.Users {
-		list.Items = append(list.Items, *toUserItem(&item, ns.Value))
+		list.Items = append(list.Items, *toSAItem(&item, ns.Value))
 	}
 	if found.ContinueID > 0 {
 		list.ListMeta.Continue = strconv.FormatInt(found.ContinueID, 10)
@@ -89,17 +92,16 @@ func (s *legacyUserStorage) List(ctx context.Context, options *internalversion.L
 	return list, err
 }
 
-func toUserItem(u *user.User, ns string) *identityv0.User {
-	item := &identityv0.User{
+func toSAItem(u *user.User, ns string) *identityv0.ServiceAccount {
+	item := &identityv0.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              u.UID,
 			Namespace:         ns,
 			ResourceVersion:   fmt.Sprintf("%d", u.Updated.UnixMilli()),
 			CreationTimestamp: metav1.NewTime(u.Created),
 		},
-		Spec: identityv0.UserSpec{
+		Spec: identityv0.ServiceAccountSpec{
 			Name:          u.Name,
-			Login:         u.Login,
 			Email:         u.Email,
 			EmailVerified: u.EmailVerified,
 			Disabled:      u.IsDisabled,
@@ -114,7 +116,7 @@ func toUserItem(u *user.User, ns string) *identityv0.User {
 	return item
 }
 
-func (s *legacyUserStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -122,15 +124,15 @@ func (s *legacyUserStorage) Get(ctx context.Context, name string, options *metav
 	query := legacy.ListUserQuery{
 		OrgID:            ns.OrgID,
 		Limit:            1,
-		IsServiceAccount: false,
+		IsServiceAccount: true,
 	}
 
-	found, err := s.service.ListUsers(ctx, ns, query)
+	found, err := s.store.ListUsers(ctx, ns, query)
 	if found == nil || err != nil {
-		return nil, s.resourceInfo.NewNotFound(name)
+		return nil, resource.NewNotFound(name)
 	}
 	if len(found.Users) < 1 {
-		return nil, s.resourceInfo.NewNotFound(name)
+		return nil, resource.NewNotFound(name)
 	}
-	return toUserItem(&found.Users[0], ns.Value), nil
+	return toSAItem(&found.Users[0], ns.Value), nil
 }

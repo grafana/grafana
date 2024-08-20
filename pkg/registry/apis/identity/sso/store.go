@@ -1,4 +1,4 @@
-package identity
+package sso
 
 import (
 	"context"
@@ -21,56 +21,56 @@ import (
 )
 
 var (
-	_ rest.Storage              = (*legacyStorage)(nil)
-	_ rest.Scoper               = (*legacyStorage)(nil)
-	_ rest.Getter               = (*legacyStorage)(nil)
-	_ rest.Lister               = (*legacyStorage)(nil)
-	_ rest.Updater              = (*legacyStorage)(nil)
-	_ rest.SingularNameProvider = (*legacyStorage)(nil)
-	_ rest.GracefulDeleter      = (*legacyStorage)(nil)
+	_ rest.Storage              = (*LegacyStore)(nil)
+	_ rest.Scoper               = (*LegacyStore)(nil)
+	_ rest.Getter               = (*LegacyStore)(nil)
+	_ rest.Lister               = (*LegacyStore)(nil)
+	_ rest.Updater              = (*LegacyStore)(nil)
+	_ rest.SingularNameProvider = (*LegacyStore)(nil)
+	_ rest.GracefulDeleter      = (*LegacyStore)(nil)
 )
 
 var resource = identityv0.SSOSettingResourceInfo
 
-func newLegacySSOStore(service ssosettings.Service) *legacyStorage {
-	return &legacyStorage{service}
+func NewLegacyStore(service ssosettings.Service) *LegacyStore {
+	return &LegacyStore{service}
 }
 
-type legacyStorage struct {
+type LegacyStore struct {
 	service ssosettings.Service
 }
 
 // Destroy implements rest.Storage.
-func (s *legacyStorage) Destroy() {}
+func (s *LegacyStore) Destroy() {}
 
 // NamespaceScoped implements rest.Scoper.
-func (s *legacyStorage) NamespaceScoped() bool {
+func (s *LegacyStore) NamespaceScoped() bool {
 	// this is maybe incorrect
 	return true
 }
 
 // GetSingularName implements rest.SingularNameProvider.
-func (s *legacyStorage) GetSingularName() string {
+func (s *LegacyStore) GetSingularName() string {
 	return resource.GetSingularName()
 }
 
 // New implements rest.Storage.
-func (s *legacyStorage) New() runtime.Object {
+func (s *LegacyStore) New() runtime.Object {
 	return resource.NewFunc()
 }
 
 // ConvertToTable implements rest.Lister.
-func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return resource.TableConverter().ConvertToTable(ctx, object, tableOptions)
 }
 
 // NewList implements rest.Lister.
-func (s *legacyStorage) NewList() runtime.Object {
+func (s *LegacyStore) NewList() runtime.Object {
 	return resource.NewListFunc()
 }
 
 // List implements rest.Lister.
-func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	ns, _ := request.NamespaceInfoFrom(ctx, false)
 
 	settings, err := s.service.List(ctx)
@@ -87,7 +87,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 }
 
 // Get implements rest.Getter.
-func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	ns, _ := request.NamespaceInfoFrom(ctx, false)
 
 	setting, err := s.service.GetForProviderWithRedactedSecrets(ctx, name)
@@ -103,7 +103,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 }
 
 // Update implements rest.Updater.
-func (s *legacyStorage) Update(
+func (s *LegacyStore) Update(
 	ctx context.Context,
 	name string,
 	objInfo rest.UpdatedObjectInfo,
@@ -142,7 +142,7 @@ func (s *legacyStorage) Update(
 }
 
 // Delete implements rest.GracefulDeleter.
-func (s *legacyStorage) Delete(
+func (s *LegacyStore) Delete(
 	ctx context.Context,
 	name string,
 	_ rest.ValidateObjectFunc,
