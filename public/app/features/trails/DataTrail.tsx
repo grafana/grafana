@@ -80,6 +80,7 @@ export interface DataTrailState extends SceneObjectState {
   otelTargets?: OtelTargetType; // all the targets with job and instance regex, job=~"<job-v>|<job-v>"", instance=~"<instance-v>|<instance-v>"
   otelResources?: string[];
   otelJoinQuery?: string;
+  isStandardOtel?: boolean;
 
   // Synced with url
   metric?: string;
@@ -322,22 +323,10 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
       const otelTargets = await totalOtelResources(datasourceUid, timeRange);
       const deploymentEnvironments = await getDeploymentEnvironments(datasourceUid, timeRange);
-
       const hasOtelResources = otelTargets.job !== '' && otelTargets.instance !== '';
+      const isStandard = await isOtelStandardization(datasourceUid, timeRange);
 
-      if (hasOtelResources && deploymentEnvironments.length > 0) {
-        const isStandard = await isOtelStandardization(datasourceUid, timeRange);
-
-        if (!isStandard) {
-          const appEvents = getAppEvents();
-          appEvents.publish({
-            type: AppEvents.alertWarning.name,
-            payload: [
-              'The Prometheus data source is not standardized for joining OTel resources with metrics. The data source may be standardized in the future but currently this feature is disabled for your data source.',
-            ],
-          });
-        }
-
+      if (hasOtelResources && isStandard && deploymentEnvironments.length > 0) {
         // get the labels for otel resources
         const excludedFilters = getOtelFilterKeys(otelResourcesVariable);
         let resources = await getOtelResources(datasourceUid, timeRange, excludedFilters);
@@ -386,12 +375,14 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         const filteredOtelTargets = await totalOtelResources(datasourceUid, timeRange, resourcesObject.filters);
         this.setState({
           hasOtelResources,
+          isStandardOtel: isStandard && deploymentEnvironments.length > 0,
           otelTargets: filteredOtelTargets,
           otelResources: resources,
           useOtelExperience: true,
         });
       } else {
         // if there are no resources reset the otel variables and otel state
+        // or if not standard
         otelResourcesVariable.setState({
           defaultKeys: [],
           hide: VariableHide.hideVariable,
@@ -405,7 +396,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         otelJoinQueryVariable.setState({ value: '' });
 
         this.setState({
-          hasOtelResources: false,
+          hasOtelResources,
+          isStandardOtel: isStandard && deploymentEnvironments.length > 0,
           useOtelExperience: false,
           otelTargets: { job: '', instance: '' },
           otelResources: [],
