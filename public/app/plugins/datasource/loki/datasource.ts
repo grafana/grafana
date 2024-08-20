@@ -299,10 +299,10 @@ export class LokiDatasource
     const dashboardTitle = dashboard?.title;
     const panelTitle = dashboard?.panels.find((p) => p.id === request?.panelId)?.title;
     if (dashboardTitle) {
-      headers['X-Grafana-Dashboard-Title'] = dashboardTitle;
+      headers['X-Dashboard-Title'] = dashboardTitle;
     }
     if (panelTitle) {
-      headers['X-Grafana-Panel-Title'] = panelTitle;
+      headers['X-Panel-Title'] = panelTitle;
     }
 
     return headers;
