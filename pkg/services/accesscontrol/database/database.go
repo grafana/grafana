@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
@@ -278,12 +277,7 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 }
 
 // GetUsersBasicRoles returns the list of user basic roles (Admin, Editor, Viewer, Grafana Admin) indexed by UserID
-// Special case for anonymous users, they don't have a user ID, we return the basic roles for them
 func (s *AccessControlStore) GetUsersBasicRoles(ctx context.Context, userIDFilter []int64, orgID int64) (map[int64][]string, error) {
-	// Special case for anonymous users, they don't have a user ID
-	if len(userIDFilter) == 1 && userIDFilter[0] == 0 {
-		return map[int64][]string{0: []string{string(identity.RoleAdmin), string(identity.RoleEditor), string(identity.RoleViewer)}}, nil
-	}
 	type UserOrgRole struct {
 		UserID  int64  `xorm:"id"`
 		OrgRole string `xorm:"role"`

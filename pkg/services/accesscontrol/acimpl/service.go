@@ -494,9 +494,7 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 	// Limit roles to available in OSS
 	options.RolePrefixes = OSSRolesPrefixes
 	if options.TypedID != "" {
-		var err error
-		var userID int64
-		userID, err = options.ComputeUserID()
+		userID, err := options.ComputeUserID()
 		if err != nil {
 			s.log.Error("Failed to resolve user ID", "error", err)
 			return nil, err
@@ -524,9 +522,15 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 		}
 	}
 
-	usersRoles, err := s.store.GetUsersBasicRoles(ctx, nil, usr.GetOrgID())
-	if err != nil {
-		return nil, err
+	var err error
+	var usersRoles map[int64][]string
+	if usr.IsIdentityType(claims.TypeAnonymous) {
+		usersRoles = map[int64][]string{0: {string(usr.GetOrgRole())}}
+	} else {
+		usersRoles, err = s.store.GetUsersBasicRoles(ctx, nil, usr.GetOrgID())
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
@@ -629,10 +633,15 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 		return nil, err
 	}
 
-	// Get permissions for user's basic roles from RAM
-	roleList, err := s.store.GetUsersBasicRoles(ctx, []int64{userID}, orgID)
-	if err != nil {
-		return nil, fmt.Errorf("could not fetch basic roles for the user: %w", err)
+	var roleList map[int64][]string
+	// Special case for anonymous users, they don't have a user ID
+	if userID == 0 {
+		roleList = map[int64][]string{0: {string(s.cfg.AnonymousOrgRole)}}
+	} else {
+		roleList, err = s.store.GetUsersBasicRoles(ctx, []int64{userID}, orgID)
+		if err != nil {
+			return nil, fmt.Errorf("could not fetch basic roles for the user: %w", err)
+		}
 	}
 	var roles []string
 	var ok bool
