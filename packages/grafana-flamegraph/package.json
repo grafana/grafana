@@ -82,7 +82,7 @@
     "rollup-plugin-node-externals": "^5.0.0",
     "ts-jest": "29.2.4",
     "ts-node": "10.9.2",
-    "typescript": "5.4.5"
+    "typescript": "5.5.4"
   },
   "peerDependencies": {
     "react": "^18.0.0",
