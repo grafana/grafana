@@ -79,10 +79,10 @@ You can migrate from the legacy Graph visualization to the time series visualiza
 You can use a time series visualization when you want to visualize the variations of a set of data values over time, each paired with timestamps.
 The visualization displays an x-y graph with the time progression on the x-axis and the magnitude of the values on the y-axis. This visualization makes it easier to display large lists of timed data points that would be hard to track in a table or list.
 You can use the time series visualization if you need track:
+
 - Temperature variations throughout the day
 - The daily progress of your retirement account
 - The distance you jog each day over the course of a year
-
 
 ## Configure a time series visualization
 
@@ -116,6 +116,7 @@ The visualization supports multiple datasets. If all datasets are compliant with
 ### Example
 
 #### Query1
+
 | Time                | value1 | value2 | value3 |
 | ------------------- | ------ | ------ | ------ |
 | 2022-11-01 10:00:00 | 1      | 2      | 3      |
@@ -123,6 +124,7 @@ The visualization supports multiple datasets. If all datasets are compliant with
 | 2022-11-01 12:00:00 | 7      | 8      | 9      |
 
 #### Query2
+
 | timestamp           | number1 | number2 | number3 |
 | ------------------- | ------- | ------- | ------- |
 | 2022-11-01 10:30:00 | 11      | 12      | 13      |
@@ -137,6 +139,7 @@ If you want to more easily compare events between different, but overlapping, ti
 ### Example
 
 #### Query1
+
 | Time                | value1 | value2 | value3 |
 | ------------------- | ------ | ------ | ------ |
 | 2022-11-01 10:00:00 | 1      | 2      | 3      |
@@ -144,6 +147,7 @@ If you want to more easily compare events between different, but overlapping, ti
 | 2022-11-01 12:00:00 | 7      | 8      | 9      |
 
 #### Query2
+
 | timestamp(-30min)   | number1 | number2 | number3 |
 | ------------------- | ------- | ------- | ------- |
 | 2022-11-01 10:30:00 | 11      | 12      | 13      |
