@@ -57,9 +57,18 @@ const putHeaderParser: HeaderParser = parseHeaderByMethodFactory('put');
 const patchHeaderParser: HeaderParser = parseHeaderByMethodFactory('patch');
 
 const headerParsers = [postHeaderParser, putHeaderParser, patchHeaderParser, defaultHeaderParser];
+const nonSafeCharacters = /[^\u0000-\u00ff]/g;
+
+function safeValue(v: string) {
+  return nonSafeCharacters.test(v) ? encodeURI(v) : v;
+}
 
 export const parseHeaders = (options: BackendSrvRequest) => {
-  const headers = options?.headers ? new Headers(options.headers) : new Headers();
+  const safeHeaders: Record<string, string> = {};
+  for (let [key, value] of Object.entries(options.headers ?? {})) {
+    safeHeaders[safeValue(key)] = safeValue(value);
+  }
+  const headers = new Headers(safeHeaders);
   const parsers = headerParsers.filter((parser) => parser.canParse(options));
   const combinedHeaders = parsers.reduce((prev, parser) => {
     return parser.parse(prev);
