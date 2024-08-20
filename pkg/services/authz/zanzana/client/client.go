@@ -61,7 +61,7 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 		c.tenantID = "stack-default"
 	}
 
-	if c.modules == nil || len(c.modules) == 0 {
+	if len(c.modules) == 0 {
 		c.modules = schema.SchemaModules
 	}
 
