@@ -79,6 +79,7 @@ func (r *historyPollResponse) Results() (*historyPollResponse, error) {
 }
 
 type groupResourceRV map[string]map[string]int64
+
 type sqlResourceHistoryPollRequest struct {
 	sqltemplate.SQLTemplate
 	Resource             string
@@ -87,8 +88,13 @@ type sqlResourceHistoryPollRequest struct {
 	Response             *historyPollResponse
 }
 
-func (r sqlResourceHistoryPollRequest) Validate() error {
+func (r *sqlResourceHistoryPollRequest) Validate() error {
 	return nil // TODO
+}
+
+func (r *sqlResourceHistoryPollRequest) Results() (*historyPollResponse, error) {
+	res := *r.Response
+	return &res, nil
 }
 
 // sqlResourceReadRequest can be used to retrieve a row fromthe "resource" tables.
@@ -107,8 +113,13 @@ type sqlResourceReadRequest struct {
 	*readResponse
 }
 
-func (r sqlResourceReadRequest) Validate() error {
+func (r *sqlResourceReadRequest) Validate() error {
 	return nil // TODO
+}
+
+func (r *sqlResourceReadRequest) Results() (*readResponse, error) {
+	x := *r.readResponse
+	return &x, nil
 }
 
 // List
@@ -189,6 +200,11 @@ type sqlResourceVersionListRequest struct {
 	*groupResourceVersion
 }
 
-func (r sqlResourceVersionListRequest) Validate() error {
+func (r *sqlResourceVersionListRequest) Validate() error {
 	return nil // TODO
+}
+
+func (r *sqlResourceVersionListRequest) Results() (*groupResourceVersion, error) {
+	x := *r.groupResourceVersion
+	return &x, nil
 }
