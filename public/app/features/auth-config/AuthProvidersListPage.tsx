@@ -98,9 +98,9 @@ export const AuthConfigPageUnconnected = ({
             {providerList
               // Temporarily filter out providers that don't have the UI implemented
               .filter(({ provider }) => !['grafana_com'].includes(provider))
-              .map(({ provider, settings }, i) => (
+              .map(({ provider, settings }) => (
                 <ProviderCard
-                  key={provider + i}
+                  key={provider}
                   authType={settings.type || 'OAuth'}
                   providerId={provider}
                   enabled={settings.enabled}
