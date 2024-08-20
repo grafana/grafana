@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/aggregator/apiserver/util"
 	grafanasemconv "github.com/grafana/grafana/pkg/semconv"
 	"k8s.io/component-base/tracing"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 func (h *PluginHandler) AdmissionMutationHandler() http.Handler {
@@ -25,18 +25,18 @@ func (h *PluginHandler) AdmissionMutationHandler() http.Handler {
 			return
 		}
 
-		req, err := admission.ToAdmissionRequest(ar)
-		if err != nil {
-			responder.Error(w, r, fmt.Errorf("unable to convert admission request: %w", err))
-			return
-		}
-
 		span.AddEvent("GetPluginContext",
 			grafanasemconv.GrafanaPluginId(h.dataplaneService.Spec.PluginID),
 		)
 		pluginContext, err := h.pluginContextProvider.GetPluginContext(ctx, h.dataplaneService.Spec.PluginID, "")
 		if err != nil {
 			responder.Error(w, r, fmt.Errorf("unable to get plugin context: %w", err))
+			return
+		}
+
+		req, err := admission.ToAdmissionRequest(pluginContext, ar)
+		if err != nil {
+			responder.Error(w, r, fmt.Errorf("unable to convert admission request: %w", err))
 			return
 		}
 
@@ -84,18 +84,18 @@ func (h *PluginHandler) AdmissionValidationHandler() http.Handler {
 			return
 		}
 
-		req, err := admission.ToAdmissionRequest(ar)
-		if err != nil {
-			responder.Error(w, r, fmt.Errorf("unable to convert admission request: %w", err))
-			return
-		}
-
 		span.AddEvent("GetPluginContext",
 			grafanasemconv.GrafanaPluginId(h.dataplaneService.Spec.PluginID),
 		)
 		pluginContext, err := h.pluginContextProvider.GetPluginContext(ctx, h.dataplaneService.Spec.PluginID, "")
 		if err != nil {
 			responder.Error(w, r, fmt.Errorf("unable to get plugin context: %w", err))
+			return
+		}
+
+		req, err := admission.ToAdmissionRequest(pluginContext, ar)
+		if err != nil {
+			responder.Error(w, r, fmt.Errorf("unable to convert admission request: %w", err))
 			return
 		}
 

@@ -2,6 +2,8 @@ package admission
 
 import (
 	"encoding/json"
+	"errors"
+	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/mattbaird/jsonpatch"
@@ -10,15 +12,30 @@ import (
 )
 
 func FromMutationResponse(current []byte, r *backend.MutationResponse) (*admissionv1.AdmissionReview, error) {
-	res := admissionv1.AdmissionResponse{
-		Allowed: r.Allowed,
-		Result: &metav1.Status{
-			Status:  r.Result.Status,
-			Message: r.Result.Message,
-			Reason:  metav1.StatusReason(r.Result.Reason),
-			Code:    r.Result.Code,
+	res := &admissionv1.AdmissionReview{
+		Response: &admissionv1.AdmissionResponse{
+			Allowed:  r.Allowed,
+			Warnings: r.Warnings,
 		},
-		Warnings: r.Warnings,
+	}
+
+	if !r.Allowed {
+		res.Response.Result = &metav1.Status{
+			Status:  metav1.StatusFailure,
+			Message: "Internal error",
+			Reason:  metav1.StatusReasonInternalError,
+			Code:    http.StatusInternalServerError,
+		}
+		if r.Result != nil {
+			res.Response.Result.Message = r.Result.Message
+			res.Response.Result.Reason = metav1.StatusReason(r.Result.Reason)
+			res.Response.Result.Code = r.Result.Code
+		}
+		return res, nil
+	}
+
+	if r.Allowed && len(r.ObjectBytes) == 0 {
+		return nil, errors.New("empty mutation response object bytes")
 	}
 
 	patch, err := jsonpatch.CreatePatch(current, r.ObjectBytes)
@@ -31,13 +48,9 @@ func FromMutationResponse(current []byte, r *backend.MutationResponse) (*admissi
 		return nil, err
 	}
 
-	res.Patch = raw
+	res.Response.Patch = raw
 	pt := admissionv1.PatchTypeJSONPatch
-	res.PatchType = &pt
+	res.Response.PatchType = &pt
 
-	resAR := &admissionv1.AdmissionReview{
-		Response: &res,
-	}
-
-	return resAR, nil
+	return res, nil
 }

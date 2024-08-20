@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 )
 
-func ToAdmissionRequest(a *admissionv1.AdmissionReview) (*backend.AdmissionRequest, error) {
+func ToAdmissionRequest(pluginCtx backend.PluginContext, a *admissionv1.AdmissionReview) (*backend.AdmissionRequest, error) {
 	if a.Request == nil {
 		return nil, errors.New("admission review request is nil")
 	}
@@ -21,7 +21,7 @@ func ToAdmissionRequest(a *admissionv1.AdmissionReview) (*backend.AdmissionReque
 	}
 
 	return &backend.AdmissionRequest{
-		PluginContext: backend.PluginContext{},
+		PluginContext: pluginCtx,
 		Operation:     op,
 		Kind: backend.GroupVersionKind{
 			Group:   a.Request.Kind.Group,
