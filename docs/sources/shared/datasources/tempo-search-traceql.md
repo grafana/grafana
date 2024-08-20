@@ -20,23 +20,22 @@ labels:
 The TraceQL query builder, located on the **Explore** > **Query type** > **Search** in Grafana, provides drop-downs and text fields to help you write a query.
 The selections you make automatically generate a [TraceQL query](/docs/tempo/latest/traceql).
 
-![The TraceQL query builder](/media/docs/tempo/traceql/screenshot-traceql-query-type-search-v10.png)
+![The TraceQL query builder](![The Search query builder](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-search-v11.png))
 
 The builder lets you run the most common queries in as few clicks as possible. You don't need to know the underlying query language or database architecture to use it.
 
-The builder supports a subset of TraceQL capabilities.
-For example, if you wish to use structural operators (`>>`, `>`, `~`), you need to use the query editor on the **TraceQL** tab.
+The builder supports a subset of TraceQL capabilitie, including some structural operators (`>>`, `>`, `=~`, `!=`).
 
 To access **Search**, select your Tempo data source, and then choose **Explore** and select **Query type** > **Search**.
 You can use the query builder to search trace data by resource service name, span name, duration, and one or more tags. The examples on this page use the default filters.
 
 In addition, you can add query builder blocks, view the query history, and use the **Inspector** to see details.
 
-{{< figure src="/media/docs/tempo/traceql/screenshot-tempods-query-search.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo Search query type" >}}
+{{< figure src="/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-builder-v11.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo Search query type" >}}
 
 ## Perform a search
 
-To perform a search, you need to select filters and/or tags and then run the query. The results appear underneath the query builder.
+To perform a search, you need to select filters and then run the query. The results appear underneath the query builder.
 The screenshot identifies the areas used to perform a search.
 
 {{< figure src="/media/docs/tempo/traceql/screenshot-tempods-query-search-parts.png" class="docs-image--no-shadow" max-width="750px" caption="Parts of Tempo Search query type" >}}

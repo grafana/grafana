@@ -11,11 +11,11 @@ labels:
     - enterprise
     - oss
 menuTitle: Search traces
-title: Search traces using TraceQL query builder
+title: Investigate traces using Search query builder
 weight: 300
 ---
 
-# Search traces using TraceQL query builder
+# Investigate traces using Search query builder
 
 Inspired by PromQL and LogQL, TraceQL is a query language designed for selecting traces.
 TraceQL provides a method for formulating precise queries so you can zoom in to the data you need.
@@ -23,9 +23,9 @@ Query results are returned faster because the queries limit what is searched.
 
 To learn more about how to query by TraceQL, refer to the [TraceQL documentation](/docs/tempo/latest/traceql).
 
-The TraceQL query builder, located on the **Explore** > **Query type** > **Search** in Grafana, provides drop-downs and text fields to help you write a query.
+The Search query builder, located on the **Explore** > **Query type** > **Search** in Grafana, provides drop-down lists and text fields to help you write a query.
 
-![The TraceQL query builder](/static/img/docs/tempo/screenshot-traceql-query-type-search-v10.png)
+![The Search query builder](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-builder-v11.png)
 
 ## Enable Search with the query builder
 

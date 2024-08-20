@@ -23,11 +23,11 @@ Query results are returned faster because the queries limit what is searched.
 
 To learn more about how to query by TraceQL, refer to the [TraceQL documentation](https://grafana.com/docs/tempo/latest/traceql/).
 
-The TraceQL query editor, located on the **Explore** > **TraceQL** tab in Grafana, lets you search by trace ID and write TraceQL queries using autocomplete.
+The TraceQL query editor **Explore** in Grafana lets you search by trace ID and write TraceQL queries using autocomplete.
 
-![The TraceQL query editor](/media/docs/tempo/traceql/screenshot-traceql-query-editor-v10.png)
+![The TraceQL query editor](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-traceql-v11.png)
 
-## Enable the query editor
+## Before you begin
 
 This feature is automatically available in Grafana 10 (and newer) and Grafana Cloud.
 
@@ -53,7 +53,8 @@ To access the query editor, follow these steps:
 1. Select a Tempo data source.
 1. Select the **TraceQL** tab.
 1. Start your query on the text line by entering `{`. For help with TraceQL syntax, refer to the [Construct a TraceQL query documentation](https://grafana.com/docs/tempo/latest/traceql/#construct-a-traceql-query).
-1. Optional: Use the Time picker drop-down to change the time and range for the query (refer to the [documentation for instructions](https://grafana.com/docs/grafana/latest/dashboards/use-dashboards/#set-dashboard-time-range)).
+   Optional: Select **Copy query from Search** to transfer a builder query to the editor.
+1. Optional: Use the **Time picker** drop-down list to change the time and range for the query (refer to the [documentation for instructions](https://grafana.com/docs/grafana/latest/dashboards/use-dashboards/#set-dashboard-time-range)).
 1. Once you have finished your query, select **Run query**.
 
 This video provides and example of creating a TraceQL query using the custom tag grouping.
@@ -68,15 +69,15 @@ To query a particular trace by its trace ID:
 1. Enter the trace ID into the query field. For example: `41928b92edf1cdbe0ba6594baee5ae9`
 1. Click **Run query** or use the keyboard shortcut Shift + Enter.
 
-![Search for a trace ID using the TraceQL query editor](/media/docs/tempo/traceql/screenshot-traceql-editor-traceID.png)
+![Search for a trace ID using the TraceQL query editor](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-trace-id-v11.png)
 
 ## Use autocomplete to write queries
 
 You can use the query editor’s autocomplete suggestions to write queries.
 The editor detects span sets to provide relevant autocomplete options.
-It uses regular expressions (regex) to detect where it's inside a spanset and provide attribute names, scopes, intrinsic names, logic operators, or attribute values from Tempo's API, depending on what's expected for the current situation.
+It uses regular expressions (regex) to detect where it's inside a spanset and provide attribute names, scopes, intrinsic names, logic operators, or attribute values from the Tempo API, depending on what's expected for the current situation.
 
-![Query editor showing the auto-complete feature](/media/docs/tempo/traceql/screenshot-traceql-query-editor-auto-complete-v10.png)
+![Query editor showing the auto-complete feature](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-editor-autocomplete.png)
 
 To create a query using autocomplete, follow these steps:
 
