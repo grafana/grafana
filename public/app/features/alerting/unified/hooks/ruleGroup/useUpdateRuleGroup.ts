@@ -14,7 +14,7 @@ import { useAsync } from '../useAsync';
 
 import { useProduceNewRuleGroup } from './useProduceNewRuleGroup';
 
-const ruleUpdateSuccessMessage = t('alerting.rule-groups.update.success', 'Successfully updated rule group');
+const ruleUpdateSuccessMessage = () => t('alerting.rule-groups.update.success', 'Successfully updated rule group');
 
 /**
  * Update an existing rule group, currently only supports updating the interval.
@@ -34,7 +34,7 @@ export function useUpdateRuleGroupConfiguration() {
       rulerConfig,
       namespace: namespaceName,
       payload: newRuleGroupDefinition,
-      notificationOptions: { successMessage: ruleUpdateSuccessMessage },
+      notificationOptions: { successMessage: ruleUpdateSuccessMessage() },
     }).unwrap();
   });
 }
@@ -184,7 +184,7 @@ export function useReorderRuleForRuleGroup() {
       rulerConfig,
       namespace: namespaceName,
       payload: newRuleGroupDefinition,
-      notificationOptions: { successMessage: ruleUpdateSuccessMessage },
+      notificationOptions: { successMessage: ruleUpdateSuccessMessage() },
     }).unwrap();
   });
 }

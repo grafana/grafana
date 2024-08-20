@@ -33,17 +33,7 @@ export type NotificationOptions = {
    * will not be shown
    */
   errorMessage?: string;
-
-  /**
-   * Set to false an success application alert box will not be shown for successful PUT, DELETE, POST requests
-   */
-  showSuccessAlert?: boolean;
-
-  /**
-   * Set to false to not show an application alert box for request errors
-   */
-  showErrorAlert?: boolean;
-};
+} & Pick<BackendSrvRequest, 'showSuccessAlert' | 'showErrorAlert'>;
 
 // utility type for passing request options to endpoints
 export type WithNotificationOptions<T> = T & {

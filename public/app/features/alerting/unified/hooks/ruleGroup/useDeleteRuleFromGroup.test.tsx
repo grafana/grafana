@@ -1,4 +1,3 @@
-import userEvent from '@testing-library/user-event';
 import { HttpResponse } from 'msw';
 import { render } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
@@ -61,9 +60,9 @@ describe('delete rule', () => {
 
     const capture = captureRequests();
 
-    render(<DeleteTestComponent rule={rules[1]} />);
+    const { user } = render(<DeleteTestComponent rule={rules[1]} />);
 
-    await userEvent.click(byRole('button').get());
+    await user.click(byRole('button').get());
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
@@ -100,9 +99,9 @@ describe('delete rule', () => {
 
     const capture = captureRequests();
 
-    render(<DeleteTestComponent rule={rules[1]} />);
+    const { user } = render(<DeleteTestComponent rule={rules[1]} />);
 
-    await userEvent.click(byRole('button').get());
+    await user.click(byRole('button').get());
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
@@ -127,8 +126,8 @@ describe('delete rule', () => {
 
     const capture = captureRequests();
 
-    render(<DeleteTestComponent rule={rule} />);
-    await userEvent.click(byRole('button').get());
+    const { user } = render(<DeleteTestComponent rule={rule} />);
+    await user.click(byRole('button').get());
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
 

@@ -75,14 +75,12 @@ export function useUpdateRuleInRuleGroup() {
       const action = updateRuleAction({ identifier: ruleIdentifier, rule: finalRuleDefinition });
       const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
 
-      const result = upsertRuleGroup({
+      return upsertRuleGroup({
         rulerConfig,
         namespace: namespaceName,
         payload: newRuleGroupDefinition,
         notificationOptions: { successMessage },
       }).unwrap();
-
-      return result;
     }
   );
 }
