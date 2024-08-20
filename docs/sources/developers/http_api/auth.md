@@ -29,6 +29,8 @@ If you use Grafana v9.1 or newer, use service accounts instead of API keys. For 
 
 ## List API keys
 
+### DEPRECATED
+
 `GET /api/auth/keys`
 
 **Required permissions**
@@ -75,6 +77,8 @@ Content-Type: application/json
 
 ## Create API Key
 
+### PERMANENTLY MOVED
+
 `POST /api/auth/keys`
 
 **Required permissions**
@@ -114,13 +118,15 @@ Error statuses:
 **Example Response**:
 
 ```http
-HTTP/1.1 200
+HTTP/1.1 301
 Content-Type: application/json
 
-{"name":"mykey","key":"eyJrIjoiWHZiSWd3NzdCYUZnNUtibE9obUpESmE3bzJYNDRIc0UiLCJuIjoibXlrZXkiLCJpZCI6MX1=","id":1}
+""
 ```
 
 ## Delete API Key
+
+### DEPRECATED
 
 `DELETE /api/auth/keys/:id`
 
