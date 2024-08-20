@@ -4,7 +4,7 @@ export interface ModalSceneObjectLike {
   onDismiss: () => void;
 }
 
-export interface SceneShareTabState extends SceneObjectState, ModalSceneObjectLike {
+export interface SceneShareTabState extends SceneObjectState, Partial<ModalSceneObjectLike> {
   modalRef?: SceneObjectRef<ModalSceneObjectLike>;
 }
 

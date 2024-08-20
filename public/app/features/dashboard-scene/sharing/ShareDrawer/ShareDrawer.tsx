@@ -3,6 +3,7 @@ import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState,
 import { Drawer } from '@grafana/ui';
 
 import { CreateReportTab as CreateReportTabScene } from '../../../../extensions/reports/dashboard-scene/CreateReportTab';
+import { shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { ExportAsJson } from '../ExportButton/ExportAsJson';
@@ -11,7 +12,7 @@ import { ShareInternally } from '../ShareButton/share-internally/ShareInternally
 import { ShareSnapshot } from '../ShareButton/share-snapshot/ShareSnapshot';
 import { SharePanelEmbedTab } from '../SharePanelEmbedTab';
 import { SharePanelInternally } from '../panel-share/SharePanelInternally';
-import { ModalSceneObjectLike, ShareView } from '../types';
+import { ModalSceneObjectLike, SceneShareTabState, ShareView } from '../types';
 
 import { ShareDrawerContext } from './ShareDrawerContext';
 
@@ -19,6 +20,13 @@ export interface ShareDrawerState extends SceneObjectState {
   panelRef?: SceneObjectRef<VizPanel>;
   shareView: string;
   activeShare: ShareView;
+}
+
+type CustomShareViewType = { id: string; shareOption: new (...args: SceneShareTabState[]) => ShareView };
+const customShareViewOptions: CustomShareViewType[] = [];
+
+export function addDashboardShareView(shareView: CustomShareViewType) {
+  customShareViewOptions.push(shareView);
 }
 
 export class ShareDrawer extends SceneObjectBase<ShareDrawerState> implements ModalSceneObjectLike {
@@ -69,16 +77,21 @@ function getShareView(
   dashboardRef: SceneObjectRef<DashboardScene>,
   panelRef?: SceneObjectRef<VizPanel>
 ): ShareView {
+  const currentShareView = customShareViewOptions.find((s) => s.id === shareView);
+  if (currentShareView) {
+    return new currentShareView.shareOption({ onDismiss });
+  }
+
   switch (shareView) {
-    case 'link':
+    case shareDashboardType.link:
       return new ShareInternally({ onDismiss });
-    case 'public_dashboard':
+    case shareDashboardType.publicDashboard:
       return new ShareExternally({ onDismiss });
-    case 'snapshot':
+    case shareDashboardType.snapshot:
       return new ShareSnapshot({ dashboardRef, panelRef, onDismiss });
-    case 'export':
+    case shareDashboardType.export:
       return new ExportAsJson({ onDismiss });
-    case 'report':
+    case shareDashboardType.report:
       return new CreateReportTabScene({ onDismiss });
     default:
       return new ShareInternally({ onDismiss });
@@ -92,11 +105,11 @@ function getPanelShareView(
   panelRef: SceneObjectRef<VizPanel>
 ): ShareView {
   switch (shareView) {
-    case 'link':
+    case shareDashboardType.link:
       return new SharePanelInternally({ panelRef, onDismiss });
-    case 'snapshot':
+    case shareDashboardType.snapshot:
       return new ShareSnapshot({ dashboardRef, panelRef, onDismiss });
-    case 'embed':
+    case shareDashboardType.embed:
       return new SharePanelEmbedTab({ panelRef, onDismiss });
     default:
       return new SharePanelInternally({ panelRef, onDismiss });

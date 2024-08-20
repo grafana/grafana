@@ -16,6 +16,7 @@ import { KioskMode } from 'app/types';
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
+import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
 import { findVizPanelByKey, getDashboardSceneFor, getLibraryPanel, isPanelClone } from '../utils/utils';
 
@@ -23,7 +24,6 @@ import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
 import { ViewPanelScene } from './ViewPanelScene';
 import { DashboardRepeatsProcessedEvent } from './types';
-import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   private _eventSub?: Unsubscribable;

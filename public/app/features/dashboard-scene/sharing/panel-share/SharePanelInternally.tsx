@@ -5,9 +5,10 @@ import { config } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Alert, ClipboardButton, Divider, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
+
+import { getDashboardSceneFor } from '../../utils/utils';
 import ShareInternallyConfiguration from '../ShareInternallyConfiguration';
 import { ShareLinkTab, ShareLinkTabState } from '../ShareLinkTab';
-import { getDashboardSceneFor } from '../../utils/utils';
 
 export class SharePanelInternally extends ShareLinkTab {
   static Component = SharePanelInternallyRenderer;
