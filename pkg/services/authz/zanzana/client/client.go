@@ -5,11 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"google.golang.org/grpc"
-	"google.golang.org/protobuf/types/known/wrapperspb"
-
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/openfga/language/pkg/go/transformer"
+	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"

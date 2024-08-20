@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-
 	"github.com/grafana/dskit/concurrency"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 )
