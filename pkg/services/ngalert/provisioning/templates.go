@@ -66,31 +66,34 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]defi
 	return templates, nil
 }
 
-func (t *TemplateService) GetTemplate(ctx context.Context, orgID int64, name string) (definitions.NotificationTemplate, error) {
+func (t *TemplateService) GetTemplate(ctx context.Context, orgID int64, nameOrUid string) (definitions.NotificationTemplate, error) {
 	revision, err := t.configStore.Get(ctx, orgID)
 	if err != nil {
 		return definitions.NotificationTemplate{}, err
 	}
 
-	for tmplName, tmpl := range revision.Config.TemplateFiles {
-		if tmplName != name {
-			continue
-		}
-		tmpl := definitions.NotificationTemplate{
-			UID:             legacy_storage.NameToUid(tmplName),
-			Name:            tmplName,
-			Template:        tmpl,
-			ResourceVersion: calculateTemplateFingerprint(tmpl),
-		}
-
-		provenance, err := t.provenanceStore.GetProvenance(ctx, &tmpl, orgID)
-		if err != nil {
-			return definitions.NotificationTemplate{}, err
-		}
-		tmpl.Provenance = definitions.Provenance(provenance)
-		return tmpl, nil
+	existingName := nameOrUid
+	existingContent, ok := revision.Config.TemplateFiles[nameOrUid]
+	if !ok {
+		existingName, existingContent, ok = getTemplateByUid(revision.Config.TemplateFiles, nameOrUid)
 	}
-	return definitions.NotificationTemplate{}, ErrTemplateNotFound.Errorf("")
+	if !ok {
+		return definitions.NotificationTemplate{}, ErrTemplateNotFound.Errorf("")
+	}
+
+	tmpl := definitions.NotificationTemplate{
+		UID:             legacy_storage.NameToUid(existingName),
+		Name:            existingName,
+		Template:        existingContent,
+		ResourceVersion: calculateTemplateFingerprint(existingContent),
+	}
+
+	provenance, err := t.provenanceStore.GetProvenance(ctx, &tmpl, orgID)
+	if err != nil {
+		return definitions.NotificationTemplate{}, err
+	}
+	tmpl.Provenance = definitions.Provenance(provenance)
+	return tmpl, nil
 }
 
 func (t *TemplateService) UpsertTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error) {
