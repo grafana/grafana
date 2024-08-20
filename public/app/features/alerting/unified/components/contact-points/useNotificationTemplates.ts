@@ -14,9 +14,8 @@ import {
 import { updateAlertManagerConfigAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { PROVENANCE_ANNOTATION, PROVENANCE_NONE } from '../../utils/k8s/constants';
-import { shouldUseK8sApi } from '../../utils/k8s/utils';
+import { shouldUseK8sApi, getK8sNamespace } from '../../utils/k8s/utils';
 import { ensureDefine } from '../../utils/templates';
-import { getK8sNamespace } from '../mute-timings/util';
 import { TemplateFormValues } from '../receivers/TemplateForm';
 
 interface BaseAlertmanagerArgs {

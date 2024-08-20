@@ -15,9 +15,12 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
 }));
 
-jest.mock('react-virtualized-auto-sizer', () => ({ children }: Props) => (
-  <div>{children({ width: 1000, height: 1000, scaledWidth: 1, scaledHeight: 1 })}</div>
-));
+jest.mock(
+  'react-virtualized-auto-sizer',
+  () =>
+    ({ children }: Props) =>
+      children({ width: 1000, height: 1000, scaledWidth: 1, scaledHeight: 1 })
+);
 
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
