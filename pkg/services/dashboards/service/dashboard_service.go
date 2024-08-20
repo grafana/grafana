@@ -749,7 +749,11 @@ func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64
 		return dr.dashboardStore.SoftDeleteDashboardsInFolders(ctx, orgID, folderUIDs)
 	}
 
-	return dr.dashboardStore.DeleteDashboardsInFolders(ctx, &dashboards.DeleteDashboardsInFolderRequest{FolderUIDs: folderUIDs, OrgID: orgID})
+	return dr.dashboardStore.DeleteDashboardsInFolders(ctx, &dashboards.DeleteDashboardsInFolderRequest{
+		FolderUIDs:        folderUIDs,
+		OrgID:             orgID,
+		CheckProvisioning: true,
+	})
 }
 
 func (dr *DashboardServiceImpl) Kind() string { return entity.StandardKindDashboard }
