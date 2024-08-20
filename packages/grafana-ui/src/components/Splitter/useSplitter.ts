@@ -301,6 +301,16 @@ export function useSplitter(options: UseSplitterOptions) {
   const dragHandleStyle = direction === 'column' ? dragStyles.dragHandleHorizontal : dragStyles.dragHandleVertical;
   const id = useId();
 
+  const primaryStyles: React.CSSProperties = {
+    flexGrow: clamp(initialSize ?? 0.5, 0, 1),
+    ...(options.allowOverflow ? { overflow: 'auto' } : { [minDimProp]: 'min-content' }),
+  };
+
+  const secondaryStyles: React.CSSProperties = {
+    flexGrow: clamp(1 - initialSize, 0, 1),
+    ...(options.allowOverflow ? { overflow: 'auto' } : { [minDimProp]: 'min-content' }),
+  };
+
   return {
     containerProps: {
       ref: containerRef,
@@ -309,18 +319,12 @@ export function useSplitter(options: UseSplitterOptions) {
     primaryProps: {
       ref: firstPaneRef,
       className: styles.panel,
-      style: {
-        flexGrow: clamp(initialSize ?? 0.5, 0, 1),
-        ...(options.allowOverflow ? { overflow: 'auto' } : { [minDimProp]: 'min-content' }),
-      },
+      style: primaryStyles,
     },
     secondaryProps: {
       ref: secondPaneRef,
       className: styles.panel,
-      style: {
-        flexGrow: clamp(1 - initialSize, 0, 1),
-        ...(options.allowOverflow ? { overflow: 'auto' } : { [minDimProp]: 'min-content' }),
-      },
+      style: secondaryStyles,
     },
     splitterProps: {
       onPointerUp,
