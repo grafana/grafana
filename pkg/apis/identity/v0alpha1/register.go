@@ -102,8 +102,9 @@ var SSOSettingResourceInfo = common.NewResourceInfo(
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Source", Type: "string", Format: "source"},
-			{Name: "Created At", Type: "date"},
+			{Name: "Source", Type: "string"},
+			{Name: "Enabled", Type: "boolean"},
+			{Name: "Created At", Type: "string", Format: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
 			m, ok := obj.(*SSOSetting)
@@ -113,6 +114,7 @@ var SSOSettingResourceInfo = common.NewResourceInfo(
 			return []interface{}{
 				m.Name,
 				m.Spec.Source,
+				m.Spec.Settings.GetNestedBool("enabled"),
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
 			}, nil
 		},
