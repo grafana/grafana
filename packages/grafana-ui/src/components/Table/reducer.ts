@@ -2,14 +2,14 @@ import { useCallback } from 'react';
 
 import { getFieldDisplayName } from '@grafana/data';
 
-import { TableSortByFieldState, GrafanaTableColumn, GrafanaTableState, Props } from './types';
+import { TableSortByFieldState, GrafanaTableColumn, GrafanaTableState, GeneralTableProps } from './types';
 
 export interface ActionType {
   type: string;
   id: string | undefined;
 }
 
-export function useTableStateReducer({ onColumnResize, onSortByChange, data }: Props) {
+export function useTableStateReducer({ onColumnResize, onSortByChange, data }: GeneralTableProps) {
   return useCallback(
     (newState: GrafanaTableState, action: ActionType) => {
       switch (action.type) {
@@ -63,7 +63,7 @@ export function useTableStateReducer({ onColumnResize, onSortByChange, data }: P
 }
 
 export function getInitialState(
-  initialSortBy: Props['initialSortBy'],
+  initialSortBy: GeneralTableProps['initialSortBy'],
   columns: GrafanaTableColumn[]
 ): Partial<GrafanaTableState> {
   const state: Partial<GrafanaTableState> = {};

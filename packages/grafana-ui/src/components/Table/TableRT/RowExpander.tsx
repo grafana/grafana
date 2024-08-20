@@ -1,7 +1,9 @@
-import { Icon } from '../Icon/Icon';
+import { Icon } frxom '../../Icon/Icon';
+
+import { GrafanaTableRow } from '../types';
 
 import { TableStyles } from './styles';
-import { GrafanaTableRow } from './types';
+
 
 export interface Props {
   row: GrafanaTableRow;

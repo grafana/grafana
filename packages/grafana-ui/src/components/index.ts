@@ -83,7 +83,7 @@ export { PageToolbar } from './PageLayout/PageToolbar';
 // Renderless
 export { SetInterval } from './SetInterval/SetInterval';
 
-export { Table } from './Table/Table';
+export { Table } from './Table/TableRT/Table';
 export {
   type TableCustomCellOptions,
   type CustomCellRendererProps,

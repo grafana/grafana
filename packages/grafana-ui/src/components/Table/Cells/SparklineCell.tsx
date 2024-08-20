@@ -20,13 +20,13 @@ import {
   VisibilityMode,
 } from '@grafana/schema';
 
-import { useTheme2 } from '../../themes';
-import { measureText } from '../../utils';
-import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
-import { Sparkline } from '../Sparkline/Sparkline';
+import { useTheme2 } from '../../../themes';
+import { measureText } from '../../../utils';
+import { FormattedValueDisplay } from '../../FormattedValueDisplay/FormattedValueDisplay';
+import { Sparkline } from '../../Sparkline/Sparkline';
 
-import { TableCellProps } from './types';
-import { getAlignmentFactor, getCellOptions } from './utils';
+import { TableCellProps } from '../types';
+import { getAlignmentFactor, getCellOptions } from '../utils';
 
 export const defaultSparklineCellConfig: TableSparklineCellOptions = {
   type: TableCellDisplayMode.Sparkline,

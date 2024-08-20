@@ -3,9 +3,9 @@ import { ColumnInstance, HeaderGroup } from 'react-table';
 import { fieldReducers, ReducerID } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { EmptyCell, FooterCell } from './FooterCell';
+import { EmptyCell, FooterCell } from '../Cells/FooterCell';
 import { TableStyles } from './styles';
-import { FooterItem } from './types';
+import { FooterItem } from '../types';
 
 export interface FooterRowProps {
   totalColumnsWidth: number;

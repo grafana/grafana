@@ -5,8 +5,8 @@ import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 
 import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
 
-import { ButtonSelect, Checkbox, FilterInput, Label, Stack } from '..';
-import { useStyles2, useTheme2 } from '../../themes';
+import { ButtonSelect, Checkbox, FilterInput, Label, Stack } from '../..';
+import { useStyles2, useTheme2 } from '../../../themes';
 
 interface Props {
   values: SelectableValue[];
@@ -95,7 +95,7 @@ export const FilterList = ({
             const fnc = new Function('$', `'use strict'; return ${xpr};`);
             const val = comparableValue(option.value);
             return fnc(val);
-          } catch (_) {}
+          } catch (_) { }
           return false;
         } else {
           if (option.value === undefined) {

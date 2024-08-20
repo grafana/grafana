@@ -1,10 +1,10 @@
 import * as React from 'react';
 
-import { getCellLinks } from '../../utils';
-import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
+import { getCellLinks } from '../../../utils';
+import { DataLinksContextMenu } from '../../DataLinks/DataLinksContextMenu';
 
-import { TableCellDisplayMode, TableCellProps } from './types';
-import { getCellOptions } from './utils';
+import { TableCellDisplayMode, TableCellProps } from '../types';
+import { getCellOptions } from '../utils';
 
 const DATALINKS_HEIGHT_OFFSET = 10;
 

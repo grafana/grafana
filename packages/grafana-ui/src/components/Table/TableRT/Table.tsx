@@ -14,17 +14,13 @@ import { FieldType, ReducerID, getRowUniqueId } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellHeight } from '@grafana/schema';
 
-import { useTheme2 } from '../../themes';
-import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-import { Pagination } from '../Pagination/Pagination';
+import { useTheme2 } from '../../../themes';
+import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
+import { Pagination } from '../../Pagination/Pagination';
 
-import { FooterRow } from './FooterRow';
-import { HeaderRow } from './HeaderRow';
-import { RowsList } from './RowsList';
-import { useFixScrollbarContainer, useResetVariableListSizeCache } from './hooks';
-import { getInitialState, useTableStateReducer } from './reducer';
-import { useTableStyles } from './styles';
-import { FooterItem, GrafanaTableState, Props } from './types';
+import { useFixScrollbarContainer, useResetVariableListSizeCache } from '../hooks';
+import { getInitialState, useTableStateReducer } from '../reducer';
+import { FooterItem, GrafanaTableState, GeneralTableProps } from '../types';
 import {
   getColumns,
   sortCaseInsensitive,
@@ -32,13 +28,23 @@ import {
   getFooterItems,
   createFooterCalculationValues,
   guessLongestField,
-} from './utils';
+} from '../utils';
+
+import { FooterRow } from './FooterRow';
+import { HeaderRow } from './HeaderRow';
+import { RowsList } from './RowsList';
+import { useTableStyles } from './styles';
+
+
+
+
+
 
 const COLUMN_MIN_WIDTH = 150;
 const FOOTER_ROW_HEIGHT = 36;
 const NO_DATA_TEXT = 'No data';
 
-export const Table = memo((props: Props) => {
+export const Table = memo((props: GeneralTableProps) => {
   const {
     ariaLabel,
     data,
@@ -105,9 +111,9 @@ export const Table = memo((props: Props) => {
   // This checks whether `Show table footer` is toggled on, the `Calculation` is set to `Count`, and finally, whether `Count rows` is toggled on.
   const isCountRowsSet = Boolean(
     footerOptions?.countRows &&
-      footerOptions.reducer &&
-      footerOptions.reducer.length &&
-      footerOptions.reducer[0] === ReducerID.count
+    footerOptions.reducer &&
+    footerOptions.reducer.length &&
+    footerOptions.reducer[0] === ReducerID.count
   );
 
   const nestedDataField = data.fields.find((f) => f.type === FieldType.nestedFrames);
