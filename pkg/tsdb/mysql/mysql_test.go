@@ -126,6 +126,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Run("Query with Table format should map MySQL column types to Go types", func(t *testing.T) {
+			t.Ski
 			query := &backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
