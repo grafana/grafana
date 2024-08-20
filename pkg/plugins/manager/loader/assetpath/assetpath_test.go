@@ -47,8 +47,6 @@ func TestService(t *testing.T) {
 			svc := ProvideService(cfg, pluginscdn.ProvideService(cfg))
 
 			tableOldFS := fakes.NewFakePluginFS("/grafana/public/app/plugins/panel/table-old")
-			//oneFS := fakes.NewFakePluginFS("/grafana/public/plugins/one")
-			//twoFS := fakes.NewFakePluginFS("/grafana/public/plugins/one/nested-plugins/two")
 			jsonData := map[string]plugins.JSONData{
 				"table-old": {ID: "table-old", Info: plugins.Info{Version: "1.0.0"}},
 
