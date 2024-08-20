@@ -136,7 +136,7 @@ const alertTests = () => {
     });
 
     await renderSharePublicDashboard({ dashboard });
-    await waitFor(() => expect(screen.getByTestId(selectors.UnsupportedDataSourcesWarningAlert)).toBeInTheDocument());
+    expect(await screen.findByTestId(selectors.UnsupportedDataSourcesWarningAlert)).toBeInTheDocument();
   });
 };
 
