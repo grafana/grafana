@@ -1,16 +1,8 @@
 import { css } from '@emotion/css';
 import { useEffect } from 'react';
 
-import {
-  AdHocVariableFilter,
-  AppEvents,
-  GrafanaTheme2,
-  PageLayoutType,
-  RawTimeRange,
-  VariableHide,
-  urlUtil,
-} from '@grafana/data';
-import { getAppEvents, locationService, useChromeHeaderHeight } from '@grafana/runtime';
+import { AdHocVariableFilter, GrafanaTheme2, PageLayoutType, RawTimeRange, VariableHide, urlUtil } from '@grafana/data';
+import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
@@ -82,6 +74,9 @@ export interface DataTrailState extends SceneObjectState {
   otelJoinQuery?: string;
   isStandardOtel?: boolean;
 
+  // moved into settings
+  showPreviews?: boolean;
+
   // Synced with url
   metric?: string;
   metricSearch?: string;
@@ -123,6 +118,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       useOtelExperience: state.useOtelExperience ?? false,
       // preserve the otel join query
       otelJoinQuery: state.otelJoinQuery ?? '',
+      showPreviews: true,
       ...state,
     });
 

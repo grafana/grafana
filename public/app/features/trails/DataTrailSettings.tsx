@@ -6,6 +6,7 @@ import { Dropdown, Switch, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { Trans } from '@grafana/ui/src/utils/i18n';
 
 import { reportExploreMetrics } from './interactions';
+import { getTrailFor } from './utils';
 
 export interface DataTrailSettingsState extends SceneObjectState {
   stickyMainGraph?: boolean;
@@ -30,9 +31,18 @@ export class DataTrailSettings extends SceneObjectBase<DataTrailSettingsState> {
     this.setState({ isOpen });
   };
 
+  public onTogglePreviews = () => {
+    const trail = getTrailFor(this);
+    trail.setState({ showPreviews: !trail.state.showPreviews });
+  };
+
   static Component = ({ model }: SceneComponentProps<DataTrailSettings>) => {
     const { stickyMainGraph, isOpen } = model.useState();
     const styles = useStyles2(getStyles);
+
+    const trail = getTrailFor(model);
+
+    const { showPreviews } = trail.useState();
 
     const renderPopover = () => {
       return (
@@ -44,6 +54,12 @@ export class DataTrailSettings extends SceneObjectBase<DataTrailSettingsState> {
               <Trans>Always keep selected metric graph in-view</Trans>
             </div>
             <Switch value={stickyMainGraph} onChange={model.onToggleStickyMainGraph} />
+          </div>
+          <div className={styles.options}>
+            <div>
+              <Trans>Show previews of metric graphs in metric select scene</Trans>
+            </div>
+            <Switch value={showPreviews} onChange={model.onTogglePreviews} />
           </div>
         </div>
       );

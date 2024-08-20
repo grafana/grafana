@@ -63,7 +63,6 @@ export interface MetricSelectSceneState extends SceneObjectState {
   body: SceneFlexLayout | SceneCSSGridLayout;
   rootGroup?: Node;
   metricPrefix?: string;
-  showPreviews?: boolean;
   metricNames?: string[];
   metricNamesLoading?: boolean;
   metricNamesError?: string;
@@ -86,7 +85,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
 
   constructor(state: Partial<MetricSelectSceneState>) {
     super({
-      showPreviews: true,
       $variables: state.$variables,
       metricPrefix: state.metricPrefix ?? METRIC_PREFIX_ALL,
       body:
@@ -200,6 +198,14 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
         // users will most likely not switch this off but for now,
         // update metric names when changing useOtelExperience
         this._debounceRefreshMetricNames();
+      })
+    );
+
+    this._subs.add(
+      trail.subscribeToState(({ showPreviews }, oldState) => {
+        // move showPreviews into the settings
+        // build layout when toggled
+        this.buildLayout();
       })
     );
 
@@ -358,6 +364,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
   }
 
   private async buildLayout() {
+    const trail = getTrailFor(this);
+    const showPreviews = trail.state.showPreviews;
     // Temp hack when going back to select metric scene and variable updates
     if (this.ignoreNextUpdate) {
       this.ignoreNextUpdate = false;
@@ -370,7 +378,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     }
 
     const children = await this.populateFilterableViewLayout();
-    const rowTemplate = this.state.showPreviews ? ROW_PREVIEW_HEIGHT : ROW_CARD_HEIGHT;
+    const rowTemplate = showPreviews ? ROW_PREVIEW_HEIGHT : ROW_CARD_HEIGHT;
     this.state.body.setState({ children, autoRows: rowTemplate });
   }
 
@@ -407,6 +415,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
 
   private async populatePanels(trail: DataTrail, filters: ReturnType<typeof getFilters>, values: string[]) {
     const currentFilterCount = filters?.length || 0;
+    const showPreviews = trail.state.showPreviews;
 
     const previewPanelLayoutItems: SceneFlexItem[] = [];
     for (let index = 0; index < values.length; index++) {
@@ -415,7 +424,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       const metadata = await trail.getMetricMetadata(metricName);
       const description = getMetricDescription(metadata);
 
-      if (this.state.showPreviews) {
+      if (showPreviews) {
         if (metric.itemRef && metric.isPanel) {
           previewPanelLayoutItems.push(metric.itemRef.resolve());
           continue;
@@ -477,11 +486,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     });
   };
 
-  public onTogglePreviews = () => {
-    this.setState({ showPreviews: !this.state.showPreviews });
-    this.buildLayout();
-  };
-
   public onToggleOtelExperience = () => {
     const trail = getTrailFor(this);
     const useOtelExperience = trail.state.useOtelExperience;
@@ -490,16 +494,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
   };
 
   public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {
-    const {
-      showPreviews,
-      body,
-      metricNames,
-      metricNamesError,
-      metricNamesLoading,
-      metricNamesWarning,
-      rootGroup,
-      metricPrefix,
-    } = model.useState();
+    const { body, metricNames, metricNamesError, metricNamesLoading, metricNamesWarning, rootGroup, metricPrefix } =
+      model.useState();
     const { children } = body.useState();
     const trail = getTrailFor(model);
     const styles = useStyles2(getStyles);
@@ -579,7 +575,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
               ]}
             />
           </Field>
-          <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} />
           {hasOtelResources && (
             <Field
               label={
