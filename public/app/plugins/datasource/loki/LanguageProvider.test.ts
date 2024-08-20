@@ -269,7 +269,7 @@ describe('Language completion provider', () => {
       });
     });
 
-    it.only('should use a single promise to resolve values', async () => {
+    it('should use a single promise to resolve values', async () => {
       const datasource = setup({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
       const provider = await getLanguageProvider(datasource);
       const requestSpy = jest.spyOn(provider, 'request');
