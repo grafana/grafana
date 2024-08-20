@@ -2,11 +2,14 @@ import { RawTimeRange } from '@grafana/data';
 import { getPrometheusTime } from '@grafana/prometheus/src/language_utils';
 import { getBackendSrv } from '@grafana/runtime';
 
-import { OtelResponse, LabelResponse } from './types';
+import { OtelResponse, LabelResponse, OtelTargetType } from './types';
 
-/** This ensures we can join on a single series target*/
-const OTEL_TARGET_INFO_QUERY = 'count(target_info{}) by (job, instance)';
 const OTEL_RESOURCE_EXCLUDED_FILTERS = ['__name__', 'deployment_environment']; // name is handled by metric search metrics bar
+/**
+ * Function used to test for OTEL
+ * When filters are added, we can also get a list of otel targets used to reduce the metric list
+ * */
+const otelTargetInfoQuery = (filters?: string) => `count(target_info{${filters ?? ''}}) by (job, instance)`;
 
 /**
  * Query the DS for target_info matching job and instance.
@@ -51,8 +54,8 @@ export async function getOtelResources(
 export async function totalOtelResources(
   dataSourceUid: string,
   timeRange: RawTimeRange,
-  expr?: string
-): Promise<number> {
+  filters?: string
+): Promise<OtelTargetType> {
   const start = getPrometheusTime(timeRange.from, false);
   const end = getPrometheusTime(timeRange.to, true);
 
@@ -60,7 +63,7 @@ export async function totalOtelResources(
   const paramsTotalTargets: Record<string, string | number> = {
     start,
     end,
-    query: OTEL_TARGET_INFO_QUERY,
+    query: otelTargetInfoQuery(filters),
   };
 
   const responseTotal = await getBackendSrv().get<OtelResponse>(
@@ -69,7 +72,24 @@ export async function totalOtelResources(
     'explore-metrics-otel-check-total'
   );
 
-  return responseTotal.data.result.length;
+  let jobs: string[] = [];
+  let instances: string[] = [];
+
+  responseTotal.data.result.forEach((result) => {
+    jobs.push(result.metric.job);
+    instances.push(result.metric.instance);
+  });
+
+  // use these filters to reduce metrics
+  const jobsRegex = jobs.length > 0 ? `"${jobs.join('|')}"` : '';
+  const instancesRegex = instances.length > 0 ? `"${instances.join('|')}"` : '';
+
+  const otelTargets: OtelTargetType = {
+    job: jobsRegex,
+    instance: instancesRegex,
+  };
+
+  return otelTargets;
 }
 
 /**
@@ -97,7 +117,7 @@ export async function isOtelStandardization(
     start,
     end,
     // any data source with duplicated series will have a count > 1
-    query: `${OTEL_TARGET_INFO_QUERY} > 1`,
+    query: `${otelTargetInfoQuery()} > 1`,
   };
 
   const response = await getBackendSrv().get<OtelResponse>(url, paramsTargets, 'explore-metrics-otel-check-standard');

@@ -17,6 +17,7 @@ import { DataTrail } from './DataTrail';
 import { DataTrailSettings } from './DataTrailSettings';
 import { MetricScene } from './MetricScene';
 import { getTrailStore } from './TrailStore/TrailStore';
+import { OtelResourcesObject } from './otel/types';
 import { LOGS_METRIC, TRAILS_ROUTE, VAR_DATASOURCE_EXPR, VAR_OTEL_DEPLOYMENT_ENV, VAR_OTEL_RESOURCES } from './shared';
 
 export function getTrailFor(model: SceneObject): DataTrail {
@@ -121,15 +122,32 @@ export function getFilters(scene: SceneObject) {
  * Return a collection of labels and labels filters.
  * This data is used to build the join query to filter with otel resources
  *
+ * @param otelResourcesObject
+ * @returns a string that is used to add a join query to filter otel resources
+ */
+export function getOtelJoinQuery(otelResourcesObject: OtelResourcesObject): string {
+  let otelResourcesJoinQuery = '';
+  if (otelResourcesObject.filters && otelResourcesObject.labels) {
+    // add support for otel data sources that are not standardized, i.e., have non unique target_info series by job, instance
+    otelResourcesJoinQuery = `* on (job, instance) group_left(${otelResourcesObject.labels}) topk by (job, instance) (1, target_info{${otelResourcesObject.filters}})`;
+  }
+
+  return otelResourcesJoinQuery;
+}
+
+/**
+ * Returns an object containing all the filters for otel resources as well as a list of labels
+ *
  * @param scene
+ * @param firstQueryVal
  * @returns
  */
-export function getOtelJoinQuery(scene: SceneObject, firstQueryVal?: string): string {
+export function getOtelResourcesObject(scene: SceneObject, firstQueryVal?: string): OtelResourcesObject {
   const otelResources = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, scene);
   // add deployment env to otel resource filters
   const otelDepEnv = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, scene);
 
-  let otelResourcesJoinQuery = '';
+  let otelResourcesObject = { labels: '', filters: '' };
 
   if (otelResources instanceof AdHocFiltersVariable && otelDepEnv instanceof CustomVariable) {
     // get the collection of adhoc filters
@@ -162,9 +180,10 @@ export function getOtelJoinQuery(scene: SceneObject, firstQueryVal?: string): st
       allLabels += `,${labelName}`;
     }
 
-    // add support for otel data sources that are not standardized, i.e., have non unique target_info series by job, instance
-    otelResourcesJoinQuery = `* on (job, instance) group_left(${allLabels}) topk by (job, instance) (1, target_info{${allFilters}})`;
-  }
+    otelResourcesObject.labels = allLabels;
+    otelResourcesObject.filters = allFilters;
 
-  return otelResourcesJoinQuery;
+    return otelResourcesObject;
+  }
+  return otelResourcesObject;
 }

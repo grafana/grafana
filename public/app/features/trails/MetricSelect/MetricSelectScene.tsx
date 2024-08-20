@@ -196,6 +196,16 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
 
     const matchTerms = [];
 
+    if (trail.state.useOtelExperience) {
+      // add the job and instance filters
+      // but be careful, because these might get overriden
+      // I think it will be fine that they are overidden
+      // NOTE: test the limit of size of filters we can add, limit otel filters if there are too many
+      // test this with a customer with a larger amount of targets
+      matchTerms.push(`job=~${trail.state.otelTargets?.job}`);
+      matchTerms.push(`instance=~${trail.state.otelTargets?.instance}`);
+    }
+
     const filtersVar = sceneGraph.lookupVariable(VAR_FILTERS, this);
     const hasFilters = filtersVar instanceof AdHocFiltersVariable && filtersVar.getValue()?.valueOf();
     if (hasFilters) {

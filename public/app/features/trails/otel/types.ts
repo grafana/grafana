@@ -22,3 +22,8 @@ export type OtelTargetType = {
   job: string;
   instance: string;
 };
+
+export type OtelResourcesObject = {
+  filters: string;
+  labels: string;
+};

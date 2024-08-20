@@ -47,7 +47,7 @@ import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { reportChangeInLabelFilters } from './interactions';
 import { getDeploymentEnvironments, getOtelResources, isOtelStandardization, totalOtelResources } from './otel/api';
-import { OtelTargetType } from './otel/types';
+import { OtelResourcesObject, OtelTargetType } from './otel/types';
 import {
   getVariablesWithOtelJoinQueryConstant,
   MetricSelectedEvent,
@@ -59,7 +59,7 @@ import {
   VAR_OTEL_JOIN_QUERY,
   VAR_OTEL_RESOURCES,
 } from './shared';
-import { getMetricName, getOtelJoinQuery, getTrailFor } from './utils';
+import { getMetricName, getOtelJoinQuery, getOtelResourcesObject, getTrailFor } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
   topScene?: SceneObject;
@@ -76,7 +76,7 @@ export interface DataTrailState extends SceneObjectState {
   // this is for otel, if the data source has it, it will be updated here
   hasOtelResources?: boolean;
   useOtelExperience?: boolean;
-  otelTargets?: OtelTargetType[];
+  otelTargets?: OtelTargetType; // all the targets with job and instance regex, job=~"<job-v>|<job-v>"", instance=~"<instance-v>|<instance-v>"
   otelResources?: string[];
   otelJoinQuery?: string;
 
@@ -86,13 +86,16 @@ export interface DataTrailState extends SceneObjectState {
 }
 
 // NEXT WORK,
-// - build layout on change of otel things
-// - filter for metrics that are related to otel resources
-// - requery panels on change of otel variables
-// - move the toggle into the settings
-// - show the labels in the breakdown
-// - order the labels by importance
-// - clear otel filters and otel join query on changing data source
+// - [ ] build layout on change of otel things
+// - [x] filter for metrics that are related to otel resources
+// - [ ] requery panels on change of otel variables
+// - [ ] move the toggle into the settings
+// - [ ] show the labels in the breakdown
+// - [ ] order the labels by importance
+// - [ ] clear otel filters and otel join query on changing data source
+// - [ ] clear state checks like hasOtelResources when data source is changed
+// - [ ] update the url by all the state
+// - [ ] test the limit of a match string when filtering metrics in MetricSelectScene
 
 export class DataTrail extends SceneObjectBase<DataTrailState> {
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric', 'metricSearch'] });
@@ -173,12 +176,22 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       }
 
       if (this.state.useOtelExperience && (name === VAR_OTEL_DEPLOYMENT_ENV || name === VAR_OTEL_RESOURCES)) {
-        const otelJoinQuery = getOtelJoinQuery(this);
+        const resourcesObject: OtelResourcesObject = getOtelResourcesObject(this);
+        const otelJoinQuery = getOtelJoinQuery(resourcesObject);
+
         this.setState({ otelJoinQuery });
         // update the otel join query variable too
         const otelJoinQueryVariable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, this);
         if (otelJoinQueryVariable instanceof ConstantVariable) {
           otelJoinQueryVariable.setState({ value: otelJoinQuery });
+        }
+
+        // update the targets used to filter metrics
+        const timeRange: RawTimeRange | undefined = this.state.$timeRange?.state;
+        const datasourceUid = sceneGraph.interpolate(this, VAR_DATASOURCE_EXPR);
+        if (timeRange) {
+          const otelTargets = await totalOtelResources(datasourceUid, timeRange, resourcesObject.filters);
+          this.setState({ otelTargets });
         }
       }
     },
@@ -278,6 +291,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   public async checkDataSourceForOTelResources() {
+    // make sure to turn hasOtelResources and useOtelResources flags off if we change the data source
     // call up in to the parent trail
     const trail = getTrailFor(this);
 
@@ -287,8 +301,12 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
 
     if (timeRange) {
-      const hasOtelResources = (await totalOtelResources(datasourceUid, timeRange)) > 0;
-      // default otel experience to false or true??
+      const otelTargets = await totalOtelResources(datasourceUid, timeRange);
+
+      const hasOtelResources = otelTargets.job !== '' && otelTargets.instance !== '';
+
+      // default otel experience to false, then update later when we check standardization
+      // can't set the targets here, there are too many, will break the metrics query
       this.setState({ hasOtelResources, useOtelExperience: false });
     }
   }
@@ -372,13 +390,19 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
       // Because we need to define the deployment environment variable
       // we also need to update the otel join query state and variable
-      const otelJoinQuery = getOtelJoinQuery(this, options[0].value);
+      const resourcesObject: OtelResourcesObject = getOtelResourcesObject(this, options[0].value);
+      const otelJoinQuery = getOtelJoinQuery(resourcesObject);
       this.setState({ otelJoinQuery });
       // update the otel join query variable too
       const otelJoinQueryVariable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, this);
       if (otelJoinQueryVariable instanceof ConstantVariable) {
         otelJoinQueryVariable.setState({ value: otelJoinQuery });
       }
+
+      // now we can filter target_info targets by deployment_environment="somevalue"
+      // and use these new targets to reduce the metrics
+      const otelTargets = await totalOtelResources(datasourceUid, timeRange, resourcesObject.filters);
+      this.setState({ otelTargets });
     }
   }
 
