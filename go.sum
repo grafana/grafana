@@ -1571,6 +1571,8 @@ github.com/aryann/difflib v0.0.0-20170710044230-e206f873d14a/go.mod h1:DAHtR1m6l
 github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a/go.mod h1:lB+ZfQJz7igIIfQNfa7Ml4HSf2uFQQRzpGGRXenZAgY=
 github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 h1:DklsrG3dyBCFEj5IhUbnKptjxatkF07cF2ak3yi77so=
 github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2/go.mod h1:WaHUgvxTVq04UNunO+XhnAqY/wQc+bxr74GqbsZ/Jqw=
+github.com/at-wat/mqtt-go v0.19.4 h1:R2cbCU7O5PHQ38unbe1Y51ncG3KsFEJV6QeipDoqdLQ=
+github.com/at-wat/mqtt-go v0.19.4/go.mod h1:AsiWc9kqVOhqq7LzUeWT/AkKUBfx3Sw5cEe8lc06fqA=
 github.com/aws/aws-lambda-go v1.13.3/go.mod h1:4UKl9IzQMoD+QF79YdCuzCwp8VbmG4VAQwij/eHl5CU=
 github.com/aws/aws-sdk-go v1.15.27/go.mod h1:mFuSZ37Z9YOHbQEwBWztmVzqXrEkub65tZoCYDt7FT0=
 github.com/aws/aws-sdk-go v1.17.7/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
@@ -1864,8 +1866,6 @@ github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+m
 github.com/eapache/go-resiliency v1.1.0/go.mod h1:kFI+JgMyC7bLPUVY133qvEBtVayf5mFgVsvEsIPBvNs=
 github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21/go.mod h1:+020luEh2TKB4/GOp8oxxtq0Daoen/Cii55CzbTV6DU=
 github.com/eapache/queue v1.1.0/go.mod h1:6eCeP0CKFpHLu8blIFXhExK/dRa7WDZfr6jVFPTqq+I=
-github.com/eclipse/paho.mqtt.golang v1.4.3 h1:2kwcUGn8seMUfWndX0hGbvH8r7crgcJguQNCyp70xik=
-github.com/eclipse/paho.mqtt.golang v1.4.3/go.mod h1:CSYvoAlsMkhYOXh/oKyxa8EcBci6dVkLCbo5tTC1RIE=
 github.com/edsrzf/mmap-go v0.0.0-20170320065105-0bce6a688712/go.mod h1:YO35OhQPt3KJa3ryjFM5Bs14WD66h8eGKpfaBNrHW5M=
 github.com/edsrzf/mmap-go v1.0.0/go.mod h1:YO35OhQPt3KJa3ryjFM5Bs14WD66h8eGKpfaBNrHW5M=
 github.com/edsrzf/mmap-go v1.1.0 h1:6EUwBLQ/Mcr1EYLE4Tn1VdW1A4ckqCQWZBw8Hr0kjpQ=
@@ -2308,8 +2308,8 @@ github.com/gorilla/websocket v1.4.1/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWmnc=
 github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/grafana/alerting v0.0.0-20240810233427-8b36c7507ff8 h1:LxLepZCmkUkROjnd/4n4Hjefz3ZLzEKMGKxdZHetODI=
-github.com/grafana/alerting v0.0.0-20240810233427-8b36c7507ff8/go.mod h1:pK+8fhzloJcdQw8Ocaypwmovbb4BkQgwOKpiRFpVspk=
+github.com/grafana/alerting v0.0.0-20240820191338-88fb4452b6cd h1:IO3FtJb5fKwYPPU7mDKtfd+D9/X9rPl9i4NBM6+VVLg=
+github.com/grafana/alerting v0.0.0-20240820191338-88fb4452b6cd/go.mod h1:GMLi6d09Xqo96fCVUjNk//rcjP5NKEdjOzfWIffD5r4=
 github.com/grafana/authlib v0.0.0-20240809101159-74eaccc31a06 h1:qks7nEo/A0+mWvjMjWEIfFD9eIVipb5Lxjfg+HcB5u4=
 github.com/grafana/authlib v0.0.0-20240809101159-74eaccc31a06/go.mod h1:5uu+ADz2c8bVsXheavXS735IcDuO6M3dr+evuDl8rIE=
 github.com/grafana/authlib/claims v0.0.0-20240809101159-74eaccc31a06 h1:uD1LcKwvEAqzDsgVChBudPqo5BhPxkj9AgylT5QCReo=

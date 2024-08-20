@@ -74,7 +74,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.12.3 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20240810233427-8b36c7507ff8 // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20240820191338-88fb4452b6cd // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20240809101159-74eaccc31a06 // @grafana/identity-access-team
 	github.com/grafana/authlib/claims v0.0.0-20240809101159-74eaccc31a06 // @grafana/identity-access-team
 	github.com/grafana/codejen v0.0.3 // @grafana/dataviz-squad
@@ -480,7 +480,12 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 )
 
-require github.com/eclipse/paho.mqtt.golang v1.4.3 // indirect
+require (
+	github.com/at-wat/mqtt-go v0.19.4 // indirect
+	github.com/grafana/grafana/pkg/semconv v0.0.0-20240808213237-f4d2e064f435 // indirect
+	github.com/hairyhenderson/go-which v0.2.0 // indirect
+	github.com/iancoleman/orderedmap v0.3.0 // indirect
+)
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240523142256-cc370b98af7c
