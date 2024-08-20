@@ -76,6 +76,14 @@ Time series visualizations are the default way to visualize data points over int
 You can migrate from the legacy Graph visualization to the time series visualization. To migrate, open the panel and click the **Migrate** button in the side pane.
 {{< /admonition >}}
 
+You can use a time series visualization when you want to visualize the variations of a set of data values over time, each paired with timestamps.
+The visualization displays an x-y graph with the time progression on the x-axis and the magnitude of the values on the y-axis. This visualization makes it easier to display large lists of timed data points that would be hard to track in a table or list.
+You can use the time series visualization if you need track:
+- Temperature variations throughout the day
+- The daily progress of your retirement account
+- The distance you jog each day over the course of a year
+
+
 ## Configure a time series visualization
 
 The following video guides you through the creation steps and common customizations of time series visualizations, and is great for beginners:
@@ -86,7 +94,66 @@ The following video guides you through the creation steps and common customizati
 
 ## Supported data formats
 
-Time series visualizations require time-series data&mdash;a sequence of measurements, ordered in time, and formatted as a table&mdash;where every row in the table represents one individual measurement at a specific time. Learn more about [time-series data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/).
+Time series visualizations require time-series data—a sequence of measurements, ordered in time, and formatted as a table—where every row in the table represents one individual measurement at a specific time. Learn more about [time-series data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/).
+
+The dataset must contain at least one numeric field, and in case of multiple numeric fields each one will be plotted as a new line, point, or bar labeled with the field name in the tooltip.
+
+### Example
+
+| Time                | value1 | value2 | value3 |
+| ------------------- | ------ | ------ | ------ |
+| 2022-11-01 10:00:00 | 1      | 2      | 3      |
+| 2022-11-01 11:00:00 | 4      | 5      | 6      |
+| 2022-11-01 12:00:00 | 7      | 8      | 9      |
+| 2022-11-01 13:00:00 | 4      | 5      | 6      |
+
+![Time Series Example](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-timeseries-example1.png 'Time Series Example')
+
+If the time field is not recognized automatically, you might need to transform the data to a time format using a data transformation.
+
+The visualization supports multiple datasets. If all datasets are compliant with the supported data format, the visualization plots all the numeric fields of both datasets, and labels them using the numeric field's column name.
+
+### Example
+
+#### Query1
+| Time                | value1 | value2 | value3 |
+| ------------------- | ------ | ------ | ------ |
+| 2022-11-01 10:00:00 | 1      | 2      | 3      |
+| 2022-11-01 11:00:00 | 4      | 5      | 6      |
+| 2022-11-01 12:00:00 | 7      | 8      | 9      |
+
+#### Query2
+| timestamp           | number1 | number2 | number3 |
+| ------------------- | ------- | ------- | ------- |
+| 2022-11-01 10:30:00 | 11      | 12      | 13      |
+| 2022-11-01 11:30:00 | 14      | 15      | 16      |
+| 2022-11-01 12:30:00 | 17      | 18      | 19      |
+| 2022-11-01 13:30:00 | 14      | 15      | 16      |
+
+![Time Series Example with two Data Sets](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-timeseries-example2.png 'Time Series Example with two Data Sets')
+
+If you want to more easily compare events between different, but overlapping, time frames, you can do this by using a time offset while querying the compared dataset.
+
+### Example
+
+#### Query1
+| Time                | value1 | value2 | value3 |
+| ------------------- | ------ | ------ | ------ |
+| 2022-11-01 10:00:00 | 1      | 2      | 3      |
+| 2022-11-01 11:00:00 | 4      | 5      | 6      |
+| 2022-11-01 12:00:00 | 7      | 8      | 9      |
+
+#### Query2
+| timestamp(-30min)   | number1 | number2 | number3 |
+| ------------------- | ------- | ------- | ------- |
+| 2022-11-01 10:30:00 | 11      | 12      | 13      |
+| 2022-11-01 11:30:00 | 14      | 15      | 16      |
+| 2022-11-01 12:30:00 | 17      | 18      | 19      |
+| 2022-11-01 13:30:00 | 14      | 15      | 16      |
+
+![Time Series Example with second Data Set offset](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-timeseries-example3.png 'Time Series Example with second Data Set offset')
+
+When you add the offset, the resulting visualization will make the datasets appear to be occurring at the same time so that you can compare them more easily.
 
 ## Alert rules
 
