@@ -77,7 +77,9 @@ You can migrate from the legacy Graph visualization to the time series visualiza
 {{< /admonition >}}
 
 You can use a time series visualization when you want to visualize the variations of a set of data values over time, each paired with timestamps.
+
 The visualization displays an x-y graph with the time progression on the x-axis and the magnitude of the values on the y-axis. This visualization makes it easier to display large lists of timed data points that would be hard to track in a table or list.
+
 You can use the time series visualization if you need track:
 
 - Temperature variations throughout the day
