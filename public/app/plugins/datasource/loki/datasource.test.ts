@@ -1667,7 +1667,7 @@ describe('LokiDatasource', () => {
   describe('Query splitting', () => {
     beforeAll(() => {
       config.featureToggles.lokiQuerySplitting = true;
-      jest.mocked(runQuery).mockReturnValue(
+      jest.mocked(runSplitQuery).mockReturnValue(
         of({
           data: [],
         })
@@ -1694,16 +1694,14 @@ describe('LokiDatasource', () => {
       };
 
       await expect(ds.query(query)).toEmitValuesWith(() => {
-        expect(runQuery).toHaveBeenCalled();
+        expect(runSplitQuery).toHaveBeenCalled();
       });
     });
   });
 
   describe('query', () => {
-    let getCurrentSpy: jest.Mock;
     let featureToggleVal = config.featureToggles.lokiSendDashboardPanelNames;
     beforeEach(() => {
-      getCurrentSpy = jest.fn();
       setDashboardSrv({
         getCurrent: () => ({
           title: 'dashboard_title',
@@ -1713,11 +1711,6 @@ describe('LokiDatasource', () => {
       const fetchMock = jest.fn().mockReturnValue(of({ data: testLogsResponse }));
       setBackendSrv({ ...origBackendSrv, fetch: fetchMock });
       config.featureToggles.lokiSendDashboardPanelNames = true;
-      jest.mocked(runSplitQuery).mockReturnValue(
-        of({
-          data: [],
-        })
-      );
     });
     afterEach(() => {
       config.featureToggles.lokiSendDashboardPanelNames = featureToggleVal;
