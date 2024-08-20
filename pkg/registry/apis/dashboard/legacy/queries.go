@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"text/template"
 
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
@@ -31,8 +32,25 @@ var (
 type sqlQuery struct {
 	sqltemplate.SQLTemplate
 	Query *DashboardQuery
+
+	DashboardTable    string
+	VersionTable      string
+	ProvisioningTable string
+	UserTable         string
 }
 
 func (r sqlQuery) Validate() error {
 	return nil // TODO
+}
+
+func newQueryReq(sql *legacysql.LegacyDatabaseHelper, query *DashboardQuery) sqlQuery {
+	return sqlQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		Query:       query,
+
+		DashboardTable:    sql.Table("dashboard"),
+		VersionTable:      sql.Table("dashboard_version"),
+		ProvisioningTable: sql.Table("dashboard_provisioning"),
+		UserTable:         sql.Table("user"),
+	}
 }

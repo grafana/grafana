@@ -4,64 +4,64 @@ import (
 	"testing"
 	"text/template"
 
+	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 )
 
 func TestQueries(t *testing.T) {
+	// prefix tables with grafana
+	nodb := &legacysql.LegacyDatabaseHelper{
+		Table: func(n string) string {
+			return "grafana." + n
+		},
+	}
+
+	getQuery := func(q *DashboardQuery) sqltemplate.SQLTemplate {
+		v := newQueryReq(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
 			sqlQueryDashboards: {
 				{
 					Name: "history_uid",
-					Data: &sqlQuery{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Query: &DashboardQuery{
-							OrgID: 2,
-							UID:   "UUU",
-						},
-					},
+					Data: getQuery(&DashboardQuery{
+						OrgID: 2,
+						UID:   "UUU",
+					}),
 				},
 				{
 					Name: "history_uid_at_version",
-					Data: &sqlQuery{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Query: &DashboardQuery{
-							OrgID:   2,
-							UID:     "UUU",
-							Version: 3,
-						},
-					},
+					Data: getQuery(&DashboardQuery{
+						OrgID:   2,
+						UID:     "UUU",
+						Version: 3,
+					}),
 				},
 				{
 					Name: "history_uid_second_page",
-					Data: &sqlQuery{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Query: &DashboardQuery{
-							OrgID:  2,
-							UID:    "UUU",
-							LastID: 7,
-						},
-					},
+					Data: getQuery(&DashboardQuery{
+						OrgID:  2,
+						UID:    "UUU",
+						LastID: 7,
+					}),
 				},
 				{
 					Name: "dashboard",
-					Data: &sqlQuery{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Query: &DashboardQuery{
-							OrgID: 2,
-						},
-					},
+					Data: getQuery(&DashboardQuery{
+						OrgID: 2,
+					}),
 				},
 				{
 					Name: "dashboard_next_page",
-					Data: &sqlQuery{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Query: &DashboardQuery{
-							OrgID:  2,
-							LastID: 22,
-						},
-					},
+					Data: getQuery(&DashboardQuery{
+						OrgID:  2,
+						LastID: 22,
+					}),
 				},
 			},
 		},
