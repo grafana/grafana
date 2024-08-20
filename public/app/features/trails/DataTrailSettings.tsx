@@ -3,8 +3,10 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { Dropdown, Switch, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Trans } from '@grafana/ui/src/utils/i18n';
 
 import { reportExploreMetrics } from './interactions';
+import { getTrailFor } from './utils';
 
 export interface DataTrailSettingsState extends SceneObjectState {
   stickyMainGraph?: boolean;
@@ -29,9 +31,19 @@ export class DataTrailSettings extends SceneObjectBase<DataTrailSettingsState> {
     this.setState({ isOpen });
   };
 
+  public onToggleOtelExperience = () => {
+    const trail = getTrailFor(this);
+    const useOtelExperience = trail.state.useOtelExperience;
+
+    trail.setState({ useOtelExperience: !useOtelExperience });
+  };
+
   static Component = ({ model }: SceneComponentProps<DataTrailSettings>) => {
     const { stickyMainGraph, isOpen } = model.useState();
     const styles = useStyles2(getStyles);
+
+    const trail = getTrailFor(model);
+    const { useOtelExperience, hasOtelResources } = trail.useState();
 
     const renderPopover = () => {
       return (
@@ -39,9 +51,20 @@ export class DataTrailSettings extends SceneObjectBase<DataTrailSettingsState> {
         <div className={styles.popover} onClick={(evt) => evt.stopPropagation()}>
           <div className={styles.heading}>Settings</div>
           <div className={styles.options}>
-            <div>Always keep selected metric graph in-view</div>
+            <div>
+              <Trans>Always keep selected metric graph in-view</Trans>
+            </div>
             <Switch value={stickyMainGraph} onChange={model.onToggleStickyMainGraph} />
           </div>
+
+          {hasOtelResources && (
+            <div className={styles.options}>
+              <div>
+                <Trans>OTel experience</Trans>
+              </div>
+              <Switch label="Otel experience" value={useOtelExperience} onChange={model.onToggleOtelExperience} />
+            </div>
+          )}
         </div>
       );
     };

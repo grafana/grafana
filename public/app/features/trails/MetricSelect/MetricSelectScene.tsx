@@ -195,6 +195,14 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       })
     );
 
+    this._subs.add(
+      trail.subscribeToState(({ useOtelExperience }, oldState) => {
+        // users will most likely not switch this off but for now,
+        // update metric names when changing useOtelExperience
+        this._debounceRefreshMetricNames();
+      })
+    );
+
     this._debounceRefreshMetricNames();
   }
 
@@ -474,13 +482,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     this.buildLayout();
   };
 
-  public onToggleOtelExperience = () => {
-    const trail = getTrailFor(this);
-    const useOtelExperience = trail.state.useOtelExperience;
-
-    trail.setState({ useOtelExperience: !useOtelExperience });
-  };
-
   public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {
     const {
       showPreviews,
@@ -498,7 +499,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
 
     const [warningDismissed, dismissWarning] = useReducer(() => true, false);
 
-    const { metricSearch, useOtelExperience, hasOtelResources } = trail.useState();
+    const { metricSearch } = trail.useState();
 
     const tooStrict = children.length === 0 && metricSearch;
     const noMetrics = !metricNamesLoading && metricNames && metricNames.length === 0;
@@ -560,14 +561,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
             />
           </Field>
           <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} />
-          {hasOtelResources && (
-            <InlineSwitch
-              showLabel={true}
-              label="Otel experience"
-              value={useOtelExperience}
-              onChange={model.onToggleOtelExperience}
-            />
-          )}
         </div>
         {metricNamesError && (
           <Alert title="Unable to retrieve metric names" severity="error">
