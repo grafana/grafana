@@ -1,6 +1,7 @@
 package v0alpha1
 
 import (
+	"github.com/grafana/authlib/claims"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -73,19 +74,28 @@ type ServiceAccountList struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type IdentityDisplayList struct {
+type IdentityDisplayResults struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []IdentityDisplay `json:"items,omitempty"`
+	// Request keys used to lookup the display value
+	// +listType=set
+	Keys []string `json:"keys"`
+
+	// Matching items (the caller may need to remap from keys to results)
+	// +listType=atomic
+	Display []IdentityDisplay `json:"display"`
+
+	// Input keys that were not useable
+	// +listType=set
+	InvalidKeys []string `json:"invalidKeys,omitempty"`
 }
 
 type IdentityDisplay struct {
-	IdentityType string `json:"type"` // The namespaced UID, eg `user|api-key|...`
-	UID          string `json:"uid"`  // The namespaced UID, eg `xyz`
-	Display      string `json:"display"`
-	AvatarURL    string `json:"avatarURL,omitempty"`
+	IdentityType claims.IdentityType `json:"type"` // The namespaced UID, eg `user|api-key|...`
+	UID          string              `json:"uid"`  // The namespaced UID, eg `xyz`
+	Display      string              `json:"display"`
+	AvatarURL    string              `json:"avatarURL,omitempty"`
 
 	// Legacy internal ID -- usage of this value should be phased out
-	LegacyID int64 `json:"legacyId,omitempty"`
+	InternalID int64 `json:"internalId,omitempty"`
 }

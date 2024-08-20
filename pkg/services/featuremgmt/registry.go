@@ -45,7 +45,7 @@ var (
 			Name:              "panelTitleSearch",
 			Description:       "Search for dashboards using panel title",
 			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaAppPlatformSquad,
+			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
 		},
 		{
@@ -89,7 +89,7 @@ var (
 			Name:        "storage",
 			Description: "Configurable storage for dashboards, datasources, and resources",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAppPlatformSquad,
+			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
 			Name:           "correlations",
@@ -191,7 +191,7 @@ var (
 			Name:              "grpcServer",
 			Description:       "Run the GRPC server",
 			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaAppPlatformSquad,
+			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
 		},
 		{
@@ -200,7 +200,7 @@ var (
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: false,
 			RequiresRestart: true, // new SQL tables created
-			Owner:           grafanaAppPlatformSquad,
+			Owner:           grafanaSearchAndStorageSquad,
 		},
 		{
 			Name:           "cloudWatchCrossAccountQuerying",
@@ -722,6 +722,14 @@ var (
 			Expression:   "true", // Enabled by default
 		},
 		{
+			Name:            "kubernetesPlaylists",
+			Description:     "Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s",
+			Stage:           FeatureStageGeneralAvailability,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "true",
+			RequiresRestart: true, // changes the API routing
+		},
+		{
 			Name:            "kubernetesSnapshots",
 			Description:     "Routes snapshot requests from /api to the /apis endpoint",
 			Stage:           FeatureStageExperimental,
@@ -1163,8 +1171,8 @@ var (
 		},
 		{
 			Name:        "accessActionSets",
-			Description: "Introduces action sets for resource permissions",
-			Stage:       FeatureStageExperimental,
+			Description: "Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions.",
+			Stage:       FeatureStagePublicPreview,
 			Owner:       identityAccessTeam,
 		},
 		{
