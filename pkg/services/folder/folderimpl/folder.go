@@ -872,7 +872,6 @@ func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderComm
 			OrgID:                  cmd.OrgID,
 			UID:                    folderUID,
 			ForceDeleteFolderRules: cmd.ForceDeleteRules,
-			CheckProvisioning:      true,
 		}
 		if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
 			return toFolderError(err)

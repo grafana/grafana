@@ -279,7 +279,6 @@ func TestIntegrationFolderService(t *testing.T) {
 				require.NotNil(t, actualCmd)
 				require.Equal(t, orgID, actualCmd.OrgID)
 				require.Equal(t, expectedForceDeleteRules, actualCmd.ForceDeleteFolderRules)
-				require.Equal(t, true, actualCmd.CheckProvisioning)
 			})
 
 			t.Run("When deleting folder by uid, expectedForceDeleteRules as false, and dashboard Restore turned on should not return access denied error", func(t *testing.T) {

@@ -636,7 +636,7 @@ func (d *dashboardStore) deleteDashboard(ctx context.Context, cmd *dashboards.De
 		if !d.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
 			sqlStatements = append(sqlStatements, statement{SQL: "DELETE FROM dashboard WHERE org_id = ? AND folder_uid = ? AND is_folder = ? AND deleted IS NULL", args: []any{dashboard.OrgID, dashboard.UID, d.store.DB().GetDialect().BooleanStr(false)}})
 
-			if err := d.deleteChildrenDashboardAssociations(ctx, sess, &dashboard, cmd.CheckProvisioning); err != nil {
+			if err := d.deleteChildrenDashboardAssociations(ctx, sess, &dashboard); err != nil {
 				return err
 			}
 		} else {
@@ -694,7 +694,7 @@ func (d *dashboardStore) deleteResourcePermissions(sess *db.Session, orgID int64
 	return err
 }
 
-func (d *dashboardStore) deleteChildrenDashboardAssociations(ctx context.Context, sess *db.Session, dashboard *dashboards.Dashboard, checkProvisioning bool) error {
+func (d *dashboardStore) deleteChildrenDashboardAssociations(ctx context.Context, sess *db.Session, dashboard *dashboards.Dashboard) error {
 	var dashIds []struct {
 		Id  int64
 		Uid string
@@ -707,18 +707,17 @@ func (d *dashboardStore) deleteChildrenDashboardAssociations(ctx context.Context
 		return nil
 	}
 
-	if checkProvisioning {
-		args := make([]int64, 0, len(dashIds))
-		for _, entry := range dashIds {
-			args = append(args, entry.Id)
-		}
-		count, err := d.CountProvisionedDataByDashboardIDs(ctx, args)
-		if err != nil {
-			return err
-		}
-		if count != 0 {
-			return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
-		}
+	// check if any dashboards are provisioned
+	args := make([]int64, 0, len(dashIds))
+	for _, entry := range dashIds {
+		args = append(args, entry.Id)
+	}
+	count, err := d.CountProvisionedDataByDashboardIDs(ctx, args)
+	if err != nil {
+		return err
+	}
+	if count != 0 {
+		return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
 	}
 
 	for _, dash := range dashIds {
@@ -1012,7 +1011,7 @@ func (d *dashboardStore) DeleteDashboardsInFolders(
 				return dashboards.ErrFolderNotFound
 			}
 
-			if err := d.deleteChildrenDashboardAssociations(ctx, sess, &dashboard, true); err != nil {
+			if err := d.deleteChildrenDashboardAssociations(ctx, sess, &dashboard); err != nil {
 				return err
 			}
 

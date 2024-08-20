@@ -228,7 +228,6 @@ type DeleteDashboardCommand struct {
 	UID                    string
 	OrgID                  int64
 	ForceDeleteFolderRules bool
-	CheckProvisioning      bool
 }
 
 type DeleteOrphanedProvisionedDashboardsCommand struct {
