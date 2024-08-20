@@ -93,8 +93,17 @@ func (r *sqlResourceHistoryPollRequest) Validate() error {
 }
 
 func (r *sqlResourceHistoryPollRequest) Results() (*historyPollResponse, error) {
-	res := *r.Response
-	return &res, nil
+	return &historyPollResponse{
+		Key: resource.ResourceKey{
+			Namespace: r.Response.Namespace,
+			Group:     r.Response.Group,
+			Resource:  r.Response.Resource,
+			Name:      r.Response.Name,
+		},
+		ResourceVersion: r.Response.ResourceVersion,
+		Value:           r.Response.Value,
+		Action:          r.Response.Action,
+	}, nil
 }
 
 // sqlResourceReadRequest can be used to retrieve a row fromthe "resource" tables.
@@ -118,8 +127,11 @@ func (r *sqlResourceReadRequest) Validate() error {
 }
 
 func (r *sqlResourceReadRequest) Results() (*readResponse, error) {
-	x := *r.readResponse
-	return &x, nil
+	return &readResponse{
+		Error:           r.readResponse.Error,
+		ResourceVersion: r.readResponse.ResourceVersion,
+		Value:           r.readResponse.Value,
+	}, nil
 }
 
 // List
