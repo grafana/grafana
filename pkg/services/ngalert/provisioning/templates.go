@@ -109,7 +109,7 @@ func (t *TemplateService) UpsertTemplate(ctx context.Context, orgID int64, tmpl 
 		if !errors.Is(err, ErrTemplateNotFound) {
 			return d, err
 		}
-		if tmpl.ResourceVersion != "" { // if version is set then it's an update operation. Fail because resource does not exist anymore
+		if tmpl.ResourceVersion != "" || tmpl.UID != "" { // if version and\or UID are set then it's an update operation. Fail because resource does not exist anymore
 			return definitions.NotificationTemplate{}, ErrTemplateNotFound.Errorf("")
 		}
 		return t.createTemplate(ctx, revision, orgID, tmpl)

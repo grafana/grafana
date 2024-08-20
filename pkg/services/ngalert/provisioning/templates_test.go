@@ -473,6 +473,22 @@ func TestUpsertTemplate(t *testing.T) {
 		_, err := sut.UpsertTemplate(context.Background(), orgID, template)
 		require.ErrorIs(t, err, ErrTemplateNotFound)
 	})
+
+	t.Run("rejects new template has UID ", func(t *testing.T) {
+		sut, store, _ := createTemplateServiceSut()
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return revision(), nil
+		}
+		template := definitions.NotificationTemplate{
+			UID:        "new-template",
+			Name:       "template2",
+			Template:   "asdf-new",
+			Provenance: definitions.Provenance(models.ProvenanceNone),
+		}
+		_, err := sut.UpsertTemplate(context.Background(), orgID, template)
+		require.ErrorIs(t, err, ErrTemplateNotFound)
+	})
+
 	t.Run("propagates errors", func(t *testing.T) {
 		tmpl := definitions.NotificationTemplate{
 			Name:       templateName,
