@@ -1938,6 +1938,8 @@
       "title": "Pęřmäŉęŉŧľy Đęľęŧę Đäşĥþőäřđş"
     },
     "restore-modal": {
+      "folder-picker-text_one": "Pľęäşę čĥőőşę ä ƒőľđęř ŵĥęřę yőūř đäşĥþőäřđ ŵįľľ þę řęşŧőřęđ.",
+      "folder-picker-text_other": "Pľęäşę čĥőőşę ä ƒőľđęř ŵĥęřę yőūř đäşĥþőäřđş ŵįľľ þę řęşŧőřęđ.",
       "restore-button": "Ŗęşŧőřę",
       "restore-loading": "Ŗęşŧőřįŉģ...",
       "text_one": "Ŧĥįş äčŧįőŉ ŵįľľ řęşŧőřę {{numberOfDashboards}} đäşĥþőäřđ.",
