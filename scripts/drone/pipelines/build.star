@@ -3,8 +3,8 @@
 load(
     "scripts/drone/steps/lib.star",
     "build_frontend_package_step",
-    "build_test_plugins_step",
     "build_storybook_step",
+    "build_test_plugins_step",
     "cloud_plugins_e2e_tests_step",
     "compile_build_cmd",
     "download_grabpl_step",

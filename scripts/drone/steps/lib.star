@@ -893,7 +893,7 @@ def playwright_e2e_tests_step():
         "image": images["node_deb"],
         "depends_on": [
             "grafana-server",
-            "build-test-plugins"
+            "build-test-plugins",
         ],
         "commands": [
             "npx wait-on@7.0.1 http://$HOST:$PORT",
