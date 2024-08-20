@@ -2,7 +2,6 @@ import { locationService } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Drawer } from '@grafana/ui';
 
-import { CreateReportTab as CreateReportTabScene } from '../../../../extensions/reports/dashboard-scene/CreateReportTab';
 import { shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -91,8 +90,6 @@ function getShareView(
       return new ShareSnapshot({ dashboardRef, panelRef, onDismiss });
     case shareDashboardType.export:
       return new ExportAsJson({ onDismiss });
-    case shareDashboardType.report:
-      return new CreateReportTabScene({ onDismiss });
     default:
       return new ShareInternally({ onDismiss });
   }
