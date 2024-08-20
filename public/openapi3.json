@@ -3560,7 +3560,7 @@
           "Policies": {
             "description": "Policies contains all policy identifiers included in the certificate.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
             "items": {
-              "$ref": "#/components/schemas/OID"
+              "type": "string"
             },
             "type": "array"
           },
@@ -6379,6 +6379,7 @@
         "type": "object"
       },
       "JSONWebKey": {
+        "description": "JSONWebKey represents a public or private key in JWK format. It can be\nmarshaled into JSON and unmarshaled from JSON.",
         "properties": {
           "Algorithm": {
             "description": "Key algorithm, parsed from `alg` header.",
@@ -6411,7 +6412,7 @@
             "$ref": "#/components/schemas/URL"
           },
           "Key": {
-            "description": "Cryptographic key, can be a symmetric or asymmetric key."
+            "description": "Key is the Go in-memory representation of this key. It must have one\nof these types:\ned25519.PublicKey\ned25519.PrivateKey\necdsa.PublicKey\necdsa.PrivateKey\nrsa.PublicKey\nrsa.PrivateKey\n[]byte (a symmetric key)\n\nWhen marshaling this JSONWebKey into JSON, the \"kty\" header parameter\nwill be automatically set based on the type of this field."
           },
           "KeyID": {
             "description": "Key identifier, parsed from `kid` header.",
@@ -6422,7 +6423,6 @@
             "type": "string"
           }
         },
-        "title": "JSONWebKey represents a public or private key in JWK format.",
         "type": "object"
       },
       "Json": {
@@ -7219,10 +7219,6 @@
           }
         },
         "title": "OAuth2 is the oauth2 client configuration.",
-        "type": "object"
-      },
-      "OID": {
-        "title": "An OID represents an ASN.1 OBJECT IDENTIFIER.",
         "type": "object"
       },
       "ObjectIdentifier": {
