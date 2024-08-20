@@ -389,7 +389,12 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         // now we can filter target_info targets by deployment_environment="somevalue"
         // and use these new targets to reduce the metrics
         const filteredOtelTargets = await totalOtelResources(datasourceUid, timeRange, resourcesObject.filters);
-        this.setState({ otelTargets: filteredOtelTargets, otelResources: resources, useOtelExperience: true });
+        this.setState({
+          hasOtelResources,
+          otelTargets: filteredOtelTargets,
+          otelResources: resources,
+          useOtelExperience: true,
+        });
       } else {
         this.setState({ hasOtelResources, useOtelExperience: false });
       }
