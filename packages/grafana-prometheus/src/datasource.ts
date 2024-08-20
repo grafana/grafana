@@ -822,7 +822,7 @@ export class PrometheusDatasource
       return [];
     }
 
-    return filters.map((f) => ({
+    return filters.map(remapOneOf).map((f) => ({
       ...f,
       value: this.templateSrv.replace(f.value, {}, this.interpolateQueryExpr),
       operator: scopeFilterOperatorMap[f.operator],
