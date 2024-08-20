@@ -101,6 +101,15 @@ Spans with the same color belong to the same service. The grey text to the right
 
 ![Query editor showing span results](/media/docs/tempo/traceql/screenshot-traceql-query-editor-results-v10.png)
 
+### Focus on traces or spans
+
+Under **Options**, you can choose to display the table as **Traces** or **Spans** focused.
+
+When the Table Type option is set to Spans, the traces and span sets are flattened into a list of spans.
+The trace service and trace name are added to the row of each span to add context.
+
+Using the **Spans** options makes it easier access to the spans to apply transformations and plot them in dashboards.
+
 ### Streaming results
 
 The Tempo data source supports streaming responses to TraceQL queries so you can see partial query results as they come in without waiting for the whole query to finish.
