@@ -16,7 +16,6 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
-import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
 import { DashboardControls } from 'app/features/dashboard-scene/scene//DashboardControls';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
@@ -463,9 +462,6 @@ export function buildTestScene(overrides: Partial<DashboardScene> = {}) {
 }
 
 export function renderDashboard(dashboardScene: DashboardScene) {
-  const chrome = new AppChromeService();
-  chrome.update({ chromeless: false });
-
   return render(
     <KBarProvider>
       <AppChrome>
