@@ -79,5 +79,4 @@ func TestFromValidationResponse(t *testing.T) {
 		actualAdmissionReview := admission.FromValidationResponse(response)
 		require.Equal(t, expectedAdmissionReview, actualAdmissionReview)
 	})
-
 }
