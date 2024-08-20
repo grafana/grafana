@@ -10,6 +10,7 @@ labels:
   products:
     - enterprise
     - oss
+    - cloud
 title: Roles and permissions
 weight: 300
 ---
