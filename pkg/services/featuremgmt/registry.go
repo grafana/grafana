@@ -1297,8 +1297,9 @@ var (
 		{
 			Name:        "openSearchBackendFlowEnabled",
 			Description: "Enables the backend query flow for Open Search datasource plugin",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       awsDatasourcesSquad,
+			Expression:  "true",
 		},
 		{
 			Name:              "ssoSettingsLDAP",
