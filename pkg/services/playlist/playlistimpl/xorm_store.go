@@ -15,6 +15,8 @@ type sqlStore struct {
 	db db.DB
 }
 
+const MAX_PLAYLISTS = 250
+
 var _ store = &sqlStore{}
 
 func (s *sqlStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistCommand) (*playlist.Playlist, error) {
@@ -29,6 +31,14 @@ func (s *sqlStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComma
 	}
 
 	err := s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		count, err := sess.SQL("SELECT COUNT(*) FROM playlist").Count()
+		if err != nil {
+			return err
+		}
+		if count > MAX_PLAYLISTS {
+			return fmt.Errorf("too many playlists exist (%d > %d)", count, MAX_PLAYLISTS)
+		}
+
 		ts := time.Now().UnixMilli()
 		p = playlist.Playlist{
 			Name:      cmd.Name,
@@ -39,7 +49,7 @@ func (s *sqlStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComma
 			UpdatedAt: ts,
 		}
 
-		_, err := sess.Insert(&p)
+		_, err = sess.Insert(&p)
 		if err != nil {
 			return err
 		}
@@ -173,7 +183,7 @@ func (s *sqlStore) List(ctx context.Context, query *playlist.GetPlaylistsQuery) 
 			sess.Where("name LIKE ?", "%"+query.Name+"%")
 		}
 
-		sess.Where("org_id = ?", query.OrgId)
+		sess.Where("org_id = ?", query.OrgId).Limit(MAX_PLAYLISTS)
 		err := sess.Find(&playlists)
 
 		return err
@@ -185,7 +195,7 @@ func (s *sqlStore) ListAll(ctx context.Context, orgId int64) ([]playlist.Playlis
 	db := s.db.GetSqlxSession() // OK because dates are numbers!
 
 	playlists := []playlist.PlaylistDTO{}
-	err := db.Select(ctx, &playlists, "SELECT * FROM playlist WHERE org_id=? ORDER BY created_at asc", orgId)
+	err := db.Select(ctx, &playlists, "SELECT * FROM playlist WHERE org_id=? ORDER BY created_at asc LIMIT ?", orgId, MAX_PLAYLISTS)
 	if err != nil {
 		return nil, err
 	}
