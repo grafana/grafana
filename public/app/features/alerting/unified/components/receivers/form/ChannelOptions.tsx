@@ -33,6 +33,7 @@ export function ChannelOptions<R extends ChannelValues>({
 }: Props<R>): JSX.Element {
   const { watch } = useFormContext<ReceiverFormValues<R>>();
   const currentFormValues = watch(); // react hook form types ARE LYING!
+
   return (
     <>
       {selectedChannelOptions.map((option: NotificationChannelOption, index: number) => {
@@ -50,18 +51,8 @@ export function ChannelOptions<R extends ChannelValues>({
 
         if (secureFields && secureFields[option.propertyName]) {
           return (
-            <Field key={key} label={option.label} description={option.description || undefined}>
-              <Input
-                readOnly={true}
-                value="Configured"
-                suffix={
-                  readOnly ? null : (
-                    <Button onClick={() => onResetSecureField(option.propertyName)} fill="text" type="button" size="sm">
-                      Clear
-                    </Button>
-                  )
-                }
-              />
+            <Field key={key} label={option.label} description={option.description}>
+              <EncryptedInput onReset={() => onResetSecureField(option.propertyName)} readOnly={readOnly} />
             </Field>
           );
         }
@@ -74,6 +65,8 @@ export function ChannelOptions<R extends ChannelValues>({
 
         return (
           <OptionField
+            onResetSecureField={onResetSecureField}
+            secureFields={secureFields}
             defaultValue={defaultValue}
             readOnly={readOnly}
             key={key}
@@ -88,3 +81,24 @@ export function ChannelOptions<R extends ChannelValues>({
     </>
   );
 }
+
+interface SecretInputProps {
+  readOnly?: boolean;
+  onReset?: () => void;
+}
+
+export const EncryptedInput = ({ onReset, readOnly }: SecretInputProps) => {
+  return (
+    <Input
+      readOnly={true}
+      value="Configured"
+      suffix={
+        readOnly ? null : (
+          <Button onClick={onReset} fill="text" type="button" size="sm">
+            Clear
+          </Button>
+        )
+      }
+    />
+  );
+};
