@@ -23,6 +23,7 @@ import { getRcTimePickerStyles } from './rcTimePicker';
 import { getSkeletonStyles } from './skeletonStyles';
 import { getSlateStyles } from './slate';
 import { getUplotStyles } from './uPlot';
+import { getUtilityClassStyles } from './utilityClasses';
 
 /** @internal */
 export function GlobalStyles() {
@@ -51,6 +52,7 @@ export function GlobalStyles() {
         getSkeletonStyles(theme),
         getSlateStyles(theme),
         getUplotStyles(theme),
+        getUtilityClassStyles(theme),
         getLegacySelectStyles(theme),
       ]}
     />
