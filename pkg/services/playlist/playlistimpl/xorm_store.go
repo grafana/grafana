@@ -31,7 +31,7 @@ func (s *sqlStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComma
 	}
 
 	err := s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		count, err := sess.SQL("SELECT COUNT(*) FROM playlist").Count()
+		count, err := sess.SQL("SELECT COUNT(*) FROM playlist WHERE playlist.org_id = ?", cmd.OrgId).Count()
 		if err != nil {
 			return err
 		}
