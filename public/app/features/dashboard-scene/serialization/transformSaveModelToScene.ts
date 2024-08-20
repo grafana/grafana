@@ -151,7 +151,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
 
 function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]): SceneGridItemLike {
   if (Boolean(row.collapsed)) {
-    if (row.panels) {
+    if (row.panels && row.panels.length) {
       content = row.panels.map((saveModel) => {
         // Collapsed panels are not actually PanelModel instances
         if (!(saveModel instanceof PanelModel)) {
