@@ -9,9 +9,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
@@ -126,7 +127,6 @@ func TestIntegrationMySQL(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Run("Query with Table format should map MySQL column types to Go types", func(t *testing.T) {
-			t.Ski
 			query := &backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
