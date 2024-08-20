@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { reportInteraction, getAppEvents } from '@grafana/runtime';
+import { getAppEvents } from '@grafana/runtime';
 import { IconButton, Modal } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
@@ -11,6 +11,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import ExploreRunQueryButton from '../../ExploreRunQueryButton';
 import { useQueriesDrawerContext } from '../../QueriesDrawer/QueriesDrawerContext';
+import { queryLibaryTrackDeleteQuery, queryLibraryTrackRunQuery } from '../QueryLibraryAnalyticsEvents';
 import { QueryTemplateForm } from '../QueryTemplateForm';
 
 import { useQueryLibraryListStyles } from './styles';
@@ -32,7 +33,7 @@ function ActionsCell({ queryTemplate, rootDatasourceUid, queryUid }: ActionsCell
     const performDelete = (queryUid: string) => {
       deleteQueryTemplate({ uid: queryUid });
       dispatch(notifyApp(createSuccessNotification(t('explore.query-library.query-deleted', 'Query deleted'))));
-      reportInteraction('grafana_explore_query_library_deleted');
+      queryLibaryTrackDeleteQuery();
     };
 
     getAppEvents().publish(
@@ -76,7 +77,10 @@ function ActionsCell({ queryTemplate, rootDatasourceUid, queryUid }: ActionsCell
       <ExploreRunQueryButton
         queries={queryTemplate.query ? [queryTemplate.query] : []}
         rootDatasourceUid={rootDatasourceUid}
-        onClick={() => setDrawerOpened(false)}
+        onClick={() => {
+          setDrawerOpened(false);
+          queryLibraryTrackRunQuery(queryTemplate.datasourceType || '');
+        }}
       />
       <Modal
         title={t('explore.query-template-modal.edit-title', 'Edit query')}
