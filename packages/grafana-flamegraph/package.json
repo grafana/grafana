@@ -59,7 +59,7 @@
     "@babel/core": "7.25.2",
     "@babel/preset-env": "7.25.3",
     "@babel/preset-react": "7.24.7",
-    "@grafana/tsconfig": "^1.3.0-rc1",
+    "@grafana/tsconfig": "^2.0.0",
     "@rollup/plugin-node-resolve": "15.2.3",
     "@testing-library/dom": "10.0.0",
     "@testing-library/jest-dom": "^6.1.2",
@@ -82,7 +82,7 @@
     "rollup-plugin-node-externals": "^5.0.0",
     "ts-jest": "29.2.4",
     "ts-node": "10.9.2",
-    "typescript": "5.4.5"
+    "typescript": "5.5.4"
   },
   "peerDependencies": {
     "react": "^18.0.0",

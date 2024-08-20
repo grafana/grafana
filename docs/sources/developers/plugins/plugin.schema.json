@@ -563,7 +563,7 @@
     },
     "extensions": {
       "type": "array",
-      "description": "The list of extensions that the plugin registers under other extension points.",
+      "description": "List of link and component extensions which the plugin registers to given extension points.",
       "items": {
         "type": "object",
         "properties": {
