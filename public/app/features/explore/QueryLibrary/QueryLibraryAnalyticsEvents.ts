@@ -42,3 +42,9 @@ export function queryLibraryTrackRunQuery(datasourceType: string) {
     type: datasourceType,
   });
 }
+
+export function queryLibraryTrackAddOrEditDescription() {
+  reportInteraction(QUERY_LIBRARY_EVENT, {
+    item: 'add_or_edit_description',
+  });
+}

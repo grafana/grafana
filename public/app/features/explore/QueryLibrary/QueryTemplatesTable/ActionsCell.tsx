@@ -11,7 +11,11 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import ExploreRunQueryButton from '../../ExploreRunQueryButton';
 import { useQueriesDrawerContext } from '../../QueriesDrawer/QueriesDrawerContext';
-import { queryLibaryTrackDeleteQuery, queryLibraryTrackRunQuery } from '../QueryLibraryAnalyticsEvents';
+import {
+  queryLibaryTrackDeleteQuery,
+  queryLibraryTrackAddOrEditDescription,
+  queryLibraryTrackRunQuery,
+} from '../QueryLibraryAnalyticsEvents';
 import { QueryTemplateForm } from '../QueryTemplateForm';
 
 import { useQueryLibraryListStyles } from './styles';
@@ -72,6 +76,7 @@ function ActionsCell({ queryTemplate, rootDatasourceUid, queryUid }: ActionsCell
         tooltip={t('explore.query-library.add-edit-description', 'Add/edit description')}
         onClick={() => {
           setEditFormOpen(true);
+          queryLibraryTrackAddOrEditDescription();
         }}
       />
       <ExploreRunQueryButton
