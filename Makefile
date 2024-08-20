@@ -197,7 +197,7 @@ build-cli: ## Build Grafana CLI application.
 .PHONY: build-js
 build-js: ## Build frontend assets.
 	@echo "build frontend"
-	yarn run build
+	yarn build
 	yarn run plugins:build-bundled
 
 PLUGIN_ID ?=
