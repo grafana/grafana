@@ -58,7 +58,11 @@ func (s *Service) Base(n PluginInfo) (string, error) {
 	}
 	if n.parent != nil {
 		if s.cdn.PluginSupported(n.parent.pluginJSON.ID) {
-			return s.cdn.AssetURL(n.parent.pluginJSON.ID, n.parent.pluginJSON.Info.Version, n.fs.Base())
+			relPath, err := n.parent.fs.Rel(n.fs.Base())
+			if err != nil {
+				return "", err
+			}
+			return s.cdn.AssetURL(n.parent.pluginJSON.ID, n.parent.pluginJSON.Info.Version, relPath)
 		}
 	}
 
@@ -110,7 +114,7 @@ func (s *Service) RelativeURL(n PluginInfo, pathStr string) (string, error) {
 			if err != nil {
 				return "", err
 			}
-			return s.cdn.AssetURL(n.parent.pluginJSON.ID, n.parent.pluginJSON.Info.Version, path.Join(relPath, "module.js"))
+			return s.cdn.AssetURL(n.parent.pluginJSON.ID, n.parent.pluginJSON.Info.Version, path.Join(relPath, pathStr))
 		}
 	}
 
