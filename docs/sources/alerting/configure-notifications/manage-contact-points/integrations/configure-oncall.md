@@ -18,7 +18,7 @@ labels:
     - oss
 menuTitle: Grafana OnCall
 title: Configure Grafana OnCall for Alerting
-weight: 40
+weight: 0
 ---
 
 # Configure Grafana OnCall for Alerting

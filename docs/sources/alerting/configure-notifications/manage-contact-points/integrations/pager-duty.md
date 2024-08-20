@@ -14,7 +14,7 @@ labels:
     - oss
 menuTitle: PagerDuty
 title: Configure PagerDuty for Alerting
-weight: 70
+weight: 0
 ---
 
 # Configure PagerDuty for Alerting
