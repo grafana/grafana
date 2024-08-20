@@ -35,7 +35,7 @@ require (
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b // @grafana/backend-platform
 	github.com/centrifugal/centrifuge v0.30.2 // @grafana/grafana-app-platform-squad
 	github.com/crewjam/saml v0.4.13 // @grafana/grafana-authnz-team
-	github.com/fatih/color v1.15.0 // @grafana/backend-platform
+	github.com/fatih/color v1.16.0 // @grafana/backend-platform
 	github.com/gchaincl/sqlhooks v1.3.0 // @grafana/backend-platform
 	github.com/go-ldap/ldap/v3 v3.4.4 // @grafana/grafana-authnz-team
 	github.com/go-openapi/strfmt v0.22.0 // @grafana/alerting-squad-backend
@@ -58,7 +58,7 @@ require (
 	github.com/grafana/grafana-azure-sdk-go v1.12.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-plugin-sdk-go v0.218.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
-	github.com/hashicorp/go-hclog v1.6.2 // @grafana/plugins-platform-backend
+	github.com/hashicorp/go-hclog v1.6.3 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-plugin v1.6.0 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-version v1.6.0 // @grafana/backend-platform
 	github.com/hashicorp/hcl/v2 v2.17.0 // @grafana/alerting-squad-backend
@@ -70,7 +70,7 @@ require (
 	github.com/linkedin/goavro/v2 v2.10.0 // @grafana/backend-platform
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/backend-platform
 	github.com/magefile/mage v1.15.0 // @grafana/grafana-release-guild
-	github.com/mattn/go-isatty v0.0.19 // @grafana/backend-platform
+	github.com/mattn/go-isatty v0.0.20 // @grafana/backend-platform
 	github.com/mattn/go-sqlite3 v1.14.19 // @grafana/backend-platform
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @grafana/alerting-squad-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
@@ -258,7 +258,7 @@ require (
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // @grafana/grafana-as-code
 	go.opentelemetry.io/contrib/samplers/jaegerremote v0.18.0 // @grafana/backend-platform
 	golang.org/x/mod v0.14.0 // @grafana/backend-platform
-	gopkg.in/square/go-jose.v2 v2.6.0 // @grafana/grafana-authnz-team
+	gopkg.in/square/go-jose.v2 v2.6.0 // @grafana/grafana-authnz-team - replaced by patched at the end
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // @grafana/partner-datasources
 )
 
@@ -327,7 +327,7 @@ require (
 	github.com/grafana/regexp v0.0.0-20221123153739-15dc172cd2db // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
-	github.com/hashicorp/go-retryablehttp v0.7.4 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/memberlist v0.5.0 // indirect
@@ -488,3 +488,5 @@ replace github.com/hashicorp/go-hclog => github.com/hashicorp/go-hclog v0.16.1
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20240208102907-e82436ce63e6
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
+
+replace gopkg.in/square/go-jose.v2 => github.com/go-jose/go-jose v2
