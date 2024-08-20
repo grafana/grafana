@@ -87,7 +87,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         shortcut: 'p u',
         onClick: () => {
           const drawer = new ShareDrawer({
-            shareView: 'link',
+            shareView: shareDashboardType.link,
             panelRef: panel.getRef(),
           });
 
@@ -100,7 +100,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         shortcut: 'p e',
         onClick: () => {
           const drawer = new ShareDrawer({
-            shareView: 'embed',
+            shareView: shareDashboardType.embed,
             panelRef: panel.getRef(),
           });
 
@@ -115,7 +115,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
           shortcut: 'p s',
           onClick: () => {
             const drawer = new ShareDrawer({
-              shareView: 'snapshot',
+              shareView: shareDashboardType.snapshot,
               panelRef: panel.getRef(),
             });
 

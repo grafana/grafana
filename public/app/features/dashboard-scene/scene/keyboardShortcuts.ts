@@ -5,6 +5,7 @@ import appEvents from 'app/core/app_events';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 import { contextSrv } from 'app/core/services/context_srv';
 
+import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -52,7 +53,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       key: 'p u',
       onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
         const drawer = new ShareDrawer({
-          shareView: 'link',
+          shareView: shareDashboardType.link,
           panelRef: vizPanel.getRef(),
         });
 
@@ -63,7 +64,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       key: 'p e',
       onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
         const drawer = new ShareDrawer({
-          shareView: 'embed',
+          shareView: shareDashboardType.embed,
           panelRef: vizPanel.getRef(),
         });
 
@@ -76,7 +77,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
         key: 'p s',
         onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
           const drawer = new ShareDrawer({
-            shareView: 'snapshot',
+            shareView: shareDashboardType.snapshot,
             panelRef: vizPanel.getRef(),
           });
 
