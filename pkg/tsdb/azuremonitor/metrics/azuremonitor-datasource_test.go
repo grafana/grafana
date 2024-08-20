@@ -294,7 +294,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				},
 			}
 
-			queries, err := datasource.buildQueries(tsdbQuery, dsInfo)
+			query, err := datasource.buildQuery(tsdbQuery[0], dsInfo)
 			require.NoError(t, err)
 
 			resources := map[string]dataquery.AzureMonitorResource{}
@@ -321,12 +321,12 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				Resources:    resources,
 			}
 
-			assert.Equal(t, tt.expectedParamFilter, queries[0].Params.Get("$filter"))
+			assert.Equal(t, tt.expectedParamFilter, query.Params.Get("$filter"))
 			if azureMonitorQuery.URL == "" {
 				azureMonitorQuery.URL = "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics"
 			}
 
-			if diff := cmp.Diff(azureMonitorQuery, queries[0], cmpopts.IgnoreUnexported(struct{}{}), cmpopts.IgnoreFields(types.AzureMonitorQuery{}, "Params", "Dimensions")); diff != "" {
+			if diff := cmp.Diff(azureMonitorQuery, query, cmpopts.IgnoreUnexported(struct{}{}), cmpopts.IgnoreFields(types.AzureMonitorQuery{}, "Params", "Dimensions")); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
@@ -338,7 +338,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				expectedPortalURL = *tt.expectedPortalURL
 			}
 
-			actual, err := getQueryUrl(queries[0], "http://ds", "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana", "grafana")
+			actual, err := getQueryUrl(query, "http://ds", "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana", "grafana")
 			require.NoError(t, err)
 			require.Equal(t, expectedPortalURL, actual)
 		})
@@ -359,10 +359,10 @@ func TestCustomNamespace(t *testing.T) {
 			},
 		}
 
-		result, err := datasource.buildQueries(q, types.DatasourceInfo{})
+		result, err := datasource.buildQuery(q[0], types.DatasourceInfo{})
 		require.NoError(t, err)
 		expected := "custom/namespace"
-		require.Equal(t, expected, result[0].Params.Get("metricnamespace"))
+		require.Equal(t, expected, result.Params.Get("metricnamespace"))
 	})
 }
 
