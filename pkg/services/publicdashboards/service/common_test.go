@@ -3,6 +3,8 @@ package service
 import (
 	"testing"
 
+	"go.opentelemetry.io/otel"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -50,5 +52,6 @@ func newPublicDashboardServiceImpl(
 		serviceWrapper:     serviceWrapper,
 		license:            license,
 		features:           featuremgmt.WithFeatures(),
+		tracer:             otel.Tracer("test"),
 	}, db, cfg
 }
