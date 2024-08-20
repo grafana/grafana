@@ -760,26 +760,3 @@ export function guessLongestField(fieldConfig: any, data: DataFrame) {
 
   return longestField;
 }
-
-export function mapFramesToDataGrid(frames: DataFrame[], currentIndex: number) {
-  const columns: Array<{ key: string; name: string }> = [];
-  const rows: Array<{ [key: string]: string }> = [];
-  const main = frames[currentIndex];
-
-  main.fields.map((field) => {
-    const key = field.name;
-    columns.push({ key, name: key }); // TODO add display function output
-    field.values.map((value, index) => {
-      const currentValue = { [key]: String(value) };
-      if (rows.length > index) {
-        rows[index] = { ...rows[index], ...currentValue };
-      } else {
-        rows[index] = currentValue;
-      }
-    });
-  });
-
-  return {
-    columns, rows
-  }
-}

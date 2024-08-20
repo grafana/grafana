@@ -20,7 +20,7 @@ import { Pagination } from '../../Pagination/Pagination';
 
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from '../hooks';
 import { getInitialState, useTableStateReducer } from '../reducer';
-import { FooterItem, GrafanaTableState, GeneralTableProps } from '../types';
+import { FooterItem, GrafanaTableState, TableRTProps } from '../types';
 import {
   getColumns,
   sortCaseInsensitive,
@@ -44,7 +44,7 @@ const COLUMN_MIN_WIDTH = 150;
 const FOOTER_ROW_HEIGHT = 36;
 const NO_DATA_TEXT = 'No data';
 
-export const Table = memo((props: GeneralTableProps) => {
+export const Table = memo((props: TableRTProps) => {
   const {
     ariaLabel,
     data,

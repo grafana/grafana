@@ -1,4 +1,4 @@
-import { Icon } frxom '../../Icon/Icon';
+import { Icon } from '../../Icon/Icon';
 
 import { GrafanaTableRow } from '../types';
 
