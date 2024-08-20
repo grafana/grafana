@@ -183,6 +183,18 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       }
     });
 
+    this._subs.add(
+      trail.subscribeToState(({ otelTargets }, oldState) => {
+        // if the otel targets have changed, get the new list of metrics
+        if (
+          otelTargets?.instance !== oldState.otelTargets?.instance &&
+          otelTargets?.job !== oldState.otelTargets?.job
+        ) {
+          this._debounceRefreshMetricNames();
+        }
+      })
+    );
+
     this._debounceRefreshMetricNames();
   }
 
