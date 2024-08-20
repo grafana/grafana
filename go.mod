@@ -476,4 +476,6 @@ replace github.com/hashicorp/go-hclog => github.com/hashicorp/go-hclog v0.16.1
 // This is required in order to get notification delivery errors from the receivers API.
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20231027171310-70c52bf65758
 
+replace github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
+
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
