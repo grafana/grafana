@@ -37,7 +37,6 @@ func ProvideRegistryServiceSink(
 	_ *scope.ScopeAPIBuilder,
 	_ *query.QueryAPIBuilder,
 	_ *notifications.NotificationsAPIBuilder,
-	//_ *sso.SSOSettingAPIBuilder,
 ) *Service {
 	return &Service{}
 }
