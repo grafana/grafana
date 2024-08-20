@@ -63,6 +63,7 @@ Tables are a highly flexible visualization designed to display data in columns a
 {{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" lightbox="true" caption="Table visualization" >}}
 
 You can use the table visualization any time you need to visualize data as column-row format.
+
 This is useful for visualizing almost any type of queried data and datasets ranging from common database queries, logs, traces, and metrics to financial reports, customer lists, and product catalogs. Any information you might want to put in a spreadsheet can often be best visualized in a table.
 
 Tables also provide different styles to visualize data inside the table cells such as coloring text and cell backgrounds, gauges, sparklines, data links, JSON code and images.
