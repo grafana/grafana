@@ -1,6 +1,7 @@
 import { SerializedError } from '@reduxjs/toolkit';
 import userEvent from '@testing-library/user-event';
 import { SetupServer } from 'msw/node';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
@@ -88,7 +89,12 @@ const mocks = {
 const renderRuleList = () => {
   locationService.push('/');
 
-  return render(<RuleList />);
+  return render(
+    <TestProvider>
+      <RuleList />
+    </TestProvider>,
+    { renderWithRouter: false }
+  );
 };
 
 const dataSources = {
