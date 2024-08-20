@@ -1479,14 +1479,14 @@ func TestProvisiongWithFullpath(t *testing.T) {
 	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
 	ac := acmock.New()
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
-	folderService := folderimpl.ProvideService(ac, inProcBus, dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
+	folderService := folderimpl.ProvideService(ac, inProcBus, dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 	ruleService := createAlertRuleService(t, folderService)
 	var orgID int64 = 1
 
 	signedInUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
 		orgID: {
-			dashboards.ActionFoldersCreate: {},
+			dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll},
 			dashboards.ActionFoldersRead:   {dashboards.ScopeFoldersAll},
 			dashboards.ActionFoldersWrite:  {dashboards.ScopeFoldersAll}},
 	}}

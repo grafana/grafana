@@ -199,12 +199,15 @@ func TestCallResource(t *testing.T) {
 		resp, err := srv.SendJSON(req)
 		require.NoError(t, err)
 
-		body := new(strings.Builder)
-		_, err = io.Copy(body, resp.Body)
+		bodyBytes, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		expectedBody := `{ "message": "Failed to call resource", "traceID": "" }`
-		require.JSONEq(t, expectedBody, body.String())
+		var responseBody struct {
+			Message string `json:"message"`
+		}
+		err = json.Unmarshal(bodyBytes, &responseBody)
+		require.NoError(t, err)
+		require.Equal(t, responseBody.Message, "Failed to call resource")
 		require.NoError(t, resp.Body.Close())
 		require.Equal(t, 500, resp.StatusCode)
 	})

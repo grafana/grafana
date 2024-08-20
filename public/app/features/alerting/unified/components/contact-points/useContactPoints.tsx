@@ -7,17 +7,21 @@ import { produce } from 'immer';
 import { remove } from 'lodash';
 import { useMemo } from 'react';
 
+import {
+  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver,
+  generatedReceiversApi,
+} from 'app/features/alerting/unified/openapi/receiversApi.gen';
+import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
+import { cloudNotifierTypes } from 'app/features/alerting/unified/utils/cloud-alertmanager-notifier-types';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { getK8sNamespace, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
+
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { onCallApi } from '../../api/onCallApi';
 import { usePluginBridge } from '../../hooks/usePluginBridge';
-import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { SupportedPlugin } from '../../types/pluginBridges';
 
 import { enhanceContactPointsWithMetadata } from './utils';
-
-export const RECEIVER_STATUS_KEY = Symbol('receiver_status');
-export const RECEIVER_META_KEY = Symbol('receiver_metadata');
-export const RECEIVER_PLUGIN_META_KEY = Symbol('receiver_plugin_metadata');
 
 const RECEIVER_STATUS_POLLING_INTERVAL = 10 * 1000; // 10 seconds
 
@@ -37,15 +41,20 @@ const {
   useLazyGetAlertmanagerConfigurationQuery,
   useUpdateAlertmanagerConfigurationMutation,
 } = alertmanagerApi;
-
 const { useGrafanaOnCallIntegrationsQuery } = onCallApi;
+const { useListNamespacedReceiverQuery } = generatedReceiversApi;
+
+const defaultOptions = {
+  refetchOnFocus: true,
+  refetchOnReconnect: true,
+};
 
 /**
  * Check if OnCall is installed, and fetch the list of integrations if so.
  *
  * Otherwise, returns no data
  */
-const useOnCallIntegrations = ({ skip }: { skip?: boolean } = {}) => {
+const useOnCallIntegrations = ({ skip }: Skippable = {}) => {
   const { installed, loading } = usePluginBridge(SupportedPlugin.OnCall);
   const oncallIntegrationsResponse = useGrafanaOnCallIntegrationsQuery(undefined, { skip: skip || !installed });
 
@@ -60,15 +69,73 @@ const useOnCallIntegrations = ({ skip }: { skip?: boolean } = {}) => {
   }, [installed, loading, oncallIntegrationsResponse]);
 };
 
+type K8sReceiver = ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver;
+
+// TODO: Make this typed as returning `GrafanaManagedContactPoint` - we can't yet do this as the schema thinks
+// its returning integration settings as a `string` rather than `Record<string, any>`
+const parseK8sReceiver = (item: K8sReceiver) => {
+  return { name: item.spec.title, grafana_managed_receiver_configs: item.spec.integrations };
+};
+
+const useK8sContactPoints = (...[hookParams, queryOptions]: Parameters<typeof useListNamespacedReceiverQuery>) => {
+  return useListNamespacedReceiverQuery(hookParams, {
+    ...queryOptions,
+    selectFromResult: ({ data, ...rest }) => {
+      return {
+        ...rest,
+        data: data?.items.map((item) => parseK8sReceiver(item)),
+      };
+    },
+  });
+};
+
+/**
+ * Fetch contact points for Grafana Alertmanager, either from the k8s API,
+ * or the `/notifications/receivers` endpoint
+ */
+const useFetchGrafanaContactPoints = ({ skip }: Skippable = {}) => {
+  const namespace = getK8sNamespace();
+  const useK8sApi = shouldUseK8sApi(GRAFANA_RULES_SOURCE_NAME);
+
+  const grafanaResponse = useGetContactPointsListQuery(undefined, { skip: skip || useK8sApi });
+  const k8sResponse = useK8sContactPoints({ namespace }, { skip: skip || !useK8sApi });
+
+  return useK8sApi ? k8sResponse : grafanaResponse;
+};
+
+type GrafanaFetchOptions = {
+  /**
+   * Should we fetch and include status information about each contact point?
+   */
+  fetchStatuses?: boolean;
+  /**
+   * Should we fetch and include the number of notification policies that reference each contact point?
+   */
+  fetchPolicies?: boolean;
+};
+
 /**
  * Fetch contact points from separate endpoint (i.e. not the Alertmanager config) and combine with
  * OnCall integrations and any additional metadata from list of notifiers
  * (e.g. hydrate with additional names/descriptions)
  */
-export const useGetContactPoints = () => {
-  const onCallResponse = useOnCallIntegrations();
-  const alertNotifiers = useGrafanaNotifiersQuery();
-  const contactPointsListResponse = useGetContactPointsListQuery();
+export const useGrafanaContactPoints = ({
+  fetchStatuses,
+  fetchPolicies,
+  skip,
+}: GrafanaFetchOptions & Skippable = {}) => {
+  const potentiallySkip = { skip };
+  const onCallResponse = useOnCallIntegrations(potentiallySkip);
+  const alertNotifiers = useGrafanaNotifiersQuery(undefined, potentiallySkip);
+  const contactPointsListResponse = useFetchGrafanaContactPoints(potentiallySkip);
+  const contactPointsStatusResponse = useGetContactPointsStatusQuery(undefined, {
+    ...defaultOptions,
+    pollingInterval: RECEIVER_STATUS_POLLING_INTERVAL,
+    skip: skip || !fetchStatuses,
+  });
+  const alertmanagerConfigResponse = useGetAlertmanagerConfigurationQuery(GRAFANA_RULES_SOURCE_NAME, {
+    skip: skip || !fetchPolicies,
+  });
 
   return useMemo(() => {
     const isLoading = onCallResponse.isLoading || alertNotifiers.isLoading || contactPointsListResponse.isLoading;
@@ -85,83 +152,55 @@ export const useGetContactPoints = () => {
       };
     }
 
-    const enhanced = enhanceContactPointsWithMetadata(
-      [],
-      alertNotifiers.data,
-      onCallResponse?.data,
-      contactPointsListResponse.data,
-      undefined
-    );
+    const enhanced = enhanceContactPointsWithMetadata({
+      status: contactPointsStatusResponse.data,
+      notifiers: alertNotifiers.data,
+      onCallIntegrations: onCallResponse?.data,
+      contactPoints: contactPointsListResponse.data,
+      alertmanagerConfiguration: alertmanagerConfigResponse.data,
+    });
 
     return {
       ...contactPointsListResponse,
       contactPoints: enhanced,
     };
   }, [
-    alertNotifiers.data,
-    alertNotifiers.isLoading,
+    alertNotifiers,
+    alertmanagerConfigResponse,
     contactPointsListResponse,
-    onCallResponse?.data,
-    onCallResponse.isLoading,
+    contactPointsStatusResponse,
+    onCallResponse,
   ]);
 };
 
-export function useContactPointsWithStatus() {
-  const { selectedAlertmanager, isGrafanaAlertmanager } = useAlertmanager();
-
-  const defaultOptions = {
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
-  };
-
-  // fetch receiver status if we're dealing with a Grafana Managed Alertmanager
-  const fetchContactPointsStatus = useGetContactPointsStatusQuery(undefined, {
-    ...defaultOptions,
-    // re-fetch status every so often for up-to-date information
-    pollingInterval: RECEIVER_STATUS_POLLING_INTERVAL,
-    // skip fetching receiver statuses if not Grafana AM
+export function useContactPointsWithStatus({
+  alertmanager,
+  fetchStatuses,
+  fetchPolicies,
+}: GrafanaFetchOptions & BaseAlertmanagerArgs) {
+  const isGrafanaAlertmanager = alertmanager === GRAFANA_RULES_SOURCE_NAME;
+  const grafanaResponse = useGrafanaContactPoints({
     skip: !isGrafanaAlertmanager,
+    fetchStatuses,
+    fetchPolicies,
   });
 
-  // fetch notifier metadata from the Grafana API if we're using a Grafana AM – this will be used to add additional
-  // metadata and canonical names to the receiver
-  const fetchReceiverMetadata = useGrafanaNotifiersQuery(undefined, {
-    skip: !isGrafanaAlertmanager,
-  });
-
-  // if the OnCall plugin is installed, fetch its list of integrations so we can match those to the Grafana Managed contact points
-  const { data: onCallMetadata, isLoading: onCallPluginIntegrationsLoading } = useOnCallIntegrations({
-    skip: !isGrafanaAlertmanager,
-  });
-
-  // fetch the latest config from the Alertmanager
-  // we use this endpoint only when we need to get the number of policies
-  const fetchAlertmanagerConfiguration = useGetAlertmanagerConfigurationQuery(selectedAlertmanager!, {
+  const alertmanagerConfigResponse = useGetAlertmanagerConfigurationQuery(alertmanager, {
     ...defaultOptions,
     selectFromResult: (result) => ({
       ...result,
       contactPoints: result.data
-        ? enhanceContactPointsWithMetadata(
-            fetchContactPointsStatus.data,
-            fetchReceiverMetadata.data,
-            onCallMetadata,
-            result.data.alertmanager_config.receivers ?? [],
-            result.data
-          )
+        ? enhanceContactPointsWithMetadata({
+            notifiers: cloudNotifierTypes,
+            contactPoints: result.data.alertmanager_config.receivers ?? [],
+            alertmanagerConfiguration: result.data,
+          })
         : [],
     }),
+    skip: isGrafanaAlertmanager,
   });
 
-  // we will fail silently for fetching OnCall plugin status and integrations
-  const error = fetchAlertmanagerConfiguration.error || fetchContactPointsStatus.error;
-  const isLoading =
-    fetchAlertmanagerConfiguration.isLoading || fetchContactPointsStatus.isLoading || onCallPluginIntegrationsLoading;
-
-  return {
-    error,
-    isLoading,
-    contactPoints: fetchAlertmanagerConfiguration.contactPoints,
-  };
+  return isGrafanaAlertmanager ? grafanaResponse : alertmanagerConfigResponse;
 }
 
 export function useDeleteContactPoint(selectedAlertmanager: string) {

@@ -7,7 +7,7 @@ import { simpleGraphBuilder } from '../graph-builders/simple';
 import { AutoQueryDef } from '../types';
 import { getUnit } from '../units';
 
-export function createHistogramQueryDefs(metricParts: string[]) {
+export function createHistogramMetricQueryDefs(metricParts: string[]) {
   const title = `${VAR_METRIC_EXPR}`;
 
   const unitSuffix = metricParts.at(-2);

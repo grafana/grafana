@@ -830,7 +830,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 
 	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
+	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 	user := &user.SignedInUser{
 		OrgID: 1,
@@ -839,6 +839,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 				dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll},
 				dashboards.ActionFoldersRead:    []string{dashboards.ScopeFoldersAll},
 				dashboards.ActionFoldersWrite:   []string{dashboards.ScopeFoldersAll},
+				dashboards.ActionFoldersCreate:  []string{dashboards.ScopeFoldersAll},
 			},
 		},
 	}
@@ -947,7 +948,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 
 	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
+	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 	user := &user.SignedInUser{
 		OrgID: 1,
@@ -956,6 +957,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 				dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll},
 				dashboards.ActionFoldersRead:    []string{dashboards.ScopeFoldersAll},
 				dashboards.ActionFoldersWrite:   []string{dashboards.ScopeFoldersAll},
+				dashboards.ActionFoldersCreate:  []string{dashboards.ScopeFoldersAll},
 			},
 		},
 	}
