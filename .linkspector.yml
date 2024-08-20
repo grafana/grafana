@@ -1,0 +1,7 @@
+dirs:
+  - .
+modifiedFilesOnly: true
+# remove gitlab anchors to lines to prevent linkspector to write to stderr for github-action to work
+replacementPatterns:
+  - pattern: "^(.*)#(L\\d+)$"
+    replacement: '$1'
