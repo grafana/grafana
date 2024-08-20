@@ -64,13 +64,12 @@ func (e *AzureResourceGraphDatasource) ExecuteTimeSeriesQuery(ctx context.Contex
 		Responses: map[string]backend.DataResponse{},
 	}
 
-	queries, err := e.buildQueries(originalQueries, dsInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, query := range queries {
-		res, err := e.executeQuery(ctx, query, dsInfo, client, url)
+	for _, query := range originalQueries {
+		graphQuery, err := e.buildQuery(query, dsInfo)
+		if err != nil {
+			return nil, err
+		}
+		res, err := e.executeQuery(ctx, graphQuery, dsInfo, client, url)
 		if err != nil {
 			errorsource.AddErrorToResponse(query.RefID, result, err)
 			continue
@@ -88,38 +87,33 @@ type argJSONQuery struct {
 	} `json:"azureResourceGraph"`
 }
 
-func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery, dsInfo types.DatasourceInfo) ([]*AzureResourceGraphQuery, error) {
-	azureResourceGraphQueries := make([]*AzureResourceGraphQuery, len(queries))
-	for i, query := range queries {
-		queryJSONModel := argJSONQuery{}
-		err := json.Unmarshal(query.JSON, &queryJSONModel)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decode the Azure Resource Graph query object from JSON: %w", err)
-		}
-
-		azureResourceGraphTarget := queryJSONModel.AzureResourceGraph
-
-		resultFormat := azureResourceGraphTarget.ResultFormat
-		if resultFormat == "" {
-			resultFormat = "table"
-		}
-
-		interpolatedQuery, err := macros.KqlInterpolate(query, dsInfo, azureResourceGraphTarget.Query)
-		if err != nil {
-			return nil, err
-		}
-
-		azureResourceGraphQueries[i] = &AzureResourceGraphQuery{
-			RefID:             query.RefID,
-			ResultFormat:      resultFormat,
-			JSON:              query.JSON,
-			InterpolatedQuery: interpolatedQuery,
-			TimeRange:         query.TimeRange,
-			QueryType:         query.QueryType,
-		}
+func (e *AzureResourceGraphDatasource) buildQuery(query backend.DataQuery, dsInfo types.DatasourceInfo) (*AzureResourceGraphQuery, error) {
+	queryJSONModel := argJSONQuery{}
+	err := json.Unmarshal(query.JSON, &queryJSONModel)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode the Azure Resource Graph query object from JSON: %w", err)
 	}
 
-	return azureResourceGraphQueries, nil
+	azureResourceGraphTarget := queryJSONModel.AzureResourceGraph
+
+	resultFormat := azureResourceGraphTarget.ResultFormat
+	if resultFormat == "" {
+		resultFormat = "table"
+	}
+
+	interpolatedQuery, err := macros.KqlInterpolate(query, dsInfo, azureResourceGraphTarget.Query)
+	if err != nil {
+		return nil, err
+	}
+
+	return &AzureResourceGraphQuery{
+		RefID:             query.RefID,
+		ResultFormat:      resultFormat,
+		JSON:              query.JSON,
+		InterpolatedQuery: interpolatedQuery,
+		TimeRange:         query.TimeRange,
+		QueryType:         query.QueryType,
+	}, nil
 }
 
 func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *AzureResourceGraphQuery, dsInfo types.DatasourceInfo, client *http.Client, dsURL string) (*backend.DataResponse, error) {
