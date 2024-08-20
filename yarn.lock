@@ -4862,15 +4862,15 @@ __metadata:
   linkType: hard
 
 "@msagl/core@npm:^1.1.19":
-  version: 1.1.20
-  resolution: "@msagl/core@npm:1.1.20"
+  version: 1.1.22
+  resolution: "@msagl/core@npm:1.1.22"
   dependencies:
     linked-list-typed: "npm:^1.52.0"
     queue-typescript: "npm:^1.0.1"
     reliable-random: "npm:^0.0.1"
     stack-typescript: "npm:^1.0.4"
     typescript-string-operations: "npm:^1.4.1"
-  checksum: 10/0a365c6b7495008b3ee01f8a20f417c5fe4c65fdc1d6598cbafe25d0c1ca325cd1e6ff54d719332e891e35299f9e75029a448c05a6ab8faedf98a50012d5f34b
+  checksum: 10/10f42d0566bb0cd0a72c8d0021a8318bf2efece351f0b0082ccbfd67c28ab35697b74581ee1becfa752bf3dca76280250434b9db7d2f9c71b0ade788b3742145
   languageName: node
   linkType: hard
 
