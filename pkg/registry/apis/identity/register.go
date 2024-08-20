@@ -32,9 +32,8 @@ var _ builder.APIGroupBuilder = (*IdentityAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type IdentityAPIBuilder struct {
-	store      legacy.LegacyIdentityStore
-	ssoEnabled bool
-	ssoService ssosettings.Service
+	Store      legacy.LegacyIdentityStore
+	SSOService ssosettings.Service
 }
 
 func RegisterAPIService(
@@ -48,19 +47,12 @@ func RegisterAPIService(
 	}
 
 	builder := &IdentityAPIBuilder{
-		store:      legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql)),
-		ssoEnabled: true,
-		ssoService: ssoService,
+		Store:      legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql)),
+		SSOService: ssoService,
 	}
 	apiregistration.RegisterAPI(builder)
 
 	return builder, nil
-}
-
-func NewAPIBuilder(sql db.DB) *IdentityAPIBuilder {
-	return &IdentityAPIBuilder{
-		store: legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql)),
-	}
 }
 
 func (b *IdentityAPIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -89,22 +81,22 @@ func (b *IdentityAPIBuilder) GetAPIGroupInfo(
 	storage := map[string]rest.Storage{}
 
 	teamResource := identityv0.TeamResourceInfo
-	storage[teamResource.StoragePath()] = team.NewLegacyStore(b.store)
+	storage[teamResource.StoragePath()] = team.NewLegacyStore(b.Store)
 
 	userResource := identityv0.UserResourceInfo
-	storage[userResource.StoragePath()] = user.NewLegacyStore(b.store)
-	storage[userResource.StoragePath("teams")] = team.NewLegacyUserTeamsStore(b.store)
+	storage[userResource.StoragePath()] = user.NewLegacyStore(b.Store)
+	storage[userResource.StoragePath("teams")] = team.NewLegacyUserTeamsStore(b.Store)
 
 	serviceaccountResource := identityv0.ServiceAccountResourceInfo
-	storage[serviceaccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.store)
+	storage[serviceaccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.Store)
 
-	if b.ssoEnabled {
+	if b.SSOService != nil {
 		ssoResource := identityv0.SSOSettingResourceInfo
-		storage[ssoResource.StoragePath()] = sso.NewLegacyStore(b.ssoService)
+		storage[ssoResource.StoragePath()] = sso.NewLegacyStore(b.SSOService)
 	}
 
 	// The display endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
-	storage["display"] = user.NewLegacyDisplayStore(b.store)
+	storage["display"] = user.NewLegacyDisplayStore(b.Store)
 
 	apiGroupInfo.VersionedResourcesStorageMap[identityv0.VERSION] = storage
 	return &apiGroupInfo, nil
