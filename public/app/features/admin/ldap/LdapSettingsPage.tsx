@@ -71,10 +71,9 @@ const emptySettings: LdapPayload = {
 
 export const LdapSettingsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [formSettings, setFormSettings] = useState<LdapPayload>();
 
   const methods = useForm<LdapPayload>({ defaultValues: emptySettings });
-  const { handleSubmit, register, reset } = methods;
+  const { getValues, handleSubmit, register, reset } = methods;
 
   const styles = useStyles2(getStyles);
 
@@ -89,15 +88,11 @@ export const LdapSettingsPage = () => {
         return;
       }
 
-      setFormSettings(payload);
+      reset(payload);
       setIsLoading(false);
     }
     init();
-  }, []);
-
-  useEffect(() => {
-    reset(formSettings);
-  }, [reset, formSettings]);
+  }, [reset]);
 
   /**
    * Display warning if the feature flag is disabled
@@ -112,9 +107,13 @@ export const LdapSettingsPage = () => {
     );
   }
 
-  const submitAndEnableLdapSettings = async (fm: LdapPayload) => {
+  /**
+   * Save payload to the backend
+   * @param payload LdapPayload
+   */
+  const putPayload = async (payload: LdapPayload) => {
     try {
-      const result = await getBackendSrv().put('/api/v1/sso-settings/ldap', fm);
+      const result = await getBackendSrv().put('/api/v1/sso-settings/ldap', payload);
       if (result) {
         appEvents.publish({
           type: AppEvents.alertError.name,
@@ -143,25 +142,12 @@ export const LdapSettingsPage = () => {
   /**
    * Button's Actions
    */
-  const saveForm = async () => {
-    try {
-      const result = await getBackendSrv().put('/api/v1/sso-settings/ldap', formSettings);
-      if (result) {
-        appEvents.publish({
-          type: AppEvents.alertError.name,
-          payload: [t('ldap-settings-page.alert.error-saving', 'Error saving LDAP settings')],
-        });
-      }
-      appEvents.publish({
-        type: AppEvents.alertSuccess.name,
-        payload: [t('ldap-settings-page.alert.saved', 'LDAP settings saved')],
-      });
-    } catch (error) {
-      appEvents.publish({
-        type: AppEvents.alertError.name,
-        payload: [t('ldap-settings-page.alert.error-saving', 'Error saving LDAP settings')],
-      });
-    }
+  const submitAndEnableLdapSettings = (payload: LdapPayload) => {
+    payload.settings.enabled = true;
+    putPayload(payload);
+  };
+  const saveForm = () => {
+    putPayload(getValues());
   };
   const discardForm = async () => {
     try {
@@ -175,8 +161,7 @@ export const LdapSettingsPage = () => {
         });
         return;
       }
-
-      setFormSettings(payload);
+      reset(payload);
     } catch (error) {
       appEvents.publish({
         type: AppEvents.alertError.name,
@@ -208,13 +193,12 @@ export const LdapSettingsPage = () => {
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(submitAndEnableLdapSettings, onErrors)}>
             {isLoading && <Loader />}
-            {!isLoading && formSettings && (
+            {!isLoading && (
               <section className={styles.form}>
                 <h3>
                   <Trans i18nKey="ldap-settings-page.title">Basic Settings</Trans>
                 </h3>
                 <Field
-                  htmlFor="host"
                   label={t('ldap-settings-page.host.label', 'Server host')}
                   description={t(
                     'ldap-settings-page.host.description',
@@ -229,7 +213,6 @@ export const LdapSettingsPage = () => {
                   />
                 </Field>
                 <Field
-                  htmlFor="bind-dn"
                   label={t('ldap-settings-page.bind-dn.label', 'Bind DN')}
                   description={t(
                     'ldap-settings-page.bind-dn.description',
@@ -243,7 +226,7 @@ export const LdapSettingsPage = () => {
                     {...register('settings.config.servers.0.bind_dn')}
                   />
                 </Field>
-                <Field htmlFor="bind-password" label={t('ldap-settings-page.bind-password.label', 'Bind password')}>
+                <Field label={t('ldap-settings-page.bind-password.label', 'Bind password')}>
                   <Input
                     id="bind-password"
                     type="text"
@@ -251,7 +234,6 @@ export const LdapSettingsPage = () => {
                   />
                 </Field>
                 <Field
-                  htmlFor="search_filter-filter"
                   label={t('ldap-settings-page.search_filter.label', 'Search filter*')}
                   description={t(
                     'ldap-settings-page.search_filter.description',
@@ -266,7 +248,6 @@ export const LdapSettingsPage = () => {
                   />
                 </Field>
                 <Field
-                  htmlFor="search-base-dns"
                   label={t('ldap-settings-page.search-base-dns.label', 'Search base DNS *')}
                   description={t(
                     'ldap-settings-page.search-base-dns.description',
@@ -305,9 +286,7 @@ export const LdapSettingsPage = () => {
 function getStyles(theme: GrafanaTheme2) {
   return {
     form: css({
-      input: css({
-        width: theme.spacing(68),
-      }),
+      width: theme.spacing(68),
     }),
   };
 }
