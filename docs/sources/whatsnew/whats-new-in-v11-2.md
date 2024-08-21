@@ -180,6 +180,19 @@ For more complex queries that are not covered by the options in the builder you 
 
 To set up cross-account querying for AWS Cloudwatch Plugin, see instructions [here](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/query-editor/#cross-account-observability).
 
+### Catchpoint Enterprise data source for Grafana
+
+<!-- Taewoo Kim -->
+<!-- listed release is Grafana v9.5.13; not sure if this should be included -->
+
+_Available in public preview in Grafana Enterprise and Grafana Cloud_
+
+**Introducing Catchpoint data source plugin.**
+
+The Catchpoint data source plugin allows you to query and visualize `Tests`, `RUM` and `SLO` data from within Grafana.
+
+{{< video-embed src="/media/docs/plugins/Catchpoint.mp4" >}}
+
 ## Authentication and authorization
 
 ### Map org-specific user roles from your OAuth provider
