@@ -162,8 +162,16 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
             if (binaryOptions.allNumbers) {
               const operator = binaryOperators.getIfExists(binaryOptions.operator);
               data.map((frame) => {
+                const { timeField } = getTimeField(frame);
+                const newFields: Field[] = [];
+                if (timeField && options.timeSeries !== false) {
+                  newFields.push(timeField);
+                }
                 // For each field of type number, apply operator
                 frame.fields.map((field, index) => {
+                  if (!options.replaceFields) {
+                    newFields.push(field);
+                  }
                   if (field.type === FieldType.number) {
                     const left = field.values;
                     // TODO consolidate common creator logic
@@ -177,13 +185,10 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
                       arr[i] = operator.operation(left[i], right[i]);
                     }
                     const newField = { ...field, name: `${field.name} ${getNameFromOptions(options)}`, values: arr };
-                    if (options.replaceFields) {
-                      frame.fields[index] = newField;
-                    } else {
-                      frame.fields.push(newField);
-                    }
+                    newFields.push(newField);
                   }
                 });
+                frame.fields = newFields;
               });
               return data;
             } else {
