@@ -262,19 +262,17 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     const updatedState = { ...state };
 
-    if (config.featureToggles.bodyScrolling) {
-      // Entering settings view
-      if (!state.editView && urlEditView) {
-        updatedState.editView = urlEditView;
-        updatedState.rememberScrollTop = window.scrollY;
-        updatedState.updateScrollTop = 0;
-      }
+    // Entering settings view
+    if (!state.editView && urlEditView) {
+      updatedState.editView = urlEditView;
+      updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
+      updatedState.updateScrollTop = 0;
+    }
 
-      // Leaving settings view
-      else if (state.editView && !urlEditView) {
-        updatedState.updateScrollTop = state.rememberScrollTop;
-        updatedState.editView = null;
-      }
+    // Leaving settings view
+    else if (state.editView && !urlEditView) {
+      updatedState.updateScrollTop = state.rememberScrollTop;
+      updatedState.editView = null;
     }
 
     // Entering edit mode
@@ -283,12 +281,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       if (panel) {
         if (dashboard.canEditPanel(panel)) {
           updatedState.editPanel = panel;
-          updatedState.rememberScrollTop = config.featureToggles.bodyScrolling
-            ? window.scrollY
-            : state.scrollElement?.scrollTop;
-          if (config.featureToggles.bodyScrolling) {
-            updatedState.updateScrollTop = 0;
-          }
+          updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
         } else {
           updatedState.editPanelAccessDenied = true;
         }
@@ -310,9 +303,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         // Should move this state out of dashboard in the future
         dashboard.initViewPanel(panel);
         updatedState.viewPanel = panel;
-        updatedState.rememberScrollTop = config.featureToggles.bodyScrolling
-          ? window.scrollY
-          : state.scrollElement?.scrollTop;
+        updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
         updatedState.updateScrollTop = 0;
       } else {
         updatedState.panelNotFound = true;

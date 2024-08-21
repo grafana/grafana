@@ -26,20 +26,21 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const bodyToRender = model.getBodyToRender();
   const navModel = getNavModel(navIndex, 'dashboards/browse');
   const hasControls = controls?.hasControls();
+  const isSettingsOpen = editview !== undefined;
 
   // Remember scroll pos when going into view panel, edit panel or settings
   useMemo(() => {
-    if (viewPanelScene || editview || editPanel) {
+    if (viewPanelScene || isSettingsOpen || editPanel) {
       model.rememberScrollPos();
     }
-  }, [editview, editPanel, viewPanelScene, model]);
+  }, [isSettingsOpen, editPanel, viewPanelScene, model]);
 
   // Restore scroll pos when coming back
   useEffect(() => {
-    if (!viewPanelScene && !editview && !editPanel) {
+    if (!viewPanelScene && !isSettingsOpen && !editPanel) {
       model.restoreScrollPos();
     }
-  }, [editview, editPanel, viewPanelScene, model]);
+  }, [isSettingsOpen, editPanel, viewPanelScene, model]);
 
   if (editview) {
     return (

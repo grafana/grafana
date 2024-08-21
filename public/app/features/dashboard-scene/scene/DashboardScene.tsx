@@ -938,7 +938,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public rememberScrollPos() {
     this._prevScrollPos = this._scrollRef?.scrollTop;
-    console.log('rememberScrollPos', this._prevScrollPos);
   }
 
   public restoreScrollPos() {
