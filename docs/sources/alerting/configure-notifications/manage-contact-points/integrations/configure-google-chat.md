@@ -13,7 +13,7 @@ labels:
     - oss
 menuTitle: Google Chat
 title: Configure Google Chat for Alerting
-weight: 30
+weight: 0
 ---
 
 # Configure Google Chat for Alerting

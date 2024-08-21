@@ -403,35 +403,43 @@ func (f *FakeActionSetRegistry) RegisterActionSets(_ context.Context, _ string, 
 	return f.ExpectedErr
 }
 
-type FakePluginFiles struct {
+type FakePluginFS struct {
 	OpenFunc   func(name string) (fs.File, error)
 	RemoveFunc func() error
+	RelFunc    func(string) (string, error)
 
 	base string
 }
 
-func NewFakePluginFiles(base string) *FakePluginFiles {
-	return &FakePluginFiles{
+func NewFakePluginFS(base string) *FakePluginFS {
+	return &FakePluginFS{
 		base: base,
 	}
 }
 
-func (f *FakePluginFiles) Open(name string) (fs.File, error) {
+func (f *FakePluginFS) Open(name string) (fs.File, error) {
 	if f.OpenFunc != nil {
 		return f.OpenFunc(name)
 	}
 	return nil, nil
 }
 
-func (f *FakePluginFiles) Base() string {
+func (f *FakePluginFS) Rel(_ string) (string, error) {
+	if f.RelFunc != nil {
+		return f.RelFunc(f.base)
+	}
+	return "", nil
+}
+
+func (f *FakePluginFS) Base() string {
 	return f.base
 }
 
-func (f *FakePluginFiles) Files() ([]string, error) {
+func (f *FakePluginFS) Files() ([]string, error) {
 	return []string{}, nil
 }
 
-func (f *FakePluginFiles) Remove() error {
+func (f *FakePluginFS) Remove() error {
 	if f.RemoveFunc != nil {
 		return f.RemoveFunc()
 	}
