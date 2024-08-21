@@ -122,7 +122,6 @@ func addMetadataToMultiFrame(q *models.Query, frame *data.Frame) {
 	if n, ok := valueField.Labels["__name__"]; ok {
 		valueField.Name = n
 	}
-
 }
 
 // this is based on the logic from the String() function in github.com/prometheus/common/model.go
