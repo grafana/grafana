@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	datav0alpha1 "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/aggregator/apiserver/plugin/fakes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -38,8 +38,8 @@ func TestQueryDataHandler(t *testing.T) {
 			ID: 1,
 		},
 	}
-	contextProvider := &fakePluginContextProvider{
-		pluginContext: pluginContext,
+	contextProvider := &fakes.FakePluginContextProvider{
+		PluginContext: pluginContext,
 	}
 
 	res := &backend.QueryDataResponse{
@@ -58,7 +58,7 @@ func TestQueryDataHandler(t *testing.T) {
 		QueryDataHandlerFunc: newfakeQueryDataHandler(res, nil),
 	}
 
-	delegate := newFakeHTTPHandler(http.StatusNotFound, []byte(`Not Found`))
+	delegate := fakes.NewFakeHTTPHandler(http.StatusNotFound, []byte(`Not Found`))
 	handler := NewPluginHandler(pc, dps, contextProvider, delegate)
 
 	qdr := datav0alpha1.QueryDataRequest{
@@ -176,27 +176,8 @@ func TestQueryDataHandler(t *testing.T) {
 	})
 }
 
-type fakePluginContextProvider struct {
-	pluginContext backend.PluginContext
-	err           error
-}
-
-func (f fakePluginContextProvider) GetPluginContext(ctx context.Context, pluginID, dsUID string) (backend.PluginContext, error) {
-	return f.pluginContext, f.err
-}
-
 func newfakeQueryDataHandler(res *backend.QueryDataResponse, err error) backend.QueryDataHandlerFunc {
 	return func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 		return res, err
-	}
-}
-
-func newFakeHTTPHandler(status int, res []byte) http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
-		w.WriteHeader(status)
-		_, err := w.Write(res)
-		if err != nil {
-			panic(err)
-		}
 	}
 }
