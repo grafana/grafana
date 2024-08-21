@@ -1,4 +1,4 @@
-package identity
+package user
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	identity "github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1"
+	identity "github.com/grafana/grafana/pkg/apis/identity/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
@@ -18,56 +18,57 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
-type displayREST struct {
+type LegacyDisplayStore struct {
 	store legacy.LegacyIdentityStore
 }
 
 var (
-	_ rest.Storage              = (*displayREST)(nil)
-	_ rest.SingularNameProvider = (*displayREST)(nil)
-	_ rest.Connecter            = (*displayREST)(nil)
-	_ rest.Scoper               = (*displayREST)(nil)
-	_ rest.StorageMetadata      = (*displayREST)(nil)
+	_ rest.Storage              = (*LegacyDisplayStore)(nil)
+	_ rest.SingularNameProvider = (*LegacyDisplayStore)(nil)
+	_ rest.Connecter            = (*LegacyDisplayStore)(nil)
+	_ rest.Scoper               = (*LegacyDisplayStore)(nil)
+	_ rest.StorageMetadata      = (*LegacyDisplayStore)(nil)
 )
 
-func newDisplayREST(store legacy.LegacyIdentityStore) *displayREST {
-	return &displayREST{store}
+func NewLegacyDisplayStore(store legacy.LegacyIdentityStore) *LegacyDisplayStore {
+	return &LegacyDisplayStore{store}
 }
 
-func (r *displayREST) New() runtime.Object {
+func (r *LegacyDisplayStore) New() runtime.Object {
 	return &identity.IdentityDisplayResults{}
 }
 
-func (r *displayREST) Destroy() {}
+func (r *LegacyDisplayStore) Destroy() {}
 
-func (r *displayREST) NamespaceScoped() bool {
+func (r *LegacyDisplayStore) NamespaceScoped() bool {
 	return true
 }
 
-func (r *displayREST) GetSingularName() string {
-	return "IdentityDisplay" // not actually used anywhere, but required by SingularNameProvider
+func (r *LegacyDisplayStore) GetSingularName() string {
+	// not actually used anywhere, but required by SingularNameProvider
+	return "IdentityDisplay"
 }
 
-func (r *displayREST) ProducesMIMETypes(verb string) []string {
+func (r *LegacyDisplayStore) ProducesMIMETypes(verb string) []string {
 	return []string{"application/json"}
 }
 
-func (r *displayREST) ProducesObject(verb string) any {
+func (r *LegacyDisplayStore) ProducesObject(verb string) any {
 	return &identity.IdentityDisplayResults{}
 }
 
-func (r *displayREST) ConnectMethods() []string {
+func (r *LegacyDisplayStore) ConnectMethods() []string {
 	return []string{"GET"}
 }
 
-func (r *displayREST) NewConnectOptions() (runtime.Object, bool, string) {
+func (r *LegacyDisplayStore) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, "" // true means you can use the trailing path as a variable
 }
 
 // This will always have an empty app url
 var fakeCfgForGravatar = &setting.Cfg{}
 
-func (r *displayREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (r *LegacyDisplayStore) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	// See: /pkg/services/apiserver/builder/helper.go#L34
 	// The name is set with a rewriter hack
 	if name != "name" {
