@@ -14,6 +14,7 @@ import { SharePanelInternally } from '../panel-share/SharePanelInternally';
 import { ModalSceneObjectLike, SceneShareTabState, ShareView } from '../types';
 
 import { ShareDrawerContext } from './ShareDrawerContext';
+import { ShareLibraryPanelTab } from '../ShareLibraryPanelTab';
 
 export interface ShareDrawerState extends SceneObjectState {
   panelRef?: SceneObjectRef<VizPanel>;
@@ -108,6 +109,8 @@ function getPanelShareView(
       return new ShareSnapshot({ dashboardRef, panelRef, onDismiss });
     case shareDashboardType.embed:
       return new SharePanelEmbedTab({ panelRef, onDismiss });
+    case shareDashboardType.libraryPanel:
+      return new ShareLibraryPanelTab({ panelRef, onDismiss });
     default:
       return new SharePanelInternally({ panelRef, onDismiss });
   }

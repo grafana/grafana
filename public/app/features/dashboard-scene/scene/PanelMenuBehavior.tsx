@@ -23,7 +23,6 @@ import { addDataTrailPanelAction } from 'app/features/trails/Integrations/dashbo
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
-import { ShareLibraryPanelTab } from '../sharing/ShareLibraryPanelTab';
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
 import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
@@ -189,8 +188,8 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
             text: t('share-panel.menu.new-library-panel-title', 'New library panel'),
             onClick: () => {
               const drawer = new ShareDrawer({
-                title: t('share-panel.drawer.new-library-panel-title', 'New library panel'),
-                body: new ShareLibraryPanelTab({ panelRef: panel.getRef() }),
+                shareView: shareDashboardType.libraryPanel,
+                panelRef: panel.getRef(),
               });
 
               dashboard.showModal(drawer);
