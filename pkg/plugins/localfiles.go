@@ -77,6 +77,10 @@ func (f LocalFS) fileIsAllowed(basePath string, absolutePath string, info os.Fil
 	return true, nil
 }
 
+func (f LocalFS) Rel(p string) (string, error) {
+	return filepath.Rel(f.basePath, p)
+}
+
 // walkFunc returns a filepath.WalkFunc that accumulates absolute file paths into acc by walking over f.Base().
 // f.fileIsAllowed is used as WalkFunc, see its documentation for more information on which files are collected.
 func (f LocalFS) walkFunc(basePath string, acc map[string]struct{}) filepath.WalkFunc {
