@@ -16,6 +16,11 @@ export type GetPluginExtensionsOptions = {
   limitPerPlugin?: number;
 };
 
+export type UsePluginComponentOptions = {
+  extensionPointId: string;
+  limitPerPlugin?: number;
+};
+
 export type GetPluginExtensionsResult<T = PluginExtension> = {
   extensions: T[];
 };

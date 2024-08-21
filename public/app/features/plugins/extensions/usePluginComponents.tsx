@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useObservable } from 'react-use';
 
 import {
-  GetPluginExtensionsOptions,
+  UsePluginComponentOptions,
   UsePluginComponentsResult,
 } from '@grafana/runtime/src/services/pluginExtensions/getPluginExtensions';
 
@@ -15,7 +15,7 @@ export function createUsePluginComponents(registry: AddedComponentsRegistry) {
   return function usePluginComponents<Props extends object = {}>({
     limitPerPlugin,
     extensionPointId,
-  }: GetPluginExtensionsOptions): UsePluginComponentsResult<Props> {
+  }: UsePluginComponentOptions): UsePluginComponentsResult<Props> {
     const registry = useObservable(observableRegistry);
 
     return useMemo(() => {
