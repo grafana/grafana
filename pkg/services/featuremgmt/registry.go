@@ -665,12 +665,6 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:        "idForwarding",
-			Description: "Generate signed id token for identity that can be forwarded to plugins and external services",
-			Stage:       FeatureStageExperimental,
-			Owner:       identityAccessTeam,
-		},
-		{
 			Name:              "externalServiceAccounts",
 			Description:       "Automatic service account and token setup for plugins",
 			HideFromAdminPage: true,
@@ -1297,8 +1291,9 @@ var (
 		{
 			Name:        "openSearchBackendFlowEnabled",
 			Description: "Enables the backend query flow for Open Search datasource plugin",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       awsDatasourcesSquad,
+			Expression:  "true",
 		},
 		{
 			Name:              "ssoSettingsLDAP",
