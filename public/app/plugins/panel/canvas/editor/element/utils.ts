@@ -70,6 +70,9 @@ export const getRequest = (api: APIEditorConfig) => {
   if (api.method === HttpRequestMethod.POST) {
     requestHeaders.push(['Content-Type', api.contentType!]);
   }
+
+  requestHeaders.push(['X-Grafana-Action', '1']);
+
   request.headers = requestHeaders;
 
   return request;
