@@ -1839,6 +1839,19 @@
     },
     {
       "metadata": {
+        "name": "newVizLegend",
+        "resourceVersion": "1724158935069",
+        "creationTimestamp": "2024-08-20T13:02:15Z"
+      },
+      "spec": {
+        "description": "Enhanced legend for visualizations",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "nodeGraphDotLayout",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-01-31T16:26:12Z"

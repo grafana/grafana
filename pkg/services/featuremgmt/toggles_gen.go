@@ -750,4 +750,8 @@ const (
 	// FlagAdhocFilterOneOf
 	// Exposes a new &#39;one of&#39; operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.
 	FlagAdhocFilterOneOf = "adhocFilterOneOf"
+
+	// FlagNewVizLegend
+	// Enhanced legend for visualizations
+	FlagNewVizLegend = "newVizLegend"
 )
