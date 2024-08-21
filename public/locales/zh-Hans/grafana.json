@@ -106,6 +106,7 @@
       "export-all": "",
       "view": ""
     },
+    "contact-point": "",
     "contact-points": {
       "delivery-duration": "",
       "last-delivery-attempt": "",
@@ -135,7 +136,21 @@
       "saving": ""
     },
     "policies": {
+      "default-policy": {
+        "description": "",
+        "title": ""
+      },
+      "generated-policies": "",
       "metadata": {
+        "active-time": "",
+        "delivered-to": "",
+        "grouped-by": "",
+        "grouping": {
+          "none": "",
+          "single-group": ""
+        },
+        "inherited": "",
+        "mute-time": "",
         "timingOptions": {
           "groupInterval": {
             "description": "",
@@ -149,8 +164,13 @@
             "description": "",
             "label": ""
           }
-        }
-      }
+        },
+        "n-instances_other": ""
+      },
+      "new-child": "",
+      "new-policy": "",
+      "no-matchers": "",
+      "n-more-policies_other": ""
     },
     "provisioning": {
       "badge-tooltip-provenance": "",
@@ -1083,6 +1103,11 @@
       "link-title": "查看完整的迁移指南",
       "title": ""
     },
+    "migrated-counts": {
+      "dashboards": "",
+      "datasources": "",
+      "folders": ""
+    },
     "migration-token": {
       "delete-button": "",
       "delete-modal-body": "如果您已经在自己管理的安装中使用了此令牌，则该安装将无法再上传内容。",
@@ -1114,6 +1139,8 @@
       "migration-finished-with-warnings-body": "",
       "snapshot-error-status-body": "",
       "snapshot-error-status-title": "",
+      "success-message": "",
+      "success-title": "",
       "upload-snapshot-error-title": ""
     },
     "pdc": {
@@ -1895,16 +1922,7 @@
     "dismissable-button": "关闭"
   },
   "scopes": {
-    "filters": {
-      "apply": "",
-      "cancel": "",
-      "input": {
-        "placeholder": "",
-        "removeAll": ""
-      },
-      "title": ""
-    },
-    "suggestedDashboards": {
+    "dashboards": {
       "loading": "",
       "noResultsForFilter": "",
       "noResultsForFilterClear": "",
@@ -1913,8 +1931,18 @@
       "search": "",
       "toggle": {
         "collapse": "",
+        "disabled": "",
         "expand": ""
       }
+    },
+    "selector": {
+      "apply": "",
+      "cancel": "",
+      "input": {
+        "placeholder": "",
+        "removeAll": ""
+      },
+      "title": ""
     },
     "tree": {
       "collapse": "",

@@ -104,6 +104,9 @@ func (p permissionEvaluator) EvaluateCustom(fn CheckerFn) (bool, error) {
 }
 
 func (p permissionEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.permissionEvaluatorMutateScopes")
+	defer span.End()
+
 	if p.Scopes == nil {
 		return EvalPermission(p.Action), nil
 	}
@@ -172,6 +175,9 @@ func (a allEvaluator) EvaluateCustom(fn CheckerFn) (bool, error) {
 }
 
 func (a allEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.allEvaluator.MutateScopes")
+	defer span.End()
+
 	resolved := false
 	modified := make([]Evaluator, 0, len(a.allOf))
 	for _, e := range a.allOf {
@@ -245,6 +251,9 @@ func (a anyEvaluator) EvaluateCustom(fn CheckerFn) (bool, error) {
 }
 
 func (a anyEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.anyEvaluator.MutateScopes")
+	defer span.End()
+
 	resolved := false
 	modified := make([]Evaluator, 0, len(a.anyOf))
 	for _, e := range a.anyOf {

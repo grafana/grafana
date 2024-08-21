@@ -26,6 +26,11 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+const (
+	namespaceQueryTag = "QUERY_NAMESPACE"
+	groupQueryTag     = "QUERY_GROUP"
+)
+
 var searchRegex = regexp.MustCompile(`\{(\w+)\}`)
 
 func toMacaronPath(path string) string {
@@ -207,8 +212,9 @@ func messageExtractor(resp *response.NormalResponse) (any, error) {
 // ErrorResp creates a response with a visible error
 func ErrResp(status int, err error, msg string, args ...any) *response.NormalResponse {
 	if msg != "" {
-		formattedMsg := fmt.Sprintf(msg, args...)
-		err = fmt.Errorf("%s: %w", formattedMsg, err)
+		msg += ": %w"
+		args = append(args, err)
+		err = fmt.Errorf(msg, args...)
 	}
 	return response.Error(status, err.Error(), err)
 }
@@ -239,4 +245,30 @@ func getHash(hashSlice []string) uint64 {
 	}
 	hash := sum.Sum64()
 	return hash
+}
+
+func getRulesGroupParam(ctx *contextmodel.ReqContext, pathGroup string) (string, error) {
+	if pathGroup == groupQueryTag {
+		group := ctx.Query("group")
+		if group == "" {
+			return "", fmt.Errorf("group query parameter is empty")
+		}
+
+		return group, nil
+	}
+
+	return pathGroup, nil
+}
+
+func getRulesNamespaceParam(ctx *contextmodel.ReqContext, pathNamespace string) (string, error) {
+	if pathNamespace == namespaceQueryTag {
+		namespace := ctx.Query("namespace")
+		if namespace == "" {
+			return "", fmt.Errorf("namespace query parameter is empty")
+		}
+
+		return namespace, nil
+	}
+
+	return pathNamespace, nil
 }

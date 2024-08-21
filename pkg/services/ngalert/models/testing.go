@@ -498,13 +498,13 @@ func (a *AlertRuleMutators) WithRandomRecordingRules() AlertRuleMutator {
 		if rand.Int63()%2 == 0 {
 			return
 		}
-		convertToRecordingRule(rule)
+		ConvertToRecordingRule(rule)
 	}
 }
 
 func (a *AlertRuleMutators) WithAllRecordingRules() AlertRuleMutator {
 	return func(rule *AlertRule) {
-		convertToRecordingRule(rule)
+		ConvertToRecordingRule(rule)
 	}
 }
 
@@ -1309,7 +1309,7 @@ func randomMapKey[K comparable, V any](m map[K]V) (K, V) {
 	return *new(K), *new(V)
 }
 
-func convertToRecordingRule(rule *AlertRule) {
+func ConvertToRecordingRule(rule *AlertRule) {
 	if rule.Record == nil {
 		rule.Record = &Record{}
 	}

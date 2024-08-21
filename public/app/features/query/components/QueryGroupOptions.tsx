@@ -3,7 +3,7 @@ import { PureComponent, ChangeEvent, FocusEvent } from 'react';
 import * as React from 'react';
 
 import { rangeUtil, PanelData, DataSourceApi } from '@grafana/data';
-import { Switch, Input, InlineFormLabel, stylesFactory } from '@grafana/ui';
+import { Input, InlineFormLabel, stylesFactory, InlineFieldRow, InlineSwitch } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { config } from 'app/core/config';
 import { QueryGroupOptions } from 'app/types';
@@ -408,10 +408,10 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
           />
         </div>
         {(timeShift || relativeTime) && (
-          <div className="gf-form-inline align-items-center">
+          <InlineFieldRow>
             <InlineFormLabel width={9}>Hide time info</InlineFormLabel>
-            <Switch value={hideTimeOverride} onChange={this.onToggleTimeOverride} />
-          </div>
+            <InlineSwitch value={hideTimeOverride} onChange={this.onToggleTimeOverride} />
+          </InlineFieldRow>
         )}
       </QueryOperationRow>
     );
