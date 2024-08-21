@@ -1018,26 +1018,6 @@
         "tooltip": "For a complete list of supported ciphers and TLS versions, refer to: {\n        <TextLink style={{ fontSize: 'inherit' }} href=\"https://go.dev/src/crypto/tls/cipher_suites.go\" external>\n          https://go.dev/src/crypto/tls/cipher_suites.go\n        </TextLink>}"
       }
     },
-    "group-mapping": {
-      "grafana-admin": {
-        "description": "If enabled, all users from this group will be Grafana Admins",
-        "label": "Grafana Admin"
-      },
-      "group-dn": {
-        "description": "The name of the key used to extract the ID token from the returned OAuth2 token.",
-        "label": "Group DN"
-      },
-      "org-id": {
-        "description": "The Grafana organization database id. Default org (ID 1) will be used if left out",
-        "label": "Org ID"
-      },
-      "org-role": {
-        "label": "Org role *"
-      },
-      "remove": {
-        "button": "Remove group mapping"
-      }
-    },
     "group-mapping-section": {
       "description": "Map LDAP groups to Grafana org roles",
       "group-search-base-dns": {
