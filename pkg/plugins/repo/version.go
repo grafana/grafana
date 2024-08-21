@@ -1,6 +1,8 @@
 package repo
 
 import (
+	"errors"
+	"slices"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -19,19 +21,29 @@ type VersionData struct {
 // returns error if the supplied version does not exist.
 // returns error if supplied version exists but is not supported.
 // NOTE: It expects plugin.Versions to be sorted so the newest version is first.
-func SelectSystemCompatibleVersion(log log.PrettyLogger, versions []Version, pluginID, version string, compatOpts SystemCompatOpts) (VersionData, error) {
+func SelectSystemCompatibleVersion(log log.PrettyLogger, versions []Version, pluginID, version string, compatOpts CompatOpts) (VersionData, error) {
 	version = normalizeVersion(version)
 
-	var ver Version
-	latestForArch, exists := latestSupportedVersion(versions, compatOpts)
+	sysCompatOpts, exists := compatOpts.System()
 	if !exists {
-		return VersionData{}, ErrArcNotFound(pluginID, compatOpts.OSAndArch())
+		return VersionData{}, errors.New("no system compatibility requirements set")
+	}
+
+	versions = filterCompatibleVersions(versions)
+	if len(versions) == 0 {
+		return VersionData{}, ErrNoCompatibleVersions(pluginID, compatOpts.grafanaVersion)
+	}
+
+	var ver Version
+	latestForArch, exists := latestSupportedVersionForArch(versions, sysCompatOpts)
+	if !exists {
+		return VersionData{}, ErrArcNotFound(pluginID, sysCompatOpts.OSAndArch())
 	}
 
 	if version == "" {
 		return VersionData{
 			Version:  latestForArch.Version,
-			Checksum: checksum(latestForArch, compatOpts),
+			Checksum: checksum(latestForArch, sysCompatOpts),
 			Arch:     latestForArch.Arch,
 			URL:      latestForArch.URL,
 		}, nil
@@ -46,18 +58,18 @@ func SelectSystemCompatibleVersion(log log.PrettyLogger, versions []Version, plu
 	if len(ver.Version) == 0 {
 		log.Debugf("Requested plugin version %s v%s not found but potential fallback version '%s' was found",
 			pluginID, version, latestForArch.Version)
-		return VersionData{}, ErrVersionNotFound(pluginID, version, compatOpts.OSAndArch())
+		return VersionData{}, ErrVersionNotFound(pluginID, version, sysCompatOpts.OSAndArch())
 	}
 
-	if !supportsCurrentArch(ver, compatOpts) {
+	if !supportsCurrentArch(ver, sysCompatOpts) {
 		log.Debugf("Requested plugin version %s v%s is not supported on your system but potential fallback version '%s' was found",
 			pluginID, version, latestForArch.Version)
-		return VersionData{}, ErrVersionUnsupported(pluginID, version, compatOpts.OSAndArch())
+		return VersionData{}, ErrVersionUnsupported(pluginID, version, sysCompatOpts.OSAndArch())
 	}
 
 	return VersionData{
 		Version:  ver.Version,
-		Checksum: checksum(ver, compatOpts),
+		Checksum: checksum(ver, sysCompatOpts),
 		Arch:     ver.Arch,
 		URL:      ver.URL,
 	}, nil
@@ -86,7 +98,13 @@ func supportsCurrentArch(version Version, compatOpts SystemCompatOpts) bool {
 	return false
 }
 
-func latestSupportedVersion(versions []Version, compatOpts SystemCompatOpts) (Version, bool) {
+func filterCompatibleVersions(versions []Version) []Version {
+	return slices.DeleteFunc(versions, func(v Version) bool {
+		return !v.IsCompatible
+	})
+}
+
+func latestSupportedVersionForArch(versions []Version, compatOpts SystemCompatOpts) (Version, bool) {
 	for _, v := range versions {
 		if supportsCurrentArch(v, compatOpts) {
 			return v, true
