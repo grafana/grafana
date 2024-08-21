@@ -8,7 +8,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"go.opentelemetry.io/otel"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/database")
 
 const (
 	// userAssignsSQL is a query to select all users assignments.
@@ -45,6 +48,9 @@ type AccessControlStore struct {
 }
 
 func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.database.GetUserPermissions")
+	defer span.End()
+
 	result := make([]accesscontrol.Permission, 0)
 	err := s.sql.ReadReplica().WithDbSession(ctx, func(sess *db.Session) error {
 		if query.UserID == 0 && len(query.TeamIDs) == 0 && len(query.Roles) == 0 {
@@ -100,6 +106,9 @@ func (p teamPermission) Permission() accesscontrol.Permission {
 }
 
 func (s *AccessControlStore) GetTeamsPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) (map[int64][]accesscontrol.Permission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.database.GetTeamsPermissions")
+	defer span.End()
+
 	teams := query.TeamIDs
 	orgID := query.OrgID
 	rolePrefixes := query.RolePrefixes
@@ -156,6 +165,9 @@ func (s *AccessControlStore) GetTeamsPermissions(ctx context.Context, query acce
 
 // SearchUsersPermissions returns the list of user permissions in specific organization indexed by UserID
 func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.database.SearchUsersPermissions")
+	defer span.End()
+
 	type UserRBACPermission struct {
 		UserID int64  `xorm:"user_id"`
 		Action string `xorm:"action"`
@@ -278,6 +290,9 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 
 // GetUsersBasicRoles returns the list of user basic roles (Admin, Editor, Viewer, Grafana Admin) indexed by UserID
 func (s *AccessControlStore) GetUsersBasicRoles(ctx context.Context, userFilter []int64, orgID int64) (map[int64][]string, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.database.GetUsersBasicRoles")
+	defer span.End()
+
 	type UserOrgRole struct {
 		UserID  int64  `xorm:"id"`
 		OrgRole string `xorm:"role"`
@@ -318,6 +333,9 @@ func (s *AccessControlStore) GetUsersBasicRoles(ctx context.Context, userFilter 
 }
 
 func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, orgID, userID int64) error {
+	ctx, span := tracer.Start(ctx, "accesscontrol.database.DeleteUserPermissions")
+	defer span.End()
+
 	err := s.sql.DB().WithDbSession(ctx, func(sess *db.Session) error {
 		roleDeleteQuery := "DELETE FROM user_role WHERE user_id = ?"
 		roleDeleteParams := []any{roleDeleteQuery, userID}
@@ -383,6 +401,9 @@ func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, orgID, u
 }
 
 func (s *AccessControlStore) DeleteTeamPermissions(ctx context.Context, orgID, teamID int64) error {
+	ctx, span := tracer.Start(ctx, "accesscontrol.database.DeleteTeamPermissions")
+	defer span.End()
+
 	err := s.sql.DB().WithDbSession(ctx, func(sess *db.Session) error {
 		roleDeleteQuery := "DELETE FROM team_role WHERE team_id = ? AND org_id = ?"
 		roleDeleteParams := []any{roleDeleteQuery, teamID, orgID}

@@ -7,6 +7,7 @@ import (
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -18,6 +19,7 @@ import (
 
 var (
 	errAccessNotImplemented = errors.New("access control not implemented for resource")
+	tracer                  = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/acimpl")
 )
 
 var _ accesscontrol.AccessControl = new(AccessControl)
@@ -52,6 +54,9 @@ type AccessControl struct {
 }
 
 func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.Evaluate")
+	defer span.End()
+
 	if a.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 		return a.evaluateCompare(ctx, user, evaluator)
 	}
@@ -60,6 +65,9 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 }
 
 func (a *AccessControl) evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.evaluate")
+	defer span.End()
+
 	timer := prometheus.NewTimer(metrics.MAccessEvaluationsSummary)
 	defer timer.ObserveDuration()
 	metrics.MAccessEvaluationCount.Inc()
@@ -98,6 +106,9 @@ func (a *AccessControl) evaluate(ctx context.Context, user identity.Requester, e
 }
 
 func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.evaluateZanzana")
+	defer span.End()
+
 	eval, err := evaluator.MutateScopes(ctx, a.resolvers.GetScopeAttributeMutator(user.GetOrgID()))
 	if err != nil {
 		if !errors.Is(err, accesscontrol.ErrResolverNotFound) {
@@ -140,6 +151,9 @@ type evalResult struct {
 
 // evaluateCompare run RBAC and zanzana checks in parallel and then compare result
 func (a *AccessControl) evaluateCompare(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.evaluateCompare")
+	defer span.End()
+
 	res := make(chan evalResult, 2)
 	go func() {
 		timer := prometheus.NewTimer(a.metrics.mAccessEngineEvaluationsSeconds.WithLabelValues("zanzana"))
@@ -192,5 +206,8 @@ func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver a
 }
 
 func (a *AccessControl) debug(ctx context.Context, ident identity.Requester, msg string, eval accesscontrol.Evaluator) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.debug")
+	defer span.End()
+
 	a.log.FromContext(ctx).Debug(msg, "id", ident.GetID(), "orgID", ident.GetOrgID(), "permissions", eval.GoString())
 }
