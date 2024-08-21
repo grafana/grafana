@@ -27,7 +27,7 @@ Node graph panels are useful when you need to visualize elements that are relate
 
 ![Node graph visualization](/static/img/docs/node-graph/node-graph-8-0.png 'Node graph')
 
-You can use a node graph visualization if you need to show: 
+You can use a node graph visualization if you need to show:
 
 - Solution topologies
 - Networks
@@ -69,7 +69,7 @@ If the icon field contains a value, it’s displayed instead of the title and su
 **Edges Data Set**
 
 | id    | source | target | mainstat | seconddarystat | thickness | highlighted | color  |
-| ----- | ------ | ------ | -------- | -------------- | --------- | ----------- | -----  |
+| ----- | ------ | ------ | -------- | -------------- | --------- | ----------- | ------ |
 | edge1 | node1  | node2  | TheMain  | TheSub         | 3         | true        | cyan   |
 | edge2 | node3  | node2  | Main2    | Sub2           | 1         | false       | orange |
 
