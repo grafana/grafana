@@ -50,7 +50,8 @@ type dashboardSqlAccess struct {
 	provisioning provisioning.ProvisioningService
 
 	// Use for writing (not reading)
-	dashStore dashboards.Store
+	dashStore  dashboards.Store
+	softDelete bool
 
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
@@ -61,12 +62,14 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	namespacer request.NamespaceMapper,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
+	softDelete bool,
 ) DashboardAccess {
 	return &dashboardSqlAccess{
 		sql:          sql,
 		namespacer:   namespacer,
 		dashStore:    dashStore,
 		provisioning: provisioning,
+		softDelete:   softDelete,
 	}
 }
 
@@ -312,6 +315,16 @@ func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, u
 	dash, _, err := a.GetDashboard(ctx, orgId, uid, 0)
 	if err != nil {
 		return nil, false, err
+	}
+
+	if a.softDelete {
+		err = a.dashStore.SoftDeleteDashboard(ctx, orgId, uid)
+		if err == nil && dash != nil {
+			now := metav1.NewTime(time.Now())
+			dash.DeletionTimestamp = &now
+			return dash, true, err
+		}
+		return dash, false, err
 	}
 
 	id := dash.Spec.GetNestedInt64("id")

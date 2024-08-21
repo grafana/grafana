@@ -38,7 +38,35 @@ var DashboardResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 					}, nil
 				}
 			}
-			return nil, fmt.Errorf("expected dashboard or summary")
+			return nil, fmt.Errorf("expected dashboard")
+		},
+	},
+)
+
+var LibraryPanelResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+	"librarypanels", "librarypanel", "LibraryPanel",
+	func() runtime.Object { return &LibraryPanel{} },
+	func() runtime.Object { return &LibraryPanelList{} },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Title", Type: "string", Description: "The dashboard name"},
+			{Name: "Type", Type: "string", Description: "the panel type"},
+			{Name: "Created At", Type: "date"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			dash, ok := obj.(*LibraryPanel)
+			if ok {
+				if dash != nil {
+					return []interface{}{
+						dash.Name,
+						dash.Spec.Title,
+						dash.Spec.Type,
+						dash.CreationTimestamp.UTC().Format(time.RFC3339),
+					}, nil
+				}
+			}
+			return nil, fmt.Errorf("expected library panel")
 		},
 	},
 )

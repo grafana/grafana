@@ -56,6 +56,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		return nil // skip registration unless opting into experimental apis
 	}
 
+	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	builder := &DashboardsAPIBuilder{
@@ -66,7 +67,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 
 		legacy: &dashboardStorage{
 			resource:       dashboard.DashboardResourceInfo,
-			access:         legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning),
+			access:         legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, softDelete),
 			tableConverter: dashboard.DashboardResourceInfo.TableConverter(),
 		},
 	}
