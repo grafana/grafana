@@ -40,14 +40,14 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
     </Label>
   );
 
-  const useSslDescriptionUrl = (
-    <TextLink href="https://go.dev/src/crypto/tls/cipher_suites.go" external>
-      https://go.dev/src/crypto/tls/cipher_suites.go
-    </TextLink>
-  );
   const useSslDescription = (
     <Trans i18nKey="ldap-drawer.extra-security-section.use-ssl.tooltip">
-      For a complete list of supported ciphers and TLS versions, refer to: {useSslDescriptionUrl}
+      For a complete list of supported ciphers and TLS versions, refer to:{' '}
+      {
+        <TextLink style={{ fontSize: 'inherit' }} href="https://go.dev/src/crypto/tls/cipher_suites.go" external>
+          https://go.dev/src/crypto/tls/cipher_suites.go
+        </TextLink>
+      }
     </Trans>
   );
 
@@ -174,7 +174,6 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
         isOpen={true}
       >
         <Field
-          htmlFor="use-ssl"
           label={t('ldap-drawer.extra-security-section.use-ssl.label', 'Use SSL')}
           description={t(
             'ldap-drawer.extra-security-section.use-ssl.description',
