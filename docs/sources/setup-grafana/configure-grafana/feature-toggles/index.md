@@ -67,6 +67,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `tlsMemcached`                         | Use TLS-enabled memcached in the enterprise caching feature                                                                                                                                                                  | Yes                |
 | `cloudWatchNewLabelParsing`            | Updates CloudWatch label parsing to be more accurate                                                                                                                                                                         | Yes                |
 | `pluginProxyPreserveTrailingSlash`     | Preserve plugin proxy trailing slash.                                                                                                                                                                                        |                    |
+| `openSearchBackendFlowEnabled`         | Enables the backend query flow for Open Search datasource plugin                                                                                                                                                             | Yes                |
 | `cloudWatchRoundUpEndTime`             | Round up end time for metric queries to the next minute to avoid missing data                                                                                                                                                | Yes                |
 
 ## Public preview feature toggles
@@ -103,7 +104,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `ssoSettingsSAML`                      | Use the new SSO Settings API to configure the SAML connector                                                                                                                                 |
 | `accessActionSets`                     | Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions.                           |
 | `azureMonitorPrometheusExemplars`      | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                                                                                 |
-| `openSearchBackendFlowEnabled`         | Enables the backend query flow for Open Search datasource plugin                                                                                                                             |
 | `cloudwatchMetricInsightsCrossAccount` | Enables cross account observability for Cloudwatch Metric Insights query builder                                                                                                             |
 
 ## Experimental feature toggles
