@@ -27,7 +27,7 @@ interface ContactPointProps {
 }
 
 export const ContactPoint = ({ disabled = false, contactPoint }: ContactPointProps) => {
-  const { name, id, grafana_managed_receiver_configs: receivers } = contactPoint;
+  const { grafana_managed_receiver_configs: receivers } = contactPoint;
   const styles = useStyles2(getStyles);
   const { selectedAlertmanager } = useAlertmanager();
   const handleDelete = useDeleteContactPoint({ alertmanager: selectedAlertmanager! });
@@ -42,10 +42,10 @@ export const ContactPoint = ({ disabled = false, contactPoint }: ContactPointPro
         <ContactPointHeader
           contactPoint={contactPoint}
           disabled={disabled}
-          onDelete={() =>
+          onDelete={(contactPointToDelete) =>
             showDeleteModal({
-              name: id || name,
-              resourceVersion: contactPoint.metadata?.resourceVersion,
+              name: contactPointToDelete.id || contactPointToDelete.name,
+              resourceVersion: contactPointToDelete.metadata?.resourceVersion,
             })
           }
         />
