@@ -1,6 +1,5 @@
 import { AppEvents, textUtil } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, getTemplateSrv } from '@grafana/runtime';
-import config from 'app/core/config';
 import { appEvents } from 'app/core/core';
 import { createAbsoluteUrl, RelativeUrl } from 'app/features/alerting/unified/utils/url';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -10,8 +9,6 @@ import { HttpRequestMethod } from '../../panelcfg.gen';
 import { APIEditorConfig } from './APIEditor';
 
 type IsLoadingCallback = (loading: boolean) => void;
-
-const allowedAPIEndpointPattern = 'api/plugins';
 
 export const callApi = (api: APIEditorConfig, updateLoadingStateCallback?: IsLoadingCallback) => {
   if (!api.endpoint) {
