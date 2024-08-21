@@ -103,13 +103,13 @@ require (
 	go.opentelemetry.io/otel/exporters/jaeger v1.10.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/sdk v1.27.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/trace v1.27.0 // @grafana/backend-platform
-	golang.org/x/crypto v0.23.0 // @grafana/backend-platform
+	golang.org/x/crypto v0.24.0 // @grafana/backend-platform
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb // @grafana/alerting-squad-backend
-	golang.org/x/net v0.25.0 // @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/net v0.26.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.20.0 // @grafana/grafana-authnz-team
 	golang.org/x/sync v0.7.0 // @grafana/alerting-squad-backend
 	golang.org/x/time v0.5.0 // @grafana/backend-platform
-	golang.org/x/tools v0.18.0 // @grafana/grafana-as-code
+	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.12.0 // @grafana/observability-metrics
 	google.golang.org/api v0.169.0 // @grafana/backend-platform
 	google.golang.org/grpc v1.64.0 // @grafana/plugins-platform-backend
@@ -125,7 +125,7 @@ require (
 )
 
 require (
-	github.com/Azure/azure-sdk-for-go/sdk/internal v1.5.2 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/internal v1.8.0 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
@@ -210,15 +210,15 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.11.0 // @grafana/alerting-squad-backend
 	go.uber.org/goleak v1.3.0 // indirect
-	golang.org/x/sys v0.20.0 // indirect
-	golang.org/x/text v0.15.0 // @grafana/backend-platform
+	golang.org/x/sys v0.21.0 // indirect
+	golang.org/x/text v0.16.0 // @grafana/backend-platform
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de // indirect; @grafana/backend-platform
 )
 
 require (
 	cloud.google.com/go/kms v1.15.7 // @grafana/backend-platform
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.5.1 // @grafana/backend-platform
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.7.0 // @grafana/backend-platform
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys v0.9.0 // @grafana/backend-platform
 	github.com/Azure/azure-storage-blob-go v0.15.0 // @grafana/backend-platform
 	github.com/Azure/go-autorest/autorest/adal v0.9.23 // @grafana/backend-platform
@@ -251,7 +251,7 @@ require (
 	github.com/grafana/tempo v1.5.1-0.20230524121406-1dc1bfe7085b // @grafana/observability-traces-and-profiling
 	github.com/microsoft/go-mssqldb v1.6.1-0.20240214161942-b65008136246 // @grafana/grafana-bi-squad
 	go.opentelemetry.io/contrib/samplers/jaegerremote v0.18.0 // @grafana/backend-platform
-	golang.org/x/mod v0.15.0 // indirect; @grafana/backend-platform
+	golang.org/x/mod v0.17.0 // indirect; @grafana/backend-platform
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // @grafana/partner-datasources
 )
 
@@ -347,7 +347,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.27.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
-	golang.org/x/term v0.20.0 // indirect
+	golang.org/x/term v0.21.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240520151616-dc85e6b867a5 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240515191416-fc5f0ca64291 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
@@ -373,9 +373,9 @@ require (
 require (
 	cloud.google.com/go/iam v1.1.6 // indirect
 	filippo.io/age v1.1.1 // @grafana/grafana-authnz-team
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.10.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.11.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/internal v0.7.0 // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.1 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.2 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.2 // @grafana/backend-platform
 	github.com/ProtonMail/go-crypto v0.0.0-20230828082145-3c4c8a2d2371 // @grafana/plugins-platform-backend
 	github.com/RoaringBitmap/roaring v0.9.4 // indirect
