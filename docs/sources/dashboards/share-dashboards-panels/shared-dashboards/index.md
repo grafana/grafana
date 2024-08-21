@@ -1,7 +1,6 @@
 ---
 aliases:
-  - ../features/dashboard/dashboards/
-  - dashboard-manage/
+  - ../dashboard-public/ # /docs/grafana/latest/dashboards/dashboard-public/
 labels:
   products:
     - cloud
