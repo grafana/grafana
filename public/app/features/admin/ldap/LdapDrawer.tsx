@@ -8,10 +8,14 @@ import {
   Divider,
   Drawer,
   Field,
+  Icon,
   Input,
   Label,
+  Stack,
   Switch,
   Text,
+  TextLink,
+  Tooltip,
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { LdapPayload } from 'app/types';
@@ -57,6 +61,9 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
   const groupMappingsLabel = <Label className={styles.sectionLabel} description={t('ldap-drawer.group-mapping-section.description', 'Map LDAP groups to Grafana org roles')}>
     <Trans i18nKey="ldap-drawer.group-mapping-section.label">Group mapping</Trans>
   </Label>
+
+  const useSslDescriptionUrl = <TextLink href='https://go.dev/src/crypto/tls/cipher_suites.go' external>https://go.dev/src/crypto/tls/cipher_suites.go</TextLink>;
+  const useSslDescription = <Trans i18nKey='ldap-drawer.extra-security-section.use-ssl.tooltip'>For a complete list of supported ciphers and TLS versions, refer to: {(useSslDescriptionUrl)}</Trans>;
 
   return (
     <Drawer title={t('ldap-drawer.title', 'Advanced Settings')} onClose={onClose}>
@@ -209,7 +216,6 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
         label={t('ldap-drawer.extra-security-section.label', 'Extra security measures')}
         isOpen={true}
       >
-        {/* TODO:  add tooltip */}
         <Field
           htmlFor="use-ssl"
           label={t('ldap-drawer.extra-security-section.use-ssl.label', 'Use SSL')}
@@ -218,15 +224,19 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
             'Set to true if LDAP server should use an encrypted TLS connection (either with STARTTLS or LDAPS)'
           )}
         >
-          <Switch
-            id="use-ssl"
-            {...register('settings.config.servers.0.use_ssl')}
-          />
+          <Stack>
+            <Switch
+              id="use-ssl"
+              {...register('settings.config.servers.0.use_ssl')}
+            />
+            <Tooltip content={useSslDescription} interactive>
+              <Icon name="info-circle" />
+            </Tooltip>
+          </Stack>
         </Field>
         {watch('settings.config.servers.0.use_ssl') && (
           <>
             <Field
-              htmlFor="start-tls"
               label={t('ldap-drawer.extra-security-section.start-tls.label', 'Start TLS')}
               description={t(
                 'ldap-drawer.extra-security-section.start-tls.description',
@@ -254,7 +264,6 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
               />
             </Field> */}
             <Field
-              htmlFor="tls-ciphers"
               label={t('ldap-drawer.extra-security-section.tls-ciphers.label', 'TLS ciphers')}
               description={t(
                 'ldap-drawer.extra-security-section.tls-ciphers.description',
