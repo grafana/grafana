@@ -193,6 +193,20 @@ The Catchpoint data source plugin allows you to query and visualize `Tests`, `RU
 
 {{< video-embed src="/media/docs/plugins/Catchpoint.mp4" >}}
 
+### Yugabyte data source for Grafana
+
+<!-- #grafana-oss-big-tent -->
+
+_Available in public preview in all editions of Grafana_
+
+We are excited to announce the release of a new data source for Grafana: **Yugabyte**. This addition extends Grafana's capabilities, enabling seamless integration with YugabyteDB.
+
+You can find out more about the data source in the [Yugabyte data source documentation](https://grafana.com/docs/plugins/grafana-yugabyte-datasource/latest/).
+
+The datasource has some known limitations: ad-hoc filters and TLS/network customization are not yet supported. Improvements and additional supported features are planned for future updates.
+
+{{< figure src="/media/docs/yugabyte/yugabyte_explore_builder.png" alt="Yugabyte query editor" >}}
+
 ## Authentication and authorization
 
 ### Map org-specific user roles from your OAuth provider
