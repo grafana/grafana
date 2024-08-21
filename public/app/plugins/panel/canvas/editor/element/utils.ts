@@ -19,14 +19,6 @@ export const callApi = (api: APIEditorConfig, updateLoadingStateCallback?: IsLoa
     return;
   }
 
-  const endpoint = interpolateVariables(getEndpoint(api.endpoint));
-
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  if (!isRequestUrlAllowed(api.method as HttpRequestMethod, endpoint)) {
-    appEvents.emit(AppEvents.alertError, ['Cannot call API at Grafana origin.']);
-    updateLoadingStateCallback && updateLoadingStateCallback(false);
-    return;
-  }
   const request = getRequest(api);
 
   getBackendSrv()
@@ -78,7 +70,6 @@ export const getRequest = (api: APIEditorConfig) => {
   if (api.method === HttpRequestMethod.POST) {
     requestHeaders.push(['Content-Type', api.contentType!]);
   }
-
   request.headers = requestHeaders;
 
   return request;
@@ -102,23 +93,4 @@ const getEndpoint = (endpoint: string) => {
   }
 
   return endpoint;
-};
-
-const isRequestUrlAllowed = (method: HttpRequestMethod, requestEndpoint: string) => {
-  const allowedMethods = [HttpRequestMethod.POST, HttpRequestMethod.PUT];
-  const allowedAPIRegex = new RegExp(allowedAPIEndpointPattern);
-
-  if (allowedMethods.includes(method) && config.actions.allowPostURL !== '') {
-    const allowedRegexFromConfig = new RegExp(config.actions.allowPostURL!);
-    return allowedRegexFromConfig.test(requestEndpoint) && allowedAPIRegex.test(requestEndpoint);
-  }
-
-  if (method === HttpRequestMethod.GET) {
-    return true;
-  }
-
-  const requestURL = new URL(requestEndpoint);
-  const grafanaURL = new URL(window.location.origin);
-
-  return requestURL.origin === grafanaURL.origin;
 };
