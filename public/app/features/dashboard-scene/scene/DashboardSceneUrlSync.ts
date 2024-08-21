@@ -182,14 +182,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     }
 
     if (Object.keys(update).length > 0) {
-      if (update.viewPanelScene) {
-        this._scene.rememberScrollPos();
-      }
-
-      // if (!update.viewPanelScene && this._scene.state.viewPanelScene) {
-      //   this._scene.restoreScrollPos();
-      // }
-
       this._scene.setState(update);
     }
   }

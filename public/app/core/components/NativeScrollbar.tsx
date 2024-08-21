@@ -32,12 +32,6 @@ export default function NativeScrollbar({ children, onSetScrollRef, divId }: Pro
     }
   }, [ref, onSetScrollRef]);
 
-  // useEffect(() => {
-  //   if (!config.featureToggles.bodyScrolling && ref.current && scrollTop != null) {
-  //     ref.current?.scrollTo(0, scrollTop);
-  //   }
-  // }, [scrollTop]);
-
   return config.featureToggles.bodyScrolling ? (
     children
   ) : (
