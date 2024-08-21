@@ -56,6 +56,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             baseFilters: v.baseFilters ?? [],
             defaultKeys: v.defaultKeys,
             useQueriesAsFilterForOptions: true,
+            layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
           });
         }
         // for other variable types we are using the SnapshotVariable
@@ -133,6 +134,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       baseFilters: variable.baseFilters ?? [],
       defaultKeys: variable.defaultKeys,
       useQueriesAsFilterForOptions: true,
+      layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
     });
   }
   if (variable.type === 'custom') {
