@@ -91,15 +91,19 @@ To create a query using autocomplete, follow these steps:
 
 ## View query results
 
-Query results for both the editor and the builder are returned in a table. Selecting the Trace ID or Span ID provides more detailed information.
+Query results for both the editor and the builder return in a table.
+You can interact with the data listed to view more details.
 
-Selecting the trace ID from the returned results opens a trace diagram. Selecting a span from the returned results opens a trace diagram and reveals the relevant span in the trace diagram (the highlighted blue line).
+Selecting the trace ID from the returned results opens a trace diagram.
+Selecting a span from the returned results opens a trace diagram and reveals the relevant span in the trace diagram.
 
-In the trace diagram, the bold text on the left side of each span indicates the service name, for example `mythical-requester: requester`, and it is hidden when subsequent spans have the same service name (nested spans).
-Each service has a color assigned to it, which is visible to the left of the name and timeline in the graph.
-Spans with the same color belong to the same service. The grey text to the right of the service name indicates the span name.
+In the trace diagram, the bold text on the left side of each span indicates the service name, for example `otel-demo: HTTP POST`.
+It's hidden when subsequent spans have the same service name (nested spans).
+Each service has a color assigned to it, which is visible as a highlight and underline and timeline in the graph.
+Spans with the same color belong to the same service.
+The grey text to the right of the service name indicates the span name.
 
-![Query editor showing span results](/media/docs/tempo/traceql/screenshot-traceql-query-editor-results-v10.png)
+![Query editor showing span results](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-ed-example-v11-a.png)
 
 ### Focus on traces or spans
 
@@ -108,9 +112,9 @@ Under **Options**, you can choose to display the table as **Traces** or **Spans*
 When the Table Type option is set to Spans, the traces and span sets are flattened into a list of spans.
 The trace service and trace name are added to the row of each span to add context.
 
-Using the **Spans** options makes it easier access to the spans to apply transformations and plot them in dashboards.
+Using the **Spans** option makes it easier access the spans to apply transformations and plot them in dashboards.
 
-### Streaming results
+### Stream results
 
 The Tempo data source supports streaming responses to TraceQL queries so you can see partial query results as they come in without waiting for the whole query to finish.
 
