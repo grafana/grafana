@@ -62,6 +62,7 @@ It’s also useful when you have location data that’s changing in real-time an
 {{< figure src="/static/img/docs/geomap-panel/geomap-example-8-1-0.png" max-width="1200px" caption="Geomap panel" >}}
 
 You can use a geomap visualization if you need to:
+
 - Track the position of food deliveries, planes, or freight services
 - Show the locations of the data centers or corporate devices
 - Map hiking route
@@ -81,6 +82,7 @@ The following video provides beginner steps for creating geomap visualizations. 
 To create a geomap visualization you need data sets containing data fields with location information.
 
 The supported location formats are:
+
 - Latitude and longitude
 - Geohash
 - Lookup codes: country, US states, or airports
@@ -93,29 +95,30 @@ If you plan to use latitude and longitude coordinates, the dataset provided must
 
 #### Example
 
-| Name           | latitude | longitude | value |
-| -------------- | -------- | --------- | ----- |
-| Disneyland     | 33.8121  | -117.9190 | 4     |
-| DisneyWorld    | 28.3772  | -81.5707  | 10    |
-| EuroDisney     | 48.867374| 2.784018  | 3     |
-| Tokyo Disney   | 35.6329  | 139.8804  | 70    |
-| Shanghai Disney| 31.1414  | 121.6682  | 1     |
+| Name            | latitude  | longitude | value |
+| --------------- | --------- | --------- | ----- |
+| Disneyland      | 33.8121   | -117.9190 | 4     |
+| DisneyWorld     | 28.3772   | -81.5707  | 10    |
+| EuroDisney      | 48.867374 | 2.784018  | 3     |
+| Tokyo Disney    | 35.6329   | 139.8804  | 70    |
+| Shanghai Disney | 31.1414   | 121.6682  | 1     |
 
 If your latitude and longitude fields are named differently, you can select them as indicated in the [Location mode](#location-mode) section.
 
 ### GEOHASH
+
 If your location data comes in the geohash format, the visualization requires at least one field (column) containing location data in this format.
 
 If the field is named geohash, the visualization automatically detects the location and displays the elements. The order of the field doesnt matter and the data set can have multiple other numeric, text, and time fields.
 
 #### Example
 
-| Name     | geohash      | trips |
-| -------- | ------------ | ----- |
-| Cancun   | d5f21        | 8     |
-| Honolulu | 87z9ps       | 0     |
-| Palm Cove| rhzxudynb014 | 1     |
-| Mykonos  | swdj02ey9gyx | 3     |
+| Name      | geohash      | trips |
+| --------- | ------------ | ----- |
+| Cancun    | d5f21        | 8     |
+| Honolulu  | 87z9ps       | 0     |
+| Palm Cove | rhzxudynb014 | 1     |
+| Mykonos   | swdj02ey9gyx | 3     |
 
 If your field containing geohash location data is not named as above, you can configure the panel to use geohash and indicate the field to use as explained in the [Location mode](#location-mode) section.
 
@@ -125,7 +128,7 @@ The geomap visualization can identify locations based on country, airport, or US
 
 For this configuration the data set must contain at least one field (column) containing the location code.
 
-If the field is named lookup, the visualization automatically identifies it and displays points based on country codes. 
+If the field is named lookup, the visualization automatically identifies it and displays points based on country codes.
 
 #### Example
 
