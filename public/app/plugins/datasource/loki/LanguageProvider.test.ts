@@ -268,6 +268,24 @@ describe('Language completion provider', () => {
         end: expect.any(Number),
       });
     });
+
+    it('should use a single promise to resolve values', async () => {
+      const datasource = setup({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
+      const provider = await getLanguageProvider(datasource);
+      const requestSpy = jest.spyOn(provider, 'request');
+      const promise1 = provider.fetchLabelValues('testkey');
+      const promise2 = provider.fetchLabelValues('testkey');
+      const promise3 = provider.fetchLabelValues('testkeyNOPE');
+      expect(requestSpy).toHaveBeenCalledTimes(2);
+
+      const values1 = await promise1;
+      const values2 = await promise2;
+      const values3 = await promise3;
+
+      expect(values1).toStrictEqual(values2);
+      expect(values2).not.toStrictEqual(values3);
+      expect(requestSpy).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('fetchLabels', () => {
