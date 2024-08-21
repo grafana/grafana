@@ -286,3 +286,25 @@ func (i identified) GetUID() string {
 func (s ReceiverAccess[T]) AuthorizeDelete(ctx context.Context, user identity.Requester, uid string) error {
 	return s.delete.Authorize(ctx, user, identified{uid: uid})
 }
+
+// Preconditions
+
+// AuthorizeReadPreconditions checks if user has access to read some redacted receivers. Returns an error if user does not have access.
+func (s ReceiverAccess[T]) AuthorizeReadPreconditions(ctx context.Context, user identity.Requester) error {
+	return s.read.AuthorizePreConditions(ctx, user)
+}
+
+// AuthorizeCreatePreconditions checks if user has access to create some receivers. Returns an error if user does not have access.
+func (s ReceiverAccess[T]) AuthorizeCreatePreconditions(ctx context.Context, user identity.Requester) error {
+	return s.create.AuthorizePreConditions(ctx, user)
+}
+
+// AuthorizeUpdatePreconditions checks if user has access to update some receivers. Returns an error if user does not have access.
+func (s ReceiverAccess[T]) AuthorizeUpdatePreconditions(ctx context.Context, user identity.Requester) error {
+	return s.update.AuthorizePreConditions(ctx, user)
+}
+
+// AuthorizeDeletePreconditions checks if user has access to delete some receivers. Returns an error if user does not have access.
+func (s ReceiverAccess[T]) AuthorizeDeletePreconditions(ctx context.Context, user identity.Requester) error {
+	return s.delete.AuthorizePreConditions(ctx, user)
+}

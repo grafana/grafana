@@ -6,10 +6,19 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-func Authorize(ctx context.Context, ac accesscontrol.AccessControl, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+// AccessControlService provides access control for receivers.
+type AccessControlService interface {
+	AuthorizeReadPreconditions(ctx context.Context, user identity.Requester) error
+	AuthorizeCreatePreconditions(ctx context.Context, user identity.Requester) error
+	AuthorizeUpdatePreconditions(ctx context.Context, user identity.Requester) error
+	AuthorizeDeletePreconditions(ctx context.Context, user identity.Requester) error
+}
+
+type authorizeFn func(context.Context, identity.Requester) error
+
+func Authorize(ctx context.Context, ac AccessControlService, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 	if attr.GetResource() != resourceInfo.GroupResource().Resource {
 		return authorizer.DecisionNoOpinion, "", nil
 	}
@@ -18,41 +27,24 @@ func Authorize(ctx context.Context, ac accesscontrol.AccessControl, attr authori
 		return authorizer.DecisionDeny, "valid user is required", err
 	}
 
-	var action accesscontrol.Evaluator
+	var authorize authorizeFn
 	switch attr.GetVerb() {
 	case "create":
-		action = accesscontrol.EvalAny(
-			accesscontrol.EvalPermission(accesscontrol.ActionAlertingNotificationsWrite),
-			accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversCreate),
-		)
+		authorize = ac.AuthorizeCreatePreconditions
 	case "patch":
 		fallthrough
 	case "update":
-		action = accesscontrol.EvalAny(
-			accesscontrol.EvalPermission(accesscontrol.ActionAlertingNotificationsWrite),
-			accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversUpdate),
-		)
+		authorize = ac.AuthorizeUpdatePreconditions
 	case "deletecollection":
 		fallthrough
 	case "delete":
-		action = accesscontrol.EvalAny(
-			accesscontrol.EvalPermission(accesscontrol.ActionAlertingNotificationsWrite),
-			accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversDelete),
-		)
+		authorize = ac.AuthorizeDeletePreconditions
+	default:
+		authorize = ac.AuthorizeReadPreconditions
 	}
 
-	eval := accesscontrol.EvalAny(
-		accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversRead),
-		accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversReadSecrets),
-		accesscontrol.EvalPermission(accesscontrol.ActionAlertingNotificationsRead),
-	)
-	if action != nil {
-		eval = accesscontrol.EvalAll(eval, action)
+	if err := authorize(ctx, user); err != nil {
+		return authorizer.DecisionDeny, "", err
 	}
-
-	ok, err := ac.Evaluate(ctx, user, eval)
-	if ok {
-		return authorizer.DecisionAllow, "", nil
-	}
-	return authorizer.DecisionDeny, "", err
+	return authorizer.DecisionAllow, "", nil
 }

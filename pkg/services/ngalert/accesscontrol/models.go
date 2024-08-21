@@ -53,7 +53,10 @@ type actionAccess[T any] struct {
 // Filter filters the given list of resources based on access control permissions of the user.
 // This method is preferred when many resources need to be checked.
 func (s actionAccess[T]) Filter(ctx context.Context, user identity.Requester, resources ...T) ([]T, error) {
-	canAll, err := s.authorizePreConditions(ctx, user)
+	if err := s.AuthorizePreConditions(ctx, user); err != nil {
+		return nil, err
+	}
+	canAll, err := s.HasAccess(ctx, user, s.authorizeAll)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +74,10 @@ func (s actionAccess[T]) Filter(ctx context.Context, user identity.Requester, re
 
 // Authorize checks if user has access to a resource. Returns an error if user does not have access.
 func (s actionAccess[T]) Authorize(ctx context.Context, user identity.Requester, resource T) error {
-	canAll, err := s.authorizePreConditions(ctx, user)
+	if err := s.AuthorizePreConditions(ctx, user); err != nil {
+		return err
+	}
+	canAll, err := s.HasAccess(ctx, user, s.authorizeAll)
 	if canAll || err != nil { // Return early if user can either access all or there is an error.
 		return err
 	}
@@ -81,7 +87,10 @@ func (s actionAccess[T]) Authorize(ctx context.Context, user identity.Requester,
 
 // Has checks if user has access to a resource. Returns false if user does not have access.
 func (s actionAccess[T]) Has(ctx context.Context, user identity.Requester, resource T) (bool, error) {
-	canAll, err := s.authorizePreConditions(ctx, user)
+	if err := s.AuthorizePreConditions(ctx, user); err != nil {
+		return false, err
+	}
+	canAll, err := s.HasAccess(ctx, user, s.authorizeAll)
 	if canAll || err != nil { // Return early if user can either access all or there is an error.
 		return canAll, err
 	}
@@ -89,22 +98,16 @@ func (s actionAccess[T]) Has(ctx context.Context, user identity.Requester, resou
 	return s.has(ctx, user, resource)
 }
 
-// authorizePreConditions checks necessary preconditions for resources. Returns true if user has access for all
-// resources. Returns error if user does not have access to on any resources.
-func (s actionAccess[T]) authorizePreConditions(ctx context.Context, user identity.Requester) (bool, error) {
-	canAll, err := s.HasAccess(ctx, user, s.authorizeAll)
-	if canAll || err != nil { // Return early if user can either access all or there is an error.
-		return canAll, err
-	}
-
+// AuthorizePreConditions checks necessary preconditions for resources. Returns error if user does not have access to any resources.
+func (s actionAccess[T]) AuthorizePreConditions(ctx context.Context, user identity.Requester) error {
 	can, err := s.HasAccess(ctx, user, s.authorizeSome)
 	if err != nil {
-		return false, err
+		return err
 	}
 	if !can { // User does not have any resource permissions at all.
-		return false, NewAuthorizationErrorWithPermissions(fmt.Sprintf("%s any %s", s.action, s.resource), s.authorizeSome)
+		return NewAuthorizationErrorWithPermissions(fmt.Sprintf("%s any %s", s.action, s.resource), s.authorizeSome)
 	}
-	return false, nil
+	return nil
 }
 
 // authorize checks if user has access to a specific resource given precondition checks have already passed. Returns an error if user does not have access.

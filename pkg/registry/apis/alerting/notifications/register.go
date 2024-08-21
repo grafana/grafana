@@ -24,6 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
+	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -31,10 +33,11 @@ var _ builder.APIGroupBuilder = (*NotificationsAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type NotificationsAPIBuilder struct {
-	authz      accesscontrol.AccessControl
-	ng         *ngalert.AlertNG
-	namespacer request.NamespaceMapper
-	gv         schema.GroupVersion
+	authz        accesscontrol.AccessControl
+	receiverAuth receiver.AccessControlService
+	ng           *ngalert.AlertNG
+	namespacer   request.NamespaceMapper
+	gv           schema.GroupVersion
 }
 
 func RegisterAPIService(
@@ -47,10 +50,11 @@ func RegisterAPIService(
 		return nil
 	}
 	builder := &NotificationsAPIBuilder{
-		ng:         ng,
-		namespacer: request.GetNamespaceMapper(cfg),
-		gv:         notificationsModels.SchemeGroupVersion,
-		authz:      ng.Api.AccessControl,
+		ng:           ng,
+		namespacer:   request.GetNamespaceMapper(cfg),
+		gv:           notificationsModels.SchemeGroupVersion,
+		authz:        ng.Api.AccessControl,
+		receiverAuth: ac.NewReceiverAccess[*ngmodels.Receiver](ng.Api.AccessControl, false),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -128,7 +132,7 @@ func (t *NotificationsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			case notificationsModels.TimeIntervalResourceInfo.GroupResource().Resource:
 				return timeInterval.Authorize(ctx, t.authz, a)
 			case notificationsModels.ReceiverResourceInfo.GroupResource().Resource:
-				return receiver.Authorize(ctx, t.authz, a)
+				return receiver.Authorize(ctx, t.receiverAuth, a)
 			}
 			return authorizer.DecisionNoOpinion, "", nil
 		})
