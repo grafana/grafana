@@ -240,7 +240,7 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 		}
 	}()
 
-	return s.parseResponse(ctx, q, res, enablePrometheusDataplaneFlag)
+	return s.parseResponse(ctx, q, res)
 }
 
 func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
@@ -266,7 +266,7 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 		}
 	}()
 
-	return s.parseResponse(ctx, q, res, enablePrometheusDataplaneFlag)
+	return s.parseResponse(ctx, q, res)
 }
 
 func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
@@ -283,7 +283,7 @@ func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *mode
 			s.log.Warn("Failed to close response body", "error", err)
 		}
 	}()
-	return s.parseResponse(ctx, q, res, enablePrometheusDataplaneFlag)
+	return s.parseResponse(ctx, q, res)
 }
 
 func addDataResponse(res *backend.DataResponse, dr *backend.DataResponse) {
