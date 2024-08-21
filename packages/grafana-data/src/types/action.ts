@@ -36,7 +36,7 @@ export enum HttpRequestMethod {
   PUT = 'PUT',
 }
 
-export const httpMethodOptions = [
+export const httpMethodOptions: SelectableValue[] = [
   { label: HttpRequestMethod.GET, value: HttpRequestMethod.GET },
   { label: HttpRequestMethod.POST, value: HttpRequestMethod.POST },
   { label: HttpRequestMethod.PUT, value: HttpRequestMethod.PUT },
@@ -56,11 +56,11 @@ export const defaultActionConfig: Action = {
   title: '',
   options: {
     url: '',
-    method: HttpRequestMethod.GET,
+    method: HttpRequestMethod.POST,
     body: '{}',
     contentType: 'application/json',
     queryParams: [],
-    headers: [],
+    headers: [['Content-Type', 'application/json']],
   },
 };
 

@@ -77,12 +77,20 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
       options: {
         ...value.options,
         contentType: contentType?.value,
+        headers: addContentTypeHeader(value.options.headers ?? [], contentType.value!),
       },
     });
   };
 
   const formatCreateLabel = (input: string) => {
     return input;
+  };
+
+  const addContentTypeHeader = (headers: Array<[string, string]>, contentType: string) => {
+    const hewHeaders = headers.filter(([key, value]) => key !== 'Content-Type');
+    hewHeaders.push(['Content-Type', contentType]);
+
+    return hewHeaders;
   };
 
   const onQueryParamsChange = (queryParams: Array<[string, string]>) => {
