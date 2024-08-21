@@ -7,28 +7,23 @@ export type PluginExtensionConfigs<T> = {
   configs: T[];
 };
 
-export type RegistryItem<T> = {
-  pluginId: string;
-  config: T;
-};
-
-export type RegistryType<T> = Record<string | symbol, RegistryItem<T>>;
+export type RegistryType<T> = Record<string | symbol, T>;
 
 type ConstructorOptions<T> = {
   initialState: RegistryType<T>;
 };
 
 // This is the base-class used by the separate specific registries.
-export abstract class Registry<T> {
-  private resultSubject: Subject<PluginExtensionConfigs<T>>;
-  private registrySubject: ReplaySubject<RegistryType<T>>;
+export abstract class Registry<TRegistryValue, TMapType> {
+  private resultSubject: Subject<PluginExtensionConfigs<TMapType>>;
+  private registrySubject: ReplaySubject<RegistryType<TRegistryValue>>;
 
-  constructor(options: ConstructorOptions<T>) {
+  constructor(options: ConstructorOptions<TRegistryValue>) {
     const { initialState } = options;
-    this.resultSubject = new Subject<PluginExtensionConfigs<T>>();
+    this.resultSubject = new Subject<PluginExtensionConfigs<TMapType>>();
     // This is the subject that we expose.
     // (It will buffer the last value on the stream - the registry - and emit it to new subscribers immediately.)
-    this.registrySubject = new ReplaySubject<RegistryType<T>>(1);
+    this.registrySubject = new ReplaySubject<RegistryType<TRegistryValue>>(1);
 
     this.resultSubject
       .pipe(
@@ -41,17 +36,20 @@ export abstract class Registry<T> {
       .subscribe(this.registrySubject);
   }
 
-  abstract mapToRegistry(registry: RegistryType<T>, item: PluginExtensionConfigs<T>): RegistryType<T>;
+  abstract mapToRegistry(
+    registry: RegistryType<TRegistryValue>,
+    item: PluginExtensionConfigs<TMapType>
+  ): RegistryType<TRegistryValue>;
 
-  register(result: PluginExtensionConfigs<T>): void {
+  register(result: PluginExtensionConfigs<TMapType>): void {
     this.resultSubject.next(result);
   }
 
-  asObservable(): Observable<RegistryType<T>> {
+  asObservable(): Observable<RegistryType<TRegistryValue>> {
     return this.registrySubject.asObservable();
   }
 
-  getState(): Promise<RegistryType<T>> {
+  getState(): Promise<RegistryType<TRegistryValue>> {
     return firstValueFrom(this.asObservable());
   }
 }

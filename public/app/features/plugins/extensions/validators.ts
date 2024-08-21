@@ -41,7 +41,7 @@ export function assertIsReactComponent(component: React.ComponentType) {
 }
 
 export function assertExtensionPointIdIsValid(pluginId: string, extension: PluginExtensionConfig) {
-  if (!isExtensionPointIdValid(pluginId, extension)) {
+  if (!isExtensionPointIdValid(pluginId, extension.extensionPointId)) {
     throw new Error(
       `Invalid extension "${extension.title}". The extensionPointId should start with either "grafana/", "plugins/" or "capabilities/${pluginId}" (currently: "${extension.extensionPointId}"). Skipping the extension.`
     );
@@ -76,12 +76,12 @@ export function isLinkPathValid(pluginId: string, path: string) {
   return Boolean(typeof path === 'string' && path.length > 0 && path.startsWith(`/a/${pluginId}/`));
 }
 
-export function isExtensionPointIdValid(pluginId: string, extension: PluginExtensionConfig) {
-  return Boolean(
-    extension.extensionPointId?.startsWith('grafana/') ||
-      extension.extensionPointId?.startsWith('plugins/') ||
-      extension.extensionPointId?.startsWith(`capabilities/${pluginId}/`)
-  );
+export function isExtensionPointIdValid(pluginId: string, extensionPointId: string) {
+  return Boolean(extensionPointId.startsWith('grafana/') || extensionPointId?.startsWith('plugins/'));
+}
+
+export function extensionPointEndsWithVersion(extensionPointId: string) {
+  return extensionPointId.match(/.*\/v\d+$/);
 }
 
 export function isConfigureFnValid(extension: PluginExtensionLinkConfig) {

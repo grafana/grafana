@@ -95,6 +95,16 @@ export type PluginExtensionComponentConfig<Props = {}> = {
   extensionPointId: string;
 };
 
+export type PluginAddedComponentConfig<Props = {}> = {
+  targets: string | string[];
+  title: string;
+  description: string;
+
+  // The React component that will be rendered as the extension
+  // (This component receives contextual information as props when it is rendered. You can just return `null` from the component to hide it.)
+  component: React.ComponentType<Props>;
+};
+
 export type PluginExposedComponentConfig<Props = {}> = {
   /**
    * The unique identifier of the component
