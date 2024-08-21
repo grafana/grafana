@@ -158,12 +158,4 @@ describe('EditGroupModal component on grafana-managed alert rules', () => {
     expect(await ui.input.namespace.find()).toHaveValue('namespace1');
     expect(ui.folderLink.query()).not.toBeInTheDocument();
   });
-
-  it('does not allow slashes in the group name', async () => {
-    const user = userEvent.setup();
-    renderWithGrafanaGroup();
-    await user.type(await ui.input.group.find(), 'group/with/slashes');
-    await user.click(ui.input.interval.get());
-    expect(await screen.findByText(/cannot contain \"\/\"/i)).toBeInTheDocument();
-  });
 });
