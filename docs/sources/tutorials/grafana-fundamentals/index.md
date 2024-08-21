@@ -16,7 +16,14 @@ tags:
   - beginner
 title: Grafana fundamentals
 weight: 10
+killercoda:
+  title: Grafana fundamentals
+  description: Learn how to use Grafana to set up a monitoring solution for your application. You will explore metrics and logs, build and annotate dashboards, and set up alerts.
+  backend:
+    imageid: ubuntu
 ---
+
+<!-- INTERACTIVE page intro.md START -->
 
 ## Introduction
 
@@ -42,11 +49,25 @@ Alternatively, you can also watch our Grafana for Beginners series where we disc
 - [Docker Compose](https://docs.docker.com/compose/) (included in Docker for Desktop for macOS and Windows)
 - [Git](https://git-scm.com/)
 
-### KillerCoda sandbox environment (Alternative)
-
-If you would prefer to follow along with this tutorial without needing to set up a local environment, you can use the [KillerCoda sandbox environment](https://killercoda.com/grafana-labs/course/full-stack/tutorial-enviroment).
-
 {{% /class %}}
+
+<!-- INTERACTIVE ignore START -->
+
+{{< admonition type="tip" >}}
+Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting](https://killercoda.com/grafana-labs/course/full-stack/tutorial-enviroment).
+
+It's a fully configured environment with all the dependencies already installed.
+
+![Interactive](/media/docs/grafana/full-stack-ile.png)
+
+Provide feedback, report bugs, and raise issues in the [Grafana Killercoda repository](https://github.com/grafana/killercoda).
+{{< /admonition >}}
+
+<!-- INTERACTIVE ignore END -->
+
+<!-- INTERACTIVE page intro.md END -->
+
+<!-- INTERACTIVE page step1.md START -->
 
 ## Set up the sample application
 
@@ -58,19 +79,19 @@ In this step, you'll set up the sample application, as well as supporting servic
 
 1. Clone the [github.com/grafana/tutorial-environment](https://github.com/grafana/tutorial-environment) repository.
 
-   ```
+   ``` bash
    git clone https://github.com/grafana/tutorial-environment.git
    ```
 
 1. Change to the directory where you cloned this repository:
 
-   ```
+   ``` bash 
    cd tutorial-environment
    ```
 
 1. Make sure Docker is running:
 
-   ```
+   ``` bash
    docker ps
    ```
 
@@ -78,7 +99,7 @@ In this step, you'll set up the sample application, as well as supporting servic
 
 1. Start the sample application:
 
-   ```
+   ``` bash
    docker-compose up -d
    ```
 
@@ -88,13 +109,14 @@ In this step, you'll set up the sample application, as well as supporting servic
 
 1. Ensure all services are up-and-running:
 
-   ```
+   ``` bash
    docker-compose ps
    ```
 
    In the **State** column, it should say `Up` for all services.
 
-1. Browse to the sample application on [localhost:8081](http://localhost:8081).
+1. Browse to the sample application on [http://localhost:8081](http://localhost:8081).
+
 
 ### Grafana News
 
@@ -110,12 +132,16 @@ To add a link:
 
 To vote for a link, click the triangle icon next to the name of the link.
 
+<!-- INTERACTIVE page step1.md END -->
+
+<!-- INTERACTIVE page step2.md START -->
+
 ## Open Grafana
 
 Grafana is an open-source platform for monitoring and observability that lets you visualize and explore the state of your systems.
 
 1. Open a new tab.
-1. Browse to [localhost:3000](http://localhost:3000).
+1. Browse to [http://localhost:3000](http://localhost:3000).
 
 {{< admonition type="note" >}}
 This demo does not require a login page or credentials. However, if you choose to install Grafana locally, you will need to log in and provide credentials. In that case, the default username and password is `admin`.
@@ -124,6 +150,10 @@ This demo does not require a login page or credentials. However, if you choose t
 The first thing you see is the Home dashboard, which helps you get started.
 
 In the top left corner, you can see the menu icon. Clicking it will open the _sidebar_, the main menu for navigating Grafana.
+
+<!-- INTERACTIVE page step2.md END -->
+
+<!-- INTERACTIVE page step3.md START -->
 
 ## Explore your metrics
 
@@ -163,6 +193,10 @@ Grafana Explore is a workflow for troubleshooting and data exploration. In this 
 
 Depending on your use case, you might want to group on other labels. Try grouping by other labels, such as `status_code`, by changing the `by(route)` part of the query to `by(status_code)`.
 
+<!-- INTERACTIVE page step3.md END -->
+
+<!-- INTERACTIVE page step4.md START -->
+
 ## Add a logging data source
 
 Grafana supports log data sources, like [Loki](/oss/loki/). Just like for metrics, you first need to add your data source to Grafana.
@@ -174,6 +208,10 @@ Grafana supports log data sources, like [Loki](/oss/loki/). Just like for metric
 1. Scroll to the bottom of the page and click **Save & Test** to save your changes.
 
 You should see the message "Data source successfully connected." Loki is now available as a data source in Grafana.
+
+<!-- INTERACTIVE page step4.md END -->
+
+<!-- INTERACTIVE page step5.md START -->
 
 ## Explore your logs
 
@@ -209,6 +247,10 @@ Let's generate an error, and analyze it with Explore.
 
 Logs are helpful for understanding what went wrong. Later in this tutorial, you'll see how you can correlate logs with metrics from Prometheus to better understand the context of the error.
 
+<!-- INTERACTIVE page step5.md END -->
+
+<!-- INTERACTIVE page step6.md START -->
+
 ## Build a dashboard
 
 A _dashboard_ gives you an at-a-glance view of your data and lets you track metrics through different visualizations.
@@ -235,6 +277,10 @@ Every panel consists of a _query_ and a _visualization_. The query defines _what
    You should now have a panel added to your dashboard.
 
    {{< figure src="/media/tutorials/grafana-fundamentals-dashboard.png" alt="A panel in a Grafana dashboard" caption="A panel in a Grafana dashboard" >}}
+
+<!-- INTERACTIVE page step6.md END -->
+
+<!-- INTERACTIVE page step7.md START -->
 
 ## Annotate events
 
@@ -286,6 +332,10 @@ Being able to combine data from multiple data sources in one graph allows you to
 
 Annotations also work very well alongside alerts. In the next and final section, we will set up an alert for our app `grafana.news` and then we will trigger it. This will provide a quick intro to our new Alerting platform.
 
+<!-- INTERACTIVE page step7.md END -->
+
+<!-- INTERACTIVE page step8.md START -->
+
 ## Create a Grafana Managed Alert
 
 Alerts allow you to identify problems in your system moments after they occur. By quickly identifying unintended changes in your system, you can minimize disruptions to your services.
@@ -307,6 +357,10 @@ The most basic alert consists of two parts:
 1. An _Alert rule_ - An Alert rule defines one or more _conditions_ that Grafana regularly evaluates. When these evaluations meet the rule's criteria, the alert is triggered.
 
 To begin, let's set up a webhook contact point. Once we have a usable endpoint, we'll write an alert rule and trigger a notification.
+
+<!-- INTERACTIVE page step8.md END -->
+
+<!-- INTERACTIVE page step9.md START -->
 
 ### Create a contact point for Grafana Managed Alerts
 
@@ -331,6 +385,10 @@ Next, let's configure a Contact Point in Grafana's Alerting UI to send notificat
 1. Return to Grafana and click **Save contact point**.
 
 We have now created a dummy webhook endpoint and created a new Alerting Contact Point in Grafana. Now we can create an alert rule and link it to this new channel.
+
+<!-- INTERACTIVE page step9.md END -->
+
+<!-- INTERACTIVE page step10.md START -->
 
 ### Add an Alert Rule to Grafana
 
@@ -405,17 +463,34 @@ Check out our [advanced alerting tutorial](http://grafana.com/tutorials/alerting
 
 {{< /docs/ignore >}}
 
+<!-- INTERACTIVE page step10.md END -->
+
+<!-- INTERACTIVE page finish.md START -->
+
 ## Summary
+
+<!-- INTERACTIVE ignore START -->
 
 In this tutorial you learned about fundamental features of Grafana. To do so, we ran several Docker containers on your local machine. When you are ready to clean up this local tutorial environment, run the following command:
 
 ```
 docker-compose down -v
 ```
+<!-- INTERACTIVE ignore END -->
+
+{{< docs/ignore >}}
+
+In this tutorial you learned about fundamental features of Grafana. 
+
+{{< /docs/ignore >}}
+
+<!-- INTERACTIVE ignore START -->
 
 ### KillerCoda sandbox environment (completed tutorial)
 
 Do you want to see the finished result? Check out our [completed KillerCoda sandbox environment](https://killercoda.com/grafana-labs/course/full-stack/tutorial-enviroment-completed) containing the entire demo with dashboards, checks, and data sources configured.
+
+<!-- INTERACTIVE ignore END -->
 
 ### Learn more
 
@@ -427,3 +502,5 @@ Check out the links below to continue your learning journey with Grafana's LGTM 
 - [Alerting Overview](/docs/grafana/latest/alerting/)
 - [Alert rules](/docs/grafana/latest/alerting/create-alerts/)
 - [Contact points](/docs/grafana/latest/alerting/fundamentals/contact-points/)
+
+<!-- INTERACTIVE page finish.md END -->
