@@ -77,7 +77,11 @@ export function isLinkPathValid(pluginId: string, path: string) {
 }
 
 export function isExtensionPointIdValid(pluginId: string, extensionPointId: string) {
-  return Boolean(extensionPointId.startsWith('grafana/') || extensionPointId?.startsWith('plugins/'));
+  return Boolean(
+    extensionPointId.startsWith('grafana/') ||
+      extensionPointId?.startsWith('plugins/') ||
+      extensionPointId?.startsWith(pluginId)
+  );
 }
 
 export function extensionPointEndsWithVersion(extensionPointId: string) {
