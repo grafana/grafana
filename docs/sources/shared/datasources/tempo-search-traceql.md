@@ -161,7 +161,7 @@ Queries can take a little while to return results. The results appear in a table
 Selecting a Trace ID (2 in the screenshot) displays more detailed information (3 in the screenshot).
 **Span Filters** (4 in the screenshot) provide an additional to refine the query results.
 
-![Query results with numbered secctions](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-results-numbered-v11.png)
+![Query results with numbered sections](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-results-numbered-v11.png)
 
 ### Stream results
 
