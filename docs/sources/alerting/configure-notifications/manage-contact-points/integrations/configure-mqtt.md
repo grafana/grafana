@@ -29,7 +29,7 @@ To configure the MQTT integration for Alerting, complete the following steps.
 1. On the **Contact Points** tab, click **+ Add contact point**.
 1. Enter a descriptive name for the contact point.
 1. From the Integration list, select **MQTT**.
-1. Enter your broker URL in the **Broker URL** field. The URL must start with either `tcp` or `ssl`. For example: `tcp://127.0.0.1:1883`.
+1. Enter your broker URL in the **Broker URL** field. Supports `tcp`, `ssl`, `mqtt`, `mqtts`, `ws`, `wss` schemes. For example: `tcp://127.0.0.1:1883`.
 1. Enter the MQTT topic name in the **Topic** field.
 1. In **Optional MQTT settings**, specify additional settings for the MQTT integration if needed.
 1. Click **Test** to check that your integration works.
