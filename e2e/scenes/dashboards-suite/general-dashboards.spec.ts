@@ -24,9 +24,7 @@ describe('Dashboards', () => {
     e2e.components.Panels.Panel.menuItems('Edit').click();
     e2e.components.NavToolbar.editDashboard.backToDashboardButton().click();
 
-    // And the last panel should still be visible!
-    // TODO: investigate scroll to on navigating back
-    // e2e.components.Panels.Panel.title('Panel #50').should('be.visible');
-    // e2e.components.Panels.Panel.title('Panel #1').should('be.visible');
+    // The last panel should still be visible!
+    e2e.components.Panels.Panel.title('Panel #50').should('be.visible');
   });
 });

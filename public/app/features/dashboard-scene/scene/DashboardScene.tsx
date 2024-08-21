@@ -27,6 +27,7 @@ import {
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
+import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
 import store from 'app/core/store';
@@ -167,6 +168,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    * A reference to the scopes facade
    */
   private _scopesFacade: ScopesFacade | null;
+  /**
+   * Remember scroll position when going into panel edit
+   */
+  private _scrollRef?: ScrollRefElement;
+  private _prevScrollPos?: number;
 
   public constructor(state: Partial<DashboardSceneState>) {
     super({
@@ -924,6 +930,22 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         sceneGridLayout.toggleRow(child);
       }
     });
+  }
+
+  public onSetScrollRef = (scrollElement: ScrollRefElement): void => {
+    this._scrollRef = scrollElement;
+  };
+
+  public rememberScrollPos() {
+    this._prevScrollPos = this._scrollRef?.scrollTop;
+  }
+
+  public restoreScrollPos() {
+    if (this._prevScrollPos !== undefined) {
+      setTimeout(() => {
+        this._scrollRef?.scrollTo(0, this._prevScrollPos!);
+      }, 50);
+    }
   }
 }
 

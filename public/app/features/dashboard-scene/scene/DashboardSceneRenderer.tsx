@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
@@ -16,7 +17,7 @@ import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, editview, editPanel, isEmpty, meta } = model.useState();
+  const { controls, overlay, editview, editPanel, isEmpty, meta, viewPanelScene } = model.useState();
   const headerHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles, headerHeight);
   const location = useLocation();
@@ -25,6 +26,21 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const bodyToRender = model.getBodyToRender();
   const navModel = getNavModel(navIndex, 'dashboards/browse');
   const hasControls = controls?.hasControls();
+  const isSettingsOpen = editview !== undefined;
+
+  // Remember scroll pos when going into view panel, edit panel or settings
+  useMemo(() => {
+    if (viewPanelScene || isSettingsOpen || editPanel) {
+      model.rememberScrollPos();
+    }
+  }, [isSettingsOpen, editPanel, viewPanelScene, model]);
+
+  // Restore scroll pos when coming back
+  useEffect(() => {
+    if (!viewPanelScene && !isSettingsOpen && !editPanel) {
+      model.restoreScrollPos();
+    }
+  }, [isSettingsOpen, editPanel, viewPanelScene, model]);
 
   if (editview) {
     return (
@@ -54,12 +70,11 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   } else if (isEmpty) {
     body = [emptyState, withPanels];
   }
-
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
       {editPanel && <editPanel.Component model={editPanel} />}
       {!editPanel && (
-        <NativeScrollbar divId="page-scrollbar" autoHeightMin={'100%'}>
+        <NativeScrollbar divId="page-scrollbar" onSetScrollRef={model.onSetScrollRef}>
           <div className={cx(styles.pageContainer, hasControls && styles.pageContainerWithControls)}>
             <NavToolbarActions dashboard={model} />
             {controls && (

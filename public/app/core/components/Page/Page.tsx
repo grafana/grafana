@@ -27,8 +27,7 @@ export const Page: PageType = ({
   className,
   info,
   layout = PageLayoutType.Standard,
-  scrollTop,
-  scrollRef,
+  onSetScrollRef,
   ...otherProps
 }) => {
   const styles = useStyles2(getStyles);
@@ -57,9 +56,7 @@ export const Page: PageType = ({
         <NativeScrollbar
           // This id is used by the image renderer to scroll through the dashboard
           divId="page-scrollbar"
-          autoHeightMin={'100%'}
-          scrollTop={scrollTop}
-          scrollRefCallback={scrollRef}
+          onSetScrollRef={onSetScrollRef}
         >
           <div className={styles.pageInner}>
             {pageHeaderNav && (
@@ -82,9 +79,7 @@ export const Page: PageType = ({
         <NativeScrollbar
           // This id is used by the image renderer to scroll through the dashboard
           divId="page-scrollbar"
-          autoHeightMin={'100%'}
-          scrollTop={scrollTop}
-          scrollRefCallback={scrollRef}
+          onSetScrollRef={onSetScrollRef}
         >
           <div className={styles.canvasContent}>{children}</div>
         </NativeScrollbar>
