@@ -2,6 +2,7 @@ package querydata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -14,12 +15,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/maputil"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/promlib/client"
 	"github.com/grafana/grafana/pkg/promlib/intervalv2"
 	"github.com/grafana/grafana/pkg/promlib/models"
 	"github.com/grafana/grafana/pkg/promlib/querydata/exemplar"
 	"github.com/grafana/grafana/pkg/promlib/utils"
-	"go.opentelemetry.io/otel/trace"
 )
 
 const legendFormatAuto = "__auto"
@@ -255,7 +257,7 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 	// This is only for health check fall back scenario
 	if res.StatusCode != 200 && q.RefId == "__healthcheck__" {
 		return backend.DataResponse{
-			Error: fmt.Errorf(res.Status),
+			Error: errors.New(res.Status),
 		}
 	}
 
