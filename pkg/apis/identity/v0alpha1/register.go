@@ -133,7 +133,29 @@ var TeamBindingResourceInfo = common.NewResourceInfo(
 		Reader: func(obj any) ([]interface{}, error) {
 			m, ok := obj.(*TeamBinding)
 			if !ok {
-				return nil, fmt.Errorf("expected sso setting")
+				return nil, fmt.Errorf("expected team binding")
+			}
+			return []interface{}{
+				m.Name,
+				m.CreationTimestamp.UTC().Format(time.RFC3339),
+			}, nil
+		},
+	},
+)
+
+var TeamMemberResourceInfo = common.NewResourceInfo(
+	GROUP, VERSION, "teammembers", "teammember", "TeamMember",
+	func() runtime.Object { return &TeamMember{} },
+	func() runtime.Object { return &TeamMemberList{} },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Created At", Type: "string", Format: "date"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			m, ok := obj.(*TeamMember)
+			if !ok {
+				return nil, fmt.Errorf("expected team member")
 			}
 			return []interface{}{
 				m.Name,
@@ -168,6 +190,8 @@ func AddKnownTypes(scheme *runtime.Scheme, version string) {
 		&SSOSettingList{},
 		&TeamBinding{},
 		&TeamBindingList{},
+		&TeamMember{},
+		&TeamMemberList{},
 	)
 }
 
