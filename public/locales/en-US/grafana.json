@@ -1066,7 +1066,7 @@
       "title": "Advanced Settings"
     },
     "alert": {
-      "discard-success": "Ldap settings discarded",
+      "discard-success": "LDAP settings discarded",
       "error-fetching": "Error fetching LDAP settings",
       "error-saving": "Error saving LDAP settings",
       "error-update": "Error updating LDAP settings",
