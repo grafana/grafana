@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/prometheus/alertmanager/config"
 
@@ -78,7 +79,7 @@ func PostableToGettableGrafanaReceiver(r *apimodels.PostableGrafanaReceiver, pro
 		if decryptedValue == "" {
 			continue
 		} else {
-			settings.Set(k, decryptedValue)
+			settings.SetPath(strings.Split(k, "."), decryptedValue)
 		}
 		out.SecureFields[k] = true
 	}
