@@ -1013,7 +1013,7 @@
         "placeholder": "e.g. [\"TLS_AES_256_GCM_SHA384\"]"
       },
       "use-ssl": {
-        "description": "Set to true if LDAP server should use an encrypted TLS connection (either with STARTTLS or LDAPS)",
+        "description": "Set to true if LDAP server should use TLS connection (either with STARTTLS or LDAPS)",
         "label": "Use SSL",
         "tooltip": "For a complete list of supported ciphers and TLS versions, refer to: {\n        <TextLink style={{ fontSize: 'inherit' }} href=\"https://go.dev/src/crypto/tls/cipher_suites.go\" external>\n          https://go.dev/src/crypto/tls/cipher_suites.go\n        </TextLink>}"
       }

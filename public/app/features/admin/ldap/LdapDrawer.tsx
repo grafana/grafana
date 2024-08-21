@@ -40,7 +40,7 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
     </Label>
   );
 
-  const useSslDescription = (
+  const useTlsDescription = (
     <Trans i18nKey="ldap-drawer.extra-security-section.use-ssl.tooltip">
       For a complete list of supported ciphers and TLS versions, refer to:{' '}
       {
@@ -177,12 +177,12 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
           label={t('ldap-drawer.extra-security-section.use-ssl.label', 'Use SSL')}
           description={t(
             'ldap-drawer.extra-security-section.use-ssl.description',
-            'Set to true if LDAP server should use an encrypted TLS connection (either with STARTTLS or LDAPS)'
+            'Set to true if LDAP server should use TLS connection (either with STARTTLS or LDAPS)'
           )}
         >
           <Stack>
             <Switch id="use-ssl" {...register('settings.config.servers.0.use_ssl')} />
-            <Tooltip content={useSslDescription} interactive>
+            <Tooltip content={useTlsDescription} interactive>
               <Icon name="info-circle" />
             </Tooltip>
           </Stack>
