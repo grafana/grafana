@@ -253,9 +253,12 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 	}
 
 	// Check optimistic concurrency.
-	err = rs.checkOptimisticConcurrency(existing, version)
-	if err != nil {
-		return err
+	// Optimistic concurrency is optional for delete operations, but we still check it if a version is provided.
+	if version != "" {
+		err = rs.checkOptimisticConcurrency(existing, version)
+		if err != nil {
+			return err
+		}
 	}
 
 	if err := rs.provenanceValidator(existing.Provenance, models.Provenance(callerProvenance)); err != nil {
