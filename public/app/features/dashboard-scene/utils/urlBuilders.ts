@@ -62,6 +62,8 @@ export function getDashboardUrl(options: DashboardUrlOptions) {
 
   const params = options.currentQueryParams ? locationSearchToObject(options.currentQueryParams) : {};
 
+  delete params['shareView'];
+
   if (options.updateQuery) {
     for (const key in options.updateQuery) {
       // removing params with null | undefined
