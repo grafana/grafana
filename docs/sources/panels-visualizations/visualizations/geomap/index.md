@@ -53,7 +53,20 @@ Geomaps allow you to view and customize the world map using geospatial data. You
 
 > We would love your feedback on geomaps. Please check out the [open Github issues](https://github.com/grafana/grafana/issues?page=1&q=is%3Aopen+is%3Aissue+label%3Aarea%2Fpanel%2Fgeomap) and [submit a new feature request](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request,area%2Fpanel%2Fgeomap&title=Geomap:&projects=grafana-dataviz&template=1-feature_requests.md) as needed.
 
+You can use the geomap visualization whenever you have information that has location information and you need to see it displayed in a map.
+
+The visualization can also display other information including numeric values, labels, icons, heat maps, and routes.
+
+It’s also useful when you have location data that’s changing in real-time and you want to visualize where the element is moving using auto refresh.
+
 {{< figure src="/static/img/docs/geomap-panel/geomap-example-8-1-0.png" max-width="1200px" caption="Geomap panel" >}}
+
+You can use a geomap visualization if you need to:
+- Track the position of food deliveries, planes, or freight services
+- Show the locations of the data centers or corporate devices
+- Map hiking route
+
+## Configure a geomap visualization
 
 Pan the map, while it's in focus, by using the arrow keys. Zoom in and out by using the `+` and `-` keys.
 
@@ -62,6 +75,71 @@ The following video provides beginner steps for creating geomap visualizations. 
 {{< youtube id="HwM8AFQ7EUs" >}}
 
 {{< docs/play title="Geomap Examples" url="https://play.grafana.org/d/panel-geomap/" >}}
+
+## Supported data formats
+
+To create a geomap visualization you need data sets containing data fields with location information.
+
+The supported location formats are:
+- Latitude and longitude
+- Geohash
+- Lookup codes: country, US states, or airports
+
+The visualization also supports additional fields with various data types to define things like labels, numbers, heat sizes, and colors.
+
+### LAT/LON
+
+If you plan to use latitude and longitude coordinates, the dataset provided must include at least two fields (columns): one called latitude (you can also use lat), and one called longitude (also lon or lng). When you use this naming convention, the visualization automatically detects them and displays the elements. The order of the fields doesn't matter as long as there is one latitude and one longitude.
+
+#### Example
+
+| Name           | latitude | longitude | value |
+| -------------- | -------- | --------- | ----- |
+| Disneyland     | 33.8121  | -117.9190 | 4     |
+| DisneyWorld    | 28.3772  | -81.5707  | 10    |
+| EuroDisney     | 48.867374| 2.784018  | 3     |
+| Tokyo Disney   | 35.6329  | 139.8804  | 70    |
+| Shanghai Disney| 31.1414  | 121.6682  | 1     |
+
+If your latitude and longitude fields are named differently, you can select them as indicated in the [Location mode](#location-mode) section.
+
+### GEOHASH
+If your location data comes in the geohash format, the visualization requires at least one field (column) containing location data in this format.
+
+If the field is named geohash, the visualization automatically detects the location and displays the elements. The order of the field doesnt matter and the data set can have multiple other numeric, text, and time fields.
+
+#### Example
+
+| Name     | geohash      | trips |
+| -------- | ------------ | ----- |
+| Cancun   | d5f21        | 8     |
+| Honolulu | 87z9ps       | 0     |
+| Palm Cove| rhzxudynb014 | 1     |
+| Mykonos  | swdj02ey9gyx | 3     |
+
+If your field containing geohash location data is not named as above, you can configure the panel to use geohash and indicate the field to use as explained in the [Location mode](#location-mode) section.
+
+### LOOKUP CODES
+
+The geomap visualization can identify locations based on country, airport, or US state codes.
+
+For this configuration the data set must contain at least one field (column) containing the location code.
+
+If the field is named lookup, the visualization automatically identifies it and displays points based on country codes. 
+
+#### Example
+
+| Year | lookup | gdp       |
+| ---- | ------ | --------- |
+| 2016 | MEX    | 104171935 |
+| 2016 | DEU    | 94393454  |
+| 2016 | FRA    | 83654250  |
+| 2016 | BRA    | 80921527  |
+| 2016 | CAN    | 79699762  |
+
+The other location types—airport codes or US state codes—aren't automatically identified.
+
+If you want to use other codes, or name the field freely you can follow the steps indicated in the [Location mode](#location-mode) section.
 
 ## Panel options
 
