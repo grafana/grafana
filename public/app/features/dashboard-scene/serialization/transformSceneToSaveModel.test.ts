@@ -141,6 +141,7 @@ jest.mock('@grafana/runtime', () => ({
     return runRequestMock(ds, request);
   },
   config: {
+    ...jest.requireActual('@grafana/runtime').config,
     panels: {
       text: { skipDataQuery: true },
     },
@@ -151,9 +152,6 @@ jest.mock('@grafana/runtime', () => ({
       visualization: {
         getColorByName: jest.fn().mockReturnValue('red'),
       },
-    },
-    buildInfo: {
-      version: '11.2.0',
     },
   },
   setPluginExtensionGetter: jest.fn(),
