@@ -1522,16 +1522,16 @@ func GetSecretKeysForContactPointType(contactPointType string) ([]string, error)
 func getSecretFields(parentPath string, options []NotifierOption) []string {
 	var secureFields []string
 	for _, field := range options {
+		name := field.PropertyName
+		if parentPath != "" {
+			name = parentPath + "." + name
+		}
 		if field.Secure {
-			name := field.PropertyName
-			if parentPath != "" {
-				name = parentPath + "." + name
-			}
 			secureFields = append(secureFields, name)
 			continue
 		}
 		if len(field.SubformOptions) > 0 {
-			secureFields = append(secureFields, getSecretFields(field.PropertyName, field.SubformOptions)...)
+			secureFields = append(secureFields, getSecretFields(name, field.SubformOptions)...)
 		}
 	}
 	return secureFields

@@ -42,3 +42,48 @@ func TestGetSecretKeysForContactPointType(t *testing.T) {
 		})
 	}
 }
+
+func Test_getSecretFields(t *testing.T) {
+	testCases := []struct {
+		name           string
+		parentPath     string
+		options        []NotifierOption
+		expectedFields []string
+	}{
+		{
+			name:       "No secure fields",
+			parentPath: "",
+			options: []NotifierOption{
+				{PropertyName: "field1", Secure: false, SubformOptions: nil},
+				{PropertyName: "field2", Secure: false, SubformOptions: nil},
+			},
+			expectedFields: []string{},
+		},
+		{
+			name:       "Single secure field",
+			parentPath: "",
+			options: []NotifierOption{
+				{PropertyName: "field1", Secure: true, SubformOptions: nil},
+				{PropertyName: "field2", Secure: false, SubformOptions: nil},
+			},
+			expectedFields: []string{"field1"},
+		},
+		{
+			name:       "Secure field in subform",
+			parentPath: "parent",
+			options: []NotifierOption{
+				{PropertyName: "field1", Secure: true, SubformOptions: nil},
+				{PropertyName: "field2", Secure: false, SubformOptions: []NotifierOption{
+					{PropertyName: "subfield1", Secure: true, SubformOptions: nil},
+				}},
+			},
+			expectedFields: []string{"parent.field1", "parent.field2.subfield1"},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := getSecretFields(tc.parentPath, tc.options)
+			require.ElementsMatch(t, got, tc.expectedFields)
+		})
+	}
+}
