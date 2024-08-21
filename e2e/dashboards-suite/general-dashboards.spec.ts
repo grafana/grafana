@@ -12,9 +12,12 @@ describe('Dashboards', () => {
     e2e.components.Panels.Panel.title('Panel #1').should('be.visible');
 
     // scroll to the bottom
-    cy.get('#page-scrollbar').scrollTo('bottom', {
-      timeout: 5 * 1000,
-    });
+    e2e.pages.Dashboard.DashNav.navV2()
+      .parent()
+      .parent() // Note, this will probably fail when we change the custom scrollbars
+      .scrollTo('bottom', {
+        timeout: 5 * 1000,
+      });
 
     // The last panel should be visible...
     e2e.components.Panels.Panel.title('Panel #50').should('be.visible');
