@@ -17,6 +17,7 @@
   "extends": "@grafana/tsconfig/base.json",
   "include": [
     "public/app/**/*.ts*",
+    "public/swagger/**/*.ts*",
     "public/e2e-test/**/*.ts",
     "public/test/**/*.ts*",
     "public/vendor/**/*.ts",

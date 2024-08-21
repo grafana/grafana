@@ -59,6 +59,7 @@ export interface FeatureToggles {
   influxdbBackendMigration?: boolean;
   influxqlStreamingParser?: boolean;
   influxdbRunQueriesInParallel?: boolean;
+  prometheusRunQueriesInParallel?: boolean;
   prometheusDataplane?: boolean;
   lokiMetricDataplane?: boolean;
   lokiLogsDataplane?: boolean;
@@ -76,6 +77,7 @@ export interface FeatureToggles {
   lokiPredefinedOperations?: boolean;
   pluginsFrontendSandbox?: boolean;
   frontendSandboxMonitorOnly?: boolean;
+  pluginsDetailsRightPanel?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
   recordedQueriesMulti?: boolean;
   vizAndWidgetSplit?: boolean;
@@ -104,7 +106,6 @@ export interface FeatureToggles {
   alertingInsights?: boolean;
   externalCorePlugins?: boolean;
   pluginsAPIMetrics?: boolean;
-  idForwarding?: boolean;
   externalServiceAccounts?: boolean;
   panelMonitoring?: boolean;
   enableNativeHTTPHistogram?: boolean;
@@ -199,5 +200,7 @@ export interface FeatureToggles {
   bodyScrolling?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
   prometheusAzureOverrideAudience?: boolean;
+  backgroundPluginInstaller?: boolean;
   dataplaneAggregator?: boolean;
+  adhocFilterOneOf?: boolean;
 }

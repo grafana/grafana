@@ -18,7 +18,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 508,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -88,6 +87,7 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -102,7 +102,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "11.2.0-pre",
       "targets": [
         {
           "alias": "__house_locations",
@@ -174,6 +174,7 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -188,7 +189,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "11.2.0-pre",
       "targets": [
         {
           "alias": "__house_locations",
@@ -260,6 +261,7 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -274,7 +276,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "11.2.0-pre",
       "targets": [
         {
           "alias": "__house_locations",
@@ -346,6 +348,7 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -360,7 +363,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "11.2.0-pre",
       "targets": [
         {
           "alias": "__server_names",
@@ -431,6 +434,7 @@
         "graphMode": "line",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -445,7 +449,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "11.2.0-pre",
       "targets": [
         {
           "datasource": {
@@ -560,6 +564,7 @@
         "graphMode": "line",
         "justifyMode": "auto",
         "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -574,7 +579,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "11.2.0-pre",
       "targets": [
         {
           "datasource": {
@@ -691,6 +696,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -705,7 +711,7 @@
         "textMode": "name",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "11.2.0-pre",
       "targets": [
         {
           "alias": "__server_names",
@@ -781,6 +787,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -795,7 +802,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "11.2.0-pre",
       "targets": [
         {
           "alias": "__server_names",
@@ -871,6 +878,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -885,7 +893,7 @@
         "textMode": "none",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "11.2.0-pre",
       "targets": [
         {
           "alias": "__server_names",
@@ -972,6 +980,7 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -986,7 +995,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "11.2.0-pre",
       "targets": [
         {
           "alias": "__house_locations",
@@ -1058,6 +1067,7 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -1072,7 +1082,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "11.2.0-pre",
       "targets": [
         {
           "alias": "__house_locations",
@@ -1144,6 +1154,7 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -1158,7 +1169,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "11.2.0-pre",
       "targets": [
         {
           "alias": "__house_locations",
@@ -1230,6 +1241,7 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -1244,7 +1256,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "11.2.0-pre",
       "targets": [
         {
           "alias": "__server_names",
@@ -1315,6 +1327,7 @@
         "graphMode": "line",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -1329,7 +1342,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "11.2.0-pre",
       "targets": [
         {
           "datasource": {
@@ -1444,6 +1457,7 @@
         "graphMode": "line",
         "justifyMode": "auto",
         "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -1458,7 +1472,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "11.2.0-pre",
       "targets": [
         {
           "datasource": {
@@ -1575,6 +1589,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -1589,7 +1604,7 @@
         "textMode": "name",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "11.2.0-pre",
       "targets": [
         {
           "alias": "__server_names",
@@ -1665,6 +1680,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -1679,7 +1695,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "11.2.0-pre",
       "targets": [
         {
           "alias": "__server_names",
@@ -1755,6 +1771,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -1769,7 +1786,7 @@
         "textMode": "none",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "11.2.0-pre",
       "targets": [
         {
           "alias": "__server_names",
@@ -1819,7 +1836,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 8,
+        "w": 4,
         "x": 0,
         "y": 78
       },
@@ -1829,6 +1846,7 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -1840,7 +1858,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "11.2.0-pre",
       "targets": [
         {
           "csvContent": "time, value\n2023-12-13T00:00:00Z, 0\n2023-12-13T00:00:00Z, 100",
@@ -1853,6 +1871,73 @@
         }
       ],
       "title": "Infinity Percent Change",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "default": true,
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 4,
+        "y": 78
+      },
+      "id": 32,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": true,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.2.0-pre",
+      "targets": [
+        {
+          "csvContent": "time, value\n2023-12-13T00:00:00Z, 50\n2023-12-13T00:00:00Z, 100\n2023-12-13T00:00:00Z, 50",
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Zero Percent Change",
       "type": "stat"
     },
     {
@@ -1894,6 +1979,7 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -1905,7 +1991,7 @@
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "11.2.0-pre",
       "targets": [
         {
           "csvContent": "time, value\n2023-12-13T00:00:00Z, 0\n2023-12-13T00:00:00Z, 0",
@@ -1959,6 +2045,7 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -1970,7 +2057,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "11.2.0-pre",
       "targets": [
         {
           "csvContent": "Name, value\nName1, 10\nName2, 20",
@@ -2017,6 +2104,6 @@
   "timezone": "",
   "title": "Panel Tests - Stat",
   "uid": "EJ8_d9jZk",
-  "version": 11,
+  "version": 15,
   "weekStart": ""
 }

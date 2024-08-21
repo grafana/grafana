@@ -1,10 +1,11 @@
 module github.com/grafana/grafana/pkg/storage/unified/resource
 
-go 1.22.4
+go 1.23.0
 
 require (
 	github.com/fullstorydev/grpchan v1.1.1
 	github.com/grafana/authlib v0.0.0-20240730122259-a0d13672efb1
+	github.com/grafana/authlib/claims v0.0.0-20240809101159-74eaccc31a06
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240808164224-787abccfbc9e
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
 	github.com/prometheus/client_golang v1.19.1
@@ -13,7 +14,7 @@ require (
 	gocloud.dev v0.25.0
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
-	k8s.io/apimachinery v0.31.0-rc.1
+	k8s.io/apimachinery v0.31.0
 )
 
 require (
@@ -57,7 +58,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apiserver v0.31.0-rc.1 // indirect
+	k8s.io/apiserver v0.31.0 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect

@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
@@ -32,15 +32,13 @@ func newServer(t *testing.T) (sql.Backend, resource.ResourceServer) {
 	dbstore := infraDB.InitTestDB(t)
 	cfg := setting.NewCfg()
 	features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage)
-	tr := noop.NewTracerProvider().Tracer("integrationtests")
 
-	eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, features, tr)
+	eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, features, nil)
 	require.NoError(t, err)
 	require.NotNil(t, eDB)
 
 	ret, err := sql.NewBackend(sql.BackendOptions{
 		DBProvider: eDB,
-		Tracer:     tr,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, ret)
@@ -66,7 +64,7 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 	}
 
 	testUserA := &identity.StaticRequester{
-		Type:           identity.TypeUser,
+		Type:           claims.TypeUser,
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
@@ -341,7 +339,7 @@ func TestClientServer(t *testing.T) {
 
 	// Test with an admin identity
 	clientCtx := identity.WithRequester(ctx, &identity.StaticRequester{
-		Type:           identity.TypeUser,
+		Type:           claims.TypeUser,
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
