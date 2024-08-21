@@ -204,4 +204,5 @@ export interface FeatureToggles {
   backgroundPluginInstaller?: boolean;
   dataplaneAggregator?: boolean;
   adhocFilterOneOf?: boolean;
+  newFiltersUI?: boolean;
 }
