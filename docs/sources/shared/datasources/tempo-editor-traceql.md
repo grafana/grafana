@@ -109,7 +109,7 @@ The grey text to the right of the service name indicates the span name.
 
 Under **Options**, you can choose to display the table as **Traces** or **Spans** focused.
 
-When the Table Type option is set to Spans, the traces and span sets are flattened into a list of spans.
+When the **Table Type** option is set to **Spans**, the traces and span sets are flattened into a list of spans.
 The trace service and trace name are added to the row of each span to add context.
 
 Using the **Spans** option makes it easier access the spans to apply transformations and plot them in dashboards.

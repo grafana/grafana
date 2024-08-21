@@ -102,7 +102,7 @@ Service graph view displays a table of request rate, error rate, and duration me
 
 {{< figure src="/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-service-graph.png" class="docs-image--no-shadow" max-width="500px" caption="Screenshot of the Service Graph view" >}}
 
-For details, refer to the [Service Graph view documentation](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-service-graph.png).
+For details, refer to the [Service Graph view documentation](/docs/tempo/<TEMPO_VERSION>/metrics-generator/service-graph-view/).
 
 To open the Service Graph view:
 

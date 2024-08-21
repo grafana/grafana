@@ -17,7 +17,7 @@ labels:
 
 # Write TraceQL queries using Search
 
-The Search query builder, located on the **Explore** > **Query type** > **Search** in Grafana, provides drop-down lists and text fields to help you write a query.
+The **Search** query builder, located on the **Explore** > **Query type** > **Search** in Grafana, provides drop-down lists and text fields to help you write a query.
 The selections you make automatically generate a [TraceQL query](/docs/tempo/latest/traceql).
 
 ![The Search query builder](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-search-v11.png)
@@ -186,7 +186,7 @@ These filters are available when viewing details for a trace.
 
 You can continue to apply filters until you have narrowed down your resulting spans to the select few you are most interested in.
 
-**Service Name**, **Span Name**, **Duration**, and **Tags** have the same function and operation as the filters of the same name in the Search query builder.
+**Service Name**, **Span Name**, **Duration**, and **Tags** have the same function and operation as the filters of the same name in the **Search** query builder.
 
 In addition, you can search for a keyword, opt to **Show matches only**, opt to **Show critical path only**, and browse matches using **Prev** and **Next**.
 

@@ -62,7 +62,7 @@ You can compose TraceQL queries in Grafana and Grafana Cloud using **Explore** a
 ### TraceQL knowledge helpful, but not required
 
 You don't have to know TraceQL to create a query.
-You can use the Search query builder's user interface to select options to search your data.
+You can use the **Search** query builder's user interface to select options to search your data.
 These selections generate a TraceQL query.
 Any query generated in Build mode can be transferred to the Code mode, where you can edit the query directly.
 
@@ -75,42 +75,42 @@ You can use these modes by themselves or in combination to create building block
 
 ![The three query types: Search, TraceQL, and Service Graph](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-types.png)
 
-The three **Query types** are:
+The three query types are:
 
-- The **Search** query builder provides a user interface for building a TraceQL query.
-- The **TraceQL** query editor lets you write your own TraceQL query with assistance from autocomplete.
-- The **Service Graph** view displays a visual relationship between services. Refer to the [Service graph](ref:service-graph) documentation for more information.
+- **Search** query builder - Provides a user interface for building a TraceQL query.
+- **TraceQL** query editor - Lets you write your own TraceQL query with assistance from autocomplete.
+- **Service Graph** view - Displays a visual relationship between services. Refer to the [Service graph](ref:service-graph) documentation for more information.
 
 ### Search query builder
 
-The Search query builder provides drop-down lists and text fields to help you write a query.
+The **Search** query builder provides drop-down lists and text fields to help you write a query.
 The query builder is ideal for people who aren't familiar with or want to learn TraceQL.
 
 Refer to the [Search using the TraceQL query builder documentation]({{< relref "./traceql-search" >}}) to learn more about creating queries using convenient drop-down menus.
 
 ![The Search query builder](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-search-v11.png)
 
-### TraceQL Query editor
+### TraceQL query editor
 
-The TraceQL query editor lets you search by trace ID and write TraceQL queries using autocomplete.
+The **TraceQL** query editor lets you search by trace ID and write TraceQL queries using autocomplete.
 
 Refer to the [TraceQL query editor documentation]({{< relref "./traceql-editor" >}}) to learn more about constructing queries using a code-editor-like experience.
 
 ![The TraceQL query editor](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-traceql-v11.png)
 
-You can also search for a Trace ID by entering a trace ID into the query field.
+You can also search for a trace ID by entering it into the query field.
 
 ### Service graph view
 
-Grafana’s service graph view uses metrics to display span request rates, error rates, and durations, as well as service graphs.
-Once the requirements are set up, this pre-configured view is immediately available.
+Grafana’s **Service Graph** view uses metrics to display span request rates, error rates, and durations, as well as service graphs.
+Once the requirements are set up, this preconfigured view is immediately available.
 
 Using the service graph view, you can:
 
-- Discover spans which are consistently erroring and the rates at which they occur
-- Get an overview of the overall rate of span calls throughout your services
-- Determine how long the slowest queries in your service take to complete
-- Examine all traces that contain spans of particular interest based on rate, error, and duration values (RED signals)
+- Discover spans which are consistently erroring and the rates at which they occur.
+- Get an overview of the overall rate of span calls throughout your services.
+- Determine how long the slowest queries in your service take to complete.
+- Examine all traces that contain spans of particular interest based on rate, error, and duration values (RED signals).
 
 For more information about the service graph, refer to [Service graph](../service-graph/).
 
@@ -138,13 +138,13 @@ Span Limit
 : Sets the maximum number of spans to return for each spanset. Default value is `3`.
 
 Table Format
-: Determines whether the query results table is displayed focused on **Traces** or **Spans**. **Traces** is the default selection. When **Traces** is selected, the results table starts with the Trace ID. When **Spans** is selected, the table starts with the Trace Service.
+: Determines whether the query results table is displayed focused on **Traces** or **Spans**. **Traces** is the default selection. When **Traces** is selected, the results table starts with the trace ID. When **Spans** is selected, the table starts with the trace service.
 
 Step
 : Defines the step for metrics quires. Use duration notation, for example, `30ms` or `1m`.
 
 Streaming
-: Indicates if streaming is active. Streaming lets you view partial query results before the entire query completes. Activating Streaming adds the **Table - Streaming Progress** section to the query results.
+: Indicates if streaming is active. Streaming lets you view partial query results before the entire query completes. Activating streaming adds the **Table - Streaming Progress** section to the query results.
 
 ## Use query types together
 
@@ -174,7 +174,7 @@ Each query block has a set of icons in the right top corner.
 These icons include:
 
 Show data source help
-: Displays the Tempo Cheat Sheet with links to documentation.
+: Displays the **Tempo Cheat Sheet** with links to documentation.
 
 Create recorded query
 : Lets you save the current query block as a recorded query. This option is available in Grafana Cloud and Grafana Enterprise. For more information, refer to [Recorded queries](ref:recorded-queries).
