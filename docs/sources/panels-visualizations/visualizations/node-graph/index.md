@@ -49,9 +49,9 @@ The following video provides beginner steps for creating node panel visualizatio
 
 To create node graphs, you need two datasets: one containing the records for the displayed elements (nodes) and one dataset containing the records for the connections between those elements (edges). In addition to the data displayed for each node or edge, these datasets can also contain the fields that serve as configurations, such as colors or icons.
 
-The nodes dataset must contain one ID field giving each element (row) a unique identifier that can be text or numeric. Other optional fields that the visualization accepts are titles, subtitles, main and sub stats, arc information for how much of the circle border to paint, details, colors, icons, node size, and indications to highlight the element. For more info and naming conventions for these fields check #nodes-data-frame-structure
+The nodes dataset must contain one ID field giving each element (row) a unique identifier that can be text or numeric. Other optional fields that the visualization accepts are titles, subtitles, main and sub stats, arc information for how much of the circle border to paint, details, colors, icons, node size, and indications to highlight the element. For more info and naming conventions for these fields check the [Nodes data frame structure](#nodes-data-frame-structure) section.
 
-In a similar way, the edges dataset needs one unique ID field for each relationship, followed by two fields continuing the source and the target of the edge. Other optional fields are main and sub stats, context menu elements, line thickness, highlight indications, line colors and configurations if the connection is a dashed line. For more info and naming conventions for these fields check #edges-data-frame-structure
+In a similar way, the edges dataset needs one unique ID field for each relationship, followed by two fields containing the source and the target of the edge. Other optional fields are main and sub stats, context menu elements, line thickness, highlight indications, line colors and configurations to turn the connection into a dashed line. For more info and naming conventions for these fields check the [Edges data frame structure](#edges-data-frame-structure) section.
 
 ### Example
 
