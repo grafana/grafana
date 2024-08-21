@@ -55,7 +55,7 @@ When should you use each log level?
 
 Use a contextual logger to include additional key/value pairs attached to `context.Context`. For example, a `traceID`, used to allow correlating logs with traces, correlate logs with a common identifier, either or both.
 
-You must [Enable tracing in Grafana](#2-enable-tracing-in-grafana) to get a `traceID`.
+You must [Enable tracing in Grafana](#enable-tracing-in-grafana) to get a `traceID`.
 
 For example:
 
@@ -156,7 +156,7 @@ A distributed trace is data that tracks an application request as it flows throu
 
 ### Usage
 
-Grafana uses [OpenTelemetry](https://opentelemetry.io/) for distributed tracing. There's an interface `Tracer` in the `pkg/infra/tracing` package that implements the [OpenTelemetry Tracer interface](go.opentelemetry.io/otel/trace), which you can use to create traces and spans. To access `Tracer` you need to get it injected as a dependency of your service. Refer to [Services](services.md) for more details. For more information, you may also refer to [The OpenTelemetry documentation](https://opentelemetry.io/docs/instrumentation/go/manual/).
+Grafana uses [OpenTelemetry](https://opentelemetry.io/) for distributed tracing. There's an interface `Tracer` in the `pkg/infra/tracing` package that implements the [OpenTelemetry Tracer interface](https://pkg.go.dev/go.opentelemetry.io/otel/trace), which you can use to create traces and spans. To access `Tracer` you need to get it injected as a dependency of your service. Refer to [Services](services.md) for more details. For more information, you may also refer to [The OpenTelemetry documentation](https://opentelemetry.io/docs/instrumentation/go/manual/).
 
 For example:
 
@@ -269,7 +269,7 @@ attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgID)
    make devenv sources=jaeger
    ```
 
-1. Enable tracing in Grafana
+1. Enable tracing in Grafana<a name="enable-tracing-in-grafana"></a>
 
    To enable tracing in Grafana, you must set the address in your `config.ini` file:
 
