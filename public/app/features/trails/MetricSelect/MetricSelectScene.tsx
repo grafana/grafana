@@ -29,7 +29,6 @@ import {
 import { Alert, Field, Icon, IconButton, InlineSwitch, Input, Select, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import { DataTrail } from '../DataTrail';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
 import { Node, Parser } from '../groop/parser';
@@ -213,7 +212,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
 
     try {
       const response = await getMetricNames(datasourceUid, timeRange, match, MAX_METRIC_NAMES);
-      const searchRegex = createJSRegExpFromSearchTerms(getMetricSearch(this));
+      const searchRegex = createJSRegExpFromSearchTerms(getMetricSearch(this), this.state.metricPrefix);
       const metricNames = searchRegex
         ? response.data.filter((metric) => !searchRegex || searchRegex.test(metric))
         : response.data;
@@ -465,7 +464,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
 
   public onPrefixFilterChange = (val: SelectableValue) => {
     this.setState({ metricPrefix: val.value });
-    this.buildLayout();
+    this._refreshMetricNames();
   };
 
   public reportPrefixFilterInteraction = (isMenuOpen: boolean) => {

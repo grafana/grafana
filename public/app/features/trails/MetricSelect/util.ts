@@ -10,8 +10,13 @@ export function deriveSearchTermsFromInput(whiteSpaceSeparatedTerms?: string) {
   );
 }
 
-export function createJSRegExpFromSearchTerms(searchQuery?: string) {
-  const searchParts = deriveSearchTermsFromInput(searchQuery).map((part) => `(?=(.*${part.toLowerCase()}.*))`);
+export function createJSRegExpFromSearchTerms(searchQuery?: string, prefix?: string) {
+  let searchParts = deriveSearchTermsFromInput(searchQuery).map((part) => `(?=(.*${part.toLowerCase()}.*))`);
+
+  // filter prefix here before building layout
+  if (prefix && prefix !== 'all') {
+    searchParts = [`(?=^${prefix}.*)`].concat(searchParts);
+  }
 
   if (searchParts.length === 0) {
     return null;
