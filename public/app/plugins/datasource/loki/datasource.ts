@@ -294,6 +294,14 @@ export class LokiDatasource
     if (!config.featureToggles.lokiSendDashboardPanelNames) {
       return headers;
     }
+    // only add headers if we are in the context of a dashboard
+    if (
+      [CoreApp.Dashboard.toString(), CoreApp.PanelEditor.toString(), CoreApp.PanelViewer.toString()].includes(
+        request.app
+      ) === false
+    ) {
+      return headers;
+    }
 
     const dashboard = getDashboardSrv().getCurrent();
     const dashboardTitle = dashboard?.title;
