@@ -321,12 +321,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		},
 	}
 
-	if hs.Cfg.ActionsAllowPostURL != "" {
-		frontendSettings.Actions = &dtos.ActionsConfig{
-			AllowPostURL: hs.Cfg.ActionsAllowPostURL,
-		}
-	}
-
 	if hs.Cfg.UnifiedAlerting.StateHistory.Enabled {
 		frontendSettings.UnifiedAlerting.AlertStateHistoryBackend = hs.Cfg.UnifiedAlerting.StateHistory.Backend
 		frontendSettings.UnifiedAlerting.AlertStateHistoryPrimary = hs.Cfg.UnifiedAlerting.StateHistory.MultiPrimary

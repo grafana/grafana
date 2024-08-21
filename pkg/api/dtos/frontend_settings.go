@@ -151,11 +151,6 @@ type FrontendSettingsSqlConnectionLimitsDTO struct {
 	ConnMaxLifetime int `json:"connMaxLifetime"`
 }
 
-type ActionsConfig struct {
-	// Regex check for any POST (or PUT) URLs
-	AllowPostURL string `json:"allowPostURL,omitempty"`
-}
-
 type FrontendSettingsDTO struct {
 	DefaultDatasource  string                           `json:"defaultDatasource"`
 	Datasources        map[string]plugins.DataSourceDTO `json:"datasources"`
@@ -181,8 +176,6 @@ type FrontendSettingsDTO struct {
 	ProfileEnabled      bool `json:"profileEnabled"`
 	NewsFeedEnabled     bool `json:"newsFeedEnabled"`
 	QueryHistoryEnabled bool `json:"queryHistoryEnabled"`
-
-	Actions *ActionsConfig `json:"actions"`
 
 	GoogleAnalyticsId                   string `json:"googleAnalyticsId"`
 	GoogleAnalytics4Id                  string `json:"googleAnalytics4Id"`
