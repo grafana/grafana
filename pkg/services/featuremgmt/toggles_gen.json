@@ -2695,6 +2695,7 @@
         "name": "unifiedStorage",
         "resourceVersion": "1724096690370",
         "creationTimestamp": "2023-12-06T20:21:21Z",
+        "deletionTimestamp": "2024-08-21T09:30:06Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-08-19 19:44:50.370023815 +0000 UTC"
         }
