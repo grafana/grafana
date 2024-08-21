@@ -153,7 +153,7 @@
     "@types/react-highlight-words": "0.20.0",
     "@types/react-router-dom": "5.3.3",
     "@types/react-test-renderer": "18.3.0",
-    "@types/react-transition-group": "4.4.10",
+    "@types/react-transition-group": "4.4.11",
     "@types/react-window": "1.8.8",
     "@types/slate": "0.47.11",
     "@types/slate-plain-serializer": "0.7.5",
