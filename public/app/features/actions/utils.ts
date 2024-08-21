@@ -11,10 +11,13 @@ import {
   HttpRequestMethod,
   InterpolateFunction,
   ScopedVars,
+  textUtil,
   ValueLinkConfig,
 } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
+
+import { createAbsoluteUrl, RelativeUrl } from '../alerting/unified/utils/url';
 
 /** @internal */
 export const getActions = (
@@ -64,44 +67,55 @@ export const getActions = (
 
 /** @internal */
 const buildActionOnClick = (action: Action, replaceVariables: InterpolateFunction) => {
-  const url = new URL(replaceVariables(action.options.url));
-  const data = getRequestBody(action, replaceVariables);
+  try {
+    const url = new URL(replaceVariables(getUrl(action.options.url)));
+    const data = getRequestBody(action, replaceVariables);
 
-  const requestHeaders: HeadersInit = [];
-  let request: BackendSrvRequest = {
-    url: url.toString(),
-    method: action.options.method,
-    data: data,
-    headers: requestHeaders,
-  };
+    const requestHeaders: HeadersInit = [];
+    let request: BackendSrvRequest = {
+      url: url.toString(),
+      method: action.options.method,
+      data: data,
+      headers: requestHeaders,
+    };
 
-  if (action.options.headers) {
-    action.options.headers.forEach((param) => {
-      requestHeaders.push([replaceVariables(param[0]), replaceVariables(param[1])]);
-    });
+    if (action.options.headers) {
+      action.options.headers.forEach((param) => {
+        requestHeaders.push([replaceVariables(param[0]), replaceVariables(param[1])]);
+      });
+    }
+
+    if (action.options.queryParams) {
+      action.options.queryParams?.forEach((param) => {
+        url.searchParams.append(replaceVariables(param[0]), replaceVariables(param[1]));
+      });
+
+      request.url = url.toString();
+    }
+
+    if (action.options.method === HttpRequestMethod.POST || action.options.method === HttpRequestMethod.PUT) {
+      if (!requestHeaders.hasOwnProperty('Content-Type')) {
+        requestHeaders.push(['Content-Type', action.options.contentType!]);
+      }
+    }
+
+    requestHeaders.push(['X-Grafana-Action', '1']);
+    request.headers = requestHeaders;
+
+    getBackendSrv()
+      .fetch(request)
+      .subscribe({
+        error: (error) => {
+          appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
+        },
+        complete: () => {
+          appEvents.emit(AppEvents.alertSuccess, ['API call was successful']);
+        },
+      });
+  } catch (error) {
+    appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
+    return;
   }
-
-  if (action.options.queryParams) {
-    action.options.queryParams?.forEach((param) => {
-      url.searchParams.append(replaceVariables(param[0]), replaceVariables(param[1]));
-    });
-
-    request.url = url.toString();
-  }
-
-  requestHeaders.push(['X-Grafana-Action', '1']);
-  request.headers = requestHeaders;
-
-  getBackendSrv()
-    .fetch(request)
-    .subscribe({
-      error: (error) => {
-        appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
-      },
-      complete: () => {
-        appEvents.emit(AppEvents.alertSuccess, ['API call was successful']);
-      },
-    });
 };
 
 /** @internal */
@@ -122,4 +136,15 @@ export const getActionsDefaultField = (dataLinks: DataLink[] = [], actions: Acti
     config: { links: dataLinks, actions: actions },
     values: [],
   };
+};
+
+const getUrl = (endpoint: string) => {
+  const isRelativeUrl = endpoint.startsWith('/');
+  if (isRelativeUrl) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const sanitizedRelativeURL = textUtil.sanitizeUrl(endpoint) as RelativeUrl;
+    endpoint = createAbsoluteUrl(sanitizedRelativeURL, []);
+  }
+
+  return endpoint;
 };
