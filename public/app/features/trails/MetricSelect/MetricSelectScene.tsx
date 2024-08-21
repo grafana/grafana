@@ -311,6 +311,21 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     this.buildLayout();
   }
 
+  private sortedPreviewMetrics() {
+    return Object.values(this.previewCache).sort((a, b) => {
+      if (a.isEmpty && b.isEmpty) {
+        return a.index - b.index;
+      }
+      if (a.isEmpty) {
+        return 1;
+      }
+      if (b.isEmpty) {
+        return -1;
+      }
+      return a.index - b.index;
+    });
+  }
+
   private async buildLayout() {
     // Temp hack when going back to select metric scene and variable updates
     if (this.ignoreNextUpdate) {
@@ -318,67 +333,32 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       return;
     }
 
-    if (!this.state.rootGroup) {
-      const rootGroupNode = await this.generateGroups(this.state.metricNames);
-      this.setState({ rootGroup: rootGroupNode });
-    }
+    const children: SceneFlexItem[] = [];
 
-    const children = await this.populateFilterableViewLayout();
-    const rowTemplate = this.state.showPreviews ? ROW_PREVIEW_HEIGHT : ROW_CARD_HEIGHT;
-    this.state.body.setState({ children, autoRows: rowTemplate });
-  }
-
-  private async populateFilterableViewLayout() {
     const trail = getTrailFor(this);
+
+    const metricsList = this.sortedPreviewMetrics();
+
     // Get the current filters to determine the count of them
     // Which is required for `getPreviewPanelFor`
     const filters = getFilters(this);
-
-    let rootGroupNode = this.state.rootGroup;
-    if (!rootGroupNode) {
-      rootGroupNode = await this.generateGroups(this.state.metricNames);
-      this.setState({ rootGroup: rootGroupNode });
-    }
-
-    const children: SceneFlexItem[] = [];
-
-    for (const [groupKey, groupNode] of rootGroupNode.groups) {
-      if (this.state.metricPrefix !== METRIC_PREFIX_ALL && this.state.metricPrefix !== groupKey) {
-        continue;
-      }
-
-      for (const [_, value] of groupNode.groups) {
-        const panels = await this.populatePanels(trail, filters, value.values);
-        children.push(...panels);
-      }
-
-      const morePanelsMaybe = await this.populatePanels(trail, filters, groupNode.values);
-      children.push(...morePanelsMaybe);
-    }
-
-    return children;
-  }
-
-  private async populatePanels(trail: DataTrail, filters: ReturnType<typeof getFilters>, values: string[]) {
     const currentFilterCount = filters?.length || 0;
 
-    const previewPanelLayoutItems: SceneFlexItem[] = [];
-    for (let index = 0; index < values.length; index++) {
-      const metricName = values[index];
-      const metric: MetricPanel = this.previewCache[metricName] ?? { name: metricName, index, loaded: false };
-      const metadata = await trail.getMetricMetadata(metricName);
+    for (let index = 0; index < metricsList.length; index++) {
+      const metric = metricsList[index];
+      const metadata = await trail.getMetricMetadata(metric.name);
       const description = getMetricDescription(metadata);
 
       if (this.state.showPreviews) {
         if (metric.itemRef && metric.isPanel) {
-          previewPanelLayoutItems.push(metric.itemRef.resolve());
+          children.push(metric.itemRef.resolve());
           continue;
         }
         const panel = getPreviewPanelFor(metric.name, index, currentFilterCount, description);
 
         metric.itemRef = panel.getRef();
         metric.isPanel = true;
-        previewPanelLayoutItems.push(panel);
+        children.push(panel);
       } else {
         const panel = new SceneCSSGridItem({
           $variables: new SceneVariableSet({
@@ -388,12 +368,81 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
         });
         metric.itemRef = panel.getRef();
         metric.isPanel = false;
-        previewPanelLayoutItems.push(panel);
+        children.push(panel);
       }
     }
 
-    return previewPanelLayoutItems;
+    const rowTemplate = this.state.showPreviews ? ROW_PREVIEW_HEIGHT : ROW_CARD_HEIGHT;
+
+    this.state.body.setState({ children, autoRows: rowTemplate });
   }
+
+  // private async populateFilterableViewLayout() {
+  //   const trail = getTrailFor(this);
+  //   // Get the current filters to determine the count of them
+  //   // Which is required for `getPreviewPanelFor`
+  //   const filters = getFilters(this);
+
+  //   let rootGroupNode = this.state.rootGroup;
+  //   if (!rootGroupNode) {
+  //     rootGroupNode = await this.generateGroups(this.state.metricNames);
+  //     this.setState({ rootGroup: rootGroupNode });
+  //   }
+
+  //   const children: SceneFlexItem[] = [];
+
+  //   for (const [groupKey, groupNode] of rootGroupNode.groups) {
+  //     if (this.state.metricPrefix !== METRIC_PREFIX_ALL && this.state.metricPrefix !== groupKey) {
+  //       continue;
+  //     }
+
+  //     for (const [_, value] of groupNode.groups) {
+  //       const panels = await this.populatePanels(trail, filters, value.values);
+  //       children.push(...panels);
+  //     }
+
+  //     const morePanelsMaybe = await this.populatePanels(trail, filters, groupNode.values);
+  //     children.push(...morePanelsMaybe);
+  //   }
+
+  //   return children;
+  // }
+
+  // private async populatePanels(trail: DataTrail, filters: ReturnType<typeof getFilters>, values: string[]) {
+  //   const currentFilterCount = filters?.length || 0;
+
+  //   const previewPanelLayoutItems: SceneFlexItem[] = [];
+  //   for (let index = 0; index < values.length; index++) {
+  //     const metricName = values[index];
+  //     const metric: MetricPanel = this.previewCache[metricName] ?? { name: metricName, index, loaded: false };
+  //     const metadata = await trail.getMetricMetadata(metricName);
+  //     const description = getMetricDescription(metadata);
+
+  //     if (this.state.showPreviews) {
+  //       if (metric.itemRef && metric.isPanel) {
+  //         previewPanelLayoutItems.push(metric.itemRef.resolve());
+  //         continue;
+  //       }
+  //       const panel = getPreviewPanelFor(metric.name, index, currentFilterCount, description);
+
+  //       metric.itemRef = panel.getRef();
+  //       metric.isPanel = true;
+  //       previewPanelLayoutItems.push(panel);
+  //     } else {
+  //       const panel = new SceneCSSGridItem({
+  //         $variables: new SceneVariableSet({
+  //           variables: getVariablesWithMetricConstant(metric.name),
+  //         }),
+  //         body: getCardPanelFor(metric.name, description),
+  //       });
+  //       metric.itemRef = panel.getRef();
+  //       metric.isPanel = false;
+  //       previewPanelLayoutItems.push(panel);
+  //     }
+  //   }
+
+  //   return previewPanelLayoutItems;
+  // }
 
   public updateMetricPanel = (metric: string, isLoaded?: boolean, isEmpty?: boolean) => {
     const metricPanel = this.previewCache[metric];
