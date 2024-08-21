@@ -23,7 +23,6 @@ disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,true
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false
 topnav,deprecated,@grafana/grafana-frontend-platform,false,false,false
 grpcServer,preview,@grafana/search-and-storage,false,false,false
-unifiedStorage,experimental,@grafana/search-and-storage,false,true,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false
 mysqlAnsiQuotes,experimental,@grafana/search-and-storage,false,false,false

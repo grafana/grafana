@@ -149,7 +149,6 @@ func TestIntegrationPlaylist(t *testing.T) {
 			DisableAnonymous:     true,
 			APIServerStorageType: "unified", // use the entity api tables
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagUnifiedStorage,
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
 			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
@@ -164,7 +163,6 @@ func TestIntegrationPlaylist(t *testing.T) {
 			DisableAnonymous:     true,
 			APIServerStorageType: "unified", // use the entity api tables
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagUnifiedStorage,
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
 			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
@@ -179,7 +177,6 @@ func TestIntegrationPlaylist(t *testing.T) {
 			DisableAnonymous:     true,
 			APIServerStorageType: "unified", // use the entity api tables
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagUnifiedStorage,
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
 			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
@@ -194,7 +191,6 @@ func TestIntegrationPlaylist(t *testing.T) {
 			DisableAnonymous:     true,
 			APIServerStorageType: "unified", // use the entity api tables
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagUnifiedStorage,
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
 			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{

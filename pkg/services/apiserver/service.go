@@ -285,10 +285,6 @@ func (s *service) start(ctx context.Context) error {
 		}
 
 	case grafanaapiserveroptions.StorageTypeUnified:
-		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
-			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
-		}
-
 		server, err := sql.ProvideResourceServer(s.db, s.cfg, s.features, s.tracing)
 		if err != nil {
 			return err
@@ -298,10 +294,6 @@ func (s *service) start(ctx context.Context) error {
 			o.RecommendedOptions.Etcd.StorageConfig)
 
 	case grafanaapiserveroptions.StorageTypeUnifiedGrpc:
-		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
-			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
-		}
-
 		opts := []grpc.DialOption{
 			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
