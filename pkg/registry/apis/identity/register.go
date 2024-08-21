@@ -83,6 +83,9 @@ func (b *IdentityAPIBuilder) GetAPIGroupInfo(
 	teamResource := identityv0.TeamResourceInfo
 	storage[teamResource.StoragePath()] = team.NewLegacyStore(b.Store)
 
+	teamBindingResource := identityv0.TeamBindingResourceInfo
+	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.Store)
+
 	userResource := identityv0.UserResourceInfo
 	storage[userResource.StoragePath()] = user.NewLegacyStore(b.Store)
 	storage[userResource.StoragePath("teams")] = team.NewLegacyUserTeamsStore(b.Store)
