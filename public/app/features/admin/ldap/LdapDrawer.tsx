@@ -275,7 +275,8 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
                   'ldap-drawer.extra-security-section.tls-ciphers.placeholder',
                   'e.g. ["TLS_AES_256_GCM_SHA384"]'
                 )}
-                // onChange={({ currentTarget: { value } }) => onServerConfigChange({ tls_ciphers: value.split(' ') })}
+                value={watch('settings.config.servers.0.tls_ciphers')}
+                onChange={({currentTarget: {value}}) => setValue('settings.config.servers.0.tls_ciphers', value?.split(/,|\s/).map((v: string) => v.trim()))}
               />
             </Field>
           </>
