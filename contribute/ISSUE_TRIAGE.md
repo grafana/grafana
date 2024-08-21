@@ -270,17 +270,17 @@ In case there is an uncertainty around the prioritization of an issue, please as
 1. If applicable, label the issue `priority/support-subscription`.
 1. Add the issue to the next upcoming patch or major/minor stable release milestone. Ask maintainers for help if unsure if it's a patch or not. Create a new milestone if there are none.
 1. Make sure to add the issue to a suitable backlog of a GitHub project and prioritize it or assign someone to work on it now or very soon.
-1. Consider requesting [help from the community](#5-requesting-help-from-the-community), even though it may be problematic given a short amount of time until it should be released.
+1. Consider requesting [help from the community](#5-request-help-from-the-community), even though it may be problematic given a short amount of time until it should be released.
 
 **Important long-term**
 
 1. Label the issue `priority/important-longterm`.
-1. Consider requesting [help from the community](#5-requesting-help-from-the-community).
+1. Consider requesting [help from the community](#5-request-help-from-the-community).
 
 **Nice to have**
 
 1. Label the issue `priority/nice-to-have`.
-1. Consider requesting [help from the community](#5-requesting-help-from-the-community).
+1. Consider requesting [help from the community](#5-request-help-from-the-community).
 
 **Not critical, but unsure?**
 
