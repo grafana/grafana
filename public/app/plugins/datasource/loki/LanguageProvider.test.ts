@@ -284,6 +284,7 @@ describe('Language completion provider', () => {
 
       expect(values1).toStrictEqual(values2);
       expect(values2).not.toStrictEqual(values3);
+      expect(requestSpy).toHaveBeenCalledTimes(2);
     });
   });
 
