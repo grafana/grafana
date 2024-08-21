@@ -10,8 +10,9 @@ import (
 	"text/template"
 
 	"github.com/google/go-cmp/cmp"
-	sqltemplate "github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/stretchr/testify/require"
+
+	sqltemplate "github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 func NewTestingSQLTemplate() sqltemplate.SQLTemplate {
@@ -127,7 +128,7 @@ func CheckQuerySnapshots(t *testing.T, setup TemplateTestSetup) {
 								expect, err := os.ReadFile(fpath)
 								if err != nil || len(expect) < 1 {
 									update = true
-									t.Errorf("missing " + fpath)
+									t.Error("missing " + fpath)
 								} else {
 									if diff := cmp.Diff(string(expect), clean); diff != "" {
 										t.Errorf("%s: %s", fname, diff)

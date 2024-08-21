@@ -1,6 +1,7 @@
 package converter
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -39,7 +40,7 @@ l1Fields:
 			if err != nil {
 				rsp.Error = err
 			} else {
-				rsp.Error = fmt.Errorf(v)
+				rsp.Error = errors.New(v)
 			}
 			return rsp
 		case "code":
@@ -55,12 +56,10 @@ l1Fields:
 			}
 			return rspErr(fmt.Errorf("%s", v))
 		case "":
-			if err != nil {
-				return rspErr(err)
-			}
 			break l1Fields
 		default:
 			v, err := iter.Read()
+			// TODO: log this properly
 			fmt.Printf("[ROOT] unsupported key: %s / %v\n\n", l1Field, v)
 			if err != nil {
 				if rsp != nil {

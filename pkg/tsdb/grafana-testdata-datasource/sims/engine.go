@@ -35,7 +35,7 @@ type SimulationEngine struct {
 
 func (s *SimulationEngine) register(info simulationInfo) error {
 	if info.create == nil {
-		return fmt.Errorf("invalid simulation -- missing create function: " + info.Type)
+		return fmt.Errorf("invalid simulation -- missing create function: %s", info.Type)
 	}
 	if info.Type == "" {
 		return fmt.Errorf("missing type")
