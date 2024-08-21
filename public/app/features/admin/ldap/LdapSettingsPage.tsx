@@ -300,7 +300,7 @@ export const LdapSettingsPage = () => {
                 </Box>
               </section>
             )}
-            {isDrawerOpen && <LdapDrawerComponent onClose={() => setIsDrawerOpen(false)}/>}
+            {isDrawerOpen && <LdapDrawerComponent onClose={() => setIsDrawerOpen(false)} />}
           </form>
         </FormProvider>
       </Page.Contents>

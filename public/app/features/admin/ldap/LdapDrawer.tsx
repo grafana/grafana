@@ -30,39 +30,26 @@ const tlsOptions: Array<SelectableValue<string>> = ['TLS1.2', 'TLS1.3'].map((v) 
 export const LdapDrawerComponent = ({ onClose }: Props) => {
   const styles = useStyles2(getStyles);
   const { register, setValue, watch } = useFormContext<LdapPayload>();
-  // const onAddGroupMapping = () => {
-  //   if (!ldapSettings.config.servers[0].group_mappings) {
-  //     ldapSettings.config.servers[0].group_mappings = [];
-  //   }
-  //   ldapSettings.config.servers[0].group_mappings.push({
-  //     group_dn: '',
-  //     org_role: 'Viewer',
-  //     org_id: 1,
-  //     grafana_admin: false,
-  //   });
-  //   onChange({
-  //     ...ldapSettings,
-  //   });
-  // };
-  // const onServerConfigChange = (serverConfig: Partial<LdapServerConfig>) => {
-  //   onChange({
-  //     ...ldapSettings,
-  //     config: {
-  //       ...ldapSettings.config,
-  //       servers: {
-  //         ...ldapSettings.config.servers,
-  //         ...serverConfig,
-  //       },
-  //     },
-  //   });
-  // };
 
-  const groupMappingsLabel = <Label className={styles.sectionLabel} description={t('ldap-drawer.group-mapping-section.description', 'Map LDAP groups to Grafana org roles')}>
-    <Trans i18nKey="ldap-drawer.group-mapping-section.label">Group mapping</Trans>
-  </Label>
+  const groupMappingsLabel = (
+    <Label
+      className={styles.sectionLabel}
+      description={t('ldap-drawer.group-mapping-section.description', 'Map LDAP groups to Grafana org roles')}
+    >
+      <Trans i18nKey="ldap-drawer.group-mapping-section.label">Group mapping</Trans>
+    </Label>
+  );
 
-  const useSslDescriptionUrl = <TextLink href='https://go.dev/src/crypto/tls/cipher_suites.go' external>https://go.dev/src/crypto/tls/cipher_suites.go</TextLink>;
-  const useSslDescription = <Trans i18nKey='ldap-drawer.extra-security-section.use-ssl.tooltip'>For a complete list of supported ciphers and TLS versions, refer to: {(useSslDescriptionUrl)}</Trans>;
+  const useSslDescriptionUrl = (
+    <TextLink href="https://go.dev/src/crypto/tls/cipher_suites.go" external>
+      https://go.dev/src/crypto/tls/cipher_suites.go
+    </TextLink>
+  );
+  const useSslDescription = (
+    <Trans i18nKey="ldap-drawer.extra-security-section.use-ssl.tooltip">
+      For a complete list of supported ciphers and TLS versions, refer to: {useSslDescriptionUrl}
+    </Trans>
+  );
 
   return (
     <Drawer title={t('ldap-drawer.title', 'Advanced Settings')} onClose={onClose}>
@@ -74,10 +61,7 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
             'If not enabled, only existing Grafana users can log in using LDAP'
           )}
         >
-          <Switch
-            id="allow-sign-up"
-            {...register('settings.allowSignUp')}
-          />
+          <Switch id="allow-sign-up" {...register('settings.allowSignUp')} />
         </Field>
         <Field
           label={t('ldap-drawer.misc-section.port.label', 'Port')}
@@ -90,9 +74,7 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
             id="port"
             placeholder={t('ldap-drawer.misc-section.port.placeholder', '389')}
             type="number"
-            {...register(
-              'settings.config.servers.0.port', { valueAsNumber: true })
-            }
+            {...register('settings.config.servers.0.port', { valueAsNumber: true })}
           />
         </Field>
         <Field
@@ -106,9 +88,7 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
             id="timeout"
             placeholder={t('ldap-drawer.misc-section.timeout.placeholder', '389')}
             type="number"
-            {...register(
-              'settings.config.servers.0.timeout', { valueAsNumber: true })
-            }
+            {...register('settings.config.servers.0.timeout', { valueAsNumber: true })}
           />
         </Field>
       </CollapsableSection>
@@ -120,34 +100,19 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
           </Trans>
         </Text>
         <Field htmlFor="name" label={t('ldap-drawer.attributes-section.name.label', 'Name')}>
-          <Input
-            id="name"
-            {...register('settings.config.servers.0.attributes.name')}
-          />
+          <Input id="name" {...register('settings.config.servers.0.attributes.name')} />
         </Field>
         <Field htmlFor="surname" label={t('ldap-drawer.attributes-section.surname.label', 'Surname')}>
-          <Input
-            id="surname"
-            {...register('settings.config.servers.0.attributes.surname')}
-          />
+          <Input id="surname" {...register('settings.config.servers.0.attributes.surname')} />
         </Field>
         <Field htmlFor="username" label={t('ldap-drawer.attributes-section.username.label', 'Username')}>
-          <Input
-            id="username"
-            {...register('settings.config.servers.0.attributes.username')}
-          />
+          <Input id="username" {...register('settings.config.servers.0.attributes.username')} />
         </Field>
         <Field htmlFor="member-of" label={t('ldap-drawer.attributes-section.member-of.label', 'Member Of')}>
-          <Input
-            id="member-of"
-            {...register('settings.config.servers.0.attributes.member_of')}
-          />
+          <Input id="member-of" {...register('settings.config.servers.0.attributes.member_of')} />
         </Field>
         <Field htmlFor="email" label={t('ldap-drawer.attributes-section.email.label', 'Email')}>
-          <Input
-            id="email"
-            {...register('settings.config.servers.0.attributes.email')}
-          />
+          <Input id="email" {...register('settings.config.servers.0.attributes.email')} />
         </Field>
       </CollapsableSection>
       <CollapsableSection label={groupMappingsLabel} isOpen={true}>
@@ -159,10 +124,7 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
             'Prevent synchronizing users’ organization roles from your IdP'
           )}
         >
-          <Switch
-            id="skip-org-role-sync"
-            {...register('settings.config.servers.0.skip_org_role_sync')}
-          />
+          <Switch id="skip-org-role-sync" {...register('settings.config.servers.0.skip_org_role_sync')} />
         </Field>
         <Field
           htmlFor="group-search-filter"
@@ -172,10 +134,7 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
             'Used to filter and identify group entries within the directory'
           )}
         >
-          <Input
-            id="group-search-filter"
-            {...register('settings.config.servers.0.group_search_filter')}
-          />
+          <Input id="group-search-filter" {...register('settings.config.servers.0.group_search_filter')} />
         </Field>
         <Field
           htmlFor="group-search-base-dns"
@@ -187,7 +146,9 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
         >
           <Input
             id="group-search-base-dns"
-            onChange={({ currentTarget: { value } }) => setValue('settings.config.servers.0.group_search_base_dns', [value])}
+            onChange={({ currentTarget: { value } }) =>
+              setValue('settings.config.servers.0.group_search_base_dns', [value])
+            }
           />
         </Field>
         <Field
@@ -207,9 +168,6 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
           />
         </Field>
         <Divider />
-        {/* <Button className={styles.button} variant="secondary" icon="plus" onClick={() => onAddGroupMapping()}>
-          <Trans i18nKey="ldap-drawer.group-mapping-section.add.button">Add group mapping</Trans>
-        </Button> */}
       </CollapsableSection>
       <CollapsableSection
         label={t('ldap-drawer.extra-security-section.label', 'Extra security measures')}
@@ -224,10 +182,7 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
           )}
         >
           <Stack>
-            <Switch
-              id="use-ssl"
-              {...register('settings.config.servers.0.use_ssl')}
-            />
+            <Switch id="use-ssl" {...register('settings.config.servers.0.use_ssl')} />
             <Tooltip content={useSslDescription} interactive>
               <Icon name="info-circle" />
             </Tooltip>
@@ -242,10 +197,7 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
                 'If set to true, use LDAP with STARTTLS instead of LDAPS'
               )}
             >
-              <Switch
-                id="start-tls"
-                {...register('settings.config.servers.0.start_tls')}
-              />
+              <Switch id="start-tls" {...register('settings.config.servers.0.start_tls')} />
             </Field>
             <Field
               htmlFor="min-tls-version"
@@ -259,7 +211,7 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
                 id="min-tls-version"
                 options={tlsOptions}
                 value={watch('settings.config.servers.0.min_tls_version')}
-                onChange={({value}) => setValue('settings.config.servers.0.min_tls_version', value)}
+                onChange={({ value }) => setValue('settings.config.servers.0.min_tls_version', value)}
               />
             </Field>
             <Field
@@ -276,36 +228,16 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
                   'e.g. ["TLS_AES_256_GCM_SHA384"]'
                 )}
                 value={watch('settings.config.servers.0.tls_ciphers')}
-                onChange={({currentTarget: {value}}) => setValue('settings.config.servers.0.tls_ciphers', value?.split(/,|\s/).map((v: string) => v.trim()))}
+                onChange={({ currentTarget: { value } }) =>
+                  setValue(
+                    'settings.config.servers.0.tls_ciphers',
+                    value?.split(/,|\s/).map((v: string) => v.trim())
+                  )
+                }
               />
             </Field>
           </>
         )}
-        {/* TODO: add a component to choose either Base64 encoded value or path to file */}
-        {/* <Field label="Encryption key and certificate provision specification (required)" description="X.509 certificate provides the public part, while the private key issued in a PKCS#8 format provides the private part of the asymmetric encryption.">
-          <Input placeholder='TODO: This is a Base64-enconded content or a Path to file'></Input>
-        </Field>
-        <Field label="Root CA certificate path" description="Separate by commas or spaces">
-          <Input
-            placeholder='/path/to/private_key.pem'
-            defaultValue={ldapSettings.config.server.rootCaCert}
-            onChange={({currentTarget: {value}}) => onServerConfigChange({rootCaCert: value})}
-          />
-        </Field>
-        <Field label="Client certificate path">
-          <Input
-            placeholder='/path/to/certificate.cert'
-            defaultValue={ldapSettings.config.server.clientCert}
-            onChange={({currentTarget: {value}}) => onServerConfigChange({clientCert: value})}
-          />
-        </Field>
-        <Field label="Client key path">
-          <Input
-            placeholder='/path/to/private_key.pem'
-            defaultValue={ldapSettings.config.server.clientKey}
-            onChange={({currentTarget: {value}}) => onServerConfigChange({clientKey: value})}
-          />
-        </Field> */}
       </CollapsableSection>
     </Drawer>
   );
@@ -316,8 +248,5 @@ function getStyles(theme: GrafanaTheme2) {
     sectionLabel: css({
       fontSize: theme.typography.size.lg,
     }),
-    // button: css({
-    //   marginBottom: theme.spacing(4),
-    // }),
   };
 }
