@@ -152,6 +152,9 @@ jest.mock('@grafana/runtime', () => ({
         getColorByName: jest.fn().mockReturnValue('red'),
       },
     },
+    buildInfo: {
+      version: '11.2.0',
+    },
   },
   setPluginExtensionGetter: jest.fn(),
   getPluginLinkExtensions: jest.fn(),
