@@ -17,6 +17,11 @@ import (
 
 const DefaultAdminUserId = 1
 
+var (
+	ErrMustBeAdmin        = fmt.Errorf("reset-admin-password can only be used to reset an admin user account")
+	ErrAdminCannotBeFound = errors.New("admin user cannot be found")
+)
+
 func resetPasswordCommand(c utils.CommandLine, runner server.Runner) error {
 	var newPassword user.Password
 	adminId := int64(c.Int("user-id"))
@@ -100,9 +105,6 @@ func listAdminUsers(userSvc user.Service) ([]*user.UserSearchHitDTO, error) {
 
 	return admins.Users, nil
 }
-
-var ErrMustBeAdmin = fmt.Errorf("reset-admin-password can only be used to reset an admin user account")
-var ErrAdminCannotBeFound = errors.New("admin user cannot be found")
 
 type adminFilter struct{}
 
