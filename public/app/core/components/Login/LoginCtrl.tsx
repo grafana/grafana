@@ -11,11 +11,9 @@ const isOauthEnabled = () => {
 };
 
 const showPasswordlessConfirmation = () => {
-  const queryValues = Object.fromEntries(
-    new URLSearchParams(window.location.search.split(/\?/)[1])
-  );
+  const queryValues = Object.fromEntries(new URLSearchParams(window.location.search.split(/\?/)[1]));
   return !!queryValues.code;
-}
+};
 
 export interface FormModel {
   user: string;
@@ -30,6 +28,8 @@ export interface PasswordlessFormModel {
 export interface PasswordlessConfirmationFormModel {
   code: string;
   confirmationCode: string;
+  username?: string;
+  name?: string;
 }
 
 interface Props {
@@ -170,7 +170,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
           loginErrorMessage: fetchErrorMessage || t('login.error.unknown', 'Unknown error occurred'),
         });
       });
-  }
+  };
 
   changeView = (showDefaultPasswordWarning: boolean) => {
     this.setState({
