@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v45/github"
 	"github.com/stretchr/testify/assert"
 	"github.com/urfave/cli/v2"
 )

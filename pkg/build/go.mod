@@ -22,7 +22,6 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect; @grafana/alerting-backend
 	github.com/golang/protobuf v1.5.4 // indirect; @grafana/grafana-backend-group
 	github.com/google/go-cmp v0.6.0 // @grafana/grafana-backend-group
-	github.com/google/go-github v17.0.0+incompatible // @grafana/grafana-release-guild
 	github.com/google/go-github/v45 v45.2.0 // @grafana/grafana-release-guild
 	github.com/google/uuid v1.6.0 // indirect; @grafana/grafana-backend-group
 	github.com/googleapis/gax-go/v2 v2.12.5 // indirect; @grafana/grafana-backend-group
