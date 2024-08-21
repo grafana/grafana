@@ -30,6 +30,11 @@ export type UsePluginComponentResult<Props = {}> = {
   isLoading: boolean;
 };
 
+export type UsePluginComponentsResult<Props = {}> = {
+  components: Array<React.ComponentType<Props>>;
+  isLoading: boolean;
+};
+
 let singleton: GetPluginExtensions | undefined;
 
 export function setPluginExtensionGetter(instance: GetPluginExtensions): void {
