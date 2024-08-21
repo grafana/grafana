@@ -519,7 +519,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
-			require.NoError(t, err)
+			require.ErrorContains(t, err, fmt.Sprintf("expected metric name(s) not found: [%v]", "grafana_alerting_rule_group_rules"))
 		})
 
 		alertRule1 := models.RuleGen.With(models.RuleGen.WithOrgID(firstOrgID)).GenerateRef()
@@ -590,7 +590,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
-			require.NoError(t, err)
+			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_rule_group_rules]")
 		})
 	})
 
@@ -604,7 +604,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_groups")
-			require.NoError(t, err)
+			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_rule_groups]")
 		})
 
 		alertRule1 := models.RuleGen.With(models.RuleGen.WithOrgID(firstOrgID)).GenerateRef()
@@ -735,7 +735,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_simple_routing_rules")
-			require.NoError(t, err)
+			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_simple_routing_rules]")
 		})
 	})
 
@@ -749,7 +749,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_groups")
-			require.NoError(t, err)
+			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_rule_groups]")
 		})
 
 		alertRule1 := models.RuleGen.With(models.RuleGen.WithOrgID(firstOrgID)).GenerateRef()
