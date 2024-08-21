@@ -1,4 +1,4 @@
-import { isArray, omit, isNil, omitBy, reduce, get } from 'lodash';
+import { isArray, omit, isNil, omitBy, reduce, get, has } from 'lodash';
 
 import {
   AlertManagerCortexConfig,
@@ -268,7 +268,8 @@ export function formChannelValuesToGrafanaChannelConfig(
   const secureSettings = reduce(
     secureFieldNames,
     (acc: Record<string, unknown> = {}, key) => {
-      acc[key] = get(channel.settings, key);
+      // the value for secure settings can come from either the "settings" (accidental) or "secureFields" if editing an existing receiver
+      acc[key] = get(channel.settings, key) ?? get(values.secureFields, key, '');
       return acc;
     },
     {}
@@ -315,7 +316,7 @@ export function omitEmptyValues<T>(obj: T): T {
 // Will remove empty ('', null, undefined) object properties unless they were previously defined.
 // existing is a map of property names that were previously defined.
 export function omitEmptyUnlessExisting(settings = {}, existing = {}): Record<string, unknown> {
-  return omitBy(settings, (value, key) => isUnacceptableValue(value) && !(key in existing));
+  return omitBy(settings, (value, key) => isUnacceptableValue(value) && !has(existing, key));
 }
 
 export function omitTemporaryIdentifiers<T>(object: Readonly<T>): T {
