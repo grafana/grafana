@@ -54,21 +54,19 @@ export function transformV2(
   options: { exemplarTraceIdDestinations?: ExemplarTraceIdDestination[] }
 ) {
   // migration for dataplane field name issue
-  if (config.featureToggles.prometheusDataplane) {
-    // update displayNameFromDS in the field config
-    response.data.forEach((f: DataFrame) => {
-      const target = request.targets.find((t) => t.refId === f.refId);
-      // check that the legend is selected as auto
-      if (target && target.legendFormat === '__auto') {
-        f.fields.forEach((field) => {
-          if (field.labels?.__name__ && field.labels?.__name__ === field.name) {
-            const fieldCopy = { ...field, name: TIME_SERIES_VALUE_FIELD_NAME };
-            field.config.displayNameFromDS = getFieldDisplayName(fieldCopy, f, response.data);
-          }
-        });
-      }
-    });
-  }
+  // update displayNameFromDS in the field config
+  response.data.forEach((f: DataFrame) => {
+    const target = request.targets.find((t) => t.refId === f.refId);
+    // check that the legend is selected as auto
+    if (target && target.legendFormat === '__auto') {
+      f.fields.forEach((field) => {
+        if (field.labels?.__name__ && field.labels?.__name__ === field.name) {
+          const fieldCopy = { ...field, name: TIME_SERIES_VALUE_FIELD_NAME };
+          field.config.displayNameFromDS = getFieldDisplayName(fieldCopy, f, response.data);
+        }
+      });
+    }
+  });
 
   const [tableFrames, framesWithoutTable] = partition<DataFrame>(response.data, (df) => isTableResult(df, request));
   const processedTableFrames = transformDFToTable(tableFrames);
