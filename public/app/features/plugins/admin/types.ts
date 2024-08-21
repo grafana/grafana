@@ -43,6 +43,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   isPreinstalled: { found: boolean; withVersion: boolean }; // Indicates that the plugin is pre-installed
   // `isPublished` is TRUE if the plugin is published to grafana.com
   isPublished: boolean;
+  latestVersion?: string;
   name: string;
   orgName: string;
   signature: PluginSignatureStatus;
@@ -156,6 +157,7 @@ export type LocalPlugin = WithAccessControlMetadata & {
   dev?: boolean;
   enabled: boolean;
   hasUpdate: boolean;
+  latestVersion: string;
   id: string;
   info: {
     author: Rel;

@@ -201,6 +201,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     angularDetected,
     isFullyInstalled: true,
     iam: plugin.iam,
+    latestVersion: plugin.latestVersion,
   };
 }
 
