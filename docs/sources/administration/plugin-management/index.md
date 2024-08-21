@@ -149,6 +149,19 @@ Grafana Cloud handles the plugin installation automatically.
 
 If you're logged in to Grafana Cloud when you add a plugin, log out and then log back in again to use the new plugin.
 
+
+
+### Install plugins on a self-hosted Grafana through helm
+
+In [Helm charts](https://github.com/grafana/helm-charts/blob/79a0101296b0065b18987321b3047b8c94bc1a33/charts/grafana/values.yaml#L605), you may add the plugins you wish to install as a list
+
+```
+  plugins:
+    - https://grafana.com/api/plugins/grafana-oncall-app/versions/v1.9.0/download;grafana-oncall-app # Specific version
+    - redis-datasource
+```
+
+
 ### Install plugin on local Grafana
 
 Follow the instructions on the **Install** tab. You can either install the plugin with a Grafana CLI command or by downloading and uncompressing a zip file into the Grafana plugins directory. We recommend using Grafana CLI in most instances. The zip option is available if your Grafana server doesn't have access to the internet.
