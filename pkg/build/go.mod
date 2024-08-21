@@ -16,19 +16,18 @@ replace cuelang.org/go => github.com/grafana/cue v0.0.0-20230926092038-971951014
 replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.52.0
 
 require (
-	cloud.google.com/go/storage v1.38.0 // @grafana/grafana-backend-group
+	cloud.google.com/go/storage v1.43.0 // @grafana/grafana-backend-group
 	github.com/Masterminds/semver/v3 v3.2.0 // @grafana/grafana-release-guild
-	github.com/aws/aws-sdk-go v1.51.31 // @grafana/aws-datasources
+	github.com/aws/aws-sdk-go v1.55.5 // @grafana/aws-datasources
 	github.com/blang/semver/v4 v4.0.0 // @grafana/grafana-release-guild
 	github.com/docker/docker v26.0.2+incompatible // @grafana/grafana-release-guild
 	github.com/drone/drone-cli v1.6.1 // @grafana/grafana-release-guild
 	github.com/gogo/protobuf v1.3.2 // indirect; @grafana/alerting-backend
-	github.com/golang/protobuf v1.5.4 // indirect; @grafana/grafana-backend-group
 	github.com/google/go-cmp v0.6.0 // @grafana/grafana-backend-group
 	github.com/google/go-github v17.0.0+incompatible // @grafana/grafana-release-guild
 	github.com/google/go-github/v45 v45.2.0 // @grafana/grafana-release-guild
 	github.com/google/uuid v1.6.0 // indirect; @grafana/grafana-backend-group
-	github.com/googleapis/gax-go/v2 v2.12.3 // indirect; @grafana/grafana-backend-group
+	github.com/googleapis/gax-go/v2 v2.13.0 // indirect; @grafana/grafana-backend-group
 	github.com/jmespath/go-jmespath v0.4.0 // indirect; @grafana/grafana-backend-group
 	github.com/stretchr/testify v1.9.0 // @grafana/grafana-backend-group
 	github.com/urfave/cli v1.22.15 // @grafana/grafana-backend-group
@@ -43,20 +42,20 @@ require (
 	golang.org/x/oauth2 v0.22.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.8.0 // indirect; @grafana/alerting-backend
 	golang.org/x/text v0.17.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/time v0.5.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/time v0.6.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/tools v0.22.0 // indirect; @grafana/grafana-as-code
-	google.golang.org/api v0.176.0 // @grafana/grafana-backend-group
+	google.golang.org/api v0.191.0 // @grafana/grafana-backend-group
 	google.golang.org/grpc v1.65.0 // indirect; @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.34.2 // indirect; @grafana/plugins-platform-backend
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
 )
 
 require (
-	cloud.google.com/go v0.112.1 // indirect
-	cloud.google.com/go/auth v0.2.2 // indirect
-	cloud.google.com/go/auth/oauth2adapt v0.2.1 // indirect
-	cloud.google.com/go/compute/metadata v0.3.0 // indirect
-	cloud.google.com/go/iam v1.1.6 // indirect
+	cloud.google.com/go v0.115.0 // indirect
+	cloud.google.com/go/auth v0.8.1 // indirect
+	cloud.google.com/go/auth/oauth2adapt v0.2.4 // indirect
+	cloud.google.com/go/compute/metadata v0.5.0 // indirect
+	cloud.google.com/go/iam v1.1.13 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/bmatcuk/doublestar v1.1.1 // indirect
 	github.com/buildkite/yaml v2.1.0+incompatible // indirect
@@ -75,7 +74,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
-	github.com/google/s2a-go v0.1.7 // indirect
+	github.com/google/s2a-go v0.1.8 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
@@ -88,15 +87,16 @@ require (
 	go.opentelemetry.io/otel/metric v1.28.0 // indirect
 	go.starlark.net v0.0.0-20230525235612-a134d8f9ddca // indirect
 	golang.org/x/sys v0.24.0 // indirect
-	google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de // indirect; @grafana/grafana-backend-group
-	google.golang.org/genproto/googleapis/api v0.0.0-20240701130421-f6361c86f094 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094 // indirect
+	google.golang.org/genproto v0.0.0-20240812133136-8ffd90a71988 // indirect; @grafana/grafana-backend-group
+	google.golang.org/genproto/googleapis/api v0.0.0-20240812133136-8ffd90a71988 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240812133136-8ffd90a71988 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
 require dagger.io/dagger v0.11.8-rc.2
 
 require (
+	cloud.google.com/go/longrunning v0.5.12 // indirect
 	github.com/99designs/gqlgen v0.17.44 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/Khan/genqlient v0.7.0 // indirect

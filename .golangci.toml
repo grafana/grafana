@@ -125,6 +125,34 @@ files = [
   "**/pkg/promlib/**/*"
 ]
 
+[linters-settings.depguard.rules.storage-unified-resource]
+list-mode = "lax"
+allow = [
+  "github.com/grafana/grafana/pkg/apimachinery",
+]
+deny = [
+  { pkg = "github.com/grafana/grafana/pkg", desc = "pkg/storage/unified/resource is not allowed to import grafana core" }
+]
+files = [
+  "./pkg/storage/unified/resource/*",
+  "./pkg/storage/unified/resource/**/*"
+]
+
+[linters-settings.depguard.rules.storage-unified-apistore]
+list-mode = "lax"
+allow = [
+  "github.com/grafana/grafana/pkg/apimachinery",
+  "github.com/grafana/grafana/pkg/apiserver",
+  "github.com/grafana/grafana/pkg/unified/resource",
+]
+deny = [
+  { pkg = "github.com/grafana/grafana/pkg", desc = "pkg/storage/unified/apistore is not allowed to import grafana core" }
+]
+files = [
+  "./pkg/storage/unified/apistore/*",
+  "./pkg/storage/unified/apistore/**/*"
+]
+
 [linters-settings.gocritic]
 enabled-checks = ["ruleguard"]
 [linters-settings.gocritic.settings.ruleguard]

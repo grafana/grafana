@@ -12,6 +12,7 @@ use (
 	./pkg/build/wire // skip:golangci-lint
 	./pkg/promlib
 	./pkg/semconv
+	./pkg/storage/unified/apistore
 	./pkg/storage/unified/resource
 	./pkg/util/xorm // skip:golangci-lint
 )
