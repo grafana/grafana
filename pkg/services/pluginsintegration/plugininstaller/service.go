@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"runtime"
 
+	"cuelang.org/go/pkg/time"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -33,7 +34,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, plugi
 	}
 	if !cfg.PreinstallPluginsAsync {
 		// Block initialization process until plugins are installed
-		err := s.installPlugins(context.Background())
+		err := s.installPluginsWithTimeout()
 		if err != nil {
 			return nil, err
 		}
@@ -46,6 +47,24 @@ func (s *Service) IsDisabled() bool {
 	return !s.features.IsEnabled(context.Background(), featuremgmt.FlagBackgroundPluginInstaller) ||
 		len(s.cfg.PreinstallPlugins) == 0 ||
 		!s.cfg.PreinstallPluginsAsync
+}
+
+func (s *Service) installPluginsWithTimeout() error {
+	// Installation process does not timeout by default nor reuses the context
+	// passed to the request so we need to handle the timeout here.
+	// We could make this timeout configurable in the future.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+	done := make(chan struct{ err error })
+	go func() {
+		done <- struct{ err error }{err: s.installPlugins(ctx)}
+	}()
+	select {
+	case <-ctx.Done():
+		return fmt.Errorf("failed to install plugins: %w", ctx.Err())
+	case d := <-done:
+		return d.err
+	}
 }
 
 func (s *Service) installPlugins(ctx context.Context) error {
