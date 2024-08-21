@@ -10,12 +10,19 @@ export function deriveSearchTermsFromInput(whiteSpaceSeparatedTerms?: string) {
   );
 }
 
-export function createJSRegExpFromSearchTerms(searchQuery?: string, prefix?: string) {
-  let searchParts = deriveSearchTermsFromInput(searchQuery).map((part) => `(?=(.*${part.toLowerCase()}.*))`);
+export function createJSRegExpFromSearchTerms(searchQuery?: string, prefix?: boolean) {
+  let searchParts: string[] = [];
 
-  // filter prefix here before building layout
-  if (prefix && prefix !== 'all') {
-    searchParts = [`(?=^${prefix}.*)`].concat(searchParts);
+  // build a regex for either
+  // the search metrics input(contains)
+  // or
+  // the metricsPrefix(starts with)
+  if (prefix) {
+    // there will only be one prefix selected at a time
+    searchParts = [`(?=^${searchQuery}.*)`];
+  } else {
+    // there may be multiple search terms
+    searchParts = deriveSearchTermsFromInput(searchQuery).map((part) => `(?=(.*${part.toLowerCase()}.*))`);
   }
 
   if (searchParts.length === 0) {

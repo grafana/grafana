@@ -212,10 +212,20 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
 
     try {
       const response = await getMetricNames(datasourceUid, timeRange, match, MAX_METRIC_NAMES);
-      const searchRegex = createJSRegExpFromSearchTerms(getMetricSearch(this), this.state.metricPrefix);
-      const metricNames = searchRegex
+      const searchRegex = createJSRegExpFromSearchTerms(getMetricSearch(this));
+      let metricNames = searchRegex
         ? response.data.filter((metric) => !searchRegex || searchRegex.test(metric))
         : response.data;
+
+      const filteredMetricNames = metricNames;
+
+      if (this.state.metricPrefix !== 'all') {
+        // filter metric names with the prefix here
+        const prefixRegex = createJSRegExpFromSearchTerms(this.state.metricPrefix, true);
+        metricNames = prefixRegex
+          ? metricNames.filter((metric) => !prefixRegex || prefixRegex.test(metric))
+          : metricNames;
+      }
 
       const metricNamesWarning = response.limitReached
         ? `This feature will only return up to ${MAX_METRIC_NAMES} metric names for performance reasons. ` +
@@ -227,11 +237,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
 
       let rootGroupNode = this.state.rootGroup;
 
-      if (!rootGroupNode) {
-        // build the nodes for the metric prefix select from all the metrics possible (limited of course)
-        const allMetricNames = await getMetricNames(datasourceUid, timeRange, '', MAX_METRIC_NAMES);
-        rootGroupNode = await this.generateGroups(allMetricNames.data);
-      }
+      // generate groups based on the metric input
+      rootGroupNode = await this.generateGroups(filteredMetricNames);
 
       this.setState({
         metricNames,
