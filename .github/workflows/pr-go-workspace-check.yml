@@ -31,3 +31,5 @@ jobs:
           echo "If there is a change in enterprise dependencies, please update pkg/extensions/main.go."
           exit 1
         fi
+    - name: Ensure Dockerfile contains submodule COPY commands
+      run: ./scripts/go-workspace/validate-dockerfile.sh
