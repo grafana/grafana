@@ -236,7 +236,7 @@ groupByNode(summarize(movingAverage(apps.$app.$server.counters.requests.count, 5
 _Ad hoc filters_ enable you to add key/value filters that are automatically added to all metric queries that use the specified data source. Unlike other variables, you do not use ad hoc filters in queries. Instead, you use ad hoc filters to write filters for existing queries.
 
 {{% admonition type="note" %}}
-Ad hoc filter variables only work with Prometheus, Loki, InfluxDB, and Elasticsearch data sources.
+Not all data sources support ad hoc filters. Examples of those that do include Prometheus, Loki, InfluxDB, and Elasticsearch.
 {{% /admonition %}}
 
 1. [Enter general options](#enter-general-options).
