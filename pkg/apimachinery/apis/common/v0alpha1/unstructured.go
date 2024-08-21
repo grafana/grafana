@@ -101,6 +101,14 @@ func (u *Unstructured) GetNestedString(fields ...string) string {
 	return val
 }
 
+func (u *Unstructured) GetNestedBool(fields ...string) bool {
+	val, found, err := unstructured.NestedBool(u.Object, fields...)
+	if !found || err != nil {
+		return false
+	}
+	return val
+}
+
 func (u *Unstructured) GetNestedStringSlice(fields ...string) []string {
 	val, found, err := unstructured.NestedStringSlice(u.Object, fields...)
 	if !found || err != nil {

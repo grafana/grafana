@@ -6,15 +6,15 @@ import (
 	"path"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 
 	aggregationv0alpha1 "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
+	"github.com/grafana/grafana/pkg/aggregator/apiserver/plugin/admission"
 )
 
 type PluginClient interface {
 	backend.QueryDataHandler
-	backend.StreamHandler
 	backend.AdmissionHandler
-	backend.CallResourceHandler
 }
 
 type PluginContextProvider interface {
@@ -29,6 +29,8 @@ type PluginHandler struct {
 	pluginContextProvider PluginContextProvider
 
 	dataplaneService aggregationv0alpha1.DataPlaneService
+
+	admissionCodecs serializer.CodecFactory
 }
 
 func NewPluginHandler(
@@ -43,6 +45,7 @@ func NewPluginHandler(
 		client:                client,
 		pluginContextProvider: pluginContextProvider,
 		dataplaneService:      dataplaneService,
+		admissionCodecs:       admission.GetCodecs(),
 	}
 	h.registerRoutes()
 	return h
@@ -54,7 +57,8 @@ func (h *PluginHandler) registerRoutes() {
 	for _, service := range h.dataplaneService.Spec.Services {
 		switch service.Type {
 		case aggregationv0alpha1.AdmissionControlServiceType:
-			// TODO: implement in future PR
+			h.mux.Handle(proxyPath("/admission/mutate"), h.AdmissionMutationHandler())
+			h.mux.Handle(proxyPath("/admission/validate"), h.AdmissionValidationHandler())
 		case aggregationv0alpha1.ConversionServiceType:
 			// TODO: implement in future PR
 		case aggregationv0alpha1.DataSourceProxyServiceType:

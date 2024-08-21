@@ -42,7 +42,7 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	disablePreinstall := pluginsSection.Key("disable_preinstall").MustBool(false)
 	if !disablePreinstall {
 		rawInstallPlugins := util.SplitString(pluginsSection.Key("preinstall").MustString(""))
-		cfg.InstallPlugins = make([]InstallPlugin, len(rawInstallPlugins))
+		cfg.PreinstallPlugins = make([]InstallPlugin, len(rawInstallPlugins))
 		for i, plugin := range rawInstallPlugins {
 			parts := strings.Split(plugin, "@")
 			id := parts[0]
@@ -50,8 +50,9 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 			if len(parts) == 2 {
 				v = parts[1]
 			}
-			cfg.InstallPlugins[i] = InstallPlugin{id, v}
+			cfg.PreinstallPlugins[i] = InstallPlugin{id, v}
 		}
+		cfg.PreinstallPluginsAsync = pluginsSection.Key("preinstall_async").MustBool(true)
 	}
 
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
