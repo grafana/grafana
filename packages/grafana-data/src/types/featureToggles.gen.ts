@@ -43,7 +43,6 @@ export interface FeatureToggles {
   logRequestsInstrumentedAsUnknown?: boolean;
   topnav?: boolean;
   grpcServer?: boolean;
-  unifiedStorage?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
@@ -107,7 +106,6 @@ export interface FeatureToggles {
   alertingInsights?: boolean;
   externalCorePlugins?: boolean;
   pluginsAPIMetrics?: boolean;
-  idForwarding?: boolean;
   externalServiceAccounts?: boolean;
   panelMonitoring?: boolean;
   enableNativeHTTPHistogram?: boolean;

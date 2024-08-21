@@ -203,14 +203,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:            "unifiedStorage",
-			Description:     "SQL-based k8s storage",
-			Stage:           FeatureStageExperimental,
-			RequiresDevMode: false,
-			RequiresRestart: true, // new SQL tables created
-			Owner:           grafanaSearchAndStorageSquad,
-		},
-		{
 			Name:           "cloudWatchCrossAccountQuerying",
 			Description:    "Enables cross-account querying in CloudWatch datasources",
 			Stage:          FeatureStageGeneralAvailability,
@@ -671,12 +663,6 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaPluginsPlatformSquad,
-		},
-		{
-			Name:        "idForwarding",
-			Description: "Generate signed id token for identity that can be forwarded to plugins and external services",
-			Stage:       FeatureStageExperimental,
-			Owner:       identityAccessTeam,
 		},
 		{
 			Name:              "externalServiceAccounts",
@@ -1305,8 +1291,9 @@ var (
 		{
 			Name:        "openSearchBackendFlowEnabled",
 			Description: "Enables the backend query flow for Open Search datasource plugin",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       awsDatasourcesSquad,
+			Expression:  "true",
 		},
 		{
 			Name:              "ssoSettingsLDAP",
