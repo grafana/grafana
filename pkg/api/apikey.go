@@ -116,7 +116,7 @@ func (hs *HTTPServer) DeleteAPIKey(c *contextmodel.ReqContext) response.Response
 // 301: statusMovedPermanently
 func (hs *HTTPServer) AddAPIKey(c *contextmodel.ReqContext) response.Response {
 	// Set the Location header to the new URL
-	hs.log.Warn("Deprecated API endpoint called", "path", c.Req.URL.Path)
+	hs.log.Warn("Obsolete and Permanently moved API endpoint called", "path", c.Req.URL.Path)
 	c.Context.Resp.Header().Set("Location", "/api/serviceaccounts/tokens")
 
 	// Respond with a 301 Moved Permanently status code

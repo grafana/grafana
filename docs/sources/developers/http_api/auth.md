@@ -29,7 +29,9 @@ If you use Grafana v9.1 or newer, use service accounts instead of API keys. For 
 
 ## List API keys
 
+{{% admonition type="warning" %}}
 ### DEPRECATED
+{{% /admonition %}}
 
 `GET /api/auth/keys`
 
@@ -77,7 +79,11 @@ Content-Type: application/json
 
 ## Create API Key
 
-### PERMANENTLY MOVED
+{{% admonition type="warning" %}}
+### OBSOLETE AND PERMANENTLY MOVED
+{{% /admonition %}}
+
+Endpoint is obsolete and has been moved to [Grafana service account API]({{< relref "./serviceaccount/" >}}). For more information, refer to [Migrate to Grafana service account API]({{< relref "../../administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api" >}}).
 
 `POST /api/auth/keys`
 
@@ -126,7 +132,9 @@ Content-Type: application/json
 
 ## Delete API Key
 
+{{% admonition type="warning" %}}
 ### DEPRECATED
+{{% /admonition %}}
 
 `DELETE /api/auth/keys/:id`
 
