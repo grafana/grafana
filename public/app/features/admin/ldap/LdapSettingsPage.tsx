@@ -165,7 +165,7 @@ export const LdapSettingsPage = () => {
         return;
       }
       appEvents.publish({
-        type: AppEvents.alertError.name,
+        type: AppEvents.alertSuccess.name,
         payload: [t('ldap-settings-page.alert.discard-success', 'Ldap settings discarded')],
       });
       reset(payload);
