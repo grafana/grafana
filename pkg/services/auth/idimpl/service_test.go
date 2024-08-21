@@ -20,7 +20,7 @@ import (
 )
 
 func Test_ProvideService(t *testing.T) {
-	t.Run("should register post auth hook when feature flag is enabled", func(t *testing.T) {
+	t.Run("should register post auth hook", func(t *testing.T) {
 		var hookRegistered bool
 		authnService := &authntest.MockService{
 			RegisterPostAuthHookFunc: func(_ authn.PostAuthHookFn, _ uint) {
@@ -30,18 +30,6 @@ func Test_ProvideService(t *testing.T) {
 
 		_ = ProvideService(setting.NewCfg(), nil, nil, authnService, nil)
 		assert.True(t, hookRegistered)
-	})
-
-	t.Run("should not register post auth hook when feature flag is disabled", func(t *testing.T) {
-		var hookRegistered bool
-		authnService := &authntest.MockService{
-			RegisterPostAuthHookFunc: func(_ authn.PostAuthHookFn, _ uint) {
-				hookRegistered = true
-			},
-		}
-
-		_ = ProvideService(setting.NewCfg(), nil, nil, authnService, nil)
-		assert.False(t, hookRegistered)
 	})
 }
 
