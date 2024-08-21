@@ -12,6 +12,7 @@ labels:
   products:
     - enterprise
     - oss
+    - cloud
 menuTitle: Service accounts
 title: Service accounts
 weight: 800

@@ -258,9 +258,10 @@ type Cfg struct {
 	AuthProxy AuthProxySettings
 
 	// OAuth
-	OAuthAutoLogin                bool
-	OAuthCookieMaxAge             int
-	OAuthAllowInsecureEmailLookup bool
+	OAuthAutoLogin                       bool
+	OAuthCookieMaxAge                    int
+	OAuthAllowInsecureEmailLookup        bool
+	OAuthRefreshTokenServerLockMinWaitMs int64
 
 	JWTAuth    AuthJWTSettings
 	ExtJWTAuth ExtJWTSettings
@@ -1603,6 +1604,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	}
 
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
+	cfg.OAuthRefreshTokenServerLockMinWaitMs = auth.Key("oauth_refresh_token_server_lock_min_wait_ms").MustInt64(1000)
 	cfg.SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
 
 	// Deprecated
