@@ -106,7 +106,6 @@ export interface FeatureToggles {
   alertingInsights?: boolean;
   externalCorePlugins?: boolean;
   pluginsAPIMetrics?: boolean;
-  idForwarding?: boolean;
   externalServiceAccounts?: boolean;
   panelMonitoring?: boolean;
   enableNativeHTTPHistogram?: boolean;

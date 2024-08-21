@@ -1320,7 +1320,8 @@
       "metadata": {
         "name": "idForwarding",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-09-25T15:21:28Z"
+        "creationTimestamp": "2023-09-25T15:21:28Z",
+        "deletionTimestamp": "2024-08-21T11:35:56Z"
       },
       "spec": {
         "description": "Generate signed id token for identity that can be forwarded to plugins and external services",
