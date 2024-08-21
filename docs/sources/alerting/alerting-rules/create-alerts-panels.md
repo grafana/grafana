@@ -37,7 +37,7 @@ At the moment, alert rules are only supported in [time series](ref:time-series) 
 
 To view alert rules associated with a time series panel, complete the following steps.
 
-1. Ooen the panel editor by hovering over the top-right corner of any panel
+1. Open the panel editor by hovering over the top-right corner of any panel
 1. Click the panel menu icon that appears.
 1. Click **Edit**.
 1. Click the **Alert** tab to view existing alert rules or create a new one.
