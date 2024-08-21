@@ -76,24 +76,11 @@ var (
 	// Create
 
 	// Asserts pre-conditions for create access to receivers. If this evaluates to false, the user cannot create any receivers.
-	createReceiversPreConditionsEval = ac.EvalAny(
+	// Create has no scope, so these permissions are both necessary and sufficient to create any and all receivers.
+	createReceiversEval = ac.EvalAny(
 		ac.EvalPermission(ac.ActionAlertingNotificationsWrite), // Global action for all AM config. Org scope.
-		ac.EvalPermission(ac.ActionAlertingReceiversCreate),    // Action for receivers. UID scope.
+		ac.EvalPermission(ac.ActionAlertingReceiversCreate),    // Action for receivers. Org scope.
 	)
-
-	// Asserts create access to all receivers.
-	createAllReceiversEval = ac.EvalAny(
-		ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
-		ac.EvalPermission(ac.ActionAlertingReceiversCreate, ScopeReceiversAll),
-	)
-
-	// Asserts create access to a specific receiver.
-	createReceiverEval = func(uid string) ac.Evaluator {
-		return ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
-			ac.EvalPermission(ac.ActionAlertingReceiversCreate, ScopeReceiversProvider.GetResourceScopeUID(uid)),
-		)
-	}
 
 	// Update
 
@@ -205,11 +192,11 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 			},
 			resource:      "receiver",
 			action:        "create",
-			authorizeSome: ac.EvalAll(readRedactedReceiversPreConditionsEval, createReceiversPreConditionsEval),
+			authorizeSome: ac.EvalAll(readRedactedReceiversPreConditionsEval, createReceiversEval),
 			authorizeOne: func(receiver T) ac.Evaluator {
-				return ac.EvalAll(readRedactedReceiverEval(receiver.GetUID()), createReceiverEval(receiver.GetUID()))
+				return ac.EvalAll(readRedactedReceiversPreConditionsEval, createReceiversEval)
 			},
-			authorizeAll: ac.EvalAll(readRedactedAllReceiversEval, createAllReceiversEval),
+			authorizeAll: ac.EvalAll(readRedactedReceiversPreConditionsEval, createReceiversEval),
 		},
 		update: actionAccess[T]{
 			genericService: genericService{

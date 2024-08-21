@@ -871,27 +871,14 @@ func TestReceiverServiceAC_Create(t *testing.T) {
 			hasAccess: nil,
 		},
 		{
-			name:        "not authorized without receivers scope",
-			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversCreate: nil},
-			hasAccess:   nil,
-		},
-		{
 			name:        "global legacy permissions - not authorized without read",
 			permissions: map[string][]string{accesscontrol.ActionAlertingNotificationsWrite: nil},
 			hasAccess:   nil,
 		},
 		{
-			name:        "global receivers permissions - not authorized without read",
-			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversCreate: {ac.ScopeReceiversAll}},
+			name:        "receivers permissions - not authorized without read",
+			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversCreate: nil},
 			hasAccess:   nil,
-		},
-		{
-			name: "single receivers permissions - not authorized without read",
-			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversCreate: {
-				ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
-				ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
-			}},
-			hasAccess: nil,
 		},
 		{
 			name:        "global legacy permissions - create all",
@@ -899,48 +886,17 @@ func TestReceiverServiceAC_Create(t *testing.T) {
 			hasAccess:   allReceivers(),
 		},
 		{
-			name:        "global receivers permissions - create all",
-			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversCreate: {ac.ScopeReceiversAll}, accesscontrol.ActionAlertingReceiversRead: {ac.ScopeReceiversAll}},
+			name:        "receivers permissions - create all",
+			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversCreate: nil, accesscontrol.ActionAlertingReceiversRead: nil},
 			hasAccess:   allReceivers(),
 		},
 		{
-			name: "single receivers permissions - create some",
+			name: "receivers mixed global read permissions - create all",
 			permissions: map[string][]string{
-				accesscontrol.ActionAlertingReceiversCreate: {
-					ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
-					ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
-				},
-				accesscontrol.ActionAlertingReceiversRead: {
-					ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
-					ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
-				},
-			},
-			hasAccess: []models.Receiver{recv1, recv3},
-		},
-		{
-			name: "single receivers mixed read permissions - create some",
-			permissions: map[string][]string{
-				accesscontrol.ActionAlertingReceiversCreate: {
-					ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
-					ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
-				},
-				accesscontrol.ActionAlertingReceiversRead: {
-					ac.ScopeReceiversProvider.GetResourceScopeUID(recv2.UID),
-					ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
-				},
-			},
-			hasAccess: []models.Receiver{recv3},
-		},
-		{
-			name: "single receivers mixed global read permissions - create some",
-			permissions: map[string][]string{
-				accesscontrol.ActionAlertingReceiversCreate: {
-					ac.ScopeReceiversProvider.GetResourceScopeUID(recv1.UID),
-					ac.ScopeReceiversProvider.GetResourceScopeUID(recv3.UID),
-				},
+				accesscontrol.ActionAlertingReceiversCreate:   nil,
 				accesscontrol.ActionAlertingNotificationsRead: nil,
 			},
-			hasAccess: []models.Receiver{recv1, recv3},
+			hasAccess: allReceivers(),
 		},
 	}
 
