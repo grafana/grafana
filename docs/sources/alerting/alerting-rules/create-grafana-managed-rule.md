@@ -241,7 +241,7 @@ Annotations add metadata to provide more information on the alert in your alert 
    At the moment, alert rules are only supported in [time series](ref:time-series) and [alert list](ref:alert-list) visualizations.
    {{% /admonition %}}
 
-2. Click **Save rule**.
+1. Click **Save rule**.
 
 ## Configure no data and error handling
 

@@ -28,10 +28,10 @@ Create alert rules from time series panels. By doing so, you can reuse the queri
 The New alert rule form opens where you can configure and create your alert rule based on the query used in the panel.
 
 {{% admonition type="note" %}}
-   At the moment, alert rules are only supported in [time series](ref:time-series) visualizations.
-   {{% /admonition %}}
+At the moment, alert rules are only supported in [time series](ref:time-series) visualizations.
+{{% /admonition %}}
 
-   {{< docs/play title="visualizations with linked alerts in Grafana" url="https://play.grafana.org/d/000000074/" >}}
+{{< docs/play title="visualizations with linked alerts in Grafana" url="https://play.grafana.org/d/000000074/" >}}
 
 ## View alert rules from panels
 
