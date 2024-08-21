@@ -46,7 +46,7 @@ type PublicDashboardServiceImpl struct {
 }
 
 var LogPrefix = "publicdashboards.service"
-var tracer = otel.Tracer("publishdashboards")
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/publicdashboards/service")
 
 // Gives us compile time error if the service does not adhere to the contract of
 // the interface
