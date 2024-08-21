@@ -19,13 +19,13 @@ import (
 var (
 	installRequestCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "plugins",
-		Name:      "preinstall_request_total",
-		Help:      "The total amount of plugin preinstallation requests",
+		Name:      "preinstall_total",
+		Help:      "The total amount of plugin preinstallations",
 	}, []string{"plugin_id", "version"})
 
 	installRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "plugins",
-		Name:      "preinstall_request_duration_seconds",
+		Name:      "preinstall_duration_seconds",
 		Help:      "Plugin preinstallation duration",
 		Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
 	}, []string{"plugin_id", "version"})
