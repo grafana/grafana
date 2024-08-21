@@ -1,8 +1,6 @@
 import React from 'react';
 import { firstValueFrom } from 'rxjs';
 
-import { PluginExtensionTypes } from '@grafana/data';
-
 import { AddedComponentsRegistry } from './AddedComponentsRegistry';
 
 describe('AddedComponentsRegistry', () => {
