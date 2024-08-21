@@ -1,5 +1,4 @@
 import { xor } from 'lodash';
-import { ValidateResult } from 'react-hook-form';
 
 import {
   DataFrame,

@@ -1,4 +1,4 @@
-import { render, screen, userEvent } from 'test/test-utils';
+import { render } from 'test/test-utils';
 import { byLabelText, byTestId, byText, byTitle } from 'testing-library-selector';
 
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
