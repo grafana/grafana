@@ -224,7 +224,14 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
         : undefined;
 
       let bodyLayout = this.state.body;
-      const rootGroupNode = await this.generateGroups(metricNames);
+
+      let rootGroupNode = this.state.rootGroup;
+
+      if (!rootGroupNode) {
+        // build the nodes for the metric prefix select from all the metrics possible (limited of course)
+        const allMetricNames = await getMetricNames(datasourceUid, timeRange, '', MAX_METRIC_NAMES);
+        rootGroupNode = await this.generateGroups(allMetricNames.data);
+      }
 
       this.setState({
         metricNames,
