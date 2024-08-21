@@ -16,7 +16,7 @@ import (
 
 // tracer is the global tracer for the quota service. Tracer pulls the globally
 // initialized tracer from the opentelemetry package.
-var tracer = otel.Tracer("quota-service")
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/quota/quotaimpl/service")
 
 type serviceDisabled struct {
 }
