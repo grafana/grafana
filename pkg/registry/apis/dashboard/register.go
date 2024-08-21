@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
@@ -55,6 +56,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		return nil // skip registration unless opting into experimental apis
 	}
 
+	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	builder := &DashboardsAPIBuilder{
 		log: log.New("grafana-apiserver.dashboards"),
@@ -64,7 +66,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 
 		legacy: &dashboardStorage{
 			resource:       dashboard.DashboardResourceInfo,
-			access:         legacy.NewDashboardAccess(sql, namespacer, dashStore, provisioning),
+			access:         legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning),
 			tableConverter: dashboard.DashboardResourceInfo.TableConverter(),
 		},
 	}

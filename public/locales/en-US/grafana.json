@@ -702,16 +702,6 @@
   },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
-    "add-to-library-modal": {
-      "auto-star": "Auto-star this query to add it to your starred list in the Query Library.",
-      "data-source-name": "Data source name",
-      "data-source-type": "Data source type",
-      "description": "Description",
-      "info": "You're about to save this query. Once saved, you can easily access it in the Query Library tab for future use and reference.",
-      "query": "Query",
-      "title": "Add query to Query Library",
-      "visibility": "Visibility"
-    },
     "logs": {
       "maximum-pinned-logs": "Maximum of {{PINNED_LOGS_LIMIT}} pinned logs reached. Unpin a log to add another.",
       "no-logs-found": "No logs found.",
@@ -719,6 +709,7 @@
       "stop-scan": "Stop scan"
     },
     "query-library": {
+      "add-edit-description": "Add/edit description",
       "cancel": "Cancel",
       "default-description": "Public",
       "delete-query": "Delete query",
@@ -727,9 +718,25 @@
       "private": "Private",
       "public": "Public",
       "query-deleted": "Query deleted",
+      "query-template-add-error": "Error attempting to add this query to the library",
       "query-template-added": "Query template successfully added to the library",
-      "query-template-error": "Error attempting to add this query to the library",
+      "query-template-edit-error": "Error attempting to edit this query",
+      "query-template-edited": "Query template successfully edited",
       "save": "Save"
+    },
+    "query-template-modal": {
+      "add-info": "You're about to save this query. Once saved, you can easily access it in the Query Library tab for future use and reference.",
+      "add-title": "Add query to Query Library",
+      "auto-star": "Auto-star this query to add it to your starred list in the Query Library.",
+      "data-source-name": "Data source name",
+      "description": "Description",
+      "edit-info": "You're about to edit this query. Once saved, you can easily access it in the Query Library tab for future use and reference.",
+      "edit-title": "Edit query",
+      "query": "Query",
+      "visibility": "Visibility"
+    },
+    "query-template-modall": {
+      "data-source-type": "Data source type"
     },
     "rich-history": {
       "close-tooltip": "Close query history",
@@ -970,6 +977,53 @@
       "refresh": "Refresh"
     }
   },
+  "ldap-settings-page": {
+    "alert": {
+      "error-fetching": "Error fetching LDAP settings",
+      "error-saving": "Error saving LDAP settings",
+      "error-update": "Error updating LDAP settings",
+      "error-validate-form": "Error validating LDAP settings",
+      "feature-flag-disabled": "This page is only accessible by enabling the <1>ssoSettingsLDAP</1> feature flag.",
+      "saved": "LDAP settings saved"
+    },
+    "bind-dn": {
+      "description": "Distinguished name of the account used to bind and authenticate to the LDAP server.",
+      "label": "Bind DN",
+      "placeholder": "example: cn=admin,dc=grafana,dc=org"
+    },
+    "bind-password": {
+      "label": "Bind password"
+    },
+    "buttons-section": {
+      "discard": {
+        "button": "Discard"
+      },
+      "save": {
+        "button": "Save"
+      },
+      "save-and-enable": {
+        "button": "Save and enable"
+      }
+    },
+    "documentation": "documentation",
+    "host": {
+      "description": "Hostname or IP address of the LDAP server you wish to connect to.",
+      "label": "Server host",
+      "placeholder": "example: 127.0.0.1"
+    },
+    "search_filter": {
+      "description": "LDAP search filter used to locate specific entries within the directory.",
+      "label": "Search filter*",
+      "placeholder": "example: cn=%s"
+    },
+    "search-base-dns": {
+      "description": "An array of base dns to search through; separate by commas or spaces.",
+      "label": "Search base DNS *",
+      "placeholder": "example: \"dc=grafana.dc=org\""
+    },
+    "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our {documentation}.",
+    "title": "Basic Settings"
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "Cancel",
@@ -1047,6 +1101,11 @@
     "signup": {
       "button-label": "Sign up",
       "new-to-question": "New to Grafana?"
+    }
+  },
+  "logs": {
+    "infinite-scroll": {
+      "older-logs": "Older logs"
     }
   },
   "migrate-to-cloud": {
@@ -1512,6 +1571,10 @@
       "subtitle": "Use service accounts to run automated workloads in Grafana",
       "title": "Service accounts"
     },
+    "shared-dashboard": {
+      "subtitle": "Manage your organization's externally shared dashboards",
+      "title": "Shared dashboards"
+    },
     "sign-out": {
       "title": "Sign out"
     },
@@ -1592,6 +1655,14 @@
     },
     "starred-dashboard": "Dashboard starred",
     "unstarred-dashboard": "Dashboard unstarred"
+  },
+  "oauth": {
+    "form": {
+      "server-discovery-action-button": "Enter OpenID Connect Discovery URL",
+      "server-discovery-modal-close": "Close",
+      "server-discovery-modal-loading": "Loading...",
+      "server-discovery-modal-submit": "Submit"
+    }
   },
   "panel": {
     "header-menu": {
@@ -1737,8 +1808,7 @@
       "welcome-title": "Welcome to public dashboards!"
     },
     "delete-modal": {
-      "revoke-nonorphaned-body-text": "Are you sure you want to revoke this URL? The dashboard will no longer be public.",
-      "revoke-orphaned-body-text": "Orphaned public dashboard will no longer be public.",
+      "revoke-body-text": "Are you sure you want to revoke this URL? The dashboard will no longer be public.",
       "revoke-title": "Revoke public URL"
     },
     "email-sharing": {
@@ -1837,10 +1907,6 @@
       "revoke-button-tooltip": "Revoke public dashboard URL",
       "view-button-tooltip": "View public dashboard"
     },
-    "dashboard-title": {
-      "orphaned-title": "<0>Orphaned public dashboard</0>",
-      "orphaned-tooltip": "The linked dashboard has already been deleted"
-    },
     "empty-state": {
       "message": "You haven't created any public dashboards yet",
       "more-info": "Create a public dashboard from any existing dashboard through the <1>Share</1> modal. <4>Learn more</4>"
@@ -1851,10 +1917,12 @@
   },
   "public-dashboard-users-access-list": {
     "dashboard-modal": {
+      "external-link": "External link",
       "loading-text": "Loading...",
       "open-dashboard-list-text": "Open dashboards list",
       "public-dashboard-link": "Public dashboard URL",
-      "public-dashboard-setting": "Public dashboard settings"
+      "public-dashboard-setting": "Public dashboard settings",
+      "sharing-setting": "Sharing settings"
     },
     "delete-user-modal": {
       "delete-user-button-text": "Delete user",
@@ -1864,8 +1932,12 @@
       "revoke-user-access-modal-desc-line1": "Are you sure you want to revoke access for {{email}}?",
       "revoke-user-access-modal-desc-line2": "This action will immediately revoke {{email}}&apos;s access to all public dashboards."
     },
+    "delete-user-shared-dashboards-modal": {
+      "revoke-user-access-modal-desc-line2": "This action will immediately revoke {{email}}&apos;s access to all shared dashboards."
+    },
     "modal": {
-      "dashboard-modal-title": "Public dashboards"
+      "dashboard-modal-title": "Public dashboards",
+      "shared-dashboard-modal-title": "Shared dashboards"
     },
     "table-header": {
       "activated-label": "Activated",
@@ -1913,6 +1985,8 @@
       "title": "Permanently Delete Dashboards"
     },
     "restore-modal": {
+      "folder-picker-text_one": "Please choose a folder where your dashboard will be restored.",
+      "folder-picker-text_other": "Please choose a folder where your dashboards will be restored.",
       "restore-button": "Restore",
       "restore-loading": "Restoring...",
       "text_one": "This action will restore {{numberOfDashboards}} dashboard.",
@@ -1952,6 +2026,13 @@
       "label": "Back to {{title}}"
     },
     "dismissable-button": "Close"
+  },
+  "save-dashboards": {
+    "name-exists": {
+      "message-info": "A dashboard with the same name in the selected folder already exists, including recently deleted dashboards.",
+      "message-suggestion": "Please choose a different name or folder.",
+      "title": "Dashboard name already exists"
+    }
   },
   "scopes": {
     "dashboards": {
@@ -2122,12 +2203,20 @@
   },
   "share-panel": {
     "drawer": {
+      "new-library-panel-title": "New library panel",
       "share-embed-title": "Share embed",
-      "share-link-title": "Link settings"
+      "share-link-title": "Link settings",
+      "share-snapshot-title": "Share snapshot"
     },
     "menu": {
+      "new-library-panel-title": "New library panel",
       "share-embed-title": "Share embed",
-      "share-link-title": "Share link"
+      "share-link-title": "Share link",
+      "share-snapshot-title": "Share snapshot"
+    },
+    "new-library-panel": {
+      "cancel-button": "Cancel",
+      "create-button": "Create library panel"
     }
   },
   "share-playlist": {
@@ -2151,8 +2240,23 @@
     }
   },
   "shared-dashboard": {
+    "delete-modal": {
+      "revoke-body-text": "Are you sure you want to revoke this access? The dashboard can no longer be shared.",
+      "revoke-title": "Revoke access"
+    },
     "fields": {
       "timezone-label": "Timezone"
+    }
+  },
+  "shared-dashboard-list": {
+    "button": {
+      "config-button-tooltip": "Configure shared dashboard",
+      "revoke-button-text": "Revoke access",
+      "revoke-button-tooltip": "Revoke access",
+      "view-button-tooltip": "View shared dashboard"
+    },
+    "toggle": {
+      "pause-sharing-toggle-text": "Pause access"
     }
   },
   "shared-preferences": {
@@ -2208,11 +2312,14 @@
       "info-alert": "A Grafana dashboard snapshot publicly shares a dashboard while removing sensitive data such as queries and panel links, leaving only visible metrics and series names. Anyone with the link can access the snapshot.",
       "learn-more-button": "Learn more",
       "local-button": "Publish snapshot",
-      "name-label": "Snapshot name*",
+      "name-label": "Snapshot name",
       "new-snapshot-button": "New snapshot",
       "success-creation": "Your snapshot has been created",
       "success-delete": "Your snapshot has been deleted",
       "view-all-button": "View all snapshots"
+    },
+    "share-panel": {
+      "info-alert": "A Grafana panel snapshot publicly shares a panel while removing sensitive data such as queries and panel links, leaving only visible metrics and series names. Anyone with the link can access the snapshot."
     },
     "url-column-header": "Snapshot url",
     "view-button": "View"
@@ -2342,7 +2449,8 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Public dashboard users"
+      "public-dashboard-users-tab-title": "Public dashboard users",
+      "shared-dashboard-users-tab-title": "Shared dashboard users"
     }
   },
   "variable": {

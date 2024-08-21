@@ -29,6 +29,10 @@ import (
 func Middleware(ac AccessControl) func(Evaluator) web.Handler {
 	return func(evaluator Evaluator) web.Handler {
 		return func(c *contextmodel.ReqContext) {
+			ctx, span := tracer.Start(c.Req.Context(), "accesscontrol.Middleware")
+			defer span.End()
+			c.Req = c.Req.WithContext(ctx)
+
 			if c.AllowAnonymous {
 				forceLogin, _ := strconv.ParseBool(c.Req.URL.Query().Get("forceLogin")) // ignoring error, assuming false for non-true values is ok.
 				orgID, err := strconv.ParseInt(c.Req.URL.Query().Get("orgId"), 10, 64)
@@ -59,7 +63,11 @@ func Middleware(ac AccessControl) func(Evaluator) web.Handler {
 }
 
 func authorize(c *contextmodel.ReqContext, ac AccessControl, user identity.Requester, evaluator Evaluator) {
-	injected, err := evaluator.MutateScopes(c.Req.Context(), scopeInjector(scopeParams{
+	ctx, span := tracer.Start(c.Req.Context(), "accesscontrol.authorize")
+	defer span.End()
+	c.Req = c.Req.WithContext(ctx)
+
+	injected, err := evaluator.MutateScopes(ctx, scopeInjector(scopeParams{
 		OrgID:     user.GetOrgID(),
 		URLParams: web.Params(c.Req),
 	}))
@@ -68,7 +76,7 @@ func authorize(c *contextmodel.ReqContext, ac AccessControl, user identity.Reque
 		return
 	}
 
-	hasAccess, err := ac.Evaluate(c.Req.Context(), user, injected)
+	hasAccess, err := ac.Evaluate(ctx, user, injected)
 	if !hasAccess || err != nil {
 		deny(c, injected, err)
 		return
@@ -177,6 +185,10 @@ type OrgIDGetter func(c *contextmodel.ReqContext) (int64, error)
 func AuthorizeInOrgMiddleware(ac AccessControl, authnService authn.Service) func(OrgIDGetter, Evaluator) web.Handler {
 	return func(getTargetOrg OrgIDGetter, evaluator Evaluator) web.Handler {
 		return func(c *contextmodel.ReqContext) {
+			ctx, span := tracer.Start(c.Req.Context(), "accesscontrol.AuthorizeInOrgMiddleware")
+			defer span.End()
+			c.Req = c.Req.WithContext(ctx)
+
 			targetOrgID, err := getTargetOrg(c)
 			if err != nil {
 				if errors.Is(err, ErrInvalidRequestBody) {
