@@ -45,7 +45,6 @@ type SignedInUser struct {
 	Permissions map[int64]map[string][]string `json:"-"`
 
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
-	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
 	IDToken       string                                   `json:"-" xorm:"-"`
 	IDTokenClaims *authnlib.Claims[authnlib.IDTokenClaims] `json:"-" xorm:"-"`
 

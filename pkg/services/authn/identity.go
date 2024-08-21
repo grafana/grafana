@@ -72,7 +72,6 @@ type Identity struct {
 	// Permissions is the list of permissions the entity has.
 	Permissions map[int64]map[string][]string
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
-	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
 	IDToken       string
 	IDTokenClaims *authn.Claims[authn.IDTokenClaims]
 }

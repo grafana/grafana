@@ -271,9 +271,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 	}
 
-	if proxy.features.IsEnabled(req.Context(), featuremgmt.FlagIdForwarding) {
-		proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
-	}
+	proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
 }
 
 func (proxy *DataSourceProxy) validateRequest() error {

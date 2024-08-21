@@ -28,10 +28,6 @@ type LocalSigner struct {
 }
 
 func (s *LocalSigner) SignIDToken(ctx context.Context, claims *auth.IDClaims) (string, error) {
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagIdForwarding) {
-		return "", nil
-	}
-
 	signer, err := s.getSigner(ctx)
 	if err != nil {
 		return "", err

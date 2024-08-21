@@ -187,11 +187,8 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
 		clientmiddleware.NewResourceResponseMiddleware(),
 		clientmiddleware.NewCachingMiddlewareWithFeatureManager(cachingService, features),
+		clientmiddleware.NewForwardIDMiddleware(),
 	)
-
-	if features.IsEnabledGlobally(featuremgmt.FlagIdForwarding) {
-		middlewares = append(middlewares, clientmiddleware.NewForwardIDMiddleware())
-	}
 
 	if cfg.SendUserHeader {
 		middlewares = append(middlewares, clientmiddleware.NewUserHeaderMiddleware())

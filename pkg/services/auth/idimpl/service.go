@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -31,8 +30,9 @@ const (
 var _ auth.IDService = (*Service)(nil)
 
 func ProvideService(
-	cfg *setting.Cfg, signer auth.IDSigner, cache remotecache.CacheStorage,
-	features featuremgmt.FeatureToggles, authnService authn.Service,
+	cfg *setting.Cfg, signer auth.IDSigner,
+	cache remotecache.CacheStorage,
+	authnService authn.Service,
 	reg prometheus.Registerer,
 ) *Service {
 	s := &Service{
@@ -42,9 +42,7 @@ func ProvideService(
 		nsMapper: request.GetNamespaceMapper(cfg),
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagIdForwarding) {
-		authnService.RegisterPostAuthHook(s.hook, 140)
-	}
+	authnService.RegisterPostAuthHook(s.hook, 140)
 
 	return s
 }
