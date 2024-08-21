@@ -128,8 +128,6 @@ export interface DashboardSceneState extends SceneObjectState {
   kioskMode?: KioskMode;
   /** Share view */
   shareView?: string;
-  /** Used to scroll down to a previous position  */
-  scrollTop?: number;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
