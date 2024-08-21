@@ -5,7 +5,7 @@ go 1.22.4
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
 // github.com/docker/docker@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000
-replace github.com/docker/docker => github.com/moby/moby v23.0.4+incompatible
+replace github.com/docker/docker => github.com/moby/moby v27.1.2+incompatible
 
 // contains openapi encoder fixes. remove ASAP
 replace cuelang.org/go => github.com/grafana/cue v0.0.0-20230926092038-971951014e3f // @grafana/grafana-as-code
@@ -21,7 +21,7 @@ require (
 	github.com/aws/aws-sdk-go v1.51.31 // @grafana/aws-datasources
 	github.com/blang/semver/v4 v4.0.0 // @grafana/grafana-release-guild
 	github.com/docker/docker v26.0.2+incompatible // @grafana/grafana-release-guild
-	github.com/drone/drone-cli v1.6.1 // @grafana/grafana-release-guild
+	github.com/drone/drone-cli v1.8.0 // @grafana/grafana-release-guild
 	github.com/gogo/protobuf v1.3.2 // indirect; @grafana/alerting-backend
 	github.com/golang/protobuf v1.5.4 // indirect; @grafana/grafana-backend-group
 	github.com/google/go-cmp v0.6.0 // @grafana/grafana-backend-group
@@ -62,10 +62,9 @@ require (
 	github.com/buildkite/yaml v2.1.0+incompatible // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
-	github.com/drone-runners/drone-runner-docker v1.8.2 // indirect
+	github.com/drone-runners/drone-runner-docker v1.8.3 // indirect
 	github.com/drone/drone-go v1.7.1 // indirect
 	github.com/drone/envsubst v1.0.3 // indirect
 	github.com/drone/runner-go v1.12.0 // indirect
@@ -102,8 +101,11 @@ require (
 	github.com/Khan/genqlient v0.7.0 // indirect
 	github.com/adrg/xdg v0.4.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
+	github.com/containerd/log v0.1.0 // indirect
+	github.com/distribution/reference v0.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
+	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/term v0.5.0 // indirect
 	github.com/sosodev/duration v1.2.0 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.11 // indirect
