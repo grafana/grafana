@@ -69,6 +69,7 @@ type FS interface {
 
 	Base() string
 	Files() ([]string, error)
+	Rel(string) (string, error)
 }
 
 type FSRemover interface {

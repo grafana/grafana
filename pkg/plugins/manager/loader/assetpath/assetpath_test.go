@@ -2,6 +2,7 @@ package assetpath
 
 import (
 	"net/url"
+	"path"
 	"strings"
 	"testing"
 
@@ -13,8 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 )
 
-func extPath(pluginID string) *fakes.FakePluginFiles {
-	return fakes.NewFakePluginFiles(pluginID)
+func pluginFS(basePath string) *fakes.FakePluginFS {
+	return fakes.NewFakePluginFS(basePath)
 }
 
 func TestService(t *testing.T) {
@@ -45,7 +46,7 @@ func TestService(t *testing.T) {
 			}
 			svc := ProvideService(cfg, pluginscdn.ProvideService(cfg))
 
-			tableOldFS := fakes.NewFakePluginFiles("/grafana/public/app/plugins/panel/table-old")
+			tableOldFS := fakes.NewFakePluginFS("/grafana/public/app/plugins/panel/table-old")
 			jsonData := map[string]plugins.JSONData{
 				"table-old": {ID: "table-old", Info: plugins.Info{Version: "1.0.0"}},
 
@@ -60,37 +61,75 @@ func TestService(t *testing.T) {
 			})
 
 			t.Run("Base", func(t *testing.T) {
-				base, err := svc.Base(NewPluginInfo(jsonData["one"], plugins.ClassExternal, extPath("one")))
+				base, err := svc.Base(NewPluginInfo(jsonData["one"], plugins.ClassExternal, pluginFS("one"), nil))
 				require.NoError(t, err)
 
-				u, err := url.JoinPath(tc.cdnBaseURL, "/one/1.0.0/public/plugins/one")
+				oneCDNURL, err := url.JoinPath(tc.cdnBaseURL, "/one/1.0.0/public/plugins/one")
 				require.NoError(t, err)
-				require.Equal(t, u, base)
+				require.Equal(t, oneCDNURL, base)
 
-				base, err = svc.Base(NewPluginInfo(jsonData["two"], plugins.ClassExternal, extPath("two")))
+				base, err = svc.Base(NewPluginInfo(jsonData["one"], plugins.ClassCDN, pluginFS(oneCDNURL), nil))
+				require.NoError(t, err)
+				require.Equal(t, oneCDNURL, base)
+
+				base, err = svc.Base(NewPluginInfo(jsonData["two"], plugins.ClassExternal, pluginFS("two"), nil))
 				require.NoError(t, err)
 				require.Equal(t, "public/plugins/two", base)
 
-				base, err = svc.Base(NewPluginInfo(jsonData["table-old"], plugins.ClassCore, tableOldFS))
+				base, err = svc.Base(NewPluginInfo(jsonData["table-old"], plugins.ClassCore, tableOldFS, nil))
 				require.NoError(t, err)
 				require.Equal(t, "public/app/plugins/table-old", base)
+
+				parentFS := pluginFS(oneCDNURL)
+				parentFS.RelFunc = func(_ string) (string, error) {
+					return "child-plugins/two", nil
+				}
+				parent := NewPluginInfo(jsonData["one"], plugins.ClassExternal, parentFS, nil)
+				child := NewPluginInfo(jsonData["two"], plugins.ClassExternal, fakes.NewFakePluginFS(""), &parent)
+				base, err = svc.Base(child)
+				require.NoError(t, err)
+
+				childBase, err := url.JoinPath(oneCDNURL, "child-plugins/two")
+				require.NoError(t, err)
+				require.Equal(t, childBase, base)
 			})
 
 			t.Run("Module", func(t *testing.T) {
-				module, err := svc.Module(NewPluginInfo(jsonData["one"], plugins.ClassExternal, extPath("one")))
+				module, err := svc.Module(NewPluginInfo(jsonData["one"], plugins.ClassExternal, pluginFS("one"), nil))
 				require.NoError(t, err)
 
-				u, err := url.JoinPath(tc.cdnBaseURL, "/one/1.0.0/public/plugins/one/module.js")
+				oneCDNURL, err := url.JoinPath(tc.cdnBaseURL, "/one/1.0.0/public/plugins/one")
 				require.NoError(t, err)
-				require.Equal(t, u, module)
 
-				module, err = svc.Module(NewPluginInfo(jsonData["two"], plugins.ClassExternal, extPath("two")))
+				oneCDNModuleURL, err := url.JoinPath(oneCDNURL, "module.js")
+				require.NoError(t, err)
+				require.Equal(t, oneCDNModuleURL, module)
+
+				fs := pluginFS("one")
+				module, err = svc.Module(NewPluginInfo(jsonData["one"], plugins.ClassCDN, fs, nil))
+				require.NoError(t, err)
+				require.Equal(t, path.Join(fs.Base(), "module.js"), module)
+
+				module, err = svc.Module(NewPluginInfo(jsonData["two"], plugins.ClassExternal, pluginFS("two"), nil))
 				require.NoError(t, err)
 				require.Equal(t, "public/plugins/two/module.js", module)
 
-				module, err = svc.Module(NewPluginInfo(jsonData["table-old"], plugins.ClassCore, tableOldFS))
+				module, err = svc.Module(NewPluginInfo(jsonData["table-old"], plugins.ClassCore, tableOldFS, nil))
 				require.NoError(t, err)
 				require.Equal(t, "core:plugin/table-old", module)
+
+				parentFS := pluginFS(oneCDNURL)
+				parentFS.RelFunc = func(_ string) (string, error) {
+					return "child-plugins/two", nil
+				}
+				parent := NewPluginInfo(jsonData["one"], plugins.ClassExternal, parentFS, nil)
+				child := NewPluginInfo(jsonData["two"], plugins.ClassExternal, fakes.NewFakePluginFS(""), &parent)
+				module, err = svc.Module(child)
+				require.NoError(t, err)
+
+				childModule, err := url.JoinPath(oneCDNURL, "child-plugins/two/module.js")
+				require.NoError(t, err)
+				require.Equal(t, childModule, module)
 			})
 
 			t.Run("RelativeURL", func(t *testing.T) {
@@ -103,24 +142,47 @@ func TestService(t *testing.T) {
 					},
 				}
 
-				u, err := svc.RelativeURL(NewPluginInfo(pluginsMap["one"].JSONData, plugins.ClassExternal, extPath("one")), "")
+				u, err := svc.RelativeURL(NewPluginInfo(pluginsMap["one"].JSONData, plugins.ClassExternal, pluginFS("one"), nil), "")
 				require.NoError(t, err)
 				// given an empty path, base URL will be returned
-				baseURL, err := svc.Base(NewPluginInfo(pluginsMap["one"].JSONData, plugins.ClassExternal, extPath("one")))
+				baseURL, err := svc.Base(NewPluginInfo(pluginsMap["one"].JSONData, plugins.ClassExternal, pluginFS("one"), nil))
 				require.NoError(t, err)
 				require.Equal(t, baseURL, u)
 
-				u, err = svc.RelativeURL(NewPluginInfo(pluginsMap["one"].JSONData, plugins.ClassExternal, extPath("one")), "path/to/file.txt")
+				u, err = svc.RelativeURL(NewPluginInfo(pluginsMap["one"].JSONData, plugins.ClassExternal, pluginFS("one"), nil), "path/to/file.txt")
 				require.NoError(t, err)
 				require.Equal(t, strings.TrimRight(tc.cdnBaseURL, "/")+"/one/1.0.0/public/plugins/one/path/to/file.txt", u)
 
-				u, err = svc.RelativeURL(NewPluginInfo(pluginsMap["two"].JSONData, plugins.ClassExternal, extPath("two")), "path/to/file.txt")
+				u, err = svc.RelativeURL(NewPluginInfo(pluginsMap["two"].JSONData, plugins.ClassExternal, pluginFS("two"), nil), "path/to/file.txt")
 				require.NoError(t, err)
 				require.Equal(t, "public/plugins/two/path/to/file.txt", u)
 
-				u, err = svc.RelativeURL(NewPluginInfo(pluginsMap["two"].JSONData, plugins.ClassExternal, extPath("two")), "default")
+				u, err = svc.RelativeURL(NewPluginInfo(pluginsMap["two"].JSONData, plugins.ClassExternal, pluginFS("two"), nil), "default")
 				require.NoError(t, err)
 				require.Equal(t, "public/plugins/two/default", u)
+
+				oneCDNURL, err := url.JoinPath(tc.cdnBaseURL, "/one/1.0.0/public/plugins/one")
+				require.NoError(t, err)
+
+				u, err = svc.RelativeURL(NewPluginInfo(pluginsMap["one"].JSONData, plugins.ClassCDN, pluginFS(oneCDNURL), nil), "path/to/file.txt")
+				require.NoError(t, err)
+
+				oneCDNRelativeURL, err := url.JoinPath(oneCDNURL, "path/to/file.txt")
+				require.NoError(t, err)
+				require.Equal(t, oneCDNRelativeURL, u)
+
+				parentFS := pluginFS(oneCDNURL)
+				parentFS.RelFunc = func(_ string) (string, error) {
+					return "child-plugins/two", nil
+				}
+				parent := NewPluginInfo(jsonData["one"], plugins.ClassExternal, parentFS, nil)
+				child := NewPluginInfo(jsonData["two"], plugins.ClassExternal, fakes.NewFakePluginFS(""), &parent)
+				u, err = svc.RelativeURL(child, "path/to/file.txt")
+				require.NoError(t, err)
+
+				oneCDNRelativeURL, err = url.JoinPath(oneCDNURL, "child-plugins/two/path/to/file.txt")
+				require.NoError(t, err)
+				require.Equal(t, oneCDNRelativeURL, u)
 			})
 		})
 	}
