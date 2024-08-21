@@ -215,30 +215,31 @@ func (integration *Integration) Clone() Integration {
 // are stored in SecureSettings and the original values are removed from Settings.
 // If a field is already in SecureSettings it is not encrypted again.
 func (integration *Integration) Encrypt(encryptFn EncryptFn) error {
+	var errs []error
 	for key, val := range integration.Settings {
-		s, isString := val.(string)
-		if !isString {
-			continue
-		}
-
 		if isSecureField := integration.Config.IsSecureField(key); !isSecureField {
 			continue
 		}
 
 		delete(integration.Settings, key)
+		unencryptedSecureValue, isString := val.(string)
+		if !isString {
+			continue
+		}
+
 		if _, exists := integration.SecureSettings[key]; exists {
 			continue
 		}
 
-		encrypted, err := encryptFn(s)
+		encrypted, err := encryptFn(unencryptedSecureValue)
 		if err != nil {
-			return fmt.Errorf("failed to encrypt secure settings: %w", err)
+			errs = append(errs, fmt.Errorf("failed to encrypt secure setting '%s': %w", key, err))
 		}
 
 		integration.SecureSettings[key] = encrypted
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
 // Decrypt decrypts all fields in SecureSettings and moves them to Settings.
