@@ -22,7 +22,7 @@ import (
 
 func Test_ProvideService(t *testing.T) {
 	t.Run("should register post auth hook when feature flag is enabled", func(t *testing.T) {
-		features := featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding)
+		features := featuremgmt.WithFeatures()
 
 		var hookRegistered bool
 		authnService := &authntest.MockService{
@@ -67,7 +67,7 @@ func TestService_SignIdentity(t *testing.T) {
 	t.Run("should sign identity", func(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
-			featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding),
+			featuremgmt.WithFeatures(),
 			&authntest.FakeService{}, nil,
 		)
 		token, _, err := s.SignIdentity(context.Background(), &authn.Identity{ID: "1", Type: claims.TypeUser})
@@ -78,7 +78,7 @@ func TestService_SignIdentity(t *testing.T) {
 	t.Run("should sign identity with authenticated by if user is externally authenticated", func(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
-			featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding),
+			featuremgmt.WithFeatures(),
 			&authntest.FakeService{}, nil,
 		)
 		token, _, err := s.SignIdentity(context.Background(), &authn.Identity{
@@ -104,7 +104,7 @@ func TestService_SignIdentity(t *testing.T) {
 	t.Run("should sign identity with authenticated by if user is externally authenticated", func(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
-			featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding),
+			featuremgmt.WithFeatures(),
 			&authntest.FakeService{}, nil,
 		)
 		_, gotClaims, err := s.SignIdentity(context.Background(), &authn.Identity{

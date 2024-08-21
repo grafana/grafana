@@ -42,9 +42,7 @@ func ProvideService(
 		nsMapper: request.GetNamespaceMapper(cfg),
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagIdForwarding) {
-		authnService.RegisterPostAuthHook(s.hook, 140)
-	}
+	authnService.RegisterPostAuthHook(s.hook, 140)
 
 	return s
 }
