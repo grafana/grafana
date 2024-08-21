@@ -66,6 +66,33 @@ func TestProvisioningServiceImpl(t *testing.T) {
 		// Cancelling the root context and stopping the service
 		serviceTest.cancel()
 	})
+
+	t.Run("Should not return run error when dashboard provisioning fails", func(t *testing.T) {
+		serviceTest := &serviceTestStruct{}
+		serviceTest.waitTimeout = time.Second
+
+		serviceTest.mock = dashboards.NewDashboardProvisionerMock()
+
+		serviceTest.service = newProvisioningServiceImpl(
+			func(context.Context, string, dashboardstore.DashboardProvisioningService, org.Service, utils.DashboardStore, folder.Service) (dashboards.DashboardProvisioner, error) {
+				return serviceTest.mock, nil
+			},
+			nil,
+			nil,
+		)
+		err := serviceTest.service.setDashboardProvisioner()
+		require.NoError(t, err)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		serviceTest.cancel = cancel
+
+		serviceTest.mock.ProvisionFunc = func(ctx context.Context) error {
+			return errors.New("Test error")
+		}
+
+		err = serviceTest.service.Run(ctx)
+		assert.Nil(t, err)
+	})
 }
 
 type serviceTestStruct struct {
