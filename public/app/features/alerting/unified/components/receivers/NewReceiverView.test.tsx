@@ -6,9 +6,9 @@ import { AccessControlAction } from 'app/types';
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
+import { setupSaveEndpointMock, setupTestEndpointMock } from '../contact-points/__mocks__/grafanaManagedServer';
 
-import NewContactPoint from './NewContactPoint';
-import { setupSaveEndpointMock, setupTestEndpointMock } from './__mocks__/grafanaManagedServer';
+import NewReceiverView from './NewReceiverView';
 
 import 'core-js/stable/structured-clone';
 
@@ -25,7 +25,7 @@ it('should be able to test and save a receiver', async () => {
 
   render(
     <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName="grafana">
-      <NewContactPoint />
+      <NewReceiverView />
     </AlertmanagerProvider>
   );
 
@@ -69,28 +69,17 @@ it('should be able to test and save a receiver', async () => {
 
 const ui = {
   saveContactButton: byRole('button', { name: /save contact point/i }),
-  newContactPointIntegrationButton: byRole('button', { name: /add contact point integration/i }),
+
   testContactPointButton: byRole('button', { name: /Test/ }),
   testContactPointModal: byRole('heading', { name: /test contact point/i }),
   customContactPointOption: byRole('radio', { name: /custom/i }),
-  contactPointAnnotationSelect: (idx: number) => byTestId(`annotation-key-${idx}`),
-  contactPointAnnotationValue: (idx: number) => byTestId(`annotation-value-${idx}`),
   contactPointLabelKey: (idx: number) => byTestId(`label-key-${idx}`),
   contactPointLabelValue: (idx: number) => byTestId(`label-value-${idx}`),
   testContactPoint: byRole('button', { name: /send test notification/i }),
-  cancelButton: byTestId('cancel-button'),
-
-  channelFormContainer: byTestId('item-container'),
-
   inputs: {
     name: byPlaceholderText('Name'),
     email: {
       addresses: byLabelText(/Addresses/),
-      toEmails: byLabelText(/To/),
-    },
-    hipchat: {
-      url: byLabelText('Hip Chat Url'),
-      apiKey: byLabelText('API Key'),
     },
     slack: {
       webhookURL: byLabelText(/Webhook URL/i),
