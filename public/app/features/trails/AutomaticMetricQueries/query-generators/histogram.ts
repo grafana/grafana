@@ -1,6 +1,6 @@
 import { PromQuery } from '@grafana/prometheus';
 
-import { VAR_FILTERS_EXPR, VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../../shared';
+import { VAR_FILTERS_EXPR, VAR_GROUP_BY_EXP, VAR_METRIC_EXPR, VAR_OTEL_JOIN_QUERY_EXPR } from '../../shared';
 import { heatmapGraphBuilder } from '../graph-builders/heatmap';
 import { percentilesGraphBuilder } from '../graph-builders/percentiles';
 import { simpleGraphBuilder } from '../graph-builders/simple';
@@ -50,7 +50,7 @@ export function createHistogramMetricQueryDefs(metricParts: string[]) {
   return { preview: p50, main: percentiles, variants: [percentiles, heatmap], breakdown: breakdown };
 }
 
-const BASE_QUERY = `rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])`;
+const BASE_QUERY = `rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])${VAR_OTEL_JOIN_QUERY_EXPR}`;
 
 function baseQuery(groupings: string[] = []) {
   const sumByList = ['le', ...groupings];
