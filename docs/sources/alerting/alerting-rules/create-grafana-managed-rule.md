@@ -232,13 +232,11 @@ Annotations add metadata to provide more information on the alert in your alert 
 1. Optional: Add a custom annotation
 1. Optional: Add a **dashboard and panel link**.
 
-   Links alerts to panels in a dashboard.
+   Links alert rules to panels in a dashboard.
 
    {{% admonition type="note" %}}
-   At the moment, alerts are only supported in the [time series](ref:time-series) and [alert list](ref:alert-list) visualizations.
+   At the moment, alert rules are only supported in [time series](ref:time-series) and [alert list](ref:alert-list) visualizations.
    {{% /admonition %}}
-
-   {{< docs/play title="visualizations with linked alerts in Grafana" url="https://play.grafana.org/d/000000074/" >}}
 
 1. Click **Save rule**.
 
@@ -267,13 +265,3 @@ You can also configure the alert instance state when its evaluation returns an e
 | Keep Last State     | Maintains the alert instance in its last state. Useful for mitigating temporary issues, refer to [Keep last state](ref:keep-last-state).                                                                                               |
 
 When you configure the No data or Error behavior to `Alerting` or `Normal`, Grafana will attempt to keep a stable set of fields under notification `Values`. If your query returns no data or an error, Grafana re-uses the latest known set of fields in `Values`, but will use `-1` in place of the measured value.
-
-## Create alerts from panels
-
-Create alerts from any panel type. This means you can reuse the queries in the panel and create alerts based on them.
-
-1. Navigate to a dashboard in the **Dashboards** section.
-2. In the top right corner of the panel, click on the three dots (ellipses).
-3. From the dropdown menu, select **More...** and then choose **New alert rule**.
-
-This will open the alert rule form, allowing you to configure and create your alert based on the current panel's query.
