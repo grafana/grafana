@@ -67,7 +67,7 @@ export const BinaryOperationOptionsEditor = (props: {
     updateBinaryOptions({
       ...binary!,
       allNumbers: e.currentTarget.checked,
-      left: null, // TODO type support for null
+      left: '',
     });
   };
 
