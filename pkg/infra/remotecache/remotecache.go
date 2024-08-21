@@ -99,8 +99,18 @@ func (ds *RemoteCache) Delete(ctx context.Context, key string) error {
 
 // Run starts the backend processes for cache clients.
 func (ds *RemoteCache) Run(ctx context.Context) error {
+	// reverse createClient order to get real cacheStorage
+	cacheStorage := ds.client
+	if encryptedCache,ok := cacheStorage.(*encryptedCacheStorage);ok{
+		cacheStorage = encryptedCache.cache
+	}
+	
+	if prefixCache,ok := cacheStorage.(*prefixCacheStorage);ok{
+		cacheStorage = prefixCache.cache
+	}
+	
 	// create new interface if more clients need GC jobs
-	backgroundjob, ok := ds.client.(registry.BackgroundService)
+	backgroundjob, ok := cacheStorage.(registry.BackgroundService)
 	if ok {
 		return backgroundjob.Run(ctx)
 	}
