@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
   useStyles2,
   CollapsableSection,
@@ -11,6 +11,7 @@ import {
   Icon,
   Input,
   Label,
+  Select,
   Stack,
   Switch,
   Text,
@@ -24,9 +25,7 @@ interface Props {
   onClose: () => void;
 }
 
-// const tlsOptions: Array<SelectableValue<string>> = ['TLS1.2', 'TLS1.3'].map((v) => {
-//   return { label: v, value: v };
-// });
+const tlsOptions: Array<SelectableValue<string>> = ['TLS1.2', 'TLS1.3'].map((v) => ({ label: v, value: v }));
 
 export const LdapDrawerComponent = ({ onClose }: Props) => {
   const styles = useStyles2(getStyles);
@@ -248,7 +247,7 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
                 {...register('settings.config.servers.0.start_tls')}
               />
             </Field>
-            {/* <Field
+            <Field
               htmlFor="min-tls-version"
               label={t('ldap-drawer.extra-security-section.min-tls-version.label', 'Min TLS version')}
               description={t(
@@ -259,10 +258,10 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
               <Select
                 id="min-tls-version"
                 options={tlsOptions}
-                value={ldapSettings.config.servers[0].min_tls_version}
-                onChange={({value}) => onServerConfigChange({ min_tls_version: value })}
+                value={watch('settings.config.servers.0.min_tls_version')}
+                onChange={({value}) => setValue('settings.config.servers.0.min_tls_version', value)}
               />
-            </Field> */}
+            </Field>
             <Field
               label={t('ldap-drawer.extra-security-section.tls-ciphers.label', 'TLS ciphers')}
               description={t(
