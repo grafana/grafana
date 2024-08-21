@@ -61,6 +61,7 @@ export interface BinaryOptions {
   left: string;
   operator: BinaryOperationID;
   right: string;
+  allNumbers?: boolean;
 }
 
 interface IndexOptions {
@@ -82,6 +83,7 @@ const defaultBinaryOptions: BinaryOptions = {
   left: '',
   operator: BinaryOperationID.Add,
   right: '',
+  allNumbers: false,
 };
 
 const defaultUnaryOptions: UnaryOptions = {
@@ -157,8 +159,30 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
               left: ctx.interpolate(options.binary?.left!),
               right: ctx.interpolate(options.binary?.right!),
             };
+            if (binaryOptions.allNumbers) {
+              const operator = binaryOperators.getIfExists(binaryOptions.operator);
+              data.map((frame) => {
+                const numericFields = frame.fields.filter((field) => field.type === FieldType.number);
+                // For each field of type number, apply operator
+                numericFields.map((field) => {
+                  const left = field.values;
+                  // TODO consolidate common creator logic
+                  const right = findFieldValuesWithNameOrConstant(frame, binaryOptions.right, data);
+                  if (!left || !right || !operator) {
+                    return undefined;
+                  }
 
-            creator = getBinaryCreator(defaults(binaryOptions, defaultBinaryOptions), data);
+                  const arr = new Array(left.length);
+                  for (let i = 0; i < arr.length; i++) {
+                    arr[i] = operator.operation(left[i], right[i]);
+                  }
+                  frame.fields.push({ ...field, name: `${field.name} ${getNameFromOptions(options)}`, values: arr });
+                });
+              });
+              return data;
+            } else {
+              creator = getBinaryCreator(defaults(binaryOptions, defaultBinaryOptions), data);
+            }
             break;
           case CalculateFieldMode.Index:
             return data.map((frame) => {

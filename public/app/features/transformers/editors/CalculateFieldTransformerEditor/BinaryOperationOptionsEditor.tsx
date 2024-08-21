@@ -4,7 +4,7 @@ import {
   CalculateFieldMode,
   CalculateFieldTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
-import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch, Select } from '@grafana/ui';
 
 import { LABEL_WIDTH } from './constants';
 
@@ -63,19 +63,38 @@ export const BinaryOperationOptionsEditor = (props: {
     });
   };
 
+  const onBinaryAllNumbersChanged = (e: React.FormEvent<HTMLInputElement>) => {
+    updateBinaryOptions({
+      ...binary!,
+      allNumbers: e.currentTarget.checked,
+      left: null, // TODO type support for null
+    });
+  };
+
   return (
     <>
       <InlineFieldRow>
         <InlineField label="Operation" labelWidth={LABEL_WIDTH}>
-          <Select
-            allowCustomValue={true}
-            placeholder="Field or number"
-            options={leftNames}
-            className="min-width-18"
-            value={binary?.left}
-            onChange={onBinaryLeftChanged}
+          <InlineSwitch
+            label="All number fields"
+            showLabel={true}
+            value={binary?.allNumbers ?? false}
+            onChange={onBinaryAllNumbersChanged}
           />
         </InlineField>
+        {!binary?.allNumbers && (
+          <InlineField disabled={binary?.allNumbers ?? false}>
+            <Select
+              allowCustomValue={true}
+              placeholder={(binary?.allNumbers ?? false) ? 'All number fields' : 'Field or number'}
+              options={leftNames}
+              className="min-width-18"
+              value={binary?.left}
+              onChange={onBinaryLeftChanged}
+            />
+          </InlineField>
+        )}
+
         <InlineField>
           <Select
             className="width-4"
