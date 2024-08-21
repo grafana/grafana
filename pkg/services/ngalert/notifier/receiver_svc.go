@@ -381,7 +381,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 
 	err = rs.xact.InTransaction(ctx, func(ctx context.Context) error {
 		// If the name of the receiver changed, we must update references to it in both routes and notification settings.
-		// TODO: Needs to check provenance status compatiblity: For example, if we rename a receiver via UI but rules are provisioned, this call should be rejected.
+		// TODO: Needs to check provenance status compatibility: For example, if we rename a receiver via UI but rules are provisioned, this call should be rejected.
 		if existing.Name != r.Name {
 			affected, err := rs.ruleNotificationsStore.RenameReceiverInNotificationSettings(ctx, orgID, existing.Name, r.Name)
 			if err != nil {
