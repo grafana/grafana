@@ -5,6 +5,7 @@ import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps, UrlSyncContextProvider } from '@grafana/scenes';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
+import NativeScrollbar from 'app/core/components/NativeScrollbar';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -99,9 +100,13 @@ function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardSc
           </Stack>
         )}
       </div>
-      <div className={styles.body}>
-        <bodyToRender.Component model={bodyToRender} />
-      </div>
+      <NativeScrollbar divId="page-scrollbar" autoHeightMin={'100%'}>
+        <div className={styles.pageContainer}>
+          <div className={styles.canvasContent}>
+            <bodyToRender.Component model={bodyToRender} />
+          </div>
+        </div>
+      </NativeScrollbar>
       <PublicDashboardFooter />
     </Page>
   );
@@ -109,6 +114,28 @@ function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardSc
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    pageContainer: css({
+      display: 'grid',
+      gridTemplateAreas: `
+  "panels"`,
+      gridTemplateColumns: `1fr`,
+      gridTemplateRows: '1fr',
+      flexGrow: 1,
+      [theme.breakpoints.down('sm')]: {
+        display: 'flex',
+        flexDirection: 'column',
+      },
+    }),
+    canvasContent: css({
+      label: 'canvas-content',
+      display: 'flex',
+      flexDirection: 'column',
+      padding: theme.spacing(2, 0),
+      flexBasis: '100%',
+      gridArea: 'panels',
+      flexGrow: 1,
+      minWidth: 0,
+    }),
     loadingPage: css({
       justifyContent: 'center',
     }),
