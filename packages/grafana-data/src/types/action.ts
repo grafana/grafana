@@ -21,7 +21,6 @@ interface FetchOptions {
   method: HttpRequestMethod;
   url: string;
   body?: string;
-  contentType?: string;
   queryParams?: Array<[string, string]>;
   headers?: Array<[string, string]>;
 }
@@ -37,7 +36,6 @@ export enum HttpRequestMethod {
 }
 
 export const httpMethodOptions: SelectableValue[] = [
-  { label: HttpRequestMethod.GET, value: HttpRequestMethod.GET },
   { label: HttpRequestMethod.POST, value: HttpRequestMethod.POST },
   { label: HttpRequestMethod.PUT, value: HttpRequestMethod.PUT },
 ];
@@ -58,9 +56,8 @@ export const defaultActionConfig: Action = {
     url: '',
     method: HttpRequestMethod.POST,
     body: '{}',
-    contentType: 'application/json',
     queryParams: [],
-    headers: [['Content-Type', 'application/json']],
+    headers: [],
   },
 };
 
