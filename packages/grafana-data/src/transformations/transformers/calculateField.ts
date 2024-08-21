@@ -162,21 +162,27 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
             if (binaryOptions.allNumbers) {
               const operator = binaryOperators.getIfExists(binaryOptions.operator);
               data.map((frame) => {
-                const numericFields = frame.fields.filter((field) => field.type === FieldType.number);
                 // For each field of type number, apply operator
-                numericFields.map((field) => {
-                  const left = field.values;
-                  // TODO consolidate common creator logic
-                  const right = findFieldValuesWithNameOrConstant(frame, binaryOptions.right, data);
-                  if (!left || !right || !operator) {
-                    return undefined;
-                  }
+                frame.fields.map((field, index) => {
+                  if (field.type === FieldType.number) {
+                    const left = field.values;
+                    // TODO consolidate common creator logic
+                    const right = findFieldValuesWithNameOrConstant(frame, binaryOptions.right, data);
+                    if (!left || !right || !operator) {
+                      return undefined;
+                    }
 
-                  const arr = new Array(left.length);
-                  for (let i = 0; i < arr.length; i++) {
-                    arr[i] = operator.operation(left[i], right[i]);
+                    const arr = new Array(left.length);
+                    for (let i = 0; i < arr.length; i++) {
+                      arr[i] = operator.operation(left[i], right[i]);
+                    }
+                    const newField = { ...field, name: `${field.name} ${getNameFromOptions(options)}`, values: arr };
+                    if (options.replaceFields) {
+                      frame.fields[index] = newField;
+                    } else {
+                      frame.fields.push(newField);
+                    }
                   }
-                  frame.fields.push({ ...field, name: `${field.name} ${getNameFromOptions(options)}`, values: arr });
                 });
               });
               return data;
