@@ -12,7 +12,7 @@ type Props = RouteChildrenProps<{ name: string }>;
 const EditContactPoint = ({ match }: Props) => {
   const { selectedAlertmanager } = useAlertmanager();
 
-  const contactPointName = match?.params.name!;
+  const contactPointName = decodeURIComponent(match?.params.name!);
   const {
     isLoading,
     error,

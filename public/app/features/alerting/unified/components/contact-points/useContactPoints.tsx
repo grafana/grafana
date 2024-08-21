@@ -220,7 +220,7 @@ const useGetAlertmanagerContactPoint = (
     ...queryOptions,
     selectFromResult: (result) => {
       const matchedContactPoint = result.data?.alertmanager_config.receivers?.find(
-        (receiver) => decodeURIComponent(receiver.name) === decodeURIComponent(name)
+        (receiver) => receiver.name === name
       );
       return {
         ...result,
