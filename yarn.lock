@@ -3571,7 +3571,7 @@ __metadata:
     "@lezer/common": "npm:1.2.1"
     "@lezer/highlight": "npm:1.2.1"
     "@lezer/lr": "npm:1.4.2"
-    "@prometheus-io/lezer-promql": "npm:0.53.1"
+    "@prometheus-io/lezer-promql": "npm:0.53.2"
     "@reduxjs/toolkit": "npm:2.2.7"
     "@rollup/plugin-image": "npm:3.0.3"
     "@rollup/plugin-node-resolve": "npm:15.2.3"
@@ -3739,9 +3739,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^5.8.0":
-  version: 5.8.0
-  resolution: "@grafana/scenes@npm:5.8.0"
+"@grafana/scenes@npm:^5.10.1":
+  version: 5.10.1
+  resolution: "@grafana/scenes@npm:5.10.1"
   dependencies:
     "@grafana/e2e-selectors": "npm:^11.0.0"
     "@leeoniya/ufuzzy": "npm:^1.0.14"
@@ -3756,7 +3756,7 @@ __metadata:
     "@grafana/ui": ">=10.4"
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/1c550dd5256371de0849ae64d167c4a9dbd99be0c03f15116ac213d3a9e2ec4b5248331086ca9d6616b5ad8f2be5be503772ac38a853e32da57f485ef3addb41
+  checksum: 10/81397b728344952f55f61254b76a840440fcf85614d309c54f13c00c7e5c1eeb49a95a8229e223bb7730f59e1c1cc7cc149bf6ebbb6e9ad7304e49e3daeda524
   languageName: node
   linkType: hard
 
@@ -3789,7 +3789,7 @@ __metadata:
     "@grafana/runtime": "npm:11.3.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
     "@grafana/ui": "npm:11.3.0-pre"
-    "@react-awesome-query-builder/ui": "npm:6.6.2"
+    "@react-awesome-query-builder/ui": "npm:6.6.3"
     "@testing-library/dom": "npm:10.0.0"
     "@testing-library/jest-dom": "npm:^6.1.2"
     "@testing-library/react": "npm:15.0.2"
@@ -3900,7 +3900,7 @@ __metadata:
     "@types/react-router-dom": "npm:5.3.3"
     "@types/react-table": "npm:7.7.20"
     "@types/react-test-renderer": "npm:18.3.0"
-    "@types/react-transition-group": "npm:4.4.10"
+    "@types/react-transition-group": "npm:4.4.11"
     "@types/react-window": "npm:1.8.8"
     "@types/slate": "npm:0.47.11"
     "@types/slate-plain-serializer": "npm:0.7.5"
@@ -3913,7 +3913,7 @@ __metadata:
     chance: "npm:1.1.12"
     classnames: "npm:2.5.1"
     common-tags: "npm:1.8.2"
-    core-js: "npm:3.38.0"
+    core-js: "npm:3.38.1"
     css-loader: "npm:7.1.2"
     csstype: "npm:3.1.3"
     d3: "npm:7.9.0"
@@ -5855,13 +5855,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prometheus-io/lezer-promql@npm:0.53.1":
-  version: 0.53.1
-  resolution: "@prometheus-io/lezer-promql@npm:0.53.1"
+"@prometheus-io/lezer-promql@npm:0.53.2":
+  version: 0.53.2
+  resolution: "@prometheus-io/lezer-promql@npm:0.53.2"
   peerDependencies:
     "@lezer/highlight": ^1.1.2
     "@lezer/lr": ^1.2.3
-  checksum: 10/ebb506155f6343277e7bafc7342af3b8c0f162eda08c380f680f8c526878211a17be92e75b5d5de69cbf344f50a76221472b50533dde152ea396e148278c2d77
+  checksum: 10/dcf094b29cca967a79f8a5f6a9f7006d84efe03465d0eba177bd42cb5d340e4e8d2dbd718e2220fbf19cab5bd831ec4c882b629ad69dd72297fa1d37fb9c18c2
   languageName: node
   linkType: hard
 
@@ -6390,9 +6390,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-awesome-query-builder/core@npm:^6.6.2":
-  version: 6.6.2
-  resolution: "@react-awesome-query-builder/core@npm:6.6.2"
+"@react-awesome-query-builder/core@npm:^6.6.3":
+  version: 6.6.3
+  resolution: "@react-awesome-query-builder/core@npm:6.6.3"
   dependencies:
     "@babel/runtime": "npm:^7.24.5"
     clone: "npm:^2.1.2"
@@ -6403,15 +6403,15 @@ __metadata:
     moment: "npm:^2.30.1"
     spel2js: "npm:^0.2.8"
     sqlstring: "npm:^2.3.3"
-  checksum: 10/9b959833923bc736dea491137ee1b04ec0f9432076b1df9ce7a5cf517834bae4a2361fb83241976c56646020c8a9e60b02e91901b43ee313fd7efbafd04f5e73
+  checksum: 10/33c8703e4df6b315105c9ec5f8af0430326a82ea3f57544c3baecbe4c6b041fb65c8b785504ee59e3e464a9af1b5e2c9681584d1dd1355a370123ada1df5ec42
   languageName: node
   linkType: hard
 
-"@react-awesome-query-builder/ui@npm:6.6.2":
-  version: 6.6.2
-  resolution: "@react-awesome-query-builder/ui@npm:6.6.2"
+"@react-awesome-query-builder/ui@npm:6.6.3":
+  version: 6.6.3
+  resolution: "@react-awesome-query-builder/ui@npm:6.6.3"
   dependencies:
-    "@react-awesome-query-builder/core": "npm:^6.6.2"
+    "@react-awesome-query-builder/core": "npm:^6.6.3"
     classnames: "npm:^2.5.1"
     lodash: "npm:^4.17.21"
     prop-types: "npm:^15.8.1"
@@ -6420,7 +6420,7 @@ __metadata:
   peerDependencies:
     react: ^16.8.4 || ^17.0.1 || ^18.0.0
     react-dom: ^16.8.4 || ^17.0.1 || ^18.0.0
-  checksum: 10/29246a9f6ccce54b6caf141bc1fe8856c0de07f4cdfddfb04e17eb544abf280979074145e27bbd7ae4fa874b4d0adad379ecbb0c211101a4ce8a2924bd3c3118
+  checksum: 10/095fd1921e384c24e7895405234c1a09c2365002411be745b1af68e857364c74fb0bc82b5a4ce6a222cabeb0079e390bb3cd04cad4a16b0d095998e88020fda4
   languageName: node
   linkType: hard
 
@@ -9514,9 +9514,9 @@ __metadata:
   linkType: hard
 
 "@types/ini@npm:^4":
-  version: 4.1.0
-  resolution: "@types/ini@npm:4.1.0"
-  checksum: 10/43dc756f60a4b2e828371baa0c5db006f3d31a2d58877f88ff15a58815aa804a612eea35adfc2c0e99ba09632b7a96bdf4a55ccaf5f164598f9ee314ad1171a1
+  version: 4.1.1
+  resolution: "@types/ini@npm:4.1.1"
+  checksum: 10/5d17a4af098bcf0263c767515a3856ebdd61a84ba78bd132e1cf7d05ed29a928af4ea80657a1226b39a4c9b3d5e1349a2bbaaa0c5c7ec068034ba7ae768f63cf
   languageName: node
   linkType: hard
 
@@ -9956,12 +9956,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-transition-group@npm:4.4.10, @types/react-transition-group@npm:^4.4.0":
-  version: 4.4.10
-  resolution: "@types/react-transition-group@npm:4.4.10"
+"@types/react-transition-group@npm:4.4.11, @types/react-transition-group@npm:^4.4.0":
+  version: 4.4.11
+  resolution: "@types/react-transition-group@npm:4.4.11"
   dependencies:
     "@types/react": "npm:*"
-  checksum: 10/b429f3bd54d9aea6c0395943ce2dda6b76fb458e902365bd91fd99bf72064fb5d59e2b74e78d10f2871908501d350da63e230d81bda2b616c967cab8dc51bd16
+  checksum: 10/a7f4de6e5f57d9fcdea027e22873c633f96a803c96d422db8b99a45c36a9cceb7882d152136bbc31c7158fc1827e37aea5070d369724bb71dd11b5687332bc4d
   languageName: node
   linkType: hard
 
@@ -13694,10 +13694,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js@npm:3.38.0, core-js@npm:^3.6.0, core-js@npm:^3.8.3":
-  version: 3.38.0
-  resolution: "core-js@npm:3.38.0"
-  checksum: 10/95f5c768ee14aaf79e8fece9e58023a5a6367186184c92e825a842f271d3d91c559cfadee9c75712c463f248c61d636ed5a31a1fff1c904d4f5a2ed69b23f0c2
+"core-js@npm:3.38.1, core-js@npm:^3.6.0, core-js@npm:^3.8.3":
+  version: 3.38.1
+  resolution: "core-js@npm:3.38.1"
+  checksum: 10/3c25fdf0b2595ed37ceb305213a61e2cf26185f628455e99d1c736dda5f69e2de4de7126e6a1da136f54260c4fcc982c4215e37b5a618790a597930f854c0a37
   languageName: node
   linkType: hard
 
@@ -15432,8 +15432,8 @@ __metadata:
   linkType: hard
 
 "downshift@npm:^9.0.6":
-  version: 9.0.7
-  resolution: "downshift@npm:9.0.7"
+  version: 9.0.8
+  resolution: "downshift@npm:9.0.8"
   dependencies:
     "@babel/runtime": "npm:^7.24.5"
     compute-scroll-into-view: "npm:^3.1.0"
@@ -15442,7 +15442,7 @@ __metadata:
     tslib: "npm:^2.6.2"
   peerDependencies:
     react: ">=16.12.0"
-  checksum: 10/d4adf8e0c36b911d751aaca01ca517c4f8c467f50f4340cc92a491153ada54da613a44cccb6c942fb95f38a75bbb6172c52c5ffc8935ea9ee2a97599563ed6fe
+  checksum: 10/9dc4577e780c54742ba4dde11f481f0d839f001b309200fbe4db112385b227ccd9cd2ef97d9e995379fa70249f0664a562240e415b9966f18c8a5cb7ce435f2c
   languageName: node
   linkType: hard
 
@@ -18163,7 +18163,7 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:^5.8.0"
+    "@grafana/scenes": "npm:^5.10.1"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
@@ -18190,7 +18190,7 @@ __metadata:
     "@react-aria/focus": "npm:3.18.2"
     "@react-aria/overlays": "npm:3.23.2"
     "@react-aria/utils": "npm:3.25.2"
-    "@react-awesome-query-builder/ui": "npm:6.6.2"
+    "@react-awesome-query-builder/ui": "npm:6.6.3"
     "@react-types/button": "npm:3.9.6"
     "@react-types/menu": "npm:3.9.11"
     "@react-types/overlays": "npm:3.8.9"
@@ -18245,7 +18245,7 @@ __metadata:
     "@types/react-router-dom": "npm:5.3.3"
     "@types/react-table": "npm:7.7.20"
     "@types/react-test-renderer": "npm:18.3.0"
-    "@types/react-transition-group": "npm:4.4.10"
+    "@types/react-transition-group": "npm:4.4.11"
     "@types/react-virtualized-auto-sizer": "npm:1.0.4"
     "@types/react-window": "npm:1.8.8"
     "@types/react-window-infinite-loader": "npm:^1"
@@ -18290,7 +18290,7 @@ __metadata:
     comlink: "npm:4.4.1"
     common-tags: "npm:1.8.2"
     copy-webpack-plugin: "npm:12.0.2"
-    core-js: "npm:3.38.0"
+    core-js: "npm:3.38.1"
     css-loader: "npm:7.1.2"
     css-minimizer-webpack-plugin: "npm:6.0.0"
     cypress: "npm:13.10.0"
