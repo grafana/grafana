@@ -1,7 +1,4 @@
 ---
-aliases:
-  - ../features/dashboard/dashboards/
-  - dashboard-manage/
 labels:
   products:
     - cloud
