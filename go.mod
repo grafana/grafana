@@ -74,7 +74,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.13.0 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20240812131556-611a23ff0f7f // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20240822131459-9daa6239cc41 // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20240814074258-eae7d47f01db // @grafana/identity-access-team
 	github.com/grafana/authlib/claims v0.0.0-20240814074258-eae7d47f01db // @grafana/identity-access-team
 	github.com/grafana/codejen v0.0.3 // @grafana/dataviz-squad
@@ -479,6 +479,7 @@ require (
 
 require (
 	cloud.google.com/go/longrunning v0.5.12 // indirect
+	github.com/at-wat/mqtt-go v0.19.4 // indirect
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20240808213237-f4d2e064f435 // indirect
 	github.com/hairyhenderson/go-which v0.2.0 // indirect
 	github.com/iancoleman/orderedmap v0.3.0 // indirect
