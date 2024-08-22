@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
+import { usePluginComponents } from '@grafana/runtime';
 
 import { CloudWatchDatasource } from '../../datasource';
 import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from '../../guards';
@@ -17,6 +18,12 @@ export const QueryEditor = (props: Props) => {
   const [dataIsStale, setDataIsStale] = useState(false);
   const [extraHeaderElementLeft, setExtraHeaderElementLeft] = useState<JSX.Element>();
   const [extraHeaderElementRight, setExtraHeaderElementRight] = useState<JSX.Element>();
+
+  const c = usePluginComponents({
+    limitPerPlugin: 1,
+    extensionPointId: 'cloudwatch-query-editor-extra-header',
+    context: props,
+  });
 
   useEffect(() => {
     setDataIsStale(false);

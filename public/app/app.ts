@@ -214,11 +214,11 @@ export class GrafanaApp {
 
       // Initialize plugin extensions
       const pluginExtensionsRegistries = {
+        extensionsRegistry: new ReactivePluginExtensionsRegistry(),
         addedComponentsRegistry: new AddedComponentsRegistry(),
         exposedComponentsRegistry: new ExposedComponentsRegistry(),
       };
-      const extensionsRegistry = new ReactivePluginExtensionsRegistry();
-      extensionsRegistry.register({
+      pluginExtensionsRegistries.extensionsRegistry.register({
         pluginId: 'grafana',
         extensionConfigs: getCoreExtensionConfigurations(),
         exposedComponentConfigs: [],
@@ -232,20 +232,21 @@ export class GrafanaApp {
         const awaitedAppPlugins = Object.values(config.apps).filter((app) => awaitedAppPluginIds.includes(app.id));
         const appPlugins = Object.values(config.apps).filter((app) => !awaitedAppPluginIds.includes(app.id));
 
-        preloadPlugins(appPlugins, extensionsRegistry, pluginExtensionsRegistries);
-        await preloadPlugins(
-          awaitedAppPlugins,
-          extensionsRegistry,
-          pluginExtensionsRegistries,
-          'frontend_awaited_plugins_preload'
-        );
+        preloadPlugins(appPlugins, pluginExtensionsRegistries);
+        await preloadPlugins(awaitedAppPlugins, pluginExtensionsRegistries, 'frontend_awaited_plugins_preload');
       }
 
       setPluginExtensionGetter(
-        createPluginExtensionsGetter(extensionsRegistry, pluginExtensionsRegistries.addedComponentsRegistry)
+        createPluginExtensionsGetter(
+          pluginExtensionsRegistries.extensionsRegistry,
+          pluginExtensionsRegistries.addedComponentsRegistry
+        )
       );
       setPluginExtensionsHook(
-        createUsePluginExtensions(extensionsRegistry, pluginExtensionsRegistries.addedComponentsRegistry)
+        createUsePluginExtensions(
+          pluginExtensionsRegistries.extensionsRegistry,
+          pluginExtensionsRegistries.addedComponentsRegistry
+        )
       );
       setPluginComponentHook(createUsePluginComponent(pluginExtensionsRegistries.exposedComponentsRegistry));
       setPluginComponentsHook(createUsePluginComponents(pluginExtensionsRegistries.addedComponentsRegistry));
