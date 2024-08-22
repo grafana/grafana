@@ -94,17 +94,14 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*l
 		return nil, false, nil
 	}
 
-	namespace, id := usr.GetTypedID()
-	if namespace != identity.TypeUser {
-		// Not a user, therefore no token.
+	if !identity.IsIdentityType(usr.GetID(), identity.TypeUser) {
 		return nil, false, nil
 	}
 
 	ctxLogger := logger.FromContext(ctx)
-
-	userID, err := identity.IntIdentifier(namespace, id)
+	userID, err := identity.UserIdentifier(usr.GetID())
 	if err != nil {
-		ctxLogger.Error("Failed to convert user id to int", "namespace", namespace, "userID", id, "error", err)
+		ctxLogger.Error("Failed to convert user id to int", "id", usr.GetID(), "error", err)
 		return nil, false, err
 	}
 
@@ -130,24 +127,22 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*l
 // TryTokenRefresh returns an error in case the OAuth token refresh was unsuccessful
 // It uses a singleflight.Group to prevent getting the Refresh Token multiple times for a given User
 func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) error {
+	ctxLogger := logger.FromContext(ctx)
+
 	if usr == nil || usr.IsNil() {
-		logger.Warn("Can only refresh OAuth tokens for existing users", "user", "nil")
+		ctxLogger.Warn("Can only refresh OAuth tokens for existing users", "user", "nil")
 		// Not user, no token.
 		return nil
 	}
 
-	namespace, id := usr.GetTypedID()
-	if namespace != identity.TypeUser {
-		// Not a user, therefore no token.
-		logger.Warn("Can only refresh OAuth tokens for users", "namespace", namespace, "userId", id)
+	if !identity.IsIdentityType(usr.GetID(), identity.TypeUser) {
+		ctxLogger.Warn("Can only refresh OAuth tokens for users", "id", usr.GetID())
 		return nil
 	}
 
-	ctxLogger := logger.FromContext(ctx)
-
-	userID, err := identity.IntIdentifier(namespace, id)
+	userID, err := identity.UserIdentifier(usr.GetID())
 	if err != nil {
-		ctxLogger.Warn("Failed to convert user id to int", "namespace", namespace, "userId", id, "error", err)
+		ctxLogger.Warn("Failed to convert user id to int", "id", usr.GetID(), "error", err)
 		return nil
 	}
 

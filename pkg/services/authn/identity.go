@@ -115,10 +115,6 @@ func (i *Identity) GetID() identity.TypedID {
 	return i.ID
 }
 
-func (i *Identity) GetTypedID() (namespace identity.IdentityType, identifier string) {
-	return i.ID.Type(), i.ID.ID()
-}
-
 func (i *Identity) GetUID() string {
 	return i.UID.String()
 }
@@ -132,14 +128,14 @@ func (i *Identity) GetAuthenticatedBy() string {
 }
 
 func (i *Identity) GetCacheKey() string {
-	namespace, id := i.GetTypedID()
+	id := i.GetID().ID()
 	if !i.HasUniqueId() {
 		// Hack use the org role as id for identities that do not have a unique id
 		// e.g. anonymous and render key.
 		id = string(i.GetOrgRole())
 	}
 
-	return fmt.Sprintf("%d-%s-%s", i.GetOrgID(), namespace, id)
+	return fmt.Sprintf("%d-%s-%s", i.GetOrgID(), i.GetID().Type(), id)
 }
 
 func (i *Identity) GetDisplayName() string {
@@ -232,10 +228,10 @@ func (i *Identity) HasRole(role org.RoleType) bool {
 }
 
 func (i *Identity) HasUniqueId() bool {
-	namespace, _ := i.GetTypedID()
-	return namespace == identity.TypeUser ||
-		namespace == identity.TypeServiceAccount ||
-		namespace == identity.TypeAPIKey
+	typ := i.GetID().Type()
+	return typ == identity.TypeUser ||
+		typ == identity.TypeServiceAccount ||
+		typ == identity.TypeAPIKey
 }
 
 func (i *Identity) IsAuthenticatedBy(providers ...string) bool {
