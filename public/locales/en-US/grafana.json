@@ -984,8 +984,96 @@
       "refresh": "Refresh"
     }
   },
+  "ldap-drawer": {
+    "attributes-section": {
+      "description": "Specify the LDAP attributes that map to the user&lsquo;s given name, surname, and email address, ensuring the application correctly retrieves and displays user information.",
+      "email": {
+        "label": "Email"
+      },
+      "label": "Attributes",
+      "member-of": {
+        "label": "Member Of"
+      },
+      "name": {
+        "label": "Name"
+      },
+      "surname": {
+        "label": "Surname"
+      },
+      "username": {
+        "label": "Username"
+      }
+    },
+    "extra-security-section": {
+      "label": "Extra security measures",
+      "min-tls-version": {
+        "description": "This is the minimum TLS version allowed. Accepted values are: TLS1.2, TLS1.3.",
+        "label": "Min TLS version"
+      },
+      "start-tls": {
+        "description": "If set to true, use LDAP with STARTTLS instead of LDAPS",
+        "label": "Start TLS"
+      },
+      "tls-ciphers": {
+        "description": "List of comma- or space-separated ciphers",
+        "label": "TLS ciphers",
+        "placeholder": "e.g. [\"TLS_AES_256_GCM_SHA384\"]"
+      },
+      "use-ssl": {
+        "description": "Set to true if LDAP server should use TLS connection (either with STARTTLS or LDAPS)",
+        "label": "Use SSL",
+        "tooltip": "For a complete list of supported ciphers and TLS versions, refer to: {\n        <TextLink style={{ fontSize: 'inherit' }} href=\"https://go.dev/src/crypto/tls/cipher_suites.go\" external>\n          https://go.dev/src/crypto/tls/cipher_suites.go\n        </TextLink>}"
+      }
+    },
+    "group-mapping-section": {
+      "description": "Map LDAP groups to Grafana org roles",
+      "group-search-base-dns": {
+        "description": "Separate by commas or spaces",
+        "label": "Group search base DNS"
+      },
+      "group-search-filter": {
+        "description": "Used to filter and identify group entries within the directory",
+        "label": "Group search filter"
+      },
+      "group-search-filter-user-attribute": {
+        "description": "Identifies users within group entries for filtering purposes",
+        "label": "Group name attribute"
+      },
+      "label": "Group mapping",
+      "skip-org-role-sync": {
+        "description": "Prevent synchronizing users’ organization roles from your IdP",
+        "label": "Skip organization role sync"
+      }
+    },
+    "misc-section": {
+      "allow-sign-up": {
+        "descrition": "If not enabled, only existing Grafana users can log in using LDAP",
+        "label": "Allow sign up"
+      },
+      "label": "Misc",
+      "port": {
+        "description": "Default port is 389 without SSL or 636 with SSL",
+        "label": "Port",
+        "placeholder": "389"
+      },
+      "timeout": {
+        "description": "Timeout in seconds for the connection to the LDAP server",
+        "label": "Timeout",
+        "placeholder": "389"
+      }
+    },
+    "title": "Advanced Settings"
+  },
   "ldap-settings-page": {
+    "advanced-settings-section": {
+      "edit": {
+        "button": "Edit"
+      },
+      "subtitle": "Mappings, extra security measures, and more.",
+      "title": "Advanced Settings"
+    },
     "alert": {
+      "discard-success": "LDAP settings discarded",
       "error-fetching": "Error fetching LDAP settings",
       "error-saving": "Error saving LDAP settings",
       "error-update": "Error updating LDAP settings",
