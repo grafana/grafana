@@ -161,7 +161,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
             };
             if (binaryOptions.allNumbers) {
               const operator = binaryOperators.getIfExists(binaryOptions.operator);
-              data.map((frame) => {
+              return data.map((frame) => {
                 const { timeField } = getTimeField(frame);
                 const newFields: Field[] = [];
                 if (timeField && options.timeSeries !== false) {
@@ -188,9 +188,8 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
                     newFields.push(newField);
                   }
                 });
-                frame.fields = newFields;
+                return { ...frame, fields: newFields };
               });
-              return data;
             } else {
               creator = getBinaryCreator(defaults(binaryOptions, defaultBinaryOptions), data);
             }
