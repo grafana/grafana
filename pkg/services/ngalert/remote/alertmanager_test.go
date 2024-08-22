@@ -364,7 +364,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 		{
 			"default configuration with different field order",
 			parsedDefaultConfigWithDifferentFieldOrder,
-			false, // NOTE: is there any chance that the default configuration might be manipulated to change array elements order?
+			false,
 		},
 	}
 	for _, test := range tests {
