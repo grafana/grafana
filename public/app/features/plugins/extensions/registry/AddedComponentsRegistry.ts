@@ -26,8 +26,6 @@ export class AddedComponentsRegistry extends Registry<AddedComponentRegistryItem
     const { pluginId, configs } = item;
 
     for (const config of configs) {
-      // assertStringProps(extension, ['title', 'description', 'extensionPointId']);
-
       if (!isReactComponent(config.component)) {
         logWarning(
           `Could not register added component with title '${config.title}'. Reason: The provided component is not a valid React component.`

@@ -521,4 +521,42 @@ describe('getPluginExtensions()', () => {
       })
     );
   });
+
+  test('should honour the limitPerPlugin also for component extensions', async () => {
+    const registries = await createRegistries([
+      {
+        pluginId,
+        extensionConfigs: [],
+        addedComponentConfigs: [
+          {
+            ...component1,
+            targets: component1.extensionPointId,
+          },
+          {
+            title: 'Component 2',
+            description: 'Component 2 description',
+            targets: component1.extensionPointId,
+            component: (context) => {
+              return <div>Hello world2!</div>;
+            },
+          },
+        ],
+      },
+    ]);
+    const { extensions } = getPluginExtensions({
+      ...registries,
+      limitPerPlugin: 1,
+      extensionPointId: component1.extensionPointId,
+    });
+
+    expect(extensions).toHaveLength(1);
+    expect(extensions[0]).toEqual(
+      expect.objectContaining({
+        pluginId,
+        type: PluginExtensionTypes.component,
+        title: component1.title,
+        description: component1.description,
+      })
+    );
+  });
 });

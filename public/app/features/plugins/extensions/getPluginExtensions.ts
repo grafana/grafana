@@ -42,6 +42,7 @@ export function createPluginExtensionsGetter(
   addedComponentRegistry: AddedComponentsRegistry
 ): GetPluginExtensions {
   let registry: PluginExtensionRegistry = { id: '', extensions: {} };
+  let addedComponentsRegistryState: AddedComponentsRegistryState = {};
 
   // Create a subscription to keep an copy of the registry state for use in the non-async
   // plugin extensions getter.
@@ -49,7 +50,6 @@ export function createPluginExtensionsGetter(
     registry = r;
   });
 
-  let addedComponentsRegistryState: AddedComponentsRegistryState = {};
   addedComponentRegistry.asObservable().subscribe((r) => {
     addedComponentsRegistryState = r;
   });
@@ -124,6 +124,14 @@ export const getPluginExtensions: GetExtensions = ({
   if (extensionPointId in addedComponentsRegistry) {
     const addedComponents = addedComponentsRegistry[extensionPointId];
     for (const addedComponent of addedComponents) {
+      // Only limit if the `limitPerPlugin` is set
+      if (limitPerPlugin && extensionsByPlugin[addedComponent.pluginId] >= limitPerPlugin) {
+        continue;
+      }
+
+      if (extensionsByPlugin[addedComponent.pluginId] === undefined) {
+        extensionsByPlugin[addedComponent.pluginId] = 0;
+      }
       const extension: PluginExtensionComponent = {
         id: generateExtensionId(addedComponent.pluginId, {
           ...addedComponent,
@@ -138,6 +146,7 @@ export const getPluginExtensions: GetExtensions = ({
       };
 
       extensions.push(extension);
+      extensionsByPlugin[addedComponent.pluginId] += 1;
     }
   }
 

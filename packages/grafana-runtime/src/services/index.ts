@@ -26,7 +26,6 @@ export {
   usePluginExtensions,
   usePluginLinkExtensions,
   usePluginComponentExtensions,
-  // usePluginComponents,
   usePluginLinks,
 } from './pluginExtensions/usePluginExtensions';
 

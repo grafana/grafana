@@ -5,7 +5,6 @@ import { useAsync } from 'react-use';
 
 import {
   type PluginExtensionLinkConfig,
-  type PluginExtensionComponentConfig,
   type PluginExtensionConfig,
   type PluginExtensionEventHelpers,
   PluginExtensionTypes,

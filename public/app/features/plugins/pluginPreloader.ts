@@ -18,13 +18,13 @@ export type PluginPreloadResult = {
 };
 
 type PluginExtensionRegistries = {
+  extensionsRegistry: ReactivePluginExtensionsRegistry;
   addedComponentsRegistry: AddedComponentsRegistry;
   exposedComponentsRegistry: ExposedComponentsRegistry;
 };
 
 export async function preloadPlugins(
   apps: AppPluginConfig[] = [],
-  registry: ReactivePluginExtensionsRegistry,
   registries: PluginExtensionRegistries,
   eventName = 'frontend_plugins_preload'
 ) {
@@ -38,8 +38,7 @@ export async function preloadPlugins(
       continue;
     }
 
-    registry.register(preloadedPlugin);
-
+    registries.extensionsRegistry.register(preloadedPlugin);
     registries.exposedComponentsRegistry.register({
       pluginId: preloadedPlugin.pluginId,
       configs: preloadedPlugin.exposedComponentConfigs,
