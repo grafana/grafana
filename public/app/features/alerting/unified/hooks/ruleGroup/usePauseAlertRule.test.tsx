@@ -54,7 +54,7 @@ describe('pause rule', () => {
     expect(byText(/uninitialized/i).get()).toBeInTheDocument();
 
     await userEvent.click(byRole('button').get());
-    expect(await byText(/error: No rule with UID/i).find()).toBeInTheDocument();
+    expect(await byText(/error: no rule matching identifier/i).find()).toBeInTheDocument();
   });
 
   it('should be able to handle error', async () => {
