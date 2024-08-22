@@ -8823,9 +8823,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@test-plugins/extensions-test-app@workspace:e2e/custom-plugins/grafana-extensionstest-app":
+"@test-plugins/extensions-test-app@workspace:e2e/test-plugins/grafana-extensionstest-app":
   version: 0.0.0-use.local
-  resolution: "@test-plugins/extensions-test-app@workspace:e2e/custom-plugins/grafana-extensionstest-app"
+  resolution: "@test-plugins/extensions-test-app@workspace:e2e/test-plugins/grafana-extensionstest-app"
   dependencies:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "workspace:*"
