@@ -1,6 +1,6 @@
 # Storybook
 
-[Storybook](https://storybook.js.org/) is a tool which Grafana uses to manage our design system and its components. Storybook consists of _stories_. Each story represents a component and the case in which it is used. 
+[Storybook](https://storybook.js.org/) is a tool which Grafana uses to manage our design system and its components. Storybook consists of _stories_. Each story represents a component and the case in which it is used.
 
 To show a wide variety of use cases is good both documentation wise and for troubleshooting—it might be possible to reproduce a bug for an edge case in a story.
 
@@ -12,13 +12,13 @@ Storybook is:
 
 ## How to create stories
 
-Stories for a component should be placed next to the component file. The Storybook file requires the same name as the component file. For example, a story for `SomeComponent.tsx` has the file name `SomeComponent.story.tsx`. 
+Stories for a component should be placed next to the component file. The Storybook file requires the same name as the component file. For example, a story for `SomeComponent.tsx` has the file name `SomeComponent.story.tsx`.
 
 If a story should be internal—not visible in production—name the file `SomeComponent.story.internal.tsx`.
 
 ### Writing stories
 
-When writing stories, we use the [CSF format](https://storybook.js.org/docs/formats/component-story-format/). 
+When writing stories, we use the [CSF format](https://storybook.js.org/docs/formats/component-story-format/).
 
 > **Note:** For more in-depth information on writing stories, see [Storybook’s documentation](https://storybook.js.org/docs/basics/writing-stories/).
 
@@ -109,7 +109,7 @@ import { MyComponent } from './MyComponent';
 
 ### MDX file without a relationship to a component
 
-An MDX file can exist by itself without any connection to a story. This can be good for writing things such as a general guidelines page. 
+An MDX file can exist by itself without any connection to a story. This can be good for writing things such as a general guidelines page.
 
 Two conditions must be met for this to work:
 
@@ -153,13 +153,13 @@ interface MyProps {
 
 ### Controls
 
-The [controls addon](https://storybook.js.org/docs/react/essentials/controls) provides a way to interact with a component's properties dynamically. It also requires much less code than knobs. 
+The [controls addon](https://storybook.js.org/docs/react/essentials/controls) provides a way to interact with a component's properties dynamically. It also requires much less code than knobs.
 
 Knobs are deprecated in favor of using controls.
 
 #### Migrating a story from Knobs to Controls
 
-As a test, we migrated the [button story](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/Button/Button.story.tsx). 
+As a test, we migrated the [button story](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/Button/Button.story.tsx).
 
 Here's the guide on how to migrate a story to controls.
 

@@ -1,6 +1,6 @@
 # End-to-end tests for plugins
 
-When end-to-end testing Grafana plugins, a best practice is to use the [`@grafana/plugin-e2e`](https://www.npmjs.com/package/@grafana/plugin-e2e?activeTab=readme) testing tool. The `@grafana/plugin-e2e` tool extends [`@playwright/test`](https://playwright.dev/) capabilities with relevant fixtures, models, and expect matchers. Use it to enable comprehensive end-to-end testing of Grafana plugins across multiple versions of Grafana. 
+When end-to-end testing Grafana plugins, a best practice is to use the [`@grafana/plugin-e2e`](https://www.npmjs.com/package/@grafana/plugin-e2e?activeTab=readme) testing tool. The `@grafana/plugin-e2e` tool extends [`@playwright/test`](https://playwright.dev/) capabilities with relevant fixtures, models, and expect matchers. Use it to enable comprehensive end-to-end testing of Grafana plugins across multiple versions of Grafana.
 
 > **Note:** To learn more, refer to our documentation on [plugin development](https://grafana.com/developers/plugin-tools/) and [end-to-end plugin testing](https://grafana.com/developers/plugin-tools/e2e-test-a-plugin/get-started).
 
@@ -26,7 +26,7 @@ You can add Playwright end-to-end tests for plugins to the [`e2e/plugin-e2e`](ht
     },
    ```
 
-3. Update the [CODEOWNERS](https://github.com/grafana/grafana/blob/main/.github/CODEOWNERS/#L315) file so that your team is owner of the tests in the directory you added in step 1.
+1. Update the [CODEOWNERS](https://github.com/grafana/grafana/blob/main/.github/CODEOWNERS/#L315) file so that your team is owner of the tests in the directory you added in step 1.
 
 ## Commands
 
@@ -36,6 +36,6 @@ You can add Playwright end-to-end tests for plugins to the [`e2e/plugin-e2e`](ht
 
   `HOST=127.0.0.1 PORT=3001 yarn e2e:playwright`
 
-  The `yarn e2e:playwright:server` starts a Grafana [development server](https://github.com/grafana/grafana/blob/main/scripts/grafana-server/start-server) on port 3001 and runs the Playwright tests. 
+  The `yarn e2e:playwright:server` starts a Grafana [development server](https://github.com/grafana/grafana/blob/main/scripts/grafana-server/start-server) on port 3001 and runs the Playwright tests.
 
 - You can provision the development server with the [devenv](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#add-data-sources) dashboards, data sources, and apps.

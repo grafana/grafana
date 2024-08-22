@@ -26,7 +26,7 @@ Let's start with a simple [JSX](https://reactjs.org/docs/introducing-jsx.html) e
 <input className="gf-form-input login-form-input" type="text" />
 ```
 
-It is possible to target the field with a CSS selector like `.gf-form-input.login-form-input`. However, doing so is a brittle solution because style changes occur frequently. 
+It is possible to target the field with a CSS selector like `.gf-form-input.login-form-input`. However, doing so is a brittle solution because style changes occur frequently.
 
 Furthermore, there is nothing that signals to future developers that this input is part of an E2E test. At Grafana, we use `data-testid` attributes as our preferred way of defining selectors. See [Aria-Labels vs data-testid](#aria-labels-vs-data-testid) for more details.
 

@@ -32,7 +32,7 @@ const getStyles = (theme: GrafanaTheme2) =>
 
 ### Style complex components
 
-In more complex cases, you can have the `getStyles` function return an object with many class names and use [Emotion's `cx` function](https://emotion.sh/docs/@emotion/css#cx) to compose them. 
+In more complex cases, you can have the `getStyles` function return an object with many class names and use [Emotion's `cx` function](https://emotion.sh/docs/@emotion/css#cx) to compose them.
 
 This feature can be especially useful in certain use cases:
 
