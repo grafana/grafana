@@ -65,17 +65,21 @@ func TestProcessTicks(t *testing.T) {
 
 	cacheServ := &datasources.FakeCacheService{}
 	evaluator := eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheServ, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest()))
+	rrSet := setting.RecordingRuleSettings{
+		Enabled: true,
+	}
 
 	schedCfg := SchedulerCfg{
-		BaseInterval:     cfg.BaseInterval,
-		C:                mockedClock,
-		AppURL:           appUrl,
-		EvaluatorFactory: evaluator,
-		RuleStore:        ruleStore,
-		Metrics:          testMetrics.GetSchedulerMetrics(),
-		AlertSender:      notifier,
-		Tracer:           testTracer,
-		Log:              log.New("ngalert.scheduler"),
+		BaseInterval:      cfg.BaseInterval,
+		C:                 mockedClock,
+		AppURL:            appUrl,
+		EvaluatorFactory:  evaluator,
+		RuleStore:         ruleStore,
+		Metrics:           testMetrics.GetSchedulerMetrics(),
+		AlertSender:       notifier,
+		RecordingRulesCfg: rrSet,
+		Tracer:            testTracer,
+		Log:               log.New("ngalert.scheduler"),
 	}
 	managerCfg := state.ManagerCfg{
 		Metrics:       testMetrics.GetStateMetrics(),
@@ -367,10 +371,101 @@ func TestProcessTicks(t *testing.T) {
 		require.Len(t, updated, 1)
 		require.Equal(t, expectedUpdated, updated[0])
 	})
-	t.Run("on 12th tick all rules should be stopped", func(t *testing.T) {
+
+	// Add a recording rule with 2 * base interval.
+	recordingRule1 := gen.With(gen.WithOrgID(mainOrgID), gen.WithInterval(2*cfg.BaseInterval), gen.WithTitle("recording-1"), gen.WithAllRecordingRules()).GenerateRef()
+	ruleStore.PutRule(ctx, recordingRule1)
+
+	t.Run("on 12th tick recording rule and alert rules should be evaluated", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
+
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Len(t, scheduled, 3)
+		require.Emptyf(t, stopped, "No rules are expected to be stopped")
+		require.Emptyf(t, updated, "No rules are expected to be updated")
+		contains := false
+		for _, sch := range scheduled {
+			if sch.rule.Title == recordingRule1.Title {
+				contains = true
+			}
+		}
+		require.True(t, contains, "Expected a scheduled rule with title %s but didn't get one, scheduled rules were %v", recordingRule1.Title, scheduled)
+	})
+
+	// Update the recording rule.
+	recordingRule1 = models.CopyRule(recordingRule1)
+	recordingRule1.Version++
+	expectedUpdated := models.AlertRuleKeyWithVersion{
+		Version:      recordingRule1.Version,
+		AlertRuleKey: recordingRule1.GetKey(),
+	}
+	ruleStore.PutRule(context.Background(), recordingRule1)
+
+	t.Run("on 13th tick recording rule should be updated", func(t *testing.T) {
+		// It has 2 * base interval - so normally it would not have been scheduled for evaluation this tick.
+		tick = tick.Add(cfg.BaseInterval)
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Len(t, scheduled, 1)
+		require.Emptyf(t, stopped, "No rules are expected to be stopped")
+		require.Len(t, updated, 1)
+		require.Equal(t, expectedUpdated, updated[0])
+		assertScheduledContains(t, scheduled, alertRule3)
+	})
+
+	t.Run("on 14th tick both 1-tick alert rule and 2-tick recording rule should be evaluated", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
+
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Len(t, scheduled, 2)
+		require.Emptyf(t, stopped, "No rules are expected to be stopped")
+		require.Emptyf(t, updated, "No rules are expected to be updated")
+		assertScheduledContains(t, scheduled, alertRule3)
+		assertScheduledContains(t, scheduled, recordingRule1)
+	})
+
+	// Convert an alerting rule to a recording rule.
+	models.ConvertToRecordingRule(alertRule3)
+	alertRule3.Version++
+	ruleStore.PutRule(ctx, alertRule3)
+
+	t.Run("prior to 15th tick alertRule3 should still be scheduled as alerting rule", func(t *testing.T) {
+		require.Equal(t, models.RuleTypeAlerting, sched.registry.rules[alertRule3.GetKey()].Type())
+	})
+
+	t.Run("on 15th tick converted rule and 3-tick alert rule should be evaluated", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Len(t, scheduled, 2)
+		require.Emptyf(t, stopped, "No rules are expected to be stopped")
+		// We never sent the Updated command to the restarted rule, so this should be empty.
+		require.Emptyf(t, updated, "No rules are expected to be updated")
+
+		assertScheduledContains(t, scheduled, alertRule2)
+		assertScheduledContains(t, scheduled, alertRule3) // converted
+		// Rule in registry should be updated to the correct type.
+		require.Equal(t, models.RuleTypeRecording, sched.registry.rules[alertRule3.GetKey()].Type())
+	})
+
+	t.Run("on 16th tick converted rule and 2-tick recording rule should be evaluated", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Len(t, scheduled, 2)
+		require.Emptyf(t, stopped, "No rules are expected to be stopped")
+		require.Emptyf(t, updated, "No rules are expected to be updated")
+		assertScheduledContains(t, scheduled, recordingRule1)
+		assertScheduledContains(t, scheduled, alertRule3)
+	})
+
+	t.Run("on 17th tick all rules should be stopped", func(t *testing.T) {
 		expectedToBeStopped, err := ruleStore.GetAlertRulesKeysForScheduling(ctx)
 		require.NoError(t, err)
 
+		// Remove all rules from store.
 		ruleStore.rules = map[string]*models.AlertRule{}
 		tick = tick.Add(cfg.BaseInterval)
 		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
@@ -424,7 +519,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
-			require.NoError(t, err)
+			require.ErrorContains(t, err, fmt.Sprintf("expected metric name(s) not found: [%v]", "grafana_alerting_rule_group_rules"))
 		})
 
 		alertRule1 := models.RuleGen.With(models.RuleGen.WithOrgID(firstOrgID)).GenerateRef()
@@ -495,7 +590,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
-			require.NoError(t, err)
+			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_rule_group_rules]")
 		})
 	})
 
@@ -509,7 +604,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_groups")
-			require.NoError(t, err)
+			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_rule_groups]")
 		})
 
 		alertRule1 := models.RuleGen.With(models.RuleGen.WithOrgID(firstOrgID)).GenerateRef()
@@ -640,7 +735,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_simple_routing_rules")
-			require.NoError(t, err)
+			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_simple_routing_rules]")
 		})
 	})
 
@@ -654,7 +749,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_groups")
-			require.NoError(t, err)
+			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_rule_groups]")
 		})
 
 		alertRule1 := models.RuleGen.With(models.RuleGen.WithOrgID(firstOrgID)).GenerateRef()
@@ -762,23 +857,26 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 	cfg := setting.UnifiedAlertingSettings{
 		BaseInterval: time.Second,
 		MaxAttempts:  1,
+		RecordingRules: setting.RecordingRuleSettings{
+			Enabled: true,
+		},
 	}
 
 	fakeRecordingWriter := writer.FakeWriter{}
 
 	schedCfg := SchedulerCfg{
-		BaseInterval:     cfg.BaseInterval,
-		MaxAttempts:      cfg.MaxAttempts,
-		C:                mockedClock,
-		AppURL:           appUrl,
-		EvaluatorFactory: evaluator,
-		RuleStore:        rs,
-		FeatureToggles:   featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules),
-		Metrics:          m.GetSchedulerMetrics(),
-		AlertSender:      senderMock,
-		Tracer:           testTracer,
-		Log:              log.New("ngalert.scheduler"),
-		RecordingWriter:  fakeRecordingWriter,
+		BaseInterval:      cfg.BaseInterval,
+		MaxAttempts:       cfg.MaxAttempts,
+		C:                 mockedClock,
+		AppURL:            appUrl,
+		EvaluatorFactory:  evaluator,
+		RuleStore:         rs,
+		RecordingRulesCfg: cfg.RecordingRules,
+		Metrics:           m.GetSchedulerMetrics(),
+		AlertSender:       senderMock,
+		Tracer:            testTracer,
+		Log:               log.New("ngalert.scheduler"),
+		RecordingWriter:   fakeRecordingWriter,
 	}
 	managerCfg := state.ManagerCfg{
 		Metrics:                 m.GetStateMetrics(),
@@ -898,4 +996,16 @@ func assertStopRun(t *testing.T, ch <-chan models.AlertRuleKey, keys ...models.A
 			t.Fatal("cycle has expired")
 		}
 	}
+}
+
+func assertScheduledContains(t *testing.T, scheduled []readyToRunItem, rule *models.AlertRule) {
+	t.Helper()
+
+	contains := false
+	for _, sch := range scheduled {
+		if sch.rule.GetKey() == rule.GetKey() {
+			contains = true
+		}
+	}
+	require.True(t, contains, "Expected a scheduled rule with key %s title %s but didn't get one, scheduled rules were %v", rule.GetKey(), rule.Title, scheduled)
 }

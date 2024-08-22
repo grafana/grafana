@@ -89,7 +89,8 @@ const renderRuleList = () => {
   return render(
     <TestProvider>
       <RuleList />
-    </TestProvider>
+    </TestProvider>,
+    { renderWithRouter: false }
   );
 };
 

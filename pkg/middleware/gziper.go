@@ -42,6 +42,7 @@ func prefix(p string) matcher { return func(s string) bool { return strings.HasP
 func substr(p string) matcher { return func(s string) bool { return strings.Contains(s, p) } }
 
 var gzipIgnoredPaths = []matcher{
+	prefix("/apis"), // apiserver handles its own compression https://github.com/kubernetes/kubernetes/blob/b60e01f881aa8a74b44d0ac1000e4f67f854273b/staging/src/k8s.io/apiserver/pkg/endpoints/handlers/responsewriters/writers.go#L155-L158
 	prefix("/api/datasources"),
 	prefix("/api/plugins"),
 	prefix("/api/plugin-proxy/"),
