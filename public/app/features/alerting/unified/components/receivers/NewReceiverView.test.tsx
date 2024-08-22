@@ -1,32 +1,33 @@
-import { render, screen, waitFor, userEvent } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 import { byLabelText, byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
 
+import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { AccessControlAction } from 'app/types';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
-import { setupSaveEndpointMock, setupTestEndpointMock } from '../contact-points/__mocks__/grafanaManagedServer';
 
 import NewReceiverView from './NewReceiverView';
 
 import 'core-js/stable/structured-clone';
 
-const server = setupMswServer();
-const user = userEvent.setup();
+setupMswServer();
 
 beforeEach(() => {
   grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsWrite]);
 });
 
 it('should be able to test and save a receiver', async () => {
-  const testMock = setupTestEndpointMock(server);
-  const saveMock = setupSaveEndpointMock(server);
+  const capture = captureRequests();
 
-  render(
+  const { user } = render(
     <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName="grafana">
       <NewReceiverView />
-    </AlertmanagerProvider>
+    </AlertmanagerProvider>,
+    {
+      historyOptions: { initialEntries: ['/alerting/notifications/new'] },
+    }
   );
 
   // wait for loading to be done
@@ -55,16 +56,19 @@ it('should be able to test and save a receiver', async () => {
 
   // we shouldn't be testing implementation details but when the request is successful
   // it can't seem to assert on the success toast
-  await waitFor(() => {
-    expect(testMock).toHaveBeenCalled();
-  });
-  expect(testMock.mock.lastCall).toMatchSnapshot();
-
   await user.click(ui.saveContactButton.get());
-  await waitFor(() => {
-    expect(saveMock).toHaveBeenCalled();
-  });
-  expect(saveMock.mock.lastCall).toMatchSnapshot();
+
+  const requests = await capture;
+  const testRequest = requests.find((r) => r.url.endsWith('/config/api/v1/receivers/test'));
+  const saveRequest = requests.find(
+    (r) => r.url.endsWith('/api/alertmanager/grafana/config/api/v1/alerts') && r.method === 'POST'
+  );
+
+  const testBody = await testRequest?.json();
+  const saveBody = await saveRequest?.json();
+
+  expect([testBody]).toMatchSnapshot();
+  expect([saveBody]).toMatchSnapshot();
 });
 
 const ui = {
@@ -80,12 +84,6 @@ const ui = {
     name: byPlaceholderText('Name'),
     email: {
       addresses: byLabelText(/Addresses/),
-    },
-    slack: {
-      webhookURL: byLabelText(/Webhook URL/i),
-    },
-    webhook: {
-      URL: byLabelText(/The endpoint to send HTTP POST requests to/i),
     },
   },
 };
