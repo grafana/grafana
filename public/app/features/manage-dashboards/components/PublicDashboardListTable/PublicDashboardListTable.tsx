@@ -157,7 +157,7 @@ export const PublicDashboardListTable = () => {
                     Create a shared dashboard from any existing dashboard through the <b>Share</b> modal.{' '}
                     <TextLink
                       external
-                      href="https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/#make-a-dashboard-public"
+                      href="https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/shared-dashboards"
                     >
                       Learn more
                     </TextLink>
