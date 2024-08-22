@@ -109,7 +109,7 @@ The dataset must contain at least one numeric field, and in case of multiple num
 | 2022-11-01 12:00:00 | 7      | 8      | 9      |
 | 2022-11-01 13:00:00 | 4      | 5      | 6      |
 
-![Time Series Example](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-timeseries-example1.png 'Time Series Example')
+![Time Series Example](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-timeseries-example1v2.png 'Time Series Example')
 
 If the time field is not recognized automatically, you might need to transform the data to a time format using a data transformation.
 
@@ -134,7 +134,7 @@ The visualization supports multiple datasets. If all datasets are compliant with
 | 2022-11-01 12:30:00 | 17      | 18      | 19      |
 | 2022-11-01 13:30:00 | 14      | 15      | 16      |
 
-![Time Series Example with two Data Sets](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-timeseries-example2.png 'Time Series Example with two Data Sets')
+![Time Series Example with two Data Sets](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-timeseries-example2v2.png 'Time Series Example with two Data Sets')
 
 If you want to more easily compare events between different, but overlapping, time frames, you can do this by using a time offset while querying the compared dataset.
 
@@ -157,7 +157,7 @@ If you want to more easily compare events between different, but overlapping, ti
 | 2022-11-01 12:30:00 | 17      | 18      | 19      |
 | 2022-11-01 13:30:00 | 14      | 15      | 16      |
 
-![Time Series Example with second Data Set offset](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-timeseries-example3.png 'Time Series Example with second Data Set offset')
+![Time Series Example with second Data Set offset](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-timeseries-example3v2.png 'Time Series Example with second Data Set offset')
 
 When you add the offset, the resulting visualization will make the datasets appear to be occurring at the same time so that you can compare them more easily.
 
