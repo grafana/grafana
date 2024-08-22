@@ -29,15 +29,10 @@ func SelectSystemCompatibleVersion(log log.PrettyLogger, versions []Version, plu
 		return VersionData{}, errors.New("no system compatibility requirements set")
 	}
 
-	versions = filterCompatibleVersions(versions)
-	if len(versions) == 0 {
-		return VersionData{}, ErrNoCompatibleVersions(pluginID, compatOpts.grafanaVersion)
-	}
-
 	var ver Version
-	latestForArch, exists := latestSupportedVersionForArch(versions, sysCompatOpts)
-	if !exists {
-		return VersionData{}, ErrArcNotFound(pluginID, sysCompatOpts.OSAndArch())
+	latestForArch, err := latestSupportedVersion(pluginID, versions, compatOpts)
+	if err != nil {
+		return VersionData{}, err
 	}
 
 	if version == "" {
@@ -98,19 +93,22 @@ func supportsCurrentArch(version Version, compatOpts SystemCompatOpts) bool {
 	return false
 }
 
-func filterCompatibleVersions(versions []Version) []Version {
-	return slices.DeleteFunc(versions, func(v Version) bool {
-		return !v.IsCompatible
+func latestSupportedVersion(pluginID string, versions []Version, compatOpts CompatOpts) (Version, error) {
+	// First check if the version are compatible with the current Grafana version
+	versions = slices.DeleteFunc(versions, func(v Version) bool {
+		return v.IsCompatible != nil && !*v.IsCompatible
 	})
-}
+	if len(versions) == 0 {
+		return Version{}, ErrNoCompatibleVersions(pluginID, compatOpts.grafanaVersion)
+	}
 
-func latestSupportedVersionForArch(versions []Version, compatOpts SystemCompatOpts) (Version, bool) {
+	// Then check if the version are compatible with the current system
 	for _, v := range versions {
-		if supportsCurrentArch(v, compatOpts) {
-			return v, true
+		if supportsCurrentArch(v, compatOpts.system) {
+			return v, nil
 		}
 	}
-	return Version{}, false
+	return Version{}, ErrArcNotFound(pluginID, compatOpts.system.OSAndArch())
 }
 
 func normalizeVersion(version string) string {

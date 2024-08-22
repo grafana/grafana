@@ -93,6 +93,6 @@ func ErrCorePlugin(pluginID string) error {
 	return ErrCorePluginBase.Build(errutil.TemplateData{Public: map[string]any{"PluginID": pluginID}})
 }
 
-func ErrNoCompatibleVersions(pluginID, version string) error {
-	return ErrNotCompatibleBase.Build(errutil.TemplateData{Public: map[string]any{"PluginID": pluginID, "GrafanaVersion": version}})
+func ErrNoCompatibleVersions(pluginID, grafanaVersion string) error {
+	return ErrNotCompatibleBase.Build(errutil.TemplateData{Public: map[string]any{"PluginID": pluginID, "GrafanaVersion": grafanaVersion}})
 }

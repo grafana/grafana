@@ -22,7 +22,7 @@ type Version struct {
 	Arch              map[string]ArchMeta `json:"packages"`
 	URL               string              `json:"url"`
 	CreatedAt         string              `json:"createdAt"`
-	IsCompatible      bool                `json:"isCompatible"`
+	IsCompatible      *bool               `json:"isCompatible,omitempty"`
 	GrafanaDependency string              `json:"grafanaDependency"`
 }
 
