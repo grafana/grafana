@@ -28,108 +28,167 @@ import { DASHBOARDS_OPENED_KEY } from './internal/const';
 
 export const mocksScopes: Scope[] = [
   {
-    metadata: { name: 'indexHelperCluster' },
+    metadata: { name: 'cloud' },
     spec: {
-      title: 'Cluster Index Helper',
+      title: 'Cloud',
       type: 'indexHelper',
       description: 'redundant label filter but makes queries faster',
       category: 'indexHelpers',
-      filters: [{ key: 'indexHelper', value: 'cluster', operator: 'equals' }],
+      filters: [{ key: 'cloud', value: '.*', operator: 'regex-match' }],
     },
   },
   {
-    metadata: { name: 'slothClusterNorth' },
+    metadata: { name: 'dev' },
     spec: {
-      title: 'slothClusterNorth',
-      type: 'cluster',
-      description: 'slothClusterNorth',
-      category: 'clusters',
-      filters: [{ key: 'cluster', value: 'slothClusterNorth', operator: 'equals' }],
+      title: 'Dev',
+      type: 'cloud',
+      description: 'Dev',
+      category: 'cloud',
+      filters: [{ key: 'cloud', value: 'dev', operator: 'equals' }],
     },
   },
   {
-    metadata: { name: 'slothClusterSouth' },
+    metadata: { name: 'ops' },
     spec: {
-      title: 'slothClusterSouth',
-      type: 'cluster',
-      description: 'slothClusterSouth',
-      category: 'clusters',
-      filters: [{ key: 'cluster', value: 'slothClusterSouth', operator: 'equals' }],
+      title: 'Ops',
+      type: 'cloud',
+      description: 'Ops',
+      category: 'cloud',
+      filters: [{ key: 'cloud', value: 'ops', operator: 'equals' }],
     },
   },
   {
-    metadata: { name: 'slothClusterEast' },
+    metadata: { name: 'prod' },
     spec: {
-      title: 'slothClusterEast',
-      type: 'cluster',
-      description: 'slothClusterEast',
-      category: 'clusters',
-      filters: [{ key: 'cluster', value: 'slothClusterEast', operator: 'equals' }],
+      title: 'Prod',
+      type: 'cloud',
+      description: 'Prod',
+      category: 'cloud',
+      filters: [{ key: 'cloud', value: 'prod', operator: 'equals' }],
     },
   },
   {
-    metadata: { name: 'slothPictureFactory' },
+    metadata: { name: 'grafana' },
     spec: {
-      title: 'slothPictureFactory',
+      title: 'Grafana',
       type: 'app',
-      description: 'slothPictureFactory',
+      description: 'Grafana',
       category: 'apps',
-      filters: [{ key: 'app', value: 'slothPictureFactory', operator: 'equals' }],
+      filters: [{ key: 'app', value: 'grafana', operator: 'equals' }],
     },
   },
   {
-    metadata: { name: 'slothVoteTracker' },
+    metadata: { name: 'mimir' },
     spec: {
-      title: 'slothVoteTracker',
+      title: 'Mimir',
       type: 'app',
-      description: 'slothVoteTracker',
+      description: 'Mimir',
       category: 'apps',
-      filters: [{ key: 'app', value: 'slothVoteTracker', operator: 'equals' }],
+      filters: [{ key: 'app', value: 'mimir', operator: 'equals' }],
+    },
+  },
+  {
+    metadata: { name: 'loki' },
+    spec: {
+      title: 'Loki',
+      type: 'app',
+      description: 'Loki',
+      category: 'apps',
+      filters: [{ key: 'app', value: 'loki', operator: 'equals' }],
+    },
+  },
+  {
+    metadata: { name: 'tempo' },
+    spec: {
+      title: 'Tempo',
+      type: 'app',
+      description: 'Tempo',
+      category: 'apps',
+      filters: [{ key: 'app', value: 'tempo', operator: 'equals' }],
     },
   },
 ] as const;
 
+const dashboardBindingsGenerator = (
+  scopes: string[],
+  dashboards: Array<{ dashboardTitle: string; dashboardKey?: string; groups?: string[] }>
+) =>
+  scopes.reduce<ScopeDashboardBinding[]>((scopeAcc, scopeTitle) => {
+    const scope = scopeTitle.toLowerCase().replaceAll(' ', '-').replaceAll('/', '-');
+
+    return [
+      ...scopeAcc,
+      ...dashboards.reduce<ScopeDashboardBinding[]>((acc, { dashboardTitle, groups, dashboardKey }, idx) => {
+        dashboardKey = dashboardKey ?? dashboardTitle.toLowerCase().replaceAll(' ', '-').replaceAll('/', '-');
+        const group = !groups
+          ? ''
+          : groups.length === 1
+            ? groups[0] === ''
+              ? ''
+              : `${groups[0].toLowerCase().replaceAll(' ', '-').replaceAll('/', '-')}-`
+            : `multiple${idx}-`;
+        const dashboard = `${group}${dashboardKey}`;
+
+        return [
+          ...acc,
+          {
+            metadata: { name: `${scope}-${dashboard}` },
+            spec: {
+              dashboard,
+              dashboardTitle,
+              scope,
+              groups,
+            },
+          },
+        ];
+      }, []),
+    ];
+  }, []);
+
 export const mocksScopeDashboardBindings: ScopeDashboardBinding[] = [
-  {
-    metadata: { name: 'binding1' },
-    spec: { dashboard: '1', dashboardTitle: 'My Dashboard 1', scope: 'slothPictureFactory' },
-  },
-  {
-    metadata: { name: 'binding2' },
-    spec: { dashboard: '2', dashboardTitle: 'My Dashboard 2', scope: 'slothPictureFactory' },
-  },
-  {
-    metadata: { name: 'binding3' },
-    spec: { dashboard: '3', dashboardTitle: 'My Dashboard 3', scope: 'slothVoteTracker' },
-  },
-  {
-    metadata: { name: 'binding4' },
-    spec: { dashboard: '4', dashboardTitle: 'My Dashboard 4', scope: 'slothVoteTracker' },
-  },
-  {
-    metadata: { name: 'binding5' },
-    spec: { dashboard: '5', dashboardTitle: 'My Dashboard 5', scope: 'slothClusterNorth' },
-  },
-  {
-    metadata: { name: 'binding6' },
-    spec: { dashboard: '6', dashboardTitle: 'My Dashboard 6', scope: 'slothClusterNorth' },
-  },
-  {
-    metadata: { name: 'binding7' },
-    spec: { dashboard: '7', dashboardTitle: 'My Dashboard 7', scope: 'slothClusterNorth' },
-  },
-  {
-    metadata: { name: 'binding8' },
-    spec: { dashboard: '5', dashboardTitle: 'My Dashboard 5', scope: 'slothClusterSouth' },
-  },
-  {
-    metadata: { name: 'binding9' },
-    spec: { dashboard: '6', dashboardTitle: 'My Dashboard 6', scope: 'slothClusterSouth' },
-  },
-  {
-    metadata: { name: 'binding10' },
-    spec: { dashboard: '8', dashboardTitle: 'My Dashboard 8', scope: 'slothClusterSouth' },
-  },
+  ...dashboardBindingsGenerator(
+    ['Grafana'],
+    [
+      { dashboardTitle: 'Data Sources', groups: ['General'] },
+      { dashboardTitle: 'Usage', groups: ['General'] },
+      { dashboardTitle: 'Frontend Errors', groups: ['Observability'] },
+      { dashboardTitle: 'Frontend Logs', groups: ['Observability'] },
+      { dashboardTitle: 'Backend Errors', groups: ['Observability'] },
+      { dashboardTitle: 'Backend Logs', groups: ['Observability'] },
+      { dashboardTitle: 'Usage Overview', groups: ['Usage'] },
+      { dashboardTitle: 'Data Sources', groups: ['Usage'] },
+      { dashboardTitle: 'Stats', groups: ['Usage'] },
+      { dashboardTitle: 'Overview', groups: [''] },
+      { dashboardTitle: 'Frontend' },
+      { dashboardTitle: 'Stats' },
+    ]
+  ),
+  ...dashboardBindingsGenerator(
+    ['Loki', 'Tempo', 'Mimir'],
+    [
+      { dashboardTitle: 'Ingester', groups: ['Components', 'Investigations'] },
+      { dashboardTitle: 'Distributor', groups: ['Components', 'Investigations'] },
+      { dashboardTitle: 'Compacter', groups: ['Components', 'Investigations'] },
+      { dashboardTitle: 'Datasource Errors', groups: ['Observability', 'Investigations'] },
+      { dashboardTitle: 'Datasource Logs', groups: ['Observability', 'Investigations'] },
+      { dashboardTitle: 'Overview' },
+      { dashboardTitle: 'Stats', dashboardKey: 'another-stats' },
+    ]
+  ),
+  ...dashboardBindingsGenerator(
+    ['Dev', 'Ops', 'Prod'],
+    [
+      { dashboardTitle: 'Overview', groups: ['Cardinality Management'] },
+      { dashboardTitle: 'Metrics', groups: ['Cardinality Management'] },
+      { dashboardTitle: 'Labels', groups: ['Cardinality Management'] },
+      { dashboardTitle: 'Overview', groups: ['Usage Insights'] },
+      { dashboardTitle: 'Data Sources', groups: ['Usage Insights'] },
+      { dashboardTitle: 'Query Errors', groups: ['Usage Insights'] },
+      { dashboardTitle: 'Alertmanager', groups: ['Usage Insights'] },
+      { dashboardTitle: 'Metrics Ingestion', groups: ['Usage Insights'] },
+      { dashboardTitle: 'Billing/Usage' },
+    ]
+  ),
 ] as const;
 
 export const mocksNodes: Array<ScopeNode & { parent: string }> = [
@@ -144,133 +203,188 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
   },
   {
     parent: '',
-    metadata: { name: 'clusters' },
+    metadata: { name: 'cloud' },
     spec: {
       nodeType: 'container',
-      title: 'Clusters',
-      description: 'Cluster Scopes',
+      title: 'Cloud',
+      description: 'Cloud Scopes',
       disableMultiSelect: true,
       linkType: 'scope',
-      linkId: 'indexHelperCluster',
+      linkId: 'cloud',
     },
   },
   {
     parent: 'applications',
-    metadata: { name: 'applications-slothPictureFactory' },
+    metadata: { name: 'applications-grafana' },
     spec: {
       nodeType: 'leaf',
-      title: 'slothPictureFactory',
-      description: 'slothPictureFactory',
+      title: 'Grafana',
+      description: 'Grafana',
       linkType: 'scope',
-      linkId: 'slothPictureFactory',
+      linkId: 'grafana',
     },
   },
   {
     parent: 'applications',
-    metadata: { name: 'applications-slothVoteTracker' },
+    metadata: { name: 'applications-mimir' },
     spec: {
       nodeType: 'leaf',
-      title: 'slothVoteTracker',
-      description: 'slothVoteTracker',
+      title: 'Mimir',
+      description: 'Mimir',
       linkType: 'scope',
-      linkId: 'slothVoteTracker',
+      linkId: 'mimir',
     },
   },
   {
     parent: 'applications',
-    metadata: { name: 'applications-clusters' },
+    metadata: { name: 'applications-loki' },
+    spec: {
+      nodeType: 'leaf',
+      title: 'Loki',
+      description: 'Loki',
+      linkType: 'scope',
+      linkId: 'loki',
+    },
+  },
+  {
+    parent: 'applications',
+    metadata: { name: 'applications-tempo' },
+    spec: {
+      nodeType: 'leaf',
+      title: 'Tempo',
+      description: 'Tempo',
+      linkType: 'scope',
+      linkId: 'tempo',
+    },
+  },
+  {
+    parent: 'applications',
+    metadata: { name: 'applications-cloud' },
     spec: {
       nodeType: 'container',
-      title: 'Clusters',
-      description: 'Application/Clusters Scopes',
+      title: 'Cloud',
+      description: 'Application/Cloud Scopes',
       linkType: 'scope',
-      linkId: 'indexHelperCluster',
+      linkId: 'cloud',
     },
   },
   {
-    parent: 'applications-clusters',
-    metadata: { name: 'applications-clusters-slothClusterNorth' },
+    parent: 'applications-cloud',
+    metadata: { name: 'applications-cloud-dev' },
     spec: {
       nodeType: 'leaf',
-      title: 'slothClusterNorth',
-      description: 'slothClusterNorth',
+      title: 'Dev',
+      description: 'Dev',
       linkType: 'scope',
-      linkId: 'slothClusterNorth',
+      linkId: 'dev',
     },
   },
   {
-    parent: 'applications-clusters',
-    metadata: { name: 'applications-clusters-slothClusterSouth' },
+    parent: 'applications-cloud',
+    metadata: { name: 'applications-cloud-ops' },
     spec: {
       nodeType: 'leaf',
-      title: 'slothClusterSouth',
-      description: 'slothClusterSouth',
+      title: 'Ops',
+      description: 'Ops',
       linkType: 'scope',
-      linkId: 'slothClusterSouth',
+      linkId: 'ops',
     },
   },
   {
-    parent: 'clusters',
-    metadata: { name: 'clusters-slothClusterNorth' },
+    parent: 'applications-cloud',
+    metadata: { name: 'applications-cloud-prod' },
     spec: {
       nodeType: 'leaf',
-      title: 'slothClusterNorth',
-      description: 'slothClusterNorth',
+      title: 'Prod',
+      description: 'Prod',
       linkType: 'scope',
-      linkId: 'slothClusterNorth',
+      linkId: 'prod',
     },
   },
   {
-    parent: 'clusters',
-    metadata: { name: 'clusters-slothClusterSouth' },
+    parent: 'cloud',
+    metadata: { name: 'cloud-dev' },
     spec: {
       nodeType: 'leaf',
-      title: 'slothClusterSouth',
-      description: 'slothClusterSouth',
+      title: 'Dev',
+      description: 'Dev',
       linkType: 'scope',
-      linkId: 'slothClusterSouth',
+      linkId: 'dev',
     },
   },
   {
-    parent: 'clusters',
-    metadata: { name: 'clusters-slothClusterEast' },
+    parent: 'cloud',
+    metadata: { name: 'cloud-ops' },
     spec: {
       nodeType: 'leaf',
-      title: 'slothClusterEast',
-      description: 'slothClusterEast',
+      title: 'Ops',
+      description: 'Ops',
       linkType: 'scope',
-      linkId: 'slothClusterEast',
+      linkId: 'ops',
     },
   },
   {
-    parent: 'clusters',
-    metadata: { name: 'clusters-applications' },
+    parent: 'cloud',
+    metadata: { name: 'cloud-prod' },
+    spec: {
+      nodeType: 'leaf',
+      title: 'Prod',
+      description: 'Prod',
+      linkType: 'scope',
+      linkId: 'prod',
+    },
+  },
+  {
+    parent: 'cloud',
+    metadata: { name: 'cloud-applications' },
     spec: {
       nodeType: 'container',
       title: 'Applications',
-      description: 'Clusters/Application Scopes',
+      description: 'Cloud/Application Scopes',
     },
   },
   {
-    parent: 'clusters-applications',
-    metadata: { name: 'clusters-applications-slothPictureFactory' },
+    parent: 'cloud-applications',
+    metadata: { name: 'cloud-applications-grafana' },
     spec: {
       nodeType: 'leaf',
-      title: 'slothPictureFactory',
-      description: 'slothPictureFactory',
+      title: 'Grafana',
+      description: 'Grafana',
       linkType: 'scope',
-      linkId: 'slothPictureFactory',
+      linkId: 'grafana',
     },
   },
   {
-    parent: 'clusters-applications',
-    metadata: { name: 'clusters-applications-slothVoteTracker' },
+    parent: 'cloud-applications',
+    metadata: { name: 'cloud-applications-mimir' },
     spec: {
       nodeType: 'leaf',
-      title: 'slothVoteTracker',
-      description: 'slothVoteTracker',
+      title: 'Mimir',
+      description: 'Mimir',
       linkType: 'scope',
-      linkId: 'slothVoteTracker',
+      linkId: 'mimir',
+    },
+  },
+  {
+    parent: 'cloud-applications',
+    metadata: { name: 'cloud-applications-loki' },
+    spec: {
+      nodeType: 'leaf',
+      title: 'Loki',
+      description: 'Loki',
+      linkType: 'scope',
+      linkId: 'loki',
+    },
+  },
+  {
+    parent: 'cloud-applications',
+    metadata: { name: 'cloud-applications-tempo' },
+    spec: {
+      nodeType: 'leaf',
+      title: 'Tempo',
+      description: 'Tempo',
+      linkType: 'scope',
+      linkId: 'tempo',
     },
   },
 ] as const;
@@ -278,7 +392,7 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
 export const fetchNodesSpy = jest.spyOn(api, 'fetchNodes');
 export const fetchScopeSpy = jest.spyOn(api, 'fetchScope');
 export const fetchSelectedScopesSpy = jest.spyOn(api, 'fetchSelectedScopes');
-export const fetchSuggestedDashboardsSpy = jest.spyOn(api, 'fetchSuggestedDashboards');
+export const fetchDashboardsSpy = jest.spyOn(api, 'fetchDashboards');
 
 export const getMock = jest
   .fn()
@@ -286,7 +400,8 @@ export const getMock = jest
     if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_node_children')) {
       return {
         items: mocksNodes.filter(
-          ({ parent, spec: { title } }) => parent === params.parent && title.includes(params.query ?? '')
+          ({ parent, spec: { title } }) =>
+            parent === params.parent && title.toLowerCase().includes((params.query ?? '').toLowerCase())
         ),
       };
     }
@@ -294,7 +409,7 @@ export const getMock = jest
     if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/')) {
       const name = url.replace('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/', '');
 
-      return mocksScopes.find((scope) => scope.metadata.name === name) ?? {};
+      return mocksScopes.find((scope) => scope.metadata.name.toLowerCase() === name.toLowerCase()) ?? {};
     }
 
     if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_dashboard_bindings')) {
@@ -369,47 +484,45 @@ export const getNotFoundForFilterClear = () => screen.getByTestId(selectors.dash
 export const getTreeSearch = () => screen.getByTestId<HTMLInputElement>(selectors.tree.search);
 export const getTreeHeadline = () => screen.getByTestId(selectors.tree.headline);
 export const getResultApplicationsExpand = () => screen.getByTestId(selectors.tree.expand('applications', 'result'));
-export const queryResultApplicationsSlothPictureFactoryTitle = () =>
-  screen.queryByTestId(selectors.tree.title('applications-slothPictureFactory', 'result'));
-export const getResultApplicationsSlothPictureFactoryTitle = () =>
-  screen.getByTestId(selectors.tree.title('applications-slothPictureFactory', 'result'));
-export const getResultApplicationsSlothPictureFactorySelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-slothPictureFactory', 'result'));
-export const queryPersistedApplicationsSlothPictureFactoryTitle = () =>
-  screen.queryByTestId(selectors.tree.title('applications-slothPictureFactory', 'persisted'));
-export const getPersistedApplicationsSlothPictureFactoryTitle = () =>
-  screen.getByTestId(selectors.tree.title('applications-slothPictureFactory', 'persisted'));
-export const getPersistedApplicationsSlothPictureFactorySelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-slothPictureFactory', 'persisted'));
-export const queryResultApplicationsSlothVoteTrackerTitle = () =>
-  screen.queryByTestId(selectors.tree.title('applications-slothVoteTracker', 'result'));
-export const getResultApplicationsSlothVoteTrackerTitle = () =>
-  screen.getByTestId(selectors.tree.title('applications-slothVoteTracker', 'result'));
-export const getResultApplicationsSlothVoteTrackerSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-slothVoteTracker', 'result'));
-export const queryPersistedApplicationsSlothVoteTrackerTitle = () =>
-  screen.queryByTestId(selectors.tree.title('applications-slothVoteTracker', 'persisted'));
-export const getPersistedApplicationsSlothVoteTrackerTitle = () =>
-  screen.getByTestId(selectors.tree.title('applications-slothVoteTracker', 'persisted'));
-export const queryResultApplicationsClustersTitle = () =>
-  screen.queryByTestId(selectors.tree.title('applications-clusters', 'result'));
-export const getResultApplicationsClustersSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-clusters', 'result'));
-export const getResultApplicationsClustersExpand = () =>
-  screen.getByTestId(selectors.tree.expand('applications-clusters', 'result'));
-export const getResultApplicationsClustersSlothClusterNorthSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-clusters-slothClusterNorth', 'result'));
-export const getResultApplicationsClustersSlothClusterSouthSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-clusters-slothClusterSouth', 'result'));
+export const queryResultApplicationsGrafanaTitle = () =>
+  screen.queryByTestId(selectors.tree.title('applications-grafana', 'result'));
+export const getResultApplicationsGrafanaTitle = () =>
+  screen.getByTestId(selectors.tree.title('applications-grafana', 'result'));
+export const getResultApplicationsGrafanaSelect = () =>
+  screen.getByTestId(selectors.tree.select('applications-grafana', 'result'));
+export const queryPersistedApplicationsGrafanaTitle = () =>
+  screen.queryByTestId(selectors.tree.title('applications-grafana', 'persisted'));
+export const queryResultApplicationsMimirTitle = () =>
+  screen.queryByTestId(selectors.tree.title('applications-mimir', 'result'));
+export const getResultApplicationsMimirTitle = () =>
+  screen.getByTestId(selectors.tree.title('applications-mimir', 'result'));
+export const getResultApplicationsMimirSelect = () =>
+  screen.getByTestId(selectors.tree.select('applications-mimir', 'result'));
+export const queryPersistedApplicationsMimirTitle = () =>
+  screen.queryByTestId(selectors.tree.title('applications-mimir', 'persisted'));
+export const getPersistedApplicationsMimirTitle = () =>
+  screen.getByTestId(selectors.tree.title('applications-mimir', 'persisted'));
+export const getPersistedApplicationsMimirSelect = () =>
+  screen.getByTestId(selectors.tree.select('applications-mimir', 'persisted'));
+export const queryResultApplicationsCloudTitle = () =>
+  screen.queryByTestId(selectors.tree.title('applications-cloud', 'result'));
+export const getResultApplicationsCloudSelect = () =>
+  screen.getByTestId(selectors.tree.select('applications-cloud', 'result'));
+export const getResultApplicationsCloudExpand = () =>
+  screen.getByTestId(selectors.tree.expand('applications-cloud', 'result'));
+export const getResultApplicationsCloudDevSelect = () =>
+  screen.getByTestId(selectors.tree.select('applications-cloud-dev', 'result'));
+export const getResultApplicationsCloudOpsSelect = () =>
+  screen.getByTestId(selectors.tree.select('applications-cloud-ops', 'result'));
 
-export const getResultClustersSelect = () => screen.getByTestId(selectors.tree.select('clusters', 'result'));
-export const getResultClustersExpand = () => screen.getByTestId(selectors.tree.expand('clusters', 'result'));
-export const getResultClustersSlothClusterNorthRadio = () =>
-  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('clusters-slothClusterNorth', 'result'));
-export const getResultClustersSlothClusterSouthRadio = () =>
-  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('clusters-slothClusterSouth', 'result'));
-export const getResultClustersSlothClusterEastRadio = () =>
-  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('clusters-slothClusterEast', 'result'));
+export const getResultCloudSelect = () => screen.getByTestId(selectors.tree.select('cloud', 'result'));
+export const getResultCloudExpand = () => screen.getByTestId(selectors.tree.expand('cloud', 'result'));
+export const getResultCloudDevRadio = () =>
+  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('cloud-dev', 'result'));
+export const getResultCloudOpsRadio = () =>
+  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('cloud-ops', 'result'));
+export const getResultCloudProdRadio = () =>
+  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('cloud-prod', 'result'));
 
 export function buildTestScene(overrides: Partial<DashboardScene> = {}) {
   return new DashboardScene({

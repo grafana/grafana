@@ -57,7 +57,7 @@ export function groupDashboards(dashboards: ScopeDashboardBinding[]): SuggestedD
       const groups = dashboard.spec.groups ?? [];
 
       groups.forEach((group) => {
-        if (!rootNode.folders[group]) {
+        if (group && !rootNode.folders[group]) {
           rootNode.folders[group] = {
             title: group,
             isExpanded: false,
@@ -68,7 +68,9 @@ export function groupDashboards(dashboards: ScopeDashboardBinding[]): SuggestedD
       });
 
       const targets =
-        groups.length > 0 ? groups.map((group) => rootNode.folders[group].dashboards) : [rootNode.dashboards];
+        groups.length > 0
+          ? groups.map((group) => (group === '' ? rootNode.dashboards : rootNode.folders[group].dashboards))
+          : [rootNode.dashboards];
 
       targets.forEach((target) => {
         if (!target[dashboard.spec.dashboard]) {
