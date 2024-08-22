@@ -24,6 +24,7 @@ export const ActionEditorModalContent = ({
   getSuggestions,
 }: ActionEditorModalContentProps) => {
   const [dirtyAction, setDirtyAction] = useState(action);
+
   return (
     <>
       <ActionEditor
@@ -42,6 +43,7 @@ export const ActionEditorModalContent = ({
           onClick={() => {
             onSave(index, dirtyAction);
           }}
+          disabled={dirtyAction.title.trim() === '' || dirtyAction.options.url.trim() === ''}
         >
           Save
         </Button>

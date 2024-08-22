@@ -30,7 +30,6 @@ export enum ActionType {
 }
 
 export enum HttpRequestMethod {
-  GET = 'GET',
   POST = 'POST',
   PUT = 'PUT',
 }
@@ -41,12 +40,12 @@ export const httpMethodOptions: SelectableValue[] = [
 ];
 
 export const contentTypeOptions: SelectableValue[] = [
-  { label: 'JSON', value: 'application/json' },
-  { label: 'Text', value: 'text/plain' },
-  { label: 'JavaScript', value: 'application/javascript' },
-  { label: 'HTML', value: 'text/html' },
-  { label: 'XML', value: 'application/XML' },
-  { label: 'x-www-form-urlencoded', value: 'application/x-www-form-urlencoded' },
+  { label: 'application/json', value: 'application/json' },
+  { label: 'text/plain', value: 'text/plain' },
+  { label: 'application/javascript', value: 'application/javascript' },
+  { label: 'text/html', value: 'text/html' },
+  { label: 'application/XML', value: 'application/XML' },
+  { label: 'application/x-www-form-urlencoded', value: 'application/x-www-form-urlencoded' },
 ];
 
 export const defaultActionConfig: Action = {
@@ -57,7 +56,7 @@ export const defaultActionConfig: Action = {
     method: HttpRequestMethod.POST,
     body: '{}',
     queryParams: [],
-    headers: [],
+    headers: [['Content-Type', 'application/json']],
   },
 };
 
