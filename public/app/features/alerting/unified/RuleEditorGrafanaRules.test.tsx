@@ -120,7 +120,7 @@ describe('RuleEditor grafana managed rules', () => {
     const folderInput = await ui.inputs.folder.find();
     await clickSelectOption(folderInput, 'Folder A');
     const groupInput = await ui.inputs.group.find();
-    await userEvent.click(byRole('combobox').get(groupInput));
+    await userEvent.click(await byRole('combobox').find(groupInput));
     await clickSelectOption(groupInput, grafanaRulerGroup.name);
     await userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
 
