@@ -14,7 +14,6 @@ import (
 
 func ValidateActionUrl(cfg *setting.Cfg) web.Handler {
 	return func(c *contextmodel.ReqContext) {
-
 		// ignore local render calls
 		if c.IsRenderCall {
 			return
