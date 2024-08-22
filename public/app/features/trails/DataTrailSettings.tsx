@@ -5,6 +5,8 @@ import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana
 import { Dropdown, Switch, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { Trans } from '@grafana/ui/src/utils/i18n';
 
+import { MetricScene } from './MetricScene';
+import { MetricSelectScene } from './MetricSelect/MetricSelectScene';
 import { reportExploreMetrics } from './interactions';
 import { getTrailFor } from './utils';
 
@@ -42,25 +44,29 @@ export class DataTrailSettings extends SceneObjectBase<DataTrailSettingsState> {
 
     const trail = getTrailFor(model);
 
-    const { showPreviews } = trail.useState();
+    const { showPreviews, topScene } = trail.useState();
 
     const renderPopover = () => {
       return (
         /* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */
         <div className={styles.popover} onClick={(evt) => evt.stopPropagation()}>
           <div className={styles.heading}>Settings</div>
-          <div className={styles.options}>
-            <div>
-              <Trans>Always keep selected metric graph in-view</Trans>
+          {topScene instanceof MetricScene && (
+            <div className={styles.options}>
+              <div>
+                <Trans>Always keep selected metric graph in-view</Trans>
+              </div>
+              <Switch value={stickyMainGraph} onChange={model.onToggleStickyMainGraph} />
             </div>
-            <Switch value={stickyMainGraph} onChange={model.onToggleStickyMainGraph} />
-          </div>
-          <div className={styles.options}>
-            <div>
-              <Trans>Show previews of metric graphs in metric select scene</Trans>
+          )}
+          {topScene instanceof MetricSelectScene && (
+            <div className={styles.options}>
+              <div>
+                <Trans>Show previews of metric graphs</Trans>
+              </div>
+              <Switch value={showPreviews} onChange={model.onTogglePreviews} />
             </div>
-            <Switch value={showPreviews} onChange={model.onTogglePreviews} />
-          </div>
+          )}
         </div>
       );
     };
