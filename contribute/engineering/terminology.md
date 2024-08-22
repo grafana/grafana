@@ -12,4 +12,4 @@ In practice, they are synonymous. However, TLS is considered the current name fo
 [deprecated](https://tools.ietf.org/html/rfc7568).
 
 As such, while we use both terms in our codebase and documentation, we generally prefer TLS.
-However, we have decided to use both acronyms in combination when referring to this type of technology, that is, _TLS/SSL_. We do this because we don't want to confuse readers who may not be aware of them being synonymous, and SSL still prevalent in common discourse.
+However, we use both acronyms in combination when referring to this type of technology, that is, _TLS/SSL_. We do this because we don't want to confuse readers who may not be aware of them being synonymous, and SSL is still prevalent in common discourse.
