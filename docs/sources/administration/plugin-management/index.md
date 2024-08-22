@@ -151,7 +151,7 @@ If you're logged in to Grafana Cloud when you add a plugin, log out and then log
 
 
 
-### Install plugins on a self-hosted Grafana through helm
+### Install plugins using the Grafana Helm chart
 
 In [Helm charts](https://github.com/grafana/helm-charts/blob/79a0101296b0065b18987321b3047b8c94bc1a33/charts/grafana/values.yaml#L605), you may add the plugins you wish to install as a list
 
