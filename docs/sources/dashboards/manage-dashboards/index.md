@@ -1,6 +1,5 @@
 ---
 aliases:
-  - ../features/dashboard/dashboards/
   - ../panels/working-with-panels/organize-dashboard/
   - ../reference/dashboard_folders/
   - dashboard-folders/
