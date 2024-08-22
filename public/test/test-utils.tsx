@@ -50,16 +50,21 @@ const getWrapper = ({
   grafanaContext?: Partial<GrafanaContextType>;
 }) => {
   const reduxStore = store || configureStore();
-  /**
-   * Conditional router - either a MemoryRouter or just a Fragment
-   */
-  const PotentialRouter = renderWithRouter ? Router : Fragment;
 
   // Create a fresh location service for each test - otherwise we run the risk
   // of it being stateful in between runs
   const history = createMemoryHistory(historyOptions);
   const locationService = new HistoryWrapper(history);
   setLocationService(locationService);
+
+  /**
+   * Conditional router - either a MemoryRouter or just a Fragment
+   */
+  const PotentialRouter = renderWithRouter
+    ? ({ children }: PropsWithChildren) => <Router history={history}>{children}</Router>
+    : ({ children }: PropsWithChildren) => <Fragment>{children}</Fragment>;
+
+  const PotentialCompatRouter = renderWithRouter ? CompatRouter : Fragment;
 
   const context = {
     ...getGrafanaContextMock(),
@@ -74,11 +79,11 @@ const getWrapper = ({
     return (
       <Provider store={reduxStore}>
         <GrafanaContext.Provider value={context}>
-          <PotentialRouter history={history}>
+          <PotentialRouter>
             <LocationServiceProvider service={locationService}>
-              <CompatRouter>
+              <PotentialCompatRouter>
                 <ModalsContextProvider>{children}</ModalsContextProvider>
-              </CompatRouter>
+              </PotentialCompatRouter>
             </LocationServiceProvider>
           </PotentialRouter>
         </GrafanaContext.Provider>
