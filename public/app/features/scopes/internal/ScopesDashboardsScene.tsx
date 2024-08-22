@@ -83,7 +83,9 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
 
     if (scopeNames.length === 0) {
       return this.setState({
+        dashboards: [],
         folders: {},
+        filteredFolders: {},
         forScopeNames: [],
         isLoading: false,
         scopesSelected: false,
