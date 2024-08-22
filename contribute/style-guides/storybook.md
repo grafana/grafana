@@ -53,7 +53,7 @@ If you want to write cover cases with different values for props, then using kno
 
 ### Categorization
 
-We currently have these categories of components:
+We have these categories of components:
 
 - **Docs Overview** - Guidelines and information regarding the design system
 - **Forms** - Components commonly used in forms such as different kind of inputs
