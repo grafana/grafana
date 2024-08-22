@@ -34,10 +34,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   internalLink: css({
     marginRight: theme.spacing(1),
   }),
+  openNewTab: css({
+    marginRight: theme.spacing(1),
+  }),
   dataSource: css({}),
-  openNewTab: css`
-    margin-right: ${theme.spacing(1)};
-  `,
   nameMatcherField: css({
     width: theme.spacing(20),
     marginRight: theme.spacing(0.5),
