@@ -139,9 +139,6 @@ const ModalBody = ({
               * It may take a few minutes for the plugins to be available for usage.
             </footer>
           )}
-          <footer className={styles.footer}>
-            * It may take a few minutes for the plugins to be available for usage.
-          </footer>
         </>
       )}
     </div>
