@@ -61,12 +61,10 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, features feat
 	}
 
 	p = &resourceDBProvider{
-		cfg:        cfg,
-		log:        log.New("entity-db"),
-		logQueries: getter.Key("log_queries").MustBool(false),
-	}
-	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
-		p.migrateFunc = migrations.MigrateResourceStore
+		cfg:         cfg,
+		log:         log.New("entity-db"),
+		logQueries:  getter.Key("log_queries").MustBool(false),
+		migrateFunc: migrations.MigrateResourceStore,
 	}
 
 	switch dbType := getter.Key("db_type").MustString(""); dbType {
