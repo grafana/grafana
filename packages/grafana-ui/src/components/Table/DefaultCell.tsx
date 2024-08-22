@@ -11,6 +11,7 @@ import { clearLinkButtonStyles } from '../Button';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
+import { TableCellInspectorMode } from './TableCellInspector';
 import { TableStyles } from './styles';
 import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './types';
 import { getCellColors, getCellOptions } from './utils';
@@ -114,7 +115,9 @@ export const DefaultCell = (props: TableCellProps) => {
         </DataLinksContextMenu>
       )}
 
-      {hover && showActions && <CellActions {...props} previewMode="text" showFilters={showFilters} />}
+      {hover && showActions && (
+        <CellActions {...props} previewMode={TableCellInspectorMode.text} showFilters={showFilters} />
+      )}
     </div>
   );
 };

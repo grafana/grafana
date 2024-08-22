@@ -15,12 +15,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/ticker"
 )
 
@@ -84,7 +84,7 @@ type schedule struct {
 	appURL               *url.URL
 	disableGrafanaFolder bool
 	jitterEvaluations    JitterStrategy
-	featureToggles       featuremgmt.FeatureToggles
+	rrCfg                setting.RecordingRuleSettings
 
 	metrics *metrics.Scheduler
 	// lastUpdatedMetricsForOrgsAndGroups contains AlertRuleGroupKeyWithFolderFullpaths that
@@ -113,7 +113,7 @@ type SchedulerCfg struct {
 	C                    clock.Clock
 	MinRuleInterval      time.Duration
 	DisableGrafanaFolder bool
-	FeatureToggles       featuremgmt.FeatureToggles
+	RecordingRulesCfg    setting.RecordingRuleSettings
 	AppURL               *url.URL
 	JitterEvaluations    JitterStrategy
 	EvaluatorFactory     eval.EvaluatorFactory
@@ -146,7 +146,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		appURL:                             cfg.AppURL,
 		disableGrafanaFolder:               cfg.DisableGrafanaFolder,
 		jitterEvaluations:                  cfg.JitterEvaluations,
-		featureToggles:                     cfg.FeatureToggles,
+		rrCfg:                              cfg.RecordingRulesCfg,
 		stateManager:                       stateManager,
 		minRuleInterval:                    cfg.MinRuleInterval,
 		schedulableAlertRules:              alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
@@ -266,7 +266,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		sch.evaluatorFactory,
 		&sch.schedulableAlertRules,
 		sch.clock,
-		sch.featureToggles,
+		sch.rrCfg,
 		sch.metrics,
 		sch.log,
 		sch.tracer,
