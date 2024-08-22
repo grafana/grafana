@@ -150,7 +150,7 @@ func TestIntegrationLoki(t *testing.T) {
 		require.Equal(t, "basicAuthPassword", pwd)
 	})
 
-	t.Run("should forward `X-Dashboard-Title` header but no `X-Panel-Title`", func(t *testing.T) {
+	t.Run("should forward `X-Dashboard-Title` and `X-Panel-Title` header", func(t *testing.T) {
 		query := simplejson.NewFromAny(map[string]interface{}{
 			"datasource": map[string]interface{}{
 				"uid": uid,
