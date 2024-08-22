@@ -114,24 +114,6 @@ export const getPluginExtensions: GetExtensions = ({
         extensions.push(extension);
         extensionsByPlugin[pluginId] += 1;
       }
-
-      // COMPONENT
-      // if (isPluginExtensionComponentConfig(extensionConfig)) {
-      //   assertIsReactComponent(extensionConfig.component);
-
-      //   const extension: PluginExtensionComponent = {
-      //     id: generateExtensionId(registryItem.pluginId, extensionConfig),
-      //     type: PluginExtensionTypes.component,
-      //     pluginId: registryItem.pluginId,
-
-      //     title: extensionConfig.title,
-      //     description: extensionConfig.description,
-      //     component: wrapWithPluginContext(pluginId, extensionConfig.component),
-      //   };
-
-      //   extensions.push(extension);
-      //   extensionsByPlugin[pluginId] += 1;
-      // }
     } catch (error) {
       if (error instanceof Error) {
         logWarning(error.message);
