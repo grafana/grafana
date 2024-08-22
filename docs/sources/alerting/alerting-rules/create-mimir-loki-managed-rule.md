@@ -145,9 +145,7 @@ Annotations add metadata to provide more information on the alert in your alert 
    Links alerts to panels in a dashboard.
 
    {{% admonition type="note" %}}
-   At the moment, alerts are only supported in the [time series](ref:time-series) and [alert list](ref:alert-list) visualizations.
+   At the moment, alert rules are only supported in [time series](ref:time-series) and [alert list](ref:alert-list) visualizations.
    {{% /admonition %}}
-
-   {{< docs/play title="visualizations with linked alerts in Grafana" url="https://play.grafana.org/d/000000074/" >}}
 
 1. Click **Save rule**.

@@ -121,7 +121,6 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 			},
 			[]string{"org"},
 		),
-		// TODO: partition on rule group as well as tenant, similar to loki|cortex.
 		GroupRules: promauto.With(r).NewGaugeVec(
 			prometheus.GaugeOpts{
 				Namespace: Namespace,
@@ -129,7 +128,7 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Name:      "rule_group_rules",
 				Help:      "The number of alert rules that are scheduled, both active and paused.",
 			},
-			[]string{"org", "state"},
+			[]string{"org", "state", "rule_group"},
 		),
 		Groups: promauto.With(r).NewGaugeVec(
 			prometheus.GaugeOpts{
