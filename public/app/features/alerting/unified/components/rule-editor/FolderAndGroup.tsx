@@ -23,7 +23,6 @@ import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
 import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
-import { checkForPathSeparator } from './util';
 
 export const MAX_GROUP_RESULTS = 1000;
 
@@ -175,9 +174,6 @@ export function FolderAndGroup({
                     name="folder"
                     rules={{
                       required: { value: true, message: 'Select a folder' },
-                      validate: {
-                        pathSeparator: (folder: Folder) => checkForPathSeparator(folder.uid),
-                      },
                     }}
                   />
                   <Text color="secondary">or</Text>
@@ -251,9 +247,6 @@ export function FolderAndGroup({
               control={control}
               rules={{
                 required: { value: true, message: 'Must enter a group name' },
-                validate: {
-                  pathSeparator: (group_: string) => checkForPathSeparator(group_),
-                },
               }}
             />
           </Field>
