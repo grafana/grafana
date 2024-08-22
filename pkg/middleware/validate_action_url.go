@@ -14,10 +14,13 @@ import (
 
 func ValidateActionUrl(cfg *setting.Cfg) web.Handler {
 	return func(c *contextmodel.ReqContext) {
+
 		// ignore local render calls
 		if c.IsRenderCall {
 			return
 		}
+
+		// TODO: only process same origin requests
 
 		// only process POST and PUT
 		if c.Req.Method != http.MethodPost && c.Req.Method != http.MethodPut {
@@ -41,7 +44,7 @@ func ValidateActionUrl(cfg *setting.Cfg) web.Handler {
 				if err != nil {
 					// match error, ignore
 					logger.Warn("Error matching configured paths", "err", err)
-					c.JsonApiErr(http.StatusForbidden, fmt.Sprintf("Error matching configured paths", err.Error()), nil)
+					c.JsonApiErr(http.StatusForbidden, fmt.Sprintf("Error matching configured paths: %s", err.Error()), nil)
 					return
 				}
 				if matched {
@@ -51,7 +54,7 @@ func ValidateActionUrl(cfg *setting.Cfg) web.Handler {
 				}
 			}
 			logger.Warn("POST/PUT to path not allowed", "warn", urlToCheck)
-			c.JsonApiErr(http.StatusForbidden, fmt.Sprintf("POST/PUT to path not allowed", urlToCheck), nil)
+			c.JsonApiErr(http.StatusForbidden, fmt.Sprintf("POST/PUT to path not allowed: %s", urlToCheck), nil)
 			return
 		}
 	}
