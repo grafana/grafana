@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 import { KBarProvider } from 'kbar';
-import { getWrapper, render } from 'test/test-utils';
+import { render } from 'test/test-utils';
 
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
 import {
@@ -16,10 +16,8 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
-import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
 import { DashboardControls } from 'app/features/dashboard-scene/scene//DashboardControls';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { configureStore } from 'app/store/configureStore';
 
 import { ScopesFacade } from './ScopesFacadeScene';
 import { scopesDashboardsScene, scopesSelectorScene } from './instance';
@@ -464,24 +462,12 @@ export function buildTestScene(overrides: Partial<DashboardScene> = {}) {
 }
 
 export function renderDashboard(dashboardScene: DashboardScene) {
-  const store = configureStore();
-  const chrome = new AppChromeService();
-  chrome.update({ chromeless: false });
-  const Wrapper = getWrapper({ store, renderWithRouter: true, grafanaContext: { chrome } });
-
   return render(
     <KBarProvider>
-      <Wrapper>
-        <AppChrome>
-          <dashboardScene.Component model={dashboardScene} />
-        </AppChrome>
-      </Wrapper>
-    </KBarProvider>,
-    {
-      historyOptions: {
-        initialEntries: ['/'],
-      },
-    }
+      <AppChrome>
+        <dashboardScene.Component model={dashboardScene} />
+      </AppChrome>
+    </KBarProvider>
   );
 }
 

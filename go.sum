@@ -1542,6 +1542,8 @@ github.com/aryann/difflib v0.0.0-20170710044230-e206f873d14a/go.mod h1:DAHtR1m6l
 github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a/go.mod h1:lB+ZfQJz7igIIfQNfa7Ml4HSf2uFQQRzpGGRXenZAgY=
 github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 h1:DklsrG3dyBCFEj5IhUbnKptjxatkF07cF2ak3yi77so=
 github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2/go.mod h1:WaHUgvxTVq04UNunO+XhnAqY/wQc+bxr74GqbsZ/Jqw=
+github.com/at-wat/mqtt-go v0.19.4 h1:R2cbCU7O5PHQ38unbe1Y51ncG3KsFEJV6QeipDoqdLQ=
+github.com/at-wat/mqtt-go v0.19.4/go.mod h1:AsiWc9kqVOhqq7LzUeWT/AkKUBfx3Sw5cEe8lc06fqA=
 github.com/aws/aws-lambda-go v1.13.3/go.mod h1:4UKl9IzQMoD+QF79YdCuzCwp8VbmG4VAQwij/eHl5CU=
 github.com/aws/aws-sdk-go v1.17.7/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
 github.com/aws/aws-sdk-go v1.27.0/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
@@ -2244,8 +2246,8 @@ github.com/gorilla/websocket v0.0.0-20170926233335-4201258b820c/go.mod h1:E7qHFY
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWmnc=
 github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/grafana/alerting v0.0.0-20240812131556-611a23ff0f7f h1:c8QAFXkilBiF29xc7oKO2IkbGE3bp9NIKgiNLazdooY=
-github.com/grafana/alerting v0.0.0-20240812131556-611a23ff0f7f/go.mod h1:DLj8frbtCaITljC2jc0L85JQViPF3mPfOSiYhm1osso=
+github.com/grafana/alerting v0.0.0-20240822131459-9daa6239cc41 h1:p+UsX43BoDH5YlG6xUd9xDS3M4sWouy8VJ+ODv5S6uE=
+github.com/grafana/alerting v0.0.0-20240822131459-9daa6239cc41/go.mod h1:GMLi6d09Xqo96fCVUjNk//rcjP5NKEdjOzfWIffD5r4=
 github.com/grafana/authlib v0.0.0-20240814074258-eae7d47f01db h1:z++X4DdoX+aNlZNT1ZY4cykiFay4+f077pa0AG48SGg=
 github.com/grafana/authlib v0.0.0-20240814074258-eae7d47f01db/go.mod h1:ptt910z9KFfpVSIbSbXvTRR7tS19mxD7EtmVbbJi/WE=
 github.com/grafana/authlib/claims v0.0.0-20240814074258-eae7d47f01db h1:mDk0bwRV6rDrLSmKXftcPf9kLA9uH6EvxJvzpPW9bso=
