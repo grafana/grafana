@@ -39,6 +39,15 @@ const listNamespacedReceiverHandler = () =>
     return HttpResponse.json(parsedReceivers);
   });
 
+const createNamespacedReceiverHandler = () =>
+  http.post<{ namespace: string }>(
+    `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/receivers`,
+    async ({ request }) => {
+      const body = await request.json();
+      return HttpResponse.json(body);
+    }
+  );
+
 const deleteNamespacedReceiverHandler = () =>
   http.delete<{ namespace: string; name: string }>(
     `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/receivers/:name`,
@@ -52,5 +61,9 @@ const deleteNamespacedReceiverHandler = () =>
     }
   );
 
-const handlers = [listNamespacedReceiverHandler(), deleteNamespacedReceiverHandler()];
+const handlers = [
+  listNamespacedReceiverHandler(),
+  createNamespacedReceiverHandler(),
+  deleteNamespacedReceiverHandler(),
+];
 export default handlers;

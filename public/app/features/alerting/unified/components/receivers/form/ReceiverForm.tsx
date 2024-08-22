@@ -127,7 +127,8 @@ export function ReceiverForm<R extends ChannelValues>({
         </h4>
         <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message} required>
           <Input
-            readOnly={!isEditable || disableEditTitle}
+            disabled={disableEditTitle}
+            readOnly={!isEditable}
             id="name"
             {...register('name', {
               required: 'Name is required',

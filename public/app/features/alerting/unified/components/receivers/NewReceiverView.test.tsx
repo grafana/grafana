@@ -1,6 +1,9 @@
+import 'core-js/stable/structured-clone';
+import { Route } from 'react-router';
 import { render, screen } from 'test/test-utils';
 import { byLabelText, byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
 
+import { config } from '@grafana/runtime';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { AccessControlAction } from 'app/types';
 
@@ -10,65 +13,99 @@ import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 
 import NewReceiverView from './NewReceiverView';
 
-import 'core-js/stable/structured-clone';
-
 setupMswServer();
 
-beforeEach(() => {
-  grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsWrite]);
-});
-
-it('should be able to test and save a receiver', async () => {
-  const capture = captureRequests();
-
-  const { user } = render(
-    <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName="grafana">
-      <NewReceiverView />
+const renderForm = () =>
+  render(
+    <AlertmanagerProvider accessType="notification" alertmanagerSourceName="grafana">
+      <Route path="/alerting/notifications/new" exact>
+        <NewReceiverView />
+      </Route>
+      <Route path="/alerting/notifications" exact>
+        redirected
+      </Route>
     </AlertmanagerProvider>,
     {
       historyOptions: { initialEntries: ['/alerting/notifications/new'] },
     }
   );
 
-  // wait for loading to be done
-  // type in a name for the new receiver
-  await user.type(await ui.inputs.name.find(), 'my new receiver');
+beforeEach(() => {
+  grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsWrite]);
+});
 
-  // enter some email
-  const email = ui.inputs.email.addresses.get();
-  await user.clear(email);
-  await user.type(email, 'tester@grafana.com');
+describe('alerting API server enabled', () => {
+  beforeEach(() => {
+    config.featureToggles.alertingApiServer = true;
+  });
 
-  // try to test the contact point
-  await user.click(await ui.testContactPointButton.find());
+  it('can create a receiver', async () => {
+    const { user } = renderForm();
 
-  expect(await ui.testContactPointModal.find()).toBeInTheDocument();
+    expect(await ui.inputs.name.find()).toBeEnabled();
 
-  await user.click(ui.customContactPointOption.get());
+    await user.type(await ui.inputs.name.find(), 'my new receiver');
 
-  // enter custom annotations and labels
-  await user.type(screen.getByPlaceholderText('Enter a description...'), 'Test contact point');
-  await user.type(ui.contactPointLabelKey(0).get(), 'foo');
-  await user.type(ui.contactPointLabelValue(0).get(), 'bar');
+    // enter some email
+    const email = ui.inputs.email.addresses.get();
+    await user.clear(email);
+    await user.type(email, 'tester@grafana.com');
 
-  // click test
-  await user.click(ui.testContactPoint.get());
+    await user.click(ui.saveContactButton.get());
 
-  // we shouldn't be testing implementation details but when the request is successful
-  // it can't seem to assert on the success toast
-  await user.click(ui.saveContactButton.get());
+    expect(await screen.findByText(/redirected/i)).toBeInTheDocument();
+  });
+});
 
-  const requests = await capture;
-  const testRequest = requests.find((r) => r.url.endsWith('/config/api/v1/receivers/test'));
-  const saveRequest = requests.find(
-    (r) => r.url.endsWith('/api/alertmanager/grafana/config/api/v1/alerts') && r.method === 'POST'
-  );
+describe('alerting API server disabled', () => {
+  beforeEach(() => {
+    config.featureToggles.alertingApiServer = false;
+  });
+  it('should be able to test and save a receiver', async () => {
+    const capture = captureRequests();
 
-  const testBody = await testRequest?.json();
-  const saveBody = await saveRequest?.json();
+    const { user } = renderForm();
 
-  expect([testBody]).toMatchSnapshot();
-  expect([saveBody]).toMatchSnapshot();
+    // wait for loading to be done
+    // type in a name for the new receiver
+    await user.type(await ui.inputs.name.find(), 'my new receiver');
+
+    // enter some email
+    const email = ui.inputs.email.addresses.get();
+    await user.clear(email);
+    await user.type(email, 'tester@grafana.com');
+
+    // try to test the contact point
+    await user.click(await ui.testContactPointButton.find());
+
+    expect(await ui.testContactPointModal.find()).toBeInTheDocument();
+
+    await user.click(ui.customContactPointOption.get());
+
+    // enter custom annotations and labels
+    await user.type(screen.getByPlaceholderText('Enter a description...'), 'Test contact point');
+    await user.type(ui.contactPointLabelKey(0).get(), 'foo');
+    await user.type(ui.contactPointLabelValue(0).get(), 'bar');
+
+    // click test
+    await user.click(ui.testContactPoint.get());
+
+    // we shouldn't be testing implementation details but when the request is successful
+    // it can't seem to assert on the success toast
+    await user.click(ui.saveContactButton.get());
+
+    const requests = await capture;
+    const testRequest = requests.find((r) => r.url.endsWith('/config/api/v1/receivers/test'));
+    const saveRequest = requests.find(
+      (r) => r.url.endsWith('/api/alertmanager/grafana/config/api/v1/alerts') && r.method === 'POST'
+    );
+
+    const testBody = await testRequest?.json();
+    const saveBody = await saveRequest?.json();
+
+    expect([testBody]).toMatchSnapshot();
+    expect([saveBody]).toMatchSnapshot();
+  });
 });
 
 const ui = {
