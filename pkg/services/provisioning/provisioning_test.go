@@ -75,7 +75,8 @@ func TestProvisioningServiceImpl(t *testing.T) {
 		serviceTest.mock.ProvisionFunc = func(ctx context.Context) error {
 			return provisioningErr
 		}
-		serviceTest.service.ProvisionDashboards(context.Background())
+		err := serviceTest.service.ProvisionDashboards(context.Background())
+		assert.NotNil(t, err)
 		serviceTest.startService()
 
 		serviceTest.waitForPollChanges()
@@ -88,7 +89,6 @@ func TestProvisioningServiceImpl(t *testing.T) {
 		fmt.Println("serviceTest.serviceError", serviceTest.serviceError)
 		assert.Equal(t, context.Canceled, serviceTest.serviceError)
 	})
-
 }
 
 type serviceTestStruct struct {
