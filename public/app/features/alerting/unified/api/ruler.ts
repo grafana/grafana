@@ -3,7 +3,7 @@ import { lastValueFrom } from 'rxjs';
 import { isObject } from '@grafana/data';
 import { FetchResponse, getBackendSrv } from '@grafana/runtime';
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
-import { PostableRulerRuleGroupDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { containsPathSeparator } from '../components/rule-editor/util';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
@@ -111,25 +111,6 @@ function getRulerPath(rulerConfig: RulerDataSourceConfig) {
   return `${grafanaServerPath}/api/v1/rules`;
 }
 
-// upsert a rule group. use this to update rule
-export async function setRulerRuleGroup(
-  rulerConfig: RulerDataSourceConfig,
-  namespaceIdentifier: string,
-  group: PostableRulerRuleGroupDTO
-): Promise<void> {
-  const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespaceIdentifier);
-  await lastValueFrom(
-    getBackendSrv().fetch<unknown>({
-      method: 'POST',
-      url: path,
-      data: group,
-      showErrorAlert: false,
-      showSuccessAlert: false,
-      params,
-    })
-  );
-}
-
 export interface FetchRulerRulesFilter {
   dashboardUID?: string;
   panelId?: number;
@@ -170,19 +151,6 @@ export async function fetchRulerRulesGroup(
 ): Promise<RulerRuleGroupDTO | null> {
   const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespaceIdentifier, group);
   return rulerGetRequest<RulerRuleGroupDTO | null>(path, null, params);
-}
-
-export async function deleteRulerRulesGroup(rulerConfig: RulerDataSourceConfig, namespace: string, groupName: string) {
-  const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, groupName);
-  await lastValueFrom(
-    getBackendSrv().fetch({
-      url: path,
-      method: 'DELETE',
-      showSuccessAlert: false,
-      showErrorAlert: false,
-      params,
-    })
-  );
 }
 
 // false in case ruler is not supported. this is weird, but we'll work on it
@@ -241,18 +209,5 @@ function isCortexErrorResponse(error: FetchResponse<ErrorResponseMessage>) {
   return (
     error.status === 404 &&
     (error.data.message?.includes('group does not exist') || error.data.message?.includes('no rule groups found'))
-  );
-}
-
-export async function deleteNamespace(rulerConfig: RulerDataSourceConfig, namespace: string): Promise<void> {
-  const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
-  await lastValueFrom(
-    getBackendSrv().fetch<unknown>({
-      method: 'DELETE',
-      url: path,
-      showErrorAlert: false,
-      showSuccessAlert: false,
-      params,
-    })
   );
 }
