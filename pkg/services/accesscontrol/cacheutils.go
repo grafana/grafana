@@ -2,6 +2,8 @@ package accesscontrol
 
 import (
 	"fmt"
+	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -40,4 +42,13 @@ func GetBasicRolePermissionCacheKey(role string, orgID int64) string {
 
 func GetTeamPermissionCacheKey(teamID int64, orgID int64) string {
 	return fmt.Sprintf("rbac-permissions-team-%d-%d", orgID, teamID)
+}
+
+func GetTeamPermissionCompositeCacheKey(teamIds []int64, orgID int64) string {
+	teams := make([]string, 0)
+	slices.Sort(teamIds)
+	for _, id := range teamIds {
+		teams = append(teams, strconv.FormatInt(int64(id), 10))
+	}
+	return fmt.Sprintf("rbac-permissions-team-%d-%s", orgID, strings.Join(teams, "-"))
 }
