@@ -238,7 +238,7 @@ func (mg *Migrator) run() (err error) {
 			return err
 		})
 		if err != nil {
-			return fmt.Errorf("%v: %w", fmt.Sprintf("migration failed (id = %s)", m.Id()), err)
+			return fmt.Errorf("%v: %w %s", fmt.Sprintf("migration failed (id = %s)", m.Id()), err, sql)
 		}
 	}
 

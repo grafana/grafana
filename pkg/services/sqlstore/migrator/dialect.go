@@ -163,7 +163,13 @@ func (b *BaseDialect) Default(col *Column) string {
 		}
 		return b.dialect.BooleanStr(bl)
 	}
-	return b.dialect.Quote(col.Default)
+
+	// if default is a number, do not quote. Otherwise add quotes to escape reserved words
+	if _, err := strconv.Atoi(col.Default); err == nil {
+		return col.Default
+	} else {
+		return b.dialect.Quote(col.Default)
+	}
 }
 
 func (b *BaseDialect) DateTimeFunc(value string) string {
