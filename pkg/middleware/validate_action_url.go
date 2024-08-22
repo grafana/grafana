@@ -3,68 +3,70 @@ package middleware
 import (
 	"fmt"
 	"net/http"
-	"path"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+
+	"github.com/ryanuber/go-glob"
 )
 
-func ValidateActionUrl(cfg *setting.Cfg) web.Middleware {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			c := contexthandler.FromContext(req.Context())
+func ValidateActionUrl(cfg *setting.Cfg, logger log.Logger) web.Handler {
+	return func(c *contextmodel.ReqContext) {
+		// ignore local render calls
+		if c.IsRenderCall {
+			return
+		}
 
-			// ignore local render calls
-			if c.IsRenderCall {
+		// only process requests targeting local instance
+		if !isLocalPath(c) {
+			// call next on url
+			return
+		}
+
+		// only process POST and PUT
+		if c.Req.Method != http.MethodPost && c.Req.Method != http.MethodPut {
+			return
+		}
+
+		if c.IsApiRequest() {
+			// check if action header exists
+			action := c.Req.Header.Get("X-Grafana-Action")
+
+			if action == "" {
+				// header not found, just return
 				return
 			}
 
-			// only process requests targeting local instance
-			if !isLocalPath(c) {
-				// call next on url
-				next.ServeHTTP(rw, req)
-			}
-
-			// only process POST and PUT
-			if c.Req.Method != http.MethodPost && c.Req.Method != http.MethodPut {
-				next.ServeHTTP(rw, req)
-			}
-
-			if c.IsApiRequest() {
-				// check if action header exists
-				action := c.Req.Header.Get("X-Grafana-Action")
-
-				if action == "" {
-					// header not found, just return
-					next.ServeHTTP(rw, req)
-				}
-
-				urlToCheck := c.Req.URL
-				// get the urls allowed from server config
-				pathsToCheck := util.SplitString(cfg.ActionsAllowPostURL)
-				for _, i := range pathsToCheck {
+			urlToCheck := c.Req.URL
+			// get the urls allowed from server config
+			pathsToCheck := util.SplitString(cfg.ActionsAllowPostURL)
+			logger.Info("Checking url", "actions", urlToCheck.Path)
+			for _, i := range pathsToCheck {
+				logger.Info("Checking match", "actions", i)
+				matched := glob.Glob(i, urlToCheck.Path)
+				/*
 					matched, err := path.Match(i, urlToCheck.Path)
 					if err != nil {
 						// match error, ignore
 						logger.Warn("Error matching configured paths", "err", err)
 						c.JsonApiErr(http.StatusForbidden, fmt.Sprintf("Error matching configured paths: %s", err.Error()), nil)
-					}
-					if matched {
-						// allowed
-						logger.Debug("API call allowed", "path", i)
-						next.ServeHTTP(rw, c.Req)
 						return
 					}
+				*/
+				if matched {
+					// allowed
+					logger.Info("POST/PUT call matches allow configuration settings", "actions_allow_post_url", i)
+					return
 				}
-				logger.Warn("POST/PUT to path not allowed", "warn", urlToCheck)
-				c.JsonApiErr(http.StatusForbidden, fmt.Sprintf("POST/PUT to path not allowed: %s", urlToCheck), nil)
 			}
-			next.ServeHTTP(rw, req)
-		})
+			logger.Warn("POST/PUT to path not allowed", "warn", urlToCheck)
+			c.JsonApiErr(http.StatusForbidden, fmt.Sprintf("POST/PUT to path not allowed: %s", urlToCheck), nil)
+			return
+		}
 	}
 }
 
