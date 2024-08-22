@@ -137,5 +137,8 @@ export function getUtilityClassStyles(theme: GrafanaTheme2) {
         boxShadow: 'none',
       },
     },
+    '.typeahead': {
+      zIndex: theme.zIndex.typeahead,
+    },
   });
 }
