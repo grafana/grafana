@@ -103,7 +103,10 @@ export function filterFolders(folders: SuggestedDashboardsFoldersMap, query: str
   return Object.entries(folders).reduce<SuggestedDashboardsFoldersMap>((acc, [folderId, folder]) => {
     // If folder matches the query, we show everything inside
     if (folder.title.toLowerCase().includes(query)) {
-      acc[folderId] = folder;
+      acc[folderId] = {
+        ...folder,
+        isExpanded: true,
+      };
 
       return acc;
     }
@@ -116,6 +119,7 @@ export function filterFolders(folders: SuggestedDashboardsFoldersMap, query: str
     if (Object.keys(filteredFolders).length > 0 || filteredDashboards.length > 0) {
       acc[folderId] = {
         ...folder,
+        isExpanded: true,
         folders: filteredFolders,
         dashboards: Object.fromEntries(filteredDashboards),
       };
