@@ -87,13 +87,7 @@ type ModalBodyProps = {
   errorMap: Map<string, UpdateError>;
 };
 
-const ModalBody = ({
-  plugins,
-  inProgress,
-  selectedPlugins,
-  onCheckboxChange,
-  errorMap,
-}: ModalBodyProps) => {
+const ModalBody = ({ plugins, inProgress, selectedPlugins, onCheckboxChange, errorMap }: ModalBodyProps) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -118,17 +112,12 @@ const ModalBody = ({
                 {plugins.map(({ id, name, installedVersion, latestVersion }: CatalogPlugin) => (
                   <tr key={id} className={styles.tableRow}>
                     <td>
-                      <Checkbox
-                        onChange={() => onCheckboxChange(id)}
-                        value={selectedPlugins?.has(id)}
-                      />
+                      <Checkbox onChange={() => onCheckboxChange(id)} value={selectedPlugins?.has(id)} />
                     </td>
                     <td>{name}</td>
                     <td>{installedVersion}</td>
                     <td>{latestVersion}</td>
-                    <td className={styles.icon}>
-                      {getIcon({ id, inProgress, errorMap, selectedPlugins })}
-                    </td>
+                    <td className={styles.icon}>{getIcon({ id, inProgress, errorMap, selectedPlugins })}</td>
                   </tr>
                 ))}
               </tbody>
@@ -171,7 +160,6 @@ export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
             newSelectedPlugins.delete(id);
             return newSelectedPlugins;
           });
-
         }
       });
 
