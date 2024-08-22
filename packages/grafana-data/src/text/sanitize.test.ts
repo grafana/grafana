@@ -23,7 +23,7 @@ describe('sanitizeIframe', () => {
   it('should sanitize iframe tags', () => {
     const html = '<iframe src="javascript:alert(document.domain)"></iframe>';
     const str = sanitizeTextPanelContent(html);
-    expect(str).toBe('<iframe src="about:blank" sandbox credentialless=true referrerpolicy=no-referrer></iframe>');
+    expect(str).toBe('<iframe src="about:blank" sandbox credentialless referrerpolicy=no-referrer></iframe>');
   });
 });
 

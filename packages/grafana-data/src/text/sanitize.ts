@@ -16,7 +16,7 @@ const sanitizeTextPanelWhitelist = new xss.FilterXSS({
   onTagAttr: function (tag, name, value, isWhiteAttr) {
     if (tag === 'iframe') {
       return isWhiteAttr
-        ? ` ${name}="${xss.escapeAttrValue(sanitizeUrl(value))}" sandbox credentialless=true referrerpolicy=no-referrer`
+        ? ` ${name}="${xss.escapeAttrValue(sanitizeUrl(value))}" sandbox credentialless referrerpolicy=no-referrer`
         : '';
     }
     return;
