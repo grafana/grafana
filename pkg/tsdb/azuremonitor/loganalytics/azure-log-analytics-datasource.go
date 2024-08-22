@@ -178,7 +178,7 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 	appInsightsQuery = appInsightsRegExp.Match([]byte(resourceOrWorkspace))
 
 	if basicLogsQueryFlag {
-		if meetsBasicLogsCriteria, meetsBasicLogsCriteriaErr := meetsBasicLogsCriteria(resources, fromAlert); meetsBasicLogsCriteriaErr != nil {
+		if meetsBasicLogsCriteria, meetsBasicLogsCriteriaErr := meetsBasicLogsCriteria(resources, fromAlert, *queryJSONModel.AzureLogAnalytics.BasicLogsQuery); meetsBasicLogsCriteriaErr != nil {
 			return nil, meetsBasicLogsCriteriaErr
 		} else {
 			basicLogsQuery = meetsBasicLogsCriteria
