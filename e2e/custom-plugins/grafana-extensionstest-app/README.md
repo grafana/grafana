@@ -13,14 +13,23 @@ To build this plugin run `yarn e2e:plugin:build`.
 
 ## Development
 
-To develop this plugin run `yarn e2e:plugin:build:dev`.
+1: Install frontend dependencies:
+`yarn install --immutable`
+
+2: Build and watch the core frontend
+`yarn start`
+
+3: Build and watch the test plugins
+`yarn e2e:plugin:build:dev`
+
+4: Build the backend
+`make build-go`
+
+5: Start the Grafana e2e test server with the provisioned test plugin
+`PORT=3000 ./scripts/grafana-server/start-server`
 
 Note that this plugin extends the `@grafana/plugin-configs` configs which is why it has no src directory and uses a custom webpack config to copy necessary files.
 
-## Testing
+## Run Playwright tests
 
-Testing locally can be done by first building this plugin then starting the server and running the tests:
-
-- run either `yarn e2e:plugin:build`, `yarn e2e:plugin:build:dev` depending on your needs
-- `yarn e2e:playwright:server`
 - `yarn e2e:playwright`
