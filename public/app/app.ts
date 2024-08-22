@@ -241,8 +241,12 @@ export class GrafanaApp {
         );
       }
 
-      setPluginExtensionGetter(createPluginExtensionsGetter(extensionsRegistry));
-      setPluginExtensionsHook(createUsePluginExtensions(extensionsRegistry));
+      setPluginExtensionGetter(
+        createPluginExtensionsGetter(extensionsRegistry, pluginExtensionsRegistries.addedComponentsRegistry)
+      );
+      setPluginExtensionsHook(
+        createUsePluginExtensions(extensionsRegistry, pluginExtensionsRegistries.addedComponentsRegistry)
+      );
       setPluginComponentHook(createUsePluginComponent(pluginExtensionsRegistries.exposedComponentsRegistry));
       setPluginComponentsHook(createUsePluginComponents(pluginExtensionsRegistries.addedComponentsRegistry));
 

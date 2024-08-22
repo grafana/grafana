@@ -11,37 +11,36 @@ import {
 import { GetPluginExtensions, reportInteraction } from '@grafana/runtime';
 
 import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
-import type { PluginExtensionRegistry } from './types';
+import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
+import type { AddedComponentsRegistryState, PluginExtensionRegistry } from './types';
 import {
   isPluginExtensionLinkConfig,
   getReadOnlyProxy,
   logWarning,
   generateExtensionId,
   getEventHelpers,
-  isPluginExtensionComponentConfig,
   wrapWithPluginContext,
 } from './utils';
-import {
-  assertIsReactComponent,
-  assertIsNotPromise,
-  assertLinkPathIsValid,
-  assertStringProps,
-  isPromise,
-} from './validators';
+import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
 
 type GetExtensions = ({
   context,
   extensionPointId,
   limitPerPlugin,
   registry,
+  addedComponentsRegistry,
 }: {
   context?: object | Record<string | symbol, unknown>;
   extensionPointId: string;
   limitPerPlugin?: number;
   registry: PluginExtensionRegistry;
+  addedComponentsRegistry: AddedComponentsRegistryState;
 }) => { extensions: PluginExtension[] };
 
-export function createPluginExtensionsGetter(extensionRegistry: ReactivePluginExtensionsRegistry): GetPluginExtensions {
+export function createPluginExtensionsGetter(
+  extensionRegistry: ReactivePluginExtensionsRegistry,
+  addedComponentRegistry: AddedComponentsRegistry
+): GetPluginExtensions {
   let registry: PluginExtensionRegistry = { id: '', extensions: {} };
 
   // Create a subscription to keep an copy of the registry state for use in the non-async
@@ -50,11 +49,23 @@ export function createPluginExtensionsGetter(extensionRegistry: ReactivePluginEx
     registry = r;
   });
 
-  return (options) => getPluginExtensions({ ...options, registry });
+  let addedComponentsRegistryState: AddedComponentsRegistryState = {};
+  addedComponentRegistry.asObservable().subscribe((r) => {
+    addedComponentsRegistryState = r;
+  });
+
+  return (options) =>
+    getPluginExtensions({ ...options, registry, addedComponentsRegistry: addedComponentsRegistryState });
 }
 
 // Returns with a list of plugin extensions for the given extension point
-export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, limitPerPlugin, registry }) => {
+export const getPluginExtensions: GetExtensions = ({
+  context,
+  extensionPointId,
+  limitPerPlugin,
+  registry,
+  addedComponentsRegistry,
+}) => {
   const frozenContext = context ? getReadOnlyProxy(context) : {};
   const registryItems = registry.extensions[extensionPointId] ?? [];
   // We don't return the extensions separated by type, because in that case it would be much harder to define a sort-order for them.
@@ -105,26 +116,46 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
       }
 
       // COMPONENT
-      if (isPluginExtensionComponentConfig(extensionConfig)) {
-        assertIsReactComponent(extensionConfig.component);
+      // if (isPluginExtensionComponentConfig(extensionConfig)) {
+      //   assertIsReactComponent(extensionConfig.component);
 
-        const extension: PluginExtensionComponent = {
-          id: generateExtensionId(registryItem.pluginId, extensionConfig),
-          type: PluginExtensionTypes.component,
-          pluginId: registryItem.pluginId,
+      //   const extension: PluginExtensionComponent = {
+      //     id: generateExtensionId(registryItem.pluginId, extensionConfig),
+      //     type: PluginExtensionTypes.component,
+      //     pluginId: registryItem.pluginId,
 
-          title: extensionConfig.title,
-          description: extensionConfig.description,
-          component: wrapWithPluginContext(pluginId, extensionConfig.component),
-        };
+      //     title: extensionConfig.title,
+      //     description: extensionConfig.description,
+      //     component: wrapWithPluginContext(pluginId, extensionConfig.component),
+      //   };
 
-        extensions.push(extension);
-        extensionsByPlugin[pluginId] += 1;
-      }
+      //   extensions.push(extension);
+      //   extensionsByPlugin[pluginId] += 1;
+      // }
     } catch (error) {
       if (error instanceof Error) {
         logWarning(error.message);
       }
+    }
+  }
+
+  if (extensionPointId in addedComponentsRegistry) {
+    const addedComponents = addedComponentsRegistry[extensionPointId];
+    for (const addedComponent of addedComponents) {
+      const extension: PluginExtensionComponent = {
+        id: generateExtensionId(addedComponent.pluginId, {
+          ...addedComponent,
+          extensionPointId,
+          type: PluginExtensionTypes.component,
+        }),
+        type: PluginExtensionTypes.component,
+        pluginId: addedComponent.pluginId,
+        title: addedComponent.title,
+        description: addedComponent.description,
+        component: wrapWithPluginContext(addedComponent.pluginId, addedComponent.component),
+      };
+
+      extensions.push(extension);
     }
   }
 
