@@ -506,15 +506,20 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `MQTT`
 
-| Name               | Secure setting |
-| ------------------ | -------------- |
-| brokerUrl          |                |
-| clientId           |                |
-| topic              |                |
-| messageFormat      |
-| username           |                |
-| password           | yes            |
-| insecureSkipVerify |                |
+| Name                 | Secure setting |
+| -------------------- | -------------- |
+| brokerUrl            |                |
+| clientId             |                |
+| topic                |                |
+| messageFormat        |                |
+| username             |                |
+| password             | yes            |
+| retain               |                |
+| qos                  |                |
+| insecureSkipVerify   |                |
+| tlsClientCertificate | yes            |
+| tlsClientKey         | yes            |
+| tlsCACertificate     | yes            |
 
 #### Alert notification `pagerduty`
 
