@@ -203,6 +203,9 @@
       "recording-rule": "Recording rule"
     },
     "rules": {
+      "add-rule": {
+        "success": "Rule added successfully"
+      },
       "delete-rule": {
         "success": "Rule successfully deleted"
       },
@@ -211,6 +214,9 @@
       },
       "resume-rule": {
         "success": "Rule evaluation resumed"
+      },
+      "update-rule": {
+        "success": "Rule updated successfully"
       }
     }
   },
@@ -345,6 +351,7 @@
     }
   },
   "common": {
+    "cancel": "Cancel",
     "locale": {
       "default": "Default"
     },

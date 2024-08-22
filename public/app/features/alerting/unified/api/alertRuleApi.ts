@@ -22,7 +22,7 @@ import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } 
 import { arrayKeyValuesToObject } from '../utils/labels';
 import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
 
-import { alertingApi, withRequestOptions, WithRequestOptions } from './alertingApi';
+import { alertingApi, WithNotificationOptions } from './alertingApi';
 import {
   FetchPromRulesFilter,
   groupRulesByFileName,
@@ -227,11 +227,15 @@ export const alertRuleApi = alertingApi.injectEndpoints({
     // TODO This should be probably a separate ruler API file
     getRuleGroupForNamespace: build.query<
       RulerRuleGroupDTO,
-      WithRequestOptions<{ rulerConfig: RulerDataSourceConfig; namespace: string; group: string }>
+      WithNotificationOptions<{ rulerConfig: RulerDataSourceConfig; namespace: string; group: string }>
     >({
-      query: ({ rulerConfig, namespace, group, requestOptions }) => {
+      query: ({ rulerConfig, namespace, group, notificationOptions }) => {
         const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
-        return withRequestOptions({ url: path, params }, requestOptions);
+        return {
+          url: path,
+          params,
+          notificationOptions,
+        };
       },
       providesTags: (_result, _error, { namespace, group }) => [
         {
@@ -244,13 +248,21 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
     deleteRuleGroupFromNamespace: build.mutation<
       RulerRuleGroupDTO,
-      WithRequestOptions<{ rulerConfig: RulerDataSourceConfig; namespace: string; group: string }>
+      WithNotificationOptions<{ rulerConfig: RulerDataSourceConfig; namespace: string; group: string }>
     >({
-      query: ({ rulerConfig, namespace, group, requestOptions }) => {
+      query: ({ rulerConfig, namespace, group, notificationOptions }) => {
         const successMessage = t('alerting.rule-groups.delete.success', 'Successfully deleted rule group');
         const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
 
-        return withRequestOptions({ url: path, params, method: 'DELETE' }, requestOptions, { successMessage });
+        return {
+          url: path,
+          params,
+          method: 'DELETE',
+          notificationOptions: {
+            successMessage,
+            ...notificationOptions,
+          },
+        };
       },
       invalidatesTags: (_result, _error, { namespace, group }) => [
         {
@@ -263,29 +275,35 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
     upsertRuleGroupForNamespace: build.mutation<
       AlertGroupUpdated,
-      WithRequestOptions<{
+      WithNotificationOptions<{
         rulerConfig: RulerDataSourceConfig;
         namespace: string;
         payload: PostableRulerRuleGroupDTO;
       }>
     >({
-      query: ({ payload, namespace, rulerConfig, requestOptions }) => {
+      query: ({ payload, namespace, rulerConfig, notificationOptions }) => {
         const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
 
         const successMessage = t('alerting.rule-groups.update.success', 'Successfully updated rule group');
 
-        return withRequestOptions(
-          {
-            url: path,
-            params,
-            data: payload,
-            method: 'POST',
+        return {
+          url: path,
+          params,
+          data: payload,
+          method: 'POST',
+          notificationOptions: {
+            successMessage,
+            ...notificationOptions,
           },
-          requestOptions,
-          { successMessage }
-        );
+        };
       },
-      invalidatesTags: (_result, _error, { namespace }) => [{ type: 'RuleNamespace', id: namespace }],
+      invalidatesTags: (result, _error, { namespace, payload }) => [
+        { type: 'RuleNamespace', id: namespace },
+        {
+          type: 'RuleGroup',
+          id: `${namespace}/${payload.name}`,
+        },
+      ],
     }),
 
     getAlertRule: build.query<RulerGrafanaRuleDTO, { uid: string }>({
