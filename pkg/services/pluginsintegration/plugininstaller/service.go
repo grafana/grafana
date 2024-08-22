@@ -121,8 +121,8 @@ func (s *Service) installPlugins(ctx context.Context) error {
 			s.log.Error("Failed to install plugin", "pluginId", installPlugin.ID, "version", installPlugin.Version, "error", err)
 			continue
 		}
-		s.log.Info("Plugin successfully installed", "pluginId", installPlugin.ID, "version", installPlugin.Version)
 		elapsed := time.Since(start)
+		s.log.Info("Plugin successfully installed", "pluginId", installPlugin.ID, "version", installPlugin.Version, "duration", elapsed)
 		installRequestDuration.WithLabelValues(installPlugin.ID, installPlugin.Version).Observe(elapsed.Seconds())
 		installRequestCounter.WithLabelValues(installPlugin.ID, installPlugin.Version).Inc()
 	}
