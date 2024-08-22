@@ -267,7 +267,9 @@ Shows value formatted as code. If a value is an object the JSON view allowing br
 
 ##### Image
 
-> Only available in Grafana 7.3+
+{{< admonition type="note" >}}
+Only available in Grafana 7.3+
+{{< /admonition >}}
 
 If you have a field value that is an image URL or a base64 encoded image you can configure the table to display it as an image.
 
