@@ -259,6 +259,8 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		if err != nil {
 			return err
 		}
+	} else {
+		rs.log.Debug("ignoring optimistic concurrency check because version was not provided", "receiver", existing.Name, "operation", "delete")
 	}
 
 	if err := rs.provenanceValidator(existing.Provenance, models.Provenance(callerProvenance)); err != nil {
