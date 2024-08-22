@@ -183,3 +183,4 @@ prometheusAzureOverrideAudience,deprecated,@grafana/partner-datasources,false,fa
 backgroundPluginInstaller,experimental,@grafana/plugins-platform-backend,false,true,false
 dataplaneAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
 adhocFilterOneOf,experimental,@grafana/dashboards-squad,false,false,false
+lokiSendDashboardPanelNames,experimental,@grafana/observability-logs,false,false,false
