@@ -128,8 +128,8 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			accessControl:   ac,
 			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:write": {"users:*"}}}},
 			userIdentities: []*authn.Identity{
-				{ID: "1", OrgID: -1, Permissions: map[int64]map[string][]string{}},
-				{ID: "1", OrgID: accesscontrol.GlobalOrgID, Permissions: map[int64]map[string][]string{accesscontrol.GlobalOrgID: {"users:read": {"users:*"}}}},
+				{ID: identity.MustParseTypedID("user:1"), OrgID: -1, Permissions: map[int64]map[string][]string{}},
+				{ID: identity.MustParseTypedID("user:1"), OrgID: accesscontrol.GlobalOrgID, Permissions: map[int64]map[string][]string{accesscontrol.GlobalOrgID: {"users:read": {"users:*"}}}},
 			},
 			authnErrors:    []error{nil, nil},
 			expectedStatus: http.StatusOK,
@@ -141,8 +141,8 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			accessControl:   ac,
 			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:write": {"users:*"}}}},
 			userIdentities: []*authn.Identity{
-				{ID: "1", OrgID: -1, Permissions: map[int64]map[string][]string{}},
-				{ID: "1", OrgID: accesscontrol.GlobalOrgID, Permissions: map[int64]map[string][]string{accesscontrol.GlobalOrgID: {"folders:read": {"folders:*"}}}},
+				{ID: identity.MustParseTypedID("user:1"), OrgID: -1, Permissions: map[int64]map[string][]string{}},
+				{ID: identity.MustParseTypedID("user:1"), OrgID: accesscontrol.GlobalOrgID, Permissions: map[int64]map[string][]string{accesscontrol.GlobalOrgID: {"folders:read": {"folders:*"}}}},
 			},
 			authnErrors:    []error{nil, nil},
 			expectedStatus: http.StatusForbidden,
