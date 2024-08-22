@@ -7,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
+import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { Page } from 'app/core/components/Page/Page';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
@@ -77,7 +78,7 @@ export interface State {
   showLoadingState: boolean;
   panelNotFound: boolean;
   editPanelAccessDenied: boolean;
-  scrollElement?: HTMLDivElement;
+  scrollElement?: ScrollRefElement;
   pageNav?: NavModelItem;
   sectionNav?: NavModel;
 }
@@ -234,11 +235,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       locationService.partial({ editPanel: null, viewPanel: null });
     }
 
-    if (config.featureToggles.bodyScrolling) {
-      // Update window scroll position
-      if (this.state.updateScrollTop !== undefined && this.state.updateScrollTop !== prevState.updateScrollTop) {
-        window.scrollTo(0, this.state.updateScrollTop);
-      }
+    // Update window scroll position
+    if (this.state.updateScrollTop !== undefined && this.state.updateScrollTop !== prevState.updateScrollTop) {
+      this.state.scrollElement?.scrollTo(0, this.state.updateScrollTop);
     }
   }
 
@@ -263,19 +262,17 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     const updatedState = { ...state };
 
-    if (config.featureToggles.bodyScrolling) {
-      // Entering settings view
-      if (!state.editView && urlEditView) {
-        updatedState.editView = urlEditView;
-        updatedState.rememberScrollTop = window.scrollY;
-        updatedState.updateScrollTop = 0;
-      }
+    // Entering settings view
+    if (!state.editView && urlEditView) {
+      updatedState.editView = urlEditView;
+      updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
+      updatedState.updateScrollTop = 0;
+    }
 
-      // Leaving settings view
-      else if (state.editView && !urlEditView) {
-        updatedState.updateScrollTop = state.rememberScrollTop;
-        updatedState.editView = null;
-      }
+    // Leaving settings view
+    else if (state.editView && !urlEditView) {
+      updatedState.updateScrollTop = state.rememberScrollTop;
+      updatedState.editView = null;
     }
 
     // Entering edit mode
@@ -284,12 +281,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       if (panel) {
         if (dashboard.canEditPanel(panel)) {
           updatedState.editPanel = panel;
-          updatedState.rememberScrollTop = config.featureToggles.bodyScrolling
-            ? window.scrollY
-            : state.scrollElement?.scrollTop;
-          if (config.featureToggles.bodyScrolling) {
-            updatedState.updateScrollTop = 0;
-          }
+          updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
         } else {
           updatedState.editPanelAccessDenied = true;
         }
@@ -311,9 +303,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         // Should move this state out of dashboard in the future
         dashboard.initViewPanel(panel);
         updatedState.viewPanel = panel;
-        updatedState.rememberScrollTop = config.featureToggles.bodyScrolling
-          ? window.scrollY
-          : state.scrollElement?.scrollTop;
+        updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
         updatedState.updateScrollTop = 0;
       } else {
         updatedState.panelNotFound = true;
@@ -337,7 +327,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     return updateStatePageNavFromProps(props, updatedState);
   }
 
-  setScrollRef = (scrollElement: HTMLDivElement): void => {
+  setScrollRef = (scrollElement: ScrollRefElement): void => {
     this.setState({ scrollElement });
   };
 
@@ -366,7 +356,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
   render() {
     const { dashboard, initError, queryParams, theme } = this.props;
-    const { editPanel, viewPanel, updateScrollTop, pageNav, sectionNav } = this.state;
+    const { editPanel, viewPanel, pageNav, sectionNav } = this.state;
     const kioskMode = getKioskMode(this.props.queryParams);
     const styles = getStyles(theme);
 
@@ -443,8 +433,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           pageNav={pageNav}
           layout={PageLayoutType.Canvas}
           className={pageClassName}
-          scrollRef={this.setScrollRef}
-          scrollTop={updateScrollTop}
+          onSetScrollRef={this.setScrollRef}
         >
           {showToolbar && (
             <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>

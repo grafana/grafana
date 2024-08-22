@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -45,6 +46,7 @@ type PublicDashboardServiceImpl struct {
 }
 
 var LogPrefix = "publicdashboards.service"
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/publicdashboards/service")
 
 // Gives us compile time error if the service does not adhere to the contract of
 // the interface
@@ -79,6 +81,9 @@ func ProvideService(
 }
 
 func (pd *PublicDashboardServiceImpl) GetPublicDashboardForView(ctx context.Context, accessToken string) (*dtos.DashboardFullWithMeta, error) {
+	ctx, span := tracer.Start(ctx, "publicdashboards.GetPublicDashboardForView")
+	defer span.End()
+
 	pubdash, dash, err := pd.FindEnabledPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
 	if err != nil {
 		return nil, err
@@ -110,10 +115,14 @@ func (pd *PublicDashboardServiceImpl) GetPublicDashboardForView(ctx context.Cont
 
 // FindByDashboardUid this method would be replaced by another implementation for Enterprise version
 func (pd *PublicDashboardServiceImpl) FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error) {
+	ctx, span := tracer.Start(ctx, "publicdashboards.FindByDashboardUid")
+	defer span.End()
 	return pd.serviceWrapper.FindByDashboardUid(ctx, orgId, dashboardUid)
 }
 
 func (pd *PublicDashboardServiceImpl) Find(ctx context.Context, uid string) (*PublicDashboard, error) {
+	ctx, span := tracer.Start(ctx, "publicdashboards.Find")
+	defer span.End()
 	pubdash, err := pd.store.Find(ctx, uid)
 	if err != nil {
 		return nil, ErrInternalServerError.Errorf("Find: failed to find public dashboard%w", err)
@@ -123,6 +132,8 @@ func (pd *PublicDashboardServiceImpl) Find(ctx context.Context, uid string) (*Pu
 
 // FindDashboard Gets a dashboard by Uid
 func (pd *PublicDashboardServiceImpl) FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*dashboards.Dashboard, error) {
+	ctx, span := tracer.Start(ctx, "publicdashboards.FindDashboard")
+	defer span.End()
 	dash, err := pd.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: dashboardUid, OrgID: orgId})
 	if err != nil {
 		var dashboardErr dashboards.DashboardErr
@@ -139,6 +150,8 @@ func (pd *PublicDashboardServiceImpl) FindDashboard(ctx context.Context, orgId i
 
 // FindByAccessToken Gets public dashboard by access token
 func (pd *PublicDashboardServiceImpl) FindByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error) {
+	ctx, span := tracer.Start(ctx, "publicdashboards.FindByAccessToken")
+	defer span.End()
 	pubdash, err := pd.store.FindByAccessToken(ctx, accessToken)
 	if err != nil {
 		return nil, ErrInternalServerError.Errorf("FindByAccessToken: failed to find a public dashboard: %w", err)
@@ -153,6 +166,8 @@ func (pd *PublicDashboardServiceImpl) FindByAccessToken(ctx context.Context, acc
 
 // FindEnabledPublicDashboardAndDashboardByAccessToken Gets public dashboard and a dashboard by access token if public dashboard is enabled
 func (pd *PublicDashboardServiceImpl) FindEnabledPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *dashboards.Dashboard, error) {
+	ctx, span := tracer.Start(ctx, "publicdashboards.FindEnabledPublicDashboardAndDashboardByAccessToken")
+	defer span.End()
 	pubdash, dash, err := pd.FindPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
 	if err != nil {
 		return pubdash, dash, err
@@ -171,6 +186,8 @@ func (pd *PublicDashboardServiceImpl) FindEnabledPublicDashboardAndDashboardByAc
 
 // FindPublicDashboardAndDashboardByAccessToken Gets public dashboard and a dashboard by access token
 func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *dashboards.Dashboard, error) {
+	ctx, span := tracer.Start(ctx, "publicdashboards.FindPublicDashboardAndDashboardByAccessToken")
+	defer span.End()
 	pubdash, err := pd.FindByAccessToken(ctx, accessToken)
 	if err != nil {
 		return nil, nil, err
@@ -190,6 +207,8 @@ func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessTok
 
 // Creates and validates the public dashboard and saves it to the database
 func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
+	ctx, span := tracer.Start(ctx, "publicdashboards.Create")
+	defer span.End()
 	// validate fields
 	err := validation.ValidatePublicDashboard(dto)
 	if err != nil {
@@ -247,6 +266,8 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 
 // Update: updates an existing public dashboard based on publicdashboard.Uid
 func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
+	ctx, span := tracer.Start(ctx, "publicdashboards.Update")
+	defer span.End()
 	// validate fields
 	err := validation.ValidatePublicDashboard(dto)
 	if err != nil {
@@ -303,6 +324,8 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 
 // NewPublicDashboardUid Generates a unique uid to create a public dashboard. Will make 3 attempts and fail if it cannot find an unused uid
 func (pd *PublicDashboardServiceImpl) NewPublicDashboardUid(ctx context.Context) (string, error) {
+	ctx, span := tracer.Start(ctx, "publicdashboards.NewPublicDashboardUid")
+	defer span.End()
 	var uid string
 	for i := 0; i < 3; i++ {
 		uid = util.GenerateShortUID()
@@ -317,6 +340,8 @@ func (pd *PublicDashboardServiceImpl) NewPublicDashboardUid(ctx context.Context)
 
 // NewPublicDashboardAccessToken Generates a unique accessToken to create a public dashboard. Will make 3 attempts and fail if it cannot find an unused access token
 func (pd *PublicDashboardServiceImpl) NewPublicDashboardAccessToken(ctx context.Context) (string, error) {
+	ctx, span := tracer.Start(ctx, "publicdashboards.NewPublicDashboardAccessToken")
+	defer span.End()
 	var accessToken string
 	for i := 0; i < 3; i++ {
 		var err error
@@ -335,6 +360,8 @@ func (pd *PublicDashboardServiceImpl) NewPublicDashboardAccessToken(ctx context.
 
 // FindAllWithPagination Returns a list of public dashboards by orgId, based on permissions and with pagination
 func (pd *PublicDashboardServiceImpl) FindAllWithPagination(ctx context.Context, query *PublicDashboardListQuery) (*PublicDashboardListResponseWithPagination, error) {
+	ctx, span := tracer.Start(ctx, "publicdashboards.FindAllWithPagination")
+	defer span.End()
 	query.Offset = query.Limit * (query.Page - 1)
 	resp, err := pd.store.FindAllWithPagination(ctx, query)
 	if err != nil {
@@ -348,18 +375,26 @@ func (pd *PublicDashboardServiceImpl) FindAllWithPagination(ctx context.Context,
 }
 
 func (pd *PublicDashboardServiceImpl) ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error) {
+	ctx, span := tracer.Start(ctx, "publicdashboards.ExistsEnabledByDashboardUid")
+	defer span.End()
 	return pd.store.ExistsEnabledByDashboardUid(ctx, dashboardUid)
 }
 
 func (pd *PublicDashboardServiceImpl) ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error) {
+	ctx, span := tracer.Start(ctx, "publicdashboards.ExistsEnabledByAccessToken")
+	defer span.End()
 	return pd.store.ExistsEnabledByAccessToken(ctx, accessToken)
 }
 
 func (pd *PublicDashboardServiceImpl) GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error) {
+	ctx, span := tracer.Start(ctx, "publicdashboards.GetOrgIdByAccessToken")
+	defer span.End()
 	return pd.store.GetOrgIdByAccessToken(ctx, accessToken)
 }
 
 func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, uid string, dashboardUid string) error {
+	ctx, span := tracer.Start(ctx, "publicdashboards.Delete")
+	defer span.End()
 	// get existing public dashboard if exists
 	existingPubdash, err := pd.store.Find(ctx, uid)
 	if err != nil {
@@ -377,6 +412,8 @@ func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, uid string, da
 }
 
 func (pd *PublicDashboardServiceImpl) DeleteByDashboard(ctx context.Context, dashboard *dashboards.Dashboard) error {
+	ctx, span := tracer.Start(ctx, "publicdashboards.DeleteByDashboard")
+	defer span.End()
 	if dashboard.IsFolder {
 		// get all pubdashes for the folder
 		pubdashes, err := pd.store.FindByFolder(ctx, dashboard.OrgID, dashboard.UID)
@@ -464,6 +501,8 @@ func GenerateAccessToken() (string, error) {
 }
 
 func (pd *PublicDashboardServiceImpl) newCreatePublicDashboard(ctx context.Context, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
+	ctx, span := tracer.Start(ctx, "publicdashboards.newCreatePublicDashboard")
+	defer span.End()
 	//Check if uid already exists, if none then auto generate
 	var err error
 	uid := dto.PublicDashboard.Uid

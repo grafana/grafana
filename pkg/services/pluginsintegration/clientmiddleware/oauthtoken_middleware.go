@@ -27,11 +27,6 @@ func NewOAuthTokenMiddleware(oAuthTokenService oauthtoken.OAuthTokenService) plu
 	})
 }
 
-const (
-	tokenHeaderName   = "Authorization"
-	idTokenHeaderName = "X-ID-Token"
-)
-
 type OAuthTokenMiddleware struct {
 	baseMiddleware
 	oAuthTokenService oauthtoken.OAuthTokenService
@@ -69,19 +64,19 @@ func (m *OAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backend.Plug
 
 			switch t := req.(type) {
 			case *backend.QueryDataRequest:
-				t.Headers[tokenHeaderName] = authorizationHeader
+				t.Headers[backend.OAuthIdentityTokenHeaderName] = authorizationHeader
 				if idTokenHeader != "" {
-					t.Headers[idTokenHeaderName] = idTokenHeader
+					t.Headers[backend.OAuthIdentityIDTokenHeaderName] = idTokenHeader
 				}
 			case *backend.CheckHealthRequest:
-				t.Headers[tokenHeaderName] = authorizationHeader
+				t.Headers[backend.OAuthIdentityTokenHeaderName] = authorizationHeader
 				if idTokenHeader != "" {
-					t.Headers[idTokenHeaderName] = idTokenHeader
+					t.Headers[backend.OAuthIdentityIDTokenHeaderName] = idTokenHeader
 				}
 			case *backend.CallResourceRequest:
-				t.Headers[tokenHeaderName] = []string{authorizationHeader}
+				t.Headers[backend.OAuthIdentityTokenHeaderName] = []string{authorizationHeader}
 				if idTokenHeader != "" {
-					t.Headers[idTokenHeaderName] = []string{idTokenHeader}
+					t.Headers[backend.OAuthIdentityIDTokenHeaderName] = []string{idTokenHeader}
 				}
 			}
 		}

@@ -141,6 +141,7 @@ jest.mock('@grafana/runtime', () => ({
     return runRequestMock(ds, request);
   },
   config: {
+    ...jest.requireActual('@grafana/runtime').config,
     panels: {
       text: { skipDataQuery: true },
     },
