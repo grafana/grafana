@@ -45,7 +45,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       label: t('share-dashboard.menu.share-internally-title', 'Share internally'),
       description: t('share-dashboard.menu.share-internally-description', 'Advanced settings'),
       renderCondition: true,
-      onClick: () => onMenuItemClick('link'),
+      onClick: () => onMenuItemClick(shareDashboardType.link),
     });
 
     menuItems.push({
@@ -55,7 +55,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       label: t('share-dashboard.menu.share-externally-title', 'Share externally'),
       renderCondition: !panel && isPublicDashboardsEnabled(),
       onClick: () => {
-        onMenuItemClick('public_dashboard');
+        onMenuItemClick(shareDashboardType.publicDashboard);
       },
     });
 
@@ -68,7 +68,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       label: t('share-dashboard.menu.share-snapshot-title', 'Share snapshot'),
       renderCondition: contextSrv.isSignedIn && config.snapshotEnabled && dashboard.canEditDashboard(),
       onClick: () => {
-        onMenuItemClick('snapshot');
+        onMenuItemClick(shareDashboardType.snapshot);
       },
     });
 

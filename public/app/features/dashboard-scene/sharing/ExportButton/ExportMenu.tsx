@@ -43,7 +43,7 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
       icon: 'arrow',
       label: t('share-dashboard.menu.export-json-title', 'Export as JSON'),
       renderCondition: true,
-      onClick: () => onMenuItemClick('export'),
+      onClick: () => onMenuItemClick(shareDashboardType.export),
     });
 
     return menuItems.filter((item) => item.renderCondition);
