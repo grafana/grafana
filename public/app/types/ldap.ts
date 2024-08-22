@@ -90,7 +90,7 @@ export interface LdapServerConfig {
   group_search_filter: string;
   group_search_filter_user_attribute: string;
   host: string;
-  min_tls_version: string;
+  min_tls_version?: string;
   port: number;
   root_ca_cert: string;
   search_base_dns: string[];
