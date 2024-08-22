@@ -4,104 +4,104 @@ import (
 	"testing"
 	"text/template"
 
+	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 )
 
 func TestQueries(t *testing.T) {
+	// prefix tables with grafana
+	nodb := &legacysql.LegacyDatabaseHelper{
+		Table: func(n string) string {
+			return "grafana." + n
+		},
+	}
+
+	getDisplay := func(q *GetUserDisplayQuery) sqltemplate.SQLTemplate {
+		v := newGetDisplay(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	listUsers := func(q *ListUserQuery) sqltemplate.SQLTemplate {
+		v := newListUser(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	listTeams := func(q *ListTeamQuery) sqltemplate.SQLTemplate {
+		v := newListTeams(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
 			sqlQueryTeams: {
 				{
 					Name: "teams_uid",
-					Data: &sqlQueryListTeams{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Query: &ListTeamQuery{
-							UID: "abc",
-						},
-					},
+					Data: listTeams(&ListTeamQuery{
+						UID: "abc",
+					}),
 				},
 				{
 					Name: "teams_page_1",
-					Data: &sqlQueryListTeams{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Query: &ListTeamQuery{
-							Limit: 5,
-						},
-					},
+					Data: listTeams(&ListTeamQuery{
+						Limit: 5,
+					}),
 				},
 				{
 					Name: "teams_page_2",
-					Data: &sqlQueryListTeams{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Query: &ListTeamQuery{
-							ContinueID: 1,
-							Limit:      2,
-						},
-					},
+					Data: listTeams(&ListTeamQuery{
+						ContinueID: 1,
+						Limit:      2,
+					}),
 				},
 			},
 			sqlQueryUsers: {
 				{
 					Name: "users_uid",
-					Data: &sqlQueryListUsers{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Query: &ListUserQuery{
-							UID: "abc",
-						},
-					},
+					Data: listUsers(&ListUserQuery{
+						UID: "abc",
+					}),
 				},
 				{
 					Name: "users_page_1",
-					Data: &sqlQueryListUsers{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Query: &ListUserQuery{
-							Limit: 5,
-						},
-					},
+					Data: listUsers(&ListUserQuery{
+						Limit: 5,
+					}),
 				},
 				{
 					Name: "users_page_2",
-					Data: &sqlQueryListUsers{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Query: &ListUserQuery{
-							ContinueID: 1,
-							Limit:      2,
-						},
-					},
+					Data: listUsers(&ListUserQuery{
+						ContinueID: 1,
+						Limit:      2,
+					}),
 				},
 			},
 			sqlQueryDisplay: {
 				{
 					Name: "display_uids",
-					Data: &sqlQueryGetDisplay{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Query: &GetUserDisplayQuery{
-							OrgID: 2,
-							UIDs:  []string{"a", "b"},
-						},
-					},
+					Data: getDisplay(&GetUserDisplayQuery{
+						OrgID: 2,
+						UIDs:  []string{"a", "b"},
+					}),
 				},
 				{
 					Name: "display_ids",
-					Data: &sqlQueryGetDisplay{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Query: &GetUserDisplayQuery{
-							OrgID: 2,
-							IDs:   []int64{1, 2},
-						},
-					},
+					Data: getDisplay(&GetUserDisplayQuery{
+						OrgID: 2,
+						IDs:   []int64{1, 2},
+					}),
 				},
 				{
 					Name: "display_ids_uids",
-					Data: &sqlQueryGetDisplay{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Query: &GetUserDisplayQuery{
-							OrgID: 2,
-							UIDs:  []string{"a", "b"},
-							IDs:   []int64{1, 2},
-						},
-					},
+					Data: getDisplay(&GetUserDisplayQuery{
+						OrgID: 2,
+						UIDs:  []string{"a", "b"},
+						IDs:   []int64{1, 2},
+					}),
 				},
 			},
 		},
