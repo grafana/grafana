@@ -10,13 +10,12 @@ import (
 
 // AccessControlService provides access control for receivers.
 type AccessControlService interface {
-	AuthorizeReadPreconditions(ctx context.Context, user identity.Requester) error
-	AuthorizeCreatePreconditions(ctx context.Context, user identity.Requester) error
-	AuthorizeUpdatePreconditions(ctx context.Context, user identity.Requester) error
-	AuthorizeDeletePreconditions(ctx context.Context, user identity.Requester) error
+	AuthorizeReadSome(ctx context.Context, user identity.Requester) error
+	AuthorizeReadByUID(context.Context, identity.Requester, string) error
+	AuthorizeCreate(context.Context, identity.Requester) error
+	AuthorizeUpdateByUID(context.Context, identity.Requester, string) error
+	AuthorizeDeleteByUID(context.Context, identity.Requester, string) error
 }
-
-type authorizeFn func(context.Context, identity.Requester) error
 
 func Authorize(ctx context.Context, ac AccessControlService, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 	if attr.GetResource() != resourceInfo.GroupResource().Resource {
@@ -27,24 +26,43 @@ func Authorize(ctx context.Context, ac AccessControlService, attr authorizer.Att
 		return authorizer.DecisionDeny, "valid user is required", err
 	}
 
-	var authorize authorizeFn
+	uid := attr.GetName()
+
 	switch attr.GetVerb() {
+	case "get":
+		if uid == "" {
+			return authorizer.DecisionDeny, "", nil
+		}
+		if err := ac.AuthorizeReadByUID(ctx, user, uid); err != nil {
+			return authorizer.DecisionDeny, "", err
+		}
+	case "list":
+		if err := ac.AuthorizeReadSome(ctx, user); err != nil { // Preconditions, further checks are done downstream.
+			return authorizer.DecisionDeny, "", err
+		}
 	case "create":
-		authorize = ac.AuthorizeCreatePreconditions
+		if err := ac.AuthorizeCreate(ctx, user); err != nil {
+			return authorizer.DecisionDeny, "", err
+		}
 	case "patch":
 		fallthrough
 	case "update":
-		authorize = ac.AuthorizeUpdatePreconditions
-	case "deletecollection":
-		fallthrough
+		if uid == "" {
+			return authorizer.DecisionDeny, "", nil
+		}
+		if err := ac.AuthorizeUpdateByUID(ctx, user, uid); err != nil {
+			return authorizer.DecisionDeny, "", err
+		}
 	case "delete":
-		authorize = ac.AuthorizeDeletePreconditions
+		if uid == "" {
+			return authorizer.DecisionDeny, "", nil
+		}
+		if err := ac.AuthorizeDeleteByUID(ctx, user, uid); err != nil {
+			return authorizer.DecisionDeny, "", err
+		}
 	default:
-		authorize = ac.AuthorizeReadPreconditions
+		return authorizer.DecisionNoOpinion, "", nil
 	}
 
-	if err := authorize(ctx, user); err != nil {
-		return authorizer.DecisionDeny, "", err
-	}
 	return authorizer.DecisionAllow, "", nil
 }

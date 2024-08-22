@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 var (
@@ -30,7 +31,7 @@ func NewAuthorizationErrorGeneric(action string) error {
 }
 
 // actionAccess is a helper struct that provides common access control methods for a specific resource type and action.
-type actionAccess[T any] struct {
+type actionAccess[T models.Identified] struct {
 	genericService
 
 	// authorizeSome evaluates to true if user has access to some (any) resources.
@@ -41,7 +42,7 @@ type actionAccess[T any] struct {
 	authorizeAll ac.Evaluator
 
 	// authorizeOne returns an evaluator that checks if user has access to a specific resource.
-	authorizeOne func(T) ac.Evaluator
+	authorizeOne func(models.Identified) ac.Evaluator
 
 	// action is the action that user is trying to perform on the resource. Used in error messages.
 	action string
@@ -73,7 +74,7 @@ func (s actionAccess[T]) Filter(ctx context.Context, user identity.Requester, re
 }
 
 // Authorize checks if user has access to a resource. Returns an error if user does not have access.
-func (s actionAccess[T]) Authorize(ctx context.Context, user identity.Requester, resource T) error {
+func (s actionAccess[T]) Authorize(ctx context.Context, user identity.Requester, resource models.Identified) error {
 	if err := s.AuthorizePreConditions(ctx, user); err != nil {
 		return err
 	}
@@ -86,7 +87,7 @@ func (s actionAccess[T]) Authorize(ctx context.Context, user identity.Requester,
 }
 
 // Has checks if user has access to a resource. Returns false if user does not have access.
-func (s actionAccess[T]) Has(ctx context.Context, user identity.Requester, resource T) (bool, error) {
+func (s actionAccess[T]) Has(ctx context.Context, user identity.Requester, resource models.Identified) (bool, error) {
 	if err := s.AuthorizePreConditions(ctx, user); err != nil {
 		return false, err
 	}
@@ -98,26 +99,28 @@ func (s actionAccess[T]) Has(ctx context.Context, user identity.Requester, resou
 	return s.has(ctx, user, resource)
 }
 
+// AuthorizeAll checks if user has access to all resources. Returns error if user does not have access to all resources.
+func (s actionAccess[T]) AuthorizeAll(ctx context.Context, user identity.Requester) error {
+	return s.HasAccessOrError(ctx, user, s.authorizeAll, func() string {
+		return fmt.Sprintf("%s all %ss", s.action, s.resource)
+	})
+}
+
 // AuthorizePreConditions checks necessary preconditions for resources. Returns error if user does not have access to any resources.
 func (s actionAccess[T]) AuthorizePreConditions(ctx context.Context, user identity.Requester) error {
-	can, err := s.HasAccess(ctx, user, s.authorizeSome)
-	if err != nil {
-		return err
-	}
-	if !can { // User does not have any resource permissions at all.
-		return NewAuthorizationErrorWithPermissions(fmt.Sprintf("%s any %s", s.action, s.resource), s.authorizeSome)
-	}
-	return nil
+	return s.HasAccessOrError(ctx, user, s.authorizeSome, func() string {
+		return fmt.Sprintf("%s any %s", s.action, s.resource)
+	})
 }
 
 // authorize checks if user has access to a specific resource given precondition checks have already passed. Returns an error if user does not have access.
-func (s actionAccess[T]) authorize(ctx context.Context, user identity.Requester, resource T) error {
+func (s actionAccess[T]) authorize(ctx context.Context, user identity.Requester, resource models.Identified) error {
 	return s.HasAccessOrError(ctx, user, s.authorizeOne(resource), func() string {
 		return fmt.Sprintf("%s %s", s.action, s.resource)
 	})
 }
 
 // has checks if user has access to a specific resource given precondition checks have already passed. Returns false if user does not have access.
-func (s actionAccess[T]) has(ctx context.Context, user identity.Requester, resource T) (bool, error) {
+func (s actionAccess[T]) has(ctx context.Context, user identity.Requester, resource models.Identified) (bool, error) {
 	return s.HasAccess(ctx, user, s.authorizeOne(resource))
 }

@@ -169,7 +169,7 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 			resource:      "receiver",
 			action:        "read",
 			authorizeSome: readRedactedReceiversPreConditionsEval,
-			authorizeOne: func(receiver T) ac.Evaluator {
+			authorizeOne: func(receiver models.Identified) ac.Evaluator {
 				return readRedactedReceiverEval(receiver.GetUID())
 			},
 			authorizeAll: readRedactedAllReceiversEval,
@@ -181,7 +181,7 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 			resource:      "decrypted receiver",
 			action:        "read",
 			authorizeSome: readDecryptedReceiversPreConditionsEval,
-			authorizeOne: func(receiver T) ac.Evaluator {
+			authorizeOne: func(receiver models.Identified) ac.Evaluator {
 				return readDecryptedReceiverEval(receiver.GetUID())
 			},
 			authorizeAll: readDecryptedAllReceiversEval,
@@ -193,7 +193,7 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 			resource:      "receiver",
 			action:        "create",
 			authorizeSome: ac.EvalAll(readRedactedReceiversPreConditionsEval, createReceiversEval),
-			authorizeOne: func(receiver T) ac.Evaluator {
+			authorizeOne: func(receiver models.Identified) ac.Evaluator {
 				return ac.EvalAll(readRedactedReceiversPreConditionsEval, createReceiversEval)
 			},
 			authorizeAll: ac.EvalAll(readRedactedReceiversPreConditionsEval, createReceiversEval),
@@ -205,7 +205,7 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 			resource:      "receiver",
 			action:        "update",
 			authorizeSome: ac.EvalAll(readRedactedReceiversPreConditionsEval, updateReceiversPreConditionsEval),
-			authorizeOne: func(receiver T) ac.Evaluator {
+			authorizeOne: func(receiver models.Identified) ac.Evaluator {
 				return ac.EvalAll(readRedactedReceiverEval(receiver.GetUID()), updateReceiverEval(receiver.GetUID()))
 			},
 			authorizeAll: ac.EvalAll(readRedactedAllReceiversEval, updateAllReceiversEval),
@@ -264,15 +264,19 @@ func (s ReceiverAccess[T]) HasReadDecrypted(ctx context.Context, user identity.R
 	return s.readDecrypted.Has(ctx, user, receiver)
 }
 
-// AuthorizeCreate checks if user has access to create a receiver. Returns an error if user does not have access.
-func (s ReceiverAccess[T]) AuthorizeCreate(ctx context.Context, user identity.Requester, receiver T) error {
-	return s.create.Authorize(ctx, user, receiver)
-}
-
 // AuthorizeUpdate checks if user has access to update a receiver. Returns an error if user does not have access.
 func (s ReceiverAccess[T]) AuthorizeUpdate(ctx context.Context, user identity.Requester, receiver T) error {
 	return s.update.Authorize(ctx, user, receiver)
 }
+
+// Global
+
+// AuthorizeCreate checks if user has access to create receivers. Returns an error if user does not have access.
+func (s ReceiverAccess[T]) AuthorizeCreate(ctx context.Context, user identity.Requester) error {
+	return s.create.AuthorizeAll(ctx, user)
+}
+
+// By UID
 
 type identified struct {
 	uid string
@@ -282,29 +286,24 @@ func (i identified) GetUID() string {
 	return i.uid
 }
 
-// AuthorizeDelete checks if user has access to delete a receiver. Returns an error if user does not have access.
-func (s ReceiverAccess[T]) AuthorizeDelete(ctx context.Context, user identity.Requester, uid string) error {
+// AuthorizeDeleteByUID checks if user has access to delete a receiver by uid. Returns an error if user does not have access.
+func (s ReceiverAccess[T]) AuthorizeDeleteByUID(ctx context.Context, user identity.Requester, uid string) error {
 	return s.delete.Authorize(ctx, user, identified{uid: uid})
+}
+
+// AuthorizeReadByUID checks if user has access to read a redacted receiver by uid. Returns an error if user does not have access.
+func (s ReceiverAccess[T]) AuthorizeReadByUID(ctx context.Context, user identity.Requester, uid string) error {
+	return s.read.Authorize(ctx, user, identified{uid: uid})
+}
+
+// AuthorizeUpdateByUID checks if user has access to update a receiver by uid. Returns an error if user does not have access.
+func (s ReceiverAccess[T]) AuthorizeUpdateByUID(ctx context.Context, user identity.Requester, uid string) error {
+	return s.update.Authorize(ctx, user, identified{uid: uid})
 }
 
 // Preconditions
 
-// AuthorizeReadPreconditions checks if user has access to read some redacted receivers. Returns an error if user does not have access.
-func (s ReceiverAccess[T]) AuthorizeReadPreconditions(ctx context.Context, user identity.Requester) error {
+// AuthorizeReadSome checks if user has access to read some redacted receivers. Returns an error if user does not have access.
+func (s ReceiverAccess[T]) AuthorizeReadSome(ctx context.Context, user identity.Requester) error {
 	return s.read.AuthorizePreConditions(ctx, user)
-}
-
-// AuthorizeCreatePreconditions checks if user has access to create some receivers. Returns an error if user does not have access.
-func (s ReceiverAccess[T]) AuthorizeCreatePreconditions(ctx context.Context, user identity.Requester) error {
-	return s.create.AuthorizePreConditions(ctx, user)
-}
-
-// AuthorizeUpdatePreconditions checks if user has access to update some receivers. Returns an error if user does not have access.
-func (s ReceiverAccess[T]) AuthorizeUpdatePreconditions(ctx context.Context, user identity.Requester) error {
-	return s.update.AuthorizePreConditions(ctx, user)
-}
-
-// AuthorizeDeletePreconditions checks if user has access to delete some receivers. Returns an error if user does not have access.
-func (s ReceiverAccess[T]) AuthorizeDeletePreconditions(ctx context.Context, user identity.Requester) error {
-	return s.delete.AuthorizePreConditions(ctx, user)
 }

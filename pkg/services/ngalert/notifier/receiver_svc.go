@@ -60,9 +60,9 @@ type receiverAccessControlService interface {
 	AuthorizeReadDecrypted(context.Context, identity.Requester, *models.Receiver) error
 	HasList(ctx context.Context, user identity.Requester) (bool, error)
 
-	AuthorizeCreate(context.Context, identity.Requester, *models.Receiver) error
+	AuthorizeCreate(context.Context, identity.Requester) error
 	AuthorizeUpdate(context.Context, identity.Requester, *models.Receiver) error
-	AuthorizeDelete(context.Context, identity.Requester, string) error
+	AuthorizeDeleteByUID(context.Context, identity.Requester, string) error
 }
 
 type alertmanagerConfigStore interface {
@@ -228,7 +228,7 @@ func (rs *ReceiverService) ListReceivers(ctx context.Context, q models.ListRecei
 // DeleteReceiver deletes a receiver by uid.
 // UID field currently does not exist, we assume the uid is a particular hashed value of the receiver name.
 func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, callerProvenance definitions.Provenance, version string, orgID int64, user identity.Requester) error {
-	if err := rs.authz.AuthorizeDelete(ctx, user, uid); err != nil {
+	if err := rs.authz.AuthorizeDeleteByUID(ctx, user, uid); err != nil {
 		return err
 	}
 	revision, err := rs.cfgStore.Get(ctx, orgID)
@@ -287,7 +287,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 }
 
 func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receiver, orgID int64, user identity.Requester) (*models.Receiver, error) {
-	if err := rs.authz.AuthorizeCreate(ctx, user, r); err != nil {
+	if err := rs.authz.AuthorizeCreate(ctx, user); err != nil {
 		return nil, err
 	}
 
