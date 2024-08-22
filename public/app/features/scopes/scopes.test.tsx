@@ -9,15 +9,19 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 
 import { initializeScopes, scopesDashboardsScene, scopesSelectorScene } from './instance';
 import {
-  buildTestScene,
   fetchDashboardsSpy,
   fetchNodesSpy,
   fetchScopeSpy,
   fetchSelectedScopesSpy,
+  getMock,
+  mocksScopes,
+} from './testUtils/mocks';
+import { buildTestScene, renderDashboard, resetScenes } from './testUtils/render';
+import {
   getDashboard,
+  getDashboardFolderExpand,
   getDashboardsExpand,
   getDashboardsSearch,
-  getMock,
   getNotFoundForFilter,
   getNotFoundForFilterClear,
   getNotFoundForScope,
@@ -36,16 +40,15 @@ import {
   getResultCloudDevRadio,
   getResultCloudExpand,
   getResultCloudOpsRadio,
-  getResultCloudProdRadio,
   getResultCloudSelect,
   getSelectorApply,
   getSelectorCancel,
   getSelectorInput,
   getTreeHeadline,
   getTreeSearch,
-  mocksScopes,
   queryAllDashboard,
   queryDashboard,
+  queryDashboardFolderExpand,
   queryDashboardsContainer,
   queryDashboardsSearch,
   queryPersistedApplicationsGrafanaTitle,
@@ -54,9 +57,7 @@ import {
   queryResultApplicationsGrafanaTitle,
   queryResultApplicationsMimirTitle,
   querySelectorApply,
-  renderDashboard,
-  resetScenes,
-} from './testUtils';
+} from './testUtils/selectors';
 import { getClosestScopesFacade } from './utils';
 
 jest.mock('@grafana/runtime', () => ({
@@ -378,38 +379,155 @@ describe('Scopes', () => {
         await userEvents.click(getDashboardsExpand());
         await userEvents.click(getSelectorInput());
         await userEvents.click(getResultApplicationsExpand());
-        await userEvents.click(getResultApplicationsMimirSelect());
-        await userEvents.click(getSelectorApply());
-        expect(getDashboard('1')).toBeInTheDocument();
-        expect(getDashboard('2')).toBeInTheDocument();
-        expect(queryDashboard('3')).not.toBeInTheDocument();
-        expect(queryDashboard('4')).not.toBeInTheDocument();
-        await userEvents.click(getSelectorInput());
         await userEvents.click(getResultApplicationsGrafanaSelect());
         await userEvents.click(getSelectorApply());
-        expect(getDashboard('1')).toBeInTheDocument();
-        expect(getDashboard('2')).toBeInTheDocument();
-        expect(getDashboard('3')).toBeInTheDocument();
-        expect(getDashboard('4')).toBeInTheDocument();
+        await userEvents.click(getDashboardFolderExpand('General'));
+        await userEvents.click(getDashboardFolderExpand('Observability'));
+        await userEvents.click(getDashboardFolderExpand('Usage'));
+        expect(queryDashboardFolderExpand('Components')).not.toBeInTheDocument();
+        expect(queryDashboardFolderExpand('Investigations')).not.toBeInTheDocument();
+        expect(getDashboard('general-data-sources')).toBeInTheDocument();
+        expect(getDashboard('general-usage')).toBeInTheDocument();
+        expect(getDashboard('observability-backend-errors')).toBeInTheDocument();
+        expect(getDashboard('observability-backend-logs')).toBeInTheDocument();
+        expect(getDashboard('observability-frontend-errors')).toBeInTheDocument();
+        expect(getDashboard('observability-frontend-logs')).toBeInTheDocument();
+        expect(getDashboard('usage-data-sources')).toBeInTheDocument();
+        expect(getDashboard('usage-stats')).toBeInTheDocument();
+        expect(getDashboard('usage-usage-overview')).toBeInTheDocument();
+        expect(getDashboard('frontend')).toBeInTheDocument();
+        expect(getDashboard('overview')).toBeInTheDocument();
+        expect(getDashboard('stats')).toBeInTheDocument();
+        expect(queryDashboard('multiple3-datasource-errors')).not.toBeInTheDocument();
+        expect(queryDashboard('multiple4-datasource-logs')).not.toBeInTheDocument();
+        expect(queryDashboard('multiple0-ingester')).not.toBeInTheDocument();
+        expect(queryDashboard('multiple1-distributor')).not.toBeInTheDocument();
+        expect(queryDashboard('multiple2-compacter')).not.toBeInTheDocument();
+        expect(queryDashboard('another-stats')).not.toBeInTheDocument();
         await userEvents.click(getSelectorInput());
         await userEvents.click(getResultApplicationsMimirSelect());
         await userEvents.click(getSelectorApply());
-        expect(queryDashboard('1')).not.toBeInTheDocument();
-        expect(queryDashboard('2')).not.toBeInTheDocument();
-        expect(getDashboard('3')).toBeInTheDocument();
-        expect(getDashboard('4')).toBeInTheDocument();
+        await userEvents.click(getDashboardFolderExpand('General'));
+        await userEvents.click(getDashboardFolderExpand('Observability'));
+        await userEvents.click(getDashboardFolderExpand('Usage'));
+        await userEvents.click(getDashboardFolderExpand('Components'));
+        await userEvents.click(getDashboardFolderExpand('Investigations'));
+        expect(getDashboard('general-data-sources')).toBeInTheDocument();
+        expect(getDashboard('general-usage')).toBeInTheDocument();
+        expect(getDashboard('observability-backend-errors')).toBeInTheDocument();
+        expect(getDashboard('observability-backend-logs')).toBeInTheDocument();
+        expect(getDashboard('observability-frontend-errors')).toBeInTheDocument();
+        expect(getDashboard('observability-frontend-logs')).toBeInTheDocument();
+        expect(getDashboard('usage-data-sources')).toBeInTheDocument();
+        expect(getDashboard('usage-stats')).toBeInTheDocument();
+        expect(getDashboard('usage-usage-overview')).toBeInTheDocument();
+        expect(getDashboard('frontend')).toBeInTheDocument();
+        expect(getDashboard('overview')).toBeInTheDocument();
+        expect(getDashboard('stats')).toBeInTheDocument();
+        expect(queryAllDashboard('multiple3-datasource-errors')).toHaveLength(2);
+        expect(queryAllDashboard('multiple4-datasource-logs')).toHaveLength(2);
+        expect(queryAllDashboard('multiple0-ingester')).toHaveLength(2);
+        expect(queryAllDashboard('multiple1-distributor')).toHaveLength(2);
+        expect(queryAllDashboard('multiple2-compacter')).toHaveLength(2);
+        expect(getDashboard('another-stats')).toBeInTheDocument();
+        await userEvents.click(getSelectorInput());
+        await userEvents.click(getResultApplicationsMimirSelect());
+        await userEvents.click(getSelectorApply());
+        await userEvents.click(getDashboardFolderExpand('General'));
+        await userEvents.click(getDashboardFolderExpand('Observability'));
+        await userEvents.click(getDashboardFolderExpand('Usage'));
+        expect(queryDashboardFolderExpand('Components')).not.toBeInTheDocument();
+        expect(queryDashboardFolderExpand('Investigations')).not.toBeInTheDocument();
+        expect(getDashboard('general-data-sources')).toBeInTheDocument();
+        expect(getDashboard('general-usage')).toBeInTheDocument();
+        expect(getDashboard('observability-backend-errors')).toBeInTheDocument();
+        expect(getDashboard('observability-backend-logs')).toBeInTheDocument();
+        expect(getDashboard('observability-frontend-errors')).toBeInTheDocument();
+        expect(getDashboard('observability-frontend-logs')).toBeInTheDocument();
+        expect(getDashboard('usage-data-sources')).toBeInTheDocument();
+        expect(getDashboard('usage-stats')).toBeInTheDocument();
+        expect(getDashboard('usage-usage-overview')).toBeInTheDocument();
+        expect(getDashboard('frontend')).toBeInTheDocument();
+        expect(getDashboard('overview')).toBeInTheDocument();
+        expect(getDashboard('stats')).toBeInTheDocument();
+        expect(queryDashboard('multiple3-datasource-errors')).not.toBeInTheDocument();
+        expect(queryDashboard('multiple4-datasource-logs')).not.toBeInTheDocument();
+        expect(queryDashboard('multiple0-ingester')).not.toBeInTheDocument();
+        expect(queryDashboard('multiple1-distributor')).not.toBeInTheDocument();
+        expect(queryDashboard('multiple2-compacter')).not.toBeInTheDocument();
+        expect(queryDashboard('another-stats')).not.toBeInTheDocument();
       });
 
-      it('Filters the dashboards list', async () => {
+      it('Filters the dashboards list for dashboards', async () => {
         await userEvents.click(getDashboardsExpand());
         await userEvents.click(getSelectorInput());
         await userEvents.click(getResultApplicationsExpand());
-        await userEvents.click(getResultApplicationsMimirSelect());
+        await userEvents.click(getResultApplicationsGrafanaSelect());
         await userEvents.click(getSelectorApply());
-        expect(getDashboard('1')).toBeInTheDocument();
-        expect(getDashboard('2')).toBeInTheDocument();
-        await userEvents.type(getDashboardsSearch(), '1');
-        expect(queryDashboard('2')).not.toBeInTheDocument();
+        await userEvents.click(getDashboardFolderExpand('General'));
+        await userEvents.click(getDashboardFolderExpand('Observability'));
+        await userEvents.click(getDashboardFolderExpand('Usage'));
+        expect(getDashboard('general-data-sources')).toBeInTheDocument();
+        expect(getDashboard('general-usage')).toBeInTheDocument();
+        expect(getDashboard('observability-backend-errors')).toBeInTheDocument();
+        expect(getDashboard('observability-backend-logs')).toBeInTheDocument();
+        expect(getDashboard('observability-frontend-errors')).toBeInTheDocument();
+        expect(getDashboard('observability-frontend-logs')).toBeInTheDocument();
+        expect(getDashboard('usage-data-sources')).toBeInTheDocument();
+        expect(getDashboard('usage-stats')).toBeInTheDocument();
+        expect(getDashboard('usage-usage-overview')).toBeInTheDocument();
+        expect(getDashboard('frontend')).toBeInTheDocument();
+        expect(getDashboard('overview')).toBeInTheDocument();
+        expect(getDashboard('stats')).toBeInTheDocument();
+        await userEvents.type(getDashboardsSearch(), 'Stats');
+        expect(queryDashboard('general-data-sources')).not.toBeInTheDocument();
+        expect(queryDashboard('general-usage')).not.toBeInTheDocument();
+        expect(queryDashboard('observability-backend-errors')).not.toBeInTheDocument();
+        expect(queryDashboard('observability-backend-logs')).not.toBeInTheDocument();
+        expect(queryDashboard('observability-frontend-errors')).not.toBeInTheDocument();
+        expect(queryDashboard('observability-frontend-logs')).not.toBeInTheDocument();
+        expect(queryDashboard('usage-data-sources')).not.toBeInTheDocument();
+        expect(getDashboard('usage-stats')).toBeInTheDocument();
+        expect(queryDashboard('usage-usage-overview')).not.toBeInTheDocument();
+        expect(queryDashboard('frontend')).not.toBeInTheDocument();
+        expect(queryDashboard('overview')).not.toBeInTheDocument();
+        expect(getDashboard('stats')).toBeInTheDocument();
+      });
+
+      it('Filters the dashboards list for folders', async () => {
+        await userEvents.click(getDashboardsExpand());
+        await userEvents.click(getSelectorInput());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultApplicationsGrafanaSelect());
+        await userEvents.click(getSelectorApply());
+        await userEvents.click(getDashboardFolderExpand('General'));
+        await userEvents.click(getDashboardFolderExpand('Observability'));
+        await userEvents.click(getDashboardFolderExpand('Usage'));
+        expect(getDashboard('general-data-sources')).toBeInTheDocument();
+        expect(getDashboard('general-usage')).toBeInTheDocument();
+        expect(getDashboard('observability-backend-errors')).toBeInTheDocument();
+        expect(getDashboard('observability-backend-logs')).toBeInTheDocument();
+        expect(getDashboard('observability-frontend-errors')).toBeInTheDocument();
+        expect(getDashboard('observability-frontend-logs')).toBeInTheDocument();
+        expect(getDashboard('usage-data-sources')).toBeInTheDocument();
+        expect(getDashboard('usage-stats')).toBeInTheDocument();
+        expect(getDashboard('usage-usage-overview')).toBeInTheDocument();
+        expect(getDashboard('frontend')).toBeInTheDocument();
+        expect(getDashboard('overview')).toBeInTheDocument();
+        expect(getDashboard('stats')).toBeInTheDocument();
+        await userEvents.type(getDashboardsSearch(), 'Usage');
+        expect(queryDashboard('general-data-sources')).not.toBeInTheDocument();
+        expect(getDashboard('general-usage')).toBeInTheDocument();
+        expect(queryDashboard('observability-backend-errors')).not.toBeInTheDocument();
+        expect(queryDashboard('observability-backend-logs')).not.toBeInTheDocument();
+        expect(queryDashboard('observability-frontend-errors')).not.toBeInTheDocument();
+        expect(queryDashboard('observability-frontend-logs')).not.toBeInTheDocument();
+        expect(getDashboard('usage-data-sources')).toBeInTheDocument();
+        expect(getDashboard('usage-stats')).toBeInTheDocument();
+        expect(getDashboard('usage-usage-overview')).toBeInTheDocument();
+        expect(queryDashboard('frontend')).not.toBeInTheDocument();
+        expect(queryDashboard('overview')).not.toBeInTheDocument();
+        expect(queryDashboard('stats')).not.toBeInTheDocument();
       });
 
       it('Deduplicates the dashboards list', async () => {
@@ -420,10 +538,17 @@ describe('Scopes', () => {
         await userEvents.click(getResultApplicationsCloudDevSelect());
         await userEvents.click(getResultApplicationsCloudOpsSelect());
         await userEvents.click(getSelectorApply());
-        expect(queryAllDashboard('5')).toHaveLength(1);
-        expect(queryAllDashboard('6')).toHaveLength(1);
-        expect(queryAllDashboard('7')).toHaveLength(1);
-        expect(queryAllDashboard('8')).toHaveLength(1);
+        await userEvents.click(getDashboardFolderExpand('Cardinality Management'));
+        await userEvents.click(getDashboardFolderExpand('Usage Insights'));
+        expect(queryAllDashboard('cardinality-management-labels')).toHaveLength(1);
+        expect(queryAllDashboard('cardinality-management-metrics')).toHaveLength(1);
+        expect(queryAllDashboard('cardinality-management-overview')).toHaveLength(1);
+        expect(queryAllDashboard('usage-insights-alertmanager')).toHaveLength(1);
+        expect(queryAllDashboard('usage-insights-data-sources')).toHaveLength(1);
+        expect(queryAllDashboard('usage-insights-metrics-ingestion')).toHaveLength(1);
+        expect(queryAllDashboard('usage-insights-overview')).toHaveLength(1);
+        expect(queryAllDashboard('usage-insights-query-errors')).toHaveLength(1);
+        expect(queryAllDashboard('billing-usage')).toHaveLength(1);
       });
 
       it('Shows a proper message when no scopes are selected', async () => {
@@ -435,8 +560,7 @@ describe('Scopes', () => {
       it('Does not show the input when there are no dashboards found for scope', async () => {
         await userEvents.click(getDashboardsExpand());
         await userEvents.click(getSelectorInput());
-        await userEvents.click(getResultCloudExpand());
-        await userEvents.click(getResultCloudProdRadio());
+        await userEvents.click(getResultCloudSelect());
         await userEvents.click(getSelectorApply());
         expect(getNotFoundForScope()).toBeInTheDocument();
         expect(queryDashboardsSearch()).not.toBeInTheDocument();
