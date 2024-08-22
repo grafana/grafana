@@ -9,7 +9,7 @@ import (
 func TestScanDest_Into(t *testing.T) {
 	t.Parallel()
 
-	var d ScanDest
+	var d scanDest
 
 	colName, err := d.Into(reflect.Value{}, "some field")
 	if colName != "" || err == nil || len(d.GetScanDest()) != 0 {

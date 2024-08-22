@@ -839,6 +839,81 @@ func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgI
 	return len(updates), st.UpdateAlertRules(ctx, updates)
 }
 
+// RenameTimeIntervalInNotificationSettings renames all rules that use old time interval name to the new name.
+// Before renaming, it checks that all rules that need to be updated have allowed provenance status, and skips updating
+// if at least one rule does not have allowed provenance.
+// It returns a tuple:
+// - a collection of models.AlertRuleKey of rules that were updated,
+// - a collection of rules that have invalid provenance status,
+// - database error
+func (st DBstore) RenameTimeIntervalInNotificationSettings(
+	ctx context.Context,
+	orgID int64,
+	oldTimeInterval, newTimeInterval string,
+	validateProvenance func(ngmodels.Provenance) bool,
+	dryRun bool,
+) ([]ngmodels.AlertRuleKey, []ngmodels.AlertRuleKey, error) {
+	// fetch entire rules because Update method requires it because it copies rules to version table
+	rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
+		OrgID:            orgID,
+		TimeIntervalName: oldTimeInterval,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(rules) == 0 {
+		return nil, nil, nil
+	}
+
+	provenances, err := st.GetProvenances(ctx, orgID, (&ngmodels.AlertRule{}).ResourceType())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var invalidProvenance []ngmodels.AlertRuleKey
+	result := make([]ngmodels.AlertRuleKey, 0, len(rules))
+	updates := make([]ngmodels.UpdateRule, 0, len(rules))
+	for _, rule := range rules {
+		provenance, ok := provenances[rule.UID]
+		if !ok {
+			provenance = ngmodels.ProvenanceNone
+		}
+		if !validateProvenance(provenance) {
+			invalidProvenance = append(invalidProvenance, rule.GetKey())
+		}
+		if len(invalidProvenance) > 0 { // do not do any fixes if there is at least one rule with not allowed provenance
+			continue
+		}
+
+		result = append(result, rule.GetKey())
+
+		if dryRun {
+			continue
+		}
+
+		r := ngmodels.CopyRule(rule)
+		for idx := range r.NotificationSettings {
+			for mtIdx := range r.NotificationSettings[idx].MuteTimeIntervals {
+				if r.NotificationSettings[idx].MuteTimeIntervals[mtIdx] == oldTimeInterval {
+					r.NotificationSettings[idx].MuteTimeIntervals[mtIdx] = newTimeInterval
+				}
+			}
+		}
+
+		updates = append(updates, ngmodels.UpdateRule{
+			Existing: rule,
+			New:      *r,
+		})
+	}
+	if len(invalidProvenance) > 0 {
+		return nil, invalidProvenance, nil
+	}
+	if dryRun {
+		return result, nil, nil
+	}
+	return result, nil, st.UpdateAlertRules(ctx, updates)
+}
+
 func ruleConstraintViolationToErr(rule ngmodels.AlertRule, err error) error {
 	msg := err.Error()
 	if strings.Contains(msg, "UQE_alert_rule_org_id_namespace_uid_title") || strings.Contains(msg, "alert_rule.org_id, alert_rule.namespace_uid, alert_rule.title") {

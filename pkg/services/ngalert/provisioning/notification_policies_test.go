@@ -271,7 +271,7 @@ func createTestRoutingTree() definitions.Route {
 }
 
 func createTestAlertingConfig() *definitions.PostableUserConfig {
-	cfg, _ := legacy_storage.DeserializeAlertmanagerConfig([]byte(defaultConfig))
+	cfg, _ := legacy_storage.DeserializeAlertmanagerConfig([]byte(setting.GetAlertmanagerDefaultConfiguration()))
 	cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers,
 		&definitions.PostableApiReceiver{
 			Receiver: config.Receiver{
