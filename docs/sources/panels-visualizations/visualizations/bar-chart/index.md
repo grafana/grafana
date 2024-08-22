@@ -56,7 +56,7 @@ You can use the bar chart visualization if you need to show:
 
 ## Configure a bar chart
 
-The following video shows you how to  create and configure a bar chart visualization:
+The following video shows you how to create and configure a bar chart visualization:
 
 {{< youtube id="qyKE9-71KkE" >}}
 
