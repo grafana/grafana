@@ -3,7 +3,6 @@ package repo
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -84,12 +83,7 @@ func (m *Manager) PluginVersion(pluginID, version string, compatOpts CompatOpts)
 		return VersionData{}, err
 	}
 
-	sysCompatOpts, exists := compatOpts.System()
-	if !exists {
-		return VersionData{}, errors.New("no system compatibility requirements set")
-	}
-
-	compatibleVer, err := SelectSystemCompatibleVersion(m.log, versions, pluginID, version, sysCompatOpts)
+	compatibleVer, err := SelectSystemCompatibleVersion(m.log, versions, pluginID, version, compatOpts)
 	if err != nil {
 		return VersionData{}, err
 	}
