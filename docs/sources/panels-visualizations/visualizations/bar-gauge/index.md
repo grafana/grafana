@@ -31,7 +31,65 @@ This panel can show one or more bar gauges depending on how many series, rows, o
 
 {{< figure src="/static/img/docs/v66/bar_gauge_cover.png" max-width="1025px" alt="Bar gauge panel" >}}
 
+The bar gauge panel displays values as bars with various lengths or fills proportional to the values they represent. The difference from traditional bar charts is that they act as gauges displaying metrics between ranges. One example is a thermometer displaying body temperature in a line or bar filling up.
+
+You can use bar gauges when you need to show:
+
+- Key performance indicators (KPIs)
+- System health
+- Savings goals
+- Attendance
+- Process completion rates
+
 {{< docs/play title="Bar Gauge" url="https://play.grafana.org/d/vmie2cmWz/" >}}
+
+## Supported data formats
+
+To create a bar gauge visualization, you need a dataset querying at least one numeric field. Every numeric field in the dataset is displayed as a bar gauge. Text or time fields are not required but if present, they will be used for labeling.
+
+#### Example
+
+| Label | Value1 | Value2 | Value3 |
+| ----- | ------ | ------ | ------ |
+| Row1  | 5      | 3      | 2      |
+
+<<IMG>>
+
+The minimum and maximum range for the bar gauges is automatically pulled from the largest and smallest numeric values in the dataset. You can manually define the min and max values as indicated in the #standard-options section.
+
+You can also define the min and max from the dataset provided.
+
+#### Example
+
+| Label | Value | Max | Min |
+| ----- | ----- | --- | --- |
+| Row1  | 3     | 6   | 1   |
+
+<<IMG>>
+
+If you don’t want to show gauges for the min and max values, you can configure only one field to be displayed as described in the [Value options](#value-options) section.
+
+<<IMG>>
+
+Even if the min and max aren’t displayed, the visualization still pulls the range from the data set.
+
+The bar gauge visualization supports multiple records (rows) in the dataset.
+
+#### Example
+
+| Label | Value1 | Value2 | Value3 |
+| ----- | ------ | ------ | ------ |
+| Row1  | 5      | 3      | 2      |
+| Row2  | 10     | 6      | 4      |
+| Row3  | 20     | 8      | 2      |
+
+<<IMG>>
+
+By default, the visualization is configured to [calculate](#value-options) a single value per column or series and to display only the last set of data. However, it derives the min and max from the full dataset even if those values aren’t visible. In this example, that means only the last row of data is displayed in the gauges and the min and max values are 2 and 20.
+
+If you want to show one gauge per cell you can change the [Show](#show) setting from [Calculate](#calculate) to [All values](#all-values) and each bar is labeled by concatenating the text column with each value's column name.
+
+<<IMG>>
 
 ## Panel options
 
