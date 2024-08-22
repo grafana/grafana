@@ -1393,6 +1393,12 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
 		},
+		{
+			Name:        "lokiSendDashboardPanelNames",
+			Description: "Send dashboard and panel names to Loki when querying",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityLogsSquad,
+		},
 	}
 )
 

@@ -201,7 +201,7 @@ class DataSourceWithBackend<
       });
     }
 
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = request.headers ?? {};
     headers[PluginRequestHeaders.PluginID] = Array.from(pluginIDs).join(', ');
     headers[PluginRequestHeaders.DatasourceUID] = Array.from(dsUIDs).join(', ');
 

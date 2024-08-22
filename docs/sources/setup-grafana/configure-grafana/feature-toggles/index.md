@@ -193,6 +193,7 @@ Experimental features might be changed or removed without prior notice.
 | `backgroundPluginInstaller`                 | Enable background plugin installer                                                                                                                                                                                                                                                |
 | `dataplaneAggregator`                       | Enable grafana dataplane aggregator                                                                                                                                                                                                                                               |
 | `adhocFilterOneOf`                          | Exposes a new 'one of' operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.                                                                                                                                                   |
+| `lokiSendDashboardPanelNames`               | Send dashboard and panel names to Loki when querying                                                                                                                                                                                                                              |
 
 ## Development feature toggles
 
