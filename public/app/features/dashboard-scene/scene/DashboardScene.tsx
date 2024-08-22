@@ -937,14 +937,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   public rememberScrollPos() {
-    this._prevScrollPos = this._scrollRef?.scrollTop;
+    this._prevScrollPos = this._scrollRef?.scrollTop();
   }
 
-  public restoreScrollPos() {
+  public async restoreScrollPos() {
     if (this._prevScrollPos !== undefined) {
-      setTimeout(() => {
-        this._scrollRef?.scrollTo(0, this._prevScrollPos!);
-      }, 50);
+      await this._scrollRef?.waitToLoad?.();
+      this._scrollRef?.scrollTo(0, this._prevScrollPos!);
     }
   }
 }

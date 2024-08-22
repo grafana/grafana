@@ -11,8 +11,9 @@ export interface Props {
 }
 
 export interface ScrollRefElement {
-  scrollTop: number;
+  scrollTop: () => number | undefined;
   scrollTo: (x: number, y: number) => void;
+  waitToLoad?: () => Promise<void>;
 }
 
 // Shim to provide API-compatibility for Page's scroll-related props
@@ -28,7 +29,23 @@ export default function NativeScrollbar({ children, onSetScrollRef, divId }: Pro
     }
 
     if (!config.featureToggles.bodyScrolling && ref.current && onSetScrollRef) {
-      onSetScrollRef(ref.current);
+      onSetScrollRef({
+        scrollTo: ref.current.scrollTo.bind(ref.current),
+        scrollTop: () => ref.current?.scrollTop,
+        waitToLoad: function () {
+          return new Promise<void>((resolve) => {
+            const observer = new MutationObserver(() => {
+              if ((ref.current?.scrollHeight || 0) > (ref.current?.clientHeight || 0)) {
+                resolve();
+              }
+            });
+            observer.observe(ref.current!, {
+              childList: true,
+              subtree: true,
+            });
+          });
+        },
+      });
     }
   }, [ref, onSetScrollRef]);
 
@@ -44,12 +61,14 @@ export default function NativeScrollbar({ children, onSetScrollRef, divId }: Pro
 
 class WindowScrollElement {
   public get scrollTop() {
-    return window.scrollY;
+    return () => window.scrollY;
   }
 
   public scrollTo(x: number, y: number) {
     window.scrollTo(x, y);
   }
+
+  //TODO: implement waitToLoad
 }
 
 function getStyles() {

@@ -265,7 +265,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     // Entering settings view
     if (!state.editView && urlEditView) {
       updatedState.editView = urlEditView;
-      updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
+      updatedState.rememberScrollTop = state.scrollElement?.scrollTop();
       updatedState.updateScrollTop = 0;
     }
 
@@ -281,7 +281,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       if (panel) {
         if (dashboard.canEditPanel(panel)) {
           updatedState.editPanel = panel;
-          updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
+          updatedState.rememberScrollTop = state.scrollElement?.scrollTop();
         } else {
           updatedState.editPanelAccessDenied = true;
         }
@@ -303,7 +303,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         // Should move this state out of dashboard in the future
         dashboard.initViewPanel(panel);
         updatedState.viewPanel = panel;
-        updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
+        updatedState.rememberScrollTop = state.scrollElement?.scrollTop();
         updatedState.updateScrollTop = 0;
       } else {
         updatedState.panelNotFound = true;
