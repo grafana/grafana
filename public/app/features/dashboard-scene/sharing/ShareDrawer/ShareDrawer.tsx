@@ -9,12 +9,12 @@ import { ExportAsJson } from '../ExportButton/ExportAsJson';
 import { ShareExternally } from '../ShareButton/share-externally/ShareExternally';
 import { ShareInternally } from '../ShareButton/share-internally/ShareInternally';
 import { ShareSnapshot } from '../ShareButton/share-snapshot/ShareSnapshot';
+import { ShareLibraryPanelTab } from '../ShareLibraryPanelTab';
 import { SharePanelEmbedTab } from '../SharePanelEmbedTab';
 import { SharePanelInternally } from '../panel-share/SharePanelInternally';
 import { ModalSceneObjectLike, SceneShareTabState, ShareView } from '../types';
 
 import { ShareDrawerContext } from './ShareDrawerContext';
-import { ShareLibraryPanelTab } from '../ShareLibraryPanelTab';
 
 export interface ShareDrawerState extends SceneObjectState {
   panelRef?: SceneObjectRef<VizPanel>;
