@@ -10,20 +10,8 @@ export function deriveSearchTermsFromInput(whiteSpaceSeparatedTerms?: string) {
   );
 }
 
-export function createJSRegExpFromSearchTerms(searchQuery?: string, prefix?: boolean) {
-  let searchParts: string[] = [];
-
-  // build a regex for either
-  // the search metrics input(contains)
-  // or
-  // the metricsPrefix(starts with)
-  if (prefix) {
-    // there will only be one prefix selected at a time
-    searchParts = [`(?=^${searchQuery}.*)`];
-  } else {
-    // there may be multiple search terms
-    searchParts = deriveSearchTermsFromInput(searchQuery).map((part) => `(?=(.*${part.toLowerCase()}.*))`);
-  }
+export function createJSRegExpFromSearchTerms(searchQuery?: string) {
+  const searchParts = deriveSearchTermsFromInput(searchQuery).map((part) => `(?=(.*${part.toLowerCase()}.*))`);
 
   if (searchParts.length === 0) {
     return null;

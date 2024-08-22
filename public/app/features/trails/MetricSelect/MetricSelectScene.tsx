@@ -217,14 +217,14 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
         ? response.data.filter((metric) => !searchRegex || searchRegex.test(metric))
         : response.data;
 
+      // use this to generate groups for metric prefix
       const filteredMetricNames = metricNames;
 
-      if (this.state.metricPrefix !== 'all') {
-        // filter metric names with the prefix here
-        const prefixRegex = createJSRegExpFromSearchTerms(this.state.metricPrefix, true);
-        metricNames = prefixRegex
-          ? metricNames.filter((metric) => !prefixRegex || prefixRegex.test(metric))
-          : metricNames;
+      // filter the remaining metrics with the metric prefix
+      const metricPrefix = this.state.metricPrefix;
+      if (metricPrefix && metricPrefix !== 'all') {
+        const prefixRegex = new RegExp(`(^${metricPrefix}.*)`, 'igy');
+        metricNames = metricNames.filter((metric) => !prefixRegex || prefixRegex.test(metric));
       }
 
       const metricNamesWarning = response.limitReached
@@ -237,7 +237,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
 
       let rootGroupNode = this.state.rootGroup;
 
-      // generate groups based on the metric input
+      // generate groups based on the search metrics input
       rootGroupNode = await this.generateGroups(filteredMetricNames);
 
       this.setState({
