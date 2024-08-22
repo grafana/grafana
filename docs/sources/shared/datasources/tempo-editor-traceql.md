@@ -39,7 +39,7 @@ If trying to query a self-managed Grafana Tempo or Grafana Enterprise Traces dat
 If it doesn't, streaming won't work and queries will fail to return results.
 
 If you can't configure your gateway to allow gRPC, deactivate streaming in your hosted Grafana.
-In Grafana 11.2 and newer, you can deactivate **Streaming** in your Tempo data source settings from **Connections** > **Data sources** in the Grafana menu.
+In Grafana 11.2 and newer, you can deactivate the **Streaming** option in your Tempo data source settings from **Connections** > **Data sources** in the Grafana menu.
 You can also open a support escalation to request streaming query results be disabled in your hosted Grafana.
 
 ## Write TraceQL queries using the query editor
