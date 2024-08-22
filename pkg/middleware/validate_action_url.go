@@ -27,12 +27,11 @@ func ValidateActionUrl(cfg *setting.Cfg) web.Middleware {
 			if !isLocalPath(c) {
 				// call next on url
 				next.ServeHTTP(rw, req)
-				return
 			}
 
 			// only process POST and PUT
 			if c.Req.Method != http.MethodPost && c.Req.Method != http.MethodPut {
-				return
+				next.ServeHTTP(rw, req)
 			}
 
 			if c.IsApiRequest() {
@@ -41,7 +40,7 @@ func ValidateActionUrl(cfg *setting.Cfg) web.Middleware {
 
 				if action == "" {
 					// header not found, just return
-					return
+					next.ServeHTTP(rw, req)
 				}
 
 				urlToCheck := c.Req.URL
@@ -53,19 +52,18 @@ func ValidateActionUrl(cfg *setting.Cfg) web.Middleware {
 						// match error, ignore
 						logger.Warn("Error matching configured paths", "err", err)
 						c.JsonApiErr(http.StatusForbidden, fmt.Sprintf("Error matching configured paths: %s", err.Error()), nil)
-						return
 					}
 					if matched {
 						// allowed
 						logger.Debug("API call allowed", "path", i)
-						next.ServeHTTP(rw, req)
+						next.ServeHTTP(rw, c.Req)
 						return
 					}
 				}
 				logger.Warn("POST/PUT to path not allowed", "warn", urlToCheck)
 				c.JsonApiErr(http.StatusForbidden, fmt.Sprintf("POST/PUT to path not allowed: %s", urlToCheck), nil)
-				return
 			}
+			next.ServeHTTP(rw, req)
 		})
 	}
 }
