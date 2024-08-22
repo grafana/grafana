@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/grafana/authlib v0.0.0-20240814074258-eae7d47f01db // @grafana/identity-access-team
-	github.com/grafana/authlib/claims v0.0.0-20240814074258-eae7d47f01db // @grafana/identity-access-team
+	github.com/grafana/authlib/claims v0.0.0-20240814142503-ca29e2d96514 // @grafana/identity-access-team
 	github.com/stretchr/testify v1.9.0
 	k8s.io/apimachinery v0.31.0
 	k8s.io/apiserver v0.31.0
