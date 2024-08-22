@@ -19,7 +19,11 @@ func ValidateActionUrl(cfg *setting.Cfg) web.Handler {
 			return
 		}
 
-		// TODO: only process same origin requests
+		// only process requests targeting local instance
+		if !isLocalPath(c) {
+			// call next on url?
+			return
+		}
 
 		// only process POST and PUT
 		if c.Req.Method != http.MethodPost && c.Req.Method != http.MethodPut {
@@ -57,4 +61,23 @@ func ValidateActionUrl(cfg *setting.Cfg) web.Handler {
 			return
 		}
 	}
+}
+
+// isLocalPath
+// Actions are processed by internal api paths, this checks the URL to ensure the request is to the local instance
+func isLocalPath(c *contextmodel.ReqContext) bool {
+	netAddr, err := util.SplitHostPortDefault(c.Req.Host, "", "0") // we ignore the port
+	if err != nil {
+		c.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("Error parsing request for action: %s", err.Error()), nil)
+		return false
+	}
+
+	urlAddr, err := util.SplitHostPortDefault(c.Req.URL.Host, "", "0") // we ignore the port
+	pathIsLocal := urlAddr.Host == netAddr.Host
+	if netAddr.Host != "" || pathIsLocal {
+		// request is local
+		return true
+	}
+
+	return false
 }
