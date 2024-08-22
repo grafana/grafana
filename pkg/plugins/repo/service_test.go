@@ -195,7 +195,7 @@ func mockPluginVersionsAPI(t *testing.T, data srvData) *httptest.Server {
 type versionArg struct {
 	version      string
 	arch         []string
-	isCompatible bool
+	isCompatible *bool
 }
 
 func createPluginVersions(versions ...versionArg) []Version {
