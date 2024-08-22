@@ -105,15 +105,14 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
   const middleware = [
     flip({
       // see https://floating-ui.com/docs/flip#combining-with-shift
-      crossAxis: false,
+      crossAxis: true,
       boundary: document.body,
-      fallbackPlacements: ['top'],
     }),
   ];
   const elements = { reference: inputRef.current, floating: floatingRef.current };
   const { floatingStyles } = useFloating({
     open: isOpen,
-    placement: 'bottom',
+    placement: 'bottom-start',
     middleware,
     elements,
     whileElementsMounted: autoUpdate,
@@ -168,7 +167,7 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
       />
       <div
         className={cx(styles.menu, hasMinHeight && styles.menuHeight)}
-        style={{ ...floatingStyles, width: elements.reference?.getBoundingClientRect().width }}
+        style={{ ...floatingStyles }}
         {...getMenuProps({ ref: floatingRef })}
       >
         {isOpen && (
@@ -177,17 +176,18 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
               return (
                 <li
                   key={items[virtualRow.index].value}
-                  {...getItemProps({ item: items[virtualRow.index], index: virtualRow.index })}
                   data-index={virtualRow.index}
-                  ref={rowVirtualizer.measureElement}
+                  //ref={rowVirtualizer.measureElement}
                   className={cx(
                     styles.option,
                     selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected,
                     highlightedIndex === virtualRow.index && styles.optionFocused
                   )}
                   style={{
+                    height: virtualRow.size,
                     transform: `translateY(${virtualRow.start}px)`,
                   }}
+                  {...getItemProps({ item: items[virtualRow.index], index: virtualRow.index })}
                 >
                   <div className={styles.optionBody}>
                     <span>{items[virtualRow.index].label}</span>

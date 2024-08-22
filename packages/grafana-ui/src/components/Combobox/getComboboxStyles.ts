@@ -19,19 +19,25 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     menuUlContainer: css({
       label: 'grafana-select-menu-ul-container',
       listStyle: 'none',
+      // Place all children in a single cell, give them position relative and then do a transform
+      // This produces the same effect as position: absolute, but the container will fit the width of the longest child
+      // This might only work if all items are the same height
+      display: 'grid',
+      gridTemplateColumns: '1fr',
+      gridTemplateRows: '1fr',
     }),
     option: css({
       label: 'grafana-select-option',
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
+      padding: '8px',
+      position: 'relative',
+      gridRow: 1,
+      gridColumn: 1,
+      display: 'flex',
+      alignItems: 'center',
+      flexDirection: 'row',
+      flexShrink: 0,
       whiteSpace: 'nowrap',
       cursor: 'pointer',
-      borderLeft: '2px solid transparent',
-      padding: theme.spacing.x1,
-      boxSizing: 'border-box',
-      height: 'auto',
       '&:hover': {
         background: theme.colors.action.hover,
         '@media (forced-colors: active), (prefers-contrast: more)': {
@@ -51,7 +57,6 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       fontWeight: 'normal',
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
-      whiteSpace: 'normal',
       lineHeight: theme.typography.body.lineHeight,
     }),
     optionFocused: css({
@@ -71,7 +76,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         display: 'block',
         height: '100%',
         position: 'absolute',
-        transform: 'translateX(-50%)',
+        //transform: 'translateX(-50%)',
         width: theme.spacing(0.5),
         left: 0,
         top: 0,
