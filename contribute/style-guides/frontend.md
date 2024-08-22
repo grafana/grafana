@@ -62,6 +62,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 ```
 
 Use hook useStyles2(getStyles) to memoize the styles generation and try to avoid passing props to the getStyles function and instead compose classes using Emotion CX function.
+
 ### Enums
 
 Use PascalCase. For example:
@@ -92,9 +93,10 @@ For files that export multiple utility functions, use the name that describes th
 - Use `reducers.ts` for Redux reducers.
 - Use `*.test.ts(x)` for test files.
 
-For directory names, use dash-case (sometimes called kebab-case). 
+For directory names, use dash-case (sometimes called kebab-case).
 
 - Use `features/new-important-feature/utils.ts`
+
 ### Functions
 
 Use PascalCase. For example:
@@ -142,6 +144,7 @@ type request_info = ...
 // good
 type RequestInfo = ...
 ```
+
 ### Methods
 
 Use PascalCase. For example:
@@ -232,6 +235,7 @@ export class YourClass extends PureComponent { ... }
 // good
 export class YourClass extends PureComponent<{},{}> { ... }
 ```
+
 #### React state and properties
 
 Use camelCase. For example:
@@ -341,7 +345,6 @@ For code that needs to be used by an external plugin:
 ## Linting
 
 Linting is performed using [@grafana/eslint-config](https://github.com/grafana/eslint-config-grafana).
-
 
 ## Functional components
 

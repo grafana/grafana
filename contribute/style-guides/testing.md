@@ -4,7 +4,7 @@ The goal of this document is to address the most frequently asked "How to" quest
 
 ## Some recommended practices for testing
 
-- Default to the `*ByRole` queries when testing components because it encourages testing with accessibility concerns in mind. 
+- Default to the `*ByRole` queries when testing components because it encourages testing with accessibility concerns in mind.
 - Alternatively, you could use `*ByLabelText` queries for testing components. However, we recommend the `*ByRole` queries because they are [more robust](https://testing-library.com/docs/queries/bylabeltext/#name).
 
 ## Testing User Interactions
