@@ -19,18 +19,16 @@ refs:
   query-transform-data:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
   panel-inspector:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-inspector/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/panel-inspector/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-inspector/
   logs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/
     - pattern: /docs/grafana-cloud/
-      destination: grafana-cloud/visualizations/panels-visualizations/visualizations/logs/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/
 ---
 
 # InfluxDB query editor
