@@ -203,4 +203,5 @@ export interface FeatureToggles {
   backgroundPluginInstaller?: boolean;
   dataplaneAggregator?: boolean;
   adhocFilterOneOf?: boolean;
+  lokiSendDashboardPanelNames?: boolean;
 }
