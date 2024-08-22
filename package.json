@@ -434,7 +434,7 @@
       "packages/!(grafana-icons)/**",
       "plugins-bundled/internal/*",
       "public/app/plugins/*/*",
-      "e2e/custom-plugins/*"
+      "e2e/test-plugins/*"
     ]
   },
   "engines": {
