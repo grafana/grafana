@@ -31,7 +31,6 @@ const config: ConfigFile = {
       filterEndpoints: [
         'listNamespacedTimeInterval',
         'createNamespacedTimeInterval',
-        'readNamespacedTimeInterval',
         'deleteNamespacedTimeInterval',
         'patchNamespacedTimeInterval',
         'replaceNamespacedTimeInterval',

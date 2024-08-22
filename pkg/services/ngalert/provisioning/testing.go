@@ -169,8 +169,9 @@ func (s *fakeRuleAccessControlService) CanWriteAllRules(ctx context.Context, use
 type fakeAlertRuleNotificationStore struct {
 	Calls []call
 
-	RenameReceiverInNotificationSettingsFn func(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error)
-	ListNotificationSettingsFn             func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
+	RenameReceiverInNotificationSettingsFn     func(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error)
+	RenameTimeIntervalInNotificationSettingsFn func(ctx context.Context, orgID int64, old, new string, validate func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
+	ListNotificationSettingsFn                 func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
 }
 
 func (f *fakeAlertRuleNotificationStore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error) {
@@ -186,6 +187,21 @@ func (f *fakeAlertRuleNotificationStore) RenameReceiverInNotificationSettings(ct
 
 	// Default values when no function hook is provided
 	return 0, nil
+}
+
+func (f *fakeAlertRuleNotificationStore) RenameTimeIntervalInNotificationSettings(ctx context.Context, orgID int64, oldTimeInterval, newTimeInterval string, validate func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
+	call := call{
+		Method: "RenameTimeIntervalInNotificationSettings",
+		Args:   []interface{}{ctx, orgID, oldTimeInterval, newTimeInterval, validate, dryRun},
+	}
+	f.Calls = append(f.Calls, call)
+
+	if f.RenameTimeIntervalInNotificationSettingsFn != nil {
+		return f.RenameTimeIntervalInNotificationSettingsFn(ctx, orgID, oldTimeInterval, newTimeInterval, validate, dryRun)
+	}
+
+	// Default values when no function hook is provided
+	return nil, nil, nil
 }
 
 func (f *fakeAlertRuleNotificationStore) ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error) {

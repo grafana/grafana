@@ -1,6 +1,7 @@
 package buffered
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -36,12 +37,12 @@ func parse(buf io.Reader, statusCode int, query *models.Query) *backend.DataResp
 	}
 
 	if response.Error != "" {
-		return &backend.DataResponse{Error: fmt.Errorf(response.Error)}
+		return &backend.DataResponse{Error: errors.New(response.Error)}
 	}
 
 	result := response.Results[0]
 	if result.Error != "" {
-		return &backend.DataResponse{Error: fmt.Errorf(result.Error)}
+		return &backend.DataResponse{Error: errors.New(result.Error)}
 	}
 
 	if query.ResultFormat == "table" {

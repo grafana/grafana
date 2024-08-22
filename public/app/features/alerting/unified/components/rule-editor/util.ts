@@ -1,5 +1,4 @@
 import { xor } from 'lodash';
-import { ValidateResult } from 'react-hook-form';
 
 import {
   DataFrame,
@@ -89,17 +88,8 @@ export function refIdExists(queries: AlertQuery[], refId: string | null): boolea
   return queries.find((query) => query.refId === refId) !== undefined;
 }
 
-// some gateways (like Istio) will decode "/" and "\" characters – this will cause 404 errors for any API call
-// that includes these values in the URL (ie. /my/path%2fto/resource -> /my/path/to/resource)
-//
-// see https://istio.io/latest/docs/ops/best-practices/security/#customize-your-system-on-path-normalization
-export function checkForPathSeparator(value: string): ValidateResult {
-  const containsPathSeparator = value.includes('/') || value.includes('\\');
-  if (containsPathSeparator) {
-    return 'Cannot contain "/" or "\\" characters';
-  }
-
-  return true;
+export function containsPathSeparator(value: string): boolean {
+  return value.includes('/') || value.includes('\\');
 }
 
 // this function assumes we've already checked if the data passed in to the function is of the alert condition
