@@ -15,8 +15,11 @@ const sanitizeTextPanelWhitelist = new xss.FilterXSS({
   // Add sandbox attribute to iframe tags if an attribute is allowed.
   onTagAttr: function (tag, name, value, isWhiteAttr) {
     if (tag === 'iframe') {
-      return isWhiteAttr ? ` ${name}="${xss.escapeAttrValue(sanitizeUrl(value))}" sandbox` : '';
+      return isWhiteAttr
+        ? ` ${name}="${xss.escapeAttrValue(sanitizeUrl(value))}" sandbox credentialless=true referrerpolicy=no-referrer`
+        : '';
     }
+    return;
   },
   whiteList: XSSWL,
   css: {
