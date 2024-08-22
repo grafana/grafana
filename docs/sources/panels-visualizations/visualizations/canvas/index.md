@@ -34,7 +34,23 @@ Canvases combine the power of Grafana with the flexibility of custom elements. C
 
 > We would love your feedback on Canvas. Please check out the [open Github issues](https://github.com/grafana/grafana/issues?page=1&q=is%3Aopen+is%3Aissue+label%3Aarea%2Fpanel%2Fcanvas) and [submit a new feature request](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request,area%2Fpanel%2Fcanvas&title=Canvas:&projects=grafana-dataviz&template=1-feature_requests.md) as needed.
 
+A canvas is the most flexible visualization allowing you to create visualizations tailored to your specific needs. You can create visualizations based on any images you may need to use. If no other visualization type suits your needs, the canvas provides an unstructured space where you can design and script your own visuals using HTML, images, CSS, JavaScript and more.
+
+There are few limits to what a canvas can display with all the dynamic elements you can use to visualize values, text, icons, buttons, connections, and more.
+
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-beta-overview-9-2-0.mp4" max-width="750px" caption="Canvas beta overview" >}}
+
+## Supported data formats
+
+The canvas visualization is unique as it doesn't have any specific data requirements. You can even start drawing and configuring visual elements without any specific data provided.
+
+However, being so flexible, a canvas provides diverse data structuring and preparation options.
+
+Any data you plan to consume should be accessible through supported Grafana data sources and structured in a way that ensures smooth integration with your custom HTML, CSS, and JavaScript code.
+
+If your canvas is going to update in real time, your data should support refreshes at your desired intervals without degrading the user experience.
+
+You can provide data to the multiple elements and connections available in the canvas visualization, like text element values, colors, rotation, and background pattern images. Most of them has different data requirements defined in each item in the [Elements](#elements) and [Connections](#connections) sections.
 
 ## Elements
 
