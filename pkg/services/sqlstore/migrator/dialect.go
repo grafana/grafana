@@ -163,7 +163,6 @@ func (b *BaseDialect) Default(col *Column) string {
 		}
 		return b.dialect.BooleanStr(bl)
 	}
-
 	return col.Default
 }
 
