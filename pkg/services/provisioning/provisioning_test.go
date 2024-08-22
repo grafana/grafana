@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
+	"github.com/grafana/grafana/pkg/services/searchV2"
 )
 
 func TestProvisioningServiceImpl(t *testing.T) {
@@ -68,31 +70,25 @@ func TestProvisioningServiceImpl(t *testing.T) {
 	})
 
 	t.Run("Should not return run error when dashboard provisioning fails", func(t *testing.T) {
-		serviceTest := &serviceTestStruct{}
-		serviceTest.waitTimeout = time.Second
-
-		serviceTest.mock = dashboards.NewDashboardProvisionerMock()
-
-		serviceTest.service = newProvisioningServiceImpl(
-			func(context.Context, string, dashboardstore.DashboardProvisioningService, org.Service, utils.DashboardStore, folder.Service) (dashboards.DashboardProvisioner, error) {
-				return serviceTest.mock, nil
-			},
-			nil,
-			nil,
-		)
-		err := serviceTest.service.setDashboardProvisioner()
-		require.NoError(t, err)
-
-		ctx, cancel := context.WithCancel(context.Background())
-		serviceTest.cancel = cancel
-
+		serviceTest := setup(t)
+		provisioningErr := errors.New("Test error")
 		serviceTest.mock.ProvisionFunc = func(ctx context.Context) error {
-			return errors.New("Test error")
+			return provisioningErr
 		}
+		serviceTest.service.ProvisionDashboards(context.Background())
+		serviceTest.startService()
 
-		err = serviceTest.service.Run(ctx)
-		assert.Nil(t, err)
+		serviceTest.waitForPollChanges()
+		assert.Equal(t, 1, len(serviceTest.mock.Calls.PollChanges), "PollChanges should have been called")
+
+		// Cancelling the root context and stopping the service
+		serviceTest.cancel()
+		serviceTest.waitForStop()
+
+		fmt.Println("serviceTest.serviceError", serviceTest.serviceError)
+		assert.Equal(t, context.Canceled, serviceTest.serviceError)
 	})
+
 }
 
 type serviceTestStruct struct {
@@ -122,12 +118,15 @@ func setup(t *testing.T) *serviceTestStruct {
 		pollChangesChannel <- ctx
 	}
 
+	searchStub := searchV2.NewStubSearchService()
+
 	serviceTest.service = newProvisioningServiceImpl(
 		func(context.Context, string, dashboardstore.DashboardProvisioningService, org.Service, utils.DashboardStore, folder.Service) (dashboards.DashboardProvisioner, error) {
 			return serviceTest.mock, nil
 		},
 		nil,
 		nil,
+		searchStub,
 	)
 	err := serviceTest.service.setDashboardProvisioner()
 	require.NoError(t, err)
