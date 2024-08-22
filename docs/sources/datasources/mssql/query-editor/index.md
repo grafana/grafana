@@ -247,6 +247,10 @@ The resulting table panel:
 
 ## Use time series queries
 
+{{< admonition type="note" >}}
+Store timestamps in UTC to avoid issues with time shifts in Grafana when using non-UTC timezones.
+{{< /admonition >}}
+
 If you set the **Format** setting in the query editor to **Time series**, then the query must have a column named `time` that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds.
 Result sets of time series queries must also be sorted by time for panels to properly visualize the result.
 
