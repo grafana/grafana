@@ -3079,7 +3079,7 @@
           "description": "Policies contains all policy identifiers included in the certificate.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/OID"
+            "type": "string"
           }
         },
         "PolicyIdentifiers": {
@@ -4806,6 +4806,7 @@
             "PENDING_PROCESSING",
             "PROCESSING",
             "FINISHED",
+            "CANCELED",
             "ERROR",
             "UNKNOWN"
           ]
@@ -5403,7 +5404,7 @@
         "status"
       ],
       "properties": {
-        "error": {
+        "message": {
           "type": "string"
         },
         "refId": {
@@ -5413,6 +5414,7 @@
           "type": "string",
           "enum": [
             "OK",
+            "WARNING",
             "ERROR",
             "PENDING",
             "UNKNOWN"
@@ -5490,7 +5492,7 @@
       "type": "object",
       "title": "NavbarPreference defines model for NavbarPreference.",
       "properties": {
-        "savedItemIds": {
+        "bookmarkUrls": {
           "type": "array",
           "items": {
             "type": "string"
@@ -5540,10 +5542,6 @@
       "type": "integer",
       "format": "int64",
       "title": "NoticeSeverity is a type for the Severity property of a Notice."
-    },
-    "OID": {
-      "type": "object",
-      "title": "An OID represents an ASN.1 OBJECT IDENTIFIER."
     },
     "ObjectIdentifier": {
       "type": "array",
@@ -7217,6 +7215,7 @@
             "PENDING_PROCESSING",
             "PROCESSING",
             "FINISHED",
+            "CANCELED",
             "ERROR",
             "UNKNOWN"
           ]
@@ -7246,6 +7245,10 @@
             "type": "integer",
             "format": "int64"
           }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
         },
         "types": {
           "type": "object",
@@ -8376,6 +8379,23 @@
           "format": "date-time"
         },
         "userAgent": {
+          "type": "string"
+        }
+      }
+    },
+    "healthResponse": {
+      "type": "object",
+      "properties": {
+        "commit": {
+          "type": "string"
+        },
+        "database": {
+          "type": "string"
+        },
+        "enterpriseCommit": {
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         }
       }

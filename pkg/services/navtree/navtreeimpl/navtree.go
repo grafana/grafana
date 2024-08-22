@@ -164,19 +164,17 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	}
 
 	// remove user access if empty. Happens if grafana-auth-app is not injected
-	if sec := treeRoot.FindById(navtree.NavIDCfgAccess); sec != nil && (sec.Children == nil || len(sec.Children) == 0) {
+	if sec := treeRoot.FindById(navtree.NavIDCfgAccess); sec != nil && len(sec.Children) == 0 {
 		treeRoot.RemoveSectionByID(navtree.NavIDCfgAccess)
 	}
 
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPinNavItems) {
-		bookmarks := s.buildBookmarksNavLinks(prefs, treeRoot)
-
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:           "Bookmarks",
 			Id:             navtree.NavIDBookmarks,
 			Icon:           "bookmark",
 			SortWeight:     navtree.WeightBookmarks,
-			Children:       bookmarks,
+			Children:       []*navtree.NavLink{},
 			EmptyMessageId: "bookmarks-empty",
 			Url:            s.cfg.AppSubURL + "/bookmarks",
 		})
@@ -297,7 +295,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*navtree.NavLink, error) {
 	starredItemsChildNavs := []*navtree.NavLink{}
 
-	userID, _ := identity.UserIdentifier(c.SignedInUser.GetTypedID())
+	userID, _ := identity.UserIdentifier(c.SignedInUser.GetID())
 	query := star.GetUserStarsQuery{
 		UserID: userID,
 	}
@@ -334,39 +332,6 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*
 	}
 
 	return starredItemsChildNavs, nil
-}
-func (s *ServiceImpl) buildBookmarksNavLinks(prefs *pref.Preference, treeRoot *navtree.NavTreeRoot) []*navtree.NavLink {
-	bookmarksChildNavs := []*navtree.NavLink{}
-
-	bookmarkUrls := prefs.JSONData.Navbar.BookmarkUrls
-
-	if len(bookmarkUrls) > 0 {
-		for _, url := range bookmarkUrls {
-			item := treeRoot.FindByURL(url)
-			if item != nil {
-				bookmarksChildNavs = append(bookmarksChildNavs, &navtree.NavLink{
-					Id:             item.Id,
-					Text:           item.Text,
-					SubTitle:       item.SubTitle,
-					Icon:           item.Icon,
-					Img:            item.Img,
-					Url:            item.Url,
-					Target:         item.Target,
-					HideFromTabs:   item.HideFromTabs,
-					RoundIcon:      item.RoundIcon,
-					IsSection:      item.IsSection,
-					HighlightText:  item.HighlightText,
-					HighlightID:    item.HighlightID,
-					PluginID:       item.PluginID,
-					IsCreateAction: item.IsCreateAction,
-					Keywords:       item.Keywords,
-					ParentItem:     &navtree.NavLink{Id: navtree.NavIDBookmarks},
-				})
-			}
-		}
-	}
-
-	return bookmarksChildNavs
 }
 
 func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {

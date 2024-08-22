@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
@@ -31,16 +31,14 @@ func newServer(t *testing.T) (sql.Backend, resource.ResourceServer) {
 
 	dbstore := infraDB.InitTestDB(t)
 	cfg := setting.NewCfg()
-	features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage)
-	tr := noop.NewTracerProvider().Tracer("integrationtests")
+	features := featuremgmt.WithFeatures()
 
-	eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, features, tr)
+	eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, features, nil)
 	require.NoError(t, err)
 	require.NotNil(t, eDB)
 
 	ret, err := sql.NewBackend(sql.BackendOptions{
 		DBProvider: eDB,
-		Tracer:     tr,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, ret)
@@ -66,7 +64,7 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 	}
 
 	testUserA := &identity.StaticRequester{
-		Type:           identity.TypeUser,
+		Type:           claims.TypeUser,
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
@@ -220,12 +218,12 @@ func TestIntegrationBackendList(t *testing.T) {
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 5)
-		// should be sorted by resource version DESC
-		require.Equal(t, "item6 ADDED", string(res.Items[0].Value))
+		// should be sorted by key ASC
+		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
 		require.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
-		require.Equal(t, "item5 ADDED", string(res.Items[2].Value))
-		require.Equal(t, "item4 ADDED", string(res.Items[3].Value))
-		require.Equal(t, "item1 ADDED", string(res.Items[4].Value))
+		require.Equal(t, "item4 ADDED", string(res.Items[2].Value))
+		require.Equal(t, "item5 ADDED", string(res.Items[3].Value))
+		require.Equal(t, "item6 ADDED", string(res.Items[4].Value))
 
 		require.Empty(t, res.NextPageToken)
 	})
@@ -245,9 +243,9 @@ func TestIntegrationBackendList(t *testing.T) {
 		require.Len(t, res.Items, 3)
 		continueToken, err := sql.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
-		require.Equal(t, "item6 ADDED", string(res.Items[0].Value))
+		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
 		require.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
-		require.Equal(t, "item5 ADDED", string(res.Items[2].Value))
+		require.Equal(t, "item4 ADDED", string(res.Items[2].Value))
 		require.Equal(t, int64(8), continueToken.ResourceVersion)
 	})
 
@@ -264,10 +262,10 @@ func TestIntegrationBackendList(t *testing.T) {
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 4)
-		require.Equal(t, "item4 ADDED", string(res.Items[0].Value))
-		require.Equal(t, "item3 ADDED", string(res.Items[1].Value))
-		require.Equal(t, "item2 ADDED", string(res.Items[2].Value))
-		require.Equal(t, "item1 ADDED", string(res.Items[3].Value))
+		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
+		require.Equal(t, "item2 ADDED", string(res.Items[1].Value))
+		require.Equal(t, "item3 ADDED", string(res.Items[2].Value))
+		require.Equal(t, "item4 ADDED", string(res.Items[3].Value))
 		require.Empty(t, res.NextPageToken)
 	})
 
@@ -287,8 +285,8 @@ func TestIntegrationBackendList(t *testing.T) {
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 3)
 		t.Log(res.Items)
-		require.Equal(t, "item2 MODIFIED", string(res.Items[0].Value))
-		require.Equal(t, "item5 ADDED", string(res.Items[1].Value))
+		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
+		require.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
 		require.Equal(t, "item4 ADDED", string(res.Items[2].Value))
 
 		continueToken, err := sql.GetContinueToken(res.NextPageToken)
@@ -315,8 +313,8 @@ func TestIntegrationBackendList(t *testing.T) {
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 2)
 		t.Log(res.Items)
-		require.Equal(t, "item5 ADDED", string(res.Items[0].Value))
-		require.Equal(t, "item4 ADDED", string(res.Items[1].Value))
+		require.Equal(t, "item4 ADDED", string(res.Items[0].Value))
+		require.Equal(t, "item5 ADDED", string(res.Items[1].Value))
 
 		continueToken, err = sql.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
@@ -333,7 +331,7 @@ func TestClientServer(t *testing.T) {
 	cfg.GRPCServerAddress = "localhost:0"
 	cfg.GRPCServerNetwork = "tcp"
 
-	features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage)
+	features := featuremgmt.WithFeatures()
 
 	svc, err := sql.ProvideService(cfg, features, dbstore, nil)
 	require.NoError(t, err)
@@ -341,7 +339,7 @@ func TestClientServer(t *testing.T) {
 
 	// Test with an admin identity
 	clientCtx := identity.WithRequester(ctx, &identity.StaticRequester{
-		Type:           identity.TypeUser,
+		Type:           claims.TypeUser,
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",

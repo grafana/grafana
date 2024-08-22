@@ -11719,9 +11719,6 @@
             "schema": {
               "$ref": "#/definitions/NotificationTemplates"
             }
-          },
-          "404": {
-            "description": " Not found."
           }
         }
       }
@@ -11750,7 +11747,10 @@
             }
           },
           "404": {
-            "description": " Not found."
+            "description": "GenericPublicError",
+            "schema": {
+              "$ref": "#/definitions/GenericPublicError"
+            }
           }
         }
       },
@@ -11792,9 +11792,15 @@
             }
           },
           "400": {
-            "description": "ValidationError",
+            "description": "GenericPublicError",
             "schema": {
-              "$ref": "#/definitions/ValidationError"
+              "$ref": "#/definitions/GenericPublicError"
+            }
+          },
+          "409": {
+            "description": "GenericPublicError",
+            "schema": {
+              "$ref": "#/definitions/GenericPublicError"
             }
           }
         }
@@ -11808,15 +11814,27 @@
         "parameters": [
           {
             "type": "string",
-            "description": "Template Name",
+            "description": "Template name",
             "name": "name",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "description": "Version of template to use for optimistic concurrency. Leave empty to disable validation",
+            "name": "version",
+            "in": "query"
           }
         ],
         "responses": {
           "204": {
             "description": " The template was deleted successfully."
+          },
+          "409": {
+            "description": "GenericPublicError",
+            "schema": {
+              "$ref": "#/definitions/GenericPublicError"
+            }
           }
         }
       }
@@ -13539,7 +13557,7 @@
           "description": "Policies contains all policy identifiers included in the certificate.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/OID"
+            "type": "string"
           }
         },
         "PolicyIdentifiers": {
@@ -16207,7 +16225,7 @@
     },
     "Header": {
       "type": "object",
-      "title": "Headers represents the configuration for HTTP headers.",
+      "title": "Header represents the configuration for a single HTTP header.",
       "properties": {
         "files": {
           "type": "array",
@@ -16974,7 +16992,7 @@
         "status"
       ],
       "properties": {
-        "error": {
+        "message": {
           "type": "string"
         },
         "refId": {
@@ -16984,6 +17002,7 @@
           "type": "string",
           "enum": [
             "OK",
+            "WARNING",
             "ERROR",
             "PENDING",
             "UNKNOWN"
@@ -17236,6 +17255,9 @@
         },
         "template": {
           "type": "string"
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -17243,6 +17265,9 @@
       "type": "object",
       "properties": {
         "template": {
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         }
       }
@@ -17312,10 +17337,6 @@
           "type": "string"
         }
       }
-    },
-    "OID": {
-      "type": "object",
-      "title": "An OID represents an ASN.1 OBJECT IDENTIFIER."
     },
     "ObjectIdentifier": {
       "type": "array",
@@ -19475,6 +19496,12 @@
       "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
       "type": "object",
       "properties": {
+        "active_time_intervals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "continue": {
           "type": "boolean"
         },
@@ -22138,6 +22165,7 @@
       }
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "type": "object",

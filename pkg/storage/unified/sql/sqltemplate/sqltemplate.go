@@ -11,56 +11,60 @@ import (
 var (
 	ErrValidationNotImplemented = errors.New("validation not implemented")
 	ErrSQLTemplateNoSerialize   = errors.New("SQLTemplate should not be serialized")
+
+	// Make sure SQLTemplate implements the interface
+	_ SQLTemplate = (*sqlTemplate)(nil)
 )
 
 // SQLTemplate provides comprehensive support for SQL templating, handling
 // dialect traits, execution arguments and scanning arguments.
-type SQLTemplate struct {
+type sqlTemplate struct {
 	Dialect
 	Args
 	ScanDest
 }
 
 // New returns a nee *SQLTemplate that will use the given dialect.
-func New(d Dialect) *SQLTemplate {
-	ret := new(SQLTemplate)
+func New(d Dialect) SQLTemplate {
+	ret := new(sqlTemplate)
+	ret.ScanDest = new(scanDest)
+	ret.Args = NewArgs(d)
 	ret.SetDialect(d)
-
 	return ret
 }
 
-func (t *SQLTemplate) Reset() {
+func (t *sqlTemplate) Reset() {
 	t.Args.Reset()
 	t.ScanDest.Reset()
 }
 
-func (t *SQLTemplate) SetDialect(d Dialect) {
+func (t *sqlTemplate) SetDialect(d Dialect) {
 	t.Reset()
 	t.Dialect = d
-	t.Args.d = d
+	t.Args = NewArgs(d)
 }
 
-func (t *SQLTemplate) Validate() error {
+func (t *sqlTemplate) Validate() error {
 	return ErrValidationNotImplemented
 }
 
-func (t *SQLTemplate) MarshalJSON() ([]byte, error) {
+func (t *sqlTemplate) MarshalJSON() ([]byte, error) {
 	return nil, ErrSQLTemplateNoSerialize
 }
 
-func (t *SQLTemplate) UnmarshalJSON([]byte) error {
+func (t *sqlTemplate) UnmarshalJSON([]byte) error {
 	return ErrSQLTemplateNoSerialize
 }
 
-//go:generate mockery --with-expecter --name SQLTemplateIface
+//go:generate mockery --with-expecter --name SQLTemplate
 
-// SQLTemplateIface can be used as argument in general purpose utilities
+// SQLTemplate can be used as argument in general purpose utilities
 // expecting a struct embedding *SQLTemplate.
-type SQLTemplateIface interface {
+type SQLTemplate interface {
 	Dialect
-	ArgsIface
-	ScanDestIface
-	// Reset calls the Reset method of ArgsIface and ScanDestIface.
+	Args
+	ScanDest
+	// Reset calls the Reset method of Args and ScanDest.
 	Reset()
 	// SetDialect allows reusing the template components. It should first call
 	// Reset.
@@ -75,7 +79,7 @@ type SQLTemplateIface interface {
 // WithResults has an additional method suited for structs embedding
 // *SQLTemplate and returning a set of rows.
 type WithResults[T any] interface {
-	SQLTemplateIface
+	SQLTemplate
 
 	// Results returns the results of the query. If the query is expected to
 	// return a set of rows, then it should be a deep copy of the internal
@@ -114,6 +118,22 @@ func FormatSQL(q string) string {
 	q = strings.TrimSpace(q)
 
 	return q
+}
+
+// RemoveEmptyLines removes the empty lines from a SQL statement
+// empty lines are typical when using text template formatting
+func RemoveEmptyLines(q string) string {
+	var b strings.Builder
+	lines := strings.Split(strings.ReplaceAll(q, "\r\n", "\n"), "\n")
+	for _, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		line = strings.ReplaceAll(line, "\t", "  ")
+		b.WriteString(line)
+		b.WriteByte('\n')
+	}
+	return b.String()
 }
 
 type reFormatting struct {

@@ -228,6 +228,7 @@ type FrontendSettingsDTO struct {
 	PluginAdminExternalManageEnabled bool                           `json:"pluginAdminExternalManageEnabled"`
 	PluginCatalogHiddenPlugins       []string                       `json:"pluginCatalogHiddenPlugins"`
 	PluginCatalogManagedPlugins      []string                       `json:"pluginCatalogManagedPlugins"`
+	PluginCatalogPreinstalledPlugins []setting.InstallPlugin        `json:"pluginCatalogPreinstalledPlugins"`
 	ExpressionsEnabled               bool                           `json:"expressionsEnabled"`
 	AwsAllowedAuthProviders          []string                       `json:"awsAllowedAuthProviders"`
 	AwsAssumeRoleEnabled             bool                           `json:"awsAssumeRoleEnabled"`
@@ -257,8 +258,9 @@ type FrontendSettingsDTO struct {
 	PublicDashboardAccessToken string `json:"publicDashboardAccessToken"`
 	PublicDashboardsEnabled    bool   `json:"publicDashboardsEnabled"`
 
-	CloudMigrationIsTarget    bool   `json:"cloudMigrationIsTarget"`
-	CloudMigrationFeedbackURL string `json:"cloudMigrationFeedbackURL"`
+	CloudMigrationIsTarget       bool   `json:"cloudMigrationIsTarget"`
+	CloudMigrationFeedbackURL    string `json:"cloudMigrationFeedbackURL"`
+	CloudMigrationPollIntervalMs int    `json:"cloudMigrationPollIntervalMs"`
 
 	DateFormats setting.DateFormats `json:"dateFormats,omitempty"`
 
