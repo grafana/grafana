@@ -6,7 +6,7 @@ import type {
 } from '@grafana/data';
 import { isPluginExtensionLink } from '@grafana/runtime';
 
-import { isPluginExtensionComponentConfig, isPluginExtensionLinkConfig, logWarning } from './utils';
+import { isPluginExtensionLinkConfig, logWarning } from './utils';
 
 export function assertPluginExtensionLink(
   extension: PluginExtension | undefined,
@@ -113,11 +113,6 @@ export function isPluginExtensionConfigValid(pluginId: string, extension: Plugin
       if (extension.path) {
         assertLinkPathIsValid(pluginId, extension.path);
       }
-    }
-
-    // Component
-    if (isPluginExtensionComponentConfig(extension)) {
-      assertIsReactComponent(extension.component);
     }
 
     return true;
