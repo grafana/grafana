@@ -26,6 +26,6 @@ describe('Dashboards', () => {
 
     // The last panel should still be visible!
     e2e.components.Panels.Panel.title('Panel #50').should('be.visible');
-    //test
+    //test2
   });
 });
