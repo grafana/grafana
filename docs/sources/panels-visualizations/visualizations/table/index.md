@@ -62,6 +62,8 @@ Tables are a highly flexible visualization designed to display data in columns a
 
 {{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" lightbox="true" alt="Table visualization" >}}
 
+## Configure a table visualization
+
 The following video provides a visual walkthrough of the options you can set in a table visualization. If you want to see a configuration in action, check out the video:
 
 {{< youtube id="PCY7O8EJeJY" >}}
@@ -107,7 +109,7 @@ Columns with filters applied have a blue funnel displayed next to the title.
 
 To remove the filter, click the blue funnel icon and then click **Clear filter**.
 
-## Sort column
+## Sort columns
 
 Click a column title to change the sort order from default to descending to ascending. Each time you click, the sort order changes to the next option in the cycle. You can sort multiple columns by holding the `shift` key and clicking the column name.
 
