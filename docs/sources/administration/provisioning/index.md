@@ -382,10 +382,12 @@ The JSON definition in the input field when using `Copy JSON to Clipboard` or `S
 
 {{< figure src="/static/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
 
-#### Deleting a folder which contains provisioned dashboards
+#### Delete a folder which contains provisioned dashboards
 
-It's not possible to delete a folder which contains provisioned dashboards from the Grafana UI. In order to delete the folder, edit the YAML config file associated with its provisioned dashboards first. In the file, unset the `folder` and `folderUid` options. Once the provisioned dashboards are reprovisioned at the root level, delete the folder via Grafana UI.
-
+You can't delete a folder that contains provisioned dashboards in the Grafana UI.
+To delete the folder, you must edit the YAML configuration file for the provisioned dashboards.
+In the configuration file, remove the `folder` and `folderUid` fields.
+After the provisioned dashboards are re-provisioned, you can delete the folder in the Grafana UI.
 ### Reusable dashboard URLs
 
 If the dashboard in the JSON file contains an [UID]({{< relref "../../dashboards/build-dashboards/view-dashboard-json-model" >}}), Grafana forces insert/update on that UID.
