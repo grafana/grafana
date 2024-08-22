@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -58,6 +59,7 @@ var (
 			Namespace: namespace,
 			Subsystem: subsystem,
 		})
+	tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/searchv2")
 )
 
 type StandardSearchService struct {
@@ -120,6 +122,8 @@ func (s *StandardSearchService) IsDisabled() bool {
 }
 
 func (s *StandardSearchService) Run(ctx context.Context) error {
+	ctx, span := tracer.Start(ctx, "searchv2.Run")
+	defer span.End()
 	orgQuery := &org.SearchOrgsQuery{}
 	result, err := s.orgService.Search(ctx, orgQuery)
 	if err != nil {
@@ -146,6 +150,8 @@ func (s *StandardSearchService) RegisterDashboardIndexExtender(ext DashboardInde
 }
 
 func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backend.User, orgId int64) (*user.SignedInUser, error) {
+	ctx, span := tracer.Start(ctx, "searchv2.getUser")
+	defer span.End()
 	// TODO: get user & user's permissions from the request context
 
 	var usr *user.SignedInUser
@@ -204,6 +210,8 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 }
 
 func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgID int64, q DashboardQuery) *backend.DataResponse {
+	ctx, span := tracer.Start(ctx, "searchv2.DoDashboardQuery")
+	defer span.End()
 	start := time.Now()
 
 	signedInUser, err := s.getUser(ctx, user, orgID)
@@ -232,6 +240,8 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 }
 
 func (s *StandardSearchService) doDashboardQuery(ctx context.Context, signedInUser *user.SignedInUser, orgID int64, q DashboardQuery) *backend.DataResponse {
+	ctx, span := tracer.Start(ctx, "searchv2.doDashboardQuery")
+	defer span.End()
 	rsp := &backend.DataResponse{}
 
 	filter, err := s.auth.GetDashboardReadFilter(ctx, orgID, signedInUser)

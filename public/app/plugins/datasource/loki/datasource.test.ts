@@ -1530,6 +1530,7 @@ describe('LokiDatasource', () => {
           queryType: 'range',
           refId: 'log-sample-A',
           maxLines: 20,
+          supportingQueryType: SupportingQueryType.LogsSample,
         });
       });
 
@@ -1548,6 +1549,7 @@ describe('LokiDatasource', () => {
           queryType: LokiQueryType.Range,
           refId: 'log-sample-A',
           maxLines: 20,
+          supportingQueryType: SupportingQueryType.LogsSample,
         });
       });
 
@@ -1565,6 +1567,7 @@ describe('LokiDatasource', () => {
           expr: '{label="value"}',
           queryType: LokiQueryType.Range,
           refId: 'log-sample-A',
+          supportingQueryType: SupportingQueryType.LogsSample,
           maxLines: 5,
         });
       });
