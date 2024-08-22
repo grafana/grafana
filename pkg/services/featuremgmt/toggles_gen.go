@@ -103,10 +103,6 @@ const (
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
 
-	// FlagUnifiedStorage
-	// SQL-based k8s storage
-	FlagUnifiedStorage = "unifiedStorage"
-
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
