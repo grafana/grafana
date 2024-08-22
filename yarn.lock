@@ -3992,6 +3992,7 @@ __metadata:
     react-calendar: "npm:4.8.0"
     react-colorful: "npm:5.6.1"
     react-custom-scrollbars-2: "npm:4.5.0"
+    react-data-grid: "npm:7.0.0-beta.46"
     react-dom: "npm:18.2.0"
     react-dropzone: "npm:14.2.3"
     react-highlight-words: "npm:0.20.0"
@@ -26592,6 +26593,18 @@ __metadata:
     react: ^0.14.0 || ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
     react-dom: ^0.14.0 || ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
   checksum: 10/4e5e67032a254c6fbfc2157c8c9b28b4285a41372d458a41fa6756777e224f692ae842488e51cb089b55b83625809aed0eb403026b8a8122a7dcf667637b21fd
+  languageName: node
+  linkType: hard
+
+"react-data-grid@npm:7.0.0-beta.46":
+  version: 7.0.0-beta.46
+  resolution: "react-data-grid@npm:7.0.0-beta.46"
+  dependencies:
+    clsx: "npm:^2.0.0"
+  peerDependencies:
+    react: ^18.0 || ^19.0
+    react-dom: ^18.0 || ^19.0
+  checksum: 10/d8a679b5e22a07293923894591adcac5ad57b8bd28dcc93f7438563384f6acc2287f14394a3ef360bc1dc901defa00b4030aa9af37c70cf53cf121437e0882bc
   languageName: node
   linkType: hard
 
