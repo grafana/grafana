@@ -47,7 +47,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
     { value: 'has-update', label: 'New Updates' },
   ];
 
-  const updatablePlugins = useGetUpdatable()
+  const updatablePlugins = useGetUpdatable();
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const disableUpdateAllButton = updatablePlugins.length <= 0;
 
@@ -69,7 +69,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
 
   const onUpdateAll = () => {
     setShowUpdateModal(true);
-  }
+  };
 
   // How should we handle errors?
   if (error) {
@@ -87,7 +87,9 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
     </div>
   );
   const updateAll = (
-    <Button disabled={disableUpdateAllButton} onClick={onUpdateAll}>Update all{disableUpdateAllButton ? ` (${updatablePlugins.length})` : ''}</Button>
+    <Button disabled={disableUpdateAllButton} onClick={onUpdateAll}>
+      Update all{disableUpdateAllButton ? ` (${updatablePlugins.length})` : ''}
+    </Button>
   );
 
   return (
@@ -159,7 +161,11 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
           <PluginList plugins={plugins} isLoading={isLoading} />
         </div>
         <RoadmapLinks />
-        <UpdateAllModal isOpen={showUpdateModal} onDismiss={() => setShowUpdateModal(false)} plugins={updatablePlugins} />
+        <UpdateAllModal
+          isOpen={showUpdateModal}
+          onDismiss={() => setShowUpdateModal(false)}
+          plugins={updatablePlugins}
+        />
       </Page.Contents>
     </Page>
   );
