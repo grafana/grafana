@@ -2,10 +2,14 @@ package receiver
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 )
 
 // AccessControlService provides access control for receivers.
@@ -28,37 +32,49 @@ func Authorize(ctx context.Context, ac AccessControlService, attr authorizer.Att
 
 	uid := attr.GetName()
 
+	deny := func(err error) (authorizer.Decision, string, error) {
+		var utilErr errutil.Error
+		if errors.As(err, &utilErr) {
+			if errors.Is(err, accesscontrol.ErrAuthorizationBase) {
+				return authorizer.DecisionDeny, fmt.Sprintf("required permissions: %s", utilErr.PublicPayload["permissions"]), nil
+			}
+			return authorizer.DecisionDeny, utilErr.PublicMessage, nil
+		}
+
+		return authorizer.DecisionDeny, "", err
+	}
+
 	switch attr.GetVerb() {
 	case "get":
 		if uid == "" {
 			return authorizer.DecisionDeny, "", nil
 		}
 		if err := ac.AuthorizeReadByUID(ctx, user, uid); err != nil {
-			return authorizer.DecisionDeny, "", err
+			return deny(err)
 		}
 	case "list":
 		if err := ac.AuthorizeReadSome(ctx, user); err != nil { // Preconditions, further checks are done downstream.
-			return authorizer.DecisionDeny, "", err
+			return deny(err)
 		}
 	case "create":
 		if err := ac.AuthorizeCreate(ctx, user); err != nil {
-			return authorizer.DecisionDeny, "", err
+			return deny(err)
 		}
 	case "patch":
 		fallthrough
 	case "update":
 		if uid == "" {
-			return authorizer.DecisionDeny, "", nil
+			return deny(err)
 		}
 		if err := ac.AuthorizeUpdateByUID(ctx, user, uid); err != nil {
-			return authorizer.DecisionDeny, "", err
+			return deny(err)
 		}
 	case "delete":
 		if uid == "" {
-			return authorizer.DecisionDeny, "", nil
+			return deny(err)
 		}
 		if err := ac.AuthorizeDeleteByUID(ctx, user, uid); err != nil {
-			return authorizer.DecisionDeny, "", err
+			return deny(err)
 		}
 	default:
 		return authorizer.DecisionNoOpinion, "", nil
