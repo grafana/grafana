@@ -1,6 +1,6 @@
 # Frontend style guide
 
-Grafana Labs generally follows the [Airbnb React/JSX Style Guide](https://github.com/airbnb/javascript/tree/master/react) in matters pertaining to React. This guide provides highlights of the style rules we follow.
+Grafana Labs follows the [Airbnb React/JSX Style Guide](https://github.com/airbnb/javascript/tree/master/react) in matters pertaining to React. This guide provides highlights of the style rules we follow.
 
 ## Basic rules
 
