@@ -1,5 +1,5 @@
 import debounce from 'debounce-promise';
-import { ChangeEvent } from 'react';
+import React, { ChangeEvent } from 'react';
 import { UseFormSetValue, useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -47,12 +47,18 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
   const { state, onSaveDashboard } = useSaveDashboard(false);
 
+  const [contentSent, setContentSent] = React.useState<{ title?: string; folder?: {} }>({});
+  const [isRefreshed, setIsRefreshed] = React.useState(false);
+
   const onSave = async (overwrite: boolean) => {
     const data = getValues();
 
     const dashboardToSave: Dashboard = getSaveAsDashboardSaveModel(changedSaveModel, data, changeInfo.isNew);
     const result = await onSaveDashboard(dashboard, dashboardToSave, { overwrite, folderUid: data.folder.uid });
-
+    setContentSent({
+      title: data.title,
+      folder: data.folder,
+    });
     if (result.status === 'success') {
       dashboard.closeModal();
     }
@@ -68,16 +74,12 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     <SaveButton isValid={isValid} isLoading={state.loading} onSave={onSave} overwrite={overwrite} />
   );
 
-  function renderFooter(error?: Error) {
-    if (isNameExistsError(error)) {
-      return <NameAlreadyExistsError cancelButton={cancelButton} saveButton={saveButton} />;
-    }
-
+  const normalFooter = (error?: Error) => {
     return (
       <>
         {error && (
           <Alert title="Failed to save dashboard" severity="error">
-            <p>{error.message}</p>
+            {error.message && <p>{error.message}</p>}
           </Alert>
         )}
         <Stack alignItems="center">
@@ -86,8 +88,19 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
         </Stack>
       </>
     );
+  };
+  function renderFooter(error?: Error) {
+    if (isNameExistsError(error)) {
+      return <NameAlreadyExistsError cancelButton={cancelButton} saveButton={saveButton} />;
+    }
+    return normalFooter(error);
   }
-
+  React.useEffect(() => {
+    if (Object.keys(contentSent).length === 0) {
+      return;
+    }
+    setIsRefreshed(contentSent.title !== formValues.title.trim() || contentSent.folder !== formValues.folder);
+  }, [contentSent, formValues]);
   return (
     <form onSubmit={handleSubmit(() => onSave(false))}>
       <Field
@@ -118,7 +131,9 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
       <Field label="Folder">
         <FolderPicker
-          onChange={(uid: string | undefined, title: string | undefined) => setValue('folder', { uid, title })}
+          onChange={(uid: string | undefined, title: string | undefined) => {
+            setValue('folder', { uid, title });
+          }}
           // Old folder picker fields
           value={formValues.folder?.uid}
           initialTitle={defaultValues!.folder!.title}
@@ -131,7 +146,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
           <Switch {...register('copyTags')} />
         </Field>
       )}
-      <Box paddingTop={2}>{renderFooter(state.error)}</Box>
+      <Box paddingTop={2}>{isRefreshed ? normalFooter(state.error) : renderFooter(state.error)}</Box>
     </form>
   );
 }
