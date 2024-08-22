@@ -125,7 +125,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
   }
 
   const notifiers: Notifier[] = grafanaNotifiers.map((n) => {
-    if (n.type === 'oncall') {
+    if (n.type === ReceiverTypes.OnCall) {
       return {
         dto: extendOnCallNotifierFeatures(n),
         meta: onCallNotifierMeta,
@@ -134,7 +134,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
 
     return { dto: n };
   });
-  const disableEditTitle = shouldUseK8sApi(GRAFANA_RULES_SOURCE_NAME);
+  const disableEditTitle = editMode && shouldUseK8sApi(GRAFANA_RULES_SOURCE_NAME);
   return (
     <>
       {hasOnCallError && (
