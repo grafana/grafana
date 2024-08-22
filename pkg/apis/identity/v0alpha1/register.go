@@ -150,6 +150,9 @@ var TeamMemberResourceInfo = common.NewResourceInfo(
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Team", Type: "string"},
+			{Name: "Subject", Type: "string"},
+			{Name: "Permission", Type: "string"},
 			{Name: "Created At", Type: "string", Format: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
@@ -159,6 +162,9 @@ var TeamMemberResourceInfo = common.NewResourceInfo(
 			}
 			return []interface{}{
 				m.Name,
+				m.Spec.TeamRef.Name,
+				fmt.Sprintf("%s:%s", m.Spec.Subject.Kind, m.Spec.Subject.Name),
+				m.Spec.Subject.Permission,
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
 			}, nil
 		},

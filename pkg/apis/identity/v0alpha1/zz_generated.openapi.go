@@ -653,14 +653,14 @@ func schema_pkg_apis_identity_v0alpha1_TeamMember(ref common.ReferenceCallback) 
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamBindingSpec"),
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamMemberSpec"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamBindingSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamMemberSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -697,7 +697,7 @@ func schema_pkg_apis_identity_v0alpha1_TeamMemberList(ref common.ReferenceCallba
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamBinding"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamMember"),
 									},
 								},
 							},
@@ -707,7 +707,7 @@ func schema_pkg_apis_identity_v0alpha1_TeamMemberList(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamBinding", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamMember", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -793,6 +793,15 @@ func schema_pkg_apis_identity_v0alpha1_TeamSubject(ref common.ReferenceCallback)
 							Format:      "",
 						},
 					},
+					"permission": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Possible enum values:\n - `\"admin\"`\n - `\"member\"`",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"admin", "member"},
+						},
+					},
 					"name": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Name is the unique identifier for subject.",
@@ -801,6 +810,7 @@ func schema_pkg_apis_identity_v0alpha1_TeamSubject(ref common.ReferenceCallback)
 						},
 					},
 				},
+				Required: []string{"permission"},
 			},
 		},
 	}

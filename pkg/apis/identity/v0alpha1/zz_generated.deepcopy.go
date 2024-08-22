@@ -367,7 +367,7 @@ func (in *TeamMember) DeepCopyInto(out *TeamMember) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	in.Spec.DeepCopyInto(&out.Spec)
+	out.Spec = in.Spec
 	return
 }
 
@@ -396,7 +396,7 @@ func (in *TeamMemberList) DeepCopyInto(out *TeamMemberList) {
 	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
-		*out = make([]TeamBinding, len(*in))
+		*out = make([]TeamMember, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}

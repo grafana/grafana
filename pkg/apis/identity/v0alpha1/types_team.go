@@ -38,19 +38,6 @@ type TeamBindingSpec struct {
 	TeamRef  TeamRef       `json:"teamRef,omitempty"`
 }
 
-type TeamSubject struct {
-	// Kind is the kind of the subject, only supports "User".
-	Kind string `json:"kind,omitempty"`
-
-	// Name is the unique identifier for subject.
-	Name string `json:"name,omitempty"`
-}
-
-type TeamRef struct {
-	// Name is the unique identifier for a team.
-	Name string `json:"name,omitempty"`
-}
-
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type TeamBindingList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -64,7 +51,7 @@ type TeamMember struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec TeamBindingSpec `json:"spec,omitempty"`
+	Spec TeamMemberSpec `json:"spec,omitempty"`
 }
 
 type TeamMemberSpec struct {
@@ -77,5 +64,29 @@ type TeamMemberList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []TeamBinding `json:"items,omitempty"`
+	Items []TeamMember `json:"items,omitempty"`
 }
+
+type TeamSubject struct {
+	// Kind is the kind of the subject, only supports "User".
+	Kind string `json:"kind,omitempty"`
+
+	Permission TeamPermission `json:"permission,empty"`
+
+	// Name is the unique identifier for subject.
+	Name string `json:"name,omitempty"`
+}
+
+type TeamRef struct {
+	// Name is the unique identifier for a team.
+	Name string `json:"name,omitempty"`
+}
+
+// TeamPermission for subject
+// +enum
+type TeamPermission string
+
+const (
+	TeamPermissionAdmin  TeamPermission = "admin"
+	TeamPermissionMember TeamPermission = "member"
+)
