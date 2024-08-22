@@ -203,6 +203,9 @@
       "recording-rule": "Ŗęčőřđįŉģ řūľę"
     },
     "rules": {
+      "add-rule": {
+        "success": "Ŗūľę äđđęđ şūččęşşƒūľľy"
+      },
       "delete-rule": {
         "success": "Ŗūľę şūččęşşƒūľľy đęľęŧęđ"
       },
@@ -211,6 +214,9 @@
       },
       "resume-rule": {
         "success": "Ŗūľę ęväľūäŧįőŉ řęşūmęđ"
+      },
+      "update-rule": {
+        "success": "Ŗūľę ūpđäŧęđ şūččęşşƒūľľy"
       }
     }
   },
@@ -345,6 +351,7 @@
     }
   },
   "common": {
+    "cancel": "Cäŉčęľ",
     "locale": {
       "default": "Đęƒäūľŧ"
     },
