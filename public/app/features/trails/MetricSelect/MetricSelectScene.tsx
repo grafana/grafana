@@ -520,18 +520,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       </Tooltip>
     ) : undefined;
 
-    const otelExperienceTooltip = () => {
-      const enabled = hasOtelResources && isStandardOtel;
-
-      if (enabled) {
-        return (
-          <Trans i18nKey={''}>This switch enables filtering by OTel resources for OTel native data sources.</Trans>
-        );
-      }
-
-      return <Trans i18nKey={''}>This setting is disabled because this is not an OTel native data source.</Trans>;
-    };
-
     return (
       <div className={styles.container}>
         <div className={styles.header}>
@@ -572,18 +560,33 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
               label={
                 <div className={styles.displayOptionTooltip}>
                   <Trans i18nKey="">Filter by</Trans>
-                  <IconButton name={'info-circle'} size="sm" variant={'secondary'} tooltip={otelExperienceTooltip} />
+                  <IconButton
+                    name={'info-circle'}
+                    size="sm"
+                    variant={'secondary'}
+                    tooltip={
+                      <Trans i18nKey={''}>
+                        This switch enables filtering by OTel resources for OTel native data sources.
+                      </Trans>
+                    }
+                  />
                 </div>
               }
               className={styles.displayOption}
             >
-              <InlineSwitch
-                disabled={!isStandardOtel}
-                showLabel={true}
-                label="Otel experience"
-                value={useOtelExperience}
-                onChange={model.onToggleOtelExperience}
-              />
+              <div
+                title={
+                  !isStandardOtel ? 'This setting is disabled because this is not an OTel native data source.' : ''
+                }
+              >
+                <InlineSwitch
+                  disabled={!isStandardOtel}
+                  showLabel={true}
+                  label="Otel experience"
+                  value={useOtelExperience}
+                  onChange={model.onToggleOtelExperience}
+                />
+              </div>
             </Field>
           )}
         </div>
