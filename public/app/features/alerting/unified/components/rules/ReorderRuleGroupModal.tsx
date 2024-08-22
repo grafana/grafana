@@ -15,7 +15,7 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, Button, Icon, Modal, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
-import { getState } from 'app/store/store';
+import { dispatch, getState } from 'app/store/store';
 import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -23,7 +23,7 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 import { useReorderRuleForRuleGroup } from '../../hooks/ruleGroup/useUpdateRuleGroup';
 import { isLoading } from '../../hooks/useAsync';
 import { swapItems, SwapOperation } from '../../reducers/ruler/ruleGroups';
-import { getDataSourceRulerConfig } from '../../state/actions';
+import { fetchRulerRulesAction, getDataSourceRulerConfig } from '../../state/actions';
 import { isCloudRulesSource } from '../../utils/datasource';
 import { hashRulerRule } from '../../utils/rule-id';
 import {
@@ -104,8 +104,19 @@ export const ReorderCloudGroupModal = (props: ModalProps) => {
     };
 
     await reorderRulesInGroup.execute(ruleGroupIdentifier, operations);
+    // TODO: Remove once RTKQ is more prevalently used
+    await dispatch(fetchRulerRulesAction({ rulesSourceName: dataSourceName }));
     onClose();
-  }, [folderUid, group.name, operations, namespace.name, namespace.rulesSource, onClose, reorderRulesInGroup]);
+  }, [
+    namespace.rulesSource,
+    namespace.name,
+    group.name,
+    folderUid,
+    reorderRulesInGroup,
+    operations,
+    dataSourceName,
+    onClose,
+  ]);
 
   // assign unique but stable identifiers to each (alerting / recording) rule
   const rulesWithUID: RulerRuleWithUID[] = rulesList.map((rulerRule) => ({
