@@ -15,13 +15,11 @@ type UpdateError = {
 
 function getIcon({
   id,
-  installedPlugins,
   inProgress,
   errorMap,
   selectedPlugins,
 }: {
   id: string;
-  installedPlugins: Set<string>;
   inProgress: boolean;
   errorMap: Map<string, UpdateError>;
   selectedPlugins?: Set<string>;
@@ -35,9 +33,6 @@ function getIcon({
   }
   if (inProgress && selectedPlugins?.has(id)) {
     return <Spinner />;
-  }
-  if (installedPlugins.has(id)) {
-    return <Icon size="xl" name="check" />;
   }
   return '';
 }
@@ -74,9 +69,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'center',
     height: '100%',
   }),
-  tableBody: css({
+  tableContainer: css({
     overflowY: 'auto',
-    height: theme.spacing(19),
+    overflowX: 'hidden',
+    height: theme.spacing(32),
   }),
   modalContainer: css({
     height: theme.spacing(41),
@@ -84,7 +80,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 type ModalBodyProps = {
-  installedPlugins: Set<string>;
   plugins: CatalogPlugin[];
   inProgress: boolean;
   selectedPlugins?: Set<string>;
@@ -93,7 +88,6 @@ type ModalBodyProps = {
 };
 
 const ModalBody = ({
-  installedPlugins,
   plugins,
   inProgress,
   selectedPlugins,
@@ -109,7 +103,7 @@ const ModalBody = ({
       ) : (
         <>
           <div>The following plugins have update available</div>
-          <div>
+          <div className={styles.tableContainer}>
             <table className={styles.table}>
               <thead className={styles.header}>
                 <tr>
@@ -120,30 +114,25 @@ const ModalBody = ({
                   <th></th>
                 </tr>
               </thead>
+              <tbody>
+                {plugins.map(({ id, name, installedVersion, latestVersion }: CatalogPlugin) => (
+                  <tr key={id} className={styles.tableRow}>
+                    <td>
+                      <Checkbox
+                        onChange={() => onCheckboxChange(id)}
+                        value={selectedPlugins?.has(id)}
+                      />
+                    </td>
+                    <td>{name}</td>
+                    <td>{installedVersion}</td>
+                    <td>{latestVersion}</td>
+                    <td className={styles.icon}>
+                      {getIcon({ id, inProgress, errorMap, selectedPlugins })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
-            <div className={styles.tableBody}>
-              <table className={styles.table}>
-                <tbody>
-                  {plugins.map(({ id, name, installedVersion, latestVersion }: CatalogPlugin) => (
-                    <tr key={id} className={styles.tableRow}>
-                      <td>
-                        <Checkbox
-                          onChange={() => onCheckboxChange(id)}
-                          value={selectedPlugins?.has(id)}
-                          disabled={installedPlugins.has(id)}
-                        />
-                      </td>
-                      <td>{name}</td>
-                      <td>{installedPlugins.has(id) ? latestVersion : installedVersion}</td>
-                      <td>{latestVersion}</td>
-                      <td className={styles.icon}>
-                        {getIcon({ id, installedPlugins, inProgress, errorMap, selectedPlugins })}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           </div>
           {config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall && (
             <footer className={styles.footer}>
@@ -171,7 +160,6 @@ export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
   const [errorMap, setErrorMap] = useState(new Map<string, UpdateError>());
   const [inProgress, setInProgress] = useState(false);
   const [selectedPlugins, setSelectedPlugins] = useState<Set<string>>();
-  const [installedPlugins, setInstalledPlugins] = useState<Set<string>>(new Set());
 
   const pluginsSet = useMemo(() => new Set(plugins.map((plugin) => plugin.id)), [plugins]);
   const installsRemaining = plugins.length;
@@ -180,18 +168,13 @@ export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
   useEffect(() => {
     if (inProgress) {
       selectedPlugins?.forEach((id) => {
-        if (!pluginsSet.has(id) && !installedPlugins.has(id)) {
+        if (!pluginsSet.has(id)) {
           setSelectedPlugins((prevSelectedPlugins) => {
             const newSelectedPlugins = new Set(prevSelectedPlugins);
             newSelectedPlugins.delete(id);
             return newSelectedPlugins;
           });
 
-          setInstalledPlugins((prevInstalledPlugins) => {
-            const newInstalledPlugins = new Set(prevInstalledPlugins);
-            newInstalledPlugins.add(id);
-            return newInstalledPlugins;
-          });
         }
       });
 
@@ -199,7 +182,7 @@ export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
         setInProgress(false);
       }
     }
-  }, [installedPlugins, inProgress, pluginsSet, selectedPlugins]);
+  }, [inProgress, pluginsSet, selectedPlugins]);
 
   // Initialize the component with all the plugins selected
   useEffect(() => {
@@ -230,7 +213,7 @@ export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
     if (!inProgress) {
       setInProgress(true);
       plugins.forEach((plugin) => {
-        if (selectedPlugins?.has(plugin.id) && !installedPlugins.has(plugin.id)) {
+        if (selectedPlugins?.has(plugin.id)) {
           install(plugin.id, plugin.latestVersion, true);
         }
       });
@@ -241,7 +224,6 @@ export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
     setErrorMap(new Map());
     setInProgress(false);
     setSelectedPlugins(undefined);
-    setInstalledPlugins(new Set());
     onDismiss();
   };
 
@@ -270,7 +252,6 @@ export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
       title="Update Plugins"
       body={
         <ModalBody
-          installedPlugins={installedPlugins}
           plugins={plugins}
           inProgress={inProgress}
           errorMap={errorMap}

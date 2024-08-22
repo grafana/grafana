@@ -88,7 +88,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   );
   const updateAll = (
     <Button disabled={disableUpdateAllButton} onClick={onUpdateAll}>
-      Update all{disableUpdateAllButton ? ` (${updatablePlugins.length})` : ''}
+      Update all{!disableUpdateAllButton ? ` (${updatablePlugins.length})` : ''}
     </Button>
   );
 
