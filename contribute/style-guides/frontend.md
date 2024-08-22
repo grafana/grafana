@@ -259,7 +259,7 @@ In general, you should let TypeScript infer the types so that there's no need to
 There are some exceptions to this:
 
 ```typescript
-// TypeScript needs to know type of arrays or objects; otherwise it would infer type as an array of any
+// TypeScript needs to know the type of arrays or objects; otherwise, it infers type as an array of any
 
 // bad
 const stringArray = [];
