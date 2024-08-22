@@ -93,12 +93,6 @@ const buildActionOnClick = (action: Action, replaceVariables: InterpolateFunctio
       request.url = url.toString();
     }
 
-    if (action.options.method === HttpRequestMethod.POST || action.options.method === HttpRequestMethod.PUT) {
-      if (!requestHeaders.hasOwnProperty('Content-Type')) {
-        requestHeaders.push(['Content-Type', action.options.contentType!]);
-      }
-    }
-
     requestHeaders.push(['X-Grafana-Action', '1']);
     request.headers = requestHeaders;
 
