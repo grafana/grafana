@@ -241,11 +241,11 @@ Toggle the **Wrap text** switch to wrap text in the cell with the longest conten
 
 ### Cell value inspect
 
-Enables value inspection from table cell. The raw value is presented in a modal window.
+Enables value inspection from table cells. When the **Cell inspect value** switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer.
 
-{{% admonition type="note" %}}
-Cell value inspection is only available when cell display mode is set to Auto, Color text, Color background or JSON View.
-{{% /admonition %}}
+The **Inspect value** drawer has two tabs, **Plain text** and **Code editor**. Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.
+
+Cell value inspection is only available when the **Cell type** selection is **Auto**, **Colored text**, **Colored background**, or **JSON View**.
 
 ## Turn on column filtering
 
