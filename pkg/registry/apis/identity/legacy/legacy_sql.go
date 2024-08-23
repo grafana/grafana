@@ -66,10 +66,14 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 		var lastID int64
 		for rows.Next() {
 			t := team.Team{}
-			err = rows.Scan(&t.ID, &t.UID, &t.Name, &t.Email, &t.Created, &t.Updated)
+			// TODO: fix this
+			createdAt := []uint8{}
+			updatedAt := []uint8{}
+			err = rows.Scan(&t.ID, &t.UID, &t.Name, &t.Email, &createdAt, &updatedAt)
 			if err != nil {
 				return res, err
 			}
+			fmt.Printf("createdAt: %v, updatedAt: %v\n", createdAt, updatedAt)
 			lastID = t.ID
 			res.Teams = append(res.Teams, t)
 			if len(res.Teams) > limit {
