@@ -169,7 +169,7 @@ Canvases support [data links](ref:data-links) for all elements except drone and 
 1. Enable inline editing.
 1. Click the element you to which you want to add the data link.
 1. In either the inline editor or panel editor, expand the **Selected element** editor.
-1. Scroll down to the **Data links** section and expand it.
+1. Scroll down to the **Data links abd actions** section and expand it.
 1. Click **Add link**.
 1. In the dialog box that opens, enter a **Title**. This is a human-readable label for the link, which will be displayed in the UI.
 1. Enter the **URL** or variable to which you want to link.
@@ -180,11 +180,13 @@ Canvases support [data links](ref:data-links) for all elements except drone and 
 1. Click **Save** to save changes and close the dialog box.
 1. Disable inline editing.
 
+When you click the element, the tooltip displays the data link.
+
 If you add multiple data links, you can control the order in which they appear in the visualization. To do this, click and drag the data link to the desired position.
 
-#### One-click data link
+<!-- #### One-click data link
 
-You can configure a canvas data link to open with a single click on the element. To enable this feature, follow these steps:
+You can configure a canvas data link to open or with a single click on the element. To enable this feature, follow these steps:
 
 1. Enable inline editing.
 1. Click the element to which you want to add the data link.
@@ -193,9 +195,58 @@ You can configure a canvas data link to open with a single click on the element.
 1. In the **One-click** section, choose **Link**.
 1. Disable inline editing.
 
-The first data link in the list will be configured as your one-click data link. If you want to change the one-click data link, simply drag the desired data link to the top of the list.
+The first data link in the list is your one-click data link. If you want to change the one-click data link, drag the desired data link to the top of the list.
+The first action in the list is the active, one-click action. If you want to change the one-click data link, simply drag the desired data link to the top of the list.
 
-{{< video-embed src="/media/docs/grafana/panels-visualizations/canvas-one-click-datalink-.mp4" >}}
+
+The one-click data link is functionality is only active when **Link** is selected.-->
+
+### Actions
+
+Actions trigger basic, unauthenticated API calls and you can add them to any canvas element. The action configuration provides an API editor and you can even pass template variables in the API editor.
+
+You can add actions by following these steps:
+
+1. Enable inline editing.
+1. Click the element you to which you want to add the action.
+1. In either the inline editor or panel editor, expand the **Selected element** editor.
+1. Scroll down to the **Data links and actions** section and expand it.
+1. Click **Add action**.
+1. In the dialog box that opens, fill out the [API settings](#action-api-settings).
+
+   Template variables are also supported
+
+1. Click **Save** to save changes and close the dialog box.
+1. Disable inline editing.
+
+When you click the element, the tooltip displays the action.
+
+If you add multiple actions, you can control the order in which they appear in the visualization. To do this, click and drag the action to the desired position.
+
+#### Action API settings
+
+| API setting      | Description                                                                                                                                                                                                                                                                             |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Title            | The name of the action.                                                                                                                                                                                                                                                                 |
+| Method           | Select from **POST** and **PUT**.                                                                                                                                                                                                                                                       |
+| URL              | The request URL.                                                                                                                                                                                                                                                                        |
+| Query parameters | Pairs comprised of a **Key** and a **Value**. Add as many pairs as you need.                                                                                                                                                                                                            |
+| Headers          | Comprised of a **Key**/**Value** pair as well as a **Content-Type**. Content types are:<ul><li>**application/json**</li><li>**text/plain**</li><li>**application/javascript**</li><li>**text/html**</li><li>**application/XML**</li><li>**application/x-www-form-urlencoded**</li></ul> |
+| Body             | The body of the request.                                                                                                                                                                                                                                                                |
+
+### One-click data links and actions {#one-click-data-link}
+
+You can configure canvas data links to open or actions to trigger with a single click on the element. To enable this feature, follow these steps:
+
+1. Enable inline editing.
+1. Click the element with the [data link](#data-links) or [action](#actions) you want to update.
+1. In either the inline editor or panel editor, expand the **Selected element** editor.
+1. Scroll down to the **Data links and actions** section and expand it.
+1. In the **One-click** section, choose **Link** or **Action**.
+1. If you have multiple links or actions, drag the one you want to have one-click functionality to the top of the list.
+1. Disable inline editing.
+
+The one-click data link is functionality is only active when **Link** or **Action** is selected.
 
 ## Panel options
 
