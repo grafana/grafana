@@ -27,12 +27,9 @@ var standardFallback = standardIdent{}
 
 func (backtickIdent) Ident(s string) (string, error) {
 	switch s {
-	// Internal identifiers require backticks to work properly
-	case "user":
-		return "`" + s + "`", nil
 	case "":
 		return "", ErrEmptyIdent
 	}
 	// standard
-	return standardFallback.Ident(s)
+	return "`" + s + "`", nil
 }

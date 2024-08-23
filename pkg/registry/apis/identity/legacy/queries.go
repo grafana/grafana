@@ -34,6 +34,7 @@ var (
 type sqlQueryListUsers struct {
 	sqltemplate.SQLTemplate
 	Query        *ListUserQuery
+	SchemaName   string
 	UserTable    string
 	OrgUserTable string
 }
@@ -41,6 +42,7 @@ type sqlQueryListUsers struct {
 func newListUser(sql *legacysql.LegacyDatabaseHelper, q *ListUserQuery) sqlQueryListUsers {
 	return sqlQueryListUsers{
 		SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
+		SchemaName:   sql.SchemaName(),
 		UserTable:    sql.Table("user"),
 		OrgUserTable: sql.Table("org_user"),
 		Query:        q,
@@ -53,13 +55,15 @@ func (r sqlQueryListUsers) Validate() error {
 
 type sqlQueryListTeams struct {
 	sqltemplate.SQLTemplate
-	Query     *ListTeamQuery
-	TeamTable string
+	Query      *ListTeamQuery
+	SchemaName string
+	TeamTable  string
 }
 
 func newListTeams(sql *legacysql.LegacyDatabaseHelper, q *ListTeamQuery) sqlQueryListTeams {
 	return sqlQueryListTeams{
 		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		SchemaName:  sql.SchemaName(),
 		TeamTable:   sql.Table("team"),
 		Query:       q,
 	}
@@ -72,6 +76,7 @@ func (r sqlQueryListTeams) Validate() error {
 type sqlQueryGetDisplay struct {
 	sqltemplate.SQLTemplate
 	Query        *GetUserDisplayQuery
+	SchemaName   string
 	UserTable    string
 	OrgUserTable string
 }
@@ -79,6 +84,7 @@ type sqlQueryGetDisplay struct {
 func newGetDisplay(sql *legacysql.LegacyDatabaseHelper, q *GetUserDisplayQuery) sqlQueryGetDisplay {
 	return sqlQueryGetDisplay{
 		SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
+		SchemaName:   sql.SchemaName(),
 		UserTable:    sql.Table("user"),
 		OrgUserTable: sql.Table("org_user"),
 		Query:        q,

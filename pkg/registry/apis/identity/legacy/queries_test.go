@@ -12,9 +12,8 @@ import (
 func TestQueries(t *testing.T) {
 	// prefix tables with grafana
 	nodb := &legacysql.LegacyDatabaseHelper{
-		Table: func(n string) string {
-			return "grafana." + n
-		},
+		SchemaName: func() string { return "grafana" },
+		Table:      func(n string) string { return n },
 	}
 
 	getDisplay := func(q *GetUserDisplayQuery) sqltemplate.SQLTemplate {

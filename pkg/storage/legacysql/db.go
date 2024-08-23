@@ -16,6 +16,9 @@ type LegacyDatabaseProvider func(ctx context.Context) (*LegacyDatabaseHelper, er
 func NewDatabaseProvider(db db.DB) LegacyDatabaseProvider {
 	helper := &LegacyDatabaseHelper{
 		DB: db,
+		SchemaName: func() string {
+			return ""
+		},
 		Table: func(n string) string {
 			return n
 		},
@@ -28,6 +31,9 @@ func NewDatabaseProvider(db db.DB) LegacyDatabaseProvider {
 type LegacyDatabaseHelper struct {
 	// The database connection
 	DB db.DB
+
+	// schema locator
+	SchemaName func() string
 
 	// table name locator
 	Table func(n string) string
