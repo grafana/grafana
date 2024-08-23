@@ -164,12 +164,14 @@ The inline editing toggle lets you lock or unlock the canvas. When turned off th
 
 ### Data links
 
-Canvases support [data links](ref:data-links) for all elements except drone and button elements. You can add a data link by following these steps:
+Canvases support [data links](ref:data-links) for all elements except drone and button elements.
 
-1. Enable inline editing.
+To add data links, follow these steps:
+
+1. Activate inline editing.
 1. Click the element you to which you want to add the data link.
 1. In either the inline editor or panel editor, expand the **Selected element** editor.
-1. Scroll down to the **Data links abd actions** section and expand it.
+1. Scroll down to the **Data links and actions** section and expand it.
 1. Click **Add link**.
 1. In the dialog box that opens, enter a **Title**. This is a human-readable label for the link, which will be displayed in the UI.
 1. Enter the **URL** or variable to which you want to link.
@@ -178,33 +180,33 @@ Canvases support [data links](ref:data-links) for all elements except drone and 
 
 1. If you want the link to open in a new tab, toggle the **Open in a new tab** switch.
 1. Click **Save** to save changes and close the dialog box.
-1. Disable inline editing.
+1. Deactivate inline editing.
 
 When you click the element, the tooltip displays the data link.
 
-If you add multiple data links, you can control the order in which they appear in the visualization. To do this, click and drag the data link to the desired position.
+If you add multiple data links, you can control the order in which they appear in the element tooltip. To do this, click and drag the data link to the desired position.
 
 ### Actions
 
 Actions trigger basic, unauthenticated API calls and you can add them to any canvas element. The action configuration provides an API editor and you can even pass template variables in the API editor.
 
-You can add actions by following these steps:
+To add actions, follow these steps:
 
-1. Enable inline editing.
+1. Activate inline editing.
 1. Click the element you to which you want to add the action.
 1. In either the inline editor or panel editor, expand the **Selected element** editor.
 1. Scroll down to the **Data links and actions** section and expand it.
 1. Click **Add action**.
 1. In the dialog box that opens, fill out the [API settings](#action-api-settings).
 
-   Template variables are also supported
+   Template variables are also supported.
 
 1. Click **Save** to save changes and close the dialog box.
-1. Disable inline editing.
+1. Deactivate inline editing.
 
 When you click the element, the tooltip displays the action.
 
-If you add multiple actions, you can control the order in which they appear in the visualization. To do this, click and drag the action to the desired position.
+If you add multiple actions, you can control the order in which they appear in the element tooltip. To do this, click and drag the action to the desired position.
 
 #### Action API settings
 
@@ -222,13 +224,13 @@ If you add multiple actions, you can control the order in which they appear in t
 
 You can configure canvas data links to open or actions to trigger with a single click on the element. To enable this feature, follow these steps:
 
-1. Enable inline editing.
+1. Activate inline editing.
 1. Click the element with the [data link](#data-links) or [action](#actions) you want to update.
 1. In either the inline editor or panel editor, expand the **Selected element** editor.
 1. Scroll down to the **Data links and actions** section and expand it.
-1. In the **One-click** section, choose **Link** or **Action**.
-1. If you have multiple links or actions, drag the one you want to have one-click functionality to the top of the list.
-1. Disable inline editing.
+1. In the **One-click** section, click **Link** or **Action**.
+1. If you have multiple links or actions, drag the one that should have one-click functionality to the top of the list.
+1. Deactivate inline editing.
 
 The one-click data link is functionality is only active when **Link** or **Action** is selected.
 
