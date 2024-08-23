@@ -482,6 +482,9 @@ require (
 	github.com/at-wat/mqtt-go v0.19.4 // indirect
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20240808213237-f4d2e064f435 // indirect
 	github.com/hairyhenderson/go-which v0.2.0 // indirect
+	github.com/hashicorp/consul/api v1.28.2 // indirect
+	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
+	github.com/hashicorp/serf v0.10.1 // indirect
 	github.com/iancoleman/orderedmap v0.3.0 // indirect
 )
 
