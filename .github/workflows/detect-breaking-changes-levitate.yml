@@ -168,6 +168,9 @@ jobs:
               const script = require('./.github/workflows/scripts/pr-get-job-link.js')
               await script({name, github, context, core})
 
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+
       - name: Detect breaking changes
         id: breaking-changes
         run: ./scripts/check-breaking-changes.sh
