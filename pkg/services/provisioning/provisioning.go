@@ -111,6 +111,7 @@ func newProvisioningServiceImpl(
 	provisionNotifiers func(context.Context, *setting.Cfg, string, notifiers.Manager, org.Service, encryption.Internal, *notifications.NotificationService) error,
 	provisionDatasources func(context.Context, string, datasources.Store, datasources.CorrelationsStore, org.Service) error,
 	provisionPlugins func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error,
+	searchService searchV2.SearchService,
 ) *ProvisioningServiceImpl {
 	return &ProvisioningServiceImpl{
 		log:                     log.New("provisioning"),
@@ -118,6 +119,7 @@ func newProvisioningServiceImpl(
 		provisionNotifiers:      provisionNotifiers,
 		provisionDatasources:    provisionDatasources,
 		provisionPlugins:        provisionPlugins,
+		searchService:           searchService,
 	}
 }
 
@@ -182,7 +184,6 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 	err := ps.ProvisionDashboards(ctx)
 	if err != nil {
 		ps.log.Error("Failed to provision dashboard", "error", err)
-		return err
 	}
 	if ps.dashboardProvisioner.HasDashboardSources() {
 		ps.searchService.TriggerReIndex()

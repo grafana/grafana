@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
+	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -66,6 +67,26 @@ func TestProvisioningServiceImpl(t *testing.T) {
 		// Cancelling the root context and stopping the service
 		serviceTest.cancel()
 	})
+
+	t.Run("Should not return run error when dashboard provisioning fails", func(t *testing.T) {
+		serviceTest := setup()
+		provisioningErr := errors.New("Test error")
+		serviceTest.mock.ProvisionFunc = func(ctx context.Context) error {
+			return provisioningErr
+		}
+		err := serviceTest.service.ProvisionDashboards(context.Background())
+		assert.NotNil(t, err)
+		serviceTest.startService()
+
+		serviceTest.waitForPollChanges()
+		assert.Equal(t, 1, len(serviceTest.mock.Calls.PollChanges), "PollChanges should have been called")
+
+		// Cancelling the root context and stopping the service
+		serviceTest.cancel()
+		serviceTest.waitForStop()
+
+		assert.Equal(t, context.Canceled, serviceTest.serviceError)
+	})
 }
 
 type serviceTestStruct struct {
@@ -95,6 +116,8 @@ func setup() *serviceTestStruct {
 		pollChangesChannel <- ctx
 	}
 
+	searchStub := searchV2.NewStubSearchService()
+
 	serviceTest.service = newProvisioningServiceImpl(
 		func(context.Context, string, dashboardstore.DashboardProvisioningService, org.Service, utils.DashboardStore, folder.Service) (dashboards.DashboardProvisioner, error) {
 			return serviceTest.mock, nil
@@ -102,6 +125,7 @@ func setup() *serviceTestStruct {
 		nil,
 		nil,
 		nil,
+		searchStub,
 	)
 	serviceTest.service.Cfg = setting.NewCfg()
 
