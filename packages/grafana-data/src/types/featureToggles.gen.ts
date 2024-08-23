@@ -42,7 +42,6 @@ export interface FeatureToggles {
   logRequestsInstrumentedAsUnknown?: boolean;
   topnav?: boolean;
   grpcServer?: boolean;
-  unifiedStorage?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
@@ -203,4 +202,5 @@ export interface FeatureToggles {
   backgroundPluginInstaller?: boolean;
   dataplaneAggregator?: boolean;
   adhocFilterOneOf?: boolean;
+  lokiSendDashboardPanelNames?: boolean;
 }

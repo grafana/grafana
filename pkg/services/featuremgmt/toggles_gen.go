@@ -103,10 +103,6 @@ const (
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
 
-	// FlagUnifiedStorage
-	// SQL-based k8s storage
-	FlagUnifiedStorage = "unifiedStorage"
-
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
@@ -746,4 +742,8 @@ const (
 	// FlagAdhocFilterOneOf
 	// Exposes a new &#39;one of&#39; operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.
 	FlagAdhocFilterOneOf = "adhocFilterOneOf"
+
+	// FlagLokiSendDashboardPanelNames
+	// Send dashboard and panel names to Loki when querying
+	FlagLokiSendDashboardPanelNames = "lokiSendDashboardPanelNames"
 )
