@@ -102,9 +102,6 @@ export interface PanelProps<T = any> {
   /** @internal */
   renderCounter: number;
 
-  /** Panel title */
-  title: string;
-
   /** Grafana EventBus  */
   eventBus: EventBus;
 
