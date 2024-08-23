@@ -4,10 +4,7 @@ import type { AppPluginConfig } from '@grafana/runtime';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
-import { ReactivePluginExtensionsRegistry } from './extensions/reactivePluginExtensionRegistry';
-import { AddedComponentsRegistry } from './extensions/registry/AddedComponentsRegistry';
-import { AddedLinksRegistry } from './extensions/registry/AddedLinksRegistry';
-import { ExposedComponentsRegistry } from './extensions/registry/ExposedComponentsRegistry';
+import { PluginExtensionRegistries } from './extensions/types';
 import * as pluginLoader from './plugin_loader';
 
 export type PluginPreloadResult = {
@@ -17,13 +14,6 @@ export type PluginPreloadResult = {
   exposedComponentConfigs: PluginExposedComponentConfig[];
   addedComponentConfigs?: PluginAddedComponentConfig[];
   addedLinkConfigs?: PluginAddedLinkConfig[];
-};
-
-type PluginExtensionRegistries = {
-  extensionsRegistry: ReactivePluginExtensionsRegistry;
-  addedComponentsRegistry: AddedComponentsRegistry;
-  exposedComponentsRegistry: ExposedComponentsRegistry;
-  addedLinksRegistry: AddedLinksRegistry;
 };
 
 export async function preloadPlugins(

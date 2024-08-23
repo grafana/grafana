@@ -15,6 +15,7 @@ export type AddedLinkRegistryItem<Context extends object = object> = {
   pluginId: string;
   title: string;
   description: string;
+  path?: string;
   onClick?: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
   configure?: PluginAddedLinksConfigureFunc<Context>;
   icon?: IconName;
@@ -34,7 +35,8 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
   ): RegistryType<AddedLinkRegistryItem[]> {
     const { pluginId, configs } = item;
 
-    for (const { path, title, description, configure, onClick, targets, icon, category } of configs) {
+    for (const config of configs) {
+      const { path, title, description, configure, onClick, targets, icon, category } = config;
       if (!title) {
         logWarning(`Could not register added link with title '${title}'. Reason: Title is missing.`);
         continue;
@@ -68,16 +70,16 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
       for (const extensionPointId of extensionPointIds) {
         if (!isExtensionPointIdValid(pluginId, extensionPointId)) {
           logWarning(
-            `Could not register added component with id '${extensionPointId}'. Reason: The component id does not match the id naming convention. Id should be prefixed with plugin id or grafana. e.g '<grafana|myorg-basic-app>/my-component-id/v1'.`
+            `Could not register added link with id '${extensionPointId}'. Reason: Target extension point id must start with grafana, plugins or plugin id.`
           );
           continue;
         }
 
-        if (!extensionPointEndsWithVersion(extensionPointId)) {
-          logWarning(
-            `Added component with id '${extensionPointId}' does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
-          );
-        }
+        // if (!extensionPointEndsWithVersion(extensionPointId)) {
+        //   logWarning(
+        //     `Added component with id '${extensionPointId}' does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
+        //   );
+        // }
 
         const result = {
           pluginId,
@@ -87,6 +89,7 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
           configure,
           icon,
           category,
+          path,
         };
 
         if (!(extensionPointId in registry)) {
