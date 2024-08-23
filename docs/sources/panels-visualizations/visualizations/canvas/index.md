@@ -50,7 +50,7 @@ Any data you plan to consume should be accessible through supported Grafana data
 
 If your canvas is going to update in real time, your data should support refreshes at your desired intervals without degrading the user experience.
 
-You can provide data to the multiple elements and connections available in the canvas visualization, like text element values, colors, rotation, and background pattern images. Most of them has different data requirements defined in each item in the [Elements](#elements) and [Connections](#connections) sections.
+You can provide data to the multiple **elements** and **connections** available in the canvas visualization, like text element values, colors, rotation, and background pattern images. Most of them have different data requirements defined in the [Elements](#elements) and [Connections](#connections) sections.
 
 ## Elements
 
