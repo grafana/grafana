@@ -184,7 +184,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
                     for (let i = 0; i < arr.length; i++) {
                       arr[i] = operator.operation(left[i], right[i]);
                     }
-                    const newField = { ...field, name: `${field.name} ${getNameFromOptions(options)}`, values: arr };
+                    const newField = { ...field, name: `${field.name}${getNameFromOptions(options)}`, values: arr };
                     newFields.push(newField);
                   }
                 });
