@@ -159,7 +159,8 @@ function printAffectedPluginsSection(data) {
     }
   } catch (error) {
     markdown += `<h4>Error generating detailed report ${error}</h4>`;
-    markdown += `<h4>Error stdout ${error}</h4>`;
+    markdown += `<h4>Error stdout ${error.stdout}</h4>`;
+    markdown += `<h4>Error stderr ${error.stderr}</h4>`;
   }
 
   return markdown;
