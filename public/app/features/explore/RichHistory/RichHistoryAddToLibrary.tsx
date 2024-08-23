@@ -5,6 +5,10 @@ import { DataQuery } from '@grafana/schema';
 import { Button, Modal } from '@grafana/ui';
 import { isQueryLibraryEnabled } from 'app/features/query-library';
 
+import {
+  queryLibraryTrackAddFromQueryHistory,
+  queryLibraryTrackAddFromQueryHistoryAddModalShown,
+} from '../QueryLibrary/QueryLibraryAnalyticsEvents';
 import { QueryTemplateForm } from '../QueryLibrary/QueryTemplateForm';
 
 type Props = {
@@ -19,7 +23,14 @@ export const RichHistoryAddToLibrary = ({ query }: Props) => {
 
   return isQueryLibraryEnabled() && !hasBeenSaved ? (
     <>
-      <Button variant="secondary" aria-label={buttonLabel} onClick={() => setIsOpen(true)}>
+      <Button
+        variant="secondary"
+        aria-label={buttonLabel}
+        onClick={() => {
+          setIsOpen(true);
+          queryLibraryTrackAddFromQueryHistoryAddModalShown();
+        }}
+      >
         {buttonLabel}
       </Button>
       <Modal
@@ -34,6 +45,7 @@ export const RichHistoryAddToLibrary = ({ query }: Props) => {
             if (isSuccess) {
               setIsOpen(false);
               setHasBeenSaved(true);
+              queryLibraryTrackAddFromQueryHistory(query.datasource?.type || '');
             }
           }}
         />
