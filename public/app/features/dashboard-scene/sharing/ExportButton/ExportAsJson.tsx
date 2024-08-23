@@ -56,24 +56,26 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
         />
         <Label>{switchLabel}</Label>
       </Stack>
-      <AutoSizer disableHeight className={styles.codeEditorBox} data-testid={selector.codeEditor}>
-        {({ width }) => {
-          if (dashboardJson.value) {
-            return (
-              <CodeEditor
-                value={dashboardJson.value}
-                language="json"
-                showMiniMap={false}
-                height="500px"
-                width={width}
-                readOnly={true}
-              />
-            );
-          }
+      <div className={styles.codeEditorBox}>
+        <AutoSizer data-testid={selector.codeEditor}>
+          {({ width, height }) => {
+            if (dashboardJson.value) {
+              return (
+                <CodeEditor
+                  value={dashboardJson.value}
+                  language="json"
+                  showMiniMap={false}
+                  height={height}
+                  width={width}
+                  readOnly={true}
+                />
+              );
+            }
 
-          return dashboardJson.loading && <Spinner />;
-        }}
-      </AutoSizer>
+            return dashboardJson.loading && <Spinner />;
+          }}
+        </AutoSizer>
+      </div>
       <div className={styles.container}>
         <Stack gap={1} flex={1} direction={{ xs: 'column', sm: 'row' }}>
           <Button
@@ -111,6 +113,7 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     codeEditorBox: css({
       margin: `${theme.spacing(2)} 0`,
+      height: '75%',
     }),
     container: css({
       paddingBottom: theme.spacing(2),
