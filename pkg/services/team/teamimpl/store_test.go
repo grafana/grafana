@@ -189,7 +189,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.EqualValues(t, qBeforeUpdateResult[0].Permission, 0)
 
 				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-					return AddOrUpdateTeamMemberHook(sess, userId, testOrgID, team1.ID, false, dashboardaccess.PERMISSION_ADMIN)
+					return AddOrUpdateTeamMemberHook(sess, userId, testOrgID, team1.ID, false, team.PermissionTypeAdmin)
 				})
 				require.NoError(t, err)
 
@@ -214,9 +214,9 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				require.EqualValues(t, qBeforeUpdateResult[0].Permission, 0)
 
-				invalidPermissionLevel := dashboardaccess.PERMISSION_EDIT
+				invalidPermissionLevel := 2
 				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-					return AddOrUpdateTeamMemberHook(sess, userID, testOrgID, team1.ID, false, invalidPermissionLevel)
+					return AddOrUpdateTeamMemberHook(sess, userID, testOrgID, team1.ID, false, team.PermissionType(invalidPermissionLevel))
 				})
 				require.NoError(t, err)
 
@@ -356,7 +356,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 
 			t.Run("Should have empty teams", func(t *testing.T) {
 				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-					return AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, team1.ID, false, dashboardaccess.PERMISSION_ADMIN)
+					return AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, team1.ID, false, team.PermissionTypeAdmin)
 				})
 				require.NoError(t, err)
 
@@ -379,11 +379,11 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 					setup()
 
 					err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-						err := AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, team1.ID, false, dashboardaccess.PERMISSION_ADMIN)
+						err := AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, team1.ID, false, team.PermissionTypeAdmin)
 						if err != nil {
 							return err
 						}
-						return AddOrUpdateTeamMemberHook(sess, userIds[1], testOrgID, team1.ID, false, dashboardaccess.PERMISSION_ADMIN)
+						return AddOrUpdateTeamMemberHook(sess, userIds[1], testOrgID, team1.ID, false, team.PermissionTypeAdmin)
 					})
 					require.NoError(t, err)
 					err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
