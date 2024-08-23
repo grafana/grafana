@@ -39,7 +39,7 @@ func (i *IDClaimsWrapper) NamespaceMatches(namespace string) bool {
 		return namespaceParts[1] == parts[1]
 	}
 
-	return false
+	return i.Source.GetAllowedKubernetesNamespace() == namespace
 }
 
 func (i *IDClaimsWrapper) IsNil() bool {
