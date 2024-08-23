@@ -190,3 +190,25 @@ Remove query
 **Explore** provides a history of all queries you've used within a data source and an inspector that lets you view stats, inspect queries, view JSON, and general data for your data source queries.
 
 For more information, refer to the [Query inspector in Explore](ref:query-inspector) and [Query management in Explore](ref:query-history-management) documentation.
+
+## Cross-tenant TraceQL queries
+
+If you have configured multi-stack Tempo data source, you can perform TraceQL queries across those stacks and tenants.
+
+Queries performed using the cross-tenant configured data source, in either **Explore** or inside of dashboards,
+are performed across all the tenants that you specified in the **X-Scope-OrgID** header.
+
+<!-- vale Grafana.Spelling = NO -->
+TraceQL queries that compare multiple spansets may not correctly return all traces in a cross-tenant query. For instance,
+<!-- vale Grafana.Quotes = YES -->
+
+```
+{ span.attr1 = "bar" } && { span.attr2 = "foo" }
+```
+
+TraceQL evaluates a contiguously stored trace.
+If these two conditions are satisfied in separate tenants, then Tempo doesn't return the trace.
+
+Refer to [Set up a multi-stack Tempo data source in Grafana](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/multi-stack-data-sources/#set-up-a-multi-stack-tempo-data-source-in-grafana) for information about configuring the Tempo data source.
+
+For information about Tempo configuration requirements, refer to the [Cross-tenant query](https://grafana.com/docs/tempo/<TEMPO_VERSION>/operations/cross_tenant_query/) and [Enable multitenancy](https://grafana.com/docs/tempo/<TEMPO_VERSION/operations/multitenancy/) documentation.
