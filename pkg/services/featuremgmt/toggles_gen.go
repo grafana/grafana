@@ -103,10 +103,6 @@ const (
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
 
-	// FlagUnifiedStorage
-	// SQL-based k8s storage
-	FlagUnifiedStorage = "unifiedStorage"
-
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
@@ -358,10 +354,6 @@ const (
 	// FlagPluginsAPIMetrics
 	// Sends metrics of public grafana packages usage by plugins
 	FlagPluginsAPIMetrics = "pluginsAPIMetrics"
-
-	// FlagIdForwarding
-	// Generate signed id token for identity that can be forwarded to plugins and external services
-	FlagIdForwarding = "idForwarding"
 
 	// FlagExternalServiceAccounts
 	// Automatic service account and token setup for plugins
