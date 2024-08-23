@@ -497,12 +497,11 @@ func userRoleAssignemtCollector(store db.DB) TupleCollector {
 		}
 
 		for _, a := range assignments {
-			var subject string
 			if a.UserUID == "" || a.RoleUID == "" {
 				continue
 			}
 
-			subject = zanzana.NewTupleEntry(zanzana.TypeUser, a.UserUID, "")
+			subject := zanzana.NewTupleEntry(zanzana.TypeUser, a.UserUID, "")
 			if strings.HasPrefix(a.RoleUID, "fixed_") {
 				// Fixed roles are defined in shema, so they are relations itself. Assignment should look like:
 				// user:<uid> fixed_folders_reader org:1
@@ -535,16 +534,18 @@ func teamRoleAssignemtCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "team_role_assignment"
 		const query = `
-			SELECT tr.org_id, t.uid AS team_uid, r.uid AS role_uid
+			SELECT tr.org_id, t.uid AS team_uid, r.uid AS role_uid, r.name AS role_name
 			FROM team_role tr
 			LEFT JOIN role r ON r.id = tr.role_id
 			LEFT JOIN team t ON t.id = tr.team_id
+			WHERE r.name NOT LIKE 'managed:%'
 		`
 
 		type Assignment struct {
-			OrgID   int64  `xorm:"org_id"`
-			TeamUID string `xorm:"team_uid"`
-			RoleUID string `xorm:"role_uid"`
+			OrgID    int64  `xorm:"org_id"`
+			TeamUID  string `xorm:"team_uid"`
+			RoleUID  string `xorm:"role_uid"`
+			RoleName string `xorm:"role_name"`
 		}
 
 		var assignments []Assignment
@@ -556,21 +557,33 @@ func teamRoleAssignemtCollector(store db.DB) TupleCollector {
 		}
 
 		for _, a := range assignments {
-			var subject string
-			if a.TeamUID != "" && a.RoleUID != "" {
-				subject = zanzana.NewTupleEntry(zanzana.TypeTeam, a.TeamUID, "member")
-			} else {
+			if a.TeamUID == "" || a.RoleUID == "" {
 				continue
 			}
 
-			tuple := &openfgav1.TupleKey{
-				User:     subject,
-				Relation: zanzana.RelationAssignee,
-				Object:   zanzana.NewScopedTupleEntry(zanzana.TypeRole, a.RoleUID, "", strconv.FormatInt(a.OrgID, 10)),
+			subject := zanzana.NewTupleEntry(zanzana.TypeTeam, a.TeamUID, "member")
+			if strings.HasPrefix(a.RoleUID, "fixed_") {
+				// Fixed roles are defined in shema, so they are relations itself. Assignment should look like:
+				// team:<uid> fixed_folders_reader org:1
+				relation := zanzana.TranslateFixedRole(a.RoleName)
+				tuple := &openfgav1.TupleKey{
+					User:     subject,
+					Relation: relation,
+					Object:   zanzana.NewTupleEntry(zanzana.TypeOrg, strconv.FormatInt(a.OrgID, 10), ""),
+				}
+				key := fmt.Sprintf("%s-%s", collectorID, relation)
+				tuples[key] = append(tuples[key], tuple)
+			} else {
+				tuple := &openfgav1.TupleKey{
+					User:     subject,
+					Relation: zanzana.RelationAssignee,
+					Object:   zanzana.NewScopedTupleEntry(zanzana.TypeRole, a.RoleUID, "", strconv.FormatInt(a.OrgID, 10)),
+				}
+
+				key := fmt.Sprintf("%s-%s", collectorID, zanzana.RelationAssignee)
+				tuples[key] = append(tuples[key], tuple)
 			}
 
-			key := fmt.Sprintf("%s-%s", collectorID, zanzana.RelationAssignee)
-			tuples[key] = append(tuples[key], tuple)
 		}
 
 		return nil
