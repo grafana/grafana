@@ -162,7 +162,7 @@ The inline editing toggle lets you lock or unlock the canvas. When turned off th
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editing-toggle-9-2-0.mp4" max-width="750px" caption="Inline editing toggle demo" >}}
 
-### Data links and actions
+### Data links
 
 Canvases support [data links](ref:data-links) for all elements except drone and button elements. You can add a data link by following these steps:
 
@@ -208,14 +208,15 @@ If you add multiple actions, you can control the order in which they appear in t
 
 #### Action API settings
 
-| API setting      | Description                                                                                                                                                                                                                                                                             |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Title            | The name of the action.                                                                                                                                                                                                                                                                 |
-| Method           | Select from **POST** and **PUT**.                                                                                                                                                                                                                                                       |
-| URL              | The request URL.                                                                                                                                                                                                                                                                        |
-| Query parameters | Pairs comprised of a **Key** and a **Value**. Add as many pairs as you need.                                                                                                                                                                                                            |
-| Headers          | Comprised of a **Key**/**Value** pair as well as a **Content-Type**. Content types are:<ul><li>**application/json**</li><li>**text/plain**</li><li>**application/javascript**</li><li>**text/html**</li><li>**application/XML**</li><li>**application/x-www-form-urlencoded**</li></ul> |
-| Body             | The body of the request.                                                                                                                                                                                                                                                                |
+| API setting      | Description                                                                                                                                                                                                                              |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Title            | The name of the action.                                                                                                                                                                                                                  |
+| Method           | Select from **POST**, **PUT**, and **GET**.                                                                                                                                                                                              |
+| URL              | The request URL.                                                                                                                                                                                                                         |
+| Query parameters | Pairs comprised of a **Key** and a **Value**. Add as many pairs as you need.                                                                                                                                                             |
+| Headers          | Comprised of a **Key**/**Value** pair as well as a **Content-Type**.                                                                                                                                                                     |
+| Content-Type     | Select from the following content types:<ul><li>**application/json**</li><li>**text/plain**</li><li>**application/javascript**</li><li>**text/html**</li><li>**application/XML**</li><li>**application/x-www-form-urlencoded**</li></ul> |
+| Body             | The body of the request.                                                                                                                                                                                                                 |
 
 ### One-click data links and actions {#one-click-data-link}
 
