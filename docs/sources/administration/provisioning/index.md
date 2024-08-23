@@ -388,6 +388,7 @@ You can't delete a folder that contains provisioned dashboards in the Grafana UI
 To delete the folder, you must edit the YAML configuration file for the provisioned dashboards.
 In the configuration file, remove the `folder` and `folderUid` fields.
 After the provisioned dashboards are re-provisioned, you can delete the folder in the Grafana UI.
+
 ### Reusable dashboard URLs
 
 If the dashboard in the JSON file contains an [UID]({{< relref "../../dashboards/build-dashboards/view-dashboard-json-model" >}}), Grafana forces insert/update on that UID.
