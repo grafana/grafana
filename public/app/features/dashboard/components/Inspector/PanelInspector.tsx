@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { PanelPlugin } from '@grafana/data';
 import { locationService } from '@grafana/runtime';

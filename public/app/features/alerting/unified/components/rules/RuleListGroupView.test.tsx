@@ -1,11 +1,9 @@
-import { render, waitFor } from '@testing-library/react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { waitFor } from '@testing-library/react';
+import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
-import { locationService, setPluginExtensionsHook } from '@grafana/runtime';
+import { setPluginExtensionsHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
@@ -101,15 +99,7 @@ describe('RuleListGroupView', () => {
 });
 
 function renderRuleList(namespaces: CombinedRuleNamespace[]) {
-  const store = configureStore();
-
-  render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <RuleListGroupView namespaces={namespaces} expandAll />
-      </Router>
-    </Provider>
-  );
+  render(<RuleListGroupView namespaces={namespaces} expandAll />);
 }
 
 function getGrafanaNamespace(): CombinedRuleNamespace {

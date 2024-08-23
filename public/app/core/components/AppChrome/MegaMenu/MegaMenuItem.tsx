@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useRef } from 'react';
 import * as React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem, toIconName } from '@grafana/data';

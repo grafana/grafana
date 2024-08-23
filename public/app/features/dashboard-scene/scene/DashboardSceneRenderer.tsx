@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { useChromeHeaderHeight } from '@grafana/runtime';
