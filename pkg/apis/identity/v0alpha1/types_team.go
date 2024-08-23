@@ -71,6 +71,8 @@ type TeamSubject struct {
 	// Kind is the kind of the subject, only supports "User".
 	Kind string `json:"kind,omitempty"`
 
+	// Permission subject has in permission.
+	// Can be either admin or member.
 	Permission TeamPermission `json:"permission,empty"`
 
 	// Name is the unique identifier for subject.
