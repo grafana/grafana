@@ -49,18 +49,19 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
   const [contentSent, setContentSent] = React.useState<{ title?: string; folder?: {} }>({});
   const [isRefreshed, setIsRefreshed] = React.useState(false);
-
   const onSave = async (overwrite: boolean) => {
     const data = getValues();
 
     const dashboardToSave: Dashboard = getSaveAsDashboardSaveModel(changedSaveModel, data, changeInfo.isNew);
     const result = await onSaveDashboard(dashboard, dashboardToSave, { overwrite, folderUid: data.folder.uid });
-    setContentSent({
-      title: data.title,
-      folder: data.folder,
-    });
+
     if (result.status === 'success') {
       dashboard.closeModal();
+    } else {
+      setContentSent({
+        title: data.title,
+        folder: data.folder,
+      });
     }
   };
 
