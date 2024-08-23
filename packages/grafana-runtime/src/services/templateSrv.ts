@@ -69,11 +69,3 @@ let singletonInstance: TemplateSrv;
 export const setTemplateSrv = (instance: TemplateSrv) => {
   singletonInstance = instance;
 };
-
-/**
- * Used to retrieve the {@link TemplateSrv} that can be used to fetch available
- * template variables.
- *
- * @public
- */
-export const getTemplateSrv = (msg="Hello"): TemplateSrv => singletonInstance;

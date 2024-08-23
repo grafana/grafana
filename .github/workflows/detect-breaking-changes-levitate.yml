@@ -150,16 +150,6 @@ jobs:
           project_id: 'grafanalabs-global'
           install_components: 'bq'
 
-        # This step is needed to generate a detailed levitate report
-      - name: Set up gcloud project
-        run: |
-          unset CLOUDSDK_CORE_PROJECT
-          unset GCLOUD_PROJECT
-          unset GCP_PROJECT
-          unset GOOGLE_CLOUD_PROJECT
-
-          gcloud config set project grafanalabs-global
-
       - name: Get link for the Github Action job
         id: job
         uses: actions/github-script@v6
@@ -168,9 +158,6 @@ jobs:
               const name = 'Detect breaking changes';
               const script = require('./.github/workflows/scripts/pr-get-job-link.js')
               await script({name, github, context, core})
-
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
 
       - name: Detect breaking changes
         id: breaking-changes
