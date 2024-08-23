@@ -133,6 +133,9 @@ export function ReceiverForm<R extends ChannelValues>({
             {...register('name', {
               required: 'Name is required',
               validate: async (value) => {
+                // If we've been given initialValues, then we're editing an existing contact point,
+                // and the name has not changed, so we can skip validation
+                // (as we don't want to incorrectly flag the existing name as matching itself)
                 const skipValidation = initialValues && value === initialValues?.name;
                 return validateContactPointName(value, skipValidation);
               },

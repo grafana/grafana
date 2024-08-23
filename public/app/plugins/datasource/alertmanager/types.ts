@@ -74,7 +74,7 @@ export type GrafanaManagedReceiverConfig = {
   secureSettings?: GrafanaManagedReceiverConfigSettings;
   /** If retrieved from k8s API, SecureSettings property name is different */
   // SecureSettings?: GrafanaManagedReceiverConfigSettings<boolean>;
-  settings: GrafanaManagedReceiverConfigSettings; // sometimes settings are optional for security reasons (RBAC)
+  settings: GrafanaManagedReceiverConfigSettings;
   type: string;
   /**
    * Name of the _receiver_, which in most cases will be the
