@@ -6,9 +6,8 @@ import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { Alert, LoadingPlaceholder, Stack, Tab, TabContent, TabsBar, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { useMuteTimings } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
-import { ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
+import { PROVENANCE_NONE, useMuteTimings } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
+import { ObjectMatcher, Receiver, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useCleanup } from '../../../core/hooks/useCleanup';
 
@@ -29,12 +28,15 @@ import {
   useEditPolicyModal,
 } from './components/notification-policies/Modals';
 import { Policy } from './components/notification-policies/Policy';
-import { useAlertmanagerConfig } from './hooks/useAlertmanagerConfig';
+import {
+  useNotificationPolicyRoute,
+  useUpdateNotificationPolicyRoute,
+} from './components/notification-policies/useNotificationPolicyRoute';
 import { useAlertmanager } from './state/AlertmanagerContext';
-import { updateAlertManagerConfigAction } from './state/actions';
 import { FormAmRoute } from './types/amroutes';
 import { useRouteGroupsMatcher } from './useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from './utils/amroutes';
+import { stringifyErrorLike } from './utils/misc';
 import { computeInheritedTree } from './utils/notification-policies';
 import { initialAsyncRequestState } from './utils/redux';
 import {
@@ -51,7 +53,6 @@ enum ActiveTab {
 }
 
 const AmRoutes = () => {
-  const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
   const appNotification = useAppNotification();
 
@@ -71,30 +72,40 @@ const AmRoutes = () => {
 
   const contactPointsState = useGetContactPointsState(selectedAlertmanager ?? '');
 
+  // const {
+  //   currentData: result,
+  //   isLoading: resultLoading,
+  //   error: resultError,
+  // } = useAlertmanagerConfig(selectedAlertmanager, {
+  //   refetchOnFocus: true,
+  //   refetchOnReconnect: true,
+  // });
+
+  // const config = result?.alertmanager_config;
+
   const {
     currentData: result,
     isLoading: resultLoading,
     error: resultError,
-  } = useAlertmanagerConfig(selectedAlertmanager, {
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
-  });
+    refetch: refetchNotificationPolicyRoute,
+  } = useNotificationPolicyRoute(selectedAlertmanager);
 
-  const config = result?.alertmanager_config;
+  const updateNotificationPolicyRoute = useUpdateNotificationPolicyRoute(selectedAlertmanager ?? '');
 
   const { currentData: alertGroups, refetch: refetchAlertGroups } = useGetAlertmanagerAlertGroupsQuery(
     { amSourceName: selectedAlertmanager ?? '' },
     { skip: !selectedAlertmanager }
   );
 
-  const receivers = config?.receivers ?? [];
+  // TODO Receivers should be fetched separately from apropriate k8s endpoint
+  const receivers: Receiver[] = [];
 
   const rootRoute = useMemo(() => {
-    if (config?.route) {
-      return addUniqueIdentifierToRoute(config.route);
+    if (result) {
+      return addUniqueIdentifierToRoute(result);
     }
     return;
-  }, [config?.route]);
+  }, [result]);
 
   // useAsync could also work but it's hard to wait until it's done in the tests
   // Combining with useEffect gives more predictable results because the condition is in useEffect
@@ -123,7 +134,7 @@ const AmRoutes = () => {
     return findRoutesMatchingFilters(rootRoute, { contactPointFilter, labelMatchersFilter });
   }, [contactPointFilter, labelMatchersFilter, rootRoute]);
 
-  const isProvisioned = Boolean(config?.route?.provenance);
+  const isProvisioned = result?.provenance ? result.provenance !== PROVENANCE_NONE : false;
 
   function handleSave(partialRoute: Partial<FormAmRoute>) {
     if (!rootRoute) {
@@ -166,20 +177,7 @@ const AmRoutes = () => {
 
     setUpdatingTree(true);
 
-    dispatch(
-      updateAlertManagerConfigAction({
-        newConfig: {
-          ...result,
-          alertmanager_config: {
-            ...result.alertmanager_config,
-            route: newRouteTree,
-          },
-        },
-        oldConfig: result,
-        alertManagerSourceName: selectedAlertmanager!,
-      })
-    )
-      .unwrap()
+    updateNotificationPolicyRoute({ newRoute: newRouteTree, oldRoute: result })
       .then(() => {
         appNotification.success('Updated notification policies');
         if (selectedAlertmanager) {
@@ -188,6 +186,12 @@ const AmRoutes = () => {
         closeEditModal();
         closeAddModal();
         closeDeleteModal();
+      })
+      .catch((error) => {
+        // TODO: handle error
+        appNotification.error('Error updating route', stringifyErrorLike(error));
+        console.error('Error updating route', error);
+        refetchNotificationPolicyRoute();
       })
       .finally(() => {
         setUpdatingTree(false);
@@ -213,7 +217,7 @@ const AmRoutes = () => {
   const numberOfMuteTimings = muteTimings.length;
   const haveData = result && !resultError && !resultLoading;
   const isFetching = !result && resultLoading;
-  const haveError = resultError && !resultLoading;
+  const haveError = !!resultError && !resultLoading;
 
   const muteTimingsTabActive = activeTab === ActiveTab.MuteTimings;
   const policyTreeTabActive = activeTab === ActiveTab.NotificationPolicies;
