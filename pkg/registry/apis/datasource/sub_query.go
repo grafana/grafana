@@ -74,7 +74,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 		ctx = contextualMiddlewares(ctx)
 
-		// forward expected headers, log unexpected ones (but still forward for now)
+		// only forward expected headers, log unexpected ones
 		headers := make(map[string]string)
 		// headers are case insensitive, however some datasources still check for camel casing so we have to send them camel cased
 		expectedHeaders := map[string]string{
@@ -89,10 +89,10 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			if ok {
 				headers[headerToSend] = v[0]
 			} else {
-				headers[k] = v[0]
-				r.builder.log.Warn(fmt.Sprintf("datasource received an unexpected header: %s, forwarding it for now however this is likely to change in the future", k))
+				r.builder.log.Warn(fmt.Sprintf("datasource received an unexpected header: %s, ignoring it", k))
 			}
 		}
+
 		rsp, err := r.builder.client.QueryData(ctx, &backend.QueryDataRequest{
 			Queries:       queries,
 			PluginContext: pluginCtx,
