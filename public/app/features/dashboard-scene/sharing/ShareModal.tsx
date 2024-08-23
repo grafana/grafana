@@ -88,7 +88,12 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
   }
 
   onDismiss = () => {
-    locationService.partial({ shareView: null });
+    if (this.state.panelRef) {
+      const dashboard = getDashboardSceneFor(this);
+      dashboard.closeModal();
+    } else {
+      locationService.partial({ shareView: null });
+    }
   };
 
   onChangeTab: ComponentProps<typeof ModalTabsHeader>['onChangeTab'] = (tab) => {
