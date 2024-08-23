@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { memo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';

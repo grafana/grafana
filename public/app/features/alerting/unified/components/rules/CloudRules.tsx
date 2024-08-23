@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
 import { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { LinkButton, LoadingPlaceholder, Pagination, Spinner, Text, useStyles2 } from '@grafana/ui';
