@@ -30,7 +30,6 @@ func ProvideService(
 	cfg *setting.Cfg, sqlStore db.DB, usageStats usagestats.Service,
 	secretsService secrets.Service, grpcProvider grpcserver.Provider, reg prometheus.Registerer,
 ) (*RemoteCache, error) {
-
 	logger := log.New("remote-cache")
 	client, err := createClient(cfg, sqlStore, logger, secretsService, grpcProvider, reg)
 	if err != nil {

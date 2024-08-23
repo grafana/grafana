@@ -43,7 +43,6 @@ func (b *localBackend) Get(ctx context.Context, key string) ([]byte, error) {
 func (b *localBackend) Set(ctx context.Context, key string, value []byte, expire time.Duration) error {
 	b.store.Set(key, value, expire)
 	return nil
-
 }
 
 func (b *localBackend) Delete(ctx context.Context, key string) error {

@@ -40,7 +40,6 @@ func (cfg *Cfg) readCacheSettings() {
 			HeartbeatTimeout: gtimeWithFallback(ringCacheSec.Key("heartbeat_timeout").MustString("1m"), time.Minute),
 		},
 	}
-
 }
 
 func gtimeWithFallback(v string, fallback time.Duration) time.Duration {

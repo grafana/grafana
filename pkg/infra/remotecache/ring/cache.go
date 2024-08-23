@@ -19,7 +19,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache/common"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
@@ -48,6 +47,10 @@ func NewCache(cfg *setting.Cfg, reg prometheus.Registerer, provider grpcserver.P
 		Port:          cfg.RemoteCache.Ring.Port,
 		JoinMembers:   cfg.RemoteCache.Ring.JoinMembers,
 	}, logger, reg)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create memberlist: %w", err)
+	}
 
 	ring, lfc, err := newRing(
 		// FIXME(kalleep): what should we configure the id to
@@ -87,7 +90,7 @@ func NewCache(cfg *setting.Cfg, reg prometheus.Registerer, provider grpcserver.P
 
 type Cache struct {
 	UnimplementedDispatcherServer
-	logger   glog.Logger
+	logger   log.Logger
 	provider grpcserver.Provider
 
 	mux *http.ServeMux
@@ -108,17 +111,24 @@ func (c *Cache) Run(ctx context.Context) error {
 	}
 
 	stopCtx := context.Background()
-	defer services.StopAndAwaitTerminated(stopCtx, c.mlist)
+	defer func() {
+		_ = services.StopAndAwaitTerminated(stopCtx, c.mlist)
+	}()
 
 	if err := services.StartAndAwaitRunning(ctx, c.ring); err != nil {
 		return fmt.Errorf("failed to start ring: %w", err)
 	}
-	defer services.StopAndAwaitTerminated(stopCtx, c.ring)
+
+	defer func() {
+		_ = services.StopAndAwaitTerminated(stopCtx, c.ring)
+	}()
 
 	if err := services.StartAndAwaitRunning(ctx, c.lfc); err != nil {
 		return fmt.Errorf("failed to start lfc: %w", err)
 	}
-	defer services.StopAndAwaitTerminated(stopCtx, c.lfc)
+	defer func() {
+		_ = services.StopAndAwaitTerminated(stopCtx, c.lfc)
+	}()
 
 	<-ctx.Done()
 	return ctx.Err()
