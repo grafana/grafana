@@ -474,16 +474,18 @@ func userRoleAssignemtCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "user_role_assignment"
 		const query = `
-			SELECT ur.org_id, u.uid AS user_uid, r.uid AS role_uid
+			SELECT ur.org_id, u.uid AS user_uid, r.uid AS role_uid, r.name AS role_name
 			FROM user_role ur
 			LEFT JOIN role r ON r.id = ur.role_id
 			LEFT JOIN user u ON u.id = ur.user_id
+			WHERE r.name NOT LIKE 'managed:%'
 		`
 
 		type Assignment struct {
-			OrgID   int64  `xorm:"org_id"`
-			UserUID string `xorm:"user_uid"`
-			RoleUID string `xorm:"role_uid"`
+			OrgID    int64  `xorm:"org_id"`
+			UserUID  string `xorm:"user_uid"`
+			RoleUID  string `xorm:"role_uid"`
+			RoleName string `xorm:"role_name"`
 		}
 
 		var assignments []Assignment
@@ -496,20 +498,31 @@ func userRoleAssignemtCollector(store db.DB) TupleCollector {
 
 		for _, a := range assignments {
 			var subject string
-			if a.UserUID != "" && a.RoleUID != "" {
-				subject = zanzana.NewTupleEntry(zanzana.TypeUser, a.UserUID, "")
-			} else {
+			if a.UserUID == "" || a.RoleUID == "" {
 				continue
 			}
 
-			tuple := &openfgav1.TupleKey{
-				User:     subject,
-				Relation: zanzana.RelationAssignee,
-				Object:   zanzana.NewScopedTupleEntry(zanzana.TypeRole, a.RoleUID, "", strconv.FormatInt(a.OrgID, 10)),
+			subject = zanzana.NewTupleEntry(zanzana.TypeUser, a.UserUID, "")
+			if strings.HasPrefix(a.RoleUID, "fixed_") {
+				relation := zanzana.TranslateFixedRole(a.RoleName)
+				tuple := &openfgav1.TupleKey{
+					User:     subject,
+					Relation: relation,
+					Object:   zanzana.NewTupleEntry(zanzana.KindOrg, strconv.FormatInt(a.OrgID, 10), ""),
+				}
+				key := fmt.Sprintf("%s-%s", collectorID, relation)
+				tuples[key] = append(tuples[key], tuple)
+			} else {
+				tuple := &openfgav1.TupleKey{
+					User:     subject,
+					Relation: zanzana.RelationAssignee,
+					Object:   zanzana.NewScopedTupleEntry(zanzana.TypeRole, a.RoleUID, "", strconv.FormatInt(a.OrgID, 10)),
+				}
+
+				key := fmt.Sprintf("%s-%s", collectorID, zanzana.RelationAssignee)
+				tuples[key] = append(tuples[key], tuple)
 			}
 
-			key := fmt.Sprintf("%s-%s", collectorID, zanzana.RelationAssignee)
-			tuples[key] = append(tuples[key], tuple)
 		}
 
 		return nil
