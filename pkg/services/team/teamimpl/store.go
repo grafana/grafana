@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -385,7 +384,7 @@ func isTeamMember(sess *db.Session, orgId int64, teamId int64, userId int64) (bo
 
 // AddOrUpdateTeamMemberHook is called from team resource permission service
 // it adds user to a team or updates user permissions in a team within the given transaction session
-func AddOrUpdateTeamMemberHook(sess *db.Session, userID, orgID, teamID int64, isExternal bool, permission dashboardaccess.PermissionType) error {
+func AddOrUpdateTeamMemberHook(sess *db.Session, userID, orgID, teamID int64, isExternal bool, permission team.PermissionType) error {
 	isMember, err := isTeamMember(sess, orgID, teamID, userID)
 	if err != nil {
 		return err
@@ -400,7 +399,7 @@ func AddOrUpdateTeamMemberHook(sess *db.Session, userID, orgID, teamID int64, is
 	return err
 }
 
-func addTeamMember(sess *db.Session, orgID, teamID, userID int64, isExternal bool, permission dashboardaccess.PermissionType) error {
+func addTeamMember(sess *db.Session, orgID, teamID, userID int64, isExternal bool, permission team.PermissionType) error {
 	if _, err := teamExists(orgID, teamID, sess); err != nil {
 		return err
 	}
@@ -419,14 +418,14 @@ func addTeamMember(sess *db.Session, orgID, teamID, userID int64, isExternal boo
 	return err
 }
 
-func updateTeamMember(sess *db.Session, orgID, teamID, userID int64, permission dashboardaccess.PermissionType) error {
+func updateTeamMember(sess *db.Session, orgID, teamID, userID int64, permission team.PermissionType) error {
 	member, err := getTeamMember(sess, orgID, teamID, userID)
 	if err != nil {
 		return err
 	}
 
-	if permission != dashboardaccess.PERMISSION_ADMIN {
-		permission = 0 // make sure we don't get invalid permission levels in store
+	if permission != team.PermissionTypeAdmin {
+		permission = team.PermissionTypeMember // make sure we don't get invalid permission levels in store
 	}
 
 	member.Permission = permission
