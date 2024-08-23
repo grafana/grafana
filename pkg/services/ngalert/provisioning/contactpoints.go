@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/alertmanager/config"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -24,6 +25,7 @@ import (
 
 type AlertRuleNotificationSettingsStore interface {
 	RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error)
+	RenameTimeIntervalInNotificationSettings(ctx context.Context, orgID int64, oldTimeInterval, newTimeInterval string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
 	ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
 }
 
@@ -516,11 +518,37 @@ func RemoveSecretsForContactPoint(e *apimodels.EmbeddedContactPoint) (map[string
 		return nil, err
 	}
 	for _, secretKey := range secretKeys {
-		secretValue := e.Settings.Get(secretKey).MustString()
-		e.Settings.Del(secretKey)
+		foundSecretKey, secretValue, err := getCaseInsensitive(e.Settings, secretKey)
+		if err != nil {
+			return nil, err
+		}
+		e.Settings.Del(foundSecretKey)
 		s[secretKey] = secretValue
 	}
 	return s, nil
+}
+
+// getCaseInsensitive returns the value of the specified key, preferring an exact match but accepting a case-insensitive match.
+// If no key matches, the second return value is an empty string.
+func getCaseInsensitive(jsonObj *simplejson.Json, key string) (string, string, error) {
+	// Check for an exact key match first.
+	if value, ok := jsonObj.CheckGet(key); ok {
+		return key, value.MustString(), nil
+	}
+
+	// If no exact match is found, look for a case-insensitive match.
+	settingsMap, err := jsonObj.Map()
+	if err != nil {
+		return "", "", err
+	}
+
+	for k, v := range settingsMap {
+		if strings.EqualFold(k, key) {
+			return k, v.(string), nil
+		}
+	}
+
+	return key, "", nil
 }
 
 // convertRecSvcErr converts errors from notifier.ReceiverService to errors expected from ContactPointService.

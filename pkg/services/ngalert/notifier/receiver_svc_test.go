@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -32,7 +33,7 @@ func TestReceiverService_GetReceiver(t *testing.T) {
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
-			accesscontrol.ActionAlertingProvisioningRead: nil,
+			accesscontrol.ActionAlertingNotificationsRead: nil,
 		},
 	}}
 
@@ -60,7 +61,7 @@ func TestReceiverService_GetReceivers(t *testing.T) {
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
-			accesscontrol.ActionAlertingProvisioningRead: nil,
+			accesscontrol.ActionAlertingNotificationsRead: nil,
 		},
 	}}
 
@@ -93,7 +94,7 @@ func TestReceiverService_DecryptRedact(t *testing.T) {
 	readUser := &user.SignedInUser{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
-			1: {accesscontrol.ActionAlertingProvisioningRead: nil},
+			1: {accesscontrol.ActionAlertingNotificationsRead: nil},
 		},
 	}
 
@@ -101,8 +102,8 @@ func TestReceiverService_DecryptRedact(t *testing.T) {
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
 			1: {
-				accesscontrol.ActionAlertingProvisioningRead:        nil,
-				accesscontrol.ActionAlertingProvisioningReadSecrets: nil,
+				accesscontrol.ActionAlertingNotificationsRead:    nil,
+				accesscontrol.ActionAlertingReceiversReadSecrets: nil,
 			},
 		},
 	}
@@ -123,13 +124,13 @@ func TestReceiverService_DecryptRedact(t *testing.T) {
 			name:    "service returns error when trying to decrypt without permission",
 			decrypt: true,
 			user:    readUser,
-			err:     "[alerting.unauthorized] user is not authorized to read any decrypted receiver",
+			err:     "[alerting.unauthorized] user is not authorized to read decrypted receiver",
 		},
 		{
 			name:    "service returns error if user is nil and decrypt is true",
 			decrypt: true,
 			user:    nil,
-			err:     "[alerting.unauthorized] user is not authorized to read any decrypted receiver",
+			err:     "[alerting.unauthorized] user is not authorized to read decrypted receiver",
 		},
 		{
 			name:    "service decrypts receivers with permission",
@@ -189,7 +190,7 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secrets.Service) *Receive
 	provisioningStore := fakes.NewFakeProvisioningStore()
 
 	return NewReceiverService(
-		acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
+		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), false),
 		legacy_storage.NewAlertmanagerConfigStore(store),
 		provisioningStore,
 		encryptSvc,

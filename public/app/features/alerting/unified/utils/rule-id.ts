@@ -1,7 +1,15 @@
 import { nth } from 'lodash';
 
 import { locationService } from '@grafana/runtime';
-import { CombinedRule, Rule, RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
+import {
+  CloudRuleIdentifier,
+  CombinedRule,
+  EditableRuleIdentifier,
+  Rule,
+  RuleGroupIdentifier,
+  RuleIdentifier,
+  RuleWithLocation,
+} from 'app/types/unified-alerting';
 import { Annotations, Labels, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
@@ -21,7 +29,7 @@ export function fromRulerRule(
   namespace: string,
   groupName: string,
   rule: RulerRuleDTO
-): RuleIdentifier {
+): EditableRuleIdentifier {
   if (isGrafanaRulerRule(rule)) {
     return { uid: rule.grafana_alert.uid!, ruleSourceName: 'grafana' };
   }
@@ -31,7 +39,15 @@ export function fromRulerRule(
     groupName,
     ruleName: isAlertingRulerRule(rule) ? rule.alert : rule.record,
     rulerRuleHash: hashRulerRule(rule),
-  };
+  } satisfies CloudRuleIdentifier;
+}
+
+export function fromRulerRuleAndRuleGroupIdentifier(
+  ruleGroup: RuleGroupIdentifier,
+  rule: RulerRuleDTO
+): EditableRuleIdentifier {
+  const { dataSourceName, namespaceName, groupName } = ruleGroup;
+  return fromRulerRule(dataSourceName, namespaceName, groupName, rule);
 }
 
 export function fromRule(ruleSourceName: string, namespace: string, groupName: string, rule: Rule): RuleIdentifier {

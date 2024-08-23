@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, Stack, useStyles2 } from '@grafana/ui';
@@ -19,7 +19,7 @@ import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datas
 import { createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { isGrafanaAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
-import { createUrl } from '../../utils/url';
+import { createRelativeUrl } from '../../utils/url';
 
 import { RedirectToCloneRule } from './CloneRule';
 
@@ -95,7 +95,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
   if (rulerRule && canEditRule) {
     const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
 
-    const editURL = createUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`, {
+    const editURL = createRelativeUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`, {
       returnTo,
     });
 

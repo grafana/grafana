@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { memo, useEffect, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -87,7 +87,9 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
 
   const hasSelection = useHasSelection();
 
-  const { canEditFolders, canEditDashboards, canCreateDashboards, canCreateFolders } = getFolderPermissions(folderDTO);
+  const { data: rootFolder } = useGetFolderQuery('general');
+  let folder = folderDTO ? folderDTO : rootFolder;
+  const { canEditFolders, canEditDashboards, canCreateDashboards, canCreateFolders } = getFolderPermissions(folder);
 
   const showEditTitle = canEditFolders && folderUID;
   const canSelect = canEditFolders || canEditDashboards;

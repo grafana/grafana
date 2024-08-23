@@ -7,6 +7,7 @@ module.exports = {
   target: 'web',
   entry: {
     app: './public/app/index.ts',
+    swagger: './public/swagger/index.tsx',
   },
   output: {
     clean: true,
@@ -106,7 +107,7 @@ module.exports = {
       },
       // for pre-caching SVGs as part of the JS bundles
       {
-        test: /(unicons|mono|custom)[\\/].*\.svg$/,
+        test: /(unicons|mono|custom|solid)[\\/].*\.svg$/,
         type: 'asset/source',
       },
       {

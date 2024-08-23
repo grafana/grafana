@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/folder"
 	alertingauthz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -121,6 +122,7 @@ func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionDatasources func(context.Context, string, datasources.BaseDataSourceService, datasources.CorrelationsStore, org.Service) error,
 	provisionPlugins func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error,
+	searchService searchV2.SearchService,
 ) *ProvisioningServiceImpl {
 	return &ProvisioningServiceImpl{
 		log:                     log.New("provisioning"),
@@ -128,6 +130,7 @@ func newProvisioningServiceImpl(
 		provisionDatasources:    provisionDatasources,
 		provisionPlugins:        provisionPlugins,
 		Cfg:                     setting.NewCfg(),
+		searchService:           searchService,
 	}
 }
 
@@ -184,7 +187,6 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 	err := ps.ProvisionDashboards(ctx)
 	if err != nil {
 		ps.log.Error("Failed to provision dashboard", "error", err)
-		return err
 	}
 	if ps.dashboardProvisioner.HasDashboardSources() {
 		ps.searchService.TriggerReIndex()
@@ -273,7 +275,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 	)
 	configStore := legacy_storage.NewAlertmanagerConfigStore(&st)
 	receiverSvc := notifier.NewReceiverService(
-		ps.ac,
+		alertingauthz.NewReceiverAccess[*ngmodels.Receiver](ps.ac, true),
 		configStore,
 		st,
 		ps.secretService,

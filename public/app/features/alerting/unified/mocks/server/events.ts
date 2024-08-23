@@ -3,6 +3,8 @@ import { JsonValue } from 'type-fest';
 
 import server from 'app/features/alerting/unified/mockApi';
 
+type PredicateFn = (request: Request) => boolean;
+
 /**
  * Wait for the mock server to receive a request for the given method + url combination,
  * and resolve with information about the request that was made
@@ -40,11 +42,14 @@ interface SerializedRequest {
  *
  * @deprecated Try not to use this 🙏 instead aim to assert against UI side effects
  */
-export async function captureRequests(): Promise<Request[]> {
-  let requests: Request[] = [];
+
+export async function captureRequests(predicateFn: PredicateFn = () => true): Promise<Request[]> {
+  const requests: Request[] = [];
 
   server.events.on('request:start', ({ request }) => {
-    requests.push(request);
+    if (predicateFn(request)) {
+      requests.push(request);
+    }
   });
 
   return requests;

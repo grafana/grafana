@@ -35,7 +35,7 @@ export function getElementStyles(theme: GrafanaTheme2) {
         // Need type assertion here due to the use of !important
         // see https://github.com/frenic/csstype/issues/114#issuecomment-697201978
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        overflowY: 'scroll !important' as 'scroll',
+        overflowY: 'auto !important' as 'auto',
         paddingRight: '0 !important',
         '@media print': {
           overflow: 'visible',
@@ -336,6 +336,13 @@ export function getElementStyles(theme: GrafanaTheme2) {
 
     '.template-variable': {
       color: theme.colors.primary.text,
+    },
+
+    '.modal-header-title': {
+      fontSize: theme.typography.size.lg,
+      float: 'left',
+      paddingTop: theme.spacing(1),
+      margin: theme.spacing(0, 2),
     },
   });
 }
