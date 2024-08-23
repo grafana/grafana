@@ -147,7 +147,9 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     body: css({
       label: 'body',
+      display: 'flex',
       flex: 1,
+      flexDirection: 'column',
       overflowY: 'auto',
     }),
   };
