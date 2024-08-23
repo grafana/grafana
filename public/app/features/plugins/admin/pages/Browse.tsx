@@ -6,6 +6,7 @@ import { SelectableValue, GrafanaTheme2, PluginType } from '@grafana/data';
 import { locationSearchToObject } from '@grafana/runtime';
 import { Select, RadioButtonGroup, useStyles2, Tooltip, Field, Button } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { Trans } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
@@ -88,7 +89,8 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   );
   const updateAll = (
     <Button disabled={disableUpdateAllButton} onClick={onUpdateAll}>
-      Update all{!disableUpdateAllButton ? ` (${updatablePlugins.length})` : ''}
+      <Trans i18nKey="plugins.catalog.update-all.button">Update all</Trans>
+      {!disableUpdateAllButton ? ` (${updatablePlugins.length})` : ''}
     </Button>
   );
 

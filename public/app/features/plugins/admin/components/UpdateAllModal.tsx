@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Checkbox, ConfirmModal, EmptyState, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { useInstall, useInstallStatus } from '../state/hooks';
 import { CatalogPlugin } from '../types';
@@ -26,7 +27,9 @@ function getIcon({
 }) {
   if (errorMap && errorMap.has(id)) {
     return (
-      <Tooltip content={`Error updating plugin: ${errorMap.get(id)?.message}. Close the modal and try again.`}>
+      <Tooltip
+        content={`${t('plugins.catalog.update-all.error', 'Error updating plugin:')} ${errorMap.get(id)?.message}`}
+      >
         <Icon size="xl" name="exclamation-circle" />
       </Tooltip>
     );
@@ -93,18 +96,31 @@ const ModalBody = ({ plugins, inProgress, selectedPlugins, onCheckboxChange, err
   return (
     <div className={styles.modalContainer}>
       {plugins.length === 0 ? (
-        <EmptyState variant="completed" message={'All plugins updated!'} />
+        <EmptyState
+          variant="completed"
+          message={t('plugins.catalog.update-all.all-plugins-updated', 'All plugins updated!')}
+        />
       ) : (
         <>
-          <div>The following plugins have update available</div>
+          <div>
+            <Trans i18nKey="plugins.catalog.update-all.header">The following plugins have update available</Trans>
+          </div>
           <div className={styles.tableContainer}>
             <table className={styles.table}>
               <thead className={styles.header}>
                 <tr>
-                  <th>Update</th>
-                  <th>Name</th>
-                  <th>Installed</th>
-                  <th>Available</th>
+                  <th>
+                    <Trans i18nKey="plugins.catalog.update-all.update-header">Update</Trans>
+                  </th>
+                  <th>
+                    <Trans i18nKey="plugins.catalog.update-all.name-header">Name</Trans>
+                  </th>
+                  <th>
+                    <Trans i18nKey="plugins.catalog.update-all.installed-header">Installed</Trans>
+                  </th>
+                  <th>
+                    <Trans i18nKey="plugins.catalog.update-all.available-header">Available</Trans>
+                  </th>
                   <th></th>
                 </tr>
               </thead>
@@ -125,7 +141,9 @@ const ModalBody = ({ plugins, inProgress, selectedPlugins, onCheckboxChange, err
           </div>
           {config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall && (
             <footer className={styles.footer}>
-              * It may take a few minutes for the plugins to be available for usage.
+              <Trans i18nKey="plugins.catalog.update-all.cloud-update-message">
+                * It may take a few minutes for the plugins to be available for usage.
+              </Trans>
             </footer>
           )}
         </>
@@ -234,7 +252,7 @@ export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
   return (
     <ConfirmModal
       isOpen={isOpen}
-      title="Update Plugins"
+      title={t('plugins.catalog.update-all.modal-title', 'Update Plugins')}
       body={
         <ModalBody
           plugins={plugins}
@@ -247,7 +265,11 @@ export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
       onConfirm={installsRemaining > 0 ? onConfirm : onDismissClick}
       onDismiss={onDismissClick}
       disabled={selectedPlugins?.size === 0 || inProgress}
-      confirmText={installsRemaining > 0 ? `Update (${selectedPlugins?.size})` : 'Close'}
+      confirmText={
+        installsRemaining > 0
+          ? `${t('plugins.catalog.update-all.modal-confirmation', 'Update')} (${selectedPlugins?.size})`
+          : t('plugins.catalog.update-all.modal-dismiss', 'Close')
+      }
     />
   );
 };
