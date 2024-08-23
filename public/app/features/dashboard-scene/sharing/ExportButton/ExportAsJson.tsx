@@ -113,7 +113,7 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     codeEditorBox: css({
       margin: `${theme.spacing(2)} 0`,
-      height: '50%',
+      height: '75%',
     }),
     container: css({
       paddingBottom: theme.spacing(2),
