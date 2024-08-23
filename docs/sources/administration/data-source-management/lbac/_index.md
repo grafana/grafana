@@ -31,19 +31,19 @@ This feature addresses two common challenges faced by Grafana users:
 1. Using the same dashboard across multiple teams.
    Team LBAC lets Grafana Teams use the same dashboard with different access control rules.
 
-To set up Team LBAC for a Loki data source, refer to [Configure Team LBAC](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-loki/).
+To set up Team LBAC for a Loki data source, refer to [Configure Team LBAC](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/lbac/configure-lbac-for-loki/).
 
 ## Limitations
 
 - There is a set number of rules to be configured within a datasource, depending on the size of the rules.
   - Around ~500-600 rules is the upper limit.
-- If there are no Team LBAC rules for a user's team, that user can query all logs.
-- If an administrator is part of a team with Team LBAC rules, those rules are applied to the administrator requests.
-- Cloud Access Policies (CAP) LBAC rules override Team LBAC rules.
+- If there are no LBAC rules for a user's team, that user can query all logs.
+- If an administrator is part of a team with LBAC rules, those rules are applied to the administrator requests.
+- Cloud Access Policies (CAP) LBAC rules override LBAC rules.
   Cloud Access Policies are the access controls from Grafana Cloud.
   If there are any CAP LBAC rules configured for the same data source, then only the CAP LBAC rules are applied.
 
-  You must remove any label selectors from your Cloud Access Policies to use Team LBAC.
+  You must remove any label selectors from your Cloud Access Policies to use LBAC for datasources.
   For more information about CAP label selectors, refer to [Use label-based access control (LBAC) with access policies](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/label-access-policies/).
 
 ## Data source permissions
@@ -54,17 +54,17 @@ All the teams and users that are part of the data source inherit those permissio
 
 ## Recommended setup
 
-It's recommended that you create a single Loki data source for using Team LBAC rules so you have a clear separation of data sources using Team LBAC and those that aren't.
+It's recommended that you create a single Loki data source for using LBAC rules so you have a clear separation of data sources using LBAC and those that aren't.
 All teams should have with only teams having `query` permission.
-You should create another Loki data source configured without Team LBAC for full access to the logs.
+You should create another Loki data source configured without LBAC for full access to the logs.
 
-## Team LBAC rules
+## LBAC rules
 
-Grafana adds Team LBAC rules to the HTTP request via the Loki data source.
+Grafana adds LBAC rules to the HTTP request via the Loki data source.
 
 If you configure multiple rules for a team, each rule is evaluated separately.
 Query results include lines that match any of the rules.
 
-Only users with data source `Admin` permissions can edit Team LBAC rules in the **Data source permissions** tab because changing LBAC rules requires the same access level as editing data source permissions.
+Only users with data source `Admin` permissions can edit LBAC rules in the **Data source permissions** tab because changing LBAC rules requires the same access level as editing data source permissions.
 
-To set up Team LBAC for a Loki data source, refer to [Configure Team LBAC](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-loki/).
+To set up LBAC for a Loki data source, refer to [Configure LBAC for datasources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/lbac/configure-lbac-for-loki/).

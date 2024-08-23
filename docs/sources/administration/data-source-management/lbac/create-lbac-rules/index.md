@@ -12,22 +12,22 @@ title: Create Team LBAC rules for the Loki data source
 weight: 250
 ---
 
-# Create Team LBAC rules for the Loki data source
+# Create LBAC rules for the Loki data source
 
-Team LBAC is available on Cloud for data sources created with basic authentication. Any managed Loki data source can **NOT** be configured with Team LBAC rules.
+Team is available on Cloud for data sources created with basic authentication. Any managed Loki data source can **NOT** be configured with LBAC rules.
 
 ## Before you begin
 
 - Be sure that you have admin data source permissions for Grafana.
 - Be sure that you have a team setup in Grafana.
 
-### Create a Team LBAC Rule for a team
+### Create a LBAC Rule for a team
 
 1. Navigate to your Loki datasource
 1. Navigate to the permissions tab
-   - Here, you'll find the Team LBAC rules section.
-1. Add a Team LBAC Rule
-   - Add a new rule for the team in the Team LBAC rules section.
+   - Here, you'll find the LBAC rules section.
+1. Add a LBAC Rule
+   - Add a new rule for the team in the LBAC rules section.
 1. Define Label Selector for the Rule
    - Add a label selector to the rule. Refer to Loki query documentation for guidance on the types of log selections you can specify.
 
