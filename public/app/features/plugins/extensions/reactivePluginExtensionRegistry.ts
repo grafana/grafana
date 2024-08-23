@@ -5,7 +5,6 @@ import { PluginPreloadResult } from '../pluginPreloader';
 
 import { PluginExtensionRegistry, PluginExtensionRegistryItem } from './types';
 import { deepFreeze, logWarning } from './utils';
-import { isPluginExtensionConfigValid } from './validators';
 
 export class ReactivePluginExtensionsRegistry {
   private resultSubject: Subject<PluginPreloadResult>;
@@ -55,9 +54,9 @@ function resultsToRegistry(registry: PluginExtensionRegistry, result: PluginPrel
     const { extensionPointId } = extensionConfig;
 
     // Check if the config is valid
-    if (!extensionConfig || !isPluginExtensionConfigValid(pluginId, extensionConfig)) {
-      return registry;
-    }
+    // if (!extensionConfig || !isPluginExtensionConfigValid(pluginId, extensionConfig)) {
+    //   return registry;
+    // }
 
     let registryItem: PluginExtensionRegistryItem = {
       config: extensionConfig,

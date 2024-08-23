@@ -557,6 +557,7 @@ export {
   type PluginExtensionOpenModalOptions,
   type PluginExposedComponentConfig,
   type PluginAddedComponentConfig,
+  type PluginAddedLinkConfig,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,

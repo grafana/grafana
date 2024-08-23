@@ -117,6 +117,57 @@ export type PluginAddedComponentConfig<Props = {}> = {
   component: React.ComponentType<Props>;
 };
 
+export type PluginAddedLinksConfigureFunc<Context extends object> = (context?: Readonly<Context>) =>
+  | Partial<{
+      title: string;
+      description: string;
+      path: string;
+      onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
+      icon: IconName;
+      category: string;
+    }>
+  | undefined;
+
+export type PluginAddedLinkConfig<Context extends object = object> = {
+  /**
+   * The title of the link extension
+   */
+  title: string;
+
+  /**
+   * A short description
+   */
+  description: string;
+
+  /**
+   * The target extension points where the link will be added
+   */
+  targets: string | string[];
+
+  /** A URL path that will be used as the href for the rendered link extension
+   * (It is optional, because in some cases the action will be handled by the `onClick` handler instead of navigating to a new page)
+   */
+  path?: string;
+
+  /** A URL path that will be used as the href for the rendered link extension
+   * (It is optional, because in some cases the action will be handled by the `onClick` handler instead of navigating to a new page)
+   * path?: string;
+   *
+   * A function that will be called when the link is clicked
+   *  (It is called with the original event object)
+   */
+  onClick?: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
+
+  // (Optional) A function that can be used to configure the extension dynamically based on the extension point's context
+  configure?: PluginAddedLinksConfigureFunc<Context>;
+
+  // (Optional) A icon that can be displayed in the ui for the extension option.
+  icon?: IconName;
+
+  // (Optional) A category to be used when grouping the options in the ui
+  category?: string;
+};
+
 export type PluginExposedComponentConfig<Props = {}> = {
   /**
    * The unique identifier of the component

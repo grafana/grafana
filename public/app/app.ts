@@ -87,6 +87,7 @@ import { getCoreExtensionConfigurations } from './features/plugins/extensions/ge
 import { createPluginExtensionsGetter } from './features/plugins/extensions/getPluginExtensions';
 import { ReactivePluginExtensionsRegistry } from './features/plugins/extensions/reactivePluginExtensionRegistry';
 import { AddedComponentsRegistry } from './features/plugins/extensions/registry/AddedComponentsRegistry';
+import { AddedLinksRegistry } from './features/plugins/extensions/registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './features/plugins/extensions/registry/ExposedComponentsRegistry';
 import { createUsePluginComponent } from './features/plugins/extensions/usePluginComponent';
 import { createUsePluginComponents } from './features/plugins/extensions/usePluginComponents';
@@ -217,12 +218,12 @@ export class GrafanaApp {
         extensionsRegistry: new ReactivePluginExtensionsRegistry(),
         addedComponentsRegistry: new AddedComponentsRegistry(),
         exposedComponentsRegistry: new ExposedComponentsRegistry(),
+        addedLinksRegistry: new AddedLinksRegistry(),
       };
-      pluginExtensionsRegistries.extensionsRegistry.register({
+
+      pluginExtensionsRegistries.addedLinksRegistry.register({
         pluginId: 'grafana',
-        extensionConfigs: getCoreExtensionConfigurations(),
-        exposedComponentConfigs: [],
-        addedComponentConfigs: [],
+        configs: getCoreExtensionConfigurations(),
       });
 
       if (contextSrv.user.orgRole !== '') {

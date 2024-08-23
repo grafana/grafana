@@ -5,11 +5,11 @@ import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
 import {
   type PluginExtensionLinkConfig,
-  PluginExtensionTypes,
   PluginExtensionComponentConfig,
   PluginExposedComponentConfig,
   PluginExtensionConfig,
   PluginAddedComponentConfig,
+  PluginAddedLinkConfig,
 } from './pluginExtensions';
 
 /**
@@ -60,6 +60,7 @@ export interface AppPluginMeta<T extends KeyValue = KeyValue> extends PluginMeta
 export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
   private _exposedComponentConfigs: PluginExposedComponentConfig[] = [];
   private _addedComponentConfigs: PluginAddedComponentConfig[] = [];
+  private _addedLinkConfigs: PluginAddedLinkConfig[] = [];
   private _extensionConfigs: PluginExtensionConfig[] = [];
 
   // Content under: /a/${plugin-id}/*
@@ -114,22 +115,32 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this._extensionConfigs;
   }
 
-  addLink<Context extends object>(
-    extensionConfig: { targets: string | string[] } & Omit<
-      PluginExtensionLinkConfig<Context>,
-      'type' | 'extensionPointId'
-    >
-  ) {
-    const { targets, ...extension } = extensionConfig;
-    const targetsArray = Array.isArray(targets) ? targets : [targets];
+  get addedLinkConfigs() {
+    return this._addedLinkConfigs;
+  }
 
-    targetsArray.forEach((target) => {
-      this._extensionConfigs.push({
-        ...extension,
-        extensionPointId: target,
-        type: PluginExtensionTypes.link,
-      } as PluginExtensionLinkConfig);
-    });
+  // addLink<Context extends object>(
+  //   extensionConfig: { targets: string | string[] } & Omit<
+  //     PluginExtensionLinkConfig<Context>,
+  //     'type' | 'extensionPointId'
+  //   >
+  // ) {
+  //   const { targets, ...extension } = extensionConfig;
+  //   const targetsArray = Array.isArray(targets) ? targets : [targets];
+
+  //   targetsArray.forEach((target) => {
+  //     this._extensionConfigs.push({
+  //       ...extension,
+  //       extensionPointId: target,
+  //       type: PluginExtensionTypes.link,
+  //     } as PluginExtensionLinkConfig);
+  //   });
+
+  //   return this;
+  // }
+
+  addLink<Context extends object>(linkConfig: PluginAddedLinkConfig<Context>) {
+    this._addedLinkConfigs.push(linkConfig as PluginAddedLinkConfig);
 
     return this;
   }
