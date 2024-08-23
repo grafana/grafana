@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useId } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -31,6 +32,12 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
   const styles = useStyles2(getStyles);
   const { register, setValue, watch } = useFormContext<LdapPayload>();
 
+  const nameId = useId();
+  const surnameId = useId();
+  const usernameId = useId();
+  const memberOfId = useId();
+  const emailId = useId();
+
   const groupMappingsLabel = (
     <Label
       className={styles.sectionLabel}
@@ -52,7 +59,7 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
   );
 
   return (
-    <Drawer title={t('ldap-drawer.title', 'Advanced Settings')} onClose={onClose}>
+    <Drawer title={t('ldap-drawer.title', 'Advanced settings')} onClose={onClose}>
       <CollapsableSection label={t('ldap-drawer.misc-section.label', 'Misc')} isOpen={true}>
         <Field
           label={t('ldap-drawer.misc-section.allow-sign-up.label', 'Allow sign up')}
@@ -72,7 +79,7 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
         >
           <Input
             id="port"
-            placeholder={t('ldap-drawer.misc-section.port.placeholder', '389')}
+            placeholder="389"
             type="number"
             {...register('settings.config.servers.0.port', { valueAsNumber: true })}
           />
@@ -86,7 +93,7 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
         >
           <Input
             id="timeout"
-            placeholder={t('ldap-drawer.misc-section.timeout.placeholder', '389')}
+            placeholder="10"
             type="number"
             {...register('settings.config.servers.0.timeout', { valueAsNumber: true })}
           />
@@ -99,20 +106,20 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
             the application correctly retrieves and displays user information.
           </Trans>
         </Text>
-        <Field htmlFor="name" label={t('ldap-drawer.attributes-section.name.label', 'Name')}>
-          <Input id="name" {...register('settings.config.servers.0.attributes.name')} />
+        <Field label={t('ldap-drawer.attributes-section.name.label', 'Name')}>
+          <Input id={nameId} {...register('settings.config.servers.0.attributes.name')} />
         </Field>
-        <Field htmlFor="surname" label={t('ldap-drawer.attributes-section.surname.label', 'Surname')}>
-          <Input id="surname" {...register('settings.config.servers.0.attributes.surname')} />
+        <Field label={t('ldap-drawer.attributes-section.surname.label', 'Surname')}>
+          <Input id={surnameId} {...register('settings.config.servers.0.attributes.surname')} />
         </Field>
-        <Field htmlFor="username" label={t('ldap-drawer.attributes-section.username.label', 'Username')}>
-          <Input id="username" {...register('settings.config.servers.0.attributes.username')} />
+        <Field label={t('ldap-drawer.attributes-section.username.label', 'Username')}>
+          <Input id={usernameId} {...register('settings.config.servers.0.attributes.username')} />
         </Field>
-        <Field htmlFor="member-of" label={t('ldap-drawer.attributes-section.member-of.label', 'Member Of')}>
-          <Input id="member-of" {...register('settings.config.servers.0.attributes.member_of')} />
+        <Field label={t('ldap-drawer.attributes-section.member-of.label', 'Member Of')}>
+          <Input id={memberOfId} {...register('settings.config.servers.0.attributes.member_of')} />
         </Field>
-        <Field htmlFor="email" label={t('ldap-drawer.attributes-section.email.label', 'Email')}>
-          <Input id="email" {...register('settings.config.servers.0.attributes.email')} />
+        <Field label={t('ldap-drawer.attributes-section.email.label', 'Email')}>
+          <Input id={emailId} {...register('settings.config.servers.0.attributes.email')} />
         </Field>
       </CollapsableSection>
       <CollapsableSection label={groupMappingsLabel} isOpen={true}>

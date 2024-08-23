@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil, NavModelItem } from '@grafana/data';
 import { SceneObject, SceneObjectState } from '@grafana/scenes';
