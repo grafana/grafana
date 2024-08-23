@@ -199,7 +199,9 @@ Queries performed using the cross-tenant configured data source, in either **Exp
 are performed across all the tenants that you specified in the **X-Scope-OrgID** header.
 
 <!-- vale Grafana.Spelling = NO -->
+
 TraceQL queries that compare multiple spansets may not correctly return all traces in a cross-tenant query. For instance,
+
 <!-- vale Grafana.Quotes = YES -->
 
 ```
