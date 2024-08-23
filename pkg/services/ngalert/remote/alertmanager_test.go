@@ -44,8 +44,9 @@ import (
 
 const (
 	// Valid Grafana Alertmanager configurations.
-	testGrafanaConfig           = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"}}]}]}}`
-	testGrafanaConfigWithSecret = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test"},"secureSettings":{"password":"test"}}]}]}}`
+	testGrafanaConfig                               = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"}}]}]}}`
+	testGrafanaConfigWithSecret                     = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test"},"secureSettings":{"password":"test"}}]}]}}`
+	testGrafanaDefaultConfigWithDifferentFieldOrder = `{"alertmanager_config":{"route":{"group_by":["alertname","grafana_folder"],"receiver":"grafana-default-email"},"receivers":[{"grafana_managed_receiver_configs":[{"uid":"","name":"email receiver","type":"email","settings":{"addresses":"<example@email.com>"}}],"name":"grafana-default-email"}]}}`
 
 	// Valid Alertmanager state base64 encoded.
 	testSilence1 = "lwEKhgEKATESFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCN2CkbAGEJbKrMsDIgwI7Z6RsAYQlsqsywMqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCO2ekbAGEJbKrMsD"
@@ -330,6 +331,50 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 				return
 			}
 			require.Equal(tt, test.expErr, err.Error())
+		})
+	}
+}
+
+func Test_isDefaultConfiguration(t *testing.T) {
+	parsedDefaultConfig, _ := notifier.Load([]byte(defaultGrafanaConfig))
+	parsedTestConfig, _ := notifier.Load([]byte(testGrafanaConfig))
+	parsedDefaultConfigWithDifferentFieldOrder, _ := notifier.Load([]byte(testGrafanaDefaultConfigWithDifferentFieldOrder))
+	rawDefaultCfg, _ := json.Marshal(parsedDefaultConfig)
+
+	tests := []struct {
+		name     string
+		config   *apimodels.PostableUserConfig
+		expected bool
+	}{
+		{
+			"empty configuration",
+			nil,
+			false,
+		},
+		{
+			"valid configuration",
+			parsedTestConfig,
+			false,
+		},
+		{
+			"default configuration",
+			parsedDefaultConfig,
+			true,
+		},
+		{
+			"default configuration with different field order",
+			parsedDefaultConfigWithDifferentFieldOrder,
+			false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(tt *testing.T) {
+			am := &Alertmanager{
+				defaultConfig:     string(rawDefaultCfg),
+				defaultConfigHash: fmt.Sprintf("%x", md5.Sum(rawDefaultCfg)),
+			}
+			isDefault, _ := am.isDefaultConfiguration(test.config)
+			require.Equal(tt, test.expected, isDefault)
 		})
 	}
 }
