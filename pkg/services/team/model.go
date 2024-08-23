@@ -106,10 +106,10 @@ const (
 )
 
 func (p PermissionType) String() string {
-	if p == PermissionTypeMember {
-		return "Member"
+	if p == PermissionTypeAdmin {
+		return "Admin"
 	}
-	return "Admin"
+	return "Member"
 }
 
 type SearchTeamQueryResult struct {
