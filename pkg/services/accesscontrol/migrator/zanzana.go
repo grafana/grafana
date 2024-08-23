@@ -504,11 +504,13 @@ func userRoleAssignemtCollector(store db.DB) TupleCollector {
 
 			subject = zanzana.NewTupleEntry(zanzana.TypeUser, a.UserUID, "")
 			if strings.HasPrefix(a.RoleUID, "fixed_") {
+				// Fixed roles are defined in shema, so they are relations itself. Assignment should look like:
+				// user:<uid> fixed_folders_reader org:1
 				relation := zanzana.TranslateFixedRole(a.RoleName)
 				tuple := &openfgav1.TupleKey{
 					User:     subject,
 					Relation: relation,
-					Object:   zanzana.NewTupleEntry(zanzana.KindOrg, strconv.FormatInt(a.OrgID, 10), ""),
+					Object:   zanzana.NewTupleEntry(zanzana.TypeOrg, strconv.FormatInt(a.OrgID, 10), ""),
 				}
 				key := fmt.Sprintf("%s-%s", collectorID, relation)
 				tuples[key] = append(tuples[key], tuple)
