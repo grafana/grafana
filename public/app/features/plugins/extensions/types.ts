@@ -1,6 +1,5 @@
 import type { PluginExtensionConfig } from '@grafana/data';
 
-import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
 import { AddedComponentRegistryItem, AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
 import { AddedLinkRegistryItem, AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
@@ -22,13 +21,12 @@ export type PluginExtensionRegistry = {
 
 export type AddedComponentsRegistryState = RegistryType<Array<AddedComponentRegistryItem<{}>>>;
 
-export type RegistryStates = {
+export type PluginRegistryStates = {
   addedComponentsRegistry: RegistryType<Array<AddedComponentRegistryItem<{}>>>;
   addedLinksRegistry: RegistryType<AddedLinkRegistryItem[]>;
 };
 
 export type PluginExtensionRegistries = {
-  extensionsRegistry: ReactivePluginExtensionsRegistry;
   addedComponentsRegistry: AddedComponentsRegistry;
   exposedComponentsRegistry: ExposedComponentsRegistry;
   addedLinksRegistry: AddedLinksRegistry;

@@ -237,18 +237,8 @@ export class GrafanaApp {
         await preloadPlugins(awaitedAppPlugins, pluginExtensionsRegistries, 'frontend_awaited_plugins_preload');
       }
 
-      setPluginExtensionGetter(
-        createPluginExtensionsGetter(
-          pluginExtensionsRegistries.extensionsRegistry,
-          pluginExtensionsRegistries.addedComponentsRegistry
-        )
-      );
-      setPluginExtensionsHook(
-        createUsePluginExtensions(
-          pluginExtensionsRegistries.extensionsRegistry,
-          pluginExtensionsRegistries.addedComponentsRegistry
-        )
-      );
+      setPluginExtensionGetter(createPluginExtensionsGetter(pluginExtensionsRegistries));
+      setPluginExtensionsHook(createUsePluginExtensions(pluginExtensionsRegistries));
       setPluginComponentHook(createUsePluginComponent(pluginExtensionsRegistries.exposedComponentsRegistry));
       setPluginComponentsHook(createUsePluginComponents(pluginExtensionsRegistries.addedComponentsRegistry));
 

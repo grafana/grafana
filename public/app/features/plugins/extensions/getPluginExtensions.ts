@@ -10,7 +10,7 @@ import {
 import { GetPluginExtensions, reportInteraction } from '@grafana/runtime';
 
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
-import type { PluginExtensionRegistries, RegistryStates } from './types';
+import type { PluginExtensionRegistries, PluginRegistryStates } from './types';
 import { getReadOnlyProxy, logWarning, generateExtensionId, getEventHelpers, wrapWithPluginContext } from './utils';
 import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
 
@@ -23,11 +23,11 @@ type GetExtensions = ({
   context?: object | Record<string | symbol, unknown>;
   extensionPointId: string;
   limitPerPlugin?: number;
-  registryStates: RegistryStates;
+  registryStates: PluginRegistryStates;
 }) => { extensions: PluginExtension[] };
 
 export function createPluginExtensionsGetter(registries: PluginExtensionRegistries): GetPluginExtensions {
-  let registryStates: RegistryStates = {
+  let registryStates: PluginRegistryStates = {
     addedComponentsRegistry: {},
     addedLinksRegistry: {},
   };
@@ -100,33 +100,31 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
     }
   }
 
-  if (extensionPointId in registryStates.addedComponentsRegistry) {
-    const addedComponents = registryStates.addedComponentsRegistry[extensionPointId];
-    for (const addedComponent of addedComponents) {
-      // Only limit if the `limitPerPlugin` is set
-      if (limitPerPlugin && extensionsByPlugin[addedComponent.pluginId] >= limitPerPlugin) {
-        continue;
-      }
-
-      if (extensionsByPlugin[addedComponent.pluginId] === undefined) {
-        extensionsByPlugin[addedComponent.pluginId] = 0;
-      }
-      const extension: PluginExtensionComponent = {
-        id: generateExtensionId(addedComponent.pluginId, {
-          ...addedComponent,
-          extensionPointId,
-          type: PluginExtensionTypes.component,
-        }),
-        type: PluginExtensionTypes.component,
-        pluginId: addedComponent.pluginId,
-        title: addedComponent.title,
-        description: addedComponent.description,
-        component: wrapWithPluginContext(addedComponent.pluginId, addedComponent.component),
-      };
-
-      extensions.push(extension);
-      extensionsByPlugin[addedComponent.pluginId] += 1;
+  const addedComponents = registryStates.addedComponentsRegistry[extensionPointId] ?? [];
+  for (const addedComponent of addedComponents) {
+    // Only limit if the `limitPerPlugin` is set
+    if (limitPerPlugin && extensionsByPlugin[addedComponent.pluginId] >= limitPerPlugin) {
+      continue;
     }
+
+    if (extensionsByPlugin[addedComponent.pluginId] === undefined) {
+      extensionsByPlugin[addedComponent.pluginId] = 0;
+    }
+    const extension: PluginExtensionComponent = {
+      id: generateExtensionId(addedComponent.pluginId, {
+        ...addedComponent,
+        extensionPointId,
+        type: PluginExtensionTypes.component,
+      }),
+      type: PluginExtensionTypes.component,
+      pluginId: addedComponent.pluginId,
+      title: addedComponent.title,
+      description: addedComponent.description,
+      component: wrapWithPluginContext(addedComponent.pluginId, addedComponent.component),
+    };
+
+    extensions.push(extension);
+    extensionsByPlugin[addedComponent.pluginId] += 1;
   }
 
   return { extensions };

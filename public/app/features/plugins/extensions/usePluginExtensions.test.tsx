@@ -1,23 +1,25 @@
 import { act } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 
-import { PluginExtensionTypes } from '@grafana/data';
-
-import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
+import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
+import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
+import { PluginExtensionRegistries } from './types';
 import { createUsePluginExtensions } from './usePluginExtensions';
 
 describe('usePluginExtensions()', () => {
-  let reactiveRegistry: ReactivePluginExtensionsRegistry;
-  let addedComponentsRegistry: AddedComponentsRegistry;
+  let registries: PluginExtensionRegistries;
 
   beforeEach(() => {
-    reactiveRegistry = new ReactivePluginExtensionsRegistry();
-    addedComponentsRegistry = new AddedComponentsRegistry();
+    registries = {
+      addedComponentsRegistry: new AddedComponentsRegistry(),
+      addedLinksRegistry: new AddedLinksRegistry(),
+      exposedComponentsRegistry: new ExposedComponentsRegistry(),
+    };
   });
 
   it('should return an empty array if there are no extensions registered for the extension point', () => {
-    const usePluginExtensions = createUsePluginExtensions(reactiveRegistry, addedComponentsRegistry);
+    const usePluginExtensions = createUsePluginExtensions(registries);
     const { result } = renderHook(() =>
       usePluginExtensions({
         extensionPointId: 'foo/bar',
@@ -31,28 +33,25 @@ describe('usePluginExtensions()', () => {
     const extensionPointId = 'plugins/foo/bar';
     const pluginId = 'my-app-plugin';
 
-    reactiveRegistry.register({
+    registries.addedLinksRegistry.register({
       pluginId,
-      extensionConfigs: [
+      configs: [
         {
-          type: PluginExtensionTypes.link,
-          extensionPointId,
+          targets: extensionPointId,
           title: '1',
           description: '1',
           path: `/a/${pluginId}/2`,
         },
         {
-          type: PluginExtensionTypes.link,
-          extensionPointId,
+          targets: extensionPointId,
           title: '2',
           description: '2',
           path: `/a/${pluginId}/2`,
         },
       ],
-      exposedComponentConfigs: [],
     });
 
-    const usePluginExtensions = createUsePluginExtensions(reactiveRegistry, addedComponentsRegistry);
+    const usePluginExtensions = createUsePluginExtensions(registries);
     const { result } = renderHook(() => usePluginExtensions({ extensionPointId }));
 
     expect(result.current.extensions.length).toBe(2);
@@ -65,28 +64,25 @@ describe('usePluginExtensions()', () => {
     const componentExtensionPointId = 'plugins/component/bar/v1';
     const pluginId = 'my-app-plugin';
 
-    reactiveRegistry.register({
+    registries.addedLinksRegistry.register({
       pluginId,
-      extensionConfigs: [
+      configs: [
         {
-          type: PluginExtensionTypes.link,
-          extensionPointId: linkExtensionPointId,
+          targets: linkExtensionPointId,
           title: '1',
           description: '1',
           path: `/a/${pluginId}/2`,
         },
         {
-          type: PluginExtensionTypes.link,
-          extensionPointId: linkExtensionPointId,
+          targets: linkExtensionPointId,
           title: '2',
           description: '2',
           path: `/a/${pluginId}/2`,
         },
       ],
-      exposedComponentConfigs: [],
     });
 
-    addedComponentsRegistry.register({
+    registries.addedComponentsRegistry.register({
       pluginId,
       configs: [
         {
@@ -104,7 +100,7 @@ describe('usePluginExtensions()', () => {
       ],
     });
 
-    const usePluginExtensions = createUsePluginExtensions(reactiveRegistry, addedComponentsRegistry);
+    const usePluginExtensions = createUsePluginExtensions(registries);
     const { result } = renderHook(() => usePluginExtensions({ extensionPointId: componentExtensionPointId }));
 
     expect(result.current.extensions.length).toBe(2);
@@ -115,7 +111,7 @@ describe('usePluginExtensions()', () => {
   it('should dynamically update the extensions registered for a certain extension point', () => {
     const extensionPointId = 'plugins/foo/bar';
     const pluginId = 'my-app-plugin';
-    const usePluginExtensions = createUsePluginExtensions(reactiveRegistry, addedComponentsRegistry);
+    const usePluginExtensions = createUsePluginExtensions(registries);
     let { result, rerender } = renderHook(() => usePluginExtensions({ extensionPointId }));
 
     // No extensions yet
@@ -123,25 +119,22 @@ describe('usePluginExtensions()', () => {
 
     // Add extensions to the registry
     act(() => {
-      reactiveRegistry.register({
+      registries.addedLinksRegistry.register({
         pluginId,
-        extensionConfigs: [
+        configs: [
           {
-            type: PluginExtensionTypes.link,
-            extensionPointId,
+            targets: extensionPointId,
             title: '1',
             description: '1',
             path: `/a/${pluginId}/2`,
           },
           {
-            type: PluginExtensionTypes.link,
-            extensionPointId,
+            targets: extensionPointId,
             title: '2',
             description: '2',
             path: `/a/${pluginId}/2`,
           },
         ],
-        exposedComponentConfigs: [],
       });
     });
 
@@ -154,40 +147,39 @@ describe('usePluginExtensions()', () => {
   });
 
   it('should only render the hook once', () => {
-    const spy = jest.spyOn(reactiveRegistry, 'asObservable');
+    const addedComponentsRegistrySpy = jest.spyOn(registries.addedComponentsRegistry, 'asObservable');
+    const addedLinksRegistrySpy = jest.spyOn(registries.addedLinksRegistry, 'asObservable');
     const extensionPointId = 'plugins/foo/bar';
-    const usePluginExtensions = createUsePluginExtensions(reactiveRegistry, addedComponentsRegistry);
+    const usePluginExtensions = createUsePluginExtensions(registries);
 
     renderHook(() => usePluginExtensions({ extensionPointId }));
-    expect(spy).toHaveBeenCalledTimes(1);
+    expect(addedComponentsRegistrySpy).toHaveBeenCalledTimes(1);
+    expect(addedLinksRegistrySpy).toHaveBeenCalledTimes(1);
   });
 
-  it('should return the same extensions object if the context object is the same', () => {
+  it('should return the same extensions object if the context object is the same', async () => {
     const extensionPointId = 'plugins/foo/bar';
     const pluginId = 'my-app-plugin';
-    const usePluginExtensions = createUsePluginExtensions(reactiveRegistry, addedComponentsRegistry);
+    const usePluginExtensions = createUsePluginExtensions(registries);
 
     // Add extensions to the registry
     act(() => {
-      reactiveRegistry.register({
+      registries.addedLinksRegistry.register({
         pluginId,
-        extensionConfigs: [
+        configs: [
           {
-            type: PluginExtensionTypes.link,
-            extensionPointId,
+            targets: extensionPointId,
             title: '1',
             description: '1',
             path: `/a/${pluginId}/2`,
           },
           {
-            type: PluginExtensionTypes.link,
-            extensionPointId,
+            targets: extensionPointId,
             title: '2',
             description: '2',
             path: `/a/${pluginId}/2`,
           },
         ],
-        exposedComponentConfigs: [],
       });
     });
 
@@ -201,29 +193,26 @@ describe('usePluginExtensions()', () => {
   it('should return a new extensions object if the context object is different', () => {
     const extensionPointId = 'plugins/foo/bar';
     const pluginId = 'my-app-plugin';
-    const usePluginExtensions = createUsePluginExtensions(reactiveRegistry, addedComponentsRegistry);
+    const usePluginExtensions = createUsePluginExtensions(registries);
 
     // Add extensions to the registry
     act(() => {
-      reactiveRegistry.register({
+      registries.addedLinksRegistry.register({
         pluginId,
-        extensionConfigs: [
+        configs: [
           {
-            type: PluginExtensionTypes.link,
-            extensionPointId,
+            targets: extensionPointId,
             title: '1',
             description: '1',
             path: `/a/${pluginId}/2`,
           },
           {
-            type: PluginExtensionTypes.link,
-            extensionPointId,
+            targets: extensionPointId,
             title: '2',
             description: '2',
             path: `/a/${pluginId}/2`,
           },
         ],
-        exposedComponentConfigs: [],
       });
     });
 
@@ -237,22 +226,20 @@ describe('usePluginExtensions()', () => {
     const extensionPointId = 'plugins/foo/bar';
     const pluginId = 'my-app-plugin';
     const context = {};
-    const usePluginExtensions = createUsePluginExtensions(reactiveRegistry, addedComponentsRegistry);
+    const usePluginExtensions = createUsePluginExtensions(registries);
 
     // Add the first extension
     act(() => {
-      reactiveRegistry.register({
+      registries.addedLinksRegistry.register({
         pluginId,
-        extensionConfigs: [
+        configs: [
           {
-            type: PluginExtensionTypes.link,
-            extensionPointId,
+            targets: extensionPointId,
             title: '1',
             description: '1',
             path: `/a/${pluginId}/2`,
           },
         ],
-        exposedComponentConfigs: [],
       });
     });
 
@@ -261,19 +248,17 @@ describe('usePluginExtensions()', () => {
 
     // Add the second extension
     act(() => {
-      reactiveRegistry.register({
+      registries.addedLinksRegistry.register({
         pluginId,
-        extensionConfigs: [
+        configs: [
           {
-            type: PluginExtensionTypes.link,
-            extensionPointId,
+            targets: extensionPointId,
             // extensionPointId: 'plugins/foo/bar/zed', // A different extension point (to be sure that it's also returning a new object when the actual extension point doesn't change)
             title: '2',
             description: '2',
             path: `/a/${pluginId}/2`,
           },
         ],
-        exposedComponentConfigs: [],
       });
     });
 

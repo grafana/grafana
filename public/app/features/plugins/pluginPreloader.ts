@@ -31,7 +31,6 @@ export async function preloadPlugins(
       continue;
     }
 
-    registries.extensionsRegistry.register(preloadedPlugin);
     registries.exposedComponentsRegistry.register({
       pluginId: preloadedPlugin.pluginId,
       configs: preloadedPlugin.exposedComponentConfigs,

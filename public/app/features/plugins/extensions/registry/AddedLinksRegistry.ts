@@ -2,12 +2,7 @@ import { IconName, PluginAddedLinkConfig } from '@grafana/data';
 import { PluginAddedLinksConfigureFunc, PluginExtensionEventHelpers } from '@grafana/data/src/types/pluginExtensions';
 
 import { logWarning } from '../utils';
-import {
-  extensionPointEndsWithVersion,
-  isConfigureFnValid,
-  isExtensionPointIdValid,
-  isLinkPathValid,
-} from '../validators';
+import { isConfigureFnValid, isExtensionPointIdValid, isLinkPathValid } from '../validators';
 
 import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
 
