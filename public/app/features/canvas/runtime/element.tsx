@@ -612,6 +612,7 @@ export class ElementState implements LayerElement {
       const primaryAction = this.getPrimaryAction();
       if (primaryAction) {
         this.div.style.cursor = 'pointer';
+        this.div.title = primaryAction.title;
       }
     }
   };

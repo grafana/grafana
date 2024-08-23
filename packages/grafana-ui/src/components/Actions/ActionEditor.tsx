@@ -26,8 +26,8 @@ const LABEL_WIDTH = 13;
 export const ActionEditor = memo(({ index, value, onChange, suggestions }: ActionEditorProps) => {
   const styles = useStyles2(getStyles);
 
-  const onTitleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange(index, { ...value, title: event.target.value });
+  const onTitleChange = (title: string) => {
+    onChange(index, { ...value, title });
   };
 
   const onUrlChange = (url: string) => {
@@ -96,7 +96,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
   return (
     <div className={styles.listItem}>
       <Field label="Title">
-        <Input value={value.title} onChange={onTitleChange} />
+        <SuggestionsInput value={value.title} onChange={onTitleChange} suggestions={suggestions} />
       </Field>
 
       <InlineFieldRow>
