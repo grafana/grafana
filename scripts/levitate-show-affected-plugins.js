@@ -79,7 +79,7 @@ function makeQuery(section) {
   }
 
   return `
-    SELECT
+    SELECT DISTINCT
       property_name,
       package_name,
       plugin_id
@@ -159,8 +159,12 @@ function printAffectedPluginsSection(data) {
     }
   } catch (error) {
     markdown += `<h4>Error generating detailed report ${error}</h4>`;
-    markdown += `<h4>Error stdout ${error.stdout}</h4>`;
-    markdown += `<h4>Error stderr ${error.stderr}</h4>`;
+    if (error.stdout) {
+      markdown += `<h5>Error stdout ${error.stdout}</h5>`;
+    }
+    if (error.stderr) {
+      markdown += `<h5>Error stderr ${error.stderr}</h5>`;
+    }
   }
 
   return markdown;
