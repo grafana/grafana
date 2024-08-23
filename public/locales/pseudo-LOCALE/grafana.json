@@ -1053,16 +1053,14 @@
       "label": "Mįşč",
       "port": {
         "description": "Đęƒäūľŧ pőřŧ įş 389 ŵįŧĥőūŧ ŜŜĿ őř 636 ŵįŧĥ ŜŜĿ",
-        "label": "Pőřŧ",
-        "placeholder": "389"
+        "label": "Pőřŧ"
       },
       "timeout": {
         "description": "Ŧįmęőūŧ įŉ şęčőŉđş ƒőř ŧĥę čőŉŉęčŧįőŉ ŧő ŧĥę ĿĐÅP şęřvęř",
-        "label": "Ŧįmęőūŧ",
-        "placeholder": "389"
+        "label": "Ŧįmęőūŧ"
       }
     },
-    "title": "Åđväŉčęđ Ŝęŧŧįŉģş"
+    "title": "Åđväŉčęđ şęŧŧįŉģş"
   },
   "ldap-settings-page": {
     "advanced-settings-section": {
