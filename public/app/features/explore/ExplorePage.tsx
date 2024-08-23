@@ -21,6 +21,7 @@ import { ExploreActions } from './ExploreActions';
 import { ExploreDrawer } from './ExploreDrawer';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
 import { QueriesDrawerContextProvider, useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
+import { queryLibraryTrackAddFromQueryRow } from './QueryLibrary/QueryLibraryAnalyticsEvents';
 import { QueryTemplateForm } from './QueryLibrary/QueryTemplateForm';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
@@ -143,6 +144,7 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
           onSave={(isSuccess) => {
             if (isSuccess) {
               setQueryToAdd(undefined);
+              queryLibraryTrackAddFromQueryRow(queryToAdd?.datasource?.type || '');
             }
           }}
           queryToAdd={queryToAdd!}
