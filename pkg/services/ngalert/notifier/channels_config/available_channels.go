@@ -558,7 +558,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Label:        "Expire (Only used for Emergency Priority)",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Placeholder:  "maximum 86400 seconds",
+					Placeholder:  "maximum 10800 seconds",
 					PropertyName: "expire",
 				},
 				{
