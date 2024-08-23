@@ -942,9 +942,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public restoreScrollPos() {
     if (this._prevScrollPos !== undefined) {
-      setTimeout(() => {
-        this._scrollRef?.scrollTo(0, this._prevScrollPos!);
-      }, 50);
+      this._scrollRef?.scrollTo(0, this._prevScrollPos!);
     }
   }
 }
