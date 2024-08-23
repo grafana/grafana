@@ -4,6 +4,7 @@ load(
     "scripts/drone/steps/lib.star",
     "build_frontend_package_step",
     "build_storybook_step",
+    "build_test_plugins_step",
     "cloud_plugins_e2e_tests_step",
     "compile_build_cmd",
     "download_grabpl_step",
@@ -93,6 +94,7 @@ def build_e2e(trigger, ver_mode):
 
     build_steps.extend(
         [
+            build_test_plugins_step(),
             grafana_server_step(),
             e2e_tests_step("dashboards-suite"),
             e2e_tests_step("scenes/dashboards-suite"),

@@ -10,6 +10,7 @@ const eslintPathsToIgnore = [
   'public/app/angular', // will be removed in Grafana 11
   'public/app/plugins/panel/graph', // will be removed alongside angular
   'public/app/plugins/panel/table-old', // will be removed alongside angular
+  'e2e/test-plugins',
 ];
 
 // Avoid using functions that report the position of the issues, as this causes a lot of merge conflicts
