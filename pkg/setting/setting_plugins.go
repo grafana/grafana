@@ -39,7 +39,7 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	cfg.DisablePlugins = util.SplitString(pluginsSection.Key("disable_plugins").MustString(""))
 	cfg.HideAngularDeprecation = util.SplitString(pluginsSection.Key("hide_angular_deprecation").MustString(""))
 	cfg.ForwardHostEnvVars = util.SplitString(pluginsSection.Key("forward_host_env_vars").MustString(""))
-	disablePreinstall := pluginsSection.Key("disable_preinstall").MustBool(false)
+	disablePreinstall := pluginsSection.Key("preinstall_disabled").MustBool(false)
 	if !disablePreinstall {
 		rawInstallPlugins := util.SplitString(pluginsSection.Key("preinstall").MustString(""))
 		cfg.PreinstallPlugins = make([]InstallPlugin, len(rawInstallPlugins))
