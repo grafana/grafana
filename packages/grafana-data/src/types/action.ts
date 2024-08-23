@@ -32,11 +32,13 @@ export enum ActionType {
 export enum HttpRequestMethod {
   POST = 'POST',
   PUT = 'PUT',
+  GET = 'GET',
 }
 
 export const httpMethodOptions: SelectableValue[] = [
   { label: HttpRequestMethod.POST, value: HttpRequestMethod.POST },
   { label: HttpRequestMethod.PUT, value: HttpRequestMethod.PUT },
+  { label: HttpRequestMethod.GET, value: HttpRequestMethod.GET },
 ];
 
 export const contentTypeOptions: SelectableValue[] = [

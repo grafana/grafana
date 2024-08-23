@@ -132,17 +132,19 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
         />
       </Field>
 
-      <Field label="Body">
-        <SuggestionsInput
-          value={value.options.body}
-          onChange={onBodyChange}
-          suggestions={suggestions}
-          type={HTMLElementType.TextAreaElement}
-        />
-      </Field>
+      {value?.options.method !== HttpRequestMethod.GET && (
+        <Field label="Body">
+          <SuggestionsInput
+            value={value.options.body}
+            onChange={onBodyChange}
+            suggestions={suggestions}
+            type={HTMLElementType.TextAreaElement}
+          />
+        </Field>
+      )}
 
       <br />
-      {renderJSON(value?.options.body ?? '{}')}
+      {value?.options.method !== HttpRequestMethod.GET && renderJSON(value?.options.body ?? '{}')}
     </div>
   );
 });
