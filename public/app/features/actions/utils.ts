@@ -8,7 +8,6 @@ import {
   Field,
   FieldType,
   getFieldDataContextClone,
-  HttpRequestMethod,
   InterpolateFunction,
   ScopedVars,
   textUtil,
@@ -69,7 +68,7 @@ export const getActions = (
 const buildActionOnClick = (action: Action, replaceVariables: InterpolateFunction) => {
   try {
     const url = new URL(replaceVariables(getUrl(action.options.url)));
-    const data = getRequestBody(action, replaceVariables);
+    const data = action.options.body ? replaceVariables(action.options.body) : '{}';
 
     const requestHeaders: HeadersInit = [];
     let request: BackendSrvRequest = {
@@ -110,16 +109,6 @@ const buildActionOnClick = (action: Action, replaceVariables: InterpolateFunctio
     appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
     return;
   }
-};
-
-/** @internal */
-const getRequestBody = (api: Action, replaceVariables: InterpolateFunction) => {
-  let requestBody: string | undefined = api.options.body ? replaceVariables(api.options.body) : '{}';
-  if (api.options.method === HttpRequestMethod.GET) {
-    requestBody = undefined;
-  }
-
-  return requestBody;
 };
 
 // @TODO update return type

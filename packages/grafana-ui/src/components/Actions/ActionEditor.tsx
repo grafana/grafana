@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { ChangeEvent, memo } from 'react';
+import { memo } from 'react';
 
 import { Action, GrafanaTheme2, httpMethodOptions, HttpRequestMethod, VariableSuggestion } from '@grafana/data';
 
@@ -8,7 +8,6 @@ import { Field } from '../Forms/Field';
 import { InlineField } from '../Forms/InlineField';
 import { InlineFieldRow } from '../Forms/InlineFieldRow';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
-import { Input } from '../Input/Input';
 import { JSONFormatter } from '../JSONFormatter/JSONFormatter';
 
 import { ParamsEditor } from './ParamsEditor';
