@@ -16,7 +16,7 @@ import {
 import { DataQuery } from '@grafana/schema';
 import { GraphThresholdsStyleMode, Icon, InlineField, Input, Tooltip, useStyles2, Stack } from '@grafana/ui';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { msToSingleUnitDuration } from '../../utils/time';
 import { ExpressionStatusIndicator } from '../expressions/ExpressionStatusIndicator';
@@ -109,7 +109,7 @@ export const QueryWrapper = ({
   }
 
   // TODO add a warning label here too when the data looks like time series data and is used as an alert condition
-  function HeaderExtras({ query, error, index }: { query: AlertQuery; error?: Error; index: number }) {
+  function HeaderExtras({ query, error, index }: { query: AlertQuery<AlertDataQuery>; error?: Error; index: number }) {
     const queryOptions: AlertQueryOptions = {
       maxDataPoints: query.model.maxDataPoints,
       minInterval: query.model.intervalMs ? msToSingleUnitDuration(query.model.intervalMs) : undefined,
@@ -144,7 +144,7 @@ export const QueryWrapper = ({
   return (
     <Stack direction="column" gap={0.5}>
       <div className={styles.wrapper}>
-        <QueryEditorRow<DataQuery>
+        <QueryEditorRow<AlertDataQuery>
           alerting
           collapsable={false}
           dataSource={dsSettings}
