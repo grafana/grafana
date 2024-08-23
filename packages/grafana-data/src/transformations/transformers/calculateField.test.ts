@@ -197,6 +197,74 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
+  it('all numbers + static number', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.BinaryOperation,
+        binary: {
+          left: '',
+          operator: BinaryOperationID.Add,
+          right: '2',
+          allNumbers: true,
+        },
+        replaceFields: true,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesBC])).toEmitValuesWith((received) => {
+      const data = received[0];
+      const filtered = data[0];
+      const rows = new DataFrameView(filtered).toArray();
+      expect(rows).toEqual([
+        {
+          'B + 2': 4,
+          'C + 2': 5,
+          TheTime: 1000,
+        },
+        {
+          'B + 2': 202,
+          'C + 2': 302,
+          TheTime: 2000,
+        },
+      ]);
+    });
+  });
+
+  it('all numbers + field number', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.BinaryOperation,
+        binary: {
+          left: '',
+          operator: BinaryOperationID.Add,
+          right: 'C',
+          allNumbers: true,
+        },
+        replaceFields: true,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesBC])).toEmitValuesWith((received) => {
+      const data = received[0];
+      const filtered = data[0];
+      const rows = new DataFrameView(filtered).toArray();
+      expect(rows).toEqual([
+        {
+          'B + C': 5,
+          'C + C': 6,
+          TheTime: 1000,
+        },
+        {
+          'B + C': 500,
+          'C + C': 600,
+          TheTime: 2000,
+        },
+      ]);
+    });
+  });
+
   it('unary math', async () => {
     const unarySeries = toDataFrame({
       fields: [
