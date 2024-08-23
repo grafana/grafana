@@ -122,31 +122,37 @@ export const getPluginExtensions: GetExtensions = ({
   }
 
   if (extensionPointId in addedComponentsRegistry) {
-    const addedComponents = addedComponentsRegistry[extensionPointId];
-    for (const addedComponent of addedComponents) {
-      // Only limit if the `limitPerPlugin` is set
-      if (limitPerPlugin && extensionsByPlugin[addedComponent.pluginId] >= limitPerPlugin) {
-        continue;
-      }
+    try {
+      const addedComponents = addedComponentsRegistry[extensionPointId];
+      for (const addedComponent of addedComponents) {
+        // Only limit if the `limitPerPlugin` is set
+        if (limitPerPlugin && extensionsByPlugin[addedComponent.pluginId] >= limitPerPlugin) {
+          continue;
+        }
 
-      if (extensionsByPlugin[addedComponent.pluginId] === undefined) {
-        extensionsByPlugin[addedComponent.pluginId] = 0;
-      }
-      const extension: PluginExtensionComponent = {
-        id: generateExtensionId(addedComponent.pluginId, {
-          ...addedComponent,
-          extensionPointId,
+        if (extensionsByPlugin[addedComponent.pluginId] === undefined) {
+          extensionsByPlugin[addedComponent.pluginId] = 0;
+        }
+        const extension: PluginExtensionComponent = {
+          id: generateExtensionId(addedComponent.pluginId, {
+            ...addedComponent,
+            extensionPointId,
+            type: PluginExtensionTypes.component,
+          }),
           type: PluginExtensionTypes.component,
-        }),
-        type: PluginExtensionTypes.component,
-        pluginId: addedComponent.pluginId,
-        title: addedComponent.title,
-        description: addedComponent.description,
-        component: wrapWithPluginContext(addedComponent.pluginId, addedComponent.component),
-      };
+          pluginId: addedComponent.pluginId,
+          title: addedComponent.title,
+          description: addedComponent.description,
+          component: wrapWithPluginContext(addedComponent.pluginId, addedComponent.component),
+        };
 
-      extensions.push(extension);
-      extensionsByPlugin[addedComponent.pluginId] += 1;
+        extensions.push(extension);
+        extensionsByPlugin[addedComponent.pluginId] += 1;
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        logWarning(error.message);
+      }
     }
   }
 
