@@ -23,19 +23,18 @@ refs:
 
 # Pie chart
 
-A pie chart  is a graph that displays data as segments of a circle proportional to the whole, making it look like a sliced pie (or a donut). Each slice corresponds to a value or measurement.
+A pie chart is a graph that displays data as segments of a circle proportional to the whole, making it look like a sliced pie (or a donut). Each slice corresponds to a value or measurement.
 
 {{< figure src="/static/img/docs/pie-chart-panel/pie-chart-example.png" max-width="1200px" lightbox="true" caption="Pie charts" >}}
 
 The pie chart visualization is ideal when you have data that adds up to a whole sum of values and you want to easily show the proportion of each value compared to other slices and to the whole of the pie.
 
-You can use a pie chart if you need to compare: 
+You can use a pie chart if you need to compare:
 
 - Browser share distribution in the market
 - Incident causes per category
 - Network traffic sources
 - User demographics
-
 
 ## Configure a pie chart visualization
 
@@ -58,7 +57,7 @@ A straightforward way to add data to the pie chart visualization is to query a f
 **PieColumns**
 
 | Value1 | Value2 | Value3 | Optional |
-|--------|--------|--------|----------|
+| ------ | ------ | ------ | -------- |
 | 5      | 3      | 2      | Sums10   |
 
 ![Pie chart visualization with multiple values in a single row](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.1-pie-example1.png)
@@ -70,7 +69,7 @@ If you need to add numeric data in multiple rows, the default **Show** parameter
 **PieRows**
 
 | Value | Label  |
-|-------|--------|
+| ----- | ------ |
 | 5     | Value1 |
 | 3     | Value2 |
 | 2     | Value3 |
@@ -90,7 +89,7 @@ Similarly, if your dataset contains multiple rows and columns with numeric data,
 **Pie Cells**
 
 | Value1 | Value2 | Value3 | Optional |
-|--------|--------|--------|----------|
+| ------ | ------ | ------ | -------- |
 | 5      | 3      | 2      | Sums10   |
 | 10     | 6      | 4      | Sums20   |
 | 20     | 8      | 2      | Sums30   |
