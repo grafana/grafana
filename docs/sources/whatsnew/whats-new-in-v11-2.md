@@ -36,6 +36,16 @@ This intuitive UI offers real-time updates on your migration status, making your
 
 Ready to make the move? Explore our [migration guide](https://grafana.com/docs/grafana-cloud/account-management/migration-guide/) to learn more about the Cloud Migration Assistant today and begin your effortless transition to Grafana Cloud.
 
+## Navigation bookmarks
+
+<!-- #grafana-frontend-platform -->
+
+<!-- confirming availability -->
+
+As Grafana keeps growing, we have had feedback that it can be hard to find the pages you are looking for in the navigation. That is why we have added a new section to the navigation called 'Bookmarks', so you can easily access all of your favourite pages at the top of the navigation.
+
+This feature is being rolled out across Grafana Cloud now. To use Bookmarks in self-managed Grafana, turn on the `pinNavItems` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) in Grafana v11.2 or newer.
+
 ## Dashboards and visualizations
 
 ### Transformation updates
@@ -84,11 +94,11 @@ See [the documentation for more information](https://grafana.com/docs/grafana/<G
 
 _Generally available in all editions of Grafana_
 
-### Standardized tooltips
+#### Standardized tooltips
 
 As a continuation of our efforts to standardize tooltips across visualizations, we've updated canvas visualization tooltips to be supported for all elements tied to data. Besides the element name and data, the tooltip now also displays the timestamp. This is a step forward from the previous implementation where tooltips were shown only if data links were configured.
 
-### Data links improvements
+#### Data links improvements
 
 We've updated canvas visualizations so that you can add data links to canvas elements without using an override. The **Selected element** configuration now includes a **Data links** section where you can add data links to elements using the same steps as in other visualizations.
 
@@ -179,6 +189,18 @@ This feature introduces an account drop-down for selecting one or all of your so
 For more complex queries that are not covered by the options in the builder you can switch to the manual Code editor and edit the query.
 
 To set up cross-account querying for AWS Cloudwatch Plugin, see instructions [here](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/query-editor/#cross-account-observability).
+
+### Zendesk data source for Grafana
+
+<!-- #grafana-oss-big-tent -->
+
+_Available in public preview in Grafana Enterprise and Grafana Cloud_
+
+We are excited to announce the release of a new Zendesk data source for Grafana. This addition extends Grafana's capabilities, enabling seamless integration with Zendesk.
+
+You can find out more about the data source in the [Zendesk data source documentation](https://grafana.com/docs/plugins/grafana-zendesk-datasource/latest/).
+
+{{< figure src="/media/docs/zendesk/zendesk_query_editor.png" alt="Zendesk Query Editor" >}}
 
 ### Catchpoint Enterprise data source for Grafana
 
