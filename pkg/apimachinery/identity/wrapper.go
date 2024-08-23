@@ -25,9 +25,10 @@ func (i *IDClaimsWrapper) NamespaceMatches(namespace string) bool {
 		return false
 	}
 
-	// for cluster-scoped resources, namespace in request is ""
+	// for cluster-scoped resources, namespace in request is "", but we already checked
+	// that this identity doesn't have such access when we checked (parts[0] == "*")
 	if namespace == "" {
-		return true
+		return false
 	}
 
 	namespaceParts := strings.Split(namespace, "-")
