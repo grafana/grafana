@@ -76,4 +76,4 @@ export const setTemplateSrv = (instance: TemplateSrv) => {
  *
  * @public
  */
-export const getTemplateSrv2 = (msg="Hello"): TemplateSrv => singletonInstance;
+export const getTemplateSrv = (msg="Hello"): TemplateSrv => singletonInstance;
