@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import { ReactNode, useMemo, useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   Badge,
   Button,
@@ -16,13 +16,14 @@ import {
   Switch,
   useStyles2,
 } from '@grafana/ui';
+import MuteTimingsSelector from 'app/features/alerting/unified/components/alertmanager-entities/MuteTimingsSelector';
 import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { handleContactPointSelect } from 'app/features/alerting/unified/components/notification-policies/utils';
 import { MatcherOperator, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { FormAmRoute } from '../../types/amroutes';
-import { matcherFieldOptions, timeIntervalToString } from '../../utils/alertmanager';
+import { matcherFieldOptions } from '../../utils/alertmanager';
 import {
   amRouteToFormAmRoute,
   commonGroupByOptions,
@@ -33,7 +34,6 @@ import {
   stringToSelectableValue,
   stringsToSelectableValues,
 } from '../../utils/amroutes';
-import { useMuteTimings } from '../mute-timings/useMuteTimings';
 
 import { PromDurationInput } from './PromDurationInput';
 import { getFormStyles } from './formStyles';
@@ -52,18 +52,6 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
   const { selectedAlertmanager } = useAlertmanager();
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route?.group_by));
   const emptyMatcher = [{ name: '', operator: MatcherOperator.equal, value: '' }];
-  const { data: muteTimings } = useMuteTimings({ alertmanager: selectedAlertmanager! });
-
-  const muteTimingOptions = useMemo(() => {
-    const muteTimingsOptions: Array<SelectableValue<string>> =
-      muteTimings?.map((value) => ({
-        value: value.name,
-        label: value.name,
-        description: value.time_intervals.map((interval) => timeIntervalToString(interval)).join(', AND '),
-      })) ?? [];
-
-    return muteTimingsOptions;
-  }, [muteTimings]);
 
   const formAmRoute = {
     ...amRouteToFormAmRoute(route),
@@ -285,12 +273,12 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
       >
         <Controller
           render={({ field: { onChange, ref, ...field } }) => (
-            <MultiSelect
-              aria-label="Mute timings"
-              {...field}
-              className={formStyles.input}
-              onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
-              options={muteTimingOptions}
+            <MuteTimingsSelector
+              alertmanager={selectedAlertmanager!}
+              selectProps={{
+                ...field,
+                onChange: (value) => onChange(mapMultiSelectValueToStrings(value)),
+              }}
             />
           )}
           control={control}
