@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -196,7 +195,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				qAfterUpdate := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, SignedInUser: testUser}
 				qAfterUpdateResult, err := teamSvc.GetTeamMembers(context.Background(), qAfterUpdate)
 				require.NoError(t, err)
-				require.Equal(t, qAfterUpdateResult[0].Permission, dashboardaccess.PERMISSION_ADMIN)
+				require.Equal(t, qAfterUpdateResult[0].Permission, team.PermissionTypeAdmin)
 			})
 
 			t.Run("Should default to member permission level when updating a user with invalid permission level", func(t *testing.T) {
