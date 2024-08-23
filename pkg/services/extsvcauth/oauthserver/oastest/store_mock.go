@@ -6,7 +6,7 @@ import (
 	context "context"
 
 	mock "github.com/stretchr/testify/mock"
-	jose "github.com/go-jose/go-jose/v3"
+	jose "gopkg.in/square/go-jose.v2"
 
 	oauthserver "github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
 )

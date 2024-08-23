@@ -4,9 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/go-jose/go-jose/v3"
-
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
+	"gopkg.in/square/go-jose.v2"
 )
 
 const (
