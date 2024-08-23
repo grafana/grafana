@@ -523,7 +523,6 @@ func userRoleAssignemtCollector(store db.DB) TupleCollector {
 				key := fmt.Sprintf("%s-%s", collectorID, zanzana.RelationAssignee)
 				tuples[key] = append(tuples[key], tuple)
 			}
-
 		}
 
 		return nil
@@ -583,7 +582,6 @@ func teamRoleAssignemtCollector(store db.DB) TupleCollector {
 				key := fmt.Sprintf("%s-%s", collectorID, zanzana.RelationAssignee)
 				tuples[key] = append(tuples[key], tuple)
 			}
-
 		}
 
 		return nil
