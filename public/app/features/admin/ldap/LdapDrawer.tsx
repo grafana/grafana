@@ -1,5 +1,5 @@
-import { useId } from 'react';
 import { css } from '@emotion/css';
+import { useId } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -26,17 +26,17 @@ interface Props {
   onClose: () => void;
 }
 
-const nameId = useId();
-const surnameId = useId();
-const usernameId = useId();
-const memberOfId = useId();
-const emailId = useId();
-
 const tlsOptions: Array<SelectableValue<string>> = ['TLS1.2', 'TLS1.3'].map((v) => ({ label: v, value: v }));
 
 export const LdapDrawerComponent = ({ onClose }: Props) => {
   const styles = useStyles2(getStyles);
   const { register, setValue, watch } = useFormContext<LdapPayload>();
+
+  const nameId = useId();
+  const surnameId = useId();
+  const usernameId = useId();
+  const memberOfId = useId();
+  const emailId = useId();
 
   const groupMappingsLabel = (
     <Label
