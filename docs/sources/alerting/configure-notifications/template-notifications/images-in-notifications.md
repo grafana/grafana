@@ -99,6 +99,7 @@ Grafana supports a wide range of contact points with varied support for images i
 | Google Chat             | No                                                         | Yes                                                      |
 | Kafka                   | No                                                         | No                                                       |
 | Line                    | No                                                         | No                                                       |
+| MQTT                    | No                                                         | No                                                       |
 | Microsoft Teams         | No                                                         | Yes                                                      |
 | Opsgenie                | No                                                         | Yes                                                      |
 | Pagerduty               | No                                                         | Yes                                                      |

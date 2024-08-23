@@ -458,7 +458,7 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 
 	hs.log.Info("Plugin install/update requested", "pluginId", pluginID, "user", c.Login)
 
-	for _, preinstalled := range hs.Cfg.InstallPlugins {
+	for _, preinstalled := range hs.Cfg.PreinstallPlugins {
 		if preinstalled.ID == pluginID && preinstalled.Version != "" {
 			return response.Error(http.StatusConflict, "Cannot update a pinned pre-installed plugin", nil)
 		}
@@ -502,7 +502,7 @@ func (hs *HTTPServer) UninstallPlugin(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusNotFound, "Plugin not installed", nil)
 	}
 
-	for _, preinstalled := range hs.Cfg.InstallPlugins {
+	for _, preinstalled := range hs.Cfg.PreinstallPlugins {
 		if preinstalled.ID == pluginID {
 			return response.Error(http.StatusConflict, "Cannot uninstall a pre-installed plugin", nil)
 		}
