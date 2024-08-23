@@ -73,7 +73,7 @@ type TeamSubject struct {
 
 	// Permission subject has in permission.
 	// Can be either admin or member.
-	Permission TeamPermission `json:"permission,empty"`
+	Permission TeamPermission `json:"permission,omitempty"`
 
 	// Name is the unique identifier for subject.
 	Name string `json:"name,omitempty"`
