@@ -34,7 +34,7 @@ func Authorize(ctx context.Context, ac AccessControlService, attr authorizer.Att
 
 	deny := func(err error) (authorizer.Decision, string, error) {
 		var utilErr errutil.Error
-		if errors.As(err, &utilErr) {
+		if errors.As(err, &utilErr) && utilErr.Reason.Status() == errutil.StatusForbidden {
 			if errors.Is(err, accesscontrol.ErrAuthorizationBase) {
 				return authorizer.DecisionDeny, fmt.Sprintf("required permissions: %s", utilErr.PublicPayload["permissions"]), nil
 			}
