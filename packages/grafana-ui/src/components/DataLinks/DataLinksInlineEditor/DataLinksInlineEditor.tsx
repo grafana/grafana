@@ -112,18 +112,16 @@ export const DataLinksInlineEditor = ({
                 const key = `${link.title}/${idx}`;
 
                 const linkJSX = (
-                  <div className={styles.itemWrapper} key={key}>
-                    <DataLinksListItem
-                      key={key}
-                      index={idx}
-                      link={link}
-                      onChange={onDataLinkChange}
-                      onEdit={() => setEditIndex(idx)}
-                      onRemove={() => onDataLinkRemove(idx)}
-                      data={data}
-                      itemKey={key}
-                    />
-                  </div>
+                  <DataLinksListItem
+                    key={key}
+                    index={idx}
+                    link={link}
+                    onChange={onDataLinkChange}
+                    onEdit={() => setEditIndex(idx)}
+                    onRemove={() => onDataLinkRemove(idx)}
+                    data={data}
+                    itemKey={key}
+                  />
                 );
 
                 if (idx === 0) {
@@ -183,9 +181,6 @@ const getDataLinksInlineEditorStyles = (theme: GrafanaTheme2) => ({
     // Negates the padding on the span from moving the underlying link
     marginBottom: -10,
     display: 'inline-block',
-  }),
-  itemWrapper: css({
-    padding: '4px 8px 8px 8px',
   }),
   button: css({
     marginLeft: theme.spacing(1),
