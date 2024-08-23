@@ -1053,16 +1053,14 @@
       "label": "Misc",
       "port": {
         "description": "Default port is 389 without SSL or 636 with SSL",
-        "label": "Port",
-        "placeholder": "389"
+        "label": "Port"
       },
       "timeout": {
         "description": "Timeout in seconds for the connection to the LDAP server",
-        "label": "Timeout",
-        "placeholder": "389"
+        "label": "Timeout"
       }
     },
-    "title": "Advanced Settings"
+    "title": "Advanced settings"
   },
   "ldap-settings-page": {
     "advanced-settings-section": {
