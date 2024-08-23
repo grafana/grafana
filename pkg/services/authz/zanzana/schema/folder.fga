@@ -2,12 +2,12 @@ module folder
 
 extend type org
   relations
-    define folder_create: [role#assignee]
-    define folder_read: [role#assignee] or folder_delete
-    define folder_write: [role#assignee] or folder_create
-    define folder_delete: [role#assignee] or folder_write
-    define folder_permissions_write: [role#assignee]
-    define folder_permissions_read: [role#assignee] or folder_permissions_write
+    define folder_create: [role#assignee] or fixed_folders_creator
+    define folder_read: [role#assignee] or folder_delete or fixed_folders_reader
+    define folder_write: [role#assignee] or folder_create or fixed_folders_writer
+    define folder_delete: [role#assignee] or folder_write or fixed_folders_writer
+    define folder_permissions_read: [role#assignee] or folder_permissions_write or fixed_folders_permissions_reader
+    define folder_permissions_write: [role#assignee] or fixed_folders_permissions_writer
 
     define library_panel_create: [role#assignee]
     define library_panel_read: [role#assignee] or library_panel_write
@@ -22,6 +22,15 @@ extend type org
     define alert_silence_delete: [role#assignee] or alert_silence_write
     define alert_silence_read: [role#assignee] or alert_silence_write
     define alert_silence_write: [role#assignee] or alert_silence_create
+
+    # Fixed roles
+    define fixed_folders_creator: [user, team#member, role#assignee] or fixed_folders_writer
+    define fixed_folders_reader: [user, team#member, role#assignee] or fixed_folders_writer
+    define fixed_folders_writer: [user, team#member, role#assignee]
+    define fixed_folders_permissions_reader: [user, team#member, role#assignee] or fixed_folders_permissions_writer
+    define fixed_folders_permissions_writer: [user, team#member, role#assignee]
+    # Read General (root) folder only
+    define fixed_folders_general_reader: [user, team#member, role#assignee]
 
 type folder
   relations
