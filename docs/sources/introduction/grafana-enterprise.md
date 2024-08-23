@@ -77,6 +77,7 @@ With a Grafana Enterprise license, you also get access to premium data sources, 
 - [Adobe Analytics](/grafana/plugins/grafana-adobeanalytics-datasource)
 - [AppDynamics](/grafana/plugins/dlopes7-appdynamics-datasource)
 - [Atlassian Statuspage](/grafana/plugins/grafana-atlassianstatuspage-datasource)
+- [Aurora](/grafana/plugins/grafana-aurora-datasource)
 - [Azure CosmosDB](/grafana/plugins/grafana-azurecosmosdb-datasource)
 - [Azure Devops](/grafana/plugins/grafana-azuredevops-datasource)
 - [Catchpoint](/grafana/plugins/grafana-catchpoint-datasource)
