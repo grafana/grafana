@@ -162,7 +162,7 @@ The inline editing toggle lets you lock or unlock the canvas. When turned off th
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editing-toggle-9-2-0.mp4" max-width="750px" caption="Inline editing toggle demo" >}}
 
-### Data links
+### Data links and actions
 
 Canvases support [data links](ref:data-links) for all elements except drone and button elements. You can add a data link by following these steps:
 
@@ -183,23 +183,6 @@ Canvases support [data links](ref:data-links) for all elements except drone and 
 When you click the element, the tooltip displays the data link.
 
 If you add multiple data links, you can control the order in which they appear in the visualization. To do this, click and drag the data link to the desired position.
-
-<!-- #### One-click data link
-
-You can configure a canvas data link to open or with a single click on the element. To enable this feature, follow these steps:
-
-1. Enable inline editing.
-1. Click the element to which you want to add the data link.
-1. In either the inline editor or panel editor, expand the **Selected element** editor.
-1. Scroll down to the **Data links** section and expand it.
-1. In the **One-click** section, choose **Link**.
-1. Disable inline editing.
-
-The first data link in the list is your one-click data link. If you want to change the one-click data link, drag the desired data link to the top of the list.
-The first action in the list is the active, one-click action. If you want to change the one-click data link, simply drag the desired data link to the top of the list.
-
-
-The one-click data link is functionality is only active when **Link** is selected.-->
 
 ### Actions
 
