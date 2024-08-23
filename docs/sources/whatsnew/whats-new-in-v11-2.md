@@ -40,7 +40,7 @@ Ready to make the move? Explore our [migration guide](https://grafana.com/docs/g
 
 <!-- #grafana-frontend-platform -->
 
-<!-- confirming availability -->
+_Available in public preview in all editions of Grafana_
 
 As Grafana keeps growing, we have had feedback that it can be hard to find the pages you are looking for in the navigation. That is why we have added a new section to the navigation called 'Bookmarks', so you can easily access all of your favourite pages at the top of the navigation.
 
