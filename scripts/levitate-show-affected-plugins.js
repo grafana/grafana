@@ -79,7 +79,7 @@ function makeQuery(section) {
   }
 
   return `
-    SELECT
+    SELECT DISTINCT
       property_name,
       package_name,
       plugin_id
