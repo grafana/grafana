@@ -82,7 +82,6 @@ func (m mockDatasources) Get(ctx context.Context, uid string) (*v0alpha1.DataSou
 // List lists all data sources the user in context can see
 func (m mockDatasources) List(ctx context.Context) (*v0alpha1.DataSourceConnectionList, error) {
 	return nil, nil
-
 }
 
 // Return settings (decrypted!) for a specific plugin
