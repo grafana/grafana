@@ -82,11 +82,6 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 		return nil, errExtJWTInvalid.Errorf("failed to verify access token: %w", err)
 	}
 
-	authInfo := authlib.AuthInfo{
-		IdentityClaims: nil,
-		AccessClaims:   authlib.NewAccessClaims(*claims),
-	}
-
 	if err != nil {
 		return nil, err
 	}
@@ -97,8 +92,6 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 		if err != nil {
 			return nil, errExtJWTInvalid.Errorf("failed to verify id token: %w", err)
 		}
-
-		authInfo.IdentityClaims = authlib.NewIdentityClaims(*idTokenClaims)
 
 		return s.authenticateAsUser(idTokenClaims, claims)
 	}
