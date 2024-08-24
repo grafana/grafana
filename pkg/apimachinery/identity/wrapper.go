@@ -35,7 +35,7 @@ func (i *IDClaimsWrapper) NamespaceMatches(namespace string) bool {
 	if len(namespaceParts) < 2 {
 		return false
 	}
-	if parts[0] == "stack" || parts[0] == "stacks" {
+	if (parts[0] == "stack" || parts[0] == "stacks") && (namespaceParts[0] == "stack" || namespaceParts[0] == "stacks") {
 		return namespaceParts[1] == parts[1]
 	}
 

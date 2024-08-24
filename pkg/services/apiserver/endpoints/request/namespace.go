@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/grafana/authlib/authz"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/authlib/claims"
@@ -26,6 +27,15 @@ func GetNamespaceMapper(cfg *setting.Cfg) NamespaceMapper {
 		return func(orgId int64) string { return cloudNamespace }
 	}
 	return claims.OrgNamespaceFormatter
+}
+
+// GetNamespaceAccessCheckerType returns a function that is used to enforce authn depending on our use-case
+// e.g. OSS or cloud
+func GetNamespaceAccessCheckerType(cfg *setting.Cfg) authz.NamespaceAccessCheckerType {
+	if cfg != nil && cfg.StackID != "" {
+		return authz.NamespaceAccessCheckerTypeCloud
+	}
+	return authz.NamespaceAccessCheckerTypeOrg
 }
 
 func NamespaceInfoFrom(ctx context.Context, requireOrgID bool) (claims.NamespaceInfo, error) {
