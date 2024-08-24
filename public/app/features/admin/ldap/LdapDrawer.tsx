@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useId } from 'react';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -18,6 +19,7 @@ import {
   Text,
   TextLink,
   Tooltip,
+  RadioButtonGroup,
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { LdapPayload } from 'app/types';
@@ -29,6 +31,8 @@ interface Props {
 const tlsOptions: Array<SelectableValue<string>> = ['TLS1.2', 'TLS1.3'].map((v) => ({ label: v, value: v }));
 
 export const LdapDrawerComponent = ({ onClose }: Props) => {
+  const [encryptionProvider, setEncryptionProvider] = useState(false);
+
   const styles = useStyles2(getStyles);
   const { register, setValue, watch } = useFormContext<LdapPayload>();
 
@@ -241,6 +245,26 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
                   )
                 }
               />
+            </Field>
+            <Field
+              label={t(
+                'ldap-drawer.extra-security-section.encryption-provider.label',
+                'Encryption key and certificate provision specification (required)'
+              )}
+              description={t(
+                'ldap-drawer.extra-security-section.encryption-provider.description',
+                'X.509 certificate provides the public part, while the private key issued in a PKCS#8 format provides the private part of the asymmetric encryption.'
+              )}
+            >
+              <RadioButtonGroup
+                id="encryption-provider"
+                options={[
+                  { label: t('', 'Base64-encoded content'), value: false },
+                  { label: t('', 'Path to files'), value: true },
+                ]}
+                value={encryptionProvider}
+                onChange={() => setEncryptionProvider(!encryptionProvider)}
+              ></RadioButtonGroup>
             </Field>
           </>
         )}
