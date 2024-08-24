@@ -16,6 +16,7 @@ import {
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 
+import { HttpRequestMethod } from '../../plugins/panel/canvas/panelcfg.gen';
 import { createAbsoluteUrl, RelativeUrl } from '../alerting/unified/utils/url';
 
 /** @internal */
@@ -68,13 +69,12 @@ export const getActions = (
 const buildActionOnClick = (action: Action, replaceVariables: InterpolateFunction) => {
   try {
     const url = new URL(replaceVariables(getUrl(action.options.url)));
-    const data = action.options.body ? replaceVariables(action.options.body) : '{}';
 
     const requestHeaders: HeadersInit = [];
     let request: BackendSrvRequest = {
       url: url.toString(),
       method: action.options.method,
-      data: data,
+      data: getData(action, replaceVariables),
       headers: requestHeaders,
     };
 
@@ -100,6 +100,7 @@ const buildActionOnClick = (action: Action, replaceVariables: InterpolateFunctio
       .subscribe({
         error: (error) => {
           appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
+          console.error(error);
         },
         complete: () => {
           appEvents.emit(AppEvents.alertSuccess, ['API call was successful']);
@@ -107,10 +108,12 @@ const buildActionOnClick = (action: Action, replaceVariables: InterpolateFunctio
       });
   } catch (error) {
     appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
+    console.error(error);
     return;
   }
 };
 
+/** @internal */
 // @TODO update return type
 export const getActionsDefaultField = (dataLinks: DataLink[] = [], actions: Action[] = []) => {
   return {
@@ -121,6 +124,7 @@ export const getActionsDefaultField = (dataLinks: DataLink[] = [], actions: Acti
   };
 };
 
+/** @internal */
 const getUrl = (endpoint: string) => {
   const isRelativeUrl = endpoint.startsWith('/');
   if (isRelativeUrl) {
@@ -130,4 +134,14 @@ const getUrl = (endpoint: string) => {
   }
 
   return endpoint;
+};
+
+/** @internal */
+const getData = (action: Action, replaceVariables: InterpolateFunction) => {
+  let data: string | undefined = action.options.body ? replaceVariables(action.options.body) : '{}';
+  if (action.options.method === HttpRequestMethod.GET) {
+    data = undefined;
+  }
+
+  return data;
 };

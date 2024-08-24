@@ -20,6 +20,8 @@
     "e2e:playwright": "yarn playwright test",
     "e2e:playwright:server": "./e2e/plugin-e2e/start-and-run-suite",
     "e2e:storybook": "PORT=9001 ./e2e/run-suite storybook true",
+    "e2e:plugin:build": "nx run-many -t build --projects='@test-plugins/*'",
+    "e2e:plugin:build:dev": "nx run-many -t dev --projects='@test-plugins/*' --maxParallel=100",
     "test": "jest --notify --watch",
     "test:coverage": "jest --coverage",
     "test:coverage:changes": "jest --coverage --changedSince=origin/main",
@@ -431,7 +433,8 @@
       "packages/*",
       "packages/!(grafana-icons)/**",
       "plugins-bundled/internal/*",
-      "public/app/plugins/*/*"
+      "public/app/plugins/*/*",
+      "e2e/test-plugins/*"
     ]
   },
   "engines": {
