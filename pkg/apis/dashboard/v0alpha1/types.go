@@ -77,6 +77,9 @@ type LibraryPanel struct {
 
 	// The dashboard body (unstructured for now)
 	Spec LibraryPanelSpec `json:"spec"`
+
+	// Status will show errors
+	Status *LibraryPanelStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -113,6 +116,14 @@ type LibraryPanelSpec struct {
 	// The datasource queries
 	// +listType=set
 	Targets []data.DataQuery `json:"targets,omitempty"`
+}
+
+type LibraryPanelStatus struct {
+	// Translation warnings (mostly things that were in SQL columns but not found in the saved body)
+	Warnings []string `json:"warnings,omitempty"`
+
+	// The properties previously stored in SQL that are not included in this model
+	Missing common.Unstructured `json:"missing,omitempty"`
 }
 
 // This is like the legacy DTO where access and metadata are all returned in a single call

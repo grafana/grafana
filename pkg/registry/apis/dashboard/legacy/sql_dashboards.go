@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardsV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
@@ -417,7 +418,7 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 	}
 	q := rawQuery
 
-	fmt.Printf("%s // %v\n", rawQuery, req.GetArgs())
+	// fmt.Printf("%s // %v\n", rawQuery, req.GetArgs())
 
 	res := &dashboardsV0.LibraryPanelList{}
 	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
@@ -466,11 +467,37 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 				CreationTimestamp: metav1.NewTime(p.Created),
 				ResourceVersion:   strconv.FormatInt(p.Updated.UnixMilli(), 10),
 			},
-			Spec: dashboardsV0.LibraryPanelSpec{
-				Type:        p.Type,
-				Description: p.Description,
-			},
+			Spec: dashboardsV0.LibraryPanelSpec{},
 		}
+
+		status := &dashboardsV0.LibraryPanelStatus{
+			Missing: v0alpha1.Unstructured{},
+		}
+		err = json.Unmarshal(p.Model, &item.Spec)
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(p.Model, &status.Missing.Object)
+		if err != nil {
+			return nil, err
+		}
+
+		if item.Spec.Title != p.Name {
+			status.Warnings = append(item.Status.Warnings, fmt.Sprintf("title mismatch (expected: %s)", p.Name))
+		}
+		if item.Spec.Description != p.Description {
+			status.Warnings = append(item.Status.Warnings, fmt.Sprintf("description mismatch (expected: %s)", p.Description))
+		}
+		if item.Spec.Type != p.Type {
+			status.Warnings = append(item.Status.Warnings, fmt.Sprintf("type mismatch (expected: %s)", p.Type))
+		}
+		item.Status = status
+
+		// Remove the properties we are already showing
+		for _, k := range []string{"type", "pluginVersion", "title", "description", "options", "fieldConfig", "datasource", "targets", "libraryPanel"} {
+			delete(status.Missing.Object, k)
+		}
+
 		meta, err := utils.MetaAccessor(&item)
 		if err != nil {
 			return nil, err

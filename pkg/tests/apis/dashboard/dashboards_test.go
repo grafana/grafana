@@ -112,7 +112,7 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 		disco := helper.GetGroupVersionInfoJSON("dashboard.grafana.app")
 		// fmt.Printf("%s", string(disco))
 
-		require.JSONEq(t, `[
+		require.JSONEq(t, `
   {
     "freshness": "Current",
     "resources": [
@@ -158,6 +158,20 @@ func TestIntegrationDashboardsApp(t *testing.T) {
           "patch",
           "update",
           "watch"
+        ]
+      },
+      {
+        "resource": "librarypanels",
+        "responseKind": {
+          "group": "",
+          "kind": "LibraryPanel",
+          "version": ""
+        },
+        "scope": "Namespaced",
+        "singularResource": "librarypanel",
+        "verbs": [
+          "get",
+          "list"
         ]
       }
     ],

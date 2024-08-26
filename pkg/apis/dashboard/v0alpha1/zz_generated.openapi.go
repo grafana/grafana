@@ -25,6 +25,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanel":            schema_pkg_apis_dashboard_v0alpha1_LibraryPanel(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanelList":        schema_pkg_apis_dashboard_v0alpha1_LibraryPanelList(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanelSpec":        schema_pkg_apis_dashboard_v0alpha1_LibraryPanelSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanelStatus":      schema_pkg_apis_dashboard_v0alpha1_LibraryPanelStatus(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.VersionsQueryOptions":    schema_pkg_apis_dashboard_v0alpha1_VersionsQueryOptions(ref),
 	}
 }
@@ -429,12 +430,18 @@ func schema_pkg_apis_dashboard_v0alpha1_LibraryPanel(ref common.ReferenceCallbac
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanelSpec"),
 						},
 					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Status will show errors",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanelStatus"),
+						},
+					},
 				},
 				Required: []string{"spec"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanelSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanelSpec", "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanelStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -562,6 +569,41 @@ func schema_pkg_apis_dashboard_v0alpha1_LibraryPanelSpec(ref common.ReferenceCal
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1.DataQuery", "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1.DataSourceRef", "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v0alpha1_LibraryPanelStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"warnings": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Translation warnings (mostly things that were in SQL columns but not found in the saved body)",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"missing": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The properties previously stored in SQL that are not included in this model",
+							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"},
 	}
 }
 
