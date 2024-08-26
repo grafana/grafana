@@ -204,12 +204,7 @@ export function useCombinedRule({ ruleIdentifier }: { ruleIdentifier: RuleIdenti
 
   const [
     fetchRulerRuleGroup,
-    {
-      currentData: rulerRuleGroup,
-      isLoading: isLoadingRulerGroup,
-      error: rulerRuleGroupError,
-      isUninitialized: rulerRuleGroupUninitialized,
-    },
+    { currentData: rulerRuleGroup, isLoading: isLoadingRulerGroup, error: rulerRuleGroupError },
   ] = alertRuleApi.endpoints.rulerRuleGroup.useLazyQuery();
 
   useEffect(() => {
@@ -251,7 +246,7 @@ export function useCombinedRule({ ruleIdentifier }: { ruleIdentifier: RuleIdenti
   }, [ruleIdentifier, ruleSourceName, promRuleNs, rulerRuleGroup, ruleSource]);
 
   return {
-    loading: isLoadingDsFeatures || isLoadingPromRules || isLoadingRulerGroup || rulerRuleGroupUninitialized,
+    loading: isLoadingDsFeatures || isLoadingPromRules || isLoadingRulerGroup,
     error: ruleLocationError ?? promRuleNsError ?? rulerRuleGroupError,
     result: rule,
   };
