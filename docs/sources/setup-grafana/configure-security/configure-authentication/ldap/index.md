@@ -92,7 +92,7 @@ start_tls = false
 # For a complete list of supported ciphers and TLS versions, refer to: https://go.dev/src/crypto/tls/cipher_suites.go
 # Starting with Grafana v11.0 only ciphers with ECDHE support are accepted for TLS 1.2 connections.
 tls_ciphers = []
-# This is the minimum TLS version allowed. By default, this value is empty. Accepted values are: TLS1.1 (only for Grafana v10.4 or older), TLS1.2, TLS1.3.
+# This is the minimum TLS version allowed. By default, this value is empty. Accepted values are: TLS1.1 (only for Grafana v10.4 or earlier), TLS1.2, TLS1.3.
 min_tls_version = ""
 # set to true if you want to skip SSL cert validation
 ssl_skip_verify = false
