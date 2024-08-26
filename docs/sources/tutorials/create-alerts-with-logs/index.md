@@ -39,7 +39,7 @@ In this tutorial, you'll:
 <!-- INTERACTIVE ignore START -->
 
 {{< admonition type="tip" >}}
-Check out our advanced alerting tutorial to explore advanced topics such as alert instances and notification routing.
+Check out our [advanced alerting tutorial](https://grafana.com/tutorials/alerting-get-started-pt2/) to explore advanced topics such as alert instances and notification routing.
 {{< /admonition >}}
 
 {{< docs/ignore >}}
@@ -197,8 +197,8 @@ Next, we'll establish an [alert rule](http://grafana.com/docs/grafana/next/alert
 In this section, we define queries, expressions (used to manipulate the data), and the condition that must be met for the alert to be triggered.
 
 1. Select the **Loki** datasource from the drop-down.
-1. In the Query editor, switch to Code mode by clicking the button on the right.
-1. Paste the query below.
+2. In the Query editor, switch to Code mode by clicking the button on the right.
+3. Paste the query below.
 
   ```
   sum by (message)(count_over_time({filename="/var/log/web_requests.log"} != `status=200` | pattern `<_> <message> duration<_>` [10m]))
@@ -227,14 +227,14 @@ In this section, we define queries, expressions (used to manipulate the data), a
 
   {{< /docs/ignore >}}
 
-1. Remove the ‘B’ **Reduce expression** (click the bin icon). The Reduce expression comes by default, and in this case, it is not needed since the queried data is already reduced. Note that the Threshold expression is now your **Alert condition**.
+4. Remove the ‘B’ **Reduce expression** (click the bin icon). The Reduce expression comes by default, and in this case, it is not needed since the queried data is already reduced. Note that the Threshold expression is now your **Alert condition**.
 
-1. In the ‘C’ **Threshold expression**:
+5. In the ‘C’ **Threshold expression**:
 
    - Change the **Input** to **'A'** to select the data source.
    - Enter `0` as the threshold value. This is the value above which the alert rule should trigger.
 
-1. Click **Preview** to run the queries.
+6. Click **Preview** to run the queries.
 
    It should return a single sample with the value 1 at the current timestamp. And, since `1` is above `0`, the alert condition has been met, and the alert rule state is `Firing`.
 
