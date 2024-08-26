@@ -68,7 +68,7 @@ Subsequent fields are collapsed inside of each log record, expandable upon click
 | 2023-02-01 11:30:00 | title=Log1 lvl=error | 1        | server2  | 2023-02-01 11:00:00 |
 | 2023-02-01 11:00:00 | title=Log1 lvl=trace | 1        | server2  | 2023-02-01 11:00:00 |
 
-![Logs Example](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-logs-example1.png 'Logs Example')
+![Logs Example](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.1-logs-example.png 'Logs Example')
 
 ## Panel options
 
