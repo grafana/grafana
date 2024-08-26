@@ -160,17 +160,17 @@ The HA settings (`ha_peers`, etc.) apply only to communication between alertmana
 
 You can also confirm your high availability setup by monitoring Alertmanager metrics exposed by Grafana.
 
-| Metric                                               | Description                                                                                                    |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| alertmanager_cluster_members                         | Number indicating current number of members in cluster.                                                        |
-| alertmanager_cluster_messages_received_total         | Total number of cluster messages received.                                                                     |
-| alertmanager_cluster_messages_received_size_total    | Total size of cluster messages received.                                                                       |
-| alertmanager_cluster_messages_sent_total             | Total number of cluster messages sent.                                                                         |
-| alertmanager_cluster_messages_sent_size_total        | Total number of cluster messages received.                                                                     |
-| alertmanager_cluster_messages_publish_failures_total | Total number of messages that failed to be published.                                                          |
-| alertmanager_cluster_pings_seconds                   | Histogram of latencies for ping messages.                                                                      |
-| alertmanager_cluster_pings_failures_total            | Total number of failed pings.                                                                                  |
-| alertmanager_peer_position                           | Position the Alertmanager instance believes it's in. The position determines a peer's behavior in the cluster. |
+| Metric                                               | Description                                                                                                                                                |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| alertmanager_cluster_members                         | Number indicating current number of members in cluster.                                                                                                    |
+| alertmanager_cluster_messages_received_total         | Total number of cluster messages received.                                                                                                                 |
+| alertmanager_cluster_messages_received_size_total    | Total size of cluster messages received.                                                                                                                   |
+| alertmanager_cluster_messages_sent_total             | Total number of cluster messages sent.                                                                                                                     |
+| alertmanager_cluster_messages_sent_size_total        | Total number of cluster messages received.                                                                                                                 |
+| alertmanager_cluster_messages_publish_failures_total | Total number of messages that failed to be published.                                                                                                      |
+| alertmanager_cluster_pings_seconds                   | Histogram of latencies for ping messages.                                                                                                                  |
+| alertmanager_cluster_pings_failures_total            | Total number of failed pings.                                                                                                                              |
+| alertmanager_peer_position                           | The position an Alertmanager instance believes it holds, which defines its role in the cluster. Peers should be numbered sequentially, starting from zero. |
 
 You can confirm the number of Grafana instances in your alerting high availability setup by querying the `alertmanager_cluster_members` and `alertmanager_peer_position` metrics.
 
