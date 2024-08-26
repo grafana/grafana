@@ -64,11 +64,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-editor-overview/#data-section
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/panel-editor-overview/#data-section
+  data-transformation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-editor-overview/#data-section
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/panel-editor-overview/#data-section
 ---
 
 # Time series
 
-Time series visualizations are the default way to visualize data points over intervals of time, as a graph. They can render series as lines, points, or bars and are versatile enough to display almost any time-series data.
+Time series visualizations are the default way to show the variations of a set of data values over time. Each data point is matched to a timestamp and this _time series_ is displayed as a graph. The visualization can render series as lines, points, or bars and it's versatile enough to display almost any type of [time-series data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/).
 
 {{< figure src="/static/img/docs/time-series-panel/time_series_small_example.png" max-width="1200px" alt="Time series" >}}
 
@@ -76,9 +81,7 @@ Time series visualizations are the default way to visualize data points over int
 You can migrate from the legacy Graph visualization to the time series visualization. To migrate, open the panel and click the **Migrate** button in the side pane.
 {{< /admonition >}}
 
-You can use a time series visualization when you want to visualize the variations of a set of data values over time, each paired with timestamps.
-
-The visualization displays an x-y graph with the time progression on the x-axis and the magnitude of the values on the y-axis. This visualization makes it easier to display large lists of timed data points that would be hard to track in a table or list.
+A time series visualization displays an x-y graph with time progression on the x-axis and the magnitude of the values on the y-axis. This visualization is ideal for displaying large numbers of timed data points that would be hard to track in a table or list.
 
 You can use the time series visualization if you need track:
 
@@ -98,9 +101,11 @@ The following video guides you through the creation steps and common customizati
 
 Time series visualizations require time-series data—a sequence of measurements, ordered in time, and formatted as a table—where every row in the table represents one individual measurement at a specific time. Learn more about [time-series data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/).
 
-The dataset must contain at least one numeric field, and in case of multiple numeric fields each one will be plotted as a new line, point, or bar labeled with the field name in the tooltip.
+The dataset must contain at least one numeric field, and in the case of multiple numeric fields, each one is plotted as a new line, point, or bar labeled with the field name in the tooltip.
 
-### Example
+### Example 1
+
+In the following example, there are three numeric fields represented three lines in the chart:
 
 | Time                | value1 | value2 | value3 |
 | ------------------- | ------ | ------ | ------ |
@@ -109,13 +114,13 @@ The dataset must contain at least one numeric field, and in case of multiple num
 | 2022-11-01 12:00:00 | 7      | 8      | 9      |
 | 2022-11-01 13:00:00 | 4      | 5      | 6      |
 
-![Time Series Example](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-timeseries-example1v2.png 'Time Series Example')
+![Time series line chart with multiple numeric fields](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-timeseries-example1v2.png 'Time series line chart with multiple numeric fields')
 
-If the time field is not recognized automatically, you might need to transform the data to a time format using a data transformation.
+If the time field isn't automatically detected, you might need to convert the data to a time format using a [data transformation](ref:data-transformation).
 
-The visualization supports multiple datasets. If all datasets are compliant with the supported data format, the visualization plots all the numeric fields of both datasets, and labels them using the numeric field's column name.
+### Example 2
 
-### Example
+The time series visualization also supports multiple datasets. If all datasets are in the correct format, the visualization plots the numeric fields of all datasets and labels them using the column name of the field.
 
 #### Query1
 
@@ -134,11 +139,11 @@ The visualization supports multiple datasets. If all datasets are compliant with
 | 2022-11-01 12:30:00 | 17      | 18      | 19      |
 | 2022-11-01 13:30:00 | 14      | 15      | 16      |
 
-![Time Series Example with two Data Sets](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-timeseries-example2v2.png 'Time Series Example with two Data Sets')
+![Time series line chart with two datasets](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-timeseries-example2v2.png 'Time series line chart with two datasets')
 
-If you want to more easily compare events between different, but overlapping, time frames, you can do this by using a time offset while querying the compared dataset.
+### Example 3
 
-### Example
+If you want to more easily compare events between different, but overlapping, time frames, you can do this by using a time offset while querying the compared dataset:
 
 #### Query1
 
@@ -159,7 +164,7 @@ If you want to more easily compare events between different, but overlapping, ti
 
 ![Time Series Example with second Data Set offset](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-timeseries-example3v2.png 'Time Series Example with second Data Set offset')
 
-When you add the offset, the resulting visualization will make the datasets appear to be occurring at the same time so that you can compare them more easily.
+When you add the offset, the resulting visualization makes the datasets appear to be occurring at the same time so that you can compare them more easily.
 
 ## Alert rules
 
