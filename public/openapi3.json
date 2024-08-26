@@ -5616,14 +5616,6 @@
         "title": "Frames is a slice of Frame pointers.",
         "type": "array"
       },
-      "GenericPublicError": {
-        "properties": {
-          "body": {
-            "$ref": "#/components/schemas/PublicError"
-          }
-        },
-        "type": "object"
-      },
       "GetAccessTokenResponseDTO": {
         "properties": {
           "createdAt": {
@@ -8480,7 +8472,8 @@
             "type": "string"
           },
           "for": {
-            "$ref": "#/components/schemas/Duration"
+            "format": "duration",
+            "type": "string"
           },
           "id": {
             "format": "int64",
@@ -12034,7 +12027,7 @@
       },
       "ValidationError": {
         "properties": {
-          "msg": {
+          "message": {
             "example": "error message",
             "type": "string"
           }
@@ -12229,7 +12222,6 @@
         "type": "object"
       },
       "alertGroups": {
-        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -12418,7 +12410,6 @@
         "type": "object"
       },
       "gettableAlerts": {
-        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -12542,7 +12533,6 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
@@ -25450,11 +25440,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenericPublicError"
+                  "$ref": "#/components/schemas/PublicError"
                 }
               }
             },
-            "description": "GenericPublicError"
+            "description": "PublicError"
           }
         },
         "summary": "Delete a mute timing.",
@@ -25550,11 +25540,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenericPublicError"
+                  "$ref": "#/components/schemas/PublicError"
                 }
               }
             },
-            "description": "GenericPublicError"
+            "description": "PublicError"
           }
         },
         "summary": "Replace an existing mute timing.",
@@ -25879,11 +25869,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenericPublicError"
+                  "$ref": "#/components/schemas/PublicError"
                 }
               }
             },
-            "description": "GenericPublicError"
+            "description": "PublicError"
           }
         },
         "summary": "Delete a template.",
@@ -25919,11 +25909,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenericPublicError"
+                  "$ref": "#/components/schemas/PublicError"
                 }
               }
             },
-            "description": "GenericPublicError"
+            "description": "PublicError"
           }
         },
         "summary": "Get a notification template.",
@@ -25976,21 +25966,21 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenericPublicError"
+                  "$ref": "#/components/schemas/PublicError"
                 }
               }
             },
-            "description": "GenericPublicError"
+            "description": "PublicError"
           },
           "409": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenericPublicError"
+                  "$ref": "#/components/schemas/PublicError"
                 }
               }
             },
-            "description": "GenericPublicError"
+            "description": "PublicError"
           }
         },
         "summary": "Updates an existing notification template.",
