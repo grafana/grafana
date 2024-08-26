@@ -32,7 +32,7 @@ export function getPanelPluginToMigrateTo(panel: any, forceMigration?: boolean):
       isUrlFeatureFlagEnabled('autoMigrateGraphPanel'))
   ) {
     if (panel.xaxis?.mode === 'series') {
-      return 'barchart';
+      return 'bargauge';
     }
 
     if (panel.xaxis?.mode === 'histogram') {

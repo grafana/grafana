@@ -6,10 +6,12 @@ import { addOrientationOption, addStandardDataReduceOptions } from '../stat/comm
 
 import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
 import { BarGaugePanel } from './BarGaugePanel';
+import { changeToBarGaugePanelMigrationHandler } from './migrations';
 import { Options, defaultOptions } from './panelcfg.gen';
 import { BarGaugeSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options>(BarGaugePanel)
+  .setPanelChangeHandler(changeToBarGaugePanelMigrationHandler)
   .useFieldConfig()
   .setPanelOptions((builder) => {
     addStandardDataReduceOptions(builder);
