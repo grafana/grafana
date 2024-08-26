@@ -14,4 +14,5 @@ WHERE
       ORDER BY t.id ASC LIMIT {{ .Arg .Query.Limit }}
     )
 {{ end }}
-AND tm.org_id = {{ .Arg .Query.OrgID}};
+AND tm.org_id = {{ .Arg .Query.OrgID}}
+ORDER BY t.id ASC;

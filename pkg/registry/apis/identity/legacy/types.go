@@ -49,7 +49,7 @@ type TeamMember struct {
 	UserUID    string
 	Updated    time.Time
 	Created    time.Time
-	Permission int64
+	Permission team.PermissionType
 }
 
 func (m TeamMember) MemberID() string {

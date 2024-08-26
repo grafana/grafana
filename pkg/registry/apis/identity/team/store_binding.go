@@ -2,6 +2,7 @@ package team
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/identity/common"
 	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/team"
 )
 
 var bindingResource = identityv0.TeamBindingResourceInfo
@@ -77,6 +79,8 @@ func (l *LegacyBindingStore) Get(ctx context.Context, name string, options *meta
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println(res)
 
 	if len(res.Bindings) != 1 {
 		// FIXME: maybe empty result?
@@ -163,10 +167,10 @@ func mapToSubjects(members []legacy.TeamMember) []identityv0.TeamSubject {
 
 // For some reason team memberships are using dashboardaccess.PermissionType internally.
 // But that enum only have View, Edit and Admin. So admin is 4 and then members are set to 0.
-func mapPermisson(p int64) identityv0.TeamPermission {
-	if p == 0 {
-		return identityv0.TeamPermissionMember
-	} else {
+func mapPermisson(p team.PermissionType) identityv0.TeamPermission {
+	if p == team.PermissionTypeAdmin {
 		return identityv0.TeamPermissionAdmin
+	} else {
+		return identityv0.TeamPermissionMember
 	}
 }
