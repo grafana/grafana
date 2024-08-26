@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/authlib/claims"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -337,8 +338,14 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 	teams := user.GetTeams()
 	orgID := user.GetOrgID()
 	miss := teams
+	compositeKey := accesscontrol.GetTeamPermissionCompositeCacheKey(teams, orgID)
 
 	if !options.ReloadCache {
+		teamsPermissions, ok := s.cache.Get(compositeKey)
+		if ok {
+			return teamsPermissions.([]accesscontrol.Permission), nil
+		}
+
 		miss = make([]int64, 0)
 		for _, teamID := range teams {
 			key := accesscontrol.GetTeamPermissionCacheKey(teamID, orgID)
@@ -368,6 +375,7 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 			permissions = append(permissions, teamPermissions...)
 		}
 	}
+	s.cache.Set(compositeKey, permissions, cacheTTL)
 
 	return permissions, nil
 }
