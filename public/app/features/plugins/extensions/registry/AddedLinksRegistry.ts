@@ -88,10 +88,10 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
         };
 
         if (!(extensionPointId in registry)) {
-          registry[extensionPointId] = [result];
-        } else {
-          registry[extensionPointId].push(result);
+          registry[extensionPointId] = [];
         }
+
+        registry[extensionPointId].push(result);
       }
     }
 

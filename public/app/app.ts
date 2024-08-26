@@ -215,7 +215,6 @@ export class GrafanaApp {
 
       // Initialize plugin extensions
       const pluginExtensionsRegistries = {
-        extensionsRegistry: new ReactivePluginExtensionsRegistry(),
         addedComponentsRegistry: new AddedComponentsRegistry(),
         exposedComponentsRegistry: new ExposedComponentsRegistry(),
         addedLinksRegistry: new AddedLinksRegistry(),
@@ -237,7 +236,7 @@ export class GrafanaApp {
         await preloadPlugins(awaitedAppPlugins, pluginExtensionsRegistries, 'frontend_awaited_plugins_preload');
       }
 
-      setPluginExtensionGetter(createPluginExtensionsGetter(pluginExtensionsRegistries));
+      setPluginExtensionGetter(await createPluginExtensionsGetter(pluginExtensionsRegistries));
       setPluginExtensionsHook(createUsePluginExtensions(pluginExtensionsRegistries));
       setPluginComponentHook(createUsePluginComponent(pluginExtensionsRegistries.exposedComponentsRegistry));
       setPluginComponentsHook(createUsePluginComponents(pluginExtensionsRegistries.addedComponentsRegistry));

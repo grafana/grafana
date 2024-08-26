@@ -34,12 +34,12 @@ export function createPluginExtensionsGetter(registries: PluginExtensionRegistri
 
   // Create registry subscriptions to keep an copy of the registry state for use in the non-async
   // plugin extensions getter.
-  registries.addedComponentsRegistry.asObservable().subscribe((r) => {
-    registryStates.addedComponentsRegistry = r;
+  registries.addedComponentsRegistry.asObservable().subscribe((addedComponentsRegistry) => {
+    registryStates.addedComponentsRegistry = addedComponentsRegistry;
   });
 
-  registries.addedComponentsRegistry.asObservable().subscribe((r) => {
-    registryStates.addedLinksRegistry = r;
+  registries.addedLinksRegistry.asObservable().subscribe((addedLinksRegistry) => {
+    registryStates.addedLinksRegistry = addedLinksRegistry;
   });
 
   return (options) => getPluginExtensions({ ...options, registryStates });
@@ -51,6 +51,8 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
   // We don't return the extensions separated by type, because in that case it would be much harder to define a sort-order for them.
   const extensions: PluginExtension[] = [];
   const extensionsByPlugin: Record<string, number> = {};
+  console.log('addedLinksRegistry', registryStates.addedLinksRegistry);
+  // console.log('addedComponentsRegistry', registryStates.addedComponentsRegistry);
 
   for (const addedLink of registryStates.addedLinksRegistry[extensionPointId] ?? []) {
     try {
