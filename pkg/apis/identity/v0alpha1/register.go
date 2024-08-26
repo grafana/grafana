@@ -128,6 +128,7 @@ var TeamBindingResourceInfo = common.NewResourceInfo(
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Team", Type: "string"},
 			{Name: "Created At", Type: "string", Format: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
@@ -137,34 +138,7 @@ var TeamBindingResourceInfo = common.NewResourceInfo(
 			}
 			return []interface{}{
 				m.Name,
-				m.CreationTimestamp.UTC().Format(time.RFC3339),
-			}, nil
-		},
-	},
-)
-
-var TeamMemberResourceInfo = common.NewResourceInfo(
-	GROUP, VERSION, "teammembers", "teammember", "TeamMember",
-	func() runtime.Object { return &TeamMember{} },
-	func() runtime.Object { return &TeamMemberList{} },
-	utils.TableColumns{
-		Definition: []metav1.TableColumnDefinition{
-			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Team", Type: "string"},
-			{Name: "Subject", Type: "string"},
-			{Name: "Permission", Type: "string"},
-			{Name: "Created At", Type: "string", Format: "date"},
-		},
-		Reader: func(obj any) ([]interface{}, error) {
-			m, ok := obj.(*TeamMember)
-			if !ok {
-				return nil, fmt.Errorf("expected team member")
-			}
-			return []interface{}{
-				m.Name,
 				m.Spec.TeamRef.Name,
-				m.Spec.Subject.Name,
-				m.Spec.Subject.Permission,
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
 			}, nil
 		},
@@ -196,8 +170,6 @@ func AddKnownTypes(scheme *runtime.Scheme, version string) {
 		&SSOSettingList{},
 		&TeamBinding{},
 		&TeamBindingList{},
-		&TeamMember{},
-		&TeamMemberList{},
 	)
 }
 
