@@ -91,6 +91,8 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&dashboard.DashboardWithAccessInfo{},
 		&dashboard.DashboardVersionList{},
 		&dashboard.VersionsQueryOptions{},
+		&dashboard.LibraryPanel{},
+		&dashboard.LibraryPanelList{},
 		&metav1.PartialObjectMetadata{},
 		&metav1.PartialObjectMetadataList{},
 	)
@@ -155,6 +157,11 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	// Expose read only library panels
+	storage[dashboard.LibraryPanelResourceInfo.StoragePath()] = &libraryPanelStore{
+		access: b.legacy.access,
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[dashboard.VERSION] = storage

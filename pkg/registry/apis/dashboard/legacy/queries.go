@@ -27,6 +27,7 @@ func mustTemplate(filename string) *template.Template {
 // Templates.
 var (
 	sqlQueryDashboards = mustTemplate("query_dashboards.sql")
+	sqlQueryPanels     = mustTemplate("query_panels.sql")
 )
 
 type sqlQuery struct {
@@ -52,5 +53,27 @@ func newQueryReq(sql *legacysql.LegacyDatabaseHelper, query *DashboardQuery) sql
 		VersionTable:      sql.Table("dashboard_version"),
 		ProvisioningTable: sql.Table("dashboard_provisioning"),
 		UserTable:         sql.Table("user"),
+	}
+}
+
+type sqlLibraryQuery struct {
+	sqltemplate.SQLTemplate
+	Query *LibraryPanelQuery
+
+	LibraryElementTable string
+	UserTable           string
+}
+
+func (r sqlLibraryQuery) Validate() error {
+	return nil // TODO
+}
+
+func newLibraryQueryReq(sql *legacysql.LegacyDatabaseHelper, query *LibraryPanelQuery) sqlLibraryQuery {
+	return sqlLibraryQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		Query:       query,
+
+		LibraryElementTable: sql.Table("library_element"),
+		UserTable:           sql.Table("user"),
 	}
 }

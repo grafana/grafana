@@ -17,6 +17,9 @@ func GetOpenAPIDefinitions(builders []APIGroupBuilder) common.GetOpenAPIDefiniti
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 		defs := v0alpha1.GetOpenAPIDefinitions(ref) // common grafana apis
 		maps.Copy(defs, data.GetOpenAPIDefinitions(ref))
+		maps.Copy(defs, map[string]common.OpenAPIDefinition{ // TODO -- move to SDK definition above
+			"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1.DataSourceRef": dummyResponse(ref),
+		})
 		for _, b := range builders {
 			g := b.GetOpenAPIDefinitions()
 			if g != nil {
@@ -25,6 +28,19 @@ func GetOpenAPIDefinitions(builders []APIGroupBuilder) common.GetOpenAPIDefiniti
 			}
 		}
 		return defs
+	}
+}
+
+// Individual response
+func dummyResponse(_ common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description:          "todo... improve schema",
+				Type:                 []string{"object"},
+				AdditionalProperties: &spec.SchemaOrBool{Allows: true},
+			},
+		},
 	}
 }
 
