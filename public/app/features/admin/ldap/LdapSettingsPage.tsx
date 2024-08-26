@@ -5,12 +5,14 @@ import { connect } from 'react-redux';
 
 import { AppEvents, GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { getBackendSrv, getAppEvents } from '@grafana/runtime';
-import { useStyles2, Alert, Box, Button, Field, Input, Stack, TextLink } from '@grafana/ui';
+import { useStyles2, Alert, Box, Button, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
 import { Loader } from 'app/features/plugins/admin/components/Loader';
 import { LdapPayload, StoreState } from 'app/types';
+
+import { LdapDrawerComponent } from './LdapDrawer';
 
 const appEvents = getAppEvents();
 
@@ -71,6 +73,7 @@ const emptySettings: LdapPayload = {
 
 export const LdapSettingsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const methods = useForm<LdapPayload>({ defaultValues: emptySettings });
   const { getValues, handleSubmit, register, reset } = methods;
@@ -161,6 +164,10 @@ export const LdapSettingsPage = () => {
         });
         return;
       }
+      appEvents.publish({
+        type: AppEvents.alertSuccess.name,
+        payload: [t('ldap-settings-page.alert.discard-success', 'LDAP settings discarded')],
+      });
       reset(payload);
     } catch (error) {
       appEvents.publish({
@@ -261,6 +268,23 @@ export const LdapSettingsPage = () => {
                     {...register('settings.config.servers.0.search_base_dns', { required: true })}
                   />
                 </Field>
+                <Box borderColor="strong" borderStyle="solid" padding={2} width={68}>
+                  <Stack alignItems={'center'} direction={'row'} gap={2} justifyContent={'space-between'}>
+                    <Stack alignItems={'start'} direction={'column'}>
+                      <Text element="h2">
+                        <Trans i18nKey="ldap-settings-page.advanced-settings-section.title">Advanced Settings</Trans>
+                      </Text>
+                      <Text>
+                        <Trans i18nKey="ldap-settings-page.advanced-settings-section.subtitle">
+                          Mappings, extra security measures, and more.
+                        </Trans>
+                      </Text>
+                    </Stack>
+                    <Button variant="secondary" onClick={() => setIsDrawerOpen(true)}>
+                      <Trans i18nKey="ldap-settings-page.advanced-settings-section.edit.button">Edit</Trans>
+                    </Button>
+                  </Stack>
+                </Box>
                 <Box display={'flex'} gap={2} marginTop={5}>
                   <Stack alignItems={'center'} gap={2}>
                     <Button type={'submit'}>
@@ -276,6 +300,7 @@ export const LdapSettingsPage = () => {
                 </Box>
               </section>
             )}
+            {isDrawerOpen && <LdapDrawerComponent onClose={() => setIsDrawerOpen(false)} />}
           </form>
         </FormProvider>
       </Page.Contents>

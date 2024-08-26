@@ -59,7 +59,6 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
       'redux',
       'rxjs',
       'react-router',
-      'react-router-dom',
       'd3',
       'angular',
       '@grafana/ui',

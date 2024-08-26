@@ -195,14 +195,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:            "unifiedStorage",
-			Description:     "SQL-based k8s storage",
-			Stage:           FeatureStageExperimental,
-			RequiresDevMode: false,
-			RequiresRestart: true, // new SQL tables created
-			Owner:           grafanaSearchAndStorageSquad,
-		},
-		{
 			Name:           "cloudWatchCrossAccountQuerying",
 			Description:    "Enables cross-account querying in CloudWatch datasources",
 			Stage:          FeatureStageGeneralAvailability,
@@ -663,12 +655,6 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaPluginsPlatformSquad,
-		},
-		{
-			Name:        "idForwarding",
-			Description: "Generate signed id token for identity that can be forwarded to plugins and external services",
-			Stage:       FeatureStageExperimental,
-			Owner:       identityAccessTeam,
 		},
 		{
 			Name:              "externalServiceAccounts",
@@ -1406,6 +1392,12 @@ var (
 			Description: "Exposes a new 'one of' operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
+		},
+		{
+			Name:        "lokiSendDashboardPanelNames",
+			Description: "Send dashboard and panel names to Loki when querying",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityLogsSquad,
 		},
 	}
 )
