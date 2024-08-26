@@ -40,7 +40,6 @@ influxdbBackendMigration,GA,@grafana/observability-metrics,false,false,true
 influxqlStreamingParser,experimental,@grafana/observability-metrics,false,false,false
 influxdbRunQueriesInParallel,privatePreview,@grafana/observability-metrics,false,false,false
 prometheusRunQueriesInParallel,privatePreview,@grafana/observability-metrics,false,false,false
-prometheusDataplane,GA,@grafana/observability-metrics,false,false,false
 lokiMetricDataplane,GA,@grafana/observability-logs,false,false,false
 lokiLogsDataplane,experimental,@grafana/observability-logs,false,false,false
 dataplaneFrontendFallback,GA,@grafana/observability-metrics,false,false,true
@@ -183,3 +182,4 @@ prometheusAzureOverrideAudience,deprecated,@grafana/partner-datasources,false,fa
 backgroundPluginInstaller,experimental,@grafana/plugins-platform-backend,false,true,false
 dataplaneAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
 adhocFilterOneOf,experimental,@grafana/dashboards-squad,false,false,false
+lokiSendDashboardPanelNames,experimental,@grafana/observability-logs,false,false,false
