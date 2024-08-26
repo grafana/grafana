@@ -18,6 +18,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/playlist"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -92,8 +93,10 @@ func TestIntegrationPlaylist(t *testing.T) {
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
 			APIServerStorageType: "file", // write the files to disk
-			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode0,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				playlistv0alpha1.GROUPRESOURCE: {
+					DualWriterMode: grafanarest.Mode0,
+				},
 			},
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
@@ -106,8 +109,10 @@ func TestIntegrationPlaylist(t *testing.T) {
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
 			APIServerStorageType: "file", // write the files to disk
-			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode1,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				playlistv0alpha1.GROUPRESOURCE: {
+					DualWriterMode: grafanarest.Mode1,
+				},
 			},
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
@@ -120,8 +125,10 @@ func TestIntegrationPlaylist(t *testing.T) {
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
 			APIServerStorageType: "file", // write the files to disk
-			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode2,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				playlistv0alpha1.GROUPRESOURCE: {
+					DualWriterMode: grafanarest.Mode2,
+				},
 			},
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
@@ -134,8 +141,10 @@ func TestIntegrationPlaylist(t *testing.T) {
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
 			APIServerStorageType: "file", // write the files to disk
-			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode3,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				playlistv0alpha1.GROUPRESOURCE: {
+					DualWriterMode: grafanarest.Mode3,
+				},
 			},
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
@@ -151,8 +160,10 @@ func TestIntegrationPlaylist(t *testing.T) {
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
-			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode0,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				playlistv0alpha1.GROUPRESOURCE: {
+					DualWriterMode: grafanarest.Mode0,
+				},
 			},
 		}))
 	})
@@ -174,8 +185,10 @@ func TestIntegrationPlaylist(t *testing.T) {
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
-			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode2,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				playlistv0alpha1.GROUPRESOURCE: {
+					DualWriterMode: grafanarest.Mode2,
+				},
 			},
 		}))
 	})
@@ -188,8 +201,10 @@ func TestIntegrationPlaylist(t *testing.T) {
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
-			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode3,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				playlistv0alpha1.GROUPRESOURCE: {
+					DualWriterMode: grafanarest.Mode3,
+				},
 			},
 		}))
 	})
@@ -202,8 +217,10 @@ func TestIntegrationPlaylist(t *testing.T) {
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
 			APIServerStorageType: "etcd", // requires etcd running on localhost:2379
-			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode0,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				playlistv0alpha1.GROUPRESOURCE: {
+					DualWriterMode: grafanarest.Mode0,
+				},
 			},
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
@@ -232,8 +249,10 @@ func TestIntegrationPlaylist(t *testing.T) {
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
-			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode1,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				playlistv0alpha1.GROUPRESOURCE: {
+					DualWriterMode: grafanarest.Mode1,
+				},
 			},
 		})
 
@@ -259,8 +278,10 @@ func TestIntegrationPlaylist(t *testing.T) {
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
-			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode2,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				playlistv0alpha1.GROUPRESOURCE: {
+					DualWriterMode: grafanarest.Mode2,
+				},
 			},
 		})
 
@@ -286,8 +307,10 @@ func TestIntegrationPlaylist(t *testing.T) {
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
-			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode3,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				playlistv0alpha1.GROUPRESOURCE: {
+					DualWriterMode: grafanarest.Mode3,
+				},
 			},
 		})
 
