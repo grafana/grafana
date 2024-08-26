@@ -118,6 +118,13 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         };
       }
 
+      if (field.state?.calcs) {
+        config = {
+          ...config,
+          ...field.state.calcs,
+        };
+      }
+
       let displayName = field.config.displayName ?? '';
 
       const display =
