@@ -2,6 +2,7 @@ export interface ScopeDashboardBindingSpec {
   dashboard: string;
   dashboardTitle: string;
   scope: string;
+  groups?: string[];
 }
 
 // TODO: Use Resource from apiserver when we export the types
