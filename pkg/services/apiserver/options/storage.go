@@ -8,7 +8,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type StorageType string
@@ -25,7 +25,7 @@ type StorageOptions struct {
 	StorageType                  StorageType
 	DataPath                     string
 	Address                      string
-	DualWriterDesiredModes       map[string]grafanarest.DualWriterMode
+	UnifiedStorageConfig         map[string]setting.UnifiedStorageConfig
 	DualWriterDataSyncJobEnabled map[string]bool
 }
 

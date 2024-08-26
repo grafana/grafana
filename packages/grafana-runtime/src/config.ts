@@ -47,6 +47,10 @@ export type PreinstalledPlugin = {
   version: string;
 };
 
+export type UnifiedStorageConfig = {
+  dualWriterMode: number;
+};
+
 export class GrafanaBootConfig implements GrafanaConfig {
   publicDashboardAccessToken?: string;
   publicDashboardsEnabled = true;
@@ -191,7 +195,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   cloudMigrationPollIntervalMs = 2000;
   reportingStaticContext?: Record<string, string>;
   exploreDefaultTimeOffset = '1h';
-  unifiedStorage?: Record<string, number>;
+  unifiedStorage?: Record<string, UnifiedStorageConfig>;
 
   /**
    * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of

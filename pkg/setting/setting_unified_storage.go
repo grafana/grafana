@@ -1,24 +1,28 @@
 package setting
 
 import (
-	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
-func (cfg *Cfg) setUnifiedStorageConfig() error {
-	// read storage configs from ini file
-	storageSection := cfg.Raw.Section("unified_storage")
-	storageConfig := make(map[string]rest.DualWriterMode)
-
-	// populate the storage config
-	for _, k := range storageSection.Keys() {
-		v, err := strconv.ParseInt(k.Value(), 10, 32)
-		if err != nil {
-			return err
+func (cfg *Cfg) setUnifiedStorageConfig() {
+	storageConfig := make(map[string]UnifiedStorageConfig)
+	// read storage configs from ini file. They look like:
+	// [unified_storage.<resource-name>]
+	// config = <value>
+	sections := cfg.Raw.Sections()
+	for _, section := range sections {
+		sectionName := section.Name()
+		if !strings.HasPrefix(sectionName, "unified_storage.") {
+			continue
 		}
-		storageConfig[k.Name()] = rest.DualWriterMode(v)
+		// the resource name is the part after the first dot
+		resourceName := strings.SplitAfterN(sectionName, ".", 2)[1]
+
+		// parse dualWriter modes from the section
+		dualWriterMode := section.Key("dualWriterMode").MustInt(0)
+		storageConfig[resourceName] = UnifiedStorageConfig{DualWriterMode: rest.DualWriterMode(dualWriterMode)}
 	}
 	cfg.UnifiedStorage = storageConfig
-	return nil
 }

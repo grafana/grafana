@@ -55,9 +55,11 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	o.StorageOptions.DataPath = apiserverCfg.Key("storage_path").MustString(filepath.Join(cfg.DataPath, "grafana-apiserver"))
 	o.StorageOptions.Address = apiserverCfg.Key("address").MustString(o.StorageOptions.Address)
 
-	// unified storage modes
+	// unified storage configs look like
+	// [unified_storage.<resource-name>]
+	// config = <value>
 	unifiedStorageCfg := cfg.UnifiedStorage
-	o.StorageOptions.DualWriterDesiredModes = unifiedStorageCfg
+	o.StorageOptions.UnifiedStorageConfig = unifiedStorageCfg
 
 	o.StorageOptions.DualWriterDataSyncJobEnabled = map[string]bool{
 		// TODO: This will be enabled later, when we get a dedicated config section for unified_storage
@@ -66,8 +68,8 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 
 	// TODO: ensure backwards compatibility with production
 	// remove this after changing the unified_storage key format in HGAPI
-	if _, ok := o.StorageOptions.DualWriterDesiredModes[playlist.RESOURCE+"."+playlist.GROUP]; ok {
-		o.StorageOptions.DualWriterDesiredModes[playlist.RESOURCE+"."+playlist.GROUP] = o.StorageOptions.DualWriterDesiredModes[playlist.GROUPRESOURCE]
+	if _, ok := o.StorageOptions.UnifiedStorageConfig[playlist.RESOURCE+"."+playlist.GROUP]; ok {
+		o.StorageOptions.UnifiedStorageConfig[playlist.RESOURCE+"."+playlist.GROUP] = o.StorageOptions.UnifiedStorageConfig[playlist.GROUPRESOURCE]
 	}
 
 	o.ExtraOptions.DevMode = features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerEnsureKubectlAccess)
