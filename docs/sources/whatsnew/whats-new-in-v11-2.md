@@ -150,7 +150,7 @@ For Grafana Enterprise and OSS users:
 
 To try out the new alert history page, enable the `alertingCentralAlertHistory` feature toggle and [configure Loki annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alert-state-history/).
 
-{{< figure src="/media/docs/alerting/alert-state-history.png" >}}
+{{< figure src="/media/docs/alerting/alert-state-history.png" alt="Alert state history page" >}}
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/view-state-health/)
 
