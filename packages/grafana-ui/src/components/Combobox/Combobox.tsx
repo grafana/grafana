@@ -59,7 +59,7 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
 
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
-  const listRef = useRef<HTMLUListElement>(null);
+
   const styles = useStyles2(getComboboxStyles);
   const [popoverMaxWidth, setPopoverMaxWidth] = useState<number | undefined>(undefined);
   const [popoverWidth, setPopoverWidth] = useState<number | undefined>(undefined);
@@ -68,7 +68,7 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
     count: items.length,
     getScrollElement: () => floatingRef.current,
     estimateSize,
-    overscan: items.length < 100 ? 100 : 4,
+    overscan: 4,
   };
 
   const rowVirtualizer = useVirtualizer(virtualizerOptions);
@@ -228,13 +228,12 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
         {...getMenuProps({ ref: floatingRef })}
       >
         {isOpen && (
-          <ul ref={listRef} style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
+          <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               return (
                 <li
                   key={items[virtualRow.index].value}
                   data-index={virtualRow.index}
-                  //ref={rowVirtualizer.measureElement}
                   className={cx(
                     styles.option,
                     selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected,
