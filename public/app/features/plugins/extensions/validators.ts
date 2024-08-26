@@ -1,5 +1,5 @@
 import type {
-  PluginAddedLinkConfig,
+  PluginExtensionAddedLinkConfig,
   PluginExtension,
   PluginExtensionConfig,
   PluginExtensionLink,
@@ -50,7 +50,7 @@ export function assertExtensionPointIdIsValid(pluginId: string, extension: Plugi
   }
 }
 
-export function assertConfigureIsValid(config: PluginAddedLinkConfig) {
+export function assertConfigureIsValid(config: PluginExtensionAddedLinkConfig) {
   if (!isConfigureFnValid(config.configure)) {
     throw new Error(
       `Invalid extension "${config.title}". The "configure" property must be a function. Skipping the extension.`

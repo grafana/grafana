@@ -1,42 +1,16 @@
 import { memo } from 'react';
 
-import { PluginAddedLinkConfig, PluginExtension, PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
+import { PluginExtensionAddedLinkConfig, PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
 
 import {
   assertConfigureIsValid,
   assertLinkPathIsValid,
   assertExtensionPointIdIsValid,
-  assertPluginExtensionLink,
   assertStringProps,
   isReactComponent,
 } from './validators';
 
 describe('Plugin Extension Validators', () => {
-  describe('assertPluginExtensionLink()', () => {
-    it('should NOT throw an error if it is a link extension', () => {
-      expect(() => {
-        assertPluginExtensionLink({
-          id: 'id',
-          pluginId: 'myorg-b-app',
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-          path: '...',
-        } as PluginExtension);
-      }).not.toThrowError();
-    });
-
-    it('should throw an error if it is not a link extension', () => {
-      expect(() => {
-        assertPluginExtensionLink({
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-        } as PluginExtension);
-      }).toThrowError();
-    });
-  });
-
   describe('assertLinkPathIsValid()', () => {
     it('should not throw an error if the link path is valid', () => {
       expect(() => {
@@ -117,7 +91,7 @@ describe('Plugin Extension Validators', () => {
           title: 'Title',
           description: 'Description',
           targets: 'grafana/some-page/extension-point-a',
-        } as PluginAddedLinkConfig);
+        } as PluginExtensionAddedLinkConfig);
       }).not.toThrowError();
     });
 
@@ -128,7 +102,7 @@ describe('Plugin Extension Validators', () => {
           description: 'Description',
           targets: 'grafana/some-page/extension-point-a',
           configure: () => {},
-        } as PluginAddedLinkConfig);
+        } as PluginExtensionAddedLinkConfig);
       }).not.toThrowError();
     });
 

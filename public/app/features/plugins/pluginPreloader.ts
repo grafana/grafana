@@ -1,19 +1,23 @@
-import type { PluginAddedLinkConfig, PluginExposedComponentConfig, PluginExtensionConfig } from '@grafana/data';
-import { PluginAddedComponentConfig } from '@grafana/data/src/types/pluginExtensions';
+import type {
+  PluginExtensionAddedLinkConfig,
+  PluginExtensionExposedComponentConfig,
+  PluginExtensionConfig,
+} from '@grafana/data';
+import { PluginExtensionAddedComponentConfig } from '@grafana/data/src/types/pluginExtensions';
 import type { AppPluginConfig } from '@grafana/runtime';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
-import { PluginExtensionRegistries } from './extensions/types';
+import { PluginExtensionRegistries } from './extensions/registry/types';
 import * as pluginLoader from './plugin_loader';
 
 export type PluginPreloadResult = {
   pluginId: string;
   error?: unknown;
   extensionConfigs: PluginExtensionConfig[];
-  exposedComponentConfigs: PluginExposedComponentConfig[];
-  addedComponentConfigs?: PluginAddedComponentConfig[];
-  addedLinkConfigs?: PluginAddedLinkConfig[];
+  exposedComponentConfigs: PluginExtensionExposedComponentConfig[];
+  addedComponentConfigs?: PluginExtensionAddedComponentConfig[];
+  addedLinkConfigs?: PluginExtensionAddedLinkConfig[];
 };
 
 export async function preloadPlugins(

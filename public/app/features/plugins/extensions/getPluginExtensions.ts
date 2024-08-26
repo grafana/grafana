@@ -10,7 +10,7 @@ import {
 import { GetPluginExtensions, reportInteraction } from '@grafana/runtime';
 
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
-import type { PluginExtensionRegistries, PluginRegistryStates } from './types';
+import type { PluginExtensionRegistries, PluginRegistryStates } from './registry/types';
 import { getReadOnlyProxy, logWarning, generateExtensionId, getEventHelpers, wrapWithPluginContext } from './utils';
 import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
 

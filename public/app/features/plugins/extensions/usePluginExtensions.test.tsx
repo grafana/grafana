@@ -4,7 +4,7 @@ import { renderHook } from '@testing-library/react-hooks';
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
-import { PluginExtensionRegistries } from './types';
+import { PluginExtensionRegistries } from './registry/types';
 import { createUsePluginExtensions } from './usePluginExtensions';
 
 describe('usePluginExtensions()', () => {

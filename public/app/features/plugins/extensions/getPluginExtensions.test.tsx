@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { PluginAddedComponentConfig, PluginAddedLinkConfig } from '@grafana/data';
+import { PluginExtensionAddedComponentConfig, PluginExtensionAddedLinkConfig } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
 import { getPluginExtensions } from './getPluginExtensions';
@@ -19,8 +19,8 @@ jest.mock('@grafana/runtime', () => {
 async function createRegistries(
   preloadResults: Array<{
     pluginId: string;
-    addedComponentConfigs: PluginAddedComponentConfig[];
-    addedLinkConfigs: PluginAddedLinkConfig[];
+    addedComponentConfigs: PluginExtensionAddedComponentConfig[];
+    addedLinkConfigs: PluginExtensionAddedLinkConfig[];
   }>
 ) {
   const addedLinksRegistry = new AddedLinksRegistry();
@@ -49,7 +49,9 @@ describe('getPluginExtensions()', () => {
   const extensionPoint3 = 'grafana/datasources/config';
   const pluginId = 'grafana-basic-app';
   // Sample extension configs that are used in the tests below
-  let link1: PluginAddedLinkConfig, link2: PluginAddedLinkConfig, component1: PluginAddedComponentConfig;
+  let link1: PluginExtensionAddedLinkConfig,
+    link2: PluginExtensionAddedLinkConfig,
+    component1: PluginExtensionAddedComponentConfig;
 
   beforeEach(() => {
     link1 = {

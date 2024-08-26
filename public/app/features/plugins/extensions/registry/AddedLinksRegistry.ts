@@ -1,4 +1,4 @@
-import { IconName, PluginAddedLinkConfig } from '@grafana/data';
+import { IconName, PluginExtensionAddedLinkConfig } from '@grafana/data';
 import { PluginAddedLinksConfigureFunc, PluginExtensionEventHelpers } from '@grafana/data/src/types/pluginExtensions';
 
 import { logWarning } from '../utils';
@@ -17,7 +17,7 @@ export type AddedLinkRegistryItem<Context extends object = object> = {
   category?: string;
 };
 
-export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], PluginAddedLinkConfig> {
+export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], PluginExtensionAddedLinkConfig> {
   constructor(initialState: RegistryType<AddedLinkRegistryItem[]> = {}) {
     super({
       initialState,
@@ -26,7 +26,7 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
 
   mapToRegistry(
     registry: RegistryType<AddedLinkRegistryItem[]>,
-    item: PluginExtensionConfigs<PluginAddedLinkConfig>
+    item: PluginExtensionConfigs<PluginExtensionAddedLinkConfig>
   ): RegistryType<AddedLinkRegistryItem[]> {
     const { pluginId, configs } = item;
 

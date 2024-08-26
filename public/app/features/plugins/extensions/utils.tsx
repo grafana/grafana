@@ -14,7 +14,7 @@ import {
   PluginContextProvider,
   PluginExtensionLink,
   PanelMenuItem,
-  PluginAddedLinkConfig,
+  PluginExtensionAddedLinkConfig,
 } from '@grafana/data';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
@@ -219,8 +219,10 @@ export function isReadOnlyProxy(value: unknown): boolean {
   return isRecord(value) && value[_isProxy] === true;
 }
 
-export function createAddedLinkConfig<T extends object>(config: PluginAddedLinkConfig<T>): PluginAddedLinkConfig {
-  const linkConfig: PluginAddedLinkConfig<T> = {
+export function createAddedLinkConfig<T extends object>(
+  config: PluginExtensionAddedLinkConfig<T>
+): PluginExtensionAddedLinkConfig {
+  const linkConfig: PluginExtensionAddedLinkConfig<T> = {
     ...config,
   };
   assertLinkConfig(linkConfig);
@@ -228,8 +230,8 @@ export function createAddedLinkConfig<T extends object>(config: PluginAddedLinkC
 }
 
 function assertLinkConfig<T extends object>(
-  config: PluginAddedLinkConfig<T>
-): asserts config is PluginAddedLinkConfig {}
+  config: PluginExtensionAddedLinkConfig<T>
+): asserts config is PluginExtensionAddedLinkConfig {}
 
 export function truncateTitle(title: string, length: number): string {
   if (title.length < length) {

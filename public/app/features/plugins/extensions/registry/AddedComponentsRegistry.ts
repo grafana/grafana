@@ -1,4 +1,4 @@
-import { PluginAddedComponentConfig } from '@grafana/data';
+import { PluginExtensionAddedComponentConfig } from '@grafana/data';
 
 import { logWarning, wrapWithPluginContext } from '../utils';
 import { extensionPointEndsWithVersion, isExtensionPointIdValid, isReactComponent } from '../validators';
@@ -12,7 +12,10 @@ export type AddedComponentRegistryItem<Props = {}> = {
   component: React.ComponentType<Props>;
 };
 
-export class AddedComponentsRegistry extends Registry<AddedComponentRegistryItem[], PluginAddedComponentConfig> {
+export class AddedComponentsRegistry extends Registry<
+  AddedComponentRegistryItem[],
+  PluginExtensionAddedComponentConfig
+> {
   constructor(initialState: RegistryType<AddedComponentRegistryItem[]> = {}) {
     super({
       initialState,
@@ -21,7 +24,7 @@ export class AddedComponentsRegistry extends Registry<AddedComponentRegistryItem
 
   mapToRegistry(
     registry: RegistryType<AddedComponentRegistryItem[]>,
-    item: PluginExtensionConfigs<PluginAddedComponentConfig>
+    item: PluginExtensionConfigs<PluginExtensionAddedComponentConfig>
   ): RegistryType<AddedComponentRegistryItem[]> {
     const { pluginId, configs } = item;
 

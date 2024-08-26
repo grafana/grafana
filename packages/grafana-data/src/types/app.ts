@@ -6,10 +6,10 @@ import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
 import {
   type PluginExtensionLinkConfig,
   PluginExtensionComponentConfig,
-  PluginExposedComponentConfig,
+  PluginExtensionExposedComponentConfig,
   PluginExtensionConfig,
-  PluginAddedComponentConfig,
-  PluginAddedLinkConfig,
+  PluginExtensionAddedComponentConfig,
+  PluginExtensionAddedLinkConfig,
 } from './pluginExtensions';
 
 /**
@@ -58,9 +58,9 @@ export interface AppPluginMeta<T extends KeyValue = KeyValue> extends PluginMeta
 }
 
 export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
-  private _exposedComponentConfigs: PluginExposedComponentConfig[] = [];
-  private _addedComponentConfigs: PluginAddedComponentConfig[] = [];
-  private _addedLinkConfigs: PluginAddedLinkConfig[] = [];
+  private _exposedComponentConfigs: PluginExtensionExposedComponentConfig[] = [];
+  private _addedComponentConfigs: PluginExtensionAddedComponentConfig[] = [];
+  private _addedLinkConfigs: PluginExtensionAddedLinkConfig[] = [];
   private _extensionConfigs: PluginExtensionConfig[] = [];
 
   // Content under: /a/${plugin-id}/*
@@ -119,40 +119,20 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this._addedLinkConfigs;
   }
 
-  // addLink<Context extends object>(
-  //   extensionConfig: { targets: string | string[] } & Omit<
-  //     PluginExtensionLinkConfig<Context>,
-  //     'type' | 'extensionPointId'
-  //   >
-  // ) {
-  //   const { targets, ...extension } = extensionConfig;
-  //   const targetsArray = Array.isArray(targets) ? targets : [targets];
-
-  //   targetsArray.forEach((target) => {
-  //     this._extensionConfigs.push({
-  //       ...extension,
-  //       extensionPointId: target,
-  //       type: PluginExtensionTypes.link,
-  //     } as PluginExtensionLinkConfig);
-  //   });
-
-  //   return this;
-  // }
-
-  addLink<Context extends object>(linkConfig: PluginAddedLinkConfig<Context>) {
-    this._addedLinkConfigs.push(linkConfig as PluginAddedLinkConfig);
+  addLink<Context extends object>(linkConfig: PluginExtensionAddedLinkConfig<Context>) {
+    this._addedLinkConfigs.push(linkConfig as PluginExtensionAddedLinkConfig);
 
     return this;
   }
 
-  addComponent<Props = {}>(addedComponentConfig: PluginAddedComponentConfig<Props>) {
-    this._addedComponentConfigs.push(addedComponentConfig as PluginAddedComponentConfig);
+  addComponent<Props = {}>(addedComponentConfig: PluginExtensionAddedComponentConfig<Props>) {
+    this._addedComponentConfigs.push(addedComponentConfig as PluginExtensionAddedComponentConfig);
 
     return this;
   }
 
-  exposeComponent<Props = {}>(componentConfig: PluginExposedComponentConfig<Props>) {
-    this._exposedComponentConfigs.push(componentConfig as PluginExposedComponentConfig);
+  exposeComponent<Props = {}>(componentConfig: PluginExtensionExposedComponentConfig<Props>) {
+    this._exposedComponentConfigs.push(componentConfig as PluginExtensionExposedComponentConfig);
 
     return this;
   }

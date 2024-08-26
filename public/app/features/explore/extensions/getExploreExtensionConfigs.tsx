@@ -1,4 +1,4 @@
-import { PluginAddedLinkConfig, PluginExtensionPoints } from '@grafana/data';
+import { PluginExtensionAddedLinkConfig, PluginExtensionPoints } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types';
@@ -11,7 +11,7 @@ import { AddToDashboardForm } from './AddToDashboard/AddToDashboardForm';
 import { getAddToDashboardTitle } from './AddToDashboard/getAddToDashboardTitle';
 import { type PluginExtensionExploreContext } from './ToolbarExtensionPoint';
 
-export function getExploreExtensionConfigs(): PluginAddedLinkConfig[] {
+export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
   try {
     return [
       createAddedLinkConfig<PluginExtensionExploreContext>({

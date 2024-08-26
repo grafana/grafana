@@ -5,7 +5,7 @@ import { PluginExtension } from '@grafana/data';
 import { GetPluginExtensionsOptions, UsePluginExtensionsResult } from '@grafana/runtime';
 
 import { getPluginExtensions } from './getPluginExtensions';
-import { PluginExtensionRegistries } from './types';
+import { PluginExtensionRegistries } from './registry/types';
 
 export function createUsePluginExtensions(registries: PluginExtensionRegistries) {
   const observableAddedComponentsRegistry = registries.addedComponentsRegistry.asObservable();
