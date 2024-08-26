@@ -20,7 +20,7 @@ weight: -44
 
 # What’s new in Grafana v11.2
 
-Welcome to Grafana 11.2! We've made a number of improvements in this release including, most excitingly, the introduction of the Grafana Cloud Migration Assistant in public preview. We've also added several new transformations, added a centralized page for viewing your alert history, and made updates to improve and simplify authentication for your Grafana instance.
+Welcome to Grafana 11.2! We've made a number of improvements in this release, including a Grafana Cloud Migration Assistant in public preview, several new transformations, and a centralized page for viewing your alert history. We've also released several new data sources to help you visualize data from Zendesk, Catchpoint, and Yugabyte. Read on to learn more about these and all the new features in v11.2.
 
 <!-- {{< youtube id="s6IYpILVDSM" >}} -->
 
