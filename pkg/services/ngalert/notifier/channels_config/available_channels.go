@@ -1159,7 +1159,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 			},
 		},
 		{
-			Type:        "line",
+			Type:        "LINE",
 			Name:        "LINE",
 			Description: "Send notifications to LINE notify",
 			Heading:     "LINE notify settings",
@@ -1600,7 +1600,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 func GetSecretKeysForContactPointType(contactPointType string) ([]string, error) {
 	notifiers := GetAvailableNotifiers()
 	for _, n := range notifiers {
-		if n.Type == contactPointType {
+		if strings.EqualFold(n.Type, contactPointType) {
 			return getSecretFields("", n.Options), nil
 		}
 	}
@@ -1623,4 +1623,15 @@ func getSecretFields(parentPath string, options []NotifierOption) []string {
 		}
 	}
 	return secureFields
+}
+
+// ConfigForIntegrationType returns the config for the given integration type. Returns error is integration type is not known.
+func ConfigForIntegrationType(contactPointType string) (*NotifierPlugin, error) {
+	notifiers := GetAvailableNotifiers()
+	for _, n := range notifiers {
+		if strings.EqualFold(n.Type, contactPointType) {
+			return n, nil
+		}
+	}
+	return nil, fmt.Errorf("unknown integration type '%s'", contactPointType)
 }

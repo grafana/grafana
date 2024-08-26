@@ -1,5 +1,10 @@
 import { AppPlugin } from '@grafana/data';
+
+import { LINKS_EXTENSION_POINT_ID } from '../../pages/AddedLinks';
+import { testIds } from '../../testIds';
+
 import { App } from './components/App';
+import pluginJson from './plugin.json';
 
 export const plugin = new AppPlugin<{}>()
   .setRootPage(App)
@@ -11,7 +16,13 @@ export const plugin = new AppPlugin<{}>()
   })
   .exposeComponent({
     id: 'grafana-extensionexample1-app/reusable-component/v1',
-    title: 'Reusable component',
+    title: 'Exposed component',
     description: 'A component that can be reused by other app plugins.',
-    component: ({ name }: { name: string }) => <div data-testid="exposed-component">Hello {name}!</div>,
+    component: ({ name }: { name: string }) => <div data-testid={testIds.appB.exposedComponent}>Hello {name}!</div>,
+  })
+  .addLink({
+    title: 'Basic link',
+    description: '...',
+    targets: [LINKS_EXTENSION_POINT_ID],
+    path: `/a/${pluginJson.id}/`,
   });

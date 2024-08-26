@@ -4,14 +4,14 @@
 //      "type": "timeseries-multi",
 //      "typeVersion": [
 //          0,
-//          0
+//          1
 //      ],
 //      "custom": {
 //          "resultType": "matrix"
 //      },
 //      "executedQueryString": "Expr: \nStep: 1s"
 //  }
-//  Name: {handler="/api/v1/query_range", job="prometheus"}
+//  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+-----------------------------------------------------+
 //  | Name: Time                    | Name: Value                                         |
@@ -30,12 +30,11 @@
   "frames": [
     {
       "schema": {
-        "name": "{handler=\"/api/v1/query_range\", job=\"prometheus\"}",
         "meta": {
           "type": "timeseries-multi",
           "typeVersion": [
             0,
-            0
+            1
           ],
           "custom": {
             "resultType": "matrix"

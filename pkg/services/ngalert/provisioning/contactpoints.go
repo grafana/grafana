@@ -40,7 +40,7 @@ type ContactPointService struct {
 }
 
 type receiverService interface {
-	GetReceivers(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]apimodels.GettableApiReceiver, error)
+	GetReceivers(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error)
 }
 
 func NewContactPointService(store alertmanagerConfigStore, encryptionService secrets.Service,
@@ -79,23 +79,15 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 	if err != nil {
 		return nil, convertRecSvcErr(err)
 	}
-	grafanaReceivers := []*apimodels.GettableGrafanaReceiver{}
 	if q.Name != "" && len(res) > 0 {
-		grafanaReceivers = res[0].GettableGrafanaReceivers.GrafanaManagedReceivers // we only expect one receiver group
-	} else {
-		for _, r := range res {
-			grafanaReceivers = append(grafanaReceivers, r.GettableGrafanaReceivers.GrafanaManagedReceivers...)
-		}
+		res = []*models.Receiver{res[0]} // we only expect one receiver group
 	}
 
-	contactPoints := make([]apimodels.EmbeddedContactPoint, len(grafanaReceivers))
-	for i, gr := range grafanaReceivers {
-		contactPoint, err := GettableGrafanaReceiverToEmbeddedContactPoint(gr)
-		if err != nil {
-			return nil, err
+	contactPoints := make([]apimodels.EmbeddedContactPoint, 0, len(res))
+	for _, recv := range res {
+		for _, gr := range recv.Integrations {
+			contactPoints = append(contactPoints, GrafanaIntegrationConfigToEmbeddedContactPoint(gr, recv.Provenance))
 		}
-
-		contactPoints[i] = contactPoint
 	}
 
 	sort.SliceStable(contactPoints, func(i, j int) bool {
@@ -428,7 +420,7 @@ groupLoop:
 				// If we're renaming, we'll need to fix up the macro receiver group for consistency.
 				// Firstly, if we're the only receiver in the group, simply rename the group to match. Done!
 				if len(receiverGroup.GrafanaManagedReceivers) == 1 {
-					replaceReferences(receiverGroup.Name, target.Name, cfg.AlertmanagerConfig.Route)
+					legacy_storage.RenameReceiverInRoute(receiverGroup.Name, target.Name, cfg.AlertmanagerConfig.Route)
 					receiverGroup.Name = target.Name
 					receiverGroup.GrafanaManagedReceivers[i] = target
 					renamedReceiver = receiverGroup.Name
@@ -476,38 +468,12 @@ groupLoop:
 	return configModified, renamedReceiver
 }
 
-func replaceReferences(oldName, newName string, routes ...*apimodels.Route) {
-	if len(routes) == 0 {
-		return
-	}
-	for _, route := range routes {
-		if route.Receiver == oldName {
-			route.Receiver = newName
-		}
-		replaceReferences(oldName, newName, route.Routes...)
-	}
-}
-
 func ValidateContactPoint(ctx context.Context, e apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn) error {
-	if e.Type == "" {
-		return fmt.Errorf("type should not be an empty string")
-	}
-	if e.Settings == nil {
-		return fmt.Errorf("settings should not be empty")
-	}
 	integration, err := EmbeddedContactPointToGrafanaIntegrationConfig(e)
 	if err != nil {
 		return err
 	}
-	_, err = alertingNotify.BuildReceiverConfiguration(ctx, &alertingNotify.APIReceiver{
-		GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
-			Integrations: []*alertingNotify.GrafanaIntegrationConfig{&integration},
-		},
-	}, decryptFunc)
-	if err != nil {
-		return err
-	}
-	return nil
+	return models.ValidateIntegration(ctx, integration, decryptFunc)
 }
 
 // RemoveSecretsForContactPoint removes all secrets from the contact point's settings and returns them as a map. Returns error if contact point type is not known.
