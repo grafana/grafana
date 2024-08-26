@@ -23,7 +23,7 @@ Query results are returned faster because the queries limit what is searched.
 
 To learn more about how to query by TraceQL, refer to the [TraceQL documentation](https://grafana.com/docs/tempo/latest/traceql/).
 
-The TraceQL query editor **Explore** in Grafana lets you search by trace ID and write TraceQL queries using autocomplete.
+The TraceQL query editor in Grafana **Explore** lets you search by trace ID and write TraceQL queries using autocomplete.
 
 ![The TraceQL query editor](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-traceql-v11.png)
 
@@ -35,11 +35,11 @@ To use the TraceQL query editor in self-hosted Grafana 9.3.2 and older, you need
 
 ### Streaming and gRPC
 
-If trying to query a self-managed Grafana Tempo or Grafana Enterprise Traces database with a gateway, such as nginx, in front of it from your hosted Grafana, that gateway (for example, nginx) must allow gRPC connections.
+If you're trying to query a self-managed Grafana Tempo or Grafana Enterprise Traces database with a gateway, such as nginx, in front of it from your hosted Grafana, that gateway (for example, nginx) must allow gRPC connections.
 If it doesn't, streaming won't work and queries will fail to return results.
 
 If you can't configure your gateway to allow gRPC, deactivate streaming in your hosted Grafana.
-In Grafana 11.2 and newer, you can deactivate the **Streaming** option in your Tempo data source settings from **Connections** > **Data sources** in the Grafana menu.
+In Grafana 11.2 and newer, you can deactivate the **Streaming** option in your Tempo data source settings from **Connections** > **Data sources** in the Grafana main menu.
 You can also open a support escalation to request streaming query results be disabled in your hosted Grafana.
 
 ## Write TraceQL queries using the query editor
@@ -49,15 +49,17 @@ The Tempo data source’s TraceQL query editor helps you query and display trace
 To access the query editor, follow these steps:
 
 1. Sign into Grafana or Grafana Cloud.
-1. Select **Explore** from the menu.
+1. Select **Explore** from the main menu.
 1. Select a Tempo data source.
 1. Select the **TraceQL** tab.
 1. Start your query on the text line by entering `{`. For help with TraceQL syntax, refer to the [Construct a TraceQL query documentation](https://grafana.com/docs/tempo/latest/traceql/#construct-a-traceql-query).
-   Optional: Select **Copy query from Search** to transfer a builder query to the editor.
-1. Optional: Use the **Time picker** drop-down list to change the time and range for the query (refer to the [documentation for instructions](https://grafana.com/docs/grafana/latest/dashboards/use-dashboards/#set-dashboard-time-range)).
-1. Once you have finished your query, select **Run query**.
 
-This video provides and example of creating a TraceQL query using the custom tag grouping.
+   Optional: Select **Copy query from Search** to transfer a builder query to the editor.
+   
+1. Optional: Use the **Time picker** drop-down list to change the time and range for the query (refer to the [documentation for instructions](https://grafana.com/docs/grafana/latest/dashboards/use-dashboards/#set-dashboard-time-range)).
+1. Once you've finished your query, select **Run query**.
+
+This video provides an example of creating a TraceQL query using the custom tag grouping.
 
 {{< youtube id="fraepWra00Y" >}}
 
@@ -74,8 +76,8 @@ To query a particular trace by its trace ID:
 ## Use autocomplete to write queries
 
 You can use the query editor’s autocomplete suggestions to write queries.
-The editor detects span sets to provide relevant autocomplete options.
-It uses regular expressions (regex) to detect where it's inside a spanset and provide attribute names, scopes, intrinsic names, logic operators, or attribute values from the Tempo API, depending on what's expected for the current situation.
+The editor detects spansets to provide relevant autocomplete options.
+It uses regular expressions (regex) to detect where it is inside a spanset and provide attribute names, scopes, intrinsic names, logic operators, or attribute values from the Tempo API, depending on what's expected for the current situation.
 
 ![Query editor showing the auto-complete feature](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-editor-autocomplete.png)
 
@@ -109,7 +111,7 @@ The grey text to the right of the service name indicates the span name.
 
 Under **Options**, you can choose to display the table as **Traces** or **Spans** focused.
 
-When the **Table Type** option is set to **Spans**, the traces and span sets are flattened into a list of spans.
+When the **Table Type** option is set to **Spans**, the traces and spansets are flattened into a list of spans.
 The trace service and trace name are added to the row of each span to add context.
 
 Using the **Spans** option makes it easier access the spans to apply transformations and plot them in dashboards.

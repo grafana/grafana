@@ -64,14 +64,16 @@ You can compose TraceQL queries in Grafana and Grafana Cloud using **Explore** a
 You don't have to know TraceQL to create a query.
 You can use the **Search** query builder's user interface to select options to search your data.
 These selections generate a TraceQL query.
-Any query generated in Build mode can be transferred to the Code mode, where you can edit the query directly.
+Any query generated using **Search** query builder can be transferred to the **TraceQL** query editor, where you can edit the query directly.
 
 To learn more about how to query by TraceQL, refer to the [TraceQL documentation](/docs/tempo/latest/traceql).
 
 ## Choose a query editing mode
 
-The query editor has three modes, or **Query types**, that you can use to explore your tracing data.
+The query editor has three **Query types** that you can use to explore your tracing data.
 You can use these modes by themselves or in combination to create building blocks to generate custom queries.
+Adding another query adds a new query block. 
+Refer to [Use query types together](#use-query-types-together) for more information.
 
 ![The three query types: Search, TraceQL, and Service Graph](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-types.png)
 
@@ -141,7 +143,7 @@ Table Format
 : Determines whether the query results table is displayed focused on **Traces** or **Spans**. **Traces** is the default selection. When **Traces** is selected, the results table starts with the trace ID. When **Spans** is selected, the table starts with the trace service.
 
 Step
-: Defines the step for metrics quires. Use duration notation, for example, `30ms` or `1m`.
+: Defines the step for metrics queries. Use duration notation, for example, `30ms` or `1m`.
 
 Streaming
 : Indicates if streaming is active. Streaming lets you view partial query results before the entire query completes. Activating streaming adds the **Table - Streaming Progress** section to the query results.
@@ -149,8 +151,9 @@ Streaming
 ## Use query types together
 
 You can use **+ Add query** to create customized queries that use one or more of the query types together.
+Each time you add a new query, it adds a new section, or query block, that contains **Search**, **TraceQL**, or **Service Graph** user interface. 
 
-Added query and results table appear in the navigation under **Queries** and **Tables** respectively.
+The added query and results table appear in the navigation under **Queries** and **Tables** respectively.
 You can use the navigation to view query, results table, and service graph blocks.
 
 {{< video-embed src="/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-editor.mp4" max-width="800px" class="my-cool-video" caption="Navigating through the query blocks" align="center" >}}
@@ -187,13 +190,13 @@ Remove query
 
 ### Use query history and query inspector
 
-**Explore** provides a history of all queries you've used within a data source and an inspector that lets you view stats, inspect queries, view JSON, and general data for your data source queries.
+**Explore** provides a history of all queries you've used within a data source and an inspector that lets you view stats, inspect queries, view JSON, and general information for your data source queries.
 
 For more information, refer to the [Query inspector in Explore](ref:query-inspector) and [Query management in Explore](ref:query-history-management) documentation.
 
 ## Cross-tenant TraceQL queries
 
-If you have configured multi-stack Tempo data source, you can perform TraceQL queries across those stacks and tenants.
+If you've configured a multi-stack Tempo data source, you can perform TraceQL queries across those stacks and tenants.
 
 Queries performed using the cross-tenant configured data source, in either **Explore** or inside of dashboards,
 are performed across all the tenants that you specified in the **X-Scope-OrgID** header.
@@ -213,4 +216,4 @@ If these two conditions are satisfied in separate tenants, then Tempo doesn't re
 
 Refer to [Set up a multi-stack Tempo data source in Grafana](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/multi-stack-data-sources/#set-up-a-multi-stack-tempo-data-source-in-grafana) for information about configuring the Tempo data source.
 
-For information about Tempo configuration requirements, refer to the [Cross-tenant query](https://grafana.com/docs/tempo/<TEMPO_VERSION>/operations/cross_tenant_query/) and [Enable multitenancy](https://grafana.com/docs/tempo/<TEMPO_VERSION/operations/multitenancy/) documentation.
+For information about Tempo configuration requirements, refer to the [Cross-tenant query](https://grafana.com/docs/tempo/<TEMPO_VERSION>/operations/cross_tenant_query/) and [Enable multitenancy](https://grafana.com/docs/tempo/<TEMPO_VERSION>/operations/multitenancy/) documentation.

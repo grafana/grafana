@@ -68,7 +68,7 @@ Each node on the graph represents a service such as an API or database.
 
 You use the Service Graph to detect performance issues; track increases in error, fault, or throttle rates in services; and investigate root causes by viewing corresponding traces.
 
-{{< figure src="/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-node-graph.png" class="docs-image--no-shadow" max-width="500px" caption="Screenshot of a Node Graph" >}}
+{{< figure src="/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-node-graph.png" class="docs-image--no-shadow" max-width="500px" alt="Screenshot of a Node Graph" >}}
 
 ## Display the Service Graph
 
@@ -100,7 +100,7 @@ Each circle's color represents the percentage of requests in each state:
 
 Service graph view displays a table of request rate, error rate, and duration metrics (RED) calculated from your incoming spans. It also includes a node graph view built from your spans.
 
-{{< figure src="/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-service-graph.png" class="docs-image--no-shadow" max-width="500px" caption="Screenshot of the Service Graph view" >}}
+{{< figure src="/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-service-graph.png" class="docs-image--no-shadow" max-width="500px" alt="Screenshot of the Service Graph view" >}}
 
 For details, refer to the [Service Graph view documentation](/docs/tempo/<TEMPO_VERSION>/metrics-generator/service-graph-view/).
 
