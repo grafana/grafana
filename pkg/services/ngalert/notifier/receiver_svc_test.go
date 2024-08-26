@@ -239,7 +239,7 @@ func TestReceiverService_Delete(t *testing.T) {
 			name:        "delete receiver used by route fails",
 			user:        writer,
 			deleteUID:   legacy_storage.NameToUid("grafana-default-email"),
-			version:     "1fd7897966a2adc5", // Correct version for grafana-default-email.
+			version:     "6b2a1b69437ea515", // Correct version for grafana-default-email.
 			expectedErr: makeReceiverInUseErr(true, nil),
 		},
 		{
@@ -702,7 +702,7 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 	newReceiverName := "new-name"
 	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName(receiverName), models.IntegrationMuts.WithValidConfig("slack"))()
 	baseReceiver := models.ReceiverGen(models.ReceiverMuts.WithName(receiverName), models.ReceiverMuts.WithIntegrations(slackIntegration))()
-	baseReceiver.Version = "1fd7897966a2adc5" // Correct version for grafana-default-email.
+	baseReceiver.Version = "6b2a1b69437ea515" // Correct version for grafana-default-email.
 	baseReceiver.Name = newReceiverName       // Done here instead of in a mutator so we keep the same uid.
 
 	store := sut.ruleNotificationsStore.(*fakeConfigStore)
