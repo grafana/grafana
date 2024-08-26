@@ -38,9 +38,9 @@ In this tutorial, you'll:
 
 <!-- INTERACTIVE ignore START -->
 
-{{ < admonition type="tip" >}}
+{{< admonition type="tip" >}}
 Check out our advanced alerting tutorial to explore advanced topics such as alert instances and notification routing.
-{{ </ admonition > }}
+{{< /admonition >}}
 
 {{< docs/ignore >}}
 
@@ -77,17 +77,17 @@ To demonstrate the observation of data using the Grafana stack, download the fil
 
 1. Download and save a Docker compose file to run Grafana, Loki and Promtail. 
 
-  ``` bash
-  wget https://raw.githubusercontent.com/grafana/loki/v2.8.0/production/docker-compose.yaml -O docker-compose.yaml
-  ```
+``` bash
+wget https://raw.githubusercontent.com/grafana/loki/v2.8.0/production/docker-compose.yaml -O docker-compose.yaml
+```
 
 1. Run the Grafana stack.
 
-  ``` bash
-  docker compose up -d
-  ```
+``` bash
+docker compose up -d
+```
 
-  The first time you run `docker compose up -d`, Docker downloads all the necessary resources for the tutorial. This might take a few minutes, depending on your internet connection.
+The first time you run `docker compose up -d`, Docker downloads all the necessary resources for the tutorial. This might take a few minutes, depending on your internet connection.
 
 <!-- INTERACTIVE ignore START -->
 
@@ -126,16 +126,15 @@ Provide feedback, report bugs, and raise issues in the [Grafana Killercoda repos
 
 1. Download and save a python file that generates logs.
 
-  ``` bash
-  wget https://raw.githubusercontent.com/grafana/tutorial-environment/master/app/loki/web-server-logs-simulator.py
-  ```
+``` bash
+wget https://raw.githubusercontent.com/grafana/tutorial-environment/master/app/loki/web-server-logs-simulator.py
+```
 
 1. Execute the log-generating Python script.
 
-  ``` bash
-  python3 ./web-server-logs-simulator.py | sudo tee -a /var/log/web_requests.log
-
-  ```
+``` bash
+python3 ./web-server-logs-simulator.py | sudo tee -a /var/log/web_requests.log
+```
 
 ### Troubleshooting the script
 
@@ -213,23 +212,20 @@ In this section, we define queries, expressions (used to manipulate the data), a
   2023-04-22T02:49:32.562825+00:00 level=info method=GET url=test.com status=200 duration=171ms
   ```
 
-  <!-- INTERACTIVE ignore START -->
-  {{% admonition type="note" %}}
+<!-- INTERACTIVE ignore START -->
+{{% admonition type="note" %}}
 
-  If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
+If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
 
-  {{% / admonition %}}
+{{% / admonition %}}
 
-  <!-- INTERACTIVE ignore END -->
+<!-- INTERACTIVE ignore END -->
 
-  {{< docs/ignore >}}
+{{< docs/ignore >}}
 
-  
+> If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
 
-  > If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
-
-  {{< /docs/ignore >}}
-
+{{< /docs/ignore >}}
 
 1. Remove the ‘B’ **Reduce expression** (click the bin icon). The Reduce expression comes by default, and in this case, it is not needed since the queried data is already reduced. Note that the Threshold expression is now your **Alert condition**.
 
