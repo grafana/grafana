@@ -17,12 +17,7 @@ type Service struct {
 	tracer tracing.Tracer
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
-	store := &xormStore{db: db, cfg: cfg, deletes: []string{}}
-
-	if err := store.uidMigration(); err != nil {
-		return nil, err
-	}
+func ProvideService(db db.ReplDB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
 	return &Service{
 		store:  &xormStore{db: db, cfg: cfg, deletes: []string{}},
 		tracer: tracer,

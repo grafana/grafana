@@ -127,6 +127,10 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		PeerTimeout:        cfg.UnifiedAlerting.HAPeerTimeout,
 		Silences:           silencesOptions,
 		Nflog:              nflogOptions,
+		Limits: alertingNotify.Limits{
+			MaxSilences:         cfg.UnifiedAlerting.AlertmanagerMaxSilencesCount,
+			MaxSilenceSizeBytes: cfg.UnifiedAlerting.AlertmanagerMaxSilenceSizeBytes,
+		},
 	}
 
 	l := log.New("ngalert.notifier.alertmanager", "org", orgID)

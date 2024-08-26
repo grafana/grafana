@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -26,7 +27,7 @@ import (
 )
 
 func setupAuthMiddlewareTest(t *testing.T, identity *authn.Identity, authErr error) *contexthandler.ContextHandler {
-	return contexthandler.ProvideService(setting.NewCfg(), tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), &authntest.FakeService{
+	return contexthandler.ProvideService(setting.NewCfg(), tracing.InitializeTracerForTest(), &authntest.FakeService{
 		ExpectedErr:      authErr,
 		ExpectedIdentity: identity,
 	})
@@ -62,7 +63,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedIn should return 200 for anonymous user",
 			path:           "/api/secure",
 			authMiddleware: ReqSignedIn,
-			identity:       &authn.Identity{ID: authn.AnonymousNamespaceID},
+			identity:       &authn.Identity{Type: claims.TypeAnonymous},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
 		},
@@ -70,7 +71,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedIn should return redirect anonymous user with forceLogin query string",
 			path:           "/secure?forceLogin=true",
 			authMiddleware: ReqSignedIn,
-			identity:       &authn.Identity{ID: authn.AnonymousNamespaceID},
+			identity:       &authn.Identity{Type: claims.TypeAnonymous},
 			expecedReached: false,
 			expectedCode:   http.StatusFound,
 		},
@@ -78,7 +79,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedIn should return redirect anonymous user when orgId in query string is different from currently used",
 			path:           "/secure?orgId=2",
 			authMiddleware: ReqSignedIn,
-			identity:       &authn.Identity{ID: authn.AnonymousNamespaceID, OrgID: 1},
+			identity:       &authn.Identity{Type: claims.TypeAnonymous},
 			expecedReached: false,
 			expectedCode:   http.StatusFound,
 		},
@@ -86,7 +87,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedInNoAnonymous should return 401 for anonymous user",
 			path:           "/api/secure",
 			authMiddleware: ReqSignedInNoAnonymous,
-			identity:       &authn.Identity{ID: authn.AnonymousNamespaceID},
+			identity:       &authn.Identity{Type: claims.TypeAnonymous},
 			expecedReached: false,
 			expectedCode:   http.StatusUnauthorized,
 		},
@@ -94,7 +95,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedInNoAnonymous should return 200 for authenticated user",
 			path:           "/api/secure",
 			authMiddleware: ReqSignedInNoAnonymous,
-			identity:       &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
+			identity:       &authn.Identity{ID: "1", Type: claims.TypeUser},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
 		},
@@ -102,7 +103,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "snapshot public mode disabled should return 200 for authenticated user",
 			path:           "/api/secure",
 			authMiddleware: SnapshotPublicModeOrSignedIn(&setting.Cfg{SnapshotPublicMode: false}),
-			identity:       &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
+			identity:       &authn.Identity{ID: "1", Type: claims.TypeUser},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
 		},

@@ -153,7 +153,7 @@ export function useOnCallIntegration() {
           verbal_name: c.settings[OnCallIntegrationSetting.IntegrationName],
         }).unwrap();
 
-        c.settings['url'] = newIntegration.integration_url;
+        c.settings.url = newIntegration.integration_url;
       });
 
       await Promise.all(createNewOnCallIntegrationJobs);

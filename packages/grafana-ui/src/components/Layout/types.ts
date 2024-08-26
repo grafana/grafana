@@ -24,7 +24,7 @@ export type JustifyContent =
   | 'right';
 
 export type Direction = 'row' | 'row-reverse' | 'column' | 'column-reverse';
-export type Wrap = 'nowrap' | 'wrap' | 'wrap-reverse';
+export type Wrap = boolean | 'nowrap' | 'wrap' | 'wrap-reverse';
 
 type FlexGrow = number;
 type FlexShrink = number;

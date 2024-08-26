@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { PluginExtensionComponentConfig, PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -22,6 +22,7 @@ function createPluginExtensionRegistry(preloadResults: Array<{ pluginId: string;
     registry.register({
       pluginId,
       extensionConfigs,
+      exposedComponentConfigs: [],
     });
   }
 

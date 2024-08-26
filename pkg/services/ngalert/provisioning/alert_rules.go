@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
@@ -485,7 +486,7 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 				if err != nil {
 					return err
 				}
-				if canUpdate := canUpdateProvenanceInRuleGroup(storedProvenance, provenance); !canUpdate {
+				if canUpdate := validation.CanUpdateProvenanceInRuleGroup(storedProvenance, provenance); !canUpdate {
 					return fmt.Errorf("cannot delete with provided provenance '%s', needs '%s'", provenance, storedProvenance)
 				}
 			}
@@ -502,7 +503,7 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 				if err != nil {
 					return err
 				}
-				if canUpdate := canUpdateProvenanceInRuleGroup(storedProvenance, provenance); !canUpdate {
+				if canUpdate := validation.CanUpdateProvenanceInRuleGroup(storedProvenance, provenance); !canUpdate {
 					return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
 				}
 				updates = append(updates, models.UpdateRule{
@@ -658,12 +659,10 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, user ident
 // checkLimitsTransactionCtx checks whether the current transaction (as identified by the ctx) breaches configured alert rule limits.
 func (service *AlertRuleService) checkLimitsTransactionCtx(ctx context.Context, user identity.Requester) error {
 	// default to 0 if there is no user
-	userID := int64(0)
-	u, err := identity.UserIdentifier(user.GetNamespacedID())
-	if err != nil {
-		return fmt.Errorf("failed to check alert rule quota: %w", err)
+	var userID int64
+	if id, err := identity.UserIdentifier(user.GetID()); err == nil {
+		userID = id
 	}
-	userID = u
 
 	limitReached, err := service.quotas.CheckQuotaReached(ctx, models.QuotaTargetSrv, &quota.ScopeParameters{
 		OrgID:  user.GetOrgID(),

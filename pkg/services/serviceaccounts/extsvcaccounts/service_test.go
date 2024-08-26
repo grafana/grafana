@@ -15,6 +15,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
@@ -45,7 +46,11 @@ func setupTestEnv(t *testing.T) *TestEnv {
 	}
 	logger := log.New("extsvcaccounts.test")
 	env.S = &ExtSvcAccountsService{
-		acSvc:    acimpl.ProvideOSSService(cfg, env.AcStore, &resourcepermissions.FakeActionSetSvc{}, localcache.New(0, 0), fmgt, tracing.InitializeTracerForTest()),
+		acSvc: acimpl.ProvideOSSService(
+			cfg, env.AcStore, &resourcepermissions.FakeActionSetSvc{},
+			localcache.New(0, 0), fmgt, tracing.InitializeTracerForTest(), nil, nil,
+			permreg.ProvidePermissionRegistry(),
+		),
 		features: fmgt,
 		logger:   logger,
 		metrics:  newMetrics(nil, env.SaSvc, logger),

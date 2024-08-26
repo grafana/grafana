@@ -16,8 +16,7 @@ func TestRetryingDisabled(t *testing.T) {
 	require.Equal(t, 0, store.dbCfg.QueryRetries)
 
 	funcToTest := map[string]func(ctx context.Context, callback DBTransactionFunc) error{
-		"WithDbSession":    store.WithDbSession,
-		"WithNewDbSession": store.WithNewDbSession,
+		"WithDbSession": store.WithDbSession,
 	}
 
 	for name, f := range funcToTest {
@@ -67,8 +66,7 @@ func TestRetryingOnFailures(t *testing.T) {
 	store.dbCfg.QueryRetries = 5
 
 	funcToTest := map[string]func(ctx context.Context, callback DBTransactionFunc) error{
-		"WithDbSession":    store.WithDbSession,
-		"WithNewDbSession": store.WithNewDbSession,
+		"WithDbSession": store.WithDbSession,
 	}
 
 	for name, f := range funcToTest {

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
@@ -50,7 +49,7 @@ export const ConfigureCorrelationSourceForm = () => {
     );
   }
 
-  const dataSourceName = getDatasourceSrv().getInstanceSettings(correlation?.targetUID)?.name;
+  const dataSourceName = getDatasourceSrv().getInstanceSettings(getValues('targetUID'))?.name;
   return (
     <>
       <FieldSet

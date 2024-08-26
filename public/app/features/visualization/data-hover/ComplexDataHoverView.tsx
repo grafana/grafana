@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { GeomapLayerHover } from 'app/plugins/panel/geomap/event';

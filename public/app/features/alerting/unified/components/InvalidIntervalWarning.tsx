@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 

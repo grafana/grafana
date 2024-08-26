@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsyncFn, useInterval } from 'react-use';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
@@ -46,7 +46,7 @@ const RuleList = withErrorBoundary(
     const [queryParams] = useQueryParams();
     const { filterState, hasActiveFilters } = useRulesFilter();
 
-    const queryParamView = queryParams['view'] as keyof typeof VIEWS;
+    const queryParamView = queryParams.view as keyof typeof VIEWS;
     const view = VIEWS[queryParamView] ? queryParamView : 'groups';
 
     const ViewComponent = VIEWS[view];

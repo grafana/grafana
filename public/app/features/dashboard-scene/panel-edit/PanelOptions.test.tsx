@@ -1,6 +1,6 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import { render } from 'test/test-utils';
 
 import { standardEditorsRegistry, standardFieldConfigEditorRegistry } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
@@ -21,12 +21,6 @@ import { PanelOptions } from './PanelOptions';
 import { VizPanelManager } from './VizPanelManager';
 
 const OptionsPaneSelector = selectors.components.PanelEditor.OptionsPane;
-
-jest.mock('react-router-dom', () => ({
-  useLocation: () => ({
-    pathname: '',
-  }),
-}));
 
 standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);

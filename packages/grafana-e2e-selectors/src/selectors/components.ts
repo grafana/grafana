@@ -106,6 +106,7 @@ export const Components = {
           metricsBrowser: {
             openButton: 'data-testid open metrics browser',
             selectMetric: 'data-testid select a metric',
+            seriesLimit: 'data-testid series limit',
             metricList: 'data-testid metric list',
             labelNamesFilter: 'data-testid label names filter',
             labelValuesFilter: 'data-testid label values filter',
@@ -266,7 +267,7 @@ export const Components = {
     },
   },
   Tab: {
-    title: (title: string) => `Tab ${title}`,
+    title: (title: string) => `data-testid Tab ${title}`,
     active: () => '[class*="-activeTabStyle"]',
   },
   RefreshPicker: {

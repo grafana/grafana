@@ -76,6 +76,14 @@ func (r *RuleService) getRulesQueryEvaluator(rules ...*models.AlertRule) accessc
 	return accesscontrol.EvalAll(evals...)
 }
 
+// CanReadAllRules returns true when user has access to all folders and can read rules in them.
+func (r *RuleService) CanReadAllRules(ctx context.Context, user identity.Requester) (bool, error) {
+	return r.HasAccess(ctx, user, accesscontrol.EvalAll(
+		accesscontrol.EvalPermission(ruleRead, dashboards.ScopeFoldersProvider.GetResourceAllScope()),
+		accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceAllScope()),
+	))
+}
+
 // AuthorizeDatasourceAccessForRule checks that user has access to all data sources declared by the rule
 func (r *RuleService) AuthorizeDatasourceAccessForRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) error {
 	ds := r.getRulesQueryEvaluator(rule)

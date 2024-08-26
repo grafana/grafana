@@ -13,7 +13,7 @@ import (
 )
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	logger := eslog.FromContext(ctx)
+	logger := s.logger.FromContext(ctx)
 
 	ds, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {

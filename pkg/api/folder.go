@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -64,13 +65,7 @@ func (hs *HTTPServer) GetFolders(c *contextmodel.ReqContext) response.Response {
 		}
 
 		hits := make([]dtos.FolderSearchHit, 0)
-		requesterIsSvcAccount := c.SignedInUser.GetID().Namespace() == identity.NamespaceServiceAccount
 		for _, f := range folders {
-			// only list k6 folders when requested by a service account - prevents showing k6 folders in the UI for users
-			if (f.UID == accesscontrol.K6FolderUID || f.ParentUID == accesscontrol.K6FolderUID) && !requesterIsSvcAccount {
-				continue
-			}
-
 			hits = append(hits, dtos.FolderSearchHit{
 				ID:        f.ID, // nolint:staticcheck
 				UID:       f.UID,
@@ -194,15 +189,16 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 }
 
 func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, folder *folder.Folder) error {
-	var permissions []accesscontrol.SetResourcePermissionCommand
-	var userID int64
+	if !hs.Cfg.RBAC.PermissionsOnCreation("folder") {
+		return nil
+	}
 
-	namespace, id := user.GetNamespacedID()
-	if namespace == identity.NamespaceUser {
-		var errID error
-		userID, errID = identity.IntIdentifier(namespace, id)
-		if errID != nil {
-			return errID
+	var permissions []accesscontrol.SetResourcePermissionCommand
+
+	if user.IsIdentityType(claims.TypeUser) {
+		userID, err := user.GetInternalID()
+		if err != nil {
+			return err
 		}
 
 		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{

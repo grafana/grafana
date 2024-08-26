@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { ConfirmModal, EmptyState, LinkButton, TextLink } from '@grafana/ui';

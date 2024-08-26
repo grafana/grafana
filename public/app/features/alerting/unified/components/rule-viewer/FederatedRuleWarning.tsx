@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Alert, Button, Stack } from '@grafana/ui';
 
 export function FederatedRuleWarning() {

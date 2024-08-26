@@ -224,21 +224,21 @@ type mockSessionCache struct {
 	mock.Mock
 }
 
-func (c *mockSessionCache) GetSession(config awsds.SessionConfig) (*session.Session, error) {
+func (c *mockSessionCache) GetSessionWithAuthSettings(config awsds.GetSessionConfig, auth awsds.AuthSettings) (*session.Session, error) {
 	args := c.Called(config)
 	return args.Get(0).(*session.Session), args.Error(1)
 }
 
 type fakeSessionCache struct {
-	getSession    func(c awsds.SessionConfig) (*session.Session, error)
-	calledRegions []string
+	getSessionWithAuthSettings func(c awsds.GetSessionConfig, a awsds.AuthSettings) (*session.Session, error)
+	calledRegions              []string
 }
 
-func (s *fakeSessionCache) GetSession(c awsds.SessionConfig) (*session.Session, error) {
+func (s *fakeSessionCache) GetSessionWithAuthSettings(c awsds.GetSessionConfig, a awsds.AuthSettings) (*session.Session, error) {
 	s.calledRegions = append(s.calledRegions, c.Settings.Region)
 
-	if s.getSession != nil {
-		return s.getSession(c)
+	if s.getSessionWithAuthSettings != nil {
+		return s.getSessionWithAuthSettings(c, a)
 	}
 	return &session.Session{
 		Config: &aws.Config{},

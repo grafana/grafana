@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useLayoutEffect, useRef, useReducer, CSSProperties } from 'react';
+import { useLayoutEffect, useRef, useReducer, CSSProperties } from 'react';
+import * as React from 'react';
 import { createPortal } from 'react-dom';
 import uPlot from 'uplot';
 
@@ -312,8 +313,10 @@ export const TooltipPlugin2 = ({
           }
           // only pinnable tooltip is visible *and* is within proximity to series/point
           else if (_isHovering && closestSeriesIdx != null && !_isPinned) {
-            _isPinned = true;
-            scheduleRender(true);
+            setTimeout(() => {
+              _isPinned = true;
+              scheduleRender(true);
+            }, 0);
           }
         }
       });
@@ -462,7 +465,10 @@ export const TooltipPlugin2 = ({
     config.addHook('setData', (u) => {
       yZoomed = false;
       yDrag = false;
-      dismiss();
+
+      if (_isPinned) {
+        dismiss();
+      }
     });
 
     // fires on series focus/proximity changes
@@ -576,7 +582,7 @@ export const TooltipPlugin2 = ({
 
     const onscroll = (e: Event) => {
       updatePlotVisible();
-      _isHovering && !_isPinned && e.target instanceof HTMLElement && e.target.contains(_plot!.root) && dismiss();
+      _isHovering && e.target instanceof Node && e.target.contains(_plot!.root) && dismiss();
     };
 
     window.addEventListener('resize', updateWinSize);
@@ -604,14 +610,29 @@ export const TooltipPlugin2 = ({
       size.width = width;
       size.height = height;
 
-      const event = plot!.cursor.event;
+      let event = plot!.cursor.event;
 
       // if not viaSync, re-dispatch real event
       if (event != null) {
+        // we expect to re-dispatch mousemove, but on mobile we'll get mouseup or click
+        const isMobile = event.type !== 'mousemove';
+
+        if (isMobile) {
+          event = new MouseEvent('mousemove', {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+            clientX: event.clientX,
+            clientY: event.clientY,
+            screenX: event.screenX,
+            screenY: event.screenY,
+          });
+        }
+
         // this works around the fact that uPlot does not unset cursor.event (for perf reasons)
         // so if the last real mouse event was mouseleave and you manually trigger u.setCursor()
         // it would end up re-dispatching mouseleave
-        const isStaleEvent = performance.now() - event.timeStamp > 16;
+        const isStaleEvent = isMobile ? false : performance.now() - event.timeStamp > 16;
 
         !isStaleEvent && plot!.over.dispatchEvent(event);
       } else {

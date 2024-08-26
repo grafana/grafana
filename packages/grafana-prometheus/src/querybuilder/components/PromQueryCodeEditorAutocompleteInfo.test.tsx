@@ -1,6 +1,5 @@
 import { render, screen, fireEvent, createEvent } from '@testing-library/react';
 import { cloneDeep, defaultsDeep } from 'lodash';
-import React from 'react';
 
 import { PluginMeta, PluginType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -27,18 +26,6 @@ jest.mock('../../components/monaco-query-field/MonacoQueryFieldWrapper', () => {
   return {
     MonacoQueryFieldWrapper: () => {
       return 'MonacoQueryFieldWrapper';
-    },
-  };
-});
-
-jest.mock('../../gcopypaste/app/core/store', () => {
-  return {
-    get() {
-      return undefined;
-    },
-    set() {},
-    getObject(key: string, defaultValue: unknown) {
-      return defaultValue;
     },
   };
 });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { ConfirmModal, InlineField, RadioButtonGroup } from '@grafana/ui';
 

@@ -1,5 +1,5 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { getFieldDisplayName } from '../../field';
+import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { fieldMatchers } from '../matchers';

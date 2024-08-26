@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { intervalToAbbreviatedDurationString } from '@grafana/data';
 import { AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';

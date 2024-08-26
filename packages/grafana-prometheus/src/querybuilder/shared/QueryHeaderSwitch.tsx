@@ -1,7 +1,7 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/QueryHeaderSwitch.tsx
 import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import React, { HTMLProps, useRef } from 'react';
+import { HTMLProps, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Switch, useStyles2, Stack } from '@grafana/ui';

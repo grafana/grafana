@@ -1,5 +1,6 @@
 import { useId } from '@react-aria/utils';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
+import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { TextArea, useStyles2 } from '@grafana/ui';

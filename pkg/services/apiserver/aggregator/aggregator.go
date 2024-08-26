@@ -12,7 +12,6 @@
 package aggregator
 
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -22,8 +21,6 @@ import (
 	"sync"
 	"time"
 
-	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/service"
 	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -47,11 +44,13 @@ import (
 	"k8s.io/kube-aggregator/pkg/controllers"
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
 
-	"github.com/grafana/grafana/pkg/apiserver/builder"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/service"
+
 	servicev0alpha1applyconfiguration "github.com/grafana/grafana/pkg/generated/applyconfiguration/service/v0alpha1"
 	serviceclientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informersv0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 )
 
@@ -125,8 +124,8 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 			ClientConfig:          sharedConfig.LoopbackClientConfig,
 		},
 		ExtraConfig: aggregatorapiserver.ExtraConfig{
-			ProxyClientCertFile: commandOptions.AggregatorOptions.ProxyClientCertFile,
-			ProxyClientKeyFile:  commandOptions.AggregatorOptions.ProxyClientKeyFile,
+			ProxyClientCertFile: commandOptions.KubeAggregatorOptions.ProxyClientCertFile,
+			ProxyClientKeyFile:  commandOptions.KubeAggregatorOptions.ProxyClientKeyFile,
 			// NOTE: while ProxyTransport can be skipped in the configuration, it allows honoring
 			// DISABLE_HTTP2, HTTPS_PROXY and NO_PROXY env vars as needed
 			ProxyTransport:  createProxyTransport(),
@@ -134,7 +133,7 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 		},
 	}
 
-	if err := commandOptions.AggregatorOptions.ApplyTo(aggregatorConfig, commandOptions.RecommendedOptions.Etcd, commandOptions.StorageOptions.DataPath); err != nil {
+	if err := commandOptions.KubeAggregatorOptions.ApplyTo(aggregatorConfig, commandOptions.RecommendedOptions.Etcd); err != nil {
 		return nil, err
 	}
 
@@ -145,15 +144,15 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 	APIVersionPriorities[serviceAPIBuilder.GetGroupVersion()] = Priority{Group: 15000, Version: int32(1)}
 
 	// Exit early, if no remote services file is configured
-	if commandOptions.AggregatorOptions.RemoteServicesFile == "" {
+	if commandOptions.KubeAggregatorOptions.RemoteServicesFile == "" {
 		return NewConfig(aggregatorConfig, sharedInformerFactory, []builder.APIGroupBuilder{serviceAPIBuilder}, nil), nil
 	}
 
-	_, err = readCABundlePEM(commandOptions.AggregatorOptions.APIServiceCABundleFile, commandOptions.ExtraOptions.DevMode)
+	_, err = readCABundlePEM(commandOptions.KubeAggregatorOptions.APIServiceCABundleFile, commandOptions.ExtraOptions.DevMode)
 	if err != nil {
 		return nil, err
 	}
-	remoteServices, err := readRemoteServices(commandOptions.AggregatorOptions.RemoteServicesFile)
+	remoteServices, err := readRemoteServices(commandOptions.KubeAggregatorOptions.RemoteServicesFile)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +202,7 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 	}
 
 	err = aggregatorServer.GenericAPIServer.AddPostStartHook("grafana-apiserver-autoregistration", func(context genericapiserver.PostStartHookContext) error {
-		go autoRegistrationController.Run(5, context.StopCh)
+		go autoRegistrationController.Run(5, context.Done())
 		return nil
 	})
 	if err != nil {
@@ -214,10 +213,10 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 		addRemoteAPIServicesToRegister(remoteServicesConfig, autoRegistrationController)
 		externalNames := getRemoteExternalNamesToRegister(remoteServicesConfig)
 		err = aggregatorServer.GenericAPIServer.AddPostStartHook("grafana-apiserver-remote-autoregistration", func(ctx genericapiserver.PostStartHookContext) error {
-			controllers.WaitForCacheSync("grafana-apiserver-remote-autoregistration", ctx.StopCh, externalNamesInformer.Informer().HasSynced)
+			controllers.WaitForCacheSync("grafana-apiserver-remote-autoregistration", ctx.Done(), externalNamesInformer.Informer().HasSynced)
 			namespacedClient := remoteServicesConfig.serviceClientSet.ServiceV0alpha1().ExternalNames(remoteServicesConfig.ExternalNamesNamespace)
 			for _, externalName := range externalNames {
-				_, err := namespacedClient.Apply(context.Background(), externalName, metav1.ApplyOptions{
+				_, err := namespacedClient.Apply(ctx, externalName, metav1.ApplyOptions{
 					FieldManager: "grafana-aggregator",
 					Force:        true,
 				})
@@ -275,13 +274,13 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 
 	aggregatorServer.GenericAPIServer.AddPostStartHookOrDie("apiservice-status-override-available-controller", func(context genericapiserver.PostStartHookContext) error {
 		// if we end up blocking for long periods of time, we may need to increase workers.
-		go availableController.Run(5, context.StopCh)
+		go availableController.Run(5, context.Done())
 		return nil
 	})
 
 	aggregatorServer.GenericAPIServer.AddPostStartHookOrDie("start-grafana-aggregator-informers", func(context genericapiserver.PostStartHookContext) error {
-		sharedInformerFactory.Start(context.StopCh)
-		aggregatorServer.APIRegistrationInformers.Start(context.StopCh)
+		sharedInformerFactory.Start(context.Done())
+		aggregatorServer.APIRegistrationInformers.Start(context.Done())
 		return nil
 	})
 
@@ -290,8 +289,7 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 			aggregatorscheme.Scheme,
 			aggregatorscheme.Codecs,
 			aggregatorConfig.GenericConfig.RESTOptionsGetter,
-			grafanarest.Mode0,
-			reg,
+			nil, // no dual writer
 		)
 		if err != nil {
 			return nil, err

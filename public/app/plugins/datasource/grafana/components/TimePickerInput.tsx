@@ -1,7 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { Moment } from 'moment';
 import TimePicker from 'rc-time-picker';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { FormInputSize, Icon, useStyles2 } from '@grafana/ui';

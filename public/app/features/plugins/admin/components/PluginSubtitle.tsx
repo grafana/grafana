@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import { Fragment } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Alert, useStyles2 } from '@grafana/ui';
 
 import { InstallControlsWarning } from '../components/InstallControls';
@@ -35,15 +36,15 @@ export const PluginSubtitle = ({ plugin }: Props) => {
         </Alert>
       )}
       {plugin?.description && <div>{plugin?.description}</div>}
-      {plugin?.details?.links && plugin.details.links.length > 0 && (
+      {!config.featureToggles.pluginsDetailsRightPanel && !!plugin?.details?.links?.length && (
         <span>
           {plugin.details.links.map((link, index) => (
-            <React.Fragment key={index}>
+            <Fragment key={index}>
               {index > 0 && ' | '}
               <a href={link.url} className="external-link">
                 {link.name}
               </a>
-            </React.Fragment>
+            </Fragment>
           ))}
         </span>
       )}

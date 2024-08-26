@@ -1,7 +1,6 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/preview-api';
 import { Meta, StoryFn } from '@storybook/react';
-import React from 'react';
 
 import { DataSourceHttpSettings } from './DataSourceHttpSettings';
 import mdx from './DataSourceHttpSettings.mdx';

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { Button, LinkButton, useStyles2 } from '@grafana/ui';

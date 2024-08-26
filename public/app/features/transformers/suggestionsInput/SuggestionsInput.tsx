@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { autoUpdate, flip, shift, useFloating } from '@floating-ui/react';
-import React, { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, VariableSuggestion } from '@grafana/data';
 import { CustomScrollbar, FieldValidationMessage, Input, Portal, useTheme2 } from '@grafana/ui';

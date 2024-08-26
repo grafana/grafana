@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { dateTime } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
@@ -13,18 +11,23 @@ import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/co
 
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardUrl } from '../utils/urlBuilders';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { SceneShareTabState } from './types';
 export interface ShareLinkTabState extends SceneShareTabState, ShareOptions {
   panelRef?: SceneObjectRef<VizPanel>;
 }
 
-interface ShareOptions {
+export interface ShareLinkConfiguration {
   useLockedTime: boolean;
   useShortUrl: boolean;
   selectedTheme: string;
+}
+
+interface ShareOptions extends ShareLinkConfiguration {
   shareUrl: string;
   imageUrl: string;
+  isBuildUrlLoading: boolean;
 }
 
 export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
@@ -32,28 +35,34 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
 
   static Component = ShareLinkTabRenderer;
 
-  constructor(state: Omit<ShareLinkTabState, keyof ShareOptions>) {
+  constructor(state: Partial<ShareLinkTabState>) {
     super({
       ...state,
-      useLockedTime: true,
-      useShortUrl: false,
-      selectedTheme: 'current',
+      useLockedTime: state.useLockedTime ?? true,
+      useShortUrl: state.useShortUrl ?? false,
+      selectedTheme: state.selectedTheme ?? 'current',
       shareUrl: '',
       imageUrl: '',
+      isBuildUrlLoading: false,
     });
 
     this.addActivationHandler(() => {
       this.buildUrl();
     });
+
+    this.onToggleLockedTime = this.onToggleLockedTime.bind(this);
+    this.onUrlShorten = this.onUrlShorten.bind(this);
+    this.onThemeChange = this.onThemeChange.bind(this);
   }
 
   async buildUrl() {
-    const { panelRef, dashboardRef, useLockedTime: useAbsoluteTimeRange, useShortUrl, selectedTheme } = this.state;
-    const dashboard = dashboardRef.resolve();
+    this.setState({ isBuildUrlLoading: true });
+    const { panelRef, useLockedTime: useAbsoluteTimeRange, useShortUrl, selectedTheme } = this.state;
+    const dashboard = getDashboardSceneFor(this);
     const panel = panelRef?.resolve();
 
-    const opts = { useAbsoluteTimeRange, theme: selectedTheme };
-    let shareUrl = await createDashboardShareUrl(dashboard, opts, panel);
+    const opts = { useAbsoluteTimeRange, theme: selectedTheme, useShortUrl };
+    let shareUrl = createDashboardShareUrl(dashboard, opts, panel);
 
     if (useShortUrl) {
       shareUrl = await createShortLink(shareUrl);
@@ -81,27 +90,29 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
       timeZone: getRenderTimeZone(timeRange.getTimeZone()),
     });
 
-    this.setState({ shareUrl, imageUrl });
+    this.setState({ shareUrl, imageUrl, isBuildUrlLoading: false });
   }
 
   public getTabLabel() {
     return t('share-modal.tab-title.link', 'Link');
   }
 
-  onToggleLockedTime = () => {
-    this.setState({ useLockedTime: !this.state.useLockedTime });
-    this.buildUrl();
-  };
+  async onToggleLockedTime() {
+    const useLockedTime = !this.state.useLockedTime;
+    this.setState({ useLockedTime });
+    await this.buildUrl();
+  }
 
-  onUrlShorten = () => {
-    this.setState({ useShortUrl: !this.state.useShortUrl });
-    this.buildUrl();
-  };
+  async onUrlShorten() {
+    const useShortUrl = !this.state.useShortUrl;
+    this.setState({ useShortUrl });
+    await this.buildUrl();
+  }
 
-  onThemeChange = (value: string) => {
+  async onThemeChange(value: string) {
     this.setState({ selectedTheme: value });
-    this.buildUrl();
-  };
+    await this.buildUrl();
+  }
 
   getShareUrl = () => {
     return this.state.shareUrl;
@@ -119,9 +130,9 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
 
 function ShareLinkTabRenderer({ model }: SceneComponentProps<ShareLinkTab>) {
   const state = model.useState();
-  const { panelRef, dashboardRef } = state;
+  const { panelRef } = state;
 
-  const dashboard = dashboardRef.resolve();
+  const dashboard = getDashboardSceneFor(model);
   const panel = panelRef?.resolve();
 
   const timeRange = sceneGraph.getTimeRange(panel ?? dashboard);
@@ -145,7 +156,7 @@ function ShareLinkTabRenderer({ model }: SceneComponentProps<ShareLinkTab>) {
 
   return (
     <>
-      <p className="share-modal-info-text">
+      <p>
         <Trans i18nKey="share-modal.link.info-text">
           Create a direct link to this dashboard or panel, customized with the options below.
         </Trans>

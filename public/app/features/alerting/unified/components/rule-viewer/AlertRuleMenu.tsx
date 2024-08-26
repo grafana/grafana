@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { AppEvents } from '@grafana/data';
 import { ComponentSize, Dropdown, Menu } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
@@ -13,7 +11,7 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
-import { createUrl } from '../../utils/url';
+import { createRelativeUrl } from '../../utils/url';
 import { DeclareIncidentMenuItem } from '../bridges/DeclareIncidentButton';
 
 interface Props {
@@ -25,7 +23,6 @@ interface Props {
   handleDuplicateRule: (identifier: RuleIdentifier) => void;
   onPauseChange?: () => void;
   buttonSize?: ComponentSize;
-  hideLabels?: boolean;
 }
 
 /**
@@ -125,9 +122,12 @@ type PropsWithIdentifier = { identifier: RuleIdentifier };
 
 const ExportMenuItem = ({ identifier }: PropsWithIdentifier) => {
   const returnTo = location.pathname + location.search;
-  const url = createUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`, {
-    returnTo,
-  });
+  const url = createRelativeUrl(
+    `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`,
+    {
+      returnTo,
+    }
+  );
 
   return <Menu.Item key="with-modifications" label="With modifications" icon="file-edit-alt" url={url} />;
 };

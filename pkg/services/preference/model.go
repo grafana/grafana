@@ -67,6 +67,7 @@ type SavePreferenceCommand struct {
 	Language          string                  `json:"language,omitempty"`
 	QueryHistory      *QueryHistoryPreference `json:"queryHistory,omitempty"`
 	CookiePreferences []CookieType            `json:"cookiePreferences,omitempty"`
+	Navbar            *NavbarPreference       `json:"navbar,omitempty"`
 }
 
 type PatchPreferenceCommand struct {
@@ -82,16 +83,22 @@ type PatchPreferenceCommand struct {
 	Language          *string                 `json:"language,omitempty"`
 	QueryHistory      *QueryHistoryPreference `json:"queryHistory,omitempty"`
 	CookiePreferences []CookieType            `json:"cookiePreferences,omitempty"`
+	Navbar            *NavbarPreference       `json:"navbar,omitempty"`
 }
 
 type PreferenceJSONData struct {
 	Language          string                 `json:"language"`
 	QueryHistory      QueryHistoryPreference `json:"queryHistory"`
 	CookiePreferences map[string]struct{}    `json:"cookiePreferences"`
+	Navbar            NavbarPreference       `json:"navbar"`
 }
 
 type QueryHistoryPreference struct {
 	HomeTab string `json:"homeTab"`
+}
+
+type NavbarPreference struct {
+	BookmarkUrls []string `json:"bookmarkUrls"`
 }
 
 func (j *PreferenceJSONData) FromDB(data []byte) error {

@@ -1,4 +1,5 @@
-import { BootData, DataFrame } from '../../types';
+import { BootData } from '../../types/config';
+import { DataFrame } from '../../types/dataFrame';
 
 declare global {
   interface Window {

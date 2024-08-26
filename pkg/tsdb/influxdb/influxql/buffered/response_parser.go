@@ -1,6 +1,7 @@
 package buffered
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -23,17 +24,25 @@ func ResponseParse(buf io.ReadCloser, statusCode int, query *models.Query) *back
 func parse(buf io.Reader, statusCode int, query *models.Query) *backend.DataResponse {
 	response, jsonErr := parseJSON(buf)
 
+	if statusCode/100 != 2 {
+		errorStr := response.Error
+		if errorStr == "" {
+			errorStr = response.Message
+		}
+		return &backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %s", errorStr)}
+	}
+
 	if jsonErr != nil {
 		return &backend.DataResponse{Error: jsonErr}
 	}
 
 	if response.Error != "" {
-		return &backend.DataResponse{Error: fmt.Errorf(response.Error)}
+		return &backend.DataResponse{Error: errors.New(response.Error)}
 	}
 
 	result := response.Results[0]
 	if result.Error != "" {
-		return &backend.DataResponse{Error: fmt.Errorf(result.Error)}
+		return &backend.DataResponse{Error: errors.New(result.Error)}
 	}
 
 	if query.ResultFormat == "table" {

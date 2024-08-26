@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -95,7 +94,7 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 }
 
 func (p *Provider) GetDataSourceInstanceSettings(ctx context.Context, uid string) (*backend.DataSourceInstanceSettings, error) {
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +114,7 @@ func (p *Provider) PluginContextForDataSource(ctx context.Context, datasourceSet
 		return backend.PluginContext{}, plugins.ErrPluginNotRegistered
 	}
 
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return backend.PluginContext{}, err
 	}

@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { Provider } from 'react-redux';
 import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
 

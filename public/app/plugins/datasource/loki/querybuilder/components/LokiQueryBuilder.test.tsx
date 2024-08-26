@@ -1,6 +1,5 @@
 import { render, screen, getAllByRole, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { dateTime } from '@grafana/data';
 import { config } from '@grafana/runtime';

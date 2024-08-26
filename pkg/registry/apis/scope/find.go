@@ -59,7 +59,7 @@ func (r *findREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	// See: /pkg/apiserver/builder/helper.go#L34
+	// See: /pkg/services/apiserver/builder/helper.go#L34
 	// The name is set with a rewriter hack
 	if name != "name" {
 		return nil, errors.NewNotFound(schema.GroupResource{}, name)

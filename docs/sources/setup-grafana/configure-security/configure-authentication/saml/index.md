@@ -68,14 +68,19 @@ In terms of initiation, Grafana supports:
 
 By default, SP-initiated requests are enabled. For instructions on how to enable IdP-initiated logins, see [IdP-initiated Single Sign-On (SSO)]({{< relref "#idp-initiated-single-sign-on-sso" >}}).
 
-{{% admonition type="warning" %}}
-It is possible to setup Grafana with SAML authentication using Azure AD. However, Azure AD limits the number of groups that can be sent in the SAML assertion to 150. If you have more than 150 groups, Azure AD provides a link to retrieve the groups that only works for OIDC/OAuth workflows. At the moment it is not possible to use this link with SAML authentication in Grafana.
+{{% admonition type="note" %}}
+It is possible to set up Grafana with SAML authentication using Azure AD. However, if an Azure AD user belongs to more than 150 groups, a Graph API endpoint is shared instead.
 
-It is preferable to take this into consideration when setting up SAML authentication with Azure AD. We encourage the use of [Azure AD OAuth integration]({{< relref "../azuread" >}}) instead of SAML if you have more than 150 groups.
+Grafana versions 11.1 and below, do not support fetching the groups from the Graph API endpoint. As a result, users with more than 150 groups will not be able to retrieve their groups. Instead, it is recommended that you use OIDC/OAuth workflows,.
+
+As of Grafana 11.2, the SAML integration offers a mechanism to retrieve user groups from the Graph API.
+
+Related links:
 
 - [Azure AD SAML limitations](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim)
-
-{{% /admonition %}}
+- [Set up SAML with Azure AD]({{< relref "#set-up-saml-with-azure-ad" >}})
+- [Configure a Graph API application in Azure AD]({{< relref "#configure-a-graph-api-application-in-azure-ad" >}})
+  {{% /admonition %}}
 
 ### Edit SAML options in the Grafana config file
 
@@ -139,7 +144,7 @@ You can only use one form of each configuration option. Using multiple forms, su
 
 ---
 
-### **Example** of how to generate SAML credentials:
+### Generate private key for SAML authentication:
 
 An example of how to generate a self-signed certificate and private key that's valid for one year:
 
@@ -157,6 +162,99 @@ The key you provide should look like:
 ...
 -----END PRIVATE KEY-----
 ```
+
+## Set up SAML with Azure AD
+
+Grafana supports user authentication through Azure AD, which is useful when you want users to access Grafana using single sign-on. This topic shows you how to configure SAML authentication in Grafana with [Azure AD](https://azure.microsoft.com/en-us/services/active-directory/).
+
+**Before you begin:**
+
+- Ensure you have permission to administer SAML authentication. For more information about roles and permissions in Grafana.
+  - [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions" >}}).
+- Learn the limitations of Azure AD SAML integration.
+  - [Azure AD SAML limitations](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim)
+- Configure SAML integration with Azure AD, create an app integration inside the Azure AD organization first.
+  - [Add app integration in Azure AD](https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/add-application-portal-configure)
+- If you have users that belong to more than 150 groups, you need to configure a registered application to provide an Azure Graph API to retrieve the groups.
+  - [Setup Azure AD Graph API applications]({{< relref "#set-up-saml-with-azure-ad" >}})
+
+### Generate self-signed certificates
+
+Azure AD requires a certificate to sign the SAML requests. You can generate a self-signed certificate using the following command:
+
+```sh
+$ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
+```
+
+This will generate a `key.pem` and `cert.pem` file that you can use for the `private_key_path` and `certificate_path` configuration options.
+
+### Add Microsoft Entra SAML Toolkit from the gallery
+
+> Taken from https://learn.microsoft.com/en-us/entra/identity/saas-apps/saml-toolkit-tutorial#add-microsoft-entra-saml-toolkit-from-the-gallery
+
+1. Go to the [Azure portal](https://portal.azure.com/#home) and sign in with your Azure AD account.
+1. Search for **Enterprise Applications**.
+1. In the **Enterprise applications** pane, select **New application**.
+1. In the search box, enter **SAML Toolkit**, and then select the **Microsoft Entra SAML Toolkit** from the results panel.
+1. Add a descriptive name and select **Create**.
+
+### Configure the SAML Toolkit application endpoints
+
+In order to validate Azure AD users with Grafana, you need to configure the SAML Toolkit application endpoints by creating a new SAML integration in the Azure AD organization.
+
+> For the following configuration, we will use `https://localhost` as the Grafana URL. Replace it with your Grafana URL.
+
+1. In the **SAML Toolkit application**, select **Set up single sign-on**.
+1. In the **Single sign-on** pane, select **SAML**.
+1. In the Set up **Single Sign-On with SAML** pane, select the pencil icon for **Basic SAML Configuration** to edit the settings.
+1. In the **Basic SAML Configuration** pane, click on the **Edit** button and update the following fields:
+   - In the **Identifier (Entity ID)** field, enter `https://localhost/saml/metadata`.
+   - In the **Identifier (Entity ID)** field, remove the default value.
+   - In the **Reply URL (Assertion Consumer Service URL)** field, enter `https://localhost/saml/acs`.
+   - In the **Sign on URL** field, enter `https://localhost/saml/auth`.
+   - In the **Relay State** field, enter `https://localhost/saml/slo`.
+   - In the **Logout URL** field, enter `https://localhost/logout`.
+1. Select **Save**.
+1. At the **SAML Certificate** section, copy the **App Federation Metadata Url**.
+   - Use this URL in the `idp_metadata_url` field in the `custom.ini` file.
+
+### Configure a Graph API application in Azure AD
+
+While an Azure AD tenant can be configured in Grafana via SAML, some additional information is only accessible via the Graph API. To retrieve this information, create a new application in Azure AD and grant it the necessary permissions.
+
+> [Azure AD SAML limitations](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim)
+
+> For the following configuration, the URL `https://localhost` will be used as the Grafana URL. Replace it with your Grafana instance URL.
+
+#### Create a new Application registration
+
+This app registration will be used as a Service Account to retrieve more information about the user from the Azure AD.
+
+1. Go to the [Azure portal](https://portal.azure.com/#home) and sign in with your Azure AD account.
+1. In the left-hand navigation pane, select the Azure Active Directory service, and then select **App registrations**.
+1. Select **New registration**.
+1. In the **Register an application** pane, enter a name for the application.
+1. In the **Supported account types** section, select the account types that can use the application.
+1. In the **Redirect URI** section, select Web and enter `https://localhost/login/azuread`.
+1. Select **Register**.
+
+#### Set up permissions for the application
+
+1. In the overview pane, look for **API permissions** section and select **Add a permission**.
+1. In the **Request API permissions** pane, select **Microsoft Graph**.
+1. In the **Select permissions** pane, under the **GroupMember** section, select **GroupMember.Read.All**.
+1. In the **Select permissions** pane, under the **User** section, select **User.Read**.
+1. Select **Add permissions** at the bottom of the page.
+1. In the **API permissions** section, select **Grant admin consent for <your-organization>**.
+
+#### Generate a client secret
+
+1. In the **Overview** pane, select **Certificates & secrets**.
+1. Select **New client secret**.
+1. In the **Add a client secret** pane, enter a description for the secret.
+1. Set the expiration date for the secret.
+1. Select **Add**.
+1. Copy the value of the secret. This value is used in the `client_secret` field in the `custom.ini` file.
 
 ## Set up SAML with Okta
 
@@ -229,6 +327,10 @@ The table below describes all SAML configuration options. Continue reading below
 | `role_values_admin`                                        | No       | List of comma- or space-separated roles which will be mapped into the Admin role                                                                                                                             |                                                       |
 | `role_values_grafana_admin`                                | No       | List of comma- or space-separated roles which will be mapped into the Grafana Admin (Super Admin) role                                                                                                       |                                                       |
 | `name_id_format`                                           | No       | The Name ID Format to request within the SAML assertion                                                                                                                                                      | `urn:oasis:names:tc:SAML:2.0:nameid-format:transient` |
+| `client_id`                                                | No       | Client ID of the IdP service application used to retrieve more information about the user from the IdP.                                                                                                      |                                                       |
+| `client_secret`                                            | No       | Client secret of the IdP service application used to retrieve more information about the user from the IdP.                                                                                                  |                                                       |
+| `access_token_url`                                         | No       | URL to retrieve the access token from the IdP.                                                                                                                                                               |                                                       |
+| `force_use_graph_api`                                      | No       | Whether to use the IdP service application retrieve more information about the user from the IdP.                                                                                                            | `false`                                               |
 
 ### Signature algorithm
 

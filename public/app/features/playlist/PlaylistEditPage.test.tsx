@@ -1,7 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { History, Location } from 'history';
-import React from 'react';
 import { type match } from 'react-router-dom';
 import { TestProvider } from 'test/helpers/TestProvider';
 

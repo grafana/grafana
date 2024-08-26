@@ -1,4 +1,3 @@
-import React from 'react';
 import { useForm } from 'react-hook-form';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
@@ -76,10 +75,7 @@ export const ConfigEmailSharing = () => {
           >
             <Stack direction="row">
               <Input
-                placeholder={t(
-                  'public-dashboard.email-sharing.recipient-email-placeholder',
-                  'Type in the recipient email address and press Enter'
-                )}
+                placeholder={t('public-dashboard.email-sharing.recipient-email-placeholder', 'Email')}
                 autoCapitalize="none"
                 loading={isAddEmailLoading}
                 {...register('email', {

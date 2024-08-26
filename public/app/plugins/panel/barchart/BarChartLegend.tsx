@@ -1,4 +1,4 @@
-import React from 'react';
+import { memo } from 'react';
 
 import { DataFrame, Field, getFieldSeriesColor } from '@grafana/data';
 import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
@@ -28,7 +28,7 @@ export function hasVisibleLegendSeries(config: UPlotConfigBuilder, data: DataFra
   // });
 }
 
-export const BarChartLegend = React.memo(
+export const BarChartLegend = memo(
   ({ data, placement, calcs, displayMode, colorField, ...vizLayoutLegendProps }: BarChartLegend2Props) => {
     const theme = useTheme2();
 

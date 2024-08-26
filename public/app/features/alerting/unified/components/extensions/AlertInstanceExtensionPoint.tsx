@@ -1,4 +1,4 @@
-import React, { ReactElement, useMemo, useState } from 'react';
+import { ReactElement, useMemo, useState } from 'react';
 
 import { PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
 import { usePluginLinkExtensions } from '@grafana/runtime';

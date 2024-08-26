@@ -1,7 +1,6 @@
 import { render as rtlRender, screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { contextSrv } from 'app/core/core';
@@ -115,14 +114,14 @@ describe('browse-dashboards BrowseFolderAlertingPage', () => {
 
   it('displays all the folder tabs and shows the "Alert rules" tab as selected', async () => {
     render(<BrowseFolderAlertingPage {...props} />);
-    expect(await screen.findByRole('tab', { name: 'Tab Dashboards' })).toBeInTheDocument();
-    expect(await screen.findByRole('tab', { name: 'Tab Dashboards' })).toHaveAttribute('aria-selected', 'false');
+    expect(await screen.findByRole('tab', { name: 'Dashboards' })).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: 'Dashboards' })).toHaveAttribute('aria-selected', 'false');
 
-    expect(await screen.findByRole('tab', { name: 'Tab Panels' })).toBeInTheDocument();
-    expect(await screen.findByRole('tab', { name: 'Tab Panels' })).toHaveAttribute('aria-selected', 'false');
+    expect(await screen.findByRole('tab', { name: 'Panels' })).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: 'Panels' })).toHaveAttribute('aria-selected', 'false');
 
-    expect(await screen.findByRole('tab', { name: 'Tab Alert rules' })).toBeInTheDocument();
-    expect(await screen.findByRole('tab', { name: 'Tab Alert rules' })).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByRole('tab', { name: 'Alert rules' })).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: 'Alert rules' })).toHaveAttribute('aria-selected', 'true');
   });
 
   it('displays the alert rules returned by the API', async () => {

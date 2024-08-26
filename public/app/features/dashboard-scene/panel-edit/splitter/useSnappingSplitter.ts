@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useState, useCallback } from 'react';
 
 import { DragHandlePosition, useSplitter } from '@grafana/ui';
 
@@ -25,7 +25,7 @@ interface PaneState {
 export function useSnappingSplitter(options: UseSnappingSplitterOptions) {
   const { paneOptions } = options;
 
-  const [state, setState] = React.useState<PaneState>({ collapsed: false });
+  const [state, setState] = useState<PaneState>({ collapsed: false });
 
   const onResizing = useCallback(
     (flexSize: number, pixelSize: number) => {

@@ -1,5 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
-import React, { useState } from 'react';
+import { useState } from 'react';
+import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 

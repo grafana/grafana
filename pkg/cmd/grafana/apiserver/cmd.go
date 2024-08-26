@@ -3,8 +3,11 @@ package apiserver
 import (
 	"context"
 	"os"
+	"sync"
 
 	"github.com/spf13/cobra"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/component-base/cli"
 
@@ -15,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 )
 
-func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}) *cobra.Command {
+func newCommandStartStandaloneAPIServer(o *APIServerOptions, stopCh <-chan struct{}) *cobra.Command {
 	devAcknowledgementNotice := "The apiserver command is in heavy development. The entire setup is subject to change without notice"
 	runtimeConfig := ""
 
@@ -71,7 +74,9 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 				return err
 			}
 
-			config, err := o.Config()
+			// o.Config(tracer) definitely needs to happen before we override the tracer below
+			// using tracer.InitTracer with the real tracer
+			config, err := o.Config(tracer)
 			if err != nil {
 				return err
 			}
@@ -82,7 +87,7 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 
 			defer o.factory.Shutdown()
 
-			if err := o.RunAPIServer(config, stopCh); err != nil {
+			if err := o.RunAPIServer(ctx, config); err != nil {
 				return err
 			}
 
@@ -103,23 +108,50 @@ func RunCLI(opts commands.ServerOptions) int {
 	commands.SetBuildInfo(opts)
 
 	options := newAPIServerOptions(os.Stdout, os.Stderr)
-	cmd := newCommandStartExampleAPIServer(options, stopCh)
+	cmd := newCommandStartStandaloneAPIServer(options, stopCh)
 
 	return cli.Run(cmd)
 }
 
+type lateInitializedTracingProvider struct {
+	trace.TracerProvider
+	tracer *lateInitializedTracingService
+}
+
+func (tp lateInitializedTracingProvider) Tracer(name string, options ...trace.TracerOption) trace.Tracer {
+	return tp.tracer.getTracer()
+}
+
 type lateInitializedTracingService struct {
 	tracing.Tracer
+	mutex sync.RWMutex
 }
 
 func newLateInitializedTracingService() *lateInitializedTracingService {
-	return &lateInitializedTracingService{
-		Tracer: tracing.InitializeTracerForTest(),
+	ts := &lateInitializedTracingService{
+		Tracer: tracing.NewNoopTracerService(),
 	}
+
+	tp := &lateInitializedTracingProvider{
+		tracer: ts,
+	}
+
+	otel.SetTracerProvider(tp)
+
+	return ts
 }
 
-func (s *lateInitializedTracingService) InitTracer(tracer tracing.Tracer) {
+func (s *lateInitializedTracingService) getTracer() tracing.Tracer {
+	s.mutex.RLock()
+	t := s.Tracer
+	s.mutex.RUnlock()
+	return t
+}
+
+func (s *lateInitializedTracingService) InitTracer(tracer *tracing.TracingService) {
+	s.mutex.Lock()
 	s.Tracer = tracer
+	s.mutex.Unlock()
 }
 
 var _ tracing.Tracer = &lateInitializedTracingService{}

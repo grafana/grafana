@@ -14,7 +14,6 @@
 
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { polyfill as polyfillAnimationFrame } from '../../utils/test/requestAnimationFrame';
 

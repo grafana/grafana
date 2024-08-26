@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
 
@@ -69,7 +69,7 @@ const getStyles = (
         flexDirection: val,
       })),
       getResponsiveStyle(theme, wrap, (val) => ({
-        flexWrap: val,
+        flexWrap: typeof val === 'boolean' ? (val ? 'wrap' : 'nowrap') : val,
       })),
       getResponsiveStyle(theme, alignItems, (val) => ({
         alignItems: val,

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, EditorField, EditorList, EditorRow } from '@grafana/experimental';

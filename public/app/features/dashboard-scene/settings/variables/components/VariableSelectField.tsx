@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { PropsWithChildren, useId } from 'react';
+import { PropsWithChildren, useId } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Field, Select, useStyles2 } from '@grafana/ui';

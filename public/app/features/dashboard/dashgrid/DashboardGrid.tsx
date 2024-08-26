@@ -1,5 +1,6 @@
 import classNames from 'classnames';
-import React, { PureComponent, CSSProperties } from 'react';
+import { PureComponent, CSSProperties } from 'react';
+import * as React from 'react';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import { Subscription } from 'rxjs';
 

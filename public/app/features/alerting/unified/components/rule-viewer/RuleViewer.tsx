@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { isEmpty, truncate } from 'lodash';
-import React, { useState } from 'react';
+import { chain, isEmpty, truncate } from 'lodash';
+import { useState } from 'react';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Alert, LinkButton, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
@@ -8,7 +8,7 @@ import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
-import { CombinedRule, RuleHealth, RuleIdentifier } from 'app/types/unified-alerting';
+import { AlertInstanceTotalState, CombinedRule, RuleHealth, RuleIdentifier } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { defaultPageNav } from '../../RuleViewer';
@@ -20,11 +20,12 @@ import {
   getRulePluginOrigin,
   isAlertingRule,
   isFederatedRuleGroup,
+  isGrafanaRecordingRule,
   isGrafanaRulerRule,
   isGrafanaRulerRulePaused,
   isRecordingRule,
 } from '../../utils/rules';
-import { createUrl } from '../../utils/url';
+import { createRelativeUrl } from '../../utils/url';
 import { AlertLabels } from '../AlertLabels';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
@@ -42,7 +43,7 @@ import { InstancesList } from './tabs/Instances';
 import { QueryResults } from './tabs/Query';
 import { Routing } from './tabs/Routing';
 
-enum ActiveTab {
+export enum ActiveTab {
   Query = 'query',
   Instances = 'instances',
   History = 'history',
@@ -148,14 +149,18 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
   const interval = group.interval;
 
   if (runbookUrl) {
+    /* TODO instead of truncating the string, we should use flex and text overflow properly to allow it to take up all of the horizontal space available */
+    const truncatedUrl = truncate(runbookUrl, { length: 42 });
+    const valueToAdd = isValidRunbookURL(runbookUrl) ? (
+      <TextLink variant="bodySmall" href={runbookUrl} external>
+        {truncatedUrl}
+      </TextLink>
+    ) : (
+      <Text variant="bodySmall">{truncatedUrl}</Text>
+    );
     metadata.push({
-      label: 'Runbook',
-      value: (
-        <TextLink variant="bodySmall" href={runbookUrl} external>
-          {/* TODO instead of truncating the string, we should use flex and text overflow properly to allow it to take up all of the horizontal space available */}
-          {truncate(runbookUrl, { length: 42 })}
-        </TextLink>
-      ),
+      label: 'Runbook URL',
+      value: valueToAdd,
     });
   }
 
@@ -188,6 +193,13 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
       ),
     });
   }
+  if (isGrafanaRecordingRule(rule.rulerRule)) {
+    const metric = rule.rulerRule?.grafana_alert.record?.metric ?? '';
+    metadata.push({
+      label: 'Metric name',
+      value: <Text color="primary">{metric}</Text>,
+    });
+  }
 
   if (interval) {
     metadata.push({
@@ -210,7 +222,7 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
 // TODO move somewhere else
 export const createListFilterLink = (values: Array<[string, string]>) => {
   const params = new URLSearchParams([['search', values.map(([key, value]) => `${key}:"${value}"`).join(' ')]]);
-  return createUrl(`/alerting/list?` + params.toString());
+  return createRelativeUrl(`/alerting/list`, params);
 };
 
 interface TitleProps {
@@ -251,9 +263,9 @@ export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigi
 
 export const isErrorHealth = (health?: RuleHealth) => health === 'error' || health === 'err';
 
-function useActiveTab(): [ActiveTab, (tab: ActiveTab) => void] {
+export function useActiveTab(): [ActiveTab, (tab: ActiveTab) => void] {
   const [queryParams, setQueryParams] = useQueryParams();
-  const tabFromQuery = queryParams['tab'];
+  const tabFromQuery = queryParams.tab;
 
   const activeTab = isValidTab(tabFromQuery) ? tabFromQuery : ActiveTab.Query;
 
@@ -277,7 +289,7 @@ function usePageNav(rule: CombinedRule) {
 
   const summary = annotations[Annotation.summary];
   const isAlertType = isAlertingRule(promRule);
-  const numberOfInstance = isAlertType ? (promRule.alerts ?? []).length : undefined;
+  const numberOfInstance = isAlertType ? calculateTotalInstances(rule.instanceTotals) : undefined;
 
   const namespaceName = decodeGrafanaNamespace(rule.namespace).name;
   const groupName = rule.group.name;
@@ -343,6 +355,14 @@ function usePageNav(rule: CombinedRule) {
   };
 }
 
+const calculateTotalInstances = (stats: CombinedRule['instanceTotals']) => {
+  return chain(stats)
+    .pick([AlertInstanceTotalState.Alerting, AlertInstanceTotalState.Pending, AlertInstanceTotalState.Normal])
+    .values()
+    .sum()
+    .value();
+};
+
 const getStyles = () => ({
   title: css({
     display: 'flex',
@@ -351,5 +371,19 @@ const getStyles = () => ({
     minWidth: 0,
   }),
 });
+
+function isValidRunbookURL(url: string) {
+  const isRelative = url.startsWith('/');
+  let isAbsolute = false;
+
+  try {
+    new URL(url);
+    isAbsolute = true;
+  } catch (_) {
+    return false;
+  }
+
+  return isRelative || isAbsolute;
+}
 
 export default RuleViewer;

@@ -75,16 +75,26 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUI
 	})
 }
 
-// IncreaseVersionForAllRulesInNamespace Increases version for all rules that have specified namespace. Returns all rules that belong to the namespace
-func (st DBstore) IncreaseVersionForAllRulesInNamespace(ctx context.Context, orgID int64, namespaceUID string) ([]ngmodels.AlertRuleKeyWithVersion, error) {
+// IncreaseVersionForAllRulesInNamespaces Increases version for all rules that have specified namespace. Returns all rules that belong to the namespaces
+func (st DBstore) IncreaseVersionForAllRulesInNamespaces(ctx context.Context, orgID int64, namespaceUIDs []string) ([]ngmodels.AlertRuleKeyWithVersion, error) {
 	var keys []ngmodels.AlertRuleKeyWithVersion
 	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		now := TimeNow()
-		_, err := sess.Exec("UPDATE alert_rule SET version = version + 1, updated = ? WHERE namespace_uid = ? AND org_id = ?", now, namespaceUID, orgID)
+		namespaceUIDsArgs, in := getINSubQueryArgs(namespaceUIDs)
+		sql := fmt.Sprintf(
+			"UPDATE alert_rule SET version = version + 1, updated = ? WHERE org_id = ? AND namespace_uid IN (%s)",
+			strings.Join(in, ","),
+		)
+		args := make([]interface{}, 0, 3+len(namespaceUIDsArgs))
+		args = append(args, sql, now, orgID)
+		args = append(args, namespaceUIDsArgs...)
+
+		_, err := sess.Exec(args...)
 		if err != nil {
 			return err
 		}
-		return sess.Table(ngmodels.AlertRule{}).Where("namespace_uid = ? AND org_id = ?", namespaceUID, orgID).Find(&keys)
+
+		return sess.Table(ngmodels.AlertRule{}).Where("org_id = ?", orgID).In("namespace_uid", namespaceUIDs).Find(&keys)
 	})
 	return keys, err
 }
@@ -399,7 +409,14 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 		}
 
 		if query.ReceiverName != "" {
-			q, err = st.filterByReceiverName(query.ReceiverName, q)
+			q, err = st.filterByContentInNotificationSettings(query.ReceiverName, q)
+			if err != nil {
+				return err
+			}
+		}
+
+		if query.TimeIntervalName != "" {
+			q, err = st.filterByContentInNotificationSettings(query.TimeIntervalName, q)
 			if err != nil {
 				return err
 			}
@@ -428,6 +445,13 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 			if query.ReceiverName != "" { // remove false-positive hits from the result
 				if !slices.ContainsFunc(rule.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
 					return settings.Receiver == query.ReceiverName
+				}) {
+					continue
+				}
+			}
+			if query.TimeIntervalName != "" {
+				if !slices.ContainsFunc(rule.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
+					return slices.Contains(settings.MuteTimeIntervals, query.TimeIntervalName)
 				}) {
 					continue
 				}
@@ -720,13 +744,24 @@ func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListN
 	var rules []ngmodels.AlertRule
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		query := sess.Table(ngmodels.AlertRule{}).Select("uid, notification_settings").Where("org_id = ?", q.OrgID)
+		hasFilter := false
 		if q.ReceiverName != "" {
 			var err error
-			query, err = st.filterByReceiverName(q.ReceiverName, query)
+			query, err = st.filterByContentInNotificationSettings(q.ReceiverName, query)
 			if err != nil {
 				return err
 			}
-		} else {
+			hasFilter = true
+		}
+		if q.TimeIntervalName != "" {
+			var err error
+			query, err = st.filterByContentInNotificationSettings(q.TimeIntervalName, query)
+			if err != nil {
+				return err
+			}
+			hasFilter = true
+		}
+		if !hasFilter {
 			query = query.And("notification_settings IS NOT NULL AND notification_settings <> 'null'")
 		}
 		return query.Find(&rules)
@@ -736,16 +771,15 @@ func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListN
 	}
 	result := make(map[ngmodels.AlertRuleKey][]ngmodels.NotificationSettings, len(rules))
 	for _, rule := range rules {
-		var ns []ngmodels.NotificationSettings
-		if q.ReceiverName != "" { // if filter by receiver name is specified, perform fine filtering on client to avoid false-positives
-			for _, setting := range rule.NotificationSettings {
-				if q.ReceiverName == setting.Receiver { // currently, there can be only one setting. If in future there are more, we will return all settings of a rule that has a setting with receiver
-					ns = rule.NotificationSettings
-					break
-				}
+		ns := make([]ngmodels.NotificationSettings, 0, len(rule.NotificationSettings))
+		for _, setting := range rule.NotificationSettings {
+			if q.ReceiverName != "" && q.ReceiverName != setting.Receiver { // currently, there can be only one setting. If in future there are more, we will return all settings of a rule that has a setting with receiver
+				continue
 			}
-		} else {
-			ns = rule.NotificationSettings
+			if q.TimeIntervalName != "" && !slices.Contains(setting.MuteTimeIntervals, q.TimeIntervalName) {
+				continue
+			}
+			ns = append(ns, setting)
 		}
 		if len(ns) > 0 {
 			key := ngmodels.AlertRuleKey{
@@ -758,14 +792,14 @@ func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListN
 	return result, nil
 }
 
-func (st DBstore) filterByReceiverName(receiver string, sess *xorm.Session) (*xorm.Session, error) {
-	if receiver == "" {
+func (st DBstore) filterByContentInNotificationSettings(value string, sess *xorm.Session) (*xorm.Session, error) {
+	if value == "" {
 		return sess, nil
 	}
 	// marshall string according to JSON rules so we follow escaping rules.
-	b, err := json.Marshal(receiver)
+	b, err := json.Marshal(value)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshall receiver name query: %w", err)
+		return nil, fmt.Errorf("failed to marshall string for notification settings content filter: %w", err)
 	}
 	var search = string(b)
 	if st.SQLStore.GetDialect().DriverName() != migrator.SQLite {
@@ -803,6 +837,81 @@ func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgI
 		})
 	}
 	return len(updates), st.UpdateAlertRules(ctx, updates)
+}
+
+// RenameTimeIntervalInNotificationSettings renames all rules that use old time interval name to the new name.
+// Before renaming, it checks that all rules that need to be updated have allowed provenance status, and skips updating
+// if at least one rule does not have allowed provenance.
+// It returns a tuple:
+// - a collection of models.AlertRuleKey of rules that were updated,
+// - a collection of rules that have invalid provenance status,
+// - database error
+func (st DBstore) RenameTimeIntervalInNotificationSettings(
+	ctx context.Context,
+	orgID int64,
+	oldTimeInterval, newTimeInterval string,
+	validateProvenance func(ngmodels.Provenance) bool,
+	dryRun bool,
+) ([]ngmodels.AlertRuleKey, []ngmodels.AlertRuleKey, error) {
+	// fetch entire rules because Update method requires it because it copies rules to version table
+	rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
+		OrgID:            orgID,
+		TimeIntervalName: oldTimeInterval,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(rules) == 0 {
+		return nil, nil, nil
+	}
+
+	provenances, err := st.GetProvenances(ctx, orgID, (&ngmodels.AlertRule{}).ResourceType())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var invalidProvenance []ngmodels.AlertRuleKey
+	result := make([]ngmodels.AlertRuleKey, 0, len(rules))
+	updates := make([]ngmodels.UpdateRule, 0, len(rules))
+	for _, rule := range rules {
+		provenance, ok := provenances[rule.UID]
+		if !ok {
+			provenance = ngmodels.ProvenanceNone
+		}
+		if !validateProvenance(provenance) {
+			invalidProvenance = append(invalidProvenance, rule.GetKey())
+		}
+		if len(invalidProvenance) > 0 { // do not do any fixes if there is at least one rule with not allowed provenance
+			continue
+		}
+
+		result = append(result, rule.GetKey())
+
+		if dryRun {
+			continue
+		}
+
+		r := ngmodels.CopyRule(rule)
+		for idx := range r.NotificationSettings {
+			for mtIdx := range r.NotificationSettings[idx].MuteTimeIntervals {
+				if r.NotificationSettings[idx].MuteTimeIntervals[mtIdx] == oldTimeInterval {
+					r.NotificationSettings[idx].MuteTimeIntervals[mtIdx] = newTimeInterval
+				}
+			}
+		}
+
+		updates = append(updates, ngmodels.UpdateRule{
+			Existing: rule,
+			New:      *r,
+		})
+	}
+	if len(invalidProvenance) > 0 {
+		return nil, invalidProvenance, nil
+	}
+	if dryRun {
+		return result, nil, nil
+	}
+	return result, nil, st.UpdateAlertRules(ctx, updates)
 }
 
 func ruleConstraintViolationToErr(rule ngmodels.AlertRule, err error) error {

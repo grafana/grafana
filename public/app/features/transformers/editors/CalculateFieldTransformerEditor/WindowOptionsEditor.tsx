@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { ReducerID, SelectableValue } from '@grafana/data';
 import {
   CalculateFieldMode,

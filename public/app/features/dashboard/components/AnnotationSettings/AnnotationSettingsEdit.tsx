@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import {

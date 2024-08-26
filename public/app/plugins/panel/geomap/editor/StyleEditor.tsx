@@ -1,5 +1,5 @@
 import { capitalize } from 'lodash';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { Observable, of } from 'rxjs';
 

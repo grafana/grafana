@@ -39,6 +39,8 @@ export interface DashboardQueryResult {
   tags: string[];
   location: string; // url that can be split
   ds_uid: string[];
+  isDeleted?: boolean;
+  permanentlyDeleteDate?: Date;
 
   // debugging fields
   score: number;

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"crypto/tls"
 	"sync"
 	"testing"
 
@@ -71,6 +72,12 @@ func TestReload(t *testing.T) {
 						"servers": []any{
 							map[string]any{
 								"host": "127.0.0.1",
+								"group_mappings": []any{
+									map[string]any{
+										"group_dn":      "cn=admin,ou=groups,dc=ldap,dc=goauthentik,dc=io",
+										"grafana_admin": true,
+									},
+								},
 							},
 						},
 					},
@@ -80,7 +87,15 @@ func TestReload(t *testing.T) {
 			expectedServersConfig: &ldap.ServersConfig{
 				Servers: []*ldap.ServerConfig{
 					{
-						Host: "127.0.0.1",
+						Host:    "127.0.0.1",
+						Timeout: 10,
+						Groups: []*ldap.GroupToOrgRole{
+							{
+								GroupDN:        "cn=admin,ou=groups,dc=ldap,dc=goauthentik,dc=io",
+								OrgId:          1,
+								IsGrafanaAdmin: &isAdmin,
+							},
+						},
 					},
 				},
 			},
@@ -122,6 +137,7 @@ func TestReload(t *testing.T) {
 								"group_search_base_dns":              []string{"ou=groups,dc=grafana,dc=org"},
 								"tls_ciphers": []string{
 									"TLS_AES_256_GCM_SHA384",
+									"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
 								},
 								"attributes": map[string]string{
 									"email":     "mail",
@@ -147,7 +163,7 @@ func TestReload(t *testing.T) {
 									},
 									map[string]any{
 										"group_dn": "cn=viewer,ou=groups,dc=ldap,dc=goauthentik,dc=io",
-										"org_id":   1,
+										"org_id":   2,
 										"org_role": "Viewer",
 									},
 								},
@@ -160,14 +176,20 @@ func TestReload(t *testing.T) {
 			expectedServersConfig: &ldap.ServersConfig{
 				Servers: []*ldap.ServerConfig{
 					{
-						Host:          "127.0.0.1",
-						Port:          3389,
-						UseSSL:        true,
-						StartTLS:      true,
-						SkipVerifySSL: false,
-						MinTLSVersion: "TLS1.3",
+						Host:            "127.0.0.1",
+						Port:            3389,
+						UseSSL:          true,
+						StartTLS:        true,
+						SkipVerifySSL:   false,
+						MinTLSVersion:   "TLS1.3",
+						MinTLSVersionID: tls.VersionTLS13,
 						TLSCiphers: []string{
 							"TLS_AES_256_GCM_SHA384",
+							"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+						},
+						TLSCipherIDs: []uint16{
+							tls.TLS_AES_256_GCM_SHA384,
+							tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 						},
 						RootCACert:      "/path/to/certificate.crt",
 						RootCACertValue: []string{validCert},
@@ -204,7 +226,7 @@ func TestReload(t *testing.T) {
 							},
 							{
 								GroupDN: "cn=viewer,ou=groups,dc=ldap,dc=goauthentik,dc=io",
-								OrgId:   1,
+								OrgId:   2,
 								OrgRole: "Viewer",
 							},
 						},
@@ -271,7 +293,8 @@ func TestReload(t *testing.T) {
 			expectedServersConfig: &ldap.ServersConfig{
 				Servers: []*ldap.ServerConfig{
 					{
-						Host: "127.0.0.1",
+						Host:    "127.0.0.1",
+						Timeout: 10,
 					},
 				},
 			},
@@ -294,6 +317,245 @@ func TestReload(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, *tt.expectedServersConfig, *ldapImpl.ldapCfg)
 			require.Equal(t, *tt.expectedConfig, *ldapImpl.cfg)
+		})
+	}
+}
+
+func TestValidate(t *testing.T) {
+	testCases := []struct {
+		description   string
+		settings      models.SSOSettings
+		isValid       bool
+		containsError string
+	}{
+		{
+			description: "successfully validate basic settings",
+			settings: models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled": true,
+					"config": map[string]any{
+						"servers": []any{
+							map[string]any{
+								"host":            "127.0.0.1",
+								"search_filter":   "(cn=%s)",
+								"search_base_dns": []string{"dc=grafana,dc=org"},
+								"min_tls_version": "TLS1.3",
+								"tls_ciphers":     []string{"TLS_AES_128_GCM_SHA256", "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"},
+								"group_mappings": []any{
+									map[string]any{
+										"group_dn":      "cn=admins,ou=groups,dc=grafana,dc=org",
+										"grafana_admin": true,
+									},
+									map[string]any{
+										"group_dn": "cn=users,ou=groups,dc=grafana,dc=org",
+										"org_role": "Editor",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			isValid: true,
+		},
+		{
+			description: "successfully validate settings that are not enabled",
+			settings: models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled": false,
+					"config": map[string]any{
+						"servers": []any{
+							map[string]any{
+								"port": 123,
+							},
+						},
+					},
+				},
+			},
+			isValid: true,
+		},
+		{
+			description: "validation fails for invalid settings",
+			settings: models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled": true,
+					"config": map[string]any{
+						"servers": "invalid server config",
+					},
+				},
+			},
+			isValid:       false,
+			containsError: "cannot unmarshal",
+		},
+		{
+			description: "validation fails when no servers are configured",
+			settings: models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled": true,
+					"config": map[string]any{
+						"servers": []any{},
+					},
+				},
+			},
+			isValid:       false,
+			containsError: "no servers configured",
+		},
+		{
+			description: "validation fails if one server does not have a host configured",
+			settings: models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled": true,
+					"config": map[string]any{
+						"servers": []any{
+							map[string]any{
+								"host":            "127.0.0.1",
+								"search_filter":   "(cn=%s)",
+								"search_base_dns": []string{"dc=grafana,dc=org"},
+							},
+							map[string]any{
+								"port":            123,
+								"search_filter":   "(cn=%s)",
+								"search_base_dns": []string{"dc=grafana,dc=org"},
+							},
+						},
+					},
+				},
+			},
+			isValid:       false,
+			containsError: "no host configured",
+		},
+		{
+			description: "validation fails if search filter is not configured",
+			settings: models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled": true,
+					"config": map[string]any{
+						"servers": []any{
+							map[string]any{
+								"host":            "127.0.0.1",
+								"search_base_dns": []string{"dc=grafana,dc=org"},
+							},
+						},
+					},
+				},
+			},
+			isValid:       false,
+			containsError: "no search filter",
+		},
+		{
+			description: "validation fails if search base DN is not configured",
+			settings: models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled": true,
+					"config": map[string]any{
+						"servers": []any{
+							map[string]any{
+								"host":          "127.0.0.1",
+								"search_filter": "(cn=%s)",
+							},
+						},
+					},
+				},
+			},
+			isValid:       false,
+			containsError: "no search base DN",
+		},
+		{
+			description: "validation fails if min TLS version is invalid",
+			settings: models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled": true,
+					"config": map[string]any{
+						"servers": []any{
+							map[string]any{
+								"host":            "127.0.0.1",
+								"search_filter":   "(cn=%s)",
+								"search_base_dns": []string{"dc=grafana,dc=org"},
+								"min_tls_version": "TLS5.18",
+							},
+						},
+					},
+				},
+			},
+			isValid:       false,
+			containsError: "invalid min TLS version",
+		},
+		{
+			description: "validation fails if TLS cyphers are invalid",
+			settings: models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled": true,
+					"config": map[string]any{
+						"servers": []any{
+							map[string]any{
+								"host":            "127.0.0.1",
+								"search_filter":   "(cn=%s)",
+								"search_base_dns": []string{"dc=grafana,dc=org"},
+								"tls_ciphers":     []string{"TLS_AES_128_GCM_SHA256", "invalid-tls-cypher"},
+							},
+						},
+					},
+				},
+			},
+			isValid:       false,
+			containsError: "invalid TLS ciphers",
+		},
+		{
+			description: "validation fails if a group mapping contains no organization role",
+			settings: models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled": true,
+					"config": map[string]any{
+						"servers": []any{
+							map[string]any{
+								"host":            "127.0.0.1",
+								"search_filter":   "(cn=%s)",
+								"search_base_dns": []string{"dc=grafana,dc=org"},
+								"group_mappings": []any{
+									map[string]any{
+										"group_dn":      "cn=admins,ou=groups,dc=grafana,dc=org",
+										"org_role":      "Admin",
+										"grafana_admin": true,
+									},
+									map[string]any{
+										"group_dn": "cn=users,ou=groups,dc=grafana,dc=org",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			isValid:       false,
+			containsError: "organization role",
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.description, func(t *testing.T) {
+			ldapImpl := &LDAPImpl{
+				features:     featuremgmt.WithManager(featuremgmt.FlagSsoSettingsApi),
+				loadingMutex: &sync.Mutex{},
+			}
+
+			err := ldapImpl.Validate(context.Background(), tt.settings, models.SSOSettings{}, nil)
+
+			if tt.isValid {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				require.ErrorContains(t, err, tt.containsError)
+			}
 		})
 	}
 }

@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, PluginType } from '@grafana/data';
 import { useStyles2, LoadingPlaceholder, EmptyState } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { t } from 'app/core/internationalization';
+import { RoadmapLinks } from 'app/features/plugins/admin/components/RoadmapLinks';
 import { useGetAll } from 'app/features/plugins/admin/state/hooks';
 import { AccessControlAction } from 'app/types';
 
@@ -102,6 +104,7 @@ export function AddNewConnection() {
           message={t('connections.connect-data.empty-message', 'No results matching your query were found')}
         />
       )}
+      <RoadmapLinks />
     </>
   );
 }

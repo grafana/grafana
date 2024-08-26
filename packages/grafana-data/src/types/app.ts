@@ -7,6 +7,7 @@ import {
   type PluginExtensionLinkConfig,
   PluginExtensionTypes,
   PluginExtensionComponentConfig,
+  PluginExposedComponentConfig,
   PluginExtensionConfig,
 } from './pluginExtensions';
 
@@ -56,6 +57,7 @@ export interface AppPluginMeta<T extends KeyValue = KeyValue> extends PluginMeta
 }
 
 export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
+  private _exposedComponentConfigs: PluginExposedComponentConfig[] = [];
   private _extensionConfigs: PluginExtensionConfig[] = [];
 
   // Content under: /a/${plugin-id}/*
@@ -96,6 +98,10 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
         }
       }
     }
+  }
+
+  get exposedComponentConfigs() {
+    return this._exposedComponentConfigs;
   }
 
   get extensionConfigs() {
@@ -142,16 +148,8 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this;
   }
 
-  exposeComponent<Props = {}>(
-    componentConfig: { id: string } & Omit<PluginExtensionComponentConfig<Props>, 'type' | 'extensionPointId'>
-  ) {
-    const { id, ...extension } = componentConfig;
-
-    this._extensionConfigs.push({
-      ...extension,
-      extensionPointId: `capabilities/${id}`,
-      type: PluginExtensionTypes.component,
-    } as PluginExtensionComponentConfig);
+  exposeComponent<Props = {}>(componentConfig: PluginExposedComponentConfig<Props>) {
+    this._exposedComponentConfigs.push(componentConfig as PluginExposedComponentConfig);
 
     return this;
   }
@@ -165,7 +163,6 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
 
     return this;
   }
-
   /** @deprecated Use .addComponent() instead */
   configureExtensionComponent<Props = {}>(extension: Omit<PluginExtensionComponentConfig<Props>, 'type'>) {
     this.addComponent({

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { t } from 'i18next';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Icon, LoadingPlaceholder } from '@grafana/ui';
@@ -60,6 +60,7 @@ class UserSessions extends PureComponent<Props> {
                       <Button
                         size="sm"
                         variant="destructive"
+                        tooltip={t('user-session.revoke', 'Revoke user session')}
                         onClick={() => revokeUserSession(session.id)}
                         aria-label={t('user-session.revoke', 'Revoke user session')}
                       >

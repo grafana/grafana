@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { UseFormRegister } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/src';

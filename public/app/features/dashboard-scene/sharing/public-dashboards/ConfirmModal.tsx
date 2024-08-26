@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { ConfirmModal as ConfirmModalComponent, ConfirmModalProps } from '@grafana/ui';
 

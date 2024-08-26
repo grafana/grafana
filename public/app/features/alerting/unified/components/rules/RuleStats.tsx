@@ -1,6 +1,7 @@
 import { isUndefined, omitBy, pick, sum } from 'lodash';
 import pluralize from 'pluralize';
-import React, { Fragment } from 'react';
+import { Fragment } from 'react';
+import * as React from 'react';
 
 import { Badge, Stack } from '@grafana/ui';
 import {
@@ -61,7 +62,7 @@ function statsFromNamespaces(namespaces: CombinedRuleNamespace[]): AlertGroupTot
   namespaces.forEach(({ groups }) => {
     groups.forEach((group) => {
       const groupTotals = omitBy(group.totals, isUndefined);
-      for (let key in groupTotals) {
+      for (const key in groupTotals) {
         // @ts-ignore
         stats[key] += groupTotals[key];
       }

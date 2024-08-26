@@ -51,6 +51,8 @@ composableKinds: DataQuery: {
 					groupBy?: [...#TraceqlFilter]
 					// The type of the table that is used to display the search results
 					tableType?: #SearchTableType
+					// For metric queries, the step size to use
+					step?: string
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				#TempoQueryType: "traceql" | "traceqlSearch" | "serviceMap" | "upload" | "nativeSearch" | "traceId" | "clear" @cuetsy(kind="type")

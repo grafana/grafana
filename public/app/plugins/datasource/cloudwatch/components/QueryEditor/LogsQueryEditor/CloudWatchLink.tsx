@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import { PanelData } from '@grafana/data';

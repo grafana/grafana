@@ -1,10 +1,16 @@
 import { SetPanelAttentionEvent } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
+import { t } from 'app/core/internationalization';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
+import { contextSrv } from 'app/core/services/context_srv';
 
+import { ShareSnapshot } from '../sharing/ShareButton/share-snapshot/ShareSnapshot';
+import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
+import { SharePanelEmbedTab } from '../sharing/SharePanelEmbedTab';
+import { SharePanelInternally } from '../sharing/panel-share/SharePanelInternally';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../utils/utils';
@@ -15,6 +21,8 @@ import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
   let vizPanelKey: string | null = null;
+
+  const canEdit = scene.canEditDashboard();
 
   const panelAttentionSubscription = appEvents.subscribe(SetPanelAttentionEvent, (event) => {
     if (typeof event.payload.panelId === 'string') {
@@ -42,27 +50,52 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     }),
   });
 
-  // Panel edit
-  keybindings.addBinding({
-    key: 'e',
-    onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-      const sceneRoot = vizPanel.getRoot();
-      if (sceneRoot instanceof DashboardScene) {
-        const panelId = getPanelIdForVizPanel(vizPanel);
-        if (!scene.state.editPanel) {
-          locationService.push(getEditPanelUrl(panelId));
-        }
-      }
-    }),
-  });
-
   // Panel share
-  keybindings.addBinding({
-    key: 'p s',
-    onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-      scene.showModal(new ShareModal({ panelRef: vizPanel.getRef(), dashboardRef: scene.getRef() }));
-    }),
-  });
+  if (config.featureToggles.newDashboardSharingComponent) {
+    keybindings.addBinding({
+      key: 'p u',
+      onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+        const drawer = new ShareDrawer({
+          title: t('share-panel.drawer.share-link-title', 'Link settings'),
+          body: new SharePanelInternally({ panelRef: vizPanel.getRef() }),
+        });
+
+        scene.showModal(drawer);
+      }),
+    });
+    keybindings.addBinding({
+      key: 'p e',
+      onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+        const drawer = new ShareDrawer({
+          title: t('share-panel.drawer.share-embed-title', 'Share embed'),
+          body: new SharePanelEmbedTab({ panelRef: vizPanel.getRef() }),
+        });
+
+        scene.showModal(drawer);
+      }),
+    });
+
+    if (contextSrv.isSignedIn && config.snapshotEnabled && scene.canEditDashboard()) {
+      keybindings.addBinding({
+        key: 'p s',
+        onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+          const drawer = new ShareDrawer({
+            title: t('share-panel.drawer.share-snapshot-title', 'Share snapshot'),
+            body: new ShareSnapshot({ dashboardRef: scene.getRef(), panelRef: vizPanel.getRef() }),
+          });
+
+          scene.showModal(drawer);
+        }),
+      });
+    }
+  } else {
+    keybindings.addBinding({
+      key: 'p s',
+      onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+        scene.showModal(new ShareModal({ panelRef: vizPanel.getRef() }));
+      }),
+    });
+  }
 
   // Panel inspect
   keybindings.addBinding({
@@ -102,10 +135,20 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       handleZoomOut(scene);
     },
   });
+
   keybindings.addBinding({
     key: 'ctrl+z',
     onTrigger: () => {
       handleZoomOut(scene);
+    },
+  });
+
+  // Relative -> Absolute time range
+  keybindings.addBinding({
+    key: 't a',
+    onTrigger: () => {
+      const timePicker = dashboardSceneGraph.getTimePicker(scene);
+      timePicker?.toAbsolute();
     },
   });
 
@@ -123,41 +166,72 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     },
   });
 
-  // Dashboard settings
-  keybindings.addBinding({
-    key: 'd s',
-    onTrigger: scene.onOpenSettings,
-  });
+  if (canEdit) {
+    // Panel edit
+    keybindings.addBinding({
+      key: 'e',
+      onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+        const sceneRoot = vizPanel.getRoot();
+        if (sceneRoot instanceof DashboardScene) {
+          const panelId = getPanelIdForVizPanel(vizPanel);
+          if (!scene.state.editPanel) {
+            locationService.push(getEditPanelUrl(panelId));
+          }
+        }
+      }),
+    });
 
-  keybindings.addBinding({
-    key: 'mod+s',
-    onTrigger: () => scene.openSaveDrawer({}),
-  });
+    // Dashboard settings
+    keybindings.addBinding({
+      key: 'd s',
+      onTrigger: scene.onOpenSettings,
+    });
+
+    // Open save drawer
+    keybindings.addBinding({
+      key: 'mod+s',
+      onTrigger: () => scene.openSaveDrawer({}),
+    });
+
+    // delete panel
+    keybindings.addBinding({
+      key: 'p r',
+      onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
+        if (scene.state.isEditing) {
+          onRemovePanel(scene, vizPanel);
+        }
+      }),
+    });
+
+    // duplicate panel
+    keybindings.addBinding({
+      key: 'p d',
+      onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
+        if (scene.state.isEditing) {
+          scene.duplicatePanel(vizPanel);
+        }
+      }),
+    });
+
+    // collapse all rows
+    keybindings.addBinding({
+      key: 'd shift+c',
+      onTrigger: () => {
+        scene.collapseAllRows();
+      },
+    });
+
+    // expand all rows
+    keybindings.addBinding({
+      key: 'd shift+e',
+      onTrigger: () => {
+        scene.expandAllRows();
+      },
+    });
+  }
 
   // toggle all panel legends (TODO)
-  // delete panel
-  keybindings.addBinding({
-    key: 'p r',
-    onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-      if (scene.state.isEditing) {
-        onRemovePanel(scene, vizPanel);
-      }
-    }),
-  });
-
-  // duplicate panel
-  keybindings.addBinding({
-    key: 'p d',
-    onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-      if (scene.state.isEditing) {
-        scene.duplicatePanel(vizPanel);
-      }
-    }),
-  });
-
   // toggle all exemplars (TODO)
-  // collapse all rows (TODO)
-  // expand all rows (TODO)
 
   return () => {
     keybindings.removeAll();

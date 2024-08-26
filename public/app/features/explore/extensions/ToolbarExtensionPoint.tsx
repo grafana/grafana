@@ -1,4 +1,4 @@
-import React, { lazy, ReactElement, Suspense, useMemo, useState } from 'react';
+import { lazy, ReactElement, Suspense, useMemo, useState } from 'react';
 
 import { type PluginExtensionLink, PluginExtensionPoints, RawTimeRange, getTimeZone } from '@grafana/data';
 import { config, usePluginLinkExtensions } from '@grafana/runtime';

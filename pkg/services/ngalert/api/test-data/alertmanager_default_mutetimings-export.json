@@ -1,1 +1,43 @@
-{"apiVersion":1,"muteTimes":[{"orgId":1,"name":"interval","time_intervals":[]},{"orgId":1,"name":"full-interval","time_intervals":[{"times":[{"start_time":"10:00","end_time":"12:00"}],"weekdays":["monday","wednesday","friday"],"days_of_month":["1","14:16","20"],"months":["1:3","7","12"],"years":["2023:2025"],"location":"America/New_York"}]}]}
+{
+  "apiVersion": 1,
+  "muteTimes": [
+    {
+      "orgId": 1,
+      "name": "interval-1",
+      "time_intervals": []
+    },
+    {
+      "orgId": 1,
+      "name": "interval-2",
+      "time_intervals": [
+        {
+          "times": [
+            {
+              "start_time": "10:00",
+              "end_time": "12:00"
+            }
+          ],
+          "weekdays": [
+            "monday",
+            "wednesday",
+            "friday"
+          ],
+          "days_of_month": [
+            "1",
+            "14:16",
+            "20"
+          ],
+          "months": [
+            "1:3",
+            "7",
+            "12"
+          ],
+          "years": [
+            "2023:2025"
+          ],
+          "location": "America/New_York"
+        }
+      ]
+    }
+  ]
+}

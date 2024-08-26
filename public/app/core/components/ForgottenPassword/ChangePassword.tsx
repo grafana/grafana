@@ -1,4 +1,4 @@
-import React, { SyntheticEvent, useState } from 'react';
+import { SyntheticEvent, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';

@@ -26,7 +26,7 @@ type CloudWatchSettings struct {
 func LoadCloudWatchSettings(ctx context.Context, config backend.DataSourceInstanceSettings) (CloudWatchSettings, error) {
 	instance := CloudWatchSettings{}
 
-	if config.JSONData != nil && len(config.JSONData) > 1 {
+	if len(config.JSONData) > 1 {
 		if err := json.Unmarshal(config.JSONData, &instance); err != nil {
 			return CloudWatchSettings{}, fmt.Errorf("could not unmarshal DatasourceSettings json: %w", err)
 		}
@@ -43,7 +43,8 @@ func LoadCloudWatchSettings(ctx context.Context, config backend.DataSourceInstan
 		instance.LogsTimeout = Duration{30 * time.Minute}
 	}
 
-	instance.GrafanaSettings = *awsds.ReadAuthSettings(ctx)
+	authSettings, _ := awsds.ReadAuthSettingsFromContext(ctx)
+	instance.GrafanaSettings = *authSettings
 
 	return instance, nil
 }

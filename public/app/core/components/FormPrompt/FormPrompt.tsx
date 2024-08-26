@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import history from 'history';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Prompt, Redirect } from 'react-router-dom';
 
 import { Button, Modal } from '@grafana/ui';

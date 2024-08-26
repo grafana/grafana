@@ -1,7 +1,7 @@
 import { AdHocVariableFilter } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import { LayoutType } from './ActionTabs/types';
+import { BreakdownLayoutType } from './ActionTabs/types';
 import { TrailStepType } from './DataTrailsHistory';
 import { ActionViewType } from './shared';
 
@@ -26,7 +26,7 @@ type Interactions = {
     cause: 'breakdown' | 'adhoc_filter';
   };
   // User changed the breakdown layout
-  breakdown_layout_changed: { layout: LayoutType };
+  breakdown_layout_changed: { layout: BreakdownLayoutType };
   // A metric exploration has started due to one of the following causes
   exploration_started: {
     cause: (
@@ -94,6 +94,21 @@ type Interactions = {
     );
     // The number of search terms activated when the selection was made
     searchTermCount: number | null;
+  };
+  // User opens/closes the prefix filter dropdown
+  prefix_filter_clicked: {
+    from: (
+      // By clicking "Select" on a metric panel when on the no-metric-selected metrics list view
+      | 'metric_list'
+      // By clicking "Select" on a metric panel when on the related metrics tab
+      | 'related_metrics'
+    )
+    action: (
+      // Opens the dropdown
+      | 'open'
+      // Closes the dropdown
+      | 'close'
+    )
   };
 };
 

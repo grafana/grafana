@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, useStyles2 } from '@grafana/ui';
@@ -60,7 +59,7 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
         )}
         {isSeeSourceButtonEnabled && alert.generatorURL && (
           <LinkButton className={styles.button} href={alert.generatorURL} icon={'chart-line'} size={'sm'}>
-            See source
+            {isGrafanaSource ? 'See alert rule' : 'See source'}
           </LinkButton>
         )}
       </div>

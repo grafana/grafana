@@ -77,7 +77,7 @@ export class DashboardLoaderSrv {
           };
         });
     } else if (uid) {
-      const cachedDashboard = stateManager.getFromCache(uid);
+      const cachedDashboard = stateManager.getDashboardFromCache(uid);
       if (cachedDashboard) {
         return Promise.resolve(cachedDashboard);
       }

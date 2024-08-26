@@ -1,7 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneDeep } from 'lodash';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
@@ -26,6 +25,7 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   setPluginExtensionGetter: jest.fn(),
   getPluginLinkExtensions: jest.fn(),
+  useChromeHeaderHeight: jest.fn().mockReturnValue(80),
   getBackendSrv: () => {
     return {
       get: jest.fn().mockResolvedValue({ dashboard: simpleDashboard, meta: { url: '' } }),

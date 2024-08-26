@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { CoreApp, QueryEditorProps } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -64,7 +64,9 @@ const QueryEditor = ({
     options: datasource.getVariables().map((v) => ({ label: v, value: v })),
   };
 
-  const isAzureAuthenticated = config.bootData.user.authenticatedBy === 'oauth_azuread';
+  // Allow authproxy as it may not be clear if an authproxy user is authenticated by Azure
+  const isAzureAuthenticated =
+    config.bootData.user.authenticatedBy === 'oauth_azuread' || config.bootData.user.authenticatedBy === 'authproxy';
   if (datasource.currentUserAuth) {
     if (
       app === CoreApp.UnifiedAlerting &&

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { QueryEditorProps } from '@grafana/data';
 import { InlineFieldRow, Input, TextArea } from '@grafana/ui';
 import { InlineField } from '@grafana/ui/';

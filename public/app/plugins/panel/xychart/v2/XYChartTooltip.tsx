@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 
 import { DataFrame } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';

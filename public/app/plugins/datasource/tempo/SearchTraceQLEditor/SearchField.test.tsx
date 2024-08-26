@@ -1,13 +1,12 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { LanguageProvider } from '@grafana/data';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
-import { initTemplateSrv } from '../test_utils';
+import { initTemplateSrv } from '../test/test_utils';
 import { keywordOperators, numberOperators, operators, stringOperators } from '../traceql/traceql';
 
 import SearchField from './SearchField';
@@ -131,14 +130,18 @@ describe('SearchField', () => {
     if (select) {
       // Select tag22 as the tag
       await user.click(select);
-      jest.advanceTimersByTime(1000);
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
       const tag22 = await screen.findByText('tag22');
       await user.click(tag22);
       expect(updateFilter).toHaveBeenCalledWith({ ...filter, tag: 'tag22', value: [] });
 
       // Select tag1 as the tag
       await user.click(select);
-      jest.advanceTimersByTime(1000);
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
       const tag1 = await screen.findByText('tag1');
       await user.click(tag1);
       expect(updateFilter).toHaveBeenCalledWith({ ...filter, tag: 'tag1', value: [] });

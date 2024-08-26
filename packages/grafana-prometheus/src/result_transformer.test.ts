@@ -350,6 +350,62 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[1].meta?.preferredVisualisationType).toEqual('rawPrometheus' as PreferredVisualisationType);
     });
 
+    it('histogram results with table format have le values as strings for table filtering', () => {
+      const options = {
+        targets: [
+          {
+            format: 'table',
+            refId: 'A',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
+        state: 'Done',
+        data: [
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [10, 10, 0],
+                labels: { le: '1' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [30, 10, 40],
+                labels: { le: '+Inf' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [20, 10, 30],
+                labels: { le: '2' },
+              },
+            ],
+          }),
+        ],
+      } as unknown as DataQueryResponse;
+
+      const series = transformV2(response, options, {});
+      const leFields = series.data[0].fields.filter((f) => f.name === 'le');
+      const leValuesAreStrings = leFields[0].values.every((v) => typeof v === 'string');
+      expect(leValuesAreStrings).toBe(true);
+    });
     // Heatmap frames can either have a name of the metric, or if there is no metric, a name of "Value"
     it('results with heatmap format (no metric name) should be correctly transformed', () => {
       const options = {

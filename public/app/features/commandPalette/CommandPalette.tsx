@@ -12,7 +12,7 @@ import {
   useKBar,
   ActionImpl,
 } from 'kbar';
-import React, { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';

@@ -1,10 +1,11 @@
 import { css, cx } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { CellProps, Column, InteractiveTable, Stack, useStyles2 } from '@grafana/ui';
 
+import { Changelog } from '../components/Changelog';
 import { VersionList } from '../components/VersionList';
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { CatalogPlugin, Permission, PluginTabIds } from '../types';
@@ -58,6 +59,10 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
         <VersionList versions={plugin.details?.versions} installedVersion={plugin.installedVersion} />
       </div>
     );
+  }
+
+  if (pageId === PluginTabIds.CHANGELOG && plugin?.details?.changelog) {
+    return <Changelog sanitizedHTML={plugin?.details?.changelog} />;
   }
 
   if (pageId === PluginTabIds.CONFIG && pluginConfig?.angularConfigCtrl) {
@@ -131,9 +136,11 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    height: '100%',
-  }),
+  container: config.featureToggles.bodyScrolling
+    ? css({})
+    : css({
+        height: '100%',
+      }),
   readme: css({
     '& img': {
       maxWidth: '100%',

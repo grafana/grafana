@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { PageLayoutType } from '@grafana/data';
 
 import { Page } from '../Page/Page';

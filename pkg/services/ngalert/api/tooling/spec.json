@@ -3314,9 +3314,6 @@
             "schema": {
               "$ref": "#/definitions/NotificationTemplates"
             }
-          },
-          "404": {
-            "description": " Not found."
           }
         }
       }
@@ -3346,7 +3343,10 @@
             }
           },
           "404": {
-            "description": " Not found."
+            "description": "GenericPublicError",
+            "schema": {
+              "$ref": "#/definitions/GenericPublicError"
+            }
           }
         }
       },
@@ -3389,9 +3389,15 @@
             }
           },
           "400": {
-            "description": "ValidationError",
+            "description": "GenericPublicError",
             "schema": {
-              "$ref": "#/definitions/ValidationError"
+              "$ref": "#/definitions/GenericPublicError"
+            }
+          },
+          "409": {
+            "description": "GenericPublicError",
+            "schema": {
+              "$ref": "#/definitions/GenericPublicError"
             }
           }
         }
@@ -3406,15 +3412,27 @@
         "parameters": [
           {
             "type": "string",
-            "description": "Template Name",
+            "description": "Template name",
             "name": "name",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "description": "Version of template to use for optimistic concurrency. Leave empty to disable validation",
+            "name": "version",
+            "in": "query"
           }
         ],
         "responses": {
           "204": {
             "description": " The template was deleted successfully."
+          },
+          "409": {
+            "description": "GenericPublicError",
+            "schema": {
+              "$ref": "#/definitions/GenericPublicError"
+            }
           }
         }
       }
@@ -3539,6 +3557,7 @@
     },
     "/v1/rules/history": {
       "get": {
+        "description": "Allows to query alerting state history.\nIn addition to defined query parameters it accepts filter by labels. The query parameter name must start with 'labels_'\nExample: /v1/rules/history?labels_myKey1=myValue1\u0026labels_myKey2=myValue2",
         "produces": [
           "application/json"
         ],
@@ -3547,9 +3566,69 @@
         ],
         "summary": "Query state history.",
         "operationId": "RouteGetStateHistory",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "The timestamp of the start point of the time range the history is obtained.",
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "The timestamp of the end point of the time range the history is obtained.",
+            "name": "to",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "Limits the number of records that needs to be returned.",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Filter by rule UID. Required the state history is configured to use annotations for storage.",
+            "name": "ruleUID",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Filter by rules that are or were assigned to the specific dashboard.",
+            "name": "DashboardUID",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "Filter by dashboard's panel ID. Requires Dashboard UID to be specified.",
+            "name": "PanelID",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/StateHistory"
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "404": {
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
+          },
+          "500": {
+            "description": "Failure",
+            "schema": {
+              "$ref": "#/definitions/Failure"
+            }
           }
         }
       }
@@ -3574,10 +3653,10 @@
           "format": "date-time"
         },
         "annotations": {
-          "$ref": "#/definitions/overrideLabels"
+          "$ref": "#/definitions/Labels"
         },
         "labels": {
-          "$ref": "#/definitions/overrideLabels"
+          "$ref": "#/definitions/Labels"
         },
         "state": {
           "type": "string"
@@ -3992,7 +4071,7 @@
           }
         },
         "annotations": {
-          "$ref": "#/definitions/overrideLabels"
+          "$ref": "#/definitions/Labels"
         },
         "duration": {
           "type": "number",
@@ -4006,7 +4085,7 @@
           "type": "string"
         },
         "labels": {
-          "$ref": "#/definitions/overrideLabels"
+          "$ref": "#/definitions/Labels"
         },
         "lastError": {
           "type": "string"
@@ -4103,6 +4182,10 @@
         "credentials_file": {
           "type": "string"
         },
+        "credentials_ref": {
+          "description": "CredentialsRef is the name of the secret within the secret manager to use as credentials.",
+          "type": "string"
+        },
         "type": {
           "type": "string"
         }
@@ -4172,10 +4255,18 @@
         "password_file": {
           "type": "string"
         },
+        "password_ref": {
+          "description": "PasswordRef is the name of the secret within the secret manager to use as the password.",
+          "type": "string"
+        },
         "username": {
           "type": "string"
         },
         "username_file": {
+          "type": "string"
+        },
+        "username_ref": {
+          "description": "UsernameRef is the name of the secret within the secret manager to use as the username.",
           "type": "string"
         }
       }
@@ -5269,6 +5360,9 @@
           "items": {
             "$ref": "#/definitions/TimeIntervalItem"
           }
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -5398,6 +5492,9 @@
           "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
           "type": "boolean"
         },
+        "http_headers": {
+          "$ref": "#/definitions/Headers"
+        },
         "no_proxy": {
           "description": "NoProxy contains addresses that should not use a proxy.",
           "type": "string"
@@ -5406,7 +5503,7 @@
           "$ref": "#/definitions/OAuth2"
         },
         "proxy_connect_header": {
-          "$ref": "#/definitions/Header"
+          "$ref": "#/definitions/ProxyHeader"
         },
         "proxy_from_environment": {
           "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
@@ -5422,10 +5519,37 @@
     },
     "Header": {
       "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/Secret"
+      "title": "Header represents the configuration for a single HTTP header.",
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "secrets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Secret"
+          }
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Headers": {
+      "type": "object",
+      "title": "Headers represents the configuration for HTTP headers.",
+      "properties": {
+        "Headers": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Header"
+          }
         }
       }
     },
@@ -5774,6 +5898,9 @@
         },
         "template": {
           "type": "string"
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -5781,6 +5908,9 @@
       "type": "object",
       "properties": {
         "template": {
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         }
       }
@@ -5816,6 +5946,10 @@
         "client_secret_file": {
           "type": "string"
         },
+        "client_secret_ref": {
+          "description": "ClientSecretRef is the name of the secret within the secret manager to use as the client\nsecret.",
+          "type": "string"
+        },
         "endpoint_params": {
           "type": "object",
           "additionalProperties": {
@@ -5827,7 +5961,7 @@
           "type": "string"
         },
         "proxy_connect_header": {
-          "$ref": "#/definitions/Header"
+          "$ref": "#/definitions/ProxyHeader"
         },
         "proxy_from_environment": {
           "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
@@ -6550,7 +6684,7 @@
           "type": "string"
         },
         "proxy_connect_header": {
-          "$ref": "#/definitions/Header"
+          "$ref": "#/definitions/ProxyHeader"
         },
         "proxy_from_environment": {
           "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
@@ -6558,6 +6692,15 @@
         },
         "proxy_url": {
           "$ref": "#/definitions/URL"
+        }
+      }
+    },
+    "ProxyHeader": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Secret"
         }
       }
     },
@@ -6894,6 +7037,12 @@
       "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
       "type": "object",
       "properties": {
+        "active_time_intervals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "continue": {
           "type": "boolean"
         },
@@ -7021,7 +7170,7 @@
           "type": "string"
         },
         "labels": {
-          "$ref": "#/definitions/overrideLabels"
+          "$ref": "#/definitions/Labels"
         },
         "lastError": {
           "type": "string"
@@ -7437,12 +7586,20 @@
           "description": "The CA cert to use for the targets.",
           "type": "string"
         },
+        "ca_ref": {
+          "description": "CARef is the name of the secret within the secret manager to use as the CA cert for the\ntargets.",
+          "type": "string"
+        },
         "cert": {
           "description": "Text of the client cert file for the targets.",
           "type": "string"
         },
         "cert_file": {
           "description": "The client cert file for the targets.",
+          "type": "string"
+        },
+        "cert_ref": {
+          "description": "CertRef is the name of the secret within the secret manager to use as the client cert for\nthe targets.",
           "type": "string"
         },
         "insecure_skip_verify": {
@@ -7454,6 +7611,10 @@
         },
         "key_file": {
           "description": "The client key file for the targets.",
+          "type": "string"
+        },
+        "key_ref": {
+          "description": "KeyRef is the name of the secret within the secret manager to use as the client key for\nthe targets.",
           "type": "string"
         },
         "max_version": {
@@ -7788,8 +7949,9 @@
       }
     },
     "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nThe Host field contains the host and port subcomponents of the URL.\nWhen the port is present, it is separated from the host with a colon.\nWhen the host is an IPv6 address, it must be enclosed in square brackets:\n\"[fe80::1]:80\". The [net.JoinHostPort] function combines a host and port\ninto a string suitable for the Host field, adding square brackets to\nthe host when necessary.\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the [URL.EscapedPath] method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -8214,6 +8376,7 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",
@@ -8345,37 +8508,6 @@
         "$ref": "#/definitions/gettableSilence"
       }
     },
-    "integration": {
-      "description": "Integration integration",
-      "type": "object",
-      "required": [
-        "name",
-        "sendResolved"
-      ],
-      "properties": {
-        "lastNotifyAttempt": {
-          "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
-          "type": "string",
-          "format": "date-time"
-        },
-        "lastNotifyAttemptDuration": {
-          "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
-          "type": "string"
-        },
-        "lastNotifyAttemptError": {
-          "description": "Error string for the last attempt to deliver a notification. Empty if the last attempt was successful.",
-          "type": "string"
-        },
-        "name": {
-          "description": "name",
-          "type": "string"
-        },
-        "sendResolved": {
-          "description": "send resolved",
-          "type": "boolean"
-        }
-      }
-    },
     "labelSet": {
       "description": "LabelSet label set",
       "type": "object",
@@ -8415,14 +8547,6 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/matcher"
-      }
-    },
-    "overrideLabels": {
-      "description": "The custom marshaling for labels.Labels ends up doing this anyways.",
-      "type": "object",
-      "title": "override the labels type with a map for generation.",
-      "additionalProperties": {
-        "type": "string"
       }
     },
     "peerStatus": {
@@ -8531,22 +8655,9 @@
       "description": "Receiver receiver",
       "type": "object",
       "required": [
-        "active",
-        "integrations",
         "name"
       ],
       "properties": {
-        "active": {
-          "description": "active",
-          "type": "boolean"
-        },
-        "integrations": {
-          "description": "integrations",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/integration"
-          }
-        },
         "name": {
           "description": "name",
           "type": "string"
@@ -8702,7 +8813,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/receiver"
+          "$ref": "#/definitions/Receiver"
         }
       }
     }

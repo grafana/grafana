@@ -126,7 +126,7 @@ func (a *authenticator) getSignedInUser(ctx context.Context, token string) (*use
 		if err != nil {
 			a.logger.Error("failed fetching permissions for user", "userID", signedInUser.UserID, "error", err)
 		}
-		signedInUser.Permissions[signedInUser.OrgID] = accesscontrol.GroupScopesByAction(permissions)
+		signedInUser.Permissions[signedInUser.OrgID] = accesscontrol.GroupScopesByActionContext(context.Background(), permissions)
 	}
 
 	return signedInUser, nil

@@ -4,42 +4,46 @@ import { BaseQueryFn, EndpointDefinition } from '@reduxjs/toolkit/dist/query';
 import { generatedAPI } from './endpoints.gen';
 
 export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
-  addTagTypes: ['cloud-migration-config', 'cloud-migration-run', 'cloud-migration-run-list'],
+  addTagTypes: ['cloud-migration-token', 'cloud-migration-session', 'cloud-migration-snapshot'],
+
   endpoints: {
     // Cloud-side - create token
-    createCloudMigrationToken: suppressErrorsOnQuery,
+    getCloudMigrationToken: {
+      providesTags: ['cloud-migration-token'],
+    },
+    createCloudMigrationToken: {
+      invalidatesTags: ['cloud-migration-token'],
+    },
+    deleteCloudMigrationToken: {
+      invalidatesTags: ['cloud-migration-token'],
+    },
 
-    // List Cloud Configs
+    // On-prem session management (entering token)
     getSessionList: {
-      providesTags: ['cloud-migration-config'] /* should this be a -list? */,
+      providesTags: ['cloud-migration-session'] /* should this be a -list? */,
     },
-
-    // Create Cloud Config
-    createSession(endpoint) {
-      suppressErrorsOnQuery(endpoint);
-      endpoint.invalidatesTags = ['cloud-migration-config'];
-    },
-
-    // Get one Cloud Config
     getSession: {
-      providesTags: ['cloud-migration-config'],
+      providesTags: ['cloud-migration-session'],
     },
-
-    // Delete one Cloud Config
+    createSession: {
+      invalidatesTags: ['cloud-migration-session'],
+    },
     deleteSession: {
-      invalidatesTags: ['cloud-migration-config'],
+      invalidatesTags: ['cloud-migration-session', 'cloud-migration-snapshot'],
     },
 
-    getCloudMigrationRunList: {
-      providesTags: ['cloud-migration-run-list'],
+    // Snapshot management
+    getShapshotList: {
+      providesTags: ['cloud-migration-snapshot'],
     },
-
-    getCloudMigrationRun: {
-      providesTags: ['cloud-migration-run'],
+    getSnapshot: {
+      providesTags: ['cloud-migration-snapshot'],
     },
-
-    runCloudMigration: {
-      invalidatesTags: ['cloud-migration-run-list'],
+    createSnapshot: {
+      invalidatesTags: ['cloud-migration-snapshot'],
+    },
+    uploadSnapshot: {
+      invalidatesTags: ['cloud-migration-snapshot'],
     },
 
     getDashboardByUid: suppressErrorsOnQuery,

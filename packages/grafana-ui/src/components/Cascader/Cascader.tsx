@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
 import RCCascader from 'rc-cascader';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 

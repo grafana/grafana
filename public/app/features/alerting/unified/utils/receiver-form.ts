@@ -233,7 +233,7 @@ export function formChannelValuesToGrafanaChannelConfig(
 ): GrafanaManagedReceiverConfig {
   const channel: GrafanaManagedReceiverConfig = {
     settings: omitEmptyValues({
-      ...(existing && existing.type === values.type ? existing.settings ?? {} : {}),
+      ...(existing && existing.type === values.type ? (existing.settings ?? {}) : {}),
       ...(values.settings ?? {}),
     }),
     secureSettings: omitEmptyUnlessExisting(values.secureSettings, existing?.secureFields),

@@ -63,6 +63,10 @@ func (s *SAMLStrategy) loadSAMLSettings() map[string]any {
 		"role_values_grafana_admin":  section.KeyValue("role_values_grafana_admin").MustString(""),
 		"name_id_format":             section.KeyValue("name_id_format").MustString(""),
 		"skip_org_role_sync":         section.KeyValue("skip_org_role_sync").MustBool(false),
+		"client_id":                  section.KeyValue("client_id").MustString(""),
+		"client_secret":              section.KeyValue("client_secret").MustString(""),
+		"token_url":                  section.KeyValue("token_url").MustString(""),
+		"force_use_graph_api":        section.KeyValue("force_use_graph_api").MustBool(false),
 	}
 	return result
 }

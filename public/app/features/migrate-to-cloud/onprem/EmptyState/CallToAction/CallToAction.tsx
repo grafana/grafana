@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { Box, Button, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
@@ -13,7 +13,7 @@ export const CallToAction = () => {
 
   return (
     <>
-      <Box display="flex" padding={5} gap={2} direction="column" alignItems="center" backgroundColor="secondary">
+      <Box display="flex" gap={2} direction="column" alignItems="center" backgroundColor="secondary">
         <Text variant="h3" textAlignment="center">
           <Trans i18nKey="migrate-to-cloud.cta.header">Let us manage your Grafana stack</Trans>
         </Text>
@@ -26,7 +26,7 @@ export const CallToAction = () => {
       <ConnectModal
         isOpen={modalOpen}
         isLoading={createMigrationResponse.isLoading}
-        isError={createMigrationResponse.isError}
+        error={createMigrationResponse.error}
         onConfirm={createMigration}
         hideModal={() => setModalOpen(false)}
       />

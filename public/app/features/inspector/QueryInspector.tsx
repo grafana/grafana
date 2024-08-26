@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
 
 import { LoadingState, PanelData } from '@grafana/data';

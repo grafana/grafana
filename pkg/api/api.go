@@ -108,6 +108,10 @@ func (hs *HTTPServer) registerRoutes() {
 		r.Get("/admin/storage/*", reqSignedIn, hs.Index)
 	}
 
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
+		r.Get("/admin/migrate-to-cloud", reqOrgAdmin, hs.Index)
+	}
+
 	// feature toggle admin page
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagFeatureToggleAdminPage) {
 		r.Get("/admin/featuretoggles", authorize(ac.EvalPermission(ac.ActionFeatureManagementRead)), hs.Index)
@@ -166,7 +170,7 @@ func (hs *HTTPServer) registerRoutes() {
 	}
 
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-		r.Get("/dashboard/recently-deleted", reqSignedIn, hs.Index)
+		r.Get("/dashboard/recently-deleted", reqOrgAdmin, hs.Index)
 	}
 
 	r.Get("/explore", authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), hs.Index)
@@ -216,7 +220,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/public/plugins/:pluginId/*", hs.getPluginAssets)
 
 	// add swagger support
-	registerSwaggerUI(r)
+	hs.registerSwaggerUI(r)
 
 	r.Post("/api/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthToken))
 	r.Get("/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthTokenRedirect))
@@ -473,8 +477,8 @@ func (hs *HTTPServer) registerRoutes() {
 				dashUidRoute.Get("/versions/:id", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersion))
 
 				if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-					dashUidRoute.Patch("/trash", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.RestoreDeletedDashboard))
-					dashUidRoute.Delete("/trash", authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete)), routing.Wrap(hs.HardDeleteDashboardByUID))
+					dashUidRoute.Patch("/trash", reqOrgAdmin, routing.Wrap(hs.RestoreDeletedDashboard))
+					dashUidRoute.Delete("/trash", reqOrgAdmin, routing.Wrap(hs.HardDeleteDashboardByUID))
 				}
 
 				dashUidRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {

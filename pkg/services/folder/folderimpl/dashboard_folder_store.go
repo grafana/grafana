@@ -30,7 +30,7 @@ func (d *DashboardFolderStoreImpl) GetFolderByTitle(ctx context.Context, orgID i
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, Title: title}
-	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		s := sess.Table(&dashboards.Dashboard{}).Where("is_folder = " + d.store.GetDialect().BooleanStr(true))
 		if folderUID != nil {
 			s = s.Where("folder_uid = ?", *folderUID)
@@ -55,7 +55,7 @@ func (d *DashboardFolderStoreImpl) GetFolderByID(ctx context.Context, orgID int6
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, ID: id}
-	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		has, err := sess.Table(&dashboards.Dashboard{}).Where("is_folder = " + d.store.GetDialect().BooleanStr(true)).Get(&dashboard)
 		if err != nil {
 			return err
@@ -80,7 +80,7 @@ func (d *DashboardFolderStoreImpl) GetFolderByUID(ctx context.Context, orgID int
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, UID: uid}
-	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		has, err := sess.Table(&dashboards.Dashboard{}).Where("is_folder = " + d.store.GetDialect().BooleanStr(true)).Get(&dashboard)
 		if err != nil {
 			return err

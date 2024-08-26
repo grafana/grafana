@@ -26,6 +26,7 @@ export interface AzureSettings {
   workloadIdentityEnabled: boolean;
   userIdentityEnabled: boolean;
   userIdentityFallbackCredentialsEnabled: boolean;
+  azureEntraPasswordCredentialsEnabled: boolean;
 }
 
 export interface AzureCloudInfo {
@@ -39,6 +40,11 @@ export type AppPluginConfig = {
   version: string;
   preload: boolean;
   angular: AngularMeta;
+};
+
+export type PreinstalledPlugin = {
+  id: string;
+  version: string;
 };
 
 export class GrafanaBootConfig implements GrafanaConfig {
@@ -116,11 +122,14 @@ export class GrafanaBootConfig implements GrafanaConfig {
     errorInstrumentalizationEnabled: true,
     consoleInstrumentalizationEnabled: false,
     webVitalsInstrumentalizationEnabled: false,
+    tracingInstrumentalizationEnabled: false,
   };
   pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
   pluginAdminEnabled = true;
   pluginAdminExternalManageEnabled = false;
   pluginCatalogHiddenPlugins: string[] = [];
+  pluginCatalogManagedPlugins: string[] = [];
+  pluginCatalogPreinstalledPlugins: PreinstalledPlugin[] = [];
   pluginsCDNBaseURL = '';
   expressionsEnabled = false;
   customTheme?: undefined;
@@ -131,6 +140,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     workloadIdentityEnabled: false,
     userIdentityEnabled: false,
     userIdentityFallbackCredentialsEnabled: false,
+    azureEntraPasswordCredentialsEnabled: false,
   };
   caching = {
     enabled: false,
@@ -177,6 +187,10 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rootFolderUID: string | undefined;
   localFileSystemAvailable: boolean | undefined;
   cloudMigrationIsTarget: boolean | undefined;
+  cloudMigrationFeedbackURL = '';
+  cloudMigrationPollIntervalMs = 2000;
+  reportingStaticContext?: Record<string, string>;
+  exploreDefaultTimeOffset = '1h';
 
   /**
    * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of

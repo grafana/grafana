@@ -18,21 +18,36 @@ weight: 200
 
 ## Manage access using folders or data sources
 
-You can further customize access for alert rules by assigning permissions to individual folders or data sources, regardless of role assigned.
+You can extend the access provided by a role to alert rules and rule-specific silences by assigning permissions to individual folders or data sources.
+
+{{< admonition type="note" >}}
+Data source query permissions are required to create or modify an alert rule using that data source.
+{{< /admonition >}}
+
+This allows different users, teams, or service accounts to have customized access to modify or silence alert rules in specific folders or using specific data sources.
+
+Details on the additional access provided by folder permissions are below.
+
+| Folder permission | Additional Access                                                                                                                           |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| View              | Read access to all general silences. Read access to alert rules and their rule-specific silences _only_ in the given folder and subfolders. |
+| Edit              | View access and write access to alert rules and their rule-specific silences _only_ in the given folder and subfolders.                     |
+| Admin             | Same additional access as Edit.                                                                                                             |
+
+Some example combinations:
+
+| Role          | Folder permission | Access                                                                                                                                                                   |
+| ------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| No Basic Role | -                 | None. No access to alert rules or rule-specific silences in the folder.                                                                                                  |
+| No Basic Role | View              | Read access to all general silences. Read access to alert rules and their rule-specific silences _only_ in the given folder and subfolders.                              |
+| No Basic Role | Edit              | Above access and write access to alert rules (given necessary data source query permissions) and their rule-specific silences _only_ in the given folder and subfolders. |
+| Viewer        | -                 | Read access to alert rules and silences in all folders.                                                                                                                  |
+| Viewer        | Edit              | Read access to alert rules and silences in all folders. Write access to alert rules and their rule-specific silences _only_ in the given folder and subfolders.          |
+| Editor        | View              | Read and write access to alert rules and silences in all folders. Access can only be extended.                                                                           |
 
 {{< admonition type="note" >}}
 You can't use folders to customize access to notification resources.
 {{< /admonition >}}
-
-Details of how role access can combine with folder permissions for Grafana Alerting are below.
-
-| Role   | Folder | Access                                                                                   |
-| ------ | ------ | ---------------------------------------------------------------------------------------- |
-| Admin  | -      | Write access to alert rules in all folders.                                              |
-| Editor | -      | Write access to alert rules in all folders.                                              |
-| Viewer | Admin  | Write access to alert rules **only** in the folders where the Admin permission is added. |
-| Viewer | Edit   | Write access to alert rules **only** in the folders where the Edit permission is added.  |
-| Viewer | View   | Read access to alert rules in all folders.                                               |
 
 ## Folder permissions
 

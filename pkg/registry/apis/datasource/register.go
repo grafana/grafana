@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
@@ -23,13 +22,12 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/promlib/models"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
@@ -67,6 +65,8 @@ func RegisterAPIService(
 	var err error
 	var builder *DataSourceAPIBuilder
 	all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
+	// ATTENTION: Adding a datasource here requires the plugin to implement
+	// an AdmissionHandler to validate the datasource settings.
 	ids := []string{
 		"grafana-testdata-datasource",
 		"prometheus",
@@ -154,11 +154,6 @@ func (b *DataSourceAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return b.connectionResourceInfo.GroupVersion()
 }
 
-func (b *DataSourceAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
-	return grafanarest.Mode0
-}
-
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&datasource.DataSourceConnection{},
@@ -206,36 +201,15 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	_ generic.RESTOptionsGetter,
-	_ grafanarest.DualWriterMode,
-	_ prometheus.Registerer,
+	_ grafanarest.DualWriteBuilder,
 ) (*genericapiserver.APIGroupInfo, error) {
 	storage := map[string]rest.Storage{}
 
 	conn := b.connectionResourceInfo
 	storage[conn.StoragePath()] = &connectionAccess{
-		datasources:  b.datasources,
-		resourceInfo: conn,
-		tableConverter: gapiutil.NewTableConverter(
-			conn.GroupResource(),
-			[]metav1.TableColumnDefinition{
-				{Name: "Name", Type: "string", Format: "name"},
-				{Name: "Title", Type: "string", Format: "string", Description: "The datasource title"},
-				{Name: "APIVersion", Type: "string", Format: "string", Description: "API Version"},
-				{Name: "Created At", Type: "date"},
-			},
-			func(obj any) ([]interface{}, error) {
-				m, ok := obj.(*datasource.DataSourceConnection)
-				if !ok {
-					return nil, fmt.Errorf("expected connection")
-				}
-				return []interface{}{
-					m.Name,
-					m.Title,
-					m.APIVersion,
-					m.CreationTimestamp.UTC().Format(time.RFC3339),
-				}, nil
-			},
-		),
+		datasources:    b.datasources,
+		resourceInfo:   conn,
+		tableConverter: conn.TableConverter(),
 	}
 	storage[conn.StoragePath("query")] = &subQueryREST{builder: b}
 	storage[conn.StoragePath("health")] = &subHealthREST{builder: b}

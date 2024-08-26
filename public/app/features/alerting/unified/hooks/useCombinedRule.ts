@@ -1,65 +1,16 @@
 import { useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { useDispatch } from 'app/types';
-import {
-  CombinedRule,
-  RuleIdentifier,
-  RuleNamespace,
-  RulerDataSourceConfig,
-  RulesSource,
-  RuleWithLocation,
-} from 'app/types/unified-alerting';
-import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { CombinedRule, RuleIdentifier, RulesSource, RuleWithLocation } from 'app/types/unified-alerting';
+import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
-import { fetchPromAndRulerRulesAction } from '../state/actions';
-import { getDataSourceByName, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
-import { AsyncRequestMapSlice, AsyncRequestState, initialAsyncRequestState } from '../utils/redux';
+import { getDataSourceByName } from '../utils/datasource';
 import * as ruleId from '../utils/rule-id';
-import {
-  isCloudRuleIdentifier,
-  isGrafanaRuleIdentifier,
-  isPrometheusRuleIdentifier,
-  isRulerNotSupportedResponse,
-} from '../utils/rules';
+import { isCloudRuleIdentifier, isGrafanaRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
 
-import { attachRulerRulesToCombinedRules, useCombinedRuleNamespaces } from './useCombinedRuleNamespaces';
-import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
-
-export function useCombinedRulesMatching(
-  ruleName: string | undefined,
-  ruleSourceName: string | undefined
-): AsyncRequestState<CombinedRule[]> {
-  const requestState = useCombinedRulesLoader(ruleSourceName);
-  const combinedRules = useCombinedRuleNamespaces(ruleSourceName);
-
-  const rules = useMemo(() => {
-    if (!ruleName || !ruleSourceName || combinedRules.length === 0) {
-      return [];
-    }
-
-    const rules: CombinedRule[] = [];
-
-    for (const namespace of combinedRules) {
-      for (const group of namespace.groups) {
-        for (const rule of group.rules) {
-          if (rule.name === ruleName) {
-            rules.push(rule);
-          }
-        }
-      }
-    }
-
-    return rules;
-  }, [ruleName, ruleSourceName, combinedRules]);
-
-  return {
-    ...requestState,
-    result: rules,
-  };
-}
+import { attachRulerRulesToCombinedRules } from './useCombinedRuleNamespaces';
 
 export function useCloudCombinedRulesMatching(
   ruleName: string,
@@ -80,7 +31,7 @@ export function useCloudCombinedRulesMatching(
     groupName: filter?.groupName,
   });
 
-  const [fetchRulerRuleGroup] = alertRuleApi.endpoints.rulerRuleGroup.useLazyQuery();
+  const [fetchRulerRuleGroup] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
 
   const { loading, error, value } = useAsync(async () => {
     if (!dsSettings) {
@@ -123,58 +74,21 @@ export function useCloudCombinedRulesMatching(
   return { loading: isLoadingDsFeatures || loading, error: error, rules: value };
 }
 
-function useCombinedRulesLoader(
-  rulesSourceName: string | undefined,
-  identifier?: RuleIdentifier
-): AsyncRequestState<void> {
-  const dispatch = useDispatch();
-  const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
-  const promRuleRequest = getRequestState(rulesSourceName, promRuleRequests);
-  const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-  const rulerRuleRequest = getRequestState(rulesSourceName, rulerRuleRequests);
-
-  const { loading } = useAsync(async () => {
-    if (!rulesSourceName) {
-      return;
-    }
-
-    await dispatch(fetchPromAndRulerRulesAction({ rulesSourceName, identifier }));
-  }, [dispatch, rulesSourceName]);
-
-  return {
-    loading,
-    error: promRuleRequest.error ?? isRulerNotSupportedResponse(rulerRuleRequest) ? undefined : rulerRuleRequest.error,
-    dispatched: promRuleRequest.dispatched && rulerRuleRequest.dispatched,
-  };
-}
-
-function getRequestState(
-  ruleSourceName: string | undefined,
-  slice: AsyncRequestMapSlice<RulerRulesConfigDTO | RuleNamespace[] | null>
-): AsyncRequestState<RulerRulesConfigDTO | RuleNamespace[] | null> {
-  if (!ruleSourceName) {
-    return initialAsyncRequestState;
-  }
-
-  const state = slice[ruleSourceName];
-
-  if (!state) {
-    return initialAsyncRequestState;
-  }
-
-  return state;
-}
-
 interface RequestState<T> {
   result?: T;
   loading: boolean;
   error?: unknown;
 }
 
+interface Props {
+  ruleIdentifier: RuleIdentifier;
+  limitAlerts?: number;
+}
+
 // Many places still use the old way of fetching code so synchronizing cache expiration is difficult
 // Hence, this hook fetches a fresh version of a rule most of the time
 // Due to enabled filtering for Prometheus and Ruler rules it shouldn't be a problem
-export function useCombinedRule({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }): RequestState<CombinedRule> {
+export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): RequestState<CombinedRule> {
   const { ruleSourceName } = ruleIdentifier;
   const ruleSource = getRulesSourceFromIdentifier(ruleIdentifier);
 
@@ -195,6 +109,7 @@ export function useCombinedRule({ ruleIdentifier }: { ruleIdentifier: RuleIdenti
       namespace: ruleLocation?.namespace,
       groupName: ruleLocation?.group,
       ruleName: ruleLocation?.ruleName,
+      limitAlerts,
     },
     {
       skip: !ruleLocation || isLoadingRuleLocation,
@@ -204,13 +119,8 @@ export function useCombinedRule({ ruleIdentifier }: { ruleIdentifier: RuleIdenti
 
   const [
     fetchRulerRuleGroup,
-    {
-      currentData: rulerRuleGroup,
-      isLoading: isLoadingRulerGroup,
-      error: rulerRuleGroupError,
-      isUninitialized: rulerRuleGroupUninitialized,
-    },
-  ] = alertRuleApi.endpoints.rulerRuleGroup.useLazyQuery();
+    { currentData: rulerRuleGroup, isLoading: isLoadingRulerGroup, error: rulerRuleGroupError },
+  ] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
 
   useEffect(() => {
     if (!dsFeatures?.rulerConfig || !ruleLocation) {
@@ -251,7 +161,7 @@ export function useCombinedRule({ ruleIdentifier }: { ruleIdentifier: RuleIdenti
   }, [ruleIdentifier, ruleSourceName, promRuleNs, rulerRuleGroup, ruleSource]);
 
   return {
-    loading: isLoadingDsFeatures || isLoadingPromRules || isLoadingRulerGroup || rulerRuleGroupUninitialized,
+    loading: isLoadingDsFeatures || isLoadingPromRules || isLoadingRulerGroup,
     error: ruleLocationError ?? promRuleNsError ?? rulerRuleGroupError,
     result: rule,
   };
@@ -345,7 +255,7 @@ export function useRuleWithLocation({
       isUninitialized: isUninitializedRulerGroup,
       error: rulerRuleGroupError,
     },
-  ] = alertRuleApi.endpoints.rulerRuleGroup.useLazyQuery();
+  ] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
 
   useEffect(() => {
     if (!dsFeatures?.rulerConfig || !ruleLocation) {
@@ -389,29 +299,9 @@ export function useRuleWithLocation({
   };
 }
 
-export const grafanaRulerConfig: RulerDataSourceConfig = {
-  dataSourceName: GRAFANA_RULES_SOURCE_NAME,
-  apiVersion: 'legacy',
-};
-
-const grafanaDsFeatures = {
-  rulerConfig: grafanaRulerConfig,
-};
-
 export function useDataSourceFeatures(dataSourceName: string) {
-  const isGrafanaDs = isGrafanaRulesSource(dataSourceName);
-
   const { currentData: dsFeatures, isLoading: isLoadingDsFeatures } =
-    featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery(
-      {
-        rulesSourceName: dataSourceName,
-      },
-      { skip: isGrafanaDs }
-    );
-
-  if (isGrafanaDs) {
-    return { isLoadingDsFeatures: false, dsFeatures: grafanaDsFeatures };
-  }
+    featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery({ rulesSourceName: dataSourceName });
 
   return { isLoadingDsFeatures, dsFeatures };
 }

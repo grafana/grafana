@@ -2,6 +2,32 @@
 // once angular is disabled, this file can be deleted
 
 @use 'sass:map';
+@use 'sass:color';
+@use 'sass:list';
+
+// Media of at least the minimum breakpoint width. No query for the smallest breakpoint.
+// Makes the @content apply to the given breakpoint and wider.
+@mixin media-breakpoint-up($name, $breakpoints: $grid-breakpoints) {
+  $min: if(map.get($breakpoints, $name) != 0, map.get($breakpoints, $name), null);
+  @if $min {
+    @media (min-width: $min) {
+      @content;
+    }
+  } @else {
+    @content;
+  }
+}
+
+// Gradients
+@mixin gradient-vertical($startColor: #555, $endColor: #333) {
+  background-color: color.mix($startColor, $endColor, 60%);
+  background-image: linear-gradient(to bottom, $startColor, $endColor); // Standard, IE10
+  background-repeat: repeat-x;
+}
+
+@mixin font-family-monospace() {
+  font-family: $font-family-monospace;
+}
 
 .edit-tab-content {
   flex-grow: 1;
@@ -74,7 +100,7 @@ input.invalid {
     font-size: $font-size-md;
     min-height: 50px; // Include space for horizontal scrollbar
 
-    @include border-radius($input-border-radius);
+    border-radius: $input-border-radius;
     border: $border-width solid $input-border-color;
   }
 
@@ -1842,7 +1868,7 @@ $easing: cubic-bezier(0, 0, 0.265, 1);
 }
 
 /* makes the font 33% larger relative to the icon container */
-.#{$fa-css-prefix}-lg {
+.fa-lg {
   font-size: calc(4em / 3);
   line-height: calc(3em / 4);
   vertical-align: -15%;
@@ -1863,4 +1889,465 @@ $easing: cubic-bezier(0, 0, 0.265, 1);
   border: none;
   background: transparent;
   display: block;
+}
+
+.add-data-source-item {
+  padding: $space-md;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  background: $card-background;
+  border-radius: 3px;
+  margin-bottom: $space-xxs;
+
+  &:hover {
+    background: $card-background-hover;
+
+    .add-data-source-item-actions {
+      opacity: 1;
+      transition: 0.15s opacity ease-in-out;
+    }
+  }
+}
+
+.add-data-source-item-text-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.add-data-source-item-logo {
+  margin-right: $space-lg;
+  margin-left: $space-sm;
+  width: 55px;
+  max-height: 55px;
+}
+
+.add-data-source-item-desc {
+  font-size: $font-size-sm;
+  color: $text-color-weak;
+}
+
+.add-data-source-item-actions {
+  opacity: 0;
+  padding-left: $space-md;
+  display: flex;
+  align-items: center;
+
+  > button {
+    margin-left: $space-md;
+    cursor: pointer;
+  }
+}
+
+.add-data-source-item-badge {
+  margin-top: 6px;
+}
+
+.add-data-source-item-text {
+  font-size: $font-size-h5;
+}
+
+.panel-empty {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+
+  p {
+    text-align: center;
+    color: $text-muted;
+    font-size: $font-size-lg;
+    width: 100%;
+  }
+}
+
+// Base classes
+.label,
+.badge {
+  display: inline-block;
+  padding: 2px 4px;
+  font-size: $font-size-base * 0.846;
+  font-weight: $font-weight-semi-bold;
+  line-height: 14px; // ensure proper line-height if floated
+  color: $white;
+  vertical-align: baseline;
+  white-space: nowrap;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+  background-color: $gray-1;
+}
+
+// Labels & Badges
+.label-tag {
+  background-color: $purple;
+  color: color.adjust($white, $lightness: -5%);
+  white-space: nowrap;
+  border-radius: 3px;
+  text-shadow: none;
+  font-size: 12px;
+  padding: 0px 6px;
+  line-height: 20px;
+  height: 20px;
+
+  svg {
+    margin-bottom: 0;
+  }
+
+  &:hover {
+    opacity: 0.85;
+    background-color: color.adjust($purple, $lightness: -10%);
+  }
+}
+
+.query-part__link {
+  cursor: pointer;
+
+  &--no-value {
+    color: $text-muted;
+  }
+}
+
+.grafana-info-box {
+  position: relative;
+  padding: $space-lg;
+  background-color: $empty-list-cta-bg;
+  border-left: 3px solid $info-box-border-color;
+  margin-bottom: $space-md;
+  margin-right: $space-xs;
+  box-shadow: $card-shadow;
+  flex-grow: 1;
+
+  h5 {
+    margin-bottom: $spacer;
+  }
+  ul {
+    padding-left: $spacer * 1.5;
+  }
+
+  code {
+    @include font-family-monospace();
+    font-size: $font-size-base - 2;
+    background-color: $code-tag-bg;
+    color: $text-color;
+    border: 1px solid $code-tag-border;
+    border-radius: 4px;
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+
+  a {
+    @extend .external-link;
+  }
+
+  &--max-lg {
+    max-width: map.get($grid-breakpoints, 'lg');
+  }
+}
+
+.grafana-info-box__close {
+  text-align: center;
+  display: block;
+  color: $link-color !important;
+  height: 0;
+  position: relative;
+  top: -9px;
+}
+
+//
+// Alerts
+// --------------------------------------------------
+
+// Base styles
+// -------------------------
+
+.alert {
+  padding: 15px 20px;
+  margin-bottom: $space-xs;
+  border-left: 3px solid $alert-error-bg;
+  background: $layer2;
+  position: relative;
+  border-radius: $border-radius;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+// Alternate styles
+// -------------------------
+
+.alert-success {
+  border-color: $alert-success-bg;
+}
+
+.alert-danger,
+.alert-error {
+  border-color: $alert-error-bg;
+}
+
+.alert-info {
+  border-color: $alert-info-bg;
+}
+
+.alert-warning {
+  border-color: $alert-warning-bg;
+}
+
+.alert-title {
+  font-weight: $font-weight-semi-bold;
+}
+
+.alert-icon {
+  padding: 0 $space-md 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px;
+
+  .fa {
+    font-size: 21px;
+  }
+}
+
+.alert-body {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  flex-grow: 1;
+}
+
+// Alert List
+.alert-rule-item__body {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.alert-rule-item__header {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.alert-rule-item__name {
+  font-size: $font-size-base;
+  margin: 0;
+  font-weight: $font-weight-semi-bold;
+}
+
+.alert-rule-item__text {
+  font-weight: bold;
+  font-size: $font-size-sm;
+  margin: 0;
+}
+
+.alert-rule-item__time {
+  color: $text-color-weak;
+  font-weight: normal;
+  white-space: nowrap;
+}
+
+.alert-rule-item__info {
+  //color: $text-color;
+  font-weight: normal;
+  flex-grow: 2;
+  display: flex;
+  align-items: flex-end;
+}
+
+.grafana-metric-options {
+  margin-top: 25px;
+}
+
+.drop-element.drop-popover.drop-function-def .drop-content {
+  max-width: 416px;
+}
+
+.panel-height-helper {
+  display: block;
+  height: 100%;
+}
+
+.panel-content {
+  padding: $panel-padding;
+  width: 100%;
+  flex-grow: 1;
+  contain: size layout;
+  height: calc(100% - #{$panel-header-height});
+
+  &--no-padding {
+    padding: 0;
+  }
+}
+
+div.flot-text {
+  color: $text-color !important;
+}
+
+.modal-header {
+  background: $page-header-bg;
+  box-shadow: $page-header-shadow;
+  border-bottom: 1px solid $page-header-border-color;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header-close {
+  float: right;
+  padding: 9px $spacer;
+}
+
+// Body (where all modal content resides)
+.modal-body {
+  position: relative;
+}
+
+.modal-content {
+  padding: $spacer * 2;
+
+  &--has-scroll {
+    max-height: calc(100vh - 400px);
+    position: relative;
+  }
+}
+
+// Footer (for actions)
+.modal-footer {
+  padding: 14px 15px 15px;
+  border-top: 1px solid $panel-bg;
+  background-color: $panel-bg;
+  text-align: right; // right align buttons
+  // clear it in case folks use .pull-* classes on buttons
+  &::after {
+    content: '';
+    display: table;
+    clear: both;
+  }
+}
+
+.confirm-modal {
+  max-width: 500px;
+
+  .confirm-modal-icon {
+    padding-top: 41px;
+    font-size: 280%;
+    color: $green-base;
+    padding-bottom: 20px;
+  }
+
+  .confirm-modal-text {
+    font-size: $font-size-h4;
+    color: $link-color;
+    margin-bottom: $spacer * 2;
+    padding-top: $spacer;
+  }
+
+  .confirm-modal-text2 {
+    font-size: $font-size-base;
+    padding-top: $spacer;
+  }
+
+  .confirm-modal-buttons {
+    margin-bottom: $spacer;
+    button {
+      margin-right: calc($spacer/2);
+    }
+  }
+
+  .modal-content-confirm-text {
+    margin-bottom: $space-xl;
+    span {
+      text-align: center;
+    }
+  }
+}
+
+.gf-form-dropdown-typeahead {
+  position: relative;
+
+  &::after {
+    position: absolute;
+    top: 35%;
+    right: $space-sm;
+    background-color: transparent;
+    color: $input-color;
+    font: normal normal normal list.slash($font-size-sm, 1) FontAwesome;
+    content: '\f0d7';
+    pointer-events: none;
+    font-size: 11px;
+  }
+}
+
+.gf-form-help-icon {
+  flex-grow: 0;
+  color: $text-color-weak;
+
+  &--bold {
+    color: $text-color-emphasis;
+    padding-left: 0;
+  }
+
+  &--right-absolute {
+    position: absolute;
+    right: $spacer;
+    top: 6px;
+  }
+
+  &--right-normal {
+    float: right;
+  }
+
+  &--header {
+    margin-bottom: $space-xxs;
+  }
+
+  &--small-padding {
+    padding-left: 4px;
+  }
+
+  &:hover {
+    color: $text-color;
+  }
+}
+
+.clearfix {
+  &::after {
+    content: '';
+    display: table;
+    clear: both;
+  }
+}
+
+// Close icons
+// --------------------------------------------------
+.close {
+  opacity: 0.2;
+  float: right;
+  font-size: 20px;
+  font-weight: bold;
+  line-height: $line-height-base;
+  color: $black;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 1);
+
+  &:hover,
+  &:focus {
+    color: $black;
+    text-decoration: none;
+    cursor: pointer;
+    opacity: 0.4;
+  }
+}
+
+// Additional properties for button version
+// iOS requires the button element instead of an anchor tag.
+// If you want the anchor version, it requires `href="#"`.
+button.close {
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  -webkit-appearance: none;
 }

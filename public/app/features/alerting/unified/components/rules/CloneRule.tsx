@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { forwardRef, useState } from 'react';
 import { Redirect, useLocation } from 'react-router-dom';
 
 import { Button, ConfirmModal } from '@grafana/ui';
@@ -65,7 +65,7 @@ interface CloneRuleButtonProps {
   className?: string;
 }
 
-export const CloneRuleButton = React.forwardRef<HTMLButtonElement, CloneRuleButtonProps>(
+export const CloneRuleButton = forwardRef<HTMLButtonElement, CloneRuleButtonProps>(
   ({ text, ruleIdentifier, isProvisioned, className }, ref) => {
     const [redirectToClone, setRedirectToClone] = useState(false);
 

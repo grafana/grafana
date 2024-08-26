@@ -1,4 +1,3 @@
-import React from 'react';
 import { ColumnInstance, HeaderGroup } from 'react-table';
 
 import { fieldReducers, ReducerID } from '@grafana/data';
@@ -41,7 +40,7 @@ export function FooterRow(props: FooterRowProps) {
 }
 
 function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles) {
-  const footerProps = column.getHeaderProps();
+  const { key, ...footerProps } = column.getHeaderProps();
 
   if (!footerProps) {
     return null;
@@ -52,7 +51,7 @@ function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles) {
   footerProps.style.justifyContent = (column as any).justifyContent;
 
   return (
-    <div className={tableStyles.headerCell} {...footerProps}>
+    <div key={key} className={tableStyles.headerCell} {...footerProps}>
       {column.render('Footer')}
     </div>
   );

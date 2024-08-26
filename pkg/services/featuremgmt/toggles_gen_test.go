@@ -59,6 +59,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 					AllowSelfServe:    flag.AllowSelfServe,
 					HideFromAdminPage: flag.HideFromAdminPage,
 					HideFromDocs:      flag.HideFromDocs,
+					Expression:        flag.Expression,
 					// EnabledVersion: ???,
 				}
 
@@ -247,8 +248,7 @@ func verifyAndGenerateFile(t *testing.T, fpath string, gen string) {
 	body, err := os.ReadFile(fpath)
 	if err == nil {
 		if diff := cmp.Diff(gen, string(body)); diff != "" {
-			str := fmt.Sprintf("body mismatch (-want +got):\n%s\n", diff)
-			err = fmt.Errorf(str)
+			err = fmt.Errorf("body mismatch (-want +got):\n%s\n", diff)
 		}
 	}
 

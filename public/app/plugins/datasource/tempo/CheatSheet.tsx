@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { config, reportInteraction } from '@grafana/runtime';
 import { TextLink } from '@grafana/ui';
 

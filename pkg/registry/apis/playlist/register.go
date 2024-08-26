@@ -1,10 +1,6 @@
 package playlist
 
 import (
-	"context"
-	"fmt"
-	"time"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -15,15 +11,15 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
-	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var _ builder.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
@@ -33,7 +29,6 @@ type PlaylistAPIBuilder struct {
 	service    playlistsvc.Service
 	namespacer request.NamespaceMapper
 	gv         schema.GroupVersion
-	kvStore    *kvstore.NamespacedKVStore
 }
 
 func RegisterAPIService(p playlistsvc.Service,
@@ -46,8 +41,6 @@ func RegisterAPIService(p playlistsvc.Service,
 		service:    p,
 		namespacer: request.GetNamespaceMapper(cfg),
 		gv:         playlist.PlaylistResourceInfo.GroupVersion(),
-		kvStore:    kvstore.WithNamespace(kvStore, 0, "storage.dualwriting"),
-		// register:  newMetrics(registerer),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -55,15 +48,6 @@ func RegisterAPIService(p playlistsvc.Service,
 
 func (b *PlaylistAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return b.gv
-}
-
-func (b *PlaylistAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	m, ok := modeMap[playlist.GROUPRESOURCE]
-	if !dualWrite || !ok {
-		return grafanarest.Mode0
-	}
-
-	return m
 }
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
@@ -96,8 +80,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
-	desiredMode grafanarest.DualWriterMode,
-	reg prometheus.Registerer,
+	dualWriteBuilder grafanarest.DualWriteBuilder,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(playlist.GROUP, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
@@ -107,37 +90,17 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 		service:    b.service,
 		namespacer: b.namespacer,
 	}
-	legacyStore.tableConverter = gapiutil.NewTableConverter(
-		resource.GroupResource(),
-		[]metav1.TableColumnDefinition{
-			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Title", Type: "string", Format: "string", Description: "The playlist name"},
-			{Name: "Interval", Type: "string", Format: "string", Description: "How often the playlist will update"},
-			{Name: "Created At", Type: "date"},
-		},
-		func(obj any) ([]interface{}, error) {
-			m, ok := obj.(*playlist.Playlist)
-			if !ok {
-				return nil, fmt.Errorf("expected playlist")
-			}
-			return []interface{}{
-				m.Name,
-				m.Spec.Title,
-				m.Spec.Interval,
-				m.CreationTimestamp.UTC().Format(time.RFC3339),
-			}, nil
-		},
-	)
+	legacyStore.tableConverter = resource.TableConverter()
 	storage[resource.StoragePath()] = legacyStore
 
 	// enable dual writes if a RESTOptionsGetter is provided
-	if optsGetter != nil && desiredMode != grafanarest.Mode0 {
+	if optsGetter != nil && dualWriteBuilder != nil {
 		store, err := newStorage(scheme, optsGetter, legacyStore)
 		if err != nil {
 			return nil, err
 		}
 
-		dualWriter, err := grafanarest.SetDualWritingMode(context.Background(), b.kvStore, legacyStore, store, playlist.GROUPRESOURCE, desiredMode, reg)
+		dualWriter, err := dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, store)
 		if err != nil {
 			return nil, err
 		}

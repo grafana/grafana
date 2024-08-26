@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FormEvent, useState, ChangeEvent } from 'react';
+import { FormEvent, useState, ChangeEvent } from 'react';
 
 import { DataFrameSchema, FieldSchema, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, TextArea, InlineField, Input, FieldSet, InlineSwitch } from '@grafana/ui';

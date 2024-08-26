@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
@@ -25,7 +25,7 @@ export function ConfirmModal({ isOpen, onCancel, onDiscard, onCopy }: ConfirmMod
   return (
     <Modal
       title={
-        <div className="modal-header-title">
+        <div className={styles.modalHeaderTitle}>
           <Icon name="exclamation-triangle" size="lg" />
           <span className={styles.titleText}>Warning</span>
         </div>
@@ -56,5 +56,11 @@ export function ConfirmModal({ isOpen, onCancel, onDiscard, onCopy }: ConfirmMod
 const getStyles = (theme: GrafanaTheme2) => ({
   titleText: css({
     paddingLeft: theme.spacing(2),
+  }),
+  modalHeaderTitle: css({
+    fontSize: theme.typography.size.lg,
+    float: 'left',
+    paddingTop: theme.spacing(1),
+    margin: theme.spacing(0, 2),
   }),
 });

@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -11,7 +10,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 )
 
 type NotificationSrv struct {
@@ -22,7 +20,7 @@ type NotificationSrv struct {
 
 type ReceiverService interface {
 	GetReceiver(ctx context.Context, q models.GetReceiverQuery, u identity.Requester) (definitions.GettableApiReceiver, error)
-	GetReceivers(ctx context.Context, q models.GetReceiversQuery, u identity.Requester) ([]definitions.GettableApiReceiver, error)
+	ListReceivers(ctx context.Context, q models.ListReceiversQuery, user identity.Requester) ([]definitions.GettableApiReceiver, error)
 }
 
 func (srv *NotificationSrv) RouteGetTimeInterval(c *contextmodel.ReqContext, name string) response.Response {
@@ -50,33 +48,23 @@ func (srv *NotificationSrv) RouteGetReceiver(c *contextmodel.ReqContext, name st
 
 	receiver, err := srv.receiverService.GetReceiver(c.Req.Context(), q, c.SignedInUser)
 	if err != nil {
-		if errors.Is(err, notifier.ErrNotFound) {
-			return ErrResp(http.StatusNotFound, err, "receiver not found")
-		}
-		if errors.Is(err, notifier.ErrPermissionDenied) {
-			return ErrResp(http.StatusForbidden, err, "permission denied")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "failed to get receiver")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get receiver", err)
 	}
 
 	return response.JSON(http.StatusOK, receiver)
 }
 
 func (srv *NotificationSrv) RouteGetReceivers(c *contextmodel.ReqContext) response.Response {
-	q := models.GetReceiversQuery{
-		OrgID:   c.SignedInUser.OrgID,
-		Names:   c.QueryStrings("names"),
-		Limit:   c.QueryInt("limit"),
-		Offset:  c.QueryInt("offset"),
-		Decrypt: c.QueryBool("decrypt"),
+	q := models.ListReceiversQuery{
+		OrgID:  c.SignedInUser.OrgID,
+		Names:  c.QueryStrings("names"),
+		Limit:  c.QueryInt("limit"),
+		Offset: c.QueryInt("offset"),
 	}
 
-	receivers, err := srv.receiverService.GetReceivers(c.Req.Context(), q, c.SignedInUser)
+	receivers, err := srv.receiverService.ListReceivers(c.Req.Context(), q, c.SignedInUser)
 	if err != nil {
-		if errors.Is(err, notifier.ErrPermissionDenied) {
-			return ErrResp(http.StatusForbidden, err, "permission denied")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "failed to get receiver groups")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get receiver groups", err)
 	}
 
 	return response.JSON(http.StatusOK, receivers)

@@ -1,18 +1,19 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/authn/authntest"
-
+	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -220,7 +221,7 @@ func TestAPIEndpoint_DeleteOrgs(t *testing.T) {
 			expectedIdentity := &authn.Identity{
 				OrgID: 1,
 				Permissions: map[int64]map[string][]string{
-					1: accesscontrol.GroupScopesByAction(tt.permission),
+					1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permission),
 				},
 			}
 
@@ -266,11 +267,12 @@ func TestAPIEndpoint_GetOrg(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			expectedIdentity := &authn.Identity{
-				ID:    authn.MustParseNamespaceID("user:1"),
+				ID:    "1",
+				Type:  claims.TypeUser,
 				OrgID: 1,
 				Permissions: map[int64]map[string][]string{
-					0: accesscontrol.GroupScopesByAction(tt.permissions),
-					1: accesscontrol.GroupScopesByAction(tt.permissions),
+					0: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions),
+					1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions),
 				},
 			}
 

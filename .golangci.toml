@@ -1,5 +1,5 @@
 [run]
-timeout = "10m"
+timeout = "20m"
 concurrency = 10
 
 [linters-settings.exhaustive]
@@ -76,11 +76,6 @@ list-mode = "lax"
 allow = [
   "github.com/grafana/grafana/pkg/apimachinery",
   "github.com/grafana/grafana/pkg/apiserver",
-  "github.com/grafana/grafana/pkg/services/apiserver/utils",
-  "github.com/grafana/grafana/pkg/services/featuremgmt",
-  "github.com/grafana/grafana/pkg/infra/kvstore",
-  "github.com/grafana/grafana/pkg/services/apiserver/options",
-  "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1",
 ]
 deny = [
   { pkg = "github.com/grafana/grafana/pkg", desc = "apiserver is not allowed to import grafana core" }
@@ -103,6 +98,21 @@ files = [
   "**/pkg/apimachinery/**/*"
 ]
 
+[linters-settings.depguard.rules.aggregator]
+list-mode = "lax"
+allow = [
+  "github.com/grafana/grafana/pkg/aggregator",
+  "github.com/grafana/grafana/pkg/semconv",
+  "github.com/grafana/grafana/pkg/apimachinery",
+]
+deny = [
+  { pkg = "github.com/grafana/grafana/pkg", desc = "apimachinery is not allowed to import grafana core" }
+]
+files = [
+  "./pkg/aggregator/*",
+  "./pkg/aggregator/**/*"
+]
+
 [linters-settings.depguard.rules.promlib]
 list-mode = "lax" # allow unless explicitely denied
 deny = [
@@ -112,8 +122,35 @@ allow = [
   "github.com/grafana/grafana/pkg/promlib"
 ]
 files = [
-  "**/pkg/promlib/*",
   "**/pkg/promlib/**/*"
+]
+
+[linters-settings.depguard.rules.storage-unified-resource]
+list-mode = "lax"
+allow = [
+  "github.com/grafana/grafana/pkg/apimachinery",
+]
+deny = [
+  { pkg = "github.com/grafana/grafana/pkg", desc = "pkg/storage/unified/resource is not allowed to import grafana core" }
+]
+files = [
+  "./pkg/storage/unified/resource/*",
+  "./pkg/storage/unified/resource/**/*"
+]
+
+[linters-settings.depguard.rules.storage-unified-apistore]
+list-mode = "lax"
+allow = [
+  "github.com/grafana/grafana/pkg/apimachinery",
+  "github.com/grafana/grafana/pkg/apiserver",
+  "github.com/grafana/grafana/pkg/unified/resource",
+]
+deny = [
+  { pkg = "github.com/grafana/grafana/pkg", desc = "pkg/storage/unified/apistore is not allowed to import grafana core" }
+]
+files = [
+  "./pkg/storage/unified/apistore/*",
+  "./pkg/storage/unified/apistore/**/*"
 ]
 
 [linters-settings.gocritic]
@@ -155,7 +192,6 @@ enable = [
   "revive",
   "staticcheck",
   "stylecheck",
-  "typecheck",
   "unconvert",
   "unused",
   "whitespace",

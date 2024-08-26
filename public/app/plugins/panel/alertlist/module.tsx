@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { DataSourceInstanceSettings, PanelPlugin } from '@grafana/data';
 import { Button, Stack } from '@grafana/ui';
 import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';

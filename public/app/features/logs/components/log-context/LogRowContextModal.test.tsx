@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, waitFor, fireEvent, userEvent } from 'test/test-utils';
 
 import {

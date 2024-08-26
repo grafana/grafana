@@ -21,6 +21,14 @@ export interface CookiePreferences {
   performance?: Record<string, unknown>;
 }
 
+export interface NavbarPreference {
+  bookmarkUrls: Array<string>;
+}
+
+export const defaultNavbarPreference: Partial<NavbarPreference> = {
+  bookmarkUrls: [],
+};
+
 /**
  * Spec defines user, team or org Grafana preferences
  * swagger:model Preferences
@@ -38,6 +46,10 @@ export interface Preferences {
    * Selected language (beta)
    */
   language?: string;
+  /**
+   * Navigation preferences
+   */
+  navbar?: NavbarPreference;
   /**
    * Explore query history preferences
    */

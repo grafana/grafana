@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { createElement, CSSProperties } from 'react';
+import { createElement, CSSProperties } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, ThemeTypographyVariantTypes } from '@grafana/data';
 

@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -43,14 +44,11 @@ func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashI
 		return false, nil
 	}
 
-	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
-
-	if namespaceID != identity.NamespaceUser {
+	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
 		return false, nil
 	}
 
-	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
-
+	userID, err := c.SignedInUser.GetInternalID()
 	if err != nil {
 		return false, err
 	}
@@ -83,8 +81,11 @@ func dashboardGuardianResponse(err error) response.Response {
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response {
+	ctx, span := hs.tracer.Start(c.Req.Context(), "api.GetDashboard")
+	defer span.End()
+
 	uid := web.Params(c.Req)[":uid"]
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, uid)
+	dash, rsp := hs.getDashboardHelper(ctx, c.SignedInUser.GetOrgID(), 0, uid)
 	if rsp != nil {
 		return rsp
 	}
@@ -96,7 +97,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 
 	// If public dashboards is enabled and we have a public dashboard, update meta values
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagPublicDashboards) && hs.Cfg.PublicDashboardsEnabled {
-		publicDashboard, err := hs.PublicDashboardsApi.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.SignedInUser.GetOrgID(), dash.UID)
+		publicDashboard, err := hs.PublicDashboardsApi.PublicDashboardService.FindByDashboardUid(ctx, c.SignedInUser.GetOrgID(), dash.UID)
 		if err != nil && !errors.Is(err, publicdashboardModels.ErrPublicDashboardNotFound) {
 			return response.Error(http.StatusInternalServerError, "Error while retrieving public dashboards", err)
 		}
@@ -119,7 +120,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 			return response.Error(http.StatusInternalServerError, "Error while loading dashboard, dashboard data is invalid", nil)
 		}
 	}
-	guardian, err := guardian.NewByDashboard(c.Req.Context(), dash, c.SignedInUser.GetOrgID(), c.SignedInUser)
+	guardian, err := guardian.NewByDashboard(ctx, dash, c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -139,14 +140,14 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	// Finding creator and last updater of the dashboard
 	updater, creator := anonString, anonString
 	if dash.UpdatedBy > 0 {
-		updater = hs.getUserLogin(c.Req.Context(), dash.UpdatedBy)
+		updater = hs.getUserLogin(ctx, dash.UpdatedBy)
 	}
 	if dash.CreatedBy > 0 {
-		creator = hs.getUserLogin(c.Req.Context(), dash.CreatedBy)
+		creator = hs.getUserLogin(ctx, dash.CreatedBy)
 	}
 
 	annotationPermissions := &dashboardsV0.AnnotationPermission{}
-	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
+	if hs.Features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
 		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID))
 	} else {
 		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
@@ -182,7 +183,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		// nolint:staticcheck
 		query := dashboards.GetDashboardQuery{ID: dash.FolderID, OrgID: c.SignedInUser.GetOrgID()}
 		metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetDashboard).Inc()
-		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
+		queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
 		if err != nil {
 			if errors.Is(err, dashboards.ErrFolderNotFound) {
 				return response.Error(http.StatusNotFound, "Folder not found", err)
@@ -194,7 +195,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		meta.FolderUrl = queryResult.GetURL()
 	}
 
-	provisioningData, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardID(c.Req.Context(), dash.ID)
+	provisioningData, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardID(ctx, dash.ID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error while checking if dashboard is provisioned", err)
 	}
@@ -260,6 +261,9 @@ func (hs *HTTPServer) getUserLogin(ctx context.Context, userID int64) string {
 }
 
 func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id int64, uid string) (*dashboards.Dashboard, response.Response) {
+	ctx, span := hs.tracer.Start(ctx, "api.getDashboardHelper")
+	defer span.End()
+
 	var query dashboards.GetDashboardQuery
 
 	if len(uid) > 0 {
@@ -434,16 +438,13 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "Use folders endpoint for deleting folders.", nil)
 	}
 
-	namespaceID, userIDStr := c.SignedInUser.GetNamespacedID()
-
 	// disconnect all library elements for this dashboard
 	err = hs.LibraryElementService.DisconnectElementsFromDashboard(c.Req.Context(), dash.ID)
 	if err != nil {
 		hs.log.Error(
 			"Failed to disconnect library elements",
 			"dashboard", dash.ID,
-			"namespaceID", namespaceID,
-			"user", userIDStr,
+			"identity", c.GetID(),
 			"error", err)
 	}
 
@@ -510,15 +511,9 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	ctx := c.Req.Context()
 	var err error
 
-	userID := int64(0)
-	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
-	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
-		hs.log.Debug("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", userIDstr)
-	} else {
-		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
-		if err != nil {
-			hs.log.Debug("Error while parsing user ID", "namespaceID", namespaceID, "userID", userIDstr)
-		}
+	var userID int64
+	if id, err := identity.UserIdentifier(c.SignedInUser.GetID()); err == nil {
+		userID = id
 	}
 
 	cmd.OrgID = c.SignedInUser.GetOrgID()
@@ -627,16 +622,9 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 // 401: unauthorisedError
 // 500: internalServerError
 func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Response {
-	userID := int64(0)
-	var err error
-	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
-	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
-		hs.log.Debug("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", userIDstr)
-	} else {
-		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
-		if err != nil {
-			hs.log.Debug("Error while parsing user ID", "namespaceID", namespaceID, "userID", userIDstr)
-		}
+	var userID int64
+	if id, err := identity.UserIdentifier(c.SignedInUser.GetID()); err == nil {
+		userID = id
 	}
 
 	prefsQuery := pref.GetPreferenceWithDefaultsQuery{OrgID: c.SignedInUser.GetOrgID(), UserID: userID, Teams: c.SignedInUser.GetTeams()}
@@ -1004,7 +992,6 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *contextmodel.ReqContext) respons
 	newData := newVersionRes.Data
 
 	result, err := dashdiffs.CalculateDiff(c.Req.Context(), &options, baseData, newData)
-
 	if err != nil {
 		if errors.Is(err, dashver.ErrDashboardVersionNotFound) {
 			return response.Error(http.StatusNotFound, "Dashboard version not found", err)
@@ -1081,15 +1068,9 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 		return response.Error(http.StatusNotFound, "Dashboard version not found", nil)
 	}
 
-	userID := int64(0)
-	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
-	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
-		hs.log.Warn("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", userIDstr)
-	} else {
-		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
-		if err != nil {
-			hs.log.Warn("Error while parsing user ID", "namespaceID", namespaceID, "userID", userIDstr)
-		}
+	var userID int64
+	if id, err := identity.UserIdentifier(c.SignedInUser.GetID()); err == nil {
+		userID = id
 	}
 
 	saveCmd := dashboards.SaveDashboardCommand{}

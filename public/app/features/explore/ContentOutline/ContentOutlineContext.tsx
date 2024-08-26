@@ -1,5 +1,6 @@
 import { uniqueId } from 'lodash';
-import React, { useState, useContext, createContext, ReactNode, useCallback, useRef, useEffect } from 'react';
+import { useState, useContext, createContext, ReactNode, useCallback, useRef, useEffect } from 'react';
+import { SetOptional } from 'type-fest';
 
 import { ContentOutlineItemBaseProps, ITEM_TYPES } from './ContentOutlineItem';
 
@@ -10,13 +11,16 @@ export interface ContentOutlineItemContextProps extends ContentOutlineItemBasePr
   children?: ContentOutlineItemContextProps[];
 }
 
-type RegisterFunction = (outlineItem: Omit<ContentOutlineItemContextProps, 'id'>) => string;
+type RegisterFunction = (outlineItem: SetOptional<ContentOutlineItemContextProps, 'id'>) => string;
 
 export interface ContentOutlineContextProps {
   outlineItems: ContentOutlineItemContextProps[];
   register: RegisterFunction;
   unregister: (id: string) => void;
-  unregisterAllChildren: (parentId: string, childType: ITEM_TYPES) => void;
+  unregisterAllChildren: (
+    parentIdGetter: (items: ContentOutlineItemContextProps[]) => string | undefined,
+    childType: ITEM_TYPES
+  ) => void;
   updateOutlineItems: (newItems: ContentOutlineItemContextProps[]) => void;
   updateItem: (id: string, properties: Partial<Omit<ContentOutlineItemContextProps, 'id'>>) => void;
 }
@@ -41,7 +45,10 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
   const parentlessItemsRef = useRef<ParentlessItems>({});
 
   const register: RegisterFunction = useCallback((outlineItem) => {
-    const id = uniqueId(`${outlineItem.panelId}-${outlineItem.title}-${outlineItem.icon}_`);
+    // Allow the caller to define unique ID so the outlineItem can be differentiated
+    const id = outlineItem.id
+      ? outlineItem.id
+      : uniqueId(`${outlineItem.panelId}-${outlineItem.title}-${outlineItem.icon}_`);
 
     setOutlineItems((prevItems) => {
       if (outlineItem.level === 'root') {
@@ -193,16 +200,23 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
     );
   }, []);
 
-  const unregisterAllChildren = useCallback((parentId: string, childType: ITEM_TYPES) => {
-    setOutlineItems((prevItems) =>
-      prevItems.map((item) => {
-        if (item.id === parentId) {
-          item.children = item.children?.filter((child) => child.type !== childType);
+  const unregisterAllChildren = useCallback(
+    (parentIdGetter: (items: ContentOutlineItemContextProps[]) => string | undefined, childType: ITEM_TYPES) => {
+      setOutlineItems((prevItems) => {
+        const parentId = parentIdGetter(prevItems);
+        if (!parentId) {
+          return prevItems;
         }
-        return item;
-      })
-    );
-  }, []);
+        return prevItems.map((item) => {
+          if (item.id === parentId) {
+            item.children = item.children?.filter((child) => child.type !== childType);
+          }
+          return item;
+        });
+      });
+    },
+    []
+  );
 
   useEffect(() => {
     setOutlineItems((prevItems) => {

@@ -1,6 +1,5 @@
 import { screen, render, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
@@ -154,6 +153,8 @@ describe('NavToolbarActions', () => {
       expect(await screen.findByText('Share')).toBeInTheDocument();
       const newShareButton = screen.queryByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
       expect(newShareButton).not.toBeInTheDocument();
+      const newExportButton = screen.queryByTestId(selectors.pages.Dashboard.DashNav.NewExportButton.container);
+      expect(newExportButton).not.toBeInTheDocument();
     });
     it('Should show new share button when newDashboardSharingComponent FF is enabled', async () => {
       config.featureToggles.newDashboardSharingComponent = true;
@@ -162,6 +163,12 @@ describe('NavToolbarActions', () => {
       expect(await screen.queryByTestId(selectors.pages.Dashboard.DashNav.shareButton)).not.toBeInTheDocument();
       const newShareButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
       expect(newShareButton).toBeInTheDocument();
+    });
+    it('Should show new export button when newDashboardSharingComponent FF is enabled', async () => {
+      config.featureToggles.newDashboardSharingComponent = true;
+      setup();
+      const newExportButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.NewExportButton.container);
+      expect(newExportButton).toBeInTheDocument();
     });
   });
 

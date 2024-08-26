@@ -5,3 +5,5 @@ metadata:
 spec:
     scope: example
     dashboard: xyz
+    dashboardTitle: "Example Dashboard XYZ"
+    groups: ["group2", "group3"]

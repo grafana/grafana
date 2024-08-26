@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { Tooltip, Icon, InteractiveTable, type CellProps, Column } from '@grafana/ui';
 import { LdapRole } from 'app/types';

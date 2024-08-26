@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
 import Tree, { TreeNodeProps } from 'rc-tree';
-import React, { Key, useEffect, useMemo, useState } from 'react';
+import { Key, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';

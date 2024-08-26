@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useEffect } from 'react';
+import { useMemo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, FeatureState } from '@grafana/data';

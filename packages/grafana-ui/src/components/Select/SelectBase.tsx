@@ -1,5 +1,6 @@
 import { t } from 'i18next';
-import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
+import { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
+import * as React from 'react';
 import {
   default as ReactSelect,
   IndicatorsContainerProps,

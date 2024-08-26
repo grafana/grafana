@@ -1,7 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 // eslint-disable-next-line lodash/import-scope
 import lodash from 'lodash';
-import React from 'react';
 
 import { config } from '@grafana/runtime';
 

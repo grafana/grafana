@@ -30,7 +30,6 @@ export function newMetricsTrail(initialDS?: string): DataTrail {
   return new DataTrail({
     initialDS,
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
-    //initialFilters: [{ key: 'job', operator: '=', value: 'grafana' }],
     embedded: false,
   });
 }
@@ -101,7 +100,9 @@ export function getColorByIndex(index: number) {
 export type SceneTimeRangeState = SceneObjectState & {
   from: string;
   to: string;
+  timeZone?: string;
 };
+
 export function isSceneTimeRangeState(state: SceneObjectState): state is SceneTimeRangeState {
   const keys = Object.keys(state);
   return keys.includes('from') && keys.includes('to');

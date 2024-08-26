@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { Field, GrafanaTheme2 } from '@grafana/data/';
 import { InstantQueryRefIdIndex } from '@grafana/prometheus';

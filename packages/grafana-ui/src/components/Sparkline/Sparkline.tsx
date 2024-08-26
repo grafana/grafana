@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { AlignedData, Range } from 'uplot';
 
 import {
@@ -207,6 +207,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         fillColor: customConfig.fillColor,
         lineStyle: customConfig.lineStyle,
         gradientMode: customConfig.gradientMode,
+        spanNulls: customConfig.spanNulls,
       });
     }
 

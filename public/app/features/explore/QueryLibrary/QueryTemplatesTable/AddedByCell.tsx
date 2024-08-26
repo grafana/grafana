@@ -1,18 +1,14 @@
-import React from 'react';
-
-import { Avatar } from '@grafana/ui';
-
 import { useQueryLibraryListStyles } from './styles';
 
-export function AddedByCell() {
+type AddedByCellProps = {
+  user?: string;
+};
+export function AddedByCell(props: AddedByCellProps) {
   const styles = useQueryLibraryListStyles();
 
   return (
     <div>
-      <span className={styles.logo}>
-        <Avatar src="https://secure.gravatar.com/avatar" alt="unknown" />
-      </span>
-      <span className={styles.otherText}>Unknown</span>
+      <span className={styles.otherText}>{props.user || 'Unknown'}</span>
     </div>
   );
 }

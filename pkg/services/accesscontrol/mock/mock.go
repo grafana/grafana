@@ -8,13 +8,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type fullAccessControl interface {
 	accesscontrol.AccessControl
 	accesscontrol.Service
-	plugins.RoleRegistry
+	pluginaccesscontrol.RoleRegistry
 	RegisterFixedRoles(context.Context) error
 }
 
@@ -120,7 +121,7 @@ func (m *Mock) Evaluate(ctx context.Context, usr identity.Requester, evaluator a
 		if err != nil {
 			return false, err
 		}
-		permissions = accesscontrol.GroupScopesByAction(userPermissions)
+		permissions = accesscontrol.GroupScopesByActionContext(ctx, userPermissions)
 	}
 
 	if evaluator.Evaluate(permissions) {

@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	secretsFakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -159,6 +160,62 @@ func TestService_GetForProvider(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name:     "should decrypt secrets for LDAP if data is coming from store",
+			provider: "ldap",
+			setup: func(env testEnv) {
+				env.store.ExpectedSSOSetting = &models.SSOSettings{
+					Provider: "ldap",
+					Settings: map[string]any{
+						"enabled": true,
+						"config": map[string]any{
+							"servers": []any{
+								map[string]any{
+									"host":          "192.168.0.1",
+									"bind_password": base64.RawStdEncoding.EncodeToString([]byte("bind_password_1")),
+									"client_key":    base64.RawStdEncoding.EncodeToString([]byte("client_key_1")),
+								},
+								map[string]any{
+									"host":          "192.168.0.2",
+									"bind_password": base64.RawStdEncoding.EncodeToString([]byte("bind_password_2")),
+									"client_key":    base64.RawStdEncoding.EncodeToString([]byte("client_key_2")),
+								},
+							},
+						},
+					},
+					Source: models.DB,
+				}
+				env.fallbackStrategy.ExpectedIsMatch = true
+				env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{}
+
+				env.secrets.On("Decrypt", mock.Anything, []byte("bind_password_1"), mock.Anything).Return([]byte("decrypted-bind-password-1"), nil).Once()
+				env.secrets.On("Decrypt", mock.Anything, []byte("client_key_1"), mock.Anything).Return([]byte("decrypted-client-key-1"), nil).Once()
+				env.secrets.On("Decrypt", mock.Anything, []byte("bind_password_2"), mock.Anything).Return([]byte("decrypted-bind-password-2"), nil).Once()
+				env.secrets.On("Decrypt", mock.Anything, []byte("client_key_2"), mock.Anything).Return([]byte("decrypted-client-key-2"), nil).Once()
+			},
+			want: &models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled": true,
+					"config": map[string]any{
+						"servers": []any{
+							map[string]any{
+								"host":          "192.168.0.1",
+								"bind_password": "decrypted-bind-password-1",
+								"client_key":    "decrypted-client-key-1",
+							},
+							map[string]any{
+								"host":          "192.168.0.2",
+								"bind_password": "decrypted-bind-password-2",
+								"client_key":    "decrypted-client-key-2",
+							},
+						},
+					},
+				},
+				Source: models.DB,
+			},
+			wantErr: false,
+		},
+		{
 			name:     "should not decrypt secrets if data is coming from the fallback strategy",
 			provider: "github",
 			setup: func(env testEnv) {
@@ -290,7 +347,7 @@ func TestService_GetForProvider(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			env := setupTestEnv(t, true, false, true)
+			env := setupTestEnv(t, true, false, true, true)
 			if tc.setup != nil {
 				tc.setup(env)
 			}
@@ -314,13 +371,15 @@ func TestService_GetForProviderWithRedactedSecrets(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		name    string
-		setup   func(env testEnv)
-		want    *models.SSOSettings
-		wantErr bool
+		name     string
+		provider string
+		setup    func(env testEnv)
+		want     *models.SSOSettings
+		wantErr  bool
 	}{
 		{
-			name: "should return successfully and redact secrets",
+			name:     "should return successfully and redact secrets",
+			provider: "github",
 			setup: func(env testEnv) {
 				env.store.ExpectedSSOSetting = &models.SSOSettings{
 					Provider: "github",
@@ -347,13 +406,67 @@ func TestService_GetForProviderWithRedactedSecrets(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "should return error if store returns an error different than not found",
-			setup:   func(env testEnv) { env.store.ExpectedError = fmt.Errorf("error") },
-			want:    nil,
-			wantErr: true,
+			name:     "should return successfully and redact secrets for LDAP",
+			provider: "ldap",
+			setup: func(env testEnv) {
+				env.store.ExpectedSSOSetting = &models.SSOSettings{
+					Provider: "ldap",
+					Settings: map[string]any{
+						"enabled": true,
+						"config": map[string]any{
+							"servers": []any{
+								map[string]any{
+									"host":          "192.168.0.1",
+									"bind_password": base64.RawStdEncoding.EncodeToString([]byte("bind_password_1")),
+									"client_key":    base64.RawStdEncoding.EncodeToString([]byte("client_key_1")),
+								},
+								map[string]any{
+									"host":          "192.168.0.2",
+									"bind_password": base64.RawStdEncoding.EncodeToString([]byte("bind_password_2")),
+									"client_key":    base64.RawStdEncoding.EncodeToString([]byte("client_key_2")),
+								},
+							},
+						},
+					},
+					Source: models.DB,
+				}
+				env.secrets.On("Decrypt", mock.Anything, []byte("bind_password_1"), mock.Anything).Return([]byte("decrypted-bind-password-1"), nil).Once()
+				env.secrets.On("Decrypt", mock.Anything, []byte("client_key_1"), mock.Anything).Return([]byte("decrypted-client-key-1"), nil).Once()
+				env.secrets.On("Decrypt", mock.Anything, []byte("bind_password_2"), mock.Anything).Return([]byte("decrypted-bind-password-2"), nil).Once()
+				env.secrets.On("Decrypt", mock.Anything, []byte("client_key_2"), mock.Anything).Return([]byte("decrypted-client-key-2"), nil).Once()
+			},
+			want: &models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled": true,
+					"config": map[string]any{
+						"servers": []any{
+							map[string]any{
+								"host":          "192.168.0.1",
+								"bind_password": "*********",
+								"client_key":    "*********",
+							},
+							map[string]any{
+								"host":          "192.168.0.2",
+								"bind_password": "*********",
+								"client_key":    "*********",
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
 		},
 		{
-			name: "should fallback to strategy if store returns not found",
+			name:     "should return error if store returns an error different than not found",
+			provider: "github",
+			setup:    func(env testEnv) { env.store.ExpectedError = fmt.Errorf("error") },
+			want:     nil,
+			wantErr:  true,
+		},
+		{
+			name:     "should fallback to strategy if store returns not found",
+			provider: "github",
 			setup: func(env testEnv) {
 				env.store.ExpectedError = ssosettings.ErrNotFound
 				env.fallbackStrategy.ExpectedIsMatch = true
@@ -371,7 +484,8 @@ func TestService_GetForProviderWithRedactedSecrets(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "should return error if the fallback strategy was not found",
+			name:     "should return error if the fallback strategy was not found",
+			provider: "github",
 			setup: func(env testEnv) {
 				env.store.ExpectedError = ssosettings.ErrNotFound
 				env.fallbackStrategy.ExpectedIsMatch = false
@@ -380,7 +494,8 @@ func TestService_GetForProviderWithRedactedSecrets(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "should return error if fallback strategy returns error",
+			name:     "should return error if fallback strategy returns error",
+			provider: "github",
 			setup: func(env testEnv) {
 				env.store.ExpectedError = ssosettings.ErrNotFound
 				env.fallbackStrategy.ExpectedIsMatch = true
@@ -399,12 +514,12 @@ func TestService_GetForProviderWithRedactedSecrets(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			env := setupTestEnv(t, false, false, false)
+			env := setupTestEnv(t, false, false, false, true)
 			if tc.setup != nil {
 				tc.setup(env)
 			}
 
-			actual, err := env.service.GetForProviderWithRedactedSecrets(context.Background(), "github")
+			actual, err := env.service.GetForProviderWithRedactedSecrets(context.Background(), tc.provider)
 
 			if tc.wantErr {
 				require.Error(t, err)
@@ -550,7 +665,7 @@ func TestService_List(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			env := setupTestEnv(t, false, false, false)
+			env := setupTestEnv(t, false, false, false, false)
 			if tc.setup != nil {
 				tc.setup(env)
 			}
@@ -852,7 +967,7 @@ func TestService_ListWithRedactedSecrets(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			env := setupTestEnv(t, false, false, false)
+			env := setupTestEnv(t, false, false, false, false)
 			if tc.setup != nil {
 				tc.setup(env)
 			}
@@ -876,7 +991,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("successfully upsert SSO settings", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false)
+		env := setupTestEnv(t, false, false, false, false)
 
 		provider := social.AzureADProviderName
 		settings := models.SSOSettings{
@@ -936,10 +1051,80 @@ func TestService_Upsert(t *testing.T) {
 		require.EqualValues(t, settings, env.store.ActualSSOSettings)
 	})
 
+	t.Run("successfully upsert SSO settings for LDAP", func(t *testing.T) {
+		t.Parallel()
+
+		env := setupTestEnv(t, false, false, false, true)
+
+		provider := social.LDAPProviderName
+		settings := models.SSOSettings{
+			Provider: provider,
+			Settings: map[string]any{
+				"enabled": true,
+				"config": map[string]any{
+					"servers": []any{
+						map[string]any{
+							"host":          "192.168.0.1",
+							"bind_password": "bind_password_1",
+							"client_key":    "client_key_1",
+						},
+						map[string]any{
+							"host":          "192.168.0.2",
+							"bind_password": "bind_password_2",
+							"client_key":    "client_key_2",
+						},
+					},
+				},
+			},
+		}
+		var wg sync.WaitGroup
+		wg.Add(1)
+
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		reloadable.On("Validate", mock.Anything, settings, mock.Anything, mock.Anything).Return(nil)
+		reloadable.On("Reload", mock.Anything, mock.MatchedBy(func(settings models.SSOSettings) bool {
+			defer wg.Done()
+			return settings.Provider == provider &&
+				settings.ID == "someid" &&
+				maps.Equal(settings.Settings["config"].(map[string]any)["servers"].([]any)[0].(map[string]any), map[string]any{
+					"host":          "192.168.0.1",
+					"bind_password": "bind_password_1",
+					"client_key":    "client_key_1",
+				}) && maps.Equal(settings.Settings["config"].(map[string]any)["servers"].([]any)[1].(map[string]any), map[string]any{
+				"host":          "192.168.0.2",
+				"bind_password": "bind_password_2",
+				"client_key":    "client_key_2",
+			})
+		})).Return(nil).Once()
+		env.reloadables[provider] = reloadable
+		env.secrets.On("Encrypt", mock.Anything, []byte("bind_password_1"), mock.Anything).Return([]byte("encrypted-bind-password-1"), nil).Once()
+		env.secrets.On("Encrypt", mock.Anything, []byte("bind_password_2"), mock.Anything).Return([]byte("encrypted-bind-password-2"), nil).Once()
+		env.secrets.On("Encrypt", mock.Anything, []byte("client_key_1"), mock.Anything).Return([]byte("encrypted-client-key-1"), nil).Once()
+		env.secrets.On("Encrypt", mock.Anything, []byte("client_key_2"), mock.Anything).Return([]byte("encrypted-client-key-2"), nil).Once()
+
+		env.store.UpsertFn = func(ctx context.Context, settings *models.SSOSettings) error {
+			currentTime := time.Now()
+			settings.ID = "someid"
+			settings.Created = currentTime
+			settings.Updated = currentTime
+
+			env.store.ActualSSOSettings = *settings
+			return nil
+		}
+
+		err := env.service.Upsert(context.Background(), &settings, &user.SignedInUser{})
+		require.NoError(t, err)
+
+		// Wait for the goroutine first to assert the Reload call
+		wg.Wait()
+
+		require.EqualValues(t, settings, env.store.ActualSSOSettings)
+	})
+
 	t.Run("returns error if provider is not configurable", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false)
+		env := setupTestEnv(t, false, false, false, false)
 
 		provider := social.GrafanaComProviderName
 		settings := &models.SSOSettings{
@@ -962,7 +1147,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("returns error if provider was not found in reloadables", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false)
+		env := setupTestEnv(t, false, false, false, false)
 
 		provider := social.AzureADProviderName
 		settings := &models.SSOSettings{
@@ -986,7 +1171,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("returns error if validation fails", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false)
+		env := setupTestEnv(t, false, false, false, false)
 
 		provider := social.AzureADProviderName
 		settings := models.SSOSettings{
@@ -1010,7 +1195,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("returns error if a fallback strategy is not available for the provider", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false)
+		env := setupTestEnv(t, false, false, false, false)
 
 		settings := &models.SSOSettings{
 			Provider: social.AzureADProviderName,
@@ -1031,7 +1216,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("returns error if a secret does not have the type string", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false)
+		env := setupTestEnv(t, false, false, false, false)
 
 		provider := social.OktaProviderName
 		settings := models.SSOSettings{
@@ -1054,7 +1239,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("returns error if secrets encryption failed", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false)
+		env := setupTestEnv(t, false, false, false, false)
 
 		provider := social.OktaProviderName
 		settings := models.SSOSettings{
@@ -1079,7 +1264,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("should not update the current secret if the secret has not been updated", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false)
+		env := setupTestEnv(t, false, false, false, false)
 
 		provider := social.AzureADProviderName
 		settings := models.SSOSettings{
@@ -1123,7 +1308,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("run validation with all new and current secrets available in settings", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false)
+		env := setupTestEnv(t, false, false, false, false)
 
 		provider := social.AzureADProviderName
 		settings := models.SSOSettings{
@@ -1176,7 +1361,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("returns error if store failed to upsert settings", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false)
+		env := setupTestEnv(t, false, false, false, false)
 
 		provider := social.AzureADProviderName
 		settings := models.SSOSettings{
@@ -1208,7 +1393,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("successfully upsert SSO settings if reload fails", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false)
+		env := setupTestEnv(t, false, false, false, false)
 
 		provider := social.AzureADProviderName
 		settings := models.SSOSettings{
@@ -1241,7 +1426,7 @@ func TestService_Delete(t *testing.T) {
 	t.Run("successfully delete SSO settings", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false)
+		env := setupTestEnv(t, false, false, false, false)
 
 		var wg sync.WaitGroup
 		wg.Add(1)
@@ -1279,7 +1464,7 @@ func TestService_Delete(t *testing.T) {
 	t.Run("return error if SSO setting was not found for the specified provider", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false)
+		env := setupTestEnv(t, false, false, false, false)
 
 		provider := social.AzureADProviderName
 		reloadable := ssosettingstests.NewMockReloadable(t)
@@ -1295,7 +1480,7 @@ func TestService_Delete(t *testing.T) {
 	t.Run("should not delete the SSO settings if the provider is not configurable", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false)
+		env := setupTestEnv(t, false, false, false, false)
 		env.cfg.SSOSettingsConfigurableProviders = map[string]bool{social.AzureADProviderName: true}
 
 		provider := social.GrafanaComProviderName
@@ -1308,7 +1493,7 @@ func TestService_Delete(t *testing.T) {
 	t.Run("return error when store fails to delete the SSO settings for the specified provider", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false)
+		env := setupTestEnv(t, false, false, false, false)
 
 		provider := social.AzureADProviderName
 		env.store.ExpectedError = errors.New("delete sso settings failed")
@@ -1321,7 +1506,7 @@ func TestService_Delete(t *testing.T) {
 	t.Run("return successfully when the deletion was successful but reloading the settings fail", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false)
+		env := setupTestEnv(t, false, false, false, false)
 
 		provider := social.AzureADProviderName
 		reloadable := ssosettingstests.NewMockReloadable(t)
@@ -1337,13 +1522,51 @@ func TestService_Delete(t *testing.T) {
 	})
 }
 
+// we might not need this test because it is not testing the public interface
+// it was added for convenient testing of the internal deep copy and remove secrets
+func TestRemoveSecrets(t *testing.T) {
+	settings := map[string]any{
+		"enabled":       true,
+		"client_secret": "client_secret",
+		"config": map[string]any{
+			"servers": []any{
+				map[string]any{
+					"host":          "192.168.0.1",
+					"bind_password": "bind_password_1",
+					"client_key":    "client_key_1",
+				},
+				map[string]any{
+					"host":          "192.168.0.2",
+					"bind_password": "bind_password_2",
+					"client_key":    "client_key_2",
+				},
+			},
+		},
+	}
+
+	copiedSettings := deepCopyMap(settings)
+	copiedSettings["client_secret"] = "client_secret_updated"
+	copiedSettings["config"].(map[string]any)["servers"].([]any)[0].(map[string]any)["bind_password"] = "bind_password_1_updated"
+
+	require.Equal(t, "client_secret", settings["client_secret"])
+	require.Equal(t, "client_secret_updated", copiedSettings["client_secret"])
+	require.Equal(t, "bind_password_1", settings["config"].(map[string]any)["servers"].([]any)[0].(map[string]any)["bind_password"])
+	require.Equal(t, "bind_password_1_updated", copiedSettings["config"].(map[string]any)["servers"].([]any)[0].(map[string]any)["bind_password"])
+
+	settingsWithRedactedSecrets := removeSecrets(settings)
+	require.Equal(t, "client_secret", settings["client_secret"])
+	require.Equal(t, "*********", settingsWithRedactedSecrets["client_secret"])
+	require.Equal(t, "bind_password_1", settings["config"].(map[string]any)["servers"].([]any)[0].(map[string]any)["bind_password"])
+	require.Equal(t, "*********", settingsWithRedactedSecrets["config"].(map[string]any)["servers"].([]any)[0].(map[string]any)["bind_password"])
+}
+
 func TestService_DoReload(t *testing.T) {
 	t.Parallel()
 
 	t.Run("successfully reload settings", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false)
+		env := setupTestEnv(t, false, false, false, false)
 
 		settingsList := []*models.SSOSettings{
 			{
@@ -1383,7 +1606,7 @@ func TestService_DoReload(t *testing.T) {
 	t.Run("successfully reload settings when some providers have empty settings", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false)
+		env := setupTestEnv(t, false, false, false, false)
 
 		settingsList := []*models.SSOSettings{
 			{
@@ -1413,7 +1636,7 @@ func TestService_DoReload(t *testing.T) {
 	t.Run("failed fetching the SSO settings", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, false)
+		env := setupTestEnv(t, false, false, false, false)
 
 		provider := "github"
 
@@ -1457,6 +1680,35 @@ func TestService_decryptSecrets(t *testing.T) {
 				"other_secret":  "decrypted-other-secret",
 				"private_key":   "decrypted-private-key",
 				"certificate":   "decrypted-certificate",
+			},
+		},
+		{
+			name: "should decrypt LDAP secrets successfully",
+			setup: func(env testEnv) {
+				env.secrets.On("Decrypt", mock.Anything, []byte("client_key"), mock.Anything).Return([]byte("decrypted-client-key"), nil).Once()
+				env.secrets.On("Decrypt", mock.Anything, []byte("bind_password"), mock.Anything).Return([]byte("decrypted-bind-password"), nil).Once()
+			},
+			settings: map[string]any{
+				"enabled": true,
+				"config": map[string]any{
+					"servers": []any{
+						map[string]any{
+							"client_key":    base64.RawStdEncoding.EncodeToString([]byte("client_key")),
+							"bind_password": base64.RawStdEncoding.EncodeToString([]byte("bind_password")),
+						},
+					},
+				},
+			},
+			want: map[string]any{
+				"enabled": true,
+				"config": map[string]any{
+					"servers": []any{
+						map[string]any{
+							"client_key":    "decrypted-client-key",
+							"bind_password": "decrypted-bind-password",
+						},
+					},
+				},
 			},
 		},
 		{
@@ -1514,7 +1766,7 @@ func TestService_decryptSecrets(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			env := setupTestEnv(t, false, false, false)
+			env := setupTestEnv(t, false, false, false, false)
 
 			if tc.setup != nil {
 				tc.setup(env)
@@ -1593,7 +1845,7 @@ func Test_ProviderService(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			env := setupTestEnv(t, tc.isLicenseEnabled, true, tc.samlEnabled)
+			env := setupTestEnv(t, tc.isLicenseEnabled, true, tc.samlEnabled, false)
 
 			require.Equal(t, tc.expectedProvidersList, env.service.providersList)
 			require.Equal(t, tc.strategiesLength, len(env.service.fbStrategies))
@@ -1601,13 +1853,13 @@ func Test_ProviderService(t *testing.T) {
 	}
 }
 
-func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies, samlEnabled bool) testEnv {
+func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies, samlEnabled bool, ldapEnabled bool) testEnv {
 	t.Helper()
 
 	store := ssosettingstests.NewFakeStore()
 	fallbackStrategy := ssosettingstests.NewFakeFallbackStrategy()
 	secrets := secretsFakes.NewMockService(t)
-	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 	reloadables := make(map[string]ssosettings.Reloadable)
 
 	fallbackStrategy.ExpectedIsMatch = true
@@ -1631,10 +1883,14 @@ func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies, sam
 	licensing := licensingtest.NewFakeLicensing()
 	licensing.On("FeatureEnabled", "saml").Return(isLicensingEnabled)
 
-	featureManager := featuremgmt.WithManager()
+	features := make([]any, 0)
 	if samlEnabled {
-		featureManager = featuremgmt.WithManager(featuremgmt.FlagSsoSettingsSAML)
+		features = append(features, featuremgmt.FlagSsoSettingsSAML)
 	}
+	if ldapEnabled {
+		features = append(features, featuremgmt.FlagSsoSettingsLDAP)
+	}
+	featureManager := featuremgmt.WithManager(features...)
 
 	svc := ProvideService(
 		cfg,

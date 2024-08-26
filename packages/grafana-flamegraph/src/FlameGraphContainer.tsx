@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import uFuzzy from '@leeoniya/ufuzzy';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
 import { useMeasure } from 'react-use';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';

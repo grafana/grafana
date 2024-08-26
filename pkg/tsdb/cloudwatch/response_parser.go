@@ -110,6 +110,12 @@ func parseLabels(cloudwatchLabel string, query *models.CloudWatchQuery) (string,
 
 	// set Series to the name of the time series as a fallback
 	labels := data.Labels{"Series": name}
+
+	// do not parse labels for raw queries
+	if query.MetricEditorMode == models.MetricEditorModeRaw {
+		return name, labels
+	}
+
 	for _, dim := range dims {
 		values := query.Dimensions[dim]
 		if isSingleValue(values) {

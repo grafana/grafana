@@ -144,11 +144,15 @@ export interface RuleWithLocation<T = RulerRuleDTO> {
   rule: T;
 }
 
-export interface CombinedRuleWithLocation extends CombinedRule {
+// identifier for where we can find a RuleGroup
+export interface RuleGroupIdentifier {
   dataSourceName: string;
+  /** ⚠️ use the Grafana folder UID for Grafana-managed rules */
   namespaceName: string;
   groupName: string;
 }
+
+export type CombinedRuleWithLocation = CombinedRule & RuleGroupIdentifier;
 
 export interface PromRuleWithLocation {
   rule: AlertingRule;
@@ -178,7 +182,15 @@ export interface PrometheusRuleIdentifier {
   ruleHash: string;
 }
 
-export type RuleIdentifier = CloudRuleIdentifier | GrafanaRuleIdentifier | PrometheusRuleIdentifier;
+export type RuleIdentifier = EditableRuleIdentifier | PrometheusRuleIdentifier;
+
+/**
+ * This type is a union of all rule identifiers that should have a ruler API
+ *
+ * We do not support PrometheusRuleIdentifier because vanilla Prometheus has no ruler API
+ */
+export type EditableRuleIdentifier = CloudRuleIdentifier | GrafanaRuleIdentifier;
+
 export interface FilterState {
   queryString?: string;
   dataSource?: string;

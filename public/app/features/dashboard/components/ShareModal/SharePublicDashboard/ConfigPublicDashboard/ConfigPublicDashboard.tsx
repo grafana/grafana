@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data/src';
@@ -265,7 +264,6 @@ export function ConfigPublicDashboard({ publicDashboard, unsupportedDatasources 
           onRevoke={() => {
             DashboardInteractions.revokePublicDashboardClicked();
             showModal(DeletePublicDashboardModal, {
-              dashboardTitle: dashboard.title,
               onConfirm: () => onDeletePublicDashboardClick(hideModal),
               onDismiss: () => {
                 showModal(ShareModal, {

@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -110,10 +111,9 @@ func TestService_AddDataSource(t *testing.T) {
 			dsService.pluginStore = &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{{
 					JSONData: plugins.JSONData{
-						ID:         "test",
-						Type:       plugins.TypeDataSource,
-						Name:       "test",
-						APIVersion: "v0alpha1", // When a value exists in plugin.json, the callbacks will be executed
+						ID:   "test",
+						Type: plugins.TypeDataSource,
+						Name: "test",
 					},
 				}},
 			}
@@ -129,9 +129,6 @@ func TestService_AddDataSource(t *testing.T) {
 						Allowed:     true,
 						ObjectBytes: req.ObjectBytes,
 					}, nil
-				},
-				ConvertObjectFunc: func(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-					return nil, fmt.Errorf("not implemented")
 				},
 			}
 			cmd := &datasources.AddDataSourceCommand{
@@ -150,10 +147,9 @@ func TestService_AddDataSource(t *testing.T) {
 			dsService.pluginStore = &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{{
 					JSONData: plugins.JSONData{
-						ID:         "test",
-						Type:       plugins.TypeDataSource,
-						Name:       "test",
-						APIVersion: "v0alpha1", // When a value exists in plugin.json, the callbacks will be executed
+						ID:   "test",
+						Type: plugins.TypeDataSource,
+						Name: "test",
 					},
 				}},
 			}
@@ -181,9 +177,6 @@ func TestService_AddDataSource(t *testing.T) {
 				MutateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
 					return nil, fmt.Errorf("not implemented")
 				},
-				ConvertObjectFunc: func(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-					return nil, fmt.Errorf("not implemented")
-				},
 			}
 			cmd := &datasources.AddDataSourceCommand{
 				OrgID:      1,
@@ -200,10 +193,9 @@ func TestService_AddDataSource(t *testing.T) {
 			dsService.pluginStore = &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{{
 					JSONData: plugins.JSONData{
-						ID:         "test",
-						Type:       plugins.TypeDataSource,
-						Name:       "test",
-						APIVersion: "v0alpha1", // When a value exists in plugin.json, the callbacks will be executed
+						ID:   "test",
+						Type: plugins.TypeDataSource,
+						Name: "test",
 					},
 				}},
 			}
@@ -224,9 +216,6 @@ func TestService_AddDataSource(t *testing.T) {
 						Allowed:     true,
 						ObjectBytes: pb,
 					}, err
-				},
-				ConvertObjectFunc: func(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-					return nil, fmt.Errorf("not implemented")
 				},
 			}
 			cmd := &datasources.AddDataSourceCommand{
@@ -491,10 +480,9 @@ func TestService_UpdateDataSource(t *testing.T) {
 		dsService.pluginStore = &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{{
 				JSONData: plugins.JSONData{
-					ID:         "test",
-					Type:       plugins.TypeDataSource,
-					Name:       "test",
-					APIVersion: "v0alpha1", // When a value exists in plugin.json, the callbacks will be executed
+					ID:   "test",
+					Type: plugins.TypeDataSource,
+					Name: "test",
 				},
 			}},
 		}
@@ -513,9 +501,6 @@ func TestService_UpdateDataSource(t *testing.T) {
 					Allowed:     true,
 					ObjectBytes: req.ObjectBytes,
 				}, nil
-			},
-			ConvertObjectFunc: func(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-				return nil, fmt.Errorf("not implemented")
 			},
 		}
 		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
@@ -574,7 +559,11 @@ func TestService_DeleteDataSource(t *testing.T) {
 		permissionSvc.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil).Once()
 		permissionSvc.On("DeleteResourcePermissions", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, featuremgmt.WithFeatures(), acmock.New(), permissionSvc, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
+		f := ini.Empty()
+		f.Section("rbac").Key("resources_with_managed_permissions_on_creation").SetValue("datasource")
+		cfg, err := setting.NewCfgFromINIFile(f)
+		require.NoError(t, err)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), permissionSvc, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
 		require.NoError(t, err)
 
 		// First add the datasource
@@ -1503,9 +1492,6 @@ func initDSService(t *testing.T) *Service {
 				Allowed:     true,
 				ObjectBytes: req.ObjectBytes,
 			}, nil
-		},
-		ConvertObjectFunc: func(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-			return nil, fmt.Errorf("not implemented")
 		},
 	}, plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
 	require.NoError(t, err)

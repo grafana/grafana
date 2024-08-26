@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { merge } from 'lodash';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { TableCellOptions } from '@grafana/schema';
@@ -9,6 +9,7 @@ import { Field, Select, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
 import { AutoCellOptionsEditor } from './cells/AutoCellOptionsEditor';
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
+import { ImageCellOptionsEditor } from './cells/ImageCellOptionsEditor';
 import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
 
 // The props that any cell type editor are expected
@@ -72,6 +73,9 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       )}
       {cellType === TableCellDisplayMode.Sparkline && (
         <SparklineCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+      )}
+      {cellType === TableCellDisplayMode.Image && (
+        <ImageCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
     </div>
   );

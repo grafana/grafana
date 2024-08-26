@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { AppEvents, GrafanaTheme2, LoadingState, NavModelItem } from '@grafana/data';

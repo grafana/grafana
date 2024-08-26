@@ -39,52 +39,75 @@ You can control permissions for library panels using [role-based access control 
 
 When you create a library panel, the panel on the source dashboard is converted to a library panel as well. You need to save the original dashboard once a panel is converted.
 
-1. Open a panel in edit mode.
-1. In the panel display options, click the down arrow option to bring changes to the visualization.
-   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-create-lib-panel-from-edit-9-5.png" class="docs-image--no-shadow" max-width= "800px" alt="Library panels tab of the panel editor pane" >}}
-1. Click **Library panels**, and then click **+ Create library panel** to open the create dialog.
+1. Click **Edit** in the top-right corner of the dashboard.
+1. On the panel you want to update, hover over any part of the panel to display the menu icon on the top-right corner.
+1. Click the menu icon and select **More > Create library panel**.
 1. In **Library panel name**, enter the name.
 1. In **Save in folder**, select the folder to save the library panel.
-1. Click **Create library panel** to save your changes.
-1. Save the dashboard.
+1. Click **Create library panel**.
+1. Click **Save dashboard** and **Exit edit**.
 
 Once created, you can modify the library panel using any dashboard on which it appears. After you save the changes, all instances of the library panel reflect these modifications.
-
-You can also create a library panel directly from the edit menu of any panel.
-
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-create-from-more-9-5.png" class="docs-image--no-shadow" max-width= "900px" alt="Create library panel option in the panel menu" >}}
 
 ## Add a library panel to a dashboard
 
 Add a Grafana library panel to a dashboard when you want to provide visualizations to other dashboard users.
 
-1. Click **Dashboards** in the left-side menu.
+1. Click **Dashboards** in the main menu.
 1. Click **New** and select **New Dashboard** in the dropdown.
-1. On the empty dashboard, click **+ Import library panel**.
+1. On the empty dashboard, click **+ Add library panel**.
 
-   You will see a list of your library panels.
+   You'll see a list of your library panels.
 
 1. Filter the list or search to find the panel you want to add.
 1. Click a panel to add it to the dashboard.
+1. Click **Save dashboard**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
 
 ## Unlink a library panel
 
 Unlink a library panel when you want to make a change to the panel and not affect other instances of the library panel.
 
-1. Click **Dashboards** in the left-side menu.
+1. Click **Dashboards** in the main menu.
+1. Click **Library panels**.
+1. Select a library panel that is being used in dashboards.
+1. Click the panel you want to unlink.
+1. In the dialog box, select the dashboard from which you want to unlink the panel.
+1. Click **View panel in \<dashboard name\>**.
+1. Click **Edit** in the top-right corner of the dashboard.
+1. Hover over any part of the panel you want to unlink to display the menu icon on the top-right corner.
+1. Click the menu icon and select **More > Unlink library panel**.
+1. Click **Yes, unlink**.
+1. Click **Save dashboard** and **Exit edit**.
+
+Alternatively, if you know where the library panel is being used, you can go directly to that dashboard and start at step 7.
+
+## Replace a library panel
+
+To replace a library panel with a different one, follow these steps:
+
+1. Click **Dashboards** in the main menu.
 1. Click **Library panels**.
 1. Select a library panel that is being used in different dashboards.
-1. Select the panel you want to unlink.
-1. Hover over any part of the panel to display the actions menu on the top right corner.
-1. Click the menu and select **Edit**.
-1. Click **Unlink** on the top right corner of the page.
-1. Click **Yes, unlink**.
+1. Click the panel you want to unlink.
+1. In the dialog box, select the dashboard from which you want to unlink the panel.
+1. Click **View panel in \<dashboard name\>**.
+1. Click **Edit** in the top-right corner of the dashboard.
+1. Hover over any part of the panel you want to unlink to display the menu icon on the top-right corner.
+1. Click the menu icon and select **More > Replace library panel**.
+1. Select the replacement library panel.
+1. Click **Save dashboard**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save** and **Exit edit**.
+
+Alternatively, if you know where the library panel that you want to replace is being used, you can go directly to that dashboard and start at step 7.
 
 ## View a list of library panels
 
-You can view a list of available library panels and search for a library panel.
+You can view a list of available library panels and see where those panels are being used.
 
-1. Click **Dashboards** in the left-side menu.
+1. Click **Dashboards** in the main menu.
 1. Click **Library panels**.
 
    You can see a list of previously defined library panels.
@@ -94,10 +117,14 @@ You can view a list of available library panels and search for a library panel.
 
    You can also filter the panels by folder or type.
 
+1. Click the panel to see if it's being used in any dashboards.
+1. (Optional) If the library panel is in use, select one of the dashboards using it.
+1. (Optional) Click **View panel in \<dashboard name\>** to see the panel in context.
+
 ## Delete a library panel
 
 Delete a library panel when you no longer need it.
 
-1. Click **Dashboards** in the left-side menu.
+1. Click **Dashboards** in the main menu.
 1. Click **Library panels**.
 1. Click the delete icon next to the library panel name.

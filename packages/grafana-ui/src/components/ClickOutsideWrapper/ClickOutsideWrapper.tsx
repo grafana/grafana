@@ -1,4 +1,5 @@
-import React, { PureComponent, createRef } from 'react';
+import { PureComponent, createRef } from 'react';
+import * as React from 'react';
 
 export interface Props {
   /**

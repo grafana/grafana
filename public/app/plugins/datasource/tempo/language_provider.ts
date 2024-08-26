@@ -1,4 +1,6 @@
 import { LanguageProvider, SelectableValue } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
+import { VariableFormatID } from '@grafana/schema';
 
 import { getAllTags, getTagsByScope, getUnscopedTags } from './SearchTraceQLEditor/utils';
 import { TraceqlSearchScope } from './dataquery.gen';
@@ -132,7 +134,10 @@ export default class TempoLanguageProvider extends LanguageProvider {
 
   async getOptionsV2(tag: string, query?: string): Promise<Array<SelectableValue<string>>> {
     const encodedTag = this.encodeTag(tag);
-    const response = await this.request(`/api/v2/search/tag/${encodedTag}/values`, query ? { q: query } : {});
+    const response = await this.request(
+      `/api/v2/search/tag/${encodedTag}/values`,
+      query ? { q: getTemplateSrv().replace(query, {}, VariableFormatID.Pipe) } : {}
+    );
     let options: Array<SelectableValue<string>> = [];
     if (response && response.tagValues) {
       response.tagValues.forEach((v: { type: string; value?: string }) => {

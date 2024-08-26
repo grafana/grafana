@@ -1,12 +1,10 @@
-import {
-  DataLink,
-  Field,
-  FieldOverrideContext,
-  SelectableValue,
-  SliderMarks,
-  ThresholdsConfig,
-  ValueMapping,
-} from '../../types';
+import { Field } from '../../types/dataFrame';
+import { DataLink } from '../../types/dataLink';
+import { FieldOverrideContext } from '../../types/fieldOverrides';
+import { SelectableValue } from '../../types/select';
+import { SliderMarks } from '../../types/slider';
+import { ThresholdsConfig } from '../../types/thresholds';
+import { ValueMapping } from '../../types/valueMapping';
 
 export const identityOverrideProcessor = <T>(value: T) => {
   return value;

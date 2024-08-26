@@ -4,14 +4,7 @@ import { DataQueryRequest, DataSourceApi, DataSourceInstanceSettings, LoadingSta
 import { calculateFieldTransformer } from '@grafana/data/src/transformations/transformers/calculateField';
 import { mockTransformationsRegistry } from '@grafana/data/src/utils/tests/mockTransformationsRegistry';
 import { config, locationService } from '@grafana/runtime';
-import {
-  LocalValueVariable,
-  SceneGridRow,
-  SceneQueryRunner,
-  SceneVariableSet,
-  VizPanel,
-  sceneGraph,
-} from '@grafana/scenes';
+import { LocalValueVariable, SceneGridRow, SceneVariableSet, VizPanel, sceneGraph } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { InspectTab } from 'app/features/inspector/types';
@@ -193,93 +186,80 @@ jest.useFakeTimers();
 
 describe('VizPanelManager', () => {
   describe('When changing plugin', () => {
-    it('Should successfully change from one viz type to another', () => {
+    it('Should set the cache', () => {
       const { vizPanelManager } = setupTest('panel-1');
+      vizPanelManager.state.panel.changePluginType = jest.fn();
+
       expect(vizPanelManager.state.panel.state.pluginId).toBe('timeseries');
+
       vizPanelManager.changePluginType('table');
 
-      expect(vizPanelManager.state.panel.state.pluginId).toBe('table');
+      expect(vizPanelManager['_cachedPluginOptions']['timeseries']?.options).toBe(
+        vizPanelManager.state.panel.state.options
+      );
+      expect(vizPanelManager['_cachedPluginOptions']['timeseries']?.fieldConfig).toBe(
+        vizPanelManager.state.panel.state.fieldConfig
+      );
     });
 
-    it('Should clear custom options', () => {
-      const overrides = [
+    it('Should preserve correct field config', () => {
+      const { vizPanelManager } = setupTest('panel-1');
+      const mockFn = jest.fn();
+      vizPanelManager.state.panel.changePluginType = mockFn;
+      const fieldConfig = vizPanelManager.state.panel.state.fieldConfig;
+      fieldConfig.defaults = {
+        ...fieldConfig.defaults,
+        unit: 'flop',
+        decimals: 2,
+      };
+      fieldConfig.overrides = [
         {
-          matcher: { id: 'matcherOne' },
-          properties: [{ id: 'custom.propertyOne' }, { id: 'custom.propertyTwo' }, { id: 'standardProperty' }],
+          matcher: {
+            id: 'byName',
+            options: 'A-series',
+          },
+          properties: [
+            {
+              id: 'displayName',
+              value: 'test',
+            },
+          ],
+        },
+        {
+          matcher: { id: 'byName', options: 'D-series' },
+          //should be removed because it's custom
+          properties: [
+            {
+              id: 'custom.customPropNoExist',
+              value: 'google',
+            },
+          ],
         },
       ];
-      const vizPanel = new VizPanel({
-        title: 'Panel A',
-        key: 'panel-1',
-        pluginId: 'table',
-        $data: new SceneQueryRunner({
-          key: 'data-query-runner',
-          datasource: {
-            type: 'grafana-testdata-datasource',
-            uid: 'gdev-testdata',
-          },
-          queries: [{ refId: 'A' }],
-        }),
-        options: undefined,
-        fieldConfig: {
-          defaults: {
-            custom: 'Custom',
-          },
-          overrides,
-        },
+      vizPanelManager.state.panel.setState({
+        fieldConfig: fieldConfig,
       });
 
-      new DashboardGridItem({
-        body: vizPanel,
-      });
-
-      const vizPanelManager = VizPanelManager.createFor(vizPanel);
-
-      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toBe('Custom');
-      expect(vizPanelManager.state.panel.state.fieldConfig.overrides).toBe(overrides);
-
-      vizPanelManager.changePluginType('timeseries');
-
-      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toStrictEqual({});
-      expect(vizPanelManager.state.panel.state.fieldConfig.overrides[0].properties).toHaveLength(1);
-      expect(vizPanelManager.state.panel.state.fieldConfig.overrides[0].properties[0].id).toBe('standardProperty');
-    });
-
-    it('Should restore cached options/fieldConfig if they exist', () => {
-      const vizPanel = new VizPanel({
-        title: 'Panel A',
-        key: 'panel-1',
-        pluginId: 'table',
-        $data: new SceneQueryRunner({
-          key: 'data-query-runner',
-          datasource: {
-            type: 'grafana-testdata-datasource',
-            uid: 'gdev-testdata',
-          },
-          queries: [{ refId: 'A' }],
-        }),
-        options: {
-          customOption: 'A',
-        },
-        fieldConfig: { defaults: { custom: 'Custom' }, overrides: [] },
-      });
-
-      new DashboardGridItem({
-        body: vizPanel,
-      });
-
-      const vizPanelManager = VizPanelManager.createFor(vizPanel);
-
-      vizPanelManager.changePluginType('timeseries');
-      //@ts-ignore
-      expect(vizPanelManager.state.panel.state.options['customOption']).toBeUndefined();
-      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toStrictEqual({});
+      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.color?.mode).toBe('palette-classic');
+      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.thresholds?.mode).toBe('absolute');
+      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.unit).toBe('flop');
+      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.decimals).toBe(2);
+      expect(vizPanelManager.state.panel.state.fieldConfig.overrides).toHaveLength(2);
+      expect(vizPanelManager.state.panel.state.fieldConfig.overrides[1].properties).toHaveLength(1);
+      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toHaveProperty('axisBorderShow');
 
       vizPanelManager.changePluginType('table');
 
-      //@ts-ignore
-      expect(vizPanelManager.state.panel.state.options['customOption']).toBe('A');
-      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toBe('Custom');
+      expect(mockFn).toHaveBeenCalled();
+      expect(mockFn.mock.calls[0][2].defaults.color?.mode).toBe('palette-classic');
+      expect(mockFn.mock.calls[0][2].defaults.thresholds?.mode).toBe('absolute');
+      expect(mockFn.mock.calls[0][2].defaults.unit).toBe('flop');
+      expect(mockFn.mock.calls[0][2].defaults.decimals).toBe(2);
+      expect(mockFn.mock.calls[0][2].overrides).toHaveLength(2);
+      //removed custom property
+      expect(mockFn.mock.calls[0][2].overrides[1].properties).toHaveLength(0);
+      //removed fieldConfig custom values as well
+      expect(mockFn.mock.calls[0][2].defaults.custom).toStrictEqual({});
     });
   });
 

@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 
 import { FeatureState, SelectableValue, getBuiltInThemes, ThemeRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -72,6 +73,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       weekStart: '',
       language: '',
       queryHistory: { homeTab: '' },
+      navbar: { bookmarkUrls: [] },
     };
 
     this.themeOptions = getBuiltInThemes(config.featureToggles.extraThemes).map((theme) => ({
@@ -93,6 +95,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       weekStart: prefs.weekStart,
       language: prefs.language,
       queryHistory: prefs.queryHistory,
+      navbar: prefs.navbar,
     });
   }
 
@@ -101,8 +104,8 @@ export class SharedPreferences extends PureComponent<Props, State> {
     const confirmationResult = this.props.onConfirm ? await this.props.onConfirm() : true;
 
     if (confirmationResult) {
-      const { homeDashboardUID, theme, timezone, weekStart, language, queryHistory } = this.state;
-      await this.service.update({ homeDashboardUID, theme, timezone, weekStart, language, queryHistory });
+      const { homeDashboardUID, theme, timezone, weekStart, language, queryHistory, navbar } = this.state;
+      await this.service.update({ homeDashboardUID, theme, timezone, weekStart, language, queryHistory, navbar });
       window.location.reload();
     }
   };

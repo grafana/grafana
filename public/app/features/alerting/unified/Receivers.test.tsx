@@ -1,4 +1,3 @@
-import React from 'react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { render, screen, waitFor, userEvent } from 'test/test-utils';
 

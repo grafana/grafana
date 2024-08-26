@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
-import React, { createRef, PureComponent } from 'react';
+import { createRef, PureComponent } from 'react';
+import * as React from 'react';
 import ReactDOM from 'react-dom';
 import { FixedSizeList } from 'react-window';
 
@@ -220,7 +221,7 @@ class Portal extends PureComponent<React.PropsWithChildren<PortalProps>, {}> {
     const { index = 0, origin = 'query', style } = props;
     this.node = document.createElement('div');
     this.node.setAttribute('style', style);
-    this.node.classList.add(`slate-typeahead`, `slate-typeahead-${origin}-${index}`);
+    this.node.classList.add(`slate-typeahead-${origin}-${index}`);
     document.body.appendChild(this.node);
   }
 
@@ -243,8 +244,18 @@ class Portal extends PureComponent<React.PropsWithChildren<PortalProps>, {}> {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   typeahead: css({
-    maxHeight: 300,
-    overflowY: 'auto',
+    position: 'relative',
+    zIndex: theme.zIndex.typeahead,
+    borderRadius: theme.shape.radius.default,
+    border: `1px solid ${theme.components.panel.borderColor}`,
+    maxHeight: '66vh',
+    overflowY: 'scroll',
+    overflowX: 'hidden',
+    outline: 'none',
+    listStyle: 'none',
+    background: theme.components.panel.background,
+    color: theme.colors.text.primary,
+    boxShadow: theme.shadows.z2,
 
     strong: {
       color: theme.v1.palette.yellow,

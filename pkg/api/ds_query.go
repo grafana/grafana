@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -43,12 +43,12 @@ func (hs *HTTPServer) getDSQueryEndpoint() web.Handler {
 		// rewrite requests from /ds/query to the new query service
 		namespaceMapper := request.GetNamespaceMapper(hs.Cfg)
 		return func(w http.ResponseWriter, r *http.Request) {
-			user, err := appcontext.User(r.Context())
+			user, err := identity.GetRequester(r.Context())
 			if err != nil || user == nil {
 				errhttp.Write(r.Context(), fmt.Errorf("no user"), w)
 				return
 			}
-			r.URL.Path = "/apis/query.grafana.app/v0alpha1/namespaces/" + namespaceMapper(user.OrgID) + "/query"
+			r.URL.Path = "/apis/query.grafana.app/v0alpha1/namespaces/" + namespaceMapper(user.GetOrgID()) + "/query"
 			hs.clientConfigProvider.DirectlyServeHTTP(w, r)
 		}
 	}
@@ -84,19 +84,15 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 }
 
 func (hs *HTTPServer) toJsonStreamingResponse(ctx context.Context, qdr *backend.QueryDataResponse) response.Response {
-	statusWhenError := http.StatusBadRequest
-	if hs.Features.IsEnabled(ctx, featuremgmt.FlagDatasourceQueryMultiStatus) {
-		statusWhenError = http.StatusMultiStatus
-	}
-
 	statusCode := http.StatusOK
 	for _, res := range qdr.Responses {
 		if res.Error != nil {
-			statusCode = statusWhenError
+			statusCode = http.StatusBadRequest
+			break
 		}
 	}
 
-	if statusCode == statusWhenError {
+	if statusCode == http.StatusBadRequest {
 		// an error in the response we treat as downstream.
 		requestmeta.WithDownstreamStatusSource(ctx)
 	}

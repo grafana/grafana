@@ -1,4 +1,4 @@
-import { CoreApp, LoadingState, getDefaultTimeRange } from '@grafana/data';
+import { CoreApp, LoadingState, getDefaultTimeRange, store } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   sceneGraph,
@@ -14,6 +14,7 @@ import {
 } from '@grafana/scenes';
 import { Dashboard, DashboardCursorSync, LibraryPanel } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
+import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 
@@ -620,7 +621,7 @@ describe('DashboardScene', () => {
 
         scene.copyPanel(vizPanel);
 
-        expect(scene.state.hasCopiedPanel).toBe(false);
+        expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
       });
 
       it('Should fail to copy a library panel if it does not have a grid item parent', () => {
@@ -638,14 +639,14 @@ describe('DashboardScene', () => {
 
         scene.copyPanel(libVizPanel.state.panel as VizPanel);
 
-        expect(scene.state.hasCopiedPanel).toBe(false);
+        expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
       });
 
       it('Should copy a panel', () => {
         const vizPanel = ((scene.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state.body;
         scene.copyPanel(vizPanel as VizPanel);
 
-        expect(scene.state.hasCopiedPanel).toBe(true);
+        expect(store.exists(LS_PANEL_COPY_KEY)).toBe(true);
       });
 
       it('Should copy a library viz panel', () => {
@@ -654,11 +655,11 @@ describe('DashboardScene', () => {
 
         scene.copyPanel(libVizPanel.state.panel as VizPanel);
 
-        expect(scene.state.hasCopiedPanel).toBe(true);
+        expect(store.exists(LS_PANEL_COPY_KEY)).toBe(true);
       });
 
       it('Should paste a panel', () => {
-        scene.setState({ hasCopiedPanel: true });
+        store.set(LS_PANEL_COPY_KEY, JSON.stringify({ key: 'panel-7' }));
         jest.spyOn(JSON, 'parse').mockReturnThis();
         jest.mocked(buildGridItemForPanel).mockReturnValue(
           new DashboardGridItem({
@@ -680,11 +681,11 @@ describe('DashboardScene', () => {
         expect(body.state.children.length).toBe(6);
         expect(gridItem.state.body!.state.key).toBe('panel-7');
         expect(gridItem.state.y).toBe(0);
-        expect(scene.state.hasCopiedPanel).toBe(false);
+        expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
       });
 
       it('Should paste a library viz panel', () => {
-        scene.setState({ hasCopiedPanel: true });
+        store.set(LS_PANEL_COPY_KEY, JSON.stringify({ key: 'panel-7' }));
         jest.spyOn(JSON, 'parse').mockReturnValue({ libraryPanel: { uid: 'uid', name: 'libraryPanel' } });
         jest.mocked(buildGridItemForLibPanel).mockReturnValue(
           new DashboardGridItem({
@@ -709,7 +710,7 @@ describe('DashboardScene', () => {
         expect(libVizPanel.state.panelKey).toBe('panel-7');
         expect(libVizPanel.state.panel?.state.key).toBe('panel-7');
         expect(gridItem.state.y).toBe(0);
-        expect(scene.state.hasCopiedPanel).toBe(false);
+        expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
       });
 
       it('Should remove a panel', () => {

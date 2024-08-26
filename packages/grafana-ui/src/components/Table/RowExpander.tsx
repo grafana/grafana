@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Icon } from '../Icon/Icon';
 
 import { TableStyles } from './styles';

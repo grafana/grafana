@@ -185,3 +185,6 @@ The following image shows a table visualization with value mappings. If you want
 1. Click **Update** to save the value mapping.
 
 After you've added a mapping, the **Edit value mappings** button replaces the **Add value mappings** button. Click the edit button to add or update mappings.
+
+1. Click **Save dashboard**.
+1. Click **Back to dashboard** and then **Exit edit**.

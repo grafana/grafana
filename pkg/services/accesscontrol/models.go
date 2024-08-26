@@ -26,8 +26,9 @@ var (
 // RoleRegistration stores a role and its assignments to built-in roles
 // (Viewer, Editor, Admin, Grafana Admin)
 type RoleRegistration struct {
-	Role   RoleDTO
-	Grants []string
+	Role    RoleDTO
+	Grants  []string
+	Exclude []string
 }
 
 // Role is the model for Role in RBAC.
@@ -214,19 +215,7 @@ func (p Permission) OSSPermission() Permission {
 
 // SplitScope returns kind, attribute and Identifier
 func (p Permission) SplitScope() (string, string, string) {
-	if p.Scope == "" {
-		return "", "", ""
-	}
-
-	fragments := strings.Split(p.Scope, ":")
-	switch l := len(fragments); l {
-	case 1: // Splitting a wildcard scope "*" -> kind: "*"; attribute: "*"; identifier: "*"
-		return fragments[0], fragments[0], fragments[0]
-	case 2: // Splitting a wildcard scope with specified kind "dashboards:*" -> kind: "dashboards"; attribute: "*"; identifier: "*"
-		return fragments[0], fragments[1], fragments[1]
-	default: // Splitting a scope with all fields specified "dashboards:uid:my_dash" -> kind: "dashboards"; attribute: "uid"; identifier: "my_dash"
-		return fragments[0], fragments[1], strings.Join(fragments[2:], ":")
-	}
+	return SplitScope(p.Scope)
 }
 
 type GetUserPermissionsQuery struct {
@@ -304,7 +293,7 @@ func (cmd *SaveExternalServiceRoleCommand) Validate() error {
 	cmd.ExternalServiceID = slugify.Slugify(cmd.ExternalServiceID)
 
 	// Check and deduplicate permissions
-	if cmd.Permissions == nil || len(cmd.Permissions) == 0 {
+	if len(cmd.Permissions) == 0 {
 		return errors.New("no permissions provided")
 	}
 	dedupMap := map[Permission]bool{}
@@ -450,8 +439,9 @@ const (
 	ActionAlertingNotificationsWrite = "alert.notifications:write"
 
 	// Alerting notifications time interval actions
-	ActionAlertingNotificationsTimeIntervalsRead  = "alert.notifications.time-intervals:read"
-	ActionAlertingNotificationsTimeIntervalsWrite = "alert.notifications.time-intervals:write"
+	ActionAlertingNotificationsTimeIntervalsRead   = "alert.notifications.time-intervals:read"
+	ActionAlertingNotificationsTimeIntervalsWrite  = "alert.notifications.time-intervals:write"
+	ActionAlertingNotificationsTimeIntervalsDelete = "alert.notifications.time-intervals:delete"
 
 	// Alerting receiver actions
 	ActionAlertingReceiversList        = "alert.notifications.receivers:list"

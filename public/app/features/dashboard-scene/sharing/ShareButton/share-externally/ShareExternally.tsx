@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
@@ -38,7 +38,7 @@ export const getAnyOneWithTheLinkShareOption = () => {
     label: t('public-dashboard.share-externally.public-share-type-option-label', 'Anyone with the link'),
     description: t(
       'public-dashboard.share-externally.public-share-type-option-description',
-      'Anyone with the link can access'
+      'Anyone with the link can access dashboard'
     ),
     value: PublicDashboardShareType.PUBLIC,
     icon: 'globe',
@@ -49,7 +49,7 @@ const getOnlySpecificPeopleShareOption = () => ({
   label: t('public-dashboard.share-externally.email-share-type-option-label', 'Only specific people'),
   description: t(
     'public-dashboard.share-externally.email-share-type-option-description',
-    'Only people with access can open with the link'
+    'Only people with the link can access dashboard'
   ),
   value: PublicDashboardShareType.EMAIL,
   icon: 'users-alt',

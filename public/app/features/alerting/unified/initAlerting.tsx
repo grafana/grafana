@@ -1,4 +1,4 @@
-import React from 'react';
+import { lazy, Suspense } from 'react';
 
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -8,7 +8,7 @@ import { addCustomRightAction } from '../../dashboard/components/DashNav/DashNav
 import { getRulesPermissions } from './utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
-const AlertRulesToolbarButton = React.lazy(
+const AlertRulesToolbarButton = lazy(
   () => import(/* webpackChunkName: "alert-rules-toolbar-button" */ './integration/AlertRulesToolbarButton')
 );
 
@@ -21,9 +21,9 @@ export function initAlerting() {
       show: () => alertingEnabled,
       component: ({ dashboard }) =>
         alertingEnabled ? (
-          <React.Suspense fallback={null} key="alert-rules-button">
+          <Suspense fallback={null} key="alert-rules-button">
             {dashboard && <AlertRulesToolbarButton dashboardUid={dashboard.uid} />}
-          </React.Suspense>
+          </Suspense>
         ) : null,
       index: -2,
     });

@@ -14,7 +14,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
-	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -96,72 +96,6 @@ func TestContextWithTimeoutFromRequest(t *testing.T) {
 		require.Error(t, err, "exceeded maximum timeout")
 		require.Nil(t, cancelFunc)
 		require.Nil(t, ctx)
-	})
-}
-
-func TestStatusForTestReceivers(t *testing.T) {
-	t.Run("assert HTTP 400 Status Bad Request for no receivers", func(t *testing.T) {
-		require.Equal(t, http.StatusBadRequest, statusForTestReceivers([]notifier.TestReceiverResult{}))
-	})
-
-	t.Run("assert HTTP 400 Bad Request when all invalid receivers", func(t *testing.T) {
-		require.Equal(t, http.StatusBadRequest, statusForTestReceivers([]notifier.TestReceiverResult{{
-			Name: "test1",
-			Configs: []notifier.TestReceiverConfigResult{{
-				Name:   "test1",
-				UID:    "uid1",
-				Status: "failed",
-				Error:  alertingNotify.IntegrationValidationError{},
-			}},
-		}, {
-			Name: "test2",
-			Configs: []notifier.TestReceiverConfigResult{{
-				Name:   "test2",
-				UID:    "uid2",
-				Status: "failed",
-				Error:  alertingNotify.IntegrationValidationError{},
-			}},
-		}}))
-	})
-
-	t.Run("assert HTTP 408 Request Timeout when all receivers timed out", func(t *testing.T) {
-		require.Equal(t, http.StatusRequestTimeout, statusForTestReceivers([]notifier.TestReceiverResult{{
-			Name: "test1",
-			Configs: []notifier.TestReceiverConfigResult{{
-				Name:   "test1",
-				UID:    "uid1",
-				Status: "failed",
-				Error:  alertingNotify.IntegrationTimeoutError{},
-			}},
-		}, {
-			Name: "test2",
-			Configs: []notifier.TestReceiverConfigResult{{
-				Name:   "test2",
-				UID:    "uid2",
-				Status: "failed",
-				Error:  alertingNotify.IntegrationTimeoutError{},
-			}},
-		}}))
-	})
-
-	t.Run("assert 207 Multi Status for different errors", func(t *testing.T) {
-		require.Equal(t, http.StatusMultiStatus, statusForTestReceivers([]notifier.TestReceiverResult{{
-			Name: "test1",
-			Configs: []notifier.TestReceiverConfigResult{{
-				Name:   "test1",
-				UID:    "uid1",
-				Status: "failed",
-				Error:  alertingNotify.IntegrationValidationError{},
-			}},
-		}, {
-			Name: "test2",
-			Configs: []notifier.TestReceiverConfigResult{{
-				Name:   "test2",
-				UID:    "uid2",
-				Status: "failed",
-				Error:  alertingNotify.IntegrationTimeoutError{},
-			}},
-		}}))
 	})
 }
 
@@ -631,9 +565,9 @@ func createSut(t *testing.T) AlertmanagerSrv {
 	}
 	mam := createMultiOrgAlertmanager(t, configs)
 	log := log.NewNopLogger()
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 	ruleStore := ngfakes.NewRuleStore(t)
-	ruleAuthzService := accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures()))
+	ruleAuthzService := accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()))
 	return AlertmanagerSrv{
 		mam:        mam,
 		crypto:     mam.Crypto,

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { withErrorBoundary } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../../AlertingPageWrapper';

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { TimeRange } from '@grafana/data';
 import { Cascader, CascaderOption } from '@grafana/ui';

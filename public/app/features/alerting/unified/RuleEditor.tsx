@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useAsync } from 'react-use';
 
 import { NavModelItem } from '@grafana/data';
@@ -17,7 +17,10 @@ import { fetchRulesSourceBuildInfoAction } from './state/actions';
 import { useRulesAccess } from './utils/accessControlHooks';
 import * as ruleId from './utils/rule-id';
 
-type RuleEditorProps = GrafanaRouteComponentProps<{ id?: string; type?: 'recording' | 'alerting' }>;
+type RuleEditorProps = GrafanaRouteComponentProps<{
+  id?: string;
+  type?: 'recording' | 'alerting' | 'grafana-recording';
+}>;
 
 const defaultPageNav: Partial<NavModelItem> = {
   icon: 'bell',
@@ -25,8 +28,8 @@ const defaultPageNav: Partial<NavModelItem> = {
 };
 
 // sadly we only get the "type" when a new rule is being created, when editing an existing recording rule we can't actually know it from the URL
-const getPageNav = (identifier?: RuleIdentifier, type?: 'recording' | 'alerting') => {
-  if (type === 'recording') {
+const getPageNav = (identifier?: RuleIdentifier, type?: 'recording' | 'alerting' | 'grafana-recording') => {
+  if (type === 'recording' || type === 'grafana-recording') {
     if (identifier) {
       // this branch should never trigger actually, the type param isn't used when editing rules
       return { ...defaultPageNav, id: 'alert-rule-edit', text: 'Edit recording rule' };

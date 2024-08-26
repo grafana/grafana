@@ -1,5 +1,5 @@
 import { StoryFn, Meta } from '@storybook/react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { KeyValue } from '@grafana/data';
 import { Field, Button, Input } from '@grafana/ui';
@@ -10,12 +10,11 @@ import mdx from './Input.mdx';
 import { parseAccessory } from './storyUtils';
 
 const prefixSuffixOpts = {
-  None: null,
-  Text: '$',
+  $: 'Text',
   ...getAvailableIcons().reduce<KeyValue<string>>((prev, c) => {
     return {
       ...prev,
-      [`Icon: ${c}`]: `icon-${c}`,
+      [`icon-${c}`]: `Icon: ${c}`,
     };
   }, {}),
 };
@@ -43,20 +42,22 @@ const meta: Meta = {
     prefixVisible: {
       control: {
         type: 'select',
-        options: prefixSuffixOpts,
+        labels: prefixSuffixOpts,
       },
+      options: [null, ...Object.keys(prefixSuffixOpts)],
     },
     suffixVisible: {
       control: {
         type: 'select',
-        options: prefixSuffixOpts,
+        labels: prefixSuffixOpts,
       },
+      options: [null, ...Object.keys(prefixSuffixOpts)],
     },
     type: {
       control: {
         type: 'select',
-        options: ['text', 'number', 'password'],
       },
+      options: ['text', 'number', 'password'],
     },
     // validation: { name: 'Validation regex (will do a partial match if you do not anchor it)' },
     width: { control: { type: 'range', min: 10, max: 200, step: 10 } },

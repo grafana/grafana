@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { get as lodashGet } from 'lodash';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 
 import { DataFrame, GrafanaTheme2, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';

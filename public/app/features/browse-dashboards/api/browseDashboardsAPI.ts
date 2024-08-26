@@ -1,10 +1,11 @@
 import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
-import { isTruthy, locationUtil } from '@grafana/data';
+import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { notifyApp } from 'app/core/actions';
+import appEvents from 'app/core/app_events';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
@@ -21,6 +22,7 @@ import {
   SaveDashboardResponseDTO,
 } from 'app/types';
 
+import { t } from '../../../core/internationalization';
 import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
 
@@ -54,6 +56,11 @@ interface ImportOptions {
 }
 
 interface RestoreDashboardArgs {
+  dashboardUID: string;
+  targetFolderUID: string;
+}
+
+interface HardDeleteDashboardArgs {
   dashboardUID: string;
 }
 
@@ -205,6 +212,8 @@ export const browseDashboardsAPI = createApi({
 
     // gets the descendant counts for a folder. used in the move/delete modals.
     getAffectedItems: builder.query<DescendantCount, DashboardTreeSelection>({
+      // don't cache this data for now, since library panel/alert rule creation isn't done through rtk query
+      keepUnusedDataFor: 0,
       queryFn: async (selectedItems) => {
         const folderUIDs = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
 
@@ -303,14 +312,25 @@ export const browseDashboardsAPI = createApi({
             },
           });
         }
-
         // Delete all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of selectedDashboards) {
-          await baseQuery({
+          const response = await baseQuery({
             url: `/dashboards/uid/${dashboardUID}`,
             method: 'DELETE',
+            showSuccessAlert: false,
           });
+          // @ts-expect-error
+          const name = response?.data?.title;
+
+          if (name) {
+            appEvents.publish({
+              type: AppEvents.alertSuccess.name,
+              payload: [
+                t('browse-dashboards.soft-delete.success', 'Dashboard {{name}} moved to Recently deleted', { name }),
+              ],
+            });
+          }
         }
         return { data: undefined };
       },
@@ -325,17 +345,15 @@ export const browseDashboardsAPI = createApi({
 
     // save an existing dashboard
     saveDashboard: builder.mutation<SaveDashboardResponseDTO, SaveDashboardCommand>({
-      query: ({ dashboard, folderUid, message, overwrite, showErrorAlert }) => ({
-        url: `/dashboards/db`,
-        method: 'POST',
-        showErrorAlert,
-        data: {
-          dashboard,
-          folderUid,
-          message: message ?? '',
-          overwrite: Boolean(overwrite),
-        },
-      }),
+      queryFn: async (cmd) => {
+        try {
+          const rsp = await getDashboardAPI().saveDashboard(cmd);
+          return { data: rsp };
+        } catch (error) {
+          return { error };
+        }
+      },
+
       onQueryStarted: ({ folderUid }, { queryFulfilled, dispatch }) => {
         dashboardWatcher.ignoreNextSave();
         queryFulfilled.then(async () => {
@@ -377,10 +395,41 @@ export const browseDashboardsAPI = createApi({
 
     // restore a dashboard that got soft deleted
     restoreDashboard: builder.mutation<void, RestoreDashboardArgs>({
-      query: ({ dashboardUID }) => ({
+      query: ({ dashboardUID, targetFolderUID }) => ({
         url: `/dashboards/uid/${dashboardUID}/trash`,
+        data: {
+          folderUid: targetFolderUID,
+        },
         method: 'PATCH',
       }),
+    }),
+
+    // permanently delete a dashboard. used in PermanentlyDeleteModal.
+    hardDeleteDashboard: builder.mutation<void, HardDeleteDashboardArgs>({
+      queryFn: async ({ dashboardUID }, _api, _extraOptions, baseQuery) => {
+        const response = await baseQuery({
+          url: `/dashboards/uid/${dashboardUID}/trash`,
+          method: 'DELETE',
+          showSuccessAlert: false,
+        });
+
+        // @ts-expect-error
+        const name = response?.data?.title;
+
+        if (name) {
+          appEvents.publish({
+            type: AppEvents.alertSuccess.name,
+            payload: [t('browse-dashboards.hard-delete.success', 'Dashboard {{name}} deleted', { name })],
+          });
+        }
+
+        return { data: undefined };
+      },
+      onQueryStarted: ({ dashboardUID }, { queryFulfilled, dispatch }) => {
+        queryFulfilled.then(() => {
+          dispatch(refreshParents([dashboardUID]));
+        });
+      },
     }),
   }),
 });
@@ -397,6 +446,7 @@ export const {
   useSaveDashboardMutation,
   useSaveFolderMutation,
   useRestoreDashboardMutation,
+  useHardDeleteDashboardMutation,
 } = browseDashboardsAPI;
 
 export { skipToken } from '@reduxjs/toolkit/query/react';

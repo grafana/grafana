@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { useWindowSize } from 'react-use';
 

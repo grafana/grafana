@@ -1,3 +1,37 @@
+@use 'sass:color';
+
+@mixin form-control-validation($color) {
+  // Color the label and help text
+  .text-help,
+  .form-control-label,
+  .radio,
+  .checkbox,
+  .radio-inline,
+  .checkbox-inline,
+  &.radio label,
+  &.checkbox label,
+  &.radio-inline label,
+  &.checkbox-inline label,
+  .custom-control {
+    color: $color;
+  }
+
+  .form-control {
+    border-color: $color;
+  }
+
+  // Set validation states also for addons
+  .input-group-addon {
+    color: $color;
+    border-color: $color;
+    background-color: color.adjust($color, $lightness: 40%);
+  }
+  // Optional feedback icon
+  .form-control-feedback {
+    color: $color;
+  }
+}
+
 //
 // Forms
 // --------------------------------------------------
@@ -33,7 +67,11 @@ select:focus,
 input[type='file']:focus,
 input[type='radio']:focus,
 input[type='checkbox']:focus {
-  @include tab-focus();
+  // Default
+  outline: thin dotted;
+  // WebKit
+  outline: 5px auto -webkit-focus-ring-color;
+  outline-offset: -2px;
 }
 
 // not a big fan of number fields
@@ -51,7 +89,9 @@ input[type='number'] {
 // Placeholder text gets special styles because when browsers invalidate entire lines if it doesn't understand a selector
 input,
 textarea {
-  @include placeholder();
+  &::placeholder {
+    color: $input-color-placeholder;
+  }
 }
 
 // INPUT SIZES

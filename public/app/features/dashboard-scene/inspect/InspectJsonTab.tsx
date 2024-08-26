@@ -1,5 +1,4 @@
 import { isEqual } from 'lodash';
-import React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { SelectableValue } from '@grafana/data';

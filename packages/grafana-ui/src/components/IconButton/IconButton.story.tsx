@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { StoryFn, Meta } from '@storybook/react';
-import React from 'react';
 
 import { useTheme2 } from '../../themes';
 import { IconSize, IconName } from '../../types';

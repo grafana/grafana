@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,14 +20,14 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
-	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -89,11 +88,6 @@ func (b *SnapshotsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return resourceInfo.GroupVersion()
 }
 
-func (b *SnapshotsAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
-	return grafanarest.Mode0
-}
-
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&dashboardsnapshot.DashboardSnapshot{},
@@ -130,8 +124,7 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
-	_ grafanarest.DualWriterMode,
-	_ prometheus.Registerer,
+	_ grafanarest.DualWriteBuilder,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(dashboardsnapshot.GROUP, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
@@ -141,25 +134,7 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 		namespacer: b.namespacer,
 		options:    b.options,
 	}
-	legacyStore.tableConverter = gapiutil.NewTableConverter(
-		resourceInfo.GroupResource(),
-		[]metav1.TableColumnDefinition{
-			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Title", Type: "string", Format: "string", Description: "The snapshot name"},
-			{Name: "Created At", Type: "date"},
-		},
-		func(obj any) ([]interface{}, error) {
-			m, ok := obj.(*dashboardsnapshot.DashboardSnapshot)
-			if ok {
-				return []interface{}{
-					m.Name,
-					m.Spec.Title,
-					m.CreationTimestamp.UTC().Format(time.RFC3339),
-				}, nil
-			}
-			return nil, fmt.Errorf("expected snapshot")
-		},
-	)
+	legacyStore.tableConverter = resourceInfo.TableConverter()
 	storage[resourceInfo.StoragePath()] = legacyStore
 	storage[resourceInfo.StoragePath("body")] = &subBodyREST{
 		service:    b.service,
@@ -253,7 +228,7 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 					},
 				},
 				Handler: func(w http.ResponseWriter, r *http.Request) {
-					user, err := appcontext.User(r.Context())
+					user, err := identity.GetRequester(r.Context())
 					if err != nil {
 						errhttp.Write(r.Context(), err, w)
 						return
@@ -264,18 +239,18 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 							Req:  r,
 							Resp: web.NewResponseWriter(r.Method, w),
 						},
-						SignedInUser: user,
+						// SignedInUser: user, ????????????
 					}
 
 					vars := mux.Vars(r)
-					info, err := request.ParseNamespace(vars["namespace"])
+					info, err := claims.ParseNamespace(vars["namespace"])
 					if err != nil {
 						wrap.JsonApiErr(http.StatusBadRequest, "expected namespace", nil)
 						return
 					}
-					if info.OrgID != user.OrgID {
+					if info.OrgID != user.GetOrgID() {
 						wrap.JsonApiErr(http.StatusBadRequest,
-							fmt.Sprintf("user orgId does not match namespace (%d != %d)", info.OrgID, user.OrgID), nil)
+							fmt.Sprintf("user orgId does not match namespace (%d != %d)", info.OrgID, user.GetOrgID()), nil)
 						return
 					}
 

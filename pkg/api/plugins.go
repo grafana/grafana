@@ -142,7 +142,6 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 			SignatureOrg:    pluginDef.SignatureOrg,
 			AccessControl:   pluginsMetadata[pluginDef.ID],
 			AngularDetected: pluginDef.Angular.Detected,
-			APIVersion:      pluginDef.APIVersion,
 		}
 
 		if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
@@ -209,7 +208,6 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 		SignatureOrg:     plugin.SignatureOrg,
 		SecureJsonFields: map[string]bool{},
 		AngularDetected:  plugin.Angular.Detected,
-		APIVersion:       plugin.APIVersion,
 	}
 
 	if plugin.IsApp() {
@@ -458,6 +456,14 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
+	hs.log.Info("Plugin install/update requested", "pluginId", pluginID, "user", c.Login)
+
+	for _, preinstalled := range hs.Cfg.PreinstallPlugins {
+		if preinstalled.ID == pluginID && preinstalled.Version != "" {
+			return response.Error(http.StatusConflict, "Cannot update a pinned pre-installed plugin", nil)
+		}
+	}
+
 	compatOpts := plugins.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 	err := hs.pluginInstaller.Add(c.Req.Context(), pluginID, dto.Version, compatOpts)
 	if err != nil {
@@ -488,9 +494,18 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 
 func (hs *HTTPServer) UninstallPlugin(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
+
+	hs.log.Info("Plugin uninstall requested", "pluginId", pluginID, "user", c.Login)
+
 	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
 	if !exists {
 		return response.Error(http.StatusNotFound, "Plugin not installed", nil)
+	}
+
+	for _, preinstalled := range hs.Cfg.PreinstallPlugins {
+		if preinstalled.ID == pluginID {
+			return response.Error(http.StatusConflict, "Cannot uninstall a pre-installed plugin", nil)
+		}
 	}
 
 	err := hs.pluginInstaller.Remove(c.Req.Context(), pluginID, plugin.Info.Version)
@@ -547,7 +562,7 @@ func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, 
 	hs.log.Debug("check installer's permissions, plugin wants to register an external service")
 	evaluator := evalAllPermissions(plugin.JSONData.IAM.Permissions)
 	hasAccess := ac.HasGlobalAccess(hs.AccessControl, hs.authnService, c)
-	if hs.Cfg.RBACSingleOrganization {
+	if hs.Cfg.RBAC.SingleOrganization {
 		// In a single organization setup, no need for a global check
 		hasAccess = ac.HasAccess(hs.AccessControl, c)
 	}

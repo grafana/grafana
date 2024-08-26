@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import {
   DashboardCursorSync,
@@ -27,7 +26,7 @@ export function TablePanel(props: Props) {
     ? migrateFromParentRowIndexToNestedFrames(data.series)
     : data.series;
   const count = frames?.length;
-  const hasFields = frames[0]?.fields.length;
+  const hasFields = frames.some((frame) => frame.fields.length > 0);
   const currentIndex = getCurrentFrameIndex(frames, options);
   const main = frames[currentIndex];
 

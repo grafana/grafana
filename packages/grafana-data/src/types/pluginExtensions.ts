@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 
@@ -93,6 +93,29 @@ export type PluginExtensionComponentConfig<Props = {}> = {
    * (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
    */
   extensionPointId: string;
+};
+
+export type PluginExposedComponentConfig<Props = {}> = {
+  /**
+   * The unique identifier of the component
+   * Shoud be in the format of `<pluginId>/<componentName>/<componentVersion>`. e.g. `myorg-todo-app/todo-list/v1`
+   */
+  id: string;
+
+  /**
+   * The title of the component
+   */
+  title: string;
+
+  /**
+   * A short description of the component
+   */
+  description: string;
+
+  /**
+   * The React component that will be exposed to other plugins
+   */
+  component: React.ComponentType<Props>;
 };
 
 export type PluginExtensionConfig = PluginExtensionLinkConfig | PluginExtensionComponentConfig;

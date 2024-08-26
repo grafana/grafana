@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import createMockDatasource from '../../__mocks__/datasource';
 import { createMockInstanceSetttings } from '../../__mocks__/instanceSettings';

@@ -26,6 +26,7 @@ const saveDashboard = async (
     folderUid: options.folderUid ?? dashboard.meta.folderUid ?? saveModel.meta?.folderUid,
     message: options.message,
     overwrite: options.overwrite,
+    k8s: dashboard.meta.k8s,
   });
 
   if ('error' in query) {
@@ -70,7 +71,7 @@ export const useDashboardSave = (isCopy = false) => {
         const currentPath = locationService.getLocation().pathname;
         const newUrl = locationUtil.stripBaseFromUrl(result.url);
 
-        if (newUrl !== currentPath) {
+        if (newUrl !== currentPath && result.url) {
           setTimeout(() => locationService.replace(newUrl));
         }
         if (dashboard.meta.isStarred) {

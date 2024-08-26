@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { isString } from 'lodash';
-import React, { useCallback, useId, useState } from 'react';
+import { useCallback, useId, useState } from 'react';
+import * as React from 'react';
 
 import { getTimeZoneInfo, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

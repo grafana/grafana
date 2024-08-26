@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { PanelProps, buildHistogram, getHistogramFields } from '@grafana/data';
 import { histogramFieldsToFrame } from '@grafana/data/src/transformations/transformers/histogram';

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import saveAs from 'file-saver';
-import React from 'react';
+import { memo } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import {
@@ -53,7 +53,7 @@ enum DownloadFormat {
   CSV = 'csv',
 }
 
-export const LogsMetaRow = React.memo(
+export const LogsMetaRow = memo(
   ({
     meta,
     dedupStrategy,

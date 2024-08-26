@@ -1,12 +1,13 @@
-import { cx } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { css, cx } from '@emotion/css';
+import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil } from '@grafana/data';
+import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
+import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { Page } from 'app/core/components/Page/Page';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
@@ -44,6 +45,9 @@ import { initDashboard } from '../state/initDashboard';
 
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from './types';
 
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
+
 export const mapStateToProps = (state: StoreState) => ({
   initPhase: state.dashboard.initPhase,
   initError: state.dashboard.initError,
@@ -68,15 +72,50 @@ export type Props = Themeable2 &
 export interface State {
   editPanel: PanelModel | null;
   viewPanel: PanelModel | null;
+  editView: string | null;
   updateScrollTop?: number;
   rememberScrollTop?: number;
   showLoadingState: boolean;
   panelNotFound: boolean;
   editPanelAccessDenied: boolean;
-  scrollElement?: HTMLDivElement;
+  scrollElement?: ScrollRefElement;
   pageNav?: NavModelItem;
   sectionNav?: NavModel;
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  fullScreenPanel: css({
+    '.react-grid-layout': {
+      height: 'auto !important',
+      transitionProperty: 'none',
+    },
+    '.react-grid-item': {
+      display: 'none !important',
+      transitionProperty: 'none !important',
+
+      '&--fullscreen': {
+        display: 'block !important',
+        // can't avoid type assertion here due to !important
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        position: 'unset !important' as 'unset',
+        transform: 'translate(0px, 0px) !important',
+      },
+    },
+
+    // Disable grid interaction indicators in fullscreen panels
+    '.panel-header:hover': {
+      backgroundColor: 'inherit',
+    },
+
+    '.panel-title-container': {
+      cursor: 'pointer',
+    },
+
+    '.react-resizable-handle': {
+      display: 'none',
+    },
+  }),
+});
 
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
   declare context: GrafanaContextType;
@@ -87,6 +126,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
   getCleanState(): State {
     return {
+      editView: null,
       editPanel: null,
       viewPanel: null,
       showLoadingState: false,
@@ -194,6 +234,11 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       this.props.notifyApp(createErrorNotification(`Panel not found`));
       locationService.partial({ editPanel: null, viewPanel: null });
     }
+
+    // Update window scroll position
+    if (this.state.updateScrollTop !== undefined && this.state.updateScrollTop !== prevState.updateScrollTop) {
+      this.state.scrollElement?.scrollTo(0, this.state.updateScrollTop);
+    }
   }
 
   updateLiveTimer = () => {
@@ -209,12 +254,26 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     const urlEditPanelId = queryParams.editPanel;
     const urlViewPanelId = queryParams.viewPanel;
+    const urlEditView = queryParams.editview;
 
     if (!dashboard) {
       return state;
     }
 
     const updatedState = { ...state };
+
+    // Entering settings view
+    if (!state.editView && urlEditView) {
+      updatedState.editView = urlEditView;
+      updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
+      updatedState.updateScrollTop = 0;
+    }
+
+    // Leaving settings view
+    else if (state.editView && !urlEditView) {
+      updatedState.updateScrollTop = state.rememberScrollTop;
+      updatedState.editView = null;
+    }
 
     // Entering edit mode
     if (!state.editPanel && urlEditPanelId) {
@@ -268,7 +327,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     return updateStatePageNavFromProps(props, updatedState);
   }
 
-  setScrollRef = (scrollElement: HTMLDivElement): void => {
+  setScrollRef = (scrollElement: ScrollRefElement): void => {
     this.setState({ scrollElement });
   };
 
@@ -296,9 +355,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   };
 
   render() {
-    const { dashboard, initError, queryParams } = this.props;
-    const { editPanel, viewPanel, updateScrollTop, pageNav, sectionNav } = this.state;
+    const { dashboard, initError, queryParams, theme } = this.props;
+    const { editPanel, viewPanel, pageNav, sectionNav } = this.state;
     const kioskMode = getKioskMode(this.props.queryParams);
+    const styles = getStyles(theme);
 
     if (!dashboard || !pageNav || !sectionNav) {
       return <DashboardLoading initPhase={this.props.initPhase} />;
@@ -310,7 +370,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const showToolbar = kioskMode !== KioskMode.Full && !queryParams.editview;
 
     const pageClassName = cx({
-      'panel-in-fullscreen': Boolean(viewPanel),
+      [styles.fullScreenPanel]: Boolean(viewPanel),
       'page-hidden': Boolean(queryParams.editview || editPanel),
     });
 
@@ -373,8 +433,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           pageNav={pageNav}
           layout={PageLayoutType.Canvas}
           className={pageClassName}
-          scrollRef={this.setScrollRef}
-          scrollTop={updateScrollTop}
+          onSetScrollRef={this.setScrollRef}
         >
           {showToolbar && (
             <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
@@ -412,7 +471,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           />
 
           {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
-          {queryParams.shareView && <ShareModal dashboard={dashboard} onDismiss={this.onCloseShareModal} />}
+          {queryParams.shareView && (
+            <ShareModal dashboard={dashboard} onDismiss={this.onCloseShareModal} activeTab={queryParams.shareView} />
+          )}
         </Page>
         {editPanel && (
           <PanelEditor

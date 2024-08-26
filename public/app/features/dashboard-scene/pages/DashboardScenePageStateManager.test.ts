@@ -173,11 +173,11 @@ describe('DashboardScenePageStateManager', () => {
 
         const loader = new DashboardScenePageStateManager({});
 
-        expect(loader.getFromCache('fake-dash')).toBeNull();
+        expect(loader.getDashboardFromCache('fake-dash')).toBeNull();
 
         await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
-        expect(loader.getFromCache('fake-dash')).toBeDefined();
+        expect(loader.getDashboardFromCache('fake-dash')).toBeDefined();
       });
 
       it('should load dashboard DTO from cache if requested again within 2s', async () => {
@@ -186,7 +186,7 @@ describe('DashboardScenePageStateManager', () => {
 
         const loader = new DashboardScenePageStateManager({});
 
-        expect(loader.getFromCache('fake-dash')).toBeNull();
+        expect(loader.getDashboardFromCache('fake-dash')).toBeNull();
 
         await loader.fetchDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
         expect(loadDashSpy).toHaveBeenCalledTimes(1);
@@ -228,7 +228,7 @@ describe('DashboardScenePageStateManager', () => {
           keepDashboardFromExploreInLocalStorage: false,
         });
 
-        expect(loader.getFromCache('fake-dash')).toBeNull();
+        expect(loader.getDashboardFromCache('fake-dash')).toBeNull();
       });
     });
   });
