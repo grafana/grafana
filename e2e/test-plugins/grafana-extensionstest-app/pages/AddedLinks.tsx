@@ -7,8 +7,6 @@ export const LINKS_EXTENSION_POINT_ID = 'plugins/grafana-extensionstest-app/use-
 export function AddedLinks() {
   const { links, isLoading } = usePluginLinks({ extensionPointId: LINKS_EXTENSION_POINT_ID });
 
-  console.log({ links, isLoading });
-
   return (
     <PluginPage>
       <div data-testid={testIds.addedLinksPage.container}>
