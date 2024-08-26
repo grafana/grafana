@@ -1320,7 +1320,8 @@
       "metadata": {
         "name": "idForwarding",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-09-25T15:21:28Z"
+        "creationTimestamp": "2023-09-25T15:21:28Z",
+        "deletionTimestamp": "2024-08-21T11:35:56Z"
       },
       "spec": {
         "description": "Generate signed id token for identity that can be forwarded to plugins and external services",
@@ -1700,6 +1701,21 @@
       "spec": {
         "description": "Enables running Loki queries in parallel",
         "stage": "privatePreview",
+        "codeowner": "@grafana/observability-logs"
+      }
+    },
+    {
+      "metadata": {
+        "name": "lokiSendDashboardPanelNames",
+        "resourceVersion": "1724089497989",
+        "creationTimestamp": "2024-08-19T17:44:18Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-19 17:44:57.989565 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Send dashboard and panel names to Loki when querying",
+        "stage": "experimental",
         "codeowner": "@grafana/observability-logs"
       }
     },
@@ -2694,6 +2710,7 @@
         "name": "unifiedStorage",
         "resourceVersion": "1724096690370",
         "creationTimestamp": "2023-12-06T20:21:21Z",
+        "deletionTimestamp": "2024-08-21T09:30:06Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-08-19 19:44:50.370023815 +0000 UTC"
         }
