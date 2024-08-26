@@ -22,7 +22,8 @@ export const WithContextMenu = ({ children, renderMenuItems, focusOnOpen = true 
           setIsMenuOpen(true);
           setMenuPosition({
             x: e.pageX,
-            y: e.pageY,
+            // scrollY is necessary for bodyScrolling feature toggle
+            y: e.pageY - Math.round(window.scrollY),
           });
         },
       })}
