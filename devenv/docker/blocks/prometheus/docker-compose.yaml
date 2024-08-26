@@ -37,3 +37,8 @@
     build: docker/blocks/prometheus_random_data
     ports:
       - "8081:8080"
+
+  prometheus-high-card:
+    build: docker/blocks/prometheus_high_card
+    ports:
+      - "9111:9111"
