@@ -22,7 +22,7 @@ weight: -44
 
 Welcome to Grafana 11.2! We've made a number of improvements in this release, including a Grafana Cloud Migration Assistant in public preview, several new transformations, and a centralized page for viewing your alert history. We've also released several new data sources to help you visualize data from Zendesk, Catchpoint, and Yugabyte. Read on to learn more about these and all the new features in v11.2.
 
-<!-- {{< youtube id="s6IYpILVDSM" >}} -->
+{{< youtube id="s6IYpILVDSM" >}}
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v11.2, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.2/).
 
