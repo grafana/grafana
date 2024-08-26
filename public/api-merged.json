@@ -18432,7 +18432,8 @@
           "example": "project_x"
         },
         "for": {
-          "$ref": "#/definitions/Duration"
+          "type": "string",
+          "format": "duration"
         },
         "id": {
           "type": "integer",
@@ -22360,7 +22361,6 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",
@@ -22485,7 +22485,6 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "type": "object",
