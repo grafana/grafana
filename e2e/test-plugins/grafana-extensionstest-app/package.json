@@ -13,7 +13,6 @@
   "devDependencies": {
     "@grafana/eslint-config": "7.0.0",
     "@grafana/plugin-configs": "11.3.0-pre",
-    "@playwright/test": "1.46.1",
     "@types/lodash": "4.17.7",
     "@types/node": "20.14.14",
     "@types/prismjs": "1.26.4",
