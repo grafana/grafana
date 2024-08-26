@@ -29,11 +29,6 @@ jest.mock('@grafana/runtime', () => ({
       },
     };
   },
-  config: {
-    featureToggles: {
-      prometheusDataplane: true,
-    },
-  },
 }));
 
 describe('Prometheus Result Transformer', () => {
