@@ -263,9 +263,9 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 			body: `{
 				"label": "1",
 				"description": "1",
+				"type": "query",
 				"config": {
 					"field": "field",
-					"type": "query",
 					"target": { "expr": "bar" },
 					"transformations": [ {"type": "logfmt"} ]
 				}

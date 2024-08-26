@@ -22,6 +22,7 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 		Description: cmd.Description,
 		Config:      cmd.Config,
 		Provisioned: cmd.Provisioned,
+		Type:        cmd.Type,
 	}
 
 	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
@@ -131,13 +132,13 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			correlation.Description = *cmd.Description
 			session.MustCols("description")
 		}
+		if cmd.Type != nil {
+			correlation.Type = *cmd.Type
+		}
 		if cmd.Config != nil {
 			session.MustCols("config")
 			if cmd.Config.Field != nil {
 				correlation.Config.Field = *cmd.Config.Field
-			}
-			if cmd.Config.Type != nil {
-				correlation.Config.Type = *cmd.Config.Type
 			}
 			if cmd.Config.Target != nil {
 				correlation.Config.Target = *cmd.Config.Target

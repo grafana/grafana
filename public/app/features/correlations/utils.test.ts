@@ -111,7 +111,8 @@ function setup() {
       label: 'logs to metrics',
       source: loki,
       target: prometheus,
-      config: { type: 'query', field: 'traceId', target: { expr: 'target Prometheus query' } },
+      type: 'query',
+      config: { field: 'traceId', target: { expr: 'target Prometheus query' } },
       provisioned: false,
     },
     // Test multiple correlations attached to the same field
@@ -120,7 +121,8 @@ function setup() {
       label: 'logs to logs',
       source: loki,
       target: elastic,
-      config: { type: 'query', field: 'traceId', target: { expr: 'target Elastic query' } },
+      type: 'query',
+      config: { field: 'traceId', target: { expr: 'target Elastic query' } },
       provisioned: false,
     },
     {
@@ -128,7 +130,8 @@ function setup() {
       label: 'metrics to logs',
       source: prometheus,
       target: elastic,
-      config: { type: 'query', field: 'value', target: { expr: 'target Elastic query' } },
+      type: 'query',
+      config: { field: 'value', target: { expr: 'target Elastic query' } },
       provisioned: false,
     },
   ];

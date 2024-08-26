@@ -26,12 +26,11 @@ export interface RemoveCorrelationResponse {
   message: string;
 }
 
-type CorrelationConfigType = 'query';
+export type CorrelationType = 'query';
 
 export interface CorrelationConfig {
   field: string;
   target: object; // this contains anything that would go in the query editor, so any extension off DataQuery a datasource would have, and needs to be generic
-  type: CorrelationConfigType;
   transformations?: DataLinkTransformationConfig[];
 }
 
@@ -44,6 +43,7 @@ export interface Correlation {
   provisioned: boolean;
   orgId?: number;
   config: CorrelationConfig;
+  type: CorrelationType;
 }
 
 export type GetCorrelationsParams = {

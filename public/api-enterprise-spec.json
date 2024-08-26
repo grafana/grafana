@@ -3330,14 +3330,8 @@
         },
         "transformations": {
           "$ref": "#/definitions/Transformations"
-        },
-        "type": {
-          "$ref": "#/definitions/CorrelationConfigType"
         }
       }
-    },
-    "CorrelationConfigType": {
-      "type": "string"
     },
     "CorrelationConfigUpdateDTO": {
       "type": "object",
@@ -3372,9 +3366,6 @@
               "variable": "name"
             }
           ]
-        },
-        "type": {
-          "$ref": "#/definitions/CorrelationConfigType"
         }
       }
     },

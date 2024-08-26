@@ -13839,6 +13839,9 @@
           "type": "string",
           "example": "PE1C5CBDA0504A6A3"
         },
+        "type": {
+          "$ref": "#/definitions/CorrelationType"
+        },
         "uid": {
           "description": "Unique identifier of the correlation",
           "type": "string",
@@ -13850,7 +13853,6 @@
       "type": "object",
       "required": [
         "field",
-        "type",
         "target"
       ],
       "properties": {
@@ -13872,12 +13874,9 @@
           "$ref": "#/definitions/Transformations"
         },
         "type": {
-          "$ref": "#/definitions/CorrelationConfigType"
+          "$ref": "#/definitions/CorrelationType"
         }
       }
-    },
-    "CorrelationConfigType": {
-      "type": "string"
     },
     "CorrelationConfigUpdateDTO": {
       "type": "object",
@@ -13912,11 +13911,11 @@
               "variable": "name"
             }
           ]
-        },
-        "type": {
-          "$ref": "#/definitions/CorrelationConfigType"
         }
       }
+    },
+    "CorrelationType": {
+      "type": "string"
     },
     "CounterResetHint": {
       "description": "or alternatively that we are dealing with a gauge histogram, where counter resets do not apply.",
@@ -13954,9 +13953,12 @@
           "type": "boolean"
         },
         "targetUID": {
-          "description": "Target data source UID to which the correlation is created. required if config.type = query",
+          "description": "Target data source UID to which the correlation is created. required if type = query",
           "type": "string",
           "example": "PE1C5CBDA0504A6A3"
+        },
+        "type": {
+          "$ref": "#/definitions/CorrelationType"
         }
       }
     },
@@ -21419,6 +21421,9 @@
           "description": "Optional label identifying the correlation",
           "type": "string",
           "example": "My label"
+        },
+        "type": {
+          "$ref": "#/definitions/CorrelationType"
         }
       }
     },
