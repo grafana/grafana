@@ -5,13 +5,32 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
+	"sync"
+	"time"
 
-	"cuelang.org/go/pkg/time"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
+)
+
+var (
+	installRequestCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "plugins",
+		Name:      "preinstall_total",
+		Help:      "The total amount of plugin preinstallations",
+	}, []string{"plugin_id", "version"})
+
+	installRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: "plugins",
+		Name:      "preinstall_duration_seconds",
+		Help:      "Plugin preinstallation duration",
+		Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
+	}, []string{"plugin_id", "version"})
+
+	once sync.Once
 )
 
 type Service struct {
@@ -23,7 +42,12 @@ type Service struct {
 	failOnErr       bool
 }
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, pluginStore pluginstore.Store, pluginInstaller plugins.Installer) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, pluginStore pluginstore.Store, pluginInstaller plugins.Installer, promReg prometheus.Registerer) (*Service, error) {
+	once.Do(func() {
+		promReg.MustRegister(installRequestCounter)
+		promReg.MustRegister(installRequestDuration)
+	})
+
 	s := &Service{
 		features:        features,
 		log:             log.New("plugin.backgroundinstaller"),
@@ -82,6 +106,7 @@ func (s *Service) installPlugins(ctx context.Context) error {
 		}
 
 		s.log.Info("Installing plugin", "pluginId", installPlugin.ID, "version", installPlugin.Version)
+		start := time.Now()
 		err := s.pluginInstaller.Add(ctx, installPlugin.ID, installPlugin.Version, compatOpts)
 		if err != nil {
 			var dupeErr plugins.DuplicateError
@@ -96,7 +121,10 @@ func (s *Service) installPlugins(ctx context.Context) error {
 			s.log.Error("Failed to install plugin", "pluginId", installPlugin.ID, "version", installPlugin.Version, "error", err)
 			continue
 		}
-		s.log.Info("Plugin successfully installed", "pluginId", installPlugin.ID, "version", installPlugin.Version)
+		elapsed := time.Since(start)
+		s.log.Info("Plugin successfully installed", "pluginId", installPlugin.ID, "version", installPlugin.Version, "duration", elapsed)
+		installRequestDuration.WithLabelValues(installPlugin.ID, installPlugin.Version).Observe(elapsed.Seconds())
+		installRequestCounter.WithLabelValues(installPlugin.ID, installPlugin.Version).Inc()
 	}
 
 	return nil

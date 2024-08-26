@@ -171,10 +171,6 @@ const (
 	// Enables running Prometheus queries in parallel
 	FlagPrometheusRunQueriesInParallel = "prometheusRunQueriesInParallel"
 
-	// FlagPrometheusDataplane
-	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular, when this feature toggle is active, the numeric `Field.Name` is set from &#39;Value&#39; to the value of the `__name__` label.
-	FlagPrometheusDataplane = "prometheusDataplane"
-
 	// FlagLokiMetricDataplane
 	// Changes metric responses from Loki to be compliant with the dataplane specification.
 	FlagLokiMetricDataplane = "lokiMetricDataplane"
@@ -742,4 +738,8 @@ const (
 	// FlagAdhocFilterOneOf
 	// Exposes a new &#39;one of&#39; operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.
 	FlagAdhocFilterOneOf = "adhocFilterOneOf"
+
+	// FlagLokiSendDashboardPanelNames
+	// Send dashboard and panel names to Loki when querying
+	FlagLokiSendDashboardPanelNames = "lokiSendDashboardPanelNames"
 )

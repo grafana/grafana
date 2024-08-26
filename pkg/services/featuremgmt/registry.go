@@ -319,14 +319,6 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
-			Name:           "prometheusDataplane",
-			Description:    "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular, when this feature toggle is active, the numeric `Field.Name` is set from 'Value' to the value of the `__name__` label.",
-			Expression:     "true",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: true,
-		},
-		{
 			Name:           "lokiMetricDataplane",
 			Description:    "Changes metric responses from Loki to be compliant with the dataplane specification.",
 			Stage:          FeatureStageGeneralAvailability,
@@ -1392,6 +1384,12 @@ var (
 			Description: "Exposes a new 'one of' operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
+		},
+		{
+			Name:        "lokiSendDashboardPanelNames",
+			Description: "Send dashboard and panel names to Loki when querying",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityLogsSquad,
 		},
 	}
 )
