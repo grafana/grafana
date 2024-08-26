@@ -13,7 +13,7 @@ labels:
     - oss
 menuTitle: Microsoft Teams
 title: Configure Microsoft Teams for Alerting
-weight: 50
+weight: 0
 ---
 
 # Configure Microsoft Teams for Alerting

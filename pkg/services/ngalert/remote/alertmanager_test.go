@@ -22,6 +22,7 @@ import (
 
 	"github.com/grafana/alerting/definition"
 	alertingModels "github.com/grafana/alerting/models"
+	"github.com/grafana/alerting/notify"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -43,8 +44,9 @@ import (
 
 const (
 	// Valid Grafana Alertmanager configurations.
-	testGrafanaConfig           = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"}}]}]}}`
-	testGrafanaConfigWithSecret = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test"},"secureSettings":{"password":"test"}}]}]}}`
+	testGrafanaConfig                               = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"}}]}]}}`
+	testGrafanaConfigWithSecret                     = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test"},"secureSettings":{"password":"test"}}]}]}}`
+	testGrafanaDefaultConfigWithDifferentFieldOrder = `{"alertmanager_config":{"route":{"group_by":["alertname","grafana_folder"],"receiver":"grafana-default-email"},"receivers":[{"grafana_managed_receiver_configs":[{"uid":"","name":"email receiver","type":"email","settings":{"addresses":"<example@email.com>"}}],"name":"grafana-default-email"}]}}`
 
 	// Valid Alertmanager state base64 encoded.
 	testSilence1 = "lwEKhgEKATESFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCN2CkbAGEJbKrMsDIgwI7Z6RsAYQlsqsywMqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCO2ekbAGEJbKrMsD"
@@ -329,6 +331,50 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 				return
 			}
 			require.Equal(tt, test.expErr, err.Error())
+		})
+	}
+}
+
+func Test_isDefaultConfiguration(t *testing.T) {
+	parsedDefaultConfig, _ := notifier.Load([]byte(defaultGrafanaConfig))
+	parsedTestConfig, _ := notifier.Load([]byte(testGrafanaConfig))
+	parsedDefaultConfigWithDifferentFieldOrder, _ := notifier.Load([]byte(testGrafanaDefaultConfigWithDifferentFieldOrder))
+	rawDefaultCfg, _ := json.Marshal(parsedDefaultConfig)
+
+	tests := []struct {
+		name     string
+		config   *apimodels.PostableUserConfig
+		expected bool
+	}{
+		{
+			"empty configuration",
+			nil,
+			false,
+		},
+		{
+			"valid configuration",
+			parsedTestConfig,
+			false,
+		},
+		{
+			"default configuration",
+			parsedDefaultConfig,
+			true,
+		},
+		{
+			"default configuration with different field order",
+			parsedDefaultConfigWithDifferentFieldOrder,
+			false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(tt *testing.T) {
+			am := &Alertmanager{
+				defaultConfig:     string(rawDefaultCfg),
+				defaultConfigHash: fmt.Sprintf("%x", md5.Sum(rawDefaultCfg)),
+			}
+			isDefault, _ := am.isDefaultConfiguration(test.config)
+			require.Equal(tt, test.expected, isDefault)
 		})
 	}
 }
@@ -737,6 +783,66 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 			Integrations: []apimodels.Integration{},
 		},
 	}, rcvs)
+}
+
+func TestIntegrationRemoteAlertmanagerTestTemplates(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	amURL, ok := os.LookupEnv("AM_URL")
+	if !ok {
+		t.Skip("No Alertmanager URL provided")
+	}
+
+	tenantID := os.Getenv("AM_TENANT_ID")
+	password := os.Getenv("AM_PASSWORD")
+
+	cfg := AlertmanagerConfig{
+		OrgID:             1,
+		URL:               amURL,
+		TenantID:          tenantID,
+		BasicAuthPassword: password,
+		DefaultConfig:     defaultGrafanaConfig,
+	}
+
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	require.NoError(t, err)
+
+	// Valid template
+	c := apimodels.TestTemplatesConfigBodyParams{
+		Alerts: []*amv2.PostableAlert{
+			{
+				Annotations: amv2.LabelSet{
+					"annotations_label": "annotations_value",
+				},
+				Alert: amv2.Alert{
+					Labels: amv2.LabelSet{
+						"labels_label:": "labels_value",
+					},
+				},
+			},
+		},
+		Template: `{{ define "test" }} {{ index .Alerts 0 }} {{ end }}`,
+		Name:     "test",
+	}
+	res, err := am.TestTemplate(context.Background(), c)
+
+	require.NoError(t, err)
+	require.Len(t, res.Errors, 0)
+	require.Len(t, res.Results, 1)
+	require.Equal(t, "test", res.Results[0].Name)
+
+	// Invalid template
+	c.Template = `{{ define "test" }} {{ index 0 .Alerts }} {{ end }}`
+	res, err = am.TestTemplate(context.Background(), c)
+
+	require.NoError(t, err)
+	require.Len(t, res.Results, 0)
+	require.Len(t, res.Errors, 1)
+	require.Equal(t, notify.ExecutionError, res.Errors[0].Kind)
 }
 
 func genAlert(active bool, labels map[string]string) amv2.PostableAlert {
