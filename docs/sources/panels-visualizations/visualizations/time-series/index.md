@@ -105,7 +105,7 @@ The dataset must contain at least one numeric field, and in the case of multiple
 
 ### Example 1
 
-In the following example, there are three numeric fields represented three lines in the chart:
+In the following example, there are three numeric fields represented by three lines in the chart:
 
 | Time                | value1 | value2 | value3 |
 | ------------------- | ------ | ------ | ------ |
