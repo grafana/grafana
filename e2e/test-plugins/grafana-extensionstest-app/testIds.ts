@@ -14,12 +14,7 @@ export const testIds = {
     modal: 'b-app-modal',
     reusableComponent: 'b-app-configure-extension-component',
     reusableAddedComponent: 'b-app-add-component',
-  },
-  appConfig: {
-    container: 'data-testid ac-container',
-    apiKey: 'data-testid ac-api-key',
-    apiUrl: 'data-testid ac-api-url',
-    submit: 'data-testid ac-submit-form',
+    exposedComponent: 'b-app-exposed-component',
   },
   legacyAPIPage: {
     container: 'data-testid pg-legacy-container',

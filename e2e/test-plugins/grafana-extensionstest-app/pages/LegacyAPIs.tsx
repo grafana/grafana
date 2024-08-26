@@ -4,8 +4,9 @@ import {
   getPluginExtensions,
   getPluginLinkExtensions,
 } from '@grafana/runtime';
-import { ActionButton } from '../components/ActionButton';
 import { Stack } from '@grafana/ui';
+
+import { ActionButton } from '../components/ActionButton';
 import { testIds } from '../testIds';
 
 type AppExtensionContext = {};

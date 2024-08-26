@@ -1,5 +1,4 @@
 import { expect, test } from '@grafana/plugin-e2e';
-
 import { ensureExtensionRegistryIsPopulated } from '../utils';
 
 const panelTitle = 'Link with defaults';
