@@ -3,6 +3,9 @@ import {
   getPluginComponentExtensions,
   getPluginExtensions,
   getPluginLinkExtensions,
+  usePluginComponentExtensions,
+  usePluginExtensions,
+  usePluginLinkExtensions,
 } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 
@@ -14,42 +17,42 @@ type ReusableComponentProps = {
   name: string;
 };
 
-export function LegacyAPIs() {
+export function LegacyHooks() {
   const extensionPointId1 = 'plugins/grafana-extensionstest-app/actions';
   const extensionPointId2 = 'plugins/grafana-extensionexample2-app/configure-extension-component/v1';
   const context: AppExtensionContext = {};
 
-  const { extensions } = getPluginExtensions({
+  const { extensions } = usePluginExtensions({
     extensionPointId: extensionPointId1,
     context,
   });
 
-  const { extensions: linkExtensions } = getPluginLinkExtensions({
+  const { extensions: linkExtensions } = usePluginLinkExtensions({
     extensionPointId: extensionPointId1,
   });
 
-  const { extensions: componentExtensions } = getPluginComponentExtensions<ReusableComponentProps>({
+  const { extensions: componentExtensions } = usePluginComponentExtensions<ReusableComponentProps>({
     extensionPointId: extensionPointId2,
   });
 
   return (
     <PluginPage>
-      <Stack direction={'column'} gap={4} data-testid={testIds.legacyAPIPage.container}>
-        <section data-testid={testIds.legacyAPIPage.section1}>
+      <Stack direction={'column'} gap={4} data-testid={testIds.legacyHooksPage.container}>
+        <section data-testid={testIds.legacyHooksPage.section1}>
           <h3>
             Link extensions defined with configureExtensionLink or configureExtensionComponent and retrived using
-            getPluginExtensions
+            usePluginExtensions
           </h3>
           <ActionButton extensions={extensions} />
         </section>
-        <section data-testid={testIds.legacyAPIPage.section2}>
-          <h3>Link extensions defined with configureExtensionLink and retrived using getPluginLinkExtensions</h3>
+        <section data-testid={testIds.legacyHooksPage.section2}>
+          <h3>Link extensions defined with configureExtensionLink and retrived using usePluginLinkExtensions</h3>
           <ActionButton extensions={linkExtensions} />
         </section>
-        <section data-testid={testIds.legacyAPIPage.section3}>
+        <section data-testid={testIds.legacyHooksPage.section3}>
           <h3>
             Component extensions defined with configureExtensionComponent and retrived using
-            getPluginComponentExtensions
+            usePluginComponentExtensions
           </h3>
           {componentExtensions.map((extension) => {
             const Component = extension.component;

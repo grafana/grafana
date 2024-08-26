@@ -16,11 +16,17 @@ export const testIds = {
     reusableAddedComponent: 'b-app-add-component',
     exposedComponent: 'b-app-exposed-component',
   },
-  legacyAPIPage: {
-    container: 'data-testid pg-legacy-container',
+  legacyGettersPage: {
+    container: 'data-testid pg-legacy-getters-container',
     section1: 'get-plugin-extensions',
     section2: 'configure-extension-link-get-plugin-link-extensions',
     section3: 'configure-extension-component-get-plugin-component-extensions',
+  },
+  legacyHooksPage: {
+    container: 'data-testid pg-legacy-hooks-container',
+    section1: 'use-plugin-extensions',
+    section2: 'configure-extension-link-use-plugin-link-extensions',
+    section3: 'configure-extension-component-use-plugin-component-extensions',
   },
   exposedComponentsPage: {
     container: 'data-testid pg-exposed-components-container',
