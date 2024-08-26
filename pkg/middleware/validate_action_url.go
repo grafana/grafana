@@ -48,7 +48,7 @@ func ValidateActionUrl(cfg *setting.Cfg, logger log.Logger) func(http.Handler) h
 				http.Error(w, err.Error(), e.HTTPStatus)
 				return
 			}
-			matched, matchErr := check(ctx, allGlobs, logger)
+			matched, allowed, matchErr := check(ctx, allGlobs, logger)
 			if matchErr != nil {
 				if !errors.As(matchErr, &e) {
 					http.Error(w, fmt.Sprintf("internal server error: expected error type errorWithStatus, got %s. Error: %v", reflect.TypeOf(err), err), http.StatusInternalServerError)
@@ -57,20 +57,30 @@ func ValidateActionUrl(cfg *setting.Cfg, logger log.Logger) func(http.Handler) h
 				return
 			}
 			if matched {
-				next.ServeHTTP(w, r)
+				if !allowed {
+					logger.Error("POST/PUT to path not allowed", "validateActionUrl", ctx.Req.URL)
+					return
+				} else {
+					next.ServeHTTP(w, r)
+				}
 			}
+			// allowed and no matches fall through
+			next.ServeHTTP(w, r)
 		})
 	}
 }
 
-func check(ctx *contextmodel.ReqContext, allGlobs *[]glob.Glob, logger log.Logger) (bool, *errorWithStatus) {
+// check
+// Detects header for action urls and compares to globbed pattern list
+// returns true if allowed
+func check(ctx *contextmodel.ReqContext, allGlobs *[]glob.Glob, logger log.Logger) (bool, bool, *errorWithStatus) {
 	// ignore local render calls
 	if ctx.IsRenderCall {
-		return false, nil
+		return false, false, nil
 	}
 	// only process POST and PUT
 	if ctx.Req.Method != http.MethodPost && ctx.Req.Method != http.MethodPut {
-		return false, nil
+		return false, false, nil
 	}
 	// if no header
 	// return nil
@@ -78,18 +88,18 @@ func check(ctx *contextmodel.ReqContext, allGlobs *[]glob.Glob, logger log.Logge
 	action := ctx.Req.Header.Get("X-Grafana-Action")
 	if action == "" {
 		// header not found, this is not an action request
-		return false, nil
+		return false, false, nil
 	}
 	// for each split config
 	// if matches glob
 	// return nil
 	urlToCheck := ctx.Req.URL
 	if matchesAllowedPath(allGlobs, urlToCheck.Path) {
-		return true, nil
+		return true, true, nil
 	}
 	logger.Warn("POST/PUT to path not allowed", "validateActionUrl", urlToCheck)
 	// return some error
-	return false, &errorWithStatus{
+	return false, false, &errorWithStatus{
 		Underlying: fmt.Errorf("POST/PUT not allowed for path %s", urlToCheck),
 		HTTPStatus: http.StatusMethodNotAllowed,
 	}
