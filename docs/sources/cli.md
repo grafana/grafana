@@ -227,7 +227,7 @@ If you have not lost the admin password, we recommend that you change the user p
 
 If you need to set the password in a script, then you can use the [Grafana User API]({{< relref "./developers/http_api/user/#change-password" >}}).
 
-#### Reset admin password 
+#### Reset admin password
 
 If you installed Grafana using Homebrew, you can reset the admin password using the following command:
 
