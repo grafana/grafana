@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { CoreApp, findHighlightChunksInText, LogRowContextOptions, LogRowModel } from '@grafana/data';
@@ -92,7 +92,6 @@ export const LogRowMessage = memo((props: Props) => {
     onPinLine,
     pinLineButtonTooltipTitle,
     pinned,
-    mouseIsOver,
     onBlur,
     getRowContextQuery,
     expanded,
@@ -102,6 +101,7 @@ export const LogRowMessage = memo((props: Props) => {
     () => restructureLog(raw, prettifyLogMessage, wrapLogMessage, Boolean(expanded)),
     [raw, prettifyLogMessage, wrapLogMessage, expanded]
   );
+  const [mouseIsOver, setMouseIsOver] = useState(false);
   const shouldShowMenu = useMemo(() => mouseIsOver || pinned, [mouseIsOver, pinned]);
   return (
     <>
@@ -109,7 +109,15 @@ export const LogRowMessage = memo((props: Props) => {
         // When context is open, the position has to be NOT relative. // Setting the postion as inline-style to
         // overwrite the more sepecific style definition from `styles.logsRowMessage`.
       }
-      <td className={styles.logsRowMessage}>
+      <td
+        onMouseLeave={() => {
+          setMouseIsOver(false);
+        }}
+        onMouseEnter={() => {
+          setMouseIsOver(true);
+        }}
+        className={styles.logsRowMessage}
+      >
         <div className={wrapLogMessage ? styles.positionRelative : styles.horizontalScroll}>
           <button className={`${styles.logLine} ${styles.positionRelative}`}>
             <LogMessage hasAnsi={hasAnsi} entry={restructuredEntry} highlights={row.searchWords} styles={styles} />
