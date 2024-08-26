@@ -1315,14 +1315,6 @@
    "title": "Frames is a slice of Frame pointers.",
    "type": "array"
   },
-  "GenericPublicError": {
-   "properties": {
-    "body": {
-     "$ref": "#/definitions/PublicError"
-    }
-   },
-   "type": "object"
-  },
   "GettableAlertmanagers": {
    "properties": {
     "data": {
@@ -8130,9 +8122,9 @@
       "description": " The mute timing was deleted successfully."
      },
      "409": {
-      "description": "GenericPublicError",
+      "description": "PublicError",
       "schema": {
-       "$ref": "#/definitions/GenericPublicError"
+       "$ref": "#/definitions/PublicError"
       }
      }
     },
@@ -8208,9 +8200,9 @@
       }
      },
      "409": {
-      "description": "GenericPublicError",
+      "description": "PublicError",
       "schema": {
-       "$ref": "#/definitions/GenericPublicError"
+       "$ref": "#/definitions/PublicError"
       }
      }
     },
@@ -8422,9 +8414,9 @@
       "description": " The template was deleted successfully."
      },
      "409": {
-      "description": "GenericPublicError",
+      "description": "PublicError",
       "schema": {
-       "$ref": "#/definitions/GenericPublicError"
+       "$ref": "#/definitions/PublicError"
       }
      }
     },
@@ -8452,9 +8444,9 @@
       }
      },
      "404": {
-      "description": "GenericPublicError",
+      "description": "PublicError",
       "schema": {
-       "$ref": "#/definitions/GenericPublicError"
+       "$ref": "#/definitions/PublicError"
       }
      }
     },
@@ -8497,15 +8489,15 @@
       }
      },
      "400": {
-      "description": "GenericPublicError",
+      "description": "PublicError",
       "schema": {
-       "$ref": "#/definitions/GenericPublicError"
+       "$ref": "#/definitions/PublicError"
       }
      },
      "409": {
-      "description": "GenericPublicError",
+      "description": "PublicError",
       "schema": {
-       "$ref": "#/definitions/GenericPublicError"
+       "$ref": "#/definitions/PublicError"
       }
      }
     },
