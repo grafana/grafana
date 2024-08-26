@@ -27,7 +27,14 @@ const (
 	QuotaTarget    quota.Target    = "correlations"
 )
 
+// the type of correlation, either query for containing query information, or external for containing an external URL
+// +enum
 type CorrelationType string
+
+const (
+	query    CorrelationType = "query"
+	external CorrelationType = "external"
+)
 
 type Transformation struct {
 	//Enum: regex,logfmt
@@ -37,12 +44,8 @@ type Transformation struct {
 	MapValue   string `json:"mapValue,omitempty"`
 }
 
-const (
-	TypeQuery CorrelationType = "query"
-)
-
 func (t CorrelationType) Validate() error {
-	if t != TypeQuery {
+	if (t != query && t != external) {
 		return fmt.Errorf("%s: \"%s\"", ErrInvalidConfigType, t)
 	}
 	return nil
@@ -169,8 +172,8 @@ func (c CreateCorrelationCommand) Validate() error {
 	if err := c.Type.Validate(); err != nil {
 		return err
 	}
-	if c.TargetUID == nil && c.Type == TypeQuery {
-		return fmt.Errorf("correlations of type \"%s\" must have a targetUID", TypeQuery)
+	if c.TargetUID == nil && c.Type == query {
+		return fmt.Errorf("correlations of type \"%s\" must have a targetUID", query)
 	}
 
 	if err := c.Config.Transformations.Validate(); err != nil {

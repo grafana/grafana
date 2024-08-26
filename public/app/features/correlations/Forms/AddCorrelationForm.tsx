@@ -6,6 +6,7 @@ import { PanelContainer, useStyles2 } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 import { Wizard } from '../components/Wizard';
+import { CORR_TYPES } from '../types';
 import { useCorrelations } from '../useCorrelations';
 
 import { ConfigureCorrelationBasicInfoForm } from './ConfigureCorrelationBasicInfoForm';
@@ -44,7 +45,7 @@ export const AddCorrelationForm = ({ onClose, onCreated }: Props) => {
     }
   }, [error, loading, value, onCreated]);
 
-  const defaultValues: Partial<FormDTO> = { type: 'query', config: { target: {}, field: '' } };
+  const defaultValues: Partial<FormDTO> = { type: CORR_TYPES.query.value, config: { target: {}, field: '' } };
 
   return (
     <PanelContainer className={styles.panelContainer}>

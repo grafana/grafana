@@ -23,7 +23,7 @@ import {
   createRemoveCorrelationResponse,
   createUpdateCorrelationResponse,
 } from './__mocks__/useCorrelations.mocks';
-import { Correlation, CreateCorrelationParams } from './types';
+import { CORR_TYPES, Correlation, CreateCorrelationParams } from './types';
 
 const renderWithContext = async (
   datasources: ConstructorParameters<typeof MockDataSourceSrv>[0] = {},
@@ -361,7 +361,7 @@ describe('CorrelationsPage', () => {
             uid: '1',
             label: 'Some label',
             provisioned: false,
-            type: 'query',
+            type: CORR_TYPES.query.value,
             config: {
               field: 'line',
               target: {},
@@ -375,7 +375,7 @@ describe('CorrelationsPage', () => {
             targetUID: 'loki',
             uid: '2',
             label: 'Prometheus to Loki',
-            type: 'query',
+            type: CORR_TYPES.query.value,
             config: { field: 'label', target: {} },
             provisioned: false,
           },
@@ -599,7 +599,7 @@ describe('CorrelationsPage', () => {
             uid: '1',
             label: 'Loki to Loki',
             provisioned: false,
-            type: 'query',
+            type: CORR_TYPES.query.value,
             config: {
               field: 'line',
               target: {},
@@ -614,7 +614,7 @@ describe('CorrelationsPage', () => {
             uid: '2',
             label: 'Loki to Prometheus',
             provisioned: false,
-            type: 'query',
+            type: CORR_TYPES.query.value,
             config: {
               field: 'line',
               target: {},
@@ -628,7 +628,7 @@ describe('CorrelationsPage', () => {
             targetUID: 'loki',
             uid: '3',
             label: 'Prometheus to Loki',
-            type: 'query',
+            type: CORR_TYPES.query.value,
             config: { field: 'label', target: {} },
             provisioned: false,
           },
@@ -637,7 +637,7 @@ describe('CorrelationsPage', () => {
             targetUID: 'prometheus',
             uid: '4',
             label: 'Prometheus to Prometheus',
-            type: 'query',
+            type: CORR_TYPES.query.value,
             config: { field: 'label', target: {} },
             provisioned: false,
           },

@@ -39,7 +39,7 @@ func TestIntegrationCreateOrUpdateCorrelation(t *testing.T) {
 		OrgId:     dataSource.OrgID,
 		Label:     "needs migration",
 		Config: correlations.CorrelationConfig{
-			Type:   correlations.TypeQuery,
+			Type:   correlations.CorrelationType("query"),
 			Field:  "foo",
 			Target: map[string]any{},
 			Transformations: []correlations.Transformation{
@@ -55,7 +55,7 @@ func TestIntegrationCreateOrUpdateCorrelation(t *testing.T) {
 		OrgId:     dataSource.OrgID,
 		Label:     "existing",
 		Config: correlations.CorrelationConfig{
-			Type:   correlations.TypeQuery,
+			Type:  correlations.CorrelationType("query"),
 			Field:  "foo",
 			Target: map[string]any{},
 			Transformations: []correlations.Transformation{

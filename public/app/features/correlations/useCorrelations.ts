@@ -6,6 +6,7 @@ import { getDataSourceSrv, FetchResponse } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import {
+  CORR_TYPES,
   Correlation,
   CreateCorrelationParams,
   CreateCorrelationResponse,
@@ -26,7 +27,7 @@ export interface CorrelationsResponse {
 
 export interface CorrelationData extends Omit<Correlation, 'sourceUID' | 'targetUID'> {
   source: DataSourceInstanceSettings;
-  target: DataSourceInstanceSettings;
+  target?: DataSourceInstanceSettings;
 }
 
 export interface CorrelationsData {
@@ -42,7 +43,7 @@ const toEnrichedCorrelationData = ({
   ...correlation
 }: Correlation): CorrelationData | undefined => {
   const sourceDatasource = getDataSourceSrv().getInstanceSettings(sourceUID);
-  const targetDatasource = getDataSourceSrv().getInstanceSettings(targetUID);
+  const targetDatasource = targetUID ? getDataSourceSrv().getInstanceSettings(targetUID) : undefined;
 
   // According to #72258 we will remove logic to handle orgId=0/null as global correlations.
   // This logging is to check if there are any customers who did not migrate existing correlations.
@@ -54,8 +55,8 @@ const toEnrichedCorrelationData = ({
   if (
     sourceDatasource &&
     sourceDatasource?.uid !== undefined &&
-    targetDatasource &&
-    targetDatasource.uid !== undefined
+    (targetDatasource?.uid !== undefined ||
+      (targetDatasource?.uid === undefined && correlation.type === CORR_TYPES.external.value))
   ) {
     return {
       ...correlation,

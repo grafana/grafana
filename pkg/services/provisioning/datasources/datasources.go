@@ -196,7 +196,7 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 	// we ignore the legacy config.type value - the only valid value at that version was "query"
 	var corrType = correlation["type"]
 	if corrType == nil || corrType == "" {
-		corrType = correlations.TypeQuery
+		corrType = correlations.CorrelationType("query")
 	}
 
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
