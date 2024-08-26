@@ -162,8 +162,6 @@ func mapToSubjects(members []legacy.TeamMember) []identityv0.TeamSubject {
 	return out
 }
 
-// For some reason team memberships are using dashboardaccess.PermissionType internally.
-// But that enum only have View, Edit and Admin. So admin is 4 and then members are set to 0.
 func mapPermisson(p team.PermissionType) identityv0.TeamPermission {
 	if p == team.PermissionTypeAdmin {
 		return identityv0.TeamPermissionAdmin
