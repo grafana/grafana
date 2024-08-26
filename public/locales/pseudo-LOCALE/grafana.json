@@ -2350,6 +2350,10 @@
       "revoke-button-tooltip": "Ŗęvőĸę äččęşş",
       "view-button-tooltip": "Vįęŵ şĥäřęđ đäşĥþőäřđ"
     },
+    "empty-state": {
+      "message": "Ÿőū ĥävęŉ'ŧ čřęäŧęđ äŉy şĥäřęđ đäşĥþőäřđş yęŧ",
+      "more-info": "Cřęäŧę ä şĥäřęđ đäşĥþőäřđ ƒřőm äŉy ęχįşŧįŉģ đäşĥþőäřđ ŧĥřőūģĥ ŧĥę <1>Ŝĥäřę</1> mőđäľ. <4>Ŀęäřŉ mőřę</4>"
+    },
     "toggle": {
       "pause-sharing-toggle-text": "Päūşę äččęşş"
     }
