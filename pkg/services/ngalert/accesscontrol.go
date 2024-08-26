@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -133,6 +134,7 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingReceiversRead,
+					Scope:  ac.ScopeReceiversAll,
 				},
 			},
 		},
@@ -151,6 +153,18 @@ var (
 				{
 					Action: accesscontrol.ActionAlertingNotificationsExternalWrite,
 					Scope:  datasources.ScopeAll,
+				},
+				{
+					Action: accesscontrol.ActionAlertingReceiversCreate,
+					Scope:  ac.ScopeReceiversAll,
+				},
+				{
+					Action: accesscontrol.ActionAlertingReceiversUpdate,
+					Scope:  ac.ScopeReceiversAll,
+				},
+				{
+					Action: accesscontrol.ActionAlertingReceiversDelete,
+					Scope:  ac.ScopeReceiversAll,
 				},
 			}),
 		},
