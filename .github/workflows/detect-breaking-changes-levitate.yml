@@ -141,6 +141,7 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.LEVITATE_SA }}
+          project_id: 'grafanalabs-global'
 
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v2'
@@ -148,16 +149,6 @@ jobs:
           version: '>= 363.0.0'
           project_id: 'grafanalabs-global'
           install_components: 'bq'
-
-        # This step is needed to generate a detailed levitate report
-      - name: Set up gcloud project
-        run: |
-          unset CLOUDSDK_CORE_PROJECT
-          unset GCLOUD_PROJECT
-          unset GCP_PROJECT
-          unset GOOGLE_CLOUD_PROJECT
-
-          gcloud config set project grafanalabs-global
 
       - name: Get link for the Github Action job
         id: job
