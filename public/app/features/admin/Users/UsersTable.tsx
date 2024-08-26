@@ -138,6 +138,18 @@ export const UsersTable = ({
         cell: ({ cell: { value } }: Cell<'isDisabled'>) => <>{value && <Tag colorIndex={9} name={'Disabled'} />}</>,
       },
       {
+        id: 'orgId',
+        header: 'Organization ID',
+        cell: ({ cell: { value } }: Cell<'orgId'>) => value,
+        sortType: 'number',
+      },
+      {
+        id: 'orgRole',
+        header: 'Organization Role',
+        cell: ({ cell: { value } }: Cell<'orgRole'>) => value,
+        sortType: 'string',
+      },
+      {
         id: 'edit',
         header: '',
         cell: ({ row: { original } }: Cell) => {

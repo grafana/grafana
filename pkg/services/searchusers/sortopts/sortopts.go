@@ -23,6 +23,10 @@ var (
 		"name-desc":          newSortOption("name", true, 2),
 		"lastSeenAtAge-asc":  newTimeSortOption("last_seen_at", false, 3),
 		"lastSeenAtAge-desc": newTimeSortOption("last_seen_at", true, 3),
+		"orgId-asc":          newSortOption("org.id", false, 4),
+		"orgId-desc":         newSortOption("org.id", true, 4),
+		"orgRole-asc":        newSortOption("org_user.role", false, 5),
+		"orgRole-desc":       newSortOption("org_user.role", true, 5),
 	}
 
 	ErrorUnknownSortingOption = errutil.BadRequest("unknown sorting option")
@@ -34,10 +38,15 @@ type Sorter struct {
 }
 
 func (s Sorter) OrderBy() string {
-	if s.Descending {
-		return fmt.Sprintf("u.%v DESC", s.Field)
+	prefix := "u."
+	if strings.Contains(s.Field, ".") {
+		prefix = ""
 	}
-	return fmt.Sprintf("u.%v ASC", s.Field)
+	order := "ASC"
+	if s.Descending {
+		order = "DESC"
+	}
+	return fmt.Sprintf("%s%s %s", prefix, s.Field, order)
 }
 
 func newSortOption(field string, desc bool, index int) model.SortOption {

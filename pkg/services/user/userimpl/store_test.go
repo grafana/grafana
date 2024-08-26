@@ -547,7 +547,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		query5 := &user.SearchUsersQuery{IsDisabled: &isDisabled, SignedInUser: usr}
 		query5Result, err := userStore.Search(context.Background(), query5)
 		require.Nil(t, err)
-		require.EqualValues(t, query5Result.TotalCount, 5)
+		// Since we added user[1] to an additional org, we will get same user twice for different organizations
+		require.EqualValues(t, 6, query5Result.TotalCount)
 
 		// the user is deleted
 		err = userStore.Delete(context.Background(), users[1].ID)
@@ -883,6 +884,101 @@ func TestIntegrationUserUpdate(t *testing.T) {
 		// Unchanged
 		require.Equal(t, "loginuser3", result.Login)
 		require.Equal(t, "user3@test.com", result.Email)
+	})
+}
+
+func TestIntegrationUserSearchWithRoles(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ss, cfg := db.InitTestDBWithCfg(t)
+	userStore := ProvideStore(ss, setting.NewCfg())
+	orgService, usrSvc := createOrgAndUserSvc(t, ss, cfg)
+
+	users := createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
+		return &user.CreateUserCommand{
+			Email:      fmt.Sprintf("user%d@test.com", i+1),
+			Name:       fmt.Sprintf("User %d", i+1),
+			Login:      fmt.Sprintf("user%d", i+1),
+			OrgID:      int64(i + 1),
+			IsDisabled: i == 4,
+		}
+	})
+
+	userOrgMap := make(map[int64]map[int64]bool)
+
+	for _, usr := range users {
+		if userOrgMap[usr.ID] == nil {
+			userOrgMap[usr.ID] = make(map[int64]bool)
+		}
+		userOrgMap[usr.ID][usr.OrgID] = true
+	}
+
+	for i, usr := range users {
+		roleOrg := "Admin"
+		if i%2 != 0 {
+			roleOrg = "Viewer"
+		}
+
+		newOrgID := (usr.OrgID % 5) + 1
+		if !userOrgMap[usr.ID][newOrgID] {
+			err := orgService.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
+				LoginOrEmail: usr.Login,
+				Role:         org.RoleType(roleOrg),
+				OrgID:        newOrgID,
+				UserID:       usr.ID,
+			})
+			require.NoError(t, err)
+			userOrgMap[usr.ID][newOrgID] = true
+		}
+	}
+
+	t.Run("Search users with correct roles per organization", func(t *testing.T) {
+		query := user.SearchUsersQuery{
+			SignedInUser: &user.SignedInUser{
+				OrgID:       1,
+				Permissions: map[int64]map[string][]string{1: {"users:read": {"global.users:*"}}},
+			},
+		}
+
+		result, err := userStore.Search(context.Background(), &query)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.Equal(t, 10, len(result.Users)) // 5 users, each appearing twice
+
+		for _, usr := range users {
+			for orgID := range userOrgMap[usr.ID] {
+				var found bool
+				for _, u := range result.Users {
+					if u.ID == usr.ID && u.Org.ID == orgID {
+						found = true
+						break
+					}
+				}
+				require.True(t, found, "User %d was not found in Org %d", usr.ID, orgID)
+			}
+		}
+	})
+
+	t.Run("Search users with role Admin and disabled status", func(t *testing.T) {
+		isDisabled := true
+		query := user.SearchUsersQuery{
+			IsDisabled: &isDisabled,
+			SignedInUser: &user.SignedInUser{
+				OrgID:       1,
+				Permissions: map[int64]map[string][]string{1: {"users:read": {"global.users:*"}}},
+			},
+		}
+
+		result, err := userStore.Search(context.Background(), &query)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.Equal(t, 2, len(result.Users))
+
+		for _, user := range result.Users {
+			assert.True(t, user.IsDisabled)
+		}
 	})
 }
 

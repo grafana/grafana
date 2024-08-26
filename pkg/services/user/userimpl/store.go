@@ -475,7 +475,11 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 			WHERE user_auth.user_id = u.id
 			ORDER BY user_auth.created DESC `
 		joinCondition = "user_auth.id=" + joinCondition + ss.dialect.Limit(1) + ")"
+
 		sess.Join("LEFT", "user_auth", joinCondition)
+		sess.Join("LEFT", "org_user", "org_user.user_id = u.id")
+		sess.Join("LEFT", "org", "org.id = org_user.org_id")
+
 		if query.OrgID > 0 {
 			whereConditions = append(whereConditions, "org_id = ?")
 			whereParams = append(whereParams, query.OrgID)
@@ -490,8 +494,8 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		whereParams = append(whereParams, acFilter.Args...)
 
 		if query.Query != "" {
-			whereConditions = append(whereConditions, "(email "+ss.dialect.LikeStr()+" ? OR name "+ss.dialect.LikeStr()+" ? OR login "+ss.dialect.LikeStr()+" ?)")
-			whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
+			whereConditions = append(whereConditions, "(u.email "+ss.dialect.LikeStr()+" ? OR u.name "+ss.dialect.LikeStr()+" ? OR u.login "+ss.dialect.LikeStr()+" ? OR org_user.role "+ss.dialect.LikeStr()+" ?)")
+			whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards, queryWithWildcards)
 		}
 
 		if query.IsDisabled != nil {
@@ -525,8 +529,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 			sess.Limit(query.Limit, offset)
 		}
 
-		sess.Cols("u.id", "u.uid", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module")
-
+		sess.Cols("u.id", "u.uid", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module", "org.id", "org_user.role")
 		if len(query.SortOpts) > 0 {
 			for i := range query.SortOpts {
 				for j := range query.SortOpts[i].Filter {
@@ -544,6 +547,8 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		// get total
 		user := user.User{}
 		countSess := dbSess.Table("user").Alias("u")
+		countSess.Join("LEFT", "org_user", "org_user.user_id = u.id")
+		countSess.Join("LEFT", "org", "org.id = org_user.org_id")
 
 		// Join with user_auth table if users filtered by auth_module
 		if query.AuthModule != "" {
@@ -575,6 +580,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 
 		return err
 	})
+
 	return &result, err
 }
 

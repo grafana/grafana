@@ -5,7 +5,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-const activeLast30Days = "activeLast30Days"
+const (
+	activeLast30Days = "activeLast30Days"
+	roleFilter       = "role"
+)
 
 type OSSSearchUserFilter struct {
 	filters map[string]user.FilterHandler
@@ -16,6 +19,7 @@ var fltlog = log.New("filters")
 func ProvideOSSSearchUserFilter() *OSSSearchUserFilter {
 	filters := make(map[string]user.FilterHandler)
 	filters[activeLast30Days] = NewActiveLast30DaysFilter
+	filters[roleFilter] = NewRoleFilter
 	return &OSSSearchUserFilter{
 		filters: filters,
 	}
@@ -28,7 +32,7 @@ func (o *OSSSearchUserFilter) GetFilter(filterName string, params []string) user
 	}
 	filter, err := f(params)
 	if err != nil {
-		fltlog.Warn("Cannot initialise the filter.", "filter", filterName, "error", err)
+		fltlog.Warn("Cannot initialize the filter.", "filter", filterName, "error", err)
 		return nil
 	}
 	return filter

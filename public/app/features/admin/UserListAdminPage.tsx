@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import { ComponentType, useEffect } from 'react';
+import { Trans } from 'react-i18next';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { LinkButton, RadioButtonGroup, useStyles2, FilterInput, EmptyState } from '@grafana/ui';
+import { LinkButton, RadioButtonGroup, useStyles2, FilterInput, EmptyState, MultiSelect } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
@@ -66,6 +67,19 @@ const UserListAdminPageUnConnected = ({
 }: Props) => {
   const styles = useStyles2(getStyles);
 
+  const selectedRoles =
+    (filters.find((f) => f.name === 'role')?.value as Array<SelectableValue<string>> | undefined) || [];
+
+  const handleRoleChange = (selected: Array<SelectableValue<string>>) => {
+    const roles: Array<SelectableValue<string>> = selected.map((role) => ({ label: role.label, value: role.value }));
+
+    if (roles.length > 0) {
+      changeFilter({ name: 'role', value: roles });
+    } else {
+      changeFilter({ name: 'role', value: [] });
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
@@ -75,15 +89,30 @@ const UserListAdminPageUnConnected = ({
       <div className={styles.actionBar} data-testid={selectors.container}>
         <div className={styles.row}>
           <FilterInput
-            placeholder="Search user by login, email, or name."
+            placeholder={t('user-list-admin.search-placeholder', 'Search user by login, email, name and role.')}
             autoFocus={true}
             value={query}
             onChange={changeQuery}
+            className={styles.queryInput}
           />
+
+          <MultiSelect
+            options={[]}
+            value={selectedRoles}
+            placeholder={t('user-list-admin.filter-by-role', 'Filter by role')}
+            allowCustomValue={true}
+            onCreateOption={(inputValue) => {
+              const newRole: SelectableValue<string> = { label: inputValue, value: inputValue };
+              handleRoleChange([...selectedRoles, newRole]);
+            }}
+            onChange={handleRoleChange}
+            className={styles.filter}
+          />
+
           <RadioButtonGroup
             options={[
-              { label: 'All users', value: false },
-              { label: 'Active last 30 days', value: true },
+              { label: t('user-list-admin.all-users', 'All users'), value: false },
+              { label: t('user-list-admin.active-last-30-days', 'Active last 30 days'), value: true },
             ]}
             onChange={(value) => changeFilter({ name: 'activeLast30Days', value })}
             value={filters.find((f) => f.name === 'activeLast30Days')?.value}
@@ -94,7 +123,7 @@ const UserListAdminPageUnConnected = ({
           ))}
           {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
             <LinkButton href="admin/users/create" variant="primary">
-              New user
+              <Trans i18nKey="user-list-admin.new-user-button">New user</Trans>
             </LinkButton>
           )}
         </div>
@@ -132,6 +161,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       [theme.breakpoints.down('sm')]: {
         margin: 0,
       },
+    }),
+    queryInput: css({
+      flexGrow: 1,
+      minWidth: '50%',
     }),
     actionBar: css({
       marginBottom: theme.spacing(2),

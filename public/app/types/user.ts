@@ -46,6 +46,7 @@ export interface UserDTO extends WithAccessControlMetadata {
   theme?: string;
   avatarUrl?: string;
   orgId?: number;
+  orgRole?: string;
   lastSeenAt?: string;
   lastSeenAtAge?: string;
   licensedRole?: string;

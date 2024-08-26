@@ -300,6 +300,12 @@ export function fetchUsers(): ThunkResult<void> {
       if (sort) {
         url += `&sort=${sort}`;
       }
+
+      const roleFilter = filters.find((f) => f.name === 'role');
+      if (roleFilter) {
+        url += `&role=${roleFilter.value}`;
+      }
+
       const result = await getBackendSrv().get(url);
       dispatch(usersFetched(result));
     } catch (error) {
