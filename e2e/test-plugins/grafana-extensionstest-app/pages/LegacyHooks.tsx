@@ -1,8 +1,5 @@
 import {
   PluginPage,
-  getPluginComponentExtensions,
-  getPluginExtensions,
-  getPluginLinkExtensions,
   usePluginComponentExtensions,
   usePluginExtensions,
   usePluginLinkExtensions,

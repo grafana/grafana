@@ -1,8 +1,10 @@
 import { Route, Routes } from 'react-router-dom';
+
 import { AppRootProps } from '@grafana/data';
+
 import { ROUTES } from '../../constants';
-import { testIds } from '../../testIds';
 import { AddedComponents, AddedLinks, ExposedComponents, LegacyGetters, LegacyHooks } from '../../pages';
+import { testIds } from '../../testIds';
 
 export function App(props: AppRootProps) {
   return (
