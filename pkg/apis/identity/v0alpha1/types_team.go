@@ -46,27 +46,6 @@ type TeamBindingList struct {
 	Items []TeamBinding `json:"items,omitempty"`
 }
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type TeamMember struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec TeamMemberSpec `json:"spec,omitempty"`
-}
-
-type TeamMemberSpec struct {
-	Subject TeamSubject `json:"subjects,omitempty"`
-	TeamRef TeamRef     `json:"teamRef,omitempty"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type TeamMemberList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-
-	Items []TeamMember `json:"items,omitempty"`
-}
-
 type TeamSubject struct {
 	// Name is the unique identifier for subject.
 	Name string `json:"name,omitempty"`

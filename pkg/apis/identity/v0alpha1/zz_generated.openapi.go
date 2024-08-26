@@ -27,9 +27,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamBindingList":        schema_pkg_apis_identity_v0alpha1_TeamBindingList(ref),
 		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamBindingSpec":        schema_pkg_apis_identity_v0alpha1_TeamBindingSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamList":               schema_pkg_apis_identity_v0alpha1_TeamList(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamMember":             schema_pkg_apis_identity_v0alpha1_TeamMember(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamMemberList":         schema_pkg_apis_identity_v0alpha1_TeamMemberList(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamMemberSpec":         schema_pkg_apis_identity_v0alpha1_TeamMemberSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamRef":                schema_pkg_apis_identity_v0alpha1_TeamRef(ref),
 		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamSpec":               schema_pkg_apis_identity_v0alpha1_TeamSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamSubject":            schema_pkg_apis_identity_v0alpha1_TeamSubject(ref),
@@ -621,119 +618,6 @@ func schema_pkg_apis_identity_v0alpha1_TeamList(ref common.ReferenceCallback) co
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.Team", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
-	}
-}
-
-func schema_pkg_apis_identity_v0alpha1_TeamMember(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
-						},
-					},
-					"spec": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamMemberSpec"),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamMemberSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
-	}
-}
-
-func schema_pkg_apis_identity_v0alpha1_TeamMemberList(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
-						},
-					},
-					"items": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamMember"),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamMember", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
-	}
-}
-
-func schema_pkg_apis_identity_v0alpha1_TeamMemberSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"subjects": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamSubject"),
-						},
-					},
-					"teamRef": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamRef"),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamRef", "github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamSubject"},
 	}
 }
 
