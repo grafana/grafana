@@ -119,12 +119,7 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
 
   const [
     fetchRulerRuleGroup,
-    {
-      currentData: rulerRuleGroup,
-      isLoading: isLoadingRulerGroup,
-      error: rulerRuleGroupError,
-      isUninitialized: rulerRuleGroupUninitialized,
-    },
+    { currentData: rulerRuleGroup, isLoading: isLoadingRulerGroup, error: rulerRuleGroupError },
   ] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
 
   useEffect(() => {
@@ -166,7 +161,7 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
   }, [ruleIdentifier, ruleSourceName, promRuleNs, rulerRuleGroup, ruleSource]);
 
   return {
-    loading: isLoadingDsFeatures || isLoadingPromRules || isLoadingRulerGroup || rulerRuleGroupUninitialized,
+    loading: isLoadingDsFeatures || isLoadingPromRules || isLoadingRulerGroup,
     error: ruleLocationError ?? promRuleNsError ?? rulerRuleGroupError,
     result: rule,
   };
