@@ -340,7 +340,7 @@ func runDataSyncer(ctx context.Context, mode DualWriterMode, legacy LegacyStorag
 	ctx, cancelFn := context.WithTimeout(ctx, timeout)
 	defer cancelFn()
 
-	// implementation depends on the desired DualWriter mode
+	// implementation depends on the current DualWriter mode
 	switch mode {
 	case Mode2:
 		return mode2DataSyncer(ctx, legacy, storage, kind, reg, serverLockService, requestInfo)
