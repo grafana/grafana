@@ -17,30 +17,34 @@ export const BarGaugeLegend = memo(
 
     const alignedDataFrames = outerJoinDataFrames({ frames: data });
 
-    const legendItems = alignedDataFrames?.fields
-      .map?.((field, i) => {
-        const frameIndex = 0;
-        const fieldIndex = i + 1;
+    let legendItems: VizLegendItem[] = [];
 
-        if (!field || field.type === 'time' || field.config.custom?.hideFrom?.legend) {
-          return undefined;
-        }
+    if (alignedDataFrames && alignedDataFrames.fields.length > 0) {
+      legendItems = alignedDataFrames.fields
+        .map((field, i) => {
+          const frameIndex = 0;
+          const fieldIndex = i + 1;
 
-        const label = field.state?.displayName ?? field.name;
-        const color = getFieldSeriesColor(field, theme).color;
+          if (!field || field.type === 'time' || field.config.custom?.hideFrom?.legend) {
+            return undefined;
+          }
 
-        const item: VizLegendItem = {
-          label: label.toString(),
-          color,
-          yAxis: field.config.custom?.axisPlacement === AxisPlacement.Right ? 2 : 1,
-          disabled: field.state?.hideFrom?.viz,
-          getDisplayValues: () => getDisplayValuesForCalcs(calcs, field, theme),
-          getItemKey: () => `${label}-${frameIndex}-${fieldIndex}`,
-        };
+          const label = field.state?.displayName ?? field.name;
+          const color = getFieldSeriesColor(field, theme).color;
 
-        return item;
-      })
-      .filter((i): i is VizLegendItem => i !== undefined);
+          const item: VizLegendItem = {
+            label: label.toString(),
+            color,
+            yAxis: field.config.custom?.axisPlacement === AxisPlacement.Right ? 2 : 1,
+            disabled: field.state?.hideFrom?.viz,
+            getDisplayValues: () => getDisplayValuesForCalcs(calcs, field, theme),
+            getItemKey: () => `${label}-${frameIndex}-${fieldIndex}`,
+          };
+
+          return item;
+        })
+        .filter((i): i is VizLegendItem => i !== undefined);
+    }
 
     return (
       <VizLayout.Legend placement={placement} {...vizLayoutLegendProps}>

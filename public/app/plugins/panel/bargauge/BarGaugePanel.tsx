@@ -125,11 +125,11 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
   }
 
   getLegend() {
-    const { options, fieldConfig, data, width, height } = this.props;
+    const { options, data } = this.props;
     const { legend } = options;
 
-    if (legend.showLegend) {
-      return <BarGaugeLegend data={data?.series} {...legend} />;
+    if (legend.showLegend && data && data.series.length > 0) {
+      return <BarGaugeLegend data={data.series} {...legend} />;
     }
 
     return null;
