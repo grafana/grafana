@@ -48,6 +48,8 @@ As Grafana keeps growing, we have had feedback that it can be hard to find the p
 
 This feature is being rolled out across Grafana Cloud now. To use Bookmarks in self-managed Grafana, turn on the `pinNavItems` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) in Grafana v11.2 or newer.
 
+{{< figure src="/media/docs/grafana/grafana-nav-bookmarks.png" caption="Bookmark pages in the nav bar for quick access." alt="Bookmark pages in the Grafana nav bar for quick access" >}}
+
 ## Dashboards and visualizations
 
 ### Transformation updates
@@ -207,7 +209,6 @@ You can find out more about the data source in the [Zendesk data source document
 ### Catchpoint Enterprise data source for Grafana
 
 <!-- Taewoo Kim -->
-<!-- listed release is Grafana v9.5.13; not sure if this should be included -->
 
 _Available in public preview in Grafana Enterprise and Grafana Cloud_
 
