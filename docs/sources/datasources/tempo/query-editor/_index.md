@@ -72,7 +72,7 @@ To learn more about how to query by TraceQL, refer to the [TraceQL documentation
 
 The query editor has three **Query types** that you can use to explore your tracing data.
 You can use these modes by themselves or in combination to create building blocks to generate custom queries.
-Adding another query adds a new query block. 
+Adding another query adds a new query block.
 Refer to [Use query types together](#use-query-types-together) for more information.
 
 ![The three query types: Search, TraceQL, and Service Graph](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-types.png)
@@ -151,7 +151,7 @@ Streaming
 ## Use query types together
 
 You can use **+ Add query** to create customized queries that use one or more of the query types together.
-Each time you add a new query, it adds a new section, or query block, that contains **Search**, **TraceQL**, or **Service Graph** user interface. 
+Each time you add a new query, it adds a new section, or query block, that contains **Search**, **TraceQL**, or **Service Graph** user interface.
 
 The added query and results table appear in the navigation under **Queries** and **Tables** respectively.
 You can use the navigation to view query, results table, and service graph blocks.

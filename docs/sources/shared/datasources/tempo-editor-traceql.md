@@ -55,9 +55,11 @@ To access the query editor, follow these steps:
 1. Start your query on the text line by entering `{`. For help with TraceQL syntax, refer to the [Construct a TraceQL query documentation](https://grafana.com/docs/tempo/latest/traceql/#construct-a-traceql-query).
 
    Optional: Select **Copy query from Search** to transfer a builder query to the editor.
-   
+
 1. Optional: Use the **Time picker** drop-down list to change the time and range for the query (refer to the [documentation for instructions](https://grafana.com/docs/grafana/latest/dashboards/use-dashboards/#set-dashboard-time-range)).
 1. Once you've finished your query, select **Run query**.
+
+![Query editor showing span results](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-ed-example-v11-a.png)
 
 This video provides an example of creating a TraceQL query using the custom tag grouping.
 
@@ -93,19 +95,26 @@ To create a query using autocomplete, follow these steps:
 
 ## View query results
 
-Query results for both the editor and the builder return in a table.
-You can interact with the data listed to view more details.
+Query results appear in a table, such as **Table - Traces**, under the query editor.
+Each span (and the trace it belongs to) matching the query conditions is returned by the query.
+If there are no filter conditions, all spans are matching and thus returned with their associated traces.
+
+A query is performed against a defined time interval, relative (for example, the last 3 hours) or absolute (for example, from X date-time to Y date-time).
+The query response is also limited by the number of traces (**Limit**) and spans per spanset (**Span Limit**).
+
+![TraceQL in Grafana](/media/docs/tempo/traceql/TraceQL-in-Grafana-v11.png)
+
+1. TraceQL query editor
+1. Query options: **Limit**, **Span Limit** and **Table Format** (Traces or Spans).
+1. Trace (by Trace ID). The **Name** and **Service** columns are displaying the trace root span name and associated service.
+1. Spans associated with the Trace.
 
 Selecting the trace ID from the returned results opens a trace diagram.
 Selecting a span from the returned results opens a trace diagram and reveals the relevant span in the trace diagram.
 
-In the trace diagram, the bold text on the left side of each span indicates the service name, for example `otel-demo: HTTP POST`.
-It's hidden when subsequent spans have the same service name (nested spans).
-Each service has a color assigned to it, which is visible as a highlight and underline and timeline in the graph.
-Spans with the same color belong to the same service.
-The grey text to the right of the service name indicates the span name.
+For more information on span details, refer to [Traces in Explore](https://grafana.com/docs/grafana/latest/explore/trace-integration/#span-details).
 
-![Query editor showing span results](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-ed-example-v11-a.png)
+![Selecting a trace ID or a span to view span details](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-span-details-v11.png)
 
 ### Focus on traces or spans
 
