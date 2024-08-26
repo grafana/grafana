@@ -4379,7 +4379,7 @@
   },
   "ValidationError": {
    "properties": {
-    "msg": {
+    "message": {
      "example": "error message",
      "type": "string"
     }
