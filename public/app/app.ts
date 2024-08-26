@@ -85,7 +85,6 @@ import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { getCoreExtensionConfigurations } from './features/plugins/extensions/getCoreExtensionConfigurations';
 import { createPluginExtensionsGetter } from './features/plugins/extensions/getPluginExtensions';
-import { ReactivePluginExtensionsRegistry } from './features/plugins/extensions/reactivePluginExtensionRegistry';
 import { AddedComponentsRegistry } from './features/plugins/extensions/registry/AddedComponentsRegistry';
 import { AddedLinksRegistry } from './features/plugins/extensions/registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './features/plugins/extensions/registry/ExposedComponentsRegistry';
