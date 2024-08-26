@@ -1,7 +1,7 @@
 import { PluginExtension, PluginExtensionLink, SelectableValue, locationUtil } from '@grafana/data';
 import { isPluginExtensionLink, locationService } from '@grafana/runtime';
 import { Button, ButtonGroup, ButtonSelect, Modal, Stack, ToolbarButton } from '@grafana/ui';
-import { testIds } from '../testIds';
+import { testIds } from '../../testIds';
 
 import { ReactElement, useMemo, useState } from 'react';
 

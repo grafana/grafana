@@ -278,6 +278,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		alertingauthz.NewReceiverAccess[*ngmodels.Receiver](ps.ac, true),
 		configStore,
 		st,
+		st,
 		ps.secretService,
 		ps.SQLStore,
 		ps.log,
