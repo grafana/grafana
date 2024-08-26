@@ -28,4 +28,7 @@ export const testIds = {
   addedComponentsPage: {
     container: 'data-testid pg-added-components-container',
   },
+  addedLinksPage: {
+    container: 'data-testid pg-added-links-container',
+  },
 };

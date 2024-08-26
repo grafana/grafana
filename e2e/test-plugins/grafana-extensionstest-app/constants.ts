@@ -6,4 +6,5 @@ export enum ROUTES {
   LegacyAPIs = 'legacy-apis',
   ExposedComponents = 'exposed-components',
   AddedComponents = 'added-components',
+  AddedLinks = 'added-links',
 }

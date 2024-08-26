@@ -45,11 +45,11 @@
     },
     {
       "type": "page",
-      "icon": "cog",
-      "name": "Configuration",
-      "path": "/plugins/grafana-extensionstest-app",
+      "name": "Added links",
+      "path": "/a/grafana-extensionstest-app/added-links",
       "role": "Admin",
-      "addToNav": true
+      "addToNav": true,
+      "defaultNav": false
     }
   ],
   "dependencies": {

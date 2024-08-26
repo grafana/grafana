@@ -1,8 +1,10 @@
 import { AppPlugin } from '@grafana/data';
+import pluginJson from './plugin.json';
 
 import { testIds } from '../../testIds';
 
 import { App } from './components/App';
+import { LINKS_EXTENSION_POINT_ID } from '../../pages/AddedLinks';
 
 export const plugin = new AppPlugin<{}>()
   .setRootPage(App)
@@ -17,4 +19,10 @@ export const plugin = new AppPlugin<{}>()
     title: 'Exposed component',
     description: 'A component that can be reused by other app plugins.',
     component: ({ name }: { name: string }) => <div data-testid={testIds.appB.exposedComponent}>Hello {name}!</div>,
+  })
+  .addLink({
+    title: 'Basic link',
+    description: '...',
+    targets: [LINKS_EXTENSION_POINT_ID],
+    path: `/a/${pluginJson.id}/`,
   });
