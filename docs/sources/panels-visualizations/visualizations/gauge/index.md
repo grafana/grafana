@@ -57,7 +57,7 @@ To create a gauge visualization you need a dataset containing at least one numer
 #### Example
 
 | GaugeName | GaugeValue |
-|-----------|------------|
+| --------- | ---------- |
 | MyGauge   | 5          |
 
 ![Gauge viz with single numeric value](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example1.png 'Gauge with single numeric value')
@@ -71,7 +71,7 @@ The visualization can support multiple fields in the dataset. In this case, mult
 #### Example
 
 | Identifier | value1 | value2 | value3 |
-|------------|--------|--------|--------|
+| ---------- | ------ | ------ | ------ |
 | Gauges     | 5      | 3      | 10     |
 
 ![Gauge viz with multiple numeric values in a single row](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example3.png 'Gauge with multiple numeric values in a single row')
@@ -83,7 +83,7 @@ You can also define min and max values as part of the dataset.
 #### Example
 
 | Identifier | value | max | min |
-|------------|-------|-----|-----|
+| ---------- | ----- | --- | --- |
 | Gauges     | 5     | 10  | 2   |
 
 ![Gauge viz with numeric values defining max and minimum](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example4.png 'Gauge with numeric values defining max and minimum')
@@ -99,7 +99,7 @@ The visualization can display datasets with multiple rows of data or even multip
 #### Example
 
 | Identifier | value1 | value2 | value3 |
-|------------|--------|--------|--------|
+| ---------- | ------ | ------ | ------ |
 | Gauges     | 5      | 3      | 10     |
 | Indicators | 6      | 9      | 15     |
 | Defaults   | 1      | 4      | 8      |
