@@ -1,7 +1,8 @@
 package sqltemplate
 
 import (
-	"fmt"
+	"bytes"
+	"regexp"
 	"strings"
 )
 
@@ -25,24 +26,30 @@ type mysql struct {
 	name
 }
 
-// standardIdent provides standard SQL escaping of identifiers.
+// MySQL always supports backticks for identifiers
+// https://dev.mysql.com/doc/refman/8.4/en/identifiers.html
 type backtickIdent struct{}
 
-var standardFallback = standardIdent{}
+var alphanumeric = regexp.MustCompile("^[a-zA-Z0-9_]*$")
 
 func (backtickIdent) Ident(s string) (string, error) {
-	parts := strings.Split(s, ".")
-	if len(parts) == 2 {
-		return fmt.Sprintf("`%s`.`%s`", parts[0], parts[1]), nil
-	}
-
-	switch s {
-	// Internal identifiers require backticks to work properly
-	case "user":
-		return "`" + s + "`", nil
-	case "":
+	if s == "" {
 		return "", ErrEmptyIdent
 	}
-	// standard
-	return standardFallback.Ident(s)
+	var buffer bytes.Buffer
+	for i, part := range strings.Split(s, ".") {
+		if !alphanumeric.MatchString(part) {
+			return "", ErrInvalidIdentInput
+		}
+		if i > 1 {
+			return "", ErrInvalidIdentInput
+		}
+		if i > 0 {
+			_, _ = buffer.WriteRune('.')
+		}
+		_, _ = buffer.WriteRune('`')
+		_, _ = buffer.WriteString(part)
+		_, _ = buffer.WriteRune('`')
+	}
+	return buffer.String(), nil
 }

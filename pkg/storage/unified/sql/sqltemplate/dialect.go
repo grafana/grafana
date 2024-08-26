@@ -1,8 +1,8 @@
 package sqltemplate
 
 import (
+	"bytes"
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -10,6 +10,7 @@ import (
 // Dialect-agnostic errors.
 var (
 	ErrEmptyIdent              = errors.New("empty identifier")
+	ErrInvalidIdentInput       = errors.New("identifier contains invalid characters")
 	ErrInvalidRowLockingClause = errors.New("invalid row-locking clause")
 )
 
@@ -131,14 +132,22 @@ func (standardIdent) Ident(s string) (string, error) {
 	if s == "" {
 		return "", ErrEmptyIdent
 	}
-	parts := strings.Split(s, ".")
-	if len(parts) == 2 {
-		// quotes in database/schema seem more like something that should fail!
-		s := strings.ReplaceAll(parts[0], `"`, `""`)
-		t := strings.ReplaceAll(parts[1], `"`, `""`)
-		return fmt.Sprintf(`"%s"."%s"`, s, t), nil
+	var buffer bytes.Buffer
+	for i, part := range strings.Split(s, ".") {
+		if !alphanumeric.MatchString(part) {
+			return "", ErrInvalidIdentInput
+		}
+		if i > 1 {
+			return "", ErrInvalidIdentInput
+		}
+		if i > 0 {
+			_, _ = buffer.WriteRune('.')
+		}
+		_, _ = buffer.WriteRune('"')
+		_, _ = buffer.WriteString(part)
+		_, _ = buffer.WriteRune('"')
 	}
-	return `"` + strings.ReplaceAll(s, `"`, `""`) + `"`, nil
+	return buffer.String(), nil
 }
 
 type argPlaceholderFunc func(int) string
