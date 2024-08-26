@@ -112,7 +112,11 @@ func (t *TemplateService) UpsertTemplate(ctx context.Context, orgID int64, tmpl 
 		if !errors.Is(err, ErrTemplateNotFound) {
 			return d, err
 		}
-		if tmpl.ResourceVersion != "" || tmpl.UID != "" { // if version and\or UID are set then it's an update operation. Fail because resource does not exist anymore
+		// If template was not found, this is assumed to be a create operation except for two cases:
+		// - If a ResourceVersion is provided: we should assume that this was meant to be a conditional update operation.
+		// - If UID is provided: custom UID for templates is not currently supported, so this was meant to be an update
+		// operation without a ResourceVersion.
+		if tmpl.ResourceVersion != "" || tmpl.UID != "" {
 			return definitions.NotificationTemplate{}, ErrTemplateNotFound.Errorf("")
 		}
 		return t.createTemplate(ctx, revision, orgID, tmpl)
