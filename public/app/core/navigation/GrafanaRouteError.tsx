@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { ErrorInfo, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, locationUtil, PageLayoutType } from '@grafana/data';
 import { Button, ErrorWithStack, useStyles2 } from '@grafana/ui';

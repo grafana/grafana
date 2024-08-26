@@ -9,17 +9,16 @@ import { Button, ConfirmModal, CustomScrollbar, Spinner, Stack, useStyles2 } fro
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
-import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import {
+  getRuleGroupLocationFromFormValues,
   getRuleGroupLocationFromRuleWithLocation,
   isGrafanaManagedRuleByType,
   isGrafanaRulerRule,
   isGrafanaRulerRulePaused,
   isRecordingRuleByType,
 } from 'app/features/alerting/unified/utils/rules';
-import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
 import {
@@ -30,10 +29,8 @@ import {
   trackAlertRuleFormSaved,
 } from '../../../Analytics';
 import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
-import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
-import { saveRuleFormAction } from '../../../state/actions';
+import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
-import { initialAsyncRequestState } from '../../../utils/redux';
 import {
   DEFAULT_GROUP_EVALUATION_INTERVAL,
   MANUAL_ROUTING_KEY,
@@ -42,7 +39,10 @@ import {
   getDefaultQueries,
   ignoreHiddenQueries,
   normalizeDefaultAnnotations,
+  formValuesToRulerGrafanaRuleDTO,
+  formValuesToRulerRuleDTO,
 } from '../../../utils/rule-form';
+import { fromRulerRuleAndRuleGroupIdentifier } from '../../../utils/rule-id';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
@@ -61,15 +61,18 @@ type Props = {
 
 export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const styles = useStyles2(getStyles);
-  const dispatch = useDispatch();
   const notifyApp = useAppNotification();
   const [queryParams] = useQueryParams();
   const [showEditYaml, setShowEditYaml] = useState(false);
   const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
+
   const [deleteRuleFromGroup] = useDeleteRuleFromGroup();
+  const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
+  const [updateRuleInRuleGroup] = useUpdateRuleInRuleGroup();
 
   const routeParams = useParams<{ type: string; id: string }>();
   const ruleType = translateRouteParamToRuleType(routeParams.type);
+
   const uidFromParams = routeParams.id;
 
   const returnTo = !queryParams.returnTo ? '/alerting/list' : String(queryParams.returnTo);
@@ -103,15 +106,18 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     shouldFocusError: true,
   });
 
-  const { handleSubmit, watch } = formAPI;
+  const {
+    handleSubmit,
+    watch,
+    formState: { isSubmitting },
+  } = formAPI;
 
   const type = watch('type');
+  const grafanaTypeRule = isGrafanaManagedRuleByType(type ?? RuleFormType.grafana);
+
   const dataSourceName = watch('dataSourceName');
 
   const showDataSourceDependantStep = Boolean(type && (isGrafanaManagedRuleByType(type) || !!dataSourceName));
-
-  const submitState = useUnifiedAlertingSelector((state) => state.ruleForm.saveRule) || initialAsyncRequestState;
-  useCleanup((state) => (state.unifiedAlerting.ruleForm.saveRule = initialAsyncRequestState));
 
   const [conditionErrorMsg, setConditionErrorMsg] = useState('');
 
@@ -119,7 +125,8 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     setConditionErrorMsg(msg);
   };
 
-  const submit = (values: RuleFormValues, exitOnSave: boolean) => {
+  // @todo why is error not propagated to form?
+  const submit = async (values: RuleFormValues, exitOnSave: boolean) => {
     if (conditionErrorMsg !== '') {
       notifyApp.error(conditionErrorMsg);
       return;
@@ -136,33 +143,39 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       }
     }
 
-    dispatch(
-      saveRuleFormAction({
-        values: {
-          ...defaultValues,
-          ...values,
-          annotations:
-            values.annotations
-              ?.map(({ key, value }) => ({ key: key.trim(), value: value.trim() }))
-              .filter(({ key, value }) => !!key && !!value) ?? [],
-          labels:
-            values.labels
-              ?.map(({ key, value }) => ({ key: key.trim(), value: value.trim() }))
-              .filter(({ key }) => !!key) ?? [],
-        },
-        existing,
-        redirectOnSave: exitOnSave ? returnTo : undefined,
-        initialAlertRuleName: defaultValues.name,
-        evaluateEvery: evaluateEvery,
-      })
-    );
+    const ruleDefinition = grafanaTypeRule ? formValuesToRulerGrafanaRuleDTO(values) : formValuesToRulerRuleDTO(values);
+
+    const ruleGroupIdentifier = existing
+      ? getRuleGroupLocationFromRuleWithLocation(existing)
+      : getRuleGroupLocationFromFormValues(values);
+
+    // @TODO what is "evaluateEvery" being used for?
+    // @TODO move this to a hook too to make sure the logic here is tested for regressions?
+    if (!existing) {
+      await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, values.evaluateEvery);
+    } else {
+      const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
+      const targetRuleGroupIdentifier = getRuleGroupLocationFromFormValues(values);
+
+      await updateRuleInRuleGroup.execute(
+        ruleGroupIdentifier,
+        ruleIdentifier,
+        ruleDefinition,
+        targetRuleGroupIdentifier
+      );
+    }
+
+    if (exitOnSave && returnTo) {
+      locationService.push(returnTo);
+    }
   };
 
   const deleteRule = async () => {
     if (existing) {
       const ruleGroupIdentifier = getRuleGroupLocationFromRuleWithLocation(existing);
+      const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
 
-      await deleteRuleFromGroup.execute(ruleGroupIdentifier, existing.rule);
+      await deleteRuleFromGroup.execute(ruleGroupIdentifier, ruleIdentifier);
       locationService.replace(returnTo);
     }
   };
@@ -194,9 +207,9 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
           type="button"
           size="sm"
           onClick={handleSubmit((values) => submit(values, false), onInvalid)}
-          disabled={submitState.loading}
+          disabled={isSubmitting}
         >
-          {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
+          {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
           Save rule
         </Button>
       )}
@@ -205,13 +218,13 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         type="button"
         size="sm"
         onClick={handleSubmit((values) => submit(values, true), onInvalid)}
-        disabled={submitState.loading}
+        disabled={isSubmitting}
       >
-        {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
+        {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
         Save rule and exit
       </Button>
       <Link to={returnTo}>
-        <Button variant="secondary" disabled={submitState.loading} type="button" onClick={cancelRuleCreation} size="sm">
+        <Button variant="secondary" disabled={isSubmitting} type="button" onClick={cancelRuleCreation} size="sm">
           Cancel
         </Button>
       </Link>
@@ -225,7 +238,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
           variant="secondary"
           type="button"
           onClick={() => setShowEditYaml(true)}
-          disabled={submitState.loading}
+          disabled={isSubmitting}
           size="sm"
         >
           Edit YAML
