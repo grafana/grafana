@@ -72,6 +72,13 @@ In [Configure no data and error handling](ref:no-data-and-error-handling), you c
 
 {{< figure src="/media/docs/alerting/alert-rule-configure-no-data-and-error.png" alt="A screenshot of the `Configure no data and error handling` option in Grafana Alerting." max-width="500px" >}}
 
+To reduce the number of no data or error state alerts received, try the following.
+
+1. Use the **Keep last state** option. For more information, refer to the section below.
+1. Optimize your alert rule by limiting the time range of the query.
+1. Change the default evaluation time out. The default is set at 30 seconds.  To increase the default evaluation timeout, open a support ticket from the [Cloud Portal](https://grafana.com/docs/grafana-cloud/account-management/support/#grafana-cloud-support-options).
+
+
 #### Keep last state
 
 The "Keep Last State" option helps mitigate temporary data source issues, preventing alerts from unintentionally firing, resolving, and re-firing.
