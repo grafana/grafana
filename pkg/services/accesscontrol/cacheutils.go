@@ -48,7 +48,7 @@ func GetTeamPermissionCompositeCacheKey(teamIds []int64, orgID int64) string {
 	teams := make([]string, 0)
 	slices.Sort(teamIds)
 	for _, id := range teamIds {
-		teams = append(teams, strconv.FormatInt(int64(id), 10))
+		teams = append(teams, strconv.FormatInt(id, 10))
 	}
 	return fmt.Sprintf("rbac-permissions-team-%d-%s", orgID, strings.Join(teams, "-"))
 }
