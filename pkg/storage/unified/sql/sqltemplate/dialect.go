@@ -2,6 +2,7 @@ package sqltemplate
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -129,6 +130,13 @@ type standardIdent struct{}
 func (standardIdent) Ident(s string) (string, error) {
 	if s == "" {
 		return "", ErrEmptyIdent
+	}
+	parts := strings.Split(s, ".")
+	if len(parts) == 2 {
+		// quotes in database/schema seem more like something that should fail!
+		s := strings.ReplaceAll(parts[0], `"`, `""`)
+		t := strings.ReplaceAll(parts[1], `"`, `""`)
+		return fmt.Sprintf(`"%s"."%s"`, s, t), nil
 	}
 	return `"` + strings.ReplaceAll(s, `"`, `""`) + `"`, nil
 }

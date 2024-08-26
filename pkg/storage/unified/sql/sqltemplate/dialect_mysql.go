@@ -1,5 +1,10 @@
 package sqltemplate
 
+import (
+	"fmt"
+	"strings"
+)
+
 // MySQL is the default implementation of Dialect for the MySQL DMBS, currently
 // supporting MySQL-8.x. It relies on having ANSI_QUOTES SQL Mode enabled. For
 // more information about ANSI_QUOTES and SQL Modes see:
@@ -26,6 +31,11 @@ type backtickIdent struct{}
 var standardFallback = standardIdent{}
 
 func (backtickIdent) Ident(s string) (string, error) {
+	parts := strings.Split(s, ".")
+	if len(parts) == 2 {
+		return fmt.Sprintf("`%s`.`%s`", parts[0], parts[1]), nil
+	}
+
 	switch s {
 	// Internal identifiers require backticks to work properly
 	case "user":
