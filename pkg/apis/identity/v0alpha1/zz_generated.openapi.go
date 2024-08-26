@@ -786,22 +786,6 @@ func schema_pkg_apis_identity_v0alpha1_TeamSubject(ref common.ReferenceCallback)
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is the kind of the subject, only supports \"User\".",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"permission": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Possible enum values:\n - `\"admin\"`\n - `\"member\"`",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-							Enum:        []interface{}{"admin", "member"},
-						},
-					},
 					"name": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Name is the unique identifier for subject.",
@@ -809,8 +793,15 @@ func schema_pkg_apis_identity_v0alpha1_TeamSubject(ref common.ReferenceCallback)
 							Format:      "",
 						},
 					},
+					"permission": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Permission subject has in permission. Can be either admin or member.\n\nPossible enum values:\n - `\"admin\"`\n - `\"member\"`",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"admin", "member"},
+						},
+					},
 				},
-				Required: []string{"permission"},
 			},
 		},
 	}
