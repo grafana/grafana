@@ -243,6 +243,11 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	defer span.End()
 
 	permissions := []accesscontrol.Permission{}
+	cacheKey := accesscontrol.GetUserPermissionCacheKey(user)
+	if cachedPermissions, ok := s.cache.Get(cacheKey); ok {
+		return cachedPermissions.([]accesscontrol.Permission), nil
+	}
+
 	permissions, err := s.getCachedBasicRolesPermissions(ctx, user, options, permissions)
 	if err != nil {
 		return nil, err
@@ -259,6 +264,7 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	}
 
 	permissions = append(permissions, userPermissions...)
+	s.cache.Set(cacheKey, permissions, cacheTTL)
 	span.SetAttributes(attribute.Int("num_permissions", len(permissions)))
 
 	return permissions, nil
@@ -381,7 +387,7 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 }
 
 func (s *Service) ClearUserPermissionCache(user identity.Requester) {
-	s.cache.Delete(accesscontrol.GetPermissionCacheKey(user))
+	s.cache.Delete(accesscontrol.GetUserPermissionCacheKey(user))
 	s.cache.Delete(accesscontrol.GetUserDirectPermissionCacheKey(user))
 }
 
