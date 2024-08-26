@@ -177,7 +177,8 @@ type PluginMetaDTO struct {
 	Module  string `json:"module"`
 	BaseURL string `json:"baseUrl"`
 
-	Angular AngularMeta `json:"angular"`
+	Angular         AngularMeta     `json:"angular"`
+	LoadingStrategy LoadingStrategy `json:"loadingStrategy"`
 }
 
 type DataSourceDTO struct {
@@ -210,8 +211,6 @@ type DataSourceDTO struct {
 
 	// Prometheus
 	DirectURL string `json:"directUrl,omitempty"`
-
-	LoadingStrategy LoadingStrategy `json:"loadingStrategy"`
 }
 
 type PanelDTO struct {

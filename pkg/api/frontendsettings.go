@@ -450,13 +450,13 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 		dsDTO.Type = plugin.ID
 		dsDTO.Preload = plugin.Preload
 		dsDTO.Module = plugin.Module
-		dsDTO.LoadingStrategy = hs.pluginAssets.LoadingStrategy(c.Req.Context(), plugin)
 		dsDTO.PluginMeta = &plugins.PluginMetaDTO{
-			JSONData:  plugin.JSONData,
-			Signature: plugin.Signature,
-			Module:    plugin.Module,
-			BaseURL:   plugin.BaseURL,
-			Angular:   plugin.Angular,
+			LoadingStrategy: hs.pluginAssets.LoadingStrategy(c.Req.Context(), plugin),
+			JSONData:        plugin.JSONData,
+			Signature:       plugin.Signature,
+			Module:          plugin.Module,
+			BaseURL:         plugin.BaseURL,
+			Angular:         plugin.Angular,
 		}
 
 		if ds.JsonData == nil {
