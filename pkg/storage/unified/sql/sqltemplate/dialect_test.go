@@ -125,10 +125,11 @@ func TestStandardIdent_Ident(t *testing.T) {
 	}{
 		{input: ``, err: ErrEmptyIdent},
 		{input: `polite_example`, output: `"polite_example"`},
-		{input: `Juan Carlos`, output: `"Juan Carlos"`},
+		{input: `Juan Carlos`, err: ErrInvalidIdentInput}, // output: `"Juan Carlos"`},
 		{
-			input:  `exaggerated " ' ` + "`" + ` example`,
-			output: `"exaggerated "" ' ` + "`" + ` example"`,
+			input: `exaggerated " ' ` + "`" + ` example`,
+			err:   ErrInvalidIdentInput,
+			// output: `"exaggerated "" ' ` + "`" + ` example"`,
 		},
 	}
 
