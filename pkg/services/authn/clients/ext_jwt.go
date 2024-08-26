@@ -35,7 +35,7 @@ var (
 		"ext.jwt.invalid-subject", errutil.WithPublicMessage("Invalid token subject"),
 	)
 	errExtJWTNamespaceAccessCheckerDeniedAccess = errutil.Unauthorized(
-		"ext.jwt.namespace-mismatch", errutil.WithPublicMessage("Namespace access checker denied access based on claims present"),
+		"ext.jwt.namespace-access-denied", errutil.WithPublicMessage("Namespace access checker denied access based on claims present"),
 	)
 )
 
@@ -113,7 +113,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 	}
 
 	if err := s.namespaceAccessChecker.CheckAccess(authInfo, s.expectedNamespaceMapper(s.getDefaultOrgID())); err != nil {
-		return nil, errExtJWTNamespaceAccessCheckerDeniedAccess.Errorf(err.Error())
+		return nil, errExtJWTNamespaceAccessCheckerDeniedAccess.Errorf("namespace access check failed: %s", err.Error())
 	}
 
 	accessType, _, err := identity.ParseTypeAndID(accessTokenClaims.Subject)
@@ -164,7 +164,7 @@ func (s *ExtendedJWT) authenticateAsService(claims *authlib.Claims[authlib.Acces
 	}
 
 	if err := s.namespaceAccessChecker.CheckAccess(authInfo, s.expectedNamespaceMapper(s.getDefaultOrgID())); err != nil {
-		return nil, errExtJWTNamespaceAccessCheckerDeniedAccess.Errorf(err.Error())
+		return nil, errExtJWTNamespaceAccessCheckerDeniedAccess.Errorf("namespace access check failed: %s", err.Error())
 	}
 
 	t, id, err := identity.ParseTypeAndID(claims.Subject)
