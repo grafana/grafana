@@ -15,19 +15,16 @@ type IDClaimsWrapper struct {
 }
 
 func (i *IDClaimsWrapper) NamespaceMatches(namespace string) bool {
-	parts := strings.Split(i.Source.GetAllowedKubernetesNamespace(), "-")
 	// for multi-tenant operators, access tokens will have a namespace claim of "*"
-	if parts[0] == "*" {
+	// an argument of "*" can be passed in to determine cluster-scoped access
+	simpleCase := i.Source.GetAllowedKubernetesNamespace() == namespace
+	if simpleCase {
 		return true
 	}
 
+	// for more ambiguous stack namespace claim checks
+	parts := strings.Split(i.Source.GetAllowedKubernetesNamespace(), "-")
 	if len(parts) < 2 {
-		return false
-	}
-
-	// for cluster-scoped resources, namespace in request is "", but we already checked
-	// that this identity doesn't have such access when we checked (parts[0] == "*")
-	if namespace == "" {
 		return false
 	}
 
@@ -35,11 +32,12 @@ func (i *IDClaimsWrapper) NamespaceMatches(namespace string) bool {
 	if len(namespaceParts) < 2 {
 		return false
 	}
+
 	if (parts[0] == "stack" || parts[0] == "stacks") && (namespaceParts[0] == "stack" || namespaceParts[0] == "stacks") {
 		return namespaceParts[1] == parts[1]
 	}
 
-	return i.Source.GetAllowedKubernetesNamespace() == namespace
+	return false
 }
 
 func (i *IDClaimsWrapper) IsNil() bool {
