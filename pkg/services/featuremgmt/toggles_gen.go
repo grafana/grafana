@@ -103,10 +103,6 @@ const (
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
 
-	// FlagUnifiedStorage
-	// SQL-based k8s storage
-	FlagUnifiedStorage = "unifiedStorage"
-
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
@@ -174,10 +170,6 @@ const (
 	// FlagPrometheusRunQueriesInParallel
 	// Enables running Prometheus queries in parallel
 	FlagPrometheusRunQueriesInParallel = "prometheusRunQueriesInParallel"
-
-	// FlagPrometheusDataplane
-	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular, when this feature toggle is active, the numeric `Field.Name` is set from &#39;Value&#39; to the value of the `__name__` label.
-	FlagPrometheusDataplane = "prometheusDataplane"
 
 	// FlagLokiMetricDataplane
 	// Changes metric responses from Loki to be compliant with the dataplane specification.
@@ -358,10 +350,6 @@ const (
 	// FlagPluginsAPIMetrics
 	// Sends metrics of public grafana packages usage by plugins
 	FlagPluginsAPIMetrics = "pluginsAPIMetrics"
-
-	// FlagIdForwarding
-	// Generate signed id token for identity that can be forwarded to plugins and external services
-	FlagIdForwarding = "idForwarding"
 
 	// FlagExternalServiceAccounts
 	// Automatic service account and token setup for plugins
@@ -750,4 +738,8 @@ const (
 	// FlagAdhocFilterOneOf
 	// Exposes a new &#39;one of&#39; operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.
 	FlagAdhocFilterOneOf = "adhocFilterOneOf"
+
+	// FlagLokiSendDashboardPanelNames
+	// Send dashboard and panel names to Loki when querying
+	FlagLokiSendDashboardPanelNames = "lokiSendDashboardPanelNames"
 )

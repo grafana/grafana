@@ -20,6 +20,9 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
     },
 
     [theme.breakpoints.down('md')]: {
+      '.react-grid-layout': {
+        height: 'unset !important',
+      },
       '.react-grid-item': {
         display: 'block !important',
         transitionProperty: 'none !important',

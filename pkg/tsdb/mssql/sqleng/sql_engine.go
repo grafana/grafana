@@ -15,11 +15,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 )
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
@@ -153,8 +152,13 @@ func (e *DataSourceHandler) Dispose() {
 	e.log.Debug("DB disposed")
 }
 
-func (e *DataSourceHandler) Ping() error {
-	return e.db.Ping()
+func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	err := e.db.Ping()
+
+	if err != nil {
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: e.TransformQueryError(e.log, err).Error()}, nil
+	}
+	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
 }
 
 func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -214,7 +218,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 			if theErr, ok := r.(error); ok {
 				queryResult.dataResponse.Error = theErr
 			} else if theErrString, ok := r.(string); ok {
-				queryResult.dataResponse.Error = fmt.Errorf(theErrString)
+				queryResult.dataResponse.Error = errors.New(theErrString)
 			} else {
 				queryResult.dataResponse.Error = fmt.Errorf("unexpected error - %s", e.userError)
 			}

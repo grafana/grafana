@@ -481,7 +481,6 @@ func getCfgForTesting(opts ...InitTestDBOpt) *setting.Cfg {
 func getFeaturesForTesting(opts ...InitTestDBOpt) featuremgmt.FeatureToggles {
 	featureKeys := []any{
 		featuremgmt.FlagPanelTitleSearch,
-		featuremgmt.FlagUnifiedStorage,
 	}
 	for _, opt := range opts {
 		if len(opt.FeatureFlags) > 0 {
