@@ -483,7 +483,6 @@ require (
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20240808213237-f4d2e064f435 // indirect
 	github.com/hairyhenderson/go-which v0.2.0 // indirect
 	github.com/iancoleman/orderedmap v0.3.0 // indirect
-	github.com/ryanuber/go-glob v1.0.0 // @grafana/grafana-backend-group
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
