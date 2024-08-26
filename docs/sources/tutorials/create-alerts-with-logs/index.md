@@ -73,19 +73,21 @@ In order to run a Grafana stack locally, ensure you have the following applicati
 - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
 - [Git](https://git-scm.com/)
 
+
 To demonstrate the observation of data using the Grafana stack, download the files to your local machine.
+
 
 1. Download and save a Docker compose file to run Grafana, Loki and Promtail. 
 
-``` bash
-wget https://raw.githubusercontent.com/grafana/loki/v2.8.0/production/docker-compose.yaml -O docker-compose.yaml
-```
+  ``` bash
+  wget https://raw.githubusercontent.com/grafana/loki/v2.8.0/production/docker-compose.yaml -O docker-compose.yaml
+  ```
 
 2. Run the Grafana stack.
 
-``` bash
-docker compose up -d
-```
+  ``` bash
+  docker compose up -d
+  ```
 
 The first time you run `docker compose up -d`, Docker downloads all the necessary resources for the tutorial. This might take a few minutes, depending on your internet connection.
 
@@ -126,15 +128,15 @@ Provide feedback, report bugs, and raise issues in the [Grafana Killercoda repos
 
 1. Download and save a python file that generates logs.
 
-``` bash
-wget https://raw.githubusercontent.com/grafana/tutorial-environment/master/app/loki/web-server-logs-simulator.py
-```
+  ``` bash
+  wget https://raw.githubusercontent.com/grafana/tutorial-environment/master/app/loki/web-server-logs-simulator.py
+  ```
 
-1. Execute the log-generating Python script.
+2. Execute the log-generating Python script.
 
-``` bash
-python3 ./web-server-logs-simulator.py | sudo tee -a /var/log/web_requests.log
-```
+  ``` bash
+  python3 ./web-server-logs-simulator.py | sudo tee -a /var/log/web_requests.log
+  ```
 
 ### Troubleshooting the script
 
