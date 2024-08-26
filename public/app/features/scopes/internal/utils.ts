@@ -45,12 +45,6 @@ export function getScopeNamesFromSelectedScopes(scopes: SelectedScope[]): string
 }
 
 export function groupDashboards(dashboards: ScopeDashboardBinding[]): SuggestedDashboardsFoldersMap {
-  dashboards.reduce((acc, dashboard) => {
-    (dashboard.spec.groups ?? []).forEach(() => {});
-
-    return acc;
-  }, {});
-
   return dashboards.reduce<SuggestedDashboardsFoldersMap>(
     (acc, dashboard) => {
       const rootNode = acc[''];

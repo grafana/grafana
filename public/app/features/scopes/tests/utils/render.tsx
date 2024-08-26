@@ -17,11 +17,11 @@ import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { DashboardControls } from 'app/features/dashboard-scene/scene//DashboardControls';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { ScopesFacade } from '../ScopesFacadeScene';
-import { scopesDashboardsScene, scopesSelectorScene } from '../instance';
-import { getInitialDashboardsState } from '../internal/ScopesDashboardsScene';
-import { initialSelectorState } from '../internal/ScopesSelectorScene';
-import { DASHBOARDS_OPENED_KEY } from '../internal/const';
+import { ScopesFacade } from '../../ScopesFacadeScene';
+import { scopesDashboardsScene, scopesSelectorScene } from '../../instance';
+import { getInitialDashboardsState } from '../../internal/ScopesDashboardsScene';
+import { initialSelectorState } from '../../internal/ScopesSelectorScene';
+import { DASHBOARDS_OPENED_KEY } from '../../internal/const';
 
 export function buildTestScene(overrides: Partial<DashboardScene> = {}) {
   return new DashboardScene({

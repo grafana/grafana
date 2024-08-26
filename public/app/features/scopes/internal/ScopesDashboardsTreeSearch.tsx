@@ -17,13 +17,7 @@ export function ScopesDashboardsTreeSearch({ disabled, query, onChange }: Scopes
 
   const [inputState, setInputState] = useState<{ value: string; isDirty: boolean }>({ value: query, isDirty: false });
 
-  useEffect(() => {
-    if (!inputState.isDirty && inputState.value !== query) {
-      setInputState({ value: query, isDirty: false });
-    }
-  }, [inputState, query]);
-
-  useDebounce(
+  const [getDebounceState] = useDebounce(
     () => {
       if (inputState.isDirty) {
         onChange(inputState.value);
@@ -32,6 +26,12 @@ export function ScopesDashboardsTreeSearch({ disabled, query, onChange }: Scopes
     500,
     [inputState.isDirty, inputState.value]
   );
+
+  useEffect(() => {
+    if ((getDebounceState() || !inputState.isDirty) && inputState.value !== query) {
+      setInputState({ value: query, isDirty: false });
+    }
+  }, [getDebounceState, inputState, query]);
 
   return (
     <div className={styles.container}>

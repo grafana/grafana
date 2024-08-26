@@ -1,6 +1,6 @@
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
 
-import * as api from '../internal/api';
+import * as api from '../../internal/api';
 
 export const mocksScopes: Scope[] = [
   {
@@ -410,3 +410,37 @@ export const getMock = jest
 
     return {};
   });
+
+const generateScopeDashboardBinding = (dashboardTitle: string, groups?: string[], dashboardId?: string) => ({
+  metadata: { name: `${dashboardTitle}-name` },
+  spec: {
+    dashboard: `${dashboardId ?? dashboardTitle}-dashboard`,
+    dashboardTitle,
+    scope: `${dashboardTitle}-scope`,
+    groups,
+  },
+});
+
+export const dashboardWithoutFolder: ScopeDashboardBinding = generateScopeDashboardBinding('Without Folder');
+export const dashboardWithOneFolder: ScopeDashboardBinding = generateScopeDashboardBinding('With one folder', [
+  'Folder 1',
+]);
+export const dashboardWithTwoFolders: ScopeDashboardBinding = generateScopeDashboardBinding('With two folders', [
+  'Folder 1',
+  'Folder 2',
+]);
+export const alternativeDashboardWithTwoFolders: ScopeDashboardBinding = generateScopeDashboardBinding(
+  'Alternative with two folders',
+  ['Folder 1', 'Folder 2'],
+  'With two folders'
+);
+export const dashboardWithRootFolder: ScopeDashboardBinding = generateScopeDashboardBinding('With root folder', ['']);
+export const alternativeDashboardWithRootFolder: ScopeDashboardBinding = generateScopeDashboardBinding(
+  'Alternative With root folder',
+  [''],
+  'With root folder'
+);
+export const dashboardWithRootFolderAndOtherFolder: ScopeDashboardBinding = generateScopeDashboardBinding(
+  'With root folder and other folder',
+  ['', 'Folder 3']
+);

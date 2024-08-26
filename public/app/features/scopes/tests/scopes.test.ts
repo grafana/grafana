@@ -2,12 +2,13 @@ import { act, cleanup, waitFor } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
 
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { config, locationService, setPluginImportUtils } from '@grafana/runtime';
+import { config, setPluginImportUtils } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
-import { getDashboardAPI, setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { initializeScopes, scopesDashboardsScene, scopesSelectorScene } from './instance';
+import { initializeScopes, scopesDashboardsScene, scopesSelectorScene } from '../instance';
+import { getClosestScopesFacade } from '../utils';
+
 import {
   fetchDashboardsSpy,
   fetchNodesSpy,
@@ -15,8 +16,8 @@ import {
   fetchSelectedScopesSpy,
   getMock,
   mocksScopes,
-} from './testUtils/mocks';
-import { buildTestScene, renderDashboard, resetScenes } from './testUtils/render';
+} from './utils/mocks';
+import { buildTestScene, renderDashboard, resetScenes } from './utils/render';
 import {
   getDashboard,
   getDashboardFolderExpand,
@@ -57,8 +58,7 @@ import {
   queryResultApplicationsGrafanaTitle,
   queryResultApplicationsMimirTitle,
   querySelectorApply,
-} from './testUtils/selectors';
-import { getClosestScopesFacade } from './utils';
+} from './utils/selectors';
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
@@ -480,18 +480,20 @@ describe('Scopes', () => {
         expect(getDashboard('overview')).toBeInTheDocument();
         expect(getDashboard('stats')).toBeInTheDocument();
         await userEvents.type(getDashboardsSearch(), 'Stats');
-        expect(queryDashboard('general-data-sources')).not.toBeInTheDocument();
-        expect(queryDashboard('general-usage')).not.toBeInTheDocument();
-        expect(queryDashboard('observability-backend-errors')).not.toBeInTheDocument();
-        expect(queryDashboard('observability-backend-logs')).not.toBeInTheDocument();
-        expect(queryDashboard('observability-frontend-errors')).not.toBeInTheDocument();
-        expect(queryDashboard('observability-frontend-logs')).not.toBeInTheDocument();
-        expect(queryDashboard('usage-data-sources')).not.toBeInTheDocument();
-        expect(getDashboard('usage-stats')).toBeInTheDocument();
-        expect(queryDashboard('usage-usage-overview')).not.toBeInTheDocument();
-        expect(queryDashboard('frontend')).not.toBeInTheDocument();
-        expect(queryDashboard('overview')).not.toBeInTheDocument();
-        expect(getDashboard('stats')).toBeInTheDocument();
+        await waitFor(() => {
+          expect(queryDashboard('general-data-sources')).not.toBeInTheDocument();
+          expect(queryDashboard('general-usage')).not.toBeInTheDocument();
+          expect(queryDashboard('observability-backend-errors')).not.toBeInTheDocument();
+          expect(queryDashboard('observability-backend-logs')).not.toBeInTheDocument();
+          expect(queryDashboard('observability-frontend-errors')).not.toBeInTheDocument();
+          expect(queryDashboard('observability-frontend-logs')).not.toBeInTheDocument();
+          expect(queryDashboard('usage-data-sources')).not.toBeInTheDocument();
+          expect(getDashboard('usage-stats')).toBeInTheDocument();
+          expect(queryDashboard('usage-usage-overview')).not.toBeInTheDocument();
+          expect(queryDashboard('frontend')).not.toBeInTheDocument();
+          expect(queryDashboard('overview')).not.toBeInTheDocument();
+          expect(getDashboard('stats')).toBeInTheDocument();
+        });
       });
 
       it('Filters the dashboards list for folders', async () => {
@@ -516,18 +518,20 @@ describe('Scopes', () => {
         expect(getDashboard('overview')).toBeInTheDocument();
         expect(getDashboard('stats')).toBeInTheDocument();
         await userEvents.type(getDashboardsSearch(), 'Usage');
-        expect(queryDashboard('general-data-sources')).not.toBeInTheDocument();
-        expect(getDashboard('general-usage')).toBeInTheDocument();
-        expect(queryDashboard('observability-backend-errors')).not.toBeInTheDocument();
-        expect(queryDashboard('observability-backend-logs')).not.toBeInTheDocument();
-        expect(queryDashboard('observability-frontend-errors')).not.toBeInTheDocument();
-        expect(queryDashboard('observability-frontend-logs')).not.toBeInTheDocument();
-        expect(getDashboard('usage-data-sources')).toBeInTheDocument();
-        expect(getDashboard('usage-stats')).toBeInTheDocument();
-        expect(getDashboard('usage-usage-overview')).toBeInTheDocument();
-        expect(queryDashboard('frontend')).not.toBeInTheDocument();
-        expect(queryDashboard('overview')).not.toBeInTheDocument();
-        expect(queryDashboard('stats')).not.toBeInTheDocument();
+        await waitFor(() => {
+          expect(queryDashboard('general-data-sources')).not.toBeInTheDocument();
+          expect(getDashboard('general-usage')).toBeInTheDocument();
+          expect(queryDashboard('observability-backend-errors')).not.toBeInTheDocument();
+          expect(queryDashboard('observability-backend-logs')).not.toBeInTheDocument();
+          expect(queryDashboard('observability-frontend-errors')).not.toBeInTheDocument();
+          expect(queryDashboard('observability-frontend-logs')).not.toBeInTheDocument();
+          expect(getDashboard('usage-data-sources')).toBeInTheDocument();
+          expect(getDashboard('usage-stats')).toBeInTheDocument();
+          expect(getDashboard('usage-usage-overview')).toBeInTheDocument();
+          expect(queryDashboard('frontend')).not.toBeInTheDocument();
+          expect(queryDashboard('overview')).not.toBeInTheDocument();
+          expect(queryDashboard('stats')).not.toBeInTheDocument();
+        });
       });
 
       it('Deduplicates the dashboards list', async () => {
@@ -573,10 +577,14 @@ describe('Scopes', () => {
         await userEvents.click(getResultApplicationsMimirSelect());
         await userEvents.click(getSelectorApply());
         await userEvents.type(getDashboardsSearch(), 'unknown');
-        expect(queryDashboardsSearch()).toBeInTheDocument();
-        expect(getNotFoundForFilter()).toBeInTheDocument();
+        await waitFor(() => {
+          expect(queryDashboardsSearch()).toBeInTheDocument();
+          expect(getNotFoundForFilter()).toBeInTheDocument();
+        });
         await userEvents.click(getNotFoundForFilterClear());
-        expect(getDashboardsSearch().value).toBe('');
+        await waitFor(() => {
+          expect(getDashboardsSearch().value).toBe('');
+        });
       });
     });
 
@@ -673,71 +681,6 @@ describe('Scopes', () => {
             mocksScopes.filter(({ metadata: { name } }) => name === 'mimir')
           );
         });
-      });
-    });
-  });
-
-  describe('Dashboards API', () => {
-    describe('Feature flag off', () => {
-      beforeAll(() => {
-        config.featureToggles.scopeFilters = true;
-        config.featureToggles.passScopeToDashboardApi = false;
-      });
-
-      beforeEach(() => {
-        setDashboardAPI(undefined);
-        locationService.push('/?scopes=scope1&scopes=scope2&scopes=scope3');
-      });
-
-      afterEach(() => {
-        resetScenes();
-        cleanup();
-      });
-
-      it('Legacy API should not pass the scopes', async () => {
-        config.featureToggles.kubernetesDashboards = false;
-        await getDashboardAPI().getDashboardDTO('1');
-        expect(getMock).toHaveBeenCalledWith('/api/dashboards/uid/1', undefined);
-      });
-
-      it('K8s API should not pass the scopes', async () => {
-        config.featureToggles.kubernetesDashboards = true;
-        await getDashboardAPI().getDashboardDTO('1');
-        expect(getMock).toHaveBeenCalledWith(
-          '/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/1/dto'
-        );
-      });
-    });
-
-    describe('Feature flag on', () => {
-      beforeAll(() => {
-        config.featureToggles.scopeFilters = true;
-        config.featureToggles.passScopeToDashboardApi = true;
-      });
-
-      beforeEach(() => {
-        setDashboardAPI(undefined);
-        locationService.push('/?scopes=scope1&scopes=scope2&scopes=scope3');
-        initializeScopes();
-      });
-
-      afterEach(() => {
-        resetScenes();
-        cleanup();
-      });
-
-      it('Legacy API should pass the scopes', async () => {
-        config.featureToggles.kubernetesDashboards = false;
-        await getDashboardAPI().getDashboardDTO('1');
-        expect(getMock).toHaveBeenCalledWith('/api/dashboards/uid/1', { scopes: ['scope1', 'scope2', 'scope3'] });
-      });
-
-      it('K8s API should not pass the scopes', async () => {
-        config.featureToggles.kubernetesDashboards = true;
-        await getDashboardAPI().getDashboardDTO('1');
-        expect(getMock).toHaveBeenCalledWith(
-          '/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/1/dto'
-        );
       });
     });
   });
