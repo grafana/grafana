@@ -3,7 +3,6 @@ package provisioning
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 
@@ -86,7 +85,6 @@ func TestProvisioningServiceImpl(t *testing.T) {
 		serviceTest.cancel()
 		serviceTest.waitForStop()
 
-		fmt.Println("serviceTest.serviceError", serviceTest.serviceError)
 		assert.Equal(t, context.Canceled, serviceTest.serviceError)
 	})
 }
