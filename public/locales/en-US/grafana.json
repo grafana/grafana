@@ -2129,6 +2129,8 @@
   },
   "scopes": {
     "dashboards": {
+      "collapse": "Collapse",
+      "expand": "Expand",
       "loading": "Loading dashboards",
       "noResultsForFilter": "No results found for your query",
       "noResultsForFilterClear": "Clear search",

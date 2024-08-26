@@ -33,5 +33,16 @@ export interface SuggestedDashboard {
   items: ScopeDashboardBinding[];
 }
 
+export interface SuggestedDashboardsFolder {
+  title: string;
+  isExpanded: boolean;
+  folders: SuggestedDashboardsFoldersMap;
+  dashboards: SuggestedDashboardsMap;
+}
+
+export type SuggestedDashboardsMap = Record<string, SuggestedDashboard>;
+export type SuggestedDashboardsFoldersMap = Record<string, SuggestedDashboardsFolder>;
+
 export type OnNodeUpdate = (path: string[], isExpanded: boolean, query: string) => void;
 export type OnNodeSelectToggle = (path: string[]) => void;
+export type OnFolderUpdate = (path: string[], isExpanded: boolean) => void;

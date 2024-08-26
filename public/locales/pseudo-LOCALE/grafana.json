@@ -2129,6 +2129,8 @@
   },
   "scopes": {
     "dashboards": {
+      "collapse": "Cőľľäpşę",
+      "expand": "Ēχpäŉđ",
       "loading": "Ŀőäđįŉģ đäşĥþőäřđş",
       "noResultsForFilter": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy",
       "noResultsForFilterClear": "Cľęäř şęäřčĥ",
