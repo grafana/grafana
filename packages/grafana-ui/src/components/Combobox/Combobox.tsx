@@ -1,8 +1,8 @@
 import { cx } from '@emotion/css';
-import { autoUpdate, flip, useFloating } from '@floating-ui/react';
+import { autoUpdate, flip, size, useFloating } from '@floating-ui/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
@@ -42,11 +42,13 @@ function itemFilter(inputValue: string) {
 }
 
 function estimateSize() {
-  return 60;
+  return 45;
 }
 
+const MIN_HEIGHT = 400;
+const INDEX_WIDTH_CALCULATION = 100;
+
 export const Combobox = ({ options, onChange, value, id, ...restProps }: ComboboxProps) => {
-  const MIN_WIDTH = 400;
   const [items, setItems] = useState(options);
   const selectedItemIndex = useMemo(
     () => options.findIndex((option) => option.value === value) || null,
@@ -55,15 +57,20 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
   const selectedItem = selectedItemIndex ? options[selectedItemIndex] : null;
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const floatingRef = useRef(null);
+  const floatingRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
   const styles = useStyles2(getComboboxStyles);
+  const [popoverMaxWidth, setPopoverMaxWidth] = useState<number | undefined>(undefined);
+  const [popoverWidth, setPopoverWidth] = useState<number | undefined>(undefined);
 
-  const rowVirtualizer = useVirtualizer({
+  const virtualizerOptions = {
     count: items.length,
     getScrollElement: () => floatingRef.current,
     estimateSize,
-    overscan: 2,
-  });
+    overscan: items.length < 100 ? 100 : 4,
+  };
+
+  const rowVirtualizer = useVirtualizer(virtualizerOptions);
 
   const {
     getInputProps,
@@ -113,6 +120,11 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
       crossAxis: true,
       boundary: document.body,
     }),
+    size({
+      apply({ availableWidth }) {
+        setPopoverMaxWidth(availableWidth);
+      },
+    }),
   ];
   const elements = { reference: inputRef.current, floating: floatingRef.current };
   const { floatingStyles } = useFloating({
@@ -123,7 +135,41 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
     whileElementsMounted: autoUpdate,
   });
 
-  const hasMinHeight = isOpen && rowVirtualizer.getTotalSize() >= MIN_WIDTH;
+  const hasMinHeight = isOpen && rowVirtualizer.getTotalSize() >= MIN_HEIGHT;
+
+  useEffect(() => {
+    console.log(rowVirtualizer.range);
+    const startVisibleIndex = rowVirtualizer.range?.startIndex;
+    const endVisibleIndex = rowVirtualizer.range?.endIndex;
+
+    if (typeof startVisibleIndex === 'undefined' || typeof endVisibleIndex === 'undefined') {
+      return;
+    }
+
+    if (
+      startVisibleIndex === 0 ||
+      (startVisibleIndex % INDEX_WIDTH_CALCULATION === 0 && startVisibleIndex >= INDEX_WIDTH_CALCULATION)
+    ) {
+      // Scroll down and default case
+      let maxLength = 0;
+      const calculationEnd = Math.min(items.length, endVisibleIndex + INDEX_WIDTH_CALCULATION);
+      for (let i = startVisibleIndex; i < calculationEnd; i++) {
+        maxLength = Math.max(maxLength, items[i].label.length);
+      }
+      console.log('setting popover width, scroll down and default case');
+      setPopoverWidth(maxLength * 7.3);
+    } else if (endVisibleIndex % INDEX_WIDTH_CALCULATION === 0 && endVisibleIndex >= INDEX_WIDTH_CALCULATION) {
+      // Scroll up case
+      let maxLength = 0;
+      const calculationStart = Math.max(0, startVisibleIndex - INDEX_WIDTH_CALCULATION);
+      for (let i = calculationStart; i < endVisibleIndex; i++) {
+        maxLength = Math.max(maxLength, items[i].label.length);
+      }
+      console.log('setting popover width, scroll up');
+
+      setPopoverWidth(maxLength * 7.3);
+    }
+  }, [items, rowVirtualizer.range]);
 
   return (
     <div>
@@ -172,11 +218,16 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
       />
       <div
         className={cx(styles.menu, hasMinHeight && styles.menuHeight)}
-        style={{ ...floatingStyles }}
+        style={{
+          ...floatingStyles,
+          maxWidth: popoverMaxWidth,
+          minWidth: inputRef.current?.offsetWidth,
+          width: popoverWidth,
+        }}
         {...getMenuProps({ ref: floatingRef })}
       >
         {isOpen && (
-          <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
+          <ul ref={listRef} style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               return (
                 <li
@@ -195,7 +246,7 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
                   {...getItemProps({ item: items[virtualRow.index], index: virtualRow.index })}
                 >
                   <div className={styles.optionBody}>
-                    <span>{items[virtualRow.index].label}</span>
+                    <span className={styles.optionLabel}>{items[virtualRow.index].label}</span>
                     {items[virtualRow.index].description && (
                       <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
                     )}

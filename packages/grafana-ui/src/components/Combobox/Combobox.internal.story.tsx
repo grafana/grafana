@@ -68,8 +68,8 @@ type Story = StoryObj<typeof Combobox>;
 export const Basic: Story = {};
 
 async function generateOptions(amount: number): Promise<Option[]> {
-  return Array.from({ length: amount }, () => ({
-    label: chance.name(),
+  return Array.from({ length: amount }, (_, index) => ({
+    label: chance.sentence({ words: index % 5 }),
     value: chance.guid(),
     description: chance.sentence(),
   }));

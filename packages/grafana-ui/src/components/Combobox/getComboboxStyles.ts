@@ -19,17 +19,11 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     menuUlContainer: css({
       label: 'grafana-select-menu-ul-container',
       listStyle: 'none',
-      // Place all children in a single cell, give them position relative and then do a transform
-      // This produces the same effect as position: absolute, but the container will fit the width of the longest child
-      // This might only work if all items are the same height
-      display: 'grid',
-      gridTemplateColumns: '1fr',
-      gridTemplateRows: '1fr',
     }),
     option: css({
       label: 'grafana-select-option',
       padding: '8px',
-      position: 'relative',
+      position: 'absolute',
       gridRow: 1,
       gridColumn: 1,
       display: 'flex',
@@ -37,6 +31,8 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'row',
       flexShrink: 0,
       whiteSpace: 'nowrap',
+      width: '100%',
+      overflow: 'hidden',
       cursor: 'pointer',
       '&:hover': {
         background: theme.colors.action.hover,
@@ -51,6 +47,12 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       fontWeight: theme.typography.fontWeightMedium,
       flexDirection: 'column',
       flexGrow: 1,
+      overflow: 'hidden',
+    }),
+    optionLabel: css({
+      label: 'grafana-select-option-label',
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
     }),
     optionDescription: css({
       label: 'grafana-select-option-description',
@@ -58,6 +60,8 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
       lineHeight: theme.typography.body.lineHeight,
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
     }),
     optionFocused: css({
       label: 'grafana-select-option-focused',
@@ -76,7 +80,6 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         display: 'block',
         height: '100%',
         position: 'absolute',
-        //transform: 'translateX(-50%)',
         width: theme.spacing(0.5),
         left: 0,
         top: 0,
