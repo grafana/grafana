@@ -2,7 +2,7 @@ import { Route, Routes } from 'react-router-dom';
 import { AppRootProps } from '@grafana/data';
 import { ROUTES } from '../../constants';
 import { AddedComponents, ExposedComponents, LegacyAPIs } from '../../pages';
-import { testIds } from '../testIds';
+import { testIds } from '../../testIds';
 
 export function App(props: AppRootProps) {
   return (

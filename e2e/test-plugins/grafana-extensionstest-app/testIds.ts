@@ -12,6 +12,8 @@ export const testIds = {
   },
   appB: {
     modal: 'b-app-modal',
+    reusableComponent: 'b-app-configure-extension-component',
+    reusableAddedComponent: 'b-app-add-component',
   },
   appConfig: {
     container: 'data-testid ac-container',
@@ -19,18 +21,16 @@ export const testIds = {
     apiUrl: 'data-testid ac-api-url',
     submit: 'data-testid ac-submit-form',
   },
-  pageOne: {
-    container: 'data-testid pg-one-container',
-    navigateToFour: 'data-testid navigate-to-four',
+  legacyAPIPage: {
+    container: 'data-testid pg-legacy-container',
+    section1: 'get-plugin-extensions',
+    section2: 'configure-extension-link-get-plugin-link-extensions',
+    section3: 'configure-extension-component-get-plugin-component-extensions',
   },
-  pageTwo: {
-    container: 'data-testid pg-two-container',
+  exposedComponentsPage: {
+    container: 'data-testid pg-exposed-components-container',
   },
   addedComponentsPage: {
     container: 'data-testid pg-added-components-container',
-  },
-  pageFour: {
-    container: 'data-testid pg-four-container',
-    navigateBack: 'data-testid navigate-back',
   },
 };

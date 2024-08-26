@@ -8814,6 +8814,7 @@ __metadata:
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/ui": "workspace:*"
+    "@playwright/test": "npm:1.46.1"
     "@types/lodash": "npm:4.17.7"
     "@types/node": "npm:20.14.14"
     "@types/prismjs": "npm:1.26.4"

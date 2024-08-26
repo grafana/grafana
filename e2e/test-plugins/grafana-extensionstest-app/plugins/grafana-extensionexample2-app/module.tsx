@@ -1,6 +1,6 @@
 import { AppPlugin } from '@grafana/data';
 import { App } from './components/App';
-import { testIds } from './testIds';
+import { testIds } from '../../testIds';
 
 console.log('Hello from app B');
 export const plugin = new AppPlugin<{}>()

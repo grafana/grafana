@@ -1,4 +1,4 @@
-import { testIds } from '../components/testIds';
+import { testIds } from '../testIds';
 import { PluginPage, usePluginComponents } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 

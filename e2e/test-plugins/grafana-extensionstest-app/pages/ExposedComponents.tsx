@@ -1,4 +1,4 @@
-import { testIds } from '../components/testIds';
+import { testIds } from '../testIds';
 import { PluginPage, usePluginComponent } from '@grafana/runtime';
 
 type ReusableComponentProps = {
@@ -16,7 +16,7 @@ export function ExposedComponents() {
 
   return (
     <PluginPage>
-      <div data-testid={testIds.pageTwo.container}>
+      <div data-testid={testIds.exposedComponentsPage.container}>
         <ReusableComponent name={'World'} />
       </div>
     </PluginPage>
