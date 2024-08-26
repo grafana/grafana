@@ -28,11 +28,11 @@ export const RestoreModal = ({
 
   useEffect(() => {
     const origins = Object.values(dashboardOrigin);
-    if (origins.length === 1 && dashboardOrigin[selectedDashboards[0]] !== 'general') {
-      setRestoreTarget(dashboardOrigin[selectedDashboards[0]]);
+    if (origins.length === 1) {
+      setRestoreTarget(origins[0]);
     } else if (origins.length > 1) {
       if (origins.filter((originalLocation) => originalLocation !== origins[0]).length === 0) {
-        setRestoreTarget(dashboardOrigin[selectedDashboards[0]]);
+        setRestoreTarget(origins[0]);
       }
     }
   }, [dashboardOrigin, selectedDashboards]);
