@@ -54,13 +54,36 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides/
+  data-transformation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
+  build-query:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
 ---
 
 # Table
 
 Tables are a highly flexible visualization designed to display data in columns and rows. They support various data types, including tables, time series, annotations, and raw JSON data. The table visualization can even take multiple data sets and provide the option to switch between them. With this versatility, it's the preferred visualization for viewing multiple data types, aiding in your data analysis needs.
 
-{{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" lightbox="true" caption="Table visualization" >}}
+{{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" lightbox="true" alt="Table visualization" >}}
+
+You can use a table visualization to show datasets such as:
+
+- Common database queries like logs, traces, metrics
+- Financial reports
+- Customer lists
+- Product catalogs
+
+Any information you might want to put in a spreadsheet can often be best visualized in a table.
+
+Tables also provide different styles to visualize data inside the table cells such as colored text and cell backgrounds, gauges, sparklines, data links, JSON code, and images.
+
+## Configure a table visualization
 
 The following video provides a visual walkthrough of the options you can set in a table visualization. If you want to see a configuration in action, check out the video:
 
@@ -71,6 +94,38 @@ The following video provides a visual walkthrough of the options you can set in 
 {{< admonition type="note" >}}
 Annotations and alerts are not currently supported for tables.
 {{< /admonition >}}
+
+## Supported data formats
+
+The table visualization supports any data that has a column-row structure.
+
+### Example
+
+```
+Column1, Column2, Column3
+value1 , value2 , value3
+value4 , value5 , value6
+value7 , value8 , value9
+```
+
+If a cell is missing or the table cell-row structure is not complete, the table visualization won’t display any of the data:
+
+```
+Column1, Column2, Column3
+value1 , value2 , value3
+gap1   , gap2
+value4 , value5 , value6
+```
+
+If you need to hide columns, you can do so using [data transformations](ref:data-transformation), [field overrides](#field-overrides), or by [building a query](ref:build-query) that returns only the needed columns.
+
+If you’re using a cell type such as sparkline or JSON, the data requirements may differ in a way that’s specific to that type. For more info refer to [Cell type](#cell-type).
+
+## Debugging in tables
+
+The table visualization helps with debugging when you need to know exactly what results your query is returning and why other visualizations might not be working. This functionality is also accessible in most visualizations by toggling on the **Table view** switch at the top of the panel:
+
+![The Table view switch](/media/docs/grafana/panels-visualizations/screenshot-table-view-on-11.2.png)
 
 ## Sort column
 
