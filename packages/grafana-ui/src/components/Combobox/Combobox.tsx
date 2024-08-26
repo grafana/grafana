@@ -47,6 +47,7 @@ function estimateSize() {
 
 const MIN_HEIGHT = 400;
 const INDEX_WIDTH_CALCULATION = 100;
+const WIDTH_MULTIPLIER = 7.3;
 
 export const Combobox = ({ options, onChange, value, id, ...restProps }: ComboboxProps) => {
   const [items, setItems] = useState(options);
@@ -157,7 +158,7 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
         maxLength = Math.max(maxLength, items[i].label.length);
       }
       console.log('setting popover width, scroll down and default case');
-      setPopoverWidth(maxLength * 7.3);
+      setPopoverWidth(maxLength * WIDTH_MULTIPLIER);
     } else if (endVisibleIndex % INDEX_WIDTH_CALCULATION === 0 && endVisibleIndex >= INDEX_WIDTH_CALCULATION) {
       // Scroll up case
       let maxLength = 0;
@@ -167,7 +168,7 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
       }
       console.log('setting popover width, scroll up');
 
-      setPopoverWidth(maxLength * 7.3);
+      setPopoverWidth(maxLength * WIDTH_MULTIPLIER);
     }
   }, [items, rowVirtualizer.range]);
 
