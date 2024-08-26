@@ -1,12 +1,13 @@
-import { testIds } from '../components/testIds';
 import { PluginPage, usePluginComponent } from '@grafana/runtime';
+
+import { testIds } from '../testIds';
 
 type ReusableComponentProps = {
   name: string;
 };
 
 export function ExposedComponents() {
-  var { component: ReusableComponent } = usePluginComponent<ReusableComponentProps>(
+  const { component: ReusableComponent } = usePluginComponent<ReusableComponentProps>(
     'grafana-extensionexample1-app/reusable-component/v1'
   );
 
@@ -16,7 +17,7 @@ export function ExposedComponents() {
 
   return (
     <PluginPage>
-      <div data-testid={testIds.pageTwo.container}>
+      <div data-testid={testIds.exposedComponentsPage.container}>
         <ReusableComponent name={'World'} />
       </div>
     </PluginPage>
