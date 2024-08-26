@@ -182,7 +182,6 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeams.Name(), err)
 	}
 
-	// FIXME: helper for listing resources
 	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	defer func() {
 		if rows != nil {
@@ -198,19 +197,27 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 	grouped := map[string][]TeamMember{}
 
 	var lastID int64
+	var atTeamLimit bool
+
 	for rows.Next() {
 		m := TeamMember{}
-		err = rows.Scan(&m.ID, &m.TeamUID, &m.UserUID, &m.Created, &m.Updated, &m.Permission)
+		err = rows.Scan(&m.ID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.Created, &m.Updated, &m.Permission)
 		if err != nil {
 			return res, err
 		}
 
-		lastID = m.ID
-		if len(grouped) >= limit {
-			res.ContinueID = lastID
-			break
+		lastID = m.TeamID
+		members, ok := grouped[m.TeamUID]
+		if ok {
+			grouped[m.TeamUID] = append(members, m)
+		} else if !atTeamLimit {
+			grouped[m.TeamUID] = []TeamMember{m}
 		}
-		grouped[m.TeamUID] = append(grouped[m.TeamUID], m)
+
+		if len(grouped) >= limit {
+			atTeamLimit = true
+			res.ContinueID = lastID
+		}
 	}
 
 	if query.UID == "" {

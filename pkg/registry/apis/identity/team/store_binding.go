@@ -2,7 +2,6 @@ package team
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -79,8 +78,6 @@ func (l *LegacyBindingStore) Get(ctx context.Context, name string, options *meta
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println(res)
 
 	if len(res.Bindings) != 1 {
 		// FIXME: maybe empty result?

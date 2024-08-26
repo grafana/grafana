@@ -45,6 +45,7 @@ type ListTeamResult struct {
 
 type TeamMember struct {
 	ID         int64
+	TeamID     int64
 	TeamUID    string
 	UserUID    string
 	Updated    time.Time
