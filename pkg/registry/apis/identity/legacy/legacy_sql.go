@@ -124,13 +124,10 @@ func (s *legacySQLStore) GetDisplay(ctx context.Context, ns claims.NamespaceInfo
 }
 
 func (s *legacySQLStore) queryUsers(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, t *template.Template, req sqltemplate.Args, limit int) (*ListUserResult, error) {
-	rawQuery, err := sqltemplate.Execute(t, req)
+	q, err := sqltemplate.Execute(t, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", sqlQueryUsers.Name(), err)
 	}
-	q := rawQuery
-
-	// fmt.Printf("%s // %v\n", rawQuery, req.GetArgs())
 
 	res := &ListUserResult{}
 	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
@@ -207,13 +204,13 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 		if err != nil {
 			return res, err
 		}
-		lastID = m.ID
 
-		grouped[m.TeamUID] = append(grouped[m.TeamUID], m)
-		if len(grouped) > limit {
+		lastID = m.ID
+		if len(grouped) >= limit {
 			res.ContinueID = lastID
 			break
 		}
+		grouped[m.TeamUID] = append(grouped[m.TeamUID], m)
 	}
 
 	if query.UID == "" {
@@ -278,13 +275,14 @@ func (s *legacySQLStore) ListTeamMembers(ctx context.Context, ns claims.Namespac
 		if err != nil {
 			return res, err
 		}
-		lastID = m.ID
 
-		res.Members = append(res.Members, m)
-		if len(res.Members) > limit {
+		lastID = m.ID
+		if len(res.Members) >= limit {
 			res.ContinueID = lastID
 			break
 		}
+
+		res.Members = append(res.Members, m)
 	}
 
 	if query.ID == 0 {

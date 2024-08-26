@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	identityv0 "github.com/grafana/grafana/pkg/apis/identity/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/identity/common"
 	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
@@ -83,7 +84,6 @@ func (l *LegacyMemberStore) Get(ctx context.Context, name string, options *metav
 	}
 
 	if len(res.Members) != 1 {
-		// FIXME: maybe empty result?
 		return nil, resource.NewNotFound(name)
 	}
 
@@ -98,25 +98,29 @@ func (l *LegacyMemberStore) List(ctx context.Context, options *internalversion.L
 		return nil, err
 	}
 
+	continueID, err := common.GetContinueID(options)
+	if err != nil {
+		return nil, err
+	}
+
 	res, err := l.store.ListTeamMembers(ctx, ns, legacy.ListTeamMembersQuery{
-		Limit: options.Limit,
+		ContinueID: continueID,
+		Limit:      options.Limit,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	list := identityv0.TeamMemberList{
-		ListMeta: metav1.ListMeta{
-			// TODO: set these
-			ResourceVersion: "",
-			Continue:        "",
-		},
 		Items: make([]identityv0.TeamMember, 0, len(res.Members)),
 	}
 
 	for _, b := range res.Members {
 		list.Items = append(list.Items, mapToMemberObject(ns, b))
 	}
+
+	list.ListMeta.Continue = common.OptionalFormatInt(res.ContinueID)
+	list.ListMeta.ResourceVersion = common.OptionalFormatInt(res.RV)
 
 	return &list, nil
 }

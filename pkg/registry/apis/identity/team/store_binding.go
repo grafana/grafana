@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	identityv0 "github.com/grafana/grafana/pkg/apis/identity/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/identity/common"
 	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
@@ -91,25 +92,29 @@ func (l *LegacyBindingStore) List(ctx context.Context, options *internalversion.
 		return nil, err
 	}
 
+	continueID, err := common.GetContinueID(options)
+	if err != nil {
+		return nil, err
+	}
+
 	res, err := l.store.ListTeamBindings(ctx, ns, legacy.ListTeamBindingsQuery{
-		Limit: options.Limit,
+		ContinueID: continueID,
+		Limit:      options.Limit,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	list := identityv0.TeamBindingList{
-		ListMeta: metav1.ListMeta{
-			// TODO: set these
-			ResourceVersion: "",
-			Continue:        "",
-		},
 		Items: make([]identityv0.TeamBinding, 0, len(res.Bindings)),
 	}
 
 	for _, b := range res.Bindings {
 		list.Items = append(list.Items, mapToBindingObject(ns, b))
 	}
+
+	list.ListMeta.Continue = common.OptionalFormatInt(res.ContinueID)
+	list.ListMeta.ResourceVersion = common.OptionalFormatInt(res.RV)
 
 	return &list, nil
 }

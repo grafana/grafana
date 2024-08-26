@@ -5,6 +5,9 @@ INNER JOIN {{ .Ident .UserTable }} u ON tm.user_id  = u.id
 WHERE
 tm.org_id = {{ .Arg .Query.OrgID}}
 {{ if .Query.ID }}
-    and tm.id = {{ .Arg .Query.ID }}
+    AND tm.id = {{ .Arg .Query.ID }}
+{{ end }}
+{{ if .Query.ContinueID }}
+   AND tm.id >= {{ .Arg .Query.ContinueID }}
 {{ end }}
 ORDER BY tm.id ASC LIMIT {{ .Arg .Query.Limit }};

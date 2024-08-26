@@ -5,6 +5,13 @@ WHERE
 {{ if .Query.UID }}
     t.uid = {{ .Arg .Query.UID }}
 {{ else }}
-    t.uid IN(SELECT uid FROM {{ .Ident .TeamTable }} t ORDER BY t.id ASC LIMIT {{ .Arg .Query.Limit }})
+    t.uid IN(
+      SELECT uid
+      FROM {{ .Ident .TeamTable }} t
+      {{ if .Query.ContinueID }}
+        AND t.id >= {{ .Arg .Query.ContinueID }}
+      {{ end }}
+      ORDER BY t.id ASC LIMIT {{ .Arg .Query.Limit }}
+    )
 {{ end }}
 AND tm.org_id = {{ .Arg .Query.OrgID}};
