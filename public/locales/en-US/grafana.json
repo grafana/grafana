@@ -429,23 +429,30 @@
     },
     "source-form": {
       "control-required": "This field is required.",
-      "description": "You have used following variables in the target query: <1></1><2></2>A data point needs to provide values to all variables as fields or as transformations output to make the correlation button appear in the visualization.<4></4>Note: Not every variable needs to be explicitly defined below. A transformation such as <7>logfmt</7> will create variables for every key/value pair.",
-      "heading": "Variables used in the target query",
+      "description": "A data point needs to provide values to all variables as fields or as transformations output to make the correlation button appear in the visualization.<1></1>Note: Not every variable needs to be explicitly defined below. A transformation such as <4>logfmt</4> will create variables for every key/value pair.",
+      "description-external-pre": "You have used following variables in the target URL:",
+      "description-query-pre": "You have used following variables in the target query:",
+      "external-title": "Configure the data source that will use the URL (Step 3 of 3)",
+      "heading-external": "Variables used in the target URL",
+      "heading-query": "Variables used in the target query",
+      "query-title": "Configure the data source that will link to {{dataSourceName}} (Step 3 of 3)",
       "results-description": "The link will be shown next to the value of this field",
       "results-label": "Results field",
       "results-required": "This field is required.",
       "source-description": "Results from selected source data source have links displayed in the panel",
       "source-label": "Source",
-      "sub-text": "<0>Define what data source will display the correlation, and what data will replace previously defined variables.</0>",
-      "title": "Configure the data source that will link to {{dataSourceName}} (Step 3 of 3)"
+      "sub-text": "<0>Define what data source will display the correlation, and what data will replace previously defined variables.</0>"
     },
     "sub-title": "Define how data living in different data sources relates to each other. Read more in the <2>documentation<1></1></2>",
     "target-form": {
       "control-rules": "This field is required.",
-      "sub-text": "<0>Define what data source the correlation will link to, and what query will run when the correlation is clicked.</0>",
-      "target-description": "Specify which data source is queried when the link is clicked",
+      "sub-text": "<0>Define what the correlation will link to. With the query type, a query will run when the correlation is clicked. With the external type, clicking the correlation will open a URL.</0>",
+      "target-description-external": "Specify the URL that will open when the link is clicked",
+      "target-description-query": "Specify which data source is queried when the link is clicked",
       "target-label": "Target",
-      "title": "Setup the target for the correlation (Step 2 of 3)"
+      "target-type-description": "Specify the type of correlation",
+      "title": "Setup the target for the correlation (Step 2 of 3)",
+      "type-label": "Type"
     },
     "trans-details": {
       "logfmt-description": "Parse provided field with logfmt to get variables",

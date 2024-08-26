@@ -1,5 +1,6 @@
 import { DataFrame, DataSourceInstanceSettings, FieldType, toDataFrame } from '@grafana/data';
 
+import { CORR_TYPES } from './types';
 import { CorrelationData } from './useCorrelations';
 import { attachCorrelationsToDataFrames } from './utils';
 
@@ -111,7 +112,7 @@ function setup() {
       label: 'logs to metrics',
       source: loki,
       target: prometheus,
-      type: 'query',
+      type: CORR_TYPES.query.value,
       config: { field: 'traceId', target: { expr: 'target Prometheus query' } },
       provisioned: false,
     },
@@ -121,7 +122,7 @@ function setup() {
       label: 'logs to logs',
       source: loki,
       target: elastic,
-      type: 'query',
+      type: CORR_TYPES.query.value,
       config: { field: 'traceId', target: { expr: 'target Elastic query' } },
       provisioned: false,
     },
@@ -130,7 +131,7 @@ function setup() {
       label: 'metrics to logs',
       source: prometheus,
       target: elastic,
-      type: 'query',
+      type: CORR_TYPES.query.value,
       config: { field: 'value', target: { expr: 'target Elastic query' } },
       provisioned: false,
     },

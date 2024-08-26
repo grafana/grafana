@@ -26,18 +26,41 @@ export interface RemoveCorrelationResponse {
   message: string;
 }
 
-export type CorrelationType = 'query';
+type CorrelationTypeOptions = {
+  value: string;
+  label: string;
+  description: string;
+};
+
+export const CORR_TYPES: Record<string, CorrelationTypeOptions> = {
+  query: {
+    value: 'query',
+    label: 'Query',
+    description: 'Open a query',
+  },
+  external: {
+    value: 'external',
+    label: 'External',
+    description: 'Open an external URL',
+  },
+};
+
+const corrTypeArray = Object.values(CORR_TYPES).map((ct) => ct.value);
+
+export type CorrelationType = (typeof corrTypeArray)[number];
+
+export type ExternalTypeTarget = { url: string };
 
 export interface CorrelationConfig {
   field: string;
-  target: object; // this contains anything that would go in the query editor, so any extension off DataQuery a datasource would have, and needs to be generic
+  target: object | ExternalTypeTarget; // for queries, this contains anything that would go in the query editor, so any extension off DataQuery a datasource would have, and needs to be generic. For external, it simply contains a URL
   transformations?: DataLinkTransformationConfig[];
 }
 
 export interface Correlation {
   uid: string;
   sourceUID: string;
-  targetUID: string;
+  targetUID?: string;
   label?: string;
   description?: string;
   provisioned: boolean;

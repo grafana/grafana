@@ -6,6 +6,8 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { Field, LoadingPlaceholder, Alert } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
+import { CORR_TYPES } from '../types';
+
 interface Props {
   dsUid?: string;
   name: string;
@@ -52,12 +54,14 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
         name={name}
         rules={{
           validate: {
-            hasQueryEditor: () =>
-              QueryEditor !== undefined ||
-              t(
-                'correlations.query-editor.control-rules',
-                'The selected target data source must export a query editor.'
-              ),
+            hasQueryEditor: (_, formVals) => {
+              return formVals.type === CORR_TYPES.query.value && QueryEditor === undefined
+                ? t(
+                    'correlations.query-editor.control-rules',
+                    'The selected target data source must export a query editor.'
+                  )
+                : true;
+            },
           },
         }}
         render={({ field: { value, onChange } }) => {
