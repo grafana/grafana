@@ -514,6 +514,9 @@ func SchedulerUserFor(orgID int64) *user.SignedInUser {
 				datasources.ActionQuery: []string{
 					datasources.ScopeAll,
 				},
+				datasources.ActionRead: []string{
+					datasources.ScopeAll,
+				},
 			},
 		},
 	}
