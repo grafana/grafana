@@ -285,7 +285,7 @@ func (s *legacySQLStore) ListTeamMembers(ctx context.Context, ns claims.Namespac
 		res.Members = append(res.Members, m)
 	}
 
-	if query.ID == 0 {
+	if query.UserUID == "" && query.TeamUID == "" {
 		res.RV, err = sql.GetResourceVersion(ctx, "team_member", "updated")
 	}
 

@@ -76,7 +76,8 @@ type ListTeamBindingsResult struct {
 }
 
 type ListTeamMembersQuery struct {
-	ID         int64
+	TeamUID    string
+	UserUID    string
 	OrgID      int64
 	ContinueID int64 // ContinueID
 	Limit      int64
@@ -96,5 +97,6 @@ type LegacyIdentityStore interface {
 	ListTeams(ctx context.Context, ns claims.NamespaceInfo, query ListTeamQuery) (*ListTeamResult, error)
 	ListTeamBindings(ctx context.Context, ns claims.NamespaceInfo, query ListTeamBindingsQuery) (*ListTeamBindingsResult, error)
 	ListTeamMembers(ctx context.Context, ns claims.NamespaceInfo, query ListTeamMembersQuery) (*ListTeamMembersResult, error)
+
 	GetUserTeams(ctx context.Context, ns claims.NamespaceInfo, uid string) ([]team.Team, error)
 }

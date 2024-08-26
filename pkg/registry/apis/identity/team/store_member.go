@@ -2,8 +2,10 @@ package team
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -70,14 +72,15 @@ func (l *LegacyMemberStore) Get(ctx context.Context, name string, options *metav
 		return nil, err
 	}
 
-	internalID, err := strconv.ParseInt(name, 10, 64)
+	teamUID, userUID, err := parseMemberName(name)
 	if err != nil {
 		return nil, err
 	}
 
 	res, err := l.store.ListTeamMembers(ctx, ns, legacy.ListTeamMembersQuery{
-		ID:    internalID,
-		Limit: 1,
+		TeamUID: teamUID,
+		UserUID: userUID,
+		Limit:   1,
 	})
 	if err != nil {
 		return nil, err
@@ -135,7 +138,7 @@ func mapToMemberObject(ns claims.NamespaceInfo, m legacy.TeamMember) identityv0.
 
 	return identityv0.TeamMember{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              fmt.Sprintf("%s-%s", m.TeamUID, m.MemberID()),
+			Name:              formatMemberName(m),
 			Namespace:         ns.Value,
 			CreationTimestamp: metav1.NewTime(m.Created),
 			ResourceVersion:   strconv.FormatInt(m.Updated.UnixMilli(), 10),
@@ -159,4 +162,16 @@ func mapPermisson(p int64) identityv0.TeamPermission {
 	} else {
 		return identityv0.TeamPermissionAdmin
 	}
+}
+
+func formatMemberName(m legacy.TeamMember) string {
+	return fmt.Sprintf("%s-%s", m.TeamUID, m.MemberID())
+}
+
+func parseMemberName(name string) (string, string, error) {
+	parts := strings.Split(name, "-")
+	if len(parts) != 2 {
+		return "", "", errors.New("invalid team member name")
+	}
+	return parts[0], strings.TrimPrefix(parts[1], "user:"), nil
 }

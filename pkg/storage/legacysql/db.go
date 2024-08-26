@@ -2,6 +2,7 @@ package legacysql
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -58,6 +59,8 @@ func (h *LegacyDatabaseHelper) GetResourceVersion(ctx context.Context, table str
 		}
 		return err
 	})
+
+	fmt.Println("RV ", rv)
 
 	// When no RV, use a stable non-zero number
 	if rv < 1 {
