@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -49,6 +50,10 @@ type TeamMember struct {
 	Updated    time.Time
 	Created    time.Time
 	Permission int64
+}
+
+func (m TeamMember) MemberID() string {
+	return identity.NewTypedIDString(claims.TypeUser, m.UserUID)
 }
 
 type TeamBinding struct {

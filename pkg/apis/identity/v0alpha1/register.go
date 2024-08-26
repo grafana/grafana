@@ -163,7 +163,7 @@ var TeamMemberResourceInfo = common.NewResourceInfo(
 			return []interface{}{
 				m.Name,
 				m.Spec.TeamRef.Name,
-				fmt.Sprintf("%s:%s", m.Spec.Subject.Kind, m.Spec.Subject.Name),
+				m.Spec.Subject.Name,
 				m.Spec.Subject.Permission,
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
 			}, nil

@@ -68,15 +68,12 @@ type TeamMemberList struct {
 }
 
 type TeamSubject struct {
-	// Kind is the kind of the subject, only supports "User".
-	Kind string `json:"kind,omitempty"`
+	// Name is the unique identifier for subject.
+	Name string `json:"name,omitempty"`
 
 	// Permission subject has in permission.
 	// Can be either admin or member.
 	Permission TeamPermission `json:"permission,omitempty"`
-
-	// Name is the unique identifier for subject.
-	Name string `json:"name,omitempty"`
 }
 
 type TeamRef struct {

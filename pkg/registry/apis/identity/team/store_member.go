@@ -2,6 +2,7 @@ package team
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -130,7 +131,7 @@ func mapToMemberObject(ns claims.NamespaceInfo, m legacy.TeamMember) identityv0.
 
 	return identityv0.TeamMember{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              strconv.FormatInt(m.ID, 10),
+			Name:              fmt.Sprintf("%s-%s", m.TeamUID, m.MemberID()),
 			Namespace:         ns.Value,
 			CreationTimestamp: metav1.NewTime(m.Created),
 			ResourceVersion:   strconv.FormatInt(m.Updated.UnixMilli(), 10),
@@ -139,8 +140,7 @@ func mapToMemberObject(ns claims.NamespaceInfo, m legacy.TeamMember) identityv0.
 		Spec: identityv0.TeamMemberSpec{
 			TeamRef: identityv0.TeamRef{Name: m.TeamUID},
 			Subject: identityv0.TeamSubject{
-				Kind:       "User",
-				Name:       m.UserUID,
+				Name:       m.MemberID(),
 				Permission: permission,
 			},
 		},
