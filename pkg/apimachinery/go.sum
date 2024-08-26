@@ -29,7 +29,9 @@ github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/
 github.com/google/gofuzz v1.2.0 h1:xRy4A+RhZaiKjJ1bPfwQ8sedCA+YS2YcCHW6ec7JMi0=
 github.com/google/gofuzz v1.2.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
 github.com/grafana/authlib v0.0.0-20240826185126-5d9a84d9b410 h1:neWYk0NWTOXE6VdDZBr+lJqW67mbxONFYS5HmlGoohE=
+github.com/grafana/authlib v0.0.0-20240826185126-5d9a84d9b410/go.mod h1:uCA/4cap3Ro9e9jQGZdlxZAMNVvlelKap5GjJ0k/YRc=
 github.com/grafana/authlib/claims v0.0.0-20240826185126-5d9a84d9b410 h1:a9xEx4A6zfamZ4AXWXL3MW6ChgGLinXrQrzuGotQ0q0=
+github.com/grafana/authlib/claims v0.0.0-20240826185126-5d9a84d9b410/go.mod h1:r+F8H6awwjNQt/KPZ2GNwjk8TvsJ7/gxzkXN26GlL/A=
 github.com/josharian/intern v1.0.0 h1:vlS4z54oSdjm0bgjRigI+G1HpF+tI+9rE5LLzOg8HmY=
 github.com/josharian/intern v1.0.0/go.mod h1:5DoeVV0s6jJacbCEi61lwdGj/aVlrQvzHFFd8Hwg//Y=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
