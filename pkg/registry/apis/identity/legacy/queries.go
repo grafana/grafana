@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"text/template"
 
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
@@ -31,8 +32,19 @@ var (
 )
 
 type sqlQueryListUsers struct {
-	*sqltemplate.SQLTemplate
-	Query *ListUserQuery
+	sqltemplate.SQLTemplate
+	Query        *ListUserQuery
+	UserTable    string
+	OrgUserTable string
+}
+
+func newListUser(sql *legacysql.LegacyDatabaseHelper, q *ListUserQuery) sqlQueryListUsers {
+	return sqlQueryListUsers{
+		SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
+		UserTable:    sql.Table("user"),
+		OrgUserTable: sql.Table("org_user"),
+		Query:        q,
+	}
 }
 
 func (r sqlQueryListUsers) Validate() error {
@@ -40,8 +52,17 @@ func (r sqlQueryListUsers) Validate() error {
 }
 
 type sqlQueryListTeams struct {
-	*sqltemplate.SQLTemplate
-	Query *ListTeamQuery
+	sqltemplate.SQLTemplate
+	Query     *ListTeamQuery
+	TeamTable string
+}
+
+func newListTeams(sql *legacysql.LegacyDatabaseHelper, q *ListTeamQuery) sqlQueryListTeams {
+	return sqlQueryListTeams{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		TeamTable:   sql.Table("team"),
+		Query:       q,
+	}
 }
 
 func (r sqlQueryListTeams) Validate() error {
@@ -49,8 +70,19 @@ func (r sqlQueryListTeams) Validate() error {
 }
 
 type sqlQueryGetDisplay struct {
-	*sqltemplate.SQLTemplate
-	Query *GetUserDisplayQuery
+	sqltemplate.SQLTemplate
+	Query        *GetUserDisplayQuery
+	UserTable    string
+	OrgUserTable string
+}
+
+func newGetDisplay(sql *legacysql.LegacyDatabaseHelper, q *GetUserDisplayQuery) sqlQueryGetDisplay {
+	return sqlQueryGetDisplay{
+		SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
+		UserTable:    sql.Table("user"),
+		OrgUserTable: sql.Table("org_user"),
+		Query:        q,
+	}
 }
 
 func (r sqlQueryGetDisplay) Validate() error {

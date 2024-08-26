@@ -16,14 +16,16 @@ import (
 
 	"github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
 	v0alpha1helper "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1/helper"
+	"github.com/grafana/grafana/pkg/aggregator/apiserver/discovery"
+	"github.com/grafana/grafana/pkg/aggregator/apiserver/plugin"
 	clientset "github.com/grafana/grafana/pkg/aggregator/generated/clientset/versioned"
 	informers "github.com/grafana/grafana/pkg/aggregator/generated/informers/externalversions"
 	dataplaneservicerest "github.com/grafana/grafana/pkg/aggregator/registry/dataplaneservice/rest"
 )
 
 type ExtraConfig struct {
-	PluginClient          PluginClient
-	PluginContextProvider PluginContextProvider
+	PluginClient          plugin.PluginClient
+	PluginContextProvider plugin.PluginContextProvider
 }
 
 type Config struct {
@@ -57,10 +59,10 @@ type GrafanaAggregator struct {
 	GenericAPIServer      *genericapiserver.GenericAPIServer
 	RegistrationInformers informers.SharedInformerFactory
 	delegateHandler       http.Handler
-	proxyHandlers         map[string]*proxyHandler
+	proxyHandlers         map[string]*dataPlaneServiceHandler
 	handledGroupVersions  map[string]sets.Set[string]
-	PluginClient          PluginClient
-	PluginContextProvider PluginContextProvider
+	PluginClient          plugin.PluginClient
+	PluginContextProvider plugin.PluginContextProvider
 }
 
 // Complete fills in any fields not set that are required to have valid data. It's mutating the receiver.
@@ -82,8 +84,8 @@ func (c completedConfig) NewWithDelegate(delegationTarget genericapiserver.Deleg
 		return nil, err
 	}
 
-	discoveryHandler := newApisProxyHandler(delegationTarget.UnprotectedHandler())
-	genericServer.Handler.GoRestfulContainer.Filter(discoveryHandler.handle)
+	discoveryHandler := discovery.NewRootDiscoveryHandler(delegationTarget.UnprotectedHandler())
+	genericServer.Handler.GoRestfulContainer.Filter(discoveryHandler.Handle)
 
 	dataplaneServiceRegistrationControllerInitiated := make(chan struct{})
 	if err := genericServer.RegisterMuxAndDiscoveryCompleteSignal("DataPlaneServiceRegistrationControllerInitiated", dataplaneServiceRegistrationControllerInitiated); err != nil {
@@ -104,7 +106,7 @@ func (c completedConfig) NewWithDelegate(delegationTarget genericapiserver.Deleg
 		RegistrationInformers: informerFactory,
 		delegateHandler:       delegationTarget.UnprotectedHandler(),
 		handledGroupVersions:  map[string]sets.Set[string]{},
-		proxyHandlers:         map[string]*proxyHandler{},
+		proxyHandlers:         map[string]*dataPlaneServiceHandler{},
 		PluginClient:          c.ExtraConfig.PluginClient,
 		PluginContextProvider: c.ExtraConfig.PluginContextProvider,
 	}
@@ -151,7 +153,7 @@ func (s *GrafanaAggregator) AddDataPlaneService(dataplaneService *v0alpha1.DataP
 	}
 
 	proxyPath := "/apis/dataplane/" + dataplaneService.Spec.Group + "/" + dataplaneService.Spec.Version
-	proxyHandler := &proxyHandler{
+	proxyHandler := &dataPlaneServiceHandler{
 		localDelegate:         s.delegateHandler,
 		client:                s.PluginClient,
 		pluginContextProvider: s.PluginContextProvider,

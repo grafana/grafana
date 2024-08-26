@@ -10,7 +10,10 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"go.opentelemetry.io/otel"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/api")
 
 func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service,
 	features featuremgmt.FeatureToggles) *AccessControlAPI {
@@ -43,8 +46,11 @@ func (api *AccessControlAPI) RegisterAPIEndpoints() {
 
 // GET /api/access-control/user/actions
 func (api *AccessControlAPI) getUserActions(c *contextmodel.ReqContext) response.Response {
+	ctx, span := tracer.Start(c.Req.Context(), "accesscontrol.api.getUserActions")
+	defer span.End()
+
 	reloadCache := c.QueryBool("reloadcache")
-	permissions, err := api.Service.GetUserPermissions(c.Req.Context(),
+	permissions, err := api.Service.GetUserPermissions(ctx,
 		c.SignedInUser, ac.Options{ReloadCache: reloadCache})
 	if err != nil {
 		return response.JSON(http.StatusInternalServerError, err)
@@ -55,18 +61,24 @@ func (api *AccessControlAPI) getUserActions(c *contextmodel.ReqContext) response
 
 // GET /api/access-control/user/permissions
 func (api *AccessControlAPI) getUserPermissions(c *contextmodel.ReqContext) response.Response {
+	ctx, span := tracer.Start(c.Req.Context(), "accesscontrol.api.getUserPermissions")
+	defer span.End()
+
 	reloadCache := c.QueryBool("reloadcache")
-	permissions, err := api.Service.GetUserPermissions(c.Req.Context(),
+	permissions, err := api.Service.GetUserPermissions(ctx,
 		c.SignedInUser, ac.Options{ReloadCache: reloadCache})
 	if err != nil {
 		return response.JSON(http.StatusInternalServerError, err)
 	}
 
-	return response.JSON(http.StatusOK, ac.GroupScopesByActionContext(c.Req.Context(), permissions))
+	return response.JSON(http.StatusOK, ac.GroupScopesByActionContext(ctx, permissions))
 }
 
 // GET /api/access-control/users/permissions/search
 func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) response.Response {
+	ctx, span := tracer.Start(c.Req.Context(), "accesscontrol.api.searchUsersPermissions")
+	defer span.End()
+
 	searchOptions := ac.SearchOptions{
 		ActionPrefix: c.Query("actionPrefix"),
 		Action:       c.Query("action"),
@@ -84,7 +96,7 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 	}
 
 	// Compute metadata
-	permissions, err := api.Service.SearchUsersPermissions(c.Req.Context(), c.SignedInUser, searchOptions)
+	permissions, err := api.Service.SearchUsersPermissions(ctx, c.SignedInUser, searchOptions)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "could not get org user permissions", err)
 	}

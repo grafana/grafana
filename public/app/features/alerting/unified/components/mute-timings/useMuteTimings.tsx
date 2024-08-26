@@ -5,7 +5,7 @@ import { timeIntervalsApi } from 'app/features/alerting/unified/api/timeInterval
 import { mergeTimeIntervals } from 'app/features/alerting/unified/components/mute-timings/util';
 import {
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval,
-  ReadNamespacedTimeIntervalApiResponse,
+  IoK8SApimachineryPkgApisMetaV1ObjectMeta,
 } from 'app/features/alerting/unified/openapi/timeIntervalsApi.gen';
 import { BaseAlertmanagerArgs } from 'app/features/alerting/unified/types/hooks';
 import { PROVENANCE_ANNOTATION, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
@@ -24,7 +24,6 @@ const { useLazyGetAlertmanagerConfigurationQuery } = alertmanagerApi;
 const {
   useLazyListNamespacedTimeIntervalQuery,
   useCreateNamespacedTimeIntervalMutation,
-  useLazyReadNamespacedTimeIntervalQuery,
   useReplaceNamespacedTimeIntervalMutation,
   useDeleteNamespacedTimeIntervalMutation,
 } = timeIntervalsApi;
@@ -35,7 +34,7 @@ const {
  * */
 export type MuteTiming = MuteTimeInterval & {
   id: string;
-  metadata?: ReadNamespacedTimeIntervalApiResponse['metadata'];
+  metadata?: IoK8SApimachineryPkgApisMetaV1ObjectMeta;
 };
 
 /** Alias for generated kuberenetes Alerting API Server type */
@@ -156,14 +155,18 @@ export const useCreateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
 export const useGetMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertmanagerArgs & { name: string }) => {
   const useK8sApi = shouldUseK8sApi(alertmanager);
 
-  const [getGrafanaTimeInterval, k8sResponse] = useLazyReadNamespacedTimeIntervalQuery({
+  const [getGrafanaTimeInterval, k8sResponse] = useLazyListNamespacedTimeIntervalQuery({
     selectFromResult: ({ data, ...rest }) => {
       if (!data) {
         return { data, ...rest };
       }
 
+      if (data.items.length === 0) {
+        return { ...rest, data: undefined, isError: true };
+      }
+
       return {
-        data: parseK8sTimeInterval(data),
+        data: parseK8sTimeInterval(data.items[0]),
         ...rest,
       };
     },
@@ -192,7 +195,7 @@ export const useGetMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertma
   useEffect(() => {
     if (useK8sApi) {
       const namespace = getK8sNamespace();
-      getGrafanaTimeInterval({ namespace, name: nameToFind }, true);
+      getGrafanaTimeInterval({ namespace, fieldSelector: `spec.name=${nameToFind}` }, true);
     } else {
       getAlertmanagerTimeInterval(alertmanager, true);
     }

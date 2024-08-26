@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardsV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -46,43 +45,32 @@ type dashboardRow struct {
 }
 
 type dashboardSqlAccess struct {
-	sql          legacysql.NamespacedDBProvider
-	dialect      sqltemplate.Dialect
+	sql          legacysql.LegacyDatabaseProvider
 	namespacer   request.NamespaceMapper
-	dashStore    dashboards.Store
 	provisioning provisioning.ProvisioningService
-	currentRV    legacysql.ResourceVersionLookup
+
+	// Use for writing (not reading)
+	dashStore dashboards.Store
 
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
 	mutex       sync.Mutex
 }
 
-func NewDashboardAccess(sql db.DB,
+func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	namespacer request.NamespaceMapper,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
 ) DashboardAccess {
-	dialect := sqltemplate.DialectForDriver(string(sql.GetDBType()))
-	if dialect == nil {
-		// panic?
-		// fmt.Errorf("no dialect for driver %q", driverName)
-		fmt.Printf("ERROR: NO DIALECT")
-	}
-
-	nssql := func(ctx context.Context) (db.DB, error) { return sql, nil }
-
 	return &dashboardSqlAccess{
-		sql:          nssql,
-		dialect:      dialect,
+		sql:          sql,
 		namespacer:   namespacer,
 		dashStore:    dashStore,
 		provisioning: provisioning,
-		currentRV:    legacysql.GetResourceVersionLookup(nssql, "dashboard", "updated"),
 	}
 }
 
-func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery) (*rowsWrapper, error) {
+func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, query *DashboardQuery) (*rowsWrapper, error) {
 	if len(query.Labels) > 0 {
 		return nil, fmt.Errorf("labels not yet supported")
 		// if query.Requirements.Folder != nil {
@@ -91,10 +79,7 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 		// }
 	}
 
-	req := sqlQuery{
-		SQLTemplate: sqltemplate.New(a.dialect),
-		Query:       query,
-	}
+	req := newQueryReq(sql, query)
 
 	tmpl := sqlQueryDashboards
 	if query.UseHistoryTable() && query.GetTrash {
@@ -109,11 +94,7 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 	// q = sqltemplate.RemoveEmptyLines(rawQuery)
 	// fmt.Printf(">>%s [%+v]", q, req.GetArgs())
 
-	db, err := a.sql(ctx)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := db.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	if err != nil {
 		if rows != nil {
 			_ = rows.Close()

@@ -102,7 +102,12 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 }
 
 func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid string, v int64) (*dashboard.Dashboard, int64, error) {
-	rows, err := a.getRows(ctx, &DashboardQuery{
+	sql, err := a.sql(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	rows, err := a.getRows(ctx, sql, &DashboardQuery{
 		OrgID:   orgId,
 		UID:     uid,
 		Limit:   2, // will only be one!
@@ -183,11 +188,16 @@ func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.Lis
 		Labels: req.Options.Labels,
 	}
 
-	listRV, err := a.currentRV(ctx)
+	sql, err := a.sql(ctx)
 	if err != nil {
 		return 0, err
 	}
-	rows, err := a.getRows(ctx, query)
+
+	listRV, err := sql.GetResourceVersion(ctx, "dashboard", "updated")
+	if err != nil {
+		return 0, err
+	}
+	rows, err := a.getRows(ctx, sql, query)
 	if rows != nil {
 		defer func() {
 			_ = rows.Close()
@@ -268,7 +278,12 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 		query.GetHistory = true
 	}
 
-	rows, err := a.getRows(ctx, query)
+	sql, err := a.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := a.getRows(ctx, sql, query)
 	if err != nil {
 		return nil, err
 	}

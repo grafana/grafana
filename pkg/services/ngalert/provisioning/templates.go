@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"unsafe"
@@ -9,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 )
 
@@ -89,7 +91,7 @@ func (t *TemplateService) GetTemplate(ctx context.Context, orgID int64, name str
 	return definitions.NotificationTemplate{}, ErrTemplateNotFound.Errorf("")
 }
 
-func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error) {
+func (t *TemplateService) UpsertTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error) {
 	err := tmpl.Validate()
 	if err != nil {
 		return definitions.NotificationTemplate{}, MakeErrTemplateInvalid(err)
@@ -100,30 +102,97 @@ func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl def
 		return definitions.NotificationTemplate{}, err
 	}
 
+	d, err := t.updateTemplate(ctx, revision, orgID, tmpl)
+	if err != nil {
+		if !errors.Is(err, ErrTemplateNotFound) {
+			return d, err
+		}
+		if tmpl.ResourceVersion != "" { // if version is set then it's an update operation. Fail because resource does not exist anymore
+			return definitions.NotificationTemplate{}, ErrTemplateNotFound.Errorf("")
+		}
+		return t.createTemplate(ctx, revision, orgID, tmpl)
+	}
+	return d, err
+}
+
+func (t *TemplateService) CreateTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error) {
+	err := tmpl.Validate()
+	if err != nil {
+		return definitions.NotificationTemplate{}, MakeErrTemplateInvalid(err)
+	}
+	revision, err := t.configStore.Get(ctx, orgID)
+	if err != nil {
+		return definitions.NotificationTemplate{}, err
+	}
+	return t.createTemplate(ctx, revision, orgID, tmpl)
+}
+
+func (t *TemplateService) createTemplate(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error) {
 	if revision.Config.TemplateFiles == nil {
 		revision.Config.TemplateFiles = map[string]string{}
 	}
 
-	_, ok := revision.Config.TemplateFiles[tmpl.Name]
-	if ok {
-		// check that provenance is not changed in an invalid way
-		storedProvenance, err := t.provenanceStore.GetProvenance(ctx, &tmpl, orgID)
-		if err != nil {
-			return definitions.NotificationTemplate{}, err
-		}
-		if err := t.validator(storedProvenance, models.Provenance(tmpl.Provenance)); err != nil {
-			return definitions.NotificationTemplate{}, err
-		}
+	_, found := revision.Config.TemplateFiles[tmpl.Name]
+	if found {
+		return definitions.NotificationTemplate{}, ErrTemplateExists.Errorf("")
 	}
 
-	existing, ok := revision.Config.TemplateFiles[tmpl.Name]
-	if ok {
-		err = t.checkOptimisticConcurrency(tmpl.Name, existing, models.Provenance(tmpl.Provenance), tmpl.ResourceVersion, "update")
-		if err != nil {
-			return definitions.NotificationTemplate{}, err
+	revision.Config.TemplateFiles[tmpl.Name] = tmpl.Template
+
+	err := t.xact.InTransaction(ctx, func(ctx context.Context) error {
+		if err := t.configStore.Save(ctx, revision, orgID); err != nil {
+			return err
 		}
-	} else if tmpl.ResourceVersion != "" { // if version is set then it's an update operation. Fail because resource does not exist anymore
+		return t.provenanceStore.SetProvenance(ctx, &tmpl, orgID, models.Provenance(tmpl.Provenance))
+	})
+	if err != nil {
+		return definitions.NotificationTemplate{}, err
+	}
+
+	return definitions.NotificationTemplate{
+		Name:            tmpl.Name,
+		Template:        tmpl.Template,
+		Provenance:      tmpl.Provenance,
+		ResourceVersion: calculateTemplateFingerprint(tmpl.Template),
+	}, nil
+}
+
+func (t *TemplateService) UpdateTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error) {
+	err := tmpl.Validate()
+	if err != nil {
+		return definitions.NotificationTemplate{}, MakeErrTemplateInvalid(err)
+	}
+
+	revision, err := t.configStore.Get(ctx, orgID)
+	if err != nil {
+		return definitions.NotificationTemplate{}, err
+	}
+	return t.updateTemplate(ctx, revision, orgID, tmpl)
+}
+
+func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error) {
+	if revision.Config.TemplateFiles == nil {
+		revision.Config.TemplateFiles = map[string]string{}
+	}
+
+	existingName := tmpl.Name
+	exisitingContent, found := revision.Config.TemplateFiles[existingName]
+	if !found {
 		return definitions.NotificationTemplate{}, ErrTemplateNotFound.Errorf("")
+	}
+
+	// check that provenance is not changed in an invalid way
+	storedProvenance, err := t.provenanceStore.GetProvenance(ctx, &tmpl, orgID)
+	if err != nil {
+		return definitions.NotificationTemplate{}, err
+	}
+	if err := t.validator(storedProvenance, models.Provenance(tmpl.Provenance)); err != nil {
+		return definitions.NotificationTemplate{}, err
+	}
+
+	err = t.checkOptimisticConcurrency(tmpl.Name, exisitingContent, models.Provenance(tmpl.Provenance), tmpl.ResourceVersion, "update")
+	if err != nil {
+		return definitions.NotificationTemplate{}, err
 	}
 
 	revision.Config.TemplateFiles[tmpl.Name] = tmpl.Template

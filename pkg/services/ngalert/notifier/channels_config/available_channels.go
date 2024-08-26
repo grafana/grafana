@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	alertingMqtt "github.com/grafana/alerting/receivers/mqtt"
 	alertingOpsgenie "github.com/grafana/alerting/receivers/opsgenie"
 	alertingPagerduty "github.com/grafana/alerting/receivers/pagerduty"
 	alertingTemplates "github.com/grafana/alerting/templates"
@@ -1246,6 +1247,93 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 			},
 		},
 		{
+			Type:        "mqtt",
+			Name:        "MQTT",
+			Description: "Sends notifications to an MQTT broker",
+			Heading:     "MQTT settings",
+			Info:        "The MQTT notifier sends messages to an MQTT broker. The message is sent to the topic specified in the configuration. ",
+			Options: []NotifierOption{
+				{
+					Label:        "Broker URL",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "tcp://localhost:1883",
+					Description:  "The URL of the MQTT broker.",
+					PropertyName: "brokerUrl",
+					Required:     true,
+				},
+				{
+					Label:        "Topic",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "grafana/alerts",
+					Description:  "The topic to which the message will be sent.",
+					PropertyName: "topic",
+					Required:     true,
+				},
+				{
+					Label:   "Message format",
+					Element: ElementTypeSelect,
+					SelectOptions: []SelectOption{
+						{
+							Value: alertingMqtt.MessageFormatJSON,
+							Label: "json",
+						},
+						{
+							Value: alertingMqtt.MessageFormatText,
+							Label: "text",
+						},
+					},
+					InputType:    InputTypeText,
+					Placeholder:  "json",
+					Description:  "The format of the message to be sent. If set to 'json', the message will be sent as a JSON object. If set to 'text', the message will be sent as a plain text string. By default json is used.",
+					PropertyName: "messageFormat",
+					Required:     false,
+				},
+				{
+					Label:        "Client ID",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "",
+					Description:  "The client ID to use when connecting to the MQTT broker. If blank, a random client ID is used.",
+					PropertyName: "clientId",
+					Required:     false,
+				},
+				{
+					Label:        "Message",
+					Element:      ElementTypeTextArea,
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
+					PropertyName: "message",
+				},
+				{
+					Label:        "Username",
+					Description:  "The username to use when connecting to the MQTT broker.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "",
+					PropertyName: "username",
+					Required:     false,
+				},
+				{
+					Label:        "Password",
+					Description:  "The password to use when connecting to the MQTT broker.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "",
+					PropertyName: "password",
+					Required:     false,
+					Secure:       true,
+				},
+				{
+					Label:        "Disable certificate verification",
+					Element:      ElementTypeCheckbox,
+					Description:  "Do not verify the broker's certificate chain and host name.",
+					PropertyName: "insecureSkipVerify",
+					Required:     false,
+				},
+			},
+		},
+		{
 			Type:        "opsgenie",
 			Name:        "OpsGenie",
 			Description: "Sends notifications to OpsGenie",
@@ -1513,7 +1601,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 func GetSecretKeysForContactPointType(contactPointType string) ([]string, error) {
 	notifiers := GetAvailableNotifiers()
 	for _, n := range notifiers {
-		if n.Type == contactPointType {
+		if strings.EqualFold(n.Type, contactPointType) {
 			var secureFields []string
 			for _, field := range n.Options {
 				if field.Secure {
@@ -1524,4 +1612,15 @@ func GetSecretKeysForContactPointType(contactPointType string) ([]string, error)
 		}
 	}
 	return nil, fmt.Errorf("no secrets configured for type '%s'", contactPointType)
+}
+
+// ConfigForIntegrationType returns the config for the given integration type. Returns error is integration type is not known.
+func ConfigForIntegrationType(contactPointType string) (*NotifierPlugin, error) {
+	notifiers := GetAvailableNotifiers()
+	for _, n := range notifiers {
+		if strings.EqualFold(n.Type, contactPointType) {
+			return n, nil
+		}
+	}
+	return nil, fmt.Errorf("unknown integration type '%s'", contactPointType)
 }

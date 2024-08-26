@@ -8,11 +8,14 @@ import (
 	"strings"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/accesscontrol/migrator")
 
 // A TupleCollector is responsible to build and store [openfgav1.TupleKey] into provided tuple map.
 // They key used should be a unique group key for the collector so we can skip over an already synced group.
@@ -54,6 +57,9 @@ func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...Tu
 // Sync runs all collectors and tries to write all collected tuples.
 // It will skip over any "sync group" that has already been written.
 func (z *ZanzanaSynchroniser) Sync(ctx context.Context) error {
+	ctx, span := tracer.Start(ctx, "accesscontrol.migrator.Sync")
+	defer span.End()
+
 	tuplesMap := make(map[string][]*openfgav1.TupleKey)
 
 	for _, c := range z.collectors {
@@ -145,6 +151,9 @@ func managedPermissionsCollector(store db.DB) TupleCollector {
 
 func teamMembershipCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+		ctx, span := tracer.Start(ctx, "accesscontrol.migrator.teamMembershipCollector")
+		defer span.End()
+
 		const collectorID = "team_membership"
 		const query = `
 			SELECT t.uid as team_uid, u.uid as user_uid, tm.permission
@@ -191,6 +200,9 @@ func teamMembershipCollector(store db.DB) TupleCollector {
 // folderTreeCollector collects folder tree structure and writes it as relation tuples
 func folderTreeCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+		ctx, span := tracer.Start(ctx, "accesscontrol.migrator.folderTreeCollector")
+		defer span.End()
+
 		const collectorID = "folder"
 		const query = `
 			SELECT uid, parent_uid, org_id FROM folder
@@ -236,6 +248,9 @@ func folderTreeCollector(store db.DB) TupleCollector {
 // dashboardFolderCollector collects information about dashboards parent folders
 func dashboardFolderCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+		ctx, span := tracer.Start(ctx, "accesscontrol.migrator.dashboardFolderCollector")
+		defer span.End()
+
 		const collectorID = "folder"
 		const query = `
 			SELECT org_id, uid, folder_uid, is_folder FROM dashboard WHERE is_folder = 0 AND folder_uid IS NOT NULL
