@@ -75,20 +75,6 @@ type ListTeamBindingsResult struct {
 	RV         int64
 }
 
-type ListTeamMembersQuery struct {
-	TeamUID    string
-	UserUID    string
-	OrgID      int64
-	ContinueID int64 // ContinueID
-	Limit      int64
-}
-
-type ListTeamMembersResult struct {
-	Members    []TeamMember
-	ContinueID int64
-	RV         int64
-}
-
 // In every case, RBAC should be applied before calling, or before returning results to the requester
 type LegacyIdentityStore interface {
 	ListUsers(ctx context.Context, ns claims.NamespaceInfo, query ListUserQuery) (*ListUserResult, error)
@@ -96,7 +82,6 @@ type LegacyIdentityStore interface {
 
 	ListTeams(ctx context.Context, ns claims.NamespaceInfo, query ListTeamQuery) (*ListTeamResult, error)
 	ListTeamBindings(ctx context.Context, ns claims.NamespaceInfo, query ListTeamBindingsQuery) (*ListTeamBindingsResult, error)
-	ListTeamMembers(ctx context.Context, ns claims.NamespaceInfo, query ListTeamMembersQuery) (*ListTeamMembersResult, error)
 
 	GetUserTeams(ctx context.Context, ns claims.NamespaceInfo, uid string) ([]team.Team, error)
 }

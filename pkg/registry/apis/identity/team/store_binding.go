@@ -2,6 +2,8 @@ package team
 
 import (
 	"context"
+	"strconv"
+	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -120,14 +122,24 @@ func (l *LegacyBindingStore) List(ctx context.Context, options *internalversion.
 }
 
 func mapToBindingObject(ns claims.NamespaceInfo, b legacy.TeamBinding) identityv0.TeamBinding {
+	rv := time.Time{}
+	ct := time.Now()
+
+	for _, m := range b.Members {
+		if m.Updated.After(rv) {
+			rv = m.Updated
+		}
+		if m.Created.Before(ct) {
+			ct = m.Created
+		}
+	}
+
 	return identityv0.TeamBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      b.TeamUID,
-			Namespace: ns.Value,
-			// FIXME: what should this be? last updated value?
-			ResourceVersion: "",
-			// FIXME: Creation of first value?
-			CreationTimestamp: metav1.Time{},
+			Name:              b.TeamUID,
+			Namespace:         ns.Value,
+			ResourceVersion:   strconv.FormatInt(rv.UnixMilli(), 10),
+			CreationTimestamp: metav1.NewTime(ct),
 		},
 		Spec: identityv0.TeamBindingSpec{
 			TeamRef: identityv0.TeamRef{
@@ -147,4 +159,14 @@ func mapToSubjects(members []legacy.TeamMember) []identityv0.TeamSubject {
 		})
 	}
 	return out
+}
+
+// For some reason team memberships are using dashboardaccess.PermissionType internally.
+// But that enum only have View, Edit and Admin. So admin is 4 and then members are set to 0.
+func mapPermisson(p int64) identityv0.TeamPermission {
+	if p == 0 {
+		return identityv0.TeamPermissionMember
+	} else {
+		return identityv0.TeamPermissionAdmin
+	}
 }
