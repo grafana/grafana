@@ -23,7 +23,6 @@ disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,true
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false
 topnav,deprecated,@grafana/grafana-frontend-platform,false,false,false
 grpcServer,preview,@grafana/search-and-storage,false,false,false
-unifiedStorage,experimental,@grafana/search-and-storage,false,true,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false
 mysqlAnsiQuotes,experimental,@grafana/search-and-storage,false,false,false
@@ -41,7 +40,6 @@ influxdbBackendMigration,GA,@grafana/observability-metrics,false,false,true
 influxqlStreamingParser,experimental,@grafana/observability-metrics,false,false,false
 influxdbRunQueriesInParallel,privatePreview,@grafana/observability-metrics,false,false,false
 prometheusRunQueriesInParallel,privatePreview,@grafana/observability-metrics,false,false,false
-prometheusDataplane,GA,@grafana/observability-metrics,false,false,false
 lokiMetricDataplane,GA,@grafana/observability-logs,false,false,false
 lokiLogsDataplane,experimental,@grafana/observability-logs,false,false,false
 dataplaneFrontendFallback,GA,@grafana/observability-metrics,false,false,true
@@ -87,7 +85,6 @@ wargamesTesting,experimental,@grafana/hosted-grafana-team,false,false,false
 alertingInsights,GA,@grafana/alerting-squad,false,false,true
 externalCorePlugins,experimental,@grafana/plugins-platform-backend,false,false,false
 pluginsAPIMetrics,experimental,@grafana/plugins-platform-backend,false,false,true
-idForwarding,experimental,@grafana/identity-access-team,false,false,false
 externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
 panelMonitoring,GA,@grafana/dataviz-squad,false,false,true
 enableNativeHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
@@ -170,7 +167,7 @@ pluginProxyPreserveTrailingSlash,GA,@grafana/plugins-platform-backend,false,fals
 azureMonitorPrometheusExemplars,preview,@grafana/partner-datasources,false,false,false
 pinNavItems,experimental,@grafana/grafana-frontend-platform,false,false,false
 authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
-openSearchBackendFlowEnabled,preview,@grafana/aws-datasources,false,false,false
+openSearchBackendFlowEnabled,GA,@grafana/aws-datasources,false,false,false
 ssoSettingsLDAP,experimental,@grafana/identity-access-team,false,false,false
 failWrongDSUID,experimental,@grafana/plugins-platform-backend,false,false,false
 databaseReadReplica,experimental,@grafana/grafana-backend-services-squad,false,false,false
@@ -185,3 +182,4 @@ prometheusAzureOverrideAudience,deprecated,@grafana/partner-datasources,false,fa
 backgroundPluginInstaller,experimental,@grafana/plugins-platform-backend,false,true,false
 dataplaneAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
 adhocFilterOneOf,experimental,@grafana/dashboards-squad,false,false,false
+lokiSendDashboardPanelNames,experimental,@grafana/observability-logs,false,false,false
