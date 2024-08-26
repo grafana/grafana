@@ -62,6 +62,7 @@ func ValidateActionUrl(cfg *setting.Cfg, logger log.Logger) func(http.Handler) h
 					return
 				} else {
 					next.ServeHTTP(w, r)
+					return
 				}
 			}
 			// allowed and no matches fall through
