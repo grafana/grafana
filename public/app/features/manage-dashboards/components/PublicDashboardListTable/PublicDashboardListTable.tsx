@@ -145,23 +145,43 @@ export const PublicDashboardListTable = () => {
         {!isLoading && !isError && !!paginatedPublicDashboards && (
           <div>
             {paginatedPublicDashboards.publicDashboards.length === 0 ? (
-              <EmptyState
-                variant="call-to-action"
-                message={t(
-                  'public-dashboard-list.empty-state.message',
-                  "You haven't created any public dashboards yet"
-                )}
-              >
-                <Trans i18nKey="public-dashboard-list.empty-state.more-info">
-                  Create a public dashboard from any existing dashboard through the <b>Share</b> modal.{' '}
-                  <TextLink
-                    external
-                    href="https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/#make-a-dashboard-public"
-                  >
-                    Learn more
-                  </TextLink>
-                </Trans>
-              </EmptyState>
+              config.featureToggles.newDashboardSharingComponent ? (
+                <EmptyState
+                  variant="call-to-action"
+                  message={t(
+                    'shared-dashboard-list.empty-state.message',
+                    "You haven't created any shared dashboards yet"
+                  )}
+                >
+                  <Trans i18nKey="shared-dashboard-list.empty-state.more-info">
+                    Create a shared dashboard from any existing dashboard through the <b>Share</b> modal.{' '}
+                    <TextLink
+                      external
+                      href="https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/shared-dashboards"
+                    >
+                      Learn more
+                    </TextLink>
+                  </Trans>
+                </EmptyState>
+              ) : (
+                <EmptyState
+                  variant="call-to-action"
+                  message={t(
+                    'public-dashboard-list.empty-state.message',
+                    "You haven't created any public dashboards yet"
+                  )}
+                >
+                  <Trans i18nKey="public-dashboard-list.empty-state.more-info">
+                    Create a public dashboard from any existing dashboard through the <b>Share</b> modal.{' '}
+                    <TextLink
+                      external
+                      href="https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/#make-a-dashboard-public"
+                    >
+                      Learn more
+                    </TextLink>
+                  </Trans>
+                </EmptyState>
+              )
             ) : (
               <>
                 <ul className={styles.list}>

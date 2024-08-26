@@ -2350,6 +2350,10 @@
       "revoke-button-tooltip": "Revoke access",
       "view-button-tooltip": "View shared dashboard"
     },
+    "empty-state": {
+      "message": "You haven't created any shared dashboards yet",
+      "more-info": "Create a shared dashboard from any existing dashboard through the <1>Share</1> modal. <4>Learn more</4>"
+    },
     "toggle": {
       "pause-sharing-toggle-text": "Pause access"
     }
