@@ -24,11 +24,11 @@ export default function NativeScrollbar({ children, onSetScrollRef, divId }: Pro
 
   useEffect(() => {
     if (config.featureToggles.bodyScrolling && onSetScrollRef) {
-      onSetScrollRef(new WindowScrollElement());
+      onSetScrollRef(new DivScrollElement(document.documentElement));
     }
 
     if (!config.featureToggles.bodyScrolling && ref.current && onSetScrollRef) {
-      onSetScrollRef(ref.current);
+      onSetScrollRef(new DivScrollElement(ref.current));
     }
   }, [ref, onSetScrollRef]);
 
@@ -42,13 +42,23 @@ export default function NativeScrollbar({ children, onSetScrollRef, divId }: Pro
   );
 }
 
-class WindowScrollElement {
+class DivScrollElement {
+  public constructor(private element: HTMLElement) {}
   public get scrollTop() {
-    return window.scrollY;
+    return this.element.scrollTop;
   }
 
-  public scrollTo(x: number, y: number) {
-    window.scrollTo(x, y);
+  public scrollTo(x: number, y: number, retry = 0) {
+    // If the element does not have the height we wait a few frames and look again
+    // Gives the view time to render and get the correct height before we restore scroll position
+    const canScroll = this.element.scrollHeight - this.element.clientHeight - y >= 0;
+
+    if (!canScroll && retry < 10) {
+      requestAnimationFrame(() => this.scrollTo(x, y, retry + 1));
+      return;
+    }
+
+    this.element.scrollTo(x, y);
   }
 }
 
