@@ -81,7 +81,7 @@ To demonstrate the observation of data using the Grafana stack, download the fil
 wget https://raw.githubusercontent.com/grafana/loki/v2.8.0/production/docker-compose.yaml -O docker-compose.yaml
 ```
 
-1. Run the Grafana stack.
+2. Run the Grafana stack.
 
 ``` bash
 docker compose up -d
@@ -212,20 +212,20 @@ In this section, we define queries, expressions (used to manipulate the data), a
   2023-04-22T02:49:32.562825+00:00 level=info method=GET url=test.com status=200 duration=171ms
   ```
 
-<!-- INTERACTIVE ignore START -->
-{{% admonition type="note" %}}
+  <!-- INTERACTIVE ignore START -->
+  {{% admonition type="note" %}}
 
-If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
+  If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
 
-{{% / admonition %}}
+  {{% / admonition %}}
 
-<!-- INTERACTIVE ignore END -->
+  <!-- INTERACTIVE ignore END -->
 
-{{< docs/ignore >}}
+  {{< docs/ignore >}}
 
-> If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
+  If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
 
-{{< /docs/ignore >}}
+  {{< /docs/ignore >}}
 
 1. Remove the ‘B’ **Reduce expression** (click the bin icon). The Reduce expression comes by default, and in this case, it is not needed since the queried data is already reduced. Note that the Threshold expression is now your **Alert condition**.
 
