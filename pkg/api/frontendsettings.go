@@ -110,7 +110,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 	apps := make(map[string]*plugins.AppDTO, 0)
 	for _, ap := range availablePlugins[plugins.TypeApp] {
-		apps[ap.Plugin.ID] = newAppDTO(
+		apps[ap.Plugin.ID] = hs.newAppDTO(
+			c.Req.Context(),
 			ap.Plugin,
 			ap.Settings,
 		)
@@ -140,18 +141,19 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		}
 
 		panels[panel.ID] = plugins.PanelDTO{
-			ID:            panel.ID,
-			Name:          panel.Name,
-			AliasIDs:      panel.AliasIDs,
-			Info:          panel.Info,
-			Module:        panel.Module,
-			BaseURL:       panel.BaseURL,
-			SkipDataQuery: panel.SkipDataQuery,
-			HideFromList:  panel.HideFromList,
-			ReleaseState:  string(panel.State),
-			Signature:     string(panel.Signature),
-			Sort:          getPanelSort(panel.ID),
-			Angular:       panel.Angular,
+			ID:              panel.ID,
+			Name:            panel.Name,
+			AliasIDs:        panel.AliasIDs,
+			Info:            panel.Info,
+			Module:          panel.Module,
+			BaseURL:         panel.BaseURL,
+			SkipDataQuery:   panel.SkipDataQuery,
+			HideFromList:    panel.HideFromList,
+			ReleaseState:    string(panel.State),
+			Signature:       string(panel.Signature),
+			Sort:            getPanelSort(panel.ID),
+			Angular:         panel.Angular,
+			LoadingStrategy: hs.pluginAssets.LoadingStrategy(c.Req.Context(), panel),
 		}
 	}
 
@@ -448,6 +450,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 		dsDTO.Type = plugin.ID
 		dsDTO.Preload = plugin.Preload
 		dsDTO.Module = plugin.Module
+		dsDTO.LoadingStrategy = hs.pluginAssets.LoadingStrategy(c.Req.Context(), plugin)
 		dsDTO.PluginMeta = &plugins.PluginMetaDTO{
 			JSONData:  plugin.JSONData,
 			Signature: plugin.Signature,
@@ -550,13 +553,14 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 	return dataSources, nil
 }
 
-func newAppDTO(plugin pluginstore.Plugin, settings pluginsettings.InfoDTO) *plugins.AppDTO {
+func (hs *HTTPServer) newAppDTO(ctx context.Context, plugin pluginstore.Plugin, settings pluginsettings.InfoDTO) *plugins.AppDTO {
 	app := &plugins.AppDTO{
-		ID:      plugin.ID,
-		Version: plugin.Info.Version,
-		Path:    plugin.Module,
-		Preload: false,
-		Angular: plugin.Angular,
+		ID:              plugin.ID,
+		Version:         plugin.Info.Version,
+		Path:            plugin.Module,
+		Preload:         false,
+		Angular:         plugin.Angular,
+		LoadingStrategy: hs.pluginAssets.LoadingStrategy(ctx, plugin),
 	}
 
 	if settings.Enabled {
