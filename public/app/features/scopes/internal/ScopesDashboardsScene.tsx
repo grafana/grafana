@@ -3,10 +3,11 @@ import { isEqual } from 'lodash';
 
 import { GrafanaTheme2, ScopeDashboardBinding } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
-import { Button, CustomScrollbar, FilterInput, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Button, CustomScrollbar, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { ScopesDashboardsTree } from './ScopesDashboardsTree';
+import { ScopesDashboardsTreeSearch } from './ScopesDashboardsTreeSearch';
 import { ScopesSelectorScene } from './ScopesSelectorScene';
 import { fetchDashboards } from './api';
 import { DASHBOARDS_OPENED_KEY } from './const';
@@ -200,15 +201,11 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
 
   return (
     <div className={styles.container} data-testid="scopes-dashboards-container">
-      <div className={styles.searchInputContainer}>
-        <FilterInput
-          disabled={isLoading}
-          placeholder={t('scopes.dashboards.search', 'Search')}
-          value={searchQuery}
-          data-testid="scopes-dashboards-search"
-          onChange={(value) => model.changeSearchQuery(value)}
-        />
-      </div>
+      <ScopesDashboardsTreeSearch
+        disabled={isLoading}
+        query={searchQuery}
+        onChange={(value) => model.changeSearchQuery(value)}
+      />
 
       {isLoading ? (
         <LoadingPlaceholder
@@ -262,9 +259,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'center',
       margin: 0,
       textAlign: 'center',
-    }),
-    searchInputContainer: css({
-      flex: '0 1 auto',
     }),
     loadingIndicator: css({
       alignSelf: 'center',
