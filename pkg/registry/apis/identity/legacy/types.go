@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/registry/apis/identity/common"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -47,7 +48,11 @@ type TeamMember struct {
 	ID         int64
 	TeamID     int64
 	TeamUID    string
+	UserID     int64
 	UserUID    string
+	Name       string
+	Email      string
+	Username   string
 	Updated    time.Time
 	Created    time.Time
 	Permission team.PermissionType
@@ -76,6 +81,17 @@ type ListTeamBindingsResult struct {
 	RV         int64
 }
 
+type ListTeamMembersQuery struct {
+	UID        string
+	OrgID      int64
+	Pagination common.Pagination
+}
+
+type ListTeamMembersResult struct {
+	Continue int64
+	Members  []TeamMember
+}
+
 // In every case, RBAC should be applied before calling, or before returning results to the requester
 type LegacyIdentityStore interface {
 	ListUsers(ctx context.Context, ns claims.NamespaceInfo, query ListUserQuery) (*ListUserResult, error)
@@ -83,6 +99,7 @@ type LegacyIdentityStore interface {
 
 	ListTeams(ctx context.Context, ns claims.NamespaceInfo, query ListTeamQuery) (*ListTeamResult, error)
 	ListTeamBindings(ctx context.Context, ns claims.NamespaceInfo, query ListTeamBindingsQuery) (*ListTeamBindingsResult, error)
+	ListTeamMembers(ctx context.Context, ns claims.NamespaceInfo, query ListTeamMembersQuery) (*ListTeamMembersResult, error)
 
 	GetUserTeams(ctx context.Context, ns claims.NamespaceInfo, uid string) ([]team.Team, error)
 }
