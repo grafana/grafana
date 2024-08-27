@@ -41,14 +41,16 @@ type Service struct {
 // Otherwise, set loadingStrategy to "fetch".
 func (s *Service) LoadingStrategy(_ context.Context, p pluginstore.Plugin) plugins.LoadingStrategy {
 	if pCfg, ok := s.cfg.PluginSettings[p.ID]; ok {
-		if cpv, ok := pCfg[CreatePluginVersionCfgKey]; ok {
-			createPluginVer, err := semver.NewVersion(cpv)
-			if err != nil {
-				s.log.Warn("Failed to parse create plugin version setting as semver", "pluginId", p.ID, "error", err)
-			} else {
-				if !createPluginVer.LessThan(scriptLoadingMinSupportedVersion) {
-					return plugins.LoadingStrategyScript
-				}
+		if s.compatibleCreatePluginVersion(pCfg) {
+			return plugins.LoadingStrategyScript
+		}
+	}
+
+	// If the plugin has a parent, check the parent's create_plugin_version setting
+	if p.Parent != nil {
+		if pCfg, ok := s.cfg.PluginSettings[p.Parent.ID]; ok {
+			if s.compatibleCreatePluginVersion(pCfg) {
+				return plugins.LoadingStrategyScript
 			}
 		}
 	}
@@ -58,6 +60,20 @@ func (s *Service) LoadingStrategy(_ context.Context, p pluginstore.Plugin) plugi
 	}
 
 	return plugins.LoadingStrategyFetch
+}
+
+func (s *Service) compatibleCreatePluginVersion(ps map[string]string) bool {
+	if cpv, ok := ps[CreatePluginVersionCfgKey]; ok {
+		createPluginVer, err := semver.NewVersion(cpv)
+		if err != nil {
+			s.log.Warn("Failed to parse create plugin version setting as semver", "version", cpv, "error", err)
+		} else {
+			if !createPluginVer.LessThan(scriptLoadingMinSupportedVersion) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (s *Service) cndEnabled(p pluginstore.Plugin) bool {

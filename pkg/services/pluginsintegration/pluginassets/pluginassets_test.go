@@ -38,6 +38,17 @@ func TestService_Calculate(t *testing.T) {
 			expected: plugins.LoadingStrategyScript,
 		},
 		{
+			name: "Expected LoadingStrategyScript when parent create-plugin version is compatible and plugin is not angular",
+			pluginSettings: newPluginSettings("parent-datasource", map[string]string{
+				CreatePluginVersionCfgKey: compatVersion,
+			}),
+			plugin: newPlugin(pluginID, false, func(p pluginstore.Plugin) pluginstore.Plugin {
+				p.Parent = &pluginstore.ParentPlugin{ID: "parent-datasource"}
+				return p
+			}),
+			expected: plugins.LoadingStrategyScript,
+		},
+		{
 			name: "Expected LoadingStrategyScript when create-plugin version is future compatible and plugin is not angular",
 			pluginSettings: newPluginSettings(pluginID, map[string]string{
 				CreatePluginVersionCfgKey: futureVersion,
