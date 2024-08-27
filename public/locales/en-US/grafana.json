@@ -1053,16 +1053,14 @@
       "label": "Misc",
       "port": {
         "description": "Default port is 389 without SSL or 636 with SSL",
-        "label": "Port",
-        "placeholder": "389"
+        "label": "Port"
       },
       "timeout": {
         "description": "Timeout in seconds for the connection to the LDAP server",
-        "label": "Timeout",
-        "placeholder": "389"
+        "label": "Timeout"
       }
     },
-    "title": "Advanced Settings"
+    "title": "Advanced settings"
   },
   "ldap-settings-page": {
     "advanced-settings-section": {
@@ -2131,6 +2129,8 @@
   },
   "scopes": {
     "dashboards": {
+      "collapse": "Collapse",
+      "expand": "Expand",
       "loading": "Loading dashboards",
       "noResultsForFilter": "No results found for your query",
       "noResultsForFilterClear": "Clear search",
@@ -2349,6 +2349,10 @@
       "revoke-button-text": "Revoke access",
       "revoke-button-tooltip": "Revoke access",
       "view-button-tooltip": "View shared dashboard"
+    },
+    "empty-state": {
+      "message": "You haven't created any shared dashboards yet",
+      "more-info": "Create a shared dashboard from any existing dashboard through the <1>Share</1> modal. <4>Learn more</4>"
     },
     "toggle": {
       "pause-sharing-toggle-text": "Pause access"
