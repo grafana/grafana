@@ -49,7 +49,9 @@ refs:
 
 # Geomap
 
-Geomaps allow you to view and customize the world map using geospatial data. It's the ideal visualization if you have data that includes location information and you want to see it displayed in a map. You can configure various overlay styles, like routes, as well as map view settings including adding numeric values, labels, and icons. This helps you to easily focus on the important location-based characteristics of the data.
+Geomaps allow you to view and customize the world map using geospatial data. It's the ideal visualization if you have data that includes location information and you want to see it displayed in a map.
+
+You can configure and overlay [map layers](#types), like heatmaps and networks, and blend included basemaps or your own custom maps. This helps you to easily focus on the important location-based characteristics of the data.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-example-8-1-0.png" max-width="1200px" alt="Geomap visualization" >}}
 
