@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -23,23 +24,32 @@ func (hs *HTTPServer) registerSwaggerUI(r routing.RouteRegister) {
 	// The swagger based api navigator
 	r.Get("/swagger", func(c *contextmodel.ReqContext) {
 		ctx := c.Context.Req.Context()
+
 		assets, err := webassets.GetWebAssets(ctx, hs.Cfg, hs.License)
 		if err != nil {
 			errhttp.Write(ctx, err, c.Resp)
 			return
 		}
 
+		nonce, err := middleware.GenerateNonce()
+		if err != nil {
+			errhttp.Write(ctx, err, c.Resp)
+			return
+		}
+
+		// Create a strict CSP only for the Swagger page
+		// 'self' is to be backwards compatible with browsers not supporting nonces
+		csp := fmt.Sprintf("script-src 'nonce-%s' 'self'; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'", nonce)
+
 		data := map[string]any{
-			"Nonce":          c.RequestNonce,
+			"Nonce":          nonce,
+			"CSPContent":     csp,
 			"Assets":         assets,
 			"FavIcon":        "public/img/fav32.png",
 			"AppleTouchIcon": "public/img/apple-touch-icon.png",
 		}
-		if hs.Cfg.CSPEnabled {
-			data["CSPEnabled"] = true
-			data["CSPContent"] = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, hs.Cfg.AppURL, c.RequestNonce)
-		}
 
+		c.Resp.Header().Set("Content-Security-Policy", csp)
 		c.HTML(http.StatusOK, "swagger", data)
 	})
 }
