@@ -156,6 +156,7 @@ type ProvisionedAlertRule struct {
 	// required: true
 	ExecErrState ExecutionErrorState `json:"execErrState"`
 	// required: true
+	// swagger:strfmt duration
 	For model.Duration `json:"for"`
 	// example: {"runbook_url": "https://supercoolrunbook.com/page/13"}
 	Annotations map[string]string `json:"annotations,omitempty"`

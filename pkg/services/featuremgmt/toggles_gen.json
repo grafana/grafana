@@ -1619,6 +1619,7 @@
         "name": "lokiMetricDataplane",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-04-13T13:07:08Z",
+        "deletionTimestamp": "2024-08-21T13:49:48Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -1784,6 +1785,18 @@
       },
       "spec": {
         "description": "Use double quotes to escape keyword in a MySQL query",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
+        "name": "mysqlParseTime",
+        "resourceVersion": "1724750152191",
+        "creationTimestamp": "2024-08-27T09:15:52Z"
+      },
+      "spec": {
+        "description": "Ensure the parseTime flag is set for MySQL driver",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage"
       }
@@ -2184,6 +2197,7 @@
         "name": "prometheusDataplane",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-03-29T15:26:32Z",
+        "deletionTimestamp": "2024-08-21T13:35:19Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }

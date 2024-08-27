@@ -79,7 +79,7 @@
     "@emotion/eslint-plugin": "11.11.0",
     "@grafana/eslint-config": "7.0.0",
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
-    "@grafana/plugin-e2e": "1.6.1",
+    "@grafana/plugin-e2e": "1.7.1",
     "@grafana/tsconfig": "^2.0.0",
     "@manypkg/get-packages": "^2.2.0",
     "@playwright/test": "1.46.1",
@@ -249,7 +249,7 @@
     "@emotion/css": "11.11.2",
     "@emotion/react": "11.11.4",
     "@fingerprintjs/fingerprintjs": "^3.4.2",
-    "@floating-ui/react": "0.26.22",
+    "@floating-ui/react": "0.26.23",
     "@formatjs/intl-durationformat": "^0.2.4",
     "@glideapps/glide-data-grid": "^6.0.0",
     "@grafana/aws-sdk": "0.4.1",
@@ -440,7 +440,7 @@
   "engines": {
     "node": ">= 20"
   },
-  "packageManager": "yarn@4.4.0",
+  "packageManager": "yarn@4.4.1",
   "dependenciesMeta": {
     "prettier@3.3.3": {
       "unplugged": true
