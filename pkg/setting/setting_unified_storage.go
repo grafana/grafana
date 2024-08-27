@@ -9,7 +9,7 @@ import (
 func (cfg *Cfg) setUnifiedStorageConfig() {
 	storageConfig := make(map[string]UnifiedStorageConfig)
 	// read storage configs from ini file. They look like:
-	// [unified_storage.<resource-name>]
+	// [unified_storage.<group>.<resource>]
 	// config = <value>
 	sections := cfg.Raw.Sections()
 	for _, section := range sections {

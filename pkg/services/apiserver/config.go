@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strconv"
 
-	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -56,7 +55,7 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	o.StorageOptions.Address = apiserverCfg.Key("address").MustString(o.StorageOptions.Address)
 
 	// unified storage configs look like
-	// [unified_storage.<resource-name>]
+	// [unified_storage.<group>.<resource>]
 	// config = <value>
 	unifiedStorageCfg := cfg.UnifiedStorage
 	o.StorageOptions.UnifiedStorageConfig = unifiedStorageCfg
@@ -68,9 +67,9 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 
 	// TODO: ensure backwards compatibility with production
 	// remove this after changing the unified_storage key format in HGAPI
-	if _, ok := o.StorageOptions.UnifiedStorageConfig[playlist.RESOURCE+"."+playlist.GROUP]; ok {
-		o.StorageOptions.UnifiedStorageConfig[playlist.RESOURCE+"."+playlist.GROUP] = o.StorageOptions.UnifiedStorageConfig[playlist.GROUPRESOURCE]
-	}
+	// if _, ok := o.StorageOptions.UnifiedStorageConfig[playlist.RESOURCE+"."+playlist.GROUP]; ok {
+	// 	o.StorageOptions.UnifiedStorageConfig[playlist.RESOURCE+"."+playlist.GROUP] = o.StorageOptions.UnifiedStorageConfig[playlist.GROUPRESOURCE]
+	// }
 
 	o.ExtraOptions.DevMode = features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerEnsureKubectlAccess)
 	o.ExtraOptions.ExternalAddress = host
