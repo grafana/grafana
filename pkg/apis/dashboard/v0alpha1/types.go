@@ -75,7 +75,7 @@ type LibraryPanel struct {
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	// The dashboard body (unstructured for now)
+	// Panel properties
 	Spec LibraryPanelSpec `json:"spec"`
 
 	// Status will show errors
