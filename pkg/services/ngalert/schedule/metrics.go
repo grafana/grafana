@@ -33,9 +33,10 @@ func sortedUIDs(alertRules []*models.AlertRule) []string {
 }
 
 type ruleKey struct {
-	orgID    int64
-	ruleType models.RuleType
-	state    string
+	orgID     int64
+	ruleGroup models.AlertRuleGroupKeyWithFolderFullpath
+	ruleType  models.RuleType
+	state     string
 }
 
 func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
@@ -52,10 +53,15 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 		if rule.IsPaused {
 			state = metrics.AlertRulePausedLabelValue
 		}
+		ruleGroup := models.AlertRuleGroupKeyWithFolderFullpath{
+			AlertRuleGroupKey: rule.GetGroupKey(),
+			FolderFullpath:    sch.schedulableAlertRules.folderTitles[rule.GetFolderKey()],
+		}
 		key := ruleKey{
-			orgID:    rule.OrgID,
-			ruleType: rule.Type(),
-			state:    state,
+			orgID:     rule.OrgID,
+			ruleGroup: ruleGroup,
+			ruleType:  rule.Type(),
+			state:     state,
 		}
 		buckets[key]++
 
@@ -81,7 +87,7 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 
 	// Set metrics
 	for key, count := range buckets {
-		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(key.orgID), key.ruleType.String(), key.state).Set(float64(count))
+		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(key.orgID), key.ruleType.String(), key.state, makeRuleGroupLabelValue(key.ruleGroup)).Set(float64(count))
 	}
 	for orgID, numRulesNfSettings := range orgsNfSettings {
 		sch.metrics.SimpleNotificationRules.WithLabelValues(fmt.Sprint(orgID)).Set(float64(numRulesNfSettings))
