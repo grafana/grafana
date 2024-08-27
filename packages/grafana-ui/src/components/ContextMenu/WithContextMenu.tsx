@@ -15,6 +15,7 @@ export interface WithContextMenuProps {
 export const WithContextMenu = ({ children, renderMenuItems, focusOnOpen = true }: WithContextMenuProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  const isBodyScrolling = window.grafanaBootData?.settings.featureToggles.bodyScrolling;
   return (
     <>
       {children({
@@ -22,8 +23,7 @@ export const WithContextMenu = ({ children, renderMenuItems, focusOnOpen = true 
           setIsMenuOpen(true);
           setMenuPosition({
             x: e.pageX,
-            // scrollY is necessary for bodyScrolling feature toggle
-            y: e.pageY - Math.round(window.scrollY),
+            y: isBodyScrolling ? e.pageY - window.scrollY : e.pageY,
           });
         },
       })}
