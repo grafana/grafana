@@ -1,5 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { render } from 'test/test-utils';
 
 import { PanelModel } from 'app/features/dashboard/state';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
@@ -15,12 +16,6 @@ jest.mock('app/types', () => {
     useSelector: jest.fn(),
   };
 });
-
-jest.mock('react-router-dom', () => ({
-  useLocation: () => ({
-    pathname: 'localhost:3000/example/path',
-  }),
-}));
 
 jest.spyOn(analytics, 'logInfo');
 

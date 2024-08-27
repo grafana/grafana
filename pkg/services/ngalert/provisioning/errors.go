@@ -24,6 +24,7 @@ var (
 
 	ErrTemplateNotFound = errutil.NotFound("alerting.notifications.templates.notFound")
 	ErrTemplateInvalid  = errutil.BadRequest("alerting.notifications.templates.invalidFormat").MustTemplate("Invalid format of the submitted template", errutil.WithPublic("Template is in invalid format. Correct the payload and try again."))
+	ErrTemplateExists   = errutil.BadRequest("alerting.notifications.templates.nameExists", errutil.WithPublicMessage("Template file with this name already exists. Use a different name or update existing one."))
 
 	ErrContactPointReferenced = errutil.Conflict("alerting.notifications.contact-points.referenced", errutil.WithPublicMessage("Contact point is currently referenced by a notification policy."))
 	ErrContactPointUsedInRule = errutil.Conflict("alerting.notifications.contact-points.used-by-rule", errutil.WithPublicMessage("Contact point is currently used in the notification settings of one or many alert rules."))
