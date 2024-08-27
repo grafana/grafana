@@ -32,16 +32,16 @@ type GetUserDisplayQuery struct {
 }
 
 type ListTeamQuery struct {
-	OrgID      int64
-	UID        string
-	ContinueID int64 // ContinueID
-	Limit      int64
+	OrgID int64
+	UID   string
+
+	Pagination common.Pagination
 }
 
 type ListTeamResult struct {
-	Teams      []team.Team
-	ContinueID int64
-	RV         int64
+	Teams    []team.Team
+	Continue int64
+	RV       int64
 }
 
 type TeamMember struct {

@@ -29,12 +29,8 @@ type legacySQLStore struct {
 
 // ListTeams implements LegacyIdentityStore.
 func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo, query ListTeamQuery) (*ListTeamResult, error) {
-	if query.Limit < 1 {
-		query.Limit = 50
-	}
-
-	limit := int(query.Limit)
-	query.Limit += 1 // for continue
+	// for continue
+	query.Pagination.Limit += 1
 	query.OrgID = ns.OrgID
 	if ns.OrgID == 0 {
 		return nil, fmt.Errorf("expected non zero orgID")
@@ -46,13 +42,11 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 	}
 
 	req := newListTeams(sql, &query)
-	rawQuery, err := sqltemplate.Execute(sqlQueryTeams, req)
+	q, err := sqltemplate.Execute(sqlQueryTeams, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeams.Name(), err)
 	}
-	q := rawQuery
 
-	res := &ListTeamResult{}
 	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	defer func() {
 		if rows != nil {
@@ -60,26 +54,32 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 		}
 	}()
 
-	if err == nil {
-		// id, uid, name, email, created, updated
-		var lastID int64
-		for rows.Next() {
-			t := team.Team{}
-			err = rows.Scan(&t.ID, &t.UID, &t.Name, &t.Email, &t.Created, &t.Updated)
-			if err != nil {
-				return res, err
-			}
-			lastID = t.ID
-			res.Teams = append(res.Teams, t)
-			if len(res.Teams) > limit {
-				res.ContinueID = lastID
-				break
-			}
+	res := &ListTeamResult{}
+	if err != nil {
+		return nil, err
+	}
+
+	var lastID int64
+	for rows.Next() {
+		t := team.Team{}
+		err = rows.Scan(&t.ID, &t.UID, &t.Name, &t.Email, &t.Created, &t.Updated)
+		if err != nil {
+			return res, err
 		}
-		if query.UID == "" {
-			res.RV, err = sql.GetResourceVersion(ctx, "team", "updated")
+
+		lastID = t.ID
+		res.Teams = append(res.Teams, t)
+		if len(res.Teams) > int(query.Pagination.Limit)-1 {
+			res.Teams = append(res.Teams[0 : len(res.Teams)-1])
+			res.Continue = lastID
+			break
 		}
 	}
+
+	if query.UID == "" {
+		res.RV, err = sql.GetResourceVersion(ctx, "team", "updated")
+	}
+
 	return res, err
 }
 
