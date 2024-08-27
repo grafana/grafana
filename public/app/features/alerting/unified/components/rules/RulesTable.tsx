@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Tooltip } from '@grafana/ui';
+import { useStyles2, Tooltip, LoadingPlaceholder } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
@@ -22,6 +22,11 @@ import { RuleConfigStatus } from './RuleConfigStatus';
 import { RuleDetails } from './RuleDetails';
 import { RuleHealth } from './RuleHealth';
 import { RuleState } from './RuleState';
+import { alertRuleApi } from '../../api/alertRuleApi';
+import { useAsync } from '../../hooks/useAsync';
+import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
+import { getRulesSourceName } from '../../utils/datasource';
+import { attachRulerRuleToCombinedRule, attachRulerRulesToCombinedRules } from '../../hooks/useCombinedRuleNamespaces';
 
 type RuleTableColumnProps = DynamicTableColumnProps<CombinedRule>;
 type RuleTableItemProps = DynamicTableItemProps<CombinedRule>;
@@ -46,19 +51,55 @@ export const RulesTable = ({
   showNextEvaluationColumn = false,
 }: Props) => {
   const styles = useStyles2(getStyles);
-
   const wrapperClass = cx(styles.wrapper, className, { [styles.wrapperMargin]: showGuidelines });
 
+  const { useLazyGetRuleGroupForNamespaceQuery } = alertRuleApi;
+  const { useLazyDiscoverDsFeaturesQuery } = featureDiscoveryApi;
+
+  const [fetchRulerRuleGroup, { isLoading: isLoadingRulerGroup }] = useLazyGetRuleGroupForNamespaceQuery();
+  const [fetchDsFeatures, { isLoading: isLoadingDsFeatures }] = useLazyDiscoverDsFeaturesQuery();
+
+  const [actions, { result: rulesWithRulerDefinitions, status }] = useAsync(async () => {
+    const result = Promise.all(
+      rules.map(async (rule) => {
+        const dsFeatures = await fetchDsFeatures({
+          rulesSourceName: getRulesSourceName(rule.namespace.rulesSource),
+        }).unwrap();
+
+        if (dsFeatures.rulerConfig) {
+          // RTK Query should handle caching and deduplication for us
+          const rulerRuleGroup = await fetchRulerRuleGroup(
+            {
+              namespace: rule.namespace.name,
+              group: rule.group.name,
+              rulerConfig: dsFeatures.rulerConfig,
+            },
+            true
+          ).unwrap();
+
+          attachRulerRuleToCombinedRule(rule, rulerRuleGroup);
+        }
+
+        return rule;
+      })
+    );
+    return result;
+  }, rules);
+
+  useEffect(() => {
+    actions.execute();
+  }, [rules]);
+
   const items = useMemo((): RuleTableItemProps[] => {
-    return rules.map((rule, ruleIdx) => {
+    return rulesWithRulerDefinitions.map((rule, ruleIdx) => {
       return {
         id: `${rule.namespace.name}-${rule.group.name}-${rule.name}-${ruleIdx}`,
         data: rule,
       };
     });
-  }, [rules]);
+  }, [rulesWithRulerDefinitions]);
 
-  const columns = useColumns(showSummaryColumn, showGroupColumn, showNextEvaluationColumn);
+  const columns = useColumns(showSummaryColumn, showGroupColumn, showNextEvaluationColumn, isLoadingRulerGroup);
 
   if (!rules.length) {
     return <div className={cx(wrapperClass, styles.emptyMessage)}>{emptyMessage}</div>;
@@ -105,7 +146,12 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNextEvaluationColumn: boolean) {
+function useColumns(
+  showSummaryColumn: boolean,
+  showGroupColumn: boolean,
+  showNextEvaluationColumn: boolean,
+  isRulerLoading: boolean
+) {
   const { hasRuler, rulerRulesLoaded } = useHasRuler();
 
   return useMemo((): RuleTableColumnProps[] => {
@@ -235,6 +281,11 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
       renderCell: ({ data: rule }) => {
         const isDeleting = ruleIsDeleting(rule);
         const isCreating = ruleIsCreating(rule);
+
+        if (isRulerLoading) {
+          return <LoadingPlaceholder text="Loading actions..." />;
+        }
+
         return (
           <RuleActionsButtons
             compact
