@@ -18,11 +18,11 @@ type NamespaceMapper = claims.NamespaceFormatter
 // GetNamespaceMapper returns a function that will convert orgIds into a consistent namespace
 func GetNamespaceMapper(cfg *setting.Cfg) NamespaceMapper {
 	if cfg != nil && cfg.StackID != "" {
-		stackIdInt, err := strconv.Atoi(cfg.StackID)
+		stackIdInt, err := strconv.ParseInt(cfg.StackID, 10, 64)
 		if err != nil {
 			stackIdInt = 0
 		}
-		cloudNamespace := claims.CloudNamespaceFormatter(int64(stackIdInt))
+		cloudNamespace := claims.CloudNamespaceFormatter(stackIdInt)
 		return func(_ int64) string { return cloudNamespace }
 	}
 	return claims.OrgNamespaceFormatter
