@@ -79,7 +79,7 @@ The following video provides beginner steps for creating geomap visualizations. 
 
 ## Supported data formats
 
-To create a geomap visualization you need data sets containing data fields with location information.
+To create a geomap visualization, you need datasets containing fields with location information.
 
 The supported location formats are:
 
@@ -87,13 +87,13 @@ The supported location formats are:
 - Geohash
 - Lookup codes: country, US states, or airports
 
-The visualization also supports additional fields with various data types to define things like labels, numbers, heat sizes, and colors.
+To learn more, refer to [Location mode](#location-mode).
 
-### LAT/LON
+Geomaps also support additional fields with various data types to define things like labels, numbers, heat sizes, and colors.
+
+### Example - latitude and longitude
 
 If you plan to use latitude and longitude coordinates, the dataset provided must include at least two fields (columns): one called latitude (you can also use lat), and one called longitude (also lon or lng). When you use this naming convention, the visualization automatically detects them and displays the elements. The order of the fields doesn't matter as long as there is one latitude and one longitude.
-
-#### Example
 
 | Name            | latitude  | longitude | value |
 | --------------- | --------- | --------- | ----- |
@@ -105,13 +105,11 @@ If you plan to use latitude and longitude coordinates, the dataset provided must
 
 If your latitude and longitude fields are named differently, you can select them as indicated in the [Location mode](#location-mode) section.
 
-### GEOHASH
+### Example - geohash
 
 If your location data comes in the geohash format, the visualization requires at least one field (column) containing location data in this format.
 
 If the field is named geohash, the visualization automatically detects the location and displays the elements. The order of the field doesnt matter and the data set can have multiple other numeric, text, and time fields.
-
-#### Example
 
 | Name      | geohash      | trips |
 | --------- | ------------ | ----- |
@@ -122,15 +120,13 @@ If the field is named geohash, the visualization automatically detects the locat
 
 If your field containing geohash location data is not named as above, you can configure the panel to use geohash and indicate the field to use as explained in the [Location mode](#location-mode) section.
 
-### LOOKUP CODES
+### Example - lookup codes
 
 The geomap visualization can identify locations based on country, airport, or US state codes.
 
 For this configuration the data set must contain at least one field (column) containing the location code.
 
 If the field is named lookup, the visualization automatically identifies it and displays points based on country codes.
-
-#### Example
 
 | Year | lookup | gdp       |
 | ---- | ------ | --------- |
