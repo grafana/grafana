@@ -129,8 +129,8 @@ func TestInitEngine_ParseTimeInConnectionString(t *testing.T) {
 				log:      log.New(),
 			}
 
-			err = ss.initEngine(nil)
-			require.NoError(t, err)
+			ss.initEngine(nil)
+			// don't check the error, the db isn't running. Just check the connection string is okay
 			assert.Equal(t, tt.expectedConnection, ss.dbCfg.ConnectionString)
 		})
 	}
