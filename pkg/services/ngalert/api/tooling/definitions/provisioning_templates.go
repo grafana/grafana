@@ -55,6 +55,7 @@ type RouteDeleteTemplateParam struct {
 
 // swagger:model
 type NotificationTemplate struct {
+	UID             string     `json:"-" yaml:"-"`
 	Name            string     `json:"name"`
 	Template        string     `json:"template"`
 	Provenance      Provenance `json:"provenance,omitempty"`
