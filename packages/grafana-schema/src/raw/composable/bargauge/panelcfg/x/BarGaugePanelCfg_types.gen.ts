@@ -10,7 +10,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "11.2.0";
+export const pluginVersion = "11.2.1";
 
 export interface Options extends common.SingleStatBaseOptions {
   displayMode: common.BarGaugeDisplayMode;
