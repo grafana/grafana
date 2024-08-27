@@ -213,6 +213,8 @@ export const install = createAsyncThunk<
   } catch (e) {
     console.error(e);
     if (isFetchError(e)) {
+      // add id to identify errors in multiple requests
+      e.data.id = id;
       return thunkApi.rejectWithValue(e.data);
     }
 

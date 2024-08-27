@@ -1829,6 +1829,22 @@
     }
   },
   "plugins": {
+    "catalog": {
+      "update-all": {
+        "all-plugins-updated": "All plugins updated!",
+        "available-header": "Available",
+        "button": "Update all",
+        "cloud-update-message": "* It may take a few minutes for the plugins to be available for usage.",
+        "error": "Error updating plugin:",
+        "header": "The following plugins have update available",
+        "installed-header": "Installed",
+        "modal-confirmation": "Update",
+        "modal-dismiss": "Close",
+        "modal-title": "Update Plugins",
+        "name-header": "Name",
+        "update-header": "Update"
+      }
+    },
     "details": {
       "labels": {
         "dependencies": "Dependencies",
