@@ -85,7 +85,7 @@ func dashboardGuardianResponse(err error) response.Response {
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response {
-	ctx, span := tracer.Start(c.Req.Context(), "api.isDashboardStarredByUser")
+	ctx, span := tracer.Start(c.Req.Context(), "api.GetDashboard")
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
 
