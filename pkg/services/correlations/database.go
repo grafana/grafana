@@ -320,6 +320,7 @@ func (s CorrelationsService) createOrUpdateCorrelation(ctx context.Context, cmd 
 		Description: cmd.Description,
 		Config:      cmd.Config,
 		Provisioned: false,
+		Type:        cmd.Type,
 	}
 
 	found := false
