@@ -10,9 +10,9 @@ SELECT
   tm.created,
   tm.updated,
   tm.permission
-FROM "grafana.team_member" tm
-INNER JOIN "grafana.team" t ON tm.team_id = t.id
-INNER JOIN "grafana.user" u ON tm.user_id  = u.id
+FROM "grafana"."team_member" tm
+INNER JOIN "grafana"."team" t ON tm.team_id = t.id
+INNER JOIN "grafana"."user" u ON tm.user_id  = u.id
 WHERE
   t.uid = 'team-1'
   AND tm.org_id = 1

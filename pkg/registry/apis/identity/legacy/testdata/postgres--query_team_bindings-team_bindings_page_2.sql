@@ -5,8 +5,8 @@ WHERE
     t.uid IN(
       SELECT uid
       FROM "grafana"."team" t
-        WHERE t.id >= 5
-      ORDER BY t.id ASC LIMIT 5
+        WHERE t.id >= 2
+      ORDER BY t.id ASC LIMIT 1
     )
 AND tm.org_id = 1
 ORDER BY t.id ASC;
