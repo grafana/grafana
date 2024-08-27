@@ -23,6 +23,12 @@ func TestQueries(t *testing.T) {
 		return &v
 	}
 
+	getLibraryQuery := func(q *LibraryPanelQuery) sqltemplate.SQLTemplate {
+		v := newLibraryQueryReq(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
@@ -61,6 +67,29 @@ func TestQueries(t *testing.T) {
 					Data: getQuery(&DashboardQuery{
 						OrgID:  2,
 						LastID: 22,
+					}),
+				},
+			},
+			sqlQueryPanels: {
+				{
+					Name: "list",
+					Data: getLibraryQuery(&LibraryPanelQuery{
+						OrgID: 1,
+						Limit: 5,
+					}),
+				},
+				{
+					Name: "list_page_two",
+					Data: getLibraryQuery(&LibraryPanelQuery{
+						OrgID:  1,
+						LastID: 4,
+					}),
+				},
+				{
+					Name: "get_uid",
+					Data: getLibraryQuery(&LibraryPanelQuery{
+						OrgID: 1,
+						UID:   "xyz",
 					}),
 				},
 			},
