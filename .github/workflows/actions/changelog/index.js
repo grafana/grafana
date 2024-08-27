@@ -199,7 +199,13 @@ const getChangeLogItems = async (name, owner, sinceDate, to) => {
       hasLabel({ labels }, 'area/grafana/ui') ||
       hasLabel({ labels }, 'area/grafana/toolkit') ||
       hasLabel({ labels }, 'area/grafana/runtime');
-    const author = item.commits.nodes[0].commit.author.user.login;
+    
+    let author = ""
+
+    if(item.commits.nodes[0].commit.author !== null){
+      author = item.commits.nodes[0].commit.author.user.login
+    }
+    
     return {
       repo: name,
       number,
