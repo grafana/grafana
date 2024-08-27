@@ -9,7 +9,6 @@ import { useStyles2 } from '../../../themes';
 import { getCellLinks } from '../../../utils';
 import { clearLinkButtonStyles } from '../../Button';
 import { DataLinksContextMenu } from '../../DataLinks/DataLinksContextMenu';
-
 import { CellActions } from '../CellActions';
 import { TableCellInspectorMode } from '../TableCellInspector';
 import { TableStyles } from '../TableRT/styles';
@@ -39,6 +38,7 @@ export const DefaultCell = (props: TableCellProps) => {
     setHover(true);
   };
 
+
   if (cellOptions.type === TableCellDisplayMode.Custom) {
     const CustomCellComponent: React.ComponentType<CustomCellRendererProps> = cellOptions.cellComponent;
     value = <CustomCellComponent field={field} value={cell.value} rowIndex={row.index} frame={frame} />;
@@ -49,6 +49,7 @@ export const DefaultCell = (props: TableCellProps) => {
       value = formattedValueToString(displayValue);
     }
   }
+
 
   const isStringValue = typeof value === 'string';
 

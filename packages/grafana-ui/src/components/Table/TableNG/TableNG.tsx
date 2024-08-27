@@ -6,6 +6,7 @@ import { Cell } from 'react-table';
 
 import { DataFrame, Field } from '@grafana/data';
 
+import { useTheme2 } from '../../../themes';
 import { TableNGProps } from '../types';
 
 import { TableCellNG } from './Cells/TableCellNG';
@@ -25,11 +26,12 @@ interface TableColumn extends Column<TableRow> {
 
 
 
-export class TableNG extends Component<TableNGProps> {
+export function TableNG(props: TableNGProps) {
+  const { height, width } = props;
+  const theme = useTheme2();
 
 
-
-  mapFrameToDataGrid(main: DataFrame) {
+  const mapFrameToDataGrid = (main: DataFrame) => {
     const columns: TableColumn[] = [];
     const rows: Array<{ [key: string]: string }> = [];
 
@@ -43,13 +45,12 @@ export class TableNG extends Component<TableNGProps> {
           const { row } = props;
           const value = row[key];
 
-          console.log(shallowField);
-
           // Cell level rendering here
           return <TableCellNG
             key={key}
             value={value}
             field={shallowField}
+            theme={theme}
           />
         }
       });
@@ -71,23 +72,32 @@ export class TableNG extends Component<TableNGProps> {
     }
   }
 
+  const { columns, rows } = mapFrameToDataGrid(props.data);
 
-  render() {
-    const { columns, rows } = this.mapFrameToDataGrid(this.props.data);
 
-    return (
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        defaultColumnOptions={{
-          sortable: true,
-          resizable: true,
-          maxWidth: 200,
-        }}
-        renderers={{ renderRow: myRowRenderer }}
-      />
-    );
-  }
+
+
+
+
+
+
+
+
+  return (
+    <DataGrid
+      rows={rows}
+      columns={columns}
+      defaultColumnOptions={{
+        sortable: true,
+        resizable: true,
+        maxWidth: 200,
+      }}
+      // TODO: This doesn't follow current table behavior
+      style={{ width, height }}
+      renderers={{ renderRow: myRowRenderer }}
+    />
+  );
+
 }
 
 function myRowRenderer(key: React.Key, props: RenderRowProps<Row>) {
@@ -97,4 +107,6 @@ function myRowRenderer(key: React.Key, props: RenderRowProps<Row>) {
     <Row {...props} />
   );
 }
+
+
 

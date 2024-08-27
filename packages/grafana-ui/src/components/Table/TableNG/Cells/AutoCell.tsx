@@ -1,9 +1,13 @@
+import { formattedValueToString } from "@grafana/data";
+
 import { CellNGProps } from "../types"
+
 
 export default function AutoCell({ value, field }: CellNGProps) {
     const displayValue = field.display!(value);
-    console.log(displayValue);
+    const formattedValue = formattedValueToString(displayValue);
+    // console.log(displayValue);
 
 
-    return (<>{displayValue.text}</>)
+    return (<>{formattedValue}</>)
 }

@@ -24,7 +24,6 @@ import { useTheme2 } from '../../../themes';
 import { measureText } from '../../../utils';
 import { FormattedValueDisplay } from '../../FormattedValueDisplay/FormattedValueDisplay';
 import { Sparkline } from '../../Sparkline/Sparkline';
-
 import { TableCellProps } from '../types';
 import { getAlignmentFactor, getCellOptions } from '../utils';
 
