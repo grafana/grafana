@@ -14,15 +14,15 @@ import (
 type ListUserQuery struct {
 	OrgID            int64
 	UID              string
-	ContinueID       int64 // ContinueID
-	Limit            int64
 	IsServiceAccount bool
+
+	Pagination common.Pagination
 }
 
 type ListUserResult struct {
-	Users      []user.User
-	ContinueID int64
-	RV         int64
+	Users    []user.User
+	Continue int64
+	RV       int64
 }
 
 type GetUserDisplayQuery struct {

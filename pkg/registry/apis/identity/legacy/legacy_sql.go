@@ -85,12 +85,10 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 
 // ListUsers implements LegacyIdentityStore.
 func (s *legacySQLStore) ListUsers(ctx context.Context, ns claims.NamespaceInfo, query ListUserQuery) (*ListUserResult, error) {
-	if query.Limit < 1 {
-		query.Limit = 50
-	}
+	// for continue
+	limit := int(query.Pagination.Limit)
+	query.Pagination.Limit += 1
 
-	limit := int(query.Limit)
-	query.Limit += 1 // for continue
 	query.OrgID = ns.OrgID
 	if ns.OrgID == 0 {
 		return nil, fmt.Errorf("expected non zero orgID")
@@ -102,10 +100,10 @@ func (s *legacySQLStore) ListUsers(ctx context.Context, ns claims.NamespaceInfo,
 	}
 
 	res, err := s.queryUsers(ctx, sql, sqlQueryUsers, newListUser(sql, &query), limit)
-
 	if err == nil && query.UID != "" {
 		res.RV, err = sql.GetResourceVersion(ctx, "user", "updated")
 	}
+
 	return res, err
 }
 
@@ -148,14 +146,17 @@ func (s *legacySQLStore) queryUsers(ctx context.Context, sql *legacysql.LegacyDa
 			if err != nil {
 				return res, err
 			}
+
 			lastID = u.ID
 			res.Users = append(res.Users, u)
 			if len(res.Users) > limit {
-				res.ContinueID = lastID
+				res.Users = res.Users[0 : len(res.Users)-1]
+				res.Continue = lastID
 				break
 			}
 		}
 	}
+
 	return res, err
 }
 

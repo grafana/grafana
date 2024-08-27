@@ -13,35 +13,39 @@ type Pagination struct {
 	Continue int64
 }
 
-func PaginationFromListOptions(options *internalversion.ListOptions) (Pagination, error) {
-	p := Pagination{Limit: options.Limit}
-	if options.Continue != "" {
-		c, err := strconv.ParseInt(options.Continue, 10, 64)
-		if err != nil {
-			return p, fmt.Errorf("invalid continue token: %w", err)
-		}
-		p.Continue = c
-	}
-	return p, nil
-}
-
-func PaginationFromListQuery(query url.Values) Pagination {
-	withFallback := func(original string, fallback int64) int64 {
-		if original == "" {
-			return fallback
-		}
-		v, err := strconv.ParseInt(original, 10, 64)
-		if err != nil {
-			return fallback
-		}
-		return v
-
+func PaginationFromListOptions(options *internalversion.ListOptions) Pagination {
+	limit := options.Limit
+	if limit < 1 {
+		limit = 50
 	}
 
 	return Pagination{
-		Limit:    withFallback(query.Get("limit"), 50),
-		Continue: withFallback(query.Get("continue"), 0),
+		Limit:    limit,
+		Continue: parseIntWithFallback(options.Continue, 0, 0),
 	}
+}
+
+func PaginationFromListQuery(query url.Values) Pagination {
+	return Pagination{
+		Limit:    parseIntWithFallback(query.Get("limit"), 1, 50),
+		Continue: parseIntWithFallback(query.Get("continue"), 0, 0),
+	}
+}
+
+func parseIntWithFallback(original string, min int64, fallback int64) int64 {
+	if original == "" {
+		return fallback
+	}
+	v, err := strconv.ParseInt(original, 10, 64)
+	if err != nil {
+		return fallback
+	}
+
+	if v < min {
+		return fallback
+	}
+
+	return v
 }
 
 // GetContinueID is a helper to parse options.Continue as int64.
