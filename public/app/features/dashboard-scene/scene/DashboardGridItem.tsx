@@ -3,6 +3,7 @@ import { isEqual } from 'lodash';
 import { useMemo } from 'react';
 import { Unsubscribable } from 'rxjs';
 
+import { LoadingState } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   VizPanel,
@@ -59,6 +60,9 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
   private _activationHandler() {
     if (this.state.variableName) {
       this._subs.add(this.subscribeToState((newState, prevState) => this._handleGridResize(newState, prevState)));
+      // set to undefined for reactivation, e.g.: when returning from panel edit.
+      // If we change VizPanel state then we want to re-trigger the repeat
+      this._prevRepeatValues = undefined;
       this._performRepeat();
     }
 
@@ -104,6 +108,15 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
   }
 
   private _onVariableUpdateCompleted(): void {
+    // if there are existing repeated panels on status loading,
+    // we need to reset the prevRepeatValues to undefined to trigger the repeat again
+    if (this.state.repeatedPanels) {
+      const data = sceneGraph.getData(this.state.repeatedPanels[0]);
+      if (data.state.data?.state === LoadingState.Loading) {
+        this._prevRepeatValues = undefined;
+      }
+    }
+
     if (this.state.variableName) {
       this._performRepeat();
     }
