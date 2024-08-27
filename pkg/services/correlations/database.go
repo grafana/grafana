@@ -186,7 +186,7 @@ func (s CorrelationsService) getCorrelation(ctx context.Context, cmd GetCorrelat
 		}
 
 		// Correlations created before the fix #72498 may have org_id = 0, but it's deprecated and will be removed in #72325
-		found, err := session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and (correlation.org_id = 0 or dss.org_id = correlation.org_id) and dss.org_id = ?", cmd.OrgId).Join("LEFT OUTER", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ?", cmd.OrgId).Where("correlation.uid = ? AND correlation.source_uid = ?)", correlation.UID, correlation.SourceUID).And(VALID_TYPE_FILTER).Get(&correlation)
+		found, err := session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and (correlation.org_id = 0 or dss.org_id = correlation.org_id) and dss.org_id = ?", cmd.OrgId).Join("LEFT OUTER", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ?", cmd.OrgId).Where("correlation.uid = ?", correlation.UID).And("correlation.source_uid = ?", correlation.SourceUID).And(VALID_TYPE_FILTER).Get(&correlation)
 		if !found {
 			return ErrCorrelationNotFound
 		}

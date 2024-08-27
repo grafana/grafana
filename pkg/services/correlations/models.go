@@ -164,7 +164,7 @@ type CreateCorrelationCommand struct {
 	Config CorrelationConfig `json:"config" binding:"Required"`
 	// True if correlation was created with provisioning. This makes it read-only.
 	Provisioned bool `json:"provisioned"`
-	// correlation type, currently only valid value is "query"
+	// correlation type
 	Type CorrelationType `json:"type" binding:"Required"`
 }
 
