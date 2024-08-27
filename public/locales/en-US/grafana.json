@@ -1007,7 +1007,9 @@
       "submit-loading-label": "Logging in...",
       "username-label": "Email or username",
       "username-placeholder": "email or username",
-      "username-required": "Email or username is required"
+      "username-required": "Email or username is required",
+      "verify-email-label": "Send a verification email",
+      "verify-email-loading-label": "Sending email..."
     },
     "services": {
       "sing-in-with-prefix": "Sign in with {{serviceName}}"

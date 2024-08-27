@@ -42,7 +42,9 @@ export const PasswordlessLoginForm = ({ onSubmit, isLoggingIn }: Props) => {
           className={styles.submitButton}
           disabled={isLoggingIn}
         >
-          {isLoggingIn ? t('login.form.submit-loading-label', 'Logging in...') : t('login.form.submit-label', 'Log in')}
+          {isLoggingIn
+            ? t('login.form.verify-email-loading-label', 'Sending email...')
+            : t('login.form.verify-email-label', 'Send a verification email')}
         </Button>
       </form>
     </div>

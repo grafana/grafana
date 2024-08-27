@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Input, Field, useStyles2 } from '@grafana/ui';
+import { Branding } from 'app/core/components/Branding/Branding';
 import { t } from 'app/core/internationalization';
 
 import { PasswordlessConfirmationFormModel } from './LoginCtrl';
@@ -30,6 +31,10 @@ export const PasswordlessConfirmation = ({ onSubmit, isLoggingIn }: Props) => {
   } = useForm<PasswordlessConfirmationFormModel>({ mode: 'onChange' });
 
   useEffect(() => {
+    Branding.LoginTitle = "We've sent you an email!";
+    Branding.GetLoginSubTitle = () =>
+      "Check your inbox and click the confirmation link or use the confirmation code we've sent.";
+
     const queryValues = Object.fromEntries(new URLSearchParams(window.location.search.split(/\?/)[1]));
     console.log('queryValues', queryValues);
     console.log('signup', queryValues.signup);
@@ -75,7 +80,7 @@ export const PasswordlessConfirmation = ({ onSubmit, isLoggingIn }: Props) => {
         </Field>
         {signup && (
           <>
-            <Field label={'Username'} invalid={!!errors.code} error={errors.code?.message}>
+            <Field label={'Username'} invalid={!!errors.code} error={errors.code?.message} hidden={true}>
               <Input
                 {...register('username')}
                 id={usernameId}
@@ -83,6 +88,7 @@ export const PasswordlessConfirmation = ({ onSubmit, isLoggingIn }: Props) => {
                 autoCapitalize="none"
                 placeholder={'username'}
                 data-testid={selectors.pages.PasswordlessLogin.email}
+                hidden={true}
               />
             </Field>
             <Field label={t('login.form.name-label', 'Name')} invalid={!!errors.code} error={errors.code?.message}>
