@@ -13,7 +13,7 @@ import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardUrl } from '../utils/urlBuilders';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { SceneShareTabState } from './types';
+import { SceneShareTabState, ShareView } from './types';
 export interface ShareLinkTabState extends SceneShareTabState, ShareOptions {
   panelRef?: SceneObjectRef<VizPanel>;
 }
@@ -30,7 +30,7 @@ interface ShareOptions extends ShareLinkConfiguration {
   isBuildUrlLoading: boolean;
 }
 
-export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
+export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements ShareView {
   public tabId = shareDashboardType.link;
 
   static Component = ShareLinkTabRenderer;

@@ -1,12 +1,10 @@
-import { SceneObject, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
-
-import { DashboardScene } from '../scene/DashboardScene';
+import { SceneObject, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
 
 export interface ModalSceneObjectLike {
   onDismiss: () => void;
 }
 
-export interface SceneShareTabState extends SceneObjectState {
+export interface SceneShareTabState extends SceneObjectState, Partial<ModalSceneObjectLike> {
   modalRef?: SceneObjectRef<ModalSceneObjectLike>;
 }
 
@@ -15,7 +13,6 @@ export interface SceneShareTab<T extends SceneShareTabState = SceneShareTabState
   tabId: string;
 }
 
-export interface SceneShareDrawerState extends SceneObjectState {
-  dashboardRef: SceneObjectRef<DashboardScene>;
-  panelRef?: SceneObjectRef<VizPanel>;
+export interface ShareView extends SceneObject {
+  getTabLabel(): string;
 }

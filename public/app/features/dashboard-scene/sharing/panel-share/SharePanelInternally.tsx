@@ -2,27 +2,30 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectRef, VizPanel } from '@grafana/scenes';
+import { SceneComponentProps } from '@grafana/scenes';
 import { Alert, ClipboardButton, Divider, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 import ShareInternallyConfiguration from '../ShareInternallyConfiguration';
-import { ShareLinkTab } from '../ShareLinkTab';
+import { ShareLinkTab, ShareLinkTabState } from '../ShareLinkTab';
 
 export class SharePanelInternally extends ShareLinkTab {
   static Component = SharePanelInternallyRenderer;
 
-  constructor({ panelRef }: { panelRef?: SceneObjectRef<VizPanel> }) {
-    super({
-      panelRef,
-    });
+  constructor(state: Partial<ShareLinkTabState>) {
+    super(state);
+  }
+
+  public getTabLabel() {
+    return t('share-panel.drawer.share-link-title', 'Link settings');
   }
 }
 
 function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelInternally>) {
   const styles = useStyles2(getStyles);
   const { useLockedTime, useShortUrl, selectedTheme, isBuildUrlLoading, imageUrl } = model.useState();
+
   const dashboard = getDashboardSceneFor(model);
   const isDashboardSaved = Boolean(dashboard.state.uid);
 

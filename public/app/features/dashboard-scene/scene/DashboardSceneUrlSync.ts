@@ -1,7 +1,7 @@
 import { Unsubscribable } from 'rxjs';
 
 import { AppEvents } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   SceneGridLayout,
   SceneObjectBase,
@@ -16,6 +16,7 @@ import { KioskMode } from 'app/types';
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
+import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
 import { findVizPanelByKey, getDashboardSceneFor, getLibraryPanel, isPanelClone } from '../utils/utils';
 
@@ -157,9 +158,13 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
     if (typeof values.shareView === 'string') {
       update.shareView = values.shareView;
-      update.overlay = new ShareModal({
-        activeTab: values.shareView,
-      });
+      update.overlay = config.featureToggles.newDashboardSharingComponent
+        ? new ShareDrawer({
+            shareView: values.shareView,
+          })
+        : new ShareModal({
+            activeTab: values.shareView,
+          });
     } else if (shareView && values.shareView === null) {
       update.overlay = undefined;
       update.shareView = undefined;

@@ -8,20 +8,22 @@ import { SceneComponentProps } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Label, Spinner, Stack, Switch, useStyles2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
-import { Trans, t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
 
-import { getDashboardSceneFor } from '../../utils/utils';
 import { ShareExportTab } from '../ShareExportTab';
 
 const selector = e2eSelectors.pages.ExportDashboardDrawer.ExportAsJson;
 
 export class ExportAsJson extends ShareExportTab {
   static Component = ExportAsJsonRenderer;
+
+  public getTabLabel(): string {
+    return t('export.json.title', 'Save dashboard JSON');
+  }
 }
 
 function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
-  const dashboard = getDashboardSceneFor(model);
   const styles = useStyles2(getStyles);
 
   const { isSharingExternally } = model.useState();
@@ -98,7 +100,7 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
           <Button
             data-testid={selector.cancelButton}
             variant="secondary"
-            onClick={() => dashboard.closeModal()}
+            onClick={model.useState().onDismiss}
             fill="outline"
           >
             <Trans i18nKey="export.json.cancel-button">Cancel</Trans>
