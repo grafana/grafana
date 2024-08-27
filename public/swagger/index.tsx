@@ -30,7 +30,7 @@ if (tt?.createPolicy) {
   tt.createPolicy('default', {
     createHTML: (string) => DOMPurify.sanitize(string, { RETURN_TRUSTED_TYPE: true }) as unknown as string,
     createScriptURL: (url) => textUtil.sanitizeUrl(url) as unknown as string,
-    createScript: () => "",
+    createScript: () => '',
   });
 }
 
