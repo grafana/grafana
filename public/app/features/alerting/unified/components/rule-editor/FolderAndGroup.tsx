@@ -14,7 +14,7 @@ import { AccessControlAction } from 'app/types';
 import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
-import { grafanaRulerConfig } from '../../hooks/useCombinedRule';
+import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
 import { RuleFormValues } from '../../types/rule-form';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
 import { isGrafanaRulerRule } from '../../utils/rules';
@@ -33,7 +33,7 @@ export const useFolderGroupOptions = (folderUid: string, enableProvisionedGroups
     alertRuleApi.endpoints.rulerNamespace.useQuery(
       {
         namespace: folderUid,
-        rulerConfig: grafanaRulerConfig,
+        rulerConfig: GRAFANA_RULER_CONFIG,
       },
       {
         skip: !folderUid,
