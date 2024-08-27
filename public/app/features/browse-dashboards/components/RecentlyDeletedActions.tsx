@@ -29,11 +29,11 @@ export function RecentlyDeletedActions() {
       .map(([uid]) => uid);
   }, [selectedItemsState.dashboard]);
 
-  const dashboardOrigin: Record<string, string> = {};
+  const selectedDashboardOrigin: string[] = [];
   if (searchState.result) {
     for (const selectedDashboard of selectedDashboards) {
       const index = searchState.result.view.fields.uid.values.findIndex((e) => e === selectedDashboard);
-      dashboardOrigin[selectedDashboard] = searchState.result.view.fields.location.values[index];
+      selectedDashboardOrigin.push(searchState.result.view.fields.location.values[index]);
     }
   }
 
@@ -90,7 +90,7 @@ export function RecentlyDeletedActions() {
         component: RestoreModal,
         props: {
           selectedDashboards,
-          dashboardOrigin,
+          dashboardOrigin: selectedDashboardOrigin,
           onConfirm: onRestore,
           isLoading: isRestoreLoading,
         },
