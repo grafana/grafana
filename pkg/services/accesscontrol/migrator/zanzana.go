@@ -616,7 +616,7 @@ func fixedRoleTuplesCollector(store db.DB) TupleCollector {
 
 		assignments := []Assignment{
 			{RoleName: "fixed:dashboards:creator", Action: "folders:read", Kind: "folders", Identifier: "general"},
-			{RoleName: "fixed:dashboards:creator", Action: "dashboards:create", Kind: "dashboards", Identifier: "general"},
+			{RoleName: "fixed:dashboards:creator", Action: "dashboards:create", Kind: "folders", Identifier: "general"},
 			{RoleName: "fixed:folders:creator", Action: "folders:create", Kind: "folders", Identifier: "general"},
 			{RoleName: "fixed:folders.general:reader", Action: "folders:read", Kind: "folders", Identifier: "general"},
 		}
