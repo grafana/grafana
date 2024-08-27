@@ -56,7 +56,7 @@ Alternatively, you can also watch our Grafana for Beginners series where we disc
 <!-- INTERACTIVE ignore START -->
 
 {{< admonition type="tip" >}}
-Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting](https://killercoda.com/grafana-labs/course/grafana/grafana-fundamentals).
+Alternatively, you can try out this example in our interactive learning environment: [Grafana Fundamentals](https://killercoda.com/grafana-labs/course/grafana/grafana-fundamentals).
 
 It's a fully configured environment with all the dependencies already installed.
 
