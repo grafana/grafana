@@ -5,7 +5,6 @@ import { useAsync } from 'react-use';
 
 import {
   type PluginExtensionLinkConfig,
-  type PluginExtensionComponentConfig,
   type PluginExtensionConfig,
   type PluginExtensionEventHelpers,
   PluginExtensionTypes,
@@ -29,12 +28,6 @@ export function isPluginExtensionLinkConfig(
   extension: PluginExtensionConfig | undefined
 ): extension is PluginExtensionLinkConfig {
   return typeof extension === 'object' && 'type' in extension && extension['type'] === PluginExtensionTypes.link;
-}
-
-export function isPluginExtensionComponentConfig<Props extends object>(
-  extension: PluginExtensionConfig | undefined | PluginExtensionComponentConfig<Props>
-): extension is PluginExtensionComponentConfig<Props> {
-  return typeof extension === 'object' && 'type' in extension && extension['type'] === PluginExtensionTypes.component;
 }
 
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {

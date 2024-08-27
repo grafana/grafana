@@ -1,20 +1,28 @@
 import { PluginExposedComponentConfig } from '@grafana/data';
 
 import { logWarning } from '../utils';
+import { extensionPointEndsWithVersion } from '../validators';
 
 import { Registry, RegistryType, PluginExtensionConfigs } from './Registry';
 
-export class ExposedComponentsRegistry extends Registry<PluginExposedComponentConfig> {
-  constructor(initialState: RegistryType<PluginExposedComponentConfig> = {}) {
+export type ExposedComponentRegistryItem<Props = {}> = {
+  pluginId: string;
+  title: string;
+  description: string;
+  component: React.ComponentType<Props>;
+};
+
+export class ExposedComponentsRegistry extends Registry<ExposedComponentRegistryItem, PluginExposedComponentConfig> {
+  constructor(initialState: RegistryType<ExposedComponentRegistryItem> = {}) {
     super({
       initialState,
     });
   }
 
   mapToRegistry(
-    registry: RegistryType<PluginExposedComponentConfig>,
+    registry: RegistryType<ExposedComponentRegistryItem>,
     { pluginId, configs }: PluginExtensionConfigs<PluginExposedComponentConfig>
-  ): RegistryType<PluginExposedComponentConfig> {
+  ): RegistryType<ExposedComponentRegistryItem> {
     if (!configs) {
       return registry;
     }
@@ -29,7 +37,7 @@ export class ExposedComponentsRegistry extends Registry<PluginExposedComponentCo
         continue;
       }
 
-      if (!id.match(/.*\/v\d+$/)) {
+      if (!extensionPointEndsWithVersion(id)) {
         logWarning(
           `Exposed component with id '${id}' does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
         );
@@ -52,7 +60,7 @@ export class ExposedComponentsRegistry extends Registry<PluginExposedComponentCo
         continue;
       }
 
-      registry[id] = { config, pluginId };
+      registry[id] = { ...config, pluginId };
     }
 
     return registry;

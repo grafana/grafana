@@ -26,11 +26,11 @@ export {
   usePluginExtensions,
   usePluginLinkExtensions,
   usePluginComponentExtensions,
-  usePluginComponents,
   usePluginLinks,
 } from './pluginExtensions/usePluginExtensions';
 
 export { setPluginComponentHook, usePluginComponent } from './pluginExtensions/usePluginComponent';
+export { setPluginComponentsHook, usePluginComponents } from './pluginExtensions/usePluginComponents';
 
 export { isPluginExtensionLink, isPluginExtensionComponent } from './pluginExtensions/utils';
 export { setCurrentUser } from './user';

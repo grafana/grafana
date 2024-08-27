@@ -40,11 +40,9 @@ describe('ExposedComponentsRegistry', () => {
     expect(Object.keys(registry)).toHaveLength(1);
     expect(registry[id]).toMatchObject({
       pluginId,
-      config: {
-        id,
-        title: 'not important',
-        description: 'not important',
-      },
+      id,
+      title: 'not important',
+      description: 'not important',
     });
   });
 
@@ -82,9 +80,9 @@ describe('ExposedComponentsRegistry', () => {
     const registry = await reactiveRegistry.getState();
 
     expect(Object.keys(registry)).toHaveLength(3);
-    expect(registry[id1]).toMatchObject({ config: { id: id1 }, pluginId });
-    expect(registry[id2]).toMatchObject({ config: { id: id2 }, pluginId });
-    expect(registry[id3]).toMatchObject({ config: { id: id3 }, pluginId });
+    expect(registry[id1]).toMatchObject({ id: id1, pluginId });
+    expect(registry[id2]).toMatchObject({ id: id2, pluginId });
+    expect(registry[id3]).toMatchObject({ id: id3, pluginId });
   });
 
   it('should be possible to register multiple exposed components from multiple plugins', async () => {
@@ -135,10 +133,10 @@ describe('ExposedComponentsRegistry', () => {
     const registry = await reactiveRegistry.getState();
 
     expect(Object.keys(registry)).toHaveLength(4);
-    expect(registry[id1]).toMatchObject({ config: { id: id1 }, pluginId: pluginId1 });
-    expect(registry[id2]).toMatchObject({ config: { id: id2 }, pluginId: pluginId1 });
-    expect(registry[id3]).toMatchObject({ config: { id: id3 }, pluginId: pluginId2 });
-    expect(registry[id4]).toMatchObject({ config: { id: id4 }, pluginId: pluginId2 });
+    expect(registry[id1]).toMatchObject({ id: id1, pluginId: pluginId1 });
+    expect(registry[id2]).toMatchObject({ id: id2, pluginId: pluginId1 });
+    expect(registry[id3]).toMatchObject({ id: id3, pluginId: pluginId2 });
+    expect(registry[id4]).toMatchObject({ id: id4, pluginId: pluginId2 });
   });
 
   it('should notify subscribers when the registry changes', async () => {
@@ -208,11 +206,9 @@ describe('ExposedComponentsRegistry', () => {
 
     expect(mock['grafana-basic-app/hello-world/v1']).toMatchObject({
       pluginId: 'grafana-basic-app',
-      config: {
-        id: 'grafana-basic-app/hello-world/v1',
-        title: 'not important',
-        description: 'not important',
-      },
+      id: 'grafana-basic-app/hello-world/v1',
+      title: 'not important',
+      description: 'not important',
     });
   });
 
@@ -234,9 +230,7 @@ describe('ExposedComponentsRegistry', () => {
     expect(Object.keys(currentState1)).toHaveLength(1);
     expect(currentState1['grafana-basic-app1/hello-world/v1']).toMatchObject({
       pluginId: 'grafana-basic-app1',
-      config: {
-        id: 'grafana-basic-app1/hello-world/v1',
-      },
+      id: 'grafana-basic-app1/hello-world/v1',
     });
 
     registry.register({

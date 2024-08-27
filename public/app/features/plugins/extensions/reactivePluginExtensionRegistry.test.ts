@@ -40,6 +40,7 @@ describe('createPluginExtensionsRegistry', () => {
         },
       ],
       exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     const registry = await reactiveRegistry.getRegistry();
@@ -66,6 +67,7 @@ describe('createPluginExtensionsRegistry', () => {
         },
       ],
       exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     const registry1 = await reactiveRegistry.getRegistry();
@@ -86,6 +88,7 @@ describe('createPluginExtensionsRegistry', () => {
         },
       ],
       exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     const registry2 = await reactiveRegistry.getRegistry();
@@ -120,6 +123,7 @@ describe('createPluginExtensionsRegistry', () => {
         },
       ],
       exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     const registry = await reactiveRegistry.getRegistry();
@@ -173,6 +177,7 @@ describe('createPluginExtensionsRegistry', () => {
         },
       ],
       exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     const registry1 = await reactiveRegistry.getRegistry();
@@ -207,6 +212,7 @@ describe('createPluginExtensionsRegistry', () => {
         },
       ],
       exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     const registry2 = await reactiveRegistry.getRegistry();
@@ -258,6 +264,7 @@ describe('createPluginExtensionsRegistry', () => {
         },
       ],
       exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     const registry1 = await reactiveRegistry.getRegistry();
@@ -292,6 +299,7 @@ describe('createPluginExtensionsRegistry', () => {
         },
       ],
       exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     const registry2 = await reactiveRegistry.getRegistry();
@@ -344,6 +352,7 @@ describe('createPluginExtensionsRegistry', () => {
         },
       ],
       exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     // Register extensions to a different extension point
@@ -360,6 +369,7 @@ describe('createPluginExtensionsRegistry', () => {
         },
       ],
       exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     const registry2 = await reactiveRegistry.getRegistry();
@@ -410,6 +420,7 @@ describe('createPluginExtensionsRegistry', () => {
         },
       ],
       exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     // Register extensions to a different extension point
@@ -426,6 +437,7 @@ describe('createPluginExtensionsRegistry', () => {
         },
       ],
       exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     const registry2 = await reactiveRegistry.getRegistry();
@@ -482,6 +494,7 @@ describe('createPluginExtensionsRegistry', () => {
         },
       ],
       exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     expect(subscribeCallback).toHaveBeenCalledTimes(2);
@@ -500,6 +513,7 @@ describe('createPluginExtensionsRegistry', () => {
         },
       ],
       exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     expect(subscribeCallback).toHaveBeenCalledTimes(3);
@@ -553,6 +567,7 @@ describe('createPluginExtensionsRegistry', () => {
         },
       ],
       exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     observable.subscribe(subscribeCallback);
@@ -597,6 +612,7 @@ describe('createPluginExtensionsRegistry', () => {
         },
       ],
       exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     expect(consoleWarn).toHaveBeenCalled();
@@ -657,6 +673,7 @@ describe('createPluginExtensionsRegistry', () => {
         },
       ],
       exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     expect(consoleWarn).toHaveBeenCalled();
@@ -687,6 +704,7 @@ describe('createPluginExtensionsRegistry', () => {
         },
       ],
       exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     expect(consoleWarn).toHaveBeenCalled();
