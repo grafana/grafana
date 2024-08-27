@@ -21,9 +21,23 @@ weight: 100
 
 # Node graph
 
-Node graphs can visualize directed graphs or networks. They use a directed force layout to effectively position the nodes, so they can display complex infrastructure maps, hierarchies, or execution diagrams.
+Node graphs are useful when you need to visualize elements that are related to each other. This is done by displaying circles&mdash;or _nodes_&mdash;for each element you want to visualize, connected by lines&mdash;or _edges_. The visualization uses a directed force layout that positions the nodes into a network of connected circles.
+
+Node graphs display useful information about each node, as well as the relationships between them, allowing you to visualize complex infrastructure maps, hierarchies, or execution diagrams.
 
 ![Node graph visualization](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-node-graph.png 'Node graph')
+
+The appearance of nodes and edges can also be customized in several ways including color, borders, and line style.
+
+You can use a node graph visualization if you need to show:
+
+- Solution topologies
+- Networks
+- Infrastructure
+- Organizational charts
+- Critical path diagrams
+- Family trees
+- Mind maps
 
 ## Configure a node graph visualization
 
@@ -32,6 +46,38 @@ The following video provides beginner steps for creating node panel visualizatio
 {{< youtube id="VrvsMkRwoKw" >}}
 
 {{< docs/play title="Node graph panel" url="https://play.grafana.org/d/bdodfbi3d57uoe/" >}}
+
+## Supported data formats
+
+To create node graphs, you need two datasets: one containing the records for the displayed elements (nodes) and one dataset containing the records for the connections between those elements (edges).
+
+### Nodes dataset
+
+The nodes dataset must contain one alphanumeric ID field that gives each element a unique identifier. The visualization also accepts other options fields for titles, subtitles, main and secondary stats, arc information for how much of the circle border to paint, details, colors, icons, node size, and indicators for element highlighting. For more information and naming conventions for these fields, refer to the [Nodes data frame structure](#nodes-data-frame-structure) section.
+
+#### Example
+
+| id    | title | subtitle | mainstat | secondarystat | color | icon | highlighted |
+| ----- | ----- | -------- | -------- | ------------- | ----- | ---- | ----------- |
+| node1 | PC    | Windows  | AMD      | 16gbRAM       | blue  |      | true        |
+| node2 | PC    | Linux    | Intel    | 32gbRAM       | green | eye  | false       |
+| node3 | Mac   | MacOS    | M3       | 16gbRAM       | gray  | apps | false       |
+| node4 | Alone | SoLonely | JustHere | NotConnected  | red   |      | false       |
+
+If the icon field contains a value, it’s displayed instead of the title and subtitle. For a list of of available icons, refer to [Icons Overview](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview).
+
+### Edges dataset
+
+Similar to the nodes dataset, the edges dataset needs one unique ID field for each relationship, followed by two fields containing the source and the target nodes of the edge; that is, the nodes the edge connects. Other optional fields are main and secondary stats, context menu elements, line thickness, highlight indications, line colors, and configurations to turn the connection into a dashed line. For more information and naming conventions for these fields, refer to the [Edges data frame structure](#edges-data-frame-structure) section.
+
+#### Example
+
+| id    | source | target | mainstat | seconddarystat | thickness | highlighted | color  |
+| ----- | ------ | ------ | -------- | -------------- | --------- | ----------- | ------ |
+| edge1 | node1  | node2  | TheMain  | TheSub         | 3         | true        | cyan   |
+| edge2 | node3  | node2  | Main2    | Sub2           | 1         | false       | orange |
+
+If a node lacks edge connections, it’s displayed on its own outside of the network.
 
 ## Panel options
 
