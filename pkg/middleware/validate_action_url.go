@@ -36,7 +36,7 @@ func ValidateActionUrl(cfg *setting.Cfg, logger log.Logger) func(http.Handler) h
 	// get the urls allowed from server config
 	allGlobs, globErr := cacheGlobs(cfg.ActionsAllowPostURL)
 	if globErr != nil {
-		logger.Error("invalid glob settings in config section [security] actions_allow_post_url", cfg.ActionsAllowPostURL)
+		logger.Error("invalid glob settings in config section [security] actions_allow_post_url", "url", cfg.ActionsAllowPostURL)
 	}
 
 	return func(next http.Handler) http.Handler {
