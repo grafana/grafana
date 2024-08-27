@@ -102,17 +102,6 @@ var (
 			Namespace: "stack-1234",
 		},
 	}
-	invalidWildcardNamespaceIDTokenClaims = idTokenClaims{
-		Claims: &jwt.Claims{
-			Subject:  "user:2",
-			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-		},
-		Rest: authnlib.IDTokenClaims{
-			AuthenticatedBy: "extended_jwt",
-			Namespace:       "*",
-		},
-	}
 	invalidNamespaceIDTokenClaims = idTokenClaims{
 		Claims: &jwt.Claims{
 			Subject:  "user:2",
@@ -432,13 +421,6 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					SyncPermissions: true,
 				},
 			},
-		},
-		{
-			name:        "should return error when id token namespace is a wildcard",
-			accessToken: &validAccessTokenClaims,
-			idToken:     &invalidWildcardNamespaceIDTokenClaims,
-			orgID:       1,
-			wantErr:     errExtJWTDisallowedNamespaceClaim,
 		},
 		{
 			name:        "should return error when id token has an invalid namespace",

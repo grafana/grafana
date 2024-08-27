@@ -13,11 +13,6 @@ type IDClaimsWrapper struct {
 	Source Requester
 }
 
-func (i *IDClaimsWrapper) NamespaceMatches(namespace string) bool {
-	// TODO: determine if you need to factor in the ID token
-	return i.Source.GetAccess().NamespaceMatches(namespace)
-}
-
 func (i *IDClaimsWrapper) IsNil() bool {
 	return i.Source.IsNil()
 }
