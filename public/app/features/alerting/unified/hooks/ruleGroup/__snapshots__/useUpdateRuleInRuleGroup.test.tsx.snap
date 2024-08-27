@@ -1,0 +1,311 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Updating a Data source managed rule should be able to move a rule if target group is different from current group 1`] = `
+[
+  {
+    "body": {
+      "name": "a new group",
+      "rules": [
+        {
+          "annotations": {
+            "summary": "Test alert",
+          },
+          "for": "5m",
+          "grafana_alert": {
+            "condition": "A",
+            "data": [
+              {
+                "datasourceUid": "datasource-uid",
+                "model": {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "datasource-uid",
+                  },
+                  "expression": "vector(1)",
+                  "queryType": "alerting",
+                  "refId": "A",
+                },
+                "queryType": "alerting",
+                "refId": "A",
+                "relativeTimeRange": {
+                  "from": 1000,
+                  "to": 2000,
+                },
+              },
+            ],
+            "exec_err_state": "Error",
+            "is_paused": false,
+            "namespace_uid": "uuid020c61ef",
+            "no_data_state": "NoData",
+            "rule_group": "grafana-group-1",
+            "title": "updated rule title",
+            "uid": "4d7125fee983",
+          },
+          "labels": {
+            "region": "nasa",
+            "severity": "critical",
+          },
+        },
+      ],
+    },
+    "headers": [
+      [
+        "content-type",
+        "application/json",
+      ],
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "POST",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/namespace-1?subtype=mimir",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "DELETE",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/namespace-1/group-1?subtype=mimir",
+  },
+]
+`;
+
+exports[`Updating a Data source managed rule should update a rule in an existing group 1`] = `
+[
+  {
+    "body": {
+      "interval": "1m",
+      "name": "group-1",
+      "rules": [
+        {
+          "annotations": {
+            "summary": "Test alert",
+          },
+          "for": "5m",
+          "grafana_alert": {
+            "condition": "A",
+            "data": [
+              {
+                "datasourceUid": "datasource-uid",
+                "model": {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "datasource-uid",
+                  },
+                  "expression": "vector(1)",
+                  "queryType": "alerting",
+                  "refId": "A",
+                },
+                "queryType": "alerting",
+                "refId": "A",
+                "relativeTimeRange": {
+                  "from": 1000,
+                  "to": 2000,
+                },
+              },
+            ],
+            "exec_err_state": "Error",
+            "is_paused": false,
+            "namespace_uid": "uuid020c61ef",
+            "no_data_state": "NoData",
+            "rule_group": "grafana-group-1",
+            "title": "updated rule title",
+            "uid": "4d7125fee983",
+          },
+          "labels": {
+            "region": "nasa",
+            "severity": "critical",
+          },
+        },
+      ],
+    },
+    "headers": [
+      [
+        "content-type",
+        "application/json",
+      ],
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "POST",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/namespace-1?subtype=mimir",
+  },
+]
+`;
+
+exports[`Updating a Grafana managed rule should move a rule in to another group 1`] = `
+[
+  {
+    "body": {
+      "interval": "1m",
+      "name": "grafana-group-2",
+      "rules": [
+        {
+          "annotations": {
+            "summary": "Test alert",
+          },
+          "for": "5m",
+          "grafana_alert": {
+            "condition": "A",
+            "data": [
+              {
+                "datasourceUid": "datasource-uid",
+                "model": {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "datasource-uid",
+                  },
+                  "expression": "vector(1)",
+                  "queryType": "alerting",
+                  "refId": "A",
+                },
+                "queryType": "alerting",
+                "refId": "A",
+                "relativeTimeRange": {
+                  "from": 1000,
+                  "to": 2000,
+                },
+              },
+            ],
+            "exec_err_state": "Error",
+            "is_paused": false,
+            "namespace_uid": "uuid020c61ef",
+            "no_data_state": "NoData",
+            "rule_group": "grafana-group-1",
+            "title": "Grafana-rule",
+            "uid": "4d7125fee983",
+          },
+          "labels": {
+            "region": "nasa",
+            "severity": "critical",
+          },
+        },
+        {
+          "annotations": {
+            "summary": "Test alert",
+          },
+          "for": "5m",
+          "grafana_alert": {
+            "condition": "A",
+            "data": [
+              {
+                "datasourceUid": "datasource-uid",
+                "model": {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "datasource-uid",
+                  },
+                  "expression": "vector(1)",
+                  "queryType": "alerting",
+                  "refId": "A",
+                },
+                "queryType": "alerting",
+                "refId": "A",
+                "relativeTimeRange": {
+                  "from": 1000,
+                  "to": 2000,
+                },
+              },
+            ],
+            "exec_err_state": "Error",
+            "is_paused": false,
+            "namespace_uid": "uuid020c61ef",
+            "no_data_state": "NoData",
+            "rule_group": "grafana-group-1",
+            "title": "updated rule title",
+            "uid": "4d7125fee983",
+          },
+          "labels": {
+            "region": "nasa",
+            "severity": "critical",
+          },
+        },
+      ],
+    },
+    "headers": [
+      [
+        "content-type",
+        "application/json",
+      ],
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "POST",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef?subtype=cortex",
+  },
+]
+`;
+
+exports[`Updating a Grafana managed rule should update a rule in an existing group 1`] = `
+[
+  {
+    "body": {
+      "interval": "1m",
+      "name": "grafana-group-1",
+      "rules": [
+        {
+          "annotations": {
+            "summary": "Test alert",
+          },
+          "for": "5m",
+          "grafana_alert": {
+            "condition": "A",
+            "data": [
+              {
+                "datasourceUid": "datasource-uid",
+                "model": {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "datasource-uid",
+                  },
+                  "expression": "vector(1)",
+                  "queryType": "alerting",
+                  "refId": "A",
+                },
+                "queryType": "alerting",
+                "refId": "A",
+                "relativeTimeRange": {
+                  "from": 1000,
+                  "to": 2000,
+                },
+              },
+            ],
+            "exec_err_state": "Error",
+            "is_paused": false,
+            "namespace_uid": "uuid020c61ef",
+            "no_data_state": "NoData",
+            "rule_group": "grafana-group-1",
+            "title": "updated rule title",
+            "uid": "4d7125fee983",
+          },
+          "labels": {
+            "region": "nasa",
+            "severity": "critical",
+          },
+        },
+      ],
+    },
+    "headers": [
+      [
+        "content-type",
+        "application/json",
+      ],
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "POST",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef?subtype=cortex",
+  },
+]
+`;

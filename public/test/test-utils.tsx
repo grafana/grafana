@@ -6,6 +6,7 @@ import { Fragment, PropsWithChildren } from 'react';
 import * as React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
+import { CompatRouter } from 'react-router-dom-v5-compat';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { HistoryWrapper, LocationServiceProvider, setLocationService } from '@grafana/runtime';
@@ -49,16 +50,21 @@ const getWrapper = ({
   grafanaContext?: Partial<GrafanaContextType>;
 }) => {
   const reduxStore = store || configureStore();
-  /**
-   * Conditional router - either a MemoryRouter or just a Fragment
-   */
-  const PotentialRouter = renderWithRouter ? Router : Fragment;
 
   // Create a fresh location service for each test - otherwise we run the risk
   // of it being stateful in between runs
   const history = createMemoryHistory(historyOptions);
   const locationService = new HistoryWrapper(history);
   setLocationService(locationService);
+
+  /**
+   * Conditional router - either a MemoryRouter or just a Fragment
+   */
+  const PotentialRouter = renderWithRouter
+    ? ({ children }: PropsWithChildren) => <Router history={history}>{children}</Router>
+    : ({ children }: PropsWithChildren) => <Fragment>{children}</Fragment>;
+
+  const PotentialCompatRouter = renderWithRouter ? CompatRouter : Fragment;
 
   const context = {
     ...getGrafanaContextMock(),
@@ -73,9 +79,11 @@ const getWrapper = ({
     return (
       <Provider store={reduxStore}>
         <GrafanaContext.Provider value={context}>
-          <PotentialRouter history={history}>
+          <PotentialRouter>
             <LocationServiceProvider service={locationService}>
-              <ModalsContextProvider>{children}</ModalsContextProvider>
+              <PotentialCompatRouter>
+                <ModalsContextProvider>{children}</ModalsContextProvider>
+              </PotentialCompatRouter>
             </LocationServiceProvider>
           </PotentialRouter>
         </GrafanaContext.Provider>

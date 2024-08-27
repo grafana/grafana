@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 
 import {
@@ -304,6 +304,12 @@ export const LogsPanel = ({
     },
     [displayedFields]
   );
+
+  useEffect(() => {
+    if (options.displayedFields) {
+      setDisplayedFields(options.displayedFields);
+    }
+  }, [options.displayedFields]);
 
   if (!data || logRows.length === 0) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;

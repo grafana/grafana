@@ -24,6 +24,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ShareSnapshot } from '../sharing/ShareButton/share-snapshot/ShareSnapshot';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
+import { ShareLibraryPanelTab } from '../sharing/ShareLibraryPanelTab';
 import { ShareModal } from '../sharing/ShareModal';
 import { SharePanelEmbedTab } from '../sharing/SharePanelEmbedTab';
 import { SharePanelInternally } from '../sharing/panel-share/SharePanelInternally';
@@ -186,17 +187,31 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
           },
         });
       } else {
-        moreSubMenu.push({
-          text: t('panel.header-menu.create-library-panel', `Create library panel`),
-          onClick: () => {
-            dashboard.showModal(
-              new ShareModal({
-                panelRef: panel.getRef(),
-                activeTab: shareDashboardType.libraryPanel,
-              })
-            );
-          },
-        });
+        if (config.featureToggles.newDashboardSharingComponent) {
+          moreSubMenu.push({
+            text: t('share-panel.menu.new-library-panel-title', 'New library panel'),
+            onClick: () => {
+              const drawer = new ShareDrawer({
+                title: t('share-panel.drawer.new-library-panel-title', 'New library panel'),
+                body: new ShareLibraryPanelTab({ panelRef: panel.getRef() }),
+              });
+
+              dashboard.showModal(drawer);
+            },
+          });
+        } else {
+          moreSubMenu.push({
+            text: t('panel.header-menu.create-library-panel', `Create library panel`),
+            onClick: () => {
+              dashboard.showModal(
+                new ShareModal({
+                  panelRef: panel.getRef(),
+                  activeTab: shareDashboardType.libraryPanel,
+                })
+              );
+            },
+          });
+        }
       }
     }
 

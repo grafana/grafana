@@ -265,9 +265,25 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingSpec(ref common.Referen
 					},
 					"dashboardTitle": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "DashboardTitle should be populated and update from the dashboard",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"groups": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Groups is used for the grouping of dashboards that are suggested based on a scope. The source of truth for this information has not been determined yet.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
 						},
 					},
 					"scope": {
