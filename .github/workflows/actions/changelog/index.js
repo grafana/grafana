@@ -200,11 +200,7 @@ const getChangeLogItems = async (name, owner, sinceDate, to) => {
       hasLabel({ labels }, 'area/grafana/toolkit') ||
       hasLabel({ labels }, 'area/grafana/runtime');
     
-    let author = ""
-
-    if(item.commits.nodes[0].commit.author !== null){
-      author = item.commits.nodes[0].commit.author.user.login
-    }
+    const author = item.commits.nodes[0].commit.author.user?.login
     
     return {
       repo: name,
@@ -275,7 +271,7 @@ const changelog = [...oss, ...entr]
 // Convert PR numbers to Github links
 const pullRequestLink = (n) => `[#${n}](https://github.com/grafana/grafana/pull/${n})`;
 // Convert Github user IDs to Github links
-const userLink = (u) => `[@${u}](https://github.com/${u})`;
+const userLink = (u) => u !== "" ? `[@${u}](https://github.com/${u})`: "";
 
 // Now that we have a changelog - we can render some markdown as an output
 const markdown = (changelog) => {
