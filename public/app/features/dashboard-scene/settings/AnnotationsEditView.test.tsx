@@ -1,7 +1,18 @@
 import { map, of } from 'rxjs';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
-import { AnnotationQuery, DataQueryRequest, DataSourceApi, LoadingState, PanelData } from '@grafana/data';
+import {
+  AnnotationQuery,
+  DataQueryRequest,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  DataSourcePluginMeta,
+  getDataSourceUID,
+  LoadingState,
+  PanelData,
+} from '@grafana/data';
 import { SceneGridLayout, SceneTimeRange, dataLayers } from '@grafana/scenes';
+import { DataSourceRef } from '@grafana/schema';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -29,11 +40,49 @@ const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request:
   );
 });
 
+const noAnnotationsDsInstanceSettings = {
+  name: 'noAnnotationsDs',
+  uid: 'noAnnotationsDs',
+  meta: {
+    annotations: true,
+  } as DataSourcePluginMeta,
+  readOnly: false,
+  type: 'noAnnotations',
+} as DataSourceInstanceSettings;
+
+const grafanaDsInstanceSettings = {
+  name: 'Grafana',
+  uid: '-- Grafana --',
+  meta: {
+    annotations: true,
+  } as DataSourcePluginMeta,
+  readOnly: false,
+  type: 'grafana',
+} as DataSourceInstanceSettings;
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => {
     return {
-      getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
+      //return default datasource when no ref is provided
+      getInstanceSettings: (ref: DataSourceRef | string | null) => {
+        if (!ref) {
+          return new MockDataSourceApi(noAnnotationsDsInstanceSettings);
+        }
+        if (getDataSourceUID(ref) === '-- Grafana --') {
+          return new MockDataSourceApi(grafanaDsInstanceSettings);
+        }
+        return jest.fn().mockResolvedValue({ uid: 'ds1' });
+      },
+      get: (ref: DataSourceRef) => {
+        if (getDataSourceUID(ref) === 'noAnnotationsDs') {
+          return Promise.resolve(new MockDataSourceApi(noAnnotationsDsInstanceSettings));
+        }
+        if (getDataSourceUID(ref) === '-- Grafana --') {
+          return Promise.resolve(new MockDataSourceApi(grafanaDsInstanceSettings));
+        }
+        return Promise.resolve(new MockDataSourceApi('ds1'));
+      },
     };
   },
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
@@ -58,22 +107,22 @@ describe('AnnotationsEditView', () => {
       expect(annotationsView.getUrlKey()).toBe('annotations');
     });
 
-    it('should add a new annotation and group it with the other annotations', () => {
+    it('should add a new annotation and group it with the other annotations', async () => {
       const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
 
       expect(dataLayers?.state.annotationLayers.length).toBe(1);
 
-      annotationsView.onNew();
+      await annotationsView.onNew();
 
       expect(dataLayers?.state.annotationLayers.length).toBe(2);
       expect(dataLayers?.state.annotationLayers[1].state.name).toBe(newAnnotationName);
       expect(dataLayers?.state.annotationLayers[1].isActive).toBe(true);
     });
 
-    it('should move an annotation up one position', () => {
+    it('should move an annotation up one position', async () => {
       const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
 
-      annotationsView.onNew();
+      await annotationsView.onNew();
 
       expect(dataLayers?.state.annotationLayers.length).toBe(2);
       expect(dataLayers?.state.annotationLayers[0].state.name).toBe('test');
@@ -84,10 +133,10 @@ describe('AnnotationsEditView', () => {
       expect(dataLayers?.state.annotationLayers[0].state.name).toBe(newAnnotationName);
     });
 
-    it('should move an annotation down one position', () => {
+    it('should move an annotation down one position', async () => {
       const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
 
-      annotationsView.onNew();
+      await annotationsView.onNew();
 
       expect(dataLayers?.state.annotationLayers.length).toBe(2);
       expect(dataLayers?.state.annotationLayers[0].state.name).toBe('test');

@@ -51,11 +51,32 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     return this._dashboard;
   }
 
-  public onNew = () => {
+  // Get the datasource that supports annotations
+  public getDataSourceRefForAnnotation = async () => {
+    // get current default datasource ref from instance settings
+    const defaultInstanceDS = getDataSourceSrv().getInstanceSettings(null);
+    // get datasource ref from default datasource
+    const defaultDSRef = getDataSourceRef(defaultInstanceDS!);
+    const dataSourceSrv = await getDataSourceSrv().get(defaultDSRef);
+
+    // if default ds does not support annotations, return the grafana datasource
+    if (!dataSourceSrv?.annotations) {
+      const dsGrafana = getDataSourceSrv().getInstanceSettings('-- Grafana --');
+      if (!dsGrafana) {
+        throw new Error('Grafana datasource not found');
+      }
+      const grafanaDataSourceRef = getDataSourceRef(dsGrafana);
+      return grafanaDataSourceRef;
+    } else {
+      return defaultDSRef;
+    }
+  };
+
+  public onNew = async () => {
     const newAnnotationQuery: AnnotationQuery = {
       name: newAnnotationName,
       enable: true,
-      datasource: getDataSourceRef(getDataSourceSrv().getInstanceSettings(null)!),
+      datasource: await this.getDataSourceRefForAnnotation(),
       iconColor: 'red',
     };
 
@@ -69,7 +90,6 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     const data = dashboardSceneGraph.getDataLayers(this._dashboard);
 
     data.addAnnotationLayer(newAnnotation);
-
     this.setState({ editIndex: data.state.annotationLayers.length - 1 });
   };
 
