@@ -34,6 +34,7 @@ In this tutorial, you'll learn how to use Grafana to set up a monitoring solutio
 - Annotate dashboards
 - Set up alerts
 
+<!-- INTERACTIVE ignore START -->
 Alternatively, you can also watch our Grafana for Beginners series where we discuss fundamental concepts to help you get started with Grafana.
 
 <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden">
@@ -41,7 +42,6 @@ Alternatively, you can also watch our Grafana for Beginners series where we disc
    </iframe>
 </div>
 
-<!-- INTERACTIVE ignore START -->
 {{% class "prerequisite-section" %}}
 
 ### Prerequisites
@@ -51,9 +51,6 @@ Alternatively, you can also watch our Grafana for Beginners series where we disc
 - [Git](https://git-scm.com/)
 
 {{% /class %}}
-<!-- INTERACTIVE ignore END -->
-
-<!-- INTERACTIVE ignore START -->
 
 {{< admonition type="tip" >}}
 Alternatively, you can try out this example in our interactive learning environment: [Grafana Fundamentals](https://killercoda.com/grafana-labs/course/grafana/grafana-fundamentals).
