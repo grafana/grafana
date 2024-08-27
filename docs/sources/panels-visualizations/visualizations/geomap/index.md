@@ -49,17 +49,13 @@ refs:
 
 # Geomap
 
-Geomaps allow you to view and customize the world map using geospatial data. You can configure various overlay styles and map view settings to easily focus on the important location-based characteristics of the data.
+Geomaps allow you to view and customize the world map using geospatial data. It's the ideal visualization if you have data that includes location information and you want to see it displayed in a map. You can configure various overlay styles, like routes, as well as map view settings including adding numeric values, labels, and icons. This helps you to easily focus on the important location-based characteristics of the data.
 
-> We would love your feedback on geomaps. Please check out the [open Github issues](https://github.com/grafana/grafana/issues?page=1&q=is%3Aopen+is%3Aissue+label%3Aarea%2Fpanel%2Fgeomap) and [submit a new feature request](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request,area%2Fpanel%2Fgeomap&title=Geomap:&projects=grafana-dataviz&template=1-feature_requests.md) as needed.
+{{< figure src="/static/img/docs/geomap-panel/geomap-example-8-1-0.png" max-width="1200px" alt="Geomap visualization" >}}
 
-You can use the geomap visualization whenever you have information that has location information and you need to see it displayed in a map.
+When a geomap is in focus, you can pan around using the arrow keys or zoom in and out using the plus (`+`) and minus (`-`) keys or icons.
 
-The visualization can also display other information including numeric values, labels, icons, heat maps, and routes.
-
-It’s also useful when you have location data that’s changing in real-time and you want to visualize where the element is moving using auto refresh.
-
-{{< figure src="/static/img/docs/geomap-panel/geomap-example-8-1-0.png" max-width="1200px" caption="Geomap panel" >}}
+Geomaps are also useful when you have location data that’s changing in real time and you want to visualize where an element is moving, using auto-refresh.
 
 You can use a geomap visualization if you need to:
 
@@ -67,9 +63,11 @@ You can use a geomap visualization if you need to:
 - Show the locations of the data centers or corporate devices
 - Map hiking route
 
-## Configure a geomap visualization
+{{< admonition type="note" >}}
+We'd love your feedback on the geomap visualization. Please check out the [open Github issues](https://github.com/grafana/grafana/issues?page=1&q=is%3Aopen+is%3Aissue+label%3Aarea%2Fpanel%2Fgeomap) and [submit a new feature request](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request,area%2Fpanel%2Fgeomap&title=Geomap:&projects=grafana-dataviz&template=1-feature_requests.md) as needed.
+{{< /admonition >}}
 
-Pan the map, while it's in focus, by using the arrow keys. Zoom in and out by using the `+` and `-` keys.
+## Configure a geomap visualization
 
 The following video provides beginner steps for creating geomap visualizations. You'll learn the data requirements and caveats, special customizations, preconfigured displays and much more:
 
@@ -91,9 +89,9 @@ To learn more, refer to [Location mode](#location-mode).
 
 Geomaps also support additional fields with various data types to define things like labels, numbers, heat sizes, and colors.
 
-### Example - latitude and longitude
+### Example - Latitude and longitude
 
-If you plan to use latitude and longitude coordinates, the dataset provided must include at least two fields (columns): one called latitude (you can also use lat), and one called longitude (also lon or lng). When you use this naming convention, the visualization automatically detects them and displays the elements. The order of the fields doesn't matter as long as there is one latitude and one longitude.
+If you plan to use latitude and longitude coordinates, the dataset must include at least two fields (or columns): one called `latitude` (you can also use`lat`), and one called `longitude` (also `lon` or `lng`). When you use this naming convention, the visualization automatically detects the fields and displays the elements. The order of the fields doesn't matter as long as there is one latitude and one longitude.
 
 | Name            | latitude  | longitude | value |
 | --------------- | --------- | --------- | ----- |
@@ -103,13 +101,13 @@ If you plan to use latitude and longitude coordinates, the dataset provided must
 | Tokyo Disney    | 35.6329   | 139.8804  | 70    |
 | Shanghai Disney | 31.1414   | 121.6682  | 1     |
 
-If your latitude and longitude fields are named differently, you can select them as indicated in the [Location mode](#location-mode) section.
+If your latitude and longitude fields are named differently, you can specify them, as indicated in the [Location mode](#location-mode) section.
 
-### Example - geohash
+### Example - Geohash
 
-If your location data comes in the geohash format, the visualization requires at least one field (column) containing location data in this format.
+If your location data is in geohash format, the visualization requires at least one field (or column) containing location data.
 
-If the field is named geohash, the visualization automatically detects the location and displays the elements. The order of the field doesnt matter and the data set can have multiple other numeric, text, and time fields.
+If the field is named `geohash`, the visualization automatically detects the location and displays the elements. The order of the fields doesn't matter and the data set can have multiple other numeric, text, and time fields.
 
 | Name      | geohash      | trips |
 | --------- | ------------ | ----- |
@@ -118,15 +116,15 @@ If the field is named geohash, the visualization automatically detects the locat
 | Palm Cove | rhzxudynb014 | 1     |
 | Mykonos   | swdj02ey9gyx | 3     |
 
-If your field containing geohash location data is not named as above, you can configure the panel to use geohash and indicate the field to use as explained in the [Location mode](#location-mode) section.
+If your field containing geohash location data is not named as above, you can configure the visualization to use geohash and specify which field to use, as explained in the [Location mode](#location-mode) section.
 
-### Example - lookup codes
+### Example - Lookup codes
 
 The geomap visualization can identify locations based on country, airport, or US state codes.
 
-For this configuration the data set must contain at least one field (column) containing the location code.
+For this configuration, the dataset must contain at least one field (or column) containing the location code.
 
-If the field is named lookup, the visualization automatically identifies it and displays points based on country codes.
+If the field is named `lookup`, the visualization automatically detects it and displays points based on country codes.
 
 | Year | lookup | gdp       |
 | ---- | ------ | --------- |
@@ -136,9 +134,9 @@ If the field is named lookup, the visualization automatically identifies it and 
 | 2016 | BRA    | 80921527  |
 | 2016 | CAN    | 79699762  |
 
-The other location types—airport codes or US state codes—aren't automatically identified.
+The other location types&mdash; airport codes or US state codes&mdash;aren't automatically detected.
 
-If you want to use other codes, or name the field freely you can follow the steps indicated in the [Location mode](#location-mode) section.
+If you want to use other codes or give the field a custom name, you can follow the steps in the [Location mode](#location-mode) section.
 
 ## Panel options
 
