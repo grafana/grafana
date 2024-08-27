@@ -72,7 +72,6 @@ type Identity struct {
 	// Permissions is the list of permissions the entity has.
 	Permissions map[int64]map[string][]string
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
-	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
 	IDToken       string
 	IDTokenClaims *authn.Claims[authn.IDTokenClaims]
 }
@@ -173,10 +172,6 @@ func (i *Identity) IsEmailVerified() bool {
 
 func (i *Identity) GetIDToken() string {
 	return i.IDToken
-}
-
-func (i *Identity) GetIDClaims() *authn.Claims[authn.IDTokenClaims] {
-	return i.IDTokenClaims
 }
 
 func (i *Identity) GetIsGrafanaAdmin() bool {

@@ -4,17 +4,15 @@ import { PluginError, PluginType } from '@grafana/data';
 import { useDispatch, useSelector } from 'app/types';
 
 import { sortPlugins, Sorters } from '../helpers';
-import { CatalogPlugin, PluginListDisplayMode } from '../types';
+import { CatalogPlugin } from '../types';
 
 import { fetchAll, fetchDetails, fetchRemotePlugins, install, uninstall, fetchAllLocal, unsetInstall } from './actions';
-import { setDisplayMode } from './reducer';
 import {
   selectPlugins,
   selectById,
   selectIsRequestPending,
   selectRequestError,
   selectIsRequestNotFetched,
-  selectDisplayMode,
   selectPluginErrors,
   type PluginFilters,
 } from './selectors';
@@ -149,14 +147,4 @@ export const useFetchDetailsLazy = () => {
   const dispatch = useDispatch();
 
   return (id: string) => dispatch(fetchDetails(id));
-};
-
-export const useDisplayMode = () => {
-  const dispatch = useDispatch();
-  const displayMode = useSelector(selectDisplayMode);
-
-  return {
-    displayMode,
-    setDisplayMode: (v: PluginListDisplayMode) => dispatch(setDisplayMode(v)),
-  };
 };

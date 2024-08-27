@@ -138,17 +138,13 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 
 	// Record the index of each LegacyStorage object so it can later be replaced by
 	// an equivalent Storage object if it exists.
-	optionsStorage, indexMap, err := parseList(legacyList)
+	legacyNames, err := parseList(legacyList)
 	if err != nil {
 		return nil, err
 	}
 
-	if optionsStorage.LabelSelector == nil {
-		return ll, nil
-	}
-
 	startStorage := time.Now()
-	sl, err := d.Storage.List(ctx, &optionsStorage)
+	sl, err := d.Storage.List(ctx, options)
 	if err != nil {
 		log.Error(err, "unable to list objects from storage")
 		d.recordStorageDuration(true, mode2Str, d.kind, method, startStorage)
@@ -163,14 +159,10 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 	}
 
 	for _, obj := range storageList {
-		accessor, err := meta.Accessor(obj)
-		if err != nil {
-			return nil, err
-		}
-		name := accessor.GetName()
-		if legacyIndex, ok := indexMap[name]; ok {
-			legacyList[legacyIndex] = obj
-			areEqual := Compare(obj, legacyList[legacyIndex])
+		name := getName(obj)
+		if i, ok := legacyNames[name]; ok {
+			legacyList[i] = obj
+			areEqual := Compare(obj, legacyList[i])
 			d.recordOutcome(mode2Str, name, areEqual, method)
 			if !areEqual {
 				log.WithValues("name", name).Info("object from legacy and storage are not equal")
@@ -212,16 +204,13 @@ func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation
 	}
 
 	// Only the items deleted by the legacy DeleteCollection call are selected for deletion by Storage.
-	optionsStorage, _, err := parseList(legacyList)
+	_, err = parseList(legacyList)
 	if err != nil {
 		return nil, err
 	}
-	if optionsStorage.LabelSelector == nil {
-		return deleted, nil
-	}
 
 	startStorage := time.Now()
-	res, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, &optionsStorage)
+	res, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	if err != nil {
 		log.WithValues("deleted", res).Error(err, "failed to delete collection successfully from Storage")
 		d.recordStorageDuration(true, mode2Str, d.kind, method, startStorage)
@@ -366,22 +355,17 @@ func (d *DualWriterMode2) ConvertToTable(ctx context.Context, object runtime.Obj
 	return d.Storage.ConvertToTable(ctx, object, tableOptions)
 }
 
-func parseList(legacyList []runtime.Object) (metainternalversion.ListOptions, map[string]int, error) {
-	options := metainternalversion.ListOptions{}
-	originKeys := []string{}
+func parseList(legacyList []runtime.Object) (map[string]int, error) {
 	indexMap := map[string]int{}
 
 	for i, obj := range legacyList {
 		accessor, err := utils.MetaAccessor(obj)
 		if err != nil {
-			return options, nil, err
+			return nil, err
 		}
 		indexMap[accessor.GetName()] = i
 	}
-	if len(originKeys) == 0 {
-		return options, nil, nil
-	}
-	return options, indexMap, nil
+	return indexMap, nil
 }
 
 func enrichLegacyObject(originalObj, returnedObj runtime.Object) error {

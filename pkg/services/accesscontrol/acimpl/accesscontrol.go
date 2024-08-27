@@ -19,7 +19,7 @@ import (
 
 var (
 	errAccessNotImplemented = errors.New("access control not implemented for resource")
-	tracer                  = otel.Tracer("github.com/grafana/grafana/pkg/services/search")
+	tracer                  = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/acimpl")
 )
 
 var _ accesscontrol.AccessControl = new(AccessControl)

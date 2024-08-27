@@ -67,7 +67,7 @@ func authorize(c *contextmodel.ReqContext, ac AccessControl, user identity.Reque
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
 
-	injected, err := evaluator.MutateScopes(c.Req.Context(), scopeInjector(scopeParams{
+	injected, err := evaluator.MutateScopes(ctx, scopeInjector(scopeParams{
 		OrgID:     user.GetOrgID(),
 		URLParams: web.Params(c.Req),
 	}))
@@ -76,7 +76,7 @@ func authorize(c *contextmodel.ReqContext, ac AccessControl, user identity.Reque
 		return
 	}
 
-	hasAccess, err := ac.Evaluate(c.Req.Context(), user, injected)
+	hasAccess, err := ac.Evaluate(ctx, user, injected)
 	if !hasAccess || err != nil {
 		deny(c, injected, err)
 		return
@@ -205,6 +205,10 @@ func AuthorizeInOrgMiddleware(ac AccessControl, authnService authn.Service) func
 			var orgUser identity.Requester = c.SignedInUser
 			if targetOrgID != c.SignedInUser.GetOrgID() {
 				orgUser, err = authnService.ResolveIdentity(c.Req.Context(), targetOrgID, c.SignedInUser.GetID())
+				if err == nil && orgUser.GetOrgID() == NoOrgID {
+					// User is not a member of the target org, so only their global permissions are relevant
+					orgUser, err = authnService.ResolveIdentity(c.Req.Context(), GlobalOrgID, c.SignedInUser.GetID())
+				}
 				if err != nil {
 					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
 					return

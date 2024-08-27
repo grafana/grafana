@@ -69,8 +69,8 @@ const (
 	AdmissionControlServiceType ServiceType = "admission"
 	// ConversionServiceType maps to pluginv2.ResourceConversion
 	ConversionServiceType ServiceType = "conversion"
-	// DataSourceServiceType maps to pluginv2.Data
-	DataServiceType ServiceType = "data"
+	// QueryServiceType maps to pluginv2.Data
+	QueryServiceType ServiceType = "query"
 	// StreamServiceType maps to pluginv2.Stream
 	StreamServiceType ServiceType = "stream"
 	// RouteServiceType maps pluginv2.Resource

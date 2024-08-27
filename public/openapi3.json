@@ -3614,7 +3614,7 @@
           "Policies": {
             "description": "Policies contains all policy identifiers included in the certificate.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
             "items": {
-              "$ref": "#/components/schemas/OID"
+              "type": "string"
             },
             "type": "array"
           },
@@ -3898,6 +3898,9 @@
             "example": "PE1C5CBDA0504A6A3",
             "type": "string"
           },
+          "type": {
+            "$ref": "#/components/schemas/CorrelationType"
+          },
           "uid": {
             "description": "Unique identifier of the correlation",
             "example": "50xhMlg9k",
@@ -3926,18 +3929,14 @@
             "$ref": "#/components/schemas/Transformations"
           },
           "type": {
-            "$ref": "#/components/schemas/CorrelationConfigType"
+            "$ref": "#/components/schemas/CorrelationType"
           }
         },
         "required": [
           "field",
-          "type",
           "target"
         ],
         "type": "object"
-      },
-      "CorrelationConfigType": {
-        "type": "string"
       },
       "CorrelationConfigUpdateDTO": {
         "properties": {
@@ -3971,12 +3970,12 @@
               "$ref": "#/components/schemas/Transformation"
             },
             "type": "array"
-          },
-          "type": {
-            "$ref": "#/components/schemas/CorrelationConfigType"
           }
         },
         "type": "object"
+      },
+      "CorrelationType": {
+        "type": "string"
       },
       "CounterResetHint": {
         "description": "or alternatively that we are dealing with a gauge histogram, where counter resets do not apply.",
@@ -4013,9 +4012,12 @@
             "type": "boolean"
           },
           "targetUID": {
-            "description": "Target data source UID to which the correlation is created. required if config.type = query",
+            "description": "Target data source UID to which the correlation is created. required if type = query",
             "example": "PE1C5CBDA0504A6A3",
             "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/CorrelationType"
           }
         },
         "type": "object"
@@ -5613,14 +5615,6 @@
         },
         "title": "Frames is a slice of Frame pointers.",
         "type": "array"
-      },
-      "GenericPublicError": {
-        "properties": {
-          "body": {
-            "$ref": "#/components/schemas/PublicError"
-          }
-        },
-        "type": "object"
       },
       "GetAccessTokenResponseDTO": {
         "properties": {
@@ -7398,10 +7392,6 @@
         "title": "OAuth2 is the oauth2 client configuration.",
         "type": "object"
       },
-      "OID": {
-        "title": "An OID represents an ASN.1 OBJECT IDENTIFIER.",
-        "type": "object"
-      },
       "ObjectIdentifier": {
         "items": {
           "format": "int64",
@@ -8482,7 +8472,8 @@
             "type": "string"
           },
           "for": {
-            "$ref": "#/components/schemas/Duration"
+            "format": "duration",
+            "type": "string"
           },
           "id": {
             "format": "int64",
@@ -11481,6 +11472,9 @@
             "description": "Optional label identifying the correlation",
             "example": "My label",
             "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/CorrelationType"
           }
         },
         "type": "object"
@@ -12033,7 +12027,7 @@
       },
       "ValidationError": {
         "properties": {
-          "msg": {
+          "message": {
             "example": "error message",
             "type": "string"
           }
@@ -12228,7 +12222,6 @@
         "type": "object"
       },
       "alertGroups": {
-        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -12417,7 +12410,6 @@
         "type": "object"
       },
       "gettableAlerts": {
-        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -12541,7 +12533,6 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
@@ -25449,11 +25440,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenericPublicError"
+                  "$ref": "#/components/schemas/PublicError"
                 }
               }
             },
-            "description": "GenericPublicError"
+            "description": "PublicError"
           }
         },
         "summary": "Delete a mute timing.",
@@ -25549,11 +25540,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenericPublicError"
+                  "$ref": "#/components/schemas/PublicError"
                 }
               }
             },
-            "description": "GenericPublicError"
+            "description": "PublicError"
           }
         },
         "summary": "Replace an existing mute timing.",
@@ -25878,11 +25869,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenericPublicError"
+                  "$ref": "#/components/schemas/PublicError"
                 }
               }
             },
-            "description": "GenericPublicError"
+            "description": "PublicError"
           }
         },
         "summary": "Delete a template.",
@@ -25918,11 +25909,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenericPublicError"
+                  "$ref": "#/components/schemas/PublicError"
                 }
               }
             },
-            "description": "GenericPublicError"
+            "description": "PublicError"
           }
         },
         "summary": "Get a notification template.",
@@ -25975,21 +25966,21 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenericPublicError"
+                  "$ref": "#/components/schemas/PublicError"
                 }
               }
             },
-            "description": "GenericPublicError"
+            "description": "PublicError"
           },
           "409": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenericPublicError"
+                  "$ref": "#/components/schemas/PublicError"
                 }
               }
             },
-            "description": "GenericPublicError"
+            "description": "PublicError"
           }
         },
         "summary": "Updates an existing notification template.",

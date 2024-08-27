@@ -53,6 +53,7 @@ var ScopeDashboardBindingResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 			{Name: "Created At", Type: "date"},
 			{Name: "Dashboard", Type: "string"},
 			{Name: "Scope", Type: "string"},
+			{Name: "Groups", Type: "array"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
 			m, ok := obj.(*ScopeDashboardBinding)
@@ -64,6 +65,7 @@ var ScopeDashboardBindingResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
 				m.Spec.Dashboard,
 				m.Spec.Scope,
+				m.Spec.Groups,
 			}, nil
 		},
 	},

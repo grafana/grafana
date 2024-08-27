@@ -8,7 +8,7 @@ import (
 	v0alpha1 "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
 )
 
-// DataPlaneServiceSpecApplyConfiguration represents an declarative configuration of the DataPlaneServiceSpec type for use
+// DataPlaneServiceSpecApplyConfiguration represents a declarative configuration of the DataPlaneServiceSpec type for use
 // with apply.
 type DataPlaneServiceSpecApplyConfiguration struct {
 	PluginID   *string                     `json:"pluginID,omitempty"`
@@ -18,7 +18,7 @@ type DataPlaneServiceSpecApplyConfiguration struct {
 	Services   []ServiceApplyConfiguration `json:"services,omitempty"`
 }
 
-// DataPlaneServiceSpecApplyConfiguration constructs an declarative configuration of the DataPlaneServiceSpec type for use with
+// DataPlaneServiceSpecApplyConfiguration constructs a declarative configuration of the DataPlaneServiceSpec type for use with
 // apply.
 func DataPlaneServiceSpec() *DataPlaneServiceSpecApplyConfiguration {
 	return &DataPlaneServiceSpecApplyConfiguration{}
