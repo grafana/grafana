@@ -300,7 +300,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 
 		// Ensure that parseTime is enabled for MySQL
 		if ss.dbCfg.Type == migrator.MySQL && !strings.Contains(connection, "parseTime=") {
-			if ss.features.IsEnabledGlobally() {
+			if ss.features.IsEnabledGlobally(featuremgmt.FlagMysqlParseTime) {
 				connection += "&parseTime=true"
 			}
 		}
