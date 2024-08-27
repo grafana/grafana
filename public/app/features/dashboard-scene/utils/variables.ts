@@ -57,7 +57,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             defaultKeys: v.defaultKeys,
             useQueriesAsFilterForOptions: true,
             supportsMultiValueOperators: Boolean(
-              v.datasource?.uid && config.datasources[v.datasource.uid].meta.multiValueFilterOperators
+              v.datasource?.uid && config.datasources[v.datasource.uid]?.meta.multiValueFilterOperators
             ),
           });
         }
@@ -137,7 +137,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultKeys: variable.defaultKeys,
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: Boolean(
-        variable.datasource?.uid && config.datasources[variable.datasource.uid].meta.multiValueFilterOperators
+        variable.datasource?.uid && config.datasources[variable.datasource.uid]?.meta.multiValueFilterOperators
       ),
     });
   }
