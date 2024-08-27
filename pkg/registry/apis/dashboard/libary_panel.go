@@ -92,28 +92,3 @@ func (s *libraryPanelStore) Get(ctx context.Context, name string, options *metav
 	}
 	return nil, lpr.NewNotFound(name)
 }
-
-// func toUserItem(u *user.User, ns string) *identityv0.User {
-// 	item := &identityv0.User{
-// 		ObjectMeta: metav1.ObjectMeta{
-// 			Name:              u.UID,
-// 			Namespace:         ns,
-// 			ResourceVersion:   fmt.Sprintf("%d", u.Updated.UnixMilli()),
-// 			CreationTimestamp: metav1.NewTime(u.Created),
-// 		},
-// 		Spec: identityv0.UserSpec{
-// 			Name:          u.Name,
-// 			Login:         u.Login,
-// 			Email:         u.Email,
-// 			EmailVerified: u.EmailVerified,
-// 			Disabled:      u.IsDisabled,
-// 		},
-// 	}
-// 	obj, _ := utils.MetaAccessor(item)
-// 	obj.SetUpdatedTimestamp(&u.Updated)
-// 	obj.SetOriginInfo(&utils.ResourceOriginInfo{
-// 		Name: "SQL",
-// 		Path: strconv.FormatInt(u.ID, 10),
-// 	})
-// 	return item
-// }
