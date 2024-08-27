@@ -160,8 +160,11 @@ const getHistory = async (name, owner, target, sinceDate) => {
       cursor,
     });
     LOG(`GraphQL: ${JSON.stringify(result)}`);
-    nodes = [...nodes, ...result.repository.object.history.nodes];
-    const { hasNextPage, endCursor } = result.repository.object.history.pageInfo;
+
+    if(result) {
+      nodes = [...nodes, ...result?.repository.object.history.nodes];
+    }
+    const { hasNextPage, endCursor } = result?.repository.object.history.pageInfo;
     if (!hasNextPage) {
       break;
     }
