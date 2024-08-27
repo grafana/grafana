@@ -46,7 +46,9 @@ function estimateSize() {
 }
 
 const MIN_HEIGHT = 400;
+// On every 100th index we will recalculate the width of the popover.
 const INDEX_WIDTH_CALCULATION = 100;
+// A multiplier guesstimate times the amount of characters. I any padding or image support etc. is added this will need to be updated.
 const WIDTH_MULTIPLIER = 7.3;
 
 export const Combobox = ({ options, onChange, value, id, ...restProps }: ComboboxProps) => {
