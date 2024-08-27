@@ -17,45 +17,45 @@ import (
 )
 
 var (
-	_ rest.Storage         = (*LegacyTeamMemberStore)(nil)
-	_ rest.Scoper          = (*LegacyTeamMemberStore)(nil)
-	_ rest.StorageMetadata = (*LegacyTeamMemberStore)(nil)
-	_ rest.Connecter       = (*LegacyTeamMemberStore)(nil)
+	_ rest.Storage         = (*LegacyTeamMemberREST)(nil)
+	_ rest.Scoper          = (*LegacyTeamMemberREST)(nil)
+	_ rest.StorageMetadata = (*LegacyTeamMemberREST)(nil)
+	_ rest.Connecter       = (*LegacyTeamMemberREST)(nil)
 )
 
-func NewLegacyTeamMemberStore(store legacy.LegacyIdentityStore) *LegacyTeamMemberStore {
-	return &LegacyTeamMemberStore{store}
+func NewLegacyTeamMemberREST(store legacy.LegacyIdentityStore) *LegacyTeamMemberREST {
+	return &LegacyTeamMemberREST{store}
 }
 
-type LegacyTeamMemberStore struct {
+type LegacyTeamMemberREST struct {
 	store legacy.LegacyIdentityStore
 }
 
 // New implements rest.Storage.
-func (s *LegacyTeamMemberStore) New() runtime.Object {
+func (s *LegacyTeamMemberREST) New() runtime.Object {
 	return &identityv0.TeamMemberList{}
 }
 
 // Destroy implements rest.Storage.
-func (s *LegacyTeamMemberStore) Destroy() {}
+func (s *LegacyTeamMemberREST) Destroy() {}
 
 // NamespaceScoped implements rest.Scoper.
-func (s *LegacyTeamMemberStore) NamespaceScoped() bool {
+func (s *LegacyTeamMemberREST) NamespaceScoped() bool {
 	return true
 }
 
 // ProducesMIMETypes implements rest.StorageMetadata.
-func (s *LegacyTeamMemberStore) ProducesMIMETypes(verb string) []string {
+func (s *LegacyTeamMemberREST) ProducesMIMETypes(verb string) []string {
 	return []string{"application/json"}
 }
 
 // ProducesObject implements rest.StorageMetadata.
-func (s *LegacyTeamMemberStore) ProducesObject(verb string) interface{} {
+func (s *LegacyTeamMemberREST) ProducesObject(verb string) interface{} {
 	return s.New()
 }
 
 // Connect implements rest.Connecter.
-func (s *LegacyTeamMemberStore) Connect(ctx context.Context, name string, options runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (s *LegacyTeamMemberREST) Connect(ctx context.Context, name string, options runtime.Object, responder rest.Responder) (http.Handler, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -86,12 +86,12 @@ func (s *LegacyTeamMemberStore) Connect(ctx context.Context, name string, option
 }
 
 // NewConnectOptions implements rest.Connecter.
-func (s *LegacyTeamMemberStore) NewConnectOptions() (runtime.Object, bool, string) {
+func (s *LegacyTeamMemberREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
 }
 
 // ConnectMethods implements rest.Connecter.
-func (s *LegacyTeamMemberStore) ConnectMethods() []string {
+func (s *LegacyTeamMemberREST) ConnectMethods() []string {
 	return []string{http.MethodGet}
 }
 
