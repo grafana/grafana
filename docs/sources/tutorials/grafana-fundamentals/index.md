@@ -41,6 +41,7 @@ Alternatively, you can also watch our Grafana for Beginners series where we disc
    </iframe>
 </div>
 
+<!-- INTERACTIVE ignore START -->
 {{% class "prerequisite-section" %}}
 
 ### Prerequisites
@@ -50,11 +51,12 @@ Alternatively, you can also watch our Grafana for Beginners series where we disc
 - [Git](https://git-scm.com/)
 
 {{% /class %}}
+<!-- INTERACTIVE ignore END -->
 
 <!-- INTERACTIVE ignore START -->
 
 {{< admonition type="tip" >}}
-Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting](https://killercoda.com/grafana-labs/course/full-stack/tutorial-enviroment).
+Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting](https://killercoda.com/grafana-labs/course/grafana/grafana-fundamentals).
 
 It's a fully configured environment with all the dependencies already installed.
 
@@ -143,9 +145,15 @@ Grafana is an open-source platform for monitoring and observability that lets yo
 1. Open a new tab.
 1. Browse to [http://localhost:3000](http://localhost:3000).
 
+<!-- INTERACTIVE ignore START -->
 {{< admonition type="note" >}}
 This demo does not require a login page or credentials. However, if you choose to install Grafana locally, you will need to log in and provide credentials. In that case, the default username and password is `admin`.
 {{< /admonition >}}
+<!-- INTERACTIVE ignore START -->
+
+{{< docs/ignore >}}
+> This demo does not require a login page or credentials. However, if you choose to install Grafana locally, you will need to log in and provide credentials. In that case, the default username and password is `admin`.
+{{< /docs/ignore >}}
 
 The first thing you see is the Home dashboard, which helps you get started.
 
@@ -423,15 +431,23 @@ We have now configured an alert rule and a contact point. Now let's see if we ca
 
 Once the query `sum(rate(tns_request_duration_seconds_count[5m])) by(route)` returns a value greater than `0.2` Grafana will trigger our alert. Browse to the Request Bin we created earlier and find the sent Grafana alert notification with details and metadata.
 
+<!-- INTERACTIVE ignore START -->
 {{< admonition type="note" >}}
 The alert may be triggered by the `/metrics` endpoint which is frequently accessed by Grafana when pulling metrics from the application. If this happens, you can increase the **Threshold** value in **Section 2** for testing purposes.
 {{< /admonition >}}
+<!-- INTERACTIVE ignore START -->
+
+{{< docs/ignore >}}
+> The alert may be triggered by the `/metrics` endpoint which is frequently accessed by Grafana when pulling metrics from the application. If this happens, you can increase the **Threshold** value in **Section 2** for testing purposes.
+{{< /docs/ignore >}}
 
 ### Display Grafana Alerts to your dashboard
 
 In most cases, it's also valuable to display Grafana Alerts as annotations to your dashboard. Check out the video tutorial below to learn how to display alerting to your dashboard.
 
+<!-- INTERACTIVE ignore START -->
 {{< youtube id="ClLp-iSoaSY" >}}
+<!-- INTERACTIVE ignore END -->
 
 Let's see how we can configure this.
 
