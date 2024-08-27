@@ -3,6 +3,8 @@ import { Meta, StoryFn, StoryObj } from '@storybook/react';
 import { Chance } from 'chance';
 import { ComponentProps, useEffect, useState } from 'react';
 
+import { Field } from '../Forms/Field';
+
 import { Combobox, Option, Value } from './Combobox';
 
 const chance = new Chance();
@@ -15,11 +17,18 @@ const meta: Meta<PropsAndCustomArgs> = {
   args: {
     loading: undefined,
     invalid: undefined,
+    width: 30,
     placeholder: 'Select an option...',
     options: [
       { label: 'Apple', value: 'apple' },
       { label: 'Banana', value: 'banana' },
       { label: 'Carrot', value: 'carrot' },
+      // Long label to test overflow
+      {
+        label:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+        value: 'long-text',
+      },
       { label: 'Dill', value: 'dill' },
       { label: 'Eggplant', value: 'eggplant' },
       { label: 'Fennel', value: 'fennel' },
@@ -40,14 +49,17 @@ const meta: Meta<PropsAndCustomArgs> = {
 const BasicWithState: StoryFn<typeof Combobox> = (args) => {
   const [value, setValue] = useState(args.value);
   return (
-    <Combobox
-      {...args}
-      value={value}
-      onChange={(val) => {
-        setValue(val?.value || null);
-        action('onChange')(val);
-      }}
-    />
+    <Field label="Test input" description="Input with a few options">
+      <Combobox
+        id="test-combobox"
+        {...args}
+        value={value}
+        onChange={(val) => {
+          setValue(val?.value || null);
+          action('onChange')(val);
+        }}
+      />
+    </Field>
   );
 };
 
@@ -56,10 +68,10 @@ type Story = StoryObj<typeof Combobox>;
 export const Basic: Story = {};
 
 async function generateOptions(amount: number): Promise<Option[]> {
-  return Array.from({ length: amount }, () => ({
-    label: chance.name(),
+  return Array.from({ length: amount }, (_, index) => ({
+    label: chance.sentence({ words: index % 5 }),
     value: chance.guid(),
-    description: chance.sentence(),
+    //description: chance.sentence(),
   }));
 }
 
