@@ -75,6 +75,7 @@ func TestIntegrationCreateOrUpdateCorrelation(t *testing.T) {
 			Description: needsMigration.Description,
 			Config:      needsMigration.Config,
 			Provisioned: true,
+			Type:        needsMigration.Type,
 		})
 
 		// should be added
@@ -86,6 +87,7 @@ func TestIntegrationCreateOrUpdateCorrelation(t *testing.T) {
 			Description: needsMigration.Description,
 			Config:      needsMigration.Config,
 			Provisioned: true,
+			Type:        needsMigration.Type,
 		})
 
 		res := ctx.Get(GetParams{
