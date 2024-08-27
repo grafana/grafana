@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/authlib/claims"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -242,6 +243,11 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	defer span.End()
 
 	permissions := []accesscontrol.Permission{}
+	cacheKey := accesscontrol.GetUserPermissionCacheKey(user)
+	if cachedPermissions, ok := s.cache.Get(cacheKey); ok {
+		return cachedPermissions.([]accesscontrol.Permission), nil
+	}
+
 	permissions, err := s.getCachedBasicRolesPermissions(ctx, user, options, permissions)
 	if err != nil {
 		return nil, err
@@ -258,6 +264,7 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	}
 
 	permissions = append(permissions, userPermissions...)
+	s.cache.Set(cacheKey, permissions, cacheTTL)
 	span.SetAttributes(attribute.Int("num_permissions", len(permissions)))
 
 	return permissions, nil
@@ -337,8 +344,14 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 	teams := user.GetTeams()
 	orgID := user.GetOrgID()
 	miss := teams
+	compositeKey := accesscontrol.GetTeamPermissionCompositeCacheKey(teams, orgID)
 
 	if !options.ReloadCache {
+		teamsPermissions, ok := s.cache.Get(compositeKey)
+		if ok {
+			return teamsPermissions.([]accesscontrol.Permission), nil
+		}
+
 		miss = make([]int64, 0)
 		for _, teamID := range teams {
 			key := accesscontrol.GetTeamPermissionCacheKey(teamID, orgID)
@@ -368,12 +381,13 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 			permissions = append(permissions, teamPermissions...)
 		}
 	}
+	s.cache.Set(compositeKey, permissions, cacheTTL)
 
 	return permissions, nil
 }
 
 func (s *Service) ClearUserPermissionCache(user identity.Requester) {
-	s.cache.Delete(accesscontrol.GetPermissionCacheKey(user))
+	s.cache.Delete(accesscontrol.GetUserPermissionCacheKey(user))
 	s.cache.Delete(accesscontrol.GetUserDirectPermissionCacheKey(user))
 }
 
