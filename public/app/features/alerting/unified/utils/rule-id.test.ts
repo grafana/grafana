@@ -4,12 +4,31 @@ import { RuleIdentifier } from 'app/types/unified-alerting';
 import {
   GrafanaAlertStateDecision,
   GrafanaRuleDefinition,
+  PromAlertingRuleState,
+  PromRuleType,
   RulerAlertingRuleDTO,
   RulerGrafanaRuleDTO,
   RulerRecordingRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { hashRulerRule, parse, stringifyIdentifier, getRuleIdFromPathname } from './rule-id';
+import { hashRulerRule, parse, stringifyIdentifier, getRuleIdFromPathname, hashRule, equal } from './rule-id';
+
+const promRule = {
+  name: 'cpu-over-90',
+  query: 'cpu_usage_seconds_total{job="integrations/node_exporter"} > 90',
+  labels: { type: 'cpu' },
+  annotations: { description: 'CPU usage too high' },
+  state: PromAlertingRuleState.Firing,
+  type: PromRuleType.Alerting,
+  health: 'ok',
+};
+
+const rulerRule = {
+  alert: 'cpu-over-90',
+  expr: 'cpu_usage_seconds_total{job="integrations/node_exporter"} > 90',
+  labels: { type: 'cpu' },
+  annotations: { description: 'CPU usage too high' },
+};
 
 describe('hashRulerRule', () => {
   it('should not hash unknown rule types', () => {
@@ -114,6 +133,41 @@ describe('hashRulerRule', () => {
 
   it('should throw for malformed identifier', () => {
     expect(() => parse('foo$bar$baz', false)).toThrow(/failed to parse/i);
+  });
+});
+
+describe('hashRule', () => {
+  it('should produce hashRulerRule compatible hashes', () => {
+    const promHash = hashRule(promRule);
+    const rulerHash = hashRulerRule(rulerRule);
+
+    expect(promHash).toBe(rulerHash);
+  });
+});
+
+describe('eqaul', () => {
+  it('should return true for Prom and cloud identifiers with the same name, type, query and labels', () => {
+    const promIdentifier: RuleIdentifier = {
+      ruleSourceName: 'mimir-cloud',
+      namespace: 'cloud-alerts',
+      groupName: 'cpu-usage',
+      ruleName: promRule.name,
+      ruleHash: hashRule(promRule),
+    };
+
+    const cloudIdentifier: RuleIdentifier = {
+      ruleSourceName: 'mimir-cloud',
+      namespace: 'cloud-alerts',
+      groupName: 'cpu-usage',
+      ruleName: promRule.name,
+      ruleHash: hashRulerRule(rulerRule),
+    };
+
+    const promToCloud = equal(promIdentifier, cloudIdentifier);
+    const cloudToProm = equal(cloudIdentifier, promIdentifier);
+
+    expect(promToCloud).toBe(true);
+    expect(cloudToProm).toBe(true);
   });
 });
 
