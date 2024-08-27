@@ -22,10 +22,11 @@ const (
 )
 
 type StorageOptions struct {
-	StorageType            StorageType
-	DataPath               string
-	Address                string
-	DualWriterDesiredModes map[string]grafanarest.DualWriterMode
+	StorageType                  StorageType
+	DataPath                     string
+	Address                      string
+	DualWriterDesiredModes       map[string]grafanarest.DualWriterMode
+	DualWriterDataSyncJobEnabled map[string]bool
 }
 
 func NewStorageOptions() *StorageOptions {

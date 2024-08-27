@@ -159,6 +159,20 @@ func TestIntegrationDashboardsApp(t *testing.T) {
           "update",
           "watch"
         ]
+      },
+      {
+        "resource": "librarypanels",
+        "responseKind": {
+          "group": "",
+          "kind": "LibraryPanel",
+          "version": ""
+        },
+        "scope": "Namespaced",
+        "singularResource": "librarypanel",
+        "verbs": [
+          "get",
+          "list"
+        ]
       }
     ],
     "version": "v0alpha1"
