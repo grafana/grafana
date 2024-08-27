@@ -5,9 +5,14 @@ import { GetPluginExtensionsOptions, UsePluginExtensionsResult } from '@grafana/
 
 import { getPluginExtensions } from './getPluginExtensions';
 import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
+import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
 
-export function createUsePluginExtensions(extensionsRegistry: ReactivePluginExtensionsRegistry) {
+export function createUsePluginExtensions(
+  extensionsRegistry: ReactivePluginExtensionsRegistry,
+  addedComponentsRegistry: AddedComponentsRegistry
+) {
   const observableRegistry = extensionsRegistry.asObservable();
+  const observableAddedComponentRegistry = addedComponentsRegistry.asObservable();
   const cache: {
     id: string;
     extensions: Record<string, { context: GetPluginExtensionsOptions['context']; extensions: PluginExtension[] }>;
@@ -18,8 +23,9 @@ export function createUsePluginExtensions(extensionsRegistry: ReactivePluginExte
 
   return function usePluginExtensions(options: GetPluginExtensionsOptions): UsePluginExtensionsResult<PluginExtension> {
     const registry = useObservable(observableRegistry);
+    const addedComponentsRegistry = useObservable(observableAddedComponentRegistry);
 
-    if (!registry) {
+    if (!registry || !addedComponentsRegistry) {
       return { extensions: [], isLoading: false };
     }
 
@@ -39,7 +45,11 @@ export function createUsePluginExtensions(extensionsRegistry: ReactivePluginExte
       };
     }
 
-    const { extensions } = getPluginExtensions({ ...options, registry });
+    const { extensions } = getPluginExtensions({
+      ...options,
+      registry,
+      addedComponentsRegistry,
+    });
 
     cache.extensions[key] = {
       context: options.context,
