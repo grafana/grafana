@@ -50,7 +50,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     td: {
       paddingRight: theme.spacing(1),
-    }
+    },
   }),
   icon: css({
     display: 'flex',
@@ -63,7 +63,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderBottom: `2px solid ${theme.colors.border.strong}`,
     th: {
       paddingRight: theme.spacing(1),
-    }
+    },
   }),
   data: css({
     padding: '10px',
