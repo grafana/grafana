@@ -120,6 +120,9 @@
       "used-by_one": "",
       "used-by_other": ""
     },
+    "contactPointFilter": {
+      "label": ""
+    },
     "grafana-rules": {
       "export-rules": "",
       "loading": "",
@@ -200,6 +203,9 @@
       "recording-rule": ""
     },
     "rules": {
+      "add-rule": {
+        "success": ""
+      },
       "delete-rule": {
         "success": ""
       },
@@ -207,6 +213,9 @@
         "success": ""
       },
       "resume-rule": {
+        "success": ""
+      },
+      "update-rule": {
         "success": ""
       }
     }
@@ -342,6 +351,7 @@
     }
   },
   "common": {
+    "cancel": "",
     "locale": {
       "default": "Por defecto"
     },
@@ -691,18 +701,14 @@
       "message": ""
     }
   },
+  "embed": {
+    "share": {
+      "time-range-description": "",
+      "time-range-label": ""
+    }
+  },
   "explore": {
     "add-to-dashboard": "Añadir al tablero",
-    "add-to-library-modal": {
-      "auto-star": "",
-      "data-source-name": "",
-      "data-source-type": "",
-      "description": "",
-      "info": "",
-      "query": "",
-      "title": "",
-      "visibility": ""
-    },
     "logs": {
       "maximum-pinned-logs": "",
       "no-logs-found": "",
@@ -710,6 +716,7 @@
       "stop-scan": ""
     },
     "query-library": {
+      "add-edit-description": "",
       "cancel": "",
       "default-description": "",
       "delete-query": "",
@@ -718,9 +725,25 @@
       "private": "",
       "public": "",
       "query-deleted": "",
+      "query-template-add-error": "",
       "query-template-added": "",
-      "query-template-error": "",
+      "query-template-edit-error": "",
+      "query-template-edited": "",
       "save": ""
+    },
+    "query-template-modal": {
+      "add-info": "",
+      "add-title": "",
+      "auto-star": "",
+      "data-source-name": "",
+      "description": "",
+      "edit-info": "",
+      "edit-title": "",
+      "query": "",
+      "visibility": ""
+    },
+    "query-template-modall": {
+      "data-source-type": ""
     },
     "rich-history": {
       "close-tooltip": "Cerrar el historial de consultas",
@@ -961,6 +984,139 @@
       "refresh": "Actualizar"
     }
   },
+  "ldap-drawer": {
+    "attributes-section": {
+      "description": "",
+      "email": {
+        "label": ""
+      },
+      "label": "",
+      "member-of": {
+        "label": ""
+      },
+      "name": {
+        "label": ""
+      },
+      "surname": {
+        "label": ""
+      },
+      "username": {
+        "label": ""
+      }
+    },
+    "extra-security-section": {
+      "label": "",
+      "min-tls-version": {
+        "description": "",
+        "label": ""
+      },
+      "start-tls": {
+        "description": "",
+        "label": ""
+      },
+      "tls-ciphers": {
+        "description": "",
+        "label": "",
+        "placeholder": ""
+      },
+      "use-ssl": {
+        "description": "",
+        "label": "",
+        "tooltip": ""
+      }
+    },
+    "group-mapping-section": {
+      "description": "",
+      "group-search-base-dns": {
+        "description": "",
+        "label": ""
+      },
+      "group-search-filter": {
+        "description": "",
+        "label": ""
+      },
+      "group-search-filter-user-attribute": {
+        "description": "",
+        "label": ""
+      },
+      "label": "",
+      "skip-org-role-sync": {
+        "description": "",
+        "label": ""
+      }
+    },
+    "misc-section": {
+      "allow-sign-up": {
+        "descrition": "",
+        "label": ""
+      },
+      "label": "",
+      "port": {
+        "description": "",
+        "label": ""
+      },
+      "timeout": {
+        "description": "",
+        "label": ""
+      }
+    },
+    "title": ""
+  },
+  "ldap-settings-page": {
+    "advanced-settings-section": {
+      "edit": {
+        "button": ""
+      },
+      "subtitle": "",
+      "title": ""
+    },
+    "alert": {
+      "discard-success": "",
+      "error-fetching": "",
+      "error-saving": "",
+      "error-update": "",
+      "error-validate-form": "",
+      "feature-flag-disabled": "",
+      "saved": ""
+    },
+    "bind-dn": {
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
+    "bind-password": {
+      "label": ""
+    },
+    "buttons-section": {
+      "discard": {
+        "button": ""
+      },
+      "save": {
+        "button": ""
+      },
+      "save-and-enable": {
+        "button": ""
+      }
+    },
+    "documentation": "",
+    "host": {
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
+    "search_filter": {
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
+    "search-base-dns": {
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
+    "subtitle": "",
+    "title": ""
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "Cancelar",
@@ -1038,6 +1194,11 @@
     "signup": {
       "button-label": "Regístrate",
       "new-to-question": "¿Te acabas de unir a Grafana?"
+    }
+  },
+  "logs": {
+    "infinite-scroll": {
+      "older-logs": ""
     }
   },
   "migrate-to-cloud": {
@@ -1503,6 +1664,10 @@
       "subtitle": "Use cuentas de servicio para ejecutar cargas de trabajo automatizadas en Grafana",
       "title": "Cuentas de servicios"
     },
+    "shared-dashboard": {
+      "subtitle": "",
+      "title": ""
+    },
     "sign-out": {
       "title": "Cerrar sesión"
     },
@@ -1584,6 +1749,14 @@
     "starred-dashboard": "Panel de control destacado",
     "unstarred-dashboard": "Panel de control no destacado"
   },
+  "oauth": {
+    "form": {
+      "server-discovery-action-button": "",
+      "server-discovery-modal-close": "",
+      "server-discovery-modal-loading": "",
+      "server-discovery-modal-submit": ""
+    }
+  },
   "panel": {
     "header-menu": {
       "copy": "Copiar",
@@ -1656,6 +1829,34 @@
     }
   },
   "plugins": {
+    "catalog": {
+      "update-all": {
+        "all-plugins-updated": "",
+        "available-header": "",
+        "button": "",
+        "cloud-update-message": "",
+        "error": "",
+        "header": "",
+        "installed-header": "",
+        "modal-confirmation": "",
+        "modal-dismiss": "",
+        "modal-title": "",
+        "name-header": "",
+        "update-header": ""
+      }
+    },
+    "details": {
+      "labels": {
+        "dependencies": "",
+        "downloads": "",
+        "from": "",
+        "reportAbuse": "",
+        "signature": "",
+        "status": "",
+        "updatedAt": "",
+        "version": ""
+      }
+    },
     "empty-state": {
       "message": ""
     }
@@ -1716,8 +1917,7 @@
       "welcome-title": "¡Bienvenidos al tablero público!"
     },
     "delete-modal": {
-      "revoke-nonorphaned-body-text": "¿Seguro que quieres revocar esta URL? El tablero dejará de ser público.",
-      "revoke-orphaned-body-text": "El tablero público huérfano ya no será público.",
+      "revoke-body-text": "",
       "revoke-title": "Revocar URL pública"
     },
     "email-sharing": {
@@ -1816,10 +2016,6 @@
       "revoke-button-tooltip": "Revocar URL del tablero público",
       "view-button-tooltip": "Ver tablero público"
     },
-    "dashboard-title": {
-      "orphaned-title": "<0>Tablero público huérfano</0>",
-      "orphaned-tooltip": "El tablero vinculado ya se ha eliminado"
-    },
     "empty-state": {
       "message": "",
       "more-info": ""
@@ -1830,10 +2026,12 @@
   },
   "public-dashboard-users-access-list": {
     "dashboard-modal": {
+      "external-link": "",
       "loading-text": "Cargando...",
       "open-dashboard-list-text": "Abrir lista de tableros",
       "public-dashboard-link": "URL del tablero público",
-      "public-dashboard-setting": "Ajustes del tablero público"
+      "public-dashboard-setting": "Ajustes del tablero público",
+      "sharing-setting": ""
     },
     "delete-user-modal": {
       "delete-user-button-text": "Eliminar usuario",
@@ -1843,8 +2041,12 @@
       "revoke-user-access-modal-desc-line1": "¿Seguro que quieres revocar el acceso para {{email}}?",
       "revoke-user-access-modal-desc-line2": "Esta acción revocará inmediatamente el acceso de {{email}} a todos los tableros públicos."
     },
+    "delete-user-shared-dashboards-modal": {
+      "revoke-user-access-modal-desc-line2": ""
+    },
     "modal": {
-      "dashboard-modal-title": "Paneles de control públicos"
+      "dashboard-modal-title": "Paneles de control públicos",
+      "shared-dashboard-modal-title": ""
     },
     "table-header": {
       "activated-label": "Activado",
@@ -1895,6 +2097,8 @@
       "restore-button": "",
       "restore-loading": "",
       "title": "",
+      "folder-picker-text_one": "",
+      "folder-picker-text_other": "",
       "text_one": "",
       "text_other": ""
     }
@@ -1932,8 +2136,17 @@
     },
     "dismissable-button": "Cerrar"
   },
+  "save-dashboards": {
+    "name-exists": {
+      "message-info": "",
+      "message-suggestion": "",
+      "title": ""
+    }
+  },
   "scopes": {
     "dashboards": {
+      "collapse": "",
+      "expand": "",
       "loading": "",
       "noResultsForFilter": "",
       "noResultsForFilterClear": "",
@@ -2031,8 +2244,7 @@
       "html": "Incrustar HTML",
       "html-description": "El código HTML a continuación se puede pegar e incluir en otra página web. A menos que se active el acceso anónimo, el usuario que vea esa página debe iniciar sesión en Grafana para que el gráfico se cargue.",
       "info": "Genere un HTML para incrustar un iframe con este panel.",
-      "time-range": "Intervalo de tiempo actual",
-      "time-range-description": "Transforma el intervalo de tiempo relativo actual en un intervalo de tiempo absoluto"
+      "time-range": ""
     },
     "export": {
       "back-button": "Volver a la configuración de exportación",
@@ -2102,10 +2314,20 @@
   },
   "share-panel": {
     "drawer": {
-      "share-link-title": ""
+      "new-library-panel-title": "",
+      "share-embed-title": "",
+      "share-link-title": "",
+      "share-snapshot-title": ""
     },
     "menu": {
-      "share-link-title": ""
+      "new-library-panel-title": "",
+      "share-embed-title": "",
+      "share-link-title": "",
+      "share-snapshot-title": ""
+    },
+    "new-library-panel": {
+      "cancel-button": "",
+      "create-button": ""
     }
   },
   "share-playlist": {
@@ -2129,8 +2351,27 @@
     }
   },
   "shared-dashboard": {
+    "delete-modal": {
+      "revoke-body-text": "",
+      "revoke-title": ""
+    },
     "fields": {
       "timezone-label": "Zona horaria"
+    }
+  },
+  "shared-dashboard-list": {
+    "button": {
+      "config-button-tooltip": "",
+      "revoke-button-text": "",
+      "revoke-button-tooltip": "",
+      "view-button-tooltip": ""
+    },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
+    "toggle": {
+      "pause-sharing-toggle-text": ""
     }
   },
   "shared-preferences": {
@@ -2191,6 +2432,9 @@
       "success-creation": "",
       "success-delete": "",
       "view-all-button": ""
+    },
+    "share-panel": {
+      "info-alert": ""
     },
     "url-column-header": "URL de la instantánea",
     "view-button": "Vista"
@@ -2320,7 +2564,8 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Usuarios del tablero público"
+      "public-dashboard-users-tab-title": "Usuarios del tablero público",
+      "shared-dashboard-users-tab-title": ""
     }
   },
   "variable": {
