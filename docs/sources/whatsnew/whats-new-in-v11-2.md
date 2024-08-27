@@ -38,6 +38,8 @@ This intuitive UI offers real-time updates on your migration status, making your
 
 Ready to make the move? Explore our [migration guide](https://grafana.com/docs/grafana-cloud/account-management/migration-guide/) to learn more about the Cloud Migration Assistant today and begin your effortless transition to Grafana Cloud.
 
+{{< youtube id="66W1UMHtX3U" >}}
+
 ## Navigation bookmarks
 
 <!-- #grafana-frontend-platform -->
@@ -114,6 +116,8 @@ As part of this improvement, we've also added the ability to control the order i
 
 In future releases, we'll add one-click functionality to data links in other Grafana visualizations.
 
+{{< youtube id="zOsM8VqwYpw" >}}
+
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#data-links)
 
 ### State timeline supports pagination
@@ -131,6 +135,8 @@ With paginated results, the visualization displays a subset of all series on eac
 Pagination is especially useful if you're running a query on a dynamic data source. It's also helpful regardless of whether you have many data frames with just two fields (time + value) or few frames with many fields (time + many values).
 
 This feature is [a community contribution](https://github.com/grafana/grafana/pull/89586) ❤️
+
+{{< youtube id="mgkjWJvYoHk" >}}
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/state-timeline/#page-size-enable-pagination)
 
@@ -151,6 +157,8 @@ For Grafana Enterprise and OSS users:
 To try out the new alert history page, enable the `alertingCentralAlertHistory` feature toggle and [configure Loki annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alert-state-history/).
 
 {{< figure src="/media/docs/alerting/alert-state-history.png" alt="Alert state history page" >}}
+
+{{< youtube id="0fNtby8ieEw" >}}
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/view-state-health/)
 
