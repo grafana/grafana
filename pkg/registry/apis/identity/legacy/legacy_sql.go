@@ -162,12 +162,8 @@ func (s *legacySQLStore) queryUsers(ctx context.Context, sql *legacysql.LegacyDa
 
 // ListTeamsBindings implements LegacyIdentityStore.
 func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.NamespaceInfo, query ListTeamBindingsQuery) (*ListTeamBindingsResult, error) {
-	if query.Limit < 1 {
-		query.Limit = 50
-	}
-
-	limit := int(query.Limit)
-	query.Limit += 1 // for continue
+	// for continue
+	query.Pagination.Limit += 1
 	query.OrgID = ns.OrgID
 	if query.OrgID == 0 {
 		return nil, fmt.Errorf("expected non zero orgID")
@@ -216,9 +212,9 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 			grouped[m.TeamUID] = []TeamMember{m}
 		}
 
-		if len(grouped) >= limit {
+		if len(grouped) >= int(query.Pagination.Limit)-1 {
 			atTeamLimit = true
-			res.ContinueID = lastID
+			res.Continue = lastID
 		}
 	}
 

@@ -71,14 +71,13 @@ type ListTeamBindingsQuery struct {
 	// UID is team uid to list bindings for. If not set store should list bindings for all teams
 	UID        string
 	OrgID      int64
-	ContinueID int64 // ContinueID
-	Limit      int64
+	Pagination common.Pagination
 }
 
 type ListTeamBindingsResult struct {
-	Bindings   []TeamBinding
-	ContinueID int64
-	RV         int64
+	Bindings []TeamBinding
+	Continue int64
+	RV       int64
 }
 
 type ListTeamMembersQuery struct {
@@ -94,8 +93,9 @@ type ListTeamMembersResult struct {
 
 // In every case, RBAC should be applied before calling, or before returning results to the requester
 type LegacyIdentityStore interface {
-	ListUsers(ctx context.Context, ns claims.NamespaceInfo, query ListUserQuery) (*ListUserResult, error)
 	GetDisplay(ctx context.Context, ns claims.NamespaceInfo, query GetUserDisplayQuery) (*ListUserResult, error)
+
+	ListUsers(ctx context.Context, ns claims.NamespaceInfo, query ListUserQuery) (*ListUserResult, error)
 
 	ListTeams(ctx context.Context, ns claims.NamespaceInfo, query ListTeamQuery) (*ListTeamResult, error)
 	ListTeamBindings(ctx context.Context, ns claims.NamespaceInfo, query ListTeamBindingsQuery) (*ListTeamBindingsResult, error)
