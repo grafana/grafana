@@ -1,4 +1,4 @@
-import { cloneDeep, isNumber, omit } from 'lodash';
+import { cloneDeep, isNumber, omit, pickBy, identity } from 'lodash';
 
 import {
   convertOldAngularValueMappings,
@@ -16,7 +16,7 @@ import {
   ValueMapping,
   VizOrientation,
 } from '@grafana/data';
-import { OptionsWithTextFormatting } from '@grafana/schema';
+import { LegendDisplayMode, OptionsWithLegend, OptionsWithTextFormatting, VizLegendOptions } from '@grafana/schema';
 
 export interface SingleStatBaseOptions extends OptionsWithTextFormatting {
   reduceOptions: ReduceDataOptions;
@@ -25,6 +25,7 @@ export interface SingleStatBaseOptions extends OptionsWithTextFormatting {
 
 const optionsToKeep = ['reduceOptions', 'orientation'];
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function sharedSingleStatPanelChangedHandler(
   panel: PanelModel<Partial<SingleStatBaseOptions>> | any,
   prevPluginId: string,
@@ -40,6 +41,9 @@ export function sharedSingleStatPanelChangedHandler(
   // Migrating from angular singlestat
   if (prevPluginId === 'singlestat' && prevOptions.angular) {
     return migrateFromAngularSinglestat(panel, prevOptions);
+  } else if (prevPluginId === 'graph') {
+    // Migrating from Graph panel
+    return migrateFromGraphPanel(panel, prevOptions);
   }
 
   for (const k of optionsToKeep) {
@@ -48,6 +52,57 @@ export function sharedSingleStatPanelChangedHandler(
     }
   }
 
+  return options;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function migrateFromGraphPanel(panel: PanelModel<Partial<SingleStatBaseOptions>> | any, prevOptions: any) {
+  const graphOptions: GraphOptions = prevOptions.angular;
+
+  const options: OptionsWithLegend = {
+    legend: {
+      displayMode: LegendDisplayMode.List,
+      showLegend: true,
+      placement: 'bottom',
+      calcs: [],
+    },
+  };
+
+  if (graphOptions.xaxis?.mode === 'series') {
+    panel.fieldConfig = {
+      ...panel.fieldConfig,
+      defaults: {
+        ...panel.fieldConfig.defaults,
+        color: { mode: 'palette-classic' },
+      },
+    };
+
+    // Legend migration
+    const legendConfig = graphOptions.legend;
+    if (legendConfig) {
+      if (legendConfig.show) {
+        options.legend.displayMode = legendConfig.alignAsTable ? LegendDisplayMode.Table : LegendDisplayMode.List;
+      } else {
+        options.legend.showLegend = false;
+      }
+
+      if (legendConfig.rightSide) {
+        options.legend.placement = 'right';
+      }
+
+      if (legendConfig.values) {
+        const enabledLegendValues = pickBy(legendConfig, identity);
+        options.legend.calcs = getReducersFromLegend(enabledLegendValues);
+      }
+
+      console.log('legendConfig.sideWidth', legendConfig.sideWidth);
+      if (legendConfig.sideWidth) {
+        options.legend.width = legendConfig.sideWidth;
+      }
+    }
+  }
+
+  console.log('options', options);
   return options;
 }
 
@@ -330,4 +385,23 @@ export function migrateOldThresholds(thresholds?: any[]): Threshold[] | undefine
  */
 export function convertOldAngularValueMapping(panel: any): ValueMapping[] {
   return convertOldAngularValueMappings(panel);
+}
+
+interface GraphOptions {
+  xaxis: {
+    mode: 'series' | 'time' | 'histogram';
+    values?: string[];
+  };
+  legend: VizLegendOptions;
+}
+
+function getReducersFromLegend(obj: Record<string, unknown>): string[] {
+  const ids: string[] = [];
+  for (const key in obj) {
+    const r = fieldReducers.getIfExists(key);
+    if (r) {
+      ids.push(r.id);
+    }
+  }
+  return ids;
 }
