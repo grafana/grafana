@@ -55,7 +55,7 @@ func TestIntegrationCreateOrUpdateCorrelation(t *testing.T) {
 		OrgId:     dataSource.OrgID,
 		Label:     "existing",
 		Config: correlations.CorrelationConfig{
-			Type:  correlations.CorrelationType("query"),
+			Type:   correlations.CorrelationType("query"),
 			Field:  "foo",
 			Target: map[string]any{},
 			Transformations: []correlations.Transformation{
