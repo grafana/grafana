@@ -70,7 +70,7 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 		lastID = t.ID
 		res.Teams = append(res.Teams, t)
 		if len(res.Teams) > int(query.Pagination.Limit)-1 {
-			res.Teams = append(res.Teams[0 : len(res.Teams)-1])
+			res.Teams = res.Teams[0 : len(res.Teams)-1]
 			res.Continue = lastID
 			break
 		}
