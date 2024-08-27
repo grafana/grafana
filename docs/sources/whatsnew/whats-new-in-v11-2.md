@@ -112,7 +112,9 @@ Data links in canvas elements can also be configured to open with a single click
 
 As part of this improvement, we've also added the ability to control the order in which data links are displayed by dragging and dropping them. This improvement has been added to all visualizations.
 
-{{< youtube id="zOsM8VqwYpw" >}}
+{{< video-embed src="/media/docs/grafana/panels-visualizations/canvas-oneclick-tooltips-v4-11.2.mp4" >}}
+
+<!-- {{< youtube id="zOsM8VqwYpw" >}} -->
 
 In future releases, we'll add one-click functionality to data links in other Grafana visualizations.
 
@@ -134,7 +136,7 @@ Pagination is especially useful if you're running a query on a dynamic data sour
 
 This feature is [a community contribution](https://github.com/grafana/grafana/pull/89586) ❤️
 
-{{< youtube id="mgkjWJvYoHk" >}}
+<!-- {{< youtube id="mgkjWJvYoHk" >}} -->
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/state-timeline/#page-size-enable-pagination)
 
