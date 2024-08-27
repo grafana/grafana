@@ -71,7 +71,7 @@ async function generateOptions(amount: number): Promise<Option[]> {
   return Array.from({ length: amount }, (_, index) => ({
     label: chance.sentence({ words: index % 5 }),
     value: chance.guid(),
-    description: chance.sentence(),
+    //description: chance.sentence(),
   }));
 }
 

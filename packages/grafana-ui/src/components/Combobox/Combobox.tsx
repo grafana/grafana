@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import { autoUpdate, flip, size, useFloating } from '@floating-ui/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
@@ -138,39 +138,7 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
 
   const hasMinHeight = isOpen && rowVirtualizer.getTotalSize() >= MIN_HEIGHT;
 
-  useEffect(() => {
-    console.log(rowVirtualizer.range);
-    const startVisibleIndex = rowVirtualizer.range?.startIndex;
-    const endVisibleIndex = rowVirtualizer.range?.endIndex;
-
-    if (typeof startVisibleIndex === 'undefined' || typeof endVisibleIndex === 'undefined') {
-      return;
-    }
-
-    if (
-      startVisibleIndex === 0 ||
-      (startVisibleIndex % INDEX_WIDTH_CALCULATION === 0 && startVisibleIndex >= INDEX_WIDTH_CALCULATION)
-    ) {
-      // Scroll down and default case
-      let maxLength = 0;
-      const calculationEnd = Math.min(items.length, endVisibleIndex + INDEX_WIDTH_CALCULATION);
-      for (let i = startVisibleIndex; i < calculationEnd; i++) {
-        maxLength = Math.max(maxLength, items[i].label.length);
-      }
-      console.log('setting popover width, scroll down and default case');
-      setPopoverWidth(maxLength * WIDTH_MULTIPLIER);
-    } else if (endVisibleIndex % INDEX_WIDTH_CALCULATION === 0 && endVisibleIndex >= INDEX_WIDTH_CALCULATION) {
-      // Scroll up case
-      let maxLength = 0;
-      const calculationStart = Math.max(0, startVisibleIndex - INDEX_WIDTH_CALCULATION);
-      for (let i = calculationStart; i < endVisibleIndex; i++) {
-        maxLength = Math.max(maxLength, items[i].label.length);
-      }
-      console.log('setting popover width, scroll up');
-
-      setPopoverWidth(maxLength * WIDTH_MULTIPLIER);
-    }
-  }, [items, rowVirtualizer.range]);
+  useDynamicWidth(items, rowVirtualizer.range, setPopoverWidth);
 
   return (
     <div>
@@ -259,4 +227,47 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
       </div>
     </div>
   );
+};
+
+const useDynamicWidth = (
+  items: Option[],
+  range: { startIndex: number; endIndex: number } | null,
+  setPopoverWidth: { (value: SetStateAction<number | undefined>): void }
+) => {
+  useEffect(() => {
+    console.log(range);
+    if (range === null) {
+      return;
+    }
+    const startVisibleIndex = range?.startIndex;
+    const endVisibleIndex = range?.endIndex;
+
+    if (typeof startVisibleIndex === 'undefined' || typeof endVisibleIndex === 'undefined') {
+      return;
+    }
+
+    if (
+      startVisibleIndex === 0 ||
+      (startVisibleIndex % INDEX_WIDTH_CALCULATION === 0 && startVisibleIndex >= INDEX_WIDTH_CALCULATION)
+    ) {
+      // Scroll down and default case
+      let maxLength = 0;
+      const calculationEnd = Math.min(items.length, endVisibleIndex + INDEX_WIDTH_CALCULATION);
+      for (let i = startVisibleIndex; i < calculationEnd; i++) {
+        maxLength = Math.max(maxLength, items[i].label.length);
+      }
+      console.log('setting popover width, scroll down and default case');
+      setPopoverWidth(maxLength * WIDTH_MULTIPLIER);
+    } else if (endVisibleIndex % INDEX_WIDTH_CALCULATION === 0 && endVisibleIndex >= INDEX_WIDTH_CALCULATION) {
+      // Scroll up case
+      let maxLength = 0;
+      const calculationStart = Math.max(0, startVisibleIndex - INDEX_WIDTH_CALCULATION);
+      for (let i = calculationStart; i < endVisibleIndex; i++) {
+        maxLength = Math.max(maxLength, items[i].label.length);
+      }
+      console.log('setting popover width, scroll up');
+
+      setPopoverWidth(maxLength * WIDTH_MULTIPLIER);
+    }
+  }, [items, range, setPopoverWidth]);
 };
