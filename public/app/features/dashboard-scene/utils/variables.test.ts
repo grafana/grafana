@@ -425,6 +425,7 @@ describe('when creating variables objects', () => {
       datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
       applyMode: 'auto',
       useQueriesAsFilterForOptions: true,
+      supportsMultiValueOperators: false,
     });
   });
 
@@ -508,6 +509,7 @@ describe('when creating variables objects', () => {
         },
       ],
       useQueriesAsFilterForOptions: true,
+      supportsMultiValueOperators: false,
     });
   });
 
