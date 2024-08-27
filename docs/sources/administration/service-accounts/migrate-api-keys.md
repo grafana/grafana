@@ -3,7 +3,7 @@ aliases:
   - ../api-keys/ # /docs/grafana/<GRAFANA_VERSION>/administration/api-keys/
   - ../about-api-keys/ # /docs/grafana/<GRAFANA_VERSION>/administration/about-api-keys/
   - ../create-api-key/ # /docs/grafana/<GRAFANA_VERSION>/administration/create-api-key/
-description: This section contains information about how to migrate legacy API keys to service account tokens
+description: Learn how to migrate legacy API keys to service account tokens.
 keywords:
   - API keys
   - Service accounts
