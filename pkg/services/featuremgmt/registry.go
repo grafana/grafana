@@ -215,6 +215,12 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
+			Name:        "mysqlParseTime",
+			Description: "Ensure the parseTime flag is set for MySQL driver",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+		},
+		{
 			Name:              "accessControlOnCall",
 			Description:       "Access control primitives for OnCall",
 			Stage:             FeatureStagePublicPreview,
