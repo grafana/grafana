@@ -41,6 +41,11 @@ func (auth orgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attribut
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 
+	// Grafana super admins can see things in every org
+	if signedInUser.GetIsGrafanaAdmin() {
+		return authorizer.DecisionNoOpinion, "", nil
+	}
+
 	if info.OrgID == -1 {
 		return authorizer.DecisionDeny, "org id is required", nil
 	}

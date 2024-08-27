@@ -1,7 +1,7 @@
 import { DataFrameView, dateTime, createDataFrame, FieldType } from '@grafana/data';
 
 import { createGraphFrames, mapPromMetricsToServiceMap } from './graphTransform';
-import { bigResponse } from './testResponse';
+import { bigResponse } from './test/testResponse';
 
 describe('createGraphFrames', () => {
   it('transforms basic response into nodes and edges frame', async () => {

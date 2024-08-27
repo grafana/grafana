@@ -489,11 +489,11 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 	inFolder := dash.FolderID > 0
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
-	if !provisioned {
-		userID, err := identity.IntIdentifier(dto.User.GetID())
+	if !provisioned && dto.User.IsIdentityType(claims.TypeUser) {
+		userID, err := dto.User.GetInternalID()
 		if err != nil {
 			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "id", dto.User.GetID(), "error", err)
-		} else if identity.IsIdentityType(dto.User.GetID(), claims.TypeUser) {
+		} else {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 				UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 			})
@@ -525,11 +525,11 @@ func (dr *DashboardServiceImpl) setDefaultFolderPermissions(ctx context.Context,
 	inFolder := f.ParentUID != ""
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
-	if !provisioned {
-		userID, err := identity.IntIdentifier(cmd.SignedInUser.GetID())
+	if !provisioned && cmd.SignedInUser.IsIdentityType(claims.TypeUser) {
+		userID, err := cmd.SignedInUser.GetInternalID()
 		if err != nil {
 			dr.log.Error("Could not make user admin", "folder", cmd.Title, "id", cmd.SignedInUser.GetID())
-		} else if identity.IsIdentityType(cmd.SignedInUser.GetID(), claims.TypeUser) {
+		} else {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 				UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 			})

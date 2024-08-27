@@ -653,7 +653,7 @@ func createService(store *fakes.RuleStore) *RulerSrv {
 		authz:          accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
 		amConfigStore:  &fakeAMRefresher{},
 		amRefresher:    &fakeAMRefresher{},
-		featureManager: featuremgmt.WithFeatures(),
+		featureManager: featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules),
 	}
 }
 

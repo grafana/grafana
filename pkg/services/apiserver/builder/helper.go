@@ -43,6 +43,12 @@ var pathRewriters = []filters.PathRewriter{
 			return matches[1] + "/name" // connector requires a name
 		},
 	},
+	{
+		Pattern: regexp.MustCompile(`(/apis/identity.grafana.app/v0alpha1/namespaces/.*/display$)`),
+		ReplaceFunc: func(matches []string) string {
+			return matches[1] + "/name" // connector requires a name
+		},
+	},
 }
 
 func SetupConfig(

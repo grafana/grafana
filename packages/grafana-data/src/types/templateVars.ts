@@ -22,7 +22,8 @@ export type TypedVariableModel =
   | CustomVariableModel
   | UserVariableModel
   | OrgVariableModel
-  | DashboardVariableModel;
+  | DashboardVariableModel
+  | SnapshotVariableModel;
 
 export enum VariableRefresh {
   never, // removed from the UI
@@ -178,4 +179,9 @@ export interface BaseVariableModel {
   error: any | null;
   description: string | null;
   usedInRepeat?: boolean;
+}
+
+export interface SnapshotVariableModel extends VariableWithOptions {
+  type: 'snapshot';
+  query: string;
 }

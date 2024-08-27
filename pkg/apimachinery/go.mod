@@ -1,13 +1,13 @@
 module github.com/grafana/grafana/pkg/apimachinery
 
-go 1.22.4
+go 1.23.0
 
 require (
-	github.com/grafana/authlib v0.0.0-20240812070441-ccb639ea96d0 // @grafana/identity-access-team
-	github.com/grafana/authlib/claims v0.0.0-20240809101159-74eaccc31a06 // @grafana/identity-access-team
+	github.com/grafana/authlib v0.0.0-20240814074258-eae7d47f01db // @grafana/identity-access-team
+	github.com/grafana/authlib/claims v0.0.0-20240814074258-eae7d47f01db // @grafana/identity-access-team
 	github.com/stretchr/testify v1.9.0
-	k8s.io/apimachinery v0.31.0-rc.1
-	k8s.io/apiserver v0.31.0-rc.1
+	k8s.io/apimachinery v0.31.0
+	k8s.io/apiserver v0.31.0
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340
 )
 
@@ -35,9 +35,9 @@ require (
 	golang.org/x/crypto v0.26.0 // indirect
 	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.23.0 // indirect
+	golang.org/x/sys v0.24.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240812133136-8ffd90a71988 // indirect
 	google.golang.org/grpc v1.65.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect

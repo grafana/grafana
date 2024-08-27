@@ -111,7 +111,7 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
     <>
       {!isViewingJSON && (
         <>
-          <p className="share-modal-info-text">
+          <p>
             <Trans i18nKey="share-modal.export.info-text">Export this dashboard.</Trans>
           </p>
           <Stack gap={2} direction="column">

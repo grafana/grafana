@@ -7,12 +7,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -145,9 +145,9 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 	}
 
 	span.SetAttributes(
-		attribute.String("identity.ID", identity.ID.String()),
-		attribute.String("identity.AuthID", identity.AuthID),
-		attribute.String("identity.AuthenticatedBy", identity.AuthenticatedBy),
+		attribute.String("identity.ID", identity.GetID()),
+		attribute.String("identity.AuthID", identity.GetAuthID()),
+		attribute.String("identity.AuthenticatedBy", identity.GetAuthenticatedBy()),
 	)
 
 	if len(identity.ClientParams.FetchPermissionsParams.ActionsLookup) > 0 {
@@ -218,12 +218,12 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 	}
 
 	// Login is only supported for users
-	if !id.ID.IsType(claims.TypeUser) {
+	if !id.IsIdentityType(claims.TypeUser) {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()
-		return nil, authn.ErrUnsupportedIdentity.Errorf("expected identity of type user but got: %s", id.ID.Type())
+		return nil, authn.ErrUnsupportedIdentity.Errorf("expected identity of type user but got: %s", id.GetIdentityType())
 	}
 
-	userID, err := id.ID.ParseInt()
+	userID, err := id.GetInternalID()
 	if err != nil {
 		return nil, err
 	}
@@ -282,11 +282,11 @@ func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionTo
 		redirect.URL = s.cfg.SignoutRedirectUrl
 	}
 
-	if !user.GetID().IsType(claims.TypeUser) {
+	if !user.IsIdentityType(claims.TypeUser) {
 		return redirect, nil
 	}
 
-	id, err := user.GetID().ParseInt()
+	id, err := user.GetInternalID()
 	if err != nil {
 		s.log.FromContext(ctx).Debug("Invalid user id", "id", id, "err", err)
 		return redirect, nil
@@ -329,7 +329,7 @@ Default:
 	return redirect, nil
 }
 
-func (s *Service) ResolveIdentity(ctx context.Context, orgID int64, namespaceID identity.TypedID) (*authn.Identity, error) {
+func (s *Service) ResolveIdentity(ctx context.Context, orgID int64, typedID string) (*authn.Identity, error) {
 	ctx, span := s.tracer.Start(ctx, "authn.ResolveIdentity")
 	defer span.End()
 
@@ -338,8 +338,12 @@ func (s *Service) ResolveIdentity(ctx context.Context, orgID int64, namespaceID 
 	// hack to not update last seen
 	r.SetMeta(authn.MetaKeyIsLogin, "true")
 
-	identity, err := s.resolveIdenity(ctx, orgID, namespaceID)
+	identity, err := s.resolveIdenity(ctx, orgID, typedID)
 	if err != nil {
+		if errors.Is(err, claims.ErrInvalidTypedID) {
+			return nil, authn.ErrUnsupportedIdentity.Errorf("invalid identity type")
+		}
+
 		return nil, err
 	}
 
@@ -377,14 +381,20 @@ func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) er
 	return s.runPostAuthHooks(ctx, identity, r)
 }
 
-func (s *Service) resolveIdenity(ctx context.Context, orgID int64, namespaceID identity.TypedID) (*authn.Identity, error) {
+func (s *Service) resolveIdenity(ctx context.Context, orgID int64, typedID string) (*authn.Identity, error) {
 	ctx, span := s.tracer.Start(ctx, "authn.resolveIdentity")
 	defer span.End()
 
-	if namespaceID.IsType(claims.TypeUser) {
+	t, i, err := identity.ParseTypeAndID(typedID)
+	if err != nil {
+		return nil, err
+	}
+
+	if claims.IsIdentityType(t, claims.TypeUser) {
 		return &authn.Identity{
 			OrgID: orgID,
-			ID:    namespaceID,
+			ID:    i,
+			Type:  claims.TypeUser,
 			ClientParams: authn.ClientParams{
 				AllowGlobalOrg:  true,
 				FetchSyncedUser: true,
@@ -392,9 +402,10 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, namespaceID i
 			}}, nil
 	}
 
-	if namespaceID.IsType(claims.TypeServiceAccount) {
+	if claims.IsIdentityType(t, claims.TypeServiceAccount) {
 		return &authn.Identity{
-			ID:    namespaceID,
+			ID:    i,
+			Type:  claims.TypeServiceAccount,
 			OrgID: orgID,
 			ClientParams: authn.ClientParams{
 				AllowGlobalOrg:  true,
@@ -403,11 +414,11 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, namespaceID i
 			}}, nil
 	}
 
-	resolver, ok := s.idenityResolverClients[string(namespaceID.Type())]
+	resolver, ok := s.idenityResolverClients[string(t)]
 	if !ok {
-		return nil, authn.ErrUnsupportedIdentity.Errorf("no resolver for : %s", namespaceID.Type())
+		return nil, authn.ErrUnsupportedIdentity.Errorf("no resolver for : %s", t)
 	}
-	return resolver.ResolveIdentity(ctx, orgID, namespaceID)
+	return resolver.ResolveIdentity(ctx, orgID, t, i)
 }
 
 func (s *Service) errorLogFunc(ctx context.Context, err error) func(msg string, ctx ...any) {

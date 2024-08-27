@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -267,7 +267,8 @@ func TestAPIEndpoint_GetOrg(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			expectedIdentity := &authn.Identity{
-				ID:    identity.MustParseTypedID("user:1"),
+				ID:    "1",
+				Type:  claims.TypeUser,
 				OrgID: 1,
 				Permissions: map[int64]map[string][]string{
 					0: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions),

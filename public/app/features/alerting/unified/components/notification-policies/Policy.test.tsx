@@ -2,6 +2,7 @@ import { render, renderHook, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { first, noop } from 'lodash';
 import { Router } from 'react-router-dom';
+import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import { config, locationService } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
@@ -100,8 +101,9 @@ describe('Policy', () => {
     // for grouping
     expect(within(defaultPolicy).getByTestId('grouping')).toHaveTextContent('grafana_folder, alertname');
 
-    // no mute timings
+    // no timings
     expect(within(defaultPolicy).queryByTestId('mute-timings')).not.toBeInTheDocument();
+    expect(within(defaultPolicy).queryByTestId('active-timings')).not.toBeInTheDocument();
 
     // for timing options
     expect(within(defaultPolicy).getByTestId('timing-options')).toHaveTextContent(
@@ -132,6 +134,7 @@ describe('Policy', () => {
     // expect(within(firstPolicy).getByTestId('matching-instances')).toHaveTextContent('0instances');
     expect(within(firstPolicy).getByTestId('contact-point')).toHaveTextContent('provisioned-contact-point');
     expect(within(firstPolicy).getByTestId('mute-timings')).toHaveTextContent('Muted whenmt-1');
+    expect(within(firstPolicy).getByTestId('active-timings')).toHaveTextContent('Active whenmt-2');
     expect(within(firstPolicy).getByTestId('inherited-properties')).toHaveTextContent('Inherited2 properties');
 
     // second custom policy should be correct
@@ -139,6 +142,7 @@ describe('Policy', () => {
     expect(within(secondPolicy).getByTestId('label-matchers')).toHaveTextContent(/^region \= EMEA$/);
     expect(within(secondPolicy).queryByTestId('continue-matching')).not.toBeInTheDocument();
     expect(within(secondPolicy).queryByTestId('mute-timings')).not.toBeInTheDocument();
+    expect(within(secondPolicy).queryByTestId('active-timings')).not.toBeInTheDocument();
     expect(within(secondPolicy).getByTestId('inherited-properties')).toHaveTextContent('Inherited3 properties');
 
     // third custom policy should be correct
@@ -344,7 +348,9 @@ describe('Policy', () => {
 const renderPolicy = (element: JSX.Element) =>
   render(
     <Router history={locationService.getHistory()}>
-      <AlertmanagerProvider accessType="notification">{element}</AlertmanagerProvider>
+      <CompatRouter>
+        <AlertmanagerProvider accessType="notification">{element}</AlertmanagerProvider>
+      </CompatRouter>
     </Router>
   );
 
@@ -360,6 +366,7 @@ const mockRoutes: RouteWithID = {
       receiver: 'provisioned-contact-point',
       object_matchers: [['team', eq, 'operations']],
       mute_time_intervals: ['mt-1'],
+      active_time_intervals: ['mt-2'],
       continue: true,
       routes: [
         {
