@@ -1,9 +1,9 @@
 import { AppPlugin } from '@grafana/data';
 
+import { LINKS_EXTENSION_POINT_ID } from '../../pages/AddedLinks';
 import { testIds } from '../../testIds';
 
 import { App } from './components/App';
-import { LINKS_EXTENSION_POINT_ID } from '../../pages/AddedLinks';
 
 export const plugin = new AppPlugin<{}>()
   .setRootPage(App)
