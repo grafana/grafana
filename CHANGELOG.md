@@ -2,7 +2,6 @@
 
 # 11.1.5 (2024-08-27)
 
-
 ### Bug fixes
 
 - **Alerting:** Fix permissions for prometheus rule endpoints [#91414](https://github.com/grafana/grafana/pull/91414), [@yuri-tceretian](https://github.com/yuri-tceretian)
@@ -13,12 +12,11 @@
 - **RBAC:** Fix seeder failures when inserting duplicated permissions (Enterprise)
 - **Snapshots:** Fix panic when snapshot_remove_expired is true [#91232](https://github.com/grafana/grafana/pull/91232), [@ryantxu](https://github.com/ryantxu)
 - **VizTooltip:** Fix positioning at bottom and right edges on mobile [#92137](https://github.com/grafana/grafana/pull/92137), [@leeoniya](https://github.com/leeoniya)
-  
 
 ### Plugin development fixes & changes
 
 - **Bugfix:** QueryField typeahead missing background color [#92316](https://github.com/grafana/grafana/pull/92316), [@mckn](https://github.com/mckn)
-  
+
 <!-- 11.1.5 END -->
 <!-- 11.1.4 START -->
 
