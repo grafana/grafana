@@ -42,7 +42,8 @@ type Dialect interface {
 
 	// Ident returns the given string quoted in a way that is suitable to be
 	// used as an identifier. Database names, schema names, table names, column
-	// names are all examples of identifiers.
+	// names are all examples of identifiers.  When the value includes a "."
+	// each part side of the separator will be escaped: (eg: `db`.`table`)
 	Ident(string) (string, error)
 
 	// ArgPlaceholder returns a safe argument suitable to be used in a SQL
