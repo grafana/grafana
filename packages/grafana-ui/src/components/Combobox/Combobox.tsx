@@ -235,7 +235,6 @@ const useDynamicWidth = (
   setPopoverWidth: { (value: SetStateAction<number | undefined>): void }
 ) => {
   useEffect(() => {
-    console.log(range);
     if (range === null) {
       return;
     }
@@ -246,26 +245,27 @@ const useDynamicWidth = (
       return;
     }
 
+    // Scroll down and default case
     if (
       startVisibleIndex === 0 ||
       (startVisibleIndex % INDEX_WIDTH_CALCULATION === 0 && startVisibleIndex >= INDEX_WIDTH_CALCULATION)
     ) {
-      // Scroll down and default case
       let maxLength = 0;
       const calculationEnd = Math.min(items.length, endVisibleIndex + INDEX_WIDTH_CALCULATION);
+
       for (let i = startVisibleIndex; i < calculationEnd; i++) {
         maxLength = Math.max(maxLength, items[i].label.length);
       }
-      console.log('setting popover width, scroll down and default case');
+
       setPopoverWidth(maxLength * WIDTH_MULTIPLIER);
     } else if (endVisibleIndex % INDEX_WIDTH_CALCULATION === 0 && endVisibleIndex >= INDEX_WIDTH_CALCULATION) {
       // Scroll up case
       let maxLength = 0;
       const calculationStart = Math.max(0, startVisibleIndex - INDEX_WIDTH_CALCULATION);
+
       for (let i = calculationStart; i < endVisibleIndex; i++) {
         maxLength = Math.max(maxLength, items[i].label.length);
       }
-      console.log('setting popover width, scroll up');
 
       setPopoverWidth(maxLength * WIDTH_MULTIPLIER);
     }
