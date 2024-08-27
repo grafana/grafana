@@ -211,7 +211,7 @@ grafana cli admin
 
 ### Reset admin password
 
-`grafana cli admin reset-admin-password <new password>` resets the password for the admin user using the CLI. You might need to do this if you lose the admin password.
+`grafana cli admin reset-admin-password <new password>` resets the password for the admin user using the CLI. You might need to do this if you lose the admin password. By default, this command uses the default ID of the admin user, which is 1. If you know the ID of the admin user, you can use the `--user-id` flag to specify the user ID. If the `--user-id` flag is not specified and the command cannot find the admin user, it returns the list of current admin users' username and ID. From that list you can determine the ID of the admin user and run the command again with the `--user-id` flag.
 
 If there are two flags being used to set the homepath and the config file path, then running the command returns this error:
 
@@ -226,6 +226,14 @@ grafana cli --homepath "/usr/share/grafana" admin reset-admin-password <new pass
 If you have not lost the admin password, we recommend that you change the user password either in the User Preferences or in the Server Admin > User tab.
 
 If you need to set the password in a script, then you can use the [Grafana User API]({{< relref "./developers/http_api/user/#change-password" >}}).
+
+#### Reset admin password
+
+If you installed Grafana using Homebrew, you can reset the admin password using the following command:
+
+```bash
+/opt/homebrew/opt/grafana/bin/grafana cli --config /opt/homebrew/etc/grafana/grafana.ini --homepath /opt/homebrew/opt/grafana/share/grafana --configOverrides cfg:default.paths.data=/opt/homebrew/var/lib/grafana admin reset-admin-password <new password>
+```
 
 ### Migrate data and encrypt passwords
 
