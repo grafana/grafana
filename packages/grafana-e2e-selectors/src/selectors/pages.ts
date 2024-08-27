@@ -239,6 +239,9 @@ export const Pages = {
      */
     dashboards: (title: string) => `Dashboard search item ${title}`,
   },
+  RecentlyDeleted: {
+    url: '/dashboard/recently-deleted',
+  },
   SaveDashboardAsModal: {
     newName: 'Save dashboard title field',
     save: 'Save dashboard button',
@@ -374,6 +377,10 @@ export const Pages = {
     url: '/?search=openn',
     FolderView: {
       url: '/?search=open&layout=folders',
+    },
+    table: {
+      body: 'data-testid search-table',
+      row: (name: string) => `data-testid search row ${name}`,
     },
   },
   PublicDashboards: {
