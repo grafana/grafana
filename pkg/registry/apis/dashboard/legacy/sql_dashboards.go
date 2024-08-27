@@ -502,6 +502,7 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		if err != nil {
 			return nil, err
 		}
+		meta.SetFolder(p.FolderUID)
 		meta.SetCreatedBy(p.CreatedBy)
 		meta.SetUpdatedBy(p.UpdatedBy)
 		meta.SetUpdatedTimestamp(&p.Updated)
