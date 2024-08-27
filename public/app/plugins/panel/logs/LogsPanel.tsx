@@ -127,6 +127,10 @@ export const LogsPanel = ({
     [eventBus]
   );
 
+  const onLogContainerMouseOut = useCallback(() => {
+    eventBus.publish(new DataHoverClearEvent());
+  }, [eventBus]);
+
   const onCloseContext = useCallback(() => {
     setContextRow(null);
     if (closeCallback.current) {
@@ -348,13 +352,7 @@ export const LogsPanel = ({
         scrollTop={scrollTop}
         scrollRefCallback={(scrollElement) => setScrollElement(scrollElement)}
       >
-        <div
-          onMouseLeave={() => {
-            eventBus.publish(new DataHoverClearEvent());
-          }}
-          className={style.container}
-          ref={logsContainerRef}
-        >
+        <div onMouseLeave={onLogContainerMouseOut} className={style.container} ref={logsContainerRef}>
           {showCommonLabels && !isAscending && renderCommonLabels()}
           <LogRows
             containerRendered={logsContainerRef.current !== null}
