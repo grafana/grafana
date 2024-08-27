@@ -3629,7 +3629,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/e2e-selectors@npm:11.3.0-pre, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
+"@grafana/e2e-selectors@npm:11.3.0-pre, @grafana/e2e-selectors@npm:^11.0.0, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors"
   dependencies:
@@ -3646,17 +3646,6 @@ __metadata:
     typescript: "npm:5.5.4"
   languageName: unknown
   linkType: soft
-
-"@grafana/e2e-selectors@npm:^11.0.0":
-  version: 11.2.0
-  resolution: "@grafana/e2e-selectors@npm:11.2.0"
-  dependencies:
-    "@grafana/tsconfig": "npm:^1.3.0-rc1"
-    tslib: "npm:2.6.3"
-    typescript: "npm:5.4.5"
-  checksum: 10/aec06529dfedcd2611b4a0c25b256fdd860979105a7734309d8a06655c18a5915e7132ed99d110e4742adf904dc483c7bfb20fbda0b5668773a77f607351e49f
-  languageName: node
-  linkType: hard
 
 "@grafana/eslint-config@npm:7.0.0":
   version: 7.0.0
