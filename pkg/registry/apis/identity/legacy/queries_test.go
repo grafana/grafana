@@ -4,6 +4,7 @@ import (
 	"testing"
 	"text/template"
 
+	"github.com/grafana/grafana/pkg/registry/apis/identity/common"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
@@ -54,14 +55,16 @@ func TestIdentityQueries(t *testing.T) {
 				{
 					Name: "teams_page_1",
 					Data: listTeams(&ListTeamQuery{
-						Limit: 5,
+						Pagination: common.Pagination{Limit: 5},
 					}),
 				},
 				{
 					Name: "teams_page_2",
 					Data: listTeams(&ListTeamQuery{
-						ContinueID: 1,
-						Limit:      2,
+						Pagination: common.Pagination{
+							Limit:    1,
+							Continue: 2,
+						},
 					}),
 				},
 			},
@@ -75,14 +78,16 @@ func TestIdentityQueries(t *testing.T) {
 				{
 					Name: "users_page_1",
 					Data: listUsers(&ListUserQuery{
-						Limit: 5,
+						Pagination: common.Pagination{Limit: 5},
 					}),
 				},
 				{
 					Name: "users_page_2",
 					Data: listUsers(&ListUserQuery{
-						ContinueID: 1,
-						Limit:      2,
+						Pagination: common.Pagination{
+							Limit:    1,
+							Continue: 2,
+						},
 					}),
 				},
 			},
@@ -121,16 +126,18 @@ func TestIdentityQueries(t *testing.T) {
 				{
 					Name: "team_bindings_page_1",
 					Data: listTeamBindings(&ListTeamBindingsQuery{
-						OrgID: 1,
-						Limit: 5,
+						OrgID:      1,
+						Pagination: common.Pagination{Limit: 5},
 					}),
 				},
 				{
 					Name: "team_bindings_page_2",
 					Data: listTeamBindings(&ListTeamBindingsQuery{
-						OrgID:      1,
-						Limit:      5,
-						ContinueID: 5,
+						OrgID: 1,
+						Pagination: common.Pagination{
+							Limit:    1,
+							Continue: 2,
+						},
 					}),
 				},
 			},
