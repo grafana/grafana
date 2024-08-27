@@ -3102,6 +3102,37 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana-plugins/mssql@workspace:public/app/plugins/datasource/mssql":
+  version: 0.0.0-use.local
+  resolution: "@grafana-plugins/mssql@workspace:public/app/plugins/datasource/mssql"
+  dependencies:
+    "@emotion/css": "npm:11.11.2"
+    "@grafana/data": "workspace:*"
+    "@grafana/e2e-selectors": "workspace:*"
+    "@grafana/experimental": "npm:1.7.12"
+    "@grafana/plugin-configs": "workspace:*"
+    "@grafana/runtime": "npm:11.3.0-pre"
+    "@grafana/sql": "npm:11.3.0-pre"
+    "@grafana/ui": "npm:11.3.0-pre"
+    "@testing-library/react": "npm:15.0.2"
+    "@testing-library/user-event": "npm:14.5.2"
+    "@types/jest": "npm:29.5.12"
+    "@types/lodash": "npm:4.17.4"
+    "@types/node": "npm:20.14.2"
+    "@types/react": "npm:18.3.3"
+    "@types/testing-library__jest-dom": "npm:5.14.9"
+    lodash: "npm:4.17.21"
+    react: "npm:18.2.0"
+    rxjs: "npm:7.8.1"
+    ts-node: "npm:10.9.2"
+    tslib: "npm:2.6.3"
+    typescript: "npm:5.4.5"
+    webpack: "npm:5.91.0"
+  peerDependencies:
+    "@grafana/runtime": "*"
+  languageName: unknown
+  linkType: soft
+
 "@grafana-plugins/mysql@workspace:public/app/plugins/datasource/mysql":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/mysql@workspace:public/app/plugins/datasource/mysql"
@@ -6678,6 +6709,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@remix-run/router@npm:1.19.1":
+  version: 1.19.1
+  resolution: "@remix-run/router@npm:1.19.1"
+  checksum: 10/2800c2f6567a982fe942aacc4cb5b170e7cc89bd455960e3bea2424161ff7dac32d01886322d88dd19b88d1bea711f39566d17f02b73eeb74999affb471f8f52
+  languageName: node
+  linkType: hard
+
 "@rollup/plugin-image@npm:3.0.3":
   version: 3.0.3
   resolution: "@rollup/plugin-image@npm:3.0.3"
@@ -8796,6 +8834,39 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@test-plugins/extensions-test-app@workspace:e2e/test-plugins/grafana-extensionstest-app":
+  version: 0.0.0-use.local
+  resolution: "@test-plugins/extensions-test-app@workspace:e2e/test-plugins/grafana-extensionstest-app"
+  dependencies:
+    "@emotion/css": "npm:11.11.2"
+    "@grafana/data": "workspace:*"
+    "@grafana/eslint-config": "npm:7.0.0"
+    "@grafana/plugin-configs": "npm:11.3.0-pre"
+    "@grafana/runtime": "workspace:*"
+    "@grafana/schema": "workspace:*"
+    "@grafana/ui": "workspace:*"
+    "@types/lodash": "npm:4.17.7"
+    "@types/node": "npm:20.14.14"
+    "@types/prismjs": "npm:1.26.4"
+    "@types/react": "npm:18.3.3"
+    "@types/react-dom": "npm:18.2.25"
+    "@types/semver": "npm:7.5.8"
+    "@types/uuid": "npm:9.0.8"
+    glob: "npm:10.4.1"
+    react: "npm:18.2.0"
+    react-dom: "npm:18.2.0"
+    react-router-dom: "npm:^6.22.0"
+    rxjs: "npm:7.8.1"
+    ts-node: "npm:10.9.2"
+    tslib: "npm:2.6.3"
+    typescript: "npm:5.5.4"
+    webpack: "npm:5.91.0"
+    webpack-merge: "npm:5.10.0"
+  peerDependencies:
+    "@grafana/runtime": "*"
+  languageName: unknown
+  linkType: soft
+
 "@testing-library/dom@npm:10.0.0, @testing-library/dom@npm:>=7, @testing-library/dom@npm:^10.0.0":
   version: 10.0.0
   resolution: "@testing-library/dom@npm:10.0.0"
@@ -9781,6 +9852,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/lodash@npm:4.17.4":
+  version: 4.17.4
+  resolution: "@types/lodash@npm:4.17.4"
+  checksum: 10/3ec19f9fc48200006e71733e08bcb1478b0398673657fcfb21a8643d41a80bcce09a01000077c3b23a3c6d86b9b314abe0672a8fdfc0fd66b893bd41955cfab8
+  languageName: node
+  linkType: hard
+
 "@types/logfmt@npm:^1.2.3":
   version: 1.2.6
   resolution: "@types/logfmt@npm:1.2.6"
@@ -9889,6 +9967,15 @@ __metadata:
   dependencies:
     undici-types: "npm:~5.26.4"
   checksum: 10/035bc347e3de04888d537801e23eb4b4f99522975ca002dbfef978edd853710031b7cd43bf022670d6aba4ed5d4ac75ea1b5ff77ff8f80998bffd943b7bcef48
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:20.14.2":
+  version: 20.14.2
+  resolution: "@types/node@npm:20.14.2"
+  dependencies:
+    undici-types: "npm:~5.26.4"
+  checksum: 10/c38e47b190fa0a8bdfde24b036dddcf9401551f2fb170a90ff33625c7d6f218907e81c74e0fa6e394804a32623c24c60c50e249badc951007830f0d02c48ee0f
   languageName: node
   linkType: hard
 
@@ -27286,6 +27373,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-router-dom@npm:^6.22.0":
+  version: 6.26.1
+  resolution: "react-router-dom@npm:6.26.1"
+  dependencies:
+    "@remix-run/router": "npm:1.19.1"
+    react-router: "npm:6.26.1"
+  peerDependencies:
+    react: ">=16.8"
+    react-dom: ">=16.8"
+  checksum: 10/1bd255d1ff88f477699c72656e7c07702a907e644388a1bea1c648f2df0c3c86db2e90bea945b1d43eaf84ebab194f3868f3788502965ad5f20c508c6874f1fe
+  languageName: node
+  linkType: hard
+
 "react-router@npm:5.3.3":
   version: 5.3.3
   resolution: "react-router@npm:5.3.3"
@@ -27314,6 +27414,17 @@ __metadata:
   peerDependencies:
     react: ">=16.8"
   checksum: 10/3d5107cfdb440519d84e6ad6d95454e3bf41ec97677b95f7b2a7f281f8ddf191b765cf1b599ead951f3cd33ed4429f140590d74a01cfdf835dc2f812023a978a
+  languageName: node
+  linkType: hard
+
+"react-router@npm:6.26.1":
+  version: 6.26.1
+  resolution: "react-router@npm:6.26.1"
+  dependencies:
+    "@remix-run/router": "npm:1.19.1"
+  peerDependencies:
+    react: ">=16.8"
+  checksum: 10/b3761515c75da65a1678f005d08a6285ceccd9df7237ae6fdd9ab2ab816ef328435b75610f705ecd9ecd41c6878fd22eb9b44c5391cdef2e1ed99ddbc78de8a4
   languageName: node
   linkType: hard
 
