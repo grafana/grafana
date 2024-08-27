@@ -45,7 +45,7 @@ type Transformation struct {
 }
 
 func (t CorrelationType) Validate() error {
-	if (t != query && t != external) {
+	if t != query && t != external {
 		return fmt.Errorf("%s: \"%s\"", ErrInvalidConfigType, t)
 	}
 	return nil

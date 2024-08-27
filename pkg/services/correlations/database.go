@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const VALID_TYPE_FILTER = "(correlation.type = 'external' OR (correlation.type = 'query' AND dst.uid IS NOT NULL))";
+const VALID_TYPE_FILTER = "(correlation.type = 'external' OR (correlation.type = 'query' AND dst.uid IS NOT NULL))"
 
 // createCorrelation adds a correlation
 func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCorrelationCommand) (Correlation, error) {
