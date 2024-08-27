@@ -288,28 +288,24 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		}
 	}
 	if engine == nil {
-		connection := ss.dbCfg.ConnectionString
-
 		// Ensure that parseTime is enabled for MySQL
-		if ss.dbCfg.Type == migrator.MySQL && !strings.Contains(connection, "parseTime=") {
-			if ss.features.IsEnabledGlobally(featuremgmt.FlagMysqlParseTime) {
-				if strings.Contains(connection, "?") {
-					connection += "&parseTime=true"
-				} else {
-					connection += "?parseTime=true"
-				}
+		if ss.features.IsEnabledGlobally(featuremgmt.FlagMysqlParseTime) && ss.dbCfg.Type == migrator.MySQL && !strings.Contains(ss.dbCfg.ConnectionString, "parseTime=") {
+			if strings.Contains(ss.dbCfg.ConnectionString, "?") {
+				ss.dbCfg.ConnectionString += "&parseTime=true"
+			} else {
+				ss.dbCfg.ConnectionString += "?parseTime=true"
 			}
 		}
 
 		var err error
-		engine, err = xorm.NewEngine(ss.dbCfg.Type, connection)
+		engine, err = xorm.NewEngine(ss.dbCfg.Type, ss.dbCfg.ConnectionString)
 		if err != nil {
 			return err
 		}
 		// Only for MySQL or MariaDB, verify we can connect with the current connection string's system var for transaction isolation.
 		// If not, create a new engine with a compatible connection string.
 		if ss.dbCfg.Type == migrator.MySQL {
-			engine, err = ss.ensureTransactionIsolationCompatibility(engine, connection)
+			engine, err = ss.ensureTransactionIsolationCompatibility(engine, ss.dbCfg.ConnectionString)
 			if err != nil {
 				return err
 			}
