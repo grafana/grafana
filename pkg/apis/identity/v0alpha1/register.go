@@ -121,6 +121,30 @@ var SSOSettingResourceInfo = common.NewResourceInfo(
 	},
 )
 
+var TeamBindingResourceInfo = common.NewResourceInfo(
+	GROUP, VERSION, "teambindings", "teambinding", "TeamBinding",
+	func() runtime.Object { return &TeamBinding{} },
+	func() runtime.Object { return &TeamBindingList{} },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Team", Type: "string"},
+			{Name: "Created At", Type: "string", Format: "date"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			m, ok := obj.(*TeamBinding)
+			if !ok {
+				return nil, fmt.Errorf("expected team binding")
+			}
+			return []interface{}{
+				m.Name,
+				m.Spec.TeamRef.Name,
+				m.CreationTimestamp.UTC().Format(time.RFC3339),
+			}, nil
+		},
+	},
+)
+
 var (
 	// SchemeGroupVersion is group version used to register these objects
 	SchemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}
@@ -144,6 +168,8 @@ func AddKnownTypes(scheme *runtime.Scheme, version string) {
 		&IdentityDisplayResults{},
 		&SSOSetting{},
 		&SSOSettingList{},
+		&TeamBinding{},
+		&TeamBindingList{},
 	)
 }
 

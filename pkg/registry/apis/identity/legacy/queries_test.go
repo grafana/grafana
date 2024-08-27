@@ -35,6 +35,12 @@ func TestQueries(t *testing.T) {
 		return &v
 	}
 
+	listTeamBindings := func(q *ListTeamBindingsQuery) sqltemplate.SQLTemplate {
+		v := newListTeamBindings(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
@@ -101,6 +107,30 @@ func TestQueries(t *testing.T) {
 						OrgID: 2,
 						UIDs:  []string{"a", "b"},
 						IDs:   []int64{1, 2},
+					}),
+				},
+			},
+			sqlQueryTeamBindings: {
+				{
+					Name: "team_1_bindings",
+					Data: listTeamBindings(&ListTeamBindingsQuery{
+						OrgID: 1,
+						UID:   "team-1",
+					}),
+				},
+				{
+					Name: "team_bindings_page_1",
+					Data: listTeamBindings(&ListTeamBindingsQuery{
+						OrgID: 1,
+						Limit: 5,
+					}),
+				},
+				{
+					Name: "team_bindings_page_2",
+					Data: listTeamBindings(&ListTeamBindingsQuery{
+						OrgID:      1,
+						Limit:      5,
+						ContinueID: 5,
 					}),
 				},
 			},

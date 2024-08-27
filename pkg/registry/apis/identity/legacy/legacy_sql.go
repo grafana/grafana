@@ -16,14 +16,14 @@ var (
 	_ LegacyIdentityStore = (*legacySQLStore)(nil)
 )
 
-type legacySQLStore struct {
-	sql legacysql.LegacyDatabaseProvider
-}
-
 func NewLegacySQLStores(sql legacysql.LegacyDatabaseProvider) LegacyIdentityStore {
 	return &legacySQLStore{
 		sql: sql,
 	}
+}
+
+type legacySQLStore struct {
+	sql legacysql.LegacyDatabaseProvider
 }
 
 // ListTeams implements LegacyIdentityStore.
@@ -50,8 +50,6 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeams.Name(), err)
 	}
 	q := rawQuery
-
-	// fmt.Printf("%s // %v\n", rawQuery, req.GetArgs())
 
 	res := &ListTeamResult{}
 	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
@@ -126,13 +124,10 @@ func (s *legacySQLStore) GetDisplay(ctx context.Context, ns claims.NamespaceInfo
 }
 
 func (s *legacySQLStore) queryUsers(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, t *template.Template, req sqltemplate.Args, limit int) (*ListUserResult, error) {
-	rawQuery, err := sqltemplate.Execute(t, req)
+	q, err := sqltemplate.Execute(t, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", sqlQueryUsers.Name(), err)
 	}
-	q := rawQuery
-
-	// fmt.Printf("%s // %v\n", rawQuery, req.GetArgs())
 
 	res := &ListUserResult{}
 	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
@@ -160,6 +155,83 @@ func (s *legacySQLStore) queryUsers(ctx context.Context, sql *legacysql.LegacyDa
 			}
 		}
 	}
+	return res, err
+}
+
+// ListTeamsBindings implements LegacyIdentityStore.
+func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.NamespaceInfo, query ListTeamBindingsQuery) (*ListTeamBindingsResult, error) {
+	if query.Limit < 1 {
+		query.Limit = 50
+	}
+
+	limit := int(query.Limit)
+	query.Limit += 1 // for continue
+	query.OrgID = ns.OrgID
+	if query.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero orgID")
+	}
+
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newListTeamBindings(sql, &query)
+	q, err := sqltemplate.Execute(sqlQueryTeamBindings, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeams.Name(), err)
+	}
+
+	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+
+	if err != nil {
+		return nil, err
+	}
+
+	res := &ListTeamBindingsResult{}
+	grouped := map[string][]TeamMember{}
+
+	var lastID int64
+	var atTeamLimit bool
+
+	for rows.Next() {
+		m := TeamMember{}
+		err = rows.Scan(&m.ID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.Created, &m.Updated, &m.Permission)
+		if err != nil {
+			return res, err
+		}
+
+		lastID = m.TeamID
+		members, ok := grouped[m.TeamUID]
+		if ok {
+			grouped[m.TeamUID] = append(members, m)
+		} else if !atTeamLimit {
+			grouped[m.TeamUID] = []TeamMember{m}
+		}
+
+		if len(grouped) >= limit {
+			atTeamLimit = true
+			res.ContinueID = lastID
+		}
+	}
+
+	if query.UID == "" {
+		res.RV, err = sql.GetResourceVersion(ctx, "team_member", "updated")
+	}
+
+	res.Bindings = make([]TeamBinding, 0, len(grouped))
+	for uid, members := range grouped {
+		res.Bindings = append(res.Bindings, TeamBinding{
+			TeamUID: uid,
+			Members: members,
+		})
+	}
+
 	return res, err
 }
 
