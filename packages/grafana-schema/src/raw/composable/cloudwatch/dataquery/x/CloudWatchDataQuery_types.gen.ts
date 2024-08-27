@@ -11,7 +11,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.3.9";
+export const pluginVersion = "10.3.10";
 
 export interface MetricStat {
   /**
