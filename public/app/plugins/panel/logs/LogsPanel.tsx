@@ -114,9 +114,7 @@ export const LogsPanel = ({
   const { eventBus, onAddAdHocFilter } = usePanelContext();
   const onLogRowHover = useCallback(
     (row?: LogRowModel) => {
-      if (!row) {
-        eventBus.publish(new DataHoverClearEvent());
-      } else {
+      if (row) {
         eventBus.publish(
           new DataHoverEvent({
             point: {
@@ -128,6 +126,10 @@ export const LogsPanel = ({
     },
     [eventBus]
   );
+
+  const onLogContainerMouseLeave = useCallback(() => {
+    eventBus.publish(new DataHoverClearEvent());
+  }, [eventBus]);
 
   const onCloseContext = useCallback(() => {
     setContextRow(null);
@@ -350,7 +352,7 @@ export const LogsPanel = ({
         scrollTop={scrollTop}
         scrollRefCallback={(scrollElement) => setScrollElement(scrollElement)}
       >
-        <div className={style.container} ref={logsContainerRef}>
+        <div onMouseLeave={onLogContainerMouseLeave} className={style.container} ref={logsContainerRef}>
           {showCommonLabels && !isAscending && renderCommonLabels()}
           <LogRows
             containerRendered={logsContainerRef.current !== null}
