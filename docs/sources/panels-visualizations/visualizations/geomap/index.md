@@ -53,7 +53,7 @@ Geomaps allow you to view and customize the world map using geospatial data. It'
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-example-8-1-0.png" max-width="1200px" alt="Geomap visualization" >}}
 
-When a geomap is in focus, you can pan around using the arrow keys or zoom in and out using the plus (`+`) and minus (`-`) keys or icons.
+When a geomap is in focus, in addition to typical mouse controls, you can pan around using the arrow keys or zoom in and out using the plus (`+`) and minus (`-`) keys or icons.
 
 Geomaps are also useful when you have location data that’s changing in real time and you want to visualize where an element is moving, using auto-refresh.
 
