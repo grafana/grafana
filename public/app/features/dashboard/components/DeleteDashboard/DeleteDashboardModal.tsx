@@ -35,7 +35,6 @@ const DeleteDashboardModalUnconnected = ({ hideModal, cleanUpDashboardAndVariabl
       source: 'dashboard_settings',
       restore_enabled: config.featureToggles.dashboardRestoreUI,
     });
-    // await deleteDashboard(dashboard.uid, true);
     await deleteItems({
       selectedItems: {
         dashboard: {
