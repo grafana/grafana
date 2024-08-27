@@ -316,7 +316,9 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       baseFilters: variable.baseFilters ?? [],
       defaultKeys: variable.defaultKeys,
       useQueriesAsFilterForOptions: true,
-      supportsMultiValueOperators: config.featureToggles.adhocFilterOneOf,
+      supportsMultiValueOperators: Boolean(
+        variable.datasource?.uid && config.datasources[variable.datasource.uid].meta.multiValueFilterOperators
+      ),
     });
   }
   if (variable.type === 'custom') {

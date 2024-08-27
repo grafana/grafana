@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { AdHocVariableFilter, GrafanaTheme2, PageLayoutType, VariableHide, urlUtil } from '@grafana/data';
-import { config, locationService, useChromeHeaderHeight } from '@grafana/runtime';
+import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   DataSourceVariable,
@@ -262,7 +262,8 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
         layout: 'vertical',
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
-        supportsMultiValueOperators: config.featureToggles.adhocFilterOneOf,
+        // since we only support prometheus datasources, this is always true
+        supportsMultiValueOperators: true,
       }),
     ],
   });

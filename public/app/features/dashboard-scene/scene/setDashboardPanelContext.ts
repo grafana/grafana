@@ -161,7 +161,7 @@ export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceR
   const newVariable = new AdHocFiltersVariable({
     name: 'Filters',
     datasource: ds,
-    supportsMultiValueOperators: config.featureToggles.adhocFilterOneOf,
+    supportsMultiValueOperators: Boolean(ds?.uid && config.datasources[ds.uid].meta.multiValueFilterOperators),
     useQueriesAsFilterForOptions: true,
   });
 
