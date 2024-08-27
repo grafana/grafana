@@ -2255,12 +2255,16 @@ github.com/grafana/authlib v0.0.0-20240826185126-5d9a84d9b410 h1:neWYk0NWTOXE6Vd
 github.com/grafana/authlib v0.0.0-20240826185126-5d9a84d9b410/go.mod h1:uCA/4cap3Ro9e9jQGZdlxZAMNVvlelKap5GjJ0k/YRc=
 github.com/grafana/authlib v0.0.0-20240827174109-b30c33e1ab1f h1:zykdujy4H5FcQXT5HBR8MA09c05R2KjPciJ1GeGEa4o=
 github.com/grafana/authlib v0.0.0-20240827174109-b30c33e1ab1f/go.mod h1:2qJppn1Housx6zA9LE5R4SE6h5BtWAvdjawAWJfdupc=
+github.com/grafana/authlib v0.0.0-20240827180556-bb8df027bb2b h1:huEUSOnISkgF4yDJ29aOVOST4GklfUQeDMryt9lW6iM=
+github.com/grafana/authlib v0.0.0-20240827180556-bb8df027bb2b/go.mod h1:2qJppn1Housx6zA9LE5R4SE6h5BtWAvdjawAWJfdupc=
 github.com/grafana/authlib/claims v0.0.0-20240814074258-eae7d47f01db h1:mDk0bwRV6rDrLSmKXftcPf9kLA9uH6EvxJvzpPW9bso=
 github.com/grafana/authlib/claims v0.0.0-20240814074258-eae7d47f01db/go.mod h1:r+F8H6awwjNQt/KPZ2GNwjk8TvsJ7/gxzkXN26GlL/A=
 github.com/grafana/authlib/claims v0.0.0-20240826185126-5d9a84d9b410 h1:a9xEx4A6zfamZ4AXWXL3MW6ChgGLinXrQrzuGotQ0q0=
 github.com/grafana/authlib/claims v0.0.0-20240826185126-5d9a84d9b410/go.mod h1:r+F8H6awwjNQt/KPZ2GNwjk8TvsJ7/gxzkXN26GlL/A=
 github.com/grafana/authlib/claims v0.0.0-20240827174109-b30c33e1ab1f h1:vvm3USg+RcAV9VRkqXKPbMHARoQ2NVPsGvVuHqcKUmo=
 github.com/grafana/authlib/claims v0.0.0-20240827174109-b30c33e1ab1f/go.mod h1:r+F8H6awwjNQt/KPZ2GNwjk8TvsJ7/gxzkXN26GlL/A=
+github.com/grafana/authlib/claims v0.0.0-20240827180556-bb8df027bb2b h1:eD9FygKoXBckMA7S+AxHzsAenKQWlHROGAdMO6/UYak=
+github.com/grafana/authlib/claims v0.0.0-20240827180556-bb8df027bb2b/go.mod h1:r+F8H6awwjNQt/KPZ2GNwjk8TvsJ7/gxzkXN26GlL/A=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
 github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
 github.com/grafana/cue v0.0.0-20230926092038-971951014e3f h1:TmYAMnqg3d5KYEAaT6PtTguL2GjLfvr6wnAX8Azw6tQ=
