@@ -24,8 +24,6 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       label: 'grafana-select-option',
       padding: '8px',
       position: 'absolute',
-      gridRow: 1,
-      gridColumn: 1,
       display: 'flex',
       alignItems: 'center',
       flexDirection: 'row',
