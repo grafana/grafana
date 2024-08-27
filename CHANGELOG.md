@@ -1,3 +1,15 @@
+<!-- 10.4.8 START -->
+
+# 10.4.8 (2024-08-27)
+
+### Bug fixes
+
+- **Alerting:** Fix persisting result fingerprint that is used by recovery threshold [#91331](https://github.com/grafana/grafana/pull/91331), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Auditing:** Fix a possible crash when audit logger parses responses for failed requests (Enterprise)
+- **RBAC:** Fix seeder failures when inserting duplicated permissions (Enterprise)
+- **Snapshots:** Fix panic when snapshot_remove_expired is true [#91329](https://github.com/grafana/grafana/pull/91329), [@ryantxu](https://github.com/ryantxu)
+
+<!-- 10.4.8 END -->
 <!-- 10.3.9 START -->
 
 # 10.3.9 (2024-08-27)
