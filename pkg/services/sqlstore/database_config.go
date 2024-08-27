@@ -166,10 +166,6 @@ func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg, features fe
 			cnnstr += fmt.Sprintf("&transaction_isolation=%s", val)
 		}
 
-		if features != nil && features.IsEnabledGlobally(featuremgmt.FlagMysqlParseTime) {
-			cnnstr += "&parseTime=true"
-		}
-
 		if features != nil && features.IsEnabledGlobally(featuremgmt.FlagMysqlAnsiQuotes) {
 			cnnstr += "&sql_mode='ANSI_QUOTES'"
 		}
