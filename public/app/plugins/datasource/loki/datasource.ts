@@ -242,6 +242,7 @@ export class LokiDatasource
           refId: `${REF_ID_STARTER_LOG_SAMPLE}${normalizedQuery.refId}`,
           expr: getLogQueryFromMetricsQuery(expr),
           maxLines: Number.isNaN(Number(options.limit)) ? this.maxLines : Number(options.limit),
+          supportingQueryType: SupportingQueryType.LogsSample,
         };
 
       default:

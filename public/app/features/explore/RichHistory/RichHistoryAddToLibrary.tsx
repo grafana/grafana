@@ -5,7 +5,7 @@ import { DataQuery } from '@grafana/schema';
 import { Button, Modal } from '@grafana/ui';
 import { isQueryLibraryEnabled } from 'app/features/query-library';
 
-import { AddToLibraryForm } from '../QueryLibrary/AddToLibraryForm';
+import { QueryTemplateForm } from '../QueryLibrary/QueryTemplateForm';
 
 type Props = {
   query: DataQuery;
@@ -23,13 +23,13 @@ export const RichHistoryAddToLibrary = ({ query }: Props) => {
         {buttonLabel}
       </Button>
       <Modal
-        title={t('explore.add-to-library-modal.title', 'Add query to Query Library')}
+        title={t('explore.query-template-modal.add-title', 'Add query to Query Library')}
         isOpen={isOpen}
         onDismiss={() => setIsOpen(false)}
       >
-        <AddToLibraryForm
+        <QueryTemplateForm
           onCancel={() => setIsOpen(() => false)}
-          query={query}
+          queryToAdd={query}
           onSave={(isSuccess) => {
             if (isSuccess) {
               setIsOpen(false);

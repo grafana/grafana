@@ -659,12 +659,10 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, user ident
 // checkLimitsTransactionCtx checks whether the current transaction (as identified by the ctx) breaches configured alert rule limits.
 func (service *AlertRuleService) checkLimitsTransactionCtx(ctx context.Context, user identity.Requester) error {
 	// default to 0 if there is no user
-	userID := int64(0)
-	u, err := identity.UserIdentifier(user.GetTypedID())
-	if err != nil {
-		return fmt.Errorf("failed to check alert rule quota: %w", err)
+	var userID int64
+	if id, err := identity.UserIdentifier(user.GetID()); err == nil {
+		userID = id
 	}
-	userID = u
 
 	limitReached, err := service.quotas.CheckQuotaReached(ctx, models.QuotaTargetSrv, &quota.ScopeParameters{
 		OrgID:  user.GetOrgID(),

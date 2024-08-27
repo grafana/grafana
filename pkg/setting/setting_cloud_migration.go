@@ -24,6 +24,7 @@ type CloudMigrationSettings struct {
 	DeleteTokenTimeout          time.Duration
 	TokenExpiresAfter           time.Duration
 	FeedbackURL                 string
+	FrontendPollInterval        time.Duration
 
 	IsDeveloperMode bool
 }
@@ -49,6 +50,7 @@ func (cfg *Cfg) readCloudMigrationSettings() {
 	cfg.CloudMigration.TokenExpiresAfter = cloudMigration.Key("token_expires_after").MustDuration(7 * 24 * time.Hour)
 	cfg.CloudMigration.IsDeveloperMode = cloudMigration.Key("developer_mode").MustBool(false)
 	cfg.CloudMigration.FeedbackURL = cloudMigration.Key("feedback_url").MustString("")
+	cfg.CloudMigration.FrontendPollInterval = cloudMigration.Key("frontend_poll_interval").MustDuration(2 * time.Second)
 
 	if cfg.CloudMigration.SnapshotFolder == "" {
 		cfg.CloudMigration.SnapshotFolder = filepath.Join(cfg.DataPath, "cloud_migration")

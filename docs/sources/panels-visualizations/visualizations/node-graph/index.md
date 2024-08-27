@@ -25,11 +25,36 @@ Node graphs can visualize directed graphs or networks. They use a directed force
 
 ![Node graph visualization](/static/img/docs/node-graph/node-graph-8-0.png 'Node graph')
 
+## Configure a node graph visualization
+
 The following video provides beginner steps for creating node panel visualizations. You'll learn the data requirements and caveats, special customizations, and much more:
 
 {{< youtube id="VrvsMkRwoKw" >}}
 
 {{< docs/play title="Node graph panel" url="https://play.grafana.org/d/bdodfbi3d57uoe/" >}}
+
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Nodes options
+
+The **Nodes** options section provides configurations for node behaviors.
+
+- **Main stat unit** - Choose which unit the main stat displays in the graph's nodes.
+- **Secondary stat unit** - Choose which unit the secondary stat displays in the graph's nodes.
+- **Arc sections** - Configure which fields define the size of the colored circle around the node and select a color for each. You can add multiple fields.
+
+{{< admonition type="note" >}}
+Defining arc sections overrides the automatic detection of `arc__*` and `color` fields described in the **Optional fields** section of [Nodes data frame structure](#nodes-data-frame-structure).
+{{< /admonition >}}
+
+## Edges options
+
+The **Edges** options section provides configurations for node edges behaviors.
+
+- **Main stat unit** - Choose which unit the main stat displays in the graph's edges.
+- **Secondary stat unit** - Choose which unit the secondary stat displays in the graph's edges.
 
 ## Data requirements
 
@@ -148,7 +173,3 @@ Optional fields:
 | icon          | string        | Name of the icon to show inside the node instead of the default stats. Only Grafana built in icons are allowed (see the available icons [here](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview)).                                                                                                                      |
 | nodeRadius    | number        | Radius value in pixels. Used to manage node size.                                                                                                                                                                                                                                                                                                                         |
 | highlighted   | boolean       | Sets whether the node should be highlighted. Useful for example to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                                                                                                                                                                                                       |
-
-## Panel options
-
-{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}

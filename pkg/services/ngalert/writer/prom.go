@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/dataplane/sdata/numeric"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/m3db/prometheus_remote_client_golang/promremote"
 
@@ -174,14 +173,9 @@ func createAuthOpts(username, password string) *httpclient.BasicAuthOptions {
 }
 
 // Write writes the given frames to the Prometheus remote write endpoint.
-func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, frames data.Frames, extraLabels map[string]string) error {
+func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error {
 	l := w.logger.FromContext(ctx)
-	ruleKey, found := models.RuleKeyFromContext(ctx)
-	if !found {
-		// sanity check, this should never happen
-		return fmt.Errorf("rule key not found in context")
-	}
-	lvs := []string{fmt.Sprint(ruleKey.OrgID), backendType}
+	lvs := []string{fmt.Sprint(orgID), backendType}
 
 	points, err := PointsFromFrames(name, t, frames, extraLabels)
 	if err != nil {

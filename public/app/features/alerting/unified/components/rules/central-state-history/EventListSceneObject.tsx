@@ -232,7 +232,7 @@ function AlertRuleName({ labels, ruleUID }: AlertRuleNameProps) {
   const styles = useStyles2(getStyles);
   const { pathname, search } = useLocation();
   const returnTo = `${pathname}${search}`;
-  const alertRuleName = labels['alertname'];
+  const alertRuleName = labels.alertname;
   if (!ruleUID) {
     return (
       <Text>

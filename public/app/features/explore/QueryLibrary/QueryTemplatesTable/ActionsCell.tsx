@@ -1,6 +1,7 @@
+import { useState } from 'react';
+
 import { reportInteraction, getAppEvents } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
-import { IconButton } from '@grafana/ui';
+import { IconButton, Modal } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { t } from 'app/core/internationalization';
@@ -10,17 +11,20 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import ExploreRunQueryButton from '../../ExploreRunQueryButton';
 import { useQueriesDrawerContext } from '../../QueriesDrawer/QueriesDrawerContext';
+import { QueryTemplateForm } from '../QueryTemplateForm';
 
 import { useQueryLibraryListStyles } from './styles';
+import { QueryTemplateRow } from './types';
 
 interface ActionsCellProps {
   queryUid?: string;
-  query?: DataQuery;
+  queryTemplate: QueryTemplateRow;
   rootDatasourceUid?: string;
 }
 
-function ActionsCell({ query, rootDatasourceUid, queryUid }: ActionsCellProps) {
+function ActionsCell({ queryTemplate, rootDatasourceUid, queryUid }: ActionsCellProps) {
   const [deleteQueryTemplate] = useDeleteQueryTemplateMutation();
+  const [editFormOpen, setEditFormOpen] = useState(false);
   const { setDrawerOpened } = useQueriesDrawerContext();
   const styles = useQueryLibraryListStyles();
 
@@ -59,11 +63,34 @@ function ActionsCell({ query, rootDatasourceUid, queryUid }: ActionsCellProps) {
           }
         }}
       />
+      <IconButton
+        className={styles.actionButton}
+        size="lg"
+        name="comment-alt"
+        title={t('explore.query-library.add-edit-description', 'Add/edit description')}
+        tooltip={t('explore.query-library.add-edit-description', 'Add/edit description')}
+        onClick={() => {
+          setEditFormOpen(true);
+        }}
+      />
       <ExploreRunQueryButton
-        queries={query ? [query] : []}
+        queries={queryTemplate.query ? [queryTemplate.query] : []}
         rootDatasourceUid={rootDatasourceUid}
         onClick={() => setDrawerOpened(false)}
       />
+      <Modal
+        title={t('explore.query-template-modal.edit-title', 'Edit query')}
+        isOpen={editFormOpen}
+        onDismiss={() => setEditFormOpen(false)}
+      >
+        <QueryTemplateForm
+          onCancel={() => setEditFormOpen(false)}
+          templateData={queryTemplate}
+          onSave={() => {
+            setEditFormOpen(false);
+          }}
+        />
+      </Modal>
     </div>
   );
 }

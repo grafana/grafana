@@ -23,7 +23,7 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
   const [showDeletedAlert, setShowDeletedAlert] = useState(false);
   const [step, setStep] = useState(1);
 
-  const { snapshotName, snapshotSharingOptions, selectedExpireOption, dashboardRef } = model.useState();
+  const { snapshotName, snapshotSharingOptions, selectedExpireOption, dashboardRef, panelRef } = model.useState();
 
   const [snapshotResult, createSnapshot] = useAsyncFn(async (external = false) => {
     const response = await model.onSnapshotCreate(external);
@@ -76,6 +76,7 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
             onExpireChange={model.onExpireChange}
             onCreateClick={createSnapshot}
             isLoading={snapshotResult.loading}
+            panelRef={panelRef}
           />
         </>
       )}

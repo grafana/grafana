@@ -46,6 +46,7 @@ const (
 )
 
 var searchWordsRegex = regexp.MustCompile(regexp.QuoteMeta(es.HighlightPreTagsString) + `(.*?)` + regexp.QuoteMeta(es.HighlightPostTagsString))
+var aliasPatternRegex = regexp.MustCompile(`\{\{([\s\S]+?)\}\}`)
 
 func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets []*Query, configuredFields es.ConfiguredFields, keepLabelsInResponse bool, logger log.Logger) (*backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
@@ -922,8 +923,6 @@ func nameFields(queryResult backend.DataResponse, target *Query, keepLabelsInRes
 		}
 	}
 }
-
-var aliasPatternRegex = regexp.MustCompile(`\{\{([\s\S]+?)\}\}`)
 
 func getFieldName(dataField data.Field, target *Query, metricTypeCount int) string {
 	metricType := dataField.Labels["metric"]

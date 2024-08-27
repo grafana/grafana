@@ -14,9 +14,9 @@ var (
 )
 
 func NewAuthorizationErrorWithPermissions(action string, eval ac.Evaluator) error {
-	msg := fmt.Sprintf("user is not authorized to %s", action)
-	err := ErrAuthorizationBase.Errorf(msg)
-	err.PublicMessage = msg
+	msg := "user is not authorized to %s"
+	err := ErrAuthorizationBase.Errorf(msg, action)
+	err.PublicMessage = fmt.Sprintf(msg, action)
 	if eval != nil {
 		err.PublicPayload = map[string]any{
 			"permissions": eval.GoString(),

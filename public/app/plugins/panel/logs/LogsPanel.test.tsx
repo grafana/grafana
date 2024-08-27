@@ -426,6 +426,122 @@ describe('LogsPanel', () => {
       });
     });
   });
+
+  describe('Show/hide fields', () => {
+    const series = [
+      createDataFrame({
+        refId: 'A',
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z'],
+          },
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: ['logline text'],
+            labels: {
+              app: 'common_app',
+            },
+          },
+        ],
+      }),
+    ];
+
+    it('displays the provided fields instead of the log line', async () => {
+      setup({
+        data: {
+          series,
+        },
+        options: {
+          showLabels: false,
+          showTime: false,
+          wrapLogMessage: false,
+          showCommonLabels: false,
+          prettifyLogMessage: false,
+          sortOrder: LogsSortOrder.Descending,
+          dedupStrategy: LogsDedupStrategy.none,
+          enableLogDetails: true,
+          displayedFields: ['app'],
+          onClickHideField: undefined,
+          onClickShowField: undefined,
+        },
+      });
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(screen.queryByText('logline text')).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByText('app=common_app'));
+
+      expect(screen.getByLabelText('Hide this field')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByLabelText('Hide this field'));
+
+      expect(screen.getByText('logline text')).toBeInTheDocument();
+    });
+
+    it('enables the behavior with a default implementation', async () => {
+      setup({
+        data: {
+          series,
+        },
+        options: {
+          showLabels: false,
+          showTime: false,
+          wrapLogMessage: false,
+          showCommonLabels: false,
+          prettifyLogMessage: false,
+          sortOrder: LogsSortOrder.Descending,
+          dedupStrategy: LogsDedupStrategy.none,
+          enableLogDetails: true,
+          displayedFields: [],
+          onClickHideField: undefined,
+          onClickShowField: undefined,
+        },
+      });
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByText('logline text'));
+      await userEvent.click(screen.getByLabelText('Show this field instead of the message'));
+
+      expect(screen.getByText('app=common_app')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByLabelText('Hide this field'));
+
+      expect(screen.getByText('logline text')).toBeInTheDocument();
+    });
+
+    it('overrides the default implementation when the callbacks are provided', async () => {
+      const onClickShowFieldMock = jest.fn();
+
+      setup({
+        data: {
+          series,
+        },
+        options: {
+          showLabels: false,
+          showTime: false,
+          wrapLogMessage: false,
+          showCommonLabels: false,
+          prettifyLogMessage: false,
+          sortOrder: LogsSortOrder.Descending,
+          dedupStrategy: LogsDedupStrategy.none,
+          enableLogDetails: true,
+          onClickHideField: jest.fn(),
+          onClickShowField: onClickShowFieldMock,
+        },
+      });
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByText('logline text'));
+      await userEvent.click(screen.getByLabelText('Show this field instead of the message'));
+
+      expect(onClickShowFieldMock).toHaveBeenCalledTimes(1);
+    });
+  });
 });
 
 const setup = (propsOverrides?: {}) => {

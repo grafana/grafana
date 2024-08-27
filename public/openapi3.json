@@ -3614,7 +3614,7 @@
           "Policies": {
             "description": "Policies contains all policy identifiers included in the certificate.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
             "items": {
-              "$ref": "#/components/schemas/OID"
+              "type": "string"
             },
             "type": "array"
           },
@@ -6304,7 +6304,7 @@
             "type": "array"
           }
         },
-        "title": "Headers represents the configuration for HTTP headers.",
+        "title": "Header represents the configuration for a single HTTP header.",
         "type": "object"
       },
       "Headers": {
@@ -7046,7 +7046,7 @@
       },
       "MigrateDataResponseItemDTO": {
         "properties": {
-          "error": {
+          "message": {
             "type": "string"
           },
           "refId": {
@@ -7055,6 +7055,7 @@
           "status": {
             "enum": [
               "OK",
+              "WARNING",
               "ERROR",
               "PENDING",
               "UNKNOWN"
@@ -7313,6 +7314,9 @@
           },
           "template": {
             "type": "string"
+          },
+          "version": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -7320,6 +7324,9 @@
       "NotificationTemplateContent": {
         "properties": {
           "template": {
+            "type": "string"
+          },
+          "version": {
             "type": "string"
           }
         },
@@ -7389,10 +7396,6 @@
           }
         },
         "title": "OAuth2 is the oauth2 client configuration.",
-        "type": "object"
-      },
-      "OID": {
-        "title": "An OID represents an ASN.1 OBJECT IDENTIFIER.",
         "type": "object"
       },
       "ObjectIdentifier": {
@@ -9552,6 +9555,12 @@
       "Route": {
         "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
         "properties": {
+          "active_time_intervals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "continue": {
             "type": "boolean"
           },
@@ -12215,6 +12224,7 @@
         "type": "object"
       },
       "alertGroups": {
+        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -25826,9 +25836,6 @@
               }
             },
             "description": "NotificationTemplates"
-          },
-          "404": {
-            "description": " Not found."
           }
         },
         "summary": "Get all notification templates.",
@@ -25842,10 +25849,18 @@
         "operationId": "RouteDeleteTemplate",
         "parameters": [
           {
-            "description": "Template Name",
+            "description": "Template name",
             "in": "path",
             "name": "name",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Version of template to use for optimistic concurrency. Leave empty to disable validation",
+            "in": "query",
+            "name": "version",
             "schema": {
               "type": "string"
             }
@@ -25854,6 +25869,16 @@
         "responses": {
           "204": {
             "description": " The template was deleted successfully."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericPublicError"
+                }
+              }
+            },
+            "description": "GenericPublicError"
           }
         },
         "summary": "Delete a template.",
@@ -25886,7 +25911,14 @@
             "description": "NotificationTemplate"
           },
           "404": {
-            "description": " Not found."
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericPublicError"
+                }
+              }
+            },
+            "description": "GenericPublicError"
           }
         },
         "summary": "Get a notification template.",
@@ -25939,11 +25971,21 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError"
+                  "$ref": "#/components/schemas/GenericPublicError"
                 }
               }
             },
-            "description": "ValidationError"
+            "description": "GenericPublicError"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericPublicError"
+                }
+              }
+            },
+            "description": "GenericPublicError"
           }
         },
         "summary": "Updates an existing notification template.",

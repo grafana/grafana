@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
@@ -197,7 +198,8 @@ func (sl *ServerLockService) LockExecuteAndReleaseWithRetries(ctx context.Contex
 		// could not get the lock
 		if err != nil {
 			var lockedErr *ServerLockExistsError
-			if errors.As(err, &lockedErr) {
+			var deadlockErr *mysql.MySQLError
+			if errors.As(err, &lockedErr) || (errors.As(err, &deadlockErr) && deadlockErr.Number == 1213) {
 				// if the lock is already taken, wait and try again
 				if lockChecks == 1 { // only warn on first lock check
 					ctxLogger.Warn("another instance has the lock, waiting for it to be released", "actionName", actionName)

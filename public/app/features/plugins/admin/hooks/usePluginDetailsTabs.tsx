@@ -35,6 +35,15 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
         active: PluginTabIds.VERSIONS === currentPageId,
       });
     }
+    if (isPublished && plugin?.details?.changelog) {
+      navModelChildren.push({
+        text: PluginTabLabels.CHANGELOG,
+        id: PluginTabIds.CHANGELOG,
+        icon: 'rocket',
+        url: `${pathname}?page=${PluginTabIds.CHANGELOG}`,
+        active: PluginTabIds.CHANGELOG === currentPageId,
+      });
+    }
 
     // Not extending the tabs with the config pages if the plugin is not installed
     if (!pluginConfig) {

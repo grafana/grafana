@@ -90,13 +90,6 @@ type SearchTeamsQuery struct {
 	HiddenUsers  map[string]struct{}
 }
 
-type ListTeamsCommand struct {
-	Limit int
-	Start int
-	OrgID int64
-	UID   string
-}
-
 type TeamDTO struct {
 	ID            int64                          `json:"id" xorm:"id"`
 	UID           string                         `json:"uid" xorm:"uid"`

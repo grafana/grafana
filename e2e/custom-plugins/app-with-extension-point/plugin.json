@@ -32,7 +32,5 @@
     "grafanaDependency": ">=10.3.3",
     "plugins": []
   },
-  "generated": {
-    "extensions": []
-  }
+  "extensions": []
 }

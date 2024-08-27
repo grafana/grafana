@@ -514,7 +514,7 @@ describe('buildVisualQueryFromString', () => {
           text: 'afe}',
           from: 14,
           to: 18,
-          parentType: 'LabelMatcher',
+          parentType: 'UnquotedLabelMatcher',
         },
       ],
       query: {

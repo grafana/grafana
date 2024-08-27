@@ -10,10 +10,9 @@ import (
 // This does not check if you have permissions!
 
 type DashboardQuery struct {
-	OrgID    int64
-	UID      string // to select a single dashboard
-	Limit    int
-	MaxBytes int
+	OrgID int64
+	UID   string // to select a single dashboard
+	Limit int
 
 	// Included in the continue token
 	// This is the ID from the last dashboard sent in the previous page
@@ -28,6 +27,10 @@ type DashboardQuery struct {
 
 	// The label requirements
 	Labels []*resource.Requirement
+}
+
+func (r *DashboardQuery) UseHistoryTable() bool {
+	return r.GetHistory || r.Version > 0
 }
 
 type DashboardAccess interface {

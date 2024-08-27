@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -120,9 +121,9 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	}
 
 	// Make this cancelable
-	ctx, cancel := context.WithCancel(identity.WithRequester(context.Background(),
+	ctx, cancel := context.WithCancel(claims.WithClaims(context.Background(),
 		&identity.StaticRequester{
-			Type:           identity.TypeServiceAccount,
+			Type:           claims.TypeServiceAccount,
 			Login:          "watcher", // admin user for watch
 			UserID:         1,
 			IsGrafanaAdmin: true,
@@ -211,19 +212,15 @@ func (s *server) Stop(ctx context.Context) error {
 }
 
 // Old value indicates an update -- otherwise a create
-func (s *server) newEvent(ctx context.Context, key *ResourceKey, value, oldValue []byte) (*WriteEvent, error) {
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, ErrUserNotFoundInContext
-	}
+func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *ResourceKey, value, oldValue []byte) (*WriteEvent, *ErrorResult) {
 	tmp := &unstructured.Unstructured{}
-	err = tmp.UnmarshalJSON(value)
+	err := tmp.UnmarshalJSON(value)
 	if err != nil {
-		return nil, err
+		return nil, AsErrorResult(err)
 	}
 	obj, err := utils.MetaAccessor(tmp)
 	if err != nil {
-		return nil, err
+		return nil, AsErrorResult(err)
 	}
 
 	event := &WriteEvent{
@@ -239,27 +236,27 @@ func (s *server) newEvent(ctx context.Context, key *ResourceKey, value, oldValue
 		temp := &unstructured.Unstructured{}
 		err = temp.UnmarshalJSON(oldValue)
 		if err != nil {
-			return nil, err
+			return nil, AsErrorResult(err)
 		}
 		event.ObjectOld, err = utils.MetaAccessor(temp)
 		if err != nil {
-			return nil, err
+			return nil, AsErrorResult(err)
 		}
 	}
 
 	if key.Namespace != obj.GetNamespace() {
-		return nil, apierrors.NewBadRequest("key/namespace do not match")
+		return nil, NewBadRequestError("key/namespace do not match")
 	}
 
 	gvk := obj.GetGroupVersionKind()
 	if gvk.Kind == "" {
-		return nil, apierrors.NewBadRequest("expecting resources with a kind in the body")
+		return nil, NewBadRequestError("expecting resources with a kind in the body")
 	}
 	if gvk.Version == "" {
-		return nil, apierrors.NewBadRequest("expecting resources with an apiVersion")
+		return nil, NewBadRequestError("expecting resources with an apiVersion")
 	}
 	if gvk.Group != "" && gvk.Group != key.Group {
-		return nil, apierrors.NewBadRequest(
+		return nil, NewBadRequestError(
 			fmt.Sprintf("group in key does not match group in the body (%s != %s)", key.Group, gvk.Group),
 		)
 	}
@@ -267,15 +264,14 @@ func (s *server) newEvent(ctx context.Context, key *ResourceKey, value, oldValue
 	// This needs to be a create function
 	if key.Name == "" {
 		if obj.GetName() == "" {
-			return nil, apierrors.NewBadRequest("missing name")
+			return nil, NewBadRequestError("missing name")
 		}
 		key.Name = obj.GetName()
 	} else if key.Name != obj.GetName() {
-		return nil, apierrors.NewBadRequest(
+		return nil, NewBadRequestError(
 			fmt.Sprintf("key/name do not match (key: %s, name: %s)", key.Name, obj.GetName()))
 	}
-	err = validateName(obj.GetName())
-	if err != nil {
+	if err := validateName(obj.GetName()); err != nil {
 		return nil, err
 	}
 
@@ -283,17 +279,17 @@ func (s *server) newEvent(ctx context.Context, key *ResourceKey, value, oldValue
 	if folder != "" {
 		err = s.access.CanWriteFolder(ctx, user, folder)
 		if err != nil {
-			return nil, err
+			return nil, AsErrorResult(err)
 		}
 	}
 	origin, err := obj.GetOriginInfo()
 	if err != nil {
-		return nil, apierrors.NewBadRequest("invalid origin info")
+		return nil, NewBadRequestError("invalid origin info")
 	}
 	if origin != nil {
 		err = s.access.CanWriteOrigin(ctx, user, origin.Name)
 		if err != nil {
-			return nil, err
+			return nil, AsErrorResult(err)
 		}
 	}
 	return event, nil
@@ -308,6 +304,15 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	}
 
 	rsp := &CreateResponse{}
+	user, ok := claims.From(ctx)
+	if !ok || user == nil {
+		rsp.Error = &ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}
+		return rsp, nil
+	}
+
 	found := s.backend.ReadResource(ctx, &ReadRequest{Key: req.Key})
 	if found != nil && len(found.Value) > 0 {
 		rsp.Error = &ErrorResult{
@@ -317,12 +322,13 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 		return rsp, nil
 	}
 
-	event, err := s.newEvent(ctx, req.Key, req.Value, nil)
-	if err != nil {
-		rsp.Error = AsErrorResult(err)
+	event, e := s.newEvent(ctx, user, req.Key, req.Value, nil)
+	if e != nil {
+		rsp.Error = e
 		return rsp, nil
 	}
 
+	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
@@ -339,6 +345,14 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 	}
 
 	rsp := &UpdateResponse{}
+	user, ok := claims.From(ctx)
+	if !ok || user == nil {
+		rsp.Error = &ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}
+		return rsp, nil
+	}
 	if req.ResourceVersion < 0 {
 		rsp.Error = AsErrorResult(apierrors.NewBadRequest("update must include the previous version"))
 		return rsp, nil
@@ -359,15 +373,16 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 		return nil, ErrOptimisticLockingFailed
 	}
 
-	event, err := s.newEvent(ctx, req.Key, req.Value, latest.Value)
-	if err != nil {
-		rsp.Error = AsErrorResult(err)
-		return rsp, err
+	event, e := s.newEvent(ctx, user, req.Key, req.Value, latest.Value)
+	if e != nil {
+		rsp.Error = e
+		return rsp, nil
 	}
 
 	event.Type = WatchEvent_MODIFIED
 	event.PreviousRV = latest.ResourceVersion
 
+	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
@@ -406,12 +421,12 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 		Type:       WatchEvent_DELETED,
 		PreviousRV: latest.ResourceVersion,
 	}
-	requester, err := identity.GetRequester(ctx)
-	if err != nil {
+	requester, ok := claims.From(ctx)
+	if !ok {
 		return nil, apierrors.NewBadRequest("unable to get user")
 	}
 	marker := &DeletedMarker{}
-	err = json.Unmarshal(latest.Value, marker)
+	err := json.Unmarshal(latest.Value, marker)
 	if err != nil {
 		return nil, apierrors.NewBadRequest(
 			fmt.Sprintf("unable to read previous object, %v", err))
@@ -573,7 +588,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 				// }
 				// TODO: return values that match either the old or the new
 
-				srv.Send(&WatchEvent{
+				if err := srv.Send(&WatchEvent{
 					Timestamp: event.Timestamp,
 					Type:      event.Type,
 					Resource: &WatchEvent_Resource{
@@ -581,7 +596,9 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 						Version: event.ResourceVersion,
 					},
 					// TODO... previous???
-				})
+				}); err != nil {
+					return err
+				}
 			}
 		}
 	}

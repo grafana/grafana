@@ -25,12 +25,12 @@ import { RuleEditorSection } from './RuleEditorSection';
 
 export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 
-const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
+const forValidationOptions = (evaluateEvery: string): RegisterOptions<{ evaluateFor: string }> => ({
   required: {
     value: true,
     message: 'Required.',
   },
-  validate: (value: string) => {
+  validate: (value) => {
     // parsePrometheusDuration does not allow 0 but does allow 0s
     if (value === '0') {
       return true;
@@ -146,7 +146,7 @@ function FolderGroupAndEvaluationInterval({
               <Stack direction="column" gap={1}>
                 {getValues('group') && getValues('evaluateEvery') && (
                   <span>
-                    <Trans i18nKey="alert-rule-form.evaluation-behaviour-group.text" evaluateEvery={evaluateEvery}>
+                    <Trans i18nKey="alert-rule-form.evaluation-behaviour-group.text" values={{ evaluateEvery }}>
                       All rules in the selected group are evaluated every {{ evaluateEvery }}.
                     </Trans>
                     {!isNewGroup && (

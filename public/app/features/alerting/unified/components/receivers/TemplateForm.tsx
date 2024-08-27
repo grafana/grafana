@@ -7,7 +7,7 @@ import { useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { isFetchError } from '@grafana/runtime';
+import { isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
   Button,
@@ -21,20 +21,22 @@ import {
   InlineField,
   Box,
 } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { AlertManagerCortexConfig, TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
 
 import { AppChromeUpdate } from '../../../../../core/components/AppChrome/AppChromeUpdate';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { updateAlertManagerConfigAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { makeAMLink } from '../../utils/misc';
+import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { ensureDefine } from '../../utils/templates';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHeader';
+import {
+  useCreateNotificationTemplate,
+  useUpdateNotificationTemplate,
+} from '../contact-points/useNotificationTemplates';
 
 import { PayloadEditor } from './PayloadEditor';
 import { TemplateDataDocs } from './TemplateDataDocs';
@@ -82,13 +84,17 @@ export const isDuplicating = (location: Location) => location.pathname.endsWith(
  */
 export const TemplateForm = ({ existing, alertManagerSourceName, config, provenance }: Props) => {
   const styles = useStyles2(getStyles);
-  const dispatch = useDispatch();
+
+  const appNotification = useAppNotification();
+
+  const createNewTemplate = useCreateNotificationTemplate({ alertmanager: alertManagerSourceName });
+  const updateTemplate = useUpdateNotificationTemplate({ alertmanager: alertManagerSourceName });
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
   const formRef = useRef<HTMLFormElement>(null);
   const isGrafanaAlertManager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
 
-  const { loading, error } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
+  const { error } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
 
   const [cheatsheetOpened, toggleCheatsheetOpened] = useToggle(false);
 
@@ -111,47 +117,6 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
     dragPosition: 'middle',
   });
 
-  const submit = (values: TemplateFormValues) => {
-    // wrap content in "define" if it's not already wrapped, in case user did not do it/
-    // it's not obvious that this is needed for template to work
-    const content = ensureDefine(values.name, values.content);
-
-    // add new template to template map
-    const template_files = {
-      ...config.template_files,
-      [values.name]: content,
-    };
-
-    // delete existing one (if name changed, otherwise it was overwritten in previous step)
-    if (existing && existing.name !== values.name) {
-      delete template_files[existing.name];
-    }
-
-    // make sure name for the template is configured on the alertmanager config object
-    const templates = [
-      ...(config.alertmanager_config.templates ?? []).filter((name) => name !== existing?.name),
-      values.name,
-    ];
-
-    const newConfig: AlertManagerCortexConfig = {
-      template_files,
-      alertmanager_config: {
-        ...config.alertmanager_config,
-        templates,
-      },
-    };
-    dispatch(
-      updateAlertManagerConfigAction({
-        alertManagerSourceName,
-        newConfig,
-        oldConfig: config,
-        successMessage: 'Template saved.',
-        redirectPath: '/alerting/notifications',
-        redirectSearch: `tab=${ContactPointsActiveTabs.NotificationTemplates}`,
-      })
-    );
-  };
-
   const formApi = useForm<TemplateFormValues>({
     mode: 'onSubmit',
     defaultValues: existing ?? defaults,
@@ -159,11 +124,28 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
   const {
     handleSubmit,
     register,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     getValues,
     setValue,
     watch,
   } = formApi;
+
+  const submit = async (values: TemplateFormValues) => {
+    const returnLink = makeAMLink('/alerting/notifications', alertManagerSourceName, {
+      tab: ContactPointsActiveTabs.NotificationTemplates,
+    });
+
+    try {
+      if (!existing) {
+        await createNewTemplate({ template: values });
+      } else {
+        await updateTemplate({ originalName: existing.name, template: values });
+      }
+      locationService.push(returnLink);
+    } catch (error) {
+      appNotification.error('Error saving template', stringifyErrorLike(error));
+    }
+  };
 
   const validateNameIsUnique: Validate<string, TemplateFormValues> = (name: string) => {
     return !config.template_files[name] || existing?.name === name
@@ -173,11 +155,11 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
 
   const actionButtons = (
     <Stack>
-      <Button onClick={() => formRef.current?.requestSubmit()} variant="primary" size="sm" disabled={loading}>
+      <Button onClick={() => formRef.current?.requestSubmit()} variant="primary" size="sm" disabled={isSubmitting}>
         Save
       </Button>
       <LinkButton
-        disabled={loading}
+        disabled={isSubmitting}
         href={makeAMLink('alerting/notifications', alertManagerSourceName, {
           tab: ContactPointsActiveTabs.NotificationTemplates,
         })}
@@ -201,7 +183,11 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
             </Alert>
           )}
           {/* warning about provisioned template */}
-          {provenance && <ProvisioningAlert resource={ProvisionedResource.Template} />}
+          {provenance && (
+            <Box grow={0}>
+              <ProvisioningAlert resource={ProvisionedResource.Template} />
+            </Box>
+          )}
 
           {/* name field for the template */}
           <FieldSet disabled={Boolean(provenance)} className={styles.fieldset}>

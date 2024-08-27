@@ -15,20 +15,20 @@ var (
 // the right order. Add it to your data types passed to SQLTemplate, either by
 // embedding or with a named struct field if its Arg method would clash with
 // another struct field.
-type Args struct {
+type args struct {
 	d      interface{ ArgPlaceholder(argNum int) string }
 	values []any
 }
 
-func NewArgs(d Dialect) *Args {
-	return &Args{
+func NewArgs(d Dialect) Args {
+	return &args{
 		d: d,
 	}
 }
 
 // Arg can be called from within templates to pass arguments to the SQL driver
 // to use in the execution of the query.
-func (a *Args) Arg(x any) string {
+func (a *args) Arg(x any) string {
 	a.values = append(a.values, x)
 
 	return a.d.ArgPlaceholder(len(a.values))
@@ -48,7 +48,7 @@ func (a *Args) Arg(x any) string {
 //	DELETE FROM {{ .Ident "mytab" }}
 //		WHERE id IN ( {{ argList . .IDs }} )
 //	;
-func (a *Args) ArgList(slice reflect.Value) (string, error) {
+func (a *args) ArgList(slice reflect.Value) (string, error) {
 	if !slice.IsValid() || slice.Kind() != reflect.Slice {
 		return "", ErrInvalidArgList
 	}
@@ -69,15 +69,15 @@ func (a *Args) ArgList(slice reflect.Value) (string, error) {
 	return b.String(), nil
 }
 
-func (a *Args) Reset() {
+func (a *args) Reset() {
 	a.values = nil
 }
 
-func (a *Args) GetArgs() []any {
+func (a *args) GetArgs() []any {
 	return a.values
 }
 
-type ArgsIface interface {
+type Args interface {
 	Arg(x any) string
 	ArgList(slice reflect.Value) (string, error)
 	GetArgs() []any
