@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { compact } from 'lodash';
 import { useMemo } from 'react';
-import { FormProvider, RegisterOptions, useForm, useFormContext } from 'react-hook-form';
+import { FieldValues, FormProvider, RegisterOptions, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Badge, Button, Field, Input, Label, LinkButton, Modal, Stack, useStyles2 } from '@grafana/ui';
@@ -28,7 +28,6 @@ import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 import { decodeGrafanaNamespace, encodeGrafanaNamespace } from '../expressions/util';
 import { EvaluationGroupQuickPick } from '../rule-editor/EvaluationGroupQuickPick';
 import { MIN_TIME_RANGE_STEP_S } from '../rule-editor/GrafanaEvaluationBehavior';
-import { checkForPathSeparator } from '../rule-editor/util';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -135,7 +134,7 @@ interface FormValues {
   groupInterval: string;
 }
 
-export const evaluateEveryValidationOptions = (rules: RulerRuleDTO[]): RegisterOptions => ({
+export const evaluateEveryValidationOptions = <T extends FieldValues>(rules: RulerRuleDTO[]): RegisterOptions<T> => ({
   required: {
     value: true,
     message: 'Required.',
@@ -192,9 +191,9 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
    *  2. rename the rule group, but keeping it in the same namespace
    *  3. move the rule group to a new namespace, optionally with a different group name
    */
-  const [updateRuleGroupState, updateRuleGroup] = useUpdateRuleGroupConfiguration();
-  const [renameRuleGroupState, renameRuleGroup] = useRenameRuleGroup();
-  const [moveRuleGroupState, moveRuleGroup] = useMoveRuleGroup();
+  const [updateRuleGroup, updateRuleGroupState] = useUpdateRuleGroupConfiguration();
+  const [renameRuleGroup, renameRuleGroupState] = useRenameRuleGroup();
+  const [moveRuleGroup, moveRuleGroupState] = useMoveRuleGroup();
 
   const { loading, error } = anyOfRequestState(updateRuleGroupState, moveRuleGroupState, renameRuleGroupState);
 
@@ -300,11 +299,6 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                     readOnly={intervalEditOnly || isGrafanaManagedGroup}
                     {...register('namespaceName', {
                       required: 'Namespace name is required.',
-                      validate: {
-                        // for Grafana-managed we do not validate the name of the folder because we use the UID anyway
-                        pathSeparator: (namespaceName) =>
-                          isGrafanaManagedGroup ? true : checkForPathSeparator(namespaceName),
-                      },
                     })}
                   />
                 </Field>
@@ -337,9 +331,6 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 readOnly={intervalEditOnly}
                 {...register('groupName', {
                   required: 'Evaluation group name is required.',
-                  validate: {
-                    pathSeparator: (namespace) => checkForPathSeparator(namespace),
-                  },
                 })}
               />
             </Field>

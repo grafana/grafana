@@ -515,6 +515,7 @@ export {
   type UserVariableModel,
   type SystemVariable,
   type BaseVariableModel,
+  type SnapshotVariableModel,
 } from './types/templateVars';
 export { type Threshold, ThresholdsMode, type ThresholdsConfig } from './types/thresholds';
 export {
@@ -554,6 +555,8 @@ export {
   type PluginExtensionDataSourceConfigContext,
   type PluginExtensionCommandPaletteContext,
   type PluginExtensionOpenModalOptions,
+  type PluginExposedComponentConfig,
+  type PluginAddedComponentConfig,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,

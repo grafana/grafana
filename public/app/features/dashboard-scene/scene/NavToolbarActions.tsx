@@ -27,7 +27,6 @@ import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
 import ShareButton from '../sharing/ShareButton/ShareButton';
-import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
 import { DynamicDashNavButtonModel, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
@@ -314,7 +313,7 @@ export function ToolbarActions({ dashboard }: Props) {
         fill="outline"
         onClick={() => {
           DashboardInteractions.toolbarShareClick();
-          dashboard.showModal(new ShareModal({}));
+          locationService.partial({ shareView: 'link' });
         }}
         data-testid={selectors.components.NavToolbar.shareDashboard}
       >
@@ -496,7 +495,6 @@ export function ToolbarActions({ dashboard }: Props) {
         return (
           <Button
             onClick={() => {
-              DashboardInteractions.toolbarSaveClick();
               dashboard.openSaveDrawer({});
             }}
             className={styles.buttonWithExtraMargin}
@@ -516,7 +514,6 @@ export function ToolbarActions({ dashboard }: Props) {
         return (
           <Button
             onClick={() => {
-              DashboardInteractions.toolbarSaveClick();
               dashboard.openSaveDrawer({ saveAsCopy: true });
             }}
             className={styles.buttonWithExtraMargin}
@@ -537,7 +534,6 @@ export function ToolbarActions({ dashboard }: Props) {
             label="Save"
             icon="save"
             onClick={() => {
-              DashboardInteractions.toolbarSaveClick();
               dashboard.openSaveDrawer({});
             }}
           />
@@ -545,7 +541,6 @@ export function ToolbarActions({ dashboard }: Props) {
             label="Save as copy"
             icon="copy"
             onClick={() => {
-              DashboardInteractions.toolbarSaveAsClick();
               dashboard.openSaveDrawer({ saveAsCopy: true });
             }}
           />
@@ -556,7 +551,6 @@ export function ToolbarActions({ dashboard }: Props) {
         <ButtonGroup className={styles.buttonWithExtraMargin} key="save">
           <Button
             onClick={() => {
-              DashboardInteractions.toolbarSaveClick();
               dashboard.openSaveDrawer({});
             }}
             tooltip="Save changes"

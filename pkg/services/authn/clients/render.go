@@ -2,10 +2,11 @@ package clients
 
 import (
 	"context"
+	"strconv"
 	"time"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -43,7 +44,8 @@ func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 
 	if renderUsr.UserID <= 0 {
 		return &authn.Identity{
-			ID:              identity.NewTypedID(identity.TypeRenderService, 0),
+			ID:              "0",
+			Type:            claims.TypeRenderService,
 			OrgID:           renderUsr.OrgID,
 			OrgRoles:        map[int64]org.RoleType{renderUsr.OrgID: org.RoleType(renderUsr.OrgRole)},
 			ClientParams:    authn.ClientParams{SyncPermissions: true},
@@ -53,7 +55,8 @@ func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	}
 
 	return &authn.Identity{
-		ID:              identity.NewTypedID(identity.TypeUser, renderUsr.UserID),
+		ID:              strconv.FormatInt(renderUsr.UserID, 10),
+		Type:            claims.TypeUser,
 		LastSeenAt:      time.Now(),
 		AuthenticatedBy: login.RenderModule,
 		ClientParams:    authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},

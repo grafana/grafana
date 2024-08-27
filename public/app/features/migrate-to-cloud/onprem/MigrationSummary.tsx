@@ -52,6 +52,7 @@ export function MigrationSummary(props: MigrationSummaryProps) {
   const totalCount = snapshot?.stats?.total ?? 0;
   const errorCount = snapshot?.stats?.statuses?.['ERROR'] ?? 0;
   const successCount = snapshot?.stats?.statuses?.['OK'] ?? 0;
+  const warningCount = snapshot?.stats?.statuses?.['WARNING'] ?? 0;
 
   return (
     <Box
@@ -83,7 +84,7 @@ export function MigrationSummary(props: MigrationSummaryProps) {
         </MigrationInfo>
 
         <MigrationInfo title={t('migrate-to-cloud.summary.successful-resource-count', 'Successfully migrated')}>
-          {successCount}
+          {successCount + warningCount}
         </MigrationInfo>
 
         <MigrationInfo title={t('migrate-to-cloud.summary.target-stack-title', 'Uploading to')}>

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
@@ -29,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
@@ -209,29 +207,9 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 
 	conn := b.connectionResourceInfo
 	storage[conn.StoragePath()] = &connectionAccess{
-		datasources:  b.datasources,
-		resourceInfo: conn,
-		tableConverter: gapiutil.NewTableConverter(
-			conn.GroupResource(),
-			[]metav1.TableColumnDefinition{
-				{Name: "Name", Type: "string", Format: "name"},
-				{Name: "Title", Type: "string", Format: "string", Description: "The datasource title"},
-				{Name: "APIVersion", Type: "string", Format: "string", Description: "API Version"},
-				{Name: "Created At", Type: "date"},
-			},
-			func(obj any) ([]interface{}, error) {
-				m, ok := obj.(*datasource.DataSourceConnection)
-				if !ok {
-					return nil, fmt.Errorf("expected connection")
-				}
-				return []interface{}{
-					m.Name,
-					m.Title,
-					m.APIVersion,
-					m.CreationTimestamp.UTC().Format(time.RFC3339),
-				}, nil
-			},
-		),
+		datasources:    b.datasources,
+		resourceInfo:   conn,
+		tableConverter: conn.TableConverter(),
 	}
 	storage[conn.StoragePath("query")] = &subQueryREST{builder: b}
 	storage[conn.StoragePath("health")] = &subHealthREST{builder: b}

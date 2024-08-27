@@ -11498,9 +11498,9 @@
             }
           },
           "409": {
-            "description": "GenericPublicError",
+            "description": "PublicError",
             "schema": {
-              "$ref": "#/definitions/GenericPublicError"
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -11536,9 +11536,9 @@
             "description": " The mute timing was deleted successfully."
           },
           "409": {
-            "description": "GenericPublicError",
+            "description": "PublicError",
             "schema": {
-              "$ref": "#/definitions/GenericPublicError"
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -11719,9 +11719,6 @@
             "schema": {
               "$ref": "#/definitions/NotificationTemplates"
             }
-          },
-          "404": {
-            "description": " Not found."
           }
         }
       }
@@ -11750,7 +11747,10 @@
             }
           },
           "404": {
-            "description": " Not found."
+            "description": "PublicError",
+            "schema": {
+              "$ref": "#/definitions/PublicError"
+            }
           }
         }
       },
@@ -11792,9 +11792,15 @@
             }
           },
           "400": {
-            "description": "ValidationError",
+            "description": "PublicError",
             "schema": {
-              "$ref": "#/definitions/ValidationError"
+              "$ref": "#/definitions/PublicError"
+            }
+          },
+          "409": {
+            "description": "PublicError",
+            "schema": {
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -11808,15 +11814,27 @@
         "parameters": [
           {
             "type": "string",
-            "description": "Template Name",
+            "description": "Template name",
             "name": "name",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "description": "Version of template to use for optimistic concurrency. Leave empty to disable validation",
+            "name": "version",
+            "in": "query"
           }
         ],
         "responses": {
           "204": {
             "description": " The template was deleted successfully."
+          },
+          "409": {
+            "description": "PublicError",
+            "schema": {
+              "$ref": "#/definitions/PublicError"
+            }
           }
         }
       }
@@ -13539,7 +13557,7 @@
           "description": "Policies contains all policy identifiers included in the certificate.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/OID"
+            "type": "string"
           }
         },
         "PolicyIdentifiers": {
@@ -13821,6 +13839,9 @@
           "type": "string",
           "example": "PE1C5CBDA0504A6A3"
         },
+        "type": {
+          "$ref": "#/definitions/CorrelationType"
+        },
         "uid": {
           "description": "Unique identifier of the correlation",
           "type": "string",
@@ -13832,7 +13853,6 @@
       "type": "object",
       "required": [
         "field",
-        "type",
         "target"
       ],
       "properties": {
@@ -13854,12 +13874,9 @@
           "$ref": "#/definitions/Transformations"
         },
         "type": {
-          "$ref": "#/definitions/CorrelationConfigType"
+          "$ref": "#/definitions/CorrelationType"
         }
       }
-    },
-    "CorrelationConfigType": {
-      "type": "string"
     },
     "CorrelationConfigUpdateDTO": {
       "type": "object",
@@ -13894,11 +13911,11 @@
               "variable": "name"
             }
           ]
-        },
-        "type": {
-          "$ref": "#/definitions/CorrelationConfigType"
         }
       }
+    },
+    "CorrelationType": {
+      "type": "string"
     },
     "CounterResetHint": {
       "description": "or alternatively that we are dealing with a gauge histogram, where counter resets do not apply.",
@@ -13936,9 +13953,12 @@
           "type": "boolean"
         },
         "targetUID": {
-          "description": "Target data source UID to which the correlation is created. required if config.type = query",
+          "description": "Target data source UID to which the correlation is created. required if type = query",
           "type": "string",
           "example": "PE1C5CBDA0504A6A3"
+        },
+        "type": {
+          "$ref": "#/definitions/CorrelationType"
         }
       }
     },
@@ -15536,14 +15556,6 @@
         "$ref": "#/definitions/Frame"
       }
     },
-    "GenericPublicError": {
-      "type": "object",
-      "properties": {
-        "body": {
-          "$ref": "#/definitions/PublicError"
-        }
-      }
-    },
     "GetAccessTokenResponseDTO": {
       "type": "object",
       "properties": {
@@ -16207,7 +16219,7 @@
     },
     "Header": {
       "type": "object",
-      "title": "Headers represents the configuration for HTTP headers.",
+      "title": "Header represents the configuration for a single HTTP header.",
       "properties": {
         "files": {
           "type": "array",
@@ -16974,7 +16986,7 @@
         "status"
       ],
       "properties": {
-        "error": {
+        "message": {
           "type": "string"
         },
         "refId": {
@@ -16984,6 +16996,7 @@
           "type": "string",
           "enum": [
             "OK",
+            "WARNING",
             "ERROR",
             "PENDING",
             "UNKNOWN"
@@ -17236,6 +17249,9 @@
         },
         "template": {
           "type": "string"
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -17243,6 +17259,9 @@
       "type": "object",
       "properties": {
         "template": {
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         }
       }
@@ -17312,10 +17331,6 @@
           "type": "string"
         }
       }
-    },
-    "OID": {
-      "type": "object",
-      "title": "An OID represents an ASN.1 OBJECT IDENTIFIER."
     },
     "ObjectIdentifier": {
       "type": "array",
@@ -18409,7 +18424,8 @@
           "example": "project_x"
         },
         "for": {
-          "$ref": "#/definitions/Duration"
+          "type": "string",
+          "format": "duration"
         },
         "id": {
           "type": "integer",
@@ -19475,6 +19491,12 @@
       "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
       "type": "object",
       "properties": {
+        "active_time_intervals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "continue": {
           "type": "boolean"
         },
@@ -21392,6 +21414,9 @@
           "description": "Optional label identifying the correlation",
           "type": "string",
           "example": "My label"
+        },
+        "type": {
+          "$ref": "#/definitions/CorrelationType"
         }
       }
     },
@@ -21944,7 +21969,7 @@
     "ValidationError": {
       "type": "object",
       "properties": {
-        "msg": {
+        "message": {
           "type": "string",
           "example": "error message"
         }
@@ -22327,7 +22352,6 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",
@@ -22452,7 +22476,6 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "type": "object",

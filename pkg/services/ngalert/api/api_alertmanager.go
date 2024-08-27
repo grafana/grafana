@@ -254,7 +254,7 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, bo
 		return errResp
 	}
 
-	result, err := am.TestReceivers(ctx, body)
+	result, status, err := am.TestReceivers(ctx, body)
 	if err != nil {
 		if errors.Is(err, alertingNotify.ErrNoReceivers) {
 			return response.Error(http.StatusBadRequest, "", err)
@@ -262,7 +262,7 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, bo
 		return response.Error(http.StatusInternalServerError, "", err)
 	}
 
-	return response.JSON(statusForTestReceivers(result.Receivers), newTestReceiversResult(result))
+	return response.JSON(status, newTestReceiversResult(result))
 }
 
 func (srv AlertmanagerSrv) RoutePostTestTemplates(c *contextmodel.ReqContext, body apimodels.TestTemplatesConfigBodyParams) response.Response {
@@ -301,7 +301,7 @@ func contextWithTimeoutFromRequest(ctx context.Context, r *http.Request, default
 	return ctx, cancelFunc, nil
 }
 
-func newTestReceiversResult(r *notifier.TestReceiversResult) apimodels.TestReceiversResult {
+func newTestReceiversResult(r *alertingNotify.TestReceiversResult) apimodels.TestReceiversResult {
 	v := apimodels.TestReceiversResult{
 		Alert: apimodels.TestReceiversConfigAlertParams{
 			Annotations: r.Alert.Annotations,
@@ -316,58 +316,12 @@ func newTestReceiversResult(r *notifier.TestReceiversResult) apimodels.TestRecei
 			configs[jx].Name = config.Name
 			configs[jx].UID = config.UID
 			configs[jx].Status = config.Status
-			if config.Error != nil {
-				configs[jx].Error = config.Error.Error()
-			}
+			configs[jx].Error = config.Error
 		}
 		v.Receivers[ix].Configs = configs
 		v.Receivers[ix].Name = next.Name
 	}
 	return v
-}
-
-// statusForTestReceivers returns the appropriate status code for the response
-// for the results.
-//
-// It returns an HTTP 200 OK status code if notifications were sent to all receivers,
-// an HTTP 400 Bad Request status code if all receivers contain invalid configuration,
-// an HTTP 408 Request Timeout status code if all receivers timed out when sending
-// a test notification or an HTTP 207 Multi Status.
-func statusForTestReceivers(v []notifier.TestReceiverResult) int {
-	var (
-		numBadRequests   int
-		numTimeouts      int
-		numUnknownErrors int
-	)
-	for _, receiver := range v {
-		for _, next := range receiver.Configs {
-			if next.Error != nil {
-				var (
-					invalidReceiverErr alertingNotify.IntegrationValidationError
-					receiverTimeoutErr alertingNotify.IntegrationTimeoutError
-				)
-				if errors.As(next.Error, &invalidReceiverErr) {
-					numBadRequests += 1
-				} else if errors.As(next.Error, &receiverTimeoutErr) {
-					numTimeouts += 1
-				} else {
-					numUnknownErrors += 1
-				}
-			}
-		}
-	}
-	if numBadRequests == len(v) {
-		// if all receivers contain invalid configuration
-		return http.StatusBadRequest
-	} else if numTimeouts == len(v) {
-		// if all receivers contain valid configuration but timed out
-		return http.StatusRequestTimeout
-	} else if numBadRequests+numTimeouts+numUnknownErrors > 0 {
-		return http.StatusMultiStatus
-	} else {
-		// all receivers were sent a notification without error
-		return http.StatusOK
-	}
 }
 
 func newTestTemplateResult(res *notifier.TestTemplatesResults) apimodels.TestTemplatesResults {
@@ -382,7 +336,7 @@ func newTestTemplateResult(res *notifier.TestTemplatesResults) apimodels.TestTem
 		apiRes.Errors = append(apiRes.Errors, apimodels.TestTemplatesErrorResult{
 			Name:    e.Name,
 			Kind:    apimodels.TemplateErrorKind(e.Kind),
-			Message: e.Error.Error(),
+			Message: e.Error,
 		})
 	}
 	return apiRes

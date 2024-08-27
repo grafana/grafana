@@ -12,8 +12,7 @@ import (
 const forwardIDHeaderName = "X-Grafana-Id"
 
 // NewForwardIDMiddleware creates a new plugins.ClientMiddleware that will
-// set grafana id header on outgoing plugins.Client requests if the
-// feature toggle FlagIdForwarding is enabled
+// set grafana id header on outgoing plugins.Client requests
 func NewForwardIDMiddleware() plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &ForwardIDMiddleware{
@@ -35,7 +34,6 @@ func (m *ForwardIDMiddleware) applyToken(ctx context.Context, pCtx backend.Plugi
 		return nil
 	}
 
-	// token will only be present if faeturemgmt.FlagIdForwarding is enabled
 	if token := reqCtx.SignedInUser.GetIDToken(); token != "" {
 		req.SetHTTPHeader(forwardIDHeaderName, token)
 	}

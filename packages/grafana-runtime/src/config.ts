@@ -42,6 +42,11 @@ export type AppPluginConfig = {
   angular: AngularMeta;
 };
 
+export type PreinstalledPlugin = {
+  id: string;
+  version: string;
+};
+
 export class GrafanaBootConfig implements GrafanaConfig {
   publicDashboardAccessToken?: string;
   publicDashboardsEnabled = true;
@@ -124,6 +129,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   pluginAdminExternalManageEnabled = false;
   pluginCatalogHiddenPlugins: string[] = [];
   pluginCatalogManagedPlugins: string[] = [];
+  pluginCatalogPreinstalledPlugins: PreinstalledPlugin[] = [];
   pluginsCDNBaseURL = '';
   expressionsEnabled = false;
   customTheme?: undefined;
@@ -182,6 +188,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   localFileSystemAvailable: boolean | undefined;
   cloudMigrationIsTarget: boolean | undefined;
   cloudMigrationFeedbackURL = '';
+  cloudMigrationPollIntervalMs = 2000;
   reportingStaticContext?: Record<string, string>;
   exploreDefaultTimeOffset = '1h';
 
@@ -262,7 +269,7 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
 
   // Although most flags can not be changed from the URL in production,
   // some of them are safe (and useful!) to change dynamically from the browser URL
-  const safeRuntimeFeatureFlags = new Set(['queryServiceFromUI']);
+  const safeRuntimeFeatureFlags = new Set(['queryServiceFromUI', 'dashboardSceneSolo']);
 
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {

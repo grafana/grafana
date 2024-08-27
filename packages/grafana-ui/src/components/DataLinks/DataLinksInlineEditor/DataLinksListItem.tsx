@@ -4,7 +4,7 @@ import { Draggable } from '@hello-pangea/dnd';
 import { DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
-import { isCompactUrl } from '../../../utils/dataLinks';
+import { isCompactUrl } from '../../../utils';
 import { FieldValidationMessage } from '../../Forms/FieldValidationMessage';
 import { Icon } from '../../Icon/Icon';
 import { IconButton } from '../../IconButton/IconButton';
@@ -39,10 +39,6 @@ export const DataLinksListItem = ({ link, onEdit, onRemove, index, itemKey }: Da
             {...provided.draggableProps}
             key={index}
           >
-            <div className={cx(styles.dragHandle, styles.icons)} {...provided.dragHandleProps}>
-              <Icon name="draggabledots" size="lg" />
-            </div>
-
             <div className={styles.linkDetails}>
               <div className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}>
                 {hasTitle ? title : 'Data link title not provided'}
@@ -59,9 +55,12 @@ export const DataLinksListItem = ({ link, onEdit, onRemove, index, itemKey }: Da
                 </FieldValidationMessage>
               )}
             </div>
-            <div>
-              <IconButton name="pen" onClick={onEdit} tooltip="Edit data link title" />
-              <IconButton name="times" onClick={onRemove} tooltip="Remove data link title" />
+            <div className={styles.icons}>
+              <IconButton name="pen" onClick={onEdit} className={styles.icon} tooltip="Edit data link" />
+              <IconButton name="trash-alt" onClick={onRemove} className={styles.icon} tooltip="Remove data link" />
+              <div className={styles.dragIcon} {...provided.dragHandleProps}>
+                <Icon name="draggabledots" size="lg" />
+              </div>
             </div>
           </div>
         </>
@@ -78,17 +77,16 @@ const getDataLinkListItemStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       justifyContent: 'space-between',
       width: '100%',
-      marginBottom: theme.spacing(2),
-      padding: '10px 0 0 10px',
-      '&:last-child': {
-        marginBottom: 0,
-      },
+      padding: '5px 0 5px 10px',
+      borderRadius: theme.shape.radius.default,
+      background: theme.colors.background.secondary,
+      gap: 8,
     }),
     linkDetails: css({
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
-      maxWidth: '80%',
+      maxWidth: `calc(100% - 100px)`,
     }),
     errored: css({
       color: theme.colors.error.text,
@@ -118,20 +116,13 @@ const getDataLinkListItemStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       gap: 8,
     }),
-    dragHandle: css({
+    dragIcon: css({
       cursor: 'grab',
-      // create focus ring around the whole row when the drag handle is tab-focused
-      // needs position: relative on the drag row to work correctly
-      '&:focus-visible&:after': {
-        bottom: 0,
-        content: '""',
-        left: 0,
-        position: 'absolute',
-        right: 0,
-        top: 0,
-        outline: `2px solid ${theme.colors.primary.main}`,
-        outlineOffset: '-2px',
-      },
+      color: theme.colors.text.secondary,
+      margin: theme.spacing(0, 0.5),
+    }),
+    icon: css({
+      color: theme.colors.text.secondary,
     }),
   };
 };

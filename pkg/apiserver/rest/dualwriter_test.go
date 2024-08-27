@@ -4,15 +4,14 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-
-	// nolint:depguard
-	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
+	"k8s.io/apiserver/pkg/apis/example"
 )
 
 func TestSetDualWritingMode(t *testing.T) {
@@ -63,9 +62,9 @@ func TestSetDualWritingMode(t *testing.T) {
 }
 
 func TestCompare(t *testing.T) {
-	var examplePlaylistGen1 = &playlist.Playlist{ObjectMeta: metav1.ObjectMeta{Generation: 1}, Spec: playlist.Spec{Title: "Example Playlist"}}
-	var examplePlaylistGen2 = &playlist.Playlist{ObjectMeta: metav1.ObjectMeta{Generation: 2}, Spec: playlist.Spec{Title: "Example Playlist"}}
-	var anotherPlaylist = &playlist.Playlist{ObjectMeta: metav1.ObjectMeta{Generation: 2}, Spec: playlist.Spec{Title: "Another Playlist"}}
+	var exampleObjGen1 = &example.Pod{ObjectMeta: metav1.ObjectMeta{Generation: 1}, Spec: example.PodSpec{Hostname: "one"}, Status: example.PodStatus{StartTime: &metav1.Time{Time: time.Unix(0, 0)}}}
+	var exampleObjGen2 = &example.Pod{ObjectMeta: metav1.ObjectMeta{Generation: 2}, Spec: example.PodSpec{Hostname: "one"}, Status: example.PodStatus{StartTime: &metav1.Time{Time: time.Unix(0, 0)}}}
+	var exampleObjDifferentTitle = &example.Pod{ObjectMeta: metav1.ObjectMeta{Generation: 2}, Spec: example.PodSpec{Hostname: "two"}, Status: example.PodStatus{StartTime: &metav1.Time{Time: time.Unix(0, 0)}}}
 
 	testCase := []struct {
 		name     string
@@ -80,21 +79,15 @@ func TestCompare(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "should return false when objects are different",
-			input1:   exampleObj,
-			input2:   anotherObj,
-			expected: false,
-		},
-		{
-			name:     "should return true when Playlists are the same, but different metadata (generation)",
-			input1:   examplePlaylistGen1,
-			input2:   examplePlaylistGen2,
+			name:     "should return true when objects are the same, but different metadata (generation)",
+			input1:   exampleObjGen1,
+			input2:   exampleObjGen2,
 			expected: true,
 		},
 		{
-			name:     "should return false when Playlists different",
-			input1:   examplePlaylistGen1,
-			input2:   anotherPlaylist,
+			name:     "should return false when objects are different",
+			input1:   exampleObjGen1,
+			input2:   exampleObjDifferentTitle,
 			expected: false,
 		},
 	}

@@ -1,6 +1,5 @@
 {
   "_comment": "",
-  "{unit}": "",
   "access-control": {
     "add-permission": {
       "role-label": "Rôle",
@@ -107,6 +106,7 @@
       "export-all": "",
       "view": ""
     },
+    "contact-point": "",
     "contact-points": {
       "delivery-duration": "",
       "last-delivery-attempt": "",
@@ -137,7 +137,21 @@
       "saving": ""
     },
     "policies": {
+      "default-policy": {
+        "description": "",
+        "title": ""
+      },
+      "generated-policies": "",
       "metadata": {
+        "active-time": "",
+        "delivered-to": "",
+        "grouped-by": "",
+        "grouping": {
+          "none": "",
+          "single-group": ""
+        },
+        "inherited": "",
+        "mute-time": "",
         "timingOptions": {
           "groupInterval": {
             "description": "",
@@ -151,8 +165,15 @@
             "description": "",
             "label": ""
           }
-        }
-      }
+        },
+        "n-instances_one": "",
+        "n-instances_other": ""
+      },
+      "new-child": "",
+      "new-policy": "",
+      "no-matchers": "",
+      "n-more-policies_one": "",
+      "n-more-policies_other": ""
     },
     "provisioning": {
       "badge-tooltip-provenance": "",
@@ -326,6 +347,7 @@
     },
     "save": "Enregistrer"
   },
+  "complete": "",
   "connections": {
     "connect-data": {
       "category-header-label": "Sources de données",
@@ -669,7 +691,6 @@
       "message": ""
     }
   },
-  "Description": "",
   "explore": {
     "add-to-dashboard": "Ajouter au tableau de bord",
     "add-to-library-modal": {
@@ -940,7 +961,6 @@
       "refresh": "Actualiser"
     }
   },
-  "Labels": "",
   "library-panel": {
     "add-modal": {
       "cancel": "Annuler",
@@ -1092,6 +1112,11 @@
       "link-title": "Voir le guide de migration complet",
       "title": ""
     },
+    "migrated-counts": {
+      "dashboards": "",
+      "datasources": "",
+      "folders": ""
+    },
     "migration-token": {
       "delete-button": "",
       "delete-modal-body": "Si vous avez déjà utilisé ce jeton avec une installation autogérée, celle-ci ne pourra plus importer de contenu.",
@@ -1118,10 +1143,13 @@
       "error-see-server-logs": "",
       "get-session-error-title": "",
       "get-snapshot-error-title": "",
+      "migration-finished-with-caveat-title": "",
+      "migration-finished-with-errors-body": "",
+      "migration-finished-with-warnings-body": "",
       "snapshot-error-status-body": "",
       "snapshot-error-status-title": "",
-      "some-resources-errored-body": "",
-      "some-resources-errored-title": "",
+      "success-message": "",
+      "success-title": "",
       "upload-snapshot-error-title": ""
     },
     "pdc": {
@@ -1139,12 +1167,14 @@
       "message": "",
       "title": ""
     },
-    "resource-error": {
+    "resource-details": {
       "dismiss-button": "",
+      "error-title": "",
+      "generic-title": "",
+      "missing-message": "",
       "resource-summary": "",
-      "specific-error": "",
       "title": "",
-      "unknown-error": ""
+      "warning-title": ""
     },
     "resource-status": {
       "error-details-button": "Détails",
@@ -1152,7 +1182,9 @@
       "migrated": "Importé dans le cloud",
       "migrating": "Importation…",
       "not-migrated": "Pas encore importé",
-      "unknown": "Inconnu"
+      "unknown": "Inconnu",
+      "warning": "",
+      "warning-details-button": ""
     },
     "resource-table": {
       "unknown-datasource-title": "",
@@ -1177,6 +1209,9 @@
       "target-stack-title": "",
       "total-resource-count": "",
       "upload-migration": ""
+    },
+    "support-types-disclosure": {
+      "text": ""
     },
     "token-status": {
       "active": "Jeton créé et actif",
@@ -1541,7 +1576,6 @@
     },
     "title": "Dernières nouvelles sur le blog"
   },
-  "No description available": "",
   "notifications": {
     "empty-state": {
       "description": "",
@@ -1899,16 +1933,7 @@
     "dismissable-button": "Fermer"
   },
   "scopes": {
-    "filters": {
-      "apply": "",
-      "cancel": "",
-      "input": {
-        "placeholder": "",
-        "removeAll": ""
-      },
-      "title": ""
-    },
-    "suggestedDashboards": {
+    "dashboards": {
       "loading": "",
       "noResultsForFilter": "",
       "noResultsForFilterClear": "",
@@ -1917,8 +1942,18 @@
       "search": "",
       "toggle": {
         "collapse": "",
+        "disabled": "",
         "expand": ""
       }
+    },
+    "selector": {
+      "apply": "",
+      "cancel": "",
+      "input": {
+        "placeholder": "",
+        "removeAll": ""
+      },
+      "title": ""
     },
     "tree": {
       "collapse": "",
@@ -2233,15 +2268,22 @@
       "select-search-input": "Tapez pour rechercher (pays, ville, abréviation)"
     }
   },
+  "trails": {
+    "metric-overview": {
+      "description-label": "",
+      "labels-label": "",
+      "no-description": "",
+      "type-label": "",
+      "unit-label": "",
+      "unknown-type": ""
+    }
+  },
   "transformations": {
     "empty": {
       "add-transformation-body": "Les transformations permettent de modifier les données de différentes manières avant l'affichage de votre visualisation.<1></1>Vous pouvez notamment rassembler des données, renommer des champs, faire des calculs, formater les données à afficher, etc.",
       "add-transformation-header": "Commencer la transformation des données"
     }
   },
-  "Type": "",
-  "Unit": "",
-  "Unknown": "",
   "user-orgs": {
     "current-org-button": "Actuel",
     "name-column": "Nom",
