@@ -5,4 +5,4 @@ SELECT o.org_id, u.id, u.uid, u.login, u.email, u.name,
    AND u.is_service_account = FALSE
    AND u.uid = 'abc'
  ORDER BY u.id asc
- LIMIT 0
+ LIMIT 1

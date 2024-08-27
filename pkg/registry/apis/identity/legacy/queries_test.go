@@ -42,6 +42,12 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	listTeamMembers := func(q *ListTeamMembersQuery) sqltemplate.SQLTemplate {
+		v := newListTeamMembers(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
@@ -49,7 +55,8 @@ func TestIdentityQueries(t *testing.T) {
 				{
 					Name: "teams_uid",
 					Data: listTeams(&ListTeamQuery{
-						UID: "abc",
+						UID:        "abc",
+						Pagination: common.Pagination{Limit: 1},
 					}),
 				},
 				{
@@ -72,7 +79,8 @@ func TestIdentityQueries(t *testing.T) {
 				{
 					Name: "users_uid",
 					Data: listUsers(&ListUserQuery{
-						UID: "abc",
+						UID:        "abc",
+						Pagination: common.Pagination{Limit: 1},
 					}),
 				},
 				{
@@ -119,8 +127,9 @@ func TestIdentityQueries(t *testing.T) {
 				{
 					Name: "team_1_bindings",
 					Data: listTeamBindings(&ListTeamBindingsQuery{
-						OrgID: 1,
-						UID:   "team-1",
+						OrgID:      1,
+						UID:        "team-1",
+						Pagination: common.Pagination{Limit: 1},
 					}),
 				},
 				{
@@ -138,6 +147,24 @@ func TestIdentityQueries(t *testing.T) {
 							Limit:    1,
 							Continue: 2,
 						},
+					}),
+				},
+			},
+			sqlQueryTeamMembers: {
+				{
+					Name: "team_1_members_page_1",
+					Data: listTeamMembers(&ListTeamMembersQuery{
+						UID:        "team-1",
+						OrgID:      1,
+						Pagination: common.Pagination{Limit: 1},
+					}),
+				},
+				{
+					Name: "team_1_members_page_2",
+					Data: listTeamMembers(&ListTeamMembersQuery{
+						UID:        "team-1",
+						OrgID:      1,
+						Pagination: common.Pagination{Limit: 1, Continue: 2},
 					}),
 				},
 			},
