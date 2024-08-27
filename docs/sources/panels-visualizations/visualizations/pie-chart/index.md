@@ -50,7 +50,7 @@ The pie chart is different from other visualizations in that it will only displa
 
 To create a pie chart visualization, you need a dataset containing a set of numeric values either in rows, columns, or both.
 
-A straightforward way to add data to the pie chart visualization is to query a field (column) per data point and in a single record (row) instead of querying multiple records and fields.
+An easy way to feed data to the pie chart visualization is that your query provides a data set with a single record (row) containing the fields (columns) that you want in the pie, as in the example below. The default settings of the pie chart visualization will automatically pick each column and paint each element as a slice of the pie.
 
 ### Example
 
