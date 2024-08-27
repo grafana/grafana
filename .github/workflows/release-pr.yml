@@ -38,6 +38,7 @@ jobs:
     name: Create PR to main to update the changelog
     uses: ./.github/workflows/changelog.yml
     with:
+      previous_version: ${{inputs.previous_version}}
       version: ${{ inputs.version }}
       latest: ${{ inputs.latest }}
       dry_run: ${{ inputs.dry_run }}
