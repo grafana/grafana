@@ -61,11 +61,10 @@ func ProvideService(cfg *setting.Cfg,
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
 	xorm.DefaultPostgresSchema = ""
-	s, err := newSQLStore(cfg, nil, migrations, bus, tracer)
+	s, err := newSQLStore(cfg, nil, features, migrations, bus, tracer)
 	if err != nil {
 		return nil, err
 	}
-	s.features = features
 
 	if err := s.Migrate(s.dbCfg.MigrationLock); err != nil {
 		return nil, err
@@ -100,18 +99,10 @@ func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featur
 func NewSQLStoreWithoutSideEffects(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
-	s, err := newSQLStore(cfg, nil, nil, bus, tracer)
-	if err != nil {
-		return nil, err
-	}
-
-	s.features = features
-	s.tracer = tracer
-
-	return s, nil
+	return newSQLStore(cfg, nil, features, nil, bus, tracer)
 }
 
-func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine,
+func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine, features featuremgmt.FeatureToggles,
 	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer, opts ...InitTestDBOpt) (*SQLStore, error) {
 	ss := &SQLStore{
 		cfg:                         cfg,
@@ -120,6 +111,7 @@ func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine,
 		migrations:                  migrations,
 		bus:                         bus,
 		tracer:                      tracer,
+		features:                    features,
 	}
 	for _, opt := range opts {
 		if !opt.EnsureDefaultOrgAndUser {
@@ -301,7 +293,11 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		// Ensure that parseTime is enabled for MySQL
 		if ss.dbCfg.Type == migrator.MySQL && !strings.Contains(connection, "parseTime=") {
 			if ss.features.IsEnabledGlobally(featuremgmt.FlagMysqlParseTime) {
-				connection += "&parseTime=true"
+				if strings.Contains(connection, "?") {
+					connection += "&parseTime=true"
+				} else {
+					connection += "?parseTime=true"
+				}
 			}
 		}
 
@@ -603,7 +599,7 @@ func TestMain(m *testing.M) {
 
 		tracer := tracing.InitializeTracerForTest()
 		bus := bus.ProvideBus(tracer)
-		testSQLStore, err = newSQLStore(cfg, engine, migration, bus, tracer, opts...)
+		testSQLStore, err = newSQLStore(cfg, engine, features, migration, bus, tracer, opts...)
 		if err != nil {
 			return nil, err
 		}
