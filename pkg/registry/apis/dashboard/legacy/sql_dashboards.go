@@ -418,7 +418,6 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 	}
 	q := rawQuery
 
-	// fmt.Printf("%s // %v\n", rawQuery, req.GetArgs())
 
 	res := &dashboardsV0.LibraryPanelList{}
 	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
