@@ -59,9 +59,10 @@ Geomaps are also useful when you have location data that’s changing in real ti
 
 You can use a geomap visualization if you need to:
 
-- Track the position of food deliveries, planes, or freight services
-- Show the locations of the data centers or corporate devices
-- Map hiking route
+- Track your fleet of vehicles and associated metrics
+- Show the locations and statuses of data centers or other connected assets in a network
+- Display geographic trends in a heatmap
+- Visualize the relationship of your locations' HVAC consumption or solar production with the sun's location
 
 {{< admonition type="note" >}}
 We'd love your feedback on the geomap visualization. Please check out the [open Github issues](https://github.com/grafana/grafana/issues?page=1&q=is%3Aopen+is%3Aissue+label%3Aarea%2Fpanel%2Fgeomap) and [submit a new feature request](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request,area%2Fpanel%2Fgeomap&title=Geomap:&projects=grafana-dataviz&template=1-feature_requests.md) as needed.
