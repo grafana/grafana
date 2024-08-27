@@ -23,7 +23,7 @@ weight: 100
 
 Node graphs can visualize directed graphs or networks. They use a directed force layout to effectively position the nodes, so they can display complex infrastructure maps, hierarchies, or execution diagrams.
 
-![Node graph visualization](/static/img/docs/node-graph/node-graph-8-0.png 'Node graph')
+![Node graph visualization](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-node-graph.png 'Node graph')
 
 ## Configure a node graph visualization
 
@@ -75,9 +75,11 @@ Node graphs can show only 1,500 nodes. If this limit is crossed a warning will b
 
 Usually, nodes show two statistical values inside the node and two identifiers just below the node, usually name and type. Nodes can also show another set of values as a color circle around the node, with sections of different color represents different values that should add up to 1.
 
-For example, you can have the percentage of errors represented by a red portion of the circle. Additional details can be displayed in a context menu which is displayed when you click on the node. There also can be additional links in the context menu that can target either other parts of Grafana or any external link.
+For example, you can have the percentage of errors represented by a red portion of the circle.
+Additional details can be displayed in a context menu which is displayed when you click on the node.
+There also can be additional links in the context menu that can target either other parts of Grafana or any external link.
 
-![Node graph navigation](/static/img/docs/node-graph/node-graph-navigation-7-4.gif 'Node graph navigation')
+![Node graph navigation](/media/docs/grafana/data-sources/tempo/query-editor/node-graph-navigation.png 'Node graph navigation')
 
 ### Edges
 
@@ -107,7 +109,9 @@ The number of nodes shown at a given time is limited to maintain a reasonable vi
 
 You can switch to the grid view to have a better overview of the most interesting nodes in the graph. Grid view shows nodes in a grid without edges and can be sorted by stats shown inside the node or by stats represented by the a colored border of the nodes.
 
-![Node graph grid](/static/img/docs/node-graph/node-graph-grid-8-0.png 'Node graph grid')
+<!-- Screenshot from v11.2 -->
+
+![Node graph grid](/media/docs/grafana/data-sources/tempo/query-editor/node-graph-grid-view.png 'Node graph grid')
 
 To sort the nodes, click on the stats inside the legend. The marker next to the stat name shows which stat is currently used for sorting and sorting direction.
 
