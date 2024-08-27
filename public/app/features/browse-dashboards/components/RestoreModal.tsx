@@ -27,12 +27,11 @@ export const RestoreModal = ({
   const numberOfDashboards = selectedDashboards.length;
 
   useEffect(() => {
-    // restoreTarget is used by the folder picker to preselect a folder and therefore unblock the confirm button
+    // restoreTarget is used by the folder picker to preselect a folder and therefore enable the confirm button
     // if there is only one dashboard selected or all selected dashboards come from the same folder
     if (
-      dashboardOrigin.length === 1 ||
-      (dashboardOrigin.length > 1 &&
-        dashboardOrigin.every((originalLocation) => originalLocation === dashboardOrigin[0]))
+      dashboardOrigin.length > 0 &&
+      dashboardOrigin.every((originalLocation) => originalLocation === dashboardOrigin[0])
     ) {
       setRestoreTarget(dashboardOrigin[0]);
     }
