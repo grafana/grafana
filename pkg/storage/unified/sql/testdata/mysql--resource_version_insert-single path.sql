@@ -1,8 +1,8 @@
-INSERT INTO "resource_version"
+INSERT INTO `resource_version`
     (
-        "group",
-        "resource",
-        "resource_version"
+        `group`,
+        `resource`,
+        `resource_version`
     )
     VALUES (
         '',

@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 )
 
-func TestQueries(t *testing.T) {
+func TestDashboardQueries(t *testing.T) {
 	// prefix tables with grafana
 	nodb := &legacysql.LegacyDatabaseHelper{
 		Table: func(n string) string {
