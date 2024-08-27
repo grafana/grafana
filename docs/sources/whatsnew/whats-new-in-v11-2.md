@@ -38,7 +38,7 @@ This intuitive UI offers real-time updates on your migration status, making your
 
 Ready to make the move? Explore our [migration guide](https://grafana.com/docs/grafana-cloud/account-management/migration-guide/) to learn more about the Cloud Migration Assistant today and begin your effortless transition to Grafana Cloud.
 
-{{< youtube id="66W1UMHtX3U" >}}
+<!-- {{< youtube id="66W1UMHtX3U" >}} -->
 
 ## Navigation bookmarks
 
