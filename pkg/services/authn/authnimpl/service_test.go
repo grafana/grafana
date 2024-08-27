@@ -59,7 +59,7 @@ func TestService_Authenticate(t *testing.T) {
 						Type: claims.TypeUser,
 						ClientParams: authn.ClientParams{
 							FetchPermissionsParams: authn.FetchPermissionsParams{
-								ActionsLookup: []string{
+								RestrictedActions: []string{
 									"datasources:read",
 									"datasources:query",
 								},
@@ -76,7 +76,7 @@ func TestService_Authenticate(t *testing.T) {
 				Type: claims.TypeUser,
 				ClientParams: authn.ClientParams{
 					FetchPermissionsParams: authn.FetchPermissionsParams{
-						ActionsLookup: []string{
+						RestrictedActions: []string{
 							"datasources:read",
 							"datasources:query",
 						},
@@ -187,9 +187,9 @@ func TestService_Authenticate(t *testing.T) {
 						assert.Equal(t, tt.expectedIdentity.AuthID, attr.Value.AsString())
 					case "identity.AuthenticatedBy":
 						assert.Equal(t, tt.expectedIdentity.AuthenticatedBy, attr.Value.AsString())
-					case "identity.ClientParams.FetchPermissionsParams.ActionsLookup":
-						if len(tt.expectedIdentity.ClientParams.FetchPermissionsParams.ActionsLookup) > 0 {
-							assert.Equal(t, tt.expectedIdentity.ClientParams.FetchPermissionsParams.ActionsLookup, attr.Value.AsStringSlice())
+					case "identity.ClientParams.FetchPermissionsParams.RestrictedActions":
+						if len(tt.expectedIdentity.ClientParams.FetchPermissionsParams.RestrictedActions) > 0 {
+							assert.Equal(t, tt.expectedIdentity.ClientParams.FetchPermissionsParams.RestrictedActions, attr.Value.AsStringSlice())
 						}
 					case "identity.ClientParams.FetchPermissionsParams.Roles":
 						if len(tt.expectedIdentity.ClientParams.FetchPermissionsParams.Roles) > 0 {

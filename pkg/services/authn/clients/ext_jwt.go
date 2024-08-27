@@ -145,7 +145,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,
 			FetchPermissionsParams: authn.FetchPermissionsParams{
-				ActionsLookup: accessTokenClaims.Rest.DelegatedPermissions,
+				RestrictedActions: accessTokenClaims.Rest.DelegatedPermissions,
 			},
 			FetchSyncedUser: true,
 		}}, nil

@@ -251,7 +251,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					FetchSyncedUser: true,
 					SyncPermissions: true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{
-						ActionsLookup: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
 					},
 				},
 			},
