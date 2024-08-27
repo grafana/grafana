@@ -72,7 +72,7 @@ var (
 			Namespace:       "stack-1234",
 		},
 	}
-	validAcessTokenClaimsWildcard = accessTokenClaims{
+	validAccessTokenClaimsWildcard = accessTokenClaims{
 		Claims: &jwt.Claims{
 			Subject:  "access-policy:this-uid",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
@@ -82,7 +82,7 @@ var (
 			Namespace: "*",
 		},
 	}
-	validAcessTokenClaimsWithStackSet = accessTokenClaims{
+	validAccessTokenClaimsWithStackSet = accessTokenClaims{
 		Claims: &jwt.Claims{
 			Subject:  "access-policy:this-uid",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
@@ -92,7 +92,7 @@ var (
 			Namespace: "stacks-1234",
 		},
 	}
-	validAcessTokenClaimsWithDeprecatedStackClaimSet = accessTokenClaims{
+	validAccessTokenClaimsWithDeprecatedStackClaimSet = accessTokenClaims{
 		Claims: &jwt.Claims{
 			Subject:  "access-policy:this-uid",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
@@ -251,7 +251,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 		},
 		{
 			name:        "should authenticate as service using wildcard namespace",
-			accessToken: &validAcessTokenClaimsWildcard,
+			accessToken: &validAccessTokenClaimsWildcard,
 			orgID:       1,
 			want: &authn.Identity{
 				ID:                         "this-uid",
@@ -289,7 +289,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 		},
 		{
 			name:        "should authenticate as user using wildcard namespace for access token",
-			accessToken: &validAcessTokenClaimsWildcard,
+			accessToken: &validAccessTokenClaimsWildcard,
 			idToken:     &validIDTokenClaims,
 			orgID:       1,
 			want: &authn.Identity{
@@ -307,7 +307,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 		},
 		{
 			name:        "should authenticate as user using wildcard namespace for access token, setting allowed namespace to specific",
-			accessToken: &validAcessTokenClaimsWildcard,
+			accessToken: &validAccessTokenClaimsWildcard,
 			idToken:     &validIDTokenClaimsWithStackSet,
 			orgID:       1,
 			cfg: &setting.Cfg{
@@ -333,7 +333,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 		},
 		{
 			name:        "should authenticate as service using specific namespace claim in access token",
-			accessToken: &validAcessTokenClaimsWithStackSet,
+			accessToken: &validAccessTokenClaimsWithStackSet,
 			orgID:       1,
 			cfg: &setting.Cfg{
 				// default org set up by the authenticator is 1
@@ -358,7 +358,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 		},
 		{
 			name:        "should authenticate as service using specific deprecated namespace claim in access token",
-			accessToken: &validAcessTokenClaimsWithDeprecatedStackClaimSet,
+			accessToken: &validAccessTokenClaimsWithDeprecatedStackClaimSet,
 			orgID:       1,
 			cfg: &setting.Cfg{
 				// default org set up by the authenticator is 1
@@ -383,7 +383,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 		},
 		{
 			name:        "should authenticate as user using specific deprecated namespace claim in access and id tokens",
-			accessToken: &validAcessTokenClaimsWithDeprecatedStackClaimSet,
+			accessToken: &validAccessTokenClaimsWithDeprecatedStackClaimSet,
 			idToken:     &validIDTokenClaimsWithDeprecatedStackClaimSet,
 			orgID:       1,
 			cfg: &setting.Cfg{
@@ -409,7 +409,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 		},
 		{
 			name:        "should authenticate as user using wildcard namespace for access token, setting allowed namespace to specific",
-			accessToken: &validAcessTokenClaimsWildcard,
+			accessToken: &validAccessTokenClaimsWildcard,
 			idToken:     &validIDTokenClaimsWithStackSet,
 			orgID:       1,
 			cfg: &setting.Cfg{
