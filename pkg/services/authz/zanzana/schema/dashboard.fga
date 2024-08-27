@@ -2,17 +2,28 @@ module dashboard
 
 extend type org
   relations
+
+    define dashboard_create: [role#assignee] or fixed_folders_writer or fixed_dashboards_creator
+    define dashboard_read: [role#assignee] or fixed_folders_reader or fixed_folders_writer or fixed_dashboards_reader
+    define dashboard_write: [role#assignee] or fixed_folders_writer or fixed_dashboards_writer
+    define dashboard_delete: [role#assignee] or fixed_folders_writer or fixed_dashboards_writer
+    define dashboard_permissions_read: [role#assignee] or fixed_folders_writer or fixed_dashboards_permissions_reader
+    define dashboard_permissions_write: [role#assignee] or fixed_folders_writer or fixed_dashboards_permissions_writer
+    define dashboard_public_write: [role#assignee] or dashboard_write or fixed_dashboards_public_writer
+
     define dashboard_annotations_create: [role#assignee]
     define dashboard_annotations_read: [role#assignee]
     define dashboard_annotations_write: [role#assignee]
     define dashboard_annotations_delete: [role#assignee]
-    define dashboard_create: [role#assignee]
-    define dashboard_delete: [role#assignee]
-    define dashboard_permissions_read: [role#assignee]
-    define dashboard_permissions_write: [role#assignee]
-    define dashboard_public_write: [role#assignee] or dashboard_write
-    define dashboard_read: [role#assignee]
-    define dashboard_write: [role#assignee]
+
+    # Fixed roles
+    define fixed_dashboards_creator: [user, team#member, role#assignee] or fixed_dashboards_writer
+    define fixed_dashboards_reader: [user, team#member, role#assignee] or fixed_dashboards_writer
+    define fixed_dashboards_writer: [user, team#member, role#assignee]
+    define fixed_dashboards_insights_reader: [user, team#member, role#assignee]
+    define fixed_dashboards_public_writer: [user, team#member, role#assignee]
+    define fixed_dashboards_permissions_reader: [user, team#member, role#assignee] or fixed_dashboards_permissions_writer
+    define fixed_dashboards_permissions_writer: [user, team#member, role#assignee]
 
 type dashboard
   relations
