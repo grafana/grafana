@@ -163,5 +163,8 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
         borderBottom: `1px solid ${theme.colors.border.weak}`,
       },
     }),
+    toggleAll: css({
+      marginRight: '16px',
+    }),
   };
 });

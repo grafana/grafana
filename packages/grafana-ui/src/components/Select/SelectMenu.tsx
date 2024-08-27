@@ -2,7 +2,6 @@ import { cx } from '@emotion/css';
 import { max } from 'lodash';
 import { RefCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import * as React from 'react';
-import { MenuListProps } from 'react-select';
 import { FixedSizeList as List } from 'react-window';
 
 import { SelectableValue, toIconName } from '@grafana/data';
@@ -10,23 +9,37 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { Checkbox } from '../Forms/Checkbox';
 import { Icon } from '../Icon/Icon';
 
 import { getSelectStyles } from './getSelectStyles';
+import { ToggleAllState } from './types';
 
 interface SelectMenuProps {
   maxHeight: number;
   innerRef: RefCallback<HTMLDivElement>;
   innerProps: {};
+  selectProps: { toggleAllOptions?: { state: ToggleAllState; selectAllClicked: () => void } };
 }
 
-export const SelectMenu = ({ children, maxHeight, innerRef, innerProps }: React.PropsWithChildren<SelectMenuProps>) => {
+export const SelectMenu = ({
+  children,
+  maxHeight,
+  innerRef,
+  innerProps,
+  selectProps,
+}: React.PropsWithChildren<SelectMenuProps>) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
+
+  const { toggleAllOptions } = selectProps;
 
   return (
     <div {...innerProps} className={styles.menu} style={{ maxHeight }} aria-label="Select options menu">
       <CustomScrollbar scrollRefCallback={innerRef} autoHide={false} autoHeightMax="inherit" hideHorizontalTrack>
+        {toggleAllOptions && (
+          <ToggleAllOption state={toggleAllOptions.state} onClick={toggleAllOptions.selectAllClicked}></ToggleAllOption>
+        )}
         {children}
       </CustomScrollbar>
     </div>
@@ -49,16 +62,28 @@ const VIRTUAL_LIST_WIDTH_EXTRA = 36;
 //
 // VIRTUAL_LIST_ITEM_HEIGHT and WIDTH_ESTIMATE_MULTIPLIER are both magic numbers.
 // Some characters (such as emojis and other unicode characters) may consist of multiple code points in which case the width would be inaccurate (but larger than needed).
+interface VirtualSelectMenuProps<T> {
+  children: React.ReactNode;
+  innerRef: React.Ref<HTMLDivElement>;
+  focusedOption: T;
+  innerProps: JSX.IntrinsicElements['div'];
+  options: T[];
+  maxHeight: number;
+  selectProps: { toggleAllOptions?: { state: ToggleAllState; selectAllClicked: () => void } };
+}
+
 export const VirtualizedSelectMenu = ({
   children,
   maxHeight,
   innerRef: scrollRef,
   options,
+  selectProps,
   focusedOption,
-}: MenuListProps<SelectableValue>) => {
+}: VirtualSelectMenuProps<SelectableValue>) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const listRef = useRef<List>(null);
+  const { toggleAllOptions } = selectProps;
 
   // we need to check for option groups (categories)
   // these are top level options with child options
@@ -105,6 +130,12 @@ export const VirtualizedSelectMenu = ({
     return [child];
   });
 
+  if (toggleAllOptions) {
+    flattenedChildren.unshift(
+      <ToggleAllOption state={toggleAllOptions.state} onClick={toggleAllOptions.selectAllClicked}></ToggleAllOption>
+    );
+  }
+
   const longestOption = max(flattenedOptions.map((option) => option.label?.length)) ?? 0;
   const widthEstimate =
     longestOption * VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER + VIRTUAL_LIST_PADDING * 2 + VIRTUAL_LIST_WIDTH_EXTRA;
@@ -143,6 +174,25 @@ interface SelectMenuOptionProps<T> {
   renderOptionLabel?: (value: SelectableValue<T>) => JSX.Element;
   data: SelectableValue<T>;
 }
+
+const ToggleAllOption = ({ state, onClick }: { state: ToggleAllState; onClick: () => void }) => {
+  const theme = useTheme2();
+  const styles = getSelectStyles(theme);
+  return (
+    <div className={styles.option} role="menuitemcheckbox" onClick={onClick}>
+      <div>
+        <label>
+          <Checkbox
+            className={styles.toggleAll}
+            checked={state === ToggleAllState.allSelected}
+            indeterminate={state === ToggleAllState.indeterminate}
+          ></Checkbox>
+          {state === ToggleAllState.noneSelected ? 'Select all' : 'Unselect all'}
+        </label>
+      </div>
+    </div>
+  );
+};
 
 export const SelectMenuOptions = ({
   children,
