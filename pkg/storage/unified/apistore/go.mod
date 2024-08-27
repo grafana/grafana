@@ -3,7 +3,7 @@ module github.com/grafana/grafana/pkg/storage/unified/apistore
 go 1.23.0
 
 require (
-	github.com/grafana/authlib/claims v0.0.0-20240814074258-eae7d47f01db
+	github.com/grafana/authlib/claims v0.0.0-20240827210201-19d5347dd8dd
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240821155123-6891eb1d35da
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20240821155123-6891eb1d35da
 	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20240821161612-71f0dae39e9d
@@ -43,7 +43,7 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.13.0 // indirect
-	github.com/grafana/authlib v0.0.0-20240814074258-eae7d47f01db // indirect
+	github.com/grafana/authlib v0.0.0-20240827201526-24af227df935 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 // indirect

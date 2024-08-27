@@ -13,6 +13,10 @@ type IDClaimsWrapper struct {
 	Source Requester
 }
 
+func (i *IDClaimsWrapper) IsNil() bool {
+	return i.Source.IsNil()
+}
+
 // GetAuthenticatedBy implements claims.IdentityClaims.
 func (i *IDClaimsWrapper) AuthenticatedBy() string {
 	return i.Source.GetAuthenticatedBy()
