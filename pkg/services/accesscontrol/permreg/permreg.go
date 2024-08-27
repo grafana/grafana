@@ -93,6 +93,7 @@ func newPermissionRegistry() *permissionRegistry {
 		"global.users":    "global.users:id:",
 		"roles":           "roles:uid:",
 		"services":        "services:",
+		"receivers":       "receivers:uid:",
 	}
 	return &permissionRegistry{
 		actionScopePrefixes: make(map[string]PrefixSet, 200),
