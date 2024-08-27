@@ -141,9 +141,6 @@ func (pr *permissionRegistry) RegisterPermission(action, scope string) error {
 	kind := strings.Split(scope, ":")[0]
 	scopePrefix, ok := pr.kindScopePrefix[kind]
 	if !ok {
-		// If you see this error, it most probably means that you have registered new kind of scope
-		// and have not yet registered it in the permission registry.
-		// Please update `kindScopePrefix` with the correct scope prefix for the new kind.
 		pr.logger.Error("unknown kind: please update `kindScopePrefix` with the correct scope prefix", "kind", kind)
 		return ErrUnknownKind(kind)
 	}
