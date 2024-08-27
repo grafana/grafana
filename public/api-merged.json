@@ -11473,9 +11473,9 @@
             }
           },
           "409": {
-            "description": "GenericPublicError",
+            "description": "PublicError",
             "schema": {
-              "$ref": "#/definitions/GenericPublicError"
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -11511,9 +11511,9 @@
             "description": " The mute timing was deleted successfully."
           },
           "409": {
-            "description": "GenericPublicError",
+            "description": "PublicError",
             "schema": {
-              "$ref": "#/definitions/GenericPublicError"
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -11722,9 +11722,9 @@
             }
           },
           "404": {
-            "description": "GenericPublicError",
+            "description": "PublicError",
             "schema": {
-              "$ref": "#/definitions/GenericPublicError"
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -11767,15 +11767,15 @@
             }
           },
           "400": {
-            "description": "GenericPublicError",
+            "description": "PublicError",
             "schema": {
-              "$ref": "#/definitions/GenericPublicError"
+              "$ref": "#/definitions/PublicError"
             }
           },
           "409": {
-            "description": "GenericPublicError",
+            "description": "PublicError",
             "schema": {
-              "$ref": "#/definitions/GenericPublicError"
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -11806,9 +11806,9 @@
             "description": " The template was deleted successfully."
           },
           "409": {
-            "description": "GenericPublicError",
+            "description": "PublicError",
             "schema": {
-              "$ref": "#/definitions/GenericPublicError"
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -13532,7 +13532,7 @@
           "description": "Policies contains all policy identifiers included in the certificate.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/OID"
+            "type": "string"
           }
         },
         "PolicyIdentifiers": {
@@ -13814,6 +13814,9 @@
           "type": "string",
           "example": "PE1C5CBDA0504A6A3"
         },
+        "type": {
+          "$ref": "#/definitions/CorrelationType"
+        },
         "uid": {
           "description": "Unique identifier of the correlation",
           "type": "string",
@@ -13825,7 +13828,6 @@
       "type": "object",
       "required": [
         "field",
-        "type",
         "target"
       ],
       "properties": {
@@ -13847,12 +13849,9 @@
           "$ref": "#/definitions/Transformations"
         },
         "type": {
-          "$ref": "#/definitions/CorrelationConfigType"
+          "$ref": "#/definitions/CorrelationType"
         }
       }
-    },
-    "CorrelationConfigType": {
-      "type": "string"
     },
     "CorrelationConfigUpdateDTO": {
       "type": "object",
@@ -13887,11 +13886,11 @@
               "variable": "name"
             }
           ]
-        },
-        "type": {
-          "$ref": "#/definitions/CorrelationConfigType"
         }
       }
+    },
+    "CorrelationType": {
+      "type": "string"
     },
     "CounterResetHint": {
       "description": "or alternatively that we are dealing with a gauge histogram, where counter resets do not apply.",
@@ -13929,9 +13928,12 @@
           "type": "boolean"
         },
         "targetUID": {
-          "description": "Target data source UID to which the correlation is created. required if config.type = query",
+          "description": "Target data source UID to which the correlation is created. required if type = query",
           "type": "string",
           "example": "PE1C5CBDA0504A6A3"
+        },
+        "type": {
+          "$ref": "#/definitions/CorrelationType"
         }
       }
     },
@@ -15527,14 +15529,6 @@
       "title": "Frames is a slice of Frame pointers.",
       "items": {
         "$ref": "#/definitions/Frame"
-      }
-    },
-    "GenericPublicError": {
-      "type": "object",
-      "properties": {
-        "body": {
-          "$ref": "#/definitions/PublicError"
-        }
       }
     },
     "GetAccessTokenResponseDTO": {
@@ -17313,10 +17307,6 @@
         }
       }
     },
-    "OID": {
-      "type": "object",
-      "title": "An OID represents an ASN.1 OBJECT IDENTIFIER."
-    },
     "ObjectIdentifier": {
       "type": "array",
       "title": "An ObjectIdentifier represents an ASN.1 OBJECT IDENTIFIER.",
@@ -18409,7 +18399,8 @@
           "example": "project_x"
         },
         "for": {
-          "$ref": "#/definitions/Duration"
+          "type": "string",
+          "format": "duration"
         },
         "id": {
           "type": "integer",
@@ -21398,6 +21389,9 @@
           "description": "Optional label identifying the correlation",
           "type": "string",
           "example": "My label"
+        },
+        "type": {
+          "$ref": "#/definitions/CorrelationType"
         }
       }
     },
@@ -21950,7 +21944,7 @@
     "ValidationError": {
       "type": "object",
       "properties": {
-        "msg": {
+        "message": {
           "type": "string",
           "example": "error message"
         }
@@ -22144,7 +22138,6 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "type": "object",
@@ -22334,7 +22327,6 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",
@@ -22459,7 +22451,6 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "type": "object",

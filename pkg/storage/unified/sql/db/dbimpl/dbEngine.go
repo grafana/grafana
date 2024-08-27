@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"xorm.io/xorm"
 )
@@ -32,6 +31,7 @@ func getEngineMySQL(getter *sectionGetter, tracer tracing.Tracer) (*xorm.Engine,
 	config.Loc = time.UTC
 	config.AllowNativePasswords = true
 	config.ClientFoundRows = true
+	config.ParseTime = true
 
 	// allow executing multiple SQL statements in a single roundtrip, and also
 	// enable executing the CALL statement to run stored procedures that execute
@@ -107,8 +107,7 @@ func getEnginePostgres(getter *sectionGetter, tracer tracing.Tracer) (*xorm.Engi
 	}
 
 	// FIXME: get rid of xorm
-	driverName := sqlstore.WrapDatabaseDriverWithHooks(db.DriverPostgres, tracer)
-	engine, err := xorm.NewEngine(driverName, dsn)
+	engine, err := xorm.NewEngine(db.DriverPostgres, dsn)
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
 	}

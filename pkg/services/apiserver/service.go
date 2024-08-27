@@ -145,21 +145,22 @@ func ProvideService(
 	pluginStore pluginstore.Store,
 ) (*service, error) {
 	s := &service{
-		cfg:             cfg,
-		features:        features,
-		rr:              rr,
-		startedCh:       make(chan struct{}),
-		stopCh:          make(chan struct{}),
-		builders:        []builder.APIGroupBuilder{},
-		authorizer:      authorizer.NewGrafanaAuthorizer(cfg, orgService),
-		tracing:         tracing,
-		db:              db, // For Unified storage
-		metrics:         metrics.ProvideRegisterer(),
-		kvStore:         kvStore,
-		pluginClient:    pluginClient,
-		datasources:     datasources,
-		contextProvider: contextProvider,
-		pluginStore:     pluginStore,
+		cfg:               cfg,
+		features:          features,
+		rr:                rr,
+		startedCh:         make(chan struct{}),
+		stopCh:            make(chan struct{}),
+		builders:          []builder.APIGroupBuilder{},
+		authorizer:        authorizer.NewGrafanaAuthorizer(cfg, orgService),
+		tracing:           tracing,
+		db:                db, // For Unified storage
+		metrics:           metrics.ProvideRegisterer(),
+		kvStore:           kvStore,
+		pluginClient:      pluginClient,
+		datasources:       datasources,
+		contextProvider:   contextProvider,
+		pluginStore:       pluginStore,
+		serverLockService: serverLockService,
 	}
 
 	// This will be used when running as a dskit service
@@ -285,10 +286,6 @@ func (s *service) start(ctx context.Context) error {
 		}
 
 	case grafanaapiserveroptions.StorageTypeUnified:
-		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
-			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
-		}
-
 		server, err := sql.ProvideResourceServer(s.db, s.cfg, s.features, s.tracing)
 		if err != nil {
 			return err
@@ -298,10 +295,6 @@ func (s *service) start(ctx context.Context) error {
 			o.RecommendedOptions.Etcd.StorageConfig)
 
 	case grafanaapiserveroptions.StorageTypeUnifiedGrpc:
-		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
-			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
-		}
-
 		opts := []grpc.DialOption{
 			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -349,7 +342,7 @@ func (s *service) start(ctx context.Context) error {
 	// Install the API group+version
 	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
 		// Required for the dual writer initialization
-		s.metrics, kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"), s.serverLockService,
+		s.metrics, request.GetNamespaceMapper(s.cfg), kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"), s.serverLockService,
 	)
 	if err != nil {
 		return err
