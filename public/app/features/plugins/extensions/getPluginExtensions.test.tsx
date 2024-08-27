@@ -36,6 +36,7 @@ async function createRegistries(
       pluginId,
       exposedComponentConfigs: [],
       extensionConfigs,
+      addedComponentConfigs: [],
     });
     addedComponentsRegistry.register({
       pluginId,

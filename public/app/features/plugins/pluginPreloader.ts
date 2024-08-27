@@ -14,7 +14,7 @@ export type PluginPreloadResult = {
   error?: unknown;
   extensionConfigs: PluginExtensionConfig[];
   exposedComponentConfigs: PluginExposedComponentConfig[];
-  addedComponentConfigs?: PluginAddedComponentConfig[];
+  addedComponentConfigs: PluginAddedComponentConfig[];
 };
 
 type PluginExtensionRegistries = {
@@ -45,7 +45,7 @@ export async function preloadPlugins(
     });
     registries.addedComponentsRegistry.register({
       pluginId: preloadedPlugin.pluginId,
-      configs: preloadedPlugin.addedComponentConfigs || [],
+      configs: preloadedPlugin.addedComponentConfigs,
     });
   }
 
@@ -62,7 +62,7 @@ async function preload(config: AppPluginConfig): Promise<PluginPreloadResult> {
       isAngular: config.angular.detected,
       pluginId,
     });
-    const { extensionConfigs = [], exposedComponentConfigs = [], addedComponentConfigs } = plugin;
+    const { extensionConfigs = [], exposedComponentConfigs = [], addedComponentConfigs = [] } = plugin;
 
     // Fetching meta-information for the preloaded app plugin and caching it for later.
     // (The function below returns a promise, but it's not awaited for a reason: we don't want to block the preload process, we would only like to cache the result for later.)

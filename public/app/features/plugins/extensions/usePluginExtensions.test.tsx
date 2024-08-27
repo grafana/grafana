@@ -50,6 +50,7 @@ describe('usePluginExtensions()', () => {
         },
       ],
       exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     const usePluginExtensions = createUsePluginExtensions(reactiveRegistry, addedComponentsRegistry);
@@ -84,6 +85,7 @@ describe('usePluginExtensions()', () => {
         },
       ],
       exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     addedComponentsRegistry.register({
@@ -142,6 +144,7 @@ describe('usePluginExtensions()', () => {
           },
         ],
         exposedComponentConfigs: [],
+        addedComponentConfigs: [],
       });
     });
 
@@ -188,6 +191,7 @@ describe('usePluginExtensions()', () => {
           },
         ],
         exposedComponentConfigs: [],
+        addedComponentConfigs: [],
       });
     });
 
@@ -224,6 +228,7 @@ describe('usePluginExtensions()', () => {
           },
         ],
         exposedComponentConfigs: [],
+        addedComponentConfigs: [],
       });
     });
 
@@ -253,6 +258,7 @@ describe('usePluginExtensions()', () => {
           },
         ],
         exposedComponentConfigs: [],
+        addedComponentConfigs: [],
       });
     });
 
@@ -274,6 +280,7 @@ describe('usePluginExtensions()', () => {
           },
         ],
         exposedComponentConfigs: [],
+        addedComponentConfigs: [],
       });
     });
 
