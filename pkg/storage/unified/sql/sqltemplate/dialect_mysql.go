@@ -1,8 +1,6 @@
 package sqltemplate
 
 import (
-	"bytes"
-	"regexp"
 	"strings"
 )
 
@@ -30,26 +28,11 @@ type mysql struct {
 // https://dev.mysql.com/doc/refman/8.4/en/identifiers.html
 type backtickIdent struct{}
 
-var alphanumeric = regexp.MustCompile("^[a-zA-Z0-9_]*$")
-
 func (backtickIdent) Ident(s string) (string, error) {
-	if s == "" {
-		return "", ErrEmptyIdent
+	if strings.ContainsRune(s, '`') {
+		return "", ErrInvalidIdentInput
 	}
-	var buffer bytes.Buffer
-	for i, part := range strings.Split(s, ".") {
-		if !alphanumeric.MatchString(part) {
-			return "", ErrInvalidIdentInput
-		}
-		if i > 1 {
-			return "", ErrInvalidIdentInput
-		}
-		if i > 0 {
-			_, _ = buffer.WriteRune('.')
-		}
-		_, _ = buffer.WriteRune('`')
-		_, _ = buffer.WriteString(part)
-		_, _ = buffer.WriteRune('`')
-	}
-	return buffer.String(), nil
+	return escapeIdentity(s, '`', func(s string) string {
+		return s
+	})
 }

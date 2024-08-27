@@ -128,26 +128,34 @@ var rowLockingClauseAll = rowLockingClauseMap{
 // standardIdent provides standard SQL escaping of identifiers.
 type standardIdent struct{}
 
-func (standardIdent) Ident(s string) (string, error) {
+func escapeIdentity(s string, quote rune, clean func(string) string) (string, error) {
 	if s == "" {
 		return "", ErrEmptyIdent
 	}
 	var buffer bytes.Buffer
 	for i, part := range strings.Split(s, ".") {
-		if !alphanumeric.MatchString(part) {
-			return "", ErrInvalidIdentInput
-		}
+		// We may want to check that the identifier is simple alphanumeric
+		// var alphanumeric = regexp.MustCompile("^[a-zA-Z0-9_]*$")
+
 		if i > 1 {
 			return "", ErrInvalidIdentInput
 		}
 		if i > 0 {
 			_, _ = buffer.WriteRune('.')
 		}
-		_, _ = buffer.WriteRune('"')
-		_, _ = buffer.WriteString(part)
-		_, _ = buffer.WriteRune('"')
+		_, _ = buffer.WriteRune(quote)
+		_, _ = buffer.WriteString(clean(part))
+		_, _ = buffer.WriteRune(quote)
 	}
 	return buffer.String(), nil
+}
+
+func (standardIdent) Ident(s string) (string, error) {
+	return escapeIdentity(s, '"', func(s string) string {
+		// not sure we should support escaping quotes in table/column names,
+		// but it is valid so we will support it for now
+		return strings.ReplaceAll(s, `"`, `""`)
+	})
 }
 
 type argPlaceholderFunc func(int) string
