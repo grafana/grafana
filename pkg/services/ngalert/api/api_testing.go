@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	m "github.com/grafana/grafana/pkg/models" // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -84,7 +85,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 	}
 
 	// LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
-	ctxWithLogzHeaders := context.WithValue(c.Req.Context(), "logzioHeaders", c.Req.Header)
+	ctxWithLogzHeaders := m.WithLogzHeaders(c.Req.Context(), c.Req.Header)
 	evaluator, err := srv.evaluator.Create(eval.NewContext(ctxWithLogzHeaders, c.SignedInUser), rule.GetEvalCondition())
 	// LOGZ.IO GRAFANA CHANGE :: End
 	if err != nil {
@@ -187,7 +188,7 @@ func (srv TestingApiSrv) RouteEvalQueries(c *contextmodel.ReqContext, cmd apimod
 	}
 
 	// LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
-	ctxWithLogzHeaders := context.WithValue(c.Req.Context(), "logzioHeaders", c.Req.Header)
+	ctxWithLogzHeaders := m.WithLogzHeaders(c.Req.Context(), c.Req.Header)
 	evaluator, err := srv.evaluator.Create(eval.NewContext(ctxWithLogzHeaders, c.SignedInUser), cond)
 	// LOGZ.IO GRAFANA CHANGE :: End
 

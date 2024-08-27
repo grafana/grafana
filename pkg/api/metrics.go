@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
+	"github.com/grafana/grafana/pkg/models" // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -79,7 +80,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 	}
 
 	// LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
-	ctxWithLogzHeaders := context.WithValue(c.Req.Context(), "logzioHeaders", c.Req.Header)
+	ctxWithLogzHeaders := models.WithLogzHeaders(c.Req.Context(), c.Req.Header)
 	resp, err := hs.queryDataService.QueryData(ctxWithLogzHeaders, c.SignedInUser, c.SkipDSCache, reqDTO)
 	// LOGZ.IO GRAFANA CHANGE :: End
 	if err != nil {
