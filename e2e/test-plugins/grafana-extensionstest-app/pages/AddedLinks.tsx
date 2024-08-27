@@ -13,7 +13,7 @@ export function AddedLinks() {
     <PluginPage>
       <Stack direction={'column'} gap={4} data-testid={testIds.addedLinksPage.container}>
         <section data-testid={testIds.addedLinksPage.section1}>
-          <h3>Link extensions defined with addLink and retrived using usePluginLinks</h3>
+          <h3>Link extensions defined with addLink and retrieved using usePluginLinks</h3>
           <ActionButton extensions={links} />
         </section>
       </Stack>
