@@ -500,14 +500,6 @@ In this tutorial you learned about fundamental features of Grafana.
 
 {{< /docs/ignore >}}
 
-<!-- INTERACTIVE ignore START -->
-
-### KillerCoda sandbox environment (completed tutorial)
-
-Do you want to see the finished result? Check out our [completed KillerCoda sandbox environment](https://killercoda.com/grafana-labs/course/full-stack/tutorial-enviroment-completed) containing the entire demo with dashboards, checks, and data sources configured.
-
-<!-- INTERACTIVE ignore END -->
-
 ### Learn more
 
 Check out the links below to continue your learning journey with Grafana's LGTM stack.
