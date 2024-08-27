@@ -1,12 +1,12 @@
-INSERT INTO "resource"
+INSERT INTO `resource`
     (
-        "guid",
-        "group",
-        "resource",
-        "namespace",
-        "name",
-        "value",
-        "action"
+        `guid`,
+        `group`,
+        `resource`,
+        `namespace`,
+        `name`,
+        `value`,
+        `action`
     )
     VALUES (
         '',

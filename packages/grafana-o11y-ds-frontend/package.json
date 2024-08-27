@@ -20,7 +20,7 @@
     "@emotion/css": "11.11.2",
     "@grafana/data": "11.3.0-pre",
     "@grafana/e2e-selectors": "11.3.0-pre",
-    "@grafana/experimental": "1.7.13",
+    "@grafana/experimental": "1.8.0",
     "@grafana/runtime": "11.3.0-pre",
     "@grafana/schema": "11.3.0-pre",
     "@grafana/ui": "11.3.0-pre",
@@ -42,9 +42,9 @@
     "@types/testing-library__jest-dom": "5.14.9",
     "jest": "^29.6.4",
     "react": "18.2.0",
-    "ts-jest": "29.2.4",
+    "ts-jest": "29.2.5",
     "ts-node": "10.9.2",
-    "typescript": "5.4.5"
+    "typescript": "5.5.4"
   },
   "peerDependencies": {
     "react": "^18.0.0",
