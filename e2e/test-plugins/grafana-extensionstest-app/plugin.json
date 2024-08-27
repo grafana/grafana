@@ -21,8 +21,16 @@
   "includes": [
     {
       "type": "page",
-      "name": "Legacy APIs",
-      "path": "/a/grafana-extensionstest-app/legacy-apis",
+      "name": "Legacy Getters",
+      "path": "/a/grafana-extensionstest-app/legacy-getters",
+      "role": "Admin",
+      "addToNav": true,
+      "defaultNav": false
+    },
+    {
+      "type": "page",
+      "name": "Legacy Hooks",
+      "path": "/a/grafana-extensionstest-app/legacy-hooks",
       "role": "Admin",
       "addToNav": true,
       "defaultNav": false
@@ -45,11 +53,11 @@
     },
     {
       "type": "page",
-      "icon": "cog",
-      "name": "Configuration",
-      "path": "/plugins/grafana-extensionstest-app",
+      "name": "Added links",
+      "path": "/a/grafana-extensionstest-app/added-links",
       "role": "Admin",
-      "addToNav": true
+      "addToNav": true,
+      "defaultNav": false
     }
   ],
   "dependencies": {
