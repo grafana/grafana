@@ -49,19 +49,97 @@ refs:
 
 # Geomap
 
-Geomaps allow you to view and customize the world map using geospatial data. You can configure various overlay styles and map view settings to easily focus on the important location-based characteristics of the data.
+Geomaps allow you to view and customize the world map using geospatial data. It's the ideal visualization if you have data that includes location information and you want to see it displayed in a map.
 
-> We would love your feedback on geomaps. Please check out the [open Github issues](https://github.com/grafana/grafana/issues?page=1&q=is%3Aopen+is%3Aissue+label%3Aarea%2Fpanel%2Fgeomap) and [submit a new feature request](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request,area%2Fpanel%2Fgeomap&title=Geomap:&projects=grafana-dataviz&template=1-feature_requests.md) as needed.
+You can configure and overlay [map layers](#types), like heatmaps and networks, and blend included basemaps or your own custom maps. This helps you to easily focus on the important location-based characteristics of the data.
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-example-8-1-0.png" max-width="1200px" caption="Geomap panel" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-example-8-1-0.png" max-width="1200px" alt="Geomap visualization" >}}
 
-Pan the map, while it's in focus, by using the arrow keys. Zoom in and out by using the `+` and `-` keys.
+When a geomap is in focus, in addition to typical mouse controls, you can pan around using the arrow keys or zoom in and out using the plus (`+`) and minus (`-`) keys or icons.
+
+Geomaps are also useful when you have location data that’s changing in real time and you want to visualize where an element is moving, using auto-refresh.
+
+You can use a geomap visualization if you need to:
+
+- Track your fleet of vehicles and associated metrics
+- Show the locations and statuses of data centers or other connected assets in a network
+- Display geographic trends in a heatmap
+- Visualize the relationship of your locations' HVAC consumption or solar production with the sun's location
+
+{{< admonition type="note" >}}
+We'd love your feedback on the geomap visualization. Please check out the [open Github issues](https://github.com/grafana/grafana/issues?page=1&q=is%3Aopen+is%3Aissue+label%3Aarea%2Fpanel%2Fgeomap) and [submit a new feature request](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request,area%2Fpanel%2Fgeomap&title=Geomap:&projects=grafana-dataviz&template=1-feature_requests.md) as needed.
+{{< /admonition >}}
+
+## Configure a geomap visualization
 
 The following video provides beginner steps for creating geomap visualizations. You'll learn the data requirements and caveats, special customizations, preconfigured displays and much more:
 
 {{< youtube id="HwM8AFQ7EUs" >}}
 
 {{< docs/play title="Geomap Examples" url="https://play.grafana.org/d/panel-geomap/" >}}
+
+## Supported data formats
+
+To create a geomap visualization, you need datasets containing fields with location information.
+
+The supported location formats are:
+
+- Latitude and longitude
+- Geohash
+- Lookup codes: country, US states, or airports
+
+To learn more, refer to [Location mode](#location-mode).
+
+Geomaps also support additional fields with various data types to define things like labels, numbers, heat sizes, and colors.
+
+### Example - Latitude and longitude
+
+If you plan to use latitude and longitude coordinates, the dataset must include at least two fields (or columns): one called `latitude` (you can also use`lat`), and one called `longitude` (also `lon` or `lng`). When you use this naming convention, the visualization automatically detects the fields and displays the elements. The order of the fields doesn't matter as long as there is one latitude and one longitude.
+
+| Name            | latitude  | longitude | value |
+| --------------- | --------- | --------- | ----- |
+| Disneyland      | 33.8121   | -117.9190 | 4     |
+| DisneyWorld     | 28.3772   | -81.5707  | 10    |
+| EuroDisney      | 48.867374 | 2.784018  | 3     |
+| Tokyo Disney    | 35.6329   | 139.8804  | 70    |
+| Shanghai Disney | 31.1414   | 121.6682  | 1     |
+
+If your latitude and longitude fields are named differently, you can specify them, as indicated in the [Location mode](#location-mode) section.
+
+### Example - Geohash
+
+If your location data is in geohash format, the visualization requires at least one field (or column) containing location data.
+
+If the field is named `geohash`, the visualization automatically detects the location and displays the elements. The order of the fields doesn't matter and the data set can have multiple other numeric, text, and time fields.
+
+| Name      | geohash      | trips |
+| --------- | ------------ | ----- |
+| Cancun    | d5f21        | 8     |
+| Honolulu  | 87z9ps       | 0     |
+| Palm Cove | rhzxudynb014 | 1     |
+| Mykonos   | swdj02ey9gyx | 3     |
+
+If your field containing geohash location data is not named as above, you can configure the visualization to use geohash and specify which field to use, as explained in the [Location mode](#location-mode) section.
+
+### Example - Lookup codes
+
+The geomap visualization can identify locations based on country, airport, or US state codes.
+
+For this configuration, the dataset must contain at least one field (or column) containing the location code.
+
+If the field is named `lookup`, the visualization automatically detects it and displays points based on country codes.
+
+| Year | lookup | gdp       |
+| ---- | ------ | --------- |
+| 2016 | MEX    | 104171935 |
+| 2016 | DEU    | 94393454  |
+| 2016 | FRA    | 83654250  |
+| 2016 | BRA    | 80921527  |
+| 2016 | CAN    | 79699762  |
+
+The other location types&mdash; airport codes or US state codes&mdash;aren't automatically detected.
+
+If you want to use other codes or give the field a custom name, you can follow the steps in the [Location mode](#location-mode) section.
 
 ## Panel options
 
