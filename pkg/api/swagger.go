@@ -39,7 +39,8 @@ func (hs *HTTPServer) registerSwaggerUI(r routing.RouteRegister) {
 
 		// Create a strict CSP only for the Swagger page
 		// 'self' is to be backwards compatible with browsers not supporting nonces
-		csp := fmt.Sprintf("script-src 'nonce-%s' 'self'; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'", nonce)
+		csp := fmt.Sprintf("script-src 'nonce-%s' 'self'; object-src 'none'; base-uri 'none';"+
+			"worker-src blob:; require-trusted-types-for 'script'", nonce)
 
 		data := map[string]any{
 			"Nonce":          nonce,
