@@ -6,12 +6,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 )
@@ -102,7 +105,13 @@ const (
 
 // TODO: make this function private as there should only be one public way of setting the dual writing mode
 // NewDualWriter returns a new DualWriter.
-func NewDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage, reg prometheus.Registerer, kind string) DualWriter {
+func NewDualWriter(
+	mode DualWriterMode,
+	legacy LegacyStorage,
+	storage Storage,
+	reg prometheus.Registerer,
+	kind string,
+) DualWriter {
 	metrics := &dualWriterMetrics{}
 	metrics.init(reg)
 	switch mode {
@@ -148,6 +157,10 @@ type NamespacedKVStore interface {
 	Set(ctx context.Context, key, value string) error
 }
 
+type ServerLockService interface {
+	LockExecuteAndRelease(ctx context.Context, actionName string, maxInterval time.Duration, fn func(ctx context.Context)) error
+}
+
 func SetDualWritingMode(
 	ctx context.Context,
 	kvs NamespacedKVStore,
@@ -156,6 +169,8 @@ func SetDualWritingMode(
 	entity string,
 	desiredMode DualWriterMode,
 	reg prometheus.Registerer,
+	serverLockService ServerLockService,
+	requestInfo *request.RequestInfo,
 ) (DualWriterMode, error) {
 	// Mode0 means no DualWriter
 	if desiredMode == Mode0 {
@@ -206,6 +221,7 @@ func SetDualWritingMode(
 			return Mode0, errDualWriterSetCurrentMode
 		}
 	}
+
 	if (desiredMode == Mode1) && (currentMode == Mode2) {
 		// This is where we go through the different gates to allow the instance to migrate from mode 2 to mode 1.
 		// There are none between mode 1 and mode 2
@@ -215,6 +231,28 @@ func SetDualWritingMode(
 		if err != nil {
 			return Mode0, errDualWriterSetCurrentMode
 		}
+	}
+
+	if (desiredMode == Mode3) && (currentMode == Mode2) {
+		// This is where we go through the different gates to allow the instance to migrate from mode 2 to mode 3.
+
+		// gate #1: ensure the data is 100% in sync
+		syncOk, err := runDataSyncer(ctx, currentMode, legacy, storage, entity, reg, serverLockService, requestInfo)
+		if err != nil {
+			klog.Info("data syncer failed for mode:", m)
+			return currentMode, err
+		}
+		if !syncOk {
+			klog.Info("data syncer not ok for mode:", m)
+			return currentMode, nil
+		}
+
+		err = kvs.Set(ctx, entity, fmt.Sprint(desiredMode))
+		if err != nil {
+			return currentMode, errDualWriterSetCurrentMode
+		}
+
+		return desiredMode, nil
 	}
 
 	// 	#TODO add support for other combinations of desired and current modes
@@ -259,4 +297,55 @@ func getName(o runtime.Object) string {
 		return ""
 	}
 	return accessor.GetName()
+}
+
+const dataSyncerInterval = 60 * time.Minute
+
+// StartPeriodicDataSyncer starts a background job that will execute the DataSyncer every 60 minutes
+func StartPeriodicDataSyncer(ctx context.Context, mode DualWriterMode, legacy LegacyStorage, storage Storage,
+	kind string, reg prometheus.Registerer, serverLockService ServerLockService, requestInfo *request.RequestInfo) {
+	klog.Info("Starting periodic data syncer for mode mode: ", mode)
+
+	// run in background
+	go func() {
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		timeWindow := 600 // 600 seconds (10 minutes)
+		jitterSeconds := r.Int63n(int64(timeWindow))
+		klog.Info("data syncer is going to start at: ", time.Now().Add(time.Second*time.Duration(jitterSeconds)))
+		time.Sleep(time.Second * time.Duration(jitterSeconds))
+
+		// run it immediately
+		syncOK, err := runDataSyncer(ctx, mode, legacy, storage, kind, reg, serverLockService, requestInfo)
+		klog.Info("data syncer finished, syncOK: ", syncOK, ", error: ", err)
+
+		ticker := time.NewTicker(dataSyncerInterval)
+		for {
+			select {
+			case <-ticker.C:
+				syncOK, err = runDataSyncer(ctx, mode, legacy, storage, kind, reg, serverLockService, requestInfo)
+				klog.Info("data syncer finished, syncOK: ", syncOK, ", error: ", err)
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+}
+
+// runDataSyncer will ensure that data between legacy storage and unified storage are in sync.
+// The sync implementation depends on the DualWriter mode
+func runDataSyncer(ctx context.Context, mode DualWriterMode, legacy LegacyStorage, storage Storage,
+	kind string, reg prometheus.Registerer, serverLockService ServerLockService, requestInfo *request.RequestInfo) (bool, error) {
+	// ensure that execution takes no longer than necessary
+	const timeout = dataSyncerInterval - time.Minute
+	ctx, cancelFn := context.WithTimeout(ctx, timeout)
+	defer cancelFn()
+
+	// implementation depends on the current DualWriter mode
+	switch mode {
+	case Mode2:
+		return mode2DataSyncer(ctx, legacy, storage, kind, reg, serverLockService, requestInfo)
+	default:
+		klog.Info("data syncer not implemented for mode mode:", mode)
+		return false, nil
+	}
 }
