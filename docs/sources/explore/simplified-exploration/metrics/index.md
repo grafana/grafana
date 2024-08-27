@@ -6,7 +6,8 @@ labels:
     - oss
 title: Explore Metrics
 aliases:
-canonical: https://grafana.com/docs/grafana/latest/explore/explore-metrics/
+  - ../explore-metrics/ # /docs/grafana/latest/explore/explore-metrics/
+canonical: https://grafana.com/docs/grafana/latest/explore/simplified-exploration/metrics/
 description: Explore Metrics lets you browse Prometheus-compatible metrics using an intuitive, queryless experience.
 weight: 200
 ---
