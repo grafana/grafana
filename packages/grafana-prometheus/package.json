@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@emotion/css": "11.11.2",
-    "@floating-ui/react": "0.26.22",
+    "@floating-ui/react": "0.26.23",
     "@grafana/data": "11.3.0-pre",
     "@grafana/experimental": "1.8.0",
     "@grafana/faro-web-sdk": "1.9.0",
