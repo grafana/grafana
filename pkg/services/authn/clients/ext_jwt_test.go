@@ -438,14 +438,14 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			accessToken: &validAccessTokenClaims,
 			idToken:     &invalidWildcardNamespaceIDTokenClaims,
 			orgID:       1,
-			wantErr:     errExtJWTNamespaceAccessCheckerDeniedAccess,
+			wantErr:     errExtJWTDisallowedNamespaceClaim,
 		},
 		{
 			name:        "should return error when id token has an invalid namespace",
 			accessToken: &validAccessTokenClaims,
 			idToken:     &invalidNamespaceIDTokenClaims,
 			orgID:       1,
-			wantErr:     errExtJWTNamespaceAccessCheckerDeniedAccess,
+			wantErr:     errExtJWTDisallowedNamespaceClaim,
 		},
 
 		{

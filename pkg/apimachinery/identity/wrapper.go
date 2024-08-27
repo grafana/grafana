@@ -1,7 +1,6 @@
 package identity
 
 import (
-	"strings"
 	"time"
 
 	"github.com/grafana/authlib/claims"
@@ -15,29 +14,8 @@ type IDClaimsWrapper struct {
 }
 
 func (i *IDClaimsWrapper) NamespaceMatches(namespace string) bool {
-	// for multi-tenant operators, access tokens will have a namespace claim of "*"
-	// an argument of "*" can be passed in to determine cluster-scoped access
-	simpleCase := i.Source.GetAllowedKubernetesNamespace() == namespace
-	if simpleCase {
-		return true
-	}
-
-	// for more ambiguous stack namespace claim checks
-	parts := strings.Split(i.Source.GetAllowedKubernetesNamespace(), "-")
-	if len(parts) < 2 {
-		return false
-	}
-
-	namespaceParts := strings.Split(namespace, "-")
-	if len(namespaceParts) < 2 {
-		return false
-	}
-
-	if (parts[0] == "stack" || parts[0] == "stacks") && (namespaceParts[0] == "stack" || namespaceParts[0] == "stacks") {
-		return namespaceParts[1] == parts[1]
-	}
-
-	return false
+	// TODO: determine if you need to factor in the ID token
+	return i.Source.GetAccess().NamespaceMatches(namespace)
 }
 
 func (i *IDClaimsWrapper) IsNil() bool {

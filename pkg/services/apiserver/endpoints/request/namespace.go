@@ -24,7 +24,7 @@ func GetNamespaceMapper(cfg *setting.Cfg) NamespaceMapper {
 			stackIdInt = 0
 		}
 		cloudNamespace := claims.CloudNamespaceFormatter(int64(stackIdInt))
-		return func(orgId int64) string { return cloudNamespace }
+		return func(_ int64) string { return cloudNamespace }
 	}
 	return claims.OrgNamespaceFormatter
 }
