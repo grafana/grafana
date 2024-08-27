@@ -44,7 +44,7 @@ const noAnnotationsDsInstanceSettings = {
   name: 'noAnnotationsDs',
   uid: 'noAnnotationsDs',
   meta: {
-    annotations: true,
+    annotations: false,
   } as DataSourcePluginMeta,
   readOnly: false,
   type: 'noAnnotations',
@@ -107,11 +107,16 @@ describe('AnnotationsEditView', () => {
       expect(annotationsView.getUrlKey()).toBe('annotations');
     });
 
+    it('should add new annotation with correct datasource', async () => {
+      // current default datasource from test does not support annotations, so it should return grafana datasource
+      const ds = await annotationsView.getDataSourceRefForAnnotation();
+      expect(ds.uid).toBe('-- Grafana --');
+    });
+
     it('should add a new annotation and group it with the other annotations', async () => {
       const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
 
       expect(dataLayers?.state.annotationLayers.length).toBe(1);
-
       await annotationsView.onNew();
 
       expect(dataLayers?.state.annotationLayers.length).toBe(2);
