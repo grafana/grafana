@@ -425,7 +425,7 @@ func schema_pkg_apis_dashboard_v0alpha1_LibraryPanel(ref common.ReferenceCallbac
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The dashboard body (unstructured for now)",
+							Description: "Panel properties",
 							Default:     map[string]interface{}{},
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanelSpec"),
 						},
