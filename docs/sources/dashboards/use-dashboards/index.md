@@ -1,5 +1,6 @@
 ---
 aliases:
+  - ../features/dashboard/dashboards/
   - ../reference/search/
   - dashboard-ui/
   - dashboard-ui/dashboard-header/
