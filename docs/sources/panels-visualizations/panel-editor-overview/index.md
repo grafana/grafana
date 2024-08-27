@@ -2,6 +2,7 @@
 aliases:
   - ../dashboards/add-organize-panels/
   - ../dashboards/dashboard-create/
+  - ../features/dashboard/dashboards/
   - ../panels/add-panels-dynamically/about-repeating-panels-rows/
   - ../panels/add-panels-dynamically/configure-repeating-panels/
   - ../panels/add-panels-dynamically/configure-repeating-rows/
