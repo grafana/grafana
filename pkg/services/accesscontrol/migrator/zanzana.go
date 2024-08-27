@@ -45,6 +45,7 @@ func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...Tu
 		basicRoleAssignemtCollector(store),
 		userRoleAssignemtCollector(store),
 		teamRoleAssignemtCollector(store),
+		fixedRoleTuplesCollector(store),
 	)
 
 	return &ZanzanaSynchroniser{
@@ -580,6 +581,57 @@ func teamRoleAssignemtCollector(store db.DB) TupleCollector {
 				}
 
 				key := fmt.Sprintf("%s-%s", collectorID, zanzana.RelationAssignee)
+				tuples[key] = append(tuples[key], tuple)
+			}
+		}
+
+		return nil
+	}
+}
+
+// fixedRoleTuplesCollector migrates fixed roles permissions that cannot be described in schema.
+// Those are permissions like general folder read and create that have specific resource id.
+func fixedRoleTuplesCollector(store db.DB) TupleCollector {
+	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+		const collectorID = "fixed_role"
+		type Org struct {
+			Id   int64
+			Name string
+		}
+		var orgs []Org
+		orgsQuery := "SELECT id, name FROM org"
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(orgsQuery).Find(&orgs)
+		})
+		if err != nil {
+			return err
+		}
+
+		type Assignment struct {
+			RoleName   string
+			Action     string
+			Kind       string
+			Identifier string
+		}
+
+		assignments := []Assignment{
+			{RoleName: "fixed:dashboards:creator", Action: "folders:read", Kind: "folders", Identifier: "general"},
+			{RoleName: "fixed:dashboards:creator", Action: "dashboards:create", Kind: "dashboards", Identifier: "general"},
+			{RoleName: "fixed:folders:creator", Action: "folders:create", Kind: "folders", Identifier: "general"},
+			{RoleName: "fixed:folders.general:reader", Action: "folders:read", Kind: "folders", Identifier: "general"},
+		}
+
+		for _, a := range assignments {
+			fixedRole := zanzana.TranslateFixedRole(a.RoleName)
+			subject := zanzana.NewTupleEntry(zanzana.TypeRole, fixedRole, "assignee")
+
+			for _, org := range orgs {
+				tuple, ok := zanzana.TranslateToTuple(subject, a.Action, a.Kind, a.Identifier, org.Id)
+				if !ok {
+					continue
+				}
+
+				key := fmt.Sprintf("%s-%s", collectorID, a.Action)
 				tuples[key] = append(tuples[key], tuple)
 			}
 		}
