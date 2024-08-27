@@ -296,15 +296,24 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		}
 	}
 	if engine == nil {
+		connection := ss.dbCfg.ConnectionString
+
+		// Ensure that parseTime is enabled for MySQL
+		if ss.dbCfg.Type == migrator.MySQL && !strings.Contains(connection, "parseTime=") {
+			if ss.features.IsEnabledGlobally() {
+				connection += "&parseTime=true"
+			}
+		}
+
 		var err error
-		engine, err = xorm.NewEngine(ss.dbCfg.Type, ss.dbCfg.ConnectionString)
+		engine, err = xorm.NewEngine(ss.dbCfg.Type, connection)
 		if err != nil {
 			return err
 		}
 		// Only for MySQL or MariaDB, verify we can connect with the current connection string's system var for transaction isolation.
 		// If not, create a new engine with a compatible connection string.
 		if ss.dbCfg.Type == migrator.MySQL {
-			engine, err = ss.ensureTransactionIsolationCompatibility(engine, ss.dbCfg.ConnectionString)
+			engine, err = ss.ensureTransactionIsolationCompatibility(engine, connection)
 			if err != nil {
 				return err
 			}
