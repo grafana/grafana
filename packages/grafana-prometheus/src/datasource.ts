@@ -327,7 +327,10 @@ export class PrometheusDatasource
       return prometheusSpecialRegexEscape(value);
     }
 
-    const escapedValues = value.map((val) => prometheusSpecialRegexEscape(val));
+    // we should use =~`${variable:regex}` for special regex escapes
+    // This change below allows that multi variables with chars like . will not be escaped
+    // e.g. {client="auth.client.session"}
+    const escapedValues = value.map((val) => prometheusRegularEscape(val));
 
     if (escapedValues.length === 1) {
       return escapedValues[0];

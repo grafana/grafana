@@ -566,15 +566,16 @@ describe('PrometheusDatasource', () => {
       });
 
       it('should regex escape values if the value is a string', () => {
+        // if the value is a string, we should continue to escape it
         expect(ds.interpolateQueryExpr('looking*glass', customVariable)).toEqual('looking\\\\*glass');
       });
 
       it('should return pipe separated values if the value is an array of strings', () => {
-        expect(ds.interpolateQueryExpr(['a|bc', 'de|f'], customVariable)).toEqual('(a\\\\|bc|de\\\\|f)');
+        expect(ds.interpolateQueryExpr(['a|bc', 'de|f'], customVariable)).toEqual('(a|bc|de|f)');
       });
 
       it('should return 1 regex escaped value if there is just 1 value in an array of strings', () => {
-        expect(ds.interpolateQueryExpr(['looking*glass'], customVariable)).toEqual('looking\\\\*glass');
+        expect(ds.interpolateQueryExpr(['looking*glass'], customVariable)).toEqual('looking*glass');
       });
     });
 
@@ -588,11 +589,18 @@ describe('PrometheusDatasource', () => {
       });
 
       it('should return pipe separated values if the value is an array of strings', () => {
-        expect(ds.interpolateQueryExpr(['a|bc', 'de|f'], customVariable)).toEqual('(a\\\\|bc|de\\\\|f)');
+        expect(ds.interpolateQueryExpr(['a|bc', 'de|f'], customVariable)).toEqual('(a|bc|de|f)');
       });
 
       it('should return 1 regex escaped value if there is just 1 value in an array of strings', () => {
-        expect(ds.interpolateQueryExpr(['looking*glass'], customVariable)).toEqual('looking\\\\*glass');
+        expect(ds.interpolateQueryExpr(['looking*glass'], customVariable)).toEqual('looking*glass');
+      });
+
+      it('should not escape . chars in variables', () => {
+        // all variables passed in scenes are now multi variables
+        // this forces the interpolation function to add extra regex escaping
+        // but now we are not doing that
+        expect(ds.interpolateQueryExpr(['a.b|cd', 'ef|g.h'], customVariable)).toEqual('(a.b|cd|ef|g.h)');
       });
     });
   });
