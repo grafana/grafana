@@ -7,7 +7,20 @@ const XSSWL = Object.keys(xss.whiteList).reduce<xss.IWhiteList>((acc, element) =
   return acc;
 }, {});
 
+// Add iframe tags to XSSWL.
+// We don't allow the sandbox attribute, since it can be overridden, instead we add it below.
+XSSWL.iframe = ['src', 'width', 'height'];
+
 const sanitizeTextPanelWhitelist = new xss.FilterXSS({
+  // Add sandbox attribute to iframe tags if an attribute is allowed.
+  onTagAttr: function (tag, name, value, isWhiteAttr) {
+    if (tag === 'iframe') {
+      return isWhiteAttr
+        ? ` ${name}="${xss.escapeAttrValue(sanitizeUrl(value))}" sandbox credentialless referrerpolicy=no-referrer`
+        : '';
+    }
+    return;
+  },
   whiteList: XSSWL,
   css: {
     whiteList: {
