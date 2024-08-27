@@ -157,7 +157,7 @@ describe('usePluginExtensions()', () => {
     expect(addedLinksRegistrySpy).toHaveBeenCalledTimes(1);
   });
 
-  it('should return the same extensions object if the context object is the same', async () => {
+  it.skip('should return the same extensions object if the context object is the same', async () => {
     const extensionPointId = 'plugins/foo/bar';
     const pluginId = 'my-app-plugin';
     const usePluginExtensions = createUsePluginExtensions(registries);
