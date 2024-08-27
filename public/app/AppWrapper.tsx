@@ -125,15 +125,21 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                 actions={[]}
                 options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
               >
-                <SidecarContext.Provider value={sidecarService}>
-                  <div className="grafana-app">
-                    {config.featureToggles.appSidecar ? (
-                      <ExperimentalSplitPaneTree routes={ready && this.renderRoutes()} />
-                    ) : (
-                      <RouterTree routes={ready && this.renderRoutes()} />
-                    )}
-                  </div>
-                </SidecarContext.Provider>
+                <ModalsContextProvider>
+                  <GlobalStyles />
+                  <SidecarContext.Provider value={sidecarService}>
+                    <div className="grafana-app">
+                      {config.featureToggles.appSidecar ? (
+                        <ExperimentalSplitPaneTree routes={ready && this.renderRoutes()} />
+                      ) : (
+                        <RouterTree routes={ready && this.renderRoutes()} />
+                      )}
+                      <LiveConnectionWarning />
+                      <ModalRoot />
+                      <PortalContainer />
+                    </div>
+                  </SidecarContext.Provider>
+                </ModalsContextProvider>
               </KBarProvider>
             </ThemeProvider>
           </GrafanaContext.Provider>
@@ -148,25 +154,19 @@ function RouterTree(props: { routes?: JSX.Element | false }) {
     <Router history={locationService.getHistory()}>
       <LocationServiceProvider service={locationService}>
         <CompatRouter>
-          <ModalsContextProvider>
-            <GlobalStyles />
-            <AppChrome>
-              <AngularRoot />
-              <AppNotificationList />
-              <Stack gap={0} grow={1} direction="column">
-                {pageBanners.map((Banner, index) => (
-                  <Banner key={index.toString()} />
-                ))}
-                {props.routes}
-              </Stack>
-              {bodyRenderHooks.map((Hook, index) => (
-                <Hook key={index.toString()} />
+          <AppChrome>
+            <AngularRoot />
+            <AppNotificationList />
+            <Stack gap={0} grow={1} direction="column">
+              {pageBanners.map((Banner, index) => (
+                <Banner key={index.toString()} />
               ))}
-            </AppChrome>
-            <LiveConnectionWarning />
-            <ModalRoot />
-            <PortalContainer />
-          </ModalsContextProvider>
+              {props.routes}
+            </Stack>
+            {bodyRenderHooks.map((Hook, index) => (
+              <Hook key={index.toString()} />
+            ))}
+          </AppChrome>
         </CompatRouter>
       </LocationServiceProvider>
     </Router>
@@ -215,21 +215,19 @@ function ExperimentalSplitPaneTree(props: { routes?: JSX.Element | false }) {
             <Router history={memoryLocationService.getHistory()}>
               <LocationServiceProvider service={memoryLocationService}>
                 <CompatRouter>
-                  <ModalsContextProvider>
-                    <GlobalStyles />
-                    <div className={styles.secondAppWrapper}>
-                      <div className={styles.secondAppToolbar}>
-                        <IconButton
-                          size={'lg'}
-                          style={{ margin: '8px' }}
-                          name={'times'}
-                          aria-label={'close'}
-                          onClick={() => closeApp(activePluginId)}
-                        />
-                      </div>
-                      <AppRootPage pluginId={activePluginId} />
+                  <GlobalStyles />
+                  <div className={styles.secondAppWrapper}>
+                    <div className={styles.secondAppToolbar}>
+                      <IconButton
+                        size={'lg'}
+                        style={{ margin: '8px' }}
+                        name={'times'}
+                        aria-label={'close'}
+                        onClick={() => closeApp(activePluginId)}
+                      />
                     </div>
-                  </ModalsContextProvider>
+                    <AppRootPage pluginId={activePluginId} />
+                  </div>
                 </CompatRouter>
               </LocationServiceProvider>
             </Router>
