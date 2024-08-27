@@ -17,8 +17,16 @@ func GetOpenAPIDefinitions(builders []APIGroupBuilder) common.GetOpenAPIDefiniti
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 		defs := v0alpha1.GetOpenAPIDefinitions(ref) // common grafana apis
 		maps.Copy(defs, data.GetOpenAPIDefinitions(ref))
-		maps.Copy(defs, map[string]common.OpenAPIDefinition{ // TODO -- move to SDK definition above
-			"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1.DataSourceRef": dummyResponse(ref),
+		// TODO: remove when https://github.com/grafana/grafana-plugin-sdk-go/pull/1062 is merged
+		maps.Copy(defs, map[string]common.OpenAPIDefinition{
+			"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1.DataSourceRef": {
+				Schema: spec.Schema{
+					SchemaProps: spec.SchemaProps{
+						Type:                 []string{"object"},
+						AdditionalProperties: &spec.SchemaOrBool{Allows: true},
+					},
+				},
+			},
 		})
 		for _, b := range builders {
 			g := b.GetOpenAPIDefinitions()
@@ -28,19 +36,6 @@ func GetOpenAPIDefinitions(builders []APIGroupBuilder) common.GetOpenAPIDefiniti
 			}
 		}
 		return defs
-	}
-}
-
-// Individual response
-func dummyResponse(_ common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description:          "todo... improve schema",
-				Type:                 []string{"object"},
-				AdditionalProperties: &spec.SchemaOrBool{Allows: true},
-			},
-		},
 	}
 }
 
