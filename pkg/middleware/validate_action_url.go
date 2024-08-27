@@ -84,7 +84,7 @@ func check(ctx *contextmodel.ReqContext, allGlobs *[]glob.Glob, logger log.Logge
 	if matchesAllowedPath(allGlobs, urlToCheck.Path) {
 		return nil
 	}
-	logger.Warn("POST/PUT to path not allowed", urlToCheck)
+	logger.Warn("POST/PUT to path not allowed", "url", urlToCheck)
 	// return some error
 	return &errorWithStatus{
 		Underlying: fmt.Errorf("method POST/PUT not allowed for path %s", urlToCheck),
