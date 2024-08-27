@@ -9,7 +9,7 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-export const pluginVersion = "10.3.7";
+export const pluginVersion = "10.3.10";
 
 export interface Options {
   /**
