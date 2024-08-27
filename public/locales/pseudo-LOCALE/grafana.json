@@ -1829,6 +1829,22 @@
     }
   },
   "plugins": {
+    "catalog": {
+      "update-all": {
+        "all-plugins-updated": "Åľľ pľūģįŉş ūpđäŧęđ!",
+        "available-header": "Åväįľäþľę",
+        "button": "Ůpđäŧę äľľ",
+        "cloud-update-message": "* Ĩŧ mäy ŧäĸę ä ƒęŵ mįŉūŧęş ƒőř ŧĥę pľūģįŉş ŧő þę äväįľäþľę ƒőř ūşäģę.",
+        "error": "Ēřřőř ūpđäŧįŉģ pľūģįŉ:",
+        "header": "Ŧĥę ƒőľľőŵįŉģ pľūģįŉş ĥävę ūpđäŧę äväįľäþľę",
+        "installed-header": "Ĩŉşŧäľľęđ",
+        "modal-confirmation": "Ůpđäŧę",
+        "modal-dismiss": "Cľőşę",
+        "modal-title": "Ůpđäŧę Pľūģįŉş",
+        "name-header": "Ńämę",
+        "update-header": "Ůpđäŧę"
+      }
+    },
     "details": {
       "labels": {
         "dependencies": "Đępęŉđęŉčįęş",
