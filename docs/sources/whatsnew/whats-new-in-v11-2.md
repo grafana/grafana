@@ -112,11 +112,9 @@ Data links in canvas elements can also be configured to open with a single click
 
 As part of this improvement, we've also added the ability to control the order in which data links are displayed by dragging and dropping them. This improvement has been added to all visualizations.
 
-{{< video-embed src="/media/docs/grafana/panels-visualizations/canvas-oneclick-tooltips-v4-11.2.mp4" >}}
+{{< youtube id="zOsM8VqwYpw" >}}
 
 In future releases, we'll add one-click functionality to data links in other Grafana visualizations.
-
-{{< youtube id="zOsM8VqwYpw" >}}
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#data-links)
 
@@ -155,8 +153,6 @@ An alert event is displayed each time an alert instance changes its state over a
 For Grafana Enterprise and OSS users:
 
 To try out the new alert history page, enable the `alertingCentralAlertHistory` feature toggle and [configure Loki annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alert-state-history/).
-
-{{< figure src="/media/docs/alerting/alert-state-history.png" alt="Alert state history page" >}}
 
 {{< youtube id="0fNtby8ieEw" >}}
 
