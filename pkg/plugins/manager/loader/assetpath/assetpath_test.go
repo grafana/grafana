@@ -187,3 +187,33 @@ func TestService(t *testing.T) {
 		})
 	}
 }
+
+func TestService_ChildPlugins(t *testing.T) {
+	t.Run("External fs-based plugin with child", func(t *testing.T) {
+		svc := ProvideService(&config.PluginManagementCfg{}, pluginscdn.ProvideService(&config.PluginManagementCfg{}))
+
+		parentInfo := NewPluginInfo(plugins.JSONData{ID: "parent", Info: plugins.Info{Version: "1.0.0"}}, plugins.ClassExternal, plugins.NewLocalFS("/data/plugins/parentInfo"), nil)
+		childInfo := NewPluginInfo(plugins.JSONData{ID: "child", Info: plugins.Info{Version: "1.0.0"}}, plugins.ClassExternal, plugins.NewLocalFS("/data/plugins/parentInfo/child"), &parentInfo)
+
+		module, err := svc.Module(childInfo)
+		require.NoError(t, err)
+		require.Equal(t, "public/plugins/parent/child/module.js", module)
+		module, err = svc.Module(parentInfo)
+		require.NoError(t, err)
+		require.Equal(t, "public/plugins/parent/module.js", module)
+
+		baseURL, err := svc.Base(childInfo)
+		require.NoError(t, err)
+		require.Equal(t, "public/plugins/parent/child", baseURL)
+		baseURL, err = svc.Base(parentInfo)
+		require.NoError(t, err)
+		require.Equal(t, "public/plugins/parent", baseURL)
+
+		relURL, err := svc.RelativeURL(childInfo, "path/to/file.txt")
+		require.NoError(t, err)
+		require.Equal(t, "public/plugins/parent/child/path/to/file.txt", relURL)
+		relURL, err = svc.RelativeURL(parentInfo, "path/to/file.txt")
+		require.NoError(t, err)
+		require.Equal(t, "public/plugins/parent/path/to/file.txt", relURL)
+	})
+}
