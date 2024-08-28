@@ -51,7 +51,7 @@ func TestIdentityQueries(t *testing.T) {
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
-			sqlQueryTeams: {
+			sqlQueryTeamsTemplate: {
 				{
 					Name: "teams_uid",
 					Data: listTeams(&ListTeamQuery{

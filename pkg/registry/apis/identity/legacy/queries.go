@@ -26,28 +26,9 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlQueryTeams        = mustTemplate("query_teams.sql")
 	sqlQueryTeamBindings = mustTemplate("query_team_bindings.sql")
 	sqlQueryTeamMembers  = mustTemplate("query_team_members.sql")
 )
-
-type sqlQueryListTeams struct {
-	sqltemplate.SQLTemplate
-	Query     *ListTeamQuery
-	TeamTable string
-}
-
-func newListTeams(sql *legacysql.LegacyDatabaseHelper, q *ListTeamQuery) sqlQueryListTeams {
-	return sqlQueryListTeams{
-		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
-		TeamTable:   sql.Table("team"),
-		Query:       q,
-	}
-}
-
-func (r sqlQueryListTeams) Validate() error {
-	return nil // TODO
-}
 
 type sqlQueryListTeamBindings struct {
 	sqltemplate.SQLTemplate

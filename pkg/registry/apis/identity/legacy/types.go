@@ -10,19 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 )
 
-type ListTeamQuery struct {
-	OrgID int64
-	UID   string
-
-	Pagination common.Pagination
-}
-
-type ListTeamResult struct {
-	Teams    []team.Team
-	Continue int64
-	RV       int64
-}
-
 type TeamMember struct {
 	ID         int64
 	TeamID     int64

@@ -40,9 +40,9 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 	}
 
 	req := newListTeams(sql, &query)
-	q, err := sqltemplate.Execute(sqlQueryTeams, req)
+	q, err := sqltemplate.Execute(sqlQueryTeamsTemplate, req)
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeams.Name(), err)
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeamsTemplate.Name(), err)
 	}
 
 	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
@@ -98,7 +98,7 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 	req := newListTeamBindings(sql, &query)
 	q, err := sqltemplate.Execute(sqlQueryTeamBindings, req)
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeams.Name(), err)
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeamsTemplate.Name(), err)
 	}
 
 	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
@@ -170,7 +170,7 @@ func (s *legacySQLStore) ListTeamMembers(ctx context.Context, ns claims.Namespac
 	req := newListTeamMembers(sql, &query)
 	q, err := sqltemplate.Execute(sqlQueryTeamMembers, req)
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeams.Name(), err)
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeamsTemplate.Name(), err)
 	}
 
 	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
