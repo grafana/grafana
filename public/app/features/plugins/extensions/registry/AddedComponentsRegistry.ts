@@ -53,14 +53,14 @@ export class AddedComponentsRegistry extends Registry<
 
       const extensionPointIds = Array.isArray(config.targets) ? config.targets : [config.targets];
       for (const extensionPointId of extensionPointIds) {
-        if (!isGrafanaCoreExtensionPoint(extensionPointId) && !isExtensionPointIdValid(pluginId, extensionPointId)) {
+        if (!isExtensionPointIdValid(pluginId, extensionPointId)) {
           logWarning(
             `Could not register added component with id '${extensionPointId}'. Reason: The component id does not match the id naming convention. Id should be prefixed with plugin id or grafana. e.g '<grafana|myorg-basic-app>/my-component-id/v1'.`
           );
           continue;
         }
 
-        if (!extensionPointEndsWithVersion(extensionPointId)) {
+        if (!isGrafanaCoreExtensionPoint(extensionPointId) && !extensionPointEndsWithVersion(extensionPointId)) {
           logWarning(
             `Added component with id '${extensionPointId}' does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
           );
