@@ -79,40 +79,39 @@ export const RolePicker = ({
       return {};
     }
     const { bottom, top, left, right } = dimensions;
+
+    const spaceBelow = window.innerHeight - bottom;
+    const spaceAbove = top;
+    const spaceRight = window.innerWidth - right;
+    const spaceLeft = left;
+
     let horizontal = left;
+    let vertical = bottom;
     let menuToLeft = false;
+    let menuToTop = false;
 
-    const distance = window.innerHeight - bottom;
-    let vertical = bottom + 5;
-    let ToTheSide = false;
-    if (distance < MENU_MAX_HEIGHT + 20) {
-      // move the menu above the input if there is not enough space below
-      vertical = top - MENU_MAX_HEIGHT - 50;
+    // Check vertical space
+    if (spaceBelow < MENU_MAX_HEIGHT && spaceAbove > spaceBelow) {
+      vertical = top - MENU_MAX_HEIGHT;
+      menuToTop = true;
     }
 
-    // check if there is enough space above the input field
-    if (top < MENU_MAX_HEIGHT + 50) {
-      // if not, reset the vertical position
-      vertical = top;
-      // move the menu to the right edge of the input field
-      horizontal = right + 5;
-      // flag to align the menu to the right or left edge of the input field
-      ToTheSide = true;
-    }
-
-    /*
-     * This expression calculates whether there is enough place
-     * on the right of the RolePicker input to show/fit the role picker menu and its sub menu AND
-     * whether there is enough place under the RolePicker input to show/fit
-     * both (the role picker menu and its sub menu) aligned to the left edge of the input.
-     * Otherwise, it aligns the role picker menu to the right.
-     */
-    if (horizontal + ROLE_PICKER_MAX_MENU_WIDTH > window.innerWidth) {
-      horizontal = window.innerWidth - (ToTheSide ? left : right);
+    // Check horizontal space
+    if (spaceRight < ROLE_PICKER_MAX_MENU_WIDTH && spaceLeft > spaceRight) {
+      horizontal = right - ROLE_PICKER_MAX_MENU_WIDTH;
       menuToLeft = true;
     }
 
-    return { horizontal, vertical, menuToLeft };
+    // If there's not enough horizontal space on either side, center it
+    if (spaceRight < ROLE_PICKER_MAX_MENU_WIDTH && spaceLeft < ROLE_PICKER_MAX_MENU_WIDTH) {
+      horizontal = Math.max(0, left + (dimensions.width - ROLE_PICKER_MAX_MENU_WIDTH) / 2);
+    }
+
+    // Ensure the menu stays within the viewport
+    horizontal = Math.max(0, Math.min(horizontal, window.innerWidth - ROLE_PICKER_MAX_MENU_WIDTH));
+    vertical = Math.max(0, Math.min(vertical, window.innerHeight - MENU_MAX_HEIGHT));
+
+    return { horizontal, vertical, menuToLeft, menuToTop };
   };
 
   const onOpen = useCallback(
