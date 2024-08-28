@@ -149,7 +149,6 @@ Grafana is an open-source platform for monitoring and observability that lets yo
 1. Browse to [http://localhost:3000](http://localhost:3000).
 {{< /docs/ignore >}}
 
-
 <!-- INTERACTIVE ignore START -->
 {{< admonition type="note" >}}
 This demo does not require a login page or credentials. However, if you choose to install Grafana locally, you will need to log in and provide credentials. In that case, the default username and password is `admin`.
