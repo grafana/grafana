@@ -121,7 +121,7 @@ func TestIntegrationCreateOrUpdateCorrelation(t *testing.T) {
 		err = json.Unmarshal(responseBody, &response)
 		require.NoError(t, err)
 
-		require.Len(t, response.Correlations, 3)
+		require.Len(t, response.Correlations, 4)
 
 		unordered := make(map[string]correlations.Correlation)
 		for _, v := range response.Correlations {
