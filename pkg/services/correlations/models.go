@@ -14,12 +14,13 @@ var (
 	ErrTargetDataSourceDoesNotExists = errors.New("target data source does not exist")
 	ErrCorrelationNotFound           = errors.New("correlation not found")
 	ErrUpdateCorrelationEmptyParams  = errors.New("not enough parameters to edit correlation")
-	ErrInvalidConfigType             = errors.New("invalid correlation config type")
+	ErrInvalidType                   = errors.New("invalid correlation type")
 	ErrInvalidTransformationType     = errors.New("invalid transformation type")
 	ErrTransformationNotNested       = errors.New("transformations must be nested under config")
 	ErrTransformationRegexReqExp     = errors.New("regex transformations require expression")
 	ErrCorrelationsQuotaFailed       = errors.New("error getting correlations quota")
 	ErrCorrelationsQuotaReached      = errors.New("correlations quota reached")
+	ErrInvalidConfigType             = errors.New("correlation contains non default value in config.type")
 )
 
 const (
@@ -46,7 +47,7 @@ type Transformation struct {
 
 func (t CorrelationType) Validate() error {
 	if t != query && t != external {
-		return fmt.Errorf("%s: \"%s\"", ErrInvalidConfigType, t)
+		return fmt.Errorf("%s: \"%s\"", ErrInvalidType, t)
 	}
 	return nil
 }

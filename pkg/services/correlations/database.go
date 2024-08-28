@@ -27,6 +27,12 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 		Type:        cmd.Type,
 	}
 
+	if correlation.Config.Type == CorrelationType("query") {
+		correlation.Type = CorrelationType("query")
+	} else if correlation.Config.Type != "" {
+		return correlation, ErrInvalidConfigType
+	}
+
 	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
 		var err error
 
