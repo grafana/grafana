@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/authlib/claims"
-
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -69,7 +68,7 @@ func TestPermissionCacheKey(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, GetUserPermissionCacheKey(tc.signedInUser))
+			assert.Equal(t, tc.expected, GetPermissionCacheKey(tc.signedInUser))
 		})
 	}
 }
