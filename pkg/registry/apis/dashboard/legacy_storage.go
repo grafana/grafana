@@ -47,7 +47,7 @@ func (s *dashboardStorage) newStore(scheme *runtime.Scheme, defaultOptsGetter ge
 		defaultOpts.StorageConfig.Config,
 	)
 
-	strategy := grafanaregistry.NewStrategy(scheme)
+	strategy := grafanaregistry.NewStrategy(scheme, resourceInfo.GroupVersion())
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,

@@ -14,14 +14,14 @@ import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { SceneShareTabState } from './types';
+import { SceneShareTabState, ShareView } from './types';
 
 export interface ShareExportTabState extends SceneShareTabState {
   isSharingExternally?: boolean;
   isViewingJSON?: boolean;
 }
 
-export class ShareExportTab extends SceneObjectBase<ShareExportTabState> {
+export class ShareExportTab extends SceneObjectBase<ShareExportTabState> implements ShareView {
   public tabId = shareDashboardType.export;
   static Component = ShareExportTabRenderer;
 
