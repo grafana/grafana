@@ -18,8 +18,8 @@ func TestIdentityQueries(t *testing.T) {
 		},
 	}
 
-	getDisplay := func(q *GetUserDisplayQuery) sqltemplate.SQLTemplate {
-		v := newGetDisplay(nodb, q)
+	getDisplay := func(q *ListDisplayQuery) sqltemplate.SQLTemplate {
+		v := newListDisplay(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
@@ -51,7 +51,7 @@ func TestIdentityQueries(t *testing.T) {
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
-			sqlQueryTeams: {
+			sqlQueryTeamsTemplate: {
 				{
 					Name: "teams_uid",
 					Data: listTeams(&ListTeamQuery{
@@ -75,7 +75,7 @@ func TestIdentityQueries(t *testing.T) {
 					}),
 				},
 			},
-			sqlQueryUsers: {
+			sqlQueryUsersTemplate: {
 				{
 					Name: "users_uid",
 					Data: listUsers(&ListUserQuery{
@@ -99,31 +99,31 @@ func TestIdentityQueries(t *testing.T) {
 					}),
 				},
 			},
-			sqlQueryDisplay: {
+			sqlQueryDisplayTemplate: {
 				{
 					Name: "display_uids",
-					Data: getDisplay(&GetUserDisplayQuery{
+					Data: getDisplay(&ListDisplayQuery{
 						OrgID: 2,
 						UIDs:  []string{"a", "b"},
 					}),
 				},
 				{
 					Name: "display_ids",
-					Data: getDisplay(&GetUserDisplayQuery{
+					Data: getDisplay(&ListDisplayQuery{
 						OrgID: 2,
 						IDs:   []int64{1, 2},
 					}),
 				},
 				{
 					Name: "display_ids_uids",
-					Data: getDisplay(&GetUserDisplayQuery{
+					Data: getDisplay(&ListDisplayQuery{
 						OrgID: 2,
 						UIDs:  []string{"a", "b"},
 						IDs:   []int64{1, 2},
 					}),
 				},
 			},
-			sqlQueryTeamBindings: {
+			sqlQueryTeamBindingsTemplate: {
 				{
 					Name: "team_1_bindings",
 					Data: listTeamBindings(&ListTeamBindingsQuery{
@@ -150,7 +150,7 @@ func TestIdentityQueries(t *testing.T) {
 					}),
 				},
 			},
-			sqlQueryTeamMembers: {
+			sqlQueryTeamMembersTemplate: {
 				{
 					Name: "team_1_members_page_1",
 					Data: listTeamMembers(&ListTeamMembersQuery{
