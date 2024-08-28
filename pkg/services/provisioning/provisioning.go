@@ -78,9 +78,8 @@ func ProvideService(
 		folderService:                folderService,
 	}
 
-	err := s.setDashboardProvisioner()
-	if err != nil {
-		return nil, fmt.Errorf("%v: %w", "Failed to create provisioner", err)
+	if err := s.setDashboardProvisioner(); err != nil {
+		return nil, err
 	}
 
 	return s, nil
@@ -107,30 +106,27 @@ type ProvisioningService interface {
 	GetAllowUIUpdatesFromConfig(name string) bool
 }
 
-// Add a public constructor for overriding service to be able to instantiate OSS as fallback
-func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
-	logger := log.New("provisioning")
-	return &ProvisioningServiceImpl{
-		log:                     logger,
-		newDashboardProvisioner: dashboards.New,
-		provisionDatasources:    datasources.Provision,
-		provisionPlugins:        plugins.Provision,
-	}
-}
-
 // Used for testing purposes
 func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionDatasources func(context.Context, string, datasources.BaseDataSourceService, datasources.CorrelationsStore, org.Service) error,
 	provisionPlugins func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error,
-) *ProvisioningServiceImpl {
-	return &ProvisioningServiceImpl{
+	searchService searchV2.SearchService,
+) (*ProvisioningServiceImpl, error) {
+	s := &ProvisioningServiceImpl{
 		log:                     log.New("provisioning"),
 		newDashboardProvisioner: newDashboardProvisioner,
 		provisionDatasources:    provisionDatasources,
 		provisionPlugins:        provisionPlugins,
 		Cfg:                     setting.NewCfg(),
+		searchService:           searchService,
 	}
+
+	if err := s.setDashboardProvisioner(); err != nil {
+		return nil, err
+	}
+
+	return s, nil
 }
 
 type ProvisioningServiceImpl struct {

@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
+	"github.com/grafana/grafana/pkg/services/searchV2"
 )
 
 func TestProvisioningServiceImpl(t *testing.T) {
@@ -136,14 +137,17 @@ func setup(t *testing.T) *serviceTestStruct {
 		pollChangesChannel <- ctx
 	}
 
-	serviceTest.service = newProvisioningServiceImpl(
+	searchStub := searchV2.NewStubSearchService()
+
+	service, err := newProvisioningServiceImpl(
 		func(context.Context, string, dashboardstore.DashboardProvisioningService, org.Service, utils.DashboardStore, folder.Service) (dashboards.DashboardProvisioner, error) {
 			return serviceTest.mock, nil
 		},
 		nil,
 		nil,
+		searchStub,
 	)
-	err := serviceTest.service.setDashboardProvisioner()
+	serviceTest.service = service
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
