@@ -82,6 +82,11 @@ type UnauthorizedError GenericError
 // swagger:response acceptedResponse
 type AcceptedResponse GenericError
 
+// StatusMovedPermanently
+//
+// swagger:response statusMovedPermanently
+type StatusMovedPermanentlyRedirect GenericError
+
 // documentation for PublicError defined in errutil.Error
 
 // swagger:response publicErrorResponse

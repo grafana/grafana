@@ -2225,34 +2225,9 @@
         "summary": "Creates an API key.",
         "operationId": "addAPIkey",
         "deprecated": true,
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/AddAPIKeyCommand"
-            }
-          }
-        ],
         "responses": {
-          "200": {
-            "$ref": "#/responses/postAPIkeyResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "409": {
-            "$ref": "#/responses/conflictError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
+          "301": {
+            "$ref": "#/responses/statusMovedPermanently"
           }
         }
       }
@@ -24188,6 +24163,12 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/SnapshotListResponseDTO"
+      }
+    },
+    "statusMovedPermanently": {
+      "description": "StatusMovedPermanently",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
       }
     },
     "unauthorisedError": {
