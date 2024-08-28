@@ -2779,9 +2779,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/react@npm:0.26.22":
-  version: 0.26.22
-  resolution: "@floating-ui/react@npm:0.26.22"
+"@floating-ui/react@npm:0.26.23":
+  version: 0.26.23
+  resolution: "@floating-ui/react@npm:0.26.23"
   dependencies:
     "@floating-ui/react-dom": "npm:^2.1.1"
     "@floating-ui/utils": "npm:^0.2.7"
@@ -2789,7 +2789,7 @@ __metadata:
   peerDependencies:
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
-  checksum: 10/53f21ce765445733be4db2efd58c424ad1db0f369d4e20346733ff60f684574e7c435b9cea3298bf09a02484d2ebb52a4097bedda5d021430b3f08439fe91bc1
+  checksum: 10/a2ffeb0bae72cac9e6583d9651e75e94c261a9e78ca4a5e862b7d33f2c19ae014cbe272627a0a0a5a2b526280efab17ec687d32ba02f6ce4e924bec562ae06ab
   languageName: node
   linkType: hard
 
@@ -2941,7 +2941,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -2972,7 +2972,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3013,7 +3013,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3054,7 +3054,7 @@ __metadata:
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
     uuid: "npm:9.0.1"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3096,7 +3096,7 @@ __metadata:
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
     uuid: "npm:9.0.1"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3109,7 +3109,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/experimental": "npm:1.7.12"
+    "@grafana/experimental": "npm:1.8.0"
     "@grafana/plugin-configs": "workspace:*"
     "@grafana/runtime": "npm:11.3.0-pre"
     "@grafana/sql": "npm:11.3.0-pre"
@@ -3117,7 +3117,7 @@ __metadata:
     "@testing-library/react": "npm:15.0.2"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.12"
-    "@types/lodash": "npm:4.17.4"
+    "@types/lodash": "npm:4.17.7"
     "@types/node": "npm:20.14.2"
     "@types/react": "npm:18.3.3"
     "@types/testing-library__jest-dom": "npm:5.14.9"
@@ -3127,7 +3127,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     typescript: "npm:5.4.5"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3158,7 +3158,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3190,7 +3190,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3238,7 +3238,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3264,7 +3264,7 @@ __metadata:
     "@lezer/lr": "npm:1.3.3"
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
-    "@opentelemetry/semantic-conventions": "npm:1.25.1"
+    "@opentelemetry/semantic-conventions": "npm:1.26.0"
     "@testing-library/dom": "npm:10.0.0"
     "@testing-library/jest-dom": "npm:6.4.2"
     "@testing-library/react": "npm:15.0.2"
@@ -3298,7 +3298,7 @@ __metadata:
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
     uuid: "npm:9.0.1"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3332,7 +3332,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3533,32 +3533,32 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-core@npm:^1.3.6, @grafana/faro-core@npm:^1.9.0":
-  version: 1.9.0
-  resolution: "@grafana/faro-core@npm:1.9.0"
+"@grafana/faro-core@npm:^1.3.6, @grafana/faro-core@npm:^1.9.1":
+  version: 1.9.1
+  resolution: "@grafana/faro-core@npm:1.9.1"
   dependencies:
     "@opentelemetry/api": "npm:^1.9.0"
     "@opentelemetry/otlp-transformer": "npm:^0.52.0"
-  checksum: 10/87437e1053af2c76bb9010d9dd7a4951d6b6f339326a4871ca9f513d0b3193ff4358845b24f4f20090f180f9168bc42a6f2949d9e764f4c672f1e202556b6de6
+  checksum: 10/b9519680b37f86082b7e73aa0d437d2d930ff94f97baab7386a1b81f619a8ac22fbc5be1a24891f3a09c434ded6eff8a369a662c2a909c4d4dadcf471283d5c1
   languageName: node
   linkType: hard
 
-"@grafana/faro-web-sdk@npm:1.9.0, @grafana/faro-web-sdk@npm:^1.3.6, @grafana/faro-web-sdk@npm:^1.9.0":
-  version: 1.9.0
-  resolution: "@grafana/faro-web-sdk@npm:1.9.0"
+"@grafana/faro-web-sdk@npm:1.9.1, @grafana/faro-web-sdk@npm:^1.3.6, @grafana/faro-web-sdk@npm:^1.9.1":
+  version: 1.9.1
+  resolution: "@grafana/faro-web-sdk@npm:1.9.1"
   dependencies:
-    "@grafana/faro-core": "npm:^1.9.0"
+    "@grafana/faro-core": "npm:^1.9.1"
     ua-parser-js: "npm:^1.0.32"
     web-vitals: "npm:^4.0.1"
-  checksum: 10/1b5f0b84c7d96bc5099328b35423de8ad3ccd7d51d14e49e7df050c69d57ee6e80b35dd441e6d5eca2de9babc4845eb425ffcc39b6ca05587e9ce453350c61b1
+  checksum: 10/436fa2da908b9aa20ce9700f3589e25f1c65eef1c855094d506afd6168278971bf347ca2f18b3f18dc0990a4551726670b9e481dd52124ae44b0d1909e879ea4
   languageName: node
   linkType: hard
 
 "@grafana/faro-web-tracing@npm:^1.8.2":
-  version: 1.9.0
-  resolution: "@grafana/faro-web-tracing@npm:1.9.0"
+  version: 1.9.1
+  resolution: "@grafana/faro-web-tracing@npm:1.9.1"
   dependencies:
-    "@grafana/faro-web-sdk": "npm:^1.9.0"
+    "@grafana/faro-web-sdk": "npm:^1.9.1"
     "@opentelemetry/api": "npm:^1.9.0"
     "@opentelemetry/context-zone": "npm:1.21.0"
     "@opentelemetry/core": "npm:^1.25.0"
@@ -3570,7 +3570,7 @@ __metadata:
     "@opentelemetry/resources": "npm:^1.25.0"
     "@opentelemetry/sdk-trace-web": "npm:^1.25.0"
     "@opentelemetry/semantic-conventions": "npm:^1.25.0"
-  checksum: 10/53aa9105c5bff80025c4d0aca0f4be90338b03143615a11207237a543bbfe14e9573d3617b52ef777dd32826bcdf80ba9dd96db0742caf9d30b0764c6d5781ca
+  checksum: 10/cd62af5b0cb177b33b80eb99c2c1c995485497bd383124dd4dcd45c2de8cfd2e081cff42b95fe326872cfaa433d460273de5b4a1dfe6f1147620591b337b46e9
   languageName: node
   linkType: hard
 
@@ -3612,7 +3612,7 @@ __metadata:
     rollup-plugin-esbuild: "npm:5.0.0"
     rollup-plugin-node-externals: "npm:^5.0.0"
     tinycolor2: "npm:1.6.0"
-    ts-jest: "npm:29.2.4"
+    ts-jest: "npm:29.2.5"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
@@ -3687,7 +3687,7 @@ __metadata:
     react-select: "npm:5.8.0"
     react-use: "npm:17.5.1"
     rxjs: "npm:7.8.1"
-    ts-jest: "npm:29.2.4"
+    ts-jest: "npm:29.2.5"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
@@ -3713,7 +3713,7 @@ __metadata:
     swc-loader: "npm:0.2.6"
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   languageName: unknown
   linkType: soft
 
@@ -3736,11 +3736,11 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.11.2"
     "@emotion/eslint-plugin": "npm:11.11.0"
-    "@floating-ui/react": "npm:0.26.22"
+    "@floating-ui/react": "npm:0.26.23"
     "@grafana/data": "npm:11.3.0-pre"
     "@grafana/e2e-selectors": "npm:11.3.0-pre"
     "@grafana/experimental": "npm:1.8.0"
-    "@grafana/faro-web-sdk": "npm:1.9.0"
+    "@grafana/faro-web-sdk": "npm:1.9.1"
     "@grafana/runtime": "npm:11.3.0-pre"
     "@grafana/schema": "npm:11.3.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
@@ -3832,7 +3832,7 @@ __metadata:
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
     uuid: "npm:9.0.1"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
     webpack-cli: "npm:5.1.4"
     whatwg-fetch: "npm:3.6.20"
   peerDependencies:
@@ -3993,7 +3993,7 @@ __metadata:
     react-virtualized-auto-sizer: "npm:1.0.24"
     rxjs: "npm:7.8.1"
     sql-formatter-plus: "npm:^1.3.6"
-    ts-jest: "npm:29.2.4"
+    ts-jest: "npm:29.2.5"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
@@ -4025,7 +4025,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@emotion/react": "npm:11.11.4"
     "@faker-js/faker": "npm:^8.4.1"
-    "@floating-ui/react": "npm:0.26.22"
+    "@floating-ui/react": "npm:0.26.23"
     "@grafana/data": "npm:11.3.0-pre"
     "@grafana/e2e-selectors": "npm:11.3.0-pre"
     "@grafana/faro-web-sdk": "npm:^1.3.6"
@@ -4158,7 +4158,7 @@ __metadata:
     typescript: "npm:5.5.4"
     uplot: "npm:1.6.30"
     uuid: "npm:9.0.1"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     react: ^18.0.0
     react-dom: ^18.0.0
@@ -5903,10 +5903,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/semantic-conventions@npm:1.25.1, @opentelemetry/semantic-conventions@npm:^1.25.0":
+"@opentelemetry/semantic-conventions@npm:1.25.1":
   version: 1.25.1
   resolution: "@opentelemetry/semantic-conventions@npm:1.25.1"
   checksum: 10/d84745a9e21a451560a293b4e6f996ee7c67bb983a7ec05408c23d207c6fc8b73a0af9c1ebea26e3acb4f0e3405ea7eb0d6bdf9adad9f954d60829bbb48ea307
+  languageName: node
+  linkType: hard
+
+"@opentelemetry/semantic-conventions@npm:1.26.0, @opentelemetry/semantic-conventions@npm:^1.25.0":
+  version: 1.26.0
+  resolution: "@opentelemetry/semantic-conventions@npm:1.26.0"
+  checksum: 10/846607106532827ec1e61deddcdf781eed2f7fe175131e4ac8ddba5b4de7280429f3678259b22d5a99cbc7bdd3d2f4eea81bd100b6304089c0341fc963b7b451
   languageName: node
   linkType: hard
 
@@ -9852,13 +9859,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:4.17.4":
-  version: 4.17.4
-  resolution: "@types/lodash@npm:4.17.4"
-  checksum: 10/3ec19f9fc48200006e71733e08bcb1478b0398673657fcfb21a8643d41a80bcce09a01000077c3b23a3c6d86b9b314abe0672a8fdfc0fd66b893bd41955cfab8
-  languageName: node
-  linkType: hard
-
 "@types/logfmt@npm:^1.2.3":
   version: 1.2.6
   resolution: "@types/logfmt@npm:1.2.6"
@@ -12699,7 +12699,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bs-logger@npm:0.x":
+"bs-logger@npm:0.x, bs-logger@npm:^0.2.6":
   version: 0.2.6
   resolution: "bs-logger@npm:0.2.6"
   dependencies:
@@ -18473,7 +18473,7 @@ __metadata:
     "@emotion/eslint-plugin": "npm:11.11.0"
     "@emotion/react": "npm:11.11.4"
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
-    "@floating-ui/react": "npm:0.26.22"
+    "@floating-ui/react": "npm:0.26.23"
     "@formatjs/intl-durationformat": "npm:^0.2.4"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/aws-sdk": "npm:0.4.1"
@@ -18514,7 +18514,7 @@ __metadata:
     "@msagl/parser": "npm:^1.1.19"
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
-    "@opentelemetry/semantic-conventions": "npm:1.25.1"
+    "@opentelemetry/semantic-conventions": "npm:1.26.0"
     "@playwright/test": "npm:1.46.1"
     "@pmmmwh/react-refresh-webpack-plugin": "npm:0.5.15"
     "@popperjs/core": "npm:2.11.8"
@@ -18781,7 +18781,7 @@ __metadata:
     tether-drop: "https://github.com/torkelo/drop"
     tinycolor2: "npm:1.6.0"
     tracelib: "npm:1.0.1"
-    ts-jest: "npm:29.2.4"
+    ts-jest: "npm:29.2.5"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     tween-functions: "npm:^1.2.0"
@@ -18790,7 +18790,7 @@ __metadata:
     uplot: "npm:1.6.30"
     uuid: "npm:9.0.1"
     visjs-network: "npm:4.25.0"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
     webpack-assets-manifest: "npm:^5.1.0"
     webpack-bundle-analyzer: "npm:4.10.2"
     webpack-cli: "npm:5.1.4"
@@ -21678,8 +21678,8 @@ __metadata:
   linkType: hard
 
 "knip@npm:^5.10.0":
-  version: 5.27.3
-  resolution: "knip@npm:5.27.3"
+  version: 5.27.4
+  resolution: "knip@npm:5.27.4"
   dependencies:
     "@nodelib/fs.walk": "npm:1.2.8"
     "@snyk/github-codeowners": "npm:1.1.0"
@@ -21703,7 +21703,7 @@ __metadata:
   bin:
     knip: bin/knip.js
     knip-bun: bin/knip-bun.js
-  checksum: 10/b043e5d6e77d32c078961d33f734040082092e14a06e525efba27cfa893d6ce2251c0951245806151203ee32461d2c50cfea2f9b4a5d9bd9fcf1755f2cdef438
+  checksum: 10/48daf6f44e6aefe4c7f9d0f611e202fcb78aa1ead48cfdebbb17bbebcd2b9db0a7bdb9024a6ee10dbe5bc521f9066ec76f2afb4fba9a7dc646a1fd62332bfb63
   languageName: node
   linkType: hard
 
@@ -22448,7 +22448,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"make-error@npm:1.x, make-error@npm:^1.1.1":
+"make-error@npm:1.x, make-error@npm:^1.1.1, make-error@npm:^1.3.6":
   version: 1.3.6
   resolution: "make-error@npm:1.3.6"
   checksum: 10/b86e5e0e25f7f777b77fabd8e2cbf15737972869d852a22b7e73c17623928fccb826d8e46b9951501d3f20e51ad74ba8c59ed584f610526a48f8ccf88aaec402
@@ -31119,19 +31119,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-jest@npm:29.2.4":
-  version: 29.2.4
-  resolution: "ts-jest@npm:29.2.4"
+"ts-jest@npm:29.2.5":
+  version: 29.2.5
+  resolution: "ts-jest@npm:29.2.5"
   dependencies:
-    bs-logger: "npm:0.x"
+    bs-logger: "npm:^0.2.6"
     ejs: "npm:^3.1.10"
-    fast-json-stable-stringify: "npm:2.x"
+    fast-json-stable-stringify: "npm:^2.1.0"
     jest-util: "npm:^29.0.0"
     json5: "npm:^2.2.3"
-    lodash.memoize: "npm:4.x"
-    make-error: "npm:1.x"
-    semver: "npm:^7.5.3"
-    yargs-parser: "npm:^21.0.1"
+    lodash.memoize: "npm:^4.1.2"
+    make-error: "npm:^1.3.6"
+    semver: "npm:^7.6.3"
+    yargs-parser: "npm:^21.1.1"
   peerDependencies:
     "@babel/core": ">=7.0.0-beta.0 <8"
     "@jest/transform": ^29.0.0
@@ -31152,7 +31152,7 @@ __metadata:
       optional: true
   bin:
     ts-jest: cli.js
-  checksum: 10/69db25e06b93f4ea4e454a54afc4e49c59b71f7efdef94fe728f4d62b8c475364d0fed7253212c5394669dcd143516ab6f630f4b139b2f9c37119245cf5a963c
+  checksum: 10/f89e562816861ec4510840a6b439be6145f688b999679328de8080dc8e66481325fc5879519b662163e33b7578f35243071c38beb761af34e5fe58e3e326a958
   languageName: node
   linkType: hard
 
@@ -32510,7 +32510,43 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack@npm:5, webpack@npm:5.91.0, webpack@npm:^5":
+"webpack@npm:5, webpack@npm:5.94.0, webpack@npm:^5":
+  version: 5.94.0
+  resolution: "webpack@npm:5.94.0"
+  dependencies:
+    "@types/estree": "npm:^1.0.5"
+    "@webassemblyjs/ast": "npm:^1.12.1"
+    "@webassemblyjs/wasm-edit": "npm:^1.12.1"
+    "@webassemblyjs/wasm-parser": "npm:^1.12.1"
+    acorn: "npm:^8.7.1"
+    acorn-import-attributes: "npm:^1.9.5"
+    browserslist: "npm:^4.21.10"
+    chrome-trace-event: "npm:^1.0.2"
+    enhanced-resolve: "npm:^5.17.1"
+    es-module-lexer: "npm:^1.2.1"
+    eslint-scope: "npm:5.1.1"
+    events: "npm:^3.2.0"
+    glob-to-regexp: "npm:^0.4.1"
+    graceful-fs: "npm:^4.2.11"
+    json-parse-even-better-errors: "npm:^2.3.1"
+    loader-runner: "npm:^4.2.0"
+    mime-types: "npm:^2.1.27"
+    neo-async: "npm:^2.6.2"
+    schema-utils: "npm:^3.2.0"
+    tapable: "npm:^2.1.1"
+    terser-webpack-plugin: "npm:^5.3.10"
+    watchpack: "npm:^2.4.1"
+    webpack-sources: "npm:^3.2.3"
+  peerDependenciesMeta:
+    webpack-cli:
+      optional: true
+  bin:
+    webpack: bin/webpack.js
+  checksum: 10/648449c5fbbb0839814116e3b2b044ac6c75a7ba272435155ddeb1e64dfaa2f8079be3adfbb691f648b69900756ce0f6fb73beab0ced3cf5e0fd46868b4593a6
+  languageName: node
+  linkType: hard
+
+"webpack@npm:5.91.0":
   version: 5.91.0
   resolution: "webpack@npm:5.91.0"
   dependencies:

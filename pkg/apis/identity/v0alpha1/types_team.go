@@ -50,14 +50,30 @@ type TeamSubject struct {
 	// Name is the unique identifier for subject.
 	Name string `json:"name,omitempty"`
 
-	// Permission subject has in permission.
-	// Can be either admin or member.
+	// Permission subject has in team.
 	Permission TeamPermission `json:"permission,omitempty"`
 }
 
 type TeamRef struct {
 	// Name is the unique identifier for a team.
 	Name string `json:"name,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type TeamMemberList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []TeamMember `json:"items,omitempty"`
+}
+
+type TeamMember struct {
+	IdentityDisplay `json:",inline"`
+
+	// External is set if member ship was synced from external IDP.
+	External bool `json:"external,omitempty"`
+	// Permission member has in team.
+	Permission TeamPermission `json:"permission,omitempty"`
 }
 
 // TeamPermission for subject
