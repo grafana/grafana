@@ -169,13 +169,16 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims claims.AccessClaim
 	}
 
 	permissions := accessTokenClaims.Permissions()
-	roles := make([]string, 0, len(permissions))
-	actions := make([]string, 0, len(permissions))
-	for i := range permissions {
-		if strings.HasPrefix(permissions[i], "fixed:") {
-			roles = append(roles, permissions[i])
-		} else {
-			actions = append(actions, permissions[i])
+	fetchPermissionsParams := authn.FetchPermissionsParams{}
+	if len(permissions) > 0 {
+		fetchPermissionsParams.Roles = make([]string, 0, len(permissions))
+		fetchPermissionsParams.AllowedActions = make([]string, 0, len(permissions))
+		for i := range permissions {
+			if strings.HasPrefix(permissions[i], "fixed:") {
+				fetchPermissionsParams.Roles = append(fetchPermissionsParams.Roles, permissions[i])
+			} else {
+				fetchPermissionsParams.AllowedActions = append(fetchPermissionsParams.AllowedActions, permissions[i])
+			}
 		}
 	}
 
@@ -188,12 +191,9 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims claims.AccessClaim
 		AuthID:                     accessTokenClaims.Subject(),
 		AllowedKubernetesNamespace: accessTokenClaims.Namespace(),
 		ClientParams: authn.ClientParams{
-			SyncPermissions: true,
-			FetchPermissionsParams: authn.FetchPermissionsParams{
-				Roles:          roles,
-				AllowedActions: actions,
-			},
-			FetchSyncedUser: false,
+			SyncPermissions:        true,
+			FetchPermissionsParams: fetchPermissionsParams,
+			FetchSyncedUser:        false,
 		},
 	}, nil
 }
