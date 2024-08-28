@@ -35,7 +35,7 @@ func NewStorage(
 		tableConverter: resourceInfo.TableConverter(),
 	}
 	if optsGetter != nil && dualWriteBuilder != nil {
-		strategy := grafanaregistry.NewStrategy(scheme)
+		strategy := grafanaregistry.NewStrategy(scheme, resourceInfo.GroupVersion())
 		s := &genericregistry.Store{
 			NewFunc:                   resourceInfo.NewFunc,
 			NewListFunc:               resourceInfo.NewListFunc,

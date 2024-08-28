@@ -17,7 +17,7 @@ type storage struct {
 }
 
 func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, legacy *legacyStorage) (*storage, error) {
-	strategy := grafanaregistry.NewStrategy(scheme)
+	strategy := grafanaregistry.NewStrategy(scheme, resourceInfo.GroupVersion())
 
 	resource := playlist.PlaylistResourceInfo
 	store := &genericregistry.Store{
