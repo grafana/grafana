@@ -24,6 +24,7 @@ export function createTraceFrame(data: TraceResponse): DataFrame {
       { name: 'startTime', type: FieldType.number },
       { name: 'duration', type: FieldType.number },
       { name: 'logs', type: FieldType.other },
+      { name: 'references', type: FieldType.other, values: [] },
       { name: 'tags', type: FieldType.other },
       { name: 'warnings', type: FieldType.other },
       { name: 'stackTraces', type: FieldType.other },
@@ -59,6 +60,7 @@ function toSpanRow(span: Span, processes: Record<string, TraceProcess>): TraceSp
     tags: span.tags,
     warnings: span.warnings ?? undefined,
     stackTraces: span.stackTraces,
+    references: span.references,
     serviceName: processes[span.processID].serviceName,
     serviceTags: processes[span.processID].tags,
   };
