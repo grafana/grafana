@@ -46,7 +46,7 @@ func (r *LegacyDisplayStore) NamespaceScoped() bool {
 
 func (r *LegacyDisplayStore) GetSingularName() string {
 	// not actually used anywhere, but required by SingularNameProvider
-	return "IdentityDisplay"
+	return "identitydisplay"
 }
 
 func (r *LegacyDisplayStore) ProducesMIMETypes(verb string) []string {
@@ -81,7 +81,7 @@ func (r *LegacyDisplayStore) Connect(ctx context.Context, name string, _ runtime
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		keys := parseKeys(req.URL.Query()["key"])
-		users, err := r.store.GetDisplay(ctx, ns, legacy.GetUserDisplayQuery{
+		users, err := r.store.ListDisplay(ctx, ns, legacy.ListDisplayQuery{
 			OrgID: ns.OrgID,
 			UIDs:  keys.uids,
 			IDs:   keys.ids,
