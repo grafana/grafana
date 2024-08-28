@@ -2,6 +2,7 @@ package legacy
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -234,4 +235,101 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 	}
 
 	return res, err
+}
+
+type ListTeamMembersQuery struct {
+	UID        string
+	OrgID      int64
+	Pagination common.Pagination
+}
+
+type ListTeamMembersResult struct {
+	Continue int64
+	Members  []TeamMember
+}
+
+// Templates.
+var sqlQueryTeamMembersTemplate = mustTemplate("team_members_query.sql")
+
+type listTeamMembersQuery struct {
+	sqltemplate.SQLTemplate
+	Query           *ListTeamMembersQuery
+	UserTable       string
+	TeamTable       string
+	TeamMemberTable string
+}
+
+func (r listTeamMembersQuery) Validate() error {
+	return nil // TODO
+}
+
+func newListTeamMembers(sql *legacysql.LegacyDatabaseHelper, q *ListTeamMembersQuery) listTeamMembersQuery {
+	return listTeamMembersQuery{
+		SQLTemplate:     sqltemplate.New(sql.DialectForDriver()),
+		UserTable:       sql.Table("user"),
+		TeamTable:       sql.Table("team"),
+		TeamMemberTable: sql.Table("team_member"),
+		Query:           q,
+	}
+}
+
+// ListTeamMembers implements LegacyIdentityStore.
+func (s *legacySQLStore) ListTeamMembers(ctx context.Context, ns claims.NamespaceInfo, query ListTeamMembersQuery) (*ListTeamMembersResult, error) {
+	query.Pagination.Limit += 1
+	query.OrgID = ns.OrgID
+	if query.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero org id")
+	}
+
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newListTeamMembers(sql, &query)
+	q, err := sqltemplate.Execute(sqlQueryTeamMembersTemplate, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeamsTemplate.Name(), err)
+	}
+
+	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+
+	if err != nil {
+		return nil, err
+	}
+
+	res := &ListTeamMembersResult{}
+	var lastID int64
+	for rows.Next() {
+		m, err := scanMember(rows)
+		if err != nil {
+			return nil, err
+		}
+
+		lastID = m.ID
+		res.Members = append(res.Members, m)
+		if len(res.Members) > int(query.Pagination.Limit)-1 {
+			res.Continue = lastID
+			res.Members = res.Members[0 : len(res.Members)-1]
+			break
+		}
+	}
+
+	return res, err
+}
+
+func scanMember(rows *sql.Rows) (TeamMember, error) {
+	m := TeamMember{}
+	err := rows.Scan(&m.ID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Name, &m.Email, &m.Username, &m.External, &m.Created, &m.Updated, &m.Permission)
+	return m, err
+}
+
+// GetUserTeams implements LegacyIdentityStore.
+func (s *legacySQLStore) GetUserTeams(ctx context.Context, ns claims.NamespaceInfo, uid string) ([]team.Team, error) {
+	panic("unimplemented")
 }
