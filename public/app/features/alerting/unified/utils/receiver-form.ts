@@ -1,4 +1,4 @@
-import { isArray, omit, isNil, omitBy, reduce, get, has } from 'lodash';
+import { get, has, isArray, isNil, omit, omitBy, reduce } from 'lodash';
 
 import {
   AlertManagerCortexConfig,
@@ -269,7 +269,7 @@ export function formChannelValuesToGrafanaChannelConfig(
     secureFieldNames,
     (acc: Record<string, unknown> = {}, key) => {
       // the value for secure settings can come from either the "settings" (accidental) or "secureFields" if editing an existing receiver
-      acc[key] = get(channel.settings, key) ?? get(values.secureFields, key, '');
+      acc[key] = get(channel.settings, key) ?? get(values.secureFields, key);
       return acc;
     },
     {}

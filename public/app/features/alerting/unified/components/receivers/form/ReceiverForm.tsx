@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { useCallback } from 'react';
 import * as React from 'react';
+import { useCallback } from 'react';
 import { FieldErrors, FormProvider, SubmitErrorHandler, useForm, Validate } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -93,6 +93,17 @@ export function ReceiverForm<R extends ChannelValues>({
   );
 
   const submitCallback = async (values: ReceiverFormValues<R>) => {
+    values.items.forEach((item) => {
+      if (item.secureFields) {
+        // omit secure fields with boolean value as BE expects not touched fields to be omitted: https://github.com/grafana/grafana/pull/71307
+        Object.keys(item.secureFields).forEach((key) => {
+          if (item.secureFields[key] === true || item.secureFields[key] === false) {
+            delete item.secureFields[key];
+          }
+        });
+      }
+    });
+
     try {
       await onSubmit({
         ...values,
