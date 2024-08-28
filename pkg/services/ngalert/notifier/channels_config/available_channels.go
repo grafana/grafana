@@ -558,7 +558,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Label:        "Expire (Only used for Emergency Priority)",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Placeholder:  "maximum 86400 seconds",
+					Placeholder:  "maximum 10800 seconds",
 					PropertyName: "expire",
 				},
 				{
@@ -1601,7 +1601,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 func GetSecretKeysForContactPointType(contactPointType string) ([]string, error) {
 	notifiers := GetAvailableNotifiers()
 	for _, n := range notifiers {
-		if n.Type == contactPointType {
+		if strings.EqualFold(n.Type, contactPointType) {
 			var secureFields []string
 			for _, field := range n.Options {
 				if field.Secure {
@@ -1612,4 +1612,15 @@ func GetSecretKeysForContactPointType(contactPointType string) ([]string, error)
 		}
 	}
 	return nil, fmt.Errorf("no secrets configured for type '%s'", contactPointType)
+}
+
+// ConfigForIntegrationType returns the config for the given integration type. Returns error is integration type is not known.
+func ConfigForIntegrationType(contactPointType string) (*NotifierPlugin, error) {
+	notifiers := GetAvailableNotifiers()
+	for _, n := range notifiers {
+		if strings.EqualFold(n.Type, contactPointType) {
+			return n, nil
+		}
+	}
+	return nil, fmt.Errorf("unknown integration type '%s'", contactPointType)
 }
