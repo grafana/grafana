@@ -8,6 +8,7 @@ import {
   IoK8SApimachineryPkgApisMetaV1ObjectMeta,
 } from 'app/features/alerting/unified/openapi/timeIntervalsApi.gen';
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { PROVENANCE_ANNOTATION, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
 import { getK8sNamespace, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
@@ -300,16 +301,18 @@ export const useValidateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) =>
 
 /**
  * @deprecated This will be deprecated by the K8S API.
- * Once that is enabled by default, this should be removed and the `getMuteTimingList` should be removed
+ * Once that is enabled by default, this method should be removed and `useMuteTimings` should always be used instead
  */
 export const useSelectableMuteTimings = ({ alertmanager }: BaseAlertmanagerArgs) => {
   const useK8sApi = shouldUseK8sApi(alertmanager);
+  const useDeprecatedEndpoint = alertmanager === GRAFANA_RULES_SOURCE_NAME && !useK8sApi;
 
-  const fetchGrafanaMuteTimings = useGetMuteTimingListQuery(undefined, {
-    skip: useK8sApi,
+  /** Fetch from the (to be deprecated) specific endpoint for time-intervals */
+  const deprecatedMuteTimingsResponse = useGetMuteTimingListQuery(undefined, {
+    skip: !useDeprecatedEndpoint,
   });
 
-  const fetchK8sMuteTimings = useMuteTimings({ alertmanager, skip: !useK8sApi });
+  const fetchMuteTimings = useMuteTimings({ alertmanager, skip: useDeprecatedEndpoint });
 
-  return useK8sApi ? fetchK8sMuteTimings : fetchGrafanaMuteTimings;
+  return useDeprecatedEndpoint ? deprecatedMuteTimingsResponse : fetchMuteTimings;
 };
