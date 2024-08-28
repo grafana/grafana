@@ -30,8 +30,7 @@ If you use Grafana v9.1 or newer, use service accounts instead of API keys. For 
 ## List API keys
 
 {{% admonition type="warning" %}}
-
-### DEPRECATED
+This endpoint is deprecated.
 
 {{% /admonition %}}
 
@@ -82,8 +81,7 @@ Content-Type: application/json
 ## Create API Key
 
 {{% admonition type="warning" %}}
-
-### OBSOLETE AND PERMANENTLY MOVED
+This endpoint has been made obsolete in Grafana 11.3.0.
 
 {{% /admonition %}}
 
