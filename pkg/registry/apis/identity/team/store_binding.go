@@ -72,8 +72,8 @@ func (l *LegacyBindingStore) Get(ctx context.Context, name string, options *meta
 	}
 
 	res, err := l.store.ListTeamBindings(ctx, ns, legacy.ListTeamBindingsQuery{
-		UID:   name,
-		Limit: 1,
+		UID:        name,
+		Pagination: common.Pagination{Limit: 1},
 	})
 	if err != nil {
 		return nil, err
@@ -95,14 +95,8 @@ func (l *LegacyBindingStore) List(ctx context.Context, options *internalversion.
 		return nil, err
 	}
 
-	continueID, err := common.GetContinueID(options)
-	if err != nil {
-		return nil, err
-	}
-
 	res, err := l.store.ListTeamBindings(ctx, ns, legacy.ListTeamBindingsQuery{
-		ContinueID: continueID,
-		Limit:      options.Limit,
+		Pagination: common.PaginationFromListOptions(options),
 	})
 	if err != nil {
 		return nil, err
@@ -116,7 +110,7 @@ func (l *LegacyBindingStore) List(ctx context.Context, options *internalversion.
 		list.Items = append(list.Items, mapToBindingObject(ns, b))
 	}
 
-	list.ListMeta.Continue = common.OptionalFormatInt(res.ContinueID)
+	list.ListMeta.Continue = common.OptionalFormatInt(res.Continue)
 	list.ListMeta.ResourceVersion = common.OptionalFormatInt(res.RV)
 
 	return &list, nil

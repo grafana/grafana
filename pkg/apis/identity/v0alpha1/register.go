@@ -170,6 +170,7 @@ func AddKnownTypes(scheme *runtime.Scheme, version string) {
 		&SSOSettingList{},
 		&TeamBinding{},
 		&TeamBindingList{},
+		&TeamMemberList{},
 	)
 }
 

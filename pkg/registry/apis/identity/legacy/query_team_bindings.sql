@@ -8,11 +8,12 @@ WHERE
     t.uid IN(
       SELECT uid
       FROM {{ .Ident .TeamTable }} t
-      {{ if .Query.ContinueID }}
-        WHERE t.id >= {{ .Arg .Query.ContinueID }}
+      {{ if .Query.Pagination.Continue }}
+        WHERE t.id >= {{ .Arg .Query.Pagination.Continue }}
       {{ end }}
-      ORDER BY t.id ASC LIMIT {{ .Arg .Query.Limit }}
+      ORDER BY t.id ASC LIMIT {{ .Arg .Query.Pagination.Limit }}
     )
 {{ end }}
 AND tm.org_id = {{ .Arg .Query.OrgID}}
+AND NOT tm.external
 ORDER BY t.id ASC;

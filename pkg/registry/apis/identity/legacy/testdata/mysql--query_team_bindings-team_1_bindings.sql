@@ -4,4 +4,5 @@ INNER JOIN `grafana`.`user` u ON tm.user_id  = u.id
 WHERE
     t.uid = 'team-1'
 AND tm.org_id = 1
+AND NOT tm.external
 ORDER BY t.id ASC;
