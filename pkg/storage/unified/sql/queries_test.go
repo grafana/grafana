@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 )
 
-func TestQueries(t *testing.T) {
+func TestUnifiedStorageQueries(t *testing.T) {
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
