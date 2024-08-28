@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	identityv0 "github.com/grafana/grafana/pkg/apis/identity/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/identity/common"
 	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -62,19 +63,12 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 	if err != nil {
 		return nil, err
 	}
-	query := legacy.ListUserQuery{
-		OrgID:            ns.OrgID,
-		Limit:            options.Limit,
-		IsServiceAccount: false,
-	}
-	if options.Continue != "" {
-		query.ContinueID, err = strconv.ParseInt(options.Continue, 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("invalid continue token")
-		}
-	}
 
-	found, err := s.store.ListUsers(ctx, ns, query)
+	found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
+		OrgID:            ns.OrgID,
+		IsServiceAccount: false,
+		Pagination:       common.PaginationFromListOptions(options),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -83,12 +77,10 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 	for _, item := range found.Users {
 		list.Items = append(list.Items, *toUserItem(&item, ns.Value))
 	}
-	if found.ContinueID > 0 {
-		list.ListMeta.Continue = strconv.FormatInt(found.ContinueID, 10)
-	}
-	if found.RV > 0 {
-		list.ListMeta.ResourceVersion = strconv.FormatInt(found.RV, 10)
-	}
+
+	list.ListMeta.Continue = common.OptionalFormatInt(found.Continue)
+	list.ListMeta.ResourceVersion = common.OptionalFormatInt(found.RV)
+
 	return list, err
 }
 
@@ -99,8 +91,8 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 	}
 	query := legacy.ListUserQuery{
 		OrgID:            ns.OrgID,
-		Limit:            1,
 		IsServiceAccount: false,
+		Pagination:       common.Pagination{Limit: 1},
 	}
 
 	found, err := s.store.ListUsers(ctx, ns, query)

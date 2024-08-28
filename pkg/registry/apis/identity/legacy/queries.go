@@ -26,9 +26,11 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlQueryTeams   = mustTemplate("query_teams.sql")
-	sqlQueryUsers   = mustTemplate("query_users.sql")
-	sqlQueryDisplay = mustTemplate("query_display.sql")
+	sqlQueryTeams        = mustTemplate("query_teams.sql")
+	sqlQueryUsers        = mustTemplate("query_users.sql")
+	sqlQueryDisplay      = mustTemplate("query_display.sql")
+	sqlQueryTeamBindings = mustTemplate("query_team_bindings.sql")
+	sqlQueryTeamMembers  = mustTemplate("query_team_members.sql")
 )
 
 type sqlQueryListUsers struct {
@@ -87,4 +89,48 @@ func newGetDisplay(sql *legacysql.LegacyDatabaseHelper, q *GetUserDisplayQuery) 
 
 func (r sqlQueryGetDisplay) Validate() error {
 	return nil // TODO
+}
+
+type sqlQueryListTeamBindings struct {
+	sqltemplate.SQLTemplate
+	Query           *ListTeamBindingsQuery
+	UserTable       string
+	TeamTable       string
+	TeamMemberTable string
+}
+
+func (r sqlQueryListTeamBindings) Validate() error {
+	return nil // TODO
+}
+
+func newListTeamBindings(sql *legacysql.LegacyDatabaseHelper, q *ListTeamBindingsQuery) sqlQueryListTeamBindings {
+	return sqlQueryListTeamBindings{
+		SQLTemplate:     sqltemplate.New(sql.DialectForDriver()),
+		UserTable:       sql.Table("user"),
+		TeamTable:       sql.Table("team"),
+		TeamMemberTable: sql.Table("team_member"),
+		Query:           q,
+	}
+}
+
+type sqlQueryListTeamMembers struct {
+	sqltemplate.SQLTemplate
+	Query           *ListTeamMembersQuery
+	UserTable       string
+	TeamTable       string
+	TeamMemberTable string
+}
+
+func (r sqlQueryListTeamMembers) Validate() error {
+	return nil // TODO
+}
+
+func newListTeamMembers(sql *legacysql.LegacyDatabaseHelper, q *ListTeamMembersQuery) sqlQueryListTeamMembers {
+	return sqlQueryListTeamMembers{
+		SQLTemplate:     sqltemplate.New(sql.DialectForDriver()),
+		UserTable:       sql.Table("user"),
+		TeamTable:       sql.Table("team"),
+		TeamMemberTable: sql.Table("team_member"),
+		Query:           q,
+	}
 }

@@ -195,14 +195,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:            "unifiedStorage",
-			Description:     "SQL-based k8s storage",
-			Stage:           FeatureStageExperimental,
-			RequiresDevMode: false,
-			RequiresRestart: true, // new SQL tables created
-			Owner:           grafanaSearchAndStorageSquad,
-		},
-		{
 			Name:           "cloudWatchCrossAccountQuerying",
 			Description:    "Enables cross-account querying in CloudWatch datasources",
 			Stage:          FeatureStageGeneralAvailability,
@@ -219,6 +211,12 @@ var (
 		{
 			Name:        "mysqlAnsiQuotes",
 			Description: "Use double quotes to escape keyword in a MySQL query",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+		},
+		{
+			Name:        "mysqlParseTime",
+			Description: "Ensure the parseTime flag is set for MySQL driver",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
 		},
@@ -325,14 +323,6 @@ var (
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
 			Owner:        grafanaObservabilityMetricsSquad,
-		},
-		{
-			Name:           "prometheusDataplane",
-			Description:    "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular, when this feature toggle is active, the numeric `Field.Name` is set from 'Value' to the value of the `__name__` label.",
-			Expression:     "true",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: true,
 		},
 		{
 			Name:           "lokiMetricDataplane",
@@ -663,12 +653,6 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaPluginsPlatformSquad,
-		},
-		{
-			Name:        "idForwarding",
-			Description: "Generate signed id token for identity that can be forwarded to plugins and external services",
-			Stage:       FeatureStageExperimental,
-			Owner:       identityAccessTeam,
 		},
 		{
 			Name:              "externalServiceAccounts",
@@ -1412,6 +1396,12 @@ var (
 			Description: "Enables new combobox style UI for the Ad hoc filters variable in scenes architecture",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
+		},
+		{
+			Name:        "lokiSendDashboardPanelNames",
+			Description: "Send dashboard and panel names to Loki when querying",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityLogsSquad,
 		},
 	}
 )

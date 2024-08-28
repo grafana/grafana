@@ -1320,7 +1320,8 @@
       "metadata": {
         "name": "idForwarding",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-09-25T15:21:28Z"
+        "creationTimestamp": "2023-09-25T15:21:28Z",
+        "deletionTimestamp": "2024-08-21T11:35:56Z"
       },
       "spec": {
         "description": "Generate signed id token for identity that can be forwarded to plugins and external services",
@@ -1618,6 +1619,7 @@
         "name": "lokiMetricDataplane",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-04-13T13:07:08Z",
+        "deletionTimestamp": "2024-08-21T13:49:48Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -1705,6 +1707,21 @@
     },
     {
       "metadata": {
+        "name": "lokiSendDashboardPanelNames",
+        "resourceVersion": "1724089497989",
+        "creationTimestamp": "2024-08-19T17:44:18Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-19 17:44:57.989565 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Send dashboard and panel names to Loki when querying",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs"
+      }
+    },
+    {
+      "metadata": {
         "name": "lokiStructuredMetadata",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-11-16T16:06:14Z",
@@ -1768,6 +1785,18 @@
       },
       "spec": {
         "description": "Use double quotes to escape keyword in a MySQL query",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
+        "name": "mysqlParseTime",
+        "resourceVersion": "1724750152191",
+        "creationTimestamp": "2024-08-27T09:15:52Z"
+      },
+      "spec": {
+        "description": "Ensure the parseTime flag is set for MySQL driver",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage"
       }
@@ -2180,6 +2209,7 @@
         "name": "prometheusDataplane",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-03-29T15:26:32Z",
+        "deletionTimestamp": "2024-08-21T13:35:19Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -2706,6 +2736,7 @@
         "name": "unifiedStorage",
         "resourceVersion": "1724096690370",
         "creationTimestamp": "2023-12-06T20:21:21Z",
+        "deletionTimestamp": "2024-08-21T09:30:06Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-08-19 19:44:50.370023815 +0000 UTC"
         }

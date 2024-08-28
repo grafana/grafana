@@ -11,7 +11,7 @@ export interface RestoreModalProps {
   onConfirm: (restoreTarget: string) => Promise<void>;
   onDismiss: () => void;
   selectedDashboards: string[];
-  dashboardOrigin: { [key: string]: string };
+  dashboardOrigin: string[];
   isLoading: boolean;
 }
 
@@ -27,8 +27,13 @@ export const RestoreModal = ({
   const numberOfDashboards = selectedDashboards.length;
 
   useEffect(() => {
-    if (Object.entries(dashboardOrigin).length === 1 && dashboardOrigin[selectedDashboards[0]] !== 'general') {
-      setRestoreTarget(dashboardOrigin[selectedDashboards[0]]);
+    // restoreTarget is used by the folder picker to preselect a folder and therefore enable the confirm button
+    // if there is only one dashboard selected or all selected dashboards come from the same folder
+    if (
+      dashboardOrigin.length > 0 &&
+      dashboardOrigin.every((originalLocation) => originalLocation === dashboardOrigin[0])
+    ) {
+      setRestoreTarget(dashboardOrigin[0]);
     }
   }, [dashboardOrigin, selectedDashboards]);
 
