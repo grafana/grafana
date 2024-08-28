@@ -1,8 +1,17 @@
-import { PanelModel } from '@grafana/data';
+import { FieldConfigSource, PanelModel } from '@grafana/data';
 
 import { sharedSingleStatMigrationHandler, sharedSingleStatPanelChangedHandler } from './SingleStatBaseOptions';
 
 describe('sharedSingleStatMigrationHandler', () => {
+  let prevFieldConfig: FieldConfigSource;
+
+  beforeEach(() => {
+    prevFieldConfig = {
+      defaults: {},
+      overrides: [],
+    };
+  });
+
   it('from old valueOptions model without pluginVersion', () => {
     const panel = {
       options: {
@@ -247,5 +256,31 @@ describe('sharedSingleStatMigrationHandler', () => {
     expect(panel.fieldConfig.defaults.unit).toBe('percentunit');
     expect(panel.fieldConfig.defaults.min).toBe(0);
     expect(panel.fieldConfig.defaults.max).toBe(1);
+  });
+});
+
+describe('BarGauge migrations', () => {
+  it('Should migrate from old graph', () => {
+    const old = {
+      angular: {
+        xaxis: {
+          mode: 'series',
+        },
+        legend: {
+          show: true,
+          values: true,
+          min: false,
+          max: true,
+          current: true,
+          total: false,
+          avg: false,
+        },
+      },
+    };
+
+    const panel = {} as PanelModel;
+    panel.options = sharedSingleStatPanelChangedHandler(panel, 'graph', old);
+    expect(panel.options.legend.showLegend).toBe(true);
+    expect(panel.options.legend.calcs).toHaveLength(2);
   });
 });

@@ -95,14 +95,12 @@ function migrateFromGraphPanel(panel: PanelModel<Partial<SingleStatBaseOptions>>
         options.legend.calcs = getReducersFromLegend(enabledLegendValues);
       }
 
-      console.log('legendConfig.sideWidth', legendConfig.sideWidth);
       if (legendConfig.sideWidth) {
         options.legend.width = legendConfig.sideWidth;
       }
     }
   }
 
-  console.log('options', options);
   return options;
 }
 
@@ -392,7 +390,18 @@ interface GraphOptions {
     mode: 'series' | 'time' | 'histogram';
     values?: string[];
   };
-  legend: VizLegendOptions;
+  legend: {
+    show: boolean;
+    alignAsTable: boolean;
+    rightSide: boolean;
+    values: boolean;
+    min?: boolean;
+    max?: boolean;
+    avg?: boolean;
+    current?: boolean;
+    total?: boolean;
+    sideWidth?: number;
+  };
 }
 
 function getReducersFromLegend(obj: Record<string, unknown>): string[] {
