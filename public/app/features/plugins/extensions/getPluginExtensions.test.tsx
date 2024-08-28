@@ -44,9 +44,9 @@ async function createRegistries(
 }
 
 describe('getPluginExtensions()', () => {
-  const extensionPoint1 = 'grafana/dashboard/panel/menu';
-  const extensionPoint2 = 'plugins/myorg-basic-app/start';
-  const extensionPoint3 = 'grafana/datasources/config';
+  const extensionPoint1 = 'grafana/dashboard/panel/menu/v1';
+  const extensionPoint2 = 'plugins/myorg-basic-app/start/v1';
+  const extensionPoint3 = 'grafana/datasources/config/v1';
   const pluginId = 'grafana-basic-app';
   // Sample extension configs that are used in the tests below
   let link1: PluginExtensionAddedLinkConfig,
@@ -223,7 +223,7 @@ describe('getPluginExtensions()', () => {
 
     expect(link2.configure).toHaveBeenCalledTimes(1);
     expect(extension.path).toBe(
-      `/a/${pluginId}/updated-path?uel_pid=grafana-basic-app&uel_epid=plugins%2Fmyorg-basic-app%2Fstart`
+      `/a/${pluginId}/updated-path?uel_pid=grafana-basic-app&uel_epid=plugins%2Fmyorg-basic-app%2Fstart%2Fv1`
     );
   });
 

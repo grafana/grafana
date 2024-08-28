@@ -22,7 +22,7 @@ describe('usePluginExtensions()', () => {
     const usePluginExtensions = createUsePluginExtensions(registries);
     const { result } = renderHook(() =>
       usePluginExtensions({
-        extensionPointId: 'foo/bar',
+        extensionPointId: 'foo/bar/v1',
       })
     );
 
@@ -30,7 +30,7 @@ describe('usePluginExtensions()', () => {
   });
 
   it('should return the plugin link extensions from the registry', () => {
-    const extensionPointId = 'plugins/foo/bar';
+    const extensionPointId = 'plugins/foo/bar/v1';
     const pluginId = 'my-app-plugin';
 
     registries.addedLinksRegistry.register({
@@ -60,7 +60,7 @@ describe('usePluginExtensions()', () => {
   });
 
   it('should return the plugin component extensions from the registry', () => {
-    const linkExtensionPointId = 'plugins/foo/bar';
+    const linkExtensionPointId = 'plugins/foo/bar/v1';
     const componentExtensionPointId = 'plugins/component/bar/v1';
     const pluginId = 'my-app-plugin';
 
@@ -109,7 +109,7 @@ describe('usePluginExtensions()', () => {
   });
 
   it('should dynamically update the extensions registered for a certain extension point', () => {
-    const extensionPointId = 'plugins/foo/bar';
+    const extensionPointId = 'plugins/foo/bar/v1';
     const pluginId = 'my-app-plugin';
     const usePluginExtensions = createUsePluginExtensions(registries);
     let { result, rerender } = renderHook(() => usePluginExtensions({ extensionPointId }));
@@ -149,7 +149,7 @@ describe('usePluginExtensions()', () => {
   it('should only render the hook once', () => {
     const addedComponentsRegistrySpy = jest.spyOn(registries.addedComponentsRegistry, 'asObservable');
     const addedLinksRegistrySpy = jest.spyOn(registries.addedLinksRegistry, 'asObservable');
-    const extensionPointId = 'plugins/foo/bar';
+    const extensionPointId = 'plugins/foo/bar/v1';
     const usePluginExtensions = createUsePluginExtensions(registries);
 
     renderHook(() => usePluginExtensions({ extensionPointId }));
@@ -158,7 +158,7 @@ describe('usePluginExtensions()', () => {
   });
 
   it.skip('should return the same extensions object if the context object is the same', async () => {
-    const extensionPointId = 'plugins/foo/bar';
+    const extensionPointId = 'plugins/foo/bar/v1';
     const pluginId = 'my-app-plugin';
     const usePluginExtensions = createUsePluginExtensions(registries);
 
@@ -191,7 +191,7 @@ describe('usePluginExtensions()', () => {
   });
 
   it('should return a new extensions object if the context object is different', () => {
-    const extensionPointId = 'plugins/foo/bar';
+    const extensionPointId = 'plugins/foo/bar/v1';
     const pluginId = 'my-app-plugin';
     const usePluginExtensions = createUsePluginExtensions(registries);
 
@@ -223,7 +223,7 @@ describe('usePluginExtensions()', () => {
   });
 
   it('should return a new extensions object if the registry changes but the context object is the same', () => {
-    const extensionPointId = 'plugins/foo/bar';
+    const extensionPointId = 'plugins/foo/bar/v1';
     const pluginId = 'my-app-plugin';
     const context = {};
     const usePluginExtensions = createUsePluginExtensions(registries);
