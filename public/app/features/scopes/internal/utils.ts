@@ -48,7 +48,7 @@ export function groupDashboards(dashboards: ScopeDashboardBinding[]): SuggestedD
   return dashboards.reduce<SuggestedDashboardsFoldersMap>(
     (acc, dashboard) => {
       const rootNode = acc[''];
-      const groups = dashboard.spec.groups ?? [];
+      const groups = dashboard.status.groups ?? [];
 
       groups.forEach((group) => {
         if (group && !rootNode.folders[group]) {
@@ -70,7 +70,7 @@ export function groupDashboards(dashboards: ScopeDashboardBinding[]): SuggestedD
         if (!target[dashboard.spec.dashboard]) {
           target[dashboard.spec.dashboard] = {
             dashboard: dashboard.spec.dashboard,
-            dashboardTitle: dashboard.spec.dashboardTitle,
+            dashboardTitle: dashboard.status.dashboardTitle,
             items: [],
           };
         }

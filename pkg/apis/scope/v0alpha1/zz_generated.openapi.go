@@ -20,6 +20,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeDashboardBinding":             schema_pkg_apis_scope_v0alpha1_ScopeDashboardBinding(ref),
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeDashboardBindingList":         schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingList(ref),
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeDashboardBindingSpec":         schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeDashboardBindingStatus":       schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingStatus(ref),
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeFilter":                       schema_pkg_apis_scope_v0alpha1_ScopeFilter(ref),
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeList":                         schema_pkg_apis_scope_v0alpha1_ScopeList(ref),
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeNode":                         schema_pkg_apis_scope_v0alpha1_ScopeNode(ref),
@@ -195,11 +196,17 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBinding(ref common.ReferenceCa
 							Ref:     ref("github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeDashboardBindingSpec"),
 						},
 					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeDashboardBindingStatus"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeDashboardBindingSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeDashboardBindingSpec", "github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeDashboardBindingStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -263,6 +270,27 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingSpec(ref common.Referen
 							Format:  "",
 						},
 					},
+					"scope": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"dashboard", "scope"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Type of the item. ScopeDashboardBindingStatus contains derived information about a ScopeDashboardBinding.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
 					"dashboardTitle": {
 						SchemaProps: spec.SchemaProps{
 							Description: "DashboardTitle should be populated and update from the dashboard",
@@ -286,17 +314,56 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingSpec(ref common.Referen
 							},
 						},
 					},
-					"scope": {
+					"dashboardTitleConditions": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-map-keys": []interface{}{
+									"type",
+								},
+								"x-kubernetes-list-type": "map",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "DashboardTitleConditions is a list of conditions that are used to determine if the dashboard title is valid.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.Condition"),
+									},
+								},
+							},
+						},
+					},
+					"groupsConditions": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-map-keys": []interface{}{
+									"type",
+								},
+								"x-kubernetes-list-type": "map",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "DashboardTitleConditions is a list of conditions that are used to determine if the list of groups is valid.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.Condition"),
+									},
+								},
+							},
 						},
 					},
 				},
-				Required: []string{"dashboard", "dashboardTitle", "scope"},
+				Required: []string{"dashboardTitle"},
 			},
 		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.Condition"},
 	}
 }
 
@@ -484,11 +551,9 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref common.ReferenceCallback) 
 					},
 					"nodeType": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Possible enum values:\n - `\"container\"`\n - `\"leaf\"`",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-							Enum:        []interface{}{"container", "leaf"},
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
 					"title": {

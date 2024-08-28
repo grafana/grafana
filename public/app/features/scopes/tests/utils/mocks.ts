@@ -111,8 +111,10 @@ const dashboardBindingsGenerator = (
             metadata: { name: `${scope}-${dashboard}` },
             spec: {
               dashboard,
-              dashboardTitle,
               scope,
+            },
+            status: {
+              dashboardTitle,
               groups,
             },
           },
@@ -415,8 +417,10 @@ const generateScopeDashboardBinding = (dashboardTitle: string, groups?: string[]
   metadata: { name: `${dashboardTitle}-name` },
   spec: {
     dashboard: `${dashboardId ?? dashboardTitle}-dashboard`,
-    dashboardTitle,
     scope: `${dashboardTitle}-scope`,
+  },
+  status: {
+    dashboardTitle,
     groups,
   },
 });

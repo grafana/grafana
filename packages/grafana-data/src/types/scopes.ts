@@ -1,7 +1,10 @@
 export interface ScopeDashboardBindingSpec {
   dashboard: string;
-  dashboardTitle: string;
   scope: string;
+}
+
+export interface ScopeDashboardBindingStatus {
+  dashboardTitle: string;
   groups?: string[];
 }
 
@@ -11,6 +14,7 @@ export interface ScopeDashboardBinding {
     name: string;
   };
   spec: ScopeDashboardBindingSpec;
+  status: ScopeDashboardBindingStatus;
 }
 
 export type ScopeFilterOperator = 'equals' | 'not-equals' | 'regex-match' | 'regex-not-match';

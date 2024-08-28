@@ -22,7 +22,7 @@ describe('Scopes', () => {
             dashboards: {
               [dashboardWithoutFolder.spec.dashboard]: {
                 dashboard: dashboardWithoutFolder.spec.dashboard,
-                dashboardTitle: dashboardWithoutFolder.spec.dashboardTitle,
+                dashboardTitle: dashboardWithoutFolder.status.dashboardTitle,
                 items: [dashboardWithoutFolder],
               },
             },
@@ -39,7 +39,7 @@ describe('Scopes', () => {
             dashboards: {
               [dashboardWithRootFolder.spec.dashboard]: {
                 dashboard: dashboardWithRootFolder.spec.dashboard,
-                dashboardTitle: dashboardWithRootFolder.spec.dashboardTitle,
+                dashboardTitle: dashboardWithRootFolder.status.dashboardTitle,
                 items: [dashboardWithRootFolder],
               },
             },
@@ -60,12 +60,12 @@ describe('Scopes', () => {
                 dashboards: {
                   [dashboardWithOneFolder.spec.dashboard]: {
                     dashboard: dashboardWithOneFolder.spec.dashboard,
-                    dashboardTitle: dashboardWithOneFolder.spec.dashboardTitle,
+                    dashboardTitle: dashboardWithOneFolder.status.dashboardTitle,
                     items: [dashboardWithOneFolder],
                   },
                   [dashboardWithTwoFolders.spec.dashboard]: {
                     dashboard: dashboardWithTwoFolders.spec.dashboard,
-                    dashboardTitle: dashboardWithTwoFolders.spec.dashboardTitle,
+                    dashboardTitle: dashboardWithTwoFolders.status.dashboardTitle,
                     items: [dashboardWithTwoFolders],
                   },
                 },
@@ -77,7 +77,7 @@ describe('Scopes', () => {
                 dashboards: {
                   [dashboardWithTwoFolders.spec.dashboard]: {
                     dashboard: dashboardWithTwoFolders.spec.dashboard,
-                    dashboardTitle: dashboardWithTwoFolders.spec.dashboardTitle,
+                    dashboardTitle: dashboardWithTwoFolders.status.dashboardTitle,
                     items: [dashboardWithTwoFolders],
                   },
                 },
@@ -101,7 +101,7 @@ describe('Scopes', () => {
                 dashboards: {
                   [dashboardWithTwoFolders.spec.dashboard]: {
                     dashboard: dashboardWithTwoFolders.spec.dashboard,
-                    dashboardTitle: dashboardWithTwoFolders.spec.dashboardTitle,
+                    dashboardTitle: dashboardWithTwoFolders.status.dashboardTitle,
                     items: [dashboardWithTwoFolders, alternativeDashboardWithTwoFolders],
                   },
                 },
@@ -113,7 +113,7 @@ describe('Scopes', () => {
                 dashboards: {
                   [dashboardWithTwoFolders.spec.dashboard]: {
                     dashboard: dashboardWithTwoFolders.spec.dashboard,
-                    dashboardTitle: dashboardWithTwoFolders.spec.dashboardTitle,
+                    dashboardTitle: dashboardWithTwoFolders.status.dashboardTitle,
                     items: [dashboardWithTwoFolders, alternativeDashboardWithTwoFolders],
                   },
                 },
@@ -140,17 +140,17 @@ describe('Scopes', () => {
             dashboards: {
               [dashboardWithRootFolderAndOtherFolder.spec.dashboard]: {
                 dashboard: dashboardWithRootFolderAndOtherFolder.spec.dashboard,
-                dashboardTitle: dashboardWithRootFolderAndOtherFolder.spec.dashboardTitle,
+                dashboardTitle: dashboardWithRootFolderAndOtherFolder.status.dashboardTitle,
                 items: [dashboardWithRootFolderAndOtherFolder],
               },
               [dashboardWithRootFolder.spec.dashboard]: {
                 dashboard: dashboardWithRootFolder.spec.dashboard,
-                dashboardTitle: dashboardWithRootFolder.spec.dashboardTitle,
+                dashboardTitle: dashboardWithRootFolder.status.dashboardTitle,
                 items: [dashboardWithRootFolder, alternativeDashboardWithRootFolder],
               },
               [dashboardWithoutFolder.spec.dashboard]: {
                 dashboard: dashboardWithoutFolder.spec.dashboard,
-                dashboardTitle: dashboardWithoutFolder.spec.dashboardTitle,
+                dashboardTitle: dashboardWithoutFolder.status.dashboardTitle,
                 items: [dashboardWithoutFolder],
               },
             },
@@ -159,12 +159,12 @@ describe('Scopes', () => {
                 dashboards: {
                   [dashboardWithOneFolder.spec.dashboard]: {
                     dashboard: dashboardWithOneFolder.spec.dashboard,
-                    dashboardTitle: dashboardWithOneFolder.spec.dashboardTitle,
+                    dashboardTitle: dashboardWithOneFolder.status.dashboardTitle,
                     items: [dashboardWithOneFolder],
                   },
                   [dashboardWithTwoFolders.spec.dashboard]: {
                     dashboard: dashboardWithTwoFolders.spec.dashboard,
-                    dashboardTitle: dashboardWithTwoFolders.spec.dashboardTitle,
+                    dashboardTitle: dashboardWithTwoFolders.status.dashboardTitle,
                     items: [dashboardWithTwoFolders, alternativeDashboardWithTwoFolders],
                   },
                 },
@@ -176,7 +176,7 @@ describe('Scopes', () => {
                 dashboards: {
                   [dashboardWithTwoFolders.spec.dashboard]: {
                     dashboard: dashboardWithTwoFolders.spec.dashboard,
-                    dashboardTitle: dashboardWithTwoFolders.spec.dashboardTitle,
+                    dashboardTitle: dashboardWithTwoFolders.status.dashboardTitle,
                     items: [dashboardWithTwoFolders, alternativeDashboardWithTwoFolders],
                   },
                 },
@@ -188,7 +188,7 @@ describe('Scopes', () => {
                 dashboards: {
                   [dashboardWithRootFolderAndOtherFolder.spec.dashboard]: {
                     dashboard: dashboardWithRootFolderAndOtherFolder.spec.dashboard,
-                    dashboardTitle: dashboardWithRootFolderAndOtherFolder.spec.dashboardTitle,
+                    dashboardTitle: dashboardWithRootFolderAndOtherFolder.status.dashboardTitle,
                     items: [dashboardWithRootFolderAndOtherFolder],
                   },
                 },
