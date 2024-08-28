@@ -14,7 +14,7 @@ export type ShareLinkConfiguration = {
 
 const DEFAULT_SHARE_LINK_CONFIGURATION: ShareLinkConfiguration = {
   useAbsoluteTimeRange: true,
-  useShortUrl: true,
+  useShortUrl: false,
   theme: 'current',
 };
 
