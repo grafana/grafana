@@ -1,4 +1,5 @@
-import { PanelTypeChangedHandler } from '@grafana/data';
+import { ConfigOverrideRule, FieldMatcherID, PanelTypeChangedHandler } from '@grafana/data';
+import { AxisPlacement } from '@grafana/ui';
 
 /*
  * This is called when the panel changes from another panel
@@ -12,16 +13,44 @@ export const changeToBarChartPanelMigrationHandler: PanelTypeChangedHandler = (
   if (prevPluginId === 'graph') {
     const graphOptions: GraphOptions = prevOptions.angular;
 
+    const fieldConfig = panel.fieldConfig ?? { defaults: {}, overrides: [] };
+
     if (graphOptions.xaxis?.mode === 'series') {
-      const tranformations = panel.transformations || [];
-      tranformations.push({
-        id: 'reduce',
-        options: {
-          reducers: graphOptions.xaxis?.values ?? ['sum'],
+      const transformations = panel.transformations || [];
+      transformations.push(
+        {
+          id: 'reduce',
+          options: {
+            reducers: graphOptions.xaxis?.values ?? ['sum'],
+          },
         },
+        {
+          id: 'transpose',
+          options: {},
+        }
+      );
+
+      panel.transformations = transformations;
+
+      // temporary, until we have a bar chart with per bar labels
+      fieldConfig.overrides.push({
+        matcher: {
+          id: FieldMatcherID.byName,
+          options: 'Name',
+        },
+        properties: [
+          {
+            id: 'custom.axisPlacement',
+            value: AxisPlacement.Hidden,
+          },
+        ],
       });
 
-      panel.transformations = tranformations;
+      panel.fieldConfig = fieldConfig;
+      panel.options = {
+        ...panel.options,
+        groupWidth: 1,
+      };
     }
   }
 

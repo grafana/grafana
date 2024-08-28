@@ -16,7 +16,7 @@ import {
   ValueMapping,
   VizOrientation,
 } from '@grafana/data';
-import { LegendDisplayMode, OptionsWithLegend, OptionsWithTextFormatting, VizLegendOptions } from '@grafana/schema';
+import { LegendDisplayMode, OptionsWithLegend, OptionsWithTextFormatting } from '@grafana/schema';
 
 export interface SingleStatBaseOptions extends OptionsWithTextFormatting {
   reduceOptions: ReduceDataOptions;
