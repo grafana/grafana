@@ -19,7 +19,7 @@ func TestIdentityQueries(t *testing.T) {
 	}
 
 	getDisplay := func(q *ListDisplayQuery) sqltemplate.SQLTemplate {
-		v := newGetDisplay(nodb, q)
+		v := newListDisplay(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
@@ -99,7 +99,7 @@ func TestIdentityQueries(t *testing.T) {
 					}),
 				},
 			},
-			sqlQueryDisplay: {
+			sqlQueryDisplayTemplate: {
 				{
 					Name: "display_uids",
 					Data: getDisplay(&ListDisplayQuery{

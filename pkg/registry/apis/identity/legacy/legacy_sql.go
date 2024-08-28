@@ -81,21 +81,6 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 	return res, err
 }
 
-// GetDisplay implements LegacyIdentityStore.
-func (s *legacySQLStore) GetDisplay(ctx context.Context, ns claims.NamespaceInfo, query GetUserDisplayQuery) (*ListUserResult, error) {
-	query.OrgID = ns.OrgID
-	if ns.OrgID == 0 {
-		return nil, fmt.Errorf("expected non zero orgID")
-	}
-
-	sql, err := s.sql(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.queryUsers(ctx, sql, sqlQueryDisplay, newGetDisplay(sql, &query), 10000)
-}
-
 // ListTeamsBindings implements LegacyIdentityStore.
 func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.NamespaceInfo, query ListTeamBindingsQuery) (*ListTeamBindingsResult, error) {
 	// for continue

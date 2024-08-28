@@ -10,12 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 )
 
-type GetUserDisplayQuery struct {
-	OrgID int64
-	UIDs  []string
-	IDs   []int64
-}
-
 type ListTeamQuery struct {
 	OrgID int64
 	UID   string
@@ -79,7 +73,7 @@ type ListTeamMembersResult struct {
 
 // In every case, RBAC should be applied before calling, or before returning results to the requester
 type LegacyIdentityStore interface {
-	GetDisplay(ctx context.Context, ns claims.NamespaceInfo, query GetUserDisplayQuery) (*ListUserResult, error)
+	ListDisplay(ctx context.Context, ns claims.NamespaceInfo, query ListDisplayQuery) (*ListUserResult, error)
 
 	ListUsers(ctx context.Context, ns claims.NamespaceInfo, query ListUserQuery) (*ListUserResult, error)
 
