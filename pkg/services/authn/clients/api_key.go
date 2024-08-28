@@ -32,7 +32,7 @@ var _ authn.ContextAwareClient = new(APIKey)
 var _ authn.IdentityResolverClient = new(APIKey)
 
 const (
-	metaKetID           = "keyID"
+	metaKeyID           = "keyID"
 	metaKeySkipLastUsed = "keySkipLastUsed"
 )
 
@@ -70,7 +70,7 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	}
 
 	// Set keyID so we can use it in last used hook
-	r.SetMeta(metaKetID, strconv.FormatInt(key.ID, 10))
+	r.SetMeta(metaKeyID, strconv.FormatInt(key.ID, 10))
 	if !shouldUpdateLastUsedAt(key) {
 		// Hack to just have some value, we will check this key in the hook
 		// and if its not an empty string we will not update last used.
@@ -195,13 +195,14 @@ func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Re
 
 		id, err := strconv.ParseInt(keyID, 10, 64)
 		if err != nil {
-			s.log.Warn("Failed to update last use date for api key", "id", keyID)
+			s.log.Warn("Failed to update last use date for api key", "id", keyID, "err", err)
+			return
 		}
 
 		if err := s.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), id); err != nil {
-			s.log.Warn("Failed to update last use date for api key", "id", keyID)
+			s.log.Warn("Failed to update last use date for api key", "id", keyID, "err", err)
 		}
-	}(r.GetMeta(metaKetID))
+	}(r.GetMeta(metaKeyID))
 
 	return nil
 }
