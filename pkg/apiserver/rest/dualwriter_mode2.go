@@ -181,11 +181,7 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 		return nil, err
 	}
 
-	// if the number of items in the legacy list and the storage list are the same, we can return the storage list
-	if len(storageList) == len(legacyList) {
-		return sl, nil
-	}
-	log.Info("lists from legacy and storage are not the same size")
+	// always return the list from legacy storage
 	return ll, nil
 }
 
