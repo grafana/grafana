@@ -5,6 +5,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Modal } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
+import { useDeleteItemsMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
 import { DashboardScene } from '../scene/DashboardScene';
 
 interface ButtonProps {
@@ -35,6 +36,8 @@ interface ModalProps {
 }
 
 function DeleteDashboardModal({ dashboard, onClose }: ModalProps) {
+  const [deleteItems] = useDeleteItemsMutation();
+
   const [, onConfirm] = useAsyncFn(async () => {
     reportInteraction('grafana_manage_dashboards_delete_clicked', {
       item_counts: {
@@ -44,7 +47,17 @@ function DeleteDashboardModal({ dashboard, onClose }: ModalProps) {
       restore_enabled: config.featureToggles.dashboardRestoreUI,
     });
     onClose();
-    await dashboard.deleteDashboard();
+    if (dashboard.state.uid) {
+      await deleteItems({
+        selectedItems: {
+          dashboard: {
+            [dashboard.state.uid]: true,
+          },
+          folder: {},
+        },
+      });
+    }
+    await dashboard.onDashboardDelete();
   }, [dashboard, onClose]);
 
   if (dashboard.state.meta.provisioned) {

@@ -891,8 +891,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this._initialSaveModel = saveModel;
   }
 
-  public async deleteDashboard() {
-    await deleteDashboard(this.state.uid!, true);
+  public async onDashboardDelete() {
     // Need to mark it non dirty to navigate away without unsaved changes warning
     this.setState({ isDirty: false });
     locationService.replace('/');
