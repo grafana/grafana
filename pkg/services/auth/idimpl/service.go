@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-jose/go-jose/v3/jwt"
 	authnlib "github.com/grafana/authlib/authn"
-	authnlibclaims "github.com/grafana/authlib/claims"
+	"github.com/grafana/authlib/claims"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/singleflight"
 
@@ -85,7 +85,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 		s.logger.FromContext(ctx).Debug("Sign new id token", "id", id.GetID())
 
 		now := time.Now()
-		claims := &auth.IDClaims{
+		idClaims := &auth.IDClaims{
 			Claims: &jwt.Claims{
 				Issuer:   s.cfg.AppURL,
 				Audience: getAudience(id.GetOrgID()),
@@ -100,15 +100,15 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			},
 		}
 
-		if id.IsIdentityType(authnlibclaims.TypeUser) {
-			claims.Rest.Email = id.GetEmail()
-			claims.Rest.EmailVerified = id.IsEmailVerified()
-			claims.Rest.AuthenticatedBy = id.GetAuthenticatedBy()
-			claims.Rest.Username = id.GetLogin()
-			claims.Rest.DisplayName = id.GetDisplayName()
+		if id.IsIdentityType(claims.TypeUser) {
+			idClaims.Rest.Email = id.GetEmail()
+			idClaims.Rest.EmailVerified = id.IsEmailVerified()
+			idClaims.Rest.AuthenticatedBy = id.GetAuthenticatedBy()
+			idClaims.Rest.Username = id.GetLogin()
+			idClaims.Rest.DisplayName = id.GetDisplayName()
 		}
 
-		token, err := s.signer.SignIDToken(ctx, claims)
+		token, err := s.signer.SignIDToken(ctx, idClaims)
 		if err != nil {
 			s.metrics.failedTokenSigningCounter.Inc()
 			return resultType{}, nil
@@ -124,7 +124,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			s.logger.FromContext(ctx).Error("Failed to add id token to cache", "error", err)
 		}
 
-		return resultType{token: token, idClaims: claims}, nil
+		return resultType{token: token, idClaims: idClaims}, nil
 	})
 
 	if err != nil {
@@ -140,7 +140,7 @@ func (s *Service) RemoveIDToken(ctx context.Context, id identity.Requester) erro
 
 func (s *Service) hook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
 	// FIXME(kalleep): we should probably lazy load this
-	token, claims, err := s.SignIdentity(ctx, identity)
+	token, idClaims, err := s.SignIdentity(ctx, identity)
 	if err != nil {
 		if shouldLogErr(err) {
 			s.logger.FromContext(ctx).Error("Failed to sign id token", "err", err, "id", identity.GetID())
@@ -150,7 +150,7 @@ func (s *Service) hook(ctx context.Context, identity *authn.Identity, _ *authn.R
 	}
 
 	identity.IDToken = token
-	identity.IDTokenClaims = claims
+	identity.IDTokenClaims = idClaims
 	return nil
 }
 

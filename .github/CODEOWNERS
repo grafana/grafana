@@ -115,7 +115,7 @@
 /pkg/services/annotations/ @grafana/grafana-search-and-storage
 /pkg/services/apikey/ @grafana/identity-squad
 /pkg/services/cleanup/ @grafana/grafana-backend-group
-/pkg/services/contexthandler/ @grafana/grafana-backend-group
+/pkg/services/contexthandler/ @grafana/grafana-backend-group @grafana/grafana-app-platform-squad
 /pkg/services/correlations/ @grafana/explore-squad
 /pkg/services/dashboardimport/ @grafana/grafana-backend-group
 /pkg/services/dashboards/ @grafana/grafana-app-platform-squad
@@ -320,7 +320,7 @@
 /e2e/ @grafana/grafana-frontend-platform
 /e2e/cloud-plugins-suite/ @grafana/partner-datasources
 /e2e/plugin-e2e/plugin-e2e-api-tests/ @grafana/plugins-platform-frontend
-/e2e/test-plugins/grafana-extensionstest-app/ @grafana/plugins-platform-frontend 
+/e2e/test-plugins/grafana-extensionstest-app/ @grafana/plugins-platform-frontend
 
 # Packages
 /packages/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
