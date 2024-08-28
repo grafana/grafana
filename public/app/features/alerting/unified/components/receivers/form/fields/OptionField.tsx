@@ -4,10 +4,8 @@ import { FC, useEffect } from 'react';
 import { Controller, DeepMap, FieldError, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Checkbox, Field, Input, RadioButtonList, Select, TextArea, useStyles2 } from '@grafana/ui';
+import { Checkbox, Field, Input, RadioButtonList, SecretInput, Select, TextArea, useStyles2 } from '@grafana/ui';
 import { NotificationChannelOption, NotificationChannelSecureFields } from 'app/types';
-
-import { EncryptedInput } from '../ChannelOptions';
 
 import { KeyValueMapInput } from './KeyValueMapInput';
 import { StringArrayInput } from './StringArrayInput';
@@ -150,7 +148,7 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
           onSelectTemplate={onSelectTemplate}
         >
           {isEncryptedInput ? (
-            <EncryptedInput onReset={() => onResetSecureField?.(nestedKey)} readOnly={readOnly} />
+            <SecretInput onReset={() => onResetSecureField?.(nestedKey)} isConfigured />
           ) : (
             <Input
               id={id}

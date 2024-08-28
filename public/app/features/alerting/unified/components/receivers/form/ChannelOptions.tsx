@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { useFormContext, FieldError, FieldErrors, DeepMap } from 'react-hook-form';
+import { DeepMap, FieldError, FieldErrors, useFormContext } from 'react-hook-form';
 
-import { Button, Field, Input } from '@grafana/ui';
+import { Field, SecretInput } from '@grafana/ui';
 import { NotificationChannelOption, NotificationChannelSecureFields } from 'app/types';
 
 import { ChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
@@ -52,7 +52,7 @@ export function ChannelOptions<R extends ChannelValues>({
         if (secureFields && secureFields[option.propertyName]) {
           return (
             <Field key={key} label={option.label} description={option.description}>
-              <EncryptedInput onReset={() => onResetSecureField(option.propertyName)} readOnly={readOnly} />
+              <SecretInput onReset={() => onResetSecureField(option.propertyName)} isConfigured />
             </Field>
           );
         }
@@ -81,24 +81,3 @@ export function ChannelOptions<R extends ChannelValues>({
     </>
   );
 }
-
-interface SecretInputProps {
-  readOnly?: boolean;
-  onReset?: () => void;
-}
-
-export const EncryptedInput = ({ onReset, readOnly }: SecretInputProps) => {
-  return (
-    <Input
-      readOnly={true}
-      value="Configured"
-      suffix={
-        readOnly ? null : (
-          <Button onClick={onReset} fill="text" type="button" size="sm">
-            Clear
-          </Button>
-        )
-      }
-    />
-  );
-};
