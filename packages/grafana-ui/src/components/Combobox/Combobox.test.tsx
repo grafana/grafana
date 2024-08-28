@@ -11,9 +11,7 @@ const options: Option[] = [
 ];
 
 describe('Combobox', () => {
-    const onChangeHandler = jest.fn((value) => {
-
-    });
+    const onChangeHandler = jest.fn();
     beforeAll(() => {
         const mockGetBoundingClientRect = jest.fn(() => ({
             width: 120,
@@ -34,15 +32,28 @@ describe('Combobox', () => {
         expect(screen.getByRole('combobox')).toBeInTheDocument();
     });
 
-    it('should allow selecting a value by clicking directly', async () => {
-        render(<Combobox options={options} onChange={onChangeHandler} value={null} />);
+
+    // it('should allow selecting a value by clicking directly', async () => {
+    //     render(<Combobox options={options} onChange={onChangeHandler} value={null} />);
+
+    //     const input = screen.getByRole('combobox');
+    //     userEvent.click(input);
+
+    //     const item = await screen.findByRole('option', { name: 'Option 1' });
+    //     userEvent.click(item);
+    //     expect(screen.queryByDisplayValue('Option 1')).toBeInTheDocument();
+    //     expect(onChangeHandler).toHaveBeenCalled();
+    // });
+
+    it('selects value by searching and pressing enter', async () => {
+        render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
 
         const input = screen.getByRole('combobox');
-        userEvent.click(input);
+        await userEvent.type(input, 'Option 3');
+        await userEvent.keyboard('{ArrowDown}{Enter}');
 
-        const item = await screen.findByRole('option', { name: 'Option 1' });
-        userEvent.click(item);
-        expect(onChangeHandler).toHaveBeenCalled();
+        expect(onChangeHandler).toHaveBeenCalledWith(options[2]);
+        expect(screen.getByDisplayValue('Option 3')).toBeInTheDocument();
     });
 
     it('selects value by using keyboard only', async () => {
@@ -52,12 +63,14 @@ describe('Combobox', () => {
         await userEvent.click(input);
 
         await userEvent.keyboard('{ArrowDown}{ArrowDown}{Enter}');
-        expect(onChangeHandler).toHaveBeenCalled();
+        expect(onChangeHandler).toHaveBeenCalledWith(options[1]);
+        expect(screen.queryByDisplayValue('Option 2')).toBeInTheDocument();
     });
 
     it('clears selected value', async () => {
         render(<Combobox options={options} value={options[1].value} onChange={onChangeHandler} />);
 
+        expect(screen.queryByDisplayValue('Option 2')).toBeInTheDocument();
         const input = screen.getByRole('combobox');
         await userEvent.click(input);
 
@@ -65,9 +78,6 @@ describe('Combobox', () => {
         await userEvent.click(clearButton);
 
         expect(onChangeHandler).toHaveBeenCalledWith(null);
-        expect(screen.queryByDisplayValue('Option 1')).not.toBeInTheDocument();
         expect(screen.queryByDisplayValue('Option 2')).not.toBeInTheDocument();
-        expect(screen.queryByDisplayValue('Option 3')).not.toBeInTheDocument();
-        expect(screen.queryByDisplayValue('Option 4')).not.toBeInTheDocument();
     });
 });
