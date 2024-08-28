@@ -106,7 +106,7 @@ describe('GeneralSettingsEditView', () => {
       expect(settings.getCursorSync()?.state.sync).toBe(DashboardCursorSync.Crosshair);
     });
 
-    it('A change to time picker visiblity settings updates the dashboard state', () => {
+    it('A change to time picker visibility settings updates the dashboard state', () => {
       settings.onHideTimePickerChange(true);
 
       expect(settings.getDashboardControls()?.state.hideTimeControls).toBe(true);

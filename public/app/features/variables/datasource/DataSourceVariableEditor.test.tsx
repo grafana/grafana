@@ -56,7 +56,7 @@ describe('DataSourceVariableEditor', () => {
   });
 });
 
-// based on styleguide recomendation
+// based on styleguide recommendation
 function setup(jsx: JSX.Element) {
   return {
     user: userEvent.setup(),
