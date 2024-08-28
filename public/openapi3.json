@@ -1307,6 +1307,19 @@
         },
         "description": "(empty)"
       },
+      "getTeamLBACRulesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/TeamLBACRules"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getTeamMembersResponse": {
         "content": {
           "application/json": {
@@ -2029,6 +2042,34 @@
                 },
                 "serviceaccount": {
                   "$ref": "#/components/schemas/ServiceAccountProfileDTO"
+                }
+              },
+              "type": "object"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "updateTeamLBACRulesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "id": {
+                  "format": "int64",
+                  "type": "integer"
+                },
+                "lbacRules": {
+                  "$ref": "#/components/schemas/TeamLBACRules"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "uid": {
+                  "type": "string"
                 }
               },
               "type": "object"
@@ -10785,6 +10826,31 @@
         },
         "type": "object"
       },
+      "TeamLBACRule": {
+        "properties": {
+          "rules": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "teamId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TeamLBACRules": {
+        "properties": {
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/TeamLBACRule"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "TeamMemberDTO": {
         "properties": {
           "auth_module": {
@@ -11805,6 +11871,17 @@
           },
           "Name": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateTeamLBACCommand": {
+        "properties": {
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/TeamLBACRule"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -17894,7 +17971,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/okResponse"
+            "$ref": "#/components/responses/getTeamLBACRulesResponse"
           },
           "400": {
             "$ref": "#/components/responses/badRequestError"
@@ -17929,9 +18006,19 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTeamLBACCommand"
+              }
+            }
+          },
+          "x-originalParamName": "body"
+        },
         "responses": {
           "200": {
-            "$ref": "#/components/responses/okResponse"
+            "$ref": "#/components/responses/updateTeamLBACRulesResponse"
           },
           "400": {
             "$ref": "#/components/responses/badRequestError"
