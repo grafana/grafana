@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-
 import { SelectableValue } from '@grafana/data';
 import { MultiSelect, MultiSelectCommonProps } from '@grafana/ui';
 import { useSelectableMuteTimings } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
@@ -20,9 +18,7 @@ const MuteTimingsSelector = ({
 }: BaseAlertmanagerArgs & { selectProps: MultiSelectCommonProps<string> }) => {
   const { data } = useSelectableMuteTimings({ alertmanager });
 
-  const muteTimingOptions = useMemo(() => {
-    return data?.map((value) => mapMuteTiming(value)) || [];
-  }, [data]);
+  const muteTimingOptions = data?.map((value) => mapMuteTiming(value)) || [];
 
   return (
     <MultiSelect
