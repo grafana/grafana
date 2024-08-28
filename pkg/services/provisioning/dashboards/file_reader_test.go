@@ -2,7 +2,6 @@ package dashboards
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -16,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -117,7 +117,6 @@ func TestDashboardFileReader(t *testing.T) {
 			cfg.Folder = "Team A"
 
 			fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(nil, nil).Once()
-			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&folder.Folder{ID: 1}, nil).Once()
 			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{ID: 2}, nil).Times(2)
 
 			reader, err := NewDashboardFileReader(cfg, logger, nil, fakeStore, fakeFoldersService)
