@@ -2044,10 +2044,25 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/UpdateTeamLBACRulesResponse"
+              "properties": {
+                "id": {
+                  "format": "int64",
+                  "type": "integer"
+                },
+                "lbacRules": {
+                  "$ref": "#/components/schemas/TeamLBACRules"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "uid": {
+                  "type": "string"
+                }
               },
-              "type": "array"
+              "type": "object"
             }
           }
         },
@@ -11850,12 +11865,11 @@
         },
         "type": "object"
       },
-      "UpdateTeamLBACRulesResponse": {
+      "UpdateTeamLBACCommand": {
         "properties": {
-          "body": {
-            "description": "in:body",
+          "rules": {
             "items": {
-              "$ref": "#/components/schemas/UpdateTeamLBACRulesResponse"
+              "$ref": "#/components/schemas/TeamLBACRule"
             },
             "type": "array"
           }
@@ -18008,9 +18022,19 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTeamLBACCommand"
+              }
+            }
+          },
+          "x-originalParamName": "body"
+        },
         "responses": {
           "200": {
-            "$ref": "#/components/responses/okResponse"
+            "$ref": "#/components/responses/updateTeamLBACRulesResponse"
           },
           "400": {
             "$ref": "#/components/responses/badRequestError"

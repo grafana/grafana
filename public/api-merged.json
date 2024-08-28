@@ -4679,11 +4679,18 @@
             "name": "uid",
             "in": "path",
             "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/UpdateTeamLBACCommand"
+            }
           }
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/okResponse"
+            "$ref": "#/responses/updateTeamLBACRulesResponse"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -21765,14 +21772,13 @@
         }
       }
     },
-    "UpdateTeamLBACRulesResponse": {
+    "UpdateTeamLBACCommand": {
       "type": "object",
       "properties": {
-        "body": {
-          "description": "in:body",
+        "rules": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/UpdateTeamLBACRulesResponse"
+            "$ref": "#/definitions/TeamLBACRule"
           }
         }
       }
@@ -24296,9 +24302,24 @@
     "updateTeamLBACRulesResponse": {
       "description": "(empty)",
       "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/UpdateTeamLBACRulesResponse"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lbacRules": {
+            "$ref": "#/definitions/TeamLBACRules"
+          },
+          "message": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
         }
       }
     },
