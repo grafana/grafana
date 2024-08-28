@@ -1,3 +1,5 @@
+import { PluginLoadingStrategy } from '@grafana/data';
+
 import { clearPluginSettingsCache } from '../pluginSettings';
 
 import { CACHE_INITIALISED_AT } from './constants';
@@ -7,18 +9,18 @@ const cache: Record<string, CachedPlugin> = {};
 type CacheablePlugin = {
   path: string;
   version: string;
-  isAngular?: boolean;
+  loadingStrategy: PluginLoadingStrategy;
 };
 
 type CachedPlugin = Omit<CacheablePlugin, 'path'>;
 
-export function registerPluginInCache({ path, version, isAngular }: CacheablePlugin): void {
+export function registerPluginInCache({ path, version, loadingStrategy }: CacheablePlugin): void {
   const key = extractCacheKeyFromPath(path);
 
   if (key && !cache[key]) {
     cache[key] = {
       version: encodeURI(version),
-      isAngular,
+      loadingStrategy,
     };
   }
 }

@@ -1,3 +1,5 @@
+import { PluginLoadingStrategy } from '@grafana/data';
+
 import {
   registerPluginInCache,
   invalidatePluginInCache,
@@ -6,23 +8,25 @@ import {
   extractCacheKeyFromPath,
 } from './cache';
 
+const initialisedAt = 123456;
+
 jest.mock('./constants', () => ({
-  CACHE_INITIALISED_AT: 123456,
+  CACHE_INITIALISED_AT: initialisedAt,
 }));
 
 describe('Cache Functions', () => {
   describe('registerPluginInCache', () => {
     it('should register a plugin in the cache', () => {
-      const plugin = { version: '1.0.0', isAngular: false };
+      const plugin = { version: '1.0.0', loadingStrategy: PluginLoadingStrategy.script };
       registerPluginInCache({ path: 'public/plugins/plugin1/module.js', ...plugin });
       expect(getPluginFromCache('plugin1')).toEqual(plugin);
     });
 
     it('should not register a plugin if it already exists in the cache', () => {
       const path = 'public/plugins/plugin2/module.js';
-      const plugin = { path, version: '2.0.0' };
+      const plugin = { path, version: '2.0.0', loadingStrategy: PluginLoadingStrategy.script };
       registerPluginInCache(plugin);
-      const plugin2 = { path, version: '2.5.0' };
+      const plugin2 = { path, version: '2.5.0', loadingStrategy: PluginLoadingStrategy.script };
       registerPluginInCache(plugin2);
       expect(getPluginFromCache(path)?.version).toBe('2.0.0');
     });
@@ -31,7 +35,7 @@ describe('Cache Functions', () => {
   describe('invalidatePluginInCache', () => {
     it('should invalidate a plugin in the cache', () => {
       const path = 'public/plugins/plugin2/module.js';
-      const plugin = { path, version: '3.0.0' };
+      const plugin = { path, version: '3.0.0', loadingStrategy: PluginLoadingStrategy.script };
       registerPluginInCache(plugin);
       invalidatePluginInCache('plugin2');
       expect(getPluginFromCache('plugin2')).toBeUndefined();
@@ -45,12 +49,12 @@ describe('Cache Functions', () => {
   describe('resolveWithCache', () => {
     it('should resolve URL with timestamp cache bust parameter if plugin is not available in the cache', () => {
       const url = 'http://localhost:3000/public/plugins/plugin4/module.js';
-      expect(resolveWithCache(url)).toContain('_cache=123456');
+      expect(resolveWithCache(url)).toContain(`_cache=${initialisedAt}`);
     });
 
     it('should resolve URL with plugin version as cache bust parameter if available', () => {
       const url = 'http://localhost:3000/public/plugins/plugin5/module.js';
-      const plugin = { path: url, version: '5.0.0' };
+      const plugin = { path: url, version: '5.0.0', loadingStrategy: PluginLoadingStrategy.script };
       registerPluginInCache(plugin);
       expect(resolveWithCache(url)).toContain('_cache=5.0.0');
     });
@@ -84,7 +88,7 @@ describe('Cache Functions', () => {
 
   describe('getPluginFromCache', () => {
     it('should return plugin from cache if exists', () => {
-      const plugin = { isAngular: false, version: '6.0.0' };
+      const plugin = { isAngular: false, version: '6.0.0', loadingStrategy: PluginLoadingStrategy.script };
       registerPluginInCache({ path: 'public/plugins/plugin6/module.js', ...plugin });
       expect(getPluginFromCache('plugin6')).toEqual(plugin);
     });
