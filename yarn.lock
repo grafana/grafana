@@ -2941,7 +2941,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -2972,7 +2972,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3013,7 +3013,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3054,7 +3054,7 @@ __metadata:
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
     uuid: "npm:9.0.1"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3096,7 +3096,7 @@ __metadata:
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
     uuid: "npm:9.0.1"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3127,7 +3127,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     typescript: "npm:5.4.5"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3158,7 +3158,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3190,7 +3190,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3238,7 +3238,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3298,7 +3298,7 @@ __metadata:
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
     uuid: "npm:9.0.1"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3332,7 +3332,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3713,7 +3713,7 @@ __metadata:
     swc-loader: "npm:0.2.6"
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   languageName: unknown
   linkType: soft
 
@@ -3832,7 +3832,7 @@ __metadata:
     tslib: "npm:2.6.3"
     typescript: "npm:5.5.4"
     uuid: "npm:9.0.1"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
     webpack-cli: "npm:5.1.4"
     whatwg-fetch: "npm:3.6.20"
   peerDependencies:
@@ -4158,7 +4158,7 @@ __metadata:
     typescript: "npm:5.5.4"
     uplot: "npm:1.6.30"
     uuid: "npm:9.0.1"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
   peerDependencies:
     react: ^18.0.0
     react-dom: ^18.0.0
@@ -18790,7 +18790,7 @@ __metadata:
     uplot: "npm:1.6.30"
     uuid: "npm:9.0.1"
     visjs-network: "npm:4.25.0"
-    webpack: "npm:5.91.0"
+    webpack: "npm:5.94.0"
     webpack-assets-manifest: "npm:^5.1.0"
     webpack-bundle-analyzer: "npm:4.10.2"
     webpack-cli: "npm:5.1.4"
@@ -32510,7 +32510,43 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack@npm:5, webpack@npm:5.91.0, webpack@npm:^5":
+"webpack@npm:5, webpack@npm:5.94.0, webpack@npm:^5":
+  version: 5.94.0
+  resolution: "webpack@npm:5.94.0"
+  dependencies:
+    "@types/estree": "npm:^1.0.5"
+    "@webassemblyjs/ast": "npm:^1.12.1"
+    "@webassemblyjs/wasm-edit": "npm:^1.12.1"
+    "@webassemblyjs/wasm-parser": "npm:^1.12.1"
+    acorn: "npm:^8.7.1"
+    acorn-import-attributes: "npm:^1.9.5"
+    browserslist: "npm:^4.21.10"
+    chrome-trace-event: "npm:^1.0.2"
+    enhanced-resolve: "npm:^5.17.1"
+    es-module-lexer: "npm:^1.2.1"
+    eslint-scope: "npm:5.1.1"
+    events: "npm:^3.2.0"
+    glob-to-regexp: "npm:^0.4.1"
+    graceful-fs: "npm:^4.2.11"
+    json-parse-even-better-errors: "npm:^2.3.1"
+    loader-runner: "npm:^4.2.0"
+    mime-types: "npm:^2.1.27"
+    neo-async: "npm:^2.6.2"
+    schema-utils: "npm:^3.2.0"
+    tapable: "npm:^2.1.1"
+    terser-webpack-plugin: "npm:^5.3.10"
+    watchpack: "npm:^2.4.1"
+    webpack-sources: "npm:^3.2.3"
+  peerDependenciesMeta:
+    webpack-cli:
+      optional: true
+  bin:
+    webpack: bin/webpack.js
+  checksum: 10/648449c5fbbb0839814116e3b2b044ac6c75a7ba272435155ddeb1e64dfaa2f8079be3adfbb691f648b69900756ce0f6fb73beab0ced3cf5e0fd46868b4593a6
+  languageName: node
+  linkType: hard
+
+"webpack@npm:5.91.0":
   version: 5.91.0
   resolution: "webpack@npm:5.91.0"
   dependencies:
