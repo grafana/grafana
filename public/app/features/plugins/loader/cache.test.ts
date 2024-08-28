@@ -8,10 +8,8 @@ import {
   extractCacheKeyFromPath,
 } from './cache';
 
-const initialisedAt = 123456;
-
 jest.mock('./constants', () => ({
-  CACHE_INITIALISED_AT: initialisedAt,
+  CACHE_INITIALISED_AT: 123456,
 }));
 
 describe('Cache Functions', () => {
@@ -49,7 +47,7 @@ describe('Cache Functions', () => {
   describe('resolveWithCache', () => {
     it('should resolve URL with timestamp cache bust parameter if plugin is not available in the cache', () => {
       const url = 'http://localhost:3000/public/plugins/plugin4/module.js';
-      expect(resolveWithCache(url)).toContain(`_cache=${initialisedAt}`);
+      expect(resolveWithCache(url)).toContain('_cache=123456');
     });
 
     it('should resolve URL with plugin version as cache bust parameter if available', () => {
@@ -88,7 +86,7 @@ describe('Cache Functions', () => {
 
   describe('getPluginFromCache', () => {
     it('should return plugin from cache if exists', () => {
-      const plugin = { isAngular: false, version: '6.0.0', loadingStrategy: PluginLoadingStrategy.script };
+      const plugin = { version: '6.0.0', loadingStrategy: PluginLoadingStrategy.script };
       registerPluginInCache({ path: 'public/plugins/plugin6/module.js', ...plugin });
       expect(getPluginFromCache('plugin6')).toEqual(plugin);
     });

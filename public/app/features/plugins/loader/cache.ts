@@ -64,6 +64,3 @@ function getCacheKey(address: string): string | undefined {
   }
   return key;
 }
-
-// @ts-ignore
-window.getPluginsCache = () => cache; // for debugging
