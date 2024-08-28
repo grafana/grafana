@@ -304,14 +304,16 @@ func cloneIntegrationSettings(m map[string]any) map[string]any {
 			continue
 		}
 		if mp, ok := v.([]any); ok {
-			result[k] = sliceClone(mp)
+			result[k] = cloneIntegrationSettingsSlice(mp)
 			continue
 		}
 	}
 	return result
 }
 
-func sliceClone(src []any) []any {
+// cloneIntegrationSettingsSlice implements a deep copy of a []any in integration settings.
+// It's not a generic purpose function because settings are limited to basic types, maps and slices.
+func cloneIntegrationSettingsSlice(src []any) []any {
 	dst := slices.Clone(src)
 	for i, v := range dst {
 		if mp, ok := v.(map[string]any); ok {
@@ -319,7 +321,7 @@ func sliceClone(src []any) []any {
 			continue
 		}
 		if mp, ok := v.([]any); ok {
-			dst[i] = sliceClone(mp)
+			dst[i] = cloneIntegrationSettingsSlice(mp)
 			continue
 		}
 	}
