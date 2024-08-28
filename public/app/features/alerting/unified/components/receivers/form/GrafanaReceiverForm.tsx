@@ -86,6 +86,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
         contactPoint: newReceiver,
         id: contactPoint!.id,
         resourceVersion: contactPoint?.metadata?.resourceVersion,
+        originalName: contactPoint?.name,
       });
     } else {
       await createContactPoint({ contactPoint: newReceiver });

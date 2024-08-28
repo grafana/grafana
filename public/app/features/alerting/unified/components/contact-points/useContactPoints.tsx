@@ -453,10 +453,12 @@ export const useUpdateContactPoint = ({ alertmanager }: BaseAlertmanagerArgs) =>
         oldConfig: config,
         alertManagerSourceName: alertmanager,
       })
-    ).then(() => {
-      dispatch(alertingApi.util.invalidateTags(['AlertmanagerConfiguration', 'ContactPoint', 'ContactPointsStatus']));
-      dispatch(generatedReceiversApi.util.invalidateTags(['Receiver']));
-    });
+    )
+      .unwrap()
+      .then(() => {
+        dispatch(alertingApi.util.invalidateTags(['AlertmanagerConfiguration', 'ContactPoint', 'ContactPointsStatus']));
+        dispatch(generatedReceiversApi.util.invalidateTags(['Receiver']));
+      });
   };
 };
 
