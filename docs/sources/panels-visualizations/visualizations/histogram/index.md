@@ -159,6 +159,7 @@ Transparency of the gradient is calculated based on the values on the Y-axis. Th
 Gradient color is generated based on the hue of the line color.
 
 #### Scheme
+
 The selected [color palette](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-standard-options/#color-scheme) is applied to the histogram bars.
 
 ## Tooltip options
