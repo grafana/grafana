@@ -629,6 +629,14 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
+  - yarn e2e:plugin:build
+  depends_on:
+  - yarn-install
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
+  image: node:20.9.0-alpine
+  name: build-test-plugins
+- commands:
   - apk add --update tar bash
   - mkdir grafana
   - tar --strip-components=1 -xvf ./dist/*amd64.tar.gz -C grafana
@@ -646,6 +654,7 @@ steps:
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
   depends_on:
   - grafana-server
+  - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
@@ -654,6 +663,7 @@ steps:
   - ./bin/build e2e-tests --port 3001 --suite scenes/dashboards-suite
   depends_on:
   - grafana-server
+  - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
@@ -662,6 +672,7 @@ steps:
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
   - grafana-server
+  - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
@@ -670,6 +681,7 @@ steps:
   - ./bin/build e2e-tests --port 3001 --suite scenes/smoke-tests-suite
   depends_on:
   - grafana-server
+  - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
@@ -678,6 +690,7 @@ steps:
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
   depends_on:
   - grafana-server
+  - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
@@ -686,6 +699,7 @@ steps:
   - ./bin/build e2e-tests --port 3001 --suite scenes/panels-suite
   depends_on:
   - grafana-server
+  - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
@@ -694,6 +708,7 @@ steps:
   - ./bin/build e2e-tests --port 3001 --suite various-suite
   depends_on:
   - grafana-server
+  - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
@@ -702,6 +717,7 @@ steps:
   - ./bin/build e2e-tests --port 3001 --suite scenes/various-suite
   depends_on:
   - grafana-server
+  - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
@@ -738,6 +754,7 @@ steps:
   - yarn e2e:playwright
   depends_on:
   - grafana-server
+  - build-test-plugins
   environment:
     HOST: grafana-server
     PORT: "3001"
@@ -2036,6 +2053,14 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
+  - yarn e2e:plugin:build
+  depends_on:
+  - yarn-install
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
+  image: node:20.9.0-alpine
+  name: build-test-plugins
+- commands:
   - apk add --update tar bash
   - mkdir grafana
   - tar --strip-components=1 -xvf ./dist/*amd64.tar.gz -C grafana
@@ -2053,6 +2078,7 @@ steps:
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
   depends_on:
   - grafana-server
+  - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
@@ -2061,6 +2087,7 @@ steps:
   - ./bin/build e2e-tests --port 3001 --suite scenes/dashboards-suite
   depends_on:
   - grafana-server
+  - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
@@ -2069,6 +2096,7 @@ steps:
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
   - grafana-server
+  - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
@@ -2077,6 +2105,7 @@ steps:
   - ./bin/build e2e-tests --port 3001 --suite scenes/smoke-tests-suite
   depends_on:
   - grafana-server
+  - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
@@ -2085,6 +2114,7 @@ steps:
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
   depends_on:
   - grafana-server
+  - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
@@ -2093,6 +2123,7 @@ steps:
   - ./bin/build e2e-tests --port 3001 --suite scenes/panels-suite
   depends_on:
   - grafana-server
+  - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
@@ -2101,6 +2132,7 @@ steps:
   - ./bin/build e2e-tests --port 3001 --suite various-suite
   depends_on:
   - grafana-server
+  - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
@@ -2109,6 +2141,7 @@ steps:
   - ./bin/build e2e-tests --port 3001 --suite scenes/various-suite
   depends_on:
   - grafana-server
+  - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
@@ -2145,6 +2178,7 @@ steps:
   - yarn e2e:playwright
   depends_on:
   - grafana-server
+  - build-test-plugins
   environment:
     HOST: grafana-server
     PORT: "3001"
@@ -6074,6 +6108,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: cd0bc27b34a09de191974f360d43b55324bd88d20c4fe92f7c41df56394fc25a
+hmac: 7c752913b444e0efe410d5a8a0d300e1b4d48d2cac8df602c35314bc62b7ac3c
 
 ...

@@ -60,6 +60,11 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 		playlist.GROUPRESOURCE: 2,
 	}
 
+	o.StorageOptions.DualWriterDataSyncJobEnabled = map[string]bool{
+		// TODO: This will be enabled later, when we get a dedicated config section for unified_storage
+		// playlist.RESOURCE + "." + playlist.GROUP: true,
+	}
+
 	// TODO: ensure backwards compatibility with production
 	// remove this after changing the unified_storage_mode key format in HGAPI
 	o.StorageOptions.DualWriterDesiredModes[playlist.RESOURCE+"."+playlist.GROUP] = o.StorageOptions.DualWriterDesiredModes[playlist.GROUPRESOURCE]

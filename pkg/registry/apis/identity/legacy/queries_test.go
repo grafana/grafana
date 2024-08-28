@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 )
 
-func TestQueries(t *testing.T) {
+func TestIdentityQueries(t *testing.T) {
 	// prefix tables with grafana
 	nodb := &legacysql.LegacyDatabaseHelper{
 		Table: func(n string) string {
@@ -31,6 +31,12 @@ func TestQueries(t *testing.T) {
 
 	listTeams := func(q *ListTeamQuery) sqltemplate.SQLTemplate {
 		v := newListTeams(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	listTeamBindings := func(q *ListTeamBindingsQuery) sqltemplate.SQLTemplate {
+		v := newListTeamBindings(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
@@ -101,6 +107,30 @@ func TestQueries(t *testing.T) {
 						OrgID: 2,
 						UIDs:  []string{"a", "b"},
 						IDs:   []int64{1, 2},
+					}),
+				},
+			},
+			sqlQueryTeamBindings: {
+				{
+					Name: "team_1_bindings",
+					Data: listTeamBindings(&ListTeamBindingsQuery{
+						OrgID: 1,
+						UID:   "team-1",
+					}),
+				},
+				{
+					Name: "team_bindings_page_1",
+					Data: listTeamBindings(&ListTeamBindingsQuery{
+						OrgID: 1,
+						Limit: 5,
+					}),
+				},
+				{
+					Name: "team_bindings_page_2",
+					Data: listTeamBindings(&ListTeamBindingsQuery{
+						OrgID:      1,
+						Limit:      5,
+						ContinueID: 5,
 					}),
 				},
 			},

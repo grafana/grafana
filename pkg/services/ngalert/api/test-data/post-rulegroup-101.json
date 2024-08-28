@@ -119,6 +119,70 @@
           "mute_time_intervals":["test-mute"]
         }
       }
+    },
+    {
+      "grafana_alert": {
+        "title": "recording rule",
+        "data": [
+          {
+            "refId": "query",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 18000,
+              "to": 10800
+            },
+            "datasourceUid": "000000002",
+            "model": {
+              "expr": "http_request_duration_microseconds_count",
+              "hide": false,
+              "interval": "",
+              "intervalMs": 1000,
+              "legendFormat": "",
+              "maxDataPoints": 100,
+              "refId": "query"
+            }
+          },
+          {
+            "refId": "reduced",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 18000,
+              "to": 10800
+            },
+            "datasourceUid": "__expr__",
+            "model": {
+              "expression": "query",
+              "hide": false,
+              "intervalMs": 1000,
+              "maxDataPoints": 100,
+              "reducer": "mean",
+              "refId": "reduced",
+              "type": "reduce"
+            }
+          },
+          {
+            "refId": "condition",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 18000,
+              "to": 10800
+            },
+            "datasourceUid": "__expr__",
+            "model": {
+              "expression": "$reduced > 10",
+              "hide": false,
+              "intervalMs": 1000,
+              "maxDataPoints": 100,
+              "refId": "condition",
+              "type": "math"
+            }
+          }
+        ],
+        "record": {
+          "metric": "test_metric",
+          "from": "condition"
+        }
+      }
     }
   ]
 }
