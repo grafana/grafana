@@ -4,6 +4,7 @@ import {
   DataSourceJsonData,
   DataSourcePlugin,
   DataSourcePluginMeta,
+  PluginLoadingStrategy,
   PluginMeta,
 } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
@@ -64,12 +65,14 @@ systemJSPrototype.onload = decorateSystemJsOnload;
 
 export async function importPluginModule({
   path,
+  pluginId,
+  loadingStrategy,
   version,
   isAngular,
-  pluginId,
 }: {
   path: string;
   pluginId: string;
+  loadingStrategy: PluginLoadingStrategy;
   version?: string;
   isAngular?: boolean;
 }): Promise<System.Module> {
@@ -103,6 +106,7 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Gene
     path: meta.module,
     version: meta.info?.version,
     isAngular,
+    loadingStrategy: meta.loadingStrategy,
     pluginId: meta.id,
   }).then((pluginExports) => {
     if (pluginExports.plugin) {
@@ -132,6 +136,7 @@ export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
     path: meta.module,
     version: meta.info?.version,
     isAngular,
+    loadingStrategy: meta.loadingStrategy,
     pluginId: meta.id,
   }).then((pluginExports) => {
     const plugin: AppPlugin = pluginExports.plugin ? pluginExports.plugin : new AppPlugin();

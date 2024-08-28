@@ -60,6 +60,7 @@ function getPanelPlugin(meta: PanelPluginMeta): Promise<PanelPlugin> {
     path: meta.module,
     version: meta.info?.version,
     isAngular: meta.angular?.detected,
+    loadingStrategy: meta.loadingStrategy,
     pluginId: meta.id,
   })
     .then((pluginExports) => {
