@@ -100,6 +100,10 @@ The data is converted as follows:
 
 Use the following options to refine your histogram visualization.
 
+### Bucket count
+
+Specifies the number of bins used to group your data in the histogram, affecting the granularity of the displayed distribution. Leave this empty for automatic bucket count of 30.
+
 ### Bucket size
 
 The size of the buckets. Leave this empty for automatic bucket sizing (~10% of the full range).
@@ -111,6 +115,22 @@ If the first bucket should not start at zero. A non-zero offset has the effect o
 ### Combine series
 
 This will merge all series and fields into a combined histogram.
+
+### Stacking
+
+Controls how multiple series are displayed in the histogram. The three settings are:
+
+#### Off
+
+Series are not stacked, shown side by side.
+
+#### Normal
+
+Series are stacked on top of each other, showing cumulative values.
+
+#### 100%
+
+Stacks series to fill 100% of the chart, showing the relative proportion of each series.
 
 ### Line width
 
@@ -137,6 +157,9 @@ Transparency of the gradient is calculated based on the values on the Y-axis. Th
 #### Hue
 
 Gradient color is generated based on the hue of the line color.
+
+#### Scheme
+The selected [color palette](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-standard-options/#color-scheme) is applied to the histogram bars.
 
 ## Tooltip options
 
