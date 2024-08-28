@@ -4,27 +4,47 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"text/template"
+	"time"
 
 	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/registry/apis/identity/common"
 	"github.com/grafana/grafana/pkg/services/team"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
-var (
-	_ LegacyIdentityStore = (*legacySQLStore)(nil)
-)
+type ListTeamQuery struct {
+	OrgID int64
+	UID   string
 
-func NewLegacySQLStores(sql legacysql.LegacyDatabaseProvider) LegacyIdentityStore {
-	return &legacySQLStore{
-		sql: sql,
+	Pagination common.Pagination
+}
+
+type ListTeamResult struct {
+	Teams    []team.Team
+	Continue int64
+	RV       int64
+}
+
+var sqlQueryTeamsTemplate = mustTemplate("teams_query.sql")
+
+type listTeamsQuery struct {
+	sqltemplate.SQLTemplate
+	Query     *ListTeamQuery
+	TeamTable string
+}
+
+func newListTeams(sql *legacysql.LegacyDatabaseHelper, q *ListTeamQuery) listTeamsQuery {
+	return listTeamsQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		TeamTable:   sql.Table("team"),
+		Query:       q,
 	}
 }
 
-type legacySQLStore struct {
-	sql legacysql.LegacyDatabaseProvider
+func (r listTeamsQuery) Validate() error {
+	return nil // TODO
 }
 
 // ListTeams implements LegacyIdentityStore.
@@ -42,9 +62,9 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 	}
 
 	req := newListTeams(sql, &query)
-	q, err := sqltemplate.Execute(sqlQueryTeams, req)
+	q, err := sqltemplate.Execute(sqlQueryTeamsTemplate, req)
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeams.Name(), err)
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeamsTemplate.Name(), err)
 	}
 
 	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
@@ -83,81 +103,65 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 	return res, err
 }
 
-// ListUsers implements LegacyIdentityStore.
-func (s *legacySQLStore) ListUsers(ctx context.Context, ns claims.NamespaceInfo, query ListUserQuery) (*ListUserResult, error) {
-	// for continue
-	limit := int(query.Pagination.Limit)
-	query.Pagination.Limit += 1
-
-	query.OrgID = ns.OrgID
-	if ns.OrgID == 0 {
-		return nil, fmt.Errorf("expected non zero orgID")
-	}
-
-	sql, err := s.sql(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := s.queryUsers(ctx, sql, sqlQueryUsers, newListUser(sql, &query), limit)
-	if err == nil && query.UID != "" {
-		res.RV, err = sql.GetResourceVersion(ctx, "user", "updated")
-	}
-
-	return res, err
+type ListTeamBindingsQuery struct {
+	// UID is team uid to list bindings for. If not set store should list bindings for all teams
+	UID        string
+	OrgID      int64
+	Pagination common.Pagination
 }
 
-// GetDisplay implements LegacyIdentityStore.
-func (s *legacySQLStore) GetDisplay(ctx context.Context, ns claims.NamespaceInfo, query GetUserDisplayQuery) (*ListUserResult, error) {
-	query.OrgID = ns.OrgID
-	if ns.OrgID == 0 {
-		return nil, fmt.Errorf("expected non zero orgID")
-	}
-
-	sql, err := s.sql(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.queryUsers(ctx, sql, sqlQueryDisplay, newGetDisplay(sql, &query), 10000)
+type ListTeamBindingsResult struct {
+	Bindings []TeamBinding
+	Continue int64
+	RV       int64
 }
 
-func (s *legacySQLStore) queryUsers(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, t *template.Template, req sqltemplate.Args, limit int) (*ListUserResult, error) {
-	q, err := sqltemplate.Execute(t, req)
-	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlQueryUsers.Name(), err)
+type TeamMember struct {
+	ID         int64
+	TeamID     int64
+	TeamUID    string
+	UserID     int64
+	UserUID    string
+	Name       string
+	Email      string
+	Username   string
+	External   bool
+	Updated    time.Time
+	Created    time.Time
+	Permission team.PermissionType
+}
+
+func (m TeamMember) MemberID() string {
+	return identity.NewTypedIDString(claims.TypeUser, m.UserUID)
+}
+
+type TeamBinding struct {
+	TeamUID string
+	Members []TeamMember
+}
+
+var sqlQueryTeamBindingsTemplate = mustTemplate("team_bindings_query.sql")
+
+type listTeamBindingsQuery struct {
+	sqltemplate.SQLTemplate
+	Query           *ListTeamBindingsQuery
+	UserTable       string
+	TeamTable       string
+	TeamMemberTable string
+}
+
+func (r listTeamBindingsQuery) Validate() error {
+	return nil // TODO
+}
+
+func newListTeamBindings(sql *legacysql.LegacyDatabaseHelper, q *ListTeamBindingsQuery) listTeamBindingsQuery {
+	return listTeamBindingsQuery{
+		SQLTemplate:     sqltemplate.New(sql.DialectForDriver()),
+		UserTable:       sql.Table("user"),
+		TeamTable:       sql.Table("team"),
+		TeamMemberTable: sql.Table("team_member"),
+		Query:           q,
 	}
-
-	res := &ListUserResult{}
-	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
-	defer func() {
-		if rows != nil {
-			_ = rows.Close()
-		}
-	}()
-
-	if err == nil {
-		var lastID int64
-		for rows.Next() {
-			u := user.User{}
-			err = rows.Scan(&u.OrgID, &u.ID, &u.UID, &u.Login, &u.Email, &u.Name,
-				&u.Created, &u.Updated, &u.IsServiceAccount, &u.IsDisabled, &u.IsAdmin,
-			)
-			if err != nil {
-				return res, err
-			}
-
-			lastID = u.ID
-			res.Users = append(res.Users, u)
-			if len(res.Users) > limit {
-				res.Users = res.Users[0 : len(res.Users)-1]
-				res.Continue = lastID
-				break
-			}
-		}
-	}
-
-	return res, err
 }
 
 // ListTeamsBindings implements LegacyIdentityStore.
@@ -175,9 +179,9 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 	}
 
 	req := newListTeamBindings(sql, &query)
-	q, err := sqltemplate.Execute(sqlQueryTeamBindings, req)
+	q, err := sqltemplate.Execute(sqlQueryTeamBindingsTemplate, req)
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeams.Name(), err)
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeamsTemplate.Name(), err)
 	}
 
 	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
@@ -233,6 +237,42 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 	return res, err
 }
 
+type ListTeamMembersQuery struct {
+	UID        string
+	OrgID      int64
+	Pagination common.Pagination
+}
+
+type ListTeamMembersResult struct {
+	Continue int64
+	Members  []TeamMember
+}
+
+// Templates.
+var sqlQueryTeamMembersTemplate = mustTemplate("team_members_query.sql")
+
+type listTeamMembersQuery struct {
+	sqltemplate.SQLTemplate
+	Query           *ListTeamMembersQuery
+	UserTable       string
+	TeamTable       string
+	TeamMemberTable string
+}
+
+func (r listTeamMembersQuery) Validate() error {
+	return nil // TODO
+}
+
+func newListTeamMembers(sql *legacysql.LegacyDatabaseHelper, q *ListTeamMembersQuery) listTeamMembersQuery {
+	return listTeamMembersQuery{
+		SQLTemplate:     sqltemplate.New(sql.DialectForDriver()),
+		UserTable:       sql.Table("user"),
+		TeamTable:       sql.Table("team"),
+		TeamMemberTable: sql.Table("team_member"),
+		Query:           q,
+	}
+}
+
 // ListTeamMembers implements LegacyIdentityStore.
 func (s *legacySQLStore) ListTeamMembers(ctx context.Context, ns claims.NamespaceInfo, query ListTeamMembersQuery) (*ListTeamMembersResult, error) {
 	query.Pagination.Limit += 1
@@ -247,9 +287,9 @@ func (s *legacySQLStore) ListTeamMembers(ctx context.Context, ns claims.Namespac
 	}
 
 	req := newListTeamMembers(sql, &query)
-	q, err := sqltemplate.Execute(sqlQueryTeamMembers, req)
+	q, err := sqltemplate.Execute(sqlQueryTeamMembersTemplate, req)
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeams.Name(), err)
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeamsTemplate.Name(), err)
 	}
 
 	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
