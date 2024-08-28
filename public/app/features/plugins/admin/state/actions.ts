@@ -235,7 +235,7 @@ export const uninstall = createAsyncThunk<Update<CatalogPlugin, string>, string>
 
       return {
         id,
-        changes: { isInstalled: false, installedVersion: undefined },
+        changes: { isInstalled: false, installedVersion: undefined, isFullyInstalled: false },
       };
     } catch (e) {
       console.error(e);
