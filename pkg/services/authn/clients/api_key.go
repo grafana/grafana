@@ -31,6 +31,11 @@ var _ authn.HookClient = new(APIKey)
 var _ authn.ContextAwareClient = new(APIKey)
 var _ authn.IdentityResolverClient = new(APIKey)
 
+const (
+	metaKetID           = "keyID"
+	metaKeySkipLastUsed = "keySkipLastUsed"
+)
+
 func ProvideAPIKey(apiKeyService apikey.Service) *APIKey {
 	return &APIKey{
 		log:           log.New(authn.ClientAPIKey),
@@ -65,7 +70,12 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	}
 
 	// Set keyID so we can use it in last used hook
-	r.SetMeta("keyID", strconv.FormatInt(key.ID, 10))
+	r.SetMeta(metaKetID, strconv.FormatInt(key.ID, 10))
+	if !shouldUpdateLastUsedAt(key) {
+		// Hack to just have some value, we will check this key in the hook
+		// and if its not an empty string we will not update last used.
+		r.SetMeta(metaKeySkipLastUsed, "true")
+	}
 
 	// if the api key don't belong to a service account construct the identity and return it
 	if key.ServiceAccountId == nil || *key.ServiceAccountId < 1 {
@@ -172,6 +182,10 @@ func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, typ claims.Id
 }
 
 func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
+	if r.GetMeta(metaKeySkipLastUsed) != "" {
+		return nil
+	}
+
 	go func(keyID string) {
 		defer func() {
 			if err := recover(); err != nil {
@@ -187,7 +201,7 @@ func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Re
 		if err := s.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), id); err != nil {
 			s.log.Warn("Failed to update last use date for api key", "id", keyID)
 		}
-	}(r.GetMeta("keyID"))
+	}(r.GetMeta(metaKetID))
 
 	return nil
 }
@@ -251,4 +265,8 @@ func newServiceAccountIdentity(key *apikey.APIKey) *authn.Identity {
 		AuthenticatedBy: login.APIKeyAuthModule,
 		ClientParams:    authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},
 	}
+}
+
+func shouldUpdateLastUsedAt(key *apikey.APIKey) bool {
+	return key.LastUsedAt == nil || time.Since(*key.LastUsedAt) > 5*time.Minute
 }
