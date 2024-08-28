@@ -1,6 +1,8 @@
 package v0alpha1
 
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type Team struct {
@@ -9,6 +11,7 @@ type Team struct {
 
 	Spec TeamSpec `json:"spec,omitempty"`
 }
+
 type TeamSpec struct {
 	Title string `json:"name,omitempty"`
 	Email string `json:"email,omitempty"`
@@ -21,3 +24,63 @@ type TeamList struct {
 
 	Items []Team `json:"items,omitempty"`
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type TeamBinding struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec TeamBindingSpec `json:"spec,omitempty"`
+}
+
+type TeamBindingSpec struct {
+	Subjects []TeamSubject `json:"subjects,omitempty"`
+	TeamRef  TeamRef       `json:"teamRef,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type TeamBindingList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []TeamBinding `json:"items,omitempty"`
+}
+
+type TeamSubject struct {
+	// Name is the unique identifier for subject.
+	Name string `json:"name,omitempty"`
+
+	// Permission subject has in team.
+	Permission TeamPermission `json:"permission,omitempty"`
+}
+
+type TeamRef struct {
+	// Name is the unique identifier for a team.
+	Name string `json:"name,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type TeamMemberList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []TeamMember `json:"items,omitempty"`
+}
+
+type TeamMember struct {
+	IdentityDisplay `json:",inline"`
+
+	// External is set if member ship was synced from external IDP.
+	External bool `json:"external,omitempty"`
+	// Permission member has in team.
+	Permission TeamPermission `json:"permission,omitempty"`
+}
+
+// TeamPermission for subject
+// +enum
+type TeamPermission string
+
+const (
+	TeamPermissionAdmin  TeamPermission = "admin"
+	TeamPermissionMember TeamPermission = "member"
+)
