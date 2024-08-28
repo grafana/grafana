@@ -283,5 +283,5 @@ type FrontendSettingsDTO struct {
 	ListDashboardScopesEndpoint string `json:"listDashboardScopesEndpoint"`
 
 	// Unified Storage
-	UnifiedStorage map[string]setting.UnifiedStorageConfig `json:"unifiedStorage,omitempty"`
+	KubernetesPlaylists bool `json:"kubernetesPlaylists"`
 }

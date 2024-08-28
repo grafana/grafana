@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/webassets"
+	playlistalpha1 "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -279,7 +280,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		AwsAllowedAuthProviders:          hs.Cfg.AWSAllowedAuthProviders,
 		AwsAssumeRoleEnabled:             hs.Cfg.AWSAssumeRoleEnabled,
 		SupportBundlesEnabled:            isSupportBundlesEnabled(hs),
-		UnifiedStorage:                   hs.Cfg.UnifiedStorage,
+		KubernetesPlaylists:              hs.shouldUseK8sAPI(playlistalpha1.PlaylistResourceInfo.GroupResource().String()),
 
 		Azure: dtos.FrontendSettingsAzureDTO{
 			Cloud:                                  hs.Cfg.Azure.Cloud,

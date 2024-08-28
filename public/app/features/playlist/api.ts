@@ -209,8 +209,5 @@ export function searchPlaylists(playlists: Playlist[], query?: string): Playlist
 }
 
 export function getPlaylistAPI() {
-  if (config.unifiedStorage && config.unifiedStorage instanceof Object) {
-    return 'playlists.playlist.grafana.app' in config.unifiedStorage ? new K8sAPI() : new LegacyAPI();
-  }
-  return new LegacyAPI();
+  return config.kubernetesPlaylists ? new K8sAPI() : new LegacyAPI();
 }
