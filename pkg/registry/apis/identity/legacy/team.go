@@ -3,8 +3,10 @@ package legacy
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/identity/common"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -95,6 +97,140 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 
 	if query.UID == "" {
 		res.RV, err = sql.GetResourceVersion(ctx, "team", "updated")
+	}
+
+	return res, err
+}
+
+type ListTeamBindingsQuery struct {
+	// UID is team uid to list bindings for. If not set store should list bindings for all teams
+	UID        string
+	OrgID      int64
+	Pagination common.Pagination
+}
+
+type ListTeamBindingsResult struct {
+	Bindings []TeamBinding
+	Continue int64
+	RV       int64
+}
+
+type TeamMember struct {
+	ID         int64
+	TeamID     int64
+	TeamUID    string
+	UserID     int64
+	UserUID    string
+	Name       string
+	Email      string
+	Username   string
+	External   bool
+	Updated    time.Time
+	Created    time.Time
+	Permission team.PermissionType
+}
+
+func (m TeamMember) MemberID() string {
+	return identity.NewTypedIDString(claims.TypeUser, m.UserUID)
+}
+
+type TeamBinding struct {
+	TeamUID string
+	Members []TeamMember
+}
+
+var sqlQueryTeamBindingsTemplate = mustTemplate("team_bindings_query.sql")
+
+type listTeamBindingsQuery struct {
+	sqltemplate.SQLTemplate
+	Query           *ListTeamBindingsQuery
+	UserTable       string
+	TeamTable       string
+	TeamMemberTable string
+}
+
+func (r listTeamBindingsQuery) Validate() error {
+	return nil // TODO
+}
+
+func newListTeamBindings(sql *legacysql.LegacyDatabaseHelper, q *ListTeamBindingsQuery) listTeamBindingsQuery {
+	return listTeamBindingsQuery{
+		SQLTemplate:     sqltemplate.New(sql.DialectForDriver()),
+		UserTable:       sql.Table("user"),
+		TeamTable:       sql.Table("team"),
+		TeamMemberTable: sql.Table("team_member"),
+		Query:           q,
+	}
+}
+
+// ListTeamsBindings implements LegacyIdentityStore.
+func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.NamespaceInfo, query ListTeamBindingsQuery) (*ListTeamBindingsResult, error) {
+	// for continue
+	query.Pagination.Limit += 1
+	query.OrgID = ns.OrgID
+	if query.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero orgID")
+	}
+
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newListTeamBindings(sql, &query)
+	q, err := sqltemplate.Execute(sqlQueryTeamBindingsTemplate, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeamsTemplate.Name(), err)
+	}
+
+	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+
+	if err != nil {
+		return nil, err
+	}
+
+	res := &ListTeamBindingsResult{}
+	grouped := map[string][]TeamMember{}
+
+	var lastID int64
+	var atTeamLimit bool
+
+	for rows.Next() {
+		m := TeamMember{}
+		err = rows.Scan(&m.ID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.Created, &m.Updated, &m.Permission)
+		if err != nil {
+			return res, err
+		}
+
+		lastID = m.TeamID
+		members, ok := grouped[m.TeamUID]
+		if ok {
+			grouped[m.TeamUID] = append(members, m)
+		} else if !atTeamLimit {
+			grouped[m.TeamUID] = []TeamMember{m}
+		}
+
+		if len(grouped) >= int(query.Pagination.Limit)-1 {
+			atTeamLimit = true
+			res.Continue = lastID
+		}
+	}
+
+	if query.UID == "" {
+		res.RV, err = sql.GetResourceVersion(ctx, "team_member", "updated")
+	}
+
+	res.Bindings = make([]TeamBinding, 0, len(grouped))
+	for uid, members := range grouped {
+		res.Bindings = append(res.Bindings, TeamBinding{
+			TeamUID: uid,
+			Members: members,
+		})
 	}
 
 	return res, err

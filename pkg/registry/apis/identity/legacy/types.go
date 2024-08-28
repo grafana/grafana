@@ -2,50 +2,11 @@ package legacy
 
 import (
 	"context"
-	"time"
 
 	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/identity/common"
 	"github.com/grafana/grafana/pkg/services/team"
 )
-
-type TeamMember struct {
-	ID         int64
-	TeamID     int64
-	TeamUID    string
-	UserID     int64
-	UserUID    string
-	Name       string
-	Email      string
-	Username   string
-	External   bool
-	Updated    time.Time
-	Created    time.Time
-	Permission team.PermissionType
-}
-
-func (m TeamMember) MemberID() string {
-	return identity.NewTypedIDString(claims.TypeUser, m.UserUID)
-}
-
-type TeamBinding struct {
-	TeamUID string
-	Members []TeamMember
-}
-
-type ListTeamBindingsQuery struct {
-	// UID is team uid to list bindings for. If not set store should list bindings for all teams
-	UID        string
-	OrgID      int64
-	Pagination common.Pagination
-}
-
-type ListTeamBindingsResult struct {
-	Bindings []TeamBinding
-	Continue int64
-	RV       int64
-}
 
 type ListTeamMembersQuery struct {
 	UID        string
