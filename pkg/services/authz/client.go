@@ -8,6 +8,7 @@ import (
 	authnlib "github.com/grafana/authlib/authn"
 	authzlib "github.com/grafana/authlib/authz"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/grafana/authlib/claims"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -104,7 +105,8 @@ func newInProcLegacyClient(server *legacyServer) (authzlib.MultiTenantClient, er
 	return authzlib.NewLegacyClient(
 		&authzlib.MultiTenantClientConfig{},
 		authzlib.WithGrpcConnectionLCOption(channel),
-		authzlib.WithNamespaceFormatterLCOption(authnlib.OnPremNamespaceFormatter),
+		// nolint:staticcheck
+		authzlib.WithNamespaceFormatterLCOption(claims.OrgNamespaceFormatter),
 		authzlib.WithDisableAccessTokenLCOption(),
 	)
 }
@@ -127,7 +129,8 @@ func newGrpcLegacyClient(address string) (authzlib.MultiTenantClient, error) {
 			grpc.WithUnaryInterceptor(clientInterceptor.UnaryClientInterceptor),
 			grpc.WithStreamInterceptor(clientInterceptor.StreamClientInterceptor),
 		),
-		authzlib.WithNamespaceFormatterLCOption(authnlib.OnPremNamespaceFormatter),
+		// nolint:staticcheck
+		authzlib.WithNamespaceFormatterLCOption(claims.OrgNamespaceFormatter),
 		// TODO(drclau): remove this once we have access token support on-prem
 		authzlib.WithDisableAccessTokenLCOption(),
 	)

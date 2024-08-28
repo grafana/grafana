@@ -6,12 +6,15 @@
     {
       "metadata": {
         "name": "accessActionSets",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-04-12T16:19:25Z"
+        "resourceVersion": "1723737724157",
+        "creationTimestamp": "2024-04-12T16:19:25Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-15 16:02:04.157828 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Introduces action sets for resource permissions",
-        "stage": "experimental",
+        "description": "Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions.",
+        "stage": "preview",
         "codeowner": "@grafana/identity-access-team"
       }
     },
@@ -43,6 +46,18 @@
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "adhocFilterOneOf",
+        "resourceVersion": "1723119716623",
+        "creationTimestamp": "2024-08-08T12:21:56Z"
+      },
+      "spec": {
+        "description": "Exposes a new 'one of' operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad"
       }
     },
     {
@@ -505,13 +520,29 @@
     {
       "metadata": {
         "name": "azureMonitorPrometheusExemplars",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-06-06T16:53:17Z"
+        "resourceVersion": "1723028568258",
+        "creationTimestamp": "2024-06-06T16:53:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-07 11:02:48.258776 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/partner-datasources"
+      }
+    },
+    {
+      "metadata": {
+        "name": "backgroundPluginInstaller",
+        "resourceVersion": "1723202510081",
+        "creationTimestamp": "2024-08-09T11:21:50Z"
+      },
+      "spec": {
+        "description": "Enable background plugin installer",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true
       }
     },
     {
@@ -1272,13 +1303,16 @@
     {
       "metadata": {
         "name": "grpcServer",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2022-09-26T20:25:34Z"
+        "resourceVersion": "1724096690370",
+        "creationTimestamp": "2022-09-26T20:25:34Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-19 19:44:50.370023815 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Run the GRPC server",
         "stage": "preview",
-        "codeowner": "@grafana/grafana-app-platform-squad",
+        "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true
       }
     },
@@ -1286,7 +1320,8 @@
       "metadata": {
         "name": "idForwarding",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-09-25T15:21:28Z"
+        "creationTimestamp": "2023-09-25T15:21:28Z",
+        "deletionTimestamp": "2024-08-21T11:35:56Z"
       },
       "spec": {
         "description": "Generate signed id token for identity that can be forwarded to plugins and external services",
@@ -1584,6 +1619,7 @@
         "name": "lokiMetricDataplane",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-04-13T13:07:08Z",
+        "deletionTimestamp": "2024-08-21T13:49:48Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -1671,6 +1707,21 @@
     },
     {
       "metadata": {
+        "name": "lokiSendDashboardPanelNames",
+        "resourceVersion": "1724089497989",
+        "creationTimestamp": "2024-08-19T17:44:18Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-19 17:44:57.989565 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Send dashboard and panel names to Loki when querying",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs"
+      }
+    },
+    {
+      "metadata": {
         "name": "lokiStructuredMetadata",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-11-16T16:06:14Z",
@@ -1734,6 +1785,18 @@
       },
       "spec": {
         "description": "Use double quotes to escape keyword in a MySQL query",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
+        "name": "mysqlParseTime",
+        "resourceVersion": "1724750152191",
+        "creationTimestamp": "2024-08-27T09:15:52Z"
+      },
+      "spec": {
+        "description": "Ensure the parseTime flag is set for MySQL driver",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage"
       }
@@ -1864,13 +1927,17 @@
     {
       "metadata": {
         "name": "openSearchBackendFlowEnabled",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-06-17T09:41:50Z"
+        "resourceVersion": "1724141158995",
+        "creationTimestamp": "2024-06-17T09:41:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-20 08:05:58.995762 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the backend query flow for Open Search datasource plugin",
-        "stage": "preview",
-        "codeowner": "@grafana/aws-datasources"
+        "stage": "GA",
+        "codeowner": "@grafana/aws-datasources",
+        "expression": "true"
       }
     },
     {
@@ -1907,13 +1974,16 @@
     {
       "metadata": {
         "name": "panelTitleSearch",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2022-02-15T18:26:03Z"
+        "resourceVersion": "1724096690370",
+        "creationTimestamp": "2022-02-15T18:26:03Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-19 19:44:50.370023815 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Search for dashboards using panel title",
         "stage": "preview",
-        "codeowner": "@grafana/grafana-app-platform-squad",
+        "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true
       }
     },
@@ -2004,6 +2074,22 @@
       },
       "spec": {
         "description": "Sends metrics of public grafana packages usage by plugins",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "pluginsDetailsRightPanel",
+        "resourceVersion": "1720788722220",
+        "creationTimestamp": "2024-07-12T08:39:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-07-12 12:52:02.22099 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables right panel for the plugins details page",
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true
@@ -2111,6 +2197,7 @@
         "name": "prometheusDataplane",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-03-29T15:26:32Z",
+        "deletionTimestamp": "2024-08-21T13:35:19Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -2166,6 +2253,18 @@
         "stage": "experimental",
         "codeowner": "@grafana/observability-metrics",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "prometheusRunQueriesInParallel",
+        "resourceVersion": "1720677541862",
+        "creationTimestamp": "2024-07-11T05:59:01Z"
+      },
+      "spec": {
+        "description": "Enables running Prometheus queries in parallel",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/observability-metrics"
       }
     },
     {
@@ -2487,13 +2586,16 @@
     {
       "metadata": {
         "name": "storage",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2022-03-17T17:19:23Z"
+        "resourceVersion": "1724096690370",
+        "creationTimestamp": "2022-03-17T17:19:23Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-19 19:44:50.370023815 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Configurable storage for dashboards, datasources, and resources",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad"
+        "codeowner": "@grafana/search-and-storage"
       }
     },
     {
@@ -2620,13 +2722,17 @@
     {
       "metadata": {
         "name": "unifiedStorage",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-12-06T20:21:21Z"
+        "resourceVersion": "1724096690370",
+        "creationTimestamp": "2023-12-06T20:21:21Z",
+        "deletionTimestamp": "2024-08-21T09:30:06Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-19 19:44:50.370023815 +0000 UTC"
+        }
       },
       "spec": {
         "description": "SQL-based k8s storage",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
+        "codeowner": "@grafana/search-and-storage",
         "requiresRestart": true
       }
     },

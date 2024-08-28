@@ -32,7 +32,21 @@ In this tutorial you will:
 - Set up an alert rule.
 - Receive firing and resolved alert notifications in a public webhook.
 
-Check out [Part 2](http://grafana.com/tutorials/alerting-get-started-pt2/) if you want to learn more about alerts and notification routing.
+<!-- INTERACTIVE ignore START -->
+
+{{< admonition type="tip" >}}
+
+Before you dive in, remember that you can [explore advanced topics like alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/) in the second part of this guide.
+
+{{< /admonition >}}
+
+<!-- INTERACTIVE ignore END -->
+
+{{< docs/ignore >}}
+
+> Before you dive in, remember that you can [explore advanced topics like alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/) in the second part of this guide.
+
+{{< /docs/ignore >}}
 
 <!-- INTERACTIVE page intro.md END -->
 
@@ -265,16 +279,20 @@ By incrementing the threshold, the condition is no longer met, and after the eva
 
 ## Learn more
 
-Your learning journey continues in [Part 2](http://grafana.com/tutorials/alerting-get-started-pt2/) where you will learn about alert instances and notification routing.
+<!-- INTERACTIVE ignore START -->
 
-## Summary
+{{< admonition type="tip" >}}
 
-In this tutorial, you have learned how to set up a contact point, create an alert, and send alert notifications to a public Webhook. By following these steps, you’ve gained a foundational understanding of how to leverage Grafana Alerting capabilities to monitor and respond to events of interest in your data.
+Advance your skills by exploring [alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/) in Part 2 of your learning journey.
 
-Feel free to experiment with different [contact points](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/) to customize your alert notifications and discover the configuration that best suits your needs.
+{{< /admonition >}}
 
-If you run into any problems, you are welcome to post questions in our [Grafana Community forum](https://community.grafana.com/).
+<!-- INTERACTIVE ignore END -->
 
-Happy monitoring!
+{{< docs/ignore >}}
+
+Advance your skills by exploring [alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/) in Part 2 of your learning journey.
+
+{{< /docs/ignore >}}
 
 <!-- INTERACTIVE page finish.md END -->

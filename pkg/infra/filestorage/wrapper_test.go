@@ -1,7 +1,6 @@
 package filestorage
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -35,7 +34,7 @@ func TestFilestorage_getParentFolderPath(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(fmt.Sprintf(tt.name), func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			require.Equal(t, tt.expected, getParentFolderPath(tt.path))
 		})
 	}

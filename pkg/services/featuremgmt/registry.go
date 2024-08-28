@@ -45,7 +45,7 @@ var (
 			Name:              "panelTitleSearch",
 			Description:       "Search for dashboards using panel title",
 			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaAppPlatformSquad,
+			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
 		},
 		{
@@ -89,7 +89,7 @@ var (
 			Name:        "storage",
 			Description: "Configurable storage for dashboards, datasources, and resources",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAppPlatformSquad,
+			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
 			Name:           "correlations",
@@ -191,16 +191,8 @@ var (
 			Name:              "grpcServer",
 			Description:       "Run the GRPC server",
 			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaAppPlatformSquad,
+			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
-		},
-		{
-			Name:            "unifiedStorage",
-			Description:     "SQL-based k8s storage",
-			Stage:           FeatureStageExperimental,
-			RequiresDevMode: false,
-			RequiresRestart: true, // new SQL tables created
-			Owner:           grafanaAppPlatformSquad,
 		},
 		{
 			Name:           "cloudWatchCrossAccountQuerying",
@@ -219,6 +211,12 @@ var (
 		{
 			Name:        "mysqlAnsiQuotes",
 			Description: "Use double quotes to escape keyword in a MySQL query",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+		},
+		{
+			Name:        "mysqlParseTime",
+			Description: "Ensure the parseTime flag is set for MySQL driver",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
 		},
@@ -320,12 +318,11 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
-			Name:           "prometheusDataplane",
-			Description:    "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular, when this feature toggle is active, the numeric `Field.Name` is set from 'Value' to the value of the `__name__` label.",
-			Expression:     "true",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: true,
+			Name:         "prometheusRunQueriesInParallel",
+			Description:  "Enables running Prometheus queries in parallel",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:           "lokiMetricDataplane",
@@ -432,6 +429,13 @@ var (
 		{
 			Name:         "frontendSandboxMonitorOnly",
 			Description:  "Enables monitor only in the plugin frontend sandbox (if enabled)",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "pluginsDetailsRightPanel",
+			Description:  "Enables right panel for the plugins details page",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
@@ -649,12 +653,6 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaPluginsPlatformSquad,
-		},
-		{
-			Name:        "idForwarding",
-			Description: "Generate signed id token for identity that can be forwarded to plugins and external services",
-			Stage:       FeatureStageExperimental,
-			Owner:       identityAccessTeam,
 		},
 		{
 			Name:              "externalServiceAccounts",
@@ -1157,8 +1155,8 @@ var (
 		},
 		{
 			Name:        "accessActionSets",
-			Description: "Introduces action sets for resource permissions",
-			Stage:       FeatureStageExperimental,
+			Description: "Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions.",
+			Stage:       FeatureStagePublicPreview,
 			Owner:       identityAccessTeam,
 		},
 		{
@@ -1263,7 +1261,7 @@ var (
 		{
 			Name:        "azureMonitorPrometheusExemplars",
 			Description: "Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaPartnerPluginsSquad,
 		},
 		{
@@ -1283,8 +1281,9 @@ var (
 		{
 			Name:        "openSearchBackendFlowEnabled",
 			Description: "Enables the backend query flow for Open Search datasource plugin",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       awsDatasourcesSquad,
+			Expression:  "true",
 		},
 		{
 			Name:              "ssoSettingsLDAP",
@@ -1373,11 +1372,30 @@ var (
 			Expression:  "true", // Enabled by default for now
 		},
 		{
+			Name:            "backgroundPluginInstaller",
+			Description:     "Enable background plugin installer",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:            "dataplaneAggregator",
 			Description:     "Enable grafana dataplane aggregator",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
+		},
+		{
+			Name:        "adhocFilterOneOf",
+			Description: "Exposes a new 'one of' operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+		},
+		{
+			Name:        "lokiSendDashboardPanelNames",
+			Description: "Send dashboard and panel names to Loki when querying",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityLogsSquad,
 		},
 	}
 )

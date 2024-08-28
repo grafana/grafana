@@ -13,6 +13,7 @@ import { LocalValueVariable, sceneGraph, SceneGridRow, VizPanel, VizPanelMenu } 
 import { DataQuery, OptionsWithLegend } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
+import { contextSrv } from 'app/core/services/context_srv';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { InspectTab } from 'app/features/inspector/types';
@@ -23,7 +24,6 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
-import { SharePanelInternally } from '../sharing/panel-share/SharePanelInternally';
 import { DashboardInteractions } from '../utils/interactions';
 import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
@@ -87,13 +87,42 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         shortcut: 'p u',
         onClick: () => {
           const drawer = new ShareDrawer({
-            title: t('share-panel.drawer.share-link-title', 'Link settings'),
-            body: new SharePanelInternally({ panelRef: panel.getRef() }),
+            shareView: shareDashboardType.link,
+            panelRef: panel.getRef(),
           });
 
           dashboard.showModal(drawer);
         },
       });
+      subMenu.push({
+        text: t('share-panel.menu.share-embed-title', 'Share embed'),
+        iconClassName: 'arrow',
+        shortcut: 'p e',
+        onClick: () => {
+          const drawer = new ShareDrawer({
+            shareView: shareDashboardType.embed,
+            panelRef: panel.getRef(),
+          });
+
+          dashboard.showModal(drawer);
+        },
+      });
+
+      if (contextSrv.isSignedIn && config.snapshotEnabled && dashboard.canEditDashboard()) {
+        subMenu.push({
+          text: t('share-panel.menu.share-snapshot-title', 'Share snapshot'),
+          iconClassName: 'camera',
+          shortcut: 'p s',
+          onClick: () => {
+            const drawer = new ShareDrawer({
+              shareView: shareDashboardType.snapshot,
+              panelRef: panel.getRef(),
+            });
+
+            dashboard.showModal(drawer);
+          },
+        });
+      }
 
       items.push({
         type: 'submenu',
@@ -154,17 +183,31 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
           },
         });
       } else {
-        moreSubMenu.push({
-          text: t('panel.header-menu.create-library-panel', `Create library panel`),
-          onClick: () => {
-            dashboard.showModal(
-              new ShareModal({
+        if (config.featureToggles.newDashboardSharingComponent) {
+          moreSubMenu.push({
+            text: t('share-panel.menu.new-library-panel-title', 'New library panel'),
+            onClick: () => {
+              const drawer = new ShareDrawer({
+                shareView: shareDashboardType.libraryPanel,
                 panelRef: panel.getRef(),
-                activeTab: shareDashboardType.libraryPanel,
-              })
-            );
-          },
-        });
+              });
+
+              dashboard.showModal(drawer);
+            },
+          });
+        } else {
+          moreSubMenu.push({
+            text: t('panel.header-menu.create-library-panel', `Create library panel`),
+            onClick: () => {
+              dashboard.showModal(
+                new ShareModal({
+                  panelRef: panel.getRef(),
+                  activeTab: shareDashboardType.libraryPanel,
+                })
+              );
+            },
+          });
+        }
       }
     }
 

@@ -284,7 +284,6 @@ func (s *ServiceImpl) hasAccessToInclude(c *contextmodel.ReqContext, pluginID st
 func (s *ServiceImpl) readNavigationSettings() {
 	s.navigationAppConfig = map[string]NavigationAppConfig{
 		"grafana-k8s-app":                  {SectionID: navtree.NavIDInfrastructure, SortWeight: 1, Text: "Kubernetes"},
-		"grafana-aws-app":                  {SectionID: navtree.NavIDInfrastructure, SortWeight: 2},
 		"grafana-app-observability-app":    {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApplication, Text: "Application", Icon: "graph-bar"},
 		"grafana-lokiexplore-app":          {SectionID: navtree.NavIDExplore, SortWeight: 1, Text: "Logs"},
 		"grafana-exploretraces-app":        {SectionID: navtree.NavIDExplore, SortWeight: 2, Text: "Traces"},

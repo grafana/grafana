@@ -13,6 +13,8 @@ import (
 
 	"github.com/grafana/dskit/concurrency"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -20,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -44,12 +47,14 @@ type Service struct {
 	dashboardFolderStore folder.FolderStore
 	features             featuremgmt.FeatureToggles
 	accessControl        accesscontrol.AccessControl
-	// bus is currently used to publish event in case of title change
+	// bus is currently used to publish event in case of folder full path change.
+	// For example when a folder is moved to another folder or when a folder is renamed.
 	bus bus.Bus
 
 	mutex    sync.RWMutex
 	registry map[string]folder.RegistryService
 	metrics  *foldersMetrics
+	tracer   tracing.Tracer
 }
 
 func ProvideService(
@@ -61,6 +66,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	supportBundles supportbundles.Service,
 	r prometheus.Registerer,
+	tracer tracing.Tracer,
 ) folder.Service {
 	store := ProvideStore(db)
 	srv := &Service{
@@ -74,6 +80,7 @@ func ProvideService(
 		db:                   db,
 		registry:             make(map[string]folder.RegistryService),
 		metrics:              newFoldersMetrics(r),
+		tracer:               tracer,
 	}
 	srv.DBMigration(db)
 
@@ -592,21 +599,17 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 
 	user := cmd.SignedInUser
 
-	userID := int64(0)
-	var err error
-	namespaceID, userIDstr := user.GetTypedID()
-	if namespaceID != identity.TypeUser && namespaceID != identity.TypeServiceAccount {
-		s.log.Debug("User does not belong to a user or service account namespace, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
+	var userID int64
+	if id, err := identity.UserIdentifier(cmd.SignedInUser.GetID()); err == nil {
+		userID = id
 	} else {
-		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
-		if err != nil {
-			s.log.Debug("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
-		}
+		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "id", cmd.SignedInUser.GetID())
 	}
 
 	if userID == 0 {
 		userID = -1
 	}
+
 	dashFolder.CreatedBy = userID
 	dashFolder.UpdatedBy = userID
 	dashFolder.UpdateSlug()
@@ -659,6 +662,9 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 }
 
 func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.Update")
+	defer span.End()
+
 	if cmd.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -682,17 +688,9 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 		}
 
 		if cmd.NewTitle != nil {
-			namespace, id := cmd.SignedInUser.GetTypedID()
-
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-			if err := s.bus.Publish(ctx, &events.FolderTitleUpdated{
-				Timestamp: foldr.Updated,
-				Title:     foldr.Title,
-				ID:        dashFolder.ID, // nolint:staticcheck
-				UID:       dashFolder.UID,
-				OrgID:     cmd.OrgID,
-			}); err != nil {
-				s.log.ErrorContext(ctx, "failed to publish FolderTitleUpdated event", "folder", foldr.Title, "user", id, "namespace", namespace, "error", err)
+
+			if err := s.publishFolderFullPathUpdatedEvent(ctx, foldr.Updated, cmd.OrgID, cmd.UID); err != nil {
 				return err
 			}
 		}
@@ -739,12 +737,10 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 	}
 
 	var userID int64
-	namespace, id := cmd.SignedInUser.GetTypedID()
-	if namespace == identity.TypeUser || namespace == identity.TypeServiceAccount {
-		userID, err = identity.IntIdentifier(namespace, id)
-		if err != nil {
-			s.log.ErrorContext(ctx, "failed to parse user ID", "namespace", namespace, "userID", id, "error", err)
-		}
+	if id, err := identity.UserIdentifier(cmd.SignedInUser.GetID()); err == nil {
+		userID = id
+	} else {
+		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "id", cmd.SignedInUser.GetID())
 	}
 
 	prepareForUpdate(dashFolder, cmd.OrgID, userID, cmd)
@@ -881,6 +877,9 @@ func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderComm
 }
 
 func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.Move")
+	defer span.End()
+
 	if cmd.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -955,11 +954,45 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 			return folder.ErrInternal.Errorf("failed to move legacy folder: %w", err)
 		}
 
+		if err := s.publishFolderFullPathUpdatedEvent(ctx, f.Updated, cmd.OrgID, cmd.UID); err != nil {
+			return err
+		}
+
 		return nil
 	}); err != nil {
 		return nil, err
 	}
 	return f, nil
+}
+
+func (s *Service) publishFolderFullPathUpdatedEvent(ctx context.Context, timestamp time.Time, orgID int64, folderUID string) error {
+	ctx, span := s.tracer.Start(ctx, "folder.publishFolderFullPathUpdatedEvent")
+	defer span.End()
+
+	descFolders, err := s.store.GetDescendants(ctx, orgID, folderUID)
+	if err != nil {
+		s.log.ErrorContext(ctx, "Failed to get descendants of the folder", "folderUID", folderUID, "orgID", orgID, "error", err)
+		return err
+	}
+	uids := make([]string, 0, len(descFolders)+1)
+	uids = append(uids, folderUID)
+	for _, f := range descFolders {
+		uids = append(uids, f.UID)
+	}
+	span.AddEvent("found folder descendants", trace.WithAttributes(
+		attribute.Int64("folders", int64(len(uids))),
+	))
+
+	if err := s.bus.Publish(ctx, &events.FolderFullPathUpdated{
+		Timestamp: timestamp,
+		UIDs:      uids,
+		OrgID:     orgID,
+	}); err != nil {
+		s.log.ErrorContext(ctx, "Failed to publish FolderFullPathUpdated event", "folderUID", folderUID, "orgID", orgID, "descendantsUIDs", uids, "error", err)
+		return err
+	}
+
+	return nil
 }
 
 func (s *Service) canMove(ctx context.Context, cmd *folder.MoveFolderCommand) (bool, error) {
@@ -1163,15 +1196,11 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		}
 	}
 
-	userID := int64(0)
-	namespaceID, userIDstr := dto.User.GetTypedID()
-	if namespaceID != identity.TypeUser && namespaceID != identity.TypeServiceAccount {
-		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
+	var userID int64
+	if id, err := identity.UserIdentifier(dto.User.GetID()); err == nil {
+		userID = id
 	} else {
-		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
-		if err != nil {
-			s.log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
-		}
+		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "id", dto.User.GetID())
 	}
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()

@@ -155,6 +155,11 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			  "js": ["public/build/runtime.XYZ.js"]
 			}
 		  },
+		  "swagger": {
+			"assets": {
+			  "js": ["public/build/runtime.XYZ.js"]
+			}
+		  },
 		  "dark": {
 			"assets": {
 			  "css": ["public/build/dark.css"]
