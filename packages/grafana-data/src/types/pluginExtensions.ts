@@ -41,7 +41,7 @@ export type PluginExtension = PluginExtensionLink | PluginExtensionComponent;
 // Objects used for registering extensions (in app plugins)
 // --------------------------------------------------------
 
-type PluginConfigBase = {
+type PluginExtensionConfigBase = {
   /**
    * The title of the link extension
    */
@@ -53,7 +53,7 @@ type PluginConfigBase = {
   description: string;
 };
 
-export type PluginExtensionAddedComponentConfig<Props = {}> = PluginConfigBase & {
+export type PluginExtensionAddedComponentConfig<Props = {}> = PluginExtensionConfigBase & {
   /**
    * The target extension points where the component will be added
    */
@@ -86,7 +86,7 @@ export type PluginAddedLinksConfigureFunc<Context extends object> = (context?: R
     }>
   | undefined;
 
-export type PluginExtensionAddedLinkConfig<Context extends object = object> = PluginConfigBase & {
+export type PluginExtensionAddedLinkConfig<Context extends object = object> = PluginExtensionConfigBase & {
   /**
    * The target extension points where the link will be added
    */
@@ -116,7 +116,7 @@ export type PluginExtensionAddedLinkConfig<Context extends object = object> = Pl
   category?: string;
 };
 
-export type PluginExtensionExposedComponentConfig<Props = {}> = PluginConfigBase & {
+export type PluginExtensionExposedComponentConfig<Props = {}> = PluginExtensionConfigBase & {
   /**
    * The unique identifier of the component
    * Shoud be in the format of `<pluginId>/<componentName>/<componentVersion>`. e.g. `myorg-todo-app/todo-list/v1`

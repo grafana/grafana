@@ -7,7 +7,6 @@ import {
   type PluginExtensionLinkConfig,
   PluginExtensionComponentConfig,
   PluginExtensionExposedComponentConfig,
-  PluginExtensionConfig,
   PluginExtensionAddedComponentConfig,
   PluginExtensionAddedLinkConfig,
 } from './pluginExtensions';
@@ -61,7 +60,6 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
   private _exposedComponentConfigs: PluginExtensionExposedComponentConfig[] = [];
   private _addedComponentConfigs: PluginExtensionAddedComponentConfig[] = [];
   private _addedLinkConfigs: PluginExtensionAddedLinkConfig[] = [];
-  private _extensionConfigs: PluginExtensionConfig[] = [];
 
   // Content under: /a/${plugin-id}/*
   root?: ComponentType<AppRootProps<T>>;
@@ -109,10 +107,6 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
 
   get addedComponentConfigs() {
     return this._addedComponentConfigs;
-  }
-
-  get extensionConfigs() {
-    return this._extensionConfigs;
   }
 
   get addedLinkConfigs() {

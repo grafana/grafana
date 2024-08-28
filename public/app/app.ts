@@ -89,6 +89,7 @@ import { createPluginExtensionsGetter } from './features/plugins/extensions/getP
 import { AddedComponentsRegistry } from './features/plugins/extensions/registry/AddedComponentsRegistry';
 import { AddedLinksRegistry } from './features/plugins/extensions/registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './features/plugins/extensions/registry/ExposedComponentsRegistry';
+import { setupPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
 import { createUsePluginComponent } from './features/plugins/extensions/usePluginComponent';
 import { createUsePluginComponents } from './features/plugins/extensions/usePluginComponents';
 import { createUsePluginExtensions } from './features/plugins/extensions/usePluginExtensions';
@@ -215,16 +216,7 @@ export class GrafanaApp {
       initWindowRuntime();
 
       // Initialize plugin extensions
-      const pluginExtensionsRegistries = {
-        addedComponentsRegistry: new AddedComponentsRegistry(),
-        exposedComponentsRegistry: new ExposedComponentsRegistry(),
-        addedLinksRegistry: new AddedLinksRegistry(),
-      };
-
-      pluginExtensionsRegistries.addedLinksRegistry.register({
-        pluginId: 'grafana',
-        configs: getCoreExtensionConfigurations(),
-      });
+      const pluginExtensionsRegistries = setupPluginExtensionRegistries();
 
       if (contextSrv.user.orgRole !== '') {
         // The "cloud-home-app" is registering banners once it's loaded, and this can cause a rerender in the AppChrome if it's loaded after the Grafana app init.
