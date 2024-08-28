@@ -166,6 +166,8 @@ export const availableIconsIndex = {
   kubernetes: true,
   'layer-group': true,
   'layers-alt': true,
+  'legend-hide': true,
+  'legend-show': true,
   'library-panel': true,
   'line-alt': true,
   link: true,
