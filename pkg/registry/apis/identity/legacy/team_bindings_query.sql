@@ -1,4 +1,5 @@
-SELECT tm.id as id, t.uid as team_uid, t.id as team_id, u.uid as user_uid, tm.created, tm.updated, tm.permission FROM {{ .Ident .TeamMemberTable }} tm
+SELECT tm.id as id, t.uid as team_uid, t.id as team_id, u.uid as user_uid, tm.created, tm.updated, tm.permission
+FROM {{ .Ident .TeamMemberTable }} tm
 INNER JOIN {{ .Ident .TeamTable }} t ON tm.team_id = t.id
 INNER JOIN {{ .Ident .UserTable }} u ON tm.user_id  = u.id
 WHERE
