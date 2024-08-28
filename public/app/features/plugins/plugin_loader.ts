@@ -74,7 +74,7 @@ export async function importPluginModule({
   isAngular?: boolean;
 }): Promise<System.Module> {
   if (version) {
-    registerPluginInCache({ pluginId, version, isAngular });
+    registerPluginInCache({ path, version, isAngular });
   }
 
   const builtIn = builtInPlugins[path];
