@@ -14,6 +14,7 @@ export const plugin = new PanelPlugin<Options>(BarGaugePanel)
   .setPanelOptions((builder) => {
     addStandardDataReduceOptions(builder);
     addOrientationOption(builder);
+    commonOptionsBuilder.addLegendOptions(builder, true, false);
     commonOptionsBuilder.addTextSizeOptions(builder);
 
     builder
