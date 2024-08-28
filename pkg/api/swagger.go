@@ -50,6 +50,12 @@ func (hs *HTTPServer) registerSwaggerUI(r routing.RouteRegister) {
 			"AppleTouchIcon": "public/img/apple-touch-icon.png",
 		}
 
+		// If CSPReportOnlyEnabled is true, we need to remove the CSPReportOnly header, since
+		// we set a CSP header down below.
+		if hs.Cfg.CSPReportOnlyEnabled {
+			c.Resp.Header().Del("Content-Security-Policy-Report-Only")
+		}
+
 		c.Resp.Header().Set("Content-Security-Policy", csp)
 		c.HTML(http.StatusOK, "swagger", data)
 	})
