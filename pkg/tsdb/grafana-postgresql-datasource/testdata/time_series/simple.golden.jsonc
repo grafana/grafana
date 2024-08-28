@@ -4,7 +4,7 @@
 //      "type": "timeseries-wide",
 //      "typeVersion": [
 //          0,
-//          0
+//          1
 //      ],
 //      "executedQueryString": "SELECT * FROM tbl"
 //  }
@@ -33,7 +33,7 @@
           "type": "timeseries-wide",
           "typeVersion": [
             0,
-            0
+            1
           ],
           "executedQueryString": "SELECT * FROM tbl"
         },
