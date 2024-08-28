@@ -1,4 +1,4 @@
-import testDashboard from '../dashboards/TestDashboard.json';
+import testDashboard from '../dashboards/TestRestoreDashboard.json';
 import { e2e } from '../utils';
 
 describe('Dashboard restore', () => {
@@ -16,40 +16,40 @@ describe('Dashboard restore', () => {
 
     // Dashboard should appear in Recently Deleted
     e2e.pages.RecentlyDeleted.visit();
-    e2e.pages.Search.table.row('E2E Test - Import Dashboard').should('exist');
+    e2e.pages.Search.table.row('E2E Test - Restore Dashboard').should('exist');
 
     // Restore dashboard
-    e2e.pages.Search.table.row('E2E Test - Import Dashboard').find('[type="checkbox"]').click({ force: true });
+    e2e.pages.Search.table.row('E2E Test - Restore Dashboard').find('[type="checkbox"]').click({ force: true });
     cy.contains('button', 'Restore').click();
     cy.contains('p', 'This action will restore 1 dashboard.').should('be.visible');
     e2e.pages.ConfirmModal.delete().click();
 
     // Dashboard should appear in Browse
     e2e.pages.Dashboards.visit();
-    e2e.pages.BrowseDashboards.table.row('E2E Test - Import Dashboard').should('exist');
+    e2e.pages.BrowseDashboards.table.row('E2E Test - Restore Dashboard').should('exist');
 
     // Delete dashboard
     deleteDashboard();
 
     // Permanently delete dashboard
     e2e.pages.RecentlyDeleted.visit();
-    e2e.pages.Search.table.row('E2E Test - Import Dashboard').find('[type="checkbox"]').click({ force: true });
+    e2e.pages.Search.table.row('E2E Test - Restore Dashboard').find('[type="checkbox"]').click({ force: true });
     cy.contains('button', 'Delete permanently').click();
     cy.contains('p', 'This action will delete 1 dashboard.').should('be.visible');
     e2e.flows.confirmDelete();
 
     // Dashboard should not appear in Recently Deleted or Browse
-    e2e.pages.Search.table.row('E2E Test - Import Dashboard').should('not.exist');
+    e2e.pages.Search.table.row('E2E Test - Restore Dashboard').should('not.exist');
 
     e2e.pages.Dashboards.visit();
-    e2e.pages.BrowseDashboards.table.row('E2E Test - Import Dashboard').should('not.exist');
+    e2e.pages.BrowseDashboards.table.row('E2E Test - Restore Dashboard').should('not.exist');
   });
 });
 
 const deleteDashboard = () => {
-  e2e.pages.BrowseDashboards.table.row('E2E Test - Import Dashboard').find('[type="checkbox"]').click({ force: true });
+  e2e.pages.BrowseDashboards.table.row('E2E Test - Restore Dashboard').find('[type="checkbox"]').click({ force: true });
 
   cy.contains('button', 'Delete').click();
   e2e.flows.confirmDelete();
-  e2e.pages.BrowseDashboards.table.row('E2E Test - Import Dashboard').should('not.exist');
+  e2e.pages.BrowseDashboards.table.row('E2E Test - Restore Dashboard').should('not.exist');
 };
