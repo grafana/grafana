@@ -66,19 +66,30 @@ describe('useContactPoints', () => {
   });
 
   it('returns ~matching responses with and without alertingApiServer', async () => {
+    // Compare the responses between the two implementations, but do not consider:
+    // - ID: k8s API will return id properties, but the AM config will fall back to the name of the contact point.
+    //       These will be different, so we don't want to compare them
+    // - Metadata: k8s API includes metadata, AM config does not
+
     const snapshotAmConfig = await getHookResponse(false);
     const snapshotAlertingApiServer = await getHookResponse(true);
 
-    // k8s returns IDs and additional metadata, AM config will not
-    // We want to assert that the two match, without considering these property
-    const strippedContactPoints = snapshotAlertingApiServer.contactPoints.map((receiver) => {
+    const amContactPoints = snapshotAmConfig.contactPoints.map((receiver) => {
+      const { id, ...rest } = receiver;
+      return rest;
+    });
+
+    const k8sContactPoints = snapshotAlertingApiServer.contactPoints.map((receiver) => {
       const { id, metadata, ...rest } = receiver;
       return rest;
     });
 
-    expect(snapshotAmConfig).toEqual({
+    expect({
+      ...snapshotAmConfig,
+      contactPoints: amContactPoints,
+    }).toEqual({
       ...snapshotAlertingApiServer,
-      contactPoints: strippedContactPoints,
+      contactPoints: k8sContactPoints,
     });
   });
 

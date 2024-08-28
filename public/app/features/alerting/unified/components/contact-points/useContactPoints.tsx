@@ -105,10 +105,13 @@ const parseK8sReceiver = (item: K8sReceiver): GrafanaManagedContactPoint => {
 const useK8sContactPoints = (...[hookParams, queryOptions]: Parameters<typeof useListNamespacedReceiverQuery>) => {
   return useListNamespacedReceiverQuery(hookParams, {
     ...queryOptions,
-    selectFromResult: ({ data, ...rest }) => {
+    selectFromResult: (result) => {
+      const data = result.data?.items.map((item) => parseK8sReceiver(item));
+
       return {
-        ...rest,
-        data: data?.items.map((item) => parseK8sReceiver(item)),
+        ...result,
+        data,
+        currentData: data,
       };
     },
   });
@@ -125,12 +128,15 @@ const useFetchGrafanaContactPoints = ({ skip }: Skippable = {}) => {
   const grafanaResponse = useGetContactPointsListQuery(undefined, {
     skip: skip || useK8sApi,
     selectFromResult: (result) => {
+      const data = result.data?.map((item) => ({
+        ...item,
+        provisioned: item.grafana_managed_receiver_configs?.some((item) => item.provenance),
+      }));
+
       return {
         ...result,
-        data: result.data?.map((item) => ({
-          ...item,
-          provisioned: item.grafana_managed_receiver_configs?.some((item) => item.provenance),
-        })),
+        data,
+        currentData: data,
       };
     },
   });
@@ -225,6 +231,7 @@ const useGetAlertmanagerContactPoint = (
       return {
         ...result,
         data: matchedContactPoint,
+        currentData: matchedContactPoint,
       };
     },
   });
@@ -244,10 +251,14 @@ const useGetGrafanaContactPoint = (
     { namespace, name },
     {
       ...queryOptions,
-      selectFromResult: (result) => ({
-        ...result,
-        data: result.data ? parseK8sReceiver(result.data) : undefined,
-      }),
+      selectFromResult: (result) => {
+        const data = result.data ? parseK8sReceiver(result.data) : undefined;
+        return {
+          ...result,
+          data,
+          currentData: data,
+        };
+      },
       skip: queryOptions?.skip || !useK8sApi,
     }
   );
