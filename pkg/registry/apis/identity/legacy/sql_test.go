@@ -123,7 +123,7 @@ func TestIdentityQueries(t *testing.T) {
 					}),
 				},
 			},
-			sqlQueryTeamBindings: {
+			sqlQueryTeamBindingsTemplate: {
 				{
 					Name: "team_1_bindings",
 					Data: listTeamBindings(&ListTeamBindingsQuery{
@@ -150,7 +150,7 @@ func TestIdentityQueries(t *testing.T) {
 					}),
 				},
 			},
-			sqlQueryTeamMembers: {
+			sqlQueryTeamMembersTemplate: {
 				{
 					Name: "team_1_members_page_1",
 					Data: listTeamMembers(&ListTeamMembersQuery{
