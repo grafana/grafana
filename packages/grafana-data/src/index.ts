@@ -581,6 +581,7 @@ export {
   type PluginError,
   type AngularMeta,
   type PluginMeta,
+  type PluginLoadingStrategy,
   type PluginDependencies,
   type PluginInclude,
   type PluginBuildInfo,

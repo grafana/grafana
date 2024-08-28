@@ -59,6 +59,8 @@ export interface AngularMeta {
   hideDeprecation: boolean;
 }
 
+export type PluginLoadingStrategy = 'fetch' | 'script';
+
 export interface PluginMeta<T extends KeyValue = {}> {
   id: string;
   name: string;
@@ -91,6 +93,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   live?: boolean;
   angular?: AngularMeta;
   angularDetected?: boolean;
+  loadingStrategy: PluginLoadingStrategy;
 }
 
 interface PluginDependencyInfo {
