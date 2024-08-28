@@ -142,8 +142,16 @@ To vote for a link, click the triangle icon next to the name of the link.
 
 Grafana is an open-source platform for monitoring and observability that lets you visualize and explore the state of your systems.
 
+<!-- INTERACTIVE ignore START -->
 1. Open a new tab.
 1. Browse to [http://localhost:3000](http://localhost:3000).
+<!-- INTERACTIVE ignore END -->
+
+{{< docs/ignore >}}
+1. Open a new tab.
+1. Browse to [http://localhost:3000](http://localhost:3000).
+{{< /docs/ignore >}}
+
 
 <!-- INTERACTIVE ignore START -->
 {{< admonition type="note" >}}
