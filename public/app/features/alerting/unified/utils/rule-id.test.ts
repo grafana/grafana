@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react-hooks';
 
-import { RuleIdentifier } from 'app/types/unified-alerting';
+import { AlertingRule, RecordingRule, RuleIdentifier } from 'app/types/unified-alerting';
 import {
   GrafanaAlertStateDecision,
   GrafanaRuleDefinition,
@@ -13,21 +13,37 @@ import {
 
 import { hashRulerRule, parse, stringifyIdentifier, getRuleIdFromPathname, hashRule, equal } from './rule-id';
 
-const promRule = {
-  name: 'cpu-over-90',
-  query: 'cpu_usage_seconds_total{job="integrations/node_exporter"} > 90',
-  labels: { type: 'cpu' },
-  annotations: { description: 'CPU usage too high' },
-  state: PromAlertingRuleState.Firing,
-  type: PromRuleType.Alerting,
-  health: 'ok',
+const alertingRule = {
+  prom: {
+    name: 'cpu-over-90',
+    query: 'cpu_usage_seconds_total{job="integrations/node_exporter"} > 90',
+    labels: { type: 'cpu' },
+    annotations: { description: 'CPU usage too high' },
+    state: PromAlertingRuleState.Firing,
+    type: PromRuleType.Alerting,
+    health: 'ok',
+  } satisfies AlertingRule,
+  ruler: {
+    alert: 'cpu-over-90',
+    expr: 'cpu_usage_seconds_total{job="integrations/node_exporter"} > 90',
+    labels: { type: 'cpu' },
+    annotations: { description: 'CPU usage too high' },
+  } satisfies RulerAlertingRuleDTO,
 };
 
-const rulerRule = {
-  alert: 'cpu-over-90',
-  expr: 'cpu_usage_seconds_total{job="integrations/node_exporter"} > 90',
-  labels: { type: 'cpu' },
-  annotations: { description: 'CPU usage too high' },
+const recordingRule = {
+  prom: {
+    name: 'instance:node_num_cpu:sum',
+    type: PromRuleType.Recording,
+    health: 'ok',
+    query: 'count without (mode) (node_cpu_seconds_total{job="integrations/node_exporter"})',
+    labels: { type: 'cpu' },
+  } satisfies RecordingRule,
+  ruler: {
+    record: 'instance:node_num_cpu:sum',
+    expr: 'count without (mode) (node_cpu_seconds_total{job="integrations/node_exporter"})',
+    labels: { type: 'cpu' },
+  } satisfies RulerRecordingRuleDTO,
 };
 
 describe('hashRulerRule', () => {
@@ -37,8 +53,9 @@ describe('hashRulerRule', () => {
     expect(() => {
       // @ts-ignore
       hashRulerRule(unknownRule);
-    }).toThrowError();
+    }).toThrow('Only recording and alerting ruler rules can be hashed');
   });
+
   it('should hash recording rules', () => {
     const recordingRule: RulerRecordingRuleDTO = {
       record: 'instance:node_num_cpu:sum',
@@ -137,30 +154,37 @@ describe('hashRulerRule', () => {
 });
 
 describe('hashRule', () => {
-  it('should produce hashRulerRule compatible hashes', () => {
-    const promHash = hashRule(promRule);
-    const rulerHash = hashRulerRule(rulerRule);
+  it('should produce hashRulerRule compatible hashes for alerting rules', () => {
+    const promHash = hashRule(alertingRule.prom);
+    const rulerHash = hashRulerRule(alertingRule.ruler);
+
+    expect(promHash).toBe(rulerHash);
+  });
+
+  it('should produce hashRulerRule compatible hashes for recording rules', () => {
+    const promHash = hashRule(recordingRule.prom);
+    const rulerHash = hashRulerRule(recordingRule.ruler);
 
     expect(promHash).toBe(rulerHash);
   });
 });
 
-describe('eqaul', () => {
+describe('equal', () => {
   it('should return true for Prom and cloud identifiers with the same name, type, query and labels', () => {
     const promIdentifier: RuleIdentifier = {
       ruleSourceName: 'mimir-cloud',
       namespace: 'cloud-alerts',
       groupName: 'cpu-usage',
-      ruleName: promRule.name,
-      ruleHash: hashRule(promRule),
+      ruleName: alertingRule.prom.name,
+      ruleHash: hashRule(alertingRule.prom),
     };
 
     const cloudIdentifier: RuleIdentifier = {
       ruleSourceName: 'mimir-cloud',
       namespace: 'cloud-alerts',
       groupName: 'cpu-usage',
-      ruleName: promRule.name,
-      ruleHash: hashRulerRule(rulerRule),
+      ruleName: alertingRule.ruler.alert,
+      ruleHash: hashRulerRule(alertingRule.ruler),
     };
 
     const promToCloud = equal(promIdentifier, cloudIdentifier);

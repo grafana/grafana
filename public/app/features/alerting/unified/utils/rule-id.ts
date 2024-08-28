@@ -245,11 +245,11 @@ export function hashRulerRule(rule: RulerRuleDTO): string {
     return rule.grafana_alert.uid;
   }
 
-  const fingerprint = getRulerRuleFingerPrint(rule);
+  const fingerprint = getRulerRuleFingerprint(rule);
   return hash(JSON.stringify(fingerprint)).toString();
 }
 
-function getRulerRuleFingerPrint(rule: RulerRuleDTO) {
+function getRulerRuleFingerprint(rule: RulerRuleDTO) {
   if (isRecordingRulerRule(rule)) {
     return [rule.record, PromRuleType.Recording, hashQuery(rule.expr), hashLabelsOrAnnotations(rule.labels)];
   }
@@ -266,24 +266,23 @@ function getRulerRuleFingerPrint(rule: RulerRuleDTO) {
 }
 
 export function hashRule(rule: Rule): string {
+  const fingerprint = getPromRuleFingerprint(rule);
+  return hash(JSON.stringify(fingerprint)).toString();
+}
+
+function getPromRuleFingerprint(rule: Rule) {
   if (isRecordingRule(rule)) {
-    return hash(
-      JSON.stringify([rule.name, PromRuleType.Recording, hashQuery(rule.query), hashLabelsOrAnnotations(rule.labels)])
-    ).toString();
+    return [rule.name, PromRuleType.Recording, hashQuery(rule.query), hashLabelsOrAnnotations(rule.labels)];
   }
-
   if (isAlertingRule(rule)) {
-    return hash(
-      JSON.stringify([
-        rule.name,
-        PromRuleType.Alerting,
-        hashQuery(rule.query),
-        hashLabelsOrAnnotations(rule.annotations),
-        hashLabelsOrAnnotations(rule.labels),
-      ])
-    ).toString();
+    return [
+      rule.name,
+      PromRuleType.Alerting,
+      hashQuery(rule.query),
+      hashLabelsOrAnnotations(rule.annotations),
+      hashLabelsOrAnnotations(rule.labels),
+    ];
   }
-
   throw new Error('Only recording and alerting rules can be hashed');
 }
 
