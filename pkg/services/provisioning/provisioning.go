@@ -81,6 +81,16 @@ func ProvideService(
 	return s, nil
 }
 
+func (ps *ProvisioningServiceImpl) setDashboardProvisioner() error {
+	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
+	dashProvisioner, err := ps.newDashboardProvisioner(context.Background(), dashboardPath, ps.dashboardProvisioningService, ps.orgService, ps.dashboardService, ps.folderService)
+	if err != nil {
+		return fmt.Errorf("%v: %w", "Failed to create provisioner", err)
+	}
+	ps.dashboardProvisioner = dashProvisioner
+	return nil
+}
+
 type ProvisioningService interface {
 	registry.BackgroundService
 	RunInitProvisioners(ctx context.Context) error
@@ -112,15 +122,22 @@ func newProvisioningServiceImpl(
 	provisionDatasources func(context.Context, string, datasources.Store, datasources.CorrelationsStore, org.Service) error,
 	provisionPlugins func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error,
 	searchService searchV2.SearchService,
-) *ProvisioningServiceImpl {
-	return &ProvisioningServiceImpl{
+) (*ProvisioningServiceImpl, error) {
+	s := &ProvisioningServiceImpl{
 		log:                     log.New("provisioning"),
 		newDashboardProvisioner: newDashboardProvisioner,
 		provisionNotifiers:      provisionNotifiers,
 		provisionDatasources:    provisionDatasources,
 		provisionPlugins:        provisionPlugins,
 		searchService:           searchService,
+		Cfg:                     setting.NewCfg(),
 	}
+
+	if err := s.setDashboardProvisioner(); err != nil {
+		return nil, fmt.Errorf("%v: %w", "Failed to create provisioner", err)
+	}
+
+	return s, nil
 }
 
 type ProvisioningServiceImpl struct {

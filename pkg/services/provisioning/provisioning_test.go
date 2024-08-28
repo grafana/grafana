@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -19,7 +20,7 @@ import (
 
 func TestProvisioningServiceImpl(t *testing.T) {
 	t.Run("Restart dashboard provisioning and stop service", func(t *testing.T) {
-		serviceTest := setup()
+		serviceTest := setup(t)
 		err := serviceTest.service.ProvisionDashboards(context.Background())
 		assert.Nil(t, err)
 		serviceTest.startService()
@@ -46,7 +47,7 @@ func TestProvisioningServiceImpl(t *testing.T) {
 	})
 
 	t.Run("Failed reloading does not stop polling with old provisioned", func(t *testing.T) {
-		serviceTest := setup()
+		serviceTest := setup(t)
 		err := serviceTest.service.ProvisionDashboards(context.Background())
 		assert.Nil(t, err)
 		serviceTest.startService()
@@ -69,7 +70,7 @@ func TestProvisioningServiceImpl(t *testing.T) {
 	})
 
 	t.Run("Should not return run error when dashboard provisioning fails", func(t *testing.T) {
-		serviceTest := setup()
+		serviceTest := setup(t)
 		provisioningErr := errors.New("Test error")
 		serviceTest.mock.ProvisionFunc = func(ctx context.Context) error {
 			return provisioningErr
@@ -104,7 +105,7 @@ type serviceTestStruct struct {
 	service *ProvisioningServiceImpl
 }
 
-func setup() *serviceTestStruct {
+func setup(t *testing.T) *serviceTestStruct {
 	serviceTest := &serviceTestStruct{}
 	serviceTest.waitTimeout = time.Second
 
@@ -118,7 +119,7 @@ func setup() *serviceTestStruct {
 
 	searchStub := searchV2.NewStubSearchService()
 
-	serviceTest.service = newProvisioningServiceImpl(
+	service, err := newProvisioningServiceImpl(
 		func(context.Context, string, dashboardstore.DashboardProvisioningService, org.Service, utils.DashboardStore, folder.Service) (dashboards.DashboardProvisioner, error) {
 			return serviceTest.mock, nil
 		},
@@ -127,6 +128,9 @@ func setup() *serviceTestStruct {
 		nil,
 		searchStub,
 	)
+	serviceTest.service = service
+	require.NoError(t, err)
+
 	serviceTest.service.Cfg = setting.NewCfg()
 
 	ctx, cancel := context.WithCancel(context.Background())
