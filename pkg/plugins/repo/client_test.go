@@ -57,6 +57,8 @@ func Test_Download(t *testing.T) {
 				http.Error(w, "error", http.StatusInternalServerError)
 				return
 			}
+			retryCount := r.Header.Get("grafana-retrycount")
+			require.Equal(t, "2", retryCount, "retry count should be set")
 			err := writeFakeZip(w)
 			require.NoError(t, err)
 		}))
