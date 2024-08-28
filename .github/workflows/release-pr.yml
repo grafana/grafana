@@ -8,6 +8,10 @@ name: Complete a Grafana release
 on:
   workflow_dispatch:
     inputs:
+      previous_version:
+        type: string
+        required: false
+        description: 'The release version (semver, git tag, branch or commit) to use for comparison'
       version:
         required: true
         type: string
@@ -38,6 +42,7 @@ jobs:
     name: Create PR to main to update the changelog
     uses: ./.github/workflows/changelog.yml
     with:
+      previous_version: ${{inputs.previous_version}}
       version: ${{ inputs.version }}
       latest: ${{ inputs.latest }}
       dry_run: ${{ inputs.dry_run }}

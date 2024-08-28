@@ -49,10 +49,23 @@ export const plugin = new PanelPlugin<Options>(BarGaugePanel)
             { value: BarGaugeNamePlacement.Auto, label: 'Auto' },
             { value: BarGaugeNamePlacement.Top, label: 'Top' },
             { value: BarGaugeNamePlacement.Left, label: 'Left' },
+            { value: BarGaugeNamePlacement.Hidden, label: 'Hidden' },
           ],
         },
         defaultValue: defaultOptions.namePlacement,
         showIf: (options) => options.orientation !== VizOrientation.Vertical,
+      })
+      .addRadio({
+        path: 'namePlacement',
+        name: 'Name placement',
+        settings: {
+          options: [
+            { value: BarGaugeNamePlacement.Auto, label: 'Auto' },
+            { value: BarGaugeNamePlacement.Hidden, label: 'Hidden' },
+          ],
+        },
+        defaultValue: defaultOptions.namePlacement,
+        showIf: (options) => options.orientation === VizOrientation.Vertical,
       })
       .addBooleanSwitch({
         path: 'showUnfilled',

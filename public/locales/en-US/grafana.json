@@ -704,7 +704,7 @@
   "embed": {
     "share": {
       "time-range-description": "Change the current relative time range to an absolute time range",
-      "time-range-label": "Time range"
+      "time-range-label": "Lock time range"
     }
   },
   "explore": {
@@ -2244,7 +2244,7 @@
       "html": "Embed HTML",
       "html-description": "The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled, the user viewing that page need to be signed into Grafana for the graph to load.",
       "info": "Generate HTML for embedding an iframe with this panel.",
-      "time-range": "Time range"
+      "time-range": "Lock time range"
     },
     "export": {
       "back-button": "Back to export config",
@@ -2316,8 +2316,7 @@
     "drawer": {
       "new-library-panel-title": "New library panel",
       "share-embed-title": "Share embed",
-      "share-link-title": "Link settings",
-      "share-snapshot-title": "Share snapshot"
+      "share-link-title": "Link settings"
     },
     "menu": {
       "new-library-panel-title": "New library panel",
