@@ -460,8 +460,11 @@ export const useValidateContactPoint = ({ alertmanager }: BaseAlertmanagerArgs) 
     return () => undefined;
   }
 
-  return async (value: string, skipValidation?: boolean) => {
-    if (skipValidation) {
+  return async (value: string, existingValue?: string) => {
+    // If we've been given an existing value, and the name has not changed,
+    // we can skip validation
+    // (as we don't want to incorrectly flag the existing name as matching itself)
+    if (existingValue && value === existingValue) {
       return;
     }
     return getConfig(alertmanager)
