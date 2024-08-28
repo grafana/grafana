@@ -10,7 +10,6 @@ labels:
     - oss
 title: Logs in Explore
 weight: 25
-
 ---
 
 # Logs in Explore
