@@ -59,6 +59,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     AccordianKeyValuesItem: css({
       marginBottom: theme.spacing(0.5),
     }),
+    parenthesis: css`
+      color: ${autoColor(theme, '#777')};
+    `,
   };
 };
 
@@ -117,7 +120,9 @@ export default function AccordianLogs({
             const formattedLogName = log.name && truncateLogNameInSummary ? log.name.slice(0, 20) + '...' : log.name;
             const label = formattedLogName ? (
               <span>
-                {formattedLogName} ({duration})
+                {formattedLogName} <span className={styles.parenthesis}>(</span>
+                {duration}
+                <span className={styles.parenthesis}>)</span>
               </span>
             ) : (
               formattedDuration
