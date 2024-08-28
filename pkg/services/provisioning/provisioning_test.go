@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -65,6 +66,46 @@ func TestProvisioningServiceImpl(t *testing.T) {
 
 		// Cancelling the root context and stopping the service
 		serviceTest.cancel()
+	})
+
+	t.Run("Should not return run error when dashboard provisioning fails because of folder", func(t *testing.T) {
+		serviceTest := setup(t)
+		provisioningErr := fmt.Errorf("%w: Test error", dashboards.ErrGetOrCreateFolder)
+		serviceTest.mock.ProvisionFunc = func(ctx context.Context) error {
+			return provisioningErr
+		}
+		err := serviceTest.service.ProvisionDashboards(context.Background())
+		assert.NotNil(t, err)
+		serviceTest.startService()
+
+		serviceTest.waitForPollChanges()
+		assert.Equal(t, 1, len(serviceTest.mock.Calls.PollChanges), "PollChanges should have been called")
+
+		// Cancelling the root context and stopping the service
+		serviceTest.cancel()
+		serviceTest.waitForStop()
+
+		assert.Equal(t, context.Canceled, serviceTest.serviceError)
+	})
+
+	t.Run("Should return run error when dashboard provisioning fails for non-allow-listed error", func(t *testing.T) {
+		serviceTest := setup(t)
+		provisioningErr := errors.New("Non-allow-listed error")
+		serviceTest.mock.ProvisionFunc = func(ctx context.Context) error {
+			return provisioningErr
+		}
+		err := serviceTest.service.ProvisionDashboards(context.Background())
+		assert.NotNil(t, err)
+		serviceTest.startService()
+
+		serviceTest.waitForPollChanges()
+		assert.Equal(t, 0, len(serviceTest.mock.Calls.PollChanges), "PollChanges should have been called")
+
+		// Cancelling the root context and stopping the service
+		serviceTest.cancel()
+		serviceTest.waitForStop()
+
+		assert.True(t, errors.Is(serviceTest.serviceError, provisioningErr))
 	})
 }
 

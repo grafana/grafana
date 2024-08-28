@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"sync"
@@ -185,7 +186,11 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 	err := ps.ProvisionDashboards(ctx)
 	if err != nil {
 		ps.log.Error("Failed to provision dashboard", "error", err)
-		return err
+		// Consider the allow list of errors for which running the provisioning service should not
+		// fail. For now this includes only dashboards.ErrGetOrCreateFolder.
+		if !errors.Is(err, dashboards.ErrGetOrCreateFolder) {
+			return err
+		}
 	}
 	if ps.dashboardProvisioner.HasDashboardSources() {
 		ps.searchService.TriggerReIndex()
