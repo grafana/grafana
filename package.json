@@ -122,7 +122,7 @@
     "@types/lodash": "4.17.7",
     "@types/logfmt": "^1.2.3",
     "@types/lucene": "^2",
-    "@types/node": "20.14.14",
+    "@types/node": "20.16.2",
     "@types/node-forge": "^1",
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.4",
     "@types/pluralize": "^0.0.33",
