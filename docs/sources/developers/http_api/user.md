@@ -26,14 +26,14 @@ refs:
 
 {{% admonition type="caution" %}}
 The Users HTTP API currently does not work with service account tokens. Service accounts are limited to an organization and an organization role. They cannot be granted [Grafana server administrator permissions]({{< relref "../roles-and-permissions/#grafana-server-administrators" >}}).
-  In order to use these API endpoints you have to use Basic Auth and the Grafana user must have the Grafana server administrator permission.
+In order to use these API endpoints you have to use Basic Auth and the Grafana user must have the Grafana server administrator permission.
 
-  The `admin` user that Grafana is provisioned with by default has permissions to use these API endpoints.
+The `admin` user that Grafana is provisioned with by default has permissions to use these API endpoints.
 
 Service account tokens can be used with Organization HTTP API to get users of specific organization.
 
 {{% /admonition %}}
-    
+
 > If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](ref:role-based-access-control-permissions) for more information.
 
 ## Search Users
