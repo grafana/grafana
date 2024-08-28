@@ -46,7 +46,7 @@ func (r *LegacyDisplayStore) NamespaceScoped() bool {
 
 func (r *LegacyDisplayStore) GetSingularName() string {
 	// not actually used anywhere, but required by SingularNameProvider
-	return "IdentityDisplay"
+	return "identitydisplay"
 }
 
 func (r *LegacyDisplayStore) ProducesMIMETypes(verb string) []string {

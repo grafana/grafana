@@ -1,6 +1,7 @@
-import { testIds } from '../components/testIds';
 import { PluginPage, usePluginComponents } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
+
+import { testIds } from '../testIds';
 
 type ReusableComponentProps = {
   name: string;

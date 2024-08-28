@@ -23,11 +23,19 @@ type IdentityDisplayResults struct {
 }
 
 type IdentityDisplay struct {
-	IdentityType claims.IdentityType `json:"type"` // The namespaced UID, eg `user|api-key|...`
-	UID          string              `json:"uid"`  // The namespaced UID, eg `xyz`
-	Display      string              `json:"display"`
-	AvatarURL    string              `json:"avatarURL,omitempty"`
+	// Type of identity e.g. "user".
+	// For a full list see https://github.com/grafana/authlib/blob/2f8d13a83ca3e82da08b53726de1697ee5b5b4cc/claims/type.go#L15-L24
+	IdentityType claims.IdentityType `json:"type"`
 
-	// Legacy internal ID -- usage of this value should be phased out
+	// UID for identity, is a unique value for the type within a namespace.
+	UID string `json:"uid"`
+
+	// Display name for identity.
+	Display string `json:"display"`
+
+	// AvatarURL is the url where we can get the avatar for identity
+	AvatarURL string `json:"avatarURL,omitempty"`
+
+	// InternalID is the legacy numreric id for identity, this is deprecated and should be phased out
 	InternalID int64 `json:"internalId,omitempty"`
 }
