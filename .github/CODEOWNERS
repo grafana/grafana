@@ -320,7 +320,7 @@
 /e2e/ @grafana/grafana-frontend-platform
 /e2e/cloud-plugins-suite/ @grafana/partner-datasources
 /e2e/plugin-e2e/plugin-e2e-api-tests/ @grafana/plugins-platform-frontend
-/e2e/test-plugins/grafana-extensionstest-app/ @grafana/plugins-platform-frontend 
+/e2e/test-plugins/grafana-extensionstest-app/ @grafana/plugins-platform-frontend
 
 # Packages
 /packages/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
@@ -402,6 +402,9 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/core/components/TimeSeries/ @grafana/dataviz-squad
 /public/app/core/components/TimelineChart/ @grafana/dataviz-squad
 /public/app/core/components/Form/ @grafana/grafana-frontend-platform
+/public/app/core/components/OptionsUI/ @grafana/dashboards-squad
+
+
 /public/app/core/history/ @grafana/explore-squad
 /public/app/features/all.ts @grafana/grafana-frontend-platform
 /public/app/features/admin/ @grafana/identity-access-team
