@@ -30,6 +30,19 @@ func GetNamespaceMapper(cfg *setting.Cfg) NamespaceMapper {
 	return claims.OrgNamespaceFormatter
 }
 
+// Temporary version that is only passed to th
+func GetTemporarySingularNamespaceMapper(cfg *setting.Cfg) NamespaceMapper {
+	if cfg != nil && cfg.StackID != "" {
+		stackIdInt, err := strconv.ParseInt(cfg.StackID, 10, 64)
+		if err != nil {
+			stackIdInt = 0
+		}
+		cloudNamespace := claims.CloudNamespaceFormatter(stackIdInt)
+		return func(_ int64) string { return cloudNamespace }
+	}
+	return claims.OrgNamespaceFormatter
+}
+
 func NamespaceInfoFrom(ctx context.Context, requireOrgID bool) (claims.NamespaceInfo, error) {
 	info, err := claims.ParseNamespace(request.NamespaceValue(ctx))
 	if err == nil && requireOrgID && info.OrgID < 1 {
