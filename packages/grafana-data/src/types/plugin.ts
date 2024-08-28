@@ -59,7 +59,10 @@ export interface AngularMeta {
   hideDeprecation: boolean;
 }
 
-export type PluginLoadingStrategy = 'fetch' | 'script';
+export enum PluginLoadingStrategy {
+  fetch = 'fetch',
+  script = 'script',
+}
 
 export interface PluginMeta<T extends KeyValue = {}> {
   id: string;
