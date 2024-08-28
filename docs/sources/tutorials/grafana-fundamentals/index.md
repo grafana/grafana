@@ -357,15 +357,15 @@ The most basic alert rule consists of two parts:
 
 1. A _Contact point_ - A Contact point defines how Grafana delivers an alert instance. When the conditions of an _alert rule_ are met, Grafana notifies the contact points, or channels, configured for that alert rule.
 
-<!-- INTERACTIVE ignore START -->
-{{< admonition type="note" >}}
-An [alert instance](https://grafana.com/docs/grafana/latest/alerting/fundamentals/#alert-instances) is a specific occurrence that matches a condition defined by an alert rule, such as when the rate of requests for a specific route suddenly increases.
-{{< /admonition >}}
-<!-- INTERACTIVE ignore START -->
+   <!-- INTERACTIVE ignore START -->
+   {{< admonition type="note" >}}
+   An [alert instance](https://grafana.com/docs/grafana/latest/alerting/fundamentals/#alert-instances) is a specific occurrence that matches a condition defined by an alert rule, such as when the rate of requests for a specific route suddenly increases.
+   {{< /admonition >}}
+   <!-- INTERACTIVE ignore START -->
 
-{{< docs/ignore >}}
-> An [alert instance](https://grafana.com/docs/grafana/latest/alerting/fundamentals/#alert-instances) is a specific occurrence that matches a condition defined by an alert rule, such as when the rate of requests for a specific route suddenly increases.
-{{< /docs/ignore >}}
+   {{< docs/ignore >}}
+   > An [alert instance](https://grafana.com/docs/grafana/latest/alerting/fundamentals/#alert-instances) is a specific occurrence that matches a condition defined by an alert rule, such as when the rate of requests for a specific route suddenly increases.
+   {{< /docs/ignore >}}
 
    Some popular channels include:
 
