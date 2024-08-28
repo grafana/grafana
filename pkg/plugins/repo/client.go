@@ -122,7 +122,7 @@ func (c *Client) downloadFile(ctx context.Context, tmpFile *os.File, pluginURL, 
 		if r := recover(); r != nil {
 			c.retryCount++
 			if c.retryCount < 3 {
-				c.log.Debug("Failed downloading. Will retry once.")
+				c.log.Debug("Failed downloading. Will retry.")
 				err = tmpFile.Truncate(0)
 				if err != nil {
 					return
@@ -155,7 +155,7 @@ func (c *Client) downloadFile(ctx context.Context, tmpFile *os.File, pluginURL, 
 	if err != nil {
 		if c.retryCount < 3 {
 			c.retryCount++
-			c.log.Debug("Failed downloading. Will retry once.")
+			c.log.Debug("Failed downloading. Will retry.")
 			err = c.downloadFile(ctx, tmpFile, pluginURL, checksum, compatOpts)
 		}
 		return err
@@ -197,9 +197,7 @@ func (c *Client) sendReqNoTimeout(ctx context.Context, url *url.URL, compatOpts 
 }
 
 func (c *Client) createReq(ctx context.Context, url *url.URL, compatOpts CompatOpts) (*http.Request, error) {
-	u := url.String()
-
-	req, err := http.NewRequest(http.MethodGet, u, nil)
+	req, err := http.NewRequest(http.MethodGet, url.String(), nil)
 	if err != nil {
 		return nil, err
 	}
