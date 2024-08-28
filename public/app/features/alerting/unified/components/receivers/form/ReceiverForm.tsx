@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { produce } from 'immer';
 import * as React from 'react';
 import { useCallback } from 'react';
 import { FieldErrors, FormProvider, SubmitErrorHandler, useForm, Validate } from 'react-hook-form';
@@ -93,21 +94,23 @@ export function ReceiverForm<R extends ChannelValues>({
   );
 
   const submitCallback = async (values: ReceiverFormValues<R>) => {
-    values.items.forEach((item) => {
-      if (item.secureFields) {
-        // omit secure fields with boolean value as BE expects not touched fields to be omitted: https://github.com/grafana/grafana/pull/71307
-        Object.keys(item.secureFields).forEach((key) => {
-          if (item.secureFields[key] === true || item.secureFields[key] === false) {
-            delete item.secureFields[key];
-          }
-        });
-      }
+    const updatedValues = produce(values, (draft) => {
+      draft.items.forEach((item) => {
+        if (item.secureFields) {
+          // omit secure fields with boolean value as BE expects not touched fields to be omitted: https://github.com/grafana/grafana/pull/71307
+          Object.keys(item.secureFields).forEach((key) => {
+            if (item.secureFields[key] === true || item.secureFields[key] === false) {
+              delete item.secureFields[key];
+            }
+          });
+        }
+      });
     });
 
     try {
       await onSubmit({
-        ...values,
-        items: values.items.filter((item) => !item.__deleted),
+        ...updatedValues,
+        items: updatedValues.items.filter((item) => !item.__deleted),
       });
     } catch (e) {
       if (e instanceof Error || isFetchError(e)) {
