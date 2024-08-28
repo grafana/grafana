@@ -669,6 +669,13 @@ func schema_pkg_apis_identity_v0alpha1_TeamMember(ref common.ReferenceCallback) 
 							Format:      "int64",
 						},
 					},
+					"external": {
+						SchemaProps: spec.SchemaProps{
+							Description: "External is set if member ship was synced from external IDP.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"permission": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Permission member has in team.\n\nPossible enum values:\n - `\"admin\"`\n - `\"member\"`",

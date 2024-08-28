@@ -70,6 +70,8 @@ type TeamMemberList struct {
 type TeamMember struct {
 	IdentityDisplay `json:",inline"`
 
+	// External is set if member ship was synced from external IDP.
+	External bool `json:"external,omitempty"`
 	// Permission member has in team.
 	Permission TeamPermission `json:"permission,omitempty"`
 }

@@ -15,4 +15,5 @@ WHERE
     )
 {{ end }}
 AND tm.org_id = {{ .Arg .Query.OrgID}}
+AND NOT tm.external
 ORDER BY t.id ASC;

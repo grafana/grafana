@@ -53,6 +53,7 @@ type TeamMember struct {
 	Name       string
 	Email      string
 	Username   string
+	External   bool
 	Updated    time.Time
 	Created    time.Time
 	Permission team.PermissionType

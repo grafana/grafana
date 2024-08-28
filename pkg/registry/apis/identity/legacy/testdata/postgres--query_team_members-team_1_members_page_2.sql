@@ -7,6 +7,7 @@ SELECT
   u.name,
   u.email,
   u.login,
+  tm.external,
   tm.created,
   tm.updated,
   tm.permission

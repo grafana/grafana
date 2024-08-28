@@ -9,4 +9,5 @@ WHERE
       ORDER BY t.id ASC LIMIT 1
     )
 AND tm.org_id = 1
+AND NOT tm.external
 ORDER BY t.id ASC;
