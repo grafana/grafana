@@ -1,12 +1,12 @@
 import { memo } from 'react';
 
-import { PluginExtensionAddedLinkConfig, PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
+import { PluginExtensionAddedLinkConfig, PluginExtensionLinkConfig, PluginExtensionPoints } from '@grafana/data';
 
 import {
   assertConfigureIsValid,
   assertLinkPathIsValid,
-  assertExtensionPointIdIsValid,
   assertStringProps,
+  isGrafanaCoreExtensionPoint,
   isReactComponent,
 } from './validators';
 
@@ -50,37 +50,6 @@ describe('Plugin Extension Validators', () => {
 
         assertLinkPathIsValid('myorg-b-app', extension.path);
       }).toThrowError();
-    });
-  });
-
-  describe('assertExtensionPointIdIsValid()', () => {
-    it('should throw an error if the extensionPointId does not have the right prefix', () => {
-      expect(() => {
-        assertExtensionPointIdIsValid('my-org-app', {
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-          extensionPointId: 'wrong-extension-point-id',
-        });
-      }).toThrowError();
-    });
-
-    it('should NOT throw an error if the extensionPointId is correct', () => {
-      expect(() => {
-        assertExtensionPointIdIsValid('my-org-app', {
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-          extensionPointId: 'grafana/some-page/extension-point-a',
-        });
-
-        assertExtensionPointIdIsValid('my-org-app', {
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-          extensionPointId: 'plugins/my-super-plugin/some-page/extension-point-a',
-        });
-      }).not.toThrowError();
     });
   });
 
@@ -199,6 +168,20 @@ describe('Plugin Extension Validators', () => {
       expect(isReactComponent(false)).toBe(false);
       expect(isReactComponent(undefined)).toBe(false);
       expect(isReactComponent(null)).toBe(false);
+    });
+  });
+
+  describe('isGrafanaCoreExtensionPoint()', () => {
+    it('should return TRUE if we pass an PluginExtensionPoints value', () => {
+      expect(isGrafanaCoreExtensionPoint(PluginExtensionPoints.AlertingAlertingRuleAction)).toBe(true);
+    });
+
+    it('should return TRUE if we pass a string matching a PluginExtensionPoints value', () => {
+      expect(isGrafanaCoreExtensionPoint('grafana/alerting/alertingrule/action')).toBe(true);
+    });
+
+    it('should return FALSE if we pass a string not matching a PluginExtensionPoints value', () => {
+      expect(isGrafanaCoreExtensionPoint('grafana/dashboard/alertingrule/action')).toBe(false);
     });
   });
 });

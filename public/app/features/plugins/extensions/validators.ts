@@ -1,29 +1,12 @@
-import type {
-  PluginExtensionAddedLinkConfig,
-  PluginExtension,
-  PluginExtensionConfig,
-  PluginExtensionLink,
-  PluginExtensionLinkConfig,
-} from '@grafana/data';
-import { PluginAddedLinksConfigureFunc } from '@grafana/data/src/types/pluginExtensions';
+import type { PluginExtensionAddedLinkConfig, PluginExtension, PluginExtensionLink } from '@grafana/data';
+import { PluginAddedLinksConfigureFunc, PluginExtensionPoints } from '@grafana/data/src/types/pluginExtensions';
 import { isPluginExtensionLink } from '@grafana/runtime';
-
-import { isPluginExtensionLinkConfig } from './utils';
 
 export function assertPluginExtensionLink(
   extension: PluginExtension | undefined,
   errorMessage = 'extension is not a link extension'
 ): asserts extension is PluginExtensionLink {
   if (!isPluginExtensionLink(extension)) {
-    throw new Error(errorMessage);
-  }
-}
-
-export function assertPluginExtensionLinkConfig(
-  extension: PluginExtensionLinkConfig,
-  errorMessage = 'extension is not a command extension config'
-): asserts extension is PluginExtensionLinkConfig {
-  if (!isPluginExtensionLinkConfig(extension)) {
     throw new Error(errorMessage);
   }
 }
@@ -39,14 +22,6 @@ export function assertLinkPathIsValid(pluginId: string, path: string) {
 export function assertIsReactComponent(component: React.ComponentType) {
   if (!isReactComponent(component)) {
     throw new Error(`Invalid component extension, the "component" property needs to be a valid React component.`);
-  }
-}
-
-export function assertExtensionPointIdIsValid(pluginId: string, extension: PluginExtensionConfig) {
-  if (!isExtensionPointIdValid(pluginId, extension.extensionPointId)) {
-    throw new Error(
-      `Invalid extension "${extension.title}". The extensionPointId should start with either "grafana/", "plugins/" or "capabilities/${pluginId}" (currently: "${extension.extensionPointId}"). Skipping the extension.`
-    );
   }
 }
 
@@ -88,6 +63,12 @@ export function isExtensionPointIdValid(pluginId: string, extensionPointId: stri
 
 export function extensionPointEndsWithVersion(extensionPointId: string) {
   return extensionPointId.match(/.*\/v\d+$/);
+}
+
+export function isGrafanaCoreExtensionPoint(extensionPointId: string) {
+  return Object.values(PluginExtensionPoints)
+    .map((v) => v.toString())
+    .includes(extensionPointId);
 }
 
 export function isConfigureFnValid(configure?: PluginAddedLinksConfigureFunc<object> | undefined) {

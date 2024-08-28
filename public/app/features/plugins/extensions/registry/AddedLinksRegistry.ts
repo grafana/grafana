@@ -2,12 +2,19 @@ import { IconName, PluginExtensionAddedLinkConfig } from '@grafana/data';
 import { PluginAddedLinksConfigureFunc, PluginExtensionEventHelpers } from '@grafana/data/src/types/pluginExtensions';
 
 import { logWarning } from '../utils';
-import { isConfigureFnValid, isExtensionPointIdValid, isLinkPathValid } from '../validators';
+import {
+  extensionPointEndsWithVersion,
+  isConfigureFnValid,
+  isExtensionPointIdValid,
+  isGrafanaCoreExtensionPoint,
+  isLinkPathValid,
+} from '../validators';
 
 import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
 
 export type AddedLinkRegistryItem<Context extends object = object> = {
   pluginId: string;
+  extensionPointId: string;
   title: string;
   description: string;
   path?: string;
@@ -31,7 +38,7 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
     const { pluginId, configs } = item;
 
     for (const config of configs) {
-      const { path, title, description, configure, onClick, targets, icon, category } = config;
+      const { path, title, description, configure, onClick, targets } = config;
       if (!title) {
         logWarning(`Could not register added link with title '${title}'. Reason: Title is missing.`);
         continue;
@@ -70,28 +77,19 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
           continue;
         }
 
-        // if (!extensionPointEndsWithVersion(extensionPointId)) {
-        //   logWarning(
-        //     `Added component with id '${extensionPointId}' does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
-        //   );
-        // }
+        if (!isGrafanaCoreExtensionPoint(extensionPointId) && !extensionPointEndsWithVersion(extensionPointId)) {
+          logWarning(
+            `Added component with id '${extensionPointId}' does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
+          );
+        }
 
-        const result = {
-          pluginId,
-          title,
-          description,
-          onClick,
-          configure,
-          icon,
-          category,
-          path,
-        };
+        const { targets, ...registryItem } = config;
 
         if (!(extensionPointId in registry)) {
           registry[extensionPointId] = [];
         }
 
-        registry[extensionPointId].push(result);
+        registry[extensionPointId].push({ ...registryItem, pluginId, extensionPointId });
       }
     }
 

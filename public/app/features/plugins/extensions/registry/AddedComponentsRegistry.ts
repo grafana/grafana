@@ -1,7 +1,12 @@
 import { PluginExtensionAddedComponentConfig } from '@grafana/data';
 
 import { logWarning, wrapWithPluginContext } from '../utils';
-import { extensionPointEndsWithVersion, isExtensionPointIdValid, isReactComponent } from '../validators';
+import {
+  extensionPointEndsWithVersion,
+  isExtensionPointIdValid,
+  isGrafanaCoreExtensionPoint,
+  isReactComponent,
+} from '../validators';
 
 import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
 
@@ -48,7 +53,7 @@ export class AddedComponentsRegistry extends Registry<
 
       const extensionPointIds = Array.isArray(config.targets) ? config.targets : [config.targets];
       for (const extensionPointId of extensionPointIds) {
-        if (!isExtensionPointIdValid(pluginId, extensionPointId)) {
+        if (!isGrafanaCoreExtensionPoint(extensionPointId) && !isExtensionPointIdValid(pluginId, extensionPointId)) {
           logWarning(
             `Could not register added component with id '${extensionPointId}'. Reason: The component id does not match the id naming convention. Id should be prefixed with plugin id or grafana. e.g '<grafana|myorg-basic-app>/my-component-id/v1'.`
           );
