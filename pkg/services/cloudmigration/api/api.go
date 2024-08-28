@@ -435,10 +435,10 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 	dtoResults := make([]MigrateDataResponseItemDTO, len(results))
 	for i := 0; i < len(results); i++ {
 		dtoResults[i] = MigrateDataResponseItemDTO{
-			Type:   MigrateDataType(results[i].Type),
-			RefID:  results[i].RefID,
-			Status: ItemStatus(results[i].Status),
-			Error:  results[i].Error,
+			Type:    MigrateDataType(results[i].Type),
+			RefID:   results[i].RefID,
+			Status:  ItemStatus(results[i].Status),
+			Message: results[i].Error,
 		}
 	}
 
@@ -480,7 +480,7 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 // 403: forbiddenError
 // 500: internalServerError
 func (cma *CloudMigrationAPI) GetSnapshotList(c *contextmodel.ReqContext) response.Response {
-	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetShapshotList")
+	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetSnapshotList")
 	defer span.End()
 
 	uid := web.Params(c.Req)[":uid"]

@@ -12,10 +12,13 @@ import {
   SceneVariableSet,
   VariableDependencyConfig,
   VariableValueSingle,
+  VizPanelMenu,
 } from '@grafana/scenes';
 
 import { getMultiVariableValues } from '../utils/utils';
 
+import { DashboardGridItem } from './DashboardGridItem';
+import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 interface RowRepeaterBehaviorState extends SceneObjectState {
@@ -104,8 +107,10 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
     let maxYOfRows = 0;
 
+    // when variable has no options (due to error or similar) it will not render any panels at all
+    //  adding a placeholder in this case so that there is at least empty panel that can display error
     const emptyVariablePlaceholderOption = {
-      values: ['placeholder'],
+      values: [''],
       texts: variable.hasAllValue() ? ['All'] : ['None'],
     };
 
@@ -124,9 +129,18 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
         const itemKey = index > 0 ? `${source.state.key}-clone-${localValue}` : source.state.key;
         const itemClone = source.clone({ key: itemKey, y: itemY });
 
-        //Make sure all the child scene objects have unique keys
+        // Make sure all the child scene objects have unique keys
+        // and add proper menu to the repeated panel
         if (index > 0) {
           ensureUniqueKeys(itemClone, localValue);
+
+          if (itemClone instanceof DashboardGridItem) {
+            itemClone.state.body.setState({
+              menu: new VizPanelMenu({
+                $behaviors: [repeatPanelMenuBehavior],
+              }),
+            });
+          }
         }
 
         children.push(itemClone);

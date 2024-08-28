@@ -3,26 +3,28 @@ package legacy
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
-
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardsV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning"
-	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 var (
@@ -39,153 +41,71 @@ type dashboardRow struct {
 	// The folder UID (needed for access control checks)
 	FolderUID string
 
-	// Size (in bytes) of the dashboard payload
-	Bytes int
-
 	// The token we can use that will start a new connection that includes
 	// this same dashboard
 	token *continueToken
 }
 
 type dashboardSqlAccess struct {
-	sql          db.DB
-	sess         *session.SessionDB
+	sql          legacysql.LegacyDatabaseProvider
 	namespacer   request.NamespaceMapper
-	dashStore    dashboards.Store
 	provisioning provisioning.ProvisioningService
+
+	// Use for writing (not reading)
+	dashStore  dashboards.Store
+	softDelete bool
 
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
 	mutex       sync.Mutex
 }
 
-func NewDashboardAccess(sql db.DB,
+func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	namespacer request.NamespaceMapper,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
+	softDelete bool,
 ) DashboardAccess {
 	return &dashboardSqlAccess{
 		sql:          sql,
-		sess:         sql.GetSqlxSession(),
 		namespacer:   namespacer,
 		dashStore:    dashStore,
 		provisioning: provisioning,
+		softDelete:   softDelete,
 	}
 }
 
-const selector = `SELECT
-	dashboard.org_id, dashboard.id,
-	dashboard.uid, dashboard.folder_uid,
-	dashboard.created,CreatedUSER.uid as created_by,
-	dashboard.updated,UpdatedUSER.uid as updated_by,
-	dashboard.deleted, plugin_id,
-	dashboard_provisioning.name as origin_name,
-	dashboard_provisioning.external_id as origin_path,
-	dashboard_provisioning.check_sum as origin_key,
-	dashboard_provisioning.updated as origin_ts,
-	dashboard.version, '', dashboard.data
-  FROM dashboard
-  LEFT OUTER JOIN dashboard_provisioning ON dashboard.id = dashboard_provisioning.dashboard_id
-  LEFT OUTER JOIN user AS CreatedUSER ON dashboard.created_by = CreatedUSER.id
-  LEFT OUTER JOIN user AS UpdatedUSER ON dashboard.updated_by = UpdatedUSER.id
-  WHERE dashboard.is_folder = false`
-
-const history = `SELECT
-	dashboard.org_id, dashboard.id,
-	dashboard.uid, dashboard.folder_uid,
-	dashboard.created,CreatedUSER.uid as created_by,
-	dashboard_version.created,UpdatedUSER.uid as updated_by,
-	NULL, plugin_id,
-	dashboard_provisioning.name as origin_name,
-	dashboard_provisioning.external_id as origin_path,
-	dashboard_provisioning.check_sum as origin_key,
-	dashboard_provisioning.updated as origin_ts,
-	dashboard_version.version, dashboard_version.message, dashboard_version.data
-  FROM dashboard
-  LEFT OUTER JOIN dashboard_provisioning ON dashboard.id = dashboard_provisioning.dashboard_id
-  LEFT OUTER JOIN dashboard_version  ON dashboard.id = dashboard_version.dashboard_id
-  LEFT OUTER JOIN user AS CreatedUSER ON dashboard.created_by = CreatedUSER.id
-  LEFT OUTER JOIN user AS UpdatedUSER ON dashboard_version.created_by = UpdatedUSER.id
-  WHERE dashboard.is_folder = false`
-
-func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery) (*rowsWrapper, int, error) {
+func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, query *DashboardQuery) (*rowsWrapper, error) {
 	if len(query.Labels) > 0 {
-		return nil, 0, fmt.Errorf("labels not yet supported")
+		return nil, fmt.Errorf("labels not yet supported")
 		// if query.Requirements.Folder != nil {
 		// 	args = append(args, *query.Requirements.Folder)
-		// 	sqlcmd = fmt.Sprintf("%s AND dashboard.folder_uid=$%d", sqlcmd, len(args))
+		// 	sqlcmd = fmt.Sprintf("%s AND dashboard.folder_uid=?$%d", sqlcmd, len(args))
 		// }
 	}
 
-	var sqlcmd string
-	args := []any{query.OrgID}
+	req := newQueryReq(sql, query)
 
-	limit := query.Limit
-	if limit < 1 {
-		limit = 15 //
+	tmpl := sqlQueryDashboards
+	if query.UseHistoryTable() && query.GetTrash {
+		return nil, fmt.Errorf("trash not included in history table")
 	}
 
-	if query.GetHistory || query.Version > 0 {
-		if query.GetTrash {
-			return nil, 0, fmt.Errorf("trash not included in history table")
-		}
-
-		sqlcmd = fmt.Sprintf("%s AND dashboard.org_id=$%d\n  ", history, len(args))
-
-		if query.UID == "" {
-			return nil, 0, fmt.Errorf("history query must have a UID")
-		}
-
-		args = append(args, query.UID)
-		sqlcmd = fmt.Sprintf("%s AND dashboard.uid=$%d", sqlcmd, len(args))
-
-		if query.Version > 0 {
-			args = append(args, query.Version)
-			sqlcmd = fmt.Sprintf("%s AND dashboard_version.version=$%d", sqlcmd, len(args))
-		} else if query.LastID > 0 {
-			args = append(args, query.LastID)
-			sqlcmd = fmt.Sprintf("%s AND dashboard_version.version<$%d", sqlcmd, len(args))
-		}
-
-		args = append(args, (limit + 2)) // add more so we can include a next token
-		sqlcmd = fmt.Sprintf("%s\n   ORDER BY dashboard_version.version desc LIMIT $%d", sqlcmd, len(args))
-	} else {
-		sqlcmd = fmt.Sprintf("%s AND dashboard.org_id=$%d\n  ", selector, len(args))
-
-		if query.UID != "" {
-			args = append(args, query.UID)
-			sqlcmd = fmt.Sprintf("%s AND dashboard.uid=$%d", sqlcmd, len(args))
-		} else if query.LastID > 0 {
-			args = append(args, query.LastID)
-			sqlcmd = fmt.Sprintf("%s AND dashboard.id>=$%d", sqlcmd, len(args))
-		}
-		if query.GetTrash {
-			sqlcmd = sqlcmd + " AND dashboard.deleted IS NOT NULL"
-		} else {
-			sqlcmd = sqlcmd + " AND dashboard.deleted IS NULL"
-		}
-
-		args = append(args, (limit + 2)) // add more so we can include a next token
-		sqlcmd = fmt.Sprintf("%s\n   ORDER BY dashboard.id asc LIMIT $%d", sqlcmd, len(args))
+	rawQuery, err := sqltemplate.Execute(tmpl, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", tmpl.Name(), err)
 	}
-	// fmt.Printf("%s // %v\n", sqlcmd, args)
+	q := rawQuery
+	// q = sqltemplate.RemoveEmptyLines(rawQuery)
+	// fmt.Printf(">>%s [%+v]", q, req.GetArgs())
 
-	rows, err := a.doQuery(ctx, sqlcmd, args...)
+	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	if err != nil {
 		if rows != nil {
 			_ = rows.Close()
 		}
 		rows = nil
 	}
-	return rows, limit, err
-}
-
-func (a *dashboardSqlAccess) doQuery(ctx context.Context, query string, args ...any) (*rowsWrapper, error) {
-	_, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := a.sess.Query(ctx, query, args...)
 	return &rowsWrapper{
 		rows: rows,
 		a:    a,
@@ -197,25 +117,43 @@ func (a *dashboardSqlAccess) doQuery(ctx context.Context, query string, args ...
 	}, err
 }
 
+var _ resource.ListIterator = (*rowsWrapper)(nil)
+
 type rowsWrapper struct {
-	a     *dashboardSqlAccess
-	rows  *sql.Rows
-	idx   int
-	total int64
+	a    *dashboardSqlAccess
+	rows *sql.Rows
 
 	canReadDashboard func(scopes ...string) bool
+
+	// Current
+	row *dashboardRow
+	err error
 }
 
 func (r *rowsWrapper) Close() error {
+	if r.rows == nil {
+		return nil
+	}
 	return r.rows.Close()
 }
 
-func (r *rowsWrapper) Next() (*dashboardRow, error) {
+func (r *rowsWrapper) Next() bool {
+	if r.err != nil {
+		return false
+	}
+	var err error
+
 	// breaks after first readable value
 	for r.rows.Next() {
-		r.idx++
-		d, err := r.a.scanRow(r.rows)
-		if d != nil {
+		r.row, err = r.a.scanRow(r.rows)
+		if err != nil {
+			r.err = err
+			return false
+		}
+
+		if r.row != nil {
+			d := r.row
+
 			// Access control checker
 			scopes := []string{dashboards.ScopeDashboardsProvider.GetResourceScopeUID(d.Dash.Name)}
 			if d.FolderUID != "" { // Copied from searchV2... not sure the logic is right
@@ -224,13 +162,44 @@ func (r *rowsWrapper) Next() (*dashboardRow, error) {
 			if !r.canReadDashboard(scopes...) {
 				continue
 			}
-			r.total += int64(d.Bytes)
-		}
 
-		// returns the first folder it can
-		return d, err
+			// returns the first folder it can
+			return true
+		}
 	}
-	return nil, nil
+	return false
+}
+
+// ContinueToken implements resource.ListIterator.
+func (r *rowsWrapper) ContinueToken() string {
+	return r.row.token.String()
+}
+
+// Error implements resource.ListIterator.
+func (r *rowsWrapper) Error() error {
+	return r.err
+}
+
+// Name implements resource.ListIterator.
+func (r *rowsWrapper) Name() string {
+	return r.row.Dash.Name
+}
+
+// Namespace implements resource.ListIterator.
+func (r *rowsWrapper) Namespace() string {
+	return r.row.Dash.Namespace
+}
+
+// ResourceVersion implements resource.ListIterator.
+func (r *rowsWrapper) ResourceVersion() int64 {
+	return r.row.RV
+}
+
+// Value implements resource.ListIterator.
+func (r *rowsWrapper) Value() []byte {
+	b, err := json.Marshal(r.row.Dash)
+	r.err = err
+	return b
 }
 
 func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
@@ -245,10 +214,12 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	var folder_uid sql.NullString
 	var updated time.Time
 	var updatedBy sql.NullString
+	var updatedByID sql.NullInt64
 	var deleted sql.NullTime
 
 	var created time.Time
 	var createdBy sql.NullString
+	var createdByID sql.NullInt64
 	var message sql.NullString
 
 	var plugin_id string
@@ -260,10 +231,10 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	var version int64
 
 	err := rows.Scan(&orgId, &dashboard_id, &dash.Name, &folder_uid,
-		&created, &createdBy,
-		&updated, &updatedBy,
 		&deleted, &plugin_id,
 		&origin_name, &origin_path, &origin_hash, &origin_ts,
+		&created, &createdBy, &createdByID,
+		&updated, &updatedBy, &updatedByID,
 		&version, &message, &data,
 	)
 
@@ -279,8 +250,8 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 			return nil, err
 		}
 		meta.SetUpdatedTimestamp(&updated)
-		meta.SetCreatedBy(getUserID(createdBy))
-		meta.SetUpdatedBy(getUserID(updatedBy))
+		meta.SetCreatedBy(getUserID(createdBy, createdByID))
+		meta.SetUpdatedBy(getUserID(updatedBy, updatedByID))
 
 		if deleted.Valid {
 			meta.SetDeletionTimestamp(ptr.To(metav1.NewTime(deleted.Time)))
@@ -319,23 +290,26 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 			})
 		}
 
-		row.Bytes = len(data)
-		if row.Bytes > 0 {
+		if len(data) > 0 {
 			err = dash.Spec.UnmarshalJSON(data)
 			if err != nil {
 				return row, err
 			}
-			dash.Spec.Set("id", dashboard_id) // add it so we can get it from the body later
 		}
+		// add it so we can get it from the body later
+		dash.Spec.Set("id", dashboard_id)
 	}
 	return row, err
 }
 
-func getUserID(v sql.NullString) string {
-	if v.String == "" {
-		return identity.NewTypedIDString(identity.TypeProvisioning, "").String()
+func getUserID(v sql.NullString, id sql.NullInt64) string {
+	if v.Valid && v.String != "" {
+		return identity.NewTypedIDString(claims.TypeUser, v.String)
 	}
-	return identity.NewTypedIDString(identity.TypeUser, v.String).String()
+	if id.Valid && id.Int64 == -1 {
+		return identity.NewTypedIDString(claims.TypeProvisioning, "")
+	}
+	return ""
 }
 
 // DeleteDashboard implements DashboardAccess.
@@ -343,6 +317,16 @@ func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, u
 	dash, _, err := a.GetDashboard(ctx, orgId, uid, 0)
 	if err != nil {
 		return nil, false, err
+	}
+
+	if a.softDelete {
+		err = a.dashStore.SoftDeleteDashboard(ctx, orgId, uid)
+		if err == nil && dash != nil {
+			now := metav1.NewTime(time.Now())
+			dash.DeletionTimestamp = &now
+			return dash, true, err
+		}
+		return dash, false, err
 	}
 
 	id := dash.Spec.GetNestedInt64("id")
@@ -363,7 +347,7 @@ func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, u
 // SaveDashboard implements DashboardAccess.
 func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *dashboardsV0.Dashboard) (*dashboardsV0.Dashboard, bool, error) {
 	created := false
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, created, err
 	}
@@ -386,6 +370,14 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		dash.Spec.Remove("uid")
 	}
 
+	var userID int64
+	if user.IsIdentityType(claims.TypeUser) {
+		userID, err = user.GetInternalID()
+		if err != nil {
+			return nil, false, err
+		}
+	}
+
 	meta, err := utils.MetaAccessor(dash)
 	if err != nil {
 		return nil, false, err
@@ -395,7 +387,7 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		Dashboard: simplejson.NewFromAny(dash.Spec.UnstructuredContent()),
 		FolderUID: meta.GetFolder(),
 		Overwrite: true, // already passed the revisionVersion checks!
-		UserID:    user.UserID,
+		UserID:    userID,
 	})
 	if err != nil {
 		return nil, false, err
@@ -405,4 +397,129 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	}
 	dash, _, err = a.GetDashboard(ctx, orgId, out.UID, 0)
 	return dash, created, err
+}
+
+func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query LibraryPanelQuery) (*dashboardsV0.LibraryPanelList, error) {
+	limit := int(query.Limit)
+	query.Limit += 1 // for continue
+	if query.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero orgID")
+	}
+
+	sql, err := a.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newLibraryQueryReq(sql, &query)
+	rawQuery, err := sqltemplate.Execute(sqlQueryPanels, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryPanels.Name(), err)
+	}
+	q := rawQuery
+
+	res := &dashboardsV0.LibraryPanelList{}
+	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+	if err != nil {
+		return nil, err
+	}
+
+	type panel struct {
+		ID        int64
+		UID       string
+		FolderUID string
+
+		Created   time.Time
+		CreatedBy string
+
+		Updated   time.Time
+		UpdatedBy string
+
+		Name        string
+		Type        string
+		Description string
+		Model       []byte
+	}
+
+	var lastID int64
+	for rows.Next() {
+		p := panel{}
+		err = rows.Scan(&p.ID, &p.UID, &p.FolderUID,
+			&p.Created, &p.CreatedBy,
+			&p.Updated, &p.UpdatedBy,
+			&p.Name, &p.Type, &p.Description, &p.Model,
+		)
+		if err != nil {
+			return res, err
+		}
+		lastID = p.ID
+
+		item := dashboardsV0.LibraryPanel{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              p.UID,
+				CreationTimestamp: metav1.NewTime(p.Created),
+				ResourceVersion:   strconv.FormatInt(p.Updated.UnixMilli(), 10),
+			},
+			Spec: dashboardsV0.LibraryPanelSpec{},
+		}
+
+		status := &dashboardsV0.LibraryPanelStatus{
+			Missing: v0alpha1.Unstructured{},
+		}
+		err = json.Unmarshal(p.Model, &item.Spec)
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(p.Model, &status.Missing.Object)
+		if err != nil {
+			return nil, err
+		}
+
+		if item.Spec.Title != p.Name {
+			status.Warnings = append(item.Status.Warnings, fmt.Sprintf("title mismatch (expected: %s)", p.Name))
+		}
+		if item.Spec.Description != p.Description {
+			status.Warnings = append(item.Status.Warnings, fmt.Sprintf("description mismatch (expected: %s)", p.Description))
+		}
+		if item.Spec.Type != p.Type {
+			status.Warnings = append(item.Status.Warnings, fmt.Sprintf("type mismatch (expected: %s)", p.Type))
+		}
+		item.Status = status
+
+		// Remove the properties we are already showing
+		for _, k := range []string{"type", "pluginVersion", "title", "description", "options", "fieldConfig", "datasource", "targets", "libraryPanel"} {
+			delete(status.Missing.Object, k)
+		}
+
+		meta, err := utils.MetaAccessor(&item)
+		if err != nil {
+			return nil, err
+		}
+		meta.SetFolder(p.FolderUID)
+		meta.SetCreatedBy(p.CreatedBy)
+		meta.SetUpdatedBy(p.UpdatedBy)
+		meta.SetUpdatedTimestamp(&p.Updated)
+		meta.SetOriginInfo(&utils.ResourceOriginInfo{
+			Name: "SQL",
+			Path: strconv.FormatInt(p.ID, 10),
+		})
+
+		res.Items = append(res.Items, item)
+		if len(res.Items) > limit {
+			res.Continue = strconv.FormatInt(lastID, 10)
+			break
+		}
+	}
+	if query.UID == "" {
+		rv, err := sql.GetResourceVersion(ctx, "library_element", "updated")
+		if err == nil {
+			res.ResourceVersion = strconv.FormatInt(rv, 10)
+		}
+	}
+	return res, err
 }

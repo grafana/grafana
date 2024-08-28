@@ -26,6 +26,10 @@ Grafana automatically scales dashboards to any resolution, which makes them perf
 
 You can access the Playlist feature from Grafana's side menu, in the Dashboards submenu.
 
+{{< admonition type="note" >}}
+You must have at least Editor role permissions to create and manage playlists.
+{{< /admonition >}}
+
 ## Access, share, and control a playlist
 
 Use the information in this section to access playlists. Start and control the display of a playlist using one of the six available modes.

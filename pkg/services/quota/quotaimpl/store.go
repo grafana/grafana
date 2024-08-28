@@ -16,12 +16,12 @@ type store interface {
 }
 
 type sqlStore struct {
-	db     db.DB
+	db     db.ReplDB
 	logger log.Logger
 }
 
 func (ss *sqlStore) DeleteByUser(ctx quota.Context, userID int64) error {
-	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+	return ss.db.DB().WithDbSession(ctx, func(sess *db.Session) error {
 		var rawSQL = "DELETE FROM quota WHERE user_id = ?"
 		_, err := sess.Exec(rawSQL, userID)
 		return err
@@ -54,7 +54,7 @@ func (ss *sqlStore) Get(ctx quota.Context, scopeParams *quota.ScopeParameters) (
 }
 
 func (ss *sqlStore) Update(ctx quota.Context, cmd *quota.UpdateQuotaCmd) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.DB().WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// Check if quota is already defined in the DB
 		quota := quota.Quota{
 			Target: cmd.Target,
@@ -87,7 +87,7 @@ func (ss *sqlStore) Update(ctx quota.Context, cmd *quota.UpdateQuotaCmd) error {
 
 func (ss *sqlStore) getUserScopeQuota(ctx quota.Context, userID int64) (*quota.Map, error) {
 	r := quota.Map{}
-	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := ss.db.ReadReplica().WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		quotas := make([]*quota.Quota, 0)
 		if err := sess.Table("quota").Where("user_id=? AND org_id=0", userID).Find(&quotas); err != nil {
 			return err
@@ -111,7 +111,7 @@ func (ss *sqlStore) getUserScopeQuota(ctx quota.Context, userID int64) (*quota.M
 
 func (ss *sqlStore) getOrgScopeQuota(ctx quota.Context, OrgID int64) (*quota.Map, error) {
 	r := quota.Map{}
-	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := ss.db.ReadReplica().WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		quotas := make([]*quota.Quota, 0)
 		if err := sess.Table("quota").Where("user_id=0 AND org_id=?", OrgID).Find(&quotas); err != nil {
 			return err

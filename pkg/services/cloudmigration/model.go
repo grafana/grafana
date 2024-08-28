@@ -88,6 +88,7 @@ type ItemStatus string
 
 const (
 	ItemStatusOK      ItemStatus = "OK"
+	ItemStatusWarning ItemStatus = "WARNING"
 	ItemStatusError   ItemStatus = "ERROR"
 	ItemStatusPending ItemStatus = "PENDING"
 )
@@ -145,6 +146,7 @@ type ListSnapshotsQuery struct {
 
 type UpdateSnapshotCmd struct {
 	UID       string
+	SessionID string
 	Status    SnapshotStatus
 	Resources []CloudMigrationResource
 }

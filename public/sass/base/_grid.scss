@@ -1,4 +1,18 @@
 @use 'sass:math';
+@use 'sass:map';
+
+// Media of at least the minimum breakpoint width. No query for the smallest breakpoint.
+// Makes the @content apply to the given breakpoint and wider.
+@mixin media-breakpoint-up($name, $breakpoints: $grid-breakpoints) {
+  $min: if(map.get($breakpoints, $name) != 0, map.get($breakpoints, $name), null);
+  @if $min {
+    @media (min-width: $min) {
+      @content;
+    }
+  } @else {
+    @content;
+  }
+}
 
 /// Grid system
 //

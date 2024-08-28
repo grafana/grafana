@@ -4,13 +4,13 @@
 
 package v0alpha1
 
-// ExternalNameSpecApplyConfiguration represents an declarative configuration of the ExternalNameSpec type for use
+// ExternalNameSpecApplyConfiguration represents a declarative configuration of the ExternalNameSpec type for use
 // with apply.
 type ExternalNameSpecApplyConfiguration struct {
 	Host *string `json:"host,omitempty"`
 }
 
-// ExternalNameSpecApplyConfiguration constructs an declarative configuration of the ExternalNameSpec type for use with
+// ExternalNameSpecApplyConfiguration constructs a declarative configuration of the ExternalNameSpec type for use with
 // apply.
 func ExternalNameSpec() *ExternalNameSpecApplyConfiguration {
 	return &ExternalNameSpecApplyConfiguration{}

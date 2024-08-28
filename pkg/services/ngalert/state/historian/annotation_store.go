@@ -47,13 +47,10 @@ func (s *AnnotationServiceStore) Save(ctx context.Context, panel *PanelKey, anno
 	s.metrics.WritesTotal.WithLabelValues(org, "annotations").Inc()
 	s.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(len(annotations)))
 	if err := s.svc.SaveMany(ctx, annotations); err != nil {
-		logger.Error("Error saving alert annotation batch", "error", err)
 		s.metrics.WritesFailed.WithLabelValues(org, "annotations").Inc()
 		s.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(len(annotations)))
 		return fmt.Errorf("error saving alert annotation batch: %w", err)
 	}
-
-	logger.Debug("Done saving alert annotation batch")
 	return nil
 }
 

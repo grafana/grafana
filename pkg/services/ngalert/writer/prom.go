@@ -11,9 +11,7 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/dataplane/sdata/numeric"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/m3db/prometheus_remote_client_golang/promremote"
 
@@ -106,7 +104,6 @@ func NewPrometheusWriter(
 	settings setting.RecordingRuleSettings,
 	httpClientProvider HttpClientProvider,
 	clock clock.Clock,
-	tracer tracing.Tracer,
 	l log.Logger,
 	metrics *metrics.RemoteWriter,
 ) (*PrometheusWriter, error) {
@@ -119,14 +116,9 @@ func NewPrometheusWriter(
 		headers.Add(k, v)
 	}
 
-	middlewares := []httpclient.Middleware{
-		httpclient.TracingMiddleware(tracer),
-	}
-
 	cl, err := httpClientProvider.New(httpclient.Options{
-		Middlewares: middlewares,
-		BasicAuth:   createAuthOpts(settings.BasicAuthUsername, settings.BasicAuthPassword),
-		Header:      headers,
+		BasicAuth: createAuthOpts(settings.BasicAuthUsername, settings.BasicAuthPassword),
+		Header:    headers,
 	})
 	if err != nil {
 		return nil, err
@@ -181,14 +173,9 @@ func createAuthOpts(username, password string) *httpclient.BasicAuthOptions {
 }
 
 // Write writes the given frames to the Prometheus remote write endpoint.
-func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, frames data.Frames, extraLabels map[string]string) error {
+func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error {
 	l := w.logger.FromContext(ctx)
-	ruleKey, found := models.RuleKeyFromContext(ctx)
-	if !found {
-		// sanity check, this should never happen
-		return fmt.Errorf("rule key not found in context")
-	}
-	lvs := []string{fmt.Sprint(ruleKey.OrgID), backendType}
+	lvs := []string{fmt.Sprint(orgID), backendType}
 
 	points, err := PointsFromFrames(name, t, frames, extraLabels)
 	if err != nil {

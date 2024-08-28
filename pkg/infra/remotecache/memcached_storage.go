@@ -57,10 +57,6 @@ func (s *memcachedStorage) Get(ctx context.Context, key string) ([]byte, error) 
 	return memcachedItem.Value, nil
 }
 
-func (s *memcachedStorage) Count(ctx context.Context, prefix string) (int64, error) {
-	return 0, ErrNotImplemented
-}
-
 // Delete delete a key from the cache
 func (s *memcachedStorage) Delete(ctx context.Context, key string) error {
 	return s.c.Delete(key)

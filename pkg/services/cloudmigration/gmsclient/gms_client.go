@@ -254,7 +254,7 @@ func (c *gmsClientImpl) ReportEvent(ctx context.Context, session cloudmigration.
 		return
 	}
 
-	path := fmt.Sprintf("%s/api/v1/snapshots/events", c.buildBasePath(session.ClusterSlug))
+	path := fmt.Sprintf("%s/api/v1/events", c.buildBasePath(session.ClusterSlug))
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(event); err != nil {

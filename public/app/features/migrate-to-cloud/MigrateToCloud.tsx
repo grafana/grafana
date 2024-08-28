@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { Alert } from '@grafana/ui';
+import { Alert, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { Trans, t } from '../../core/internationalization';
@@ -18,13 +18,20 @@ export default function MigrateToCloud() {
         onRemove={
           feedbackURL
             ? () => {
-                window.location.href = feedbackURL;
+                window.open(feedbackURL, '_blank');
               }
             : undefined
         }
       >
         <Trans i18nKey="migrate-to-cloud.public-preview.message">
-          Help us improve this feature by providing feedback and reporting any issues.
+          No SLAs are available yet.{' '}
+          <TextLink
+            href="https://grafana.com/docs/grafana-cloud/account-management/migration-guide/#grafana-cloud-migration-assistant"
+            external
+          >
+            Visit our docs
+          </TextLink>{' '}
+          to learn more about this feature!
         </Trans>
       </Alert>
       {config.cloudMigrationIsTarget ? <CloudPage /> : <OnPremPage />}

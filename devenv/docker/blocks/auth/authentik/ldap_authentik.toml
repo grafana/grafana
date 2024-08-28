@@ -18,7 +18,7 @@ name = "displayName"
 surname = "sn"
 username = "cn"
 member_of = "memberOf"
-email =  "mail"
+email = "mail"
 
 # Map ldap groups to grafana org roles
 [[servers.group_mappings]]

@@ -39,6 +39,8 @@ describe('createPluginExtensionsRegistry', () => {
           configure: jest.fn().mockReturnValue({}),
         },
       ],
+      exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     const registry = await reactiveRegistry.getRegistry();
@@ -64,6 +66,8 @@ describe('createPluginExtensionsRegistry', () => {
           configure: jest.fn().mockReturnValue({}),
         },
       ],
+      exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     const registry1 = await reactiveRegistry.getRegistry();
@@ -83,6 +87,8 @@ describe('createPluginExtensionsRegistry', () => {
           configure: jest.fn().mockReturnValue({}),
         },
       ],
+      exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     const registry2 = await reactiveRegistry.getRegistry();
@@ -116,6 +122,8 @@ describe('createPluginExtensionsRegistry', () => {
           configure: jest.fn().mockImplementation((context) => ({ title: context?.title })),
         },
       ],
+      exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     const registry = await reactiveRegistry.getRegistry();
@@ -168,6 +176,8 @@ describe('createPluginExtensionsRegistry', () => {
           configure: jest.fn().mockReturnValue({}),
         },
       ],
+      exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     const registry1 = await reactiveRegistry.getRegistry();
@@ -201,6 +211,8 @@ describe('createPluginExtensionsRegistry', () => {
           configure: jest.fn().mockReturnValue({}),
         },
       ],
+      exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     const registry2 = await reactiveRegistry.getRegistry();
@@ -251,6 +263,8 @@ describe('createPluginExtensionsRegistry', () => {
           configure: jest.fn().mockReturnValue({}),
         },
       ],
+      exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     const registry1 = await reactiveRegistry.getRegistry();
@@ -284,6 +298,8 @@ describe('createPluginExtensionsRegistry', () => {
           configure: jest.fn().mockReturnValue({}),
         },
       ],
+      exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     const registry2 = await reactiveRegistry.getRegistry();
@@ -335,6 +351,8 @@ describe('createPluginExtensionsRegistry', () => {
           configure: jest.fn().mockReturnValue({}),
         },
       ],
+      exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     // Register extensions to a different extension point
@@ -350,6 +368,8 @@ describe('createPluginExtensionsRegistry', () => {
           configure: jest.fn().mockReturnValue({}),
         },
       ],
+      exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     const registry2 = await reactiveRegistry.getRegistry();
@@ -399,6 +419,8 @@ describe('createPluginExtensionsRegistry', () => {
           configure: jest.fn().mockReturnValue({}),
         },
       ],
+      exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     // Register extensions to a different extension point
@@ -414,6 +436,8 @@ describe('createPluginExtensionsRegistry', () => {
           configure: jest.fn().mockReturnValue({}),
         },
       ],
+      exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     const registry2 = await reactiveRegistry.getRegistry();
@@ -469,6 +493,8 @@ describe('createPluginExtensionsRegistry', () => {
           configure: jest.fn().mockReturnValue({}),
         },
       ],
+      exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     expect(subscribeCallback).toHaveBeenCalledTimes(2);
@@ -486,6 +512,8 @@ describe('createPluginExtensionsRegistry', () => {
           configure: jest.fn().mockReturnValue({}),
         },
       ],
+      exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     expect(subscribeCallback).toHaveBeenCalledTimes(3);
@@ -538,6 +566,8 @@ describe('createPluginExtensionsRegistry', () => {
           configure: jest.fn().mockReturnValue({}),
         },
       ],
+      exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     observable.subscribe(subscribeCallback);
@@ -581,6 +611,8 @@ describe('createPluginExtensionsRegistry', () => {
           configure: jest.fn().mockReturnValue({}),
         },
       ],
+      exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     expect(consoleWarn).toHaveBeenCalled();
@@ -640,6 +672,8 @@ describe('createPluginExtensionsRegistry', () => {
           configure: jest.fn().mockReturnValue({}),
         },
       ],
+      exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     expect(consoleWarn).toHaveBeenCalled();
@@ -669,6 +703,8 @@ describe('createPluginExtensionsRegistry', () => {
           configure: jest.fn().mockReturnValue({}),
         },
       ],
+      exposedComponentConfigs: [],
+      addedComponentConfigs: [],
     });
 
     expect(consoleWarn).toHaveBeenCalled();

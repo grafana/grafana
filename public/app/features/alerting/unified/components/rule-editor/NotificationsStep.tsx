@@ -10,6 +10,7 @@ import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { isRecordingRuleByType } from '../../utils/rules';
 
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
@@ -62,11 +63,14 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
     }
     setShowLabelsEditor(false);
   }
+  if (!type) {
+    return null;
+  }
 
   return (
     <RuleEditorSection
       stepNo={4}
-      title={type === RuleFormType.cloudRecording ? 'Add labels' : 'Configure labels and notifications'}
+      title={isRecordingRuleByType(type) ? 'Add labels' : 'Configure labels and notifications'}
       description={
         <Stack direction="row" gap={0.5} alignItems="center">
           {type === RuleFormType.cloudRecording ? (
