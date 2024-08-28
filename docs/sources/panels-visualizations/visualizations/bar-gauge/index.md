@@ -98,6 +98,7 @@ This option only applies when the orientation of the bar gauge is horizontal. Wh
 - **Auto -** Grafana determines the best placement.
 - **Top -** Names are placed on top of each bar gauge.
 - **Left -** Names are placed to the left of each bar gauge.
+- **Hidden -** Names are hidden on each bar gauge.
 
 ### Show unfilled area
 

@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
@@ -55,6 +56,8 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		return nil // skip registration unless opting into experimental apis
 	}
 
+	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
+	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	builder := &DashboardsAPIBuilder{
 		log: log.New("grafana-apiserver.dashboards"),
@@ -64,7 +67,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 
 		legacy: &dashboardStorage{
 			resource:       dashboard.DashboardResourceInfo,
-			access:         legacy.NewDashboardAccess(sql, namespacer, dashStore, provisioning),
+			access:         legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, softDelete),
 			tableConverter: dashboard.DashboardResourceInfo.TableConverter(),
 		},
 	}
@@ -88,6 +91,8 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&dashboard.DashboardWithAccessInfo{},
 		&dashboard.DashboardVersionList{},
 		&dashboard.VersionsQueryOptions{},
+		&dashboard.LibraryPanel{},
+		&dashboard.LibraryPanelList{},
 		&metav1.PartialObjectMetadata{},
 		&metav1.PartialObjectMetadataList{},
 	)
@@ -152,6 +157,11 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	// Expose read only library panels
+	storage[dashboard.LibraryPanelResourceInfo.StoragePath()] = &libraryPanelStore{
+		access: b.legacy.access,
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[dashboard.VERSION] = storage

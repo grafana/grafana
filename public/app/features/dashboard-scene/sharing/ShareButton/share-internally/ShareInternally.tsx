@@ -1,18 +1,18 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneComponentProps, SceneObjectRef, VizPanel } from '@grafana/scenes';
+import { SceneComponentProps } from '@grafana/scenes';
 import { Alert, ClipboardButton, Divider, Text, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import ShareInternallyConfiguration from '../../ShareInternallyConfiguration';
-import { ShareLinkTab } from '../../ShareLinkTab';
+import { ShareLinkTab, ShareLinkTabState } from '../../ShareLinkTab';
 import { getShareLinkConfiguration, updateShareLinkConfiguration } from '../utils';
 
 export class ShareInternally extends ShareLinkTab {
   static Component = ShareInternallyRenderer;
 
-  constructor(state: { panelRef?: SceneObjectRef<VizPanel> }) {
+  constructor(state: Partial<ShareLinkTabState>) {
     const { useAbsoluteTimeRange, useShortUrl, theme } = getShareLinkConfiguration();
     super({
       ...state,
@@ -24,6 +24,10 @@ export class ShareInternally extends ShareLinkTab {
     this.onToggleLockedTime = this.onToggleLockedTime.bind(this);
     this.onUrlShorten = this.onUrlShorten.bind(this);
     this.onThemeChange = this.onThemeChange.bind(this);
+  }
+
+  public getTabLabel() {
+    return t('share-dashboard.menu.share-internally-title', 'Share internally');
   }
 
   async onToggleLockedTime() {
