@@ -161,10 +161,10 @@ github.com/googleapis/gax-go/v2 v2.13.0 h1:yitjD5f7jQHhyDsnhKEBU52NdvvdSeGzlAnDP
 github.com/googleapis/gax-go/v2 v2.13.0/go.mod h1:Z/fvTZXF8/uw7Xu5GuslPw+bplx6SS338j1Is2S+B7A=
 github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWmnc=
 github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/grafana/authlib v0.0.0-20240814074258-eae7d47f01db h1:z++X4DdoX+aNlZNT1ZY4cykiFay4+f077pa0AG48SGg=
-github.com/grafana/authlib v0.0.0-20240814074258-eae7d47f01db/go.mod h1:ptt910z9KFfpVSIbSbXvTRR7tS19mxD7EtmVbbJi/WE=
-github.com/grafana/authlib/claims v0.0.0-20240814074258-eae7d47f01db h1:mDk0bwRV6rDrLSmKXftcPf9kLA9uH6EvxJvzpPW9bso=
-github.com/grafana/authlib/claims v0.0.0-20240814074258-eae7d47f01db/go.mod h1:r+F8H6awwjNQt/KPZ2GNwjk8TvsJ7/gxzkXN26GlL/A=
+github.com/grafana/authlib v0.0.0-20240827201526-24af227df935 h1:nT4UY61s2flsiLkU2jDqtqFhOLwqh355+8ZhnavKoMQ=
+github.com/grafana/authlib v0.0.0-20240827201526-24af227df935/go.mod h1:ER7bMzNNWTN/5Zl3pwqfgS6XEhcanjrvL7lOp8Ow6oc=
+github.com/grafana/authlib/claims v0.0.0-20240827210201-19d5347dd8dd h1:sIlR7n38/MnZvX2qxDEszywXdI5soCwQ78aTDSARvus=
+github.com/grafana/authlib/claims v0.0.0-20240827210201-19d5347dd8dd/go.mod h1:r+F8H6awwjNQt/KPZ2GNwjk8TvsJ7/gxzkXN26GlL/A=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240821155123-6891eb1d35da h1:2E3c/I3ayAy4Z1GwIPqXNZcpUccRapE1aBXA1ho4g7o=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240821155123-6891eb1d35da/go.mod h1:p09fvU5ujNL/Ig8HB7g4f+S0zyYbQq3x/f0jA4ujVOM=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20240821155123-6891eb1d35da h1:xQMb8cRZYu7D0IO9q/lB7qFQpLGAoPUnCase1CGHrXY=

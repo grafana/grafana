@@ -82,6 +82,17 @@ func TestIntegrationScopes(t *testing.T) {
 				]
 			  },
 			  {
+				"name": "scopedashboardbindings/status",
+				"singularName": "",
+				"namespaced": true,
+				"kind": "ScopeDashboardBinding",
+				"verbs": [
+				  "get",
+				  "patch",
+				  "update"
+				]
+			  },
+			  {
 				"name": "scopenodes",
 				"singularName": "scopenode",
 				"namespaced": true,
