@@ -1,6 +1,6 @@
 import { memo } from 'react';
 
-import { DataFrame, getFieldSeriesColor, outerJoinDataFrames } from '@grafana/data';
+import { DataFrame, FieldType, getFieldSeriesColor } from '@grafana/data';
 import { Field } from '@grafana/data/';
 import { AxisPlacement, VizLegendOptions } from '@grafana/schema';
 import { useTheme2, VizLayout, VizLayoutLegendProps, VizLegend, VizLegendItem } from '@grafana/ui';
@@ -16,12 +16,12 @@ export const BarGaugeLegend = memo(
     const theme = useTheme2();
     let legendItems: VizLegendItem[] = [];
 
-    data.map((series, frameIndex) => {
-      series.fields.map((field, i) => {
+    data.forEach((series, frameIndex) => {
+      series.fields.forEach((field, i) => {
         const fieldIndex = i + 1;
 
-        if (!field || field.type === 'time' || field.config.custom?.hideFrom?.legend) {
-          return undefined;
+        if (field.type === FieldType.time || field.config.custom?.hideFrom?.legend) {
+          return;
         }
 
         const label = field.state?.displayName ?? field.name;
