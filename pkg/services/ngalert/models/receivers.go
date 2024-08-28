@@ -289,16 +289,18 @@ func (integration *Integration) Clone() Integration {
 		Name:                  integration.Name,
 		Config:                integration.Config.Clone(),
 		DisableResolveMessage: integration.DisableResolveMessage,
-		Settings:              mapClone(integration.Settings),
+		Settings:              cloneIntegrationSettings(integration.Settings),
 		SecureSettings:        maps.Clone(integration.SecureSettings),
 	}
 }
 
-func mapClone(m map[string]any) map[string]any {
-	result := maps.Clone(m)
+// cloneIntegrationSettings implements a deep copy of settings map.
+// It's not a generic purpose function because settings are limited to basic types, maps and slices.
+func cloneIntegrationSettings(m map[string]any) map[string]any {
+	result := maps.Clone(m) // do a shallow copy of the map first
 	for k, v := range result {
 		if mp, ok := v.(map[string]any); ok {
-			result[k] = mapClone(mp)
+			result[k] = cloneIntegrationSettings(mp)
 			continue
 		}
 		if mp, ok := v.([]any); ok {
@@ -313,7 +315,7 @@ func sliceClone(src []any) []any {
 	dst := slices.Clone(src)
 	for i, v := range dst {
 		if mp, ok := v.(map[string]any); ok {
-			dst[i] = mapClone(mp)
+			dst[i] = cloneIntegrationSettings(mp)
 			continue
 		}
 		if mp, ok := v.([]any); ok {
