@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Combobox, Option } from './Combobox';
 
@@ -33,17 +33,28 @@ describe('Combobox', () => {
     });
 
 
-    // it('should allow selecting a value by clicking directly', async () => {
-    //     render(<Combobox options={options} onChange={onChangeHandler} value={null} />);
+    it('should allow selecting a value by clicking directly', async () => {
+        render(<Combobox options={options} onChange={onChangeHandler} value={null} />);
 
-    //     const input = screen.getByRole('combobox');
-    //     userEvent.click(input);
+        const input = screen.getByRole('combobox');
+        userEvent.click(input);
 
-    //     const item = await screen.findByRole('option', { name: 'Option 1' });
-    //     userEvent.click(item);
-    //     expect(screen.queryByDisplayValue('Option 1')).toBeInTheDocument();
-    //     expect(onChangeHandler).toHaveBeenCalled();
-    // });
+        const item = await screen.findByRole('option', { name: 'Option 1' });
+        userEvent.click(item);
+        expect(await screen.findByDisplayValue('Option 1')).toBeInTheDocument();
+        expect(onChangeHandler).toHaveBeenCalledWith(options[0]);
+    });
+
+    it('selects value by clicking that needs scrolling', async () => {
+        render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
+
+        await userEvent.click(screen.getByRole('combobox'));
+        fireEvent.scroll(screen.getByRole('listbox'), { target: { scrollY: 200 } });
+        await userEvent.click(screen.getByText('Option 4'));
+
+        expect(await screen.getByDisplayValue('Option 4')).toBeInTheDocument();
+        expect(onChangeHandler).toHaveBeenCalledWith(options[3]);
+    });
 
     it('selects value by searching and pressing enter', async () => {
         render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
