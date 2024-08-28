@@ -24,7 +24,7 @@ import (
 var (
 	// ErrFolderNameMissing is returned when folder name is missing.
 	ErrFolderNameMissing = errors.New("folder name missing")
-	// ErrGetOrCreateFolder is returned when there is a failure to fetch or create a provisioning folder
+	// ErrGetOrCreateFolder is returned when there is a failure to fetch or create a provisioning folder.
 	ErrGetOrCreateFolder = errors.New("failed to get or create provisioning folder")
 )
 
@@ -179,7 +179,7 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Cont
 
 		folderID, folderUID, err := fr.getOrCreateFolder(ctx, fr.Cfg, fr.dashboardProvisioningService, folderName)
 		if err != nil && !errors.Is(err, ErrFolderNameMissing) {
-			return fmt.Errorf("%w with name %q from file structure: %w", ErrGetOrCreateFolder, folderName, err)
+			return fmt.Errorf("%w with name %q from file system structure: %w", ErrGetOrCreateFolder, folderName, err)
 		}
 
 		provisioningMetadata, err := fr.saveDashboard(ctx, path, folderID, folderUID, fileInfo, dashboardRefs)
