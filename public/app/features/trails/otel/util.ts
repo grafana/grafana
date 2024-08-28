@@ -1,34 +1,49 @@
-export const blessedList: Record<string, number> = {
-  cloud_availability_zone: 1,
-  cloud_region: 2,
-  container_name: 3,
-  k8s_cluster_name: 4,
-  k8s_container_name: 5,
-  k8s_cronjob_name: 6,
-  k8s_daemonset_name: 7,
-  k8s_deployment_name: 8,
-  k8s_job_name: 9,
-  k8s_namespace_name: 10,
-  k8s_pod_name: 11,
-  k8s_replicaset_name: 12,
-  k8s_statefulset_name: 13,
-  service_instance_id: 14,
-  service_name: 15,
-  service_namespace: 16,
+import { MetricFindValue } from '@grafana/data';
+
+export const blessedList = (): Record<string, number> => {
+  return {
+    cloud_availability_zone: 0,
+    cloud_region: 0,
+    container_name: 0,
+    k8s_cluster_name: 0,
+    k8s_container_name: 0,
+    k8s_cronjob_name: 0,
+    k8s_daemonset_name: 0,
+    k8s_deployment_name: 0,
+    k8s_job_name: 0,
+    k8s_namespace_name: 0,
+    k8s_pod_name: 0,
+    k8s_replicaset_name: 0,
+    k8s_statefulset_name: 0,
+    service_instance_id: 0,
+    service_name: 0,
+    service_namespace: 0,
+  };
 };
 
-export function sortResources(resources: string[], excluded: string[]) {
+export function sortResources(resources: MetricFindValue[], excluded: string[]) {
   // these may be filtered
-  const blessed = Object.keys(blessedList).filter((resource) => !excluded.includes(resource));
-  resources.filter((resource) => {
+  const promotedList = blessedList();
+
+  const blessed = Object.keys(promotedList);
+
+  resources = resources.filter((resource) => {
     // if not in the list keep it
-    if (!blessed.includes(resource)) {
+    const val = (resource.value ?? '').toString();
+
+    if (!blessed.includes(val)) {
       return true;
     }
     // remove blessed filters
+    // but indicate which are available
+    promotedList[val] = 1;
     return false;
   });
 
+  const promotedResources = Object.keys(promotedList)
+    .filter((resource) => promotedList[resource] && !excluded.includes(resource))
+    .map((v) => ({ text: v }));
+
   // put the filters first
-  return blessed.concat(resources);
+  return promotedResources.concat(resources);
 }

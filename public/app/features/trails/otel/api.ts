@@ -11,6 +11,8 @@ const OTEL_RESOURCE_EXCLUDED_FILTERS = ['__name__', 'deployment_environment']; /
  * */
 const otelTargetInfoQuery = (filters?: string) => `count(target_info{${filters ?? ''}}) by (job, instance)`;
 
+export const TARGET_INFO_FILTER = { key: '__name__', value: 'target_info', operator: '=' };
+
 /**
  * Query the DS for target_info matching job and instance.
  * Parse the results to get label filters.
@@ -21,9 +23,10 @@ const otelTargetInfoQuery = (filters?: string) => `count(target_info{${filters ?
 export async function getOtelResources(
   dataSourceUid: string,
   timeRange: RawTimeRange,
-  excludeFilters?: string[]
+  excludedFilters?: string[],
+  matchFilters?: string
 ): Promise<string[]> {
-  const allExcludedFilters = (excludeFilters ?? []).concat(OTEL_RESOURCE_EXCLUDED_FILTERS);
+  const allExcludedFilters = (excludedFilters ?? []).concat(OTEL_RESOURCE_EXCLUDED_FILTERS);
 
   const start = getPrometheusTime(timeRange.from, false);
   const end = getPrometheusTime(timeRange.to, true);
@@ -32,7 +35,7 @@ export async function getOtelResources(
   const params: Record<string, string | number> = {
     start,
     end,
-    'match[]': '{__name__="target_info"}',
+    'match[]': `{__name__="target_info"${matchFilters ? ',' : ''}${matchFilters}}`,
   };
 
   const response = await getBackendSrv().get<LabelResponse>(url, params, 'explore-metrics-otel-resources');
