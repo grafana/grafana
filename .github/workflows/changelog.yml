@@ -74,8 +74,20 @@ jobs:
           sparse-checkout: |
             .github/workflows
             CHANGELOG.md
+            package.json
+            yarn.lock
+            .nvmrc
           fetch-depth: 0
           fetch-tags: true
+      - name: Setup nodejs environment
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+      - name: Install frontend dependencies
+        shell: bash
+        run: |
+          yarn install --immutable
       - name: "Configure git user"
         run: |
           git config --local user.name "github-actions[bot]"
@@ -120,9 +132,11 @@ jobs:
           fi
 
           git diff CHANGELOG.md
-          git add CHANGELOG.md
+
+      - name: "Prettify CHANGELOG.md"
+        run: yarn run prettier:write
       - name: "Commit changelog changes"
-        run: git commit --allow-empty -m "Update changelog" CHANGELOG.md
+        run: git add CHANGELOG.md && git commit --allow-empty -m "Update changelog" CHANGELOG.md
       - name: "git push"
         if: ${{ inputs.dry_run }} != true
         run: git push
