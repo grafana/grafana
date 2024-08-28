@@ -1307,6 +1307,19 @@
         },
         "description": "(empty)"
       },
+      "getTeamLBACRulesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/TeamLBACRules"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getTeamMembersResponse": {
         "content": {
           "application/json": {
@@ -2022,6 +2035,19 @@
                 }
               },
               "type": "object"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "updateTeamLBACRulesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/UpdateTeamLBACRulesResponse"
+              },
+              "type": "array"
             }
           }
         },
@@ -10775,6 +10801,31 @@
         },
         "type": "object"
       },
+      "TeamLBACRule": {
+        "properties": {
+          "rules": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "teamId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TeamLBACRules": {
+        "properties": {
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/TeamLBACRule"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "TeamMemberDTO": {
         "properties": {
           "auth_module": {
@@ -11795,6 +11846,18 @@
           },
           "Name": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateTeamLBACRulesResponse": {
+        "properties": {
+          "body": {
+            "description": "in:body",
+            "items": {
+              "$ref": "#/components/schemas/UpdateTeamLBACRulesResponse"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -17910,7 +17973,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/okResponse"
+            "$ref": "#/components/responses/getTeamLBACRulesResponse"
           },
           "400": {
             "$ref": "#/components/responses/badRequestError"

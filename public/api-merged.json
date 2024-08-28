@@ -4648,7 +4648,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/okResponse"
+            "$ref": "#/responses/getTeamLBACRulesResponse"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -20716,6 +20716,31 @@
         }
       }
     },
+    "TeamLBACRule": {
+      "type": "object",
+      "properties": {
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "teamId": {
+          "type": "string"
+        }
+      }
+    },
+    "TeamLBACRules": {
+      "type": "object",
+      "properties": {
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TeamLBACRule"
+          }
+        }
+      }
+    },
     "TeamMemberDTO": {
       "type": "object",
       "properties": {
@@ -21737,6 +21762,18 @@
         },
         "Name": {
           "type": "string"
+        }
+      }
+    },
+    "UpdateTeamLBACRulesResponse": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "description": "in:body",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UpdateTeamLBACRulesResponse"
+          }
         }
       }
     },
@@ -23743,6 +23780,15 @@
         }
       }
     },
+    "getTeamLBACRulesResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/TeamLBACRules"
+        }
+      }
+    },
     "getTeamMembersResponse": {
       "description": "(empty)",
       "schema": {
@@ -24244,6 +24290,15 @@
           "serviceaccount": {
             "$ref": "#/definitions/ServiceAccountProfileDTO"
           }
+        }
+      }
+    },
+    "updateTeamLBACRulesResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/UpdateTeamLBACRulesResponse"
         }
       }
     },
