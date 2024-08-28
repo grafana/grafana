@@ -231,7 +231,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     }
 
     if (rsp?.dashboard) {
-      const scene = transformSaveModelToScene(rsp);
+      const scene = transformSaveModelToScene(rsp, () => this.loadDashboard(options));
 
       // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
       if (options.uid && !comingFromExplore) {
