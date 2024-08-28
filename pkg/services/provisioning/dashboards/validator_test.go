@@ -31,7 +31,6 @@ func TestDuplicatesValidator(t *testing.T) {
 		Options: map[string]any{"path": dashboardContainingUID},
 	}
 	logger := log.New("test.logger")
-	// TODO: - passed fakeFolderService
 	fakeFoldersService := &foldertest.FakeService{ExpectedFolder: &folder.Folder{}}
 	t.Run("Duplicates validator should collect info about duplicate UIDs and titles within folders", func(t *testing.T) {
 		const folderName = "duplicates-validator-folder"

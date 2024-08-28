@@ -296,7 +296,6 @@ func TestDashboardFileReader(t *testing.T) {
 			cfg.Options["foldersFromFilesStructure"] = true
 
 			fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(nil, nil).Once()
-			//fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&folder.Folder{}, nil).Times(2)
 			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(3)
 
 			reader, err := NewDashboardFileReader(cfg, logger, nil, fakeStore, fakeFoldersService)
@@ -334,7 +333,6 @@ func TestDashboardFileReader(t *testing.T) {
 			cfg2 := &config{Name: "2", Type: "file", OrgID: 1, Folder: "f2", Options: map[string]any{"path": containingID}}
 
 			fakeService.On("GetProvisionedDashboardData", mock.Anything, mock.AnythingOfType("string")).Return(nil, nil).Times(2)
-			//fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&folder.Folder{}, nil).Times(2)
 			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(2)
 
 			reader1, err := NewDashboardFileReader(cfg1, logger, nil, fakeStore, fakeFoldersService)
