@@ -8,22 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/identity/common"
 	"github.com/grafana/grafana/pkg/services/team"
-	"github.com/grafana/grafana/pkg/services/user"
 )
-
-type ListUserQuery struct {
-	OrgID            int64
-	UID              string
-	IsServiceAccount bool
-
-	Pagination common.Pagination
-}
-
-type ListUserResult struct {
-	Users    []user.User
-	Continue int64
-	RV       int64
-}
 
 type GetUserDisplayQuery struct {
 	OrgID int64

@@ -4,11 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"text/template"
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/services/team"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -83,30 +81,6 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 	return res, err
 }
 
-// ListUsers implements LegacyIdentityStore.
-func (s *legacySQLStore) ListUsers(ctx context.Context, ns claims.NamespaceInfo, query ListUserQuery) (*ListUserResult, error) {
-	// for continue
-	limit := int(query.Pagination.Limit)
-	query.Pagination.Limit += 1
-
-	query.OrgID = ns.OrgID
-	if ns.OrgID == 0 {
-		return nil, fmt.Errorf("expected non zero orgID")
-	}
-
-	sql, err := s.sql(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := s.queryUsers(ctx, sql, sqlQueryUsers, newListUser(sql, &query), limit)
-	if err == nil && query.UID != "" {
-		res.RV, err = sql.GetResourceVersion(ctx, "user", "updated")
-	}
-
-	return res, err
-}
-
 // GetDisplay implements LegacyIdentityStore.
 func (s *legacySQLStore) GetDisplay(ctx context.Context, ns claims.NamespaceInfo, query GetUserDisplayQuery) (*ListUserResult, error) {
 	query.OrgID = ns.OrgID
@@ -120,44 +94,6 @@ func (s *legacySQLStore) GetDisplay(ctx context.Context, ns claims.NamespaceInfo
 	}
 
 	return s.queryUsers(ctx, sql, sqlQueryDisplay, newGetDisplay(sql, &query), 10000)
-}
-
-func (s *legacySQLStore) queryUsers(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, t *template.Template, req sqltemplate.Args, limit int) (*ListUserResult, error) {
-	q, err := sqltemplate.Execute(t, req)
-	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlQueryUsers.Name(), err)
-	}
-
-	res := &ListUserResult{}
-	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
-	defer func() {
-		if rows != nil {
-			_ = rows.Close()
-		}
-	}()
-
-	if err == nil {
-		var lastID int64
-		for rows.Next() {
-			u := user.User{}
-			err = rows.Scan(&u.OrgID, &u.ID, &u.UID, &u.Login, &u.Email, &u.Name,
-				&u.Created, &u.Updated, &u.IsServiceAccount, &u.IsDisabled, &u.IsAdmin,
-			)
-			if err != nil {
-				return res, err
-			}
-
-			lastID = u.ID
-			res.Users = append(res.Users, u)
-			if len(res.Users) > limit {
-				res.Users = res.Users[0 : len(res.Users)-1]
-				res.Continue = lastID
-				break
-			}
-		}
-	}
-
-	return res, err
 }
 
 // ListTeamsBindings implements LegacyIdentityStore.
