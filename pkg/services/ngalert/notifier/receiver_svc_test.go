@@ -248,7 +248,7 @@ func TestReceiverService_Delete(t *testing.T) {
 			deleteUID: baseReceiver.UID,
 			existing:  util.Pointer(baseReceiver.Clone()),
 			storeSettings: map[models.AlertRuleKey][]models.NotificationSettings{
-				{OrgID: 1, UID: "rule1"}: {
+				models.AlertRuleKey{OrgID: 1, UID: "rule1"}: {
 					models.NotificationSettingsGen(models.NSMuts.WithReceiver(baseReceiver.Name))(),
 				},
 			},
