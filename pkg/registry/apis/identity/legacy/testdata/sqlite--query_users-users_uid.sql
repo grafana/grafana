@@ -3,6 +3,6 @@ SELECT o.org_id, u.id, u.uid, u.login, u.email, u.name,
   FROM "grafana"."user" as u JOIN "grafana"."org_user" as o ON u.id = o.user_id
  WHERE o.org_id = 0
    AND u.is_service_account = FALSE
-   AND uid = 'abc'
+   AND u.uid = 'abc'
  ORDER BY u.id asc
- LIMIT 0
+ LIMIT 1
