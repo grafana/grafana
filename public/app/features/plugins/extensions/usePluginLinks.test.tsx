@@ -34,7 +34,7 @@ describe('usePluginLinks()', () => {
   });
 
   it('should only return the link extensions for the given extension point ids', async () => {
-    const extensionPointId = 'plugins/foo/bar';
+    const extensionPointId = 'plugins/foo/bar/v1';
     const pluginId = 'my-app-plugin';
 
     registry.register({
@@ -53,7 +53,7 @@ describe('usePluginLinks()', () => {
           path: `/a/${pluginId}/2`,
         },
         {
-          targets: 'plugins/another-extension',
+          targets: 'plugins/another-extension/v1',
           title: '3',
           description: '3',
           path: `/a/${pluginId}/3`,
@@ -70,7 +70,7 @@ describe('usePluginLinks()', () => {
   });
 
   it('should dynamically update the extensions registered for a certain extension point', () => {
-    const extensionPointId = 'plugins/foo/bar';
+    const extensionPointId = 'plugins/foo/bar/v1';
     const pluginId = 'my-app-plugin';
     const usePluginExtensions = createUsePluginLinks(registry);
     let { result, rerender } = renderHook(() => usePluginExtensions({ extensionPointId }));
