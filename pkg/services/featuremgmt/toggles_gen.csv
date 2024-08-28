@@ -184,3 +184,4 @@ backgroundPluginInstaller,experimental,@grafana/plugins-platform-backend,false,t
 dataplaneAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
 adhocFilterOneOf,experimental,@grafana/dashboards-squad,false,false,false
 lokiSendDashboardPanelNames,experimental,@grafana/observability-logs,false,false,false
+singleTopNav,experimental,@grafana/grafana-frontend-platform,false,false,true
