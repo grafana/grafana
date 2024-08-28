@@ -1,0 +1,16 @@
+apiVersion: grafana-auth-api.crossplane.grafana.net/v1alpha1
+kind: AccessPolicyToken
+metadata:
+  labels:
+    tanka.dev/environment: 532b0cb61d4ed28ff9677bbf3d8e8fe4545600c6257a7c84
+  name: my-demo-app-system
+  namespace: auth
+spec:
+  parameters:
+    allowedScopes:
+    - metrics:read
+    providerName: default
+    scopes:
+    - accesspolicies:write
+  writeConnectionSecretToRef:
+    name: my-demo-app-token
