@@ -7,7 +7,8 @@ import { BarGauge } from '../../../BarGauge/BarGauge';
 // import { DataLinksContextMenu, DataLinksContextMenuApi } from '../../DataLinks/DataLinksContextMenu';
 // import { TableCellProps } from '../types';
 import { getAlignmentFactor, getCellOptions } from '../../utils';
-import { CellNGProps } from '../types';
+import { BarGaugeCellProps } from '../types';
+import { he } from '@faker-js/faker';
 
 const defaultScale: ThresholdsConfig = {
     mode: ThresholdsMode.Absolute,
@@ -23,7 +24,7 @@ const defaultScale: ThresholdsConfig = {
     ],
 };
 
-export const BarGaugeCell = ({ value, field, theme }: CellNGProps) => {
+export const BarGaugeCell = ({ value, field, theme, height }: BarGaugeCellProps) => {
     const displayValue = field.display!(value);
     const cellOptions = getCellOptions(field);
 
@@ -64,11 +65,10 @@ export const BarGaugeCell = ({ value, field, theme }: CellNGProps) => {
 
     //     );
     //   };
-    console.log('went here');
 
     return <BarGauge
         width={innerWidth}
-        // height={tableStyles.cellHeightInner}
+        height={height}
         field={config}
         display={field.display}
         text={{ valueSize: 14 }}

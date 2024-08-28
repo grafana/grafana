@@ -245,7 +245,7 @@ export const RowsList = (props: RowsListProps) => {
     ) {
       rowBg = (rowIndex: number): CellColors => {
         const display = field.display!(field.values.get(rowIndex));
-        const colors = getCellColors(tableStyles, fieldOptions.cellOptions, display);
+        const colors = getCellColors(tableStyles.theme, fieldOptions.cellOptions, display);
         return colors;
       };
     }

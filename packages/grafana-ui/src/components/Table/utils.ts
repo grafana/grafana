@@ -599,12 +599,12 @@ export function calculateAroundPointThreshold(timeField: Field): number {
  * @returns CellColors
  */
 export function getCellColors(
-  tableStyles: TableStyles,
+  theme: GrafanaTheme2,
   cellOptions: TableCellOptions,
   displayValue: DisplayValue
 ): CellColors {
   // How much to darken elements depends upon if we're in dark mode
-  const darkeningFactor = tableStyles.theme.isDark ? 1 : -0.7;
+  const darkeningFactor = theme.isDark ? 1 : -0.7;
 
   // Setup color variables
   let textColor: string | undefined = undefined;
@@ -617,7 +617,7 @@ export function getCellColors(
     const mode = cellOptions.mode ?? TableCellBackgroundDisplayMode.Gradient;
 
     if (mode === TableCellBackgroundDisplayMode.Basic) {
-      textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
+      textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
       bgColor = tinycolor(displayValue.color).toRgbString();
       bgHoverColor = tinycolor(displayValue.color).setAlpha(1).toRgbString();
     } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
@@ -625,7 +625,7 @@ export function getCellColors(
       const bgColor2 = tinycolor(displayValue.color)
         .darken(10 * darkeningFactor)
         .spin(5);
-      textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
+      textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
       bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
       bgHoverColor = `linear-gradient(120deg, ${bgColor2.setAlpha(1).toRgbString()}, ${hoverColor})`;
     }
