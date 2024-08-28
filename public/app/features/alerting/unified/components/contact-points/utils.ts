@@ -91,6 +91,7 @@ export interface ReceiverConfigWithMetadata extends GrafanaManagedReceiverConfig
 }
 
 export interface ContactPointWithMetadata extends GrafanaManagedContactPoint {
+  id: string;
   policies?: RouteReference[]; // now is optional as we don't have the data from the read-only endpoint
   grafana_managed_receiver_configs: ReceiverConfigWithMetadata[];
 }
@@ -127,8 +128,11 @@ export function enhanceContactPointsWithMetadata({
     const receivers = extractReceivers(contactPoint);
     const statusForReceiver = status.find((status) => status.name === contactPoint.name);
 
+    const id = 'id' in contactPoint && contactPoint.id ? contactPoint.id : contactPoint.name;
+
     return {
       ...contactPoint,
+      id,
       policies:
         alertmanagerConfiguration && usedContactPointsByName && (usedContactPointsByName[contactPoint.name] ?? []),
       grafana_managed_receiver_configs: receivers.map((receiver, index) => {

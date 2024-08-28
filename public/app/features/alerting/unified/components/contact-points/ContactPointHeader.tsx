@@ -85,6 +85,10 @@ export const ContactPointHeader = ({ contactPoint, disabled = false, onDelete }:
     count: numberOfPolicies,
   });
 
+  // TOOD: Tidy up/consolidate logic for working out id for contact point. This requires some unravelling of
+  // existing types so its clearer where the ID has come from
+  const urlId = id || name;
+
   return (
     <div className={styles.headerWrapper}>
       <Stack direction="row" alignItems="center" gap={1}>
@@ -118,7 +122,7 @@ export const ContactPointHeader = ({ contactPoint, disabled = false, onDelete }:
           disabled={disabled}
           aria-label={`${canEdit ? 'edit' : 'view'}-action`}
           data-testid={`${canEdit ? 'edit' : 'view'}-action`}
-          href={`/alerting/notifications/receivers/${encodeURIComponent(id || name)}/edit`}
+          href={`/alerting/notifications/receivers/${encodeURIComponent(urlId)}/edit`}
         >
           {canEdit ? 'Edit' : 'View'}
         </LinkButton>
