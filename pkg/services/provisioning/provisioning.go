@@ -122,7 +122,6 @@ func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionDatasources func(context.Context, string, datasources.BaseDataSourceService, datasources.CorrelationsStore, org.Service) error,
 	provisionPlugins func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error,
-	searchService searchV2.SearchService,
 ) *ProvisioningServiceImpl {
 	return &ProvisioningServiceImpl{
 		log:                     log.New("provisioning"),
@@ -130,7 +129,6 @@ func newProvisioningServiceImpl(
 		provisionDatasources:    provisionDatasources,
 		provisionPlugins:        provisionPlugins,
 		Cfg:                     setting.NewCfg(),
-		searchService:           searchService,
 	}
 }
 
@@ -187,6 +185,7 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 	err := ps.ProvisionDashboards(ctx)
 	if err != nil {
 		ps.log.Error("Failed to provision dashboard", "error", err)
+		return err
 	}
 	if ps.dashboardProvisioner.HasDashboardSources() {
 		ps.searchService.TriggerReIndex()
