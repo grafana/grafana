@@ -36,7 +36,7 @@ This lets you design custom visualizations and overlay data in ways that aren't 
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-beta-overview-9-2-0.mp4" max-width="750px" alt="Canvas beta overview" >}}
 
-Canvases support the use of HTML, CSS, and JavaScript to create visuals, and if you've used popular UI and web design tools, then designing canvases will feel very familiar.
+If you've used popular UI and web design tools, then designing canvases will feel very familiar.
 With all of these dynamic elements, there are few limits to what a canvas can display.
 
 {{< admonition type="note" >}}
@@ -45,7 +45,7 @@ We'd love your feedback on the canvas visualization. Please check out the [open 
 
 ## Supported data formats
 
-The canvas visualization is unique in that it doesn't have any specific data requirements. You can even start drawing and configuring visual elements without providing any data. However, any data you plan to consume should be accessible through supported Grafana data sources and structured in a way that ensures smooth integration with your custom HTML, CSS, and JavaScript code.
+The canvas visualization is unique in that it doesn't have any specific data requirements. You can even start drawing and configuring visual elements without providing any data. However, any data you plan to consume should be accessible through supported Grafana data sources and structured in a way that ensures smooth integration with your custom elements.
 
 If your canvas is going to update in real time, your data should support refreshes at your desired intervals without degrading the user experience.
 
