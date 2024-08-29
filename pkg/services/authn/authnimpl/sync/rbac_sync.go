@@ -80,7 +80,8 @@ func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) 
 
 	permissions := make([]accesscontrol.Permission, 0, 8)
 	roles := ident.ClientParams.FetchPermissionsParams.Roles
-	if len(roles) > 0 {
+	actions := ident.ClientParams.FetchPermissionsParams.AllowedActions
+	if len(roles) > 0 || len(actions) > 0 {
 		for _, role := range roles {
 			roleDTO, err := s.ac.GetRoleByName(ctx, ident.GetOrgID(), role)
 			if err != nil && !errors.Is(err, accesscontrol.ErrRoleNotFound) {
@@ -91,13 +92,6 @@ func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) 
 				permissions = append(permissions, roleDTO.Permissions...)
 			}
 		}
-
-		return permissions, nil
-	}
-
-	actions := ident.ClientParams.FetchPermissionsParams.AllowedActions
-	if len(actions) > 0 {
-		permissions := make([]accesscontrol.Permission, 0, 8)
 		for _, action := range actions {
 			scopes, ok := s.permRegistry.GetScopePrefixes(action)
 			if !ok {
@@ -110,8 +104,8 @@ func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) 
 			for scope := range scopes {
 				permissions = append(permissions, accesscontrol.Permission{Action: action, Scope: scope + "*"})
 			}
-			return permissions, nil
 		}
+		return permissions, nil
 	}
 
 	permissions, err := s.ac.GetUserPermissions(ctx, ident, accesscontrol.Options{ReloadCache: false})
