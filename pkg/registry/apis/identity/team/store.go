@@ -140,7 +140,7 @@ func asTeam(team *team.Team, ns string) (*identityv0.Team, error) {
 			ResourceVersion:   strconv.FormatInt(team.Updated.UnixMilli(), 10),
 		},
 		Spec: identityv0.TeamSpec{
-			Title: team.Name,
+			Name:  team.Name,
 			Email: team.Email,
 		},
 	}
