@@ -23,6 +23,8 @@ interface ComboboxProps
   onChange: (val: Option | null) => void;
   value: Value | null;
   options: Option[];
+  isClearable?: boolean;
+  createCustomValue?: boolean;
 }
 
 function itemToString(item: Option | null) {
@@ -51,12 +53,22 @@ const INDEX_WIDTH_CALCULATION = 100;
 // A multiplier guesstimate times the amount of characters. If any padding or image support etc. is added this will need to be updated.
 const WIDTH_MULTIPLIER = 7.3;
 
-export const Combobox = ({ options, onChange, value, id, ...restProps }: ComboboxProps) => {
+export const Combobox = ({
+  options,
+  onChange,
+  value,
+  isClearable = false,
+  createCustomValue = false,
+  id,
+  ...restProps
+}: ComboboxProps) => {
   const [items, setItems] = useState(options);
-  const selectedItemIndex = useMemo(
-    () => options.findIndex((option) => option.value === value) || null,
+
+  const selectedItemIndex: number | null = useMemo(
+    () => (value === null ? null : options.findIndex((option) => option.value === value) || null),
     [options, value]
   );
+
   const selectedItem = selectedItemIndex ? options[selectedItemIndex] : null;
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -82,18 +94,27 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
     isOpen,
     highlightedIndex,
     setInputValue,
-    selectItem,
     openMenu,
     closeMenu,
+    selectItem,
   } = useCombobox({
     inputId: id,
     items,
     itemToString,
     selectedItem,
+    onSelectedItemChange: ({ selectedItem }) => {
+      onChange(selectedItem);
+    },
     defaultHighlightedIndex: selectedItemIndex ?? undefined,
     scrollIntoView: () => {},
     onInputValueChange: ({ inputValue }) => {
-      setItems(options.filter(itemFilter(inputValue)));
+      const filteredItems = options.filter(itemFilter(inputValue));
+      if (createCustomValue && inputValue) {
+        setItems([...filteredItems, { label: inputValue, value: inputValue, description: 'Create custom' }]);
+        return;
+      } else {
+        setItems(filteredItems);
+      }
     },
     onIsOpenChange: ({ isOpen }) => {
       // Default to displaying all values when opening
@@ -101,9 +122,6 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
         setItems(options);
         return;
       }
-    },
-    onSelectedItemChange: ({ selectedItem }) => {
-      onChange(selectedItem);
     },
     onHighlightedIndexChange: ({ highlightedIndex, type }) => {
       if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
@@ -113,8 +131,8 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
   });
 
   const onBlur = useCallback(() => {
-    setInputValue(selectedItem?.label ?? '');
-  }, [selectedItem, setInputValue]);
+    setInputValue(selectedItem?.label ?? value?.toString() ?? '');
+  }, [selectedItem, setInputValue, value]);
 
   // the order of middleware is important!
   const middleware = [
@@ -147,7 +165,7 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
       <Input
         suffix={
           <>
-            {!!value && value === selectedItem?.value && (
+            {!!value && value === selectedItem?.value && isClearable && (
               <Icon
                 name="times"
                 className={styles.clear}
@@ -202,7 +220,7 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               return (
                 <li
-                  key={items[virtualRow.index].value}
+                  key={items[virtualRow.index].value + items[virtualRow.index].label}
                   data-index={virtualRow.index}
                   className={cx(
                     styles.option,
