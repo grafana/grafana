@@ -62,12 +62,12 @@ export const FieldValueMatcherEditor = ({ options, onChange }: Props) => {
   );
 
   const opts = options ?? {};
-  const isBool = isBooleanReducer(options.reducer);
+  const isBool = isBooleanReducer(options?.reducer);
 
   return (
     <div className={styles.spot}>
       <Select
-        value={reducer.current}
+        value={(reducer.current[0].label)? reducer.current: null}
         options={reducer.options}
         onChange={onSetReducer}
         placeholder="Select field reducer"
