@@ -1,13 +1,10 @@
-import { isString } from 'util';
-
-import { PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
+import { PluginExtensionLink } from '@grafana/data';
 import {
   UsePluginLinksOptions,
   UsePluginLinksResult,
 } from '@grafana/runtime/src/services/pluginExtensions/getPluginExtensions';
 
 import { AddedLinkRegistryItem, AddedLinksRegistry } from './registry/AddedLinksRegistry';
-import { generateExtensionId, logWarning } from './utils';
 
 // Returns an array of component extensions for the given extension point
 export function createUsePluginLinks(_: AddedLinksRegistry) {
@@ -42,31 +39,9 @@ export function createUsePluginLinks(_: AddedLinksRegistry) {
             extensionsByPlugin[pluginId] = 0;
           }
 
-          const path = addedLink.path;
-          const extension: PluginExtensionLink = {
-            id: generateExtensionId(pluginId, {
-              ...addedLink,
-              extensionPointId,
-              type: PluginExtensionTypes.link,
-            }),
-            type: PluginExtensionTypes.link,
-            pluginId: pluginId,
-            onClick: getLinkExtensionOnClick(pluginId, extensionPointId, addedLink, context),
-
-            // Configurable properties
-            icon: addedLink.icon,
-            title: addedLink.title,
-            description: addedLink.description,
-            path: isString(path) ? getLinkExtensionPathWithTracking(pluginId, path, extensionPointId) : undefined,
-            category: addedLink.category,
-          };
-
-          extensions.push(extension);
           extensionsByPlugin[pluginId] += 1;
         } catch (error) {
-          if (error instanceof Error) {
-            logWarning(error.message);
-          }
+          console.log(error);
         }
       }
 
@@ -82,20 +57,4 @@ export function createUsePluginLinks(_: AddedLinksRegistry) {
       };
     }
   };
-}
-function getLinkExtensionOnClick(
-  pluginId: string,
-  extensionPointId: string,
-  addedLink: AddedLinkRegistryItem<object>,
-  context: object | Record<string | symbol, unknown> | undefined
-): ((event?: import('react').MouseEvent) => void) | undefined {
-  throw new Error('Function not implemented.');
-}
-
-function getLinkExtensionPathWithTracking(
-  pluginId: string,
-  path: string,
-  extensionPointId: string
-): string | undefined {
-  throw new Error('Function not implemented.');
 }
