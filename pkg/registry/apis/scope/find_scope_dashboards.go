@@ -64,7 +64,9 @@ func (f *findScopeDashboardsREST) Connect(ctx context.Context, name string, opts
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		raw, err := f.scopeDashboardStorage.List(ctx, &internalversion.ListOptions{})
+		raw, err := f.scopeDashboardStorage.List(ctx, &internalversion.ListOptions{
+			Limit: 10000,
+		})
 		if err != nil {
 			w.WriteHeader(500)
 			return
