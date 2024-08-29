@@ -133,12 +133,12 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 	if q.Decrypt {
 		err := rcv.Decrypt(rs.decryptor(ctx))
 		if err != nil {
-			rs.log.Warn("failed to decrypt secure settings", "name", rcv.Name, "error", err)
+			rs.log.Warn("Failed to decrypt secure settings", "name", rcv.Name, "error", err)
 		}
 	} else {
 		err := rcv.Encrypt(rs.encryptor(ctx))
 		if err != nil {
-			rs.log.Warn("failed to encrypt secure settings", "name", rcv.Name, "error", err)
+			rs.log.Warn("Failed to encrypt secure settings", "name", rcv.Name, "error", err)
 		}
 	}
 
@@ -181,12 +181,12 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 		if q.Decrypt {
 			err := rcv.Decrypt(rs.decryptor(ctx))
 			if err != nil {
-				rs.log.Warn("failed to decrypt secure settings", "name", rcv.Name, "error", err)
+				rs.log.Warn("Failed to decrypt secure settings", "name", rcv.Name, "error", err)
 			}
 		} else {
 			err := rcv.Encrypt(rs.encryptor(ctx))
 			if err != nil {
-				rs.log.Warn("failed to encrypt secure settings", "name", rcv.Name, "error", err)
+				rs.log.Warn("Failed to encrypt secure settings", "name", rcv.Name, "error", err)
 			}
 		}
 	}
@@ -280,7 +280,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 			return err
 		}
 	} else {
-		rs.log.Debug("ignoring optimistic concurrency check because version was not provided", "receiver", existing.Name, "operation", "delete")
+		rs.log.Debug("Ignoring optimistic concurrency check because version was not provided", "receiver", existing.Name, "operation", "delete")
 	}
 
 	if err := rs.provenanceValidator(existing.Provenance, models.Provenance(callerProvenance)); err != nil {
