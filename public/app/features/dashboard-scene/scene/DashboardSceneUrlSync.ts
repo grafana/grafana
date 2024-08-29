@@ -23,7 +23,7 @@ import {
   getDashboardSceneFor,
   getLibraryPanel,
   isPanelClone,
-  isWithinRepeatRow,
+  isWithinUnactivatedRepeatRow,
 } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
@@ -127,7 +127,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
-      if (isWithinRepeatRow(panel)) {
+      if (isWithinUnactivatedRepeatRow(panel)) {
         this._handleViewRepeatClone(values.viewPanel);
         return;
       }

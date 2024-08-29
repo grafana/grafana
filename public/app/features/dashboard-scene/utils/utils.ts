@@ -263,7 +263,7 @@ export function getLibraryPanel(vizPanel: VizPanel): LibraryVizPanel | undefined
   return;
 }
 
-export function isWithinRepeatRow(panel: VizPanel): boolean {
+export function isWithinUnactivatedRepeatRow(panel: VizPanel): boolean {
   let row;
 
   try {
@@ -272,5 +272,8 @@ export function isWithinRepeatRow(panel: VizPanel): boolean {
     return false;
   }
 
-  return !!(row.state.$behaviors && row.state.$behaviors.find((b) => b instanceof RowRepeaterBehavior));
+  const hasBehavior = !!(row.state.$behaviors && row.state.$behaviors.find((b) => b instanceof RowRepeaterBehavior));
+  const hasVariables = !!(row.state.$variables && row.state.$variables.state.variables.length > 0);
+
+  return hasBehavior && !hasVariables;
 }
