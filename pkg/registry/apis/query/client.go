@@ -9,14 +9,13 @@ import (
 // The query runner interface
 type DataSourceClientSupplier interface {
 	// Get a client for a given datasource
-	// NOTE: authorization headers are not yet added and the client may be shared across multiple users
-	GetDataSourceClient(ctx context.Context, ref data.DataSourceRef) (data.QueryDataClient, error)
+	GetDataSourceClient(ctx context.Context, ref data.DataSourceRef, headers map[string]string) (data.QueryDataClient, error)
 }
 
 type CommonDataSourceClientSupplier struct {
 	Client data.QueryDataClient
 }
 
-func (s *CommonDataSourceClientSupplier) GetDataSourceClient(ctx context.Context, ref data.DataSourceRef) (data.QueryDataClient, error) {
+func (s *CommonDataSourceClientSupplier) GetDataSourceClient(_ context.Context, _ data.DataSourceRef, _ map[string]string) (data.QueryDataClient, error) {
 	return s.Client, nil
 }
