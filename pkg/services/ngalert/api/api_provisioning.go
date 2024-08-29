@@ -45,8 +45,9 @@ type ContactPointService interface {
 
 type TemplateService interface {
 	GetTemplates(ctx context.Context, orgID int64) ([]definitions.NotificationTemplate, error)
-	SetTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error)
-	DeleteTemplate(ctx context.Context, orgID int64, name string, provenance definitions.Provenance) error
+	GetTemplate(ctx context.Context, orgID int64, nameOrUid string) (definitions.NotificationTemplate, error)
+	UpsertTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error)
+	DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, provenance definitions.Provenance, version string) error
 }
 
 type NotificationPolicyService interface {
@@ -201,44 +202,38 @@ func (srv *ProvisioningSrv) RouteDeleteContactPoint(c *contextmodel.ReqContext, 
 func (srv *ProvisioningSrv) RouteGetTemplates(c *contextmodel.ReqContext) response.Response {
 	templates, err := srv.templates.GetTemplates(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusOK, templates)
 }
 
-func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, name string) response.Response {
-	templates, err := srv.templates.GetTemplates(c.Req.Context(), c.SignedInUser.GetOrgID())
+func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, nameOrUid string) response.Response {
+	template, err := srv.templates.GetTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), nameOrUid)
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
-	for _, tmpl := range templates {
-		if tmpl.Name == name {
-			return response.JSON(http.StatusOK, tmpl)
-		}
-	}
-	return response.Empty(http.StatusNotFound)
+	return response.JSON(http.StatusOK, template)
 }
 
 func (srv *ProvisioningSrv) RoutePutTemplate(c *contextmodel.ReqContext, body definitions.NotificationTemplateContent, name string) response.Response {
 	tmpl := definitions.NotificationTemplate{
-		Name:       name,
-		Template:   body.Template,
-		Provenance: determineProvenance(c),
+		Name:            name,
+		Template:        body.Template,
+		Provenance:      determineProvenance(c),
+		ResourceVersion: body.ResourceVersion,
 	}
-	modified, err := srv.templates.SetTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), tmpl)
+	modified, err := srv.templates.UpsertTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), tmpl)
 	if err != nil {
-		if errors.Is(err, provisioning.ErrValidation) {
-			return ErrResp(http.StatusBadRequest, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusAccepted, modified)
 }
 
-func (srv *ProvisioningSrv) RouteDeleteTemplate(c *contextmodel.ReqContext, name string) response.Response {
-	err := srv.templates.DeleteTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), name, determineProvenance(c))
+func (srv *ProvisioningSrv) RouteDeleteTemplate(c *contextmodel.ReqContext, nameOrUid string) response.Response {
+	version := c.Query("version")
+	err := srv.templates.DeleteTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), nameOrUid, determineProvenance(c), version)
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusNoContent, nil)
 }

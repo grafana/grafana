@@ -1,16 +1,18 @@
 import { HttpResponse, http } from 'msw';
 
-import {
-  PROVENANCE_ANNOTATION,
-  PROVENANCE_NONE,
-} from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
+import { filterBySelector } from 'app/features/alerting/unified/mocks/server/handlers/k8s/utils';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
 import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval } from 'app/features/alerting/unified/openapi/timeIntervalsApi.gen';
+import { PROVENANCE_ANNOTATION, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
 
 /** UID of a time interval that we expect to follow all happy paths within tests/mocks */
 export const TIME_INTERVAL_UID_HAPPY_PATH = 'f4eae7a4895fa786';
+/** Display name of a time interval that we expect to follow all happy paths within tests/mocks */
+export const TIME_INTERVAL_NAME_HAPPY_PATH = 'Some interval';
+
 /** UID of a (file) provisioned time interval */
 export const TIME_INTERVAL_UID_FILE_PROVISIONED = 'd7b8515fc39e90f7';
+export const TIME_INTERVAL_NAME_FILE_PROVISIONED = 'A provisioned interval';
 
 const allTimeIntervals = getK8sResponse<ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval>(
   'TimeIntervalList',
@@ -25,7 +27,7 @@ const allTimeIntervals = getK8sResponse<ComGithubGrafanaGrafanaPkgApisAlertingNo
         namespace: 'default',
         resourceVersion: 'e0270bfced786660',
       },
-      spec: { name: 'Some interval', time_intervals: [] },
+      spec: { name: TIME_INTERVAL_NAME_HAPPY_PATH, time_intervals: [] },
     },
     {
       metadata: {
@@ -37,7 +39,7 @@ const allTimeIntervals = getK8sResponse<ComGithubGrafanaGrafanaPkgApisAlertingNo
         namespace: 'default',
         resourceVersion: 'a76d2fcc6731aa0c',
       },
-      spec: { name: 'A provisioned interval', time_intervals: [] },
+      spec: { name: TIME_INTERVAL_NAME_FILE_PROVISIONED, time_intervals: [] },
     },
   ]
 );
@@ -47,9 +49,9 @@ const getIntervalByName = (name: string) => {
 };
 
 export const listNamespacedTimeIntervalHandler = () =>
-  http.get<{ namespace: string }>(
+  http.get<{ namespace: string }, { fieldSelector: string }>(
     `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/timeintervals`,
-    ({ params }) => {
+    ({ params, request }) => {
       const { namespace } = params;
 
       // k8s APIs expect `default` rather than `org-1` - this is one particular example
@@ -62,6 +64,17 @@ export const listNamespacedTimeIntervalHandler = () =>
           { status: 403 }
         );
       }
+
+      // Rudimentary filter support for `spec.name`
+      const url = new URL(request.url);
+      const fieldSelector = url.searchParams.get('fieldSelector');
+
+      if (fieldSelector && fieldSelector.includes('spec.name')) {
+        const filteredItems = filterBySelector(allTimeIntervals.items, fieldSelector);
+
+        return HttpResponse.json({ items: filteredItems });
+      }
+
       return HttpResponse.json(allTimeIntervals);
     }
   );

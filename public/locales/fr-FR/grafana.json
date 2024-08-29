@@ -106,6 +106,7 @@
       "export-all": "",
       "view": ""
     },
+    "contact-point": "",
     "contact-points": {
       "delivery-duration": "",
       "last-delivery-attempt": "",
@@ -118,6 +119,9 @@
       },
       "used-by_one": "",
       "used-by_other": ""
+    },
+    "contactPointFilter": {
+      "label": ""
     },
     "grafana-rules": {
       "export-rules": "",
@@ -136,7 +140,21 @@
       "saving": ""
     },
     "policies": {
+      "default-policy": {
+        "description": "",
+        "title": ""
+      },
+      "generated-policies": "",
       "metadata": {
+        "active-time": "",
+        "delivered-to": "",
+        "grouped-by": "",
+        "grouping": {
+          "none": "",
+          "single-group": ""
+        },
+        "inherited": "",
+        "mute-time": "",
         "timingOptions": {
           "groupInterval": {
             "description": "",
@@ -150,8 +168,15 @@
             "description": "",
             "label": ""
           }
-        }
-      }
+        },
+        "n-instances_one": "",
+        "n-instances_other": ""
+      },
+      "new-child": "",
+      "new-policy": "",
+      "no-matchers": "",
+      "n-more-policies_one": "",
+      "n-more-policies_other": ""
     },
     "provisioning": {
       "badge-tooltip-provenance": "",
@@ -178,6 +203,9 @@
       "recording-rule": ""
     },
     "rules": {
+      "add-rule": {
+        "success": ""
+      },
       "delete-rule": {
         "success": ""
       },
@@ -185,6 +213,9 @@
         "success": ""
       },
       "resume-rule": {
+        "success": ""
+      },
+      "update-rule": {
         "success": ""
       }
     }
@@ -320,11 +351,13 @@
     }
   },
   "common": {
+    "cancel": "",
     "locale": {
       "default": "Par défaut"
     },
     "save": "Enregistrer"
   },
+  "complete": "",
   "connections": {
     "connect-data": {
       "category-header-label": "Sources de données",
@@ -668,18 +701,14 @@
       "message": ""
     }
   },
+  "embed": {
+    "share": {
+      "time-range-description": "",
+      "time-range-label": ""
+    }
+  },
   "explore": {
     "add-to-dashboard": "Ajouter au tableau de bord",
-    "add-to-library-modal": {
-      "auto-star": "",
-      "data-source-name": "",
-      "data-source-type": "",
-      "description": "",
-      "info": "",
-      "query": "",
-      "title": "",
-      "visibility": ""
-    },
     "logs": {
       "maximum-pinned-logs": "",
       "no-logs-found": "",
@@ -687,6 +716,7 @@
       "stop-scan": ""
     },
     "query-library": {
+      "add-edit-description": "",
       "cancel": "",
       "default-description": "",
       "delete-query": "",
@@ -695,9 +725,25 @@
       "private": "",
       "public": "",
       "query-deleted": "",
+      "query-template-add-error": "",
       "query-template-added": "",
-      "query-template-error": "",
+      "query-template-edit-error": "",
+      "query-template-edited": "",
       "save": ""
+    },
+    "query-template-modal": {
+      "add-info": "",
+      "add-title": "",
+      "auto-star": "",
+      "data-source-name": "",
+      "description": "",
+      "edit-info": "",
+      "edit-title": "",
+      "query": "",
+      "visibility": ""
+    },
+    "query-template-modall": {
+      "data-source-type": ""
     },
     "rich-history": {
       "close-tooltip": "Fermer l'historique des requêtes",
@@ -938,6 +984,139 @@
       "refresh": "Actualiser"
     }
   },
+  "ldap-drawer": {
+    "attributes-section": {
+      "description": "",
+      "email": {
+        "label": ""
+      },
+      "label": "",
+      "member-of": {
+        "label": ""
+      },
+      "name": {
+        "label": ""
+      },
+      "surname": {
+        "label": ""
+      },
+      "username": {
+        "label": ""
+      }
+    },
+    "extra-security-section": {
+      "label": "",
+      "min-tls-version": {
+        "description": "",
+        "label": ""
+      },
+      "start-tls": {
+        "description": "",
+        "label": ""
+      },
+      "tls-ciphers": {
+        "description": "",
+        "label": "",
+        "placeholder": ""
+      },
+      "use-ssl": {
+        "description": "",
+        "label": "",
+        "tooltip": ""
+      }
+    },
+    "group-mapping-section": {
+      "description": "",
+      "group-search-base-dns": {
+        "description": "",
+        "label": ""
+      },
+      "group-search-filter": {
+        "description": "",
+        "label": ""
+      },
+      "group-search-filter-user-attribute": {
+        "description": "",
+        "label": ""
+      },
+      "label": "",
+      "skip-org-role-sync": {
+        "description": "",
+        "label": ""
+      }
+    },
+    "misc-section": {
+      "allow-sign-up": {
+        "descrition": "",
+        "label": ""
+      },
+      "label": "",
+      "port": {
+        "description": "",
+        "label": ""
+      },
+      "timeout": {
+        "description": "",
+        "label": ""
+      }
+    },
+    "title": ""
+  },
+  "ldap-settings-page": {
+    "advanced-settings-section": {
+      "edit": {
+        "button": ""
+      },
+      "subtitle": "",
+      "title": ""
+    },
+    "alert": {
+      "discard-success": "",
+      "error-fetching": "",
+      "error-saving": "",
+      "error-update": "",
+      "error-validate-form": "",
+      "feature-flag-disabled": "",
+      "saved": ""
+    },
+    "bind-dn": {
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
+    "bind-password": {
+      "label": ""
+    },
+    "buttons-section": {
+      "discard": {
+        "button": ""
+      },
+      "save": {
+        "button": ""
+      },
+      "save-and-enable": {
+        "button": ""
+      }
+    },
+    "documentation": "",
+    "host": {
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
+    "search_filter": {
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
+    "search-base-dns": {
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
+    "subtitle": "",
+    "title": ""
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "Annuler",
@@ -1017,6 +1196,11 @@
       "new-to-question": "Nouveau sur Grafana ?"
     }
   },
+  "logs": {
+    "infinite-scroll": {
+      "older-logs": ""
+    }
+  },
   "migrate-to-cloud": {
     "build-snapshot": {
       "description": "",
@@ -1089,6 +1273,11 @@
       "link-title": "Voir le guide de migration complet",
       "title": ""
     },
+    "migrated-counts": {
+      "dashboards": "",
+      "datasources": "",
+      "folders": ""
+    },
     "migration-token": {
       "delete-button": "",
       "delete-modal-body": "Si vous avez déjà utilisé ce jeton avec une installation autogérée, celle-ci ne pourra plus importer de contenu.",
@@ -1115,10 +1304,13 @@
       "error-see-server-logs": "",
       "get-session-error-title": "",
       "get-snapshot-error-title": "",
+      "migration-finished-with-caveat-title": "",
+      "migration-finished-with-errors-body": "",
+      "migration-finished-with-warnings-body": "",
       "snapshot-error-status-body": "",
       "snapshot-error-status-title": "",
-      "some-resources-errored-body": "",
-      "some-resources-errored-title": "",
+      "success-message": "",
+      "success-title": "",
       "upload-snapshot-error-title": ""
     },
     "pdc": {
@@ -1136,12 +1328,14 @@
       "message": "",
       "title": ""
     },
-    "resource-error": {
+    "resource-details": {
       "dismiss-button": "",
+      "error-title": "",
+      "generic-title": "",
+      "missing-message": "",
       "resource-summary": "",
-      "specific-error": "",
       "title": "",
-      "unknown-error": ""
+      "warning-title": ""
     },
     "resource-status": {
       "error-details-button": "Détails",
@@ -1149,7 +1343,9 @@
       "migrated": "Importé dans le cloud",
       "migrating": "Importation…",
       "not-migrated": "Pas encore importé",
-      "unknown": "Inconnu"
+      "unknown": "Inconnu",
+      "warning": "",
+      "warning-details-button": ""
     },
     "resource-table": {
       "unknown-datasource-title": "",
@@ -1174,6 +1370,9 @@
       "target-stack-title": "",
       "total-resource-count": "",
       "upload-migration": ""
+    },
+    "support-types-disclosure": {
+      "text": ""
     },
     "token-status": {
       "active": "Jeton créé et actif",
@@ -1465,6 +1664,10 @@
       "subtitle": "Utiliser des comptes de service pour exécuter des charges de travail automatisées dans Grafana",
       "title": "Comptes de service"
     },
+    "shared-dashboard": {
+      "subtitle": "",
+      "title": ""
+    },
     "sign-out": {
       "title": "Se déconnecter"
     },
@@ -1546,6 +1749,14 @@
     "starred-dashboard": "Tableau de bord favori",
     "unstarred-dashboard": "Tableau de bord non favori"
   },
+  "oauth": {
+    "form": {
+      "server-discovery-action-button": "",
+      "server-discovery-modal-close": "",
+      "server-discovery-modal-loading": "",
+      "server-discovery-modal-submit": ""
+    }
+  },
   "panel": {
     "header-menu": {
       "copy": "Copier",
@@ -1618,6 +1829,34 @@
     }
   },
   "plugins": {
+    "catalog": {
+      "update-all": {
+        "all-plugins-updated": "",
+        "available-header": "",
+        "button": "",
+        "cloud-update-message": "",
+        "error": "",
+        "header": "",
+        "installed-header": "",
+        "modal-confirmation": "",
+        "modal-dismiss": "",
+        "modal-title": "",
+        "name-header": "",
+        "update-header": ""
+      }
+    },
+    "details": {
+      "labels": {
+        "dependencies": "",
+        "downloads": "",
+        "from": "",
+        "reportAbuse": "",
+        "signature": "",
+        "status": "",
+        "updatedAt": "",
+        "version": ""
+      }
+    },
     "empty-state": {
       "message": ""
     }
@@ -1678,8 +1917,7 @@
       "welcome-title": "Bienvenue dans les tableaux de bord publics !"
     },
     "delete-modal": {
-      "revoke-nonorphaned-body-text": "Souhaitez-vous vraiment désactiver cette URL ? Le tableau de bord ne sera plus public.",
-      "revoke-orphaned-body-text": "Le tableau de bord public orphelin ne sera plus public.",
+      "revoke-body-text": "",
       "revoke-title": "Désactiver l'URL publique"
     },
     "email-sharing": {
@@ -1778,10 +2016,6 @@
       "revoke-button-tooltip": "Désactiver l'URL du tableau de bord public",
       "view-button-tooltip": "Afficher le tableau de bord public"
     },
-    "dashboard-title": {
-      "orphaned-title": "<0>Tableau de bord public orphelin</0>",
-      "orphaned-tooltip": "Le tableau de bord lié a déjà été supprimé"
-    },
     "empty-state": {
       "message": "",
       "more-info": ""
@@ -1792,10 +2026,12 @@
   },
   "public-dashboard-users-access-list": {
     "dashboard-modal": {
+      "external-link": "",
       "loading-text": "Chargement en cours...",
       "open-dashboard-list-text": "Ouvrir la liste des tableaux de bord",
       "public-dashboard-link": "URL du tableau de bord public",
-      "public-dashboard-setting": "Paramètres du tableau de bord public"
+      "public-dashboard-setting": "Paramètres du tableau de bord public",
+      "sharing-setting": ""
     },
     "delete-user-modal": {
       "delete-user-button-text": "Supprimer l'utilisateur",
@@ -1805,8 +2041,12 @@
       "revoke-user-access-modal-desc-line1": "Souhaitez-vous vraiment retirer l'accès pour {{email}} ?",
       "revoke-user-access-modal-desc-line2": "Cette action retirera immédiatement l'accès de {{email}}&apos;s à tous les tableaux de bord publics."
     },
+    "delete-user-shared-dashboards-modal": {
+      "revoke-user-access-modal-desc-line2": ""
+    },
     "modal": {
-      "dashboard-modal-title": "Tableaux de bord publics"
+      "dashboard-modal-title": "Tableaux de bord publics",
+      "shared-dashboard-modal-title": ""
     },
     "table-header": {
       "activated-label": "Activé",
@@ -1857,6 +2097,8 @@
       "restore-button": "",
       "restore-loading": "",
       "title": "",
+      "folder-picker-text_one": "",
+      "folder-picker-text_other": "",
       "text_one": "",
       "text_other": ""
     }
@@ -1894,17 +2136,17 @@
     },
     "dismissable-button": "Fermer"
   },
-  "scopes": {
-    "filters": {
-      "apply": "",
-      "cancel": "",
-      "input": {
-        "placeholder": "",
-        "removeAll": ""
-      },
+  "save-dashboards": {
+    "name-exists": {
+      "message-info": "",
+      "message-suggestion": "",
       "title": ""
-    },
-    "suggestedDashboards": {
+    }
+  },
+  "scopes": {
+    "dashboards": {
+      "collapse": "",
+      "expand": "",
       "loading": "",
       "noResultsForFilter": "",
       "noResultsForFilterClear": "",
@@ -1913,8 +2155,18 @@
       "search": "",
       "toggle": {
         "collapse": "",
+        "disabled": "",
         "expand": ""
       }
+    },
+    "selector": {
+      "apply": "",
+      "cancel": "",
+      "input": {
+        "placeholder": "",
+        "removeAll": ""
+      },
+      "title": ""
     },
     "tree": {
       "collapse": "",
@@ -1992,8 +2244,7 @@
       "html": "Intégrer du HTML",
       "html-description": "Le code HTML ci-dessous peut être copié et inclus dans une autre page Web. Sauf si l'accès anonyme est activé, l'utilisateur qui consulte cette page doit être connecté à Grafana pour que le graphique charge.",
       "info": "Générer du HTML pour intégrer un iframe avec ce panneau.",
-      "time-range": "Période temporelle actuelle",
-      "time-range-description": "Transforme la période temporelle relative actuelle en une période temporelle absolue"
+      "time-range": ""
     },
     "export": {
       "back-button": "Retour à la configuration de l'exportation",
@@ -2063,10 +2314,19 @@
   },
   "share-panel": {
     "drawer": {
+      "new-library-panel-title": "",
+      "share-embed-title": "",
       "share-link-title": ""
     },
     "menu": {
-      "share-link-title": ""
+      "new-library-panel-title": "",
+      "share-embed-title": "",
+      "share-link-title": "",
+      "share-snapshot-title": ""
+    },
+    "new-library-panel": {
+      "cancel-button": "",
+      "create-button": ""
     }
   },
   "share-playlist": {
@@ -2090,8 +2350,27 @@
     }
   },
   "shared-dashboard": {
+    "delete-modal": {
+      "revoke-body-text": "",
+      "revoke-title": ""
+    },
     "fields": {
       "timezone-label": "Fuseau horaire"
+    }
+  },
+  "shared-dashboard-list": {
+    "button": {
+      "config-button-tooltip": "",
+      "revoke-button-text": "",
+      "revoke-button-tooltip": "",
+      "view-button-tooltip": ""
+    },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
+    "toggle": {
+      "pause-sharing-toggle-text": ""
     }
   },
   "shared-preferences": {
@@ -2152,6 +2431,9 @@
       "success-creation": "",
       "success-delete": "",
       "view-all-button": ""
+    },
+    "share-panel": {
+      "info-alert": ""
     },
     "url-column-header": "URL de l'instantané",
     "view-button": "Afficher"
@@ -2281,7 +2563,8 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "Utilisateurs du tableau de bord public"
+      "public-dashboard-users-tab-title": "Utilisateurs du tableau de bord public",
+      "shared-dashboard-users-tab-title": ""
     }
   },
   "variable": {

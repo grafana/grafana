@@ -38,6 +38,7 @@ import {
   setReturnToPreviousHook,
   setPluginExtensionsHook,
   setPluginComponentHook,
+  setPluginComponentsHook,
   setCurrentUser,
   setChromeHeaderHeightHook,
 } from '@grafana/runtime';
@@ -85,13 +86,17 @@ import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { getCoreExtensionConfigurations } from './features/plugins/extensions/getCoreExtensionConfigurations';
 import { createPluginExtensionsGetter } from './features/plugins/extensions/getPluginExtensions';
 import { ReactivePluginExtensionsRegistry } from './features/plugins/extensions/reactivePluginExtensionRegistry';
+import { AddedComponentsRegistry } from './features/plugins/extensions/registry/AddedComponentsRegistry';
+import { ExposedComponentsRegistry } from './features/plugins/extensions/registry/ExposedComponentsRegistry';
 import { createUsePluginComponent } from './features/plugins/extensions/usePluginComponent';
+import { createUsePluginComponents } from './features/plugins/extensions/usePluginComponents';
 import { createUsePluginExtensions } from './features/plugins/extensions/usePluginExtensions';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
+import { initializeScopes } from './features/scopes';
 import { cleanupOldExpandedFolders } from './features/search/utils';
 import { variableAdapters } from './features/variables/adapters';
 import { createAdHocVariableAdapter } from './features/variables/adhoc/adapter';
@@ -208,10 +213,16 @@ export class GrafanaApp {
       initWindowRuntime();
 
       // Initialize plugin extensions
-      const extensionsRegistry = new ReactivePluginExtensionsRegistry();
-      extensionsRegistry.register({
+      const pluginExtensionsRegistries = {
+        extensionsRegistry: new ReactivePluginExtensionsRegistry(),
+        addedComponentsRegistry: new AddedComponentsRegistry(),
+        exposedComponentsRegistry: new ExposedComponentsRegistry(),
+      };
+      pluginExtensionsRegistries.extensionsRegistry.register({
         pluginId: 'grafana',
         extensionConfigs: getCoreExtensionConfigurations(),
+        exposedComponentConfigs: [],
+        addedComponentConfigs: [],
       });
 
       if (contextSrv.user.orgRole !== '') {
@@ -221,13 +232,24 @@ export class GrafanaApp {
         const awaitedAppPlugins = Object.values(config.apps).filter((app) => awaitedAppPluginIds.includes(app.id));
         const appPlugins = Object.values(config.apps).filter((app) => !awaitedAppPluginIds.includes(app.id));
 
-        preloadPlugins(appPlugins, extensionsRegistry);
-        await preloadPlugins(awaitedAppPlugins, extensionsRegistry, 'frontend_awaited_plugins_preload');
+        preloadPlugins(appPlugins, pluginExtensionsRegistries);
+        await preloadPlugins(awaitedAppPlugins, pluginExtensionsRegistries, 'frontend_awaited_plugins_preload');
       }
 
-      setPluginExtensionGetter(createPluginExtensionsGetter(extensionsRegistry));
-      setPluginExtensionsHook(createUsePluginExtensions(extensionsRegistry));
-      setPluginComponentHook(createUsePluginComponent(extensionsRegistry));
+      setPluginExtensionGetter(
+        createPluginExtensionsGetter(
+          pluginExtensionsRegistries.extensionsRegistry,
+          pluginExtensionsRegistries.addedComponentsRegistry
+        )
+      );
+      setPluginExtensionsHook(
+        createUsePluginExtensions(
+          pluginExtensionsRegistries.extensionsRegistry,
+          pluginExtensionsRegistries.addedComponentsRegistry
+        )
+      );
+      setPluginComponentHook(createUsePluginComponent(pluginExtensionsRegistries.exposedComponentsRegistry));
+      setPluginComponentsHook(createUsePluginComponents(pluginExtensionsRegistries.addedComponentsRegistry));
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();
@@ -257,6 +279,8 @@ export class GrafanaApp {
 
       setReturnToPreviousHook(useReturnToPreviousInternal);
       setChromeHeaderHeightHook(useChromeHeaderHeight);
+
+      initializeScopes();
 
       const root = createRoot(document.getElementById('reactRoot')!);
       root.render(

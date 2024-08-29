@@ -1,7 +1,6 @@
-import { render, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import * as React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { getWrapper, render, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors/src';
@@ -68,12 +67,13 @@ const ui = {
   loadingIndicator: byText('Loading the rule...'),
 };
 
+const Providers = getWrapper({ renderWithRouter: true });
 function Wrapper({ children }: React.PropsWithChildren<{}>) {
   const formApi = useForm<RuleFormValues>({ defaultValues: getDefaultFormValues() });
   return (
-    <TestProvider>
+    <Providers>
       <FormProvider {...formApi}>{children}</FormProvider>
-    </TestProvider>
+    </Providers>
   );
 }
 

@@ -10,7 +10,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "11.2.0-pre";
+export const pluginVersion = "11.3.0-pre";
 
 export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTimezones {
   /**
@@ -21,6 +21,10 @@ export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui
    * Merge equal consecutive values
    */
   mergeValues?: boolean;
+  /**
+   * Enables pagination when > 0
+   */
+  perPage?: number;
   /**
    * Controls the row height
    */
@@ -34,6 +38,7 @@ export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui
 export const defaultOptions: Partial<Options> = {
   alignValue: 'left',
   mergeValues: true,
+  perPage: 20,
   rowHeight: 0.9,
   showValue: ui.VisibilityMode.Auto,
 };

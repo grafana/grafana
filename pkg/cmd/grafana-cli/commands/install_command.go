@@ -117,8 +117,13 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 
 	// If a version is specified, check if it is already installed
 	if version != "" {
-		if services.PluginVersionInstalled(pluginID, version, o.pluginDir) {
+		if p, ok := services.PluginVersionInstalled(pluginID, version, o.pluginDir); ok {
 			services.Logger.Successf("Plugin %s v%s already installed.", pluginID, version)
+			for _, depP := range p.JSONData.Dependencies.Plugins {
+				if err := doInstallPlugin(ctx, depP.ID, depP.Version, o, installing); err != nil {
+					return err
+				}
+			}
 			return nil
 		}
 	}
@@ -129,17 +134,35 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 		Logger:        services.Logger,
 	})
 
-	compatOpts := repo.NewCompatOpts(services.GrafanaVersion, runtime.GOOS, runtime.GOARCH)
+	// FIXME: Re-enable grafanaVersion. This check was broken in 10.2 so disabling it for the moment.
+	// Expected to be re-enabled in 12.x.
+	compatOpts := repo.NewCompatOpts("", runtime.GOOS, runtime.GOARCH)
 
 	var archive *repo.PluginArchive
 	var err error
-	pluginZipURL := o.pluginURL
-	if pluginZipURL != "" {
-		if archive, err = repository.GetPluginArchiveByURL(ctx, pluginZipURL, compatOpts); err != nil {
+	if o.pluginURL != "" {
+		archive, err = repository.GetPluginArchiveByURL(ctx, o.pluginURL, compatOpts)
+		if err != nil {
 			return err
 		}
 	} else {
-		if archive, err = repository.GetPluginArchive(ctx, pluginID, version, compatOpts); err != nil {
+		ctx = repo.WithRequestOrigin(ctx, "cli")
+		archiveInfo, err := repository.GetPluginArchiveInfo(ctx, pluginID, version, compatOpts)
+		if err != nil {
+			return err
+		}
+
+		if p, ok := services.PluginVersionInstalled(pluginID, archiveInfo.Version, o.pluginDir); ok {
+			services.Logger.Successf("Plugin %s v%s already installed.", pluginID, archiveInfo.Version)
+			for _, depP := range p.JSONData.Dependencies.Plugins {
+				if err = doInstallPlugin(ctx, depP.ID, depP.Version, o, installing); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+
+		if archive, err = repository.GetPluginArchiveByURL(ctx, archiveInfo.URL, compatOpts); err != nil {
 			return err
 		}
 	}

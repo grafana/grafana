@@ -373,6 +373,8 @@ export class ElementState implements LayerElement {
     const scene = this.getScene();
     const frames = scene?.data?.series;
 
+    this.options.links = this.options.links?.filter((link) => link !== null);
+
     if (frames) {
       const defaultField = {
         name: 'Default field',

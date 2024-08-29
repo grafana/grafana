@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/gmsclient"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
@@ -23,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	secretsfakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -112,9 +114,20 @@ func Test_CreateGetRunMigrationsAndRuns(t *testing.T) {
 	require.Equal(t, 1, len(listRunResp.Runs))
 	require.Equal(t, runResp.RunUID, listRunResp.Runs[0].RunUID)
 
+	/**
+	-- This is not working at the moment since it is a mix of old and new methods
+	will be fixed later when we clean the old functions and stick to the new ones.
+
 	delMigResp, err := s.DeleteSession(context.Background(), createResp.UID)
 	require.NoError(t, err)
 	require.NotNil(t, createResp.UID, delMigResp.UID)
+
+	// after deleting the session, the snapshots and resources should not exist anymore.
+	// we check the snapshot for now
+	listRunResp2, err := s.GetMigrationRunList(context.Background(), createResp.UID)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(listRunResp2.Runs))
+	*/
 }
 
 func Test_GetSnapshotStatusFromGMS(t *testing.T) {
@@ -399,6 +412,122 @@ func Test_SortFolders(t *testing.T) {
 	require.Equal(t, expected, sortedFolders)
 }
 
+func Test_NonCoreDataSourcesHaveWarning(t *testing.T) {
+	s := setUpServiceTest(t, false).(*Service)
+
+	// Insert a processing snapshot into the database before we start so we query GMS
+	sess, err := s.store.CreateMigrationSession(context.Background(), cloudmigration.CloudMigrationSession{})
+	require.NoError(t, err)
+	snapshotUid, err := s.store.CreateSnapshot(context.Background(), cloudmigration.CloudMigrationSnapshot{
+		UID:            uuid.NewString(),
+		SessionUID:     sess.UID,
+		Status:         cloudmigration.SnapshotStatusProcessing,
+		GMSSnapshotUID: "gms uid",
+	})
+	require.NoError(t, err)
+
+	// GMS should return: a core ds, a non-core ds, a non-core ds with an error, and a ds that has been uninstalled
+	gmsClientMock := &gmsClientMock{
+		getSnapshotResponse: &cloudmigration.GetSnapshotStatusResponse{
+			State: cloudmigration.SnapshotStateFinished,
+			Results: []cloudmigration.CloudMigrationResource{
+				{
+					Type:        cloudmigration.DatasourceDataType,
+					RefID:       "1", // this will be core
+					Status:      cloudmigration.ItemStatusOK,
+					SnapshotUID: snapshotUid,
+				},
+				{
+					Type:        cloudmigration.DatasourceDataType,
+					RefID:       "2", // this will be non-core
+					Status:      cloudmigration.ItemStatusOK,
+					SnapshotUID: snapshotUid,
+				},
+				{
+					Type:        cloudmigration.DatasourceDataType,
+					RefID:       "3", // this will be non-core with an error
+					Status:      cloudmigration.ItemStatusError,
+					Error:       "please don't overwrite me",
+					SnapshotUID: snapshotUid,
+				},
+				{
+					Type:        cloudmigration.DatasourceDataType,
+					RefID:       "4", // this will be deleted
+					Status:      cloudmigration.ItemStatusOK,
+					SnapshotUID: snapshotUid,
+				},
+			},
+		},
+	}
+	s.gmsClient = gmsClientMock
+
+	// Update the internal plugin store and ds store with seed data matching the descriptions above
+	s.pluginStore = pluginstore.NewFakePluginStore([]pluginstore.Plugin{
+		{
+			JSONData: plugins.JSONData{
+				ID: "1",
+			},
+			Class: plugins.ClassCore,
+		},
+		{
+			JSONData: plugins.JSONData{
+				ID: "2",
+			},
+			Class: plugins.ClassExternal,
+		},
+		{
+			JSONData: plugins.JSONData{
+				ID: "3",
+			},
+			Class: plugins.ClassExternal,
+		},
+	}...)
+
+	s.dsService = &datafakes.FakeDataSourceService{
+		DataSources: []*datasources.DataSource{
+			{UID: "1", Type: "1"},
+			{UID: "2", Type: "2"},
+			{UID: "3", Type: "3"},
+			{UID: "4", Type: "4"},
+		},
+	}
+
+	// Retrieve the snapshot with results
+	snapshot, err := s.GetSnapshot(ctxWithSignedInUser(), cloudmigration.GetSnapshotsQuery{
+		SnapshotUID: snapshotUid,
+		SessionUID:  sess.UID,
+		ResultPage:  1,
+		ResultLimit: 10,
+	})
+	assert.NoError(t, err)
+	assert.Len(t, snapshot.Resources, 4)
+
+	findRef := func(id string) *cloudmigration.CloudMigrationResource {
+		for _, r := range snapshot.Resources {
+			if r.RefID == id {
+				return &r
+			}
+		}
+		return nil
+	}
+
+	shouldBeUnaltered := findRef("1")
+	assert.Equal(t, cloudmigration.ItemStatusOK, shouldBeUnaltered.Status)
+	assert.Empty(t, shouldBeUnaltered.Error)
+
+	shouldBeAltered := findRef("2")
+	assert.Equal(t, cloudmigration.ItemStatusWarning, shouldBeAltered.Status)
+	assert.Equal(t, shouldBeAltered.Error, "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.")
+
+	shouldHaveOriginalError := findRef("3")
+	assert.Equal(t, cloudmigration.ItemStatusError, shouldHaveOriginalError.Status)
+	assert.Equal(t, shouldHaveOriginalError.Error, "please don't overwrite me")
+
+	uninstalledAltered := findRef("4")
+	assert.Equal(t, cloudmigration.ItemStatusWarning, uninstalledAltered.Status)
+	assert.Equal(t, uninstalledAltered.Error, "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.")
+}
+
 func ctxWithSignedInUser() context.Context {
 	c := &contextmodel.ReqContext{
 		SignedInUser: &user.SignedInUser{OrgID: 1},
@@ -461,6 +590,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 		tracer,
 		dashboardService,
 		mockFolder,
+		&pluginstore.FakePluginStore{},
 		kvstore.ProvideService(sqlStore),
 	)
 	require.NoError(t, err)

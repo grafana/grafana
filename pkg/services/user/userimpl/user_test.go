@@ -331,10 +331,6 @@ func (f *FakeUserStore) Search(ctx context.Context, query *user.SearchUsersQuery
 	return f.ExpectedSearchUserQueryResult, f.ExpectedError
 }
 
-func (f *FakeUserStore) List(ctx context.Context, query *user.ListUsersCommand) (*user.ListUserResult, error) {
-	return nil, f.ExpectedError
-}
-
 func (f *FakeUserStore) Count(ctx context.Context) (int64, error) {
 	return 0, nil
 }

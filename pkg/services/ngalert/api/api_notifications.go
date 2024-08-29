@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -19,8 +18,8 @@ type NotificationSrv struct {
 }
 
 type ReceiverService interface {
-	GetReceiver(ctx context.Context, q models.GetReceiverQuery, u identity.Requester) (definitions.GettableApiReceiver, error)
-	GetReceivers(ctx context.Context, q models.GetReceiversQuery, u identity.Requester) ([]definitions.GettableApiReceiver, error)
+	GetReceiver(ctx context.Context, q models.GetReceiverQuery, u identity.Requester) (*models.Receiver, error)
+	ListReceivers(ctx context.Context, q models.ListReceiversQuery, user identity.Requester) ([]*models.Receiver, error)
 }
 
 func (srv *NotificationSrv) RouteGetTimeInterval(c *contextmodel.ReqContext, name string) response.Response {
@@ -51,22 +50,31 @@ func (srv *NotificationSrv) RouteGetReceiver(c *contextmodel.ReqContext, name st
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get receiver", err)
 	}
 
-	return response.JSON(http.StatusOK, receiver)
+	gettable, err := GettableApiReceiverFromReceiver(receiver)
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to convert receiver", err)
+	}
+
+	return response.JSON(http.StatusOK, gettable)
 }
 
 func (srv *NotificationSrv) RouteGetReceivers(c *contextmodel.ReqContext) response.Response {
-	q := models.GetReceiversQuery{
-		OrgID:   c.SignedInUser.OrgID,
-		Names:   c.QueryStrings("names"),
-		Limit:   c.QueryInt("limit"),
-		Offset:  c.QueryInt("offset"),
-		Decrypt: c.QueryBool("decrypt"),
+	q := models.ListReceiversQuery{
+		OrgID:  c.SignedInUser.OrgID,
+		Names:  c.QueryStrings("names"),
+		Limit:  c.QueryInt("limit"),
+		Offset: c.QueryInt("offset"),
 	}
 
-	receivers, err := srv.receiverService.GetReceivers(c.Req.Context(), q, c.SignedInUser)
+	receivers, err := srv.receiverService.ListReceivers(c.Req.Context(), q, c.SignedInUser)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get receiver groups", err)
 	}
 
-	return response.JSON(http.StatusOK, receivers)
+	gettables, err := GettableApiReceiversFromReceivers(receivers)
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to convert receivers", err)
+	}
+
+	return response.JSON(http.StatusOK, gettables)
 }

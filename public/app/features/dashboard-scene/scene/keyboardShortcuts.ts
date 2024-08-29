@@ -2,12 +2,12 @@ import { SetPanelAttentionEvent } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
-import { t } from 'app/core/internationalization';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
+import { contextSrv } from 'app/core/services/context_srv';
 
+import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
-import { SharePanelInternally } from '../sharing/panel-share/SharePanelInternally';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../utils/utils';
@@ -53,13 +53,38 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       key: 'p u',
       onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
         const drawer = new ShareDrawer({
-          title: t('share-panel.drawer.share-link-title', 'Link settings'),
-          body: new SharePanelInternally({ panelRef: vizPanel.getRef() }),
+          shareView: shareDashboardType.link,
+          panelRef: vizPanel.getRef(),
         });
 
         scene.showModal(drawer);
       }),
     });
+    keybindings.addBinding({
+      key: 'p e',
+      onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+        const drawer = new ShareDrawer({
+          shareView: shareDashboardType.embed,
+          panelRef: vizPanel.getRef(),
+        });
+
+        scene.showModal(drawer);
+      }),
+    });
+
+    if (contextSrv.isSignedIn && config.snapshotEnabled && scene.canEditDashboard()) {
+      keybindings.addBinding({
+        key: 'p s',
+        onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+          const drawer = new ShareDrawer({
+            shareView: shareDashboardType.snapshot,
+            panelRef: vizPanel.getRef(),
+          });
+
+          scene.showModal(drawer);
+        }),
+      });
+    }
   } else {
     keybindings.addBinding({
       key: 'p s',

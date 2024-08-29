@@ -6,6 +6,7 @@ import (
 	"time"
 
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
@@ -44,12 +45,24 @@ type SignedInUser struct {
 	Permissions map[int64]map[string][]string `json:"-"`
 
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
-	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
 	IDToken       string                                   `json:"-" xorm:"-"`
 	IDTokenClaims *authnlib.Claims[authnlib.IDTokenClaims] `json:"-" xorm:"-"`
 
 	// When other settings are not deterministic, this value is used
-	FallbackType identity.IdentityType
+	FallbackType claims.IdentityType
+}
+
+// Access implements claims.AuthInfo.
+func (u *SignedInUser) GetAccess() claims.AccessClaims {
+	return &identity.IDClaimsWrapper{Source: u}
+}
+
+// Identity implements claims.AuthInfo.
+func (u *SignedInUser) GetIdentity() claims.IdentityClaims {
+	if u.IDTokenClaims != nil {
+		return authnlib.NewIdentityClaims(*u.IDTokenClaims)
+	}
+	return &identity.IDClaimsWrapper{Source: u}
 }
 
 // GetRawIdentifier implements Requester.
@@ -62,33 +75,31 @@ func (u *SignedInUser) GetRawIdentifier() string {
 	return u.UserUID
 }
 
-// Deprecated: use GetUID
+// GetInternalID implements Requester.
 func (u *SignedInUser) GetInternalID() (int64, error) {
-	switch {
-	case u.ApiKeyID != 0:
-		return u.ApiKeyID, nil
-	case u.IsAnonymous:
-		return 0, nil
-	default:
-	}
-	return u.UserID, nil
+	return identity.IntIdentifier(u.GetID())
 }
 
 // GetIdentityType implements Requester.
-func (u *SignedInUser) GetIdentityType() identity.IdentityType {
+func (u *SignedInUser) GetIdentityType() claims.IdentityType {
 	switch {
 	case u.ApiKeyID != 0:
-		return identity.TypeAPIKey
+		return claims.TypeAPIKey
 	case u.IsServiceAccount:
-		return identity.TypeServiceAccount
+		return claims.TypeServiceAccount
 	case u.UserID > 0:
-		return identity.TypeUser
+		return claims.TypeUser
 	case u.IsAnonymous:
-		return identity.TypeAnonymous
+		return claims.TypeAnonymous
 	case u.AuthenticatedBy == "render" && u.UserID == 0:
-		return identity.TypeRenderService
+		return claims.TypeRenderService
 	}
 	return u.FallbackType
+}
+
+// IsIdentityType implements Requester.
+func (u *SignedInUser) IsIdentityType(expected ...claims.IdentityType) bool {
+	return claims.IsIdentityType(u.GetIdentityType(), expected...)
 }
 
 // GetName implements identity.Requester.
@@ -169,7 +180,7 @@ func (u *SignedInUser) GetAllowedKubernetesNamespace() string {
 // GetCacheKey returns a unique key for the entity.
 // Add an extra prefix to avoid collisions with other caches
 func (u *SignedInUser) GetCacheKey() string {
-	namespace, id := u.GetTypedID()
+	typ, id := u.getTypeAndID()
 	if !u.HasUniqueId() {
 		// Hack use the org role as id for identities that do not have a unique id
 		// e.g. anonymous and render key.
@@ -181,7 +192,7 @@ func (u *SignedInUser) GetCacheKey() string {
 		id = string(orgRole)
 	}
 
-	return fmt.Sprintf("%d-%s-%s", u.GetOrgID(), namespace, id)
+	return fmt.Sprintf("%d-%s-%s", u.GetOrgID(), typ, id)
 }
 
 // GetIsGrafanaAdmin returns true if the user is a server admin
@@ -244,25 +255,23 @@ func (u *SignedInUser) GetOrgRole() identity.RoleType {
 }
 
 // GetID returns namespaced id for the entity
-func (u *SignedInUser) GetID() identity.TypedID {
-	ns, id := u.GetTypedID()
+func (u *SignedInUser) GetID() string {
+	ns, id := u.getTypeAndID()
 	return identity.NewTypedIDString(ns, id)
 }
 
-// GetTypedID returns the namespace and ID of the active entity
-// The namespace is one of the constants defined in pkg/apimachinery/identity
-func (u *SignedInUser) GetTypedID() (identity.IdentityType, string) {
+func (u *SignedInUser) getTypeAndID() (claims.IdentityType, string) {
 	switch {
 	case u.ApiKeyID != 0:
-		return identity.TypeAPIKey, strconv.FormatInt(u.ApiKeyID, 10)
+		return claims.TypeAPIKey, strconv.FormatInt(u.ApiKeyID, 10)
 	case u.IsServiceAccount:
-		return identity.TypeServiceAccount, strconv.FormatInt(u.UserID, 10)
+		return claims.TypeServiceAccount, strconv.FormatInt(u.UserID, 10)
 	case u.UserID > 0:
-		return identity.TypeUser, strconv.FormatInt(u.UserID, 10)
+		return claims.TypeUser, strconv.FormatInt(u.UserID, 10)
 	case u.IsAnonymous:
-		return identity.TypeAnonymous, "0"
+		return claims.TypeAnonymous, "0"
 	case u.AuthenticatedBy == "render" && u.UserID == 0:
-		return identity.TypeRenderService, "0"
+		return claims.TypeRenderService, "0"
 	}
 
 	return u.FallbackType, strconv.FormatInt(u.UserID, 10)
@@ -312,8 +321,4 @@ func (u *SignedInUser) GetDisplayName() string {
 
 func (u *SignedInUser) GetIDToken() string {
 	return u.IDToken
-}
-
-func (u *SignedInUser) GetIDClaims() *authnlib.Claims[authnlib.IDTokenClaims] {
-	return u.IDTokenClaims
 }
