@@ -2,13 +2,12 @@ import { css } from '@emotion/css';
 import { memo } from 'react';
 
 import { Action, GrafanaTheme2, httpMethodOptions, HttpRequestMethod, VariableSuggestion } from '@grafana/data';
-
-import { useStyles2 } from '../../themes';
-import { Field } from '../Forms/Field';
-import { InlineField } from '../Forms/InlineField';
-import { InlineFieldRow } from '../Forms/InlineFieldRow';
-import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
-import { JSONFormatter } from '../JSONFormatter/JSONFormatter';
+import { Field } from '@grafana/ui/src/components/Forms/Field';
+import { InlineField } from '@grafana/ui/src/components/Forms/InlineField';
+import { InlineFieldRow } from '@grafana/ui/src/components/Forms/InlineFieldRow';
+import { RadioButtonGroup } from '@grafana/ui/src/components/Forms/RadioButtonGroup/RadioButtonGroup';
+import { JSONFormatter } from '@grafana/ui/src/components/JSONFormatter/JSONFormatter';
+import { useStyles2 } from '@grafana/ui/src/themes';
 
 import { ParamsEditor } from './ParamsEditor';
 import { HTMLElementType, SuggestionsInput } from './SuggestionsInput';

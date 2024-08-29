@@ -2,12 +2,11 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { contentTypeOptions, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
-
-import { useStyles2 } from '../../themes';
-import { IconButton } from '../IconButton/IconButton';
-import { Input } from '../Input/Input';
-import { Stack } from '../Layout/Stack/Stack';
-import { Select } from '../Select/Select';
+import { IconButton } from '@grafana/ui/src/components/IconButton/IconButton';
+import { Input } from '@grafana/ui/src/components/Input/Input';
+import { Stack } from '@grafana/ui/src/components/Layout/Stack/Stack';
+import { Select } from '@grafana/ui/src/components/Select/Select';
+import { useStyles2 } from '@grafana/ui/src/themes';
 
 import { SuggestionsInput } from './SuggestionsInput';
 

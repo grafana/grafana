@@ -4,14 +4,13 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2, VariableSuggestion } from '@grafana/data';
-
-import { useTheme2 } from '../../themes';
-import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
-import { DataLinkSuggestions } from '../DataLinks/DataLinkSuggestions';
-import { FieldValidationMessage } from '../Forms/FieldValidationMessage';
-import { Input } from '../Input/Input';
-import { Portal } from '../Portal/Portal';
-import { TextArea } from '../TextArea/TextArea';
+import CustomScrollbar from '@grafana/ui/src/components/CustomScrollbar/CustomScrollbar';
+import { DataLinkSuggestions } from '@grafana/ui/src/components/DataLinks/DataLinkSuggestions';
+import { FieldValidationMessage } from '@grafana/ui/src/components/Forms/FieldValidationMessage';
+import { Input } from '@grafana/ui/src/components/Input/Input';
+import { Portal } from '@grafana/ui/src/components/Portal/Portal';
+import { TextArea } from '@grafana/ui/src/components/TextArea/TextArea';
+import { useTheme2 } from '@grafana/ui/src/themes';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 const ERROR_TOOLTIP_OFFSET = 8;

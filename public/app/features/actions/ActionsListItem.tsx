@@ -2,10 +2,9 @@ import { css, cx } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
 
 import { Action, DataFrame, GrafanaTheme2 } from '@grafana/data';
-
-import { useStyles2 } from '../../themes';
-import { Icon } from '../Icon/Icon';
-import { IconButton } from '../IconButton/IconButton';
+import { Icon } from '@grafana/ui/src/components/Icon/Icon';
+import { IconButton } from '@grafana/ui/src/components/IconButton/IconButton';
+import { useStyles2 } from '@grafana/ui/src/themes';
 
 export interface ActionsListItemProps {
   index: number;

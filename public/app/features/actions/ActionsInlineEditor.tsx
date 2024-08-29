@@ -4,10 +4,9 @@ import { cloneDeep } from 'lodash';
 import { ReactNode, useEffect, useState } from 'react';
 
 import { Action, DataFrame, GrafanaTheme2, defaultActionConfig, VariableSuggestion } from '@grafana/data';
-
-import { useStyles2 } from '../../themes';
-import { Button } from '../Button';
-import { Modal } from '../Modal/Modal';
+import { Button } from '@grafana/ui/src/components/Button';
+import { Modal } from '@grafana/ui/src/components/Modal/Modal';
+import { useStyles2 } from '@grafana/ui/src/themes';
 
 import { ActionEditorModalContent } from './ActionEditorModalContent';
 import { ActionListItem } from './ActionsListItem';

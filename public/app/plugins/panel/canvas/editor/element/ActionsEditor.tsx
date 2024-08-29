@@ -1,6 +1,7 @@
 import { StandardEditorProps, OneClickMode, Action, VariableSuggestionsScope } from '@grafana/data';
-import { ActionsInlineEditor } from '@grafana/ui/src/components/Actions/ActionsInlineEditor';
 import { CanvasElementOptions } from 'app/features/canvas/element';
+
+import { ActionsInlineEditor } from '../../../../../features/actions/ActionsInlineEditor';
 
 type Props = StandardEditorProps<Action[], CanvasElementOptions>;
 
