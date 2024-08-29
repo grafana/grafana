@@ -35,7 +35,15 @@ func NewClient(skipTLSVerify bool, logger log.PrettyLogger) *Client {
 	}
 }
 
-func (c *Client) Download(_ context.Context, pluginZipURL, checksum string, compatOpts CompatOpts) (*PluginArchive, error) {
+type requestOrigin struct{}
+
+// WithRequestOrigin adds the request origin to the context which is used
+// to set the `grafana-origin` header in the outgoing HTTP request.
+func WithRequestOrigin(ctx context.Context, origin string) context.Context {
+	return context.WithValue(ctx, requestOrigin{}, origin)
+}
+
+func (c *Client) Download(ctx context.Context, pluginZipURL, checksum string, compatOpts CompatOpts) (*PluginArchive, error) {
 	// Create temp file for downloading zip file
 	tmpFile, err := os.CreateTemp("", "*.zip")
 	if err != nil {
@@ -49,7 +57,7 @@ func (c *Client) Download(_ context.Context, pluginZipURL, checksum string, comp
 
 	c.log.Debugf("Installing plugin from %s", pluginZipURL)
 
-	err = c.downloadFile(tmpFile, pluginZipURL, checksum, compatOpts)
+	err = c.downloadFile(ctx, tmpFile, pluginZipURL, checksum, compatOpts)
 	if err != nil {
 		if err := tmpFile.Close(); err != nil {
 			c.log.Warn("Failed to close file", "error", err)
@@ -65,8 +73,8 @@ func (c *Client) Download(_ context.Context, pluginZipURL, checksum string, comp
 	return &PluginArchive{File: rc}, nil
 }
 
-func (c *Client) SendReq(url *url.URL, compatOpts CompatOpts) ([]byte, error) {
-	req, err := c.createReq(url, compatOpts)
+func (c *Client) SendReq(ctx context.Context, url *url.URL, compatOpts CompatOpts) ([]byte, error) {
+	req, err := c.createReq(ctx, url, compatOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +95,7 @@ func (c *Client) SendReq(url *url.URL, compatOpts CompatOpts) ([]byte, error) {
 	return io.ReadAll(bodyReader)
 }
 
-func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, compatOpts CompatOpts) (err error) {
+func (c *Client) downloadFile(ctx context.Context, tmpFile *os.File, pluginURL, checksum string, compatOpts CompatOpts) (err error) {
 	// Try handling URL as a local file path first
 	if _, err := os.Stat(pluginURL); err == nil {
 		// TODO re-verify
@@ -110,13 +118,11 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 		return nil
 	}
 
-	c.retryCount = 0
-
 	defer func() {
 		if r := recover(); r != nil {
 			c.retryCount++
 			if c.retryCount < 3 {
-				c.log.Debug("Failed downloading. Will retry once.")
+				c.log.Debug("Failed downloading. Will retry.")
 				err = tmpFile.Truncate(0)
 				if err != nil {
 					return
@@ -125,7 +131,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 				if err != nil {
 					return
 				}
-				err = c.downloadFile(tmpFile, pluginURL, checksum, compatOpts)
+				err = c.downloadFile(ctx, tmpFile, pluginURL, checksum, compatOpts)
 			} else {
 				c.retryCount = 0
 				failure := fmt.Sprintf("%v", r)
@@ -145,8 +151,13 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 
 	// Using no timeout as some plugin archives make take longer to fetch due to size, network performance, etc.
 	// Note: This is also used as part of the grafana plugin install CLI operation
-	bodyReader, err := c.sendReqNoTimeout(u, compatOpts)
+	bodyReader, err := c.sendReqNoTimeout(ctx, u, compatOpts)
 	if err != nil {
+		if c.retryCount < 3 {
+			c.retryCount++
+			c.log.Debug("Failed downloading. Will retry.")
+			err = c.downloadFile(ctx, tmpFile, pluginURL, checksum, compatOpts)
+		}
 		return err
 	}
 	defer func() {
@@ -166,11 +177,14 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 	if len(checksum) > 0 && checksum != fmt.Sprintf("%x", h.Sum(nil)) {
 		return ErrChecksumMismatch(pluginURL)
 	}
+
+	c.retryCount = 0
+
 	return nil
 }
 
-func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts CompatOpts) (io.ReadCloser, error) {
-	req, err := c.createReq(url, compatOpts)
+func (c *Client) sendReqNoTimeout(ctx context.Context, url *url.URL, compatOpts CompatOpts) (io.ReadCloser, error) {
+	req, err := c.createReq(ctx, url, compatOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +196,7 @@ func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts CompatOpts) (io.ReadC
 	return c.handleResp(res, compatOpts)
 }
 
-func (c *Client) createReq(url *url.URL, compatOpts CompatOpts) (*http.Request, error) {
+func (c *Client) createReq(ctx context.Context, url *url.URL, compatOpts CompatOpts) (*http.Request, error) {
 	req, err := http.NewRequest(http.MethodGet, url.String(), nil)
 	if err != nil {
 		return nil, err
@@ -199,6 +213,14 @@ func (c *Client) createReq(url *url.URL, compatOpts CompatOpts) (*http.Request, 
 
 	if sysArch, exists := compatOpts.system.Arch(); exists {
 		req.Header.Set("grafana-arch", sysArch)
+	}
+
+	if c.retryCount > 0 {
+		req.Header.Set("grafana-retrycount", fmt.Sprintf("%d", c.retryCount))
+	}
+
+	if orig := ctx.Value(requestOrigin{}); orig != nil {
+		req.Header.Set("grafana-origin", orig.(string))
 	}
 
 	return req, err
