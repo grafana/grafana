@@ -20,6 +20,10 @@ weight: 70
 killercoda:
   title: How to create alerts with log data
   description: Learn how to use Loki with Grafana Alerting to keep track of what’s happening in your environment with real log data.
+  preprocessing:
+    substitutions:
+      - regexp: docker compose
+        replacement: docker-compose
   backend:
     imageid: ubuntu
 ---
@@ -45,7 +49,7 @@ Check out our [advanced alerting tutorial](https://grafana.com/tutorials/alertin
 
 {{< docs/ignore >}}
 
-> Check out our advanced alerting tutorial to explore advanced topics such as alert instances and notification routing.
+> Check out our [advanced alerting tutorial](https://grafana.com/tutorials/alerting-get-started-pt2/) to explore advanced topics such as alert instances and notification routing.
 
 {{< /docs/ignore >}}
 
