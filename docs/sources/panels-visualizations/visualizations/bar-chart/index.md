@@ -67,7 +67,7 @@ To create a bar chart visualization, you need a dataset containing one string or
 
 The text or time field is used to label the bars or values in each row of data and the numeric fields are represented by proportionally sized bars.
 
-#### Example
+#### Example 1
 
 | Group | Value1 | Value2 | Value3 |
 | ----- | ------ | ------ | ------ |
