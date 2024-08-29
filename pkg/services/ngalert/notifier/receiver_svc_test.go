@@ -179,8 +179,14 @@ func TestReceiverService_DecryptRedact(t *testing.T) {
 					require.NoError(t, err)
 					if tc.decrypt {
 						require.Equal(t, "secure url", res.Integrations[0].Settings["url"])
+						require.NotContains(t, res.Integrations[0].SecureSettings, "url")
 					} else {
-						require.Equal(t, definitions.RedactedValue, res.Integrations[0].Settings["url"])
+						require.NotContains(t, res.Integrations[0].Settings, "url")
+
+						// Ensure the encrypted value exists and is not redacted or decrypted.
+						require.NotEmpty(t, res.Integrations[0].SecureSettings["url"])
+						require.NotEqual(t, definitions.RedactedValue, res.Integrations[0].SecureSettings["url"])
+						require.NotEqual(t, "secure url", res.Integrations[0].SecureSettings["url"])
 					}
 				}
 			})

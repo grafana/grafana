@@ -86,6 +86,12 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 	contactPoints := make([]apimodels.EmbeddedContactPoint, 0, len(res))
 	for _, recv := range res {
 		for _, gr := range recv.Integrations {
+			if !q.Decrypt {
+				// Provisioning API redacts by default.
+				gr.Redact(func(value string) string {
+					return apimodels.RedactedValue
+				})
+			}
 			contactPoints = append(contactPoints, GrafanaIntegrationConfigToEmbeddedContactPoint(gr, recv.Provenance))
 		}
 	}
