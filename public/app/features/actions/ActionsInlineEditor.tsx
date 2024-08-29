@@ -94,7 +94,7 @@ export const ActionsInlineEditor = ({
     if (showOneClick) {
       return (
         <div className={styles.oneClickOverlay} key={key}>
-          <span className={styles.oneClickSpan}>One-click link</span> {actionsJSX}
+          <span className={styles.oneClickSpan}>One-click action</span> {actionsJSX}
         </div>
       );
     }
