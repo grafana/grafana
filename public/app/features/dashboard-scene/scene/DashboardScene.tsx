@@ -24,6 +24,7 @@ import {
   SceneVariable,
   SceneVariableDependencyConfigLike,
   VizPanel,
+  SceneGridItemLike,
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
@@ -33,8 +34,10 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import store from 'app/core/store';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { explicitlyControlledMigrationPanels } from 'app/features/dashboard/state/PanelModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { deleteDashboard } from 'app/features/manage-dashboards/state/actions';
+import { isAngularDatasourcePluginAndNotHidden } from 'app/features/plugins/angularDeprecation/utils';
 import { getClosestScopesFacade, ScopesFacade } from 'app/features/scopes';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
@@ -932,9 +935,47 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     });
   }
 
+  public getDashboardPanels = () => {
+    if (!(this.state.body instanceof SceneGridLayout)) {
+      throw new Error('Dashboard scene layout is not SceneGridLayout');
+    }
+
+    const sceneGridLayout = this.state.body;
+    const gridItems = sceneGridLayout.state.children;
+    if (!gridItems) {
+      return [];
+    }
+    return gridItems.map((vizPanel) => {
+      if (!(vizPanel instanceof DashboardGridItem)) {
+        throw new Error('Trying to get a panel in a layout that is not DashboardGridItem');
+      }
+      const panel = vizPanel.state.body.state;
+      return panel;
+    });
+  };
+  // FIXME:: ts errors because safeguards not in place
+  public hasAngularPlugins = () => {
+    const sceneGridLayout = this.state.body;
+    const gridItems = sceneGridLayout.state.children;
+    const dashboardWasAngular = gridItems.some((gridItem) => {
+      let panelGrid = gridItem.state.body.state;
+      const isAngularPanel =
+        (config.panels[panelGrid.pluginId]?.angular?.detected ||
+          explicitlyControlledMigrationPanels.includes(panelGrid.pluginId)) &&
+        !config.panels[panelGrid.pluginId]?.angular?.hideDeprecation;
+
+      let isAngularDs = false;
+      if (panelGrid.datasource?.uid) {
+        isAngularDs = isAngularDatasourcePluginAndNotHidden(panelGrid.datasource?.uid);
+      }
+      return isAngularPanel || isAngularDs;
+    });
+    return dashboardWasAngular;
+  };
+
   public shouldShowAngularDeprecationNotice() {
     const { uid } = this.state;
-    const hasAngularPlugins = true; // this is a mock value
+    const hasAngularPlugins = this.hasAngularPlugins();
     const isAngularDeprecationNoticeDismissed = true; // this is a mock value
     const shouldShowDeprecation =
       config.featureToggles.angularDeprecationUI &&

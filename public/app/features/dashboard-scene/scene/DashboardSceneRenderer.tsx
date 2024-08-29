@@ -3,14 +3,15 @@ import { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { useChromeHeaderHeight } from '@grafana/runtime';
-import { SceneComponentProps } from '@grafana/scenes';
+import { config, useChromeHeaderHeight } from '@grafana/runtime';
+import { SceneComponentProps, VizPanel, VizPanelState } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import NativeScrollbar from 'app/core/components/NativeScrollbar';
 import { Page } from 'app/core/components/Page/Page';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { getNavModel } from 'app/core/selectors/navModel';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
+import { explicitlyControlledMigrationPanels } from 'app/features/dashboard/state/PanelModel';
 import { AngularDeprecationNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationNotice';
 import { useSelector } from 'app/types';
 
@@ -57,16 +58,27 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   );
 
   const showAngularDeprecationNotice = () => {
-    // TODO: we will implement this later
-    const shouldShowAutoMigrateLink = false;
-    // const showAutoMigrateLink = dashboard.panels.some((panel) =>
-    //   explicitlyControlledMigrationPanels.includes(panel.type)
-    // );
+    const panels = model.getDashboardPanels();
+    if (!panels) {
+      return null;
+    }
+    //FIXME: ts erros no safeguards here
+    const shouldShowAutoMigrateLink = panels.some((panel) => {
+      if (panel.pluginId === undefined) {
+        return false;
+      }
+      return explicitlyControlledMigrationPanels.includes(panel.pluginId);
+    });
 
     return (
-      model.shouldShowAngularDeprecationNotice() &&
+      config.featureToggles.angularDeprecationUI &&
+      model.hasAngularPlugins() &&
       model.state.uid && (
-        <AngularDeprecationNotice dashboardUid={model.state.uid} showAutoMigrateLink={shouldShowAutoMigrateLink} />
+        <AngularDeprecationNotice
+          dashboardUid={model.state.uid}
+          showAutoMigrateLink={shouldShowAutoMigrateLink}
+          key={model.state.uid}
+        />
       )
     );
   };
