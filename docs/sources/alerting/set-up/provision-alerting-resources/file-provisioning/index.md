@@ -366,14 +366,16 @@ settings:
   qos: 0
   # <bool>
   retain: false
-  # <bool>
-  insecureSkipVerify: false
-  # <string>
-  tlsClientCertificate: certificate in PEM format
-  # <string>
-  tlsClientKey: key in PEM format
-  # <string>
-  tlsClientCA: CA certificate in PEM format
+  # <map>
+  tls:
+    # <bool>
+    insecureSkipVerify: false
+    # <string>
+    clientCertificate: certificate in PEM format
+    # <string>
+    clientKey: key in PEM format
+    # <string>
+    caCertificate: CA certificate in PEM format
 ```
 
 {{< /collapse >}}
