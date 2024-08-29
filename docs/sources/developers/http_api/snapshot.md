@@ -13,7 +13,7 @@ labels:
   products:
     - enterprise
     - oss
-title: 'Snapshot API '
+title: 'Snapshot API'
 ---
 
 # Snapshot API
