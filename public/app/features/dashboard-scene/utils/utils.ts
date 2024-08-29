@@ -272,5 +272,5 @@ export function isWithinRepeatRow(panel: VizPanel): boolean {
     return false;
   }
 
-  return row && row.state.$behaviors?.[0] instanceof RowRepeaterBehavior;
+  return !!(row.state.$behaviors && row.state.$behaviors.find((b) => b instanceof RowRepeaterBehavior));
 }
