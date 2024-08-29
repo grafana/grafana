@@ -189,6 +189,8 @@ func (r *LotexRuler) RouteGetRulesConfig(ctx *contextmodel.ReqContext) response.
 		return ErrResp(500, err, "")
 	}
 
+	extractor := addIdentifiersToNamespaceRulesExtractor(yamlExtractor(&apimodels.NamespaceConfigResponse{}))
+
 	return r.requester.withReq(
 		ctx,
 		http.MethodGet,
@@ -197,9 +199,25 @@ func (r *LotexRuler) RouteGetRulesConfig(ctx *contextmodel.ReqContext) response.
 			legacyRulerPrefix,
 		),
 		nil,
-		yamlExtractor(apimodels.NamespaceConfigResponse{}),
+		extractor,
 		nil,
 	)
+}
+
+func addIdentifiersToNamespaceRulesExtractor(originalFunc func(*response.NormalResponse) (any, error)) func(*response.NormalResponse) (any, error) {
+	return func(resp *response.NormalResponse) (any, error) {
+		result, err := originalFunc(resp)
+
+		namespaces := result.(*apimodels.NamespaceConfigResponse)
+
+		for namespaceName, namespaceData := range *namespaces {
+			for _, ruleGroup := range namespaceData {
+				ruleGroup.PopulateRuleIdentifiers(namespaceName)
+			}
+		}
+
+		return result, err
+	}
 }
 
 func (r *LotexRuler) RoutePostNameRulesConfig(ctx *contextmodel.ReqContext, conf apimodels.PostableRuleGroupConfig, ns string) response.Response {

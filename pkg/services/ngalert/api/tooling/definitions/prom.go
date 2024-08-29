@@ -100,6 +100,12 @@ type RuleGroup struct {
 	EvaluationTime float64   `json:"evaluationTime"`
 }
 
+func (g *RuleGroup) PopulateRuleIdentifiers() {
+	for i := range g.Rules {
+		g.Rules[i].Identifier = fmt.Sprintf("%s-%s-%d", g.File, g.Name, i)
+	}
+}
+
 // HTTPStatusCode returns the HTTP status code for a given Prometheus style error.
 func (d DiscoveryBase) HTTPStatusCode() int {
 	if d.Status == "success" {
@@ -158,6 +164,7 @@ type AlertingRule struct {
 	Alerts         []Alert          `json:"alerts,omitempty"`
 	Totals         map[string]int64 `json:"totals,omitempty"`
 	TotalsFiltered map[string]int64 `json:"totalsFiltered,omitempty"`
+	Identifier     string           `json:"__identifier"`
 	Rule
 }
 

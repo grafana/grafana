@@ -286,6 +286,12 @@ type GettableRuleGroupConfig struct {
 	Rules         []GettableExtendedRuleNode `yaml:"rules" json:"rules"`
 }
 
+func (c *GettableRuleGroupConfig) PopulateRuleIdentifiers(namespace string) {
+	for i := range c.Rules {
+		c.Rules[i].Identifier = fmt.Sprintf("%s-%s-%d", namespace, c.Name, i)
+	}
+}
+
 func (c *GettableRuleGroupConfig) UnmarshalJSON(b []byte) error {
 	type plain GettableRuleGroupConfig
 	if err := json.Unmarshal(b, (*plain)(c)); err != nil {
@@ -333,6 +339,7 @@ type ApiRuleNode struct {
 	KeepFiringFor *model.Duration   `yaml:"keep_firing_for,omitempty" json:"keep_firing_for,omitempty"`
 	Labels        map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
 	Annotations   map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+	Identifier    string            `yaml:"__identifier" json:"__identifier"`
 }
 
 type RuleType int

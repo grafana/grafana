@@ -57,11 +57,26 @@ func (p *LotexProm) RouteGetAlertStatuses(ctx *contextmodel.ReqContext) response
 	)
 }
 
+func addIdentifiersToRulesExtractor(originalFunc func(*response.NormalResponse) (any, error)) func(*response.NormalResponse) (any, error) {
+	return func(resp *response.NormalResponse) (any, error) {
+		result, err := originalFunc(resp)
+
+		ruleGroups := result.(*apimodels.RuleResponse).Data.RuleGroups
+		for _, ruleGroup := range ruleGroups {
+			ruleGroup.PopulateRuleIdentifiers()
+		}
+
+		return result, err
+	}
+}
+
 func (p *LotexProm) RouteGetRuleStatuses(ctx *contextmodel.ReqContext) response.Response {
 	endpoints, err := p.getEndpoints(ctx)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
+
+	extractor := addIdentifiersToRulesExtractor(jsonExtractor(&apimodels.RuleResponse{}))
 
 	return p.withReq(
 		ctx,
@@ -71,7 +86,7 @@ func (p *LotexProm) RouteGetRuleStatuses(ctx *contextmodel.ReqContext) response.
 			endpoints.rules,
 		),
 		nil,
-		jsonExtractor(&apimodels.RuleResponse{}),
+		extractor,
 		nil,
 	)
 }
