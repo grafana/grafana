@@ -95,7 +95,7 @@ type MqttIntegration struct {
 	MessageFormat        *string `json:"messageFormat,omitempty" yaml:"messageFormat,omitempty" hcl:"message_format"`
 	Username             *string `json:"username,omitempty" yaml:"username,omitempty" hcl:"username"`
 	Password             *Secret `json:"password,omitempty" yaml:"password,omitempty" hcl:"password"`
-	QoS                  *int64  `json:"qos,omitempty" yaml:"qos,omitempty" hcl:"qos"`
+	QoS                  *string `json:"qos,omitempty" yaml:"qos,omitempty" hcl:"qos"`
 	Retain               *bool   `json:"retain,omitempty" yaml:"retain,omitempty" hcl:"retain"`
 	InsecureSkipVerify   *bool   `json:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" hcl:"insecure_skip_verify"`
 	TLSCACertificate     *Secret `json:"tlsCACertificate,omitempty" yaml:"tlsCACertificate,omitempty" hcl:"tls_ca_certificate"`
