@@ -77,7 +77,6 @@ func (s *LegacyUserTeamREST) Connect(ctx context.Context, name string, options r
 		list.ListMeta.Continue = common.OptionalFormatInt(res.Continue)
 
 		responder.Object(http.StatusOK, list)
-
 	}), nil
 }
 
