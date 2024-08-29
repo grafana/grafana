@@ -329,6 +329,9 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	if hs.Cfg.UnifiedAlerting.Enabled != nil {
 		frontendSettings.UnifiedAlertingEnabled = *hs.Cfg.UnifiedAlerting.Enabled
 	}
+	if hs.Cfg.UnifiedAlerting.RecordingRules.Enabled {
+		frontendSettings.UnifiedAlerting.GrafanaRecordingRulesUrl = hs.Cfg.UnifiedAlerting.RecordingRules.URL
+	}
 
 	// It returns false if the provider is not enabled or the skip org role sync is false.
 	parseSkipOrgRoleSyncEnabled := func(info *social.OAuthInfo) bool {
