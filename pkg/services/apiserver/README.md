@@ -4,6 +4,7 @@
 
 ```ini
 [feature_toggles]
+kubernetesPlaylists = true
 ```
 
 Start Grafana:
