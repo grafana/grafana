@@ -25,3 +25,17 @@ type UserList struct {
 
 	Items []User `json:"items,omitempty"`
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type UserTeamList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []UserTeam `json:"items,omitempty"`
+}
+
+type UserTeam struct {
+	Name       string         `json:"name,omitempty"`
+	UID        string         `json:"uid,omitempty"`
+	Permission TeamPermission `json:"permission,omitemptu"`
+}

@@ -61,7 +61,7 @@ var TeamResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 			}
 			return []interface{}{
 				m.Name,
-				m.Spec.Title,
+				m.Spec.Name,
 				m.Spec.Email,
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
 			}, nil
@@ -161,6 +161,7 @@ func AddKnownTypes(scheme *runtime.Scheme, version string) {
 		schema.GroupVersion{Group: GROUP, Version: version},
 		&User{},
 		&UserList{},
+		&UserTeamList{},
 		&ServiceAccount{},
 		&ServiceAccountList{},
 		&Team{},
