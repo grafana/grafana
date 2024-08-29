@@ -7,6 +7,7 @@ const { resolveToEsbuildTarget } = require('esbuild-plugin-browserslist');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const path = require('path');
 const WebpackAssetsManifest = require('webpack-assets-manifest');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 const { merge } = require('webpack-merge');
 
@@ -79,6 +80,7 @@ module.exports = (env = {}) =>
         fileName: path.join(process.cwd(), 'manifest.json'),
         filter: (file) => !file.name.endsWith('.map'),
       }),
+      new BundleAnalyzerPlugin(),
       function () {
         this.hooks.done.tap('Done', function (stats) {
           if (stats.compilation.errors && stats.compilation.errors.length) {
