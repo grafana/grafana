@@ -137,7 +137,7 @@ To vote for a link, click the triangle icon next to the name of the link.
 
 ## Open Grafana
 
-Grafana is an open-source platform for monitoring and observability that lets you visualize and explore the state of your systems.
+Grafana is an open source platform for monitoring and observability that lets you visualize and explore the state of your systems.
 
 <!-- INTERACTIVE ignore START -->
 1. Open a new tab.
@@ -252,7 +252,7 @@ Let's generate an error, and analyze it with Explore.
    {filename="/var/log/tns-app.log"} |= "error"
    ```
 
-1. Click on the log line that says `level=error msg="empty url"` to see more information about the error.
+1. Click the log line that says `level=error msg="empty url"` to see more information about the error.
 
    > **Note:** If you're in Live mode, clicking logs will not show more information about the error. Instead, stop and exit the live stream, then click the log line there.
 
@@ -330,7 +330,7 @@ Manually annotating your dashboard is fine for those single events. For regularl
    ```
 
 1. Click **Apply**. Grafana displays the Annotations list, with your new annotation.
-1. Click on your dashboard name to return to your dashboard.
+1. Click your dashboard name to return to your dashboard.
 1. At the top of your dashboard, there is now a toggle to display the results of the newly created annotation query. Press it if it's not already enabled.
 1. Click the **Save dashboard** (disk) icon to save the changes.
 1. To test the changes, go back to the [sample application](http://localhost:8081), post a new link without a URL to generate an error in your browser that says `empty url`.
@@ -418,7 +418,7 @@ Now that Grafana knows how to notify us, it's time to set up an alert rule:
 1. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Alert rules**.
 1. Click **+ New alert rule**.
 1. For **Section 1**, name the rule `fundamentals-test`.
-1. For **Section 2**, Find the **query A** box. Choose your Prometheus datasource. Note that the rule type should automatically switch to Grafana-managed alert rule.
+1. For **Section 2**, Find the **query A** box. Choose your Prometheus data source. Note that the rule type should automatically switch to Grafana-managed alert rule.
 1. Switch to code mode by checking the Builder/Code toggle.
 1. Enter the same Prometheus query that we used in our earlier panel:
 
@@ -426,8 +426,8 @@ Now that Grafana knows how to notify us, it's time to set up an alert rule:
    sum(rate(tns_request_duration_seconds_count[5m])) by(route)
    ```
 
-1. Scroll down to bottom of section #2 and click on the **Preview** button. You should see some data returned.
-1. Keep expressions “B” and "C" as they are. These expressions (Reduce and Threshold, respectively) come by default when creating a new rule. Expression "B", selects the last value of our query “A”, while the Threshold expression "C" will check if the last value from expression "B" is above a specific value. In addition, the Threshold expression is the alert rule condition by default. Enter `0.2` as threshold value. [You can read more about queries and conditions here](/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
+1. Scroll down to bottom of section #2 and click the **Preview** button. You should see some data returned.
+1. Keep expressions “B” and "C" as they are. These expressions (Reduce and Threshold, respectively) are included by default when creating a new rule. Expression "B", selects the last value of our query “A”, while the Threshold expression "C" will check if the last value from expression "B" is above a specific value. In addition, the Threshold expression is the alert rule condition by default. Enter `0.2` as threshold value. [You can read more about queries and conditions here](/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
 1. In **Section 3**, in Folder, create a new folder, by clicking `New folder` and typing a name for the folder. This folder will contain our alert rules. For example: `fundamentals`. Then, click `create`.
 1. In the Evaluation group, repeat the above step to create a new one. We will name it `fundamentals` too.
 1. Choose an Evaluation interval (how often the alert rule will be evaluated). For example, every `10s` (10 seconds).
@@ -472,7 +472,7 @@ Let's see how we can configure this.
 1. In Grafana's sidebar, navigate to the dashboard by clicking **Dashboards** and selecting the dashboard you created.
 1. To test the changes, follow the steps listed to [trigger a Grafana-managed alert rule](#trigger-a-grafana-managed-alert).
 
-   You should now see a red, broken heart icon beside the panel name, signifying that the alert rule has been triggered. An annotation for the alert instance, represented as a vertical red line, is also displayed.
+   You should now see a red, broken heart icon beside the panel name, indicating that the alert rule has been triggered. An annotation for the alert instance, represented as a vertical red line, is also displayed.
 
    {{< figure src="/media/tutorials/grafana-alert-on-dashboard.png" alt="A panel in a Grafana dashboard with alerting and annotations configured" caption="Displaying Grafana-managed alert rules on a dashboard" >}}
 
