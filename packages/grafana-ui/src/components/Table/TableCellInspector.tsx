@@ -28,6 +28,7 @@ export function TableCellInspector({ value, onDismiss, mode }: TableCellInspecto
     if (trimmedValue[0] === '{' || trimmedValue[0] === '[' || mode === 'code') {
       try {
         value = JSON.parse(value);
+        displayValue = JSON.stringify(value, null, ' ');
       } catch {}
     }
   } else {
