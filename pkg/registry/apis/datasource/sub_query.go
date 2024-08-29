@@ -89,7 +89,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			if ok {
 				headers[headerToSend] = v[0]
 			} else {
-				r.builder.log.Warn(fmt.Sprintf("datasource received an unexpected header: %s, ignoring it", k))
+				r.builder.log.Warn("datasource received an unexpected header, ignoring it", "header", k)
 			}
 		}
 
