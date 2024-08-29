@@ -1,4 +1,3 @@
-import { useObservable } from 'react-use';
 import { isString } from 'util';
 
 import { PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
@@ -7,12 +6,17 @@ import {
   UsePluginLinksResult,
 } from '@grafana/runtime/src/services/pluginExtensions/getPluginExtensions';
 
-import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
+import { AddedLinkRegistryItem, AddedLinksRegistry } from './registry/AddedLinksRegistry';
+import { RegistryType } from './registry/Registry';
 import { generateExtensionId, getLinkExtensionOnClick, getLinkExtensionPathWithTracking, logWarning } from './utils';
 
 // Returns an array of component extensions for the given extension point
-export function createUsePluginLinks(registry: AddedLinksRegistry) {
-  const observableRegistry = registry.asObservable();
+export function createUsePluginLinks(r: AddedLinksRegistry) {
+  let registry: RegistryType<Array<AddedLinkRegistryItem<object>>>;
+
+  r.asObservable().subscribe((addedComponentsRegistry) => {
+    registry = addedComponentsRegistry;
+  });
 
   return function usePluginLinks({
     limitPerPlugin,
@@ -20,8 +24,6 @@ export function createUsePluginLinks(registry: AddedLinksRegistry) {
     context,
   }: UsePluginLinksOptions): UsePluginLinksResult {
     try {
-      const registry = useObservable(observableRegistry);
-
       if (!registry || !registry[extensionPointId]) {
         return {
           isLoading: false,
@@ -77,9 +79,6 @@ export function createUsePluginLinks(registry: AddedLinksRegistry) {
         links: extensions,
       };
     } catch (error) {
-      if (error instanceof Error) {
-        logWarning(error.message);
-      }
       console.log('error in usePluginLinks', error);
       return {
         isLoading: false,
