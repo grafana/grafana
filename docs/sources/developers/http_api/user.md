@@ -28,7 +28,8 @@ refs:
 You can't authenticate to the User HTTP API with service account tokens.
 Service accounts are limited to an organization and an organization role.
 They can't be granted [Grafana server administrator permissions](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators).
-You can use service account tokens to manage users in an organization with [Organization HTTP API](/docs/grafana/<GRAFANA_VERSION>/developers/http_api/org/#current-organization-api).
+
+Alternatively, you can use the [Organization HTTP API](/docs/grafana/<GRAFANA_VERSION>/developers/http_api/org/#current-organization-api) with service account tokens to manage users in a specific organization
 
 To use these API endpoints you have to use Basic authentication and the Grafana user must have the Grafana server administrator permission.
 
