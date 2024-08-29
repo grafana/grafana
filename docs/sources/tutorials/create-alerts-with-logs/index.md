@@ -19,7 +19,7 @@ title: How to create alerts with log data
 weight: 70
 killercoda:
   title: How to create alerts with log data
-  description: Learn how to use Loki with Grafana Alerting to keep track of what’s happening in your environment with real logs.
+  description: Learn how to use Loki with Grafana Alerting to keep track of what’s happening in your environment with real log data.
   backend:
     imageid: ubuntu
 ---
@@ -34,17 +34,16 @@ In this tutorial, you'll:
 
 - Generate sample logs and pull them with Promtail to Grafana.
 - Create an alert rule based on a Loki query (LogQL).
-- Create a Webhook contact point to send alert notifications to. 
+- Create a Webhook contact point to send alert notifications to.
 
 <!-- INTERACTIVE ignore START -->
 
 {{< admonition type="tip" >}}
 Check out our [advanced alerting tutorial](https://grafana.com/tutorials/alerting-get-started-pt2/) to explore advanced topics such as alert instances and notification routing.
 {{< /admonition >}}
+<!-- INTERACTIVE ignore END -->
 
 {{< docs/ignore >}}
-
-<!-- INTERACTIVE ignore END -->
 
 > Check out our advanced alerting tutorial to explore advanced topics such as alert instances and notification routing.
 
@@ -73,9 +72,7 @@ In order to run a Grafana stack locally, ensure you have the following applicati
 - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
 - [Git](https://git-scm.com/)
 
-
 To demonstrate the observation of data using the Grafana stack, download the files to your local machine.
-
 
 1. Download and save a Docker compose file to run Grafana, Loki and Promtail. 
 
@@ -240,8 +237,7 @@ In this section, we define queries, expressions (used to manipulate the data), a
 
    It should return a single sample with the value 1 at the current timestamp. And, since `1` is above `0`, the alert condition has been met, and the alert rule state is `Firing`.
 
-    <!-- update img -->
-   {{< figure src="/media/docs/alerting/alerting-always-firing-alert.png" max-width="1200px" caption="A preview of a firing alert" >}}
+   {{< figure src="/media/docs/alerting/expression-loki-alert.png" max-width="1200px" caption="Preview of a firing alert instances" >}}
 
 ### Set evaluation behavior
 
