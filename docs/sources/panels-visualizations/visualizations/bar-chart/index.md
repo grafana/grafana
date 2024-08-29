@@ -67,7 +67,7 @@ To create a bar chart visualization, you need a dataset containing one string or
 
 The text or time field is used to label the bars or values in each row of data and the numeric fields are represented by proportionally sized bars.
 
-#### Example 1
+### Example 1
 
 | Group | Value1 | Value2 | Value3 |
 | ----- | ------ | ------ | ------ |
@@ -77,7 +77,7 @@ The text or time field is used to label the bars or values in each row of data a
 
 If you have more than one text or time field, by default, the visualization uses the first one, but you can change this in the x-axis option as described in the [Bar chart options](#bar-chart-options) section.
 
-#### Example 2
+### Example 2
 
 If your dataset contains multiple rows, the visualization displays multiple bar chart groups where each group contains multiple bars representing all the numeric values for a row.
 
