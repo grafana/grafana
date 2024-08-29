@@ -36,7 +36,6 @@ export function createUsePluginLinks(registry: AddedLinksRegistry) {
         };
       }
       const frozenContext = context ? getReadOnlyProxy(context) : {};
-      // We don't return the extensions separated by type, because in that case it would be much harder to define a sort-order for them.
       const extensions: PluginExtensionLink[] = [];
       const extensionsByPlugin: Record<string, number> = {};
 
