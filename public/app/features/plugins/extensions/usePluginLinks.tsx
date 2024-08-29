@@ -7,23 +7,19 @@ import {
 } from '@grafana/runtime/src/services/pluginExtensions/getPluginExtensions';
 
 import { AddedLinkRegistryItem, AddedLinksRegistry } from './registry/AddedLinksRegistry';
-import { RegistryType } from './registry/Registry';
-import { generateExtensionId, getLinkExtensionOnClick, getLinkExtensionPathWithTracking, logWarning } from './utils';
+import { generateExtensionId, logWarning } from './utils';
 
 // Returns an array of component extensions for the given extension point
-export function createUsePluginLinks(r: AddedLinksRegistry) {
-  let registry: RegistryType<Array<AddedLinkRegistryItem<object>>>;
-
-  r.asObservable().subscribe((addedComponentsRegistry) => {
-    registry = addedComponentsRegistry;
-  });
-
+export function createUsePluginLinks(_: AddedLinksRegistry) {
   return function usePluginLinks({
     limitPerPlugin,
     extensionPointId,
     context,
   }: UsePluginLinksOptions): UsePluginLinksResult {
     try {
+      // const registry = useObservable(observableRegistry);
+      let registry: Record<string, Array<AddedLinkRegistryItem<object>>> = {};
+
       if (!registry || !registry[extensionPointId]) {
         return {
           isLoading: false,
@@ -86,4 +82,20 @@ export function createUsePluginLinks(r: AddedLinksRegistry) {
       };
     }
   };
+}
+function getLinkExtensionOnClick(
+  pluginId: string,
+  extensionPointId: string,
+  addedLink: AddedLinkRegistryItem<object>,
+  context: object | Record<string | symbol, unknown> | undefined
+): ((event?: import('react').MouseEvent) => void) | undefined {
+  throw new Error('Function not implemented.');
+}
+
+function getLinkExtensionPathWithTracking(
+  pluginId: string,
+  path: string,
+  extensionPointId: string
+): string | undefined {
+  throw new Error('Function not implemented.');
 }
