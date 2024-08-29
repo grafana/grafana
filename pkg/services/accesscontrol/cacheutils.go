@@ -45,6 +45,9 @@ func GetTeamPermissionCacheKey(teamID int64, orgID int64) string {
 }
 
 func GetTeamPermissionCompositeCacheKey(teamIds []int64, orgID int64) string {
+	if len(teamIds) == 0 {
+		return ""
+	}
 	teams := make([]string, 0)
 	slices.Sort(teamIds)
 	for _, id := range teamIds {
