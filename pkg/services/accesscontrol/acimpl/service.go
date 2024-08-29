@@ -344,7 +344,6 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 
 	teams := user.GetTeams()
 	orgID := user.GetOrgID()
-	compositeKey := accesscontrol.GetTeamPermissionCompositeCacheKey(teams, orgID)
 	if len(teams) == 0 {
 		return []accesscontrol.Permission{}, nil
 	}
@@ -352,12 +351,7 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 	miss := make([]int64, 0)
 	permissions := make([]accesscontrol.Permission, 0)
 
-	if !options.ReloadCache && compositeKey != "" {
-		teamsPermissions, ok := s.cache.Get(compositeKey)
-		if ok {
-			return teamsPermissions.([]accesscontrol.Permission), nil
-		}
-
+	if !options.ReloadCache {
 		miss = make([]int64, 0)
 		for _, teamID := range teams {
 			key := accesscontrol.GetTeamPermissionCacheKey(teamID, orgID)
@@ -370,10 +364,8 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 				miss = append(miss, teamID)
 			}
 		}
-	}
-
-	// reload cache and fetch all teams permissions
-	if options.ReloadCache {
+	} else {
+		// reload cache and fetch all teams permissions
 		miss = teams
 	}
 
@@ -393,10 +385,6 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 		}
 	}
 
-	if compositeKey != "" {
-		s.cache.Set(compositeKey, permissions, cacheTTL)
-	}
-
 	return permissions, nil
 }
 
@@ -407,8 +395,6 @@ func (s *Service) ClearUserPermissionCache(user identity.Requester) {
 	// Clear user's teams cache
 	teams := user.GetTeams()
 	orgID := user.GetOrgID()
-	s.cache.Delete(accesscontrol.GetTeamPermissionCompositeCacheKey(teams, orgID))
-
 	for _, teamID := range teams {
 		s.cache.Delete(accesscontrol.GetTeamPermissionCacheKey(teamID, orgID))
 	}
