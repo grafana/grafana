@@ -147,7 +147,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,
 			FetchPermissionsParams: authn.FetchPermissionsParams{
-				RestrictedActions: accessTokenClaims.DelegatedPermissions(),
+				RestrictedActions: accessTokenClaims.Rest.DelegatedPermissions,
 			},
 			FetchSyncedUser: true,
 		}}, nil
@@ -168,7 +168,7 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
 	}
 
-	permissions := accessTokenClaims.Permissions()
+	permissions := accessTokenClaims.Rest.Permissions
 	fetchPermissionsParams := authn.FetchPermissionsParams{}
 	if len(permissions) > 0 {
 		fetchPermissionsParams.Roles = make([]string, 0, len(permissions))
