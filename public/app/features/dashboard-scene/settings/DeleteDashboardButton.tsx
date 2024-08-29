@@ -63,12 +63,14 @@ export function DeleteDashboardButton({ dashboard }: ButtonProps) {
         <Trans i18nKey="dashboard-settings.dashboard-delete-button">Delete dashboard</Trans>
       </Button>
 
-      {showModal && <DeleteModal dashboardTitle={dashboard.state.title} onConfirm={onConfirm} onClose={toggleModal} />}
+      {showModal && (
+        <DeleteDashboardModal dashboardTitle={dashboard.state.title} onConfirm={onConfirm} onClose={toggleModal} />
+      )}
     </>
   );
 }
 
-export function DeleteModal({ dashboardTitle, onConfirm, onClose }: DeleteModalProps) {
+export function DeleteDashboardModal({ dashboardTitle, onConfirm, onClose }: DeleteModalProps) {
   return (
     <ConfirmModal
       isOpen={true}
