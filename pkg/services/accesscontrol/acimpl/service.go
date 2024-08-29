@@ -349,8 +349,11 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 	orgID := user.GetOrgID()
 	miss := teams
 	compositeKey := accesscontrol.GetTeamPermissionCompositeCacheKey(teams, orgID)
+	if len(teams) == 0 {
+		return []accesscontrol.Permission{}, nil
+	}
 
-	if !options.ReloadCache {
+	if !options.ReloadCache && compositeKey != "" {
 		teamsPermissions, ok := s.cache.Get(compositeKey)
 		if ok {
 			return teamsPermissions.([]accesscontrol.Permission), nil
