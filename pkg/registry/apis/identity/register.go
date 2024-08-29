@@ -100,7 +100,7 @@ func (b *IdentityAPIBuilder) GetAPIGroupInfo(
 	}
 
 	// The display endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
-	storage["display"] = user.NewLegacyDisplayStore(b.Store)
+	storage["display"] = user.NewLegacyDisplayREST(b.Store)
 
 	apiGroupInfo.VersionedResourcesStorageMap[identityv0.VERSION] = storage
 	return &apiGroupInfo, nil
