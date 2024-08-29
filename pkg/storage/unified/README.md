@@ -26,8 +26,6 @@ target = all
 protocol = https
 
 [feature_toggles]
-; enable unified storage
-unifiedStorage = true
 ; enable k8s apiserver
 grafanaAPIServer = true
 ; store playlists in k8s
