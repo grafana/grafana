@@ -33,7 +33,7 @@ export function BookmarksPage() {
               'bookmarks.empty-state.message',
               'It looks like you haven’t created any bookmarks yet. Hover over any item in the nav menu and click on the bookmark icon to add it here.'
             )}
-          ></EmptyState>
+          />
         ) : (
           <section className={styles.grid}>
             {validItems.map((item) => {
