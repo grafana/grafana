@@ -1048,6 +1048,45 @@
     },
     {
       "metadata": {
+        "name": "exploreLogsAggregatedMetrics",
+        "resourceVersion": "1724938092041",
+        "creationTimestamp": "2024-08-29T13:28:12Z"
+      },
+      "spec": {
+        "description": "Used in Explore Logs to query by aggregated metrics",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "exploreLogsLimitedTimeRange",
+        "resourceVersion": "1724938092041",
+        "creationTimestamp": "2024-08-29T13:28:12Z"
+      },
+      "spec": {
+        "description": "Used in Explore Logs to limit the time range",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "exploreLogsShardSplitting",
+        "resourceVersion": "1724938092041",
+        "creationTimestamp": "2024-08-29T13:28:12Z"
+      },
+      "spec": {
+        "description": "Used in Explore Logs to split queries into multiple queries based on the number of shards",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "exploreMetrics",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2024-04-09T18:15:18Z",

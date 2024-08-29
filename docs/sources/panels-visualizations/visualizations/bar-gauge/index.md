@@ -25,13 +25,69 @@ refs:
 
 # Bar gauge
 
-Bar gauges simplify your data by reducing every field to a single value. You choose how Grafana calculates the reduction.
-
-This panel can show one or more bar gauges depending on how many series, rows, or columns your query returns.
+Bar gauges simplify your data by reducing every field to a single value. You choose how Grafana calculates the reduction. This visualization can show one or more bar gauges depending on how many series, rows, or columns your query returns.
 
 {{< figure src="/static/img/docs/v66/bar_gauge_cover.png" max-width="1025px" alt="Bar gauge panel" >}}
 
+The bar gauge visualization displays values as bars with various lengths or fills proportional to the values they represent. They differ from traditional bar charts in that they act as gauges displaying metrics between ranges. One example is a thermometer displaying body temperature in a bar filling up.
+
+You can use a bar gauge visualization when you need to show:
+
+- Key performance indicators (KPIs)
+- System health
+- Savings goals
+- Attendance
+- Process completion rates
+
 {{< docs/play title="Bar Gauge" url="https://play.grafana.org/d/vmie2cmWz/" >}}
+
+## Supported data formats
+
+To create a bar gauge visualization, you need a dataset querying at least one numeric field. Every numeric field in the dataset is displayed as a bar gauge. Text or time fields aren't required but if they're present, they're used for labeling.
+
+### Example 1
+
+| Label | Value1 | Value2 | Value3 |
+| ----- | ------ | ------ | ------ |
+| Row1  | 5      | 3      | 2      |
+
+![Bar gauge with single row of data](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.1-bargauge-example1.png)
+
+The minimum and maximum range for the bar gauges is automatically pulled from the largest and smallest numeric values in the dataset. You can also manually define the minimum and maximum values as indicated in the [Standard options](#standard-options) section.
+
+You can also define the minimum and maximum from the dataset provided.
+
+### Example 2
+
+| Label | Value | Max | Min |
+| ----- | ----- | --- | --- |
+| Row1  | 3     | 6   | 1   |
+
+![Bar gauge with single row of data including maximum and minimum](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.1-bargauge-example2.png)
+
+If you don’t want to show gauges for the min and max values, you can configure only one field to be displayed as described in the [Value options](#value-options) section.
+
+![Bar gauge, single row of data with max and min displaying value](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.1-bargauge-example3.png)
+
+Even if the min and max aren’t displayed, the visualization still pulls the range from the data set.
+
+### Example 3
+
+The bar gauge visualization also supports multiple records (rows) in the dataset.
+
+| Label | Value1 | Value2 | Value3 |
+| ----- | ------ | ------ | ------ |
+| Row1  | 5      | 3      | 2      |
+| Row2  | 10     | 6      | 4      |
+| Row3  | 20     | 8      | 2      |
+
+![Bar gauge with multiple rows of data displaying last row](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.1-bargauge-example4.png)
+
+By default, the visualization is configured to [calculate](#value-options) a single value per column or series and to display only the last set of data. However, it derives the minimum and maximum from the full dataset even if those values aren’t visible. In this example, that means only the last row of data is displayed in the gauges and the minimum and maximum values are defined as 2 and 20, pulled from the whole dataset.
+
+If you want to show one gauge per cell you can change the [Show](#show) setting from [Calculate](#calculate) to [All values](#all-values) and each bar is labeled by concatenating the text column with each value's column name.
+
+![Bar gauge with multiple rows of data displaying all the values](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.1-bargauge-example5.png)
 
 ## Panel options
 
@@ -160,6 +216,10 @@ This option only applies when bar size is set to manual.
 ## Thresholds
 
 {{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+Last, colors of the bar gauge thresholds can be configured as described above.
+
+![Bar gauge with colored thresholds configured](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.1-bargauge-example6.png)
 
 ## Field overrides
 

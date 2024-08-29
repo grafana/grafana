@@ -205,4 +205,7 @@ export interface FeatureToggles {
   newFiltersUI?: boolean;
   lokiSendDashboardPanelNames?: boolean;
   singleTopNav?: boolean;
+  exploreLogsShardSplitting?: boolean;
+  exploreLogsAggregatedMetrics?: boolean;
+  exploreLogsLimitedTimeRange?: boolean;
 }
