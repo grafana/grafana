@@ -33,3 +33,7 @@ func (backtickIdent) Ident(s string) (string, error) {
 		return s
 	})
 }
+
+func (mysql) CurrentEpoch() string {
+	return "(UNIX_TIMESTAMP(NOW(6)) * 1000000)"
+}

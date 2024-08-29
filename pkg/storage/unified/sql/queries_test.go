@@ -177,10 +177,8 @@ func TestUnifiedStorageQueries(t *testing.T) {
 				{
 					Name: "increment resource version",
 					Data: &sqlResourceVersionRequest{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						resourceVersion: &resourceVersion{
-							ResourceVersion: 123,
-						},
+						SQLTemplate:     mocks.NewTestingSQLTemplate(),
+						resourceVersion: new(resourceVersion),
 					},
 				},
 			},
