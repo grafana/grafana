@@ -44,9 +44,7 @@ export const httpMethodOptions: SelectableValue[] = [
 export const contentTypeOptions: SelectableValue[] = [
   { label: 'application/json', value: 'application/json' },
   { label: 'text/plain', value: 'text/plain' },
-  { label: 'application/javascript', value: 'application/javascript' },
-  { label: 'text/html', value: 'text/html' },
-  { label: 'application/XML', value: 'application/XML' },
+  { label: 'application/xml', value: 'application/xml' },
   { label: 'application/x-www-form-urlencoded', value: 'application/x-www-form-urlencoded' },
 ];
 
