@@ -44,7 +44,7 @@ func newScopeStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGette
 	return &storage{Store: store}, nil
 }
 
-func newScopeDashboardBindingStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*storage, error) {
+func newScopeDashboardBindingStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*storage, *grafanaregistry.StatusREST, error) {
 	resourceInfo := scope.ScopeDashboardBindingResourceInfo
 	strategy := grafanaregistry.NewStrategy(scheme, resourceInfo.GroupVersion())
 
@@ -63,10 +63,12 @@ func newScopeDashboardBindingStorage(scheme *runtime.Scheme, optsGetter generic.
 	}
 	options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: GetAttrs}
 	if err := store.CompleteWithOptions(options); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return &storage{Store: store}, nil
+	statusStrategy := grafanaregistry.NewStatusStrategy(scheme, resourceInfo.GroupVersion())
+	statusREST := grafanaregistry.NewStatusREST(store, statusStrategy)
+	return &storage{Store: store}, statusREST, nil
 }
 
 func newScopeNodeStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*storage, error) {
