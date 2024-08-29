@@ -242,17 +242,15 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getCachedUserPermissions")
 	defer span.End()
 
-	permissions := []accesscontrol.Permission{}
 	cacheKey := accesscontrol.GetUserPermissionCacheKey(user)
 	if cachedPermissions, ok := s.cache.Get(cacheKey); ok {
 		return cachedPermissions.([]accesscontrol.Permission), nil
 	}
 
-	basicRolePermissions, err := s.getCachedBasicRolesPermissions(ctx, user, options)
+	permissions, err := s.getCachedBasicRolesPermissions(ctx, user, options)
 	if err != nil {
 		return nil, err
 	}
-	permissions = append(permissions, basicRolePermissions...)
 
 	teamsPermissions, err := s.getCachedTeamsPermissions(ctx, user, options)
 	if err != nil {
@@ -344,14 +342,15 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getCachedTeamsPermissions")
 	defer span.End()
 
-	permissions := make([]accesscontrol.Permission, 0)
 	teams := user.GetTeams()
 	orgID := user.GetOrgID()
-	miss := teams
 	compositeKey := accesscontrol.GetTeamPermissionCompositeCacheKey(teams, orgID)
 	if len(teams) == 0 {
 		return []accesscontrol.Permission{}, nil
 	}
+
+	miss := make([]int64, 0)
+	permissions := make([]accesscontrol.Permission, 0)
 
 	if !options.ReloadCache && compositeKey != "" {
 		teamsPermissions, ok := s.cache.Get(compositeKey)
