@@ -36,7 +36,6 @@ export const TutorialCard = ({ card }: Props) => {
 };
 
 const handleTutorialClick = (event: MouseEvent<HTMLAnchorElement>, card: TutorialCardType) => {
-  event.preventDefault();
   const isSet = store.get(card.key);
   if (!isSet) {
     store.set(card.key, true);
