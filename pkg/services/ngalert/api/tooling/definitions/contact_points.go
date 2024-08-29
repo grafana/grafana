@@ -85,22 +85,26 @@ type LineIntegration struct {
 	Description *string `json:"description,omitempty" yaml:"description,omitempty" hcl:"description"`
 }
 
+type TLSConfig struct {
+	InsecureSkipVerify   *bool   `json:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" hcl:"insecure_skip_verify"`
+	TLSCACertificate     *Secret `json:"caCertificate,omitempty" yaml:"caCertificate,omitempty" hcl:"ca_certificate"`
+	TLSClientCertificate *Secret `json:"clientCertificate,omitempty" yaml:"clientCertificate,omitempty" hcl:"client_certificate"`
+	TLSClientKey         *Secret `json:"clientKey,omitempty" yaml:"clientKey,omitempty" hcl:"client_key"`
+}
+
 type MqttIntegration struct {
 	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
 
-	BrokerURL            *string `json:"brokerUrl,omitempty" yaml:"brokerUrl,omitempty" hcl:"broker_url"`
-	ClientID             *string `json:"clientId,omitempty" yaml:"clientId,omitempty" hcl:"client_id"`
-	Topic                *string `json:"topic,omitempty" yaml:"topic,omitempty" hcl:"topic"`
-	Message              *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
-	MessageFormat        *string `json:"messageFormat,omitempty" yaml:"messageFormat,omitempty" hcl:"message_format"`
-	Username             *string `json:"username,omitempty" yaml:"username,omitempty" hcl:"username"`
-	Password             *Secret `json:"password,omitempty" yaml:"password,omitempty" hcl:"password"`
-	QoS                  *string `json:"qos,omitempty" yaml:"qos,omitempty" hcl:"qos"`
-	Retain               *bool   `json:"retain,omitempty" yaml:"retain,omitempty" hcl:"retain"`
-	InsecureSkipVerify   *bool   `json:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" hcl:"insecure_skip_verify"`
-	TLSCACertificate     *Secret `json:"tlsCACertificate,omitempty" yaml:"tlsCACertificate,omitempty" hcl:"tls_ca_certificate"`
-	TLSClientCertificate *Secret `json:"tlsClientCertificate,omitempty" yaml:"tlsClientCertificate,omitempty" hcl:"tls_client_certificate"`
-	TLSClientKey         *Secret `json:"tlsClientKey,omitempty" yaml:"tlsClientKey,omitempty" hcl:"tls_client_key"`
+	BrokerURL     *string    `json:"brokerUrl,omitempty" yaml:"brokerUrl,omitempty" hcl:"broker_url"`
+	ClientID      *string    `json:"clientId,omitempty" yaml:"clientId,omitempty" hcl:"client_id"`
+	Topic         *string    `json:"topic,omitempty" yaml:"topic,omitempty" hcl:"topic"`
+	Message       *string    `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+	MessageFormat *string    `json:"messageFormat,omitempty" yaml:"messageFormat,omitempty" hcl:"message_format"`
+	Username      *string    `json:"username,omitempty" yaml:"username,omitempty" hcl:"username"`
+	Password      *Secret    `json:"password,omitempty" yaml:"password,omitempty" hcl:"password"`
+	QoS           *int64     `json:"qos,omitempty" yaml:"qos,omitempty" hcl:"qos"`
+	Retain        *bool      `json:"retain,omitempty" yaml:"retain,omitempty" hcl:"retain"`
+	TLS           *TLSConfig `json:"tls,omitempty" yaml:"tls,omitempty" hcl:"tls"`
 }
 
 type OnCallIntegration struct {
