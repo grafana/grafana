@@ -167,6 +167,9 @@ func InstallAPIs(
 			// when missing this will default to mode zero (legacy only)
 			var mode = grafanarest.DualWriterMode(0)
 			resourceConfig, resourceExists := storageOpts.UnifiedStorageConfig[key]
+			switch {
+			case resourceConfig.DualWriterMode > 2:
+			}
 			if resourceExists {
 				mode = resourceConfig.DualWriterMode
 			}
