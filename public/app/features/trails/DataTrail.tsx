@@ -679,6 +679,7 @@ function getVariableSet(
         layout: 'vertical',
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
+        applyMode: 'manual',
       }),
       ...getVariablesWithOtelJoinQueryConstant(otelJoinQuery ?? ''),
     ],
