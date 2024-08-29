@@ -373,6 +373,11 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 		}
 	}
 
+	// reload cache and fetch all teams permissions
+	if options.ReloadCache {
+		miss = teams
+	}
+
 	if len(miss) > 0 {
 		span.AddEvent("cache miss")
 		metrics.MAccessPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheMiss).Inc()
@@ -388,7 +393,10 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 			permissions = append(permissions, teamPermissions...)
 		}
 	}
-	s.cache.Set(compositeKey, permissions, cacheTTL)
+
+	if compositeKey != "" {
+		s.cache.Set(compositeKey, permissions, cacheTTL)
+	}
 
 	return permissions, nil
 }
