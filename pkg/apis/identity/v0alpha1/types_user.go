@@ -37,5 +37,5 @@ type UserTeamList struct {
 type UserTeam struct {
 	Name       string         `json:"name,omitempty"`
 	UID        string         `json:"uid,omitempty"`
-	Permission TeamPermission `json:"permission,omitemptu"`
+	Permission TeamPermission `json:"permission,omitempty"`
 }

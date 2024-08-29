@@ -960,14 +960,12 @@ func schema_pkg_apis_identity_v0alpha1_UserTeam(ref common.ReferenceCallback) co
 					"permission": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Possible enum values:\n - `\"admin\"`\n - `\"member\"`",
-							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 							Enum:        []interface{}{"admin", "member"},
 						},
 					},
 				},
-				Required: []string{"permission"},
 			},
 		},
 	}
