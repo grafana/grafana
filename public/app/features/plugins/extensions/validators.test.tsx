@@ -180,7 +180,7 @@ describe('Plugin Extension Validators', () => {
       expect(isGrafanaCoreExtensionPoint('grafana/alerting/alertingrule/action')).toBe(true);
     });
 
-    it('should return FALSE if we pass a string not matching a PluginExtensionPoints value', () => {
+    it('should return FALSE if we pass a string that is not listed under the PluginExtensionPoints enum', () => {
       expect(isGrafanaCoreExtensionPoint('grafana/dashboard/alertingrule/action')).toBe(false);
     });
   });
