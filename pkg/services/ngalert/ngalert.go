@@ -419,6 +419,7 @@ func (ng *AlertNG) init() error {
 		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, false),
 		configStore,
 		ng.store,
+		ng.store,
 		ng.SecretsService,
 		ng.store,
 		ng.Log,
@@ -426,6 +427,7 @@ func (ng *AlertNG) init() error {
 	provisioningReceiverService := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true),
 		configStore,
+		ng.store,
 		ng.store,
 		ng.SecretsService,
 		ng.store,
