@@ -2503,6 +2503,19 @@
     },
     {
       "metadata": {
+        "name": "singleTopNav",
+        "resourceVersion": "1724861961030",
+        "creationTimestamp": "2024-08-28T16:19:21Z"
+      },
+      "spec": {
+        "description": "Unifies the top search bar and breadcrumb bar into one",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "sqlDatasourceDatabaseSelection",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-06-06T16:28:52Z"

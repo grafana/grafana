@@ -746,4 +746,8 @@ const (
 	// FlagLokiSendDashboardPanelNames
 	// Send dashboard and panel names to Loki when querying
 	FlagLokiSendDashboardPanelNames = "lokiSendDashboardPanelNames"
+
+	// FlagSingleTopNav
+	// Unifies the top search bar and breadcrumb bar into one
+	FlagSingleTopNav = "singleTopNav"
 )
