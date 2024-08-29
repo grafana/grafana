@@ -41,8 +41,7 @@ import {
   setPluginComponentsHook,
   setCurrentUser,
   setChromeHeaderHeightHook,
-  setPluginLinksHook,
-  logError,
+  // setPluginLinksHook,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -90,7 +89,7 @@ import { setupPluginExtensionRegistries } from './features/plugins/extensions/re
 import { createUsePluginComponent } from './features/plugins/extensions/usePluginComponent';
 import { createUsePluginComponents } from './features/plugins/extensions/usePluginComponents';
 import { createUsePluginExtensions } from './features/plugins/extensions/usePluginExtensions';
-import { createUsePluginLinks } from './features/plugins/extensions/usePluginLinks';
+// import { createUsePluginLinks } from './features/plugins/extensions/usePluginLinks';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
@@ -226,14 +225,7 @@ export class GrafanaApp {
         await preloadPlugins(awaitedAppPlugins, pluginExtensionsRegistries, 'frontend_awaited_plugins_preload');
       }
 
-      try {
-        setPluginLinksHook(createUsePluginLinks(pluginExtensionsRegistries.addedLinksRegistry));
-      } catch (e) {
-        if (e instanceof Error) {
-          logError(e);
-        }
-        console.error(e);
-      }
+      // setPluginLinksHook(createUsePluginLinks(pluginExtensionsRegistries.addedLinksRegistry));
       setPluginExtensionGetter(createPluginExtensionsGetter(pluginExtensionsRegistries));
       setPluginExtensionsHook(createUsePluginExtensions(pluginExtensionsRegistries));
       setPluginComponentHook(createUsePluginComponent(pluginExtensionsRegistries.exposedComponentsRegistry));
