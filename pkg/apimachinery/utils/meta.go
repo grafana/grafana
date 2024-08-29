@@ -92,6 +92,10 @@ type GrafanaMetaAccessor interface {
 	GetOriginTimestamp() (*time.Time, error)
 
 	GetSpec() (any, error)
+	SetSpec(any) error
+
+	GetStatus() (any, error)
+	SetStatus(any) error
 
 	// Find a title in the object
 	// This will reflect the object and try to get:
@@ -501,6 +505,36 @@ func (m *grafanaMetaAccessor) GetSpec() (spec any, err error) {
 		}
 	}()
 	spec = m.r.FieldByName("Spec").Interface()
+	return
+}
+
+func (m *grafanaMetaAccessor) SetSpec(s any) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("error setting spec")
+		}
+	}()
+	m.r.FieldByName("Spec").Set(reflect.ValueOf(s))
+	return
+}
+
+func (m *grafanaMetaAccessor) GetStatus() (status any, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("error reading status")
+		}
+	}()
+	status = m.r.FieldByName("Status").Interface()
+	return
+}
+
+func (m *grafanaMetaAccessor) SetStatus(s any) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("error setting status")
+		}
+	}()
+	m.r.FieldByName("Status").Set(reflect.ValueOf(s))
 	return
 }
 

@@ -428,7 +428,9 @@ func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistrat
 		}
 
 		for i := range r.Role.Permissions {
-			s.permRegistry.RegisterPermission(r.Role.Permissions[i].Action, r.Role.Permissions[i].Scope)
+			if err := s.permRegistry.RegisterPermission(r.Role.Permissions[i].Action, r.Role.Permissions[i].Scope); err != nil {
+				return err
+			}
 		}
 
 		s.registrations.Append(r)
@@ -486,7 +488,9 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 		for i := range r.Role.Permissions {
 			// Register plugin actions and their possible scopes for permission validation
 			s.permRegistry.RegisterPluginScope(r.Role.Permissions[i].Scope)
-			s.permRegistry.RegisterPermission(r.Role.Permissions[i].Action, r.Role.Permissions[i].Scope)
+			if err := s.permRegistry.RegisterPermission(r.Role.Permissions[i].Action, r.Role.Permissions[i].Scope); err != nil {
+				return err
+			}
 		}
 
 		s.log.Debug("Registering plugin role", "role", r.Role.Name)
