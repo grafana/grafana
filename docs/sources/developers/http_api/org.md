@@ -282,12 +282,15 @@ Content-Type: application/json
 
 ## Admin Organizations API
 
-{{% admonition type="caution" %}}
-The Admin Organizations HTTP API currently does not work with service account tokens. They cannot be granted [Grafana server administrator permissions]({{< relref "../roles-and-permissions/#grafana-server-administrators" >}}).
-In order to use these API endpoints you have to use Basic Auth and the Grafana user must have the Grafana server administrator permission.
+{{< admonition type="caution" >}}
+You can't authenticate to the Admin Organizations HTTP API with service account tokens.
+Service accounts are limited to an organization and an organization role.
+They can't be granted [Grafana server administrator permissions](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators).
+
+To use these API endpoints you have to use Basic authentication and the Grafana user must have the Grafana server administrator permission.
 
 The `admin` user that Grafana is provisioned with by default has permissions to use these API endpoints.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Get Organization by Id
 
