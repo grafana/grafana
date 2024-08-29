@@ -2,7 +2,6 @@ package sync
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/grafana/authlib/claims"
@@ -91,6 +90,19 @@ func TestRBACSync_FetchPermissions(t *testing.T) {
 			expectedPermissions: map[string][]string{accesscontrol.ActionTeamsRead: {accesscontrol.ScopeTeamsAll}},
 		},
 		{
+			name: "robust to missing roles",
+			identity: &authn.Identity{
+				ID: "2", Type: claims.TypeUser, OrgID: 1,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						Roles: []string{"fixed:teams:reader", "fixed:unknown:role"},
+					},
+				},
+			},
+			expectedPermissions: map[string][]string{accesscontrol.ActionTeamsRead: {accesscontrol.ScopeTeamsAll}},
+		},
+		{
 			name: "fetch permissions from permissions registry",
 			identity: &authn.Identity{
 				ID: "2", Type: claims.TypeUser, OrgID: 1,
@@ -102,6 +114,32 @@ func TestRBACSync_FetchPermissions(t *testing.T) {
 				},
 			},
 			expectedPermissions: map[string][]string{"dashboards:read": {"dashboards:uid:*"}},
+		},
+		{
+			name: "fetch scopeless permissions from permissions registry",
+			identity: &authn.Identity{
+				ID: "2", Type: claims.TypeUser, OrgID: 1,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						AllowedActions: []string{"test-app:read"},
+					},
+				},
+			},
+			expectedPermissions: map[string][]string{"test-app:read": {""}},
+		},
+		{
+			name: "robust to unknown actions",
+			identity: &authn.Identity{
+				ID: "2", Type: claims.TypeUser, OrgID: 1,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						AllowedActions: []string{"unknown:read"},
+					},
+				},
+			},
+			expectedPermissions: map[string][]string{},
 		},
 		{
 			name: "restrict permissions from roles and registry",
@@ -347,7 +385,7 @@ func setupTestEnv(t *testing.T) *RBACSync {
 					Permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: accesscontrol.ScopeTeamsAll}},
 				}, nil
 			}
-			return nil, fmt.Errorf("role not found")
+			return nil, accesscontrol.ErrRoleNotFound
 		},
 	}
 	permRegistry := permreg.ProvidePermissionRegistry(t)
