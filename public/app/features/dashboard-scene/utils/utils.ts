@@ -18,6 +18,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { RowActions } from '../scene/row-actions/RowActions';
 
 import { dashboardSceneGraph } from './dashboardSceneGraph';
@@ -260,4 +261,16 @@ export function getLibraryPanel(vizPanel: VizPanel): LibraryVizPanel | undefined
     return vizPanel.parent;
   }
   return;
+}
+
+export function isWithinRepeatRow(panel: VizPanel): boolean {
+  let row;
+
+  try {
+    row = sceneGraph.getAncestor(panel, SceneGridRow);
+  } catch (err) {
+    return false;
+  }
+
+  return row && row.state.$behaviors?.[0] instanceof RowRepeaterBehavior;
 }
