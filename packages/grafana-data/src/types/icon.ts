@@ -171,6 +171,7 @@ export const availableIconsIndex = {
   'library-panel': true,
   'line-alt': true,
   link: true,
+  'link-broken 1': true,
   'list-ui-alt': true,
   'list-ul': true,
   'list-ol': true,
