@@ -25,13 +25,9 @@ refs:
 
 # Gauge
 
-Gauges are single-value visualizations that can repeat a gauge for every series, column or row.
+Gauges are single-value visualizations that allow you to show where a value falls within a defined range. You can use the visualization to display one or more gauges, each corresponding to a different series, column, or row, with the values bound by mininum, maximum, even intermediate thresholds.
 
 {{< figure src="/static/img/docs/v66/gauge_panel_cover.png" max-width="1025px" alt="A gauge visualization">}}
-
-Gauges allow you to show where a value falls within a defined range.
-
-You can use the gauge visualization to display one or multiple gauges, each corresponding to a different series, column, or row, with the values bound by thresholds (minimum and maximum limits or even intermediate thresholds).
 
 You can use gauges if you need to track:
 
@@ -54,7 +50,7 @@ The following video provides beginner steps for creating gauge panels. You'll le
 
 To create a gauge visualization you need a dataset containing at least one numeric field. These values are identified by the field name. Additional text fields aren’t required but can be used for identification and labeling.
 
-#### Example
+### Example
 
 | GaugeName | GaugeValue |
 | --------- | ---------- |
@@ -66,9 +62,9 @@ This dataset displays only one empty gauge showing the number. This is because t
 
 ![Gauge viz with single numeric value and hardcoded max-min](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example2.png 'Gauge with single numeric value and hardcoded max-min')
 
-The visualization can support multiple fields in the dataset. In this case, multiple gauges are displayed.
+### Example
 
-#### Example
+The visualization can support multiple fields in the dataset. In this case, multiple gauges are displayed.
 
 | Identifier | value1 | value2 | value3 |
 | ---------- | ------ | ------ | ------ |
@@ -78,9 +74,9 @@ The visualization can support multiple fields in the dataset. In this case, mult
 
 Because there are multiple values in the dataset, the visualization displays multiple gauges (in this case three) and automatically defines the min and max at 3 and 10. Because the min and max values are defined, each gauge is shaded in to show that value in relation to the min and max.
 
-You can also define min and max values as part of the dataset.
+### Example
 
-#### Example
+You can also define min and max values as part of the dataset.
 
 | Identifier | value | max | min |
 | ---------- | ----- | --- | --- |
