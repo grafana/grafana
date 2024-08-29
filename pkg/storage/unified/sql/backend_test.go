@@ -204,8 +204,10 @@ func TestBackend_IsHealthy(t *testing.T) {
 // expectSuccessfulResourceVersionAtomicInc sets up expectations for calling
 // resourceVersionAtomicInc, where the returned RV will be 1.
 func expectSuccessfulResourceVersionAtomicInc(t *testing.T, b testBackend) {
+	b.ExecWithResult("update resource_version set resource_version")
 	b.QueryWithResult("select resource_version for update", 0, nil)
 	b.ExecWithResult("insert resource_version")
+	b.QueryWithResult("select resource_version for update", 1, Rows{{1}})
 }
 
 // expectUnsuccessfulResourceVersionAtomicInc sets up expectations for calling
@@ -235,24 +237,24 @@ func TestResourceVersionAtomicInc(t *testing.T) {
 
 		b, ctx := setupBackendTest(t)
 
-		b.QueryWithResult("select resource_version for update", 1, Rows{{2}})
 		b.ExecWithResult("update resource_version")
+		b.QueryWithResult("select resource_version", 1, Rows{{12345}})
 
 		v, err := resourceVersionAtomicInc(ctx, b.DB, dialect, resKey)
 		require.NoError(t, err)
-		require.Equal(t, int64(3), v)
+		require.Equal(t, int64(12345), v)
 	})
 
 	t.Run("error getting current version", func(t *testing.T) {
 		t.Parallel()
 		b, ctx := setupBackendTest(t)
-
+		b.ExecWithResult("update resource_version")
 		b.QueryWithErr("select resource_version for update", errTest)
 
 		v, err := resourceVersionAtomicInc(ctx, b.DB, dialect, resKey)
 		require.Zero(t, v)
 		require.Error(t, err)
-		require.ErrorContains(t, err, "get current resource version")
+		require.ErrorContains(t, err, "could not fetch resource version")
 	})
 
 	t.Run("error inserting new row", func(t *testing.T) {
@@ -260,6 +262,7 @@ func TestResourceVersionAtomicInc(t *testing.T) {
 
 		b, ctx := setupBackendTest(t)
 
+		b.ExecWithResult("update resource_version")
 		b.QueryWithResult("select resource_version for update", 0, nil)
 		b.ExecWithErr("insert resource_version", errTest)
 
