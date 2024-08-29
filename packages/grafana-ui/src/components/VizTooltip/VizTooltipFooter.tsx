@@ -29,14 +29,10 @@ const renderDataLinks = (dataLinks: LinkModel[]) => {
 };
 
 const renderActions = (actions: ActionModel[]) => {
-  const buttonProps: ButtonProps = {
-    variant: 'secondary',
-  };
-
   return (
     <Stack direction="column" justifyContent="flex-start">
       {actions.map((action, i) => (
-        <ActionButton key={i} action={action} buttonProps={buttonProps} />
+        <ActionButton key={i} action={action} variant="secondary" />
       ))}
     </Stack>
   );
