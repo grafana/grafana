@@ -17,16 +17,22 @@ type DualWriterMode4 struct {
 	Storage  Storage
 	watchImp rest.Watcher // watch is only available in mode 3 and 4
 	*dualWriterMetrics
-	kind string
-	Log  klog.Logger
+	resource string
+	Log      klog.Logger
 }
 
 const mode4Str = "4"
 
 // newDualWriterMode4 returns a new DualWriter in mode 4.
 // Mode 4 represents writing and reading from Storage.
-func newDualWriterMode4(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics, kind string) *DualWriterMode4 {
-	return &DualWriterMode4{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode4").WithValues("mode", mode4Str, "kind", kind), dualWriterMetrics: dwm}
+func newDualWriterMode4(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics, resource string) *DualWriterMode4 {
+	return &DualWriterMode4{
+		Legacy:            legacy,
+		Storage:           storage,
+		Log:               klog.NewKlogr().WithName("DualWriterMode4").WithValues("mode", mode4Str, "resource", resource),
+		dualWriterMetrics: dwm,
+		resource:          resource,
+	}
 }
 
 // Mode returns the mode of the dual writer.
@@ -47,7 +53,7 @@ func (d *DualWriterMode4) Create(ctx context.Context, obj runtime.Object, create
 	if err != nil {
 		log.Error(err, "unable to create object in storage")
 	}
-	d.recordStorageDuration(err != nil, mode4Str, d.kind, method, startStorage)
+	d.recordStorageDuration(err != nil, mode4Str, d.resource, method, startStorage)
 	return res, err
 }
 
@@ -62,7 +68,7 @@ func (d *DualWriterMode4) Get(ctx context.Context, name string, options *metav1.
 	if err != nil {
 		log.Error(err, "unable to create object in storage")
 	}
-	d.recordStorageDuration(err != nil, mode4Str, d.kind, method, startStorage)
+	d.recordStorageDuration(err != nil, mode4Str, d.resource, method, startStorage)
 	return res, err
 }
 
@@ -76,7 +82,7 @@ func (d *DualWriterMode4) Delete(ctx context.Context, name string, deleteValidat
 	if err != nil {
 		log.Error(err, "unable to delete object in storage")
 	}
-	d.recordStorageDuration(err != nil, mode4Str, d.kind, method, startStorage)
+	d.recordStorageDuration(err != nil, mode4Str, d.resource, method, startStorage)
 	return res, async, err
 }
 
@@ -91,14 +97,14 @@ func (d *DualWriterMode4) DeleteCollection(ctx context.Context, deleteValidation
 	if err != nil {
 		log.Error(err, "unable to delete collection in storage")
 	}
-	d.recordStorageDuration(err != nil, mode4Str, d.kind, method, startStorage)
+	d.recordStorageDuration(err != nil, mode4Str, d.resource, method, startStorage)
 	return res, err
 }
 
 // Update overrides the generic behavior of the Storage and writes only to US.
 func (d *DualWriterMode4) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	var method = "update"
-	log := d.Log.WithValues("name", name, "kind", d.kind, "method", method)
+	log := d.Log.WithValues("name", name, "resource", d.resource, "method", method)
 	ctx = klog.NewContext(ctx, log)
 
 	startStorage := time.Now()
@@ -106,7 +112,7 @@ func (d *DualWriterMode4) Update(ctx context.Context, name string, objInfo rest.
 	if err != nil {
 		log.Error(err, "unable to update object in storage")
 	}
-	d.recordStorageDuration(err != nil, mode4Str, d.kind, method, startStorage)
+	d.recordStorageDuration(err != nil, mode4Str, d.resource, method, startStorage)
 	return res, async, err
 }
 
@@ -120,7 +126,7 @@ func (d *DualWriterMode4) List(ctx context.Context, options *metainternalversion
 	if err != nil {
 		log.Error(err, "unable to list objects in storage")
 	}
-	d.recordStorageDuration(err != nil, mode4Str, d.kind, method, startStorage)
+	d.recordStorageDuration(err != nil, mode4Str, d.resource, method, startStorage)
 	return res, err
 }
 
