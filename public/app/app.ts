@@ -42,6 +42,7 @@ import {
   setCurrentUser,
   setChromeHeaderHeightHook,
   setPluginLinksHook,
+  logError,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -227,8 +228,11 @@ export class GrafanaApp {
 
       try {
         setPluginLinksHook(createUsePluginLinks(pluginExtensionsRegistries.addedLinksRegistry));
-      } catch (error) {
-        console.error('Failed to set plugin links hook', error);
+      } catch (e) {
+        if (e instanceof Error) {
+          logError(e);
+        }
+        console.error(e);
       }
       setPluginExtensionGetter(createPluginExtensionsGetter(pluginExtensionsRegistries));
       setPluginExtensionsHook(createUsePluginExtensions(pluginExtensionsRegistries));
