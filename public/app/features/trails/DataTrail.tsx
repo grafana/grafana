@@ -428,12 +428,23 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
             varQuery += env + ',';
             return { value: env, label: env };
           });
+          // We have to have a default value because custom variable requires it
+          // we choose one default value to help filter metrics
+          // The work flow for OTel begins with users selecting a deployment environment
+          const defaultDepEnv = options[0].value; // usually production
+          // On starting the explore metrics workflow, the custom variable has no value
+          // even if there is state, the value is not filled in,
+          // only the text is filled in, so we check for the intial text, 'All'
+          const isIntitialCustomVariable = otelDepEnvVariable.state.text === 'All';
+          // the state is only present in the variable text
+          const depEnvInitialValue = isIntitialCustomVariable ? defaultDepEnv : otelDepEnvVariable.state.text;
+
           otelDepEnvVariable?.setState({
             // cannot have an undefined custom value
             // this breaks everything
             // create an issue for this
             // set with the previous state
-            value: otelDepEnvVariable.state.text ?? options[0].value,
+            value: depEnvInitialValue,
             query: varQuery,
             options: options,
             hide: VariableHide.dontHide,
