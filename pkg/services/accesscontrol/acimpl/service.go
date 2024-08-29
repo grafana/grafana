@@ -248,32 +248,35 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 		return cachedPermissions.([]accesscontrol.Permission), nil
 	}
 
-	permissions, err := s.getCachedBasicRolesPermissions(ctx, user, options, permissions)
+	basicRolePermissions, err := s.getCachedBasicRolesPermissions(ctx, user, options)
+	if err != nil {
+		return nil, err
+	}
+	permissions = append(permissions, basicRolePermissions...)
+
+	teamsPermissions, err := s.getCachedTeamsPermissions(ctx, user, options)
+	if err != nil {
+		return nil, err
+	}
+	permissions = append(permissions, teamsPermissions...)
+
+	userManagedPermissions, err := s.getCachedUserDirectPermissions(ctx, user, options)
 	if err != nil {
 		return nil, err
 	}
 
-	permissions, err = s.getCachedTeamsPermissions(ctx, user, options, permissions)
-	if err != nil {
-		return nil, err
-	}
-
-	userPermissions, err := s.getCachedUserDirectPermissions(ctx, user, options)
-	if err != nil {
-		return nil, err
-	}
-
-	permissions = append(permissions, userPermissions...)
+	permissions = append(permissions, userManagedPermissions...)
 	s.cache.Set(cacheKey, permissions, cacheTTL)
 	span.SetAttributes(attribute.Int("num_permissions", len(permissions)))
 
 	return permissions, nil
 }
 
-func (s *Service) getCachedBasicRolesPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options, permissions []accesscontrol.Permission) ([]accesscontrol.Permission, error) {
+func (s *Service) getCachedBasicRolesPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getCachedBasicRolesPermissions")
 	defer span.End()
 
+	permissions := make([]accesscontrol.Permission, 0)
 	basicRoles := accesscontrol.GetOrgRoles(user)
 	span.SetAttributes(attribute.Int("roles", len(basicRoles)))
 	for _, role := range basicRoles {
@@ -337,10 +340,11 @@ func (s *Service) getCachedPermissions(ctx context.Context, key string, getPermi
 	return permissions, nil
 }
 
-func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options, permissions []accesscontrol.Permission) ([]accesscontrol.Permission, error) {
+func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getCachedTeamsPermissions")
 	defer span.End()
 
+	permissions := make([]accesscontrol.Permission, 0)
 	teams := user.GetTeams()
 	orgID := user.GetOrgID()
 	miss := teams
