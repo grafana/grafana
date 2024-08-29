@@ -403,6 +403,15 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 func (s *Service) ClearUserPermissionCache(user identity.Requester) {
 	s.cache.Delete(accesscontrol.GetUserPermissionCacheKey(user))
 	s.cache.Delete(accesscontrol.GetUserDirectPermissionCacheKey(user))
+
+	// Clear user's teams cache
+	teams := user.GetTeams()
+	orgID := user.GetOrgID()
+	s.cache.Delete(accesscontrol.GetTeamPermissionCompositeCacheKey(teams, orgID))
+
+	for _, teamID := range teams {
+		s.cache.Delete(accesscontrol.GetTeamPermissionCacheKey(teamID, orgID))
+	}
 }
 
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
