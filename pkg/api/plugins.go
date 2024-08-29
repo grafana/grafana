@@ -465,7 +465,8 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 	}
 
 	compatOpts := plugins.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
-	err := hs.pluginInstaller.Add(c.Req.Context(), pluginID, dto.Version, compatOpts)
+	ctx := repo.WithRequestOrigin(c.Req.Context(), "api")
+	err := hs.pluginInstaller.Add(ctx, pluginID, dto.Version, compatOpts)
 	if err != nil {
 		var dupeErr plugins.DuplicateError
 		if errors.As(err, &dupeErr) {

@@ -20,11 +20,12 @@ import {
   PublicDashboardShareType,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 import { AccessControlAction } from 'app/types';
 
-import { getDashboardSceneFor } from '../../../utils/utils';
 import { ShareDrawerConfirmAction } from '../../ShareDrawer/ShareDrawerConfirmAction';
 import { useShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';
+import { SceneShareTabState, ShareView } from '../../types';
 
 import { EmailSharing } from './EmailShare/EmailSharing';
 import { PublicSharing } from './PublicShare/PublicSharing';
@@ -61,8 +62,12 @@ const getShareExternallyOptions = () => {
     : [getAnyOneWithTheLinkShareOption()];
 };
 
-export class ShareExternally extends SceneObjectBase {
+export class ShareExternally extends SceneObjectBase<SceneShareTabState> implements ShareView {
   static Component = ShareExternallyRenderer;
+
+  public getTabLabel() {
+    return t('share-dashboard.menu.share-externally-title', 'Share externally');
+  }
 }
 
 function ShareExternallyRenderer({ model }: SceneComponentProps<ShareExternally>) {

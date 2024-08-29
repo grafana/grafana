@@ -45,6 +45,7 @@ export interface FeatureToggles {
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
+  mysqlParseTime?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   alertingBacktesting?: boolean;
@@ -202,4 +203,8 @@ export interface FeatureToggles {
   dataplaneAggregator?: boolean;
   adhocFilterOneOf?: boolean;
   lokiSendDashboardPanelNames?: boolean;
+  singleTopNav?: boolean;
+  exploreLogsShardSplitting?: boolean;
+  exploreLogsAggregatedMetrics?: boolean;
+  exploreLogsLimitedTimeRange?: boolean;
 }

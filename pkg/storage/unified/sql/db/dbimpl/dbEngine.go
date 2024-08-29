@@ -31,6 +31,7 @@ func getEngineMySQL(getter *sectionGetter, tracer tracing.Tracer) (*xorm.Engine,
 	config.Loc = time.UTC
 	config.AllowNativePasswords = true
 	config.ClientFoundRows = true
+	config.ParseTime = true
 
 	// allow executing multiple SQL statements in a single roundtrip, and also
 	// enable executing the CALL statement to run stored procedures that execute

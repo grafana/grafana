@@ -115,6 +115,10 @@ const (
 	// Use double quotes to escape keyword in a MySQL query
 	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
 
+	// FlagMysqlParseTime
+	// Ensure the parseTime flag is set for MySQL driver
+	FlagMysqlParseTime = "mysqlParseTime"
+
 	// FlagAccessControlOnCall
 	// Access control primitives for OnCall
 	FlagAccessControlOnCall = "accessControlOnCall"
@@ -742,4 +746,20 @@ const (
 	// FlagLokiSendDashboardPanelNames
 	// Send dashboard and panel names to Loki when querying
 	FlagLokiSendDashboardPanelNames = "lokiSendDashboardPanelNames"
+
+	// FlagSingleTopNav
+	// Unifies the top search bar and breadcrumb bar into one
+	FlagSingleTopNav = "singleTopNav"
+
+	// FlagExploreLogsShardSplitting
+	// Used in Explore Logs to split queries into multiple queries based on the number of shards
+	FlagExploreLogsShardSplitting = "exploreLogsShardSplitting"
+
+	// FlagExploreLogsAggregatedMetrics
+	// Used in Explore Logs to query by aggregated metrics
+	FlagExploreLogsAggregatedMetrics = "exploreLogsAggregatedMetrics"
+
+	// FlagExploreLogsLimitedTimeRange
+	// Used in Explore Logs to limit the time range
+	FlagExploreLogsLimitedTimeRange = "exploreLogsLimitedTimeRange"
 )
