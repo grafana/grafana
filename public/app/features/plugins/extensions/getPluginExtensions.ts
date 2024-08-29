@@ -32,8 +32,8 @@ type GetExtensions = ({
   context?: object | Record<string | symbol, unknown>;
   extensionPointId: string;
   limitPerPlugin?: number;
-  addedComponentsRegistry: RegistryType<AddedComponentRegistryItem[]>;
-  addedLinksRegistry: RegistryType<AddedLinkRegistryItem[]>;
+  addedComponentsRegistry: RegistryType<AddedComponentRegistryItem[]> | undefined;
+  addedLinksRegistry: RegistryType<AddedLinkRegistryItem[]> | undefined;
 }) => { extensions: PluginExtension[] };
 
 export function createPluginExtensionsGetter(registries: PluginExtensionRegistries): GetPluginExtensions {
@@ -66,7 +66,7 @@ export const getPluginExtensions: GetExtensions = ({
   const extensions: PluginExtension[] = [];
   const extensionsByPlugin: Record<string, number> = {};
 
-  for (const addedLink of addedLinksRegistry[extensionPointId] ?? []) {
+  for (const addedLink of addedLinksRegistry?.[extensionPointId] ?? []) {
     try {
       const { pluginId } = addedLink;
       // Only limit if the `limitPerPlugin` is set
@@ -114,7 +114,7 @@ export const getPluginExtensions: GetExtensions = ({
     }
   }
 
-  const addedComponents = addedComponentsRegistry[extensionPointId] ?? [];
+  const addedComponents = addedComponentsRegistry?.[extensionPointId] ?? [];
   for (const addedComponent of addedComponents) {
     // Only limit if the `limitPerPlugin` is set
     if (limitPerPlugin && extensionsByPlugin[addedComponent.pluginId] >= limitPerPlugin) {

@@ -16,7 +16,7 @@ export function createUsePluginExtensions(registries: PluginExtensionRegistries)
     const addedLinksRegistry = useObservable(observableAddedLinksRegistry);
 
     const { extensions } = useMemo(() => {
-      if (!addedLinksRegistry || !addedComponentsRegistry) {
+      if (!addedLinksRegistry && !addedComponentsRegistry) {
         return { extensions: [], isLoading: false };
       }
 
