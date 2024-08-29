@@ -30,6 +30,7 @@ To use these API endpoints you have to use Basic authentication and the Grafana 
 
 The `admin` user that Grafana is provisioned with by default has permissions to use these API endpoints.
 {{< /admonition >}}
+
 > If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Check license availability
