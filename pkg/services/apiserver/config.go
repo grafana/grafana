@@ -65,12 +65,6 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 		// playlist.RESOURCE + "." + playlist.GROUP: true,
 	}
 
-	// TODO: ensure backwards compatibility with production
-	// remove this after changing the unified_storage key format in HGAPI
-	// if _, ok := o.StorageOptions.UnifiedStorageConfig[playlist.RESOURCE+"."+playlist.GROUP]; ok {
-	// 	o.StorageOptions.UnifiedStorageConfig[playlist.RESOURCE+"."+playlist.GROUP] = o.StorageOptions.UnifiedStorageConfig[playlist.GROUPRESOURCE]
-	// }
-
 	o.ExtraOptions.DevMode = features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerEnsureKubectlAccess)
 	o.ExtraOptions.ExternalAddress = host
 	o.ExtraOptions.APIURL = apiURL
