@@ -146,6 +146,7 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 			return err
 		}
 	} else {
+		ctx = repo.WithRequestOrigin(ctx, "cli")
 		archiveInfo, err := repository.GetPluginArchiveInfo(ctx, pluginID, version, compatOpts)
 		if err != nil {
 			return err

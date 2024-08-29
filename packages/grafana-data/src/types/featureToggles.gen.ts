@@ -203,4 +203,5 @@ export interface FeatureToggles {
   dataplaneAggregator?: boolean;
   adhocFilterOneOf?: boolean;
   lokiSendDashboardPanelNames?: boolean;
+  singleTopNav?: boolean;
 }
