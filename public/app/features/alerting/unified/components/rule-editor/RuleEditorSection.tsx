@@ -1,15 +1,19 @@
 import { css, cx } from '@emotion/css';
-import { ReactElement } from 'react';
 import * as React from 'react';
+import { ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { FieldSet, Text, useStyles2, Stack } from '@grafana/ui';
+import { FieldSet, InlineSwitch, Stack, Text, useStyles2 } from '@grafana/ui';
 
 export interface RuleEditorSectionProps {
   title: string;
   stepNo: number;
   description?: string | ReactElement;
   fullWidth?: boolean;
+  switchMode?: {
+    isModeAdvanced: boolean;
+    setAdvancedMode: (isAdvanced: boolean) => void;
+  };
 }
 
 export const RuleEditorSection = ({
@@ -18,17 +22,31 @@ export const RuleEditorSection = ({
   children,
   fullWidth = false,
   description,
+  switchMode,
 }: React.PropsWithChildren<RuleEditorSectionProps>) => {
   const styles = useStyles2(getStyles);
-
   return (
     <div className={styles.parent}>
       <FieldSet
         className={cx(fullWidth && styles.fullWidth)}
         label={
-          <Text variant="h3">
-            {stepNo}. {title}
-          </Text>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Text variant="h3">
+              {stepNo}. {title}
+            </Text>
+            {switchMode && (
+              <InlineSwitch
+                value={switchMode.isModeAdvanced}
+                onChange={(event) => {
+                  switchMode.setAdvancedMode(event.currentTarget.checked);
+                }}
+                label="Advanced options"
+                showLabel
+                transparent
+                className={styles.switch}
+              />
+            )}
+          </Stack>
         }
       >
         <Stack direction="column">
@@ -53,5 +71,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   fullWidth: css({
     width: '100%',
+  }),
+  switch: css({
+    fontSize: theme.typography.bodySmall.fontSize,
   }),
 });

@@ -69,6 +69,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   } = useFormContext<RuleFormValues>();
 
   const { queryPreviewData, runQueries, cancelQueries, isPreviewLoading, clearPreviewData } = useAlertQueryRunner();
+  const [isAdvancedMode, setIsAdvancedMode] = useState(true);
 
   const initialState = {
     queries: getValues('queries'),
@@ -387,6 +388,11 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
             title={helpLabel}
           />
         </Stack>
+      }
+      switchMode={
+        isGrafanaManagedRuleByType(type)
+          ? { isModeAdvanced: isAdvancedMode, setAdvancedMode: (isAdvanced) => setIsAdvancedMode(isAdvanced) }
+          : undefined
       }
     >
       {/* This is the cloud data source selector */}
