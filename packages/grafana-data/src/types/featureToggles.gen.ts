@@ -204,4 +204,7 @@ export interface FeatureToggles {
   adhocFilterOneOf?: boolean;
   lokiSendDashboardPanelNames?: boolean;
   singleTopNav?: boolean;
+  exploreLogsShardSplitting?: boolean;
+  exploreLogsAggregatedMetrics?: boolean;
+  exploreLogsLimitedTimeRange?: boolean;
 }
