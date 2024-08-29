@@ -195,6 +195,7 @@ Experimental features might be changed or removed without prior notice.
 | `adhocFilterOneOf`                          | Exposes a new 'one of' operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.                                                                                                                                                   |
 | `newFiltersUI`                              | Enables new combobox style UI for the Ad hoc filters variable in scenes architecture                                                                                                                                                                                              |
 | `lokiSendDashboardPanelNames`               | Send dashboard and panel names to Loki when querying                                                                                                                                                                                                                              |
+| `singleTopNav`                              | Unifies the top search bar and breadcrumb bar into one                                                                                                                                                                                                                            |
 
 ## Development feature toggles
 

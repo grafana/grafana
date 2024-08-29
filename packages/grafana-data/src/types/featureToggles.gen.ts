@@ -204,4 +204,5 @@ export interface FeatureToggles {
   adhocFilterOneOf?: boolean;
   newFiltersUI?: boolean;
   lokiSendDashboardPanelNames?: boolean;
+  singleTopNav?: boolean;
 }

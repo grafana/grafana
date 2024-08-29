@@ -69,9 +69,9 @@ func TestProvisioningServiceImpl(t *testing.T) {
 		serviceTest.cancel()
 	})
 
-	t.Run("Should not return run error when dashboard provisioning fails", func(t *testing.T) {
+	t.Run("Should not return run error when dashboard provisioning fails because of folder", func(t *testing.T) {
 		serviceTest := setup(t)
-		provisioningErr := errors.New("Test error")
+		provisioningErr := fmt.Errorf("%w: Test error", dashboards.ErrGetOrCreateFolder)
 		serviceTest.mock.ProvisionFunc = func(ctx context.Context) error {
 			return provisioningErr
 		}
@@ -86,8 +86,27 @@ func TestProvisioningServiceImpl(t *testing.T) {
 		serviceTest.cancel()
 		serviceTest.waitForStop()
 
-		fmt.Println("serviceTest.serviceError", serviceTest.serviceError)
 		assert.Equal(t, context.Canceled, serviceTest.serviceError)
+	})
+
+	t.Run("Should return run error when dashboard provisioning fails for non-allow-listed error", func(t *testing.T) {
+		serviceTest := setup(t)
+		provisioningErr := errors.New("Non-allow-listed error")
+		serviceTest.mock.ProvisionFunc = func(ctx context.Context) error {
+			return provisioningErr
+		}
+		err := serviceTest.service.ProvisionDashboards(context.Background())
+		assert.NotNil(t, err)
+		serviceTest.startService()
+
+		serviceTest.waitForPollChanges()
+		assert.Equal(t, 0, len(serviceTest.mock.Calls.PollChanges), "PollChanges should have been called")
+
+		// Cancelling the root context and stopping the service
+		serviceTest.cancel()
+		serviceTest.waitForStop()
+
+		assert.True(t, errors.Is(serviceTest.serviceError, provisioningErr))
 	})
 }
 
@@ -120,7 +139,7 @@ func setup(t *testing.T) *serviceTestStruct {
 
 	searchStub := searchV2.NewStubSearchService()
 
-	serviceTest.service = newProvisioningServiceImpl(
+	service, err := newProvisioningServiceImpl(
 		func(context.Context, string, dashboardstore.DashboardProvisioningService, org.Service, utils.DashboardStore, folder.Service) (dashboards.DashboardProvisioner, error) {
 			return serviceTest.mock, nil
 		},
@@ -128,7 +147,7 @@ func setup(t *testing.T) *serviceTestStruct {
 		nil,
 		searchStub,
 	)
-	err := serviceTest.service.setDashboardProvisioner()
+	serviceTest.service = service
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())

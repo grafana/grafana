@@ -133,11 +133,12 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 	}
 	storage[scopeResourceInfo.StoragePath()] = scopeStorage
 
-	scopeDashboardStorage, err := newScopeDashboardBindingStorage(scheme, optsGetter)
+	scopeDashboardStorage, scopedDashboardStatusStorage, err := newScopeDashboardBindingStorage(scheme, optsGetter)
 	if err != nil {
 		return nil, err
 	}
 	storage[scopeDashboardResourceInfo.StoragePath()] = scopeDashboardStorage
+	storage[scopeDashboardResourceInfo.StoragePath()+"/status"] = scopedDashboardStatusStorage
 
 	scopeNodeStorage, err := newScopeNodeStorage(scheme, optsGetter)
 	if err != nil {
