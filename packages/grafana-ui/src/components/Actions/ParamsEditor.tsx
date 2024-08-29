@@ -85,6 +85,16 @@ export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader =
         <IconButton aria-label="add" name="plus-circle" onClick={() => addParam()} disabled={isAddParamsDisabled} />
       </Stack>
 
+      <Stack direction="column">
+        {Array.from(value.filter((param) => param[0] !== 'Content-Type') || []).map((entry) => (
+          <Stack key={entry[0]} direction="row">
+            <Input disabled value={entry[0]} />
+            <Input disabled value={entry[1]} />
+            <IconButton aria-label="delete" onClick={removeParam(entry[0])} name="trash-alt" />
+          </Stack>
+        ))}
+      </Stack>
+
       {contentTypeHeader && (
         <div className={styles.extraHeader}>
           <Stack direction="row">
@@ -97,16 +107,6 @@ export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader =
           </Stack>
         </div>
       )}
-
-      <Stack direction="column">
-        {Array.from(value.filter((param) => param[0] !== 'Content-Type') || []).map((entry) => (
-          <Stack key={entry[0]} direction="row">
-            <Input disabled value={entry[0]} />
-            <Input disabled value={entry[1]} />
-            <IconButton aria-label="delete" onClick={removeParam(entry[0])} name="trash-alt" />
-          </Stack>
-        ))}
-      </Stack>
     </div>
   );
 };
