@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
 import { Combobox, Option } from './Combobox';
 
 // Mock data for the Combobox options
