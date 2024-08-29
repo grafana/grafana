@@ -86,6 +86,8 @@ func New(
 
 func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	fromAlert := req.Headers["FromAlert"] == "true"
+	logger := s.log.FromContext(ctx)
+	logger.Debug("Begin query execution", "fromAlert", fromAlert)
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
@@ -104,7 +106,6 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 
 		concurrentQueryCount, err := req.PluginContext.GrafanaConfig.ConcurrentQueryCount()
 		if err != nil {
-			logger := s.log.FromContext(ctx)
 			logger.Debug(fmt.Sprintf("Concurrent Query Count read/parse error: %v", err), "prometheusRunQueriesInParallel")
 			concurrentQueryCount = 10
 		}
