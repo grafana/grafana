@@ -168,7 +168,7 @@ In the top left corner, you can see the menu icon. Clicking it will open the _si
 
 ## Explore your metrics
 
-Grafana Explore is a workflow for troubleshooting and data exploration. In this step, you'll be using Explore to create ad-hoc queries to understand the metrics exposed by the sample application.
+Grafana Explore is a workflow for troubleshooting and data exploration. In this step, you'll be using Explore to create ad-hoc queries to understand the metrics exposed by the sample application. Specifically, you'll explore requests received by the sample application.
 
 > Ad-hoc queries are queries that are made interactively, with the purpose of exploring data. An ad-hoc query is commonly followed by another, more specific query.
 
@@ -332,7 +332,7 @@ Manually annotating your dashboard is fine for those single events. For regularl
 1. Click **Apply**. Grafana displays the Annotations list, with your new annotation.
 1. Click on your dashboard name to return to your dashboard.
 1. At the top of your dashboard, there is now a toggle to display the results of the newly created annotation query. Press it if it's not already enabled.
-1. Click the **Save dashboard** icon to save the changes.
+1. Click the **Save dashboard** (disk) icon to save the changes.
 1. To test the changes, go back to the [sample application](http://localhost:8081), post a new link without a URL to generate an error in your browser that says `empty url`.
 
 The log lines returned by your query are now displayed as annotations in the graph.
@@ -395,7 +395,7 @@ Your Request Bin is now waiting for the first request.
 
 Next, let's configure a Contact Point in Grafana's Alerting UI to send notifications to our Request Bin.
 
-1. Return to Grafana. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Contact points**.
+1. Return to Grafana. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Manage Contact points**.
 1. Click **+ Add contact point**.
 1. In **Name**, write **RequestBin**.
 1. In **Integration**, choose **Webhook**.
@@ -426,7 +426,7 @@ Now that Grafana knows how to notify us, it's time to set up an alert rule:
    sum(rate(tns_request_duration_seconds_count[5m])) by(route)
    ```
 
-1. Press **Preview**. You should see some data returned.
+1. Scroll down to bottom of section #2 and click on the **Preview** button. You should see some data returned.
 1. Keep expressions “B” and "C" as they are. These expressions (Reduce and Threshold, respectively) come by default when creating a new rule. Expression "B", selects the last value of our query “A”, while the Threshold expression "C" will check if the last value from expression "B" is above a specific value. In addition, the Threshold expression is the alert rule condition by default. Enter `0.2` as threshold value. [You can read more about queries and conditions here](/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
 1. In **Section 3**, in Folder, create a new folder, by clicking `New folder` and typing a name for the folder. This folder will contain our alert rules. For example: `fundamentals`. Then, click `create`.
 1. In the Evaluation group, repeat the above step to create a new one. We will name it `fundamentals` too.
