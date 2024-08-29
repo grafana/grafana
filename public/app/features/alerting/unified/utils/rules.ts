@@ -9,6 +9,7 @@ import {
   CombinedRule,
   CombinedRuleGroup,
   CombinedRuleWithLocation,
+  EditableRuleIdentifier,
   GrafanaRuleIdentifier,
   PromRuleWithLocation,
   PrometheusRuleIdentifier,
@@ -19,7 +20,6 @@ import {
   RuleNamespace,
   RuleWithLocation,
   RulesSource,
-  EditableRuleIdentifier,
 } from 'app/types/unified-alerting';
 import {
   GrafanaAlertState,
@@ -79,10 +79,6 @@ export function isGrafanaAlertingRule(rule?: RulerRuleDTO): rule is RulerGrafana
 
 export function isGrafanaRulerRule(rule?: RulerRuleDTO | PostableRuleDTO): rule is RulerGrafanaRuleDTO {
   return typeof rule === 'object' && 'grafana_alert' in rule;
-}
-
-export function isGrafanaRecordingRulerRule(rule?: RulerRuleDTO) {
-  return typeof rule === 'object' && 'grafana_alert' in rule && 'record' in rule.grafana_alert;
 }
 
 export function isCloudRulerRule(rule?: RulerRuleDTO | PostableRuleDTO): rule is RulerCloudRuleDTO {

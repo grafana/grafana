@@ -7,7 +7,7 @@ import { ClipboardButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui'
 import { CombinedRule } from 'app/types/unified-alerting';
 import { Annotations } from 'app/types/unified-alerting-dto';
 
-import { isGrafanaRulerRule, isRecordingRulerRule } from '../../../utils/rules';
+import { isGrafanaRecordingRule, isGrafanaRulerRule, isRecordingRulerRule } from '../../../utils/rules';
 import { MetaText } from '../../MetaText';
 import { Tokenize } from '../../Tokenize';
 
@@ -17,6 +17,7 @@ interface DetailsProps {
 
 enum RuleType {
   GrafanaManagedAlertRule = 'Grafana-managed alert rule',
+  GrafanaManagedRecordingRule = 'Grafana-managed recording rule',
   CloudAlertRule = 'Cloud alert rule',
   CloudRecordingRule = 'Cloud recording rule',
 }
@@ -27,7 +28,9 @@ const Details = ({ rule }: DetailsProps) => {
   let ruleType: RuleType;
 
   if (isGrafanaRulerRule(rule.rulerRule)) {
-    ruleType = RuleType.GrafanaManagedAlertRule;
+    ruleType = isGrafanaRecordingRule(rule.rulerRule)
+      ? RuleType.GrafanaManagedRecordingRule
+      : RuleType.GrafanaManagedAlertRule;
   } else if (isRecordingRulerRule(rule.rulerRule)) {
     ruleType = RuleType.CloudRecordingRule;
   } else {
@@ -89,7 +92,7 @@ const Details = ({ rule }: DetailsProps) => {
           )}
         </MetaText>
         <MetaText direction="column">
-          {!isRecordingRulerRule(rule.rulerRule) && (
+          {!isRecordingRulerRule(rule.rulerRule) && !isGrafanaRecordingRule(rule.rulerRule) && (
             <>
               Pending period
               <Text color="primary">{rule.rulerRule?.for ?? '0s'}</Text>
@@ -116,7 +119,7 @@ const Details = ({ rule }: DetailsProps) => {
       </div>
 
       {/* annotations go here */}
-      {annotations && (
+      {annotations && !isRecordingRulerRule(rule.rulerRule) && !isGrafanaRecordingRule(rule.rulerRule) && (
         <>
           <Text variant="h4">Annotations</Text>
           {Object.keys(annotations).length === 0 ? (
