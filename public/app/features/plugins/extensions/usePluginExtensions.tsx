@@ -24,7 +24,8 @@ export function createUsePluginExtensions(registries: PluginExtensionRegistries)
         extensionPointId: options.extensionPointId,
         context: options.context,
         limitPerPlugin: options.limitPerPlugin,
-        registryStates: { addedComponentsRegistry, addedLinksRegistry },
+        addedComponentsRegistry,
+        addedLinksRegistry,
       });
     }, [
       addedLinksRegistry,

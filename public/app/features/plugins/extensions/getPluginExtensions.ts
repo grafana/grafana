@@ -8,7 +8,10 @@ import {
 } from '@grafana/data';
 import { GetPluginExtensions } from '@grafana/runtime';
 
-import type { PluginExtensionRegistries, PluginRegistryStates } from './registry/types';
+import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
+import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
+import { RegistryType } from './registry/Registry';
+import type { PluginExtensionRegistries } from './registry/types';
 import {
   getReadOnlyProxy,
   logWarning,
@@ -23,41 +26,47 @@ type GetExtensions = ({
   context,
   extensionPointId,
   limitPerPlugin,
-  registryStates,
+  addedLinksRegistry,
+  addedComponentsRegistry,
 }: {
   context?: object | Record<string | symbol, unknown>;
   extensionPointId: string;
   limitPerPlugin?: number;
-  registryStates: PluginRegistryStates;
+  addedComponentsRegistry: RegistryType<AddedComponentRegistryItem[]>;
+  addedLinksRegistry: RegistryType<AddedLinkRegistryItem[]>;
 }) => { extensions: PluginExtension[] };
 
 export function createPluginExtensionsGetter(registries: PluginExtensionRegistries): GetPluginExtensions {
-  let registryStates: PluginRegistryStates = {
-    addedComponentsRegistry: {},
-    addedLinksRegistry: {},
-  };
+  let addedComponentsRegistry: RegistryType<AddedComponentRegistryItem[]>;
+  let addedLinksRegistry: RegistryType<AddedLinkRegistryItem[]>;
 
   // Create registry subscriptions to keep an copy of the registry state for use in the non-async
   // plugin extensions getter.
   registries.addedComponentsRegistry.asObservable().subscribe((addedComponentsRegistry) => {
-    registryStates.addedComponentsRegistry = addedComponentsRegistry;
+    addedComponentsRegistry = addedComponentsRegistry;
   });
 
   registries.addedLinksRegistry.asObservable().subscribe((addedLinksRegistry) => {
-    registryStates.addedLinksRegistry = addedLinksRegistry;
+    addedLinksRegistry = addedLinksRegistry;
   });
 
-  return (options) => getPluginExtensions({ ...options, registryStates });
+  return (options) => getPluginExtensions({ ...options, addedComponentsRegistry, addedLinksRegistry });
 }
 
 // Returns with a list of plugin extensions for the given extension point
-export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, limitPerPlugin, registryStates }) => {
+export const getPluginExtensions: GetExtensions = ({
+  context,
+  extensionPointId,
+  limitPerPlugin,
+  addedLinksRegistry,
+  addedComponentsRegistry,
+}) => {
   const frozenContext = context ? getReadOnlyProxy(context) : {};
   // We don't return the extensions separated by type, because in that case it would be much harder to define a sort-order for them.
   const extensions: PluginExtension[] = [];
   const extensionsByPlugin: Record<string, number> = {};
 
-  for (const addedLink of registryStates.addedLinksRegistry[extensionPointId] ?? []) {
+  for (const addedLink of addedLinksRegistry[extensionPointId] ?? []) {
     try {
       const { pluginId } = addedLink;
       // Only limit if the `limitPerPlugin` is set
@@ -105,7 +114,7 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
     }
   }
 
-  const addedComponents = registryStates.addedComponentsRegistry[extensionPointId] ?? [];
+  const addedComponents = addedComponentsRegistry[extensionPointId] ?? [];
   for (const addedComponent of addedComponents) {
     // Only limit if the `limitPerPlugin` is set
     if (limitPerPlugin && extensionsByPlugin[addedComponent.pluginId] >= limitPerPlugin) {
