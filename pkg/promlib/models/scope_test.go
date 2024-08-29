@@ -68,15 +68,28 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			name:  "Adhoc and Scope filter conflict - adhoc wins",
+			name:  "Adhoc and Scope filter conflict - adhoc wins if not equal operator",
+			query: `http_requests_total{job="prometheus"}`,
+			scopeFilters: []ScopeFilter{
+				{Key: "status", Value: "404", Operator: FilterOperatorNotEquals},
+			},
+			adhocFilters: []ScopeFilter{
+				{Key: "status", Value: "200", Operator: FilterOperatorEquals},
+			},
+			expected:  `http_requests_total{job="prometheus",status="200"}`,
+			expectErr: false,
+		},
+		{
+			name:  "Multiple equals are combined into a single regex filter",
 			query: `http_requests_total{job="prometheus"}`,
 			scopeFilters: []ScopeFilter{
 				{Key: "status", Value: "404", Operator: FilterOperatorEquals},
 			},
 			adhocFilters: []ScopeFilter{
 				{Key: "status", Value: "200", Operator: FilterOperatorEquals},
+				{Key: "status", Value: "204", Operator: FilterOperatorEquals},
 			},
-			expected:  `http_requests_total{job="prometheus",status="200"}`,
+			expected:  `http_requests_total{job="prometheus",status=~"404|200|204"}`,
 			expectErr: false,
 		},
 		{

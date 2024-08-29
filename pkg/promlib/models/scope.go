@@ -71,10 +71,22 @@ func ApplyFiltersAndGroupBy(rawExpr string, scopeFilters, adHocFilters []ScopeFi
 func filtersToMatchers(scopeFilters, adhocFilters []ScopeFilter) ([]*labels.Matcher, error) {
 	filterMap := make(map[string]*labels.Matcher)
 
+	changedToRegex := make(map[string]bool)
 	for _, filter := range append(scopeFilters, adhocFilters...) {
 		matcher, err := filterToMatcher(filter)
 		if err != nil {
 			return nil, err
+		}
+
+		// if filter already exists and the existing one is equal operator, change existing filter to regex operator
+		// and append the value with or ("|"), else override the existing filter
+		if existing, ok := filterMap[filter.Key]; ok {
+			if existing.Type == labels.MatchEqual || changedToRegex[filter.Key] {
+				existing.Type = labels.MatchRegexp
+				changedToRegex[filter.Key] = true
+				existing.Value = existing.Value + "|" + matcher.Value
+				continue
+			}
 		}
 		filterMap[filter.Key] = matcher
 	}
