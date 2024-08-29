@@ -176,7 +176,7 @@ describe('Plugin Extension Validators', () => {
       expect(isGrafanaCoreExtensionPoint(PluginExtensionPoints.AlertingAlertingRuleAction)).toBe(true);
     });
 
-    it('should return TRUE if we pass a string matching a PluginExtensionPoints value', () => {
+    it('should return TRUE if we pass a string that is not listed under the PluginExtensionPoints enum', () => {
       expect(isGrafanaCoreExtensionPoint('grafana/alerting/alertingrule/action')).toBe(true);
     });
 
