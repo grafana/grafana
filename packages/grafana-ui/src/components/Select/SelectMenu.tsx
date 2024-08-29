@@ -39,7 +39,7 @@ const VIRTUAL_LIST_ITEM_HEIGHT = 37;
 const VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER = 8;
 const VIRTUAL_LIST_PADDING = 8;
 // Some list items have icons or checkboxes so we need some extra width
-const VIRTUAL_LIST_WIDTH_EXTRA = 36;
+const VIRTUAL_LIST_WIDTH_EXTRA = 58;
 
 // A virtualized version of the SelectMenu, descriptions for SelectableValue options not supported since those are of a variable height.
 //
