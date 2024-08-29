@@ -68,7 +68,7 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			name:  "Adhoc and Scope filter conflict - adhoc wins (except when the operators are equals)",
+			name:  "Adhoc and Scope filter conflict - adhoc wins/overrides (except when the operators are equals)",
 			query: `http_requests_total{job="prometheus"}`,
 			scopeFilters: []ScopeFilter{
 				{Key: "status", Value: "404", Operator: FilterOperatorNotEquals},
@@ -93,6 +93,17 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 			expectErr: false,
 		},
 		{
+			name:  "Multiple equals and not equal mixed",
+			query: `http_requests_total{job="prometheus"}`,
+			scopeFilters: []ScopeFilter{
+				{Key: "status", Value: "204", Operator: FilterOperatorEquals},
+			},
+			adhocFilters: []ScopeFilter{
+				{Key: "status", Value: "404", Operator: FilterOperatorRegexNotMatch}},
+			expected:  `http_requests_total{job="prometheus",status!~"404"}`,
+			expectErr: false,
+		},
+		{
 			name:  "Adhoc filters with more complex expression",
 			query: `capacity_bytes{job="prometheus"} + available_bytes{job="grafana"} / 1024`,
 			adhocFilters: []ScopeFilter{
@@ -111,7 +122,7 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, expr, tt.expected)
+				require.Equal(t, tt.expected, expr)
 			}
 		})
 	}

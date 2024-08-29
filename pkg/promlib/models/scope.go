@@ -81,13 +81,19 @@ func filtersToMatchers(scopeFilters, adhocFilters []ScopeFilter) ([]*labels.Matc
 		// if filter already exists and the existing one is equal operator, change existing filter to regex operator
 		// and append the value with or ("|"), else override the existing filter
 		if existing, ok := filterMap[filter.Key]; ok {
-			if existing.Type == labels.MatchEqual || changedToRegex[filter.Key] {
+			if filter.Operator == FilterOperatorEquals && (existing.Type == labels.MatchEqual || changedToRegex[filter.Key]) {
 				existing.Type = labels.MatchRegexp
 				changedToRegex[filter.Key] = true
 				existing.Value = existing.Value + "|" + matcher.Value
 				continue
 			}
 		}
+		// In the case of != , do we want to override or combine?
+		// Might that depend on if it is Ad-Hoc+ScopeFilters vs all the filters
+		// coming form the same source?
+		// In this case, it depends if the user wants to refine the results with
+		// additional conditions, or override. Perhaps directly using the regex
+		// filter operator should be a way to override, else it refines?
 		filterMap[filter.Key] = matcher
 	}
 
