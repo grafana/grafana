@@ -45,10 +45,12 @@ export function createTraceFrame(data: TraceResponse): DataFrame {
 }
 
 function toSpanRow(span: Span, processes: Record<string, TraceProcess>): TraceSpanRow {
+  const parentSpanID = span.references?.find((r) => r.refType === 'CHILD_OF')?.spanID;
+
   return {
     spanID: span.spanID,
     traceID: span.traceID,
-    parentSpanID: span.references?.find((r) => r.refType === 'CHILD_OF')?.spanID,
+    parentSpanID: parentSpanID,
     operationName: span.operationName,
     // from micro to millis
     startTime: span.startTime / 1000,
@@ -60,7 +62,7 @@ function toSpanRow(span: Span, processes: Record<string, TraceProcess>): TraceSp
     tags: span.tags,
     warnings: span.warnings ?? undefined,
     stackTraces: span.stackTraces,
-    references: span.references,
+    references: span.references?.filter((r) => r.spanID !== parentSpanID) ?? [], // parentSpanID is pushed to references in the transformTraceDataFrame method
     serviceName: processes[span.processID].serviceName,
     serviceTags: processes[span.processID].tags,
   };
