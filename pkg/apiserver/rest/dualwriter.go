@@ -90,7 +90,7 @@ type DualWriterMode int
 
 const (
 	// Mode0 represents writing to and reading from solely LegacyStorage. This mode is enabled when the
-	// `unifiedStorage` feature flag is not set. All reads and writes are made to LegacyStorage. None are made to Storage.
+	// Unified Storage is disabled. All reads and writes are made to LegacyStorage. None are made to Storage.
 	Mode0 DualWriterMode = iota
 	// Mode1 represents writing to and reading from LegacyStorage for all primary functionality while additionally
 	// reading and writing to Storage on a best effort basis for the sake of collecting metrics.
@@ -116,7 +116,7 @@ func NewDualWriter(
 	metrics.init(reg)
 	switch mode {
 	// It is not possible to initialize a mode 0 dual writer. Mode 0 represents
-	// writing to legacy storage without `unifiedStorage` enabled.
+	// writing to legacy storage without Unified Storage enabled.
 	case Mode1:
 		// read and write only from legacy storage
 		return newDualWriterMode1(legacy, storage, metrics, resource)
@@ -179,7 +179,7 @@ func SetDualWritingMode(
 
 	toMode := map[string]DualWriterMode{
 		// It is not possible to initialize a mode 0 dual writer. Mode 0 represents
-		// writing to legacy storage without `unifiedStorage` enabled.
+		// writing to legacy storage without Unified Storage enabled.
 		"1": Mode1,
 		"2": Mode2,
 		"3": Mode3,
