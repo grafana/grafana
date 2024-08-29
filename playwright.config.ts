@@ -10,7 +10,8 @@ export default defineConfig<PluginOptions>({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  timeout: 5000,
+  workers: undefined,
   reporter: 'html',
   use: {
     baseURL: `http://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`,
