@@ -207,9 +207,9 @@ In this section, we define queries, expressions (used to manipulate the data), a
 2. In the Query editor, switch to Code mode by clicking the button on the right.
 3. Paste the query below.
 
-  ```
-  sum by (message)(count_over_time({filename="/var/log/web_requests.log"} != `status=200` | pattern `<_> <message> duration<_>` [10m]))
-  ```
+    ```
+    sum by (message)(count_over_time({filename="/var/log/web_requests.log"} != "status=200" | pattern "<_> <message> duration<_>" [10m]))
+    ```
 
   This query will count the number of log lines with a status code that is not 200 (OK), then sum the result set by message type using an **instant query** and the time interval indicated in brackets. It uses the LogQL pattern parser to add a new label called `message` that contains the level, method, url, and status from the log line.
 
