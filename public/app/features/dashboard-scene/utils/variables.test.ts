@@ -26,6 +26,14 @@ import { NEW_LINK } from '../settings/links/utils';
 
 import { createSceneVariableFromVariableModel, createVariablesForSnapshot } from './variables';
 
+// mock getDataSourceSrv.getInstanceSettings()
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    getInstanceSettings: jest.fn(),
+  }),
+}));
+
 describe('when creating variables objects', () => {
   it('should migrate custom variable', () => {
     const variable: CustomVariableModel = {
