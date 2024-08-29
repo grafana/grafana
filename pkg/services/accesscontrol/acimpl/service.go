@@ -352,7 +352,6 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 	permissions := make([]accesscontrol.Permission, 0)
 
 	if !options.ReloadCache {
-		miss = make([]int64, 0)
 		for _, teamID := range teams {
 			key := accesscontrol.GetTeamPermissionCacheKey(teamID, orgID)
 			teamPermissions, ok := s.cache.Get(key)
