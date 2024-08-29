@@ -95,6 +95,28 @@ export type PluginExtensionComponentConfig<Props = {}> = {
   extensionPointId: string;
 };
 
+export type PluginAddedComponentConfig<Props = {}> = {
+  /**
+   * The target extension points where the component will be added
+   */
+  targets: string | string[];
+
+  /**
+   * The title of the component
+   */
+  title: string;
+
+  /**
+   * A short description of the component
+   */
+  description: string;
+
+  /**
+   * The React component that will added to the target extension points
+   */
+  component: React.ComponentType<Props>;
+};
+
 export type PluginExposedComponentConfig<Props = {}> = {
   /**
    * The unique identifier of the component
