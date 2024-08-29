@@ -130,7 +130,17 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 		return nil, err
 	}
 
-	rs.decryptOrRedactSecureSettings(ctx, rcv, q.Decrypt)
+	if q.Decrypt {
+		err := rcv.Decrypt(rs.decryptor(ctx))
+		if err != nil {
+			rs.log.Warn("Failed to decrypt secure settings", "name", rcv.Name, "error", err)
+		}
+	} else {
+		err := rcv.Encrypt(rs.encryptor(ctx))
+		if err != nil {
+			rs.log.Warn("Failed to encrypt secure settings", "name", rcv.Name, "error", err)
+		}
+	}
 
 	return rcv, nil
 }
@@ -167,8 +177,18 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 		return nil, err
 	}
 
-	for _, r := range filtered {
-		rs.decryptOrRedactSecureSettings(ctx, r, q.Decrypt)
+	for _, rcv := range filtered {
+		if q.Decrypt {
+			err := rcv.Decrypt(rs.decryptor(ctx))
+			if err != nil {
+				rs.log.Warn("Failed to decrypt secure settings", "name", rcv.Name, "error", err)
+			}
+		} else {
+			err := rcv.Encrypt(rs.encryptor(ctx))
+			if err != nil {
+				rs.log.Warn("Failed to encrypt secure settings", "name", rcv.Name, "error", err)
+			}
+		}
 	}
 
 	return limitOffset(filtered, q.Offset, q.Limit), nil
@@ -260,7 +280,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 			return err
 		}
 	} else {
-		rs.log.Debug("ignoring optimistic concurrency check because version was not provided", "receiver", existing.Name, "operation", "delete")
+		rs.log.Debug("Ignoring optimistic concurrency check because version was not provided", "receiver", existing.Name, "operation", "delete")
 	}
 
 	if err := rs.provenanceValidator(existing.Provenance, models.Provenance(callerProvenance)); err != nil {
@@ -460,17 +480,6 @@ func (rs *ReceiverService) deleteProvenances(ctx context.Context, orgID int64, i
 	return nil
 }
 
-func (rs *ReceiverService) decryptOrRedactSecureSettings(ctx context.Context, recv *models.Receiver, decrypt bool) {
-	if decrypt {
-		err := recv.Decrypt(rs.decryptor(ctx))
-		if err != nil {
-			rs.log.Warn("failed to decrypt secure settings", "name", recv.Name, "error", err)
-		}
-	} else {
-		recv.Redact(rs.redactor())
-	}
-}
-
 // decryptor returns a models.DecryptFn that decrypts a secure setting. If decryption fails, the fallback value is used.
 func (rs *ReceiverService) decryptor(ctx context.Context) models.DecryptFn {
 	return func(value string) (string, error) {
@@ -483,13 +492,6 @@ func (rs *ReceiverService) decryptor(ctx context.Context) models.DecryptFn {
 			return "", err
 		}
 		return string(decrypted), nil
-	}
-}
-
-// redactor returns a models.RedactFn that redacts a secure setting.
-func (rs *ReceiverService) redactor() models.RedactFn {
-	return func(value string) string {
-		return definitions.RedactedValue
 	}
 }
 
