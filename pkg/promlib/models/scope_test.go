@@ -68,7 +68,7 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			name:  "Adhoc and Scope filter conflict - adhoc wins if not equal operator",
+			name:  "Adhoc and Scope filter conflict - adhoc wins (except when the operators are equals)",
 			query: `http_requests_total{job="prometheus"}`,
 			scopeFilters: []ScopeFilter{
 				{Key: "status", Value: "404", Operator: FilterOperatorNotEquals},
