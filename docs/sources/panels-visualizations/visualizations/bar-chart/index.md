@@ -42,10 +42,9 @@ refs:
 # Bar chart
 
 A bar chart is a visual representation that uses rectangular bars, where the length of each bar represents each value.
-
-{{< figure src="/static/img/docs/bar-chart-panel/barchart_small_example.png" max-width="1000px" caption="Bar chart" >}}
-
 You can use the bar chart visualization when you want to compare values over different categories or time periods. The visualization can display the bars horizontally or vertically, and can be customized to group or stack bars for more complex data analysis.
+
+{{< figure src="/static/img/docs/bar-chart-panel/barchart_small_example.png" max-width="1000px" alt="Bar chart" >}}
 
 You can use the bar chart visualization if you need to show:
 
@@ -64,9 +63,9 @@ The following video shows you how to create and configure a bar chart visualizat
 
 ## Supported data formats
 
-To create a bar chart visualization you need a dataset containing one string or time field (column) and at least one numeric field, though preferably more than one to make best use of the visualization.
+To create a bar chart visualization, you need a dataset containing one string or time field (or column) and at least one numeric field, though preferably more than one to make best use of the visualization.
 
-The text or time field is used to label the bars or values in each row of data and the numeric fields will be displayed as bars proportionally sized.
+The text or time field is used to label the bars or values in each row of data and the numeric fields are represented by proportionally sized bars.
 
 #### Example
 
@@ -76,11 +75,11 @@ The text or time field is used to label the bars or values in each row of data a
 
 ![Bar chart single row example](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-barchart-example1.png 'Bar chart single row example')
 
-If you have more than one text or time field, by default, the visualization picks the first one, but you can change this in the x-axis option as described in the [Bar chart options](#bar-chart-options) section.
+If you have more than one text or time field, by default, the visualization uses the first one, but you can change this in the x-axis option as described in the [Bar chart options](#bar-chart-options) section.
 
-If your dataset contains multiple rows, the visualization displays multiple bar chart groups, one group of bars representing all the numeric values for a row.
+#### Example 2
 
-#### Example
+If your dataset contains multiple rows, the visualization displays multiple bar chart groups where each group contains multiple bars representing all the numeric values for a row.
 
 | Group | Value1 | Value2 | Value3 |
 | ----- | ------ | ------ | ------ |
@@ -90,9 +89,9 @@ If your dataset contains multiple rows, the visualization displays multiple bar 
 
 ![Bar chart multiple row example](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-barchart-example2.png 'Bar chart multiple row example')
 
-While the first field can be time-based and you can use a bar chart to plot time series data, for large amounts of time series data, we recommend that you use the [time series visualization](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/time-series/) and configure it to be displayed as bars.
+While the first field can be time-based and you can use a bar chart to plot time-series data, for large amounts of time-series data, we recommend that you use the [time series visualization](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/time-series/) and configure it to be displayed as bars.
 
-We recommend that you only use one dataset in a bar chart as using multiple datasets can result in unexpected behavior.
+We recommend that you only use one dataset in a bar chart because using multiple datasets can result in unexpected behavior.
 
 ## Panel options
 
@@ -101,6 +100,10 @@ We recommend that you only use one dataset in a bar chart as using multiple data
 ## Bar chart options
 
 Use these options to refine your visualization.
+
+### X Axis
+
+Specify which field is used for the x-axis.
 
 ### Orientation
 
