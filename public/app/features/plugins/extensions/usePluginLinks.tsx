@@ -15,7 +15,6 @@ import {
   getLinkExtensionOverrides,
   getLinkExtensionPathWithTracking,
   getReadOnlyProxy,
-  logWarning,
 } from './utils';
 
 // Returns an array of component extensions for the given extension point
