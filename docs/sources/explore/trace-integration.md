@@ -8,7 +8,7 @@ labels:
     - enterprise
     - oss
 title: Traces in Explore
-weight: 20
+weight: 40
 ---
 
 # Traces in Explore
