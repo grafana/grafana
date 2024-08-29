@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { isString } from 'util';
 
@@ -9,14 +8,7 @@ import {
 } from '@grafana/runtime/src/services/pluginExtensions/getPluginExtensions';
 
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
-import {
-  generateExtensionId,
-  getLinkExtensionOnClick,
-  getLinkExtensionOverrides,
-  getLinkExtensionPathWithTracking,
-  getReadOnlyProxy,
-  logWarning,
-} from './utils';
+import { generateExtensionId, getLinkExtensionOnClick, getLinkExtensionPathWithTracking, logWarning } from './utils';
 
 // Returns an array of component extensions for the given extension point
 export function createUsePluginLinks(registry: AddedLinksRegistry) {
@@ -29,14 +21,12 @@ export function createUsePluginLinks(registry: AddedLinksRegistry) {
   }: UsePluginLinksOptions): UsePluginLinksResult {
     const registry = useObservable(observableRegistry);
 
-    // return useMemo(() => {
     if (!registry || !registry[extensionPointId]) {
       return {
         isLoading: false,
         links: [],
       };
     }
-    const frozenContext = context ? getReadOnlyProxy(context) : {};
     // We don't return the extensions separated by type, because in that case it would be much harder to define a sort-order for them.
     const extensions: PluginExtensionLink[] = [];
     const extensionsByPlugin: Record<string, number> = {};
@@ -53,15 +43,7 @@ export function createUsePluginLinks(registry: AddedLinksRegistry) {
           extensionsByPlugin[pluginId] = 0;
         }
 
-        // Run the configure() function with the current context, and apply the ovverides
-        const overrides = getLinkExtensionOverrides(pluginId, addedLink, frozenContext);
-
-        // configure() returned an `undefined` -> hide the extension
-        if (addedLink.configure && overrides === undefined) {
-          continue;
-        }
-
-        const path = overrides?.path || addedLink.path;
+        const path = addedLink.path;
         const extension: PluginExtensionLink = {
           id: generateExtensionId(pluginId, {
             ...addedLink,
@@ -70,14 +52,14 @@ export function createUsePluginLinks(registry: AddedLinksRegistry) {
           }),
           type: PluginExtensionTypes.link,
           pluginId: pluginId,
-          onClick: getLinkExtensionOnClick(pluginId, extensionPointId, addedLink, frozenContext),
+          onClick: getLinkExtensionOnClick(pluginId, extensionPointId, addedLink, context),
 
           // Configurable properties
-          icon: overrides?.icon || addedLink.icon,
-          title: overrides?.title || addedLink.title,
-          description: overrides?.description || addedLink.description,
+          icon: addedLink.icon,
+          title: addedLink.title,
+          description: addedLink.description,
           path: isString(path) ? getLinkExtensionPathWithTracking(pluginId, path, extensionPointId) : undefined,
-          category: overrides?.category || addedLink.category,
+          category: addedLink.category,
         };
 
         extensions.push(extension);
@@ -93,6 +75,5 @@ export function createUsePluginLinks(registry: AddedLinksRegistry) {
       isLoading: false,
       links: extensions,
     };
-    // }, [context, extensionPointId, limitPerPlugin, registry]);
   };
 }
