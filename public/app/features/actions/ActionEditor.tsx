@@ -9,8 +9,9 @@ import { RadioButtonGroup } from '@grafana/ui/src/components/Forms/RadioButtonGr
 import { JSONFormatter } from '@grafana/ui/src/components/JSONFormatter/JSONFormatter';
 import { useStyles2 } from '@grafana/ui/src/themes';
 
+import { HTMLElementType, SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
+
 import { ParamsEditor } from './ParamsEditor';
-import { HTMLElementType, SuggestionsInput } from './SuggestionsInput';
 
 interface ActionEditorProps {
   index: number;

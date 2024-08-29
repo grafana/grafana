@@ -8,7 +8,7 @@ import { Stack } from '@grafana/ui/src/components/Layout/Stack/Stack';
 import { Select } from '@grafana/ui/src/components/Select/Select';
 import { useStyles2 } from '@grafana/ui/src/themes';
 
-import { SuggestionsInput } from './SuggestionsInput';
+import { SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
 
 interface Props {
   onChange: (v: Array<[string, string]>) => void;

@@ -4,11 +4,17 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2, VariableSuggestion } from '@grafana/data';
-import { CustomScrollbar, FieldValidationMessage, Input, Portal, useTheme2 } from '@grafana/ui';
+import { CustomScrollbar, FieldValidationMessage, Portal, TextArea, useTheme2 } from '@grafana/ui';
 import { DataLinkSuggestions } from '@grafana/ui/src/components/DataLinks/DataLinkSuggestions';
+import { Input } from '@grafana/ui/src/components/Input/Input';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 const ERROR_TOOLTIP_OFFSET = 8;
+
+export enum HTMLElementType {
+  InputElement = 'input',
+  TextAreaElement = 'textarea',
+}
 
 interface SuggestionsInputProps {
   value?: string | number;
@@ -18,6 +24,8 @@ interface SuggestionsInputProps {
   invalid?: boolean;
   error?: string;
   width?: number;
+  type?: HTMLElementType;
+  style?: React.CSSProperties;
 }
 
 const getStyles = (theme: GrafanaTheme2, inputHeight: number) => {
@@ -45,6 +53,8 @@ export const SuggestionsInput = ({
   placeholder,
   error,
   invalid,
+  type = HTMLElementType.InputElement,
+  style,
 }: SuggestionsInputProps) => {
   const [showingSuggestions, setShowingSuggestions] = useState(false);
   const [suggestionsIndex, setSuggestionsIndex] = useState(0);
@@ -56,7 +66,7 @@ export const SuggestionsInput = ({
   const theme = useTheme2();
   const styles = getStyles(theme, inputHeight);
 
-  const inputRef = useRef<HTMLInputElement>();
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>();
 
   // the order of middleware is important!
   const middleware = [
@@ -79,7 +89,7 @@ export const SuggestionsInput = ({
   });
 
   const handleRef = useCallback(
-    (ref: HTMLInputElement) => {
+    (ref: HTMLInputElement | HTMLTextAreaElement) => {
       refs.setReference(ref);
 
       inputRef.current = ref;
@@ -148,12 +158,12 @@ export const SuggestionsInput = ({
     [showingSuggestions, suggestions, suggestionsIndex, onVariableSelect]
   );
 
-  const onValueChanged = React.useCallback((event: FormEvent<HTMLInputElement>) => {
+  const onValueChanged = React.useCallback((event: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setVariableValue(event.currentTarget.value);
   }, []);
 
   const onBlur = React.useCallback(
-    (event: FormEvent<HTMLInputElement>) => {
+    (event: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       onChange(event.currentTarget.value);
     },
     [onChange]
@@ -163,8 +173,17 @@ export const SuggestionsInput = ({
     setInputHeight(inputRef.current!.clientHeight);
   }, []);
 
+  const inputProps = {
+    placeholder,
+    invalid,
+    value: variableValue,
+    onChange: onValueChanged,
+    onBlur: onBlur,
+    onKeyDown: onKeyDown,
+  };
+
   return (
-    <div className={styles.inputWrapper}>
+    <div className={styles.inputWrapper} style={style ?? {}}>
       {showingSuggestions && (
         <Portal>
           <div ref={refs.setFloating} style={floatingStyles} className={styles.suggestionsWrapper}>
@@ -193,15 +212,11 @@ export const SuggestionsInput = ({
           <FieldValidationMessage>{error}</FieldValidationMessage>
         </div>
       )}
-      <Input
-        placeholder={placeholder}
-        invalid={invalid}
-        ref={handleRef}
-        value={variableValue}
-        onChange={onValueChanged}
-        onBlur={onBlur}
-        onKeyDown={onKeyDown}
-      />
+      {type === HTMLElementType.InputElement ? (
+        <Input {...inputProps} ref={handleRef as unknown as React.RefObject<HTMLInputElement>} />
+      ) : (
+        <TextArea {...inputProps} ref={handleRef as unknown as React.RefObject<HTMLTextAreaElement>} />
+      )}
     </div>
   );
 };
