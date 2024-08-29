@@ -704,7 +704,7 @@
   "embed": {
     "share": {
       "time-range-description": "Cĥäŉģę ŧĥę čūřřęŉŧ řęľäŧįvę ŧįmę řäŉģę ŧő äŉ äþşőľūŧę ŧįmę řäŉģę",
-      "time-range-label": "Ŧįmę řäŉģę"
+      "time-range-label": "Ŀőčĸ ŧįmę řäŉģę"
     }
   },
   "explore": {
@@ -2244,7 +2244,7 @@
       "html": "Ēmþęđ ĦŦMĿ",
       "html-description": "Ŧĥę ĦŦMĿ čőđę þęľőŵ čäŉ þę päşŧęđ äŉđ įŉčľūđęđ įŉ äŉőŧĥęř ŵęþ päģę. Ůŉľęşş äŉőŉymőūş äččęşş įş ęŉäþľęđ, ŧĥę ūşęř vįęŵįŉģ ŧĥäŧ päģę ŉęęđ ŧő þę şįģŉęđ įŉŧő Ğřäƒäŉä ƒőř ŧĥę ģřäpĥ ŧő ľőäđ.",
       "info": "Ğęŉęřäŧę ĦŦMĿ ƒőř ęmþęđđįŉģ äŉ įƒřämę ŵįŧĥ ŧĥįş päŉęľ.",
-      "time-range": "Ŧįmę řäŉģę"
+      "time-range": "Ŀőčĸ ŧįmę řäŉģę"
     },
     "export": {
       "back-button": "ßäčĸ ŧő ęχpőřŧ čőŉƒįģ",
@@ -2316,8 +2316,7 @@
     "drawer": {
       "new-library-panel-title": "Ńęŵ ľįþřäřy päŉęľ",
       "share-embed-title": "Ŝĥäřę ęmþęđ",
-      "share-link-title": "Ŀįŉĸ şęŧŧįŉģş",
-      "share-snapshot-title": "Ŝĥäřę şŉäpşĥőŧ"
+      "share-link-title": "Ŀįŉĸ şęŧŧįŉģş"
     },
     "menu": {
       "new-library-panel-title": "Ńęŵ ľįþřäřy päŉęľ",
