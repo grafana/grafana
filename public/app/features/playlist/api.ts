@@ -209,5 +209,5 @@ export function searchPlaylists(playlists: Playlist[], query?: string): Playlist
 }
 
 export function getPlaylistAPI() {
-  return config.kubernetesPlaylists ? new K8sAPI() : new LegacyAPI();
+  return config.featureToggles.kubernetesPlaylists ? new K8sAPI() : new LegacyAPI();
 }
