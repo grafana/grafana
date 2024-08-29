@@ -37,6 +37,8 @@ In [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}})
 
 {{% admonition type="note" %}}
 Service accounts can only act in the organization they are created for. If you have the same task that is needed for multiple organizations, we recommend creating service accounts in each organization.
+
+Service accounts can't be used for instance-wide operations, such as global user management and organization management. For these tasks, you need to use a user with [Grafana server administrator permissions]({{< relref "../roles-and-permissions/#grafana-server-administrators" >}}).
 {{% /admonition %}}
 
 {{< vimeo 742056367 >}}

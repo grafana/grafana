@@ -9841,6 +9841,12 @@
         "$ref": "#/definitions/SnapshotListResponseDTO"
       }
     },
+    "statusMovedPermanently": {
+      "description": "StatusMovedPermanently",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
     "unauthorisedError": {
       "description": "UnauthorizedError is returned when the request is not authenticated.",
       "schema": {
