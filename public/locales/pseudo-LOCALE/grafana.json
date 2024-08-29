@@ -1162,7 +1162,7 @@
   },
   "link": {
     "share": {
-      "config-alert-description": "Ůpđäŧįŉģ yőūř şęŧŧįŉģş ŵįľľ mőđįƒy ŧĥę đęƒäūľŧ čőpy ľįŉĸ ŧő įŉčľūđę ŧĥęşę čĥäŉģęş.",
+      "config-alert-description": "Ůpđäŧįŉģ yőūř şęŧŧįŉģş ŵįľľ mőđįƒy ŧĥę đęƒäūľŧ čőpy ľįŉĸ ŧő įŉčľūđę ŧĥęşę čĥäŉģęş. Pľęäşę ŉőŧę ŧĥäŧ ŧĥęşę şęŧŧįŉģş äřę şävęđ ŵįŧĥįŉ yőūř čūřřęŉŧ þřőŵşęř şčőpę.",
       "config-alert-title": "Ŀįŉĸ čőŉƒįģūřäŧįőŉ",
       "config-description": "Cřęäŧę ä pęřşőŉäľįžęđ, đįřęčŧ ľįŉĸ ŧő şĥäřę yőūř đäşĥþőäřđ ŵįŧĥįŉ yőūř őřģäŉįžäŧįőŉ, ŵįŧĥ ŧĥę ƒőľľőŵįŉģ čūşŧőmįžäŧįőŉ şęŧŧįŉģş:",
       "copy-link-button": "Cőpy ľįŉĸ",
@@ -2228,12 +2228,12 @@
     "menu": {
       "export-json-title": "Ēχpőřŧ äş ĴŜØŃ",
       "share-externally-title": "Ŝĥäřę ęχŧęřŉäľľy",
-      "share-internally-description": "Åđväŉčęđ şęŧŧįŉģş",
+      "share-internally-description": "Ŀįŉĸ şęŧŧįŉģş",
       "share-internally-title": "Ŝĥäřę įŉŧęřŉäľľy",
       "share-snapshot-title": "Ŝĥäřę şŉäpşĥőŧ"
     },
     "share-button": "Ŝĥäřę",
-    "share-button-tooltip": "Cőpy şĥőřŧęŉęđ ľįŉĸ"
+    "share-button-tooltip": "Cőpy ľįŉĸ"
   },
   "share-drawer": {
     "confirm-action": {
