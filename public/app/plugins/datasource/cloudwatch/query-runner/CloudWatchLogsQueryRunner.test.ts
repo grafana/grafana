@@ -208,6 +208,53 @@ describe('CloudWatchLogsQueryRunner', () => {
       });
     });
 
+    it('should call getQueryResults until the query returns even if it the startQuery gets a throttling error from aws', async () => {
+      const { runner } = setupMockedLogsQueryRunner();
+
+      const options: DataQueryRequest<CloudWatchLogsQuery> = {
+        ...LogsRequestMock,
+        targets: rawLogQueriesStub,
+      };
+
+      const queryFn = jest
+        .fn()
+        .mockReturnValueOnce(of(startQueryErrorWhenThrottlingResponseStub))
+        .mockReturnValueOnce(of(startQuerySuccessResponseStub))
+        .mockReturnValueOnce(of(getQuerySuccessResponseStub));
+
+      const response = runner.handleLogQueries(rawLogQueriesStub, options, queryFn);
+      const results = await lastValueFrom(response);
+      expect(queryFn).toHaveBeenCalledTimes(3);
+
+      // first call
+      expect(queryFn).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          targets: expect.arrayContaining([expect.objectContaining({ subtype: 'StartQuery' })]),
+        })
+      );
+      // we retry because the first call failed with the rate limiting error
+      expect(queryFn).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          targets: expect.arrayContaining([expect.objectContaining({ subtype: 'StartQuery' })]),
+        })
+      );
+      // we get results because second call was successful
+      expect(queryFn).toHaveBeenNthCalledWith(
+        3,
+        expect.objectContaining({
+          targets: expect.arrayContaining([expect.objectContaining({ subtype: 'GetQueryResults' })]),
+        })
+      );
+
+      expect(results).toEqual({
+        ...getQuerySuccessResponseStub,
+        errors: [],
+        key: 'test-key',
+      });
+    });
+
     it('should return an error if it timesout before the start queries can get past a rate limiting error', async () => {
       const { runner } = setupMockedLogsQueryRunner();
       // first time timeout is called it will not be timed out, second time it will be timed out
@@ -464,6 +511,18 @@ const startQueryErrorWhenRateLimitedResponseStub = {
       refId: 'A',
       message:
         'failed to execute log action with subtype: StartQuery: LimitExceededException: LimitExceededException: Account maximum query concurrency limit of [30] reached.',
+      status: 500,
+    },
+  ],
+};
+
+const startQueryErrorWhenThrottlingResponseStub = {
+  data: [],
+  errors: [
+    {
+      refId: 'A',
+      message:
+        'failed to execute log action with subtype: StartQuery: ThrottlingException: ThrottlingException: Rate exceeded',
       status: 500,
     },
   ],
