@@ -107,8 +107,8 @@ Filter alerts by the selected folder. Only alerts from dashboards in this folder
 
 Choose which alert states to display in this visualization.
 
-- **Alerting / Firing -** Displays alerts that are currently active and triggering an alert condition.
+- **Alerting / Firing -** Shows alerts that are currently active and triggering an alert condition.
 - **Pending -** Shows alerts that are in a transitional state, waiting for conditions to be met before triggering.
-- **No Data -** Filters alerts where the data source is not returning any data, which could indicate an issue with data collection.
-- **Normal -** Displays alerts that are in a normal or resolved state, where no alert condition is currently met.
+- **No Data -** Shows alerts where the data source is not returning any data, which could indicate an issue with data collection.
+- **Normal -** Shows alerts that are in a normal or resolved state, where no alert condition is currently met.
 - **Error -** Shows alerts where an error has occurred, typically related to an issue in the alerting process.
