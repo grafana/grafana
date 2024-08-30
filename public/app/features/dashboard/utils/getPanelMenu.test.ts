@@ -22,7 +22,7 @@ jest.mock('app/core/services/context_srv', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  setPluginExtensionsHook: jest.fn(),
+  setPluginLinksHook: jest.fn(),
   usePluginLinks: jest.fn(),
 }));
 

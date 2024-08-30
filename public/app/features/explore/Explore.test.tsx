@@ -124,7 +124,7 @@ jest.mock('app/core/core', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  usePluginLinks: jest.fn(() => ({ extensions: [] })),
+  usePluginLinks: jest.fn(() => ({ links: [] })),
 }));
 
 // for the AutoSizer component to have a width

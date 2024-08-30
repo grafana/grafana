@@ -21,7 +21,6 @@ import {
   locationService,
   HistoryWrapper,
   LocationService,
-  setPluginExtensionsHook,
   setBackendSrv,
   getBackendSrv,
   getDataSourceSrv,
@@ -90,7 +89,6 @@ export function setupExplore(options?: SetupOptions): {
     request: jest.fn().mockRejectedValue(undefined),
   });
 
-  setPluginExtensionsHook(() => ({ extensions: [], isLoading: false }));
   setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
   // Clear this up otherwise it persists data source selection

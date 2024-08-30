@@ -2,7 +2,7 @@ import { screen, render } from '@testing-library/react';
 import { Provider } from 'react-redux';
 
 import { PluginExtensionTypes, PluginState } from '@grafana/data';
-import { setAngularLoader, setPluginExtensionsHook } from '@grafana/runtime';
+import { setAngularLoader, setPluginLinksHook } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsState } from '../__mocks__';
@@ -58,7 +58,7 @@ describe('<EditDataSource>', () => {
   });
 
   beforeEach(() => {
-    setPluginExtensionsHook(jest.fn().mockReturnValue({ extensions: [] }));
+    setPluginLinksHook(jest.fn().mockReturnValue({ links: [] }));
   });
 
   describe('On loading errors', () => {
@@ -268,9 +268,9 @@ describe('<EditDataSource>', () => {
     it('should be possible to extend the form with a "component" extension in case the plugin ID is whitelisted', () => {
       const message = "I'm a UI extension component!";
 
-      setPluginExtensionsHook(
+      setPluginLinksHook(
         jest.fn().mockReturnValue({
-          extensions: [
+          links: [
             {
               id: '1',
               pluginId: 'grafana-pdc-app',
@@ -297,9 +297,9 @@ describe('<EditDataSource>', () => {
     it('should NOT be possible to extend the form with a "component" extension in case the plugin ID is NOT whitelisted', () => {
       const message = "I'm a UI extension component!";
 
-      setPluginExtensionsHook(
+      setPluginLinksHook(
         jest.fn().mockReturnValue({
-          extensions: [
+          links: [
             {
               id: '1',
               pluginId: 'myorg-basic-app',
@@ -327,9 +327,9 @@ describe('<EditDataSource>', () => {
       const message = "I'm a UI extension component!";
       const component = jest.fn().mockReturnValue(<div>{message}</div>);
 
-      setPluginExtensionsHook(
+      setPluginLinksHook(
         jest.fn().mockReturnValue({
-          extensions: [
+          links: [
             {
               id: '1',
               pluginId: 'grafana-pdc-app',
