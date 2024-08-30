@@ -143,11 +143,11 @@ Creates a new folder.
 
 See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 
-`folders:create` allows creating folders in the root level. To create a subfolder, `folders:write` scoped to the parent folder is required in addition to `folders:create`.
+`folders:create` allows creating folders and subfolders. If granted with scope `folders:uid:general`, allows creating root level folders. Otherwise, allows creating subfolders under the specified folders.
 
 | Action           | Scope       |
 | ---------------- | ----------- |
-| `folders:create` | n/a         |
+| `folders:create` | `folders:*` |
 | `folders:write`  | `folders:*` |
 
 **Example Request**:
@@ -411,14 +411,14 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 
 If moving the folder under another folder:
 
-| Action          | Scope                                  |
-| --------------- | -------------------------------------- |
-| `folders:write` | `folders:uid:<destination folder UID>` |
+| Action           | Scope                                                 |
+| ---------------- | ----------------------------------------------------- |
+| `folders:create` | `folders:uid:<destination folder UID>`<br>`folders:*` |
 
 If moving the folder under root:
 | Action | Scope |
 | -------------- | ------------- |
-| `folders:create` | `folders:*` |
+| `folders:create` | `folders:uid:general`<br>`folders:*` |
 
 JSON body schema:
 
