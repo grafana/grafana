@@ -878,6 +878,44 @@ func (a apiClient) EnsureReceiver(t *testing.T, receiver apimodels.EmbeddedConta
 	require.Equalf(t, http.StatusAccepted, status, body)
 }
 
+func (a apiClient) ExportReceiver(t *testing.T, name string, format string, decrypt bool) string {
+	t.Helper()
+	u, err := url.Parse(fmt.Sprintf("%s/api/v1/provisioning/contact-points/export", a.url))
+	require.NoError(t, err)
+	q := url.Values{}
+	q.Set("name", name)
+	q.Set("format", format)
+	q.Set("decrypt", fmt.Sprintf("%v", decrypt))
+	u.RawQuery = q.Encode()
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	require.NoError(t, err)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	requireStatusCode(t, http.StatusOK, resp.StatusCode, string(body))
+	return string(body)
+}
+
+func (a apiClient) ExportReceiverTyped(t *testing.T, name string, decrypt bool) apimodels.ContactPointExport {
+	t.Helper()
+
+	response := a.ExportReceiver(t, name, "json", decrypt)
+
+	var export apimodels.AlertingFileExport
+	require.NoError(t, json.Unmarshal([]byte(response), &export))
+	require.Len(t, export.ContactPoints, 1)
+	return export.ContactPoints[0]
+}
+
 func (a apiClient) GetAlertmanagerConfigWithStatus(t *testing.T) (apimodels.GettableUserConfig, int, string) {
 	t.Helper()
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/alertmanager/grafana/config/api/v1/alerts", a.url), nil)
