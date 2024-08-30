@@ -1,14 +1,13 @@
-package generic
+package apistore
 
 import (
-	"strconv"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 type storageMetrics struct {
-	Duration *prometheus.HistogramVec
+	duration *prometheus.HistogramVec
 }
 
 // storageDuration is a metric summary for storage duration
@@ -19,14 +18,14 @@ var storageDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 	NativeHistogramBucketFactor: 1.1,
 }, []string{"is_error", "resource", "method"})
 
-func (m *storageMetrics) recordStorageDuration(isError bool, resource string, method string, startFrom time.Time) {
+func (m *storageMetrics) recordStorageDuration(resource string, method string, startFrom time.Time) {
 	duration := time.Since(startFrom).Seconds()
-	m.Duration.WithLabelValues(strconv.FormatBool(isError), resource, method).Observe(duration)
+	m.duration.WithLabelValues(resource, method).Observe(duration)
 }
 
-func (m *storageMetrics) init() {
-	m.Duration = storageDuration
-
-	reg := prometheus.DefaultRegisterer
-	reg.MustRegister(m.Duration)
+func initMetrics(reg prometheus.Registerer) storageMetrics {
+	reg.MustRegister(storageDuration)
+	return storageMetrics{
+		duration: storageDuration,
+	}
 }

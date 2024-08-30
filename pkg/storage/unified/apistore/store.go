@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 const MaxUpdateAttempts = 30
@@ -53,6 +54,7 @@ type Storage struct {
 
 	watchSet  *WatchSet
 	versioner storage.Versioner
+	metrics   storageMetrics
 }
 
 // ErrFileNotExists means the file doesn't actually exist.
@@ -72,6 +74,7 @@ func NewStorage(
 	getAttrsFunc storage.AttrFunc,
 	trigger storage.IndexerFuncs,
 	indexers *cache.Indexers,
+	reg prometheus.Registerer,
 ) (storage.Interface, factory.DestroyFunc, error) {
 	s := &Storage{
 		store:        store,
@@ -88,6 +91,7 @@ func NewStorage(
 		getKey:   keyParser,
 
 		versioner: &storage.APIObjectVersioner{},
+		metrics:   initMetrics(reg),
 	}
 
 	// The key parsing callback allows us to support the hardcoded paths from upstream tests
@@ -126,6 +130,7 @@ func (s *Storage) Versioner() storage.Versioner {
 // set to the read value from database.
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
 	var err error
+	startDuration := time.Now()
 	req := &resource.CreateRequest{}
 	req.Value, err = s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
@@ -170,6 +175,8 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		Type:   watch.Added,
 	}, nil)
 
+	s.metrics.recordStorageDuration(s.gr.String(), "Create", startDuration)
+
 	return nil
 }
 
@@ -186,6 +193,7 @@ func (s *Storage) Delete(
 	validateDeletion storage.ValidateObjectFunc,
 	_ runtime.Object,
 ) error {
+	startDuration := time.Now()
 	if err := s.Get(ctx, key, storage.GetOptions{}, out); err != nil {
 		return err
 	}
@@ -231,6 +239,8 @@ func (s *Storage) Delete(
 		Object: out.DeepCopyObject(),
 		Type:   watch.Deleted,
 	}, nil)
+
+	s.metrics.recordStorageDuration(s.gr.String(), "Delete", startDuration)
 	return nil
 }
 
@@ -285,6 +295,7 @@ func (s *Storage) WatchNEXT(ctx context.Context, key string, opts storage.ListOp
 // and send it in an "ADDED" event, before watch starts.
 func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOptions) (watch.Interface, error) {
 	k, err := s.getKey(key)
+	startDuration := time.Now()
 	if err != nil {
 		return watch.NewEmptyWatch(), nil
 	}
@@ -370,6 +381,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		}
 
 		jw.Start(initEvents...)
+		s.metrics.recordStorageDuration(s.gr.String(), "Watch", startDuration)
 		return jw, nil
 	}
 
@@ -407,6 +419,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 	var err error
 	req := &resource.ReadRequest{}
 	req.Key, err = s.getKey(key)
+	startDuration := time.Now()
 	if err != nil {
 		if opts.IgnoreNotFound {
 			return runtime.SetZeroValue(objPtr)
@@ -439,6 +452,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 	if err != nil {
 		return err
 	}
+	s.metrics.recordStorageDuration(s.gr.String(), "Get", startDuration)
 	return s.versioner.UpdateObject(objPtr, uint64(rsp.ResourceVersion))
 }
 
@@ -450,6 +464,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
 	k, err := s.getKey(key)
+	startDuration := time.Now()
 	if err != nil {
 		return err
 	}
@@ -520,6 +535,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	if err := s.versioner.UpdateList(listObj, uint64(rsp.ResourceVersion), rsp.NextPageToken, remainingItems); err != nil {
 		return err
 	}
+	s.metrics.recordStorageDuration(s.gr.String(), "GetList", startDuration)
 	return nil
 }
 
@@ -547,11 +563,12 @@ func (s *Storage) GuaranteedUpdate(
 	cachedExistingObject runtime.Object,
 ) error {
 	var (
-		res         storage.ResponseMeta
-		updatedObj  runtime.Object
-		existingObj runtime.Object
-		created     bool
-		err         error
+		res           storage.ResponseMeta
+		updatedObj    runtime.Object
+		existingObj   runtime.Object
+		created       bool
+		err           error
+		startDuration time.Time
 	)
 	req := &resource.UpdateRequest{}
 	req.Key, err = s.getKey(key)
@@ -679,6 +696,7 @@ func (s *Storage) GuaranteedUpdate(
 			Type:   watch.Modified,
 		}, existingObj.DeepCopyObject())
 	}
+	s.metrics.recordStorageDuration(s.gr.String(), "GuaranteedUpdate", startDuration)
 	return nil
 }
 

@@ -300,7 +300,7 @@ func (s *service) start(ctx context.Context) error {
 		}
 		client := resource.NewLocalResourceStoreClient(server)
 		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client,
-			o.RecommendedOptions.Etcd.StorageConfig)
+			o.RecommendedOptions.Etcd.StorageConfig, s.metrics)
 
 	case grafanaapiserveroptions.StorageTypeUnifiedGrpc:
 		opts := []grpc.DialOption{
@@ -315,12 +315,12 @@ func (s *service) start(ctx context.Context) error {
 
 		// Create a client instance
 		client := resource.NewResourceStoreClientGRPC(conn)
-		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client, o.RecommendedOptions.Etcd.StorageConfig)
+		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client, o.RecommendedOptions.Etcd.StorageConfig, s.metrics)
 
 	case grafanaapiserveroptions.StorageTypeLegacy:
 		fallthrough
 	case grafanaapiserveroptions.StorageTypeFile:
-		restOptionsGetter, err := apistore.NewRESTOptionsGetterForFile(o.StorageOptions.DataPath, o.RecommendedOptions.Etcd.StorageConfig)
+		restOptionsGetter, err := apistore.NewRESTOptionsGetterForFile(o.StorageOptions.DataPath, o.RecommendedOptions.Etcd.StorageConfig, s.metrics)
 		if err != nil {
 			return err
 		}
