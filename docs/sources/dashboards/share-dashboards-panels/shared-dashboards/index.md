@@ -40,8 +40,6 @@ refs:
 
 # Externally shared dashboards
 
-<!-- Update aliases -->
-
 {{< admonition type="warning" >}}
 Sharing your dashboard externally could result in a large number of queries to the data sources used by your dashboard.
 This can be mitigated by using the Enterprise [caching](ref:caching) and/or rate limiting features.
@@ -53,51 +51,19 @@ Externally shared dashboards allow you to share your Grafana dashboard with anyo
 
 You can see a list of all your externally shared dashboards in one place by navigating to **Dashboards > Shared dashboards**. For each dashboard in the list, the page displays:
 
-- a link to view the externally shared version of the dashboard
-- a link to the shared dashboard configuration
-- options to pause or revoke access to the external dashboard
+- Link to view the externally shared version of the dashboard
+- Link to the shared dashboard configuration
+- Options to pause or revoke access to the external dashboard
 
 You can also click the name of the dashboard to navigate to the dashboard internally.
 
 ## Security implications of sharing your dashboard externally
 
+<!-- this seems like a misnamed section; I'd be expecting to see things that are all security risks -->
+
 - Anyone with the URL can access the dashboard.
 - Externally shared dashboards are read-only.
-- Arbitrary queries **cannot** be run against your data sources through externally shared dashboards. Externally shared dashboards can only execute the
-  queries stored on the original dashboard.
-
-### Share externally to anyone with a link
-
-To share your dashboard so that anyone with the link can access it, follow these steps.
-
-1. Click **Dashboards** in the main menu.
-1. Click the dashboard you want to share.
-1. Click the **Share** drop-down in the top-right corner and select **Share externally**.
-1. In the **Link access** drop-down, select **Anyone with the link**.
-1. Click the checkbox confirming that you understand the entire dashboard will be public.
-1. Click **Accept**.
-1. (Optional) Set the following options:
-   - **Enable time range** - Allow people accessing the link to change the time range. This configuration screen shows the default time range of the dashboard.
-   - **Display annotations** - Allow people accessing the link to view the dashboard annotations.
-1. Now anyone with the link can access the dashboard until you pause or revoke access to it.
-1. Click the **X** at the top-right corner to close the share drawer.
-
-Once you've shared a dashboard externally, a **Public** label is displayed in the header of the dashboard.
-
-#### Update access to an external dashboard link
-
-You can update the access to externally shared dashboard links by following these steps:
-
-1. Click **Dashboards** in the main menu.
-1. Click the dashboard you want to share.
-1. Click the **Share** drop-down in the top-right corner and select **Share externally**.
-1. Do one of the following:
-   - Click **Pause access** so that people can't access the dashboard, but the link is maintained.
-   - Click **Resume access** so that people can access the dashboard again.
-   - Click **Revoke access** so that people can't access the dashboard unless a new external link is generated. Confirm that you want to revoke the link.
-1. Click the **X** at the top-right corner to close the share drawer.
-
-The link no longer works. You must create a new external link, as in [Share externally to anyone with a link](#share-externally-to-anyone-with-a-link).
+- Arbitrary queries **cannot** be run against your data sources through externally shared dashboards. Externally shared dashboards can only execute the queries stored on the original dashboard.
 
 ## Share externally with specific people
 
@@ -171,6 +137,42 @@ One-time use links use browser cookies, so when a viewer is granted access throu
 A single viewer can't generate multiple valid one-time use links. When a new one-time use link is issued for a viewer, all previous ones are invalidated.
 
 If a Grafana user has read access to the parent dashboard, they can view the externally shared dashboard without needing to have access granted.
+
+## Share externally to anyone with a link
+
+To share your dashboard so that anyone with the link can access it, follow these steps.
+
+1. Click **Dashboards** in the main menu.
+1. Click the dashboard you want to share.
+1. Click the **Share** drop-down list in the top-right corner and select **Share externally**.
+
+   The **Share externally** drawer opens.
+
+1. In the **Link access** drop-down list, select **Anyone with the link**.
+1. Click the checkbox confirming that you understand the entire dashboard will be public.
+1. Click **Accept**.
+1. (Optional) Set the following options:
+   - **Enable time range** - Allow people accessing the link to change the time range. This configuration screen shows the default time range of the dashboard.
+   - **Display annotations** - Allow people accessing the link to view the dashboard annotations.
+1. Now anyone with the link can access the dashboard until you pause or revoke access to it.
+1. Click the **X** at the top-right corner to close the share drawer.
+
+Once you've shared a dashboard externally, a **Public** label is displayed in the header of the dashboard.
+
+### Update access to an external dashboard link
+
+You can update the access to externally shared dashboard links by following these steps:
+
+1. Click **Dashboards** in the main menu.
+1. Click the dashboard you want to share.
+1. Click the **Share** drop-down in the top-right corner and select **Share externally**.
+1. Do one of the following:
+   - Click **Pause access** so that people can't access the dashboard, but the link is maintained.
+   - Click **Resume access** so that people can access the dashboard again.
+   - Click **Revoke access** so that people can't access the dashboard unless a new external link is generated. Confirm that you want to revoke the link.
+1. Click the **X** at the top-right corner to close the share drawer.
+
+The link no longer works. You must create a new external link, as in [Share externally to anyone with a link](#share-externally-to-anyone-with-a-link).
 
 ## Assess shared dashboard usage
 
