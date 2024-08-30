@@ -14,9 +14,9 @@ weight: 80
 
 # RBAC permissions, actions, and scopes
 
-{{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
-{{% /admonition %}}
+{{< admonition type="note" >}}
+Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud/).
+{{< /admonition >}}
 
 A permission is comprised of an action and a scope. When creating a custom role, consider the actions the user can perform and the resource(s) on which they can perform those actions.
 
@@ -169,11 +169,6 @@ The following list contains role-based access control actions.
 | `users:write`                         | `global.users:*` <br> `global.users:id:*`                                               | Update a user’s profile.                                                                                                                                                                                                  |
 
 ### Grafana OnCall action definitions (beta)
-
-> **Note:** Available from Grafana 9.4 in early access.
-
-> **Note:** This feature is behind the `accessControlOnCall` feature toggle.
-> You can enable feature toggles through configuration file or environment variables. See configuration [docs]({{< relref "../../../../setup-grafana/configure-grafana/#feature_toggles" >}}) for details.
 
 The following list contains role-based access control actions used by Grafana OnCall application plugin.
 
