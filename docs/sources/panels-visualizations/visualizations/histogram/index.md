@@ -138,6 +138,8 @@ Set the mode of the gradient fill. Fill gradient is based on the line color. To 
 
 Gradient display is influenced by the **Fill opacity** setting.
 
+Choose from the following:
+
 - **None** - No gradient fill. This is the default setting.
 - **Opacity** - Transparency of the gradient is calculated based on the values on the Y-axis. The opacity of the fill is increasing with the values on the Y-axis.
 - **Hue** - Gradient color is generated based on the hue of the line color.
