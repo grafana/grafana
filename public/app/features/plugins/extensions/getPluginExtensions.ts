@@ -38,16 +38,16 @@ type GetExtensions = ({
 
 export function createPluginExtensionsGetter(registries: PluginExtensionRegistries): GetPluginExtensions {
   let addedComponentsRegistry: RegistryType<AddedComponentRegistryItem[]>;
-  let addedLinksRegistry: RegistryType<AddedLinkRegistryItem[]>;
+  let addedLinksRegistry: RegistryType<Array<AddedLinkRegistryItem<object>>>;
 
   // Create registry subscriptions to keep an copy of the registry state for use in the non-async
   // plugin extensions getter.
-  registries.addedComponentsRegistry.asObservable().subscribe((addedComponentsRegistry) => {
-    addedComponentsRegistry = addedComponentsRegistry;
+  registries.addedComponentsRegistry.asObservable().subscribe((componentsRegistry) => {
+    addedComponentsRegistry = componentsRegistry;
   });
 
-  registries.addedLinksRegistry.asObservable().subscribe((addedLinksRegistry) => {
-    addedLinksRegistry = addedLinksRegistry;
+  registries.addedLinksRegistry.asObservable().subscribe((linksRegistry) => {
+    addedLinksRegistry = linksRegistry;
   });
 
   return (options) => getPluginExtensions({ ...options, addedComponentsRegistry, addedLinksRegistry });
