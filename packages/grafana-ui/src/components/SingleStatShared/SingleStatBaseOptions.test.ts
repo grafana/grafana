@@ -1,17 +1,8 @@
-import { FieldConfigSource, PanelModel } from '@grafana/data';
+import { PanelModel } from '@grafana/data';
 
 import { sharedSingleStatMigrationHandler, sharedSingleStatPanelChangedHandler } from './SingleStatBaseOptions';
 
 describe('sharedSingleStatMigrationHandler', () => {
-  let prevFieldConfig: FieldConfigSource;
-
-  beforeEach(() => {
-    prevFieldConfig = {
-      defaults: {},
-      overrides: [],
-    };
-  });
-
   it('from old valueOptions model without pluginVersion', () => {
     const panel = {
       options: {
