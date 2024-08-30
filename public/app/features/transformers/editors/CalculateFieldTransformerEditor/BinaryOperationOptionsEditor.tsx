@@ -18,13 +18,13 @@ export const BinaryOperationOptionsEditor = (props: {
   let foundLeft = !binary?.left;
   let foundRight = !binary?.right;
 
-  const fixedValueLeft = !binary?.left.matcher;
-  const fixedValueRight = !binary?.right.matcher;
-  const matcherOptionsLeft = binary?.left.matcher?.options;
-  const matcherOptionsRight = binary?.right.matcher?.options;
+  const fixedValueLeft = !binary?.left?.matcher;
+  const fixedValueRight = !binary?.right?.matcher;
+  const matcherOptionsLeft = binary?.left?.matcher?.options;
+  const matcherOptionsRight = binary?.right?.matcher?.options;
 
-  const byNameLeft = binary?.left.matcher?.id === FieldMatcherID.byName;
-  const byNameRight = binary?.right.matcher?.id === FieldMatcherID.byName;
+  const byNameLeft = binary?.left?.matcher?.id === FieldMatcherID.byName;
+  const byNameRight = binary?.right?.matcher?.id === FieldMatcherID.byName;
   const names = props.names.map((v) => {
     if (byNameLeft && v === matcherOptionsLeft) {
       foundLeft = true;
@@ -55,11 +55,11 @@ export const BinaryOperationOptionsEditor = (props: {
   });
 
   // Add fixed values to left and right names
-  if (fixedValueLeft) {
-    leftNames.push({ label: binary?.left.fixed, value: JSON.stringify(binary?.left) ?? '', icon: '' });
+  if (fixedValueLeft && binary?.left?.fixed) {
+    leftNames.push({ label: binary.left.fixed, value: JSON.stringify(binary.left) ?? '', icon: '' });
   }
-  if (fixedValueRight) {
-    rightNames.push({ label: binary?.right.fixed, value: JSON.stringify(binary?.right) ?? '', icon: '' });
+  if (fixedValueRight && binary?.right?.fixed) {
+    rightNames.push({ label: binary.right.fixed, value: JSON.stringify(binary.right) ?? '', icon: '' });
   }
 
   const ops = binaryOperators.list().map((v) => {
