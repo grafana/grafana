@@ -18,8 +18,46 @@ export function getFormElementStyles(theme: GrafanaTheme2) {
       boxShadow: 'none',
     },
 
-    textarea: {
+    // Placeholder text gets special styles because when browsers invalidate entire lines if it doesn't understand a selector
+    'input, textarea': {
+      '&::placeholder': {
+        color: theme.colors.text.disabled,
+      },
+    },
+
+    // not a big fan of number fields
+    'input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button': {
+      WebkitAppearance: 'none',
+      margin: 0,
+    },
+    'input[type="number"]': {
+      MozAppearance: 'textfield',
+    },
+
+    // Set the height of select and file controls to match text inputs
+    'select, input[type="file"]': {
+      height:
+        theme.components.height
+          .md /* In IE7, the height of the select element cannot be changed by height, only font-size */,
+      lineHeight: theme.components.height.md,
+    },
+
+    // Make select elements obey height by applying a border
+    select: {
+      width: '220px', // default input width + 10px of padding that doesn't get applied
+      border: `1px solid ${theme.components.input.borderColor}`,
+      backgroundColor: theme.components.input.background, // Chrome on Linux and Mobile Safari need background-color
+    },
+
+    'select[multiple], select[size], textarea': {
       height: 'auto',
+    },
+
+    // Focus for select, file, radio, and checkbox
+    'select:focus, input[type="file"]:focus, input[type="radio"]:focus, input[type="checkbox"]:focus': {
+      // WebKit
+      outline: '5px auto -webkit-focus-ring-color',
+      outlineOffset: '-2px',
     },
 
     // Reset width of input images, buttons, radios, checkboxes
@@ -27,6 +65,28 @@ export function getFormElementStyles(theme: GrafanaTheme2) {
       {
         width: 'auto', // Override of generic input selector
       },
+
+    // Disabled and read-only inputs
+    'input[disabled], select[disabled], textarea[disabled], input[readonly], select[readonly], textarea[readonly]': {
+      cursor: 'not-allowed',
+      backgroundColor: theme.colors.action.disabledBackground,
+    },
+
+    // Explicitly reset the colors here
+    'input[type="radio"][disabled], input[type="checkbox"][disabled], input[type="radio"][readonly], input[type="checkbox"][readonly]':
+      {
+        cursor: 'not-allowed',
+        backgroundColor: 'transparent',
+      },
+
+    'input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill, textarea:-webkit-autofill, textarea:-webkit-autofill:hover, textarea:-webkit-autofill:focus, select:-webkit-autofill, select:-webkit-autofill:hover, select:-webkit-autofill:focus':
+      {
+        WebkitBoxShadow: `0 0 0px 1000px ${theme.components.input.background} inset !important`,
+        WebkitTextFillColor: theme.components.input.text,
+        boxShadow: `0 0 0px 1000px ${theme.components.input.background} inset`,
+        border: `1px solid ${theme.components.input.background}`,
+      },
+
     '.gf-form': {
       display: 'flex',
       flexDirection: 'row',
@@ -366,6 +426,9 @@ export function getFormElementStyles(theme: GrafanaTheme2) {
       backgroundColor: theme.colors.background.secondary,
       marginBottom: theme.spacing(3),
       borderTop: `3px solid ${theme.colors.success.main}`,
+    },
+    '.input-small': {
+      width: '90px',
     },
   });
 }
