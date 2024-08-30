@@ -903,6 +903,35 @@ func TestIntegrationCRUD(t *testing.T) {
 			}
 		})
 	})
+
+	t.Run("should fail to persist receiver with invalid config", func(t *testing.T) {
+		keysIter := maps.Keys(notify.AllKnownConfigsForTesting)
+		keys := slices.Collect(keysIter)
+		sort.Strings(keys)
+		for _, key := range keys {
+			t.Run(key, func(t *testing.T) {
+				integration := createIntegration(t, key)
+				// Make the integration invalid, so it fails to create. This is usually done by sending empty settings.
+				clear(integration.Settings.Object)
+				if key == "webex" {
+					// Webex integration is special case and passes validation without any settings so we instead set an invalid URL.
+					integration.Settings.Set("api_url", "(*^$*^%!@#$*()")
+				}
+
+				receiver, err = adminClient.Create(ctx, &v0alpha1.Receiver{
+					ObjectMeta: v1.ObjectMeta{
+						Namespace: "default",
+					},
+					Spec: v0alpha1.ReceiverSpec{
+						Title:        fmt.Sprintf("invalid-%s", key),
+						Integrations: []v0alpha1.Integration{integration},
+					},
+				}, v1.CreateOptions{})
+				require.Errorf(t, err, "Expected error but got successful result: %v", receiver)
+				require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest, got: %s", err)
+			})
+		}
+	})
 }
 
 func createIntegration(t *testing.T, integrationType string) v0alpha1.Integration {
