@@ -67,7 +67,7 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
     get: getMock,
   }),
-  usePluginLinkExtensions: jest.fn().mockReturnValue({ extensions: [] }),
+  usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
 const panelPlugin = getPanelPlugin({
