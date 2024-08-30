@@ -143,6 +143,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     isInstalled: isDisabled,
     isDisabled: isDisabled,
     isManaged: isManagedPlugin(id),
+    isPreinstalled: isPreinstalledPlugin(id),
     isDeprecated: status === RemotePluginStatus.Deprecated,
     isCore: plugin.internal,
     isDev: false,
@@ -193,12 +194,14 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     isDev: Boolean(dev),
     isEnterprise: false,
     isManaged: isManagedPlugin(id),
+    isPreinstalled: isPreinstalledPlugin(id),
     type,
     error: error?.errorCode,
     accessControl: accessControl,
     angularDetected,
     isFullyInstalled: true,
     iam: plugin.iam,
+    latestVersion: plugin.latestVersion,
   };
 }
 
@@ -241,6 +244,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     isDeprecated: remote?.status === RemotePluginStatus.Deprecated,
     isPublished: true,
     isManaged: isManagedPlugin(id),
+    isPreinstalled: isPreinstalledPlugin(id),
     // TODO<check if we would like to keep preferring the remote version>
     name: remote?.name || local?.name || '',
     // TODO<check if we would like to keep preferring the remote version>
@@ -380,6 +384,13 @@ export function isManagedPlugin(id: string) {
   const { pluginCatalogManagedPlugins }: { pluginCatalogManagedPlugins: string[] } = config;
 
   return pluginCatalogManagedPlugins?.includes(id);
+}
+
+export function isPreinstalledPlugin(id: string): { found: boolean; withVersion: boolean } {
+  const { pluginCatalogPreinstalledPlugins } = config;
+
+  const plugin = pluginCatalogPreinstalledPlugins?.find((p) => p.id === id);
+  return { found: !!plugin?.id, withVersion: !!plugin?.version };
 }
 
 function isDisabledSecretsPlugin(type?: PluginType): boolean {

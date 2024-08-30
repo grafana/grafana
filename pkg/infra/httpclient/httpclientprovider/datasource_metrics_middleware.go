@@ -6,7 +6,6 @@ import (
 	"time"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -113,7 +112,7 @@ func executeMiddleware(next http.RoundTripper, labels prometheus.Labels) http.Ro
 		}
 
 		if res != nil && res.StatusCode != http.StatusSwitchingProtocols {
-			res.Body = httpclient.CountBytesReader(res.Body, func(bytesRead int64) {
+			res.Body = sdkhttpclient.CountBytesReader(res.Body, func(bytesRead int64) {
 				responseSizeHistogram.Observe(float64(bytesRead))
 			})
 		}

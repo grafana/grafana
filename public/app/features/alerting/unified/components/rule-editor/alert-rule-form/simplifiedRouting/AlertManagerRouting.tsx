@@ -61,7 +61,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
           className={styles.collapsableSection}
         >
           <Stack direction="column" gap={1}>
-            <MuteTimingFields alertManager={alertManagerName} />
+            <MuteTimingFields alertmanager={alertManagerName} />
             <RoutingSettings alertManager={alertManagerName} />
           </Stack>
         </CollapsableSection>

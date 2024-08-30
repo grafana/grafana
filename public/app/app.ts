@@ -38,8 +38,10 @@ import {
   setReturnToPreviousHook,
   setPluginExtensionsHook,
   setPluginComponentHook,
+  setPluginComponentsHook,
   setCurrentUser,
   setChromeHeaderHeightHook,
+  setPluginLinksHook,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -82,11 +84,12 @@ import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
-import { getCoreExtensionConfigurations } from './features/plugins/extensions/getCoreExtensionConfigurations';
 import { createPluginExtensionsGetter } from './features/plugins/extensions/getPluginExtensions';
-import { ReactivePluginExtensionsRegistry } from './features/plugins/extensions/reactivePluginExtensionRegistry';
+import { setupPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
 import { createUsePluginComponent } from './features/plugins/extensions/usePluginComponent';
+import { createUsePluginComponents } from './features/plugins/extensions/usePluginComponents';
 import { createUsePluginExtensions } from './features/plugins/extensions/usePluginExtensions';
+import { createUsePluginLinks } from './features/plugins/extensions/usePluginLinks';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
@@ -209,11 +212,7 @@ export class GrafanaApp {
       initWindowRuntime();
 
       // Initialize plugin extensions
-      const extensionsRegistry = new ReactivePluginExtensionsRegistry();
-      extensionsRegistry.register({
-        pluginId: 'grafana',
-        extensionConfigs: getCoreExtensionConfigurations(),
-      });
+      const pluginExtensionsRegistries = setupPluginExtensionRegistries();
 
       if (contextSrv.user.orgRole !== '') {
         // The "cloud-home-app" is registering banners once it's loaded, and this can cause a rerender in the AppChrome if it's loaded after the Grafana app init.
@@ -222,13 +221,15 @@ export class GrafanaApp {
         const awaitedAppPlugins = Object.values(config.apps).filter((app) => awaitedAppPluginIds.includes(app.id));
         const appPlugins = Object.values(config.apps).filter((app) => !awaitedAppPluginIds.includes(app.id));
 
-        preloadPlugins(appPlugins, extensionsRegistry);
-        await preloadPlugins(awaitedAppPlugins, extensionsRegistry, 'frontend_awaited_plugins_preload');
+        preloadPlugins(appPlugins, pluginExtensionsRegistries);
+        await preloadPlugins(awaitedAppPlugins, pluginExtensionsRegistries, 'frontend_awaited_plugins_preload');
       }
 
-      setPluginExtensionGetter(createPluginExtensionsGetter(extensionsRegistry));
-      setPluginExtensionsHook(createUsePluginExtensions(extensionsRegistry));
-      setPluginComponentHook(createUsePluginComponent(extensionsRegistry));
+      setPluginLinksHook(createUsePluginLinks(pluginExtensionsRegistries.addedLinksRegistry));
+      setPluginExtensionGetter(createPluginExtensionsGetter(pluginExtensionsRegistries));
+      setPluginExtensionsHook(createUsePluginExtensions(pluginExtensionsRegistries));
+      setPluginComponentHook(createUsePluginComponent(pluginExtensionsRegistries.exposedComponentsRegistry));
+      setPluginComponentsHook(createUsePluginComponents(pluginExtensionsRegistries.addedComponentsRegistry));
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();
