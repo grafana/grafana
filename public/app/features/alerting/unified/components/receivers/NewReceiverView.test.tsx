@@ -125,7 +125,6 @@ describe('alerting API server disabled', () => {
 
 const ui = {
   saveContactButton: byRole('button', { name: /save contact point/i }),
-  savingButton: byRole('button', { name: /saving/i }),
 
   testContactPointButton: byRole('button', { name: /Test/ }),
   testContactPointModal: byRole('heading', { name: /test contact point/i }),
