@@ -399,7 +399,7 @@ export const RowsList = (props: RowsListProps) => {
   };
 
   // Key the virtualizer for expanded rows
-  const expandedKey = Object.keys(tableState.expanded).join(':');
+  const expandedKey = Object.keys(tableState.expanded).join('|');
 
   return (
     <>
