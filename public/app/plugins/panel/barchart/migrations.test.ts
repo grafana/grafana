@@ -1,4 +1,4 @@
-import { FieldConfigSource, PanelModel, ReducerID } from '@grafana/data';
+import { FieldConfigSource, FieldMatcherID, PanelModel } from '@grafana/data';
 
 import { changeToBarChartPanelMigrationHandler } from './migrations';
 
@@ -35,7 +35,7 @@ describe('Bar chart Migrations', () => {
     expect(transposeTransform.id).toBe('transpose');
 
     expect(panel.fieldConfig.overrides).toHaveLength(1);
-    expect(panel.fieldConfig.overrides[0].matcher.options.reducer).toBe(ReducerID.byName);
+    expect(panel.fieldConfig.overrides[0].matcher.id).toBe(FieldMatcherID.byName);
     expect(panel.fieldConfig.overrides).toMatchInlineSnapshot(`
         [
           {
