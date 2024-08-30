@@ -68,7 +68,8 @@ function ShareInternallyRenderer({ model }: SceneComponentProps<ShareInternally>
     <>
       <Alert severity="info" title={t('link.share.config-alert-title', 'Link configuration')}>
         <Trans i18nKey="link.share.config-alert-description">
-          Updating your settings will modify the default copy link to include these changes.
+          Updating your settings will modify the default copy link to include these changes. Please note that these
+          settings are saved within your current browser scope.
         </Trans>
       </Alert>
       <div className={styles.configDescription}>
