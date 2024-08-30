@@ -4,7 +4,7 @@ labels:
     - enterprise
     - oss
 title: Correlations Editor in Explore
-weight: 400
+weight: 20
 ---
 
 # Correlations Editor in Explore

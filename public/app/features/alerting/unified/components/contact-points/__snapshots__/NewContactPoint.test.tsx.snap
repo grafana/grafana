@@ -36,6 +36,7 @@ exports[`should be able to test and save a receiver 2`] = `
 [
   {
     "alertmanager_config": {
+      "mute_time_intervals": [],
       "receivers": [
         {
           "grafana_managed_receiver_configs": [
@@ -158,6 +159,7 @@ exports[`should be able to test and save a receiver 2`] = `
         "provisioned-template",
         "template with spaces",
       ],
+      "time_intervals": [],
     },
     "template_file_provenances": {
       "provisioned-template": "api",
