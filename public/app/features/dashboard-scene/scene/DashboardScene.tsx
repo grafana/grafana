@@ -59,10 +59,8 @@ import { getDashboardUrl, getViewPanelUrl } from '../utils/urlBuilders';
 import {
   NEW_PANEL_HEIGHT,
   NEW_PANEL_WIDTH,
-  forceRenderChildren,
   getClosestVizPanel,
   getDashboardSceneFor,
-  getDefaultRow,
   getDefaultVizPanel,
   getPanelIdForVizPanel,
   getVizPanelKeyForPanelId,
@@ -78,6 +76,7 @@ import { LibraryVizPanel } from './LibraryVizPanel';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
+import { DashboardLayoutManager } from './layouts/types';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 
@@ -99,7 +98,7 @@ export interface DashboardSceneState extends SceneObjectState {
   /** @deprecated */
   id?: number | null;
   /** Layout of panels */
-  body: SceneObject;
+  body: DashboardLayoutManager;
   /** NavToolbar actions */
   actions?: SceneObject[];
   /** Fixed row at the top of the canvas with for example variables and time range controls */
@@ -239,7 +238,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.setState({ isEditing: true });
 
     // Propagate change edit mode change to children
-    this.propagateEditModeChange();
+    this.state.body.editModeChanged(true);
 
     // Propagate edit mode to scopes
     this._scopesFacade?.enterReadOnly();
@@ -272,13 +271,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     });
 
     this._changeTracker.startTrackingChanges();
-  }
-
-  private propagateEditModeChange() {
-    if (this.state.body instanceof SceneGridLayout) {
-      this.state.body.setState({ isDraggable: this.state.isEditing, isResizable: this.state.isEditing });
-      forceRenderChildren(this.state.body, true);
-    }
   }
 
   public exitEditMode({ skipConfirm, restoreInitialState }: { skipConfirm: boolean; restoreInitialState?: boolean }) {
@@ -344,7 +336,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
 
     // Disable grid dragging
-    this.propagateEditModeChange();
+    this.state.body.editModeChanged(false);
   }
 
   private cleanupStateFromExplore() {
@@ -354,10 +346,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this._initialSaveModel.panels = this._initialSaveModel.panels.slice(1);
     }
 
-    if (this._initialState && this._initialState.body instanceof SceneGridLayout) {
-      this._initialState.body.setState({
-        children: this._initialState.body.state.children.slice(1),
-      });
+    if (this._initialState) {
+      this._initialState.body.cleanUpStateFromExplore?.();
     }
   }
 
@@ -467,72 +457,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public getInitialState(): DashboardSceneState | undefined {
     return this._initialState;
-  }
-
-  public addRow(row: SceneGridRow) {
-    if (!(this.state.body instanceof SceneGridLayout)) {
-      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
-    }
-
-    const sceneGridLayout = this.state.body;
-
-    // find all panels until the first row and put them into the newly created row. If there are no other rows,
-    // add all panels to the row. If there are no panels just create an empty row
-    const indexTillNextRow = sceneGridLayout.state.children.findIndex((child) => child instanceof SceneGridRow);
-    const rowChildren = sceneGridLayout.state.children
-      .splice(0, indexTillNextRow === -1 ? sceneGridLayout.state.children.length : indexTillNextRow)
-      .map((child) => child.clone());
-
-    if (rowChildren) {
-      row.setState({
-        children: rowChildren,
-      });
-    }
-
-    sceneGridLayout.setState({
-      children: [row, ...sceneGridLayout.state.children],
-    });
-  }
-
-  public removeRow(row: SceneGridRow, removePanels = false) {
-    if (!(this.state.body instanceof SceneGridLayout)) {
-      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
-    }
-
-    const sceneGridLayout = this.state.body;
-
-    const children = sceneGridLayout.state.children.filter((child) => child.state.key !== row.state.key);
-
-    if (!removePanels) {
-      const rowChildren = row.state.children.map((child) => child.clone());
-      const indexOfRow = sceneGridLayout.state.children.findIndex((child) => child.state.key === row.state.key);
-
-      children.splice(indexOfRow, 0, ...rowChildren);
-    }
-
-    sceneGridLayout.setState({ children });
-  }
-
-  public addPanel(vizPanel: VizPanel): void {
-    if (!(this.state.body instanceof SceneGridLayout)) {
-      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
-    }
-
-    const sceneGridLayout = this.state.body;
-
-    const panelId = getPanelIdForVizPanel(vizPanel);
-    const newGridItem = new DashboardGridItem({
-      height: NEW_PANEL_HEIGHT,
-      width: NEW_PANEL_WIDTH,
-      x: 0,
-      y: 0,
-      body: vizPanel,
-      key: `grid-item-${panelId}`,
-    });
-
-    sceneGridLayout.setState({
-      children: [newGridItem, ...sceneGridLayout.state.children],
-    });
   }
 
   public createLibraryPanel(panelToReplace: VizPanel, libPanel: LibraryPanel) {
@@ -722,49 +646,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     store.delete(LS_PANEL_COPY_KEY);
   }
 
-  public removePanel(panel: VizPanel) {
-    const panels: SceneObject[] = [];
-    const key = panel.parent instanceof LibraryVizPanel ? panel.parent.parent?.state.key : panel.parent?.state.key;
-
-    if (!key) {
-      return;
-    }
-
-    let row: SceneGridRow | undefined;
-
-    try {
-      row = sceneGraph.getAncestor(panel, SceneGridRow);
-    } catch {
-      row = undefined;
-    }
-
-    if (row) {
-      row.state.children.forEach((child: SceneObject) => {
-        if (child.state.key !== key) {
-          panels.push(child);
-        }
-      });
-
-      row.setState({ children: panels });
-
-      this.state.body.forceRender();
-
-      return;
-    }
-
-    this.state.body.forEachChild((child: SceneObject) => {
-      if (child.state.key !== key) {
-        panels.push(child);
-      }
-    });
-
-    const layout = this.state.body;
-
-    if (layout instanceof SceneGridLayout || layout instanceof SceneFlexLayout) {
-      layout.setState({ children: panels });
-    }
-  }
-
   public unlinkLibraryPanel(panel: LibraryVizPanel) {
     if (!panel.parent) {
       return;
@@ -820,11 +701,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public onCreateNewRow() {
-    const row = getDefaultRow(this);
-
-    this.addRow(row);
-
-    return getPanelIdForVizPanel(row);
+    this.state.body.addNewRow?.();
   }
 
   public onCreateNewPanel(): VizPanel {
@@ -834,7 +711,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     const vizPanel = getDefaultVizPanel(this);
 
-    this.addPanel(vizPanel);
+    this.state.body.addPanel(vizPanel);
 
     return vizPanel;
   }

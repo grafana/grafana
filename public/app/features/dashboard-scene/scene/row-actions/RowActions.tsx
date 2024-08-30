@@ -1,7 +1,14 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneComponentProps, SceneGridRow, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  sceneGraph,
+  SceneGridRow,
+  SceneObjectBase,
+  SceneObjectState,
+  VizPanel,
+} from '@grafana/scenes';
 import { Icon, TextLink, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
@@ -11,6 +18,7 @@ import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardGridItem } from '../DashboardGridItem';
 import { DashboardScene } from '../DashboardScene';
 import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
+import { ManualGridLayoutManager } from '../layouts/ManualGridLayoutWrapper';
 
 import { RowOptionsButton } from './RowOptionsButton';
 
@@ -54,6 +62,8 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
   };
 
   public onDelete = () => {
+    const layout = sceneGraph.getAncestor(this, ManualGridLayoutManager);
+
     appEvents.publish(
       new ShowConfirmModalEvent({
         title: 'Delete row',
@@ -61,10 +71,10 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
         altActionText: 'Delete row only',
         icon: 'trash-alt',
         onConfirm: () => {
-          this.getDashboard().removeRow(this.getParent(), true);
+          layout.removeRow(this.getParent(), true);
         },
         onAltAction: () => {
-          this.getDashboard().removeRow(this.getParent());
+          layout.removeRow(this.getParent(), true);
         },
       })
     );

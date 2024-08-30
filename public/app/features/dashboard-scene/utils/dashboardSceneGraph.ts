@@ -6,8 +6,6 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks } from '../scene/PanelLinks';
 
-import { getPanelIdForLibraryVizPanel, getPanelIdForVizPanel } from './utils';
-
 function getTimePicker(scene: DashboardScene) {
   return scene.state.controls?.state.timePicker;
 }
@@ -75,57 +73,7 @@ export function getCursorSync(scene: DashboardScene) {
 }
 
 export function getNextPanelId(dashboard: DashboardScene): number {
-  let max = 0;
-  const body = dashboard.state.body;
-
-  if (!(body instanceof SceneGridLayout)) {
-    throw new Error('Dashboard body is not a SceneGridLayout');
-  }
-
-  for (const child of body.state.children) {
-    if (child instanceof DashboardGridItem) {
-      const vizPanel = child.state.body;
-
-      if (vizPanel) {
-        const panelId =
-          vizPanel instanceof LibraryVizPanel
-            ? getPanelIdForLibraryVizPanel(vizPanel)
-            : getPanelIdForVizPanel(vizPanel);
-
-        if (panelId > max) {
-          max = panelId;
-        }
-      }
-    }
-
-    if (child instanceof SceneGridRow) {
-      //rows follow the same key pattern --- e.g.: `panel-6`
-      const panelId = getPanelIdForVizPanel(child);
-
-      if (panelId > max) {
-        max = panelId;
-      }
-
-      for (const rowChild of child.state.children) {
-        if (rowChild instanceof DashboardGridItem) {
-          const vizPanel = rowChild.state.body;
-
-          if (vizPanel) {
-            const panelId =
-              vizPanel instanceof LibraryVizPanel
-                ? getPanelIdForLibraryVizPanel(vizPanel)
-                : getPanelIdForVizPanel(vizPanel);
-
-            if (panelId > max) {
-              max = panelId;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  return max + 1;
+  return dashboard.state.body.getNextPanelId();
 }
 
 // Returns the LibraryVizPanel that corresponds to the given VizPanel if it exists

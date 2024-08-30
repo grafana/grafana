@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { useChromeHeaderHeight } from '@grafana/runtime';
-import { SceneComponentProps } from '@grafana/scenes';
+import { SceneComponentProps, SceneObject } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import NativeScrollbar from 'app/core/components/NativeScrollbar';
 import { Page } from 'app/core/components/Page/Page';
@@ -15,9 +15,10 @@ import { useSelector } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
+import { LayoutOptions } from './layouts/LayoutOptions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, editview, editPanel, isEmpty, meta, viewPanelScene } = model.useState();
+  const { controls, overlay, editview, editPanel, isEmpty, meta, viewPanelScene, isEditing } = model.useState();
   const headerHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles, headerHeight);
   const location = useLocation();
@@ -70,18 +71,20 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   } else if (isEmpty) {
     body = [emptyState, withPanels];
   }
+
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
       {editPanel && <editPanel.Component model={editPanel} />}
       {!editPanel && (
         <NativeScrollbar divId="page-scrollbar" onSetScrollRef={model.onSetScrollRef}>
-          <div className={cx(styles.pageContainer, hasControls && styles.pageContainerWithControls)}>
+          <div className={cx(styles.pageContainer)}>
             <NavToolbarActions dashboard={model} />
             {controls && (
               <div className={styles.controlsWrapper}>
                 <controls.Component model={controls} />
               </div>
             )}
+            {isEditing && <LayoutOptions layout={bodyToRender} scene={model} />}
             <div className={cx(styles.canvasContent)}>{body}</div>
           </div>
         </NativeScrollbar>
@@ -94,28 +97,14 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 function getStyles(theme: GrafanaTheme2, headerHeight: number | undefined) {
   return {
     pageContainer: css({
-      display: 'grid',
-      gridTemplateAreas: `
-  "panels"`,
-      gridTemplateColumns: `1fr`,
-      gridTemplateRows: '1fr',
+      display: 'flex',
       flexGrow: 1,
-      [theme.breakpoints.down('sm')]: {
-        display: 'flex',
-        flexDirection: 'column',
-      },
-    }),
-    pageContainerWithControls: css({
-      gridTemplateAreas: `
-        "controls"
-        "panels"`,
-      gridTemplateRows: 'auto 1fr',
+      flexDirection: 'column',
     }),
     controlsWrapper: css({
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 0,
-      gridArea: 'controls',
       padding: theme.spacing(2),
       ':empty': {
         display: 'none',
@@ -134,7 +123,6 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number | undefined) {
       flexDirection: 'column',
       padding: theme.spacing(0, 2),
       flexBasis: '100%',
-      gridArea: 'panels',
       flexGrow: 1,
       minWidth: 0,
     }),
