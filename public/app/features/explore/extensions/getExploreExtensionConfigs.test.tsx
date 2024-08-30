@@ -14,20 +14,18 @@ describe('getExploreExtensionConfigs', () => {
 
       expect(extensions).toEqual([
         {
-          type: 'link',
           title: 'Add to dashboard',
           description: 'Use the query and panel from explore and create/add it to a dashboard',
-          extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
+          targets: [PluginExtensionPoints.ExploreToolbarAction],
           icon: 'apps',
           configure: expect.any(Function),
           onClick: expect.any(Function),
           category: 'Dashboards',
         },
         {
-          type: 'link',
           title: 'Add correlation',
           description: 'Create a correlation from this query',
-          extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
+          targets: [PluginExtensionPoints.ExploreToolbarAction],
           icon: 'link',
           configure: expect.any(Function),
           onClick: expect.any(Function),

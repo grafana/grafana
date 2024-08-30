@@ -1,43 +1,16 @@
 import { memo } from 'react';
 
-import { PluginExtension, PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
+import { PluginExtensionAddedLinkConfig, PluginExtensionLinkConfig, PluginExtensionPoints } from '@grafana/data';
 
 import {
   assertConfigureIsValid,
   assertLinkPathIsValid,
-  assertExtensionPointIdIsValid,
-  assertPluginExtensionLink,
   assertStringProps,
-  isPluginExtensionConfigValid,
+  isGrafanaCoreExtensionPoint,
   isReactComponent,
 } from './validators';
 
 describe('Plugin Extension Validators', () => {
-  describe('assertPluginExtensionLink()', () => {
-    it('should NOT throw an error if it is a link extension', () => {
-      expect(() => {
-        assertPluginExtensionLink({
-          id: 'id',
-          pluginId: 'myorg-b-app',
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-          path: '...',
-        } as PluginExtension);
-      }).not.toThrowError();
-    });
-
-    it('should throw an error if it is not a link extension', () => {
-      expect(() => {
-        assertPluginExtensionLink({
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-        } as PluginExtension);
-      }).toThrowError();
-    });
-  });
-
   describe('assertLinkPathIsValid()', () => {
     it('should not throw an error if the link path is valid', () => {
       expect(() => {
@@ -80,45 +53,14 @@ describe('Plugin Extension Validators', () => {
     });
   });
 
-  describe('assertExtensionPointIdIsValid()', () => {
-    it('should throw an error if the extensionPointId does not have the right prefix', () => {
-      expect(() => {
-        assertExtensionPointIdIsValid('my-org-app', {
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-          extensionPointId: 'wrong-extension-point-id',
-        });
-      }).toThrowError();
-    });
-
-    it('should NOT throw an error if the extensionPointId is correct', () => {
-      expect(() => {
-        assertExtensionPointIdIsValid('my-org-app', {
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-          extensionPointId: 'grafana/some-page/extension-point-a',
-        });
-
-        assertExtensionPointIdIsValid('my-org-app', {
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-          extensionPointId: 'plugins/my-super-plugin/some-page/extension-point-a',
-        });
-      }).not.toThrowError();
-    });
-  });
-
   describe('assertConfigureIsValid()', () => {
     it('should NOT throw an error if the configure() function is missing', () => {
       expect(() => {
         assertConfigureIsValid({
           title: 'Title',
           description: 'Description',
-          extensionPointId: 'grafana/some-page/extension-point-a',
-        } as PluginExtensionLinkConfig);
+          targets: 'grafana/some-page/extension-point-a',
+        } as PluginExtensionAddedLinkConfig);
       }).not.toThrowError();
     });
 
@@ -127,9 +69,9 @@ describe('Plugin Extension Validators', () => {
         assertConfigureIsValid({
           title: 'Title',
           description: 'Description',
-          extensionPointId: 'grafana/some-page/extension-point-a',
+          targets: 'grafana/some-page/extension-point-a',
           configure: () => {},
-        } as PluginExtensionLinkConfig);
+        } as PluginExtensionAddedLinkConfig);
       }).not.toThrowError();
     });
 
@@ -203,70 +145,6 @@ describe('Plugin Extension Validators', () => {
     });
   });
 
-  describe('isPluginExtensionConfigValid()', () => {
-    it('should return TRUE if the plugin extension configuration is valid', () => {
-      const pluginId = 'my-super-plugin';
-
-      expect(
-        isPluginExtensionConfigValid(pluginId, {
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-          onClick: jest.fn(),
-          extensionPointId: 'grafana/some-page/extension-point-a',
-        } as PluginExtensionLinkConfig)
-      ).toBe(true);
-
-      expect(
-        isPluginExtensionConfigValid(pluginId, {
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-          extensionPointId: 'grafana/some-page/extension-point-a',
-          path: `/a/${pluginId}/page`,
-        } as PluginExtensionLinkConfig)
-      ).toBe(true);
-    });
-
-    it('should return FALSE if the plugin extension configuration is invalid', () => {
-      const pluginId = 'my-super-plugin';
-
-      global.console.warn = jest.fn();
-
-      // Link (wrong path)
-      expect(
-        isPluginExtensionConfigValid(pluginId, {
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-          extensionPointId: 'grafana/some-page/extension-point-a',
-          path: '/administration/users',
-        } as PluginExtensionLinkConfig)
-      ).toBe(false);
-
-      // Link (no path and no onClick)
-      expect(
-        isPluginExtensionConfigValid(pluginId, {
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-          extensionPointId: 'grafana/some-page/extension-point-a',
-        } as PluginExtensionLinkConfig)
-      ).toBe(false);
-
-      // Link (missing title)
-      expect(
-        isPluginExtensionConfigValid(pluginId, {
-          type: PluginExtensionTypes.link,
-          title: '',
-          description: 'Description',
-          extensionPointId: 'grafana/some-page/extension-point-a',
-          path: `/a/${pluginId}/page`,
-        } as PluginExtensionLinkConfig)
-      ).toBe(false);
-    });
-  });
-
   describe('isReactComponent()', () => {
     it('should return TRUE if we pass in a valid React component', () => {
       expect(isReactComponent(() => <div>Some text</div>)).toBe(true);
@@ -290,6 +168,20 @@ describe('Plugin Extension Validators', () => {
       expect(isReactComponent(false)).toBe(false);
       expect(isReactComponent(undefined)).toBe(false);
       expect(isReactComponent(null)).toBe(false);
+    });
+  });
+
+  describe('isGrafanaCoreExtensionPoint()', () => {
+    it('should return TRUE if we pass an PluginExtensionPoints value', () => {
+      expect(isGrafanaCoreExtensionPoint(PluginExtensionPoints.AlertingAlertingRuleAction)).toBe(true);
+    });
+
+    it('should return TRUE if we pass a string that is not listed under the PluginExtensionPoints enum', () => {
+      expect(isGrafanaCoreExtensionPoint('grafana/alerting/alertingrule/action')).toBe(true);
+    });
+
+    it('should return FALSE if we pass a string that is not listed under the PluginExtensionPoints enum', () => {
+      expect(isGrafanaCoreExtensionPoint('grafana/dashboard/alertingrule/action')).toBe(false);
     });
   });
 });

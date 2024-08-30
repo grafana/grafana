@@ -314,7 +314,7 @@ describe('AddedComponentsRegistry', () => {
     expect(Object.keys(currentState)).toHaveLength(0);
   });
 
-  it('should log a warning when exposed component id is not suffixed with component version', async () => {
+  it('should log a warning when added component id is not suffixed with component version', async () => {
     const registry = new AddedComponentsRegistry();
     registry.register({
       pluginId: 'grafana-basic-app',
@@ -322,14 +322,14 @@ describe('AddedComponentsRegistry', () => {
         {
           title: 'Component 1 title',
           description: 'Component 1 description',
-          targets: ['grafana/alerting/home'],
+          targets: ['grafana/test/home'],
           component: () => React.createElement('div', null, 'Hello World1'),
         },
       ],
     });
 
     expect(consoleWarn).toHaveBeenCalledWith(
-      "[Plugin Extensions] Added component with id 'grafana/alerting/home' does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'."
+      "[Plugin Extensions] Added component with id 'grafana/test/home' does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'."
     );
     const currentState = await registry.getState();
     expect(Object.keys(currentState)).toHaveLength(1);

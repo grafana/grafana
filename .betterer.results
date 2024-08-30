@@ -4988,9 +4988,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
       [0, 0, 0, "Do not use any type assertions.", "12"]
     ],
-    "public/app/features/plugins/extensions/getPluginExtensions.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/features/plugins/extensions/usePluginComponents.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
