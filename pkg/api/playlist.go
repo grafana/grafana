@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
+	playlistalpha1 "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/middleware"
 	internalplaylist "github.com/grafana/grafana/pkg/registry/apis/playlist"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
@@ -27,6 +27,7 @@ import (
 func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
 	// Register the actual handlers
 	apiRoute.Group("/playlists", func(playlistRoute routing.RouteRegister) {
+		// TODO: remove kubernetesPlaylists feature flag
 		if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesPlaylists) {
 			// Use k8s client to implement legacy API
 			handler := newPlaylistK8sHandler(hs)
@@ -330,7 +331,7 @@ type playlistK8sHandler struct {
 
 func newPlaylistK8sHandler(hs *HTTPServer) *playlistK8sHandler {
 	return &playlistK8sHandler{
-		gvr:                  v0alpha1.PlaylistResourceInfo.GroupVersionResource(),
+		gvr:                  playlistalpha1.PlaylistResourceInfo.GroupVersionResource(),
 		namespacer:           request.GetNamespaceMapper(hs.Cfg),
 		clientConfigProvider: hs.clientConfigProvider,
 	}

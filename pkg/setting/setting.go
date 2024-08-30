@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/osutil"
@@ -523,6 +524,13 @@ type Cfg struct {
 
 	//Short Links
 	ShortLinkExpiration int
+
+	// Unified Storage
+	UnifiedStorage map[string]UnifiedStorageConfig
+}
+
+type UnifiedStorageConfig struct {
+	DualWriterMode rest.DualWriterMode
 }
 
 type InstallPlugin struct {
@@ -1323,6 +1331,9 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	scopesSection := iniFile.Section("scopes")
 	cfg.ScopesListScopesURL = scopesSection.Key("list_scopes_endpoint").MustString("")
 	cfg.ScopesListDashboardsURL = scopesSection.Key("list_dashboards_endpoint").MustString("")
+
+	// read unifed storage config
+	cfg.setUnifiedStorageConfig()
 
 	return nil
 }
