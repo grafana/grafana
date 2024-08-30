@@ -1,5 +1,5 @@
 import { TypedVariableModel } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
@@ -57,6 +57,9 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             defaultKeys: v.defaultKeys,
             useQueriesAsFilterForOptions: true,
             layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
+            supportsMultiValueOperators: Boolean(
+              getDataSourceSrv().getInstanceSettings(v.datasource)?.meta.multiValueFilterOperators
+            ),
           });
         }
         // for other variable types we are using the SnapshotVariable
@@ -135,6 +138,9 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultKeys: variable.defaultKeys,
       useQueriesAsFilterForOptions: true,
       layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
+      supportsMultiValueOperators: Boolean(
+        getDataSourceSrv().getInstanceSettings(variable.datasource)?.meta.multiValueFilterOperators
+      ),
     });
   }
   if (variable.type === 'custom') {
