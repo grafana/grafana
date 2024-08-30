@@ -191,7 +191,7 @@ Note that these alerting high availability metrics are exposed via the `/metrics
 
 For more information on monitoring alerting metrics, refer to [Alerting meta-monitoring](ref:meta-monitoring). For a demo, see [alerting high availability examples using Docker Compose](https://github.com/grafana/alerting-ha-docker-examples/).
 
-## Prevent duplicated notifications
+## Prevent duplicate notifications
 
 In high-availability mode, each Grafana instance runs its own pre-configured alertmanager to handle alert notifications.
 
