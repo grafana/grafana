@@ -42,7 +42,6 @@ export const OptionField: FC<Props> = ({
   secureFields = {},
 }) => {
   const optionPath = `${pathPrefix}${pathSuffix}`;
-  const isSecure = pathSuffix === 'secureSettings.';
 
   if (option.element === 'subform') {
     return (
@@ -93,7 +92,7 @@ export const OptionField: FC<Props> = ({
   );
 };
 
-const OptionInput: FC<Props & { id: string; pathIndex?: string; isSecure?: boolean }> = ({
+const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
   option,
   invalid,
   id,
@@ -104,7 +103,6 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string; isSecure?: boole
   onResetSecureField,
   secureFields = {},
   parentOption,
-  isSecure,
 }) => {
   const styles = useStyles2(getStyles);
   const { control, register, unregister, getValues, setValue } = useFormContext();
@@ -113,13 +111,6 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string; isSecure?: boole
   const nestedKey = parentOption ? `${parentOption.propertyName}.${option.propertyName}` : option.propertyName;
 
   const isEncryptedInput = secureFields?.[nestedKey];
-
-  useEffect(() => {
-    // Remove the value of secure fields so it doesn't show the incorrect value when clearing the field
-    if (isSecure) {
-      setValue(name, null);
-    }
-  }, [isSecure, name, setValue]);
 
   // workaround for https://github.com/react-hook-form/react-hook-form/issues/4993#issuecomment-829012506
   useEffect(
