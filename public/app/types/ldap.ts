@@ -95,7 +95,7 @@ export interface LdapServerConfig {
   min_tls_version?: string;
   port: number;
   root_ca_cert: string;
-  root_ca_cert_value: string;
+  root_ca_cert_value: string[];
   search_base_dns: string[];
   search_filter: string;
   skip_org_role_sync: boolean;

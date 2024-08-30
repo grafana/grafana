@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
-import { useId } from 'react';
-import { useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -13,6 +12,7 @@ import {
   Icon,
   Input,
   Label,
+  MultiSelect,
   Select,
   Stack,
   Switch,
@@ -28,19 +28,29 @@ interface Props {
   onClose: () => void;
 }
 
+const serverConfig = 'settings.config.servers.0';
 const tlsOptions: Array<SelectableValue<string>> = ['TLS1.2', 'TLS1.3'].map((v) => ({ label: v, value: v }));
+enum EncryptionProvider {
+  Base64 = "base-64",
+  FilePath = "file-path",
+}
 
 export const LdapDrawerComponent = ({ onClose }: Props) => {
-  const [encryptionProvider, setEncryptionProvider] = useState(false);
+  const [encryptionProvider, setEncryptionProvider] = useState(EncryptionProvider.Base64);
 
   const styles = useStyles2(getStyles);
-  const { register, setValue, watch } = useFormContext<LdapPayload>();
+  const { getValues, register, setValue, watch } = useFormContext<LdapPayload>();
 
   const nameId = useId();
   const surnameId = useId();
   const usernameId = useId();
   const memberOfId = useId();
   const emailId = useId();
+
+  useEffect(() => {
+    const {client_cert, client_key, root_ca_cert} = getValues(serverConfig);
+    setEncryptionProvider(!client_cert.length && !client_key.length && !root_ca_cert.length ? EncryptionProvider.Base64 : EncryptionProvider.FilePath);
+  }, [getValues]);
 
   const groupMappingsLabel = (
     <Label
@@ -61,6 +71,19 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
       }
     </Trans>
   );
+
+  const onEncryptionProviderChange = (value: EncryptionProvider) => {
+    setEncryptionProvider(value);
+    if (value === EncryptionProvider.Base64) {
+      setValue(`${serverConfig}.root_ca_cert`, '');
+      setValue(`${serverConfig}.client_cert`, '');
+      setValue(`${serverConfig}.client_key`, '');
+    } else {
+      setValue(`${serverConfig}.root_ca_cert_value`, []);
+      setValue(`${serverConfig}.client_cert_value`, '');
+      setValue(`${serverConfig}.client_key_value`, '');
+    }
+  }
 
   return (
     <Drawer title={t('ldap-drawer.title', 'Advanced settings')} onClose={onClose}>
@@ -85,7 +108,7 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
             id="port"
             placeholder="389"
             type="number"
-            {...register('settings.config.servers.0.port', { valueAsNumber: true })}
+            {...register(`${serverConfig}.port`, { valueAsNumber: true })}
           />
         </Field>
         <Field
@@ -99,7 +122,7 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
             id="timeout"
             placeholder="10"
             type="number"
-            {...register('settings.config.servers.0.timeout', { valueAsNumber: true })}
+            {...register(`${serverConfig}.timeout`, { valueAsNumber: true })}
           />
         </Field>
       </CollapsableSection>
@@ -111,19 +134,19 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
           </Trans>
         </Text>
         <Field label={t('ldap-drawer.attributes-section.name.label', 'Name')}>
-          <Input id={nameId} {...register('settings.config.servers.0.attributes.name')} />
+          <Input id={nameId} {...register(`${serverConfig}.attributes.name`)} />
         </Field>
         <Field label={t('ldap-drawer.attributes-section.surname.label', 'Surname')}>
-          <Input id={surnameId} {...register('settings.config.servers.0.attributes.surname')} />
+          <Input id={surnameId} {...register(`${serverConfig}.attributes.surname`)} />
         </Field>
         <Field label={t('ldap-drawer.attributes-section.username.label', 'Username')}>
-          <Input id={usernameId} {...register('settings.config.servers.0.attributes.username')} />
+          <Input id={usernameId} {...register(`${serverConfig}.attributes.username`)} />
         </Field>
         <Field label={t('ldap-drawer.attributes-section.member-of.label', 'Member Of')}>
-          <Input id={memberOfId} {...register('settings.config.servers.0.attributes.member_of')} />
+          <Input id={memberOfId} {...register(`${serverConfig}.attributes.member_of`)} />
         </Field>
         <Field label={t('ldap-drawer.attributes-section.email.label', 'Email')}>
-          <Input id={emailId} {...register('settings.config.servers.0.attributes.email')} />
+          <Input id={emailId} {...register(`${serverConfig}.attributes.email`)} />
         </Field>
       </CollapsableSection>
       <CollapsableSection label={groupMappingsLabel} isOpen={true}>
@@ -135,7 +158,7 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
             'Prevent synchronizing users’ organization roles from your IdP'
           )}
         >
-          <Switch id="skip-org-role-sync" {...register('settings.config.servers.0.skip_org_role_sync')} />
+          <Switch id="skip-org-role-sync" {...register(`${serverConfig}.skip_org_role_sync`)} />
         </Field>
         <Field
           htmlFor="group-search-filter"
@@ -145,7 +168,7 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
             'Used to filter and identify group entries within the directory'
           )}
         >
-          <Input id="group-search-filter" {...register('settings.config.servers.0.group_search_filter')} />
+          <Input id="group-search-filter" {...register(`${serverConfig}.group_search_filter`)} />
         </Field>
         <Field
           htmlFor="group-search-base-dns"
@@ -158,7 +181,7 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
           <Input
             id="group-search-base-dns"
             onChange={({ currentTarget: { value } }) =>
-              setValue('settings.config.servers.0.group_search_base_dns', [value])
+              setValue(`${serverConfig}.group_search_base_dns`, [value])
             }
           />
         </Field>
@@ -175,7 +198,7 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
         >
           <Input
             id="group-search-filter-user-attribute"
-            {...register('settings.config.servers.0.group_search_filter_user_attribute')}
+            {...register(`${serverConfig}.group_search_filter_user_attribute`)}
           />
         </Field>
         <Divider />
@@ -192,13 +215,13 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
           )}
         >
           <Stack>
-            <Switch id="use-ssl" {...register('settings.config.servers.0.use_ssl')} />
+            <Switch id="use-ssl" {...register(`${serverConfig}.use_ssl`)} />
             <Tooltip content={useTlsDescription} interactive>
               <Icon name="info-circle" />
             </Tooltip>
           </Stack>
         </Field>
-        {watch('settings.config.servers.0.use_ssl') && (
+        {watch(`${serverConfig}.use_ssl`) && (
           <>
             <Field
               label={t('ldap-drawer.extra-security-section.start-tls.label', 'Start TLS')}
@@ -207,7 +230,7 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
                 'If set to true, use LDAP with STARTTLS instead of LDAPS'
               )}
             >
-              <Switch id="start-tls" {...register('settings.config.servers.0.start_tls')} />
+              <Switch id="start-tls" {...register(`${serverConfig}.start_tls`)} />
             </Field>
             <Field
               htmlFor="min-tls-version"
@@ -220,8 +243,8 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
               <Select
                 id="min-tls-version"
                 options={tlsOptions}
-                value={watch('settings.config.servers.0.min_tls_version')}
-                onChange={({ value }) => setValue('settings.config.servers.0.min_tls_version', value)}
+                value={watch(`${serverConfig}.min_tls_version`)}
+                onChange={({ value }) => setValue(`${serverConfig}.min_tls_version`, value)}
               />
             </Field>
             <Field
@@ -237,10 +260,10 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
                   'ldap-drawer.extra-security-section.tls-ciphers.placeholder',
                   'e.g. ["TLS_AES_256_GCM_SHA384"]'
                 )}
-                value={watch('settings.config.servers.0.tls_ciphers')}
+                value={watch(`${serverConfig}.tls_ciphers`) || ''}
                 onChange={({ currentTarget: { value } }) =>
                   setValue(
-                    'settings.config.servers.0.tls_ciphers',
+                    `${serverConfig}.tls_ciphers`,
                     value?.split(/,|\s/).map((v: string) => v.trim())
                   )
                 }
@@ -259,13 +282,71 @@ export const LdapDrawerComponent = ({ onClose }: Props) => {
               <RadioButtonGroup
                 id="encryption-provider"
                 options={[
-                  { label: t('', 'Base64-encoded content'), value: false },
-                  { label: t('', 'Path to files'), value: true },
+                  { label: t('ldap-drawer.extra-security-section.encryption-provider.base-64', 'Base64-encoded content'), value: EncryptionProvider.Base64 },
+                  { label: t('ldap-drawer.extra-security-section.encryption-provider.file-path', 'Path to files'), value: EncryptionProvider.FilePath },
                 ]}
                 value={encryptionProvider}
-                onChange={() => setEncryptionProvider(!encryptionProvider)}
-              ></RadioButtonGroup>
+                onChange={onEncryptionProviderChange}
+              />
             </Field>
+            {encryptionProvider === EncryptionProvider.Base64 && (
+              <>
+                <Field
+                  label={t('ldap-drawer.extra-security-section.root-ca-cert-value.label', 'Root CA certificate content')}
+                >
+                  <MultiSelect
+                    id="root-ca-cert"
+                    allowCustomValue
+                    onChange={values => setValue(`${serverConfig}.root_ca_cert_value`, values.map(({value}) => value as string))}
+                    value={watch(`${serverConfig}.root_ca_cert_value`).map(v => ({label: v, value: v}))}
+                  />
+                </Field>
+                <Field
+                  label={t('ldap-drawer.extra-security-section.client-cert-value.label', 'Client certificate content')}
+                >
+                  <Input
+                    id="client-cert"
+                    placeholder={t('ldap-drawer.extra-security-section.client-cert-value.placeholder', 'Client certificate content in base64')}
+                    {...register(`${serverConfig}.client_cert_value`)} />
+                </Field>
+                <Field
+                  label={t('ldap-drawer.extra-security-section.client-key-value.label', 'Client key content')}
+                >
+                  <Input
+                    id="client-key"
+                    placeholder={t('ldap-drawer.extra-security-section.client-key-value.placeholder', 'Client key content in base64')}
+                    {...register(`${serverConfig}.client_key_value`)} />
+                </Field>
+              </>
+            )}
+            {encryptionProvider === EncryptionProvider.FilePath && (
+              <>
+                <Field
+                  label={t('ldap-drawer.extra-security-section.root-ca-cert.label', 'Root CA certificate path')}
+                >
+                  <Input
+                    id="root-ca-cert"
+                    placeholder={t('ldap-drawer.extra-security-section.root-ca-cert.placeholder', '/path/to/root_ca_cert.pem')}
+                    {...register(`${serverConfig}.root_ca_cert`)} />
+                </Field>
+                <Field
+                  label={t('ldap-drawer.extra-security-section.client-cert.label', 'Client certificate path')}
+                >
+                  <Input
+                    id="client-cert"
+                    placeholder={t('ldap-drawer.extra-security-section.client-cert.placeholder', '/path/to/client_cert.pem')}
+                    {...register(`${serverConfig}.client_cert`)} />
+                </Field>
+                <Field
+                  label={t('ldap-drawer.extra-security-section.client-key.label', 'Client key path')}
+                >
+                  <Input
+                    id="client-key"
+                    placeholder={t('ldap-drawer.extra-security-section.client-key.placeholder', '/path/to/client_key.pem')}
+                    {...register(`${serverConfig}.client_key`)} />
+                </Field>
+              </>
+            )}
           </>
         )}
       </CollapsableSection>

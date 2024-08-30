@@ -55,7 +55,7 @@ const emptySettings: LdapPayload = {
           min_tls_version: '',
           port: 389,
           root_ca_cert: '',
-          root_ca_cert_value: '',
+          root_ca_cert_value: [],
           search_base_dns: [],
           search_filter: '',
           skip_org_role_sync: false,
