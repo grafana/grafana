@@ -59,6 +59,7 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
   private _activationHandler() {
     if (this.state.variableName) {
       this._subs.add(this.subscribeToState((newState, prevState) => this._handleGridResize(newState, prevState)));
+      this._prevRepeatValues = undefined;
       this._performRepeat();
     }
 
