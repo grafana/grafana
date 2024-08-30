@@ -1885,6 +1885,18 @@
     },
     {
       "metadata": {
+        "name": "newFiltersUI",
+        "resourceVersion": "1724228641625",
+        "creationTimestamp": "2024-08-21T08:24:01Z"
+      },
+      "spec": {
+        "description": "Enables new combobox style UI for the Ad hoc filters variable in scenes architecture",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "newFolderPicker",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-01-15T11:43:19Z"

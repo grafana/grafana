@@ -25,20 +25,6 @@ export function usePluginExtensions(options: GetPluginExtensionsOptions): UsePlu
   return singleton(options);
 }
 
-export function usePluginLinks(options: GetPluginExtensionsOptions): {
-  links: PluginExtensionLink[];
-  isLoading: boolean;
-} {
-  const { extensions, isLoading } = usePluginExtensions(options);
-
-  return useMemo(() => {
-    return {
-      links: extensions.filter(isPluginExtensionLink),
-      isLoading,
-    };
-  }, [extensions, isLoading]);
-}
-
 /**
  * @deprecated Use usePluginLinks() instead.
  */
