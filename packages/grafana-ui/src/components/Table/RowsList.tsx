@@ -405,7 +405,7 @@ export const RowsList = (props: RowsListProps) => {
     <>
       <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true} scrollTop={scrollTop}>
         <VariableSizeList
-          // This component needs an unmount/remount when row height or page changes
+          // This component needs an unmount/remount when row height, page changes, or expanded rows change
           key={`${rowHeight}${pageIndex}${expandedKey}`}
           height={listHeight}
           itemCount={itemCount}
