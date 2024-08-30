@@ -185,9 +185,18 @@ describe('usePluginExtensions()', () => {
 
     // Check if it returns the same extensions object in case nothing changes
     const context = {};
-    const firstResults = renderHook(() => usePluginExtensions({ extensionPointId, context }));
-    const secondResults = renderHook(() => usePluginExtensions({ extensionPointId, context }));
-    expect(firstResults.result.current.extensions === secondResults.result.current.extensions).toBe(true);
+    const { rerender, result } = renderHook(usePluginExtensions, {
+      initialProps: {
+        extensionPointId,
+        context,
+      },
+    });
+    const firstResult = result.current;
+
+    rerender({ context, extensionPointId });
+    const secondResult = result.current;
+
+    expect(firstResult.extensions).toBe(secondResult.extensions);
   });
 
   it('should return a new extensions object if the context object is different', () => {
