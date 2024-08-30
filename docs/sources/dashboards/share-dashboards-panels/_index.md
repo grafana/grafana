@@ -54,6 +54,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/create-reports/#create-or-update-a-report
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/create-reports/#create-or-update-a-report
+  image-rendering:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#configuration
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#configuration
 ---
 
 # Share dashboards and panels
@@ -91,15 +96,15 @@ When you share a dashboard externally as a link or by email, those dashboards ar
 
 ### Share an internal link
 
-Customize and share a personalized, direct link to your dashboard within your organization by following these steps:
+To share a customized, direct link to your dashboard within your organization, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Click the dashboard you want to share.
 1. Click the **Share** drop-down list in the top-right corner and select **Share internally**.
 1. (Optional) In the **Share internally** drawer that opens, set the following options:
-   - **Lock time range** - Change the current relative time range to an absolute time range. Enabled by default.
-   - **Shorten link** - Shorten the dashboard link. Enabled by default.
-1. Select the theme for the dashboard. Choose from: **Current**, **Dark**, or **Light**.
+   - **Lock time range** - Change the current relative time range to an absolute time range. This option is enabled by default.
+   - **Shorten link** - Shorten the dashboard link. This option is enabled by default.
+1. Select the theme for the dashboard. Choose from **Current**, **Dark**, or **Light**.
 1. Click **Copy link**.
 1. Send the copied link to a Grafana user with authorization to view the link.
 1. Click the **X** at the top-right corner to close the share drawer.
@@ -173,6 +178,10 @@ To share your dashboard with anyone as a snapshot, follow these steps:
 To delete existing snapshots, follow these steps:
 
 1. Navigate to **Dashboards > Snapshots** in the main menu.
+1. To confirm which snapshot you're about to delete, click **View** on the snapshot row.
+
+   The URLs for panel and dashboard snapshots from the same dashboard look similar and viewing them first can help you distinguish them.
+
 1. Click the red **x** next to the snapshot that you want to delete.
 
 The snapshot is immediately deleted. You might need to clear your browser cache or use a private or incognito browser to confirm this.
@@ -220,25 +229,27 @@ You can share a panels in the following ways:
 - [As a snapshot](#panel-snapshot)
 - [As a library panel](#share-a-library-panel)
 
+<!--Should library panel still be here since it's not in a Share modal anymore and we have a whole page for this? -->
+
 ### Share an internal link
 
-Share a personalized, direct link to your panel within your organization.
+To share a personalized, direct link to your panel within your organization, follow these steps:
 
 1. Hover over any part of the panel you want to share to display the actions menu on the top right corner.
 1. Click the menu and select **Share link**.
-1. (Optional) Set the following options:
+1. (Optional) In the **Link settings** drawer that opens, set the following options:
    - **Lock time range** - Change the current relative time range to an absolute time range. This option is enabled by default.
-   - **Shorten link** - Shorten the dashboard link. This option is disabled by default.
-1. Select the **Current**, **Dark**, or **Light** theme for the dashboard.
+   - **Shorten link** - Shorten the panel link. This option is disabled by default.
+1. Select the theme for the dashboard. Choose from **Current**, **Dark**, or **Light**.
 1. Do one or both of the following:
    - Click **Copy link**.
-   - [Click **Render image**.](ref:image-rendering)
-1. Send the copied link to a Grafana user with authorization to view the link.
+   - [Click **Render image**.](ref:image-rendering) - Renders the panel as a PNG image.
+1. Send the copied link or image URL to a Grafana user with authorization to view it.
 1. Click the **X** at the top-right corner to close the share drawer.
 
 #### Query string parameters for server-side rendered images
 
-When you click **Render image** in the panel link settings, Grafana generates a .png image of the panel with the following default parameters:
+When you click **Render image** in the panel link settings, Grafana generates a PNG image of the panel with the following default parameters:
 
 - **width:** Width in pixels. Default is 800.
 - **height:** Height in pixels. Default is 400.
@@ -246,7 +257,7 @@ When you click **Render image** in the panel link settings, Grafana generates a 
 - **timeout:** Number of seconds. The timeout can be increased if the query for the panel needs more than the default 30 seconds.
 - **scale:** Numeric value to configure device scale factor. Default is 1. Use a higher value to produce more detailed images (higher DPI). Supported in Grafana v7.0+.
 
-<!--how do you update these params? -->
+You can also update these parameters in the [image rendering configuration](ref:image-rendering-config).
 
 The following example shows a link to a server-side rendered PNG:
 
@@ -264,13 +275,18 @@ You can share a panel by embedding it on another website using an iframe. Users 
 As of Grafana 8.0, anonymous access permission is no longer available for Grafana Cloud.
 {{< /admonition >}}
 
-1. Hover over any part of the panel you want to share to display the actions menu on the top right corner.
+To create a panel that can be embedded, follow these steps:
+
+1. Hover over any part of the panel you want to share to display the actions menu on the top-right corner.
 1. Click the menu and select **Share embed**.
-1. (Optional) Toggle the **Time range** switch to set whether the panel uses the current relative time range to an absolute time range. This option is enabled by default.
-1. Select the **Current**, **Dark**, or **Light** theme for the dashboard.
+
+   The **Share embed** drawer opens.
+
+1. (Optional) Toggle the **Lock time range** switch to set whether the panel uses the current relative time range or an absolute time range. This option is enabled by default.
+1. Select the theme for the dashboard. Choose from **Current**, **Dark**, or **Light**.
 <!-- Can you make changes to the HTML here? -->
 1. Click **Copy to clipboard**.
-1. Paste the HTML code into the website code.
+1. Paste the HTML code into your website code.
 1. Click the **X** at the top-right corner to close the share drawer.
 
 Here's an example of what the HTML code might look like:
@@ -300,9 +316,9 @@ To see the other snapshots shared from your organization, navigate to **Dashboar
 
 To share your panel with anyone as a snapshot, follow these steps:
 
-1. Hover over any part of the panel you want to share to display the actions menu on the top right corner.
+1. Hover over any part of the panel you want to share to display the actions menu on the top-right corner.
 1. Click the menu and select **Share snapshot**.
-1. Enter a name for the snapshot.
+1. In the **Share snapshot** drawer that opens, enter a descriptive title for the snapshot in the **Snapshot name** field.
 1. Select one of the following expiration options for the snapshot:
    - **1 Hour**
    - **1 Day**
@@ -319,15 +335,20 @@ To share your panel with anyone as a snapshot, follow these steps:
 
 To delete existing snapshots, follow these steps:
 
-1. Click **Dashboards** in the main menu.
-1. Click **Snapshots** to go to the snapshots management page.
+1. Navigate to **Dashboards > Snapshots** in the main menu.
+1. To confirm which snapshot you're about to delete, click **View** on the snapshot row.
+
+   The URLs for panel and dashboard snapshots from the same dashboard look similar and viewing them first can help you distinguish them.
+
 1. Click the red **x** next to the snapshot URL that you want to delete.
 
 The snapshot is immediately deleted. You may need to clear your browser cache or use a private or incognito browser to confirm this.
 
 ### Share a library panel
 
-To create a library panel from the **Share Panel** dialog:
+<!--since this isn't in the share options, should it really be on this page anymore? -->
+
+Library panels can be reused in different dashboards throughout Grafana. To create a library panel, follow these steps:
 
 1. In the top-right corner of the dashboard, click **Edit**.
 1. Hover over any part of the panel you want to share to display the actions menu on the top right corner.
