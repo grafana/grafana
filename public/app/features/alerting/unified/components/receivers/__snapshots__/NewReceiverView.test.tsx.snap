@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`should be able to test and save a receiver 1`] = `
+exports[`alerting API server disabled should be able to test and save a receiver 1`] = `
 [
   {
     "alert": {
@@ -32,7 +32,7 @@ exports[`should be able to test and save a receiver 1`] = `
 ]
 `;
 
-exports[`should be able to test and save a receiver 2`] = `
+exports[`alerting API server disabled should be able to test and save a receiver 2`] = `
 [
   {
     "alertmanager_config": {
