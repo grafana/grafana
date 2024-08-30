@@ -464,7 +464,7 @@
     "name": "area/alerting",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/52/"
+      "url": "https://github.com/orgs/grafana/projects/52"
     }
   },
   {
@@ -552,7 +552,7 @@
     "name": "area/provisioning",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/52/"
+      "url": "https://github.com/orgs/grafana/projects/52"
     }
   },
   {
@@ -808,7 +808,7 @@
     "name": "area/backend/db/postgres",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/96/"
+      "url": "https://github.com/orgs/grafana/projects/96"
     }
   },
   {
@@ -944,7 +944,7 @@
     "name": "datasource/TestDataDB",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/76/"
+      "url": "https://github.com/orgs/grafana/projects/76"
     }
   },
   {
@@ -992,7 +992,7 @@
     "name": "datasource/Alertmanager",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/52/"
+      "url": "https://github.com/orgs/grafana/projects/52"
     }
   },
   {
