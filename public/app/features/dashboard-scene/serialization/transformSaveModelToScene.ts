@@ -95,7 +95,15 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
           // commit previous row panels
           panels.push(createRowFromPanelModel(currentRow, currentRowPanels));
 
-          currentRow = panel;
+          if (Boolean(panel.collapsed)) {
+            // collapsed rows contain their panels within the row model
+            panels.push(createRowFromPanelModel(panel, []));
+            currentRow = null;
+          } else {
+            // indicate new row to be processed
+            currentRow = panel;
+          }
+
           currentRowPanels = [];
         }
       }
