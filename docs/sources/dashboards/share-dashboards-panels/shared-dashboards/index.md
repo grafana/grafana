@@ -71,25 +71,29 @@ You can also click the name of the dashboard to navigate to the dashboard intern
 Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud).
 {{< /admonition >}}
 
-To share with specific external users, you can send them a link by email. Use this option when you only want to share your dashboard with specific people instead of anyone who navigates to the link. When you use email sharing, recipients receive a one-time use link that's valid for **one hour**. Once the link is used, the viewer has access to the shared dashboard for **30 days**.
+To share a dashboard with specific external users, you can send them a link by email. Use this option when you only want to share your dashboard with specific people instead of anyone who navigates to the link. When you use email sharing, recipients receive a one-time use link that's valid for **one hour**. Once the link is used, the viewer has access to the shared dashboard for **30 days**.
 
 When you share a dashboard with an email link, your organization is billed per user for the duration of the 30-day token, regardless of how many dashboards are shared. Billing stops after 30 days unless you renew the token.
 
+To share a dashboard with specific people, follow these steps:
+
 1. Click **Dashboards** in the main menu.
 1. Click the dashboard you want to share.
-1. Click the **Share** drop-down in the top-right corner and select **Share externally**.
-1. In the **Link access** drop-down, select **Only specific people**.
+1. Click the **Share** drop-down list in the top-right corner and select **Share externally**.
+
+   The **Share externally** drawer opens.
+
+1. In the **Link access** drop-down list, select **Only specific people**.
 1. Click the checkbox confirming that you understand payment is required to add users.
 1. Click **Accept**.
-1. In the **Invite** field, enter the email address of the person you want to invite and click **Invite**.
+1. In the **Invite** field, enter the email address of the person you want to invite and click **Invite** and repeat this process for all the people you want to invite.
 
    You can only invite one person at a time.
 
 1. (Optional) Set the following options:
    - **Enable time range** - Allow people accessing the link to change the time range. This configuration screen shows the default time range of the dashboard.
    - **Display annotations** - Allow people accessing the link to view the dashboard annotations.
-1. Click **Copy external link**.
-1. Send the copied URL to any external user.
+1. (Optional) Click **Copy external link** and send the copied URL to any external user.
 1. Click the **X** at the top-right corner to close the share drawer.
 
 ### Viewers requesting access
@@ -100,47 +104,58 @@ If a viewer without access tries to navigate to the shared dashboard, they'll be
 
 You can revoke access to the entire dashboard using the steps in [Update access to an external dashboard link](#update-access-to-an-external-dashboard-link), but you can also revoke access to the dashboard for specific people.
 
+To revoke access for a viewer, follow these steps:
+
 1. Click **Dashboards** in the main menu.
 1. Click the dashboard you want to share.
-1. Click the **Share** drop-down in the top-right corner and select **Share externally**.
-1. Click the menu icon (three dots) next to the email address of the viewer for whom you'd like to revoke access.
+1. Click the **Share** drop-down list in the top-right corner and select **Share externally**.
+1. In the **Share externally** drawer that opens, click the menu icon (three dots) next to the email address of the viewer for whom you'd like to revoke access.
 1. Click **Revoke access**.
+1. Click the **X** at the top-right corner to close the share drawer.
 
 The viewer immediately no longer has access to the dashboard, nor can they use any existing one-time use links they may have.
 
 ### Re-invite a viewer
 
+To re-invite a viewer, follow these steps:
+
 1. Click **Dashboards** in the main menu.
 1. Click the dashboard you want to share.
-1. Click the **Share** drop-down in the top-right corner and select **Share externally**.
-1. Click the menu icon (three dots) next to the email address of the viewer you'd like to invite again.
+1. Click the **Share** drop-down list in the top-right corner and select **Share externally**.
+1. In the **Share externally** drawer that opens, click the menu icon (three dots) next to the email address of the viewer you'd like to invite again.
 1. Click **Resend invite**.
+1. Click the **X** at the top-right corner to close the share drawer.
 
 The viewer receives an email with a new one-time use link. This invalidates all previously issued links for that viewer.
 
 ### View shared dashboard users
 
-To see a list of users who have accessed your externally shared dashboard by way of email sharing, take the following steps:
+To see a list of users who have accessed your externally shared dashboard by way of email sharing, follow these steps:
 
-1. In the main menu, click **Administration**.
+1. Click **Administration** in in the main menu.
 1. Select **Users and access** > **Users**.
 1. On the **Users** page, click the **Shared dashboard users** tab.
 
-From here, you can see the earliest time a user has been active in a dashboard, when they last accessed a shared dashboard, which dashboards they have access to, and their role. You can also revoke a user's access to all shared dashboards on from this tab.
+On this screen, you can see:
 
-<!-- maybe an image here? -->
+- The earliest time a user has been active in a dashboard
+- When they last accessed a shared dashboard
+- The dashboards to they have access
+- Their role
+
+You can also revoke a user's access to all shared dashboards on from this tab.
 
 ### Access limitations
 
 One-time use links use browser cookies, so when a viewer is granted access through one of these links, they'll only have access on the browser they used to claim the link.
 
-A single viewer can't generate multiple valid one-time use links. When a new one-time use link is issued for a viewer, all previous ones are invalidated.
+A single viewer can't generate multiple valid one-time use links for a dashboard. When a new one-time use link is issued for a viewer, all previous ones are invalidated.
 
 If a Grafana user has read access to the parent dashboard, they can view the externally shared dashboard without needing to have access granted.
 
 ## Share externally to anyone with a link
 
-To share your dashboard so that anyone with the link can access it, follow these steps.
+To share your dashboard so that anyone with the link can access it, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Click the dashboard you want to share.
@@ -154,8 +169,9 @@ To share your dashboard so that anyone with the link can access it, follow these
 1. (Optional) Set the following options:
    - **Enable time range** - Allow people accessing the link to change the time range. This configuration screen shows the default time range of the dashboard.
    - **Display annotations** - Allow people accessing the link to view the dashboard annotations.
-1. Now anyone with the link can access the dashboard until you pause or revoke access to it.
 1. Click the **X** at the top-right corner to close the share drawer.
+
+Now anyone with the link can access the dashboard until you pause or revoke access to it.
 
 Once you've shared a dashboard externally, a **Public** label is displayed in the header of the dashboard.
 
@@ -165,14 +181,12 @@ You can update the access to externally shared dashboard links by following thes
 
 1. Click **Dashboards** in the main menu.
 1. Click the dashboard you want to share.
-1. Click the **Share** drop-down in the top-right corner and select **Share externally**.
-1. Do one of the following:
+1. Click the **Share** drop-down list in the top-right corner and select **Share externally**.
+1. In the **Share externally** drawer that opens, do one of the following:
    - Click **Pause access** so that people can't access the dashboard, but the link is maintained.
    - Click **Resume access** so that people can access the dashboard again.
    - Click **Revoke access** so that people can't access the dashboard unless a new external link is generated. Confirm that you want to revoke the link.
 1. Click the **X** at the top-right corner to close the share drawer.
-
-The link no longer works. You must create a new external link, as in [Share externally to anyone with a link](#share-externally-to-anyone-with-a-link).
 
 ## Assess shared dashboard usage
 
@@ -182,9 +196,7 @@ Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/d
 
 You can check usage analytics about your externally shared dashboard by clicking the insights icon in the dashboard header:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-insights-11.2.png" max-width="400px" class="docs-image--no-shadow" alt="Dashboard insights icon" >}}
-
-<!--image to be updated -->
+![Dashboard insights icon](/media/docs/grafana/dashboards/screenshot-dashboard-insights-icon-11.2.png)
 
 Learn more about the kind of information provided in the [dashboard insights documentation](ref:dashboard-insights-documentation).
 
