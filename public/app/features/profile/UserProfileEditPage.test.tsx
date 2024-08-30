@@ -3,7 +3,7 @@ import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event'
 
 import { OrgRole, PluginExtensionComponent, PluginExtensionTypes } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { setPluginLinksHook, UsePluginExtensions } from '@grafana/runtime';
+import { setPluginExtensionsHook, UsePluginExtensions } from '@grafana/runtime';
 import * as useQueryParams from 'app/core/hooks/useQueryParams';
 
 import { TestProvider } from '../../../test/helpers/TestProvider';
@@ -179,7 +179,7 @@ async function getTestContext(overrides: Partial<Props & { extensions: PluginExt
     .fn()
     .mockReturnValue({ extensions, isLoading: false });
 
-  setPluginLinksHook(getter);
+  setPluginExtensionsHook(getter);
 
   const props = { ...defaultProps, ...overrides };
   const { rerender } = render(
