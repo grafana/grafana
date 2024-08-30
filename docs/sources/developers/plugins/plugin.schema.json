@@ -662,7 +662,8 @@
             "properties": {
               "id": {
                 "type": "string",
-                "description": "A unique identifier for your extension point. This is used to reference the extension point in other plugins."
+                "description": "A unique identifier for your extension point. This is used to reference the extension point in other plugins. It must be in the following format: '{PLUGIN_ID}/name-of-my-extension-point/v1'.",
+                "pattern": "^[0-9a-z]+-([0-9a-z]+-)?(app|panel|datasource|secretsmanager)\\/[a-zA-Z0-9_-]+\\/v[0-9_.-]+$"
               },
               "title": {
                 "type": "string",
