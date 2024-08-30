@@ -203,6 +203,9 @@
       "recording-rule": "Recording rule"
     },
     "rules": {
+      "add-rule": {
+        "success": "Rule added successfully"
+      },
       "delete-rule": {
         "success": "Rule successfully deleted"
       },
@@ -211,6 +214,9 @@
       },
       "resume-rule": {
         "success": "Rule evaluation resumed"
+      },
+      "update-rule": {
+        "success": "Rule updated successfully"
       }
     }
   },
@@ -225,6 +231,12 @@
   "api-keys": {
     "empty-state": {
       "message": "No API keys found"
+    }
+  },
+  "bookmarks-page": {
+    "empty": {
+      "message": "It looks like you haven’t created any bookmarks yet",
+      "tip": "Hover over any item in the nav menu and click on the bookmark icon to add it here."
     }
   },
   "bouncing-loader": {
@@ -345,6 +357,7 @@
     }
   },
   "common": {
+    "cancel": "Cancel",
     "locale": {
       "default": "Default"
     },
@@ -697,7 +710,7 @@
   "embed": {
     "share": {
       "time-range-description": "Change the current relative time range to an absolute time range",
-      "time-range-label": "Time range"
+      "time-range-label": "Lock time range"
     }
   },
   "explore": {
@@ -977,6 +990,139 @@
       "refresh": "Refresh"
     }
   },
+  "ldap-drawer": {
+    "attributes-section": {
+      "description": "Specify the LDAP attributes that map to the user&lsquo;s given name, surname, and email address, ensuring the application correctly retrieves and displays user information.",
+      "email": {
+        "label": "Email"
+      },
+      "label": "Attributes",
+      "member-of": {
+        "label": "Member Of"
+      },
+      "name": {
+        "label": "Name"
+      },
+      "surname": {
+        "label": "Surname"
+      },
+      "username": {
+        "label": "Username"
+      }
+    },
+    "extra-security-section": {
+      "label": "Extra security measures",
+      "min-tls-version": {
+        "description": "This is the minimum TLS version allowed. Accepted values are: TLS1.2, TLS1.3.",
+        "label": "Min TLS version"
+      },
+      "start-tls": {
+        "description": "If set to true, use LDAP with STARTTLS instead of LDAPS",
+        "label": "Start TLS"
+      },
+      "tls-ciphers": {
+        "description": "List of comma- or space-separated ciphers",
+        "label": "TLS ciphers",
+        "placeholder": "e.g. [\"TLS_AES_256_GCM_SHA384\"]"
+      },
+      "use-ssl": {
+        "description": "Set to true if LDAP server should use TLS connection (either with STARTTLS or LDAPS)",
+        "label": "Use SSL",
+        "tooltip": "For a complete list of supported ciphers and TLS versions, refer to: {\n        <TextLink style={{ fontSize: 'inherit' }} href=\"https://go.dev/src/crypto/tls/cipher_suites.go\" external>\n          https://go.dev/src/crypto/tls/cipher_suites.go\n        </TextLink>}"
+      }
+    },
+    "group-mapping-section": {
+      "description": "Map LDAP groups to Grafana org roles",
+      "group-search-base-dns": {
+        "description": "Separate by commas or spaces",
+        "label": "Group search base DNS"
+      },
+      "group-search-filter": {
+        "description": "Used to filter and identify group entries within the directory",
+        "label": "Group search filter"
+      },
+      "group-search-filter-user-attribute": {
+        "description": "Identifies users within group entries for filtering purposes",
+        "label": "Group name attribute"
+      },
+      "label": "Group mapping",
+      "skip-org-role-sync": {
+        "description": "Prevent synchronizing users’ organization roles from your IdP",
+        "label": "Skip organization role sync"
+      }
+    },
+    "misc-section": {
+      "allow-sign-up": {
+        "descrition": "If not enabled, only existing Grafana users can log in using LDAP",
+        "label": "Allow sign up"
+      },
+      "label": "Misc",
+      "port": {
+        "description": "Default port is 389 without SSL or 636 with SSL",
+        "label": "Port"
+      },
+      "timeout": {
+        "description": "Timeout in seconds for the connection to the LDAP server",
+        "label": "Timeout"
+      }
+    },
+    "title": "Advanced settings"
+  },
+  "ldap-settings-page": {
+    "advanced-settings-section": {
+      "edit": {
+        "button": "Edit"
+      },
+      "subtitle": "Mappings, extra security measures, and more.",
+      "title": "Advanced Settings"
+    },
+    "alert": {
+      "discard-success": "LDAP settings discarded",
+      "error-fetching": "Error fetching LDAP settings",
+      "error-saving": "Error saving LDAP settings",
+      "error-update": "Error updating LDAP settings",
+      "error-validate-form": "Error validating LDAP settings",
+      "feature-flag-disabled": "This page is only accessible by enabling the <1>ssoSettingsLDAP</1> feature flag.",
+      "saved": "LDAP settings saved"
+    },
+    "bind-dn": {
+      "description": "Distinguished name of the account used to bind and authenticate to the LDAP server.",
+      "label": "Bind DN",
+      "placeholder": "example: cn=admin,dc=grafana,dc=org"
+    },
+    "bind-password": {
+      "label": "Bind password"
+    },
+    "buttons-section": {
+      "discard": {
+        "button": "Discard"
+      },
+      "save": {
+        "button": "Save"
+      },
+      "save-and-enable": {
+        "button": "Save and enable"
+      }
+    },
+    "documentation": "documentation",
+    "host": {
+      "description": "Hostname or IP address of the LDAP server you wish to connect to.",
+      "label": "Server host",
+      "placeholder": "example: 127.0.0.1"
+    },
+    "search_filter": {
+      "description": "LDAP search filter used to locate specific entries within the directory.",
+      "label": "Search filter*",
+      "placeholder": "example: cn=%s"
+    },
+    "search-base-dns": {
+      "description": "An array of base dns to search through; separate by commas or spaces.",
+      "label": "Search base DNS *",
+      "placeholder": "example: \"dc=grafana.dc=org\""
+    },
+    "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our {documentation}.",
+    "title": "Basic Settings"
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "Cancel",
@@ -1016,7 +1162,7 @@
   },
   "link": {
     "share": {
-      "config-alert-description": "Updating your settings will modify the default copy link to include these changes.",
+      "config-alert-description": "Updating your settings will modify the default copy link to include these changes. Please note that these settings are saved within your current browser scope.",
       "config-alert-title": "Link configuration",
       "config-description": "Create a personalized, direct link to share your dashboard within your organization, with the following customization settings:",
       "copy-link-button": "Copy link",
@@ -1689,6 +1835,22 @@
     }
   },
   "plugins": {
+    "catalog": {
+      "update-all": {
+        "all-plugins-updated": "All plugins updated!",
+        "available-header": "Available",
+        "button": "Update all",
+        "cloud-update-message": "* It may take a few minutes for the plugins to be available for usage.",
+        "error": "Error updating plugin:",
+        "header": "The following plugins have update available",
+        "installed-header": "Installed",
+        "modal-confirmation": "Update",
+        "modal-dismiss": "Close",
+        "modal-title": "Update Plugins",
+        "name-header": "Name",
+        "update-header": "Update"
+      }
+    },
     "details": {
       "labels": {
         "dependencies": "Dependencies",
@@ -1989,6 +2151,8 @@
   },
   "scopes": {
     "dashboards": {
+      "collapse": "Collapse",
+      "expand": "Expand",
       "loading": "Loading dashboards",
       "noResultsForFilter": "No results found for your query",
       "noResultsForFilterClear": "Clear search",
@@ -2064,12 +2228,12 @@
     "menu": {
       "export-json-title": "Export as JSON",
       "share-externally-title": "Share externally",
-      "share-internally-description": "Advanced settings",
+      "share-internally-description": "Link settings",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"
     },
     "share-button": "Share",
-    "share-button-tooltip": "Copy shortened link"
+    "share-button-tooltip": "Copy link"
   },
   "share-drawer": {
     "confirm-action": {
@@ -2086,7 +2250,7 @@
       "html": "Embed HTML",
       "html-description": "The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled, the user viewing that page need to be signed into Grafana for the graph to load.",
       "info": "Generate HTML for embedding an iframe with this panel.",
-      "time-range": "Time range"
+      "time-range": "Lock time range"
     },
     "export": {
       "back-button": "Back to export config",
@@ -2158,8 +2322,7 @@
     "drawer": {
       "new-library-panel-title": "New library panel",
       "share-embed-title": "Share embed",
-      "share-link-title": "Link settings",
-      "share-snapshot-title": "Share snapshot"
+      "share-link-title": "Link settings"
     },
     "menu": {
       "new-library-panel-title": "New library panel",
@@ -2207,6 +2370,10 @@
       "revoke-button-text": "Revoke access",
       "revoke-button-tooltip": "Revoke access",
       "view-button-tooltip": "View shared dashboard"
+    },
+    "empty-state": {
+      "message": "You haven't created any shared dashboards yet",
+      "more-info": "Create a shared dashboard from any existing dashboard through the <1>Share</1> modal. <4>Learn more</4>"
     },
     "toggle": {
       "pause-sharing-toggle-text": "Pause access"

@@ -2,6 +2,10 @@ name: Generate changelog
 on:
   workflow_call:
     inputs:
+      previous_version:
+        type: string
+        required: false
+        description: 'The release version (semver, git tag, branch or commit) to use for comparison'
       version:
         type: string
         required: true
@@ -26,6 +30,10 @@ on:
 
   workflow_dispatch:
     inputs:
+      previous_version:
+        type: string
+        required: false
+        description: 'The release version (semver, git tag, branch or commit) to use for comparison'
       version:
         type: string
         required: true
@@ -79,6 +87,7 @@ jobs:
         id: changelog
         uses: ./.github/workflows/actions/changelog
         with:
+          previous: ${{ inputs.previous_version }}
           github_token: ${{ steps.generate_token.outputs.token }}
           target: v${{ inputs.version }}
           output_file: changelog_items.md

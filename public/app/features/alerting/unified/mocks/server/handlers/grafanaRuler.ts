@@ -3,6 +3,7 @@ import { delay, http, HttpResponse } from 'msw';
 export const MOCK_GRAFANA_ALERT_RULE_TITLE = 'Test alert';
 
 import {
+  PromRulesResponse,
   RulerGrafanaRuleDTO,
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
@@ -25,6 +26,12 @@ export const rulerRulesHandler = () => {
     }, {});
 
     return HttpResponse.json<RulerRulesConfigDTO>(response);
+  });
+};
+
+export const prometheusRulesHandler = () => {
+  return http.get('/api/prometheus/grafana/api/v1/rules', () => {
+    return HttpResponse.json<PromRulesResponse>({ status: 'success', data: { groups: [] } });
   });
 };
 
@@ -92,10 +99,14 @@ export const rulerRuleGroupHandler = (options?: HandlerOptions) => {
   );
 };
 
-export const deleteRulerRuleGroupHandler = () =>
+export const deleteRulerRuleGroupHandler = (options?: HandlerOptions) =>
   http.delete<{ folderUid: string; groupName: string }>(
     `/api/ruler/grafana/api/v1/rules/:folderUid/:groupName`,
     ({ params: { folderUid } }) => {
+      if (options?.response) {
+        return options.response;
+      }
+
       const namespace = namespaces[folderUid];
       if (!namespace) {
         return new HttpResponse(null, { status: 403 });
@@ -132,6 +143,7 @@ export const historyHandler = () => {
 
 const handlers = [
   rulerRulesHandler(),
+  prometheusRulesHandler(),
   getRulerRuleNamespaceHandler(),
   rulerRuleGroupHandler(),
   rulerRuleHandler(),
