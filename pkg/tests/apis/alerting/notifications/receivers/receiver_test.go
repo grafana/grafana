@@ -280,7 +280,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 
 					t.Run("should fail if already exists", func(t *testing.T) {
 						_, err := client.Create(ctx, newReceiver, v1.CreateOptions{})
-						require.Truef(t, errors.IsBadRequest(err), "expected  bad request but got %s", err)
+						require.Truef(t, errors.IsConflict(err), "expected  bad request but got %s", err)
 					})
 
 					expected = actual
