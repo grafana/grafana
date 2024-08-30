@@ -29,10 +29,10 @@ export function TableCellInspector({ value, onDismiss, mode }: TableCellInspecto
       try {
         value = JSON.parse(value);
         displayValue = JSON.stringify(value, null, ' ');
-      } catch { }
+      } catch {}
     }
   } else {
-    displayValue = JSON.stringify(value, null, ' ');
+    displayValue = JSON.stringify(value, null, '');
   }
   let text = displayValue;
 
