@@ -1,5 +1,5 @@
 import debounce from 'debounce-promise';
-import React, { ChangeEvent } from 'react';
+import { ChangeEvent, useState, useEffect } from 'react';
 import { UseFormSetValue, useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -47,8 +47,8 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
   const { state, onSaveDashboard } = useSaveDashboard(false);
 
-  const [contentSent, setContentSent] = React.useState<{ title?: string; folder?: {} }>({});
-  const [isRefreshed, setIsRefreshed] = React.useState(false);
+  const [contentSent, setContentSent] = useState<{ title?: string; folder?: {} }>({});
+  const [isRefreshed, setIsRefreshed] = useState(false);
   const onSave = async (overwrite: boolean) => {
     const data = getValues();
 
@@ -96,7 +96,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     }
     return normalFooter(error);
   }
-  React.useEffect(() => {
+  useEffect(() => {
     if (Object.keys(contentSent).length === 0) {
       return;
     }
