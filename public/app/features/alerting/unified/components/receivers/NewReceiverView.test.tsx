@@ -4,6 +4,7 @@ import { render, screen } from 'test/test-utils';
 import { byLabelText, byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
+import { makeGrafanaAlertmanagerConfigUpdateFail } from 'app/features/alerting/unified/mocks/server/configure';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { AccessControlAction } from 'app/types';
 
@@ -105,6 +106,20 @@ describe('alerting API server disabled', () => {
 
     expect([testBody]).toMatchSnapshot();
     expect([saveBody]).toMatchSnapshot();
+  });
+
+  it('does not redirect when creating contact point and API errors', async () => {
+    makeGrafanaAlertmanagerConfigUpdateFail();
+    const { user } = renderForm();
+
+    await user.type(await ui.inputs.name.find(), 'receiver that should fail');
+    const email = ui.inputs.email.addresses.get();
+    await user.clear(email);
+    await user.type(email, 'tester@grafana.com');
+
+    await user.click(ui.saveContactButton.get());
+
+    expect(screen.queryByText(/redirected/i)).not.toBeInTheDocument();
   });
 });
 
