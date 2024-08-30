@@ -122,6 +122,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			reqContext.IsSignedIn = !reqContext.SignedInUser.IsAnonymous
 			reqContext.AllowAnonymous = reqContext.SignedInUser.IsAnonymous
 			reqContext.IsRenderCall = id.IsAuthenticatedBy(login.RenderModule)
+			ctx = identity.WithRequester(ctx, id)
 		}
 
 		h.excludeSensitiveHeadersFromRequest(reqContext.Req)
@@ -139,8 +140,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 
 		// End the span to make next handlers not wrapped within middleware span
 		span.End()
-
-		next.ServeHTTP(w, r.WithContext(identity.WithRequester(ctx, id)))
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 

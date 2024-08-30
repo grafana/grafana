@@ -1,26 +1,18 @@
-import type { PluginExposedComponentConfig, PluginExtensionConfig } from '@grafana/data';
-import { PluginAddedComponentConfig } from '@grafana/data/src/types/pluginExtensions';
+import type { PluginExtensionAddedLinkConfig, PluginExtensionExposedComponentConfig } from '@grafana/data';
+import { PluginExtensionAddedComponentConfig } from '@grafana/data/src/types/pluginExtensions';
 import type { AppPluginConfig } from '@grafana/runtime';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
-import { ReactivePluginExtensionsRegistry } from './extensions/reactivePluginExtensionRegistry';
-import { AddedComponentsRegistry } from './extensions/registry/AddedComponentsRegistry';
-import { ExposedComponentsRegistry } from './extensions/registry/ExposedComponentsRegistry';
+import { PluginExtensionRegistries } from './extensions/registry/types';
 import * as pluginLoader from './plugin_loader';
 
 export type PluginPreloadResult = {
   pluginId: string;
   error?: unknown;
-  extensionConfigs: PluginExtensionConfig[];
-  exposedComponentConfigs: PluginExposedComponentConfig[];
-  addedComponentConfigs: PluginAddedComponentConfig[];
-};
-
-type PluginExtensionRegistries = {
-  extensionsRegistry: ReactivePluginExtensionsRegistry;
-  addedComponentsRegistry: AddedComponentsRegistry;
-  exposedComponentsRegistry: ExposedComponentsRegistry;
+  exposedComponentConfigs: PluginExtensionExposedComponentConfig[];
+  addedComponentConfigs?: PluginExtensionAddedComponentConfig[];
+  addedLinkConfigs?: PluginExtensionAddedLinkConfig[];
 };
 
 export async function preloadPlugins(
@@ -38,14 +30,17 @@ export async function preloadPlugins(
       continue;
     }
 
-    registries.extensionsRegistry.register(preloadedPlugin);
     registries.exposedComponentsRegistry.register({
       pluginId: preloadedPlugin.pluginId,
       configs: preloadedPlugin.exposedComponentConfigs,
     });
     registries.addedComponentsRegistry.register({
       pluginId: preloadedPlugin.pluginId,
-      configs: preloadedPlugin.addedComponentConfigs,
+      configs: preloadedPlugin.addedComponentConfigs || [],
+    });
+    registries.addedLinksRegistry.register({
+      pluginId: preloadedPlugin.pluginId,
+      configs: preloadedPlugin.addedLinkConfigs || [],
     });
   }
 
@@ -62,16 +57,22 @@ async function preload(config: AppPluginConfig): Promise<PluginPreloadResult> {
       isAngular: config.angular.detected,
       pluginId,
     });
-    const { extensionConfigs = [], exposedComponentConfigs = [], addedComponentConfigs = [] } = plugin;
+    const { exposedComponentConfigs = [], addedComponentConfigs = [], addedLinkConfigs = [] } = plugin;
 
     // Fetching meta-information for the preloaded app plugin and caching it for later.
     // (The function below returns a promise, but it's not awaited for a reason: we don't want to block the preload process, we would only like to cache the result for later.)
     getPluginSettings(pluginId);
 
-    return { pluginId, extensionConfigs, exposedComponentConfigs, addedComponentConfigs };
+    return { pluginId, exposedComponentConfigs, addedComponentConfigs, addedLinkConfigs };
   } catch (error) {
     console.error(`[Plugins] Failed to preload plugin: ${path} (version: ${version})`, error);
-    return { pluginId, extensionConfigs: [], error, exposedComponentConfigs: [], addedComponentConfigs: [] };
+    return {
+      pluginId,
+      error,
+      exposedComponentConfigs: [],
+      addedComponentConfigs: [],
+      addedLinkConfigs: [],
+    };
   } finally {
     stopMeasure(`frontend_plugin_preload_${pluginId}`);
   }
