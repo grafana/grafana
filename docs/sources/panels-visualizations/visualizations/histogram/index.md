@@ -118,19 +118,11 @@ This will merge all series and fields into a combined histogram.
 
 ### Stacking
 
-Controls how multiple series are displayed in the histogram. The three settings are:
+Controls how multiple series are displayed in the histogram. Choose from the following:
 
-#### Off
-
-Series are not stacked, shown side by side.
-
-#### Normal
-
-Series are stacked on top of each other, showing cumulative values.
-
-#### 100%
-
-Stacks series to fill 100% of the chart, showing the relative proportion of each series.
+- **Off** - Series are not stacked, but instead shown side by side.
+- **Normal** - Series are stacked on top of each other, showing cumulative values.
+- **100%** - Series are stacked to fill 100% of the chart, showing the relative proportion of each series.
 
 ### Line width
 
