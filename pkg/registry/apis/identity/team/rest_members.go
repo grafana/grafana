@@ -62,8 +62,6 @@ func (s *LegacyTeamMemberREST) Connect(ctx context.Context, name string, options
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_ = common.PaginationFromListQuery(r.URL.Query())
-
 		res, err := s.store.ListTeamMembers(ctx, ns, legacy.ListTeamMembersQuery{
 			UID:        name,
 			Pagination: common.PaginationFromListQuery(r.URL.Query()),

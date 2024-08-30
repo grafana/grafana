@@ -13,7 +13,7 @@ type Team struct {
 }
 
 type TeamSpec struct {
-	Title string `json:"name,omitempty"`
+	Title string `json:"title,omitempty"`
 	Email string `json:"email,omitempty"`
 }
 

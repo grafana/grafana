@@ -328,8 +328,3 @@ func scanMember(rows *sql.Rows) (TeamMember, error) {
 	err := rows.Scan(&m.ID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Name, &m.Email, &m.Username, &m.External, &m.Created, &m.Updated, &m.Permission)
 	return m, err
 }
-
-// GetUserTeams implements LegacyIdentityStore.
-func (s *legacySQLStore) GetUserTeams(ctx context.Context, ns claims.NamespaceInfo, uid string) ([]team.Team, error) {
-	panic("unimplemented")
-}

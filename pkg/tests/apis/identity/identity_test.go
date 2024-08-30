@@ -69,7 +69,6 @@ func TestIntegrationIdentity(t *testing.T) {
 		rsp, err := teamClient.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
 		found := teamClient.SanitizeJSONList(rsp, "name")
-		// fmt.Printf("%s", found)
 		require.JSONEq(t, `{
       "items": [
         {
@@ -87,7 +86,7 @@ func TestIntegrationIdentity(t *testing.T) {
           },
           "spec": {
             "email": "staff@Org1",
-            "name": "staff"
+            "title": "staff"
           }
         }
       ]

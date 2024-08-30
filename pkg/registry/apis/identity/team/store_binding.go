@@ -150,7 +150,7 @@ func mapToSubjects(members []legacy.TeamMember) []identityv0.TeamSubject {
 	for _, m := range members {
 		out = append(out, identityv0.TeamSubject{
 			Name:       m.MemberID(),
-			Permission: mapPermisson(m.Permission),
+			Permission: common.MapTeamPermission(m.Permission),
 		})
 	}
 	return out

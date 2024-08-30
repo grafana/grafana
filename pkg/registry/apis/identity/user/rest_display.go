@@ -18,57 +18,57 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
-type LegacyDisplayStore struct {
+type LegacyDisplayREST struct {
 	store legacy.LegacyIdentityStore
 }
 
 var (
-	_ rest.Storage              = (*LegacyDisplayStore)(nil)
-	_ rest.SingularNameProvider = (*LegacyDisplayStore)(nil)
-	_ rest.Connecter            = (*LegacyDisplayStore)(nil)
-	_ rest.Scoper               = (*LegacyDisplayStore)(nil)
-	_ rest.StorageMetadata      = (*LegacyDisplayStore)(nil)
+	_ rest.Storage              = (*LegacyDisplayREST)(nil)
+	_ rest.SingularNameProvider = (*LegacyDisplayREST)(nil)
+	_ rest.Connecter            = (*LegacyDisplayREST)(nil)
+	_ rest.Scoper               = (*LegacyDisplayREST)(nil)
+	_ rest.StorageMetadata      = (*LegacyDisplayREST)(nil)
 )
 
-func NewLegacyDisplayStore(store legacy.LegacyIdentityStore) *LegacyDisplayStore {
-	return &LegacyDisplayStore{store}
+func NewLegacyDisplayREST(store legacy.LegacyIdentityStore) *LegacyDisplayREST {
+	return &LegacyDisplayREST{store}
 }
 
-func (r *LegacyDisplayStore) New() runtime.Object {
+func (r *LegacyDisplayREST) New() runtime.Object {
 	return &identity.IdentityDisplayResults{}
 }
 
-func (r *LegacyDisplayStore) Destroy() {}
+func (r *LegacyDisplayREST) Destroy() {}
 
-func (r *LegacyDisplayStore) NamespaceScoped() bool {
+func (r *LegacyDisplayREST) NamespaceScoped() bool {
 	return true
 }
 
-func (r *LegacyDisplayStore) GetSingularName() string {
+func (r *LegacyDisplayREST) GetSingularName() string {
 	// not actually used anywhere, but required by SingularNameProvider
 	return "identitydisplay"
 }
 
-func (r *LegacyDisplayStore) ProducesMIMETypes(verb string) []string {
+func (r *LegacyDisplayREST) ProducesMIMETypes(verb string) []string {
 	return []string{"application/json"}
 }
 
-func (r *LegacyDisplayStore) ProducesObject(verb string) any {
+func (r *LegacyDisplayREST) ProducesObject(verb string) any {
 	return &identity.IdentityDisplayResults{}
 }
 
-func (r *LegacyDisplayStore) ConnectMethods() []string {
+func (r *LegacyDisplayREST) ConnectMethods() []string {
 	return []string{"GET"}
 }
 
-func (r *LegacyDisplayStore) NewConnectOptions() (runtime.Object, bool, string) {
+func (r *LegacyDisplayREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, "" // true means you can use the trailing path as a variable
 }
 
 // This will always have an empty app url
 var fakeCfgForGravatar = &setting.Cfg{}
 
-func (r *LegacyDisplayStore) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (r *LegacyDisplayREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	// See: /pkg/services/apiserver/builder/helper.go#L34
 	// The name is set with a rewriter hack
 	if name != "name" {

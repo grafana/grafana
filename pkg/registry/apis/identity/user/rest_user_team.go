@@ -1,0 +1,101 @@
+package user
+
+import (
+	"context"
+	"net/http"
+
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/registry/rest"
+
+	identityv0 "github.com/grafana/grafana/pkg/apis/identity/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/identity/common"
+	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+)
+
+var (
+	_ rest.Storage         = (*LegacyUserTeamREST)(nil)
+	_ rest.Scoper          = (*LegacyUserTeamREST)(nil)
+	_ rest.StorageMetadata = (*LegacyUserTeamREST)(nil)
+	_ rest.Connecter       = (*LegacyUserTeamREST)(nil)
+)
+
+func NewLegacyTeamMemberREST(store legacy.LegacyIdentityStore) *LegacyUserTeamREST {
+	return &LegacyUserTeamREST{store}
+}
+
+type LegacyUserTeamREST struct {
+	store legacy.LegacyIdentityStore
+}
+
+// New implements rest.Storage.
+func (s *LegacyUserTeamREST) New() runtime.Object {
+	return &identityv0.UserTeamList{}
+}
+
+// Destroy implements rest.Storage.
+func (s *LegacyUserTeamREST) Destroy() {}
+
+// NamespaceScoped implements rest.Scoper.
+func (s *LegacyUserTeamREST) NamespaceScoped() bool {
+	return true
+}
+
+// ProducesMIMETypes implements rest.StorageMetadata.
+func (s *LegacyUserTeamREST) ProducesMIMETypes(verb string) []string {
+	return []string{"application/json"}
+}
+
+// ProducesObject implements rest.StorageMetadata.
+func (s *LegacyUserTeamREST) ProducesObject(verb string) interface{} {
+	return s.New()
+}
+
+// Connect implements rest.Connecter.
+func (s *LegacyUserTeamREST) Connect(ctx context.Context, name string, options runtime.Object, responder rest.Responder) (http.Handler, error) {
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		res, err := s.store.ListUserTeams(ctx, ns, legacy.ListUserTeamsQuery{
+			UserUID:    name,
+			Pagination: common.PaginationFromListQuery(r.URL.Query()),
+		})
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+
+		list := &identityv0.UserTeamList{Items: make([]identityv0.UserTeam, 0, len(res.Items))}
+
+		for _, m := range res.Items {
+			list.Items = append(list.Items, mapToUserTeam(m))
+		}
+
+		list.ListMeta.Continue = common.OptionalFormatInt(res.Continue)
+
+		responder.Object(http.StatusOK, list)
+	}), nil
+}
+
+// NewConnectOptions implements rest.Connecter.
+func (s *LegacyUserTeamREST) NewConnectOptions() (runtime.Object, bool, string) {
+	return nil, false, ""
+}
+
+// ConnectMethods implements rest.Connecter.
+func (s *LegacyUserTeamREST) ConnectMethods() []string {
+	return []string{http.MethodGet}
+}
+
+func mapToUserTeam(t legacy.UserTeam) identityv0.UserTeam {
+	return identityv0.UserTeam{
+		Title: t.Name,
+		TeamRef: identityv0.TeamRef{
+			Name: t.UID,
+		},
+		Permission: common.MapTeamPermission(t.Permission),
+	}
+}
