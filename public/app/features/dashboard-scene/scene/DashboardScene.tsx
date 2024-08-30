@@ -73,6 +73,7 @@ import {
 } from '../utils/utils';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
+import { isPanelAngularPlugin } from './AngularDeprecation';
 import { DashboardControls } from './DashboardControls';
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
@@ -958,15 +959,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     const sceneGridLayout = this.state.body;
     const gridItems = sceneGridLayout.state.children;
     const dashboardWasAngular = gridItems.some((gridItem) => {
-      let panelGrid = gridItem.state.body.state;
-      const isAngularPanel =
-        (config.panels[panelGrid.pluginId]?.angular?.detected ||
-          explicitlyControlledMigrationPanels.includes(panelGrid.pluginId)) &&
-        !config.panels[panelGrid.pluginId]?.angular?.hideDeprecation;
-
+      let panelGrid = gridItem.state.body;
+      const isAngularPanel = isPanelAngularPlugin(panelGrid);
+      console.log('isAngularPanel from Dashboard Scene', isAngularPanel);
       let isAngularDs = false;
       if (panelGrid.datasource?.uid) {
-        isAngularDs = isAngularDatasourcePluginAndNotHidden(panelGrid.datasource?.uid);
+        isAngularDs = isAngularDatasourcePluginAndNotHidden(panelGrid.state.datasource?.uid);
       }
       return isAngularPanel || isAngularDs;
     });

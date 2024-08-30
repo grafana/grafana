@@ -26,6 +26,7 @@ import { ScopesFacade } from 'app/features/scopes';
 import { DashboardDTO, DashboardDataDTO } from 'app/types';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
+import { AngularDeprecation } from '../scene/AngularDeprecation';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -312,6 +313,9 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
 
   const titleItems: SceneObject[] = [];
 
+  if (config.featureToggles.angularDeprecationUI) {
+    titleItems.push(new AngularDeprecation());
+  }
   titleItems.push(
     new VizPanelLinks({
       rawLinks: panel.links,
