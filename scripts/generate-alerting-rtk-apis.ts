@@ -32,7 +32,6 @@ const config: ConfigFile = {
         'listNamespacedTimeInterval',
         'createNamespacedTimeInterval',
         'deleteNamespacedTimeInterval',
-        'patchNamespacedTimeInterval',
         'replaceNamespacedTimeInterval',
       ],
       exportName: 'generatedTimeIntervalsApi',
@@ -41,7 +40,13 @@ const config: ConfigFile = {
     '../public/app/features/alerting/unified/openapi/receiversApi.gen.ts': {
       apiFile: '../public/app/features/alerting/unified/api/alertingApi.ts',
       apiImport: 'alertingApi',
-      filterEndpoints: ['listNamespacedReceiver'],
+      filterEndpoints: [
+        'listNamespacedReceiver',
+        'createNamespacedReceiver',
+        'readNamespacedReceiver',
+        'deleteNamespacedReceiver',
+        'replaceNamespacedReceiver',
+      ],
       exportName: 'generatedReceiversApi',
       flattenArg: false,
     },

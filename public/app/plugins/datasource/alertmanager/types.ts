@@ -1,5 +1,6 @@
 //DOCS: https://prometheus.io/docs/alerting/latest/configuration/
 import { DataSourceJsonData, WithAccessControlMetadata } from '@grafana/data';
+import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/unified/openapi/receiversApi.gen';
 
 export type AlertManagerCortexConfig = {
   template_files: Record<string, string>;
@@ -65,12 +66,15 @@ export type WebhookConfig = {
   max_alerts?: number;
 };
 
+type GrafanaManagedReceiverConfigSettings<T = any> = Record<string, T>;
 export type GrafanaManagedReceiverConfig = {
   uid?: string;
   disableResolveMessage?: boolean;
   secureFields?: Record<string, boolean>;
-  secureSettings?: Record<string, any>;
-  settings?: Record<string, any>; // sometimes settings are optional for security reasons (RBAC)
+  secureSettings?: GrafanaManagedReceiverConfigSettings;
+  /** If retrieved from k8s API, SecureSettings property name is different */
+  // SecureSettings?: GrafanaManagedReceiverConfigSettings<boolean>;
+  settings: GrafanaManagedReceiverConfigSettings;
   type: string;
   /**
    * Name of the _receiver_, which in most cases will be the
@@ -88,6 +92,10 @@ export type GrafanaManagedReceiverConfig = {
 
 export interface GrafanaManagedContactPoint {
   name: string;
+  /** If parsed from k8s API, we'll have an ID property */
+  id?: string;
+  metadata?: IoK8SApimachineryPkgApisMetaV1ObjectMeta;
+  provisioned?: boolean;
   grafana_managed_receiver_configs?: GrafanaManagedReceiverConfig[];
 }
 

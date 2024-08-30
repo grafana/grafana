@@ -29,6 +29,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "grafana-default-email",
       "name": "grafana-default-email",
       "policies": [
         {
@@ -38,6 +39,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           },
         },
       ],
+      "provisioned": false,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -64,8 +66,10 @@ exports[`useContactPoints should return contact points with status 1`] = `
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "lotsa-emails",
       "name": "lotsa-emails",
       "policies": [],
+      "provisioned": false,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -87,8 +91,10 @@ exports[`useContactPoints should return contact points with status 1`] = `
           },
         },
       ],
+      "id": "OnCall Conctact point",
       "name": "OnCall Conctact point",
       "policies": [],
+      "provisioned": false,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -116,6 +122,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "provisioned-contact-point",
       "name": "provisioned-contact-point",
       "policies": [
         {
@@ -125,6 +132,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           },
         },
       ],
+      "provisioned": true,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -175,8 +183,10 @@ exports[`useContactPoints should return contact points with status 1`] = `
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "Slack with multiple channels",
       "name": "Slack with multiple channels",
       "policies": [],
+      "provisioned": false,
     },
   ],
   "error": undefined,
@@ -213,6 +223,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "grafana-default-email",
       "name": "grafana-default-email",
       "policies": [
         {
@@ -222,6 +233,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           },
         },
       ],
+      "provisioned": false,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -248,8 +260,10 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "lotsa-emails",
       "name": "lotsa-emails",
       "policies": [],
+      "provisioned": false,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -274,8 +288,10 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           },
         },
       ],
+      "id": "OnCall Conctact point",
       "name": "OnCall Conctact point",
       "policies": [],
+      "provisioned": false,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -303,6 +319,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "provisioned-contact-point",
       "name": "provisioned-contact-point",
       "policies": [
         {
@@ -312,6 +329,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           },
         },
       ],
+      "provisioned": true,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -362,8 +380,10 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "Slack with multiple channels",
       "name": "Slack with multiple channels",
       "policies": [],
+      "provisioned": false,
     },
   ],
   "error": undefined,

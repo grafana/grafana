@@ -1,3 +1,4 @@
+import { camelCase } from 'lodash';
 import { HttpResponse, http } from 'msw';
 
 import alertmanagerConfig from 'app/features/alerting/unified/components/contact-points/__mocks__/alertmanager.config.mock.json';
@@ -16,7 +17,11 @@ const mappedReceivers =
         return integration.provenance;
       })?.provenance || PROVENANCE_NONE;
     return {
-      metadata: { annotations: { [PROVENANCE_ANNOTATION]: provenance } },
+      metadata: {
+        // This isn't exactly accurate, but its the cleanest way to use the same data for AM config and K8S responses
+        uid: camelCase(contactPoint.name),
+        annotations: { [PROVENANCE_ANNOTATION]: provenance },
+      },
       spec: {
         title: contactPoint.name,
         integrations: contactPoint.grafana_managed_receiver_configs || [],
@@ -34,5 +39,31 @@ const listNamespacedReceiverHandler = () =>
     return HttpResponse.json(parsedReceivers);
   });
 
-const handlers = [listNamespacedReceiverHandler()];
+const createNamespacedReceiverHandler = () =>
+  http.post<{ namespace: string }>(
+    `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/receivers`,
+    async ({ request }) => {
+      const body = await request.json();
+      return HttpResponse.json(body);
+    }
+  );
+
+const deleteNamespacedReceiverHandler = () =>
+  http.delete<{ namespace: string; name: string }>(
+    `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/receivers/:name`,
+    ({ params }) => {
+      const { name } = params;
+      const matchedReceiver = parsedReceivers.items.find((receiver) => receiver.metadata.uid === name);
+      if (matchedReceiver) {
+        return HttpResponse.json(parsedReceivers);
+      }
+      return HttpResponse.json({}, { status: 404 });
+    }
+  );
+
+const handlers = [
+  listNamespacedReceiverHandler(),
+  createNamespacedReceiverHandler(),
+  deleteNamespacedReceiverHandler(),
+];
 export default handlers;
