@@ -201,7 +201,7 @@
         },
         "exposedComponents": {
           "type": "array",
-          "description": "...",
+          "description": "An array of exposed component ids that this plugin depends on.",
           "items": {
             "type": "string"
           }
@@ -574,28 +574,28 @@
     },
     "extensions": {
       "type": "object",
-      "description": "...",
+      "description": "Plugin extensions are a way to extend either the UI of core Grafana or other plugins.",
       "properties": {
         "addedComponents": {
           "type": "array",
-          "description": "...",
+          "description": "Any component extensions that your plugin registers to extension points.",
           "items": {
             "type": "object",
             "properties": {
               "targets": {
                 "type": "array",
-                "description": "...",
+                "description": "The list of the targeted extension point ids that the component is added to.",
                 "items": {
                   "type": "string"
                 }
               },
               "title": {
                 "type": "string",
-                "description": "..."
+                "description": "An informative title for your component extension."
               },
               "description": {
                 "type": "string",
-                "description": "..."
+                "description": "Additional information about your component extension."
               }
             },
             "required": ["targets", "title"]
@@ -603,24 +603,24 @@
         },
         "addedLinks": {
           "type": "array",
-          "description": "...",
+          "description": "Any link extensions that your plugin registers to extension points.",
           "items": {
             "type": "object",
             "properties": {
               "targets": {
                 "type": "array",
-                "description": "...",
+                "description": "The list of the targeted extension point ids that the link is added to.",
                 "items": {
                   "type": "string"
                 }
               },
               "title": {
                 "type": "string",
-                "description": "..."
+                "description": "An informative title for your link extension."
               },
               "description": {
                 "type": "string",
-                "description": "..."
+                "description": "Additional information about your link extension."
               }
             },
             "required": ["targets", "title"]
@@ -628,21 +628,21 @@
         },
         "exposedComponents": {
           "type": "array",
-          "description": "...",
+          "description": "Any React component that your plugin exposes so it can be reused by other app plugins.",
           "items": {
             "type": "object",
             "properties": {
               "id": {
                 "type": "string",
-                "description": "..."
+                "description": "A unique identifier for your exposed component. This is used to reference the component in other plugins."
               },
               "title": {
                 "type": "string",
-                "description": "..."
+                "description": "An informative title for your exposed component."
               },
               "description": {
                 "type": "string",
-                "description": "..."
+                "description": "Additional information about your exposed component."
               }
             },
             "required": ["id"]
@@ -650,21 +650,21 @@
         },
         "extensionPoints": {
           "type": "array",
-          "description": "...",
+          "description": "Any extension points that your plugin provides.",
           "items": {
             "type": "object",
             "properties": {
               "id": {
                 "type": "string",
-                "description": "..."
+                "description": "A unique identifier for your extension point. This is used to reference the extension point in other plugins."
               },
               "title": {
                 "type": "string",
-                "description": "..."
+                "description": "An informative title for your extension point."
               },
               "description": {
                 "type": "string",
-                "description": "..."
+                "description": "Additional information about your extension point."
               }
             },
             "required": ["id"]
