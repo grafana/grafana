@@ -9,8 +9,12 @@ import { DashboardScene } from '../DashboardScene';
 import { ViewPanelScene } from '../ViewPanelScene';
 import { RowOptionsForm } from '../row-actions/RowOptionsForm';
 
+import { AutomaticGridLayoutManager } from './AutomaticGridLayoutManager';
+import { ManualGridLayoutManager } from './ManualGridLayoutWrapper';
+import { DashboardLayoutManager, LayoutDescriptor } from './types';
+
 interface Props {
-  layout: SceneObject;
+  layout: DashboardLayoutManager;
   scene: DashboardScene;
 }
 
@@ -42,7 +46,7 @@ export function LayoutOptions({ layout, scene }: Props) {
 }
 
 interface LayoutOptionsFormProps {
-  layout: SceneObject;
+  layout: DashboardLayoutManager;
   scene: DashboardScene;
 }
 
@@ -53,69 +57,21 @@ function LayoutOptionsForm({ layout, scene }: LayoutOptionsFormProps) {
     value: layout,
   }));
 
-  const layoutId = getCurrentLayoutId(layout);
-  const currentLayoutOption = options.find((option) => option.value.id === layoutId);
+  const currentLayoutOption = options.find((option) => option.value.id === layout.getLayoutId());
 
   return (
     <Field label="type">
       <Select
         options={options}
         value={currentLayoutOption}
-        onChange={(option) => changeLayoutTo(scene, option.value!)}
+        onChange={(option) => changeLayoutTo(scene, layout, option.value!)}
       />
     </Field>
   );
 }
 
-interface LayoutDescriptor {
-  name: string;
-  id: string;
-  editor: React.ComponentType<LayoutEditorProps<any>>;
-}
-
 function getLayouts(): LayoutDescriptor[] {
-  return [
-    {
-      name: 'Manual positioning grid',
-      id: 'scene-grid-layout',
-      editor: ManualGridLayoutEditor,
-    },
-    {
-      name: 'Automatic grid',
-      id: 'automatic-grid',
-      editor: AutomaticGridEditor,
-    },
-  ];
-}
-
-function getCurrentLayoutId(layout: SceneObject): string {
-  if (layout instanceof SceneGridLayout) {
-    return 'scene-grid-layout';
-  }
-
-  return 'automatic-grid';
-}
-
-interface LayoutEditorProps<T extends SceneObject = SceneObject> {
-  layout: T;
-}
-
-function ManualGridLayoutEditor(props: LayoutEditorProps<SceneGridLayout>) {
-  return <div>No options</div>;
-}
-
-interface LayoutEditorProps<T> {
-  layout: T;
-}
-
-function AutomaticGridEditor(props: LayoutEditorProps<SceneGridLayout>) {
-  return (
-    <>
-      <Field label="Grid template">
-        <Input type="text" />
-      </Field>
-    </>
-  );
+  return [ManualGridLayoutManager.getDescriptor(), AutomaticGridLayoutManager.getDescriptor()];
 }
 
 function getStyles(theme: GrafanaTheme2) {
@@ -158,4 +114,11 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-function changeLayoutTo(scene: DashboardScene, value: LayoutDescriptor): any {}
+function changeLayoutTo(
+  dashboard: DashboardScene,
+  currentLayout: DashboardLayoutManager,
+  newLayout: LayoutDescriptor
+): any {
+  const newLayoutManager = newLayout.switchTo(currentLayout);
+  dashboard.setState({ body: newLayoutManager });
+}

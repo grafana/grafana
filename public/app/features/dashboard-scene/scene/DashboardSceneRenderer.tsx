@@ -18,7 +18,7 @@ import { NavToolbarActions } from './NavToolbarActions';
 import { LayoutOptions } from './layouts/LayoutOptions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, editview, editPanel, isEmpty, meta, viewPanelScene, isEditing } = model.useState();
+  const { controls, overlay, editview, editPanel, isEmpty, meta, viewPanelScene, isEditing, body } = model.useState();
   const headerHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles, headerHeight);
   const location = useLocation();
@@ -52,24 +52,23 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     );
   }
 
-  const emptyState = (
-    <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} key="dashboard-empty-state" />
-  );
+  function renderCanvasContent() {
+    if (meta.dashboardNotFound) {
+      return <EntityNotFound entity="Dashboard" key="dashboard-not-found" />;
+    }
 
-  const withPanels = (
-    <div className={cx(styles.body, !hasControls && styles.bodyWithoutControls)} key="dashboard-panels">
-      <bodyToRender.Component model={bodyToRender} />
-    </div>
-  );
+    if (isEmpty) {
+      return [<DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} key="dashboard-empty-state" />];
+    }
 
-  const notFound = meta.dashboardNotFound && <EntityNotFound entity="Dashboard" key="dashboard-not-found" />;
-
-  let body = [withPanels];
-
-  if (notFound) {
-    body = [notFound];
-  } else if (isEmpty) {
-    body = [emptyState, withPanels];
+    return (
+      <>
+        {isEditing && !viewPanelScene && <LayoutOptions layout={body} scene={model} />}
+        <div className={cx(styles.body, !hasControls && styles.bodyWithoutControls)} key="dashboard-panels">
+          <bodyToRender.Component model={bodyToRender} />
+        </div>
+      </>
+    );
   }
 
   return (
@@ -84,8 +83,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
                 <controls.Component model={controls} />
               </div>
             )}
-            {isEditing && <LayoutOptions layout={bodyToRender} scene={model} />}
-            <div className={cx(styles.canvasContent)}>{body}</div>
+            <div className={cx(styles.canvasContent)}>{renderCanvasContent()}</div>
           </div>
         </NativeScrollbar>
       )}
