@@ -1,4 +1,4 @@
-import { waitForElementToBeRemoved, within } from '@testing-library/react';
+import { within } from '@testing-library/react';
 import { render, waitFor, screen, userEvent } from 'test/test-utils';
 import { byText, byRole } from 'testing-library-selector';
 
