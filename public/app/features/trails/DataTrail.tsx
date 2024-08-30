@@ -262,6 +262,8 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
         layout: 'vertical',
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
+        // since we only support prometheus datasources, this is always true
+        supportsMultiValueOperators: true,
       }),
     ],
   });

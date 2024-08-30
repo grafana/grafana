@@ -89,6 +89,7 @@
   "queryOptions": {
     "minInterval": true
   },
+  "multiValueFilterOperators": true,
   "info": {
     "description": "Open source time series database & alerting",
     "author": {

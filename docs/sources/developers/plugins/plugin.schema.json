@@ -308,6 +308,10 @@
       "type": "boolean",
       "description": "For data source plugins, if the plugin supports metric queries. Used to enable the plugin in the panel editor."
     },
+    "multiValueFilterOperators": {
+      "type": "boolean",
+      "description": "For data source plugins, if the plugin supports multi value operators in adhoc filters."
+    },
     "pascalName": {
       "type": "string",
       "description": "[internal only] The PascalCase name for the plugin. Used for creating machine-friendly identifiers, typically in code generation. If not provided, defaults to name, but title-cased and sanitized (only alphabetical characters allowed).",
