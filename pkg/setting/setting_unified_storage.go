@@ -6,11 +6,14 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
+// read storage configs from ini file. They look like:
+// [unified_storage.<group>.<resource>]
+// <field> = <value>
+// e.g.
+// [unified_storage.playlists.playlist.grafana.app]
+// dualWriterMode = 2
 func (cfg *Cfg) setUnifiedStorageConfig() {
 	storageConfig := make(map[string]UnifiedStorageConfig)
-	// read storage configs from ini file. They look like:
-	// [unified_storage.<group>.<resource>]
-	// config = <value>
 	sections := cfg.Raw.Sections()
 	for _, section := range sections {
 		sectionName := section.Name()
