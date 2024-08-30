@@ -28,14 +28,14 @@ export function TableCellInspector({ value, onDismiss, mode }: TableCellInspecto
     if (trimmedValue[0] === '{' || trimmedValue[0] === '[' || mode === 'code') {
       try {
         value = JSON.parse(value);
-        displayValue = JSON.stringify(value, null, ' ');
+        displayValue = JSON.stringify(value, null, '  ');
       } catch (error: any) {
         // Display helpful error to help folks diagnose json errors
         console.log('Failed to parse JSON in Table cell inspector (this will cause JSON to not print nicely): ', error.message);
       }
     }
   } else {
-    displayValue = JSON.stringify(value, null, '');
+    displayValue = JSON.stringify(value);
   }
   let text = displayValue;
 
