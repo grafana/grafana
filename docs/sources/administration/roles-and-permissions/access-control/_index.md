@@ -92,7 +92,7 @@ Assign fixed roles when the basic roles do not meet your permission requirements
 
 - [Alerting]({{< relref "../../../alerting/" >}})
 - [Annotations]({{< relref "../../../dashboards/build-dashboards/annotate-visualizations" >}})
-- [API keys]({{< relref "../../api-keys/" >}})
+- [API keys](/docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/migrate-api-keys/)
 - [Dashboards and folders]({{< relref "../../../dashboards/" >}})
 - [Data sources]({{< relref "../../../datasources/" >}})
 - [Explore]({{< relref "../../../explore/" >}})

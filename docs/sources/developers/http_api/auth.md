@@ -85,7 +85,7 @@ This endpoint has been made obsolete in Grafana 11.3.0.
 
 {{% /admonition %}}
 
-Endpoint is obsolete and has been moved to [Grafana service account API]({{< relref "./serviceaccount/" >}}). For more information, refer to [Migrate to Grafana service account API]({{< relref "../../administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api" >}}).
+Endpoint is obsolete and has been moved to [Grafana service account API]({{< relref "./serviceaccount/" >}}). For more information, refer to [Migrate to Grafana service account API](/docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/migrate-api-keys/).
 
 `POST /api/auth/keys`
 

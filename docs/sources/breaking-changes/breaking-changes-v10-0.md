@@ -99,11 +99,11 @@ Grafana's [HTTP API endpoints for generating and managing API Keys]({{< relref "
 
 #### Migration path
 
-While upgrading to Grafana v10, you don't need to take any action; your API keys will be automatically migrated. To test or perform the migration from API keys to service accounts before upgrading to Grafana v10, follow our [migration documentation]({{< relref "../administration/api-keys/#migrate-api-keys-to-grafana-service-account" >}}").
+While upgrading to Grafana v10, you don't need to take any action; your API keys will be automatically migrated. To test or perform the migration from API keys to service accounts before upgrading to Grafana v10, follow our [migration documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/migrate-api-keys/).
 
 #### Learn more
 
-- [Documentation on migrating from API keys to service accounts]({{< relref "../administration/api-keys/" >}})
+- [Documentation on migrating from API keys to service accounts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/migrate-api-keys/)
 
 - [Blog post announcement with a video demo including how to migrate](https://grafana.com/blog/2022/08/24/new-in-grafana-9.1-service-accounts-are-now-ga/)
 

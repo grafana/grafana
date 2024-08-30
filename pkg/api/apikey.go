@@ -22,7 +22,7 @@ import (
 // Deprecated: true.
 //
 // Deprecated. Please use GET /api/serviceaccounts and GET /api/serviceaccounts/{id}/tokens instead
-// see https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.
+// see https://grafana.com/docs/grafana/next/administration/service-accounts/migrate-api-keys/.
 //
 // Responses:
 // 200: getAPIkeyResponse
@@ -71,7 +71,7 @@ func (hs *HTTPServer) GetAPIKeys(c *contextmodel.ReqContext) response.Response {
 // Delete API key.
 //
 // Deletes an API key.
-// Deprecated. See: https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.
+// Deprecated. See: https://grafana.com/docs/grafana/next/administration/service-accounts/migrate-api-keys/.
 //
 // Deprecated: true
 // Responses:
@@ -110,7 +110,7 @@ func (hs *HTTPServer) DeleteAPIKey(c *contextmodel.ReqContext) response.Response
 // Deprecated: true
 // Deprecated. Please use POST /api/serviceaccounts and POST /api/serviceaccounts/{id}/tokens
 //
-// see: https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.
+// see: https://grafana.com/docs/grafana/next/administration/service-accounts/migrate-api-keys/.
 //
 // Responses:
 // 301: statusMovedPermanently
