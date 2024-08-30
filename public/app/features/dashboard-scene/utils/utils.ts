@@ -18,6 +18,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { RowActions } from '../scene/row-actions/RowActions';
 
 import { dashboardSceneGraph } from './dashboardSceneGraph';
@@ -260,4 +261,23 @@ export function getLibraryPanel(vizPanel: VizPanel): LibraryVizPanel | undefined
     return vizPanel.parent;
   }
   return;
+}
+
+/**
+ * If the panel is within a repeated row, it must wait until the row resolves the variables.
+ * This ensures that the scoped variable for the row is assigned and the panel is initialized with them.
+ */
+export function isWithinUnactivatedRepeatRow(panel: VizPanel): boolean {
+  let row;
+
+  try {
+    row = sceneGraph.getAncestor(panel, SceneGridRow);
+  } catch (err) {
+    return false;
+  }
+
+  const hasBehavior = !!(row.state.$behaviors && row.state.$behaviors.find((b) => b instanceof RowRepeaterBehavior));
+  const hasVariables = !!(row.state.$variables && row.state.$variables.state.variables.length > 0);
+
+  return hasBehavior && !hasVariables;
 }

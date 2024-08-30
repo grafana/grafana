@@ -1,10 +1,11 @@
 import { AppEvents } from '@grafana/data';
-import { SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneGridLayout, SceneGridRow, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { KioskMode } from 'app/types';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
+import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 describe('DashboardSceneUrlSync', () => {
@@ -107,6 +108,35 @@ describe('DashboardSceneUrlSync', () => {
     // Verify it subscribes to DashboardRepeatsProcessedEvent
     scene.publishEvent(new DashboardRepeatsProcessedEvent({ source: scene }));
     expect(scene.state.viewPanelScene?.getUrlKey()).toBe('panel-1-clone-1');
+  });
+
+  it('should subscribe and update view panel if panel is in a repeated row', () => {
+    const scene = buildTestScene();
+
+    // fake adding row panel
+    const layout = scene.state.body as SceneGridLayout;
+    layout.setState({
+      children: [
+        new SceneGridRow({
+          $behaviors: [new RowRepeaterBehavior({ variableName: 'test' })],
+          children: [
+            new VizPanel({
+              title: 'Panel A',
+              key: 'panel-1',
+              pluginId: 'table',
+            }),
+          ],
+        }),
+      ],
+    });
+
+    scene.urlSync?.updateFromUrl({ viewPanel: 'panel-1' });
+
+    expect(scene.state.viewPanelScene?.getUrlKey()).toBeUndefined();
+
+    // Verify it subscribes to DashboardRepeatsProcessedEvent
+    scene.publishEvent(new DashboardRepeatsProcessedEvent({ source: scene }));
+    expect(scene.state.viewPanelScene?.getUrlKey()).toBe('panel-1');
   });
 });
 
