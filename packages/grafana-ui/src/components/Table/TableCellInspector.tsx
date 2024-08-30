@@ -29,7 +29,9 @@ export function TableCellInspector({ value, onDismiss, mode }: TableCellInspecto
       try {
         value = JSON.parse(value);
         displayValue = JSON.stringify(value, null, ' ');
-      } catch {}
+      } catch (error: any) {
+        console.log('Failed to parse JSON in Table cell inspector (this will cause JSON to not print nicely): ', error.message);
+      }
     }
   } else {
     displayValue = JSON.stringify(value, null, '');
