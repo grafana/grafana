@@ -109,7 +109,7 @@ export const Combobox = ({
     scrollIntoView: () => {},
     onInputValueChange: ({ inputValue }) => {
       const filteredItems = options.filter(itemFilter(inputValue));
-      if (createCustomValue && inputValue) {
+      if (createCustomValue && inputValue && filteredItems.findIndex((opt) => opt.label === inputValue) === -1) {
         setItems([...filteredItems, { label: inputValue, value: inputValue, description: 'Create custom' }]);
         return;
       } else {
