@@ -131,7 +131,7 @@ Provide feedback, report bugs, and raise issues in the [Grafana Killercoda repos
 
 ## Generate sample logs
 
-1. Download and save a python file that generates logs.
+1. Download and save a Python file that generates logs.
 
     ``` bash
     wget https://raw.githubusercontent.com/grafana/tutorial-environment/master/app/loki/web-server-logs-simulator.py
@@ -162,12 +162,19 @@ Besides being an open-source observability tool, Grafana has its own built-in al
 
 In this step, we'll set up a new [contact point](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/). This contact point will use the _webhooks_ integration. In order to make this work, we also need an endpoint for our webhook integration to receive the alert. We will use [Webhook.site](https://webhook.site/) to quickly set up that test endpoint. This way we can make sure that our alert is actually sending a notification somewhere.
 
+<!-- INTERACTIVE ignore START -->
 1. In your browser, **sign in** to your Grafana Cloud account.
 
    OSS users: To log in, navigate to [http://localhost:3000](http://localhost:3000), where Grafana is running.
-
 1. In another tab, go to [Webhook.site](https://webhook.site/).
 1. Copy Your unique URL.
+<!-- INTERACTIVE ignore END -->
+
+{{< docs/ignore >}}
+1. Navigate to [http://localhost:3000](http://localhost:3000), where Grafana is running.
+1. In another tab, go to [Webhook.site](https://webhook.site/).
+1. Copy Your unique URL.
+{{< /docs/ignore >}}
 
 Your webhook endpoint is now waiting for the first request.
 
@@ -243,7 +250,7 @@ In this section, we define queries, expressions (used to manipulate the data), a
 
 6. Click **Preview** to run the queries.
 
-   It should return a single sample with the value 1 at the current timestamp. And, since `1` is above `0`, the alert condition has been met, and the alert rule state is `Firing`.
+   It should return alert instances from log lines with a status code that is not 200 (OK), and that has met the alert condition. The condition for the alert rule to fire is any ocurrence that goes over the threshold of `0`. Since the Loki query has returned more than zero alert instances, the alert rule is `Firing`.
 
    {{< figure src="/media/docs/alerting/expression-loki-alert.png" max-width="1200px" caption="Preview of a firing alert instances" >}}
 
@@ -256,7 +263,7 @@ An [evaluation group](https://grafana.com/docs/grafana/latest/alerting/fundament
 
 To set up the evaluation:
 
-1. In **Folder**, click **+ New folder** and enter a name. For example: _loki-alerts_. This folder will contain our alerts.
+1. In **Folder**, click **+ New folder** and enter a name. For example: _web-server-alerts_. This folder will contain our alerts.
 1. In the **Evaluation group**, repeat the above step to create a new evaluation group. We will name it _1m-evaluation_.
 1. Choose an **Evaluation interval** (how often the alert will be evaluated).
    For example, every `1m` (1 minute).
@@ -275,7 +282,7 @@ Choose the contact point where you want to receive your alert notifications.
 
 ## Trigger the alert rule
 
-Since the alert rule that you have created has been configured to always fire, once the evaluation interval has concluded, you should receive an alert notification in the Webhook endpoint.
+Since the Python script will continue to generate log data that matches the alert rule condition, once the evaluation interval has concluded, you should receive an alert notification in the Webhook endpoint.
 
 {{< figure src="/media/docs/alerting/alerting-webhook-firing-alert.png" max-width="1200px" caption="Firing alert notification details" >}}
 
