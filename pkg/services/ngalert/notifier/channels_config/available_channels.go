@@ -1484,9 +1484,9 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 		{ // Since Grafana 11.1
 			Type:        "sns",
 			Name:        "AWS SNS",
-			Description: "Sends notifications to Cisco Webex Teams",
-			Heading:     "Webex settings",
-			Info:        "Notifications can be configured for any Cisco Webex Teams",
+			Description: "Sends messages to AWS SNS",
+			Heading:     "AWS SNS settings",
+			Info:        "Messages can be configured to send to an SNS Topic, phone number or mobile platform",
 			Options: []NotifierOption{
 				{
 					Label:        "The Amazon SNS API URL",
