@@ -233,6 +233,12 @@
       "message": ""
     }
   },
+  "bookmarks-page": {
+    "empty": {
+      "message": "",
+      "tip": ""
+    }
+  },
   "bouncing-loader": {
     "label": "Chargement"
   },

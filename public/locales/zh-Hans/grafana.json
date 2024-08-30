@@ -230,6 +230,12 @@
       "message": ""
     }
   },
+  "bookmarks-page": {
+    "empty": {
+      "message": "",
+      "tip": ""
+    }
+  },
   "bouncing-loader": {
     "label": "正在加载"
   },
