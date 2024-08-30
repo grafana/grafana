@@ -56,21 +56,8 @@ type ScopeDashboardBinding struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec ScopeDashboardBindingSpec `json:"spec,omitempty"`
-}
-
-type ScopeDashboardBindingSpec struct {
-	Dashboard string `json:"dashboard"`
-
-	// DashboardTitle should be populated and update from the dashboard
-	DashboardTitle string `json:"dashboardTitle"`
-
-	// Groups is used for the grouping of dashboards that are suggested based
-	// on a scope. The source of truth for this information has not been
-	// determined yet.
-	Groups []string `json:"groups,omitempty"`
-
-	Scope string `json:"scope"`
+	Spec   ScopeDashboardBindingSpec   `json:"spec,omitempty"`
+	Status ScopeDashboardBindingStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -97,8 +84,36 @@ type ScopeNode struct {
 	Spec ScopeNodeSpec `json:"spec,omitempty"`
 }
 
+type ScopeDashboardBindingSpec struct {
+	Dashboard string `json:"dashboard"`
+	Scope     string `json:"scope"`
+}
+
 // Type of the item.
 // +enum
+// ScopeDashboardBindingStatus contains derived information about a ScopeDashboardBinding.
+type ScopeDashboardBindingStatus struct {
+	// DashboardTitle should be populated and update from the dashboard
+	DashboardTitle string `json:"dashboardTitle"`
+
+	// Groups is used for the grouping of dashboards that are suggested based
+	// on a scope. The source of truth for this information has not been
+	// determined yet.
+	Groups []string `json:"groups,omitempty"`
+
+	// DashboardTitleConditions is a list of conditions that are used to determine if the dashboard title is valid.
+	// +optional
+	// +listType=map
+	// +listMapKey=type
+	DashboardTitleConditions []metav1.Condition `json:"dashboardTitleConditions,omitempty"`
+
+	// DashboardTitleConditions is a list of conditions that are used to determine if the list of groups is valid.
+	// +optional
+	// +listType=map
+	// +listMapKey=type
+	GroupsConditions []metav1.Condition `json:"groupsConditions,omitempty"`
+}
+
 type NodeType string
 
 // Defines values for ItemType.

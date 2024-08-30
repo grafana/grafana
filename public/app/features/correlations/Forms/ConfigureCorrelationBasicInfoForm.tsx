@@ -29,7 +29,7 @@ export const ConfigureCorrelationBasicInfoForm = () => {
         <Trans i18nKey="correlations.basic-info-form.sub-text">
           <p>Define text that will describe the correlation.</p>
         </Trans>
-        <input type="hidden" {...register('config.type')} />
+        <input type="hidden" {...register('type')} />
         <Field
           label={t('correlations.basic-info-form.label-label', 'Label')}
           description={t(
