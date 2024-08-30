@@ -1817,9 +1817,6 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/receivers/DuplicateTemplateView.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
-    "public/app/features/alerting/unified/components/receivers/EditReceiverView.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
-    ],
     "public/app/features/alerting/unified/components/receivers/EditTemplateView.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
@@ -5856,8 +5853,7 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/alertmanager/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/datasource/azuremonitor/azureMetadata/index.ts:5381": [
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
