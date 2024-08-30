@@ -566,26 +566,103 @@
       }
     },
     "extensions": {
-      "type": "array",
-      "description": "List of link and component extensions which the plugin registers to given extension points.",
-      "items": {
-        "type": "object",
-        "properties": {
-          "extensionPointId": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string",
-            "enum": ["link", "component"]
+      "type": "object",
+      "description": "...",
+      "properties": {
+        "addedComponents": {
+          "type": "array",
+          "description": "...",
+          "items": {
+            "type": "object",
+            "properties": {
+              "targets": {
+                "type": "array",
+                "description": "...",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "title": {
+                "type": "string",
+                "description": "..."
+              },
+              "description": {
+                "type": "string",
+                "description": "..."
+              }
+            },
+            "required": ["targets", "title"]
           }
         },
-        "required": ["extensionPointId", "title", "type"]
+        "addedLinks": {
+          "type": "array",
+          "description": "...",
+          "items": {
+            "type": "object",
+            "properties": {
+              "targets": {
+                "type": "array",
+                "description": "...",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "title": {
+                "type": "string",
+                "description": "..."
+              },
+              "description": {
+                "type": "string",
+                "description": "..."
+              }
+            },
+            "required": ["targets", "title"]
+          }
+        },
+        "exposedComponents": {
+          "type": "array",
+          "description": "...",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "..."
+              },
+              "title": {
+                "type": "string",
+                "description": "..."
+              },
+              "description": {
+                "type": "string",
+                "description": "..."
+              }
+            },
+            "required": ["id"]
+          }
+        },
+        "extensionPoints": {
+          "type": "array",
+          "description": "...",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "..."
+              },
+              "title": {
+                "type": "string",
+                "description": "..."
+              },
+              "description": {
+                "type": "string",
+                "description": "..."
+              }
+            },
+            "required": ["id"]
+          }
+        }
       }
     }
   }
