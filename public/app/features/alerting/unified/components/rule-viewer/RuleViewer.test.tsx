@@ -275,8 +275,3 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   useReturnToPrevious: jest.fn(),
 }));
-function setPluginLinks(
-  arg0: () => { extensions: Array<import('@grafana/data').PluginExtensionLink>; isLoading: boolean }
-) {
-  throw new Error('Function not implemented.');
-}
