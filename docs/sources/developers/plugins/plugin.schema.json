@@ -199,11 +199,17 @@
             }
           }
         },
-        "exposedComponents": {
-          "type": "array",
-          "description": "An array of exposed component ids that this plugin depends on.",
-          "items": {
-            "type": "string"
+        "extensions": {
+          "type": "object",
+          "description": "Plugin extensions that this plugin depends on.",
+          "properties": {
+            "exposedComponents": {
+              "type": "array",
+              "description": "An array of exposed component ids that this plugin depends on.",
+              "items": {
+                "type": "string"
+              }
+            }
           }
         }
       }
