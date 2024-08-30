@@ -45,6 +45,7 @@ In this tutorial, you'll:
 {{< admonition type="tip" >}}
 Check out our [advanced alerting tutorial](https://grafana.com/tutorials/alerting-get-started-pt2/) to explore advanced topics such as alert instances and notification routing.
 {{< /admonition >}}
+
 <!-- INTERACTIVE ignore END -->
 
 {{< docs/ignore >}}
@@ -82,17 +83,17 @@ In order to run a Grafana stack locally, ensure you have the following applicati
 
 To demonstrate the observation of data using the Grafana stack, download the files to your local machine.
 
-1. Download and save a Docker compose file to run Grafana, Loki and Promtail. 
+1. Download and save a Docker compose file to run Grafana, Loki and Promtail.
 
-    ``` bash
-    wget https://raw.githubusercontent.com/grafana/loki/v2.8.0/production/docker-compose.yaml -O docker-compose.yaml
-    ```
+   ```bash
+   wget https://raw.githubusercontent.com/grafana/loki/v2.8.0/production/docker-compose.yaml -O docker-compose.yaml
+   ```
 
 2. Run the Grafana stack.
 
-    ``` bash
-    docker compose up -d
-    ```
+   ```bash
+   docker compose up -d
+   ```
 
 The first time you run `docker compose up -d`, Docker downloads all the necessary resources for the tutorial. This might take a few minutes, depending on your internet connection.
 
@@ -123,6 +124,7 @@ It's a fully configured environment with all the dependencies already installed.
 
 Provide feedback, report bugs, and raise issues in the [Grafana Killercoda repository](https://github.com/grafana/killercoda).
 {{< /admonition >}}
+
 <!-- INTERACTIVE ignore END -->
 
 <!-- INTERACTIVE page step1.md END -->
@@ -133,15 +135,15 @@ Provide feedback, report bugs, and raise issues in the [Grafana Killercoda repos
 
 1. Download and save a Python file that generates logs.
 
-    ``` bash
-    wget https://raw.githubusercontent.com/grafana/tutorial-environment/master/app/loki/web-server-logs-simulator.py
-    ```
+   ```bash
+   wget https://raw.githubusercontent.com/grafana/tutorial-environment/master/app/loki/web-server-logs-simulator.py
+   ```
 
 1. Execute the log-generating Python script.
 
-    ``` bash
-    python3 ./web-server-logs-simulator.py | sudo tee -a /var/log/web_requests.log
-    ```
+   ```bash
+   python3 ./web-server-logs-simulator.py | sudo tee -a /var/log/web_requests.log
+   ```
 
 ### Troubleshooting the script
 
@@ -163,18 +165,21 @@ Besides being an open-source observability tool, Grafana has its own built-in al
 In this step, we'll set up a new [contact point](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/). This contact point will use the _webhooks_ integration. In order to make this work, we also need an endpoint for our webhook integration to receive the alert. We will use [Webhook.site](https://webhook.site/) to quickly set up that test endpoint. This way we can make sure that our alert is actually sending a notification somewhere.
 
 <!-- INTERACTIVE ignore START -->
+
 1. In your browser, **sign in** to your Grafana Cloud account.
 
    OSS users: To log in, navigate to [http://localhost:3000](http://localhost:3000), where Grafana is running.
+
 1. In another tab, go to [Webhook.site](https://webhook.site/).
 1. Copy Your unique URL.
 <!-- INTERACTIVE ignore END -->
 
 {{< docs/ignore >}}
+
 1. Navigate to [http://localhost:3000](http://localhost:3000), where Grafana is running.
 1. In another tab, go to [Webhook.site](https://webhook.site/).
 1. Copy Your unique URL.
-{{< /docs/ignore >}}
+   {{< /docs/ignore >}}
 
 Your webhook endpoint is now waiting for the first request.
 
@@ -202,7 +207,7 @@ We have created a dummy Webhook endpoint and created a new Alerting contact poin
 
 Next, we'll establish an [alert rule](http://grafana.com/docs/grafana/next/alerting/fundamentals/alert-rule-evaluation/) within Grafana Alerting to notify us whenever alert rules are triggered and resolved.
 
-1. In Grafana, **navigate to Alerting** > **Alert rules**. 
+1. In Grafana, **navigate to Alerting** > **Alert rules**.
 1. Click on **New alert rule**.
 1. Enter alert rule name for your alert rule. Make it short and descriptive as this will appear in your alert notification. For instance, **web-requests-logs**
 
@@ -214,32 +219,33 @@ In this section, we define queries, expressions (used to manipulate the data), a
 2. In the Query editor, switch to Code mode by clicking the button on the right.
 3. Paste the query below.
 
-    ```
-    sum by (message)(count_over_time({filename="/var/log/web_requests.log"} != "status=200" | pattern "<_> <message> duration<_>" [10m]))
-    ```
+   ```
+   sum by (message)(count_over_time({filename="/var/log/web_requests.log"} != "status=200" | pattern "<_> <message> duration<_>" [10m]))
+   ```
 
-  This query will count the number of log lines with a status code that is not 200 (OK), then sum the result set by message type using an **instant query** and the time interval indicated in brackets. It uses the LogQL pattern parser to add a new label called `message` that contains the level, method, url, and status from the log line.
+This query will count the number of log lines with a status code that is not 200 (OK), then sum the result set by message type using an **instant query** and the time interval indicated in brackets. It uses the LogQL pattern parser to add a new label called `message` that contains the level, method, url, and status from the log line.
 
-  You can use the **explain query** toggle button for a full explanation of the query syntax. The optional log-generating script creates a sample log line similar to the one below:
+You can use the **explain query** toggle button for a full explanation of the query syntax. The optional log-generating script creates a sample log line similar to the one below:
 
-  ```
-  2023-04-22T02:49:32.562825+00:00 level=info method=GET url=test.com status=200 duration=171ms
-  ```
+```
+2023-04-22T02:49:32.562825+00:00 level=info method=GET url=test.com status=200 duration=171ms
+```
 
   <!-- INTERACTIVE ignore START -->
-  {{% admonition type="note" %}}
 
-  If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
+{{% admonition type="note" %}}
 
-  {{% / admonition %}}
+If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
+
+{{% / admonition %}}
 
   <!-- INTERACTIVE ignore END -->
 
-  {{< docs/ignore >}}
+{{< docs/ignore >}}
 
-  If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
+If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
 
-  {{< /docs/ignore >}}
+{{< /docs/ignore >}}
 
 4. Remove the ‘B’ **Reduce expression** (click the bin icon). The Reduce expression comes by default, and in this case, it is not needed since the queried data is already reduced. Note that the Threshold expression is now your **Alert condition**.
 
