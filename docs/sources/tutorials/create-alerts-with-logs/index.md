@@ -203,7 +203,7 @@ We have created a dummy Webhook endpoint and created a new Alerting contact poin
 
 <!-- INTERACTIVE page step4.md START -->
 
-## Create an alert ruke
+## Create an alert rule
 
 Next, we'll establish an [alert rule](http://grafana.com/docs/grafana/next/alerting/fundamentals/alert-rule-evaluation/) within Grafana Alerting to notify us whenever alert rules are triggered and resolved.
 
