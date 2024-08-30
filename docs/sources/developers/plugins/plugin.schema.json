@@ -198,6 +198,13 @@
               }
             }
           }
+        },
+        "exposedComponents": {
+          "type": "array",
+          "description": "...",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
