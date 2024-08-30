@@ -137,7 +137,7 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 			}
 		}
 
-		c.Redirect(hs.GetRedirectURL(c))
+		c.Redirect(hs.Cfg.AppSubURL + "/")
 		return
 	}
 

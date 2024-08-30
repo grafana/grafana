@@ -20,6 +20,8 @@ import config from '../../core/config';
 // NOTE: this is defined here rather than TimeSrv so we avoid circular dependencies
 export const AutoRefreshInterval = 'auto';
 
+export const RedirectToUrlKey = 'redirectTo';
+
 export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
   isSignedIn: boolean;
   id: number;
@@ -119,6 +121,9 @@ export class ContextSrv {
    * Indicate the user has been logged out
    */
   setLoggedOut() {
+    if (window.sessionStorage) {
+      window.sessionStorage.setItem(RedirectToUrlKey, window.location.href.substring(window.location.origin.length));
+    }
     this.cancelTokenRotationJob();
     this.user.isSignedIn = false;
     this.isSignedIn = false;

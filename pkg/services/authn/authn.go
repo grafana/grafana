@@ -245,26 +245,8 @@ func HandleLoginRedirectResponse(r *http.Request, w http.ResponseWriter, cfg *se
 }
 
 func handleLogin(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) string {
-	redirectURL := cfg.AppSubURL + "/"
-	if redirectTo := getRedirectURL(r); len(redirectTo) > 0 {
-		if validator(redirectTo) == nil {
-			redirectURL = redirectTo
-		}
-		cookies.DeleteCookie(w, "redirect_to", cookieOptions(cfg))
-	}
-
 	WriteSessionCookie(w, cfg, identity.SessionToken)
-	return redirectURL
-}
-
-func getRedirectURL(r *http.Request) string {
-	cookie, err := r.Cookie("redirect_to")
-	if err != nil {
-		return ""
-	}
-
-	v, _ := url.QueryUnescape(cookie.Value)
-	return v
+	return cfg.AppSubURL + "/"
 }
 
 const sessionExpiryCookie = "grafana_session_expiry"

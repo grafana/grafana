@@ -84,7 +84,7 @@ func (hs *HTTPServer) RotateUserAuthTokenRedirect(c *contextmodel.ReqContext) re
 		return response.Redirect(hs.Cfg.AppSubURL + "/login")
 	}
 
-	return response.Redirect(hs.GetRedirectURL(c))
+	return response.Redirect(hs.Cfg.AppSubURL + "/")
 }
 
 // swagger:route POST /user/auth-tokens/rotate

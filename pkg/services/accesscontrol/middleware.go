@@ -98,8 +98,7 @@ func deny(c *contextmodel.ReqContext, evaluator Evaluator, err error) {
 
 	if !c.IsApiRequest() {
 		// TODO(emil): I'd like to show a message after this redirect, not sure how that can be done?
-		writeRedirectCookie(c)
-		c.Redirect(setting.AppSubUrl + "/")
+		c.Redirect(setting.AppSubUrl + "/?returnUrl=" + url.QueryEscape(getRedirectToUrl(c)))
 		return
 	}
 
@@ -125,13 +124,12 @@ func unauthorized(c *contextmodel.ReqContext) {
 		return
 	}
 
-	writeRedirectCookie(c)
 	if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
-		c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate")
+		c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate?returnUrl=" + url.QueryEscape(getRedirectToUrl(c)))
 		return
 	}
 
-	c.Redirect(setting.AppSubUrl + "/login")
+	c.Redirect(setting.AppSubUrl + "/login?returnUrl=" + url.QueryEscape(getRedirectToUrl(c)))
 }
 
 func tokenRevoked(c *contextmodel.ReqContext, err *usertoken.TokenRevokedError) {
@@ -146,8 +144,21 @@ func tokenRevoked(c *contextmodel.ReqContext, err *usertoken.TokenRevokedError) 
 		return
 	}
 
-	writeRedirectCookie(c)
-	c.Redirect(setting.AppSubUrl + "/login")
+	c.Redirect(setting.AppSubUrl + "/login?returnUrl=" + url.QueryEscape(getRedirectToUrl(c)))
+}
+
+func getRedirectToUrl(c *contextmodel.ReqContext) string {
+	redirectTo := c.Req.RequestURI
+	if setting.AppSubUrl != "" && !strings.HasPrefix(redirectTo, setting.AppSubUrl) {
+		redirectTo = setting.AppSubUrl + c.Req.RequestURI
+	}
+
+	if redirectTo == "/" {
+		return ""
+	}
+
+	// remove any forceLogin=true params
+	return removeForceLoginParams(redirectTo)
 }
 
 func writeRedirectCookie(c *contextmodel.ReqContext) {

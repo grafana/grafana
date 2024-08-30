@@ -62,7 +62,7 @@ import { setMonacoEnv } from './core/monacoEnv';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
 import { backendSrv } from './core/services/backend_srv';
-import { contextSrv } from './core/services/context_srv';
+import { contextSrv, RedirectToUrlKey } from './core/services/context_srv';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
@@ -276,6 +276,7 @@ export class GrafanaApp {
           app: this,
         })
       );
+      handleRedirectTo();
     } catch (error) {
       console.error('Failed to start Grafana', error);
       window.__grafana_load_failed();
@@ -388,6 +389,49 @@ function reportMetricPerformanceMark(metricName: string, prefix = '', suffix = '
     const metricName = metric.name.replace(/-/g, '_');
     reportPerformance(`${prefix}${metricName}${suffix}`, Math.round(metric.startTime) / 1000);
   }
+}
+
+function handleRedirectTo(): void {
+  const queryParams = new URLSearchParams(window.location.search);
+  if (queryParams.has('returnUrl') && window.location.pathname !== '/') {
+    const rawReturnUrl = queryParams.get('returnUrl')!;
+    if (!isValidRedirectTo(rawReturnUrl)) {
+      return;
+    }
+    window.sessionStorage.setItem(RedirectToUrlKey, decodeURIComponent(rawReturnUrl));
+    queryParams.delete('returnUrl');
+    window.history.replaceState({}, '', `${window.location.pathname}${queryParams.size > 0 ? `?${queryParams}` : ''}`);
+    return;
+  }
+
+  const redirectTo = window.sessionStorage.getItem(RedirectToUrlKey);
+  if (!redirectTo) {
+    return;
+  }
+
+  if (!isValidRedirectTo(redirectTo)) {
+    window.sessionStorage.removeItem(RedirectToUrlKey);
+    return;
+  }
+  
+  window.sessionStorage.removeItem(RedirectToUrlKey);
+  window.location.replace(redirectTo);
+}
+
+function isValidRedirectTo(path: string): boolean {
+  if (!path.startsWith('/')) {
+    return false;
+  }
+
+  if (path.startsWith('//')) {
+    return false;
+  }
+
+  if (config.appSubUrl && !path.startsWith(config.appSubUrl) + '/') {
+    return false;
+  }
+
+  return true;
 }
 
 export default new GrafanaApp();
