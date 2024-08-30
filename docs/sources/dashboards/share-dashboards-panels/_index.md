@@ -54,7 +54,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/create-reports/#create-or-update-a-report
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/create-reports/#create-or-update-a-report
-  image-rendering:
+  image-rendering-config:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#configuration
     - pattern: /docs/grafana-cloud/
@@ -243,7 +243,7 @@ To share a personalized, direct link to your panel within your organization, fol
 1. Select the theme for the dashboard. Choose from **Current**, **Dark**, or **Light**.
 1. Do one or both of the following:
    - Click **Copy link**.
-   - [Click **Render image**.](ref:image-rendering) - Renders the panel as a PNG image.
+   - Click **Render image**, which [renders the panel as a PNG image](ref:image-rendering).
 1. Send the copied link or image URL to a Grafana user with authorization to view it.
 1. Click the **X** at the top-right corner to close the share drawer.
 
@@ -251,11 +251,13 @@ To share a personalized, direct link to your panel within your organization, fol
 
 When you click **Render image** in the panel link settings, Grafana generates a PNG image of the panel with the following default parameters:
 
-- **width:** Width in pixels. Default is 800.
-- **height:** Height in pixels. Default is 400.
-- **tz:** Timezone in the format `UTC%2BHH%3AMM` where HH and MM are offset in hours and minutes after UTC
-- **timeout:** Number of seconds. The timeout can be increased if the query for the panel needs more than the default 30 seconds.
-- **scale:** Numeric value to configure device scale factor. Default is 1. Use a higher value to produce more detailed images (higher DPI). Supported in Grafana v7.0+.
+| Parameter | Description                                                                                                                                                |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| width     | Width in pixels. Default is 800.                                                                                                                           |
+| height    | Height in pixels. Default is 400.                                                                                                                          |
+| tz        | Timezone in the format `UTC%2BHH%3AMM` where HH and MM are offset in hours and minutes after UTC.                                                          |
+| timeout   | Number of seconds. The timeout can be increased if the query for the panel needs more than the default 30 seconds.                                         |
+| scale     | Numeric value to configure device scale factor. Default is 1. Use a higher value to produce more detailed images (higher DPI). Supported in Grafana v7.0+. |
 
 You can also update these parameters in the [image rendering configuration](ref:image-rendering-config).
 

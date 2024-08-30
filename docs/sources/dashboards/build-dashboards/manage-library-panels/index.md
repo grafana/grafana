@@ -39,6 +39,8 @@ You can control permissions for library panels using [role-based access control 
 
 When you create a library panel, the panel on the source dashboard is converted to a library panel as well. You need to save the original dashboard once a panel is converted.
 
+To create a library panel, follow these steps:
+
 1. In the top-right corner of the dashboard, click **Edit**.
 1. Hover over any part of the panel you want to share to display the actions menu on the top right corner.
 1. Click **More > New library panel**.
@@ -56,6 +58,8 @@ Once created, you can modify the library panel using any dashboard on which it a
 
 Add a Grafana library panel to a dashboard when you want to provide visualizations to other dashboard users.
 
+To add a library panel, follow these steps:
+
 1. Click **Dashboards** in the main menu.
 1. Click **New** and select **New Dashboard** in the drop-down list.
 1. On the empty dashboard, click **+ Add library panel**.
@@ -70,7 +74,9 @@ Add a Grafana library panel to a dashboard when you want to provide visualizatio
 
 ## Unlink a library panel
 
-Unlink a library panel when you want to make a change to the panel and not affect other instances of the library panel. To unlink a library panel, follow these steps:
+Unlink a library panel when you want to make a change to the panel and not affect other instances of the library panel.
+
+To unlink a library panel, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Click **Library panels**.
@@ -108,7 +114,9 @@ Alternatively, if you know where the library panel that you want to replace is b
 
 ## View a list of library panels
 
-You can view a list of available library panels and see where those panels are being used. To view and manage library panels, follow these steps:
+You can view a list of available library panels and see where those panels are being used.
+
+To view and manage library panels, follow these steps:
 
 1. Click **Dashboards > Library panels** in the main menu.
 
