@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { AdHocVariableFilter, GrafanaTheme2, PageLayoutType, VariableHide, urlUtil } from '@grafana/data';
-import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
+import { config, locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   DataSourceVariable,
@@ -259,7 +259,7 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
         addFilterButtonText: 'Add label',
         datasource: trailDS,
         hide: VariableHide.hideLabel,
-        layout: 'vertical',
+        layout: config.featureToggles.newFiltersUI ? 'combobox' : 'vertical',
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
         // since we only support prometheus datasources, this is always true
