@@ -46,28 +46,22 @@ func PostableGrafanaReceiverToEmbeddedContactPoint(contactPoint *definitions.Pos
 	return embeddedContactPoint, nil
 }
 
-func GettableGrafanaReceiverToEmbeddedContactPoint(r *definitions.GettableGrafanaReceiver) (definitions.EmbeddedContactPoint, error) {
+func GrafanaIntegrationConfigToEmbeddedContactPoint(r *models.Integration, provenance models.Provenance) definitions.EmbeddedContactPoint {
 	settingJson := simplejson.New()
 	if r.Settings != nil {
-		var err error
-		settingJson, err = simplejson.NewJson(r.Settings)
-		if err != nil {
-			return definitions.EmbeddedContactPoint{}, err
-		}
+		settingJson = simplejson.NewFromAny(r.Settings)
 	}
 
-	for k := range r.SecureFields {
-		if settingJson.Get(k).MustString() == "" {
-			settingJson.Set(k, definitions.RedactedValue)
-		}
-	}
+	// We explicitly do not copy the secure settings to the settings field. This is because the provisioning API
+	// never returns decrypted or encrypted values, only redacted values. Redacted values should already exist in the
+	// settings field.
 
 	return definitions.EmbeddedContactPoint{
 		UID:                   r.UID,
 		Name:                  r.Name,
-		Type:                  r.Type,
+		Type:                  r.Config.Type,
 		DisableResolveMessage: r.DisableResolveMessage,
 		Settings:              settingJson,
-		Provenance:            string(r.Provenance),
-	}, nil
+		Provenance:            string(provenance),
+	}
 }

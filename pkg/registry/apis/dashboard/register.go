@@ -1,9 +1,6 @@
 package dashboard
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,11 +22,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
@@ -59,6 +56,8 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		return nil // skip registration unless opting into experimental apis
 	}
 
+	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
+	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	builder := &DashboardsAPIBuilder{
 		log: log.New("grafana-apiserver.dashboards"),
@@ -67,28 +66,9 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		accessControl:    accessControl,
 
 		legacy: &dashboardStorage{
-			resource: dashboard.DashboardResourceInfo,
-			access:   legacy.NewDashboardAccess(sql, namespacer, dashStore, provisioning),
-			tableConverter: gapiutil.NewTableConverter(
-				dashboard.DashboardResourceInfo.GroupResource(),
-				[]metav1.TableColumnDefinition{
-					{Name: "Name", Type: "string", Format: "name"},
-					{Name: "Title", Type: "string", Format: "string", Description: "The dashboard name"},
-					{Name: "Created At", Type: "date"},
-				},
-				func(obj any) ([]interface{}, error) {
-					dash, ok := obj.(*dashboard.Dashboard)
-					if ok {
-						if dash != nil {
-							return []interface{}{
-								dash.Name,
-								dash.Spec.GetNestedString("title"),
-								dash.CreationTimestamp.UTC().Format(time.RFC3339),
-							}, nil
-						}
-					}
-					return nil, fmt.Errorf("expected dashboard or summary")
-				}),
+			resource:       dashboard.DashboardResourceInfo,
+			access:         legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, softDelete),
+			tableConverter: dashboard.DashboardResourceInfo.TableConverter(),
 		},
 	}
 	apiregistration.RegisterAPI(builder)
@@ -111,6 +91,8 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&dashboard.DashboardWithAccessInfo{},
 		&dashboard.DashboardVersionList{},
 		&dashboard.VersionsQueryOptions{},
+		&dashboard.LibraryPanel{},
+		&dashboard.LibraryPanelList{},
 		&metav1.PartialObjectMetadata{},
 		&metav1.PartialObjectMetadataList{},
 	)
@@ -175,6 +157,11 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	// Expose read only library panels
+	storage[dashboard.LibraryPanelResourceInfo.StoragePath()] = &libraryPanelStore{
+		access: b.legacy.access,
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[dashboard.VERSION] = storage

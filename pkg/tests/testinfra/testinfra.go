@@ -17,7 +17,6 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/api"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/fs"
@@ -151,6 +150,11 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(`{
 		"entrypoints": {
 		  "app": {
+			"assets": {
+			  "js": ["public/build/runtime.XYZ.js"]
+			}
+		  },
+		  "swagger": {
 			"assets": {
 			  "js": ["public/build/runtime.XYZ.js"]
 			}
@@ -385,12 +389,11 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = grafanaComSection.NewKey("api_url", o.GrafanaComAPIURL)
 			require.NoError(t, err)
 		}
-
-		if o.DualWriterDesiredModes != nil {
-			unifiedStorageMode, err := getOrCreateSection("unified_storage_mode")
-			require.NoError(t, err)
-			for k, v := range o.DualWriterDesiredModes {
-				_, err = unifiedStorageMode.NewKey(k, fmt.Sprint(v))
+		if o.UnifiedStorageConfig != nil {
+			for k, v := range o.UnifiedStorageConfig {
+				section, err := getOrCreateSection(fmt.Sprintf("unified_storage.%s", k))
+				require.NoError(t, err)
+				_, err = section.NewKey("dualWriterMode", fmt.Sprintf("%d", v.DualWriterMode))
 				require.NoError(t, err)
 			}
 		}
@@ -441,7 +444,7 @@ type GrafanaOpts struct {
 	QueryRetries                          int64
 	APIServerStorageType                  string
 	GrafanaComAPIURL                      string
-	DualWriterDesiredModes                map[string]grafanarest.DualWriterMode
+	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
 }
 
 func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) *user.User {
@@ -451,7 +454,7 @@ func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUser
 	cfg.AutoAssignOrgId = 1
 	cmd.OrgID = 1
 
-	quotaService := quotaimpl.ProvideService(store, cfg)
+	quotaService := quotaimpl.ProvideService(db.FakeReplDBFromDB(store), cfg)
 	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(

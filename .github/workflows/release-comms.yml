@@ -39,7 +39,7 @@ jobs:
     - if: ${{ github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/') }}
       run: |
         echo "VERSION=$(echo ${{ github.head_ref }} | sed -e 's/release\/.*\///g')" >> $GITHUB_ENV
-        echo "DRY_RUN=true" >> $GITHUB_ENV
+        echo "DRY_RUN=${{ contains(github.event.pull_request.labels.*.name, 'release/dry-run') }}" >> $GITHUB_ENV
         echo "LATEST=${{ contains(github.event.pull_request.labels.*.name, 'release/latest') }}" >> $GITHUB_ENV
     - id: output
       run: |
@@ -68,6 +68,7 @@ jobs:
     with:
       version: ${{ needs.setup.outputs.version }}
       dry_run: ${{ needs.setup.outputs.dry_run == 'true' }}
+      latest: ${{ needs.setup.outputs.latest }}
   post_on_slack:
     needs: setup
     runs-on: ubuntu-latest

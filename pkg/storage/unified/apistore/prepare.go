@@ -42,7 +42,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetOriginInfo(origin)
 	obj.SetUpdatedBy("")
 	obj.SetUpdatedTimestamp(nil)
-	obj.SetCreatedBy(user.GetUID().String())
+	obj.SetCreatedBy(user.GetUID())
 
 	var buf bytes.Buffer
 	err = s.codec.Encode(newObject, &buf)
@@ -81,7 +81,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		return nil, err
 	}
 	obj.SetOriginInfo(origin)
-	obj.SetUpdatedBy(user.GetUID().String())
+	obj.SetUpdatedBy(user.GetUID())
 	obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
 
 	var buf bytes.Buffer

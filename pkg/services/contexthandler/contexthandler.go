@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/authlib/claims"
 	authnClients "github.com/grafana/grafana/pkg/services/authn/clients"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -121,6 +122,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			reqContext.IsSignedIn = !reqContext.SignedInUser.IsAnonymous
 			reqContext.AllowAnonymous = reqContext.SignedInUser.IsAnonymous
 			reqContext.IsRenderCall = id.IsAuthenticatedBy(login.RenderModule)
+			ctx = identity.WithRequester(ctx, id)
 		}
 
 		h.excludeSensitiveHeadersFromRequest(reqContext.Req)
@@ -138,8 +140,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 
 		// End the span to make next handlers not wrapped within middleware span
 		span.End()
-
-		next.ServeHTTP(w, r.WithContext(identity.WithRequester(ctx, id)))
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
@@ -154,22 +155,21 @@ func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) w
 			return
 		}
 
-		namespace, id := ident.GetTypedID()
-		if !identity.IsIdentityType(
-			namespace,
-			identity.TypeUser,
-			identity.TypeServiceAccount,
-			identity.TypeAPIKey,
-		) || id == "0" {
+		id, _ := ident.GetInternalID()
+		if !ident.IsIdentityType(
+			claims.TypeUser,
+			claims.TypeServiceAccount,
+			claims.TypeAPIKey,
+		) || id == 0 {
 			return
 		}
 
-		if _, ok := h.Cfg.IDResponseHeaderNamespaces[namespace.String()]; !ok {
+		if _, ok := h.Cfg.IDResponseHeaderNamespaces[string(ident.GetIdentityType())]; !ok {
 			return
 		}
 
 		headerName := fmt.Sprintf("%s-Identity-Id", h.Cfg.IDResponseHeaderPrefix)
-		w.Header().Add(headerName, fmt.Sprintf("%s:%s", namespace, id))
+		w.Header().Add(headerName, ident.GetID())
 	}
 }
 

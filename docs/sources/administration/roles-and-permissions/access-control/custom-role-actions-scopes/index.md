@@ -84,10 +84,10 @@ The following list contains role-based access control actions.
 | `featuremgmt.write`                   | n/a                                                                                     | Write feature toggles.                                                                                                                                                                                                    |
 | `folders.permissions:read`            | `folders:*`<br>`folders:uid:*`                                                          | Read permissions for one or more folders and their subfolders.                                                                                                                                                            |
 | `folders.permissions:write`           | `folders:*`<br>`folders:uid:*`                                                          | Update permissions for one or more folders and their subfolders.                                                                                                                                                          |
-| `folders:create`                      | n/a                                                                                     | Create folders in the root level. If granted together with `folders:write`, also allows creating subfolders under all folders that the user can update.                                                                   |
+| `folders:create`                      | `folders:*`<br>`folders:uid:*`<br>`folders:uid:general`                                 | Create folders or subfolders. If granted with scope `folders:uid:general`, it allows to create root level folders. Otherwise, it allows creating subfolders under the specified folders.                                  |
 | `folders:delete`                      | `folders:*`<br>`folders:uid:*`                                                          | Delete one or more folders and their subfolders.                                                                                                                                                                          |
 | `folders:read`                        | `folders:*`<br>`folders:uid:*`                                                          | Read one or more folders and their subfolders.                                                                                                                                                                            |
-| `folders:write`                       | `folders:*`<br>`folders:uid:*`                                                          | Update one or more folders and their subfolders. If granted together with `folders:create` permission, also allows creating subfolders under these folders.                                                               |
+| `folders:write`                       | `folders:*`<br>`folders:uid:*`                                                          | Update one or more folders and their subfolders.                                                                                                                                                                          |
 | `ldap.config:reload`                  | n/a                                                                                     | Reload the LDAP configuration.                                                                                                                                                                                            |
 | `ldap.status:read`                    | n/a                                                                                     | Verify the availability of the LDAP server or servers.                                                                                                                                                                    |
 | `ldap.user:read`                      | n/a                                                                                     | Read users via LDAP.                                                                                                                                                                                                      |
@@ -205,6 +205,23 @@ The following list contains role-based access control actions used by Grafana On
 | `grafana-oncall-app.other-settings:read`         | n/a              | Read OnCall settings.                             |
 | `grafana-oncall-app.other-settings:write`        | n/a              | Edit OnCall settings.                             |
 
+### Grafana Adaptive Metrics action definitions
+
+The following list contains role-based access control actions used by Grafana Adaptive Metrics.
+
+| Action                                               | Applicable scope | Description                                           |
+| ---------------------------------------------------- | ---------------- | ----------------------------------------------------- |
+| `grafana‑adaptive‑metrics‑app.plugin:access`         | n/a              | Access the Adaptive Metrics plugin in Grafana Cloud.  |
+| `grafana‑adaptive‑metrics‑app.config:read`           | n/a              | Read the Adaptive Metrics app configuration.          |
+| `grafana‑adaptive‑metrics‑app.config:write`          | n/a              | Update the Adaptive Metrics app configuration.        |
+| `grafana‑adaptive‑metrics‑app.recommendations:read`  | n/a              | Read aggregation recommendations.                     |
+| `grafana‑adaptive‑metrics‑app.recommendations:apply` | n/a              | Apply aggregation recommendations.                    |
+| `grafana‑adaptive‑metrics‑app.rules:read`            | n/a              | Read aggregation rules.                               |
+| `grafana‑adaptive‑metrics‑app.rules:write`           | n/a              | Create aggregation rules.                             |
+| `grafana‑adaptive‑metrics‑app.rules:delete`          | n/a              | Delete aggregation rules.                             |
+| `grafana‑adaptive‑metrics‑app.exemptions:read`       | n/a              | Read recommendation exemptions.                       |
+| `grafana‑adaptive‑metrics‑app.exemptions:write`      | n/a              | Create, update, and delete recommendation exemptions. |
+
 ## Scope definitions
 
 The following list contains role-based access control scopes.
@@ -215,7 +232,7 @@ The following list contains role-based access control scopes.
 | `apikeys:*`<br>`apikeys:id:*`                   | Restrict an action to a set of API keys. For example, `apikeys:*` matches any API key, `apikey:id:1` matches the API key whose id is `1`.                                                                                                          |
 | `dashboards:*`<br>`dashboards:uid:*`            | Restrict an action to a set of dashboards. For example, `dashboards:*` matches any dashboard, and `dashboards:uid:1` matches the dashboard whose UID is `1`.                                                                                       |
 | `datasources:*`<br>`datasources:uid:*`          | Restrict an action to a set of data sources. For example, `datasources:*` matches any data source, and `datasources:uid:1` matches the data source whose UID is `1`.                                                                               |
-| `folders:*`<br>`folders:uid:*`                  | Restrict an action to a set of folders. For example, `folders:*` matches any folder, and `folders:uid:1` matches the folder whose UID is `1`. Note that permissions granted to a folder cascade down to subfolders located under it                |
+| `folders:*`<br>`folders:uid:*`                  | Restrict an action to a set of folders. For example, `folders:*` matches any folder, and `folders:uid:1` matches the folder whose UID is `1`. Note that permissions granted to a folder cascade down to subfolders located under it.               |
 | `global.users:*` <br> `global.users:id:*`       | Restrict an action to a set of global users. For example, `global.users:*` matches any user and `global.users:id:1` matches the user whose ID is `1`.                                                                                              |
 | `library.panels:*` <br> `library.panels:uid:*`  | Restrict an action to a set of library panels. For example, `library.panels:*` matches any library panel, and `library.panel:uid:1` matches the library panel whose UID is `1`.                                                                    |
 | `orgs:*` <br> `orgs:id:*`                       | Restrict an action to a set of organizations. For example, `orgs:*` matches any organization and `orgs:id:1` matches the organization whose ID is `1`.                                                                                             |

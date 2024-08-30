@@ -42,11 +42,10 @@ export const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroup
               name={rulerRule.alert}
               labels={rulerRule.labels}
               lastEvaluation={promRule?.lastEvaluation}
-              evaluationDuration={promRule?.evaluationTime}
               evaluationInterval={group.interval}
               instancesCount={isAlertingPromRule ? size(promRule.alerts) : undefined}
               href={createViewLink(rulesSource, rule)}
-              summary={annotations?.['summary']}
+              summary={annotations?.summary}
             />
           );
         }
@@ -59,7 +58,6 @@ export const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroup
               health={promRule?.health}
               error={promRule?.lastError}
               lastEvaluation={promRule?.lastEvaluation}
-              evaluationDuration={promRule?.evaluationTime}
               evaluationInterval={group.interval}
               labels={rulerRule.labels}
               href={createViewLink(rulesSource, rule)}
@@ -80,11 +78,10 @@ export const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroup
               labels={rulerRule.labels}
               isPaused={rulerRule.grafana_alert.is_paused}
               lastEvaluation={promRule?.lastEvaluation}
-              evaluationDuration={promRule?.evaluationTime}
               evaluationInterval={group.interval}
               instancesCount={isAlertingPromRule ? size(promRule.alerts) : undefined}
               href={createViewLink(rulesSource, rule)}
-              summary={rule.annotations?.['summary']}
+              summary={rule.annotations?.summary}
               isProvisioned={Boolean(rulerRule.grafana_alert.provenance)}
               contactPoint={contactPoint}
             />

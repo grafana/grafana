@@ -1,17 +1,20 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { InteractiveTable } from '@grafana/ui';
+import { InteractiveTable, Pagination, Stack } from '@grafana/ui';
 
 import { MigrateDataResponseItemDto } from '../api';
 
 import { NameCell } from './NameCell';
-import { ResourceErrorModal } from './ResourceErrorModal';
+import { ResourceDetailsModal } from './ResourceDetailsModal';
 import { StatusCell } from './StatusCell';
 import { TypeCell } from './TypeCell';
 import { ResourceTableItem } from './types';
 
-interface ResourcesTableProps {
+export interface ResourcesTableProps {
   resources: MigrateDataResponseItemDto[];
+  page: number;
+  numberOfPages: number;
+  onChangePage: (page: number) => void;
 }
 
 const columns = [
@@ -20,22 +23,26 @@ const columns = [
   { id: 'status', header: 'Status', cell: StatusCell },
 ];
 
-export function ResourcesTable({ resources }: ResourcesTableProps) {
-  const [erroredResource, setErroredResource] = useState<ResourceTableItem | undefined>();
+export function ResourcesTable({ resources, numberOfPages = 0, onChangePage, page = 1 }: ResourcesTableProps) {
+  const [focusedResource, setfocusedResource] = useState<ResourceTableItem | undefined>();
 
-  const handleShowErrorModal = useCallback((resource: ResourceTableItem) => {
-    setErroredResource(resource);
+  const handleShowDetailsModal = useCallback((resource: ResourceTableItem) => {
+    setfocusedResource(resource);
   }, []);
 
   const data = useMemo(() => {
-    return resources.map((r) => ({ ...r, showError: handleShowErrorModal }));
-  }, [resources, handleShowErrorModal]);
+    return resources.map((r) => ({ ...r, showDetails: handleShowDetailsModal }));
+  }, [resources, handleShowDetailsModal]);
 
   return (
     <>
-      <InteractiveTable columns={columns} data={data} getRowId={(r) => r.refId} pageSize={15} />
+      <Stack alignItems="flex-end" direction="column">
+        <InteractiveTable columns={columns} data={data} getRowId={(r) => r.refId} />
 
-      <ResourceErrorModal resource={erroredResource} onClose={() => setErroredResource(undefined)} />
+        <Pagination numberOfPages={numberOfPages} currentPage={page} onNavigate={onChangePage} />
+      </Stack>
+
+      <ResourceDetailsModal resource={focusedResource} onClose={() => setfocusedResource(undefined)} />
     </>
   );
 }

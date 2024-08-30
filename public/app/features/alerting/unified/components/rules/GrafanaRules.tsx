@@ -17,7 +17,7 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { getPaginationStyles } from '../../styles/pagination';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { createUrl } from '../../utils/url';
+import { createRelativeUrl } from '../../utils/url';
 import { GrafanaRulesExporter } from '../export/GrafanaRulesExporter';
 
 import { RulesGroup } from './RulesGroup';
@@ -40,7 +40,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
   const loading = prom.loading || ruler.loading;
   const hasResult = !!prom.result || !!ruler.result;
 
-  const wantsListView = queryParams['view'] === 'list';
+  const wantsListView = queryParams.view === 'list';
   const namespacesFormat = wantsListView ? flattenGrafanaManagedRules(namespaces) : namespaces;
 
   const groupsWithNamespaces = useCombinedGroupNamespace(namespacesFormat);
@@ -86,7 +86,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
             )}
             {grafanaRecordingRulesEnabled && (
               <LinkButton
-                href={createUrl('/alerting/new/grafana-recording', {
+                href={createRelativeUrl('/alerting/new/grafana-recording', {
                   returnTo: '/alerting/list' + location.search,
                 })}
                 icon="plus"

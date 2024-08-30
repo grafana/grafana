@@ -9,6 +9,8 @@ import (
 
 const (
 	TypeDashboard = "dashboard"
+
+	ActionAppAccess = "plugins.app:access"
 )
 
 var (
@@ -169,13 +171,11 @@ type Signature struct {
 
 type PluginMetaDTO struct {
 	JSONData
-
-	Signature SignatureStatus `json:"signature"`
-
-	Module  string `json:"module"`
-	BaseURL string `json:"baseUrl"`
-
-	Angular AngularMeta `json:"angular"`
+	Signature                 SignatureStatus `json:"signature"`
+	Module                    string          `json:"module"`
+	BaseURL                   string          `json:"baseUrl"`
+	Angular                   AngularMeta     `json:"angular"`
+	MultiValueFilterOperators bool            `json:"multiValueFilterOperators"`
 }
 
 type DataSourceDTO struct {

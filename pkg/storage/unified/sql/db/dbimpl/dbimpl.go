@@ -6,8 +6,8 @@ import (
 	"sync"
 
 	"github.com/dlmiddlecote/sqlstats"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/trace"
 	"xorm.io/xorm"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
@@ -23,7 +23,7 @@ const (
 	dbTypePostgres = "postgres"
 )
 
-func ProvideResourceDB(grafanaDB infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (db.DBProvider, error) {
+func ProvideResourceDB(grafanaDB infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (db.DBProvider, error) {
 	p, err := newResourceDBProvider(grafanaDB, cfg, features, tracer)
 	if err != nil {
 		return nil, fmt.Errorf("provide Resource DB: %w", err)
@@ -54,19 +54,17 @@ type resourceDBProvider struct {
 	logQueries      bool
 }
 
-func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (p *resourceDBProvider, err error) {
+func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (p *resourceDBProvider, err error) {
 	// TODO: This should be renamed resource_api
 	getter := &sectionGetter{
 		DynamicSection: cfg.SectionWithEnvOverrides("resource_api"),
 	}
 
 	p = &resourceDBProvider{
-		cfg:        cfg,
-		log:        log.New("entity-db"),
-		logQueries: getter.Key("log_queries").MustBool(false),
-	}
-	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
-		p.migrateFunc = migrations.MigrateResourceStore
+		cfg:         cfg,
+		log:         log.New("entity-db"),
+		logQueries:  getter.Key("log_queries").MustBool(false),
+		migrateFunc: migrations.MigrateResourceStore,
 	}
 
 	switch dbType := getter.Key("db_type").MustString(""); dbType {

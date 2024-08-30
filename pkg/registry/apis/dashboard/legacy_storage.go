@@ -38,7 +38,7 @@ func (s *dashboardStorage) newStore(scheme *runtime.Scheme, defaultOptsGetter ge
 	s.server = server
 
 	resourceInfo := s.resource
-	defaultOpts, err := defaultOptsGetter.GetRESTOptions(resourceInfo.GroupResource())
+	defaultOpts, err := defaultOptsGetter.GetRESTOptions(resourceInfo.GroupResource(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (s *dashboardStorage) newStore(scheme *runtime.Scheme, defaultOptsGetter ge
 		defaultOpts.StorageConfig.Config,
 	)
 
-	strategy := grafanaregistry.NewStrategy(scheme)
+	strategy := grafanaregistry.NewStrategy(scheme, resourceInfo.GroupVersion())
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,

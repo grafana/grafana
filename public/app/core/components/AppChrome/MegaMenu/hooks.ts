@@ -5,7 +5,7 @@ import { useGetUserPreferencesQuery } from 'app/features/preferences/api';
 
 export const usePinnedItems = () => {
   const preferences = useGetUserPreferencesQuery();
-  const pinnedItems = useMemo(() => preferences.data?.navbar?.bookmarkIds || [], [preferences]);
+  const pinnedItems = useMemo(() => preferences.data?.navbar?.bookmarkUrls || [], [preferences]);
 
   if (config.featureToggles.pinNavItems) {
     return pinnedItems;
