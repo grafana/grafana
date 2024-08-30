@@ -35,6 +35,7 @@ In this tutorial, you'll learn how to use Grafana to set up a monitoring solutio
 - Set up alert rules
 
 <!-- INTERACTIVE ignore START -->
+
 Alternatively, you can also watch our Grafana for Beginners series where we discuss fundamental concepts to help you get started with Grafana.
 
 <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden">
@@ -78,19 +79,19 @@ In this step, you'll set up the sample application, as well as supporting servic
 
 1. Clone the [github.com/grafana/tutorial-environment](https://github.com/grafana/tutorial-environment) repository.
 
-   ``` bash
+   ```bash
    git clone https://github.com/grafana/tutorial-environment.git
    ```
 
 1. Change to the directory where you cloned this repository:
 
-   ``` bash 
+   ```bash
    cd tutorial-environment
    ```
 
 1. Make sure Docker is running:
 
-   ``` bash
+   ```bash
    docker ps
    ```
 
@@ -98,7 +99,7 @@ In this step, you'll set up the sample application, as well as supporting servic
 
 1. Start the sample application:
 
-   ``` bash
+   ```bash
    docker-compose up -d
    ```
 
@@ -108,14 +109,13 @@ In this step, you'll set up the sample application, as well as supporting servic
 
 1. Ensure all services are up-and-running:
 
-   ``` bash
+   ```bash
    docker-compose ps
    ```
 
    In the **State** column, it should say `Up` for all services.
 
 1. Browse to the sample application on [http://localhost:8081](http://localhost:8081).
-
 
 ### Grafana News
 
@@ -140,23 +140,28 @@ To vote for a link, click the triangle icon next to the name of the link.
 Grafana is an open source platform for monitoring and observability that lets you visualize and explore the state of your systems.
 
 <!-- INTERACTIVE ignore START -->
+
 1. Open a new tab.
 1. Browse to [http://localhost:3000](http://localhost:3000).
 <!-- INTERACTIVE ignore END -->
 
 {{< docs/ignore >}}
+
 1. Browse to [http://localhost:3000](http://localhost:3000).
-{{< /docs/ignore >}}
+   {{< /docs/ignore >}}
 
 <!-- INTERACTIVE ignore START -->
+
 {{< admonition type="note" >}}
 This demo does not require a login page or credentials. However, if you choose to install Grafana locally, you will need to log in and provide credentials. In that case, the default username and password is `admin`.
 {{< /admonition >}}
+
 <!-- INTERACTIVE ignore START -->
 
 {{< docs/ignore >}}
+
 > This demo does not require a login page or credentials. However, if you choose to install Grafana locally, you will need to log in and provide credentials. In that case, the default username and password is `admin`.
-{{< /docs/ignore >}}
+> {{< /docs/ignore >}}
 
 The first thing you see is the Home dashboard, which helps you get started.
 
@@ -358,14 +363,16 @@ The most basic alert rule consists of two parts:
 1. A _Contact point_ - A Contact point defines how Grafana delivers an alert instance. When the conditions of an _alert rule_ are met, Grafana notifies the contact points, or channels, configured for that alert rule.
 
    <!-- INTERACTIVE ignore START -->
+
    {{< admonition type="note" >}}
    An [alert instance](https://grafana.com/docs/grafana/latest/alerting/fundamentals/#alert-instances) is a specific occurrence that matches a condition defined by an alert rule, such as when the rate of requests for a specific route suddenly increases.
    {{< /admonition >}}
    <!-- INTERACTIVE ignore END -->
 
    {{< docs/ignore >}}
+
    > An [alert instance](https://grafana.com/docs/grafana/latest/alerting/fundamentals/#alert-instances) is a specific occurrence that matches a condition defined by an alert rule, such as when the rate of requests for a specific route suddenly increases.
-   {{< /docs/ignore >}}
+   > {{< /docs/ignore >}}
 
    Some popular channels include:
 
@@ -445,21 +452,26 @@ We have now configured an alert rule and a contact point. Now let's see if we ca
 Once the query `sum(rate(tns_request_duration_seconds_count[5m])) by(route)` returns a value greater than `0.2` Grafana will trigger our alert rule. Browse to the Request Bin we created earlier and find the sent Grafana alert notification with details and metadata.
 
 <!-- INTERACTIVE ignore START -->
+
 {{< admonition type="note" >}}
 The alert rule may be triggered by the `/metrics` endpoint which is frequently accessed by Grafana when pulling metrics from the application. If this happens, you can increase the **Threshold** value in **Section 2** for testing purposes.
 {{< /admonition >}}
+
 <!-- INTERACTIVE ignore START -->
 
 {{< docs/ignore >}}
+
 > The alert rule may be triggered by the `/metrics` endpoint which is frequently accessed by Grafana when pulling metrics from the application. If this happens, you can increase the **Threshold** value in **Section 2** for testing purposes.
-{{< /docs/ignore >}}
+> {{< /docs/ignore >}}
 
 ### Display Grafana-managed alert rules to your dashboard
 
 In most cases, it's also valuable to display Grafana alert instances as annotations to your dashboard. Check out the video tutorial below to learn how to display alerting to your dashboard.
 
 <!-- INTERACTIVE ignore START -->
+
 {{< youtube id="ClLp-iSoaSY" >}}
+
 <!-- INTERACTIVE ignore END -->
 
 Let's see how we can configure this.
@@ -505,11 +517,12 @@ In this tutorial you learned about fundamental features of Grafana. To do so, we
 ```
 docker-compose down -v
 ```
+
 <!-- INTERACTIVE ignore END -->
 
 {{< docs/ignore >}}
 
-In this tutorial you learned about fundamental features of Grafana. 
+In this tutorial you learned about fundamental features of Grafana.
 
 {{< /docs/ignore >}}
 
