@@ -19,7 +19,6 @@ import config from '../../core/config';
 // When set to auto, the interval will be based on the query range
 // NOTE: this is defined here rather than TimeSrv so we avoid circular dependencies
 export const AutoRefreshInterval = 'auto';
-
 export const RedirectToUrlKey = 'redirectTo';
 
 export class User implements Omit<CurrentUserInternal, 'lightTheme'> {

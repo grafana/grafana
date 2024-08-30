@@ -44,11 +44,11 @@ func notAuthorized(c *contextmodel.ReqContext) {
 	}
 
 	if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
-		c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate?returnUrl=" + url.QueryEscape(getRedirectToUrl(c)))
+		c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate" + getRedirectToQueryParam(c))
 		return
 	}
 
-	c.Redirect(setting.AppSubUrl + "/login?returnUrl=" + url.QueryEscape(getRedirectToUrl(c)))
+	c.Redirect(setting.AppSubUrl + "/login" + getRedirectToQueryParam(c))
 }
 
 func tokenRevoked(c *contextmodel.ReqContext, err *auth.TokenRevokedError) {
@@ -63,10 +63,10 @@ func tokenRevoked(c *contextmodel.ReqContext, err *auth.TokenRevokedError) {
 		return
 	}
 
-	c.Redirect(setting.AppSubUrl + "/login?returnUrl=" + url.QueryEscape(getRedirectToUrl(c)))
+	c.Redirect(setting.AppSubUrl + "/login" + getRedirectToQueryParam(c))
 }
 
-func getRedirectToUrl(c *contextmodel.ReqContext) string {
+func getRedirectToQueryParam(c *contextmodel.ReqContext) string {
 	redirectTo := c.Req.RequestURI
 	if setting.AppSubUrl != "" && !strings.HasPrefix(redirectTo, setting.AppSubUrl) {
 		redirectTo = setting.AppSubUrl + c.Req.RequestURI
@@ -77,7 +77,8 @@ func getRedirectToUrl(c *contextmodel.ReqContext) string {
 	}
 
 	// remove any forceLogin=true params
-	return removeForceLoginParams(redirectTo)
+	redirectTo = removeForceLoginParams(redirectTo)
+	return "?redirectTo=" + url.QueryEscape(redirectTo)
 }
 
 var forceLoginParamsRegexp = regexp.MustCompile(`&?forceLogin=true`)

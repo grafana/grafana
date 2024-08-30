@@ -393,13 +393,15 @@ function reportMetricPerformanceMark(metricName: string, prefix = '', suffix = '
 
 function handleRedirectTo(): void {
   const queryParams = new URLSearchParams(window.location.search);
-  if (queryParams.has('returnUrl') && window.location.pathname !== '/') {
-    const rawReturnUrl = queryParams.get('returnUrl')!;
-    if (!isValidRedirectTo(rawReturnUrl)) {
+  const redirectToParamKey = 'redirectTo';
+
+  if (queryParams.has(redirectToParamKey) && window.location.pathname !== '/') {
+    const rawRedirectTo = queryParams.get(redirectToParamKey)!;
+    if (!isValidRedirectTo(rawRedirectTo)) {
       return;
     }
-    window.sessionStorage.setItem(RedirectToUrlKey, decodeURIComponent(rawReturnUrl));
-    queryParams.delete('returnUrl');
+    window.sessionStorage.setItem(RedirectToUrlKey, decodeURIComponent(rawRedirectTo));
+    queryParams.delete(redirectToParamKey);
     window.history.replaceState({}, '', `${window.location.pathname}${queryParams.size > 0 ? `?${queryParams}` : ''}`);
     return;
   }
@@ -413,7 +415,7 @@ function handleRedirectTo(): void {
     window.sessionStorage.removeItem(RedirectToUrlKey);
     return;
   }
-  
+
   window.sessionStorage.removeItem(RedirectToUrlKey);
   window.location.replace(redirectTo);
 }

@@ -98,7 +98,7 @@ func deny(c *contextmodel.ReqContext, evaluator Evaluator, err error) {
 
 	if !c.IsApiRequest() {
 		// TODO(emil): I'd like to show a message after this redirect, not sure how that can be done?
-		c.Redirect(setting.AppSubUrl + "/?returnUrl=" + url.QueryEscape(getRedirectToUrl(c)))
+		c.Redirect(setting.AppSubUrl + "/" + getRedirectToQueryParam(c))
 		return
 	}
 
@@ -125,11 +125,11 @@ func unauthorized(c *contextmodel.ReqContext) {
 	}
 
 	if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
-		c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate?returnUrl=" + url.QueryEscape(getRedirectToUrl(c)))
+		c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate" + getRedirectToQueryParam(c))
 		return
 	}
 
-	c.Redirect(setting.AppSubUrl + "/login?returnUrl=" + url.QueryEscape(getRedirectToUrl(c)))
+	c.Redirect(setting.AppSubUrl + "/login" + getRedirectToQueryParam(c))
 }
 
 func tokenRevoked(c *contextmodel.ReqContext, err *usertoken.TokenRevokedError) {
@@ -144,10 +144,10 @@ func tokenRevoked(c *contextmodel.ReqContext, err *usertoken.TokenRevokedError) 
 		return
 	}
 
-	c.Redirect(setting.AppSubUrl + "/login?returnUrl=" + url.QueryEscape(getRedirectToUrl(c)))
+	c.Redirect(setting.AppSubUrl + "/login" + getRedirectToQueryParam(c))
 }
 
-func getRedirectToUrl(c *contextmodel.ReqContext) string {
+func getRedirectToQueryParam(c *contextmodel.ReqContext) string {
 	redirectTo := c.Req.RequestURI
 	if setting.AppSubUrl != "" && !strings.HasPrefix(redirectTo, setting.AppSubUrl) {
 		redirectTo = setting.AppSubUrl + c.Req.RequestURI
@@ -158,8 +158,23 @@ func getRedirectToUrl(c *contextmodel.ReqContext) string {
 	}
 
 	// remove any forceLogin=true params
-	return removeForceLoginParams(redirectTo)
+	redirectTo = removeForceLoginParams(redirectTo)
+	return "?redirectTo=" + url.QueryEscape(redirectTo)
 }
+
+// func getRedirectToUrl(c *contextmodel.ReqContext) string {
+// 	redirectTo := c.Req.RequestURI
+// 	if setting.AppSubUrl != "" && !strings.HasPrefix(redirectTo, setting.AppSubUrl) {
+// 		redirectTo = setting.AppSubUrl + c.Req.RequestURI
+// 	}
+
+// 	if redirectTo == "/" {
+// 		return ""
+// 	}
+
+// 	// remove any forceLogin=true params
+// 	return removeForceLoginParams(redirectTo)
+// }
 
 func writeRedirectCookie(c *contextmodel.ReqContext) {
 	redirectTo := c.Req.RequestURI
