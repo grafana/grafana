@@ -250,7 +250,7 @@ In this section, we define queries, expressions (used to manipulate the data), a
 
 6. Click **Preview** to run the queries.
 
-   It should return alert instances from log lines with a status code that is not 200 (OK), and that has met the alert condition. The condition for the alert rule to fire is any ocurrence that goes over the threshold of `0`. Since the Loki query has returned more than zero alert instances, the alert rule is `Firing`.
+   It should return alert instances from log lines with a status code that is not 200 (OK), and that has met the alert condition. The condition for the alert rule to fire is any occurrence that goes over the threshold of `0`. Since the Loki query has returned more than zero alert instances, the alert rule is `Firing`.
 
    {{< figure src="/media/docs/alerting/expression-loki-alert.png" max-width="1200px" caption="Preview of a firing alert instances" >}}
 
