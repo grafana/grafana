@@ -17,7 +17,7 @@ export const MigrateToServiceAccountsCard = ({ onMigrate, apikeysCount, disabled
   const docsLink = (
     <a
       className="external-link"
-      href="https://grafana.com/docs/grafana/latest/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts"
+      href="https://grafana.com/docs/grafana/latest/administration/service-accounts/migrate-api-keys/)"
       target="_blank"
       rel="noopener noreferrer"
     >

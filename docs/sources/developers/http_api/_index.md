@@ -80,40 +80,41 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 - [Admin API]({{< relref "admin/" >}})
 - [Alerting API (unstable)](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json)
-- [Alerting Provisioning API]({{< relref "alerting_provisioning/" >}})
+- [Alerting provisioning API]({{< relref "alerting_provisioning/" >}})
 - [Annotations API]({{< relref "annotations/" >}})
 - [Correlations API]({{< relref "correlations/" >}})
 - [Dashboard API]({{< relref "dashboard/" >}})
-- [Dashboard Permissions API]({{< relref "dashboard_permissions/" >}})
-- [Dashboard Versions API]({{< relref "dashboard_versions/" >}})
+- [Dashboard permissions API]({{< relref "dashboard_permissions/" >}})
+- [Dashboard versions API]({{< relref "dashboard_versions/" >}})
 - [Data source API]({{< relref "data_source/" >}})
 - [Folder API]({{< relref "folder/" >}})
-- [Folder Permissions API]({{< relref "folder_permissions/" >}})
-- [Folder/Dashboard Search API]({{< relref "folder_dashboard_search/" >}})
-- [Library Element API]({{< relref "library_element/" >}})
+- [Folder permissions API]({{< relref "folder_permissions/" >}})
+- [Folder/Dashboard search API]({{< relref "folder_dashboard_search/" >}})
+- [Library element API]({{< relref "library_element/" >}})
 - [Organization API]({{< relref "org/" >}})
 - [Other API]({{< relref "other/" >}})
 - [Playlists API]({{< relref "playlist/" >}})
 - [Preferences API]({{< relref "preferences/" >}})
-- [Short URL API]({{< relref "short_url/" >}})
+- [Public dashboard API]({{< relref "dashboard_public/" >}})
 - [Query history API]({{< relref "query_history/" >}})
+- [Service account API]({{< relref "serviceaccount/" >}})
+- [Short URL API]({{< relref "short_url/" >}})
 - [Snapshot API]({{< relref "snapshot/" >}})
+- [SSO settings API]({{< relref "sso-settings/" >}})
 - [Team API]({{< relref "team/" >}})
 - [User API]({{< relref "user/" >}})
 
 ## Deprecated HTTP APIs
 
-- [Alerting Notification Channels API]({{< relref "alerting_notification_channels/" >}})
-- [Alerting API]({{< relref "alerting/" >}})
 - [Authentication API]({{< relref "auth/" >}})
 
 ## Grafana Enterprise HTTP APIs
 
 Grafana Enterprise includes all of the Grafana OSS APIs as well as those that follow:
 
-- [Role-based access control API]({{< relref "access_control/" >}})
 - [Data source permissions API]({{< relref "datasource_permissions/" >}})
-- [Team sync API]({{< relref "team_sync/" >}})
 - [License API]({{< relref "licensing/" >}})
-- [Reporting API]({{< relref "reporting/" >}})
 - [Query and resource caching API]({{< relref "query_and_resource_caching/" >}})
+- [Reporting API]({{< relref "reporting/" >}})
+- [Role-based access control API]({{< relref "access_control/" >}})
+- [Team sync API]({{< relref "team_sync/" >}})

@@ -32,7 +32,7 @@ export function TableCellInspector({ value, onDismiss, mode }: TableCellInspecto
       } catch { }
     }
   } else {
-    displayValue = JSON.stringify(value, null, ' ');
+    displayValue = JSON.stringify(value, null, '');
   }
   let text = displayValue;
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -45,6 +46,7 @@ type DataSourceAPIBuilder struct {
 	contextProvider PluginContextWrapper
 	accessControl   accesscontrol.AccessControl
 	queryTypes      *query.QueryTypeDefinitionList
+	log             log.Logger
 }
 
 func RegisterAPIService(
@@ -121,6 +123,7 @@ func NewDataSourceAPIBuilder(
 		datasources:            datasources,
 		contextProvider:        contextProvider,
 		accessControl:          accessControl,
+		log:                    log.New("grafana-apiserver.datasource"),
 	}
 	if loadQueryTypes {
 		// In the future, this will somehow come from the plugin

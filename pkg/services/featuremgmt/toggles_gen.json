@@ -1048,6 +1048,45 @@
     },
     {
       "metadata": {
+        "name": "exploreLogsAggregatedMetrics",
+        "resourceVersion": "1724938092041",
+        "creationTimestamp": "2024-08-29T13:28:12Z"
+      },
+      "spec": {
+        "description": "Used in Explore Logs to query by aggregated metrics",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "exploreLogsLimitedTimeRange",
+        "resourceVersion": "1724938092041",
+        "creationTimestamp": "2024-08-29T13:28:12Z"
+      },
+      "spec": {
+        "description": "Used in Explore Logs to limit the time range",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "exploreLogsShardSplitting",
+        "resourceVersion": "1724938092041",
+        "creationTimestamp": "2024-08-29T13:28:12Z"
+      },
+      "spec": {
+        "description": "Used in Explore Logs to split queries into multiple queries based on the number of shards",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "exploreMetrics",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2024-04-09T18:15:18Z",
@@ -1846,6 +1885,18 @@
     },
     {
       "metadata": {
+        "name": "newFiltersUI",
+        "resourceVersion": "1724228641625",
+        "creationTimestamp": "2024-08-21T08:24:01Z"
+      },
+      "spec": {
+        "description": "Enables new combobox style UI for the Ad hoc filters variable in scenes architecture",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "newFolderPicker",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-01-15T11:43:19Z"
@@ -2499,6 +2550,19 @@
         "description": "Show warnings when dashboards do not validate against the schema",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "singleTopNav",
+        "resourceVersion": "1724861961030",
+        "creationTimestamp": "2024-08-28T16:19:21Z"
+      },
+      "spec": {
+        "description": "Unifies the top search bar and breadcrumb bar into one",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
       }
     },
     {
