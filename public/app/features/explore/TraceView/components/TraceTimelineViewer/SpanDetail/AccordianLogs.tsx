@@ -59,9 +59,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     AccordianKeyValuesItem: css({
       marginBottom: theme.spacing(0.5),
     }),
-    parenthesis: css`
-      color: ${autoColor(theme, '#777')};
-    `,
+    parenthesis: css({
+      color: `${autoColor(theme, '#777')}`,
+    }),
   };
 };
 
