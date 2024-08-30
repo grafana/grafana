@@ -278,7 +278,7 @@
         var cssLink = document.createElement("link");
         cssLink.rel = 'stylesheet';
 
-        if (false && darkQuery.matches) {
+        if (darkQuery.matches) {
           document.body.classList.add("theme-dark");
           cssLink.href = window.grafanaBootData.assets.dark;
           window.grafanaBootData.user.lightTheme = false;
