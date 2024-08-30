@@ -1,3 +1,4 @@
+import { VariableRefresh } from '@grafana/data';
 import {
   DeepPartial,
   EmbeddedScene,
@@ -103,6 +104,7 @@ interface SceneOptions {
   usePanelRepeater?: boolean;
   useRowRepeater?: boolean;
   throwError?: string;
+  variableRefresh?: VariableRefresh;
 }
 
 export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel | LibraryVizPanel) {
@@ -157,6 +159,7 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
       { label: 'E', value: '5' },
     ].slice(0, options.numberOfOptions),
     throwError: defaults.throwError,
+    refresh: options.variableRefresh,
   });
 
   const rowRepeatVariable = new TestVariable({
