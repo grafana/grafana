@@ -50,8 +50,7 @@ func (api *AccessControlAPI) getUserActions(c *contextmodel.ReqContext) response
 	defer span.End()
 
 	reloadCache := c.QueryBool("reloadcache")
-	permissions, err := api.Service.GetUserPermissions(ctx,
-		c.SignedInUser, ac.Options{ReloadCache: reloadCache})
+	permissions, err := api.Service.GetUserPermissions(ctx, c.SignedInUser, ac.Options{ReloadCache: reloadCache})
 	if err != nil {
 		return response.JSON(http.StatusInternalServerError, err)
 	}
@@ -65,8 +64,7 @@ func (api *AccessControlAPI) getUserPermissions(c *contextmodel.ReqContext) resp
 	defer span.End()
 
 	reloadCache := c.QueryBool("reloadcache")
-	permissions, err := api.Service.GetUserPermissions(ctx,
-		c.SignedInUser, ac.Options{ReloadCache: reloadCache})
+	permissions, err := api.Service.GetUserPermissions(ctx, c.SignedInUser, ac.Options{ReloadCache: reloadCache})
 	if err != nil {
 		return response.JSON(http.StatusInternalServerError, err)
 	}
