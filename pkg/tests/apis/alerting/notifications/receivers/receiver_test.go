@@ -841,7 +841,7 @@ func TestIntegrationCRUD(t *testing.T) {
 			},
 		}
 		_, err := adminClient.Create(ctx, newReceiver, v1.CreateOptions{})
-		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest, got: %s", err)
+		require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
 	})
 
 	t.Run("should not let delete default receiver", func(t *testing.T) {
