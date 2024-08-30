@@ -322,12 +322,15 @@ The snapshot is immediately deleted. You may need to clear your browser cache or
 
 ### Share a library panel
 
-<!-- to be updated -->
-
 To create a library panel from the **Share Panel** dialog:
 
-1. Click **Library panel**.
-1. In **Library panel name**, enter the name.
-1. In **Save in folder**, select the folder in which to save the library panel. By default, the root level is selected.
+1. In the top-right corner of the dashboard, click **Edit**.
+1. Hover over any part of the panel you want to share to display the actions menu on the top right corner.
+1. Click **More > New library panel**.
+1. In the **Library panel name** field, enter the name.
+1. In the **Save in folder** drop-down list, select the folder in which to save the library panel. By default, the root level is selected.
 1. Click **Create library panel** to save your changes.
 1. Click **Save dashboard**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.
