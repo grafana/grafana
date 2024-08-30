@@ -21,11 +21,13 @@ import (
 	clientset "github.com/grafana/grafana/pkg/aggregator/generated/clientset/versioned"
 	informers "github.com/grafana/grafana/pkg/aggregator/generated/informers/externalversions"
 	dataplaneservicerest "github.com/grafana/grafana/pkg/aggregator/registry/dataplaneservice/rest"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type ExtraConfig struct {
 	PluginClient          plugin.PluginClient
 	PluginContextProvider plugin.PluginContextProvider
+	Reg                   prometheus.Registerer
 }
 
 type Config struct {
