@@ -7,6 +7,8 @@ import {
 } from '@grafana/data/src/transformations/transformers/calculateField';
 import { getFieldTypeIconName, InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
+import { LABEL_WIDTH } from './constants';
+
 export const BinaryOperationOptionsEditor = (props: {
   options: CalculateFieldTransformerOptions;
   onChange: (options: CalculateFieldTransformerOptions) => void;
@@ -116,17 +118,16 @@ export const BinaryOperationOptionsEditor = (props: {
   return (
     <>
       <InlineFieldRow>
-        <InlineField>
+        <InlineField label="Operation" labelWidth={LABEL_WIDTH}>
           <Select
             allowCustomValue={true}
-            placeholder={'Field(s) or number'}
+            placeholder="Field(s) or number"
             options={leftNames}
             className="min-width-18"
             value={JSON.stringify(binary?.left)}
             onChange={onBinaryLeftChanged}
           />
         </InlineField>
-
         <InlineField>
           <Select
             className="width-4"
