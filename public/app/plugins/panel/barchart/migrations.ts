@@ -1,15 +1,10 @@
-import { ConfigOverrideRule, FieldMatcherID, PanelTypeChangedHandler } from '@grafana/data';
+import { FieldMatcherID, PanelTypeChangedHandler } from '@grafana/data';
 import { AxisPlacement } from '@grafana/ui';
 
 /*
  * This is called when the panel changes from another panel
  */
-export const changeToBarChartPanelMigrationHandler: PanelTypeChangedHandler = (
-  panel,
-  prevPluginId,
-  prevOptions,
-  prevFieldConfig
-) => {
+export const changeToBarChartPanelMigrationHandler: PanelTypeChangedHandler = (panel, prevPluginId, prevOptions) => {
   if (prevPluginId === 'graph') {
     const graphOptions: GraphOptions = prevOptions.angular;
 
