@@ -2568,3 +2568,37 @@ button.close {
   color: $text-muted;
   min-width: 47px;
 }
+
+.input-mini {
+  width: 60px;
+}
+
+.input-medium {
+  width: 150px;
+}
+
+input[type='checkbox'].cr1 {
+  display: none;
+}
+
+.editor-option label.cr1 {
+  display: inline-block;
+  margin: 5px 0 1px 0;
+}
+
+label.cr1 {
+  display: inline-block;
+  height: 18px;
+  position: relative;
+  clear: none;
+  text-indent: 2px;
+  margin: 0 0 0px 0;
+  padding: 0 0 0 20px;
+  vertical-align: top;
+  background: url($checkboxImageUrl) left top no-repeat;
+  cursor: pointer;
+}
+
+input[type='checkbox'].cr1:checked + label {
+  background: url($checkboxImageUrl) 0px -18px no-repeat;
+}
