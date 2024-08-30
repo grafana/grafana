@@ -58,10 +58,14 @@ export interface UnaryOptions {
 }
 
 export interface BinaryOptions {
-  left: string;
+  left: BinaryValue;
   operator: BinaryOperationID;
-  right: string;
-  allNumbers?: boolean;
+  right: BinaryValue;
+}
+
+export interface BinaryValue {
+  fixed: string;
+  matcher?: { id?: FieldMatcherID; options?: string };
 }
 
 interface IndexOptions {
@@ -80,10 +84,9 @@ export const defaultWindowOptions: WindowOptions = {
 };
 
 const defaultBinaryOptions: BinaryOptions = {
-  left: '',
+  left: { fixed: '' },
   operator: BinaryOperationID.Add,
-  right: '',
-  allNumbers: false,
+  right: { fixed: '' },
 };
 
 const defaultUnaryOptions: UnaryOptions = {
@@ -156,10 +159,11 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
           case CalculateFieldMode.BinaryOperation:
             const binaryOptions = {
               ...options.binary,
-              left: ctx.interpolate(options.binary?.left!),
-              right: ctx.interpolate(options.binary?.right!),
+              left: options.binary?.left,
+              right: options.binary?.right,
             };
-            if (binaryOptions.allNumbers) {
+            if (binaryOptions.left?.matcher?.id && binaryOptions.left?.matcher.id === FieldMatcherID.byType) {
+              const fieldType = binaryOptions.left.matcher.options;
               const operator = binaryOperators.getIfExists(binaryOptions.operator);
               return data.map((frame) => {
                 const { timeField } = getTimeField(frame);
@@ -167,15 +171,19 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
                 if (timeField && options.timeSeries !== false) {
                   newFields.push(timeField);
                 }
-                // For each field of type number, apply operator
+                // For each field of type match, apply operator
                 frame.fields.map((field, index) => {
                   if (!options.replaceFields) {
                     newFields.push(field);
                   }
-                  if (field.type === FieldType.number) {
+                  if (field.type === fieldType) {
                     const left = field.values;
                     // TODO consolidate common creator logic
-                    const right = findFieldValuesWithNameOrConstant(frame, binaryOptions.right, data);
+                    const right = findFieldValuesWithNameOrConstant(
+                      frame,
+                      binaryOptions.right ?? defaultBinaryOptions.right,
+                      data
+                    );
                     if (!left || !right || !operator) {
                       return undefined;
                     }
@@ -184,7 +192,11 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
                     for (let i = 0; i < arr.length; i++) {
                       arr[i] = operator.operation(left[i], right[i]);
                     }
-                    const newField = { ...field, name: `${field.name}${getNameFromOptions(options)}`, values: arr };
+                    const newField = {
+                      ...field,
+                      name: `${field.name} ${options.binary?.operator ?? ''} ${options.binary?.right.matcher?.options ?? options.binary?.right.fixed}`,
+                      values: arr,
+                    };
                     newFields.push(newField);
                   }
                 });
@@ -522,23 +534,26 @@ function getReduceRowCreator(options: ReduceOptions, allFrames: DataFrame[]): Va
 
 function findFieldValuesWithNameOrConstant(
   frame: DataFrame,
-  name: string,
+  value: BinaryValue,
   allFrames: DataFrame[]
 ): number[] | undefined {
-  if (!name) {
+  if (!value) {
     return undefined;
   }
 
-  for (const f of frame.fields) {
-    if (name === getFieldDisplayName(f, frame, allFrames)) {
-      if (f.type === FieldType.boolean) {
-        return f.values.map((v) => (v ? 1 : 0));
+  if (value.matcher && value.matcher.id === FieldMatcherID.byName) {
+    const name = value.matcher.options;
+    for (const f of frame.fields) {
+      if (name === getFieldDisplayName(f, frame, allFrames)) {
+        if (f.type === FieldType.boolean) {
+          return f.values.map((v) => (v ? 1 : 0));
+        }
+        return f.values;
       }
-      return f.values;
     }
   }
 
-  const v = parseFloat(name);
+  const v = parseFloat(value.fixed);
   if (!isNaN(v)) {
     return new Array(frame.length).fill(v);
   }
@@ -550,6 +565,7 @@ function getBinaryCreator(options: BinaryOptions, allFrames: DataFrame[]): Value
   const operator = binaryOperators.getIfExists(options.operator);
 
   return (frame: DataFrame) => {
+    // TODO Add ctx.interpolate for left and right
     const left = findFieldValuesWithNameOrConstant(frame, options.left, allFrames);
     const right = findFieldValuesWithNameOrConstant(frame, options.right, allFrames);
     if (!left || !right || !operator) {
@@ -611,7 +627,7 @@ export function getNameFromOptions(options: CalculateFieldTransformerOptions) {
     }
     case CalculateFieldMode.BinaryOperation: {
       const { binary } = options;
-      const alias = `${binary?.left ?? ''} ${binary?.operator ?? ''} ${binary?.right ?? ''}`;
+      const alias = `${binary?.left.matcher?.options ?? binary?.left.fixed} ${binary?.operator ?? ''} ${binary?.right.matcher?.options ?? binary?.right.fixed}`;
 
       //Remove $ signs as they will be interpolated and cause issues. Variables can still be used
       //in alias but shouldn't in the autogenerated name
