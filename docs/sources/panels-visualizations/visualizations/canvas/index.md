@@ -49,7 +49,7 @@ The canvas visualization is unique in that it doesn't have any specific data req
 
 If your canvas is going to update in real time, your data should support refreshes at your desired intervals without degrading the user experience.
 
-You can provide data to the multiple _elements_ and _connections_ available in the canvas visualization to set options like text, colors, and background pattern images. These have different data requirements defined in the [Elements](#elements) and [Connections](#connections) sections.
+You can tie [Elements](#elements) and [Connections](#connections) to data through options like text, colors, and background pattern images, etc. available in the canvas visualization.
 
 ## Elements
 
