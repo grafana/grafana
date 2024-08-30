@@ -407,9 +407,9 @@ interface GraphOptions {
 function getReducersFromLegend(obj: Record<string, unknown>): string[] {
   const ids: string[] = [];
   for (const key in obj) {
-    const r = fieldReducers.getIfExists(key);
-    if (r) {
-      ids.push(r.id);
+    const reducer = fieldReducers.getIfExists(key);
+    if (reducer) {
+      ids.push(reducer.id);
     }
   }
   return ids;
