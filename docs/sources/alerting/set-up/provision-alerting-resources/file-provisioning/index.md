@@ -367,7 +367,7 @@ settings:
   # <bool>
   retain: false
   # <map>
-  tls:
+  tlsConfig:
     # <bool>
     insecureSkipVerify: false
     # <string>

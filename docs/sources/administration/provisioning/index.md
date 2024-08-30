@@ -516,7 +516,7 @@ The following sections detail the supported settings and secure settings for eac
 | password      | yes            |
 | retain        |                |
 | qos           |                |
-| tls           |                |
+| tlsConfig     |                |
 
 ##### TLS config
 

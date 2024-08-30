@@ -104,7 +104,7 @@ type MqttIntegration struct {
 	Password      *Secret    `json:"password,omitempty" yaml:"password,omitempty" hcl:"password"`
 	QoS           *int64     `json:"qos,omitempty" yaml:"qos,omitempty" hcl:"qos"`
 	Retain        *bool      `json:"retain,omitempty" yaml:"retain,omitempty" hcl:"retain"`
-	TLS           *TLSConfig `json:"tls,omitempty" yaml:"tls,omitempty" hcl:"tls,block"`
+	TLSConfig     *TLSConfig `json:"tlsConfig,omitempty" yaml:"tlsConfig,omitempty" hcl:"tls_config,block"`
 }
 
 type OnCallIntegration struct {

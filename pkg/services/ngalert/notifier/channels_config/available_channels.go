@@ -1354,7 +1354,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				},
 				{
 					Label:        "TLS",
-					PropertyName: "tls",
+					PropertyName: "tlsConfig",
 					Description:  "TLS configuration options",
 					Element:      ElementTypeSubform,
 					SubformOptions: []NotifierOption{
