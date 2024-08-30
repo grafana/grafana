@@ -137,12 +137,14 @@ describe('PanelRepeaterGridItem', () => {
 
     expect(vizPanel.state.title).toBe('Panel $server');
 
+    // mimic going to panel edit
     deactivate();
 
     await new Promise((r) => setTimeout(r, 10));
 
     vizPanel.setState({ title: 'Changed' });
 
+    // mimic returning to dashboard
     activateFullSceneTree(scene);
 
     await new Promise((r) => setTimeout(r, 10));
