@@ -199,4 +199,4 @@ When multiple Grafana instances are running, all alert rules are evaluated on ea
 
 Alertmanagers in HA mode communicate with each other to coordinate notification delivery. However, this setup can sometimes lead to duplicated or out-of-order notifications. By design, HA prioritizes sending duplicate notifications over the risk of missing notifications.
 
-To avoid duplicated notifications, you can configure a shared alertmanager to manage notifications for all Grafana instances. For detailed instructions, refer to [add an external alertmanager](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/).
+To avoid duplicate notifications, you can configure a shared alertmanager to manage notifications for all Grafana instances. For detailed instructions, refer to [add an external alertmanager](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/).
