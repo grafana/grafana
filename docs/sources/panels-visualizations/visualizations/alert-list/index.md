@@ -50,6 +50,10 @@ Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VE
 
 Use the following options to refine your alert list visualization.
 
+### View mode
+
+Choose between **List** to display alerts in a detailed list format with comprehensive information, or **Stat** to show alerts as a summarized single-value statistic.
+
 ### Group mode
 
 Choose between **Default grouping** to show alert instances grouped by their alert rule, or **Custom grouping** to show alert instances grouped by a custom set of labels.
@@ -103,8 +107,8 @@ Filter alerts by the selected folder. Only alerts from dashboards in this folder
 
 Choose which alert states to display in this visualization.
 
-- Alerting / Firing
-- Pending
-- No Data
-- Normal
-- Error
+- **Alerting / Firing -** Shows alerts that are currently active and triggering an alert condition.
+- **Pending -** Shows alerts that are in a transitional state, waiting for conditions to be met before triggering.
+- **No Data -** Shows alerts where the data source is not returning any data, which could indicate an issue with data collection.
+- **Normal -** Shows alerts that are in a normal or resolved state, where no alert condition is currently met.
+- **Error -** Shows alerts where an error has occurred, typically related to an issue in the alerting process.
