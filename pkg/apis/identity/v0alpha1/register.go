@@ -61,7 +61,7 @@ var TeamResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 			}
 			return []interface{}{
 				m.Name,
-				m.Spec.Name,
+				m.Spec.Title,
 				m.Spec.Email,
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
 			}, nil

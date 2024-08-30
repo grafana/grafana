@@ -35,7 +35,7 @@ type UserTeamList struct {
 }
 
 type UserTeam struct {
-	Name       string         `json:"name,omitempty"`
-	UID        string         `json:"uid,omitempty"`
+	Title      string         `json:"title,omitempty"`
+	TeamRef    TeamRef        `json:"teamRef,omitempty"`
 	Permission TeamPermission `json:"permission,omitempty"`
 }

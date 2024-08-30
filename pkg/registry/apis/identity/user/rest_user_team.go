@@ -92,8 +92,10 @@ func (s *LegacyUserTeamREST) ConnectMethods() []string {
 
 func mapToUserTeam(t legacy.UserTeam) identityv0.UserTeam {
 	return identityv0.UserTeam{
-		Name:       t.Name,
-		UID:        t.UID,
+		Title: t.Name,
+		TeamRef: identityv0.TeamRef{
+			Name: t.UID,
+		},
 		Permission: common.MapTeamPermission(t.Permission),
 	}
 }

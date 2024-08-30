@@ -77,7 +77,7 @@ func (s *LegacyStore) doList(ctx context.Context, ns claims.NamespaceInfo, query
 				ResourceVersion:   strconv.FormatInt(team.Updated.UnixMilli(), 10),
 			},
 			Spec: identityv0.TeamSpec{
-				Name:  team.Name,
+				Title: team.Name,
 				Email: team.Email,
 			},
 		}

@@ -765,7 +765,7 @@ func schema_pkg_apis_identity_v0alpha1_TeamSpec(ref common.ReferenceCallback) co
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"name": {
+					"title": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -945,16 +945,16 @@ func schema_pkg_apis_identity_v0alpha1_UserTeam(ref common.ReferenceCallback) co
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"name": {
+					"title": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
 						},
 					},
-					"uid": {
+					"teamRef": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamRef"),
 						},
 					},
 					"permission": {
@@ -968,6 +968,8 @@ func schema_pkg_apis_identity_v0alpha1_UserTeam(ref common.ReferenceCallback) co
 				},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamRef"},
 	}
 }
 
