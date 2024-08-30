@@ -89,7 +89,7 @@ describe('AccordianLogs tests', () => {
 
     expect(
       screen.getByRole('switch', {
-        name: 'This is a very very ... ( duration = 15μs)',
+        name: '15μs (This is a very very ...)',
       })
     ).toBeInTheDocument();
 
