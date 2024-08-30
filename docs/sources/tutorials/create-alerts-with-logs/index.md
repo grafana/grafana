@@ -116,7 +116,7 @@ If you already have Grafana, Loki, or Prometheus running on your system, you mig
 <!-- INTERACTIVE ignore START -->
 
 {{< admonition type="tip" >}}
-Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started/).
+Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting](https://killercoda.com/grafana-labs/course/grafana/alerting-loki-logs).
 
 It's a fully configured environment with all the dependencies already installed.
 
@@ -203,7 +203,7 @@ We have created a dummy Webhook endpoint and created a new Alerting contact poin
 
 <!-- INTERACTIVE page step4.md START -->
 
-## Create an alert ruke
+## Create an alert rule
 
 Next, we'll establish an [alert rule](http://grafana.com/docs/grafana/next/alerting/fundamentals/alert-rule-evaluation/) within Grafana Alerting to notify us whenever alert rules are triggered and resolved.
 
@@ -299,17 +299,13 @@ Since the Python script will continue to generate log data that matches the aler
 <!-- INTERACTIVE ignore START -->
 
 {{< admonition type="tip" >}}
-
-Advance your skills by exploring [alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/) in Part 2 of your learning journey.
-
+Check out our [advanced alerting tutorial](https://grafana.com/tutorials/alerting-get-started-pt2/) to explore advanced topics such as alert instances and notification routing.
 {{< /admonition >}}
 
 <!-- INTERACTIVE ignore END -->
 
 {{< docs/ignore >}}
 
-> Advance your skills by exploring [alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/) in Part 2 of your learning journey.
+> Check out our [advanced alerting tutorial](https://grafana.com/tutorials/alerting-get-started-pt2/) to explore advanced topics such as alert instances and notification routing.
 
 {{< /docs/ignore >}}
-
-<!-- INTERACTIVE page finish.md END -->
