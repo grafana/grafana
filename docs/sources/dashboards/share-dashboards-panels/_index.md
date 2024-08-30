@@ -58,7 +58,7 @@ refs:
 
 # Share dashboards and panels
 
-Grafana enables you to share dashboards and panels with other users within an organization and in certain situations, publicly on the Web. You can share using:
+Grafana enables you to share dashboards and panels with other users within your organization and in certain situations, publicly on the web. You can share using:
 
 - Direct links with users in and outside of your organization
 - Snapshots
@@ -76,7 +76,7 @@ The same permission is also required to view embedded links unless you have anon
 As of Grafana 8.0, anonymous access permission is not available in Grafana Cloud.
 {{< /admonition >}}
 
-## Share a dashboard
+## Share dashboards {#share-a-dashboard}
 
 You can share dashboards in the following ways:
 
@@ -87,30 +87,32 @@ You can share dashboards in the following ways:
 - [As a PDF export](#export-a-dashboard-as-pdf)
 - [As a JSON file export](#export-a-dashboard-as-json)
 
-When you share a dashboard externally as a link or by email, those dashboards are included a list of your shared dashboards. To view the list and manage these dashboards, navigate to **Dashboards > Shared dashboards**.
+When you share a dashboard externally as a link or by email, those dashboards are included in a list of your shared dashboards. To view the list and manage these dashboards, navigate to **Dashboards > Shared dashboards**.
 
 ### Share an internal link
 
-Share a personalized, direct link to your dashboard within your organization.
+Customize and share a personalized, direct link to your dashboard within your organization by following these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Click the dashboard you want to share.
-1. Click the **Share** drop-down in the top-right corner and select **Share internally**.
-1. (Optional) Set the following options (they're enabled by default):
-   - **Lock time range** - Change the current relative time range to an absolute time range.
-   - **Shorten link** - Shorten the dashboard link.
-1. Select the **Current**, **Dark**, or **Light** theme for the dashboard.
+1. Click the **Share** drop-down list in the top-right corner and select **Share internally**.
+1. (Optional) In the **Share internally** drawer that opens, set the following options:
+   - **Lock time range** - Change the current relative time range to an absolute time range. Enabled by default.
+   - **Shorten link** - Shorten the dashboard link. Enabled by default.
+1. Select the theme for the dashboard. Choose from: **Current**, **Dark**, or **Light**.
 1. Click **Copy link**.
 1. Send the copied link to a Grafana user with authorization to view the link.
 1. Click the **X** at the top-right corner to close the share drawer.
 
-Once you have a customized internal link, you can share it quickly by following these steps:
+#### Quick-share an internal link
+
+Once you've a customized an internal link, you can share it quickly by following these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Click the dashboard you want to share.
-1. Click the **Share** button to copy a shortened link.
+1. Click the **Share** button, not the drop-down list icon, to copy a shortened link.
 
-This link has any customizations like time range locking or theme you've previously set.
+This link has any customizations, like time range locking or theme, that you've previously set.
 
 ### Share an external link
 
@@ -128,9 +130,9 @@ To share your dashboard as a report, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Click the dashboard you want to share.
-1. Click the **Share** drop-down in the top-right corner and select **Schedule a report**.
+1. Click the **Share** drop-down list in the top-right corner and select **Schedule a report**.
 1. [Configure the report](ref:configure-report).
-1. Depending on your schedule settings, click **Schedule send** or **Send now**.
+1. Depending on your schedule settings, you'll have different options at this step. Click either **Schedule send** or **Send now**.
 
 You can also save the report as a draft.
 
@@ -148,12 +150,12 @@ The snapshots.raintank.io option is disabled by default in Grafana Cloud. You ca
 
 To see the other snapshots shared from your organization, navigate to **Dashboards > Snapshots** in the main menu.
 
-To share your dashboard with anyone as a snapshot, follow these steps.
+To share your dashboard with anyone as a snapshot, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Click the dashboard you want to share.
-1. Click the **Share** drop-down in the top-right corner and select **Share snapshot**.
-1. In the **Snapshot name** field, enter a descriptive title for the snapshot.
+1. Click the **Share** drop-down list in the top-right corner and select **Share snapshot**.
+1. In the **Share snapshot** drawer that opens, enter a descriptive title for the snapshot in the **Snapshot name** field.
 1. Select one of the following expiration options for the snapshot:
    - **1 Hour**
    - **1 Day**
@@ -173,9 +175,9 @@ To delete existing snapshots, follow these steps:
 1. Navigate to **Dashboards > Snapshots** in the main menu.
 1. Click the red **x** next to the snapshot that you want to delete.
 
-The snapshot is immediately deleted. You may need to clear your browser cache or use a private or incognito browser to confirm this.
+The snapshot is immediately deleted. You might need to clear your browser cache or use a private or incognito browser to confirm this.
 
-## Export a dashboard
+## Export dashboards {#export-a-dashboard}
 
 In addition to sharing dashboards as links, reports, and snapshots, you can export them as PDFs or JSON files.
 
@@ -186,7 +188,7 @@ To export a dashboard in its current state as a PDF, follow these steps:
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
 1. Click the **Export** drop-down in the top-right corner and select **Export as PDF**.
-1. Select either **Landscape** or **Portrait** for the PDF orientation.
+1. In the **Export dashboard PDF** drawer that opens, select either **Landscape** or **Portrait** for the PDF orientation.
 1. Select either **Grid** or **Simple** for the PDF layout.
 1. Set the **Zoom** level, which increases or decreases the numbrer of rows and columns in table visualizations.
 1. Click **Generate PDF**.
@@ -201,12 +203,15 @@ Export a Grafana JSON file that contains everything you need, including layout, 
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
-1. Click the **Export** drop-down in the top-right corner and select **Export as JSON**.
-1. If you're exporting the dashboard to use in another instance, with different data source UIDs, enable the **Export for sharing externally** switch.
+1. Click the **Export** drop-down list in the top-right corner and select **Export as JSON**.
+
+   The **Save dashboard JSON** drawer opens.
+
+1. Toggle the **Export the dashboard to use in another instance** switch to generate the JSON with a different data source UID.
 1. Click **Download file** or **Copy to clipboard**.
 1. Click the **X** at the top-right corner to close the share drawer.
 
-## Share a panel
+## Share panels {#share-a-panel}
 
 You can share a panels in the following ways:
 
