@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -178,8 +179,14 @@ func TestReceiverService_DecryptRedact(t *testing.T) {
 					require.NoError(t, err)
 					if tc.decrypt {
 						require.Equal(t, "secure url", res.Integrations[0].Settings["url"])
+						require.NotContains(t, res.Integrations[0].SecureSettings, "url")
 					} else {
-						require.Equal(t, definitions.RedactedValue, res.Integrations[0].Settings["url"])
+						require.NotContains(t, res.Integrations[0].Settings, "url")
+
+						// Ensure the encrypted value exists and is not redacted or decrypted.
+						require.NotEmpty(t, res.Integrations[0].SecureSettings["url"])
+						require.NotEqual(t, definitions.RedactedValue, res.Integrations[0].SecureSettings["url"])
+						require.NotEqual(t, "secure url", res.Integrations[0].SecureSettings["url"])
 					}
 				}
 			})
@@ -342,6 +349,7 @@ func TestReceiverService_Create(t *testing.T) {
 
 	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("slack"))()
 	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("email"))()
+	lineIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("line"))()
 	baseReceiver := models.ReceiverGen(models.ReceiverMuts.WithName("test receiver"), models.ReceiverMuts.WithIntegrations(slackIntegration))()
 
 	for _, tc := range []struct {
@@ -349,6 +357,7 @@ func TestReceiverService_Create(t *testing.T) {
 		user                identity.Requester
 		receiver            models.Receiver
 		expectedCreate      models.Receiver
+		expectedStored      *definitions.PostableApiReceiver
 		expectedErr         error
 		expectedProvenances map[string]models.Provenance
 	}{
@@ -414,6 +423,49 @@ func TestReceiverService_Create(t *testing.T) {
 			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithInvalidIntegration("slack")),
 			expectedErr: legacy_storage.ErrReceiverInvalid,
 		},
+		{
+			name: "create integration with no normal settings should not store nil settings",
+			user: writer,
+			receiver: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(
+				models.CopyIntegrationWith(lineIntegration,
+					models.IntegrationMuts.WithSettings(
+						map[string]any{ // Line is valid with only the single secure field "token", so Settings will be empty when saving.
+							"token": "secret",
+						},
+					)),
+			)),
+			expectedCreate: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(
+				models.CopyIntegrationWith(lineIntegration,
+					models.IntegrationMuts.WithSettings(
+						map[string]any{}, // Empty settings, not nil.
+					),
+					models.IntegrationMuts.WithSecureSettings(
+						map[string]string{
+							"token": "c2VjcmV0", // base64 encoded "secret".
+						},
+					),
+				),
+			)),
+			expectedStored: &definitions.PostableApiReceiver{
+				Receiver: config.Receiver{
+					Name: lineIntegration.Name,
+				},
+				PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+					GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+						{
+							UID:                   lineIntegration.UID,
+							Name:                  lineIntegration.Name,
+							Type:                  lineIntegration.Config.Type,
+							DisableResolveMessage: lineIntegration.DisableResolveMessage,
+							Settings:              definitions.RawMessage(`{}`), // Empty settings, not nil.
+							SecureSettings: map[string]string{
+								"token": "c2VjcmV0", // base64 encoded "secret".
+							},
+						},
+					},
+				},
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			sut := createReceiverServiceSut(t, &secretsService)
@@ -462,9 +514,19 @@ func TestReceiverService_Create(t *testing.T) {
 			decrypted.Version = tc.expectedCreate.Version // Version is calculated before decryption.
 			assert.Equal(t, decrypted, *stored)
 
-			provenances, err := sut.provisioningStore.GetProvenances(context.Background(), tc.user.GetOrgID(), (&definitions.EmbeddedContactPoint{}).ResourceType())
-			require.NoError(t, err)
-			assert.Equal(t, tc.expectedProvenances, provenances)
+			if tc.expectedProvenances != nil {
+				provenances, err := sut.provisioningStore.GetProvenances(context.Background(), tc.user.GetOrgID(), (&definitions.EmbeddedContactPoint{}).ResourceType())
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedProvenances, provenances)
+			}
+
+			if tc.expectedStored != nil {
+				revision, err := sut.cfgStore.Get(context.Background(), writer.GetOrgID())
+				require.NoError(t, err)
+				rcv, err := revision.GetReceiver(legacy_storage.NameToUid(tc.expectedStored.Name))
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedStored, rcv)
+			}
 		})
 	}
 }
