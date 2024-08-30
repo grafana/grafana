@@ -71,7 +71,7 @@
   "devDependencies": {
     "@babel/core": "7.25.2",
     "@babel/preset-env": "7.25.4",
-    "@babel/runtime": "7.25.4",
+    "@babel/runtime": "7.25.6",
     "@betterer/betterer": "5.4.0",
     "@betterer/cli": "5.4.0",
     "@betterer/eslint": "5.4.0",
