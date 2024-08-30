@@ -19,12 +19,15 @@ type genericStrategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
 
-	gv schema.GroupVersion
+	gv      schema.GroupVersion
+	metrics *storageMetrics
 }
 
 // NewStrategy creates and returns a genericStrategy instance.
 func NewStrategy(typer runtime.ObjectTyper, gv schema.GroupVersion) *genericStrategy {
-	return &genericStrategy{typer, names.SimpleNameGenerator, gv}
+	sm := &storageMetrics{}
+	sm.init()
+	return &genericStrategy{typer, names.SimpleNameGenerator, gv, sm}
 }
 
 // NamespaceScoped returns true because all Generic resources must be within a namespace.
