@@ -60,7 +60,11 @@ func NewAlertmanagerConfigMetrics(r prometheus.Registerer) *AlertmanagerConfigMe
 		}),
 	}
 	if r != nil {
-		r.MustRegister(m.ConfigHash, m.ConfigSizeBytes, m.Matchers, m.MatchRE, m.Match, m.ObjectMatchers)
+		for _, c := range []prometheus.Collector{m.ConfigHash, m.ConfigSizeBytes, m.Matchers, m.MatchRE, m.Match, m.ObjectMatchers} {
+			if err := r.Register(c); err != nil {
+				// log err
+			}
+		}
 	}
 	return m
 }
