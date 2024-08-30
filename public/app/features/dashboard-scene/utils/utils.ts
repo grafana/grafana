@@ -263,6 +263,10 @@ export function getLibraryPanel(vizPanel: VizPanel): LibraryVizPanel | undefined
   return;
 }
 
+/**
+ * If the panel is within a repeated row, it must wait until the row resolves the variables.
+ * This ensures that the scoped variable for the row is assigned and the panel is initialized with them.
+ */
 export function isWithinUnactivatedRepeatRow(panel: VizPanel): boolean {
   let row;
 
