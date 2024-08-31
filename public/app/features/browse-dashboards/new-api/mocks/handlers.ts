@@ -1,24 +1,16 @@
-import { HttpResponse, delay, http, passthrough } from 'msw';
+import { HttpResponse, JsonBodyType, delay, http, passthrough } from 'msw';
 
 import { GetFoldersApiResponse, SearchApiResponse } from '../endpoints.gen';
 
-import { MockDashboard, MockFolder, folderLayout } from './mockFolderLayout';
+import { folderLayout, getChildrenOfFolder } from './mockFolderLayout';
 
-function getFolderChildren(uid: string): Array<MockDashboard | MockFolder> | undefined {
-  for (const item of folderLayout) {
-    if (item.kind !== 'folder') {
-      continue;
-    }
+function getItemsOfRange(folderUID: string | undefined, type: 'folder' | 'dashboard', page: number, limit: number) {
+  const children = folderUID ? getChildrenOfFolder(folderUID, folderLayout) : folderLayout;
 
-    if (item.uid === uid) {
-      return item.children;
-    }
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
 
-    const children = getFolderChildren(uid);
-    if (children) {
-      return children;
-    }
-  }
+  return children?.filter((item) => item.kind === type).slice(startIndex, endIndex);
 }
 
 export const listFoldersHandler = () =>
@@ -32,24 +24,14 @@ export const listFoldersHandler = () =>
 
     const pageParam = parseInt(url.searchParams.get('page') ?? '1', 10);
     const limit = parseInt(url.searchParams.get('limit') ?? '50', 10);
-    const parentUid = url.searchParams.get('parentUid');
+    const parentUid = url.searchParams.get('parentUid') ?? undefined;
 
-    const children = parentUid ? getFolderChildren(parentUid) : folderLayout;
-    if (!children) {
-      return HttpResponse.json(
-        {
-          error: 'folder not found',
-        },
-        { status: 404 }
-      );
+    const layoutItems = getItemsOfRange(parentUid, 'folder', pageParam, limit);
+    if (!layoutItems) {
+      return jsonResponse({ error: 'folder not found' }, 404);
     }
 
-    const layoutItems = children.filter((item) => item.kind === 'folder');
-
-    const startIndex = (pageParam - 1) * limit;
-    const endIndex = startIndex + limit;
-
-    const folders: GetFoldersApiResponse = layoutItems.slice(startIndex, endIndex).map((item) => {
+    const folders: GetFoldersApiResponse = layoutItems.map((item) => {
       return {
         uid: item.uid,
         title: item.title,
@@ -71,13 +53,20 @@ export const searchHandler = () =>
     const url = new URL(request.url);
     const pageParam = parseInt(url.searchParams.get('page') ?? '1', 10);
     const limit = parseInt(url.searchParams.get('limit') ?? '50', 10);
+    const type = url.searchParams.get('type');
+    const folderUids = (url.searchParams.get('folderUIDs') ?? '').split(',');
 
-    const layoutItems = folderLayout.filter((item) => item.kind === 'dashboard');
+    if (type !== 'dash-db' || folderUids.length > 1) {
+      throw new Error('Unsupported search query');
+    }
 
-    const startIndex = (pageParam - 1) * limit;
-    const endIndex = startIndex + limit;
+    const parentUid = folderUids[0] === 'general' ? undefined : folderUids[0];
+    const layoutItems = getItemsOfRange(parentUid, 'dashboard', pageParam, limit);
+    if (!layoutItems) {
+      return jsonResponse({ error: 'folder not found' }, 404);
+    }
 
-    const folders: SearchApiResponse = layoutItems.slice(startIndex, endIndex).map((item) => {
+    const folders: SearchApiResponse = layoutItems.map((item) => {
       return {
         uid: item.uid,
         title: item.title,
@@ -90,3 +79,7 @@ export const searchHandler = () =>
   });
 
 export default [listFoldersHandler(), searchHandler()];
+
+function jsonResponse(data: JsonBodyType, status = 200) {
+  return HttpResponse.json(data, { status });
+}

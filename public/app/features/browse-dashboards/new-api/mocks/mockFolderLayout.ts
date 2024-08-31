@@ -46,14 +46,44 @@ function $dash(title?: string): MockDashboard {
   };
 }
 
-const joinNumbers = (...numbers: number[]) => numbers.join('.');
+const join = (...numbers: number[]) => numbers.join('.');
 
 export const folderLayout = [
   ...arrayOf(60, (index) =>
     $folder(index.toString(), [
-      ...arrayOf(60, (index2) => $folder(joinNumbers(index, index2))),
-      ...arrayOf(60, (index2) => $dash(joinNumbers(index, index2))),
+      ...arrayOf(10, (index2) =>
+        $folder(join(index, index2), [
+          ...arrayOf(3, (index3) => $folder(join(index, index2, index3))),
+          ...arrayOf(3, (index3) => $dash(join(index, index2, index3))),
+        ])
+      ),
+      ...arrayOf(60, (index2) => $dash(join(index, index2))),
     ])
   ),
+
   ...arrayOf(60, (index) => $dash(index.toString())),
 ];
+
+export function getChildrenOfFolder(
+  folderUID: string,
+  items: Array<MockFolder | MockDashboard>
+): Array<MockDashboard | MockFolder> | undefined {
+  for (const item of items) {
+    if (item.kind !== 'folder') {
+      continue;
+    }
+
+    if (item.uid === folderUID) {
+      return item.children;
+    }
+
+    if (item.children.length) {
+      const children = getChildrenOfFolder(folderUID, item.children);
+      if (children) {
+        return children;
+      }
+    }
+  }
+
+  return undefined;
+}
