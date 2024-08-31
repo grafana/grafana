@@ -216,6 +216,10 @@ export class ManualGridLayoutManager
     return 'scene-grid-layout';
   }
 
+  public getDescriptor(): LayoutDescriptor {
+    return ManualGridLayoutManager.getDescriptor();
+  }
+
   public static getDescriptor(): LayoutDescriptor {
     return {
       name: 'Manual positioning grid',
@@ -224,6 +228,11 @@ export class ManualGridLayoutManager
     };
   }
 
+  /**
+   * Handle switching to the manual grid layout from other layouts
+   * @param currentLayout
+   * @returns
+   */
   public static switchTo(currentLayout: DashboardLayoutManager): ManualGridLayoutManager {
     const objects = currentLayout.getObjects();
 
@@ -261,10 +270,5 @@ export class ManualGridLayoutManager
 }
 
 function ManualGridLayoutWrapperRenderer({ model }: SceneComponentProps<ManualGridLayoutManager>) {
-  console.log('rendering manual grid layout');
   return <model.state.layout.Component model={model.state.layout} />;
-}
-
-function ManualGridLayoutEditor(props: LayoutEditorProps<SceneGridLayout>) {
-  return <div>No options</div>;
 }

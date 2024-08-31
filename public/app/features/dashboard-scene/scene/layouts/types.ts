@@ -8,8 +8,8 @@ export interface LayoutDescriptor {
   // getVizPanels(): VizPanel;
 }
 
-export interface LayoutEditorProps<T extends SceneObject = SceneObject> {
-  layout: T;
+export interface LayoutEditorProps<T> {
+  layoutManager: T;
 }
 
 export interface DashboardLayoutManager extends SceneObject {
@@ -24,5 +24,6 @@ export interface DashboardLayoutManager extends SceneObject {
    * Right now we just check for VizPanels
    */
   getObjects(): SceneObject[];
-  getEditor?(): React.ComponentType<LayoutEditorProps>;
+  renderEditor?(): React.ReactNode;
+  getDescriptor(): LayoutDescriptor;
 }
