@@ -1,35 +1,27 @@
-import {
-  SceneComponentProps,
-  SceneLayout,
-  SceneObject,
-  SceneObjectBase,
-  SceneObjectState,
-  VizPanel,
-} from '@grafana/scenes';
-import { GRID_COLUMN_COUNT } from 'app/core/constants';
+import { SceneComponentProps, SceneObject, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
-import { forceRenderChildren, getPanelIdForVizPanel } from '../../utils/utils';
-import { DashboardGridItem } from '../DashboardGridItem';
+import { forceRenderChildren } from '../../utils/utils';
 
+import { CanvasElement } from './CanvasLayout/SceneCanvasElement';
+import { SceneCanvasRootLayout } from './CanvasLayout/SceneCanvasLayout2';
+import { HorizontalConstraint, VerticalConstraint } from './CanvasLayout/canvasTypes';
 import { DashboardLayoutManager, LayoutDescriptor } from './types';
 
 interface CanvasLayoutManagerState extends SceneObjectState {
-  children: CanvasElement[];
-  isDraggable: boolean;
+  layout: SceneCanvasRootLayout;
 }
 
-export class CanvasLayoutManager
-  extends SceneObjectBase<CanvasLayoutManagerState>
-  implements DashboardLayoutManager, SceneLayout
-{
+export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerState> implements DashboardLayoutManager {
   public editModeChanged(isEditing: boolean): void {
-    this.setState({ isDraggable: isEditing });
+    //    this.setState({ isDraggable: isEditing });
     forceRenderChildren(this, true);
   }
 
   public addPanel(vizPanel: VizPanel): void {
-    this.setState({
-      children: [...this.state.children, new CanvasElement({ body: vizPanel, width: 300, height: 300, x: 0, y: 0 })],
+    const layout = this.state.layout;
+
+    layout.setState({
+      children: [...layout.state.children, new CanvasElement({ body: vizPanel, placement: { top: 0, left: 0 } })],
     });
   }
 
@@ -43,11 +35,11 @@ export class CanvasLayoutManager
   public getObjects(): SceneObject[] {
     const objects: SceneObject[] = [];
 
-    for (const child of this.state.children) {
-      if (child instanceof VizPanel) {
-        objects.push(child);
-      }
-    }
+    // for (const child of this.state.children) {
+    //   if (child instanceof VizPanel) {
+    //     objects.push(child);
+    //   }
+    // }
 
     return objects;
   }
@@ -88,11 +80,15 @@ export class CanvasLayoutManager
       if (obj instanceof VizPanel) {
         children.push(
           new CanvasElement({
-            x: currentX,
-            y: currentY,
-            width: panelWidth,
-            height: panelHeight,
             body: obj,
+            placement: {
+              top: currentX,
+              left: currentY,
+              width: panelWidth,
+              height: panelHeight,
+              vertical: VerticalConstraint.Top,
+              horizontal: HorizontalConstraint.Left,
+            },
           })
         );
 
@@ -105,50 +101,32 @@ export class CanvasLayoutManager
       }
     }
 
-    return new CanvasLayoutManager({ children, isDraggable: true });
-  }
-
-  public isDraggable() {
-    return this.state.isDraggable;
-  }
-
-  public getDragClass(): string {
-    return 'canvas-element-drag';
-  }
-
-  public getDragClassCancel(): string {
-    return 'canvas-element-drag-cancel';
+    return new CanvasLayoutManager({ layout: new SceneCanvasRootLayout({ children }) });
   }
 
   public static Component = ({ model }: SceneComponentProps<CanvasLayoutManager>) => {
-    const { children } = model.useState();
+    const { layout } = model.useState();
 
-    return (
-      <div style={{ flexGrow: 1, minHeight: 0, position: 'relative' }}>
-        {children.map((child, index) => (
-          <CanvasElement.Component key={child.state.key} model={child} />
-        ))}
-      </div>
-    );
+    return <layout.Component model={layout} />;
   };
 }
 
-interface CanvasElementState extends SceneObjectState {
-  body: VizPanel;
-  width: number;
-  height: number;
-  x: number;
-  y: number;
-}
+// interface CanvasElementState extends SceneObjectState {
+//   body: VizPanel;
+//   width: number;
+//   height: number;
+//   x: number;
+//   y: number;
+// }
 
-export class CanvasElement extends SceneObjectBase<CanvasElementState> {
-  public static Component = ({ model }: SceneComponentProps<CanvasElement>) => {
-    const { width, height, x, y, body } = model.useState();
+// export class CanvasElement extends SceneObjectBase<CanvasElementState> {
+//   public static Component = ({ model }: SceneComponentProps<CanvasElement>) => {
+//     const { width, height, x, y, body } = model.useState();
 
-    return (
-      <div style={{ width, height, top: y, left: x, position: 'absolute' }}>
-        <body.Component model={body} />
-      </div>
-    );
-  };
-}
+//     return (
+//       <div style={{ width, height, top: y, left: x, position: 'absolute' }}>
+//         <body.Component model={body} />
+//       </div>
+//     );
+//   };
+// }

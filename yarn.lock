@@ -18699,7 +18699,7 @@ __metadata:
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.45"
     monaco-editor: "npm:0.34.1"
-    moveable: "npm:0.53.0"
+    moveable: "npm:^0.53.0"
     msw: "npm:2.3.5"
     mutationobserver-shim: "npm:0.3.7"
     nanoid: "npm:^5.0.4"
@@ -18732,7 +18732,7 @@ __metadata:
     react-i18next: "npm:^14.0.0"
     react-inlinesvg: "npm:3.0.2"
     react-loading-skeleton: "npm:3.4.0"
-    react-moveable: "npm:0.56.0"
+    react-moveable: "npm:^0.56.0"
     react-redux: "npm:9.1.2"
     react-refresh: "npm:0.14.0"
     react-resizable: "npm:3.0.5"
@@ -18763,7 +18763,7 @@ __metadata:
     rxjs: "npm:7.8.1"
     sass: "npm:1.77.8"
     sass-loader: "npm:14.2.1"
-    selecto: "npm:1.26.3"
+    selecto: "npm:^1.26.3"
     semver: "npm:7.6.3"
     slate: "npm:0.47.9"
     slate-plain-serializer: "npm:0.7.13"
@@ -23674,7 +23674,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moveable@npm:0.53.0":
+"moveable@npm:^0.53.0":
   version: 0.53.0
   resolution: "moveable@npm:0.53.0"
   dependencies:
@@ -27144,7 +27144,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-moveable@npm:0.56.0, react-moveable@npm:~0.56.0":
+"react-moveable@npm:^0.56.0, react-moveable@npm:~0.56.0":
   version: 0.56.0
   resolution: "react-moveable@npm:0.56.0"
   dependencies:
@@ -28811,7 +28811,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"selecto@npm:1.26.3, selecto@npm:~1.26.3":
+"selecto@npm:^1.26.3, selecto@npm:~1.26.3":
   version: 1.26.3
   resolution: "selecto@npm:1.26.3"
   dependencies:
