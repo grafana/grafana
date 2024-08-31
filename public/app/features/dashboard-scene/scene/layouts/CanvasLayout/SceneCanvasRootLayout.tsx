@@ -3,13 +3,7 @@ import { CSSProperties } from 'react';
 import { OnEvent, OnResize } from 'react-moveable/declaration/types';
 import Selecto from 'selecto';
 
-import {
-  SceneLayoutState,
-  SceneLayoutChildOptions,
-  SceneObjectBase,
-  SceneLayout,
-  SceneComponentProps,
-} from '@grafana/scenes';
+import { SceneLayoutState, SceneObjectBase, SceneLayout, SceneComponentProps } from '@grafana/scenes';
 
 import { CanvasElement, getItemStyles } from './SceneCanvasElement';
 import { CanvasElementPlacement, HorizontalConstraint, VerticalConstraint } from './canvasTypes';
@@ -23,15 +17,18 @@ export class SceneCanvasRootLayout extends SceneObjectBase<SceneCanvasLayoutRoot
 
   public moveable?: Moveable;
   public selecto?: Selecto;
+  private container: HTMLDivElement | null = null;
 
   public isDraggable(): boolean {
     return false;
   }
 
-  public initializeMoveable(container: HTMLDivElement) {
-    if (!container) {
+  public initializeMoveable = (container: HTMLDivElement | null) => {
+    if (!container || this.container === container) {
       return;
     }
+
+    this.container = container;
 
     let resizingTempPlacement: CanvasElementPlacement | undefined = undefined;
 
@@ -66,7 +63,12 @@ export class SceneCanvasRootLayout extends SceneObjectBase<SceneCanvasLayoutRoot
         }
 
         const placement = calculatePositionFromDOM(event.target, item.state.placement);
-        event.target.style.transform = 'none';
+        const itemStyle = getItemStyles(placement);
+
+        // To make the selection rect correct after style update need to do this to get rid of selection flicker
+        Object.assign(event.target.style, itemStyle);
+        moveable.updateRect();
+
         item.setState({ placement });
       })
       .on('dragGroupEnd', (e) => {
@@ -77,8 +79,6 @@ export class SceneCanvasRootLayout extends SceneObjectBase<SceneCanvasLayoutRoot
           }
 
           const placement = calculatePositionFromDOM(event.target, item.state.placement);
-          event.target.style.transform = 'none';
-
           item.setState({ placement });
         }
       })
@@ -143,6 +143,7 @@ export class SceneCanvasRootLayout extends SceneObjectBase<SceneCanvasLayoutRoot
       .on('selectEnd', (event) => {
         targets = event.selected;
         moveable.target = event.selected;
+
         if (event.isDragStart) {
           event.inputEvent.preventDefault();
           event.data.timer = setTimeout(() => {
@@ -156,7 +157,7 @@ export class SceneCanvasRootLayout extends SceneObjectBase<SceneCanvasLayoutRoot
 
     this.moveable = moveable;
     this.selecto = selecto;
-  }
+  };
 }
 
 function CanvasLayoutRenderer({ model }: SceneComponentProps<SceneCanvasRootLayout>) {
@@ -168,11 +169,12 @@ function CanvasLayoutRenderer({ model }: SceneComponentProps<SceneCanvasRootLayo
     gap: '8px',
     alignContent: 'baseline',
     position: 'relative',
+    minHeight: 0,
   };
 
   return (
     <>
-      <div style={style} ref={(el) => el && model.initializeMoveable(el)}>
+      <div style={style} ref={model.initializeMoveable}>
         {children.map((item) => {
           return <item.Component model={item} key={item.state.key} />;
         })}
@@ -191,14 +193,7 @@ function calculatePositionFromDOM(
 ): CanvasElementPlacement {
   let parentBorderWidth = 0;
   const elementContainer = element.getBoundingClientRect();
-  // TODO: Create function to reach to the root (due to nesting)
-  const parentContainer = element.parentElement?.parentElement?.parentElement?.getBoundingClientRect();
-
-  // TODO: maybe needed?
-  // if (!parentContainer) {
-  //   parentContainer = this.div && this.div.parentElement?.getBoundingClientRect();
-  // parentBorderWidth = parseFloat(getComputedStyle(element.parentElement!).borderWidth);
-  // }
+  const parentContainer = element.parentElement?.getBoundingClientRect();
 
   const relativeTop =
     elementContainer && parentContainer

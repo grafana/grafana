@@ -1,11 +1,11 @@
 import { SceneComponentProps, SceneObject, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
-import { forceRenderChildren } from '../../utils/utils';
+import { forceRenderChildren } from '../../../utils/utils';
+import { DashboardLayoutManager, LayoutDescriptor } from '../types';
 
-import { CanvasElement } from './CanvasLayout/SceneCanvasElement';
-import { SceneCanvasRootLayout } from './CanvasLayout/SceneCanvasLayout2';
-import { HorizontalConstraint, VerticalConstraint } from './CanvasLayout/canvasTypes';
-import { DashboardLayoutManager, LayoutDescriptor } from './types';
+import { CanvasElement } from './SceneCanvasElement';
+import { SceneCanvasRootLayout } from './SceneCanvasRootLayout';
+import { HorizontalConstraint, VerticalConstraint } from './canvasTypes';
 
 interface CanvasLayoutManagerState extends SceneObjectState {
   layout: SceneCanvasRootLayout;
@@ -110,23 +110,3 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
     return <layout.Component model={layout} />;
   };
 }
-
-// interface CanvasElementState extends SceneObjectState {
-//   body: VizPanel;
-//   width: number;
-//   height: number;
-//   x: number;
-//   y: number;
-// }
-
-// export class CanvasElement extends SceneObjectBase<CanvasElementState> {
-//   public static Component = ({ model }: SceneComponentProps<CanvasElement>) => {
-//     const { width, height, x, y, body } = model.useState();
-
-//     return (
-//       <div style={{ width, height, top: y, left: x, position: 'absolute' }}>
-//         <body.Component model={body} />
-//       </div>
-//     );
-//   };
-// }

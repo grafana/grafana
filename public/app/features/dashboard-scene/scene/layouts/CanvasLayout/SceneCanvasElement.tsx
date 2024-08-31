@@ -26,7 +26,6 @@ export class CanvasElement extends SceneObjectBase<CanvasElementState> {
   public static Component = ({ model }: SceneComponentProps<CanvasElement>) => {
     const { body, placement } = model.useState();
     const layout = sceneGraph.getLayout(model);
-    const isDraggable = layout?.isDraggable() ?? false;
 
     return (
       <div

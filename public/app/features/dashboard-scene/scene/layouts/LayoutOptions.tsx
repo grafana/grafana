@@ -8,7 +8,7 @@ import { DashboardScene } from '../DashboardScene';
 import { ViewPanelScene } from '../ViewPanelScene';
 
 import { AutomaticGridLayoutManager } from './AutomaticGridLayoutManager';
-import { CanvasLayoutManager } from './CanvasLayoutManager';
+import { CanvasLayoutManager } from './CanvasLayout/CanvasLayoutManager';
 import { ManualGridLayoutManager } from './ManualGridLayoutWrapper';
 import { DashboardLayoutManager, LayoutDescriptor } from './types';
 
