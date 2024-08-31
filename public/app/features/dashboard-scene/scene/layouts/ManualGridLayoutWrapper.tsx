@@ -232,7 +232,10 @@ export class ManualGridLayoutManager
     return {
       name: 'Manual positioning grid',
       id: 'scene-grid-layout',
-      create: ManualGridLayoutManager.switchTo,
+      create: () =>
+        new ManualGridLayoutManager({
+          layout: new SceneGridLayout({ children: [], isDraggable: true, isResizable: true }),
+        }),
     };
   }
 
@@ -241,10 +244,13 @@ export class ManualGridLayoutManager
    * @param currentLayout
    * @returns
    */
-  public static switchTo(elements: LayoutElementInfo[]): ManualGridLayoutManager {
+  public initFromLayout(currentLayout: DashboardLayoutManager): ManualGridLayoutManager {
+    const elements = currentLayout.getElements();
     const children: SceneObject[] = [];
+
     let currentY = 0;
     let currentX = 0;
+
     const panelHeight = 10;
     const panelWidth = GRID_COLUMN_COUNT / 3;
 

@@ -8,7 +8,7 @@ export interface LayoutDescriptor {
    * @param elements
    * @returns
    */
-  create: (elements: LayoutElementInfo[]) => DashboardLayoutManager;
+  create: () => DashboardLayoutManager;
 }
 
 export interface LayoutEditorProps<T> {
@@ -30,6 +30,11 @@ export interface DashboardLayoutManager extends SceneObject {
   getElements(): LayoutElementInfo[];
   renderEditor?(): React.ReactNode;
   getDescriptor(): LayoutDescriptor;
+  /**
+   * When switching between layouts
+   * @param currentLayout
+   */
+  initFromLayout(currentLayout: DashboardLayoutManager): DashboardLayoutManager;
 }
 
 export interface LayoutElementInfo {

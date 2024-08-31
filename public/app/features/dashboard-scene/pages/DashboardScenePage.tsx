@@ -88,7 +88,7 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
   return (
     <UrlSyncContextProvider scene={dashboard}>
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
-      <DashboardPrompt dashboard={dashboard} />
+      {/* <DashboardPrompt dashboard={dashboard} /> */}
     </UrlSyncContextProvider>
   );
 }

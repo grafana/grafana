@@ -36,7 +36,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
           layout: new SceneGridLayout({ children: [], isDraggable: true, isResizable: true }),
         }),
       ],
-      tabTitles: [...this.state.tabTitles, 'New tab'],
+      tabTitles: [...this.state.tabTitles, `Tab ${this.state.tabTitles.length + 1}`],
     });
   }
 
@@ -72,7 +72,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     return {
       name: 'Tabs',
       id: 'tabs-layout',
-      create: TabsLayoutManager.switchTo,
+      create: () => new TabsLayoutManager({ tabLayouts: [], tabTitles: [], currentTab: '' }),
     };
   }
 
@@ -88,7 +88,8 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     return elements;
   }
 
-  public static switchTo(elements: LayoutElementInfo[]): TabsLayoutManager {
+  public initFromLayout(layout: DashboardLayoutManager): TabsLayoutManager {
+    const elements = layout.getElements();
     const children: SceneObject[] = [];
 
     for (let element of elements) {
@@ -98,14 +99,9 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     }
 
     return new TabsLayoutManager({
-      tabLayouts: [
-        new AutomaticGridLayoutManager({ layout: new SceneCSSGridLayout({ children }) }),
-        new ManualGridLayoutManager({
-          layout: new SceneGridLayout({ children: [], isDraggable: true, isResizable: true }),
-        }),
-      ],
-      tabTitles: ['Overview', 'Errors'],
-      currentTab: 'Overview',
+      tabLayouts: [layout],
+      tabTitles: ['Tab 1'],
+      currentTab: 'Tab 1',
     });
   }
 

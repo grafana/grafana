@@ -67,7 +67,7 @@ export class AutomaticGridLayoutManager
     return {
       name: 'Responsive grid',
       id: 'automatic-grid-layout',
-      create: AutomaticGridLayoutManager.switchTo,
+      create: () => new AutomaticGridLayoutManager({ layout: new SceneCSSGridLayout({ children: [] }) }),
     };
   }
 
@@ -83,7 +83,8 @@ export class AutomaticGridLayoutManager
     return elements;
   }
 
-  public static switchTo(elements: LayoutElementInfo[]): AutomaticGridLayoutManager {
+  public initFromLayout(layout: DashboardLayoutManager): AutomaticGridLayoutManager {
+    const elements = layout.getElements();
     const children: SceneObject[] = [];
 
     for (let element of elements) {

@@ -67,7 +67,7 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
     return {
       name: 'Canvas',
       id: 'canvas-layout',
-      create: CanvasLayoutManager.switchTo,
+      create: () => new CanvasLayoutManager({ layout: new SceneCanvasRootLayout({ children: [] }) }),
     };
   }
 
@@ -76,7 +76,8 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
    * @param currentLayout
    * @returns
    */
-  public static switchTo(elements: LayoutElementInfo[]): CanvasLayoutManager {
+  public initFromLayout(layout: DashboardLayoutManager): CanvasLayoutManager {
+    const elements = layout.getElements();
     const children: CanvasElement[] = [];
     const panelHeight = 300;
     const panelWidth = 400;

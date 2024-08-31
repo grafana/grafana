@@ -275,7 +275,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public exitEditMode({ skipConfirm, restoreInitialState }: { skipConfirm: boolean; restoreInitialState?: boolean }) {
     // just to be able to view the dashboard in non edit mode without saving
-    this.setState({ isEditing: false });
+    this.setState({ isEditing: false, isDirty: false });
     // if (!this.canDiscard()) {
     //   console.error('Trying to discard back to a state that does not exist, initialState undefined');
     //   return;

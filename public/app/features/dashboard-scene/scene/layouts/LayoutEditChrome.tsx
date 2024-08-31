@@ -63,7 +63,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       gap: theme.spacing(1),
       padding: theme.spacing(0, 1, 0.5, 1),
-      margin: theme.spacing(1, 0),
+      margin: theme.spacing(0, 0, 1, 0),
       alignItems: 'flex-end',
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       paddingBottom: theme.spacing(1),
@@ -108,9 +108,10 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-function changeLayoutTo(currentLayout: DashboardLayoutManager, newLayout: LayoutDescriptor): any {
+function changeLayoutTo(currentLayout: DashboardLayoutManager, newLayoutDescriptor: LayoutDescriptor) {
   const layoutParent = currentLayout.parent;
   if (layoutParent && isLayoutParent(layoutParent)) {
-    layoutParent.switchLayout(newLayout.create(currentLayout.getElements()));
+    const newLayout = newLayoutDescriptor.create();
+    layoutParent.switchLayout(newLayout.initFromLayout(currentLayout));
   }
 }
