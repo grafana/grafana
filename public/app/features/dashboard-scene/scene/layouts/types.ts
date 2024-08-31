@@ -3,9 +3,12 @@ import { SceneObject, VizPanel } from '@grafana/scenes';
 export interface LayoutDescriptor {
   name: string;
   id: string;
-  switchTo: (current: DashboardLayoutManager) => DashboardLayoutManager;
-  //  editor: React.ComponentType<LayoutEditorProps<any>>;
-  // getVizPanels(): VizPanel;
+  /**
+   * This is for creating a new layout from the elements of another layout
+   * @param elements
+   * @returns
+   */
+  create: (elements: LayoutElementInfo[]) => DashboardLayoutManager;
 }
 
 export interface LayoutEditorProps<T> {
@@ -24,7 +27,21 @@ export interface DashboardLayoutManager extends SceneObject {
    * Used for transferring state between layouts. Not sure what the return type should be here.
    * Right now we just check for VizPanels
    */
-  getObjects(): SceneObject[];
+  getElements(): LayoutElementInfo[];
   renderEditor?(): React.ReactNode;
   getDescriptor(): LayoutDescriptor;
+}
+
+export interface LayoutElementInfo {
+  body: SceneObject;
+  width?: number;
+  height?: number;
+}
+
+export interface LayoutParent extends SceneObject {
+  switchLayout(newLayout: DashboardLayoutManager): void;
+}
+
+export function isLayoutParent(obj: SceneObject): obj is LayoutParent {
+  return 'switchLayout' in obj;
 }

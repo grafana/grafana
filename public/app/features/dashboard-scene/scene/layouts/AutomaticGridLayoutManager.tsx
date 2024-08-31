@@ -13,7 +13,7 @@ import { DashboardInteractions } from '../../utils/interactions';
 import { getDefaultVizPanel, getPanelIdForVizPanel } from '../../utils/utils';
 
 import { LayoutEditChrome } from './LayoutEditChrome';
-import { DashboardLayoutManager, LayoutDescriptor, LayoutEditorProps } from './types';
+import { DashboardLayoutManager, LayoutDescriptor, LayoutEditorProps, LayoutElementInfo } from './types';
 
 interface AutomaticGridLayoutManagerState extends SceneObjectState {
   layout: SceneCSSGridLayout;
@@ -67,29 +67,28 @@ export class AutomaticGridLayoutManager
     return {
       name: 'Responsive grid',
       id: 'automatic-grid-layout',
-      switchTo: AutomaticGridLayoutManager.switchTo,
+      create: AutomaticGridLayoutManager.switchTo,
     };
   }
 
-  public getObjects(): SceneObject[] {
-    const objects: SceneObject[] = [];
+  public getElements(): LayoutElementInfo[] {
+    const elements: LayoutElementInfo[] = [];
 
     for (const child of this.state.layout.state.children) {
       if (child instanceof VizPanel) {
-        objects.push(child);
+        elements.push({ body: child });
       }
     }
 
-    return objects;
+    return elements;
   }
 
-  public static switchTo(currentLayout: DashboardLayoutManager): AutomaticGridLayoutManager {
-    const objects = currentLayout.getObjects();
+  public static switchTo(elements: LayoutElementInfo[]): AutomaticGridLayoutManager {
     const children: SceneObject[] = [];
 
-    for (let obj of objects) {
-      if (obj instanceof VizPanel) {
-        children.push(obj.clone());
+    for (let element of elements) {
+      if (element.body instanceof VizPanel) {
+        children.push(element.body.clone());
       }
     }
 

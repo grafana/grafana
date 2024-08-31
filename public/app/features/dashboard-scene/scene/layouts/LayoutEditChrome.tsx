@@ -1,29 +1,24 @@
-import { css, cx } from '@emotion/css';
-import { useToggle } from 'react-use';
+import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Text, Button, Field, Select, Stack } from '@grafana/ui';
+import { useStyles2, Field, Select } from '@grafana/ui';
 
-import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
-import { DashboardScene } from '../DashboardScene';
-import { ViewPanelScene } from '../ViewPanelScene';
 
 import { AutomaticGridLayoutManager } from './AutomaticGridLayoutManager';
 import { CanvasLayoutManager } from './CanvasLayout/CanvasLayoutManager';
 import { ManualGridLayoutManager } from './ManualGridLayoutWrapper';
 import { TabsLayoutManager } from './TabsLayoutManager';
-import { DashboardLayoutManager, LayoutDescriptor } from './types';
+import { DashboardLayoutManager, isLayoutParent, LayoutDescriptor } from './types';
 
 interface Props {
   layoutManager: DashboardLayoutManager;
   children: React.ReactNode;
 }
 
-export function LayoutEditChrome({ layoutManager: layout, children }: Props) {
+export function LayoutEditChrome({ layoutManager, children }: Props) {
   const styles = useStyles2(getStyles);
-  const dashboard = getDashboardSceneFor(layout);
-  const { isEditing } = getDashboardSceneFor(layout).useState();
+  const { isEditing } = getDashboardSceneFor(layoutManager).useState();
 
   const layouts = getLayouts();
   const options = layouts.map((layout) => ({
@@ -31,7 +26,7 @@ export function LayoutEditChrome({ layoutManager: layout, children }: Props) {
     value: layout,
   }));
 
-  const currentLayoutOption = options.find((option) => option.value.id === layout.getLayoutId());
+  const currentLayoutOption = options.find((option) => option.value.id === layoutManager.getLayoutId());
 
   return (
     <div className={styles.wrapper}>
@@ -41,10 +36,10 @@ export function LayoutEditChrome({ layoutManager: layout, children }: Props) {
             <Select
               options={options}
               value={currentLayoutOption}
-              onChange={(option) => changeLayoutTo(dashboard, layout, option.value!)}
+              onChange={(option) => changeLayoutTo(layoutManager, option.value!)}
             />
           </Field>
-          {layout.renderEditor?.()}
+          {layoutManager.renderEditor?.()}
         </div>
       )}
       {children}
@@ -113,11 +108,9 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-function changeLayoutTo(
-  dashboard: DashboardScene,
-  currentLayout: DashboardLayoutManager,
-  newLayout: LayoutDescriptor
-): any {
-  const newLayoutManager = newLayout.switchTo(currentLayout);
-  dashboard.setState({ body: newLayoutManager });
+function changeLayoutTo(currentLayout: DashboardLayoutManager, newLayout: LayoutDescriptor): any {
+  const layoutParent = currentLayout.parent;
+  if (layoutParent && isLayoutParent(layoutParent)) {
+    layoutParent.switchLayout(newLayout.create(currentLayout.getElements()));
+  }
 }

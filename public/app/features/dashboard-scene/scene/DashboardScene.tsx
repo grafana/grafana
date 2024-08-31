@@ -274,29 +274,31 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public exitEditMode({ skipConfirm, restoreInitialState }: { skipConfirm: boolean; restoreInitialState?: boolean }) {
-    if (!this.canDiscard()) {
-      console.error('Trying to discard back to a state that does not exist, initialState undefined');
-      return;
-    }
+    // just to be able to view the dashboard in non edit mode without saving
+    this.setState({ isEditing: false });
+    // if (!this.canDiscard()) {
+    //   console.error('Trying to discard back to a state that does not exist, initialState undefined');
+    //   return;
+    // }
 
-    if (!this.state.isDirty || skipConfirm) {
-      this.exitEditModeConfirmed(restoreInitialState || this.state.isDirty);
-      this._scopesFacade?.exitReadOnly();
-      return;
-    }
+    // if (!this.state.isDirty || skipConfirm) {
+    //   this.exitEditModeConfirmed(restoreInitialState || this.state.isDirty);
+    //   this._scopesFacade?.exitReadOnly();
+    //   return;
+    // }
 
-    appEvents.publish(
-      new ShowConfirmModalEvent({
-        title: 'Discard changes to dashboard?',
-        text: `You have unsaved changes to this dashboard. Are you sure you want to discard them?`,
-        icon: 'trash-alt',
-        yesText: 'Discard',
-        onConfirm: () => {
-          this.exitEditModeConfirmed();
-          this._scopesFacade?.exitReadOnly();
-        },
-      })
-    );
+    // appEvents.publish(
+    //   new ShowConfirmModalEvent({
+    //     title: 'Discard changes to dashboard?',
+    //     text: `You have unsaved changes to this dashboard. Are you sure you want to discard them?`,
+    //     icon: 'trash-alt',
+    //     yesText: 'Discard',
+    //     onConfirm: () => {
+    //       this.exitEditModeConfirmed();
+    //       this._scopesFacade?.exitReadOnly();
+    //     },
+    //   })
+    // );
   }
 
   private exitEditModeConfirmed(restoreInitialState = true) {
@@ -805,6 +807,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     if (this._prevScrollPos !== undefined) {
       this._scrollRef?.scrollTo(0, this._prevScrollPos!);
     }
+  }
+
+  public switchLayout(layout: DashboardLayoutManager) {
+    this.setState({ body: layout });
   }
 }
 

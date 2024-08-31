@@ -4,7 +4,7 @@ import { DashboardInteractions } from 'app/features/dashboard-scene/utils/intera
 
 import { forceRenderChildren, getDefaultVizPanel } from '../../../utils/utils';
 import { LayoutEditChrome } from '../LayoutEditChrome';
-import { DashboardLayoutManager, LayoutDescriptor, LayoutEditorProps } from '../types';
+import { DashboardLayoutManager, LayoutDescriptor, LayoutEditorProps, LayoutElementInfo } from '../types';
 
 import { CanvasElement } from './SceneCanvasElement';
 import { SceneCanvasRootLayout } from './SceneCanvasRootLayout';
@@ -25,7 +25,10 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
     const layout = this.state.layout;
 
     layout.setState({
-      children: [...layout.state.children, new CanvasElement({ body: vizPanel, placement: { top: 0, left: 0 } })],
+      children: [
+        ...layout.state.children,
+        new CanvasElement({ body: vizPanel, placement: { top: 0, left: 0, width: 400, height: 300 } }),
+      ],
     });
   }
 
@@ -36,14 +39,14 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
     return max + 1;
   }
 
-  public getObjects(): SceneObject[] {
-    const objects: SceneObject[] = [];
+  public getElements(): LayoutElementInfo[] {
+    const objects: LayoutElementInfo[] = [];
 
-    // for (const child of this.state.children) {
-    //   if (child instanceof VizPanel) {
-    //     objects.push(child);
-    //   }
-    // }
+    for (const child of this.state.layout.state.children) {
+      if (child.state.body instanceof VizPanel) {
+        objects.push({ body: child.state.body });
+      }
+    }
 
     return objects;
   }
@@ -64,7 +67,7 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
     return {
       name: 'Canvas',
       id: 'canvas-layout',
-      switchTo: CanvasLayoutManager.switchTo,
+      create: CanvasLayoutManager.switchTo,
     };
   }
 
@@ -73,9 +76,7 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
    * @param currentLayout
    * @returns
    */
-  public static switchTo(currentLayout: DashboardLayoutManager): CanvasLayoutManager {
-    const objects = currentLayout.getObjects();
-
+  public static switchTo(elements: LayoutElementInfo[]): CanvasLayoutManager {
     const children: CanvasElement[] = [];
     const panelHeight = 300;
     const panelWidth = 400;
@@ -84,11 +85,11 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
     let currentY = 0;
     let currentX = 0;
 
-    for (let obj of objects) {
-      if (obj instanceof VizPanel) {
+    for (let element of elements) {
+      if (element.body instanceof VizPanel) {
         children.push(
           new CanvasElement({
-            body: obj,
+            body: element.body,
             placement: {
               top: currentY,
               left: currentX,

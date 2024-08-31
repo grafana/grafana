@@ -27,7 +27,7 @@ import { DashboardGridItem } from '../DashboardGridItem';
 import { LibraryVizPanel } from '../LibraryVizPanel';
 
 import { LayoutEditChrome } from './LayoutEditChrome';
-import { DashboardLayoutManager, LayoutDescriptor, LayoutEditorProps } from './types';
+import { DashboardLayoutManager, LayoutDescriptor, LayoutEditorProps, LayoutElementInfo } from './types';
 
 interface ManualGridLayoutManagerState extends SceneObjectState {
   layout: SceneGridLayout;
@@ -200,23 +200,24 @@ export class ManualGridLayoutManager
     return <ManualGridLayoutEditor layoutManager={this} />;
   }
 
-  public getObjects(): SceneObject[] {
-    const objects: SceneObject[] = [];
+  public getElements(): LayoutElementInfo[] {
+    const elements: LayoutElementInfo[] = [];
 
     for (const child of this.state.layout.state.children) {
       if (child instanceof DashboardGridItem && child.state.body instanceof VizPanel) {
-        objects.push(child.state.body);
+        elements.push({ body: child.state.body });
       }
 
       if (child instanceof SceneGridRow) {
         for (const rowChild of child.state.children) {
           if (rowChild instanceof DashboardGridItem && rowChild.state.body instanceof VizPanel) {
-            objects.push(rowChild.state.body);
+            elements.push({ body: rowChild.state.body });
           }
         }
       }
     }
-    return objects;
+
+    return elements;
   }
 
   public getLayoutId(): string {
@@ -231,7 +232,7 @@ export class ManualGridLayoutManager
     return {
       name: 'Manual positioning grid',
       id: 'scene-grid-layout',
-      switchTo: ManualGridLayoutManager.switchTo,
+      create: ManualGridLayoutManager.switchTo,
     };
   }
 
@@ -240,24 +241,22 @@ export class ManualGridLayoutManager
    * @param currentLayout
    * @returns
    */
-  public static switchTo(currentLayout: DashboardLayoutManager): ManualGridLayoutManager {
-    const objects = currentLayout.getObjects();
-
+  public static switchTo(elements: LayoutElementInfo[]): ManualGridLayoutManager {
     const children: SceneObject[] = [];
     let currentY = 0;
     let currentX = 0;
     const panelHeight = 10;
     const panelWidth = GRID_COLUMN_COUNT / 3;
 
-    for (let obj of objects) {
-      if (obj instanceof VizPanel) {
+    for (let element of elements) {
+      if (element.body instanceof VizPanel) {
         children.push(
           new DashboardGridItem({
             x: currentX,
             y: currentY,
             width: panelWidth,
             height: panelHeight,
-            body: obj,
+            body: element.body,
           })
         );
 

@@ -12,7 +12,7 @@ import { Button, Tab, TabsBar } from '@grafana/ui';
 import { AutomaticGridLayoutManager } from './AutomaticGridLayoutManager';
 import { LayoutEditChrome } from './LayoutEditChrome';
 import { ManualGridLayoutManager } from './ManualGridLayoutWrapper';
-import { DashboardLayoutManager, LayoutDescriptor, LayoutEditorProps } from './types';
+import { DashboardLayoutManager, LayoutDescriptor, LayoutEditorProps, LayoutElementInfo } from './types';
 
 interface TabsLayoutManagerState extends SceneObjectState {
   tabLayouts: DashboardLayoutManager[];
@@ -32,62 +32,77 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     this.setState({
       tabLayouts: [
         ...this.state.tabLayouts,
-        new ManualGridLayoutManager({ layout: new SceneGridLayout({ children: [] }) }),
+        new ManualGridLayoutManager({
+          layout: new SceneGridLayout({ children: [], isDraggable: true, isResizable: true }),
+        }),
       ],
       tabTitles: [...this.state.tabTitles, 'New tab'],
     });
-  }
-
-  public getLayoutId(): string {
-    return 'automatic-grid-layout';
   }
 
   public changeTab(tab: string) {
     this.setState({ currentTab: tab });
   }
 
-  public getDescriptor(): LayoutDescriptor {
-    return TabsLayoutManager.getDescriptor();
-  }
-
   public renderEditor() {
     return <TabsLayoutEditor layoutManager={this} />;
+  }
+
+  public switchLayout(newLayout: DashboardLayoutManager) {
+    const currentLayout = this.getCurrentLayout();
+    const index = this.state.tabLayouts.indexOf(currentLayout);
+    this.setState({ tabLayouts: this.state.tabLayouts.map((l, i) => (i === index ? newLayout : l)) });
+  }
+
+  public getCurrentLayout(): DashboardLayoutManager {
+    const currentTab = this.state.currentTab;
+    const currentTabIndex = this.state.tabTitles.findIndex((title) => title === currentTab);
+    return this.state.tabLayouts[currentTabIndex];
+  }
+
+  public getLayoutId(): string {
+    return 'tabs-layout';
+  }
+
+  public getDescriptor(): LayoutDescriptor {
+    return TabsLayoutManager.getDescriptor();
   }
 
   public static getDescriptor(): LayoutDescriptor {
     return {
       name: 'Tabs',
       id: 'tabs-layout',
-      switchTo: TabsLayoutManager.switchTo,
+      create: TabsLayoutManager.switchTo,
     };
   }
 
-  public getObjects(): SceneObject[] {
-    const objects: SceneObject[] = [];
+  public getElements(): LayoutElementInfo[] {
+    const elements: LayoutElementInfo[] = [];
 
-    // for (const child of this.state.layout.state.children) {
-    //   if (child instanceof VizPanel) {
-    //     objects.push(child);
-    //   }
-    // }
+    for (const childLayout of this.state.tabLayouts) {
+      for (const child of childLayout.getElements()) {
+        elements.push(child);
+      }
+    }
 
-    return objects;
+    return elements;
   }
 
-  public static switchTo(currentLayout: DashboardLayoutManager): TabsLayoutManager {
-    const objects = currentLayout.getObjects();
+  public static switchTo(elements: LayoutElementInfo[]): TabsLayoutManager {
     const children: SceneObject[] = [];
 
-    for (let obj of objects) {
-      if (obj instanceof VizPanel) {
-        children.push(obj.clone());
+    for (let element of elements) {
+      if (element.body instanceof VizPanel) {
+        children.push(element.body.clone());
       }
     }
 
     return new TabsLayoutManager({
       tabLayouts: [
         new AutomaticGridLayoutManager({ layout: new SceneCSSGridLayout({ children }) }),
-        new ManualGridLayoutManager({ layout: new SceneGridLayout({ children: [] }) }),
+        new ManualGridLayoutManager({
+          layout: new SceneGridLayout({ children: [], isDraggable: true, isResizable: true }),
+        }),
       ],
       tabTitles: ['Overview', 'Errors'],
       currentTab: 'Overview',
