@@ -9,12 +9,15 @@ import {
   SceneObjectState,
   VizPanel,
 } from '@grafana/scenes';
+import { Button } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 
+import { DashboardInteractions } from '../../utils/interactions';
 import {
   forceRenderChildren,
   getDashboardSceneFor,
   getDefaultRow,
+  getDefaultVizPanel,
   getPanelIdForLibraryVizPanel,
   getPanelIdForVizPanel,
   NEW_PANEL_HEIGHT,
@@ -23,6 +26,7 @@ import {
 import { DashboardGridItem } from '../DashboardGridItem';
 import { LibraryVizPanel } from '../LibraryVizPanel';
 
+import { LayoutEditChrome } from './LayoutEditChrome';
 import { DashboardLayoutManager, LayoutDescriptor, LayoutEditorProps } from './types';
 
 interface ManualGridLayoutManagerState extends SceneObjectState {
@@ -33,8 +37,6 @@ export class ManualGridLayoutManager
   extends SceneObjectBase<ManualGridLayoutManagerState>
   implements DashboardLayoutManager
 {
-  static Component = ManualGridLayoutWrapperRenderer;
-
   public editModeChanged(isEditing: boolean): void {
     this.state.layout.setState({ isDraggable: isEditing, isResizable: isEditing });
     forceRenderChildren(this.state.layout, true);
@@ -83,7 +85,8 @@ export class ManualGridLayoutManager
     sceneGridLayout.setState({ children });
   }
 
-  public addPanel(vizPanel: VizPanel): void {
+  public addNewPanel(): void {
+    const vizPanel = getDefaultVizPanel(this.getNextPanelId());
     const sceneGridLayout = this.state.layout;
 
     const panelId = getPanelIdForVizPanel(vizPanel);
@@ -193,6 +196,10 @@ export class ManualGridLayoutManager
     return max + 1;
   }
 
+  public renderEditor() {
+    return <ManualGridLayoutEditor layoutManager={this} />;
+  }
+
   public getObjects(): SceneObject[] {
     const objects: SceneObject[] = [];
 
@@ -267,8 +274,41 @@ export class ManualGridLayoutManager
       layout: new SceneGridLayout({ children: children, isDraggable: true, isResizable: true }),
     });
   }
+
+  public static Component = ({ model }: SceneComponentProps<ManualGridLayoutManager>) => {
+    return (
+      <LayoutEditChrome layoutManager={model}>
+        <model.state.layout.Component model={model.state.layout} />
+      </LayoutEditChrome>
+    );
+  };
 }
 
-function ManualGridLayoutWrapperRenderer({ model }: SceneComponentProps<ManualGridLayoutManager>) {
-  return <model.state.layout.Component model={model.state.layout} />;
+function ManualGridLayoutEditor({ layoutManager }: LayoutEditorProps<ManualGridLayoutManager>) {
+  return (
+    <>
+      <Button
+        fill="outline"
+        icon="plus"
+        onClick={() => {
+          layoutManager.addNewPanel();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
+          // dashboard.setState({ editPanel: buildPanelEditScene(vizPanel, true) });
+        }}
+      >
+        Panel
+      </Button>
+
+      <Button
+        fill="outline"
+        icon="plus"
+        onClick={() => {
+          layoutManager.addNewRow!();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
+        }}
+      >
+        Row
+      </Button>
+    </>
+  );
 }

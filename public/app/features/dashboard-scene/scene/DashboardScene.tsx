@@ -61,7 +61,6 @@ import {
   NEW_PANEL_WIDTH,
   getClosestVizPanel,
   getDashboardSceneFor,
-  getDefaultVizPanel,
   getPanelIdForVizPanel,
   getVizPanelKeyForPanelId,
   isPanelClone,
@@ -76,6 +75,7 @@ import { LibraryVizPanel } from './LibraryVizPanel';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
+import { ManualGridLayoutManager } from './layouts/ManualGridLayoutWrapper';
 import { DashboardLayoutManager } from './layouts/types';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
@@ -178,7 +178,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       title: 'Dashboard',
       meta: {},
       editable: true,
-      body: state.body ?? new SceneFlexLayout({ children: [] }),
+      body: state.body ?? new ManualGridLayoutManager({ layout: new SceneGridLayout({ children: [] }) }),
       links: state.links ?? [],
       ...state,
     });
@@ -698,22 +698,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.setState({
       overlay: new AddLibraryPanelDrawer({ panelToReplaceRef }),
     });
-  }
-
-  public onCreateNewRow() {
-    this.state.body.addNewRow?.();
-  }
-
-  public onCreateNewPanel(): VizPanel {
-    if (!this.state.isEditing) {
-      this.onEnterEditMode();
-    }
-
-    const vizPanel = getDefaultVizPanel(this);
-
-    this.state.body.addPanel(vizPanel);
-
-    return vizPanel;
   }
 
   /**

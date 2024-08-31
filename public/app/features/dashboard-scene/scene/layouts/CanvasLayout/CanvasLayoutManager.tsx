@@ -1,7 +1,10 @@
 import { SceneComponentProps, SceneObject, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { Button } from '@grafana/ui';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
-import { forceRenderChildren } from '../../../utils/utils';
-import { DashboardLayoutManager, LayoutDescriptor } from '../types';
+import { forceRenderChildren, getDefaultVizPanel } from '../../../utils/utils';
+import { LayoutEditChrome } from '../LayoutEditChrome';
+import { DashboardLayoutManager, LayoutDescriptor, LayoutEditorProps } from '../types';
 
 import { CanvasElement } from './SceneCanvasElement';
 import { SceneCanvasRootLayout } from './SceneCanvasRootLayout';
@@ -17,7 +20,8 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
     forceRenderChildren(this, true);
   }
 
-  public addPanel(vizPanel: VizPanel): void {
+  public addNewPanel(): void {
+    const vizPanel = getDefaultVizPanel(this.getNextPanelId());
     const layout = this.state.layout;
 
     layout.setState({
@@ -52,6 +56,10 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
     return CanvasLayoutManager.getDescriptor();
   }
 
+  public renderEditor(): React.ReactNode {
+    return <CanvasLayoutEditor layoutManager={this} />;
+  }
+
   public static getDescriptor(): LayoutDescriptor {
     return {
       name: 'Canvas',
@@ -82,8 +90,8 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
           new CanvasElement({
             body: obj,
             placement: {
-              top: currentX,
-              left: currentY,
+              top: currentY,
+              left: currentX,
               width: panelWidth,
               height: panelHeight,
               vertical: VerticalConstraint.Top,
@@ -92,7 +100,7 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
           })
         );
 
-        currentX += panelWidth;
+        currentX += panelWidth + 8;
 
         if (currentX + panelWidth >= maxWidth) {
           currentX = 0;
@@ -107,6 +115,39 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
   public static Component = ({ model }: SceneComponentProps<CanvasLayoutManager>) => {
     const { layout } = model.useState();
 
-    return <layout.Component model={layout} />;
+    return (
+      <LayoutEditChrome layoutManager={model}>
+        <layout.Component model={layout} />;
+      </LayoutEditChrome>
+    );
   };
+}
+
+function CanvasLayoutEditor({ layoutManager }: LayoutEditorProps<CanvasLayoutManager>) {
+  return (
+    <>
+      <Button
+        fill="outline"
+        icon="plus"
+        onClick={() => {
+          layoutManager.addNewPanel();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
+          // dashboard.setState({ editPanel: buildPanelEditScene(vizPanel, true) });
+        }}
+      >
+        Panel
+      </Button>
+      <Button
+        fill="outline"
+        icon="plus"
+        onClick={() => {
+          layoutManager.addNewPanel();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
+          // dashboard.setState({ editPanel: buildPanelEditScene(vizPanel, true) });
+        }}
+      >
+        Element
+      </Button>
+    </>
+  );
 }

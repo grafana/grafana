@@ -221,9 +221,7 @@ export function isPanelClone(key: string) {
   return key.includes('clone');
 }
 
-export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
-  const panelId = dashboardSceneGraph.getNextPanelId(dashboard);
-
+export function getDefaultVizPanel(panelId: number): VizPanel {
   return new VizPanel({
     title: 'Panel Title',
     key: getVizPanelKeyForPanelId(panelId),

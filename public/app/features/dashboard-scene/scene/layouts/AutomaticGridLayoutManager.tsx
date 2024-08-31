@@ -7,10 +7,12 @@ import {
   SceneObjectState,
   VizPanel,
 } from '@grafana/scenes';
-import { Field, Select } from '@grafana/ui';
+import { Button, Field, Select } from '@grafana/ui';
 
-import { getPanelIdForVizPanel } from '../../utils/utils';
+import { DashboardInteractions } from '../../utils/interactions';
+import { getDefaultVizPanel, getPanelIdForVizPanel } from '../../utils/utils';
 
+import { LayoutEditChrome } from './LayoutEditChrome';
 import { DashboardLayoutManager, LayoutDescriptor, LayoutEditorProps } from './types';
 
 interface AutomaticGridLayoutManagerState extends SceneObjectState {
@@ -21,13 +23,13 @@ export class AutomaticGridLayoutManager
   extends SceneObjectBase<AutomaticGridLayoutManagerState>
   implements DashboardLayoutManager
 {
-  static Component = CSSGridLayoutWrapperRenderer;
-
   public editModeChanged(isEditing: boolean): void {}
 
   public cleanUpStateFromExplore(): void {}
 
-  public addPanel(vizPanel: VizPanel): void {
+  public addNewPanel(): void {
+    const vizPanel = getDefaultVizPanel(this.getNextPanelId());
+
     this.state.layout.setState({
       children: [...this.state.layout.state.children, vizPanel],
     });
@@ -99,10 +101,14 @@ export class AutomaticGridLayoutManager
       }),
     });
   }
-}
 
-function CSSGridLayoutWrapperRenderer({ model }: SceneComponentProps<AutomaticGridLayoutManager>) {
-  return <model.state.layout.Component model={model.state.layout} />;
+  public static Component = ({ model }: SceneComponentProps<AutomaticGridLayoutManager>) => {
+    return (
+      <LayoutEditChrome layoutManager={model}>
+        <model.state.layout.Component model={model.state.layout} />;
+      </LayoutEditChrome>
+    );
+  };
 }
 
 function AutomaticGridEditor({ layoutManager }: LayoutEditorProps<AutomaticGridLayoutManager>) {
@@ -152,6 +158,17 @@ function AutomaticGridEditor({ layoutManager }: LayoutEditorProps<AutomaticGridL
           <Select options={maxOptions} value={heightParams.max} onChange={onMaxHeightChange} />
         </Field>
       )}
+      <Button
+        fill="outline"
+        icon="plus"
+        onClick={() => {
+          layoutManager.addNewPanel();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
+          // dashboard.setState({ editPanel: buildPanelEditScene(vizPanel, true) });
+        }}
+      >
+        Panel
+      </Button>
     </>
   );
 }

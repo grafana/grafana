@@ -31,8 +31,9 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const onAddVisualization = () => {
     let id;
     if (dashboard instanceof DashboardScene) {
-      const panel = dashboard.onCreateNewPanel();
-      dashboard.setState({ editPanel: buildPanelEditScene(panel, true) });
+      // TODO
+      //const panel = dashboard.onCreateNewPanel();
+      //dashboard.setState({ editPanel: buildPanelEditScene(panel, true) });
       locationService.partial({ firstPanel: true });
     } else {
       id = onCreateNewPanel(dashboard, initialDatasource);

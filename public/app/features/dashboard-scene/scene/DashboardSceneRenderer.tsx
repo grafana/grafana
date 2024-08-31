@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { useChromeHeaderHeight } from '@grafana/runtime';
-import { SceneComponentProps, SceneObject } from '@grafana/scenes';
+import { SceneComponentProps } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import NativeScrollbar from 'app/core/components/NativeScrollbar';
 import { Page } from 'app/core/components/Page/Page';
@@ -15,7 +15,6 @@ import { useSelector } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
-import { LayoutOptions } from './layouts/LayoutOptions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const { controls, overlay, editview, editPanel, isEmpty, meta, viewPanelScene, isEditing, body } = model.useState();
@@ -62,12 +61,9 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     }
 
     return (
-      <>
-        {isEditing && !viewPanelScene && <LayoutOptions layout={body} scene={model} />}
-        <div className={cx(styles.body, !hasControls && styles.bodyWithoutControls)} key="dashboard-panels">
-          <bodyToRender.Component model={bodyToRender} />
-        </div>
-      </>
+      <div className={cx(styles.body, !hasControls && styles.bodyWithoutControls)} key="dashboard-panels">
+        <bodyToRender.Component model={bodyToRender} />
+      </div>
     );
   }
 
