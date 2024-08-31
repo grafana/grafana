@@ -9,6 +9,8 @@ import {
 } from '@grafana/scenes';
 import { Field, Select } from '@grafana/ui';
 
+import { getPanelIdForVizPanel } from '../../utils/utils';
+
 import { DashboardLayoutManager, LayoutDescriptor, LayoutEditorProps } from './types';
 
 interface AutomaticGridLayoutManagerState extends SceneObjectState {
@@ -26,19 +28,25 @@ export class AutomaticGridLayoutManager
   public cleanUpStateFromExplore(): void {}
 
   public addPanel(vizPanel: VizPanel): void {
-    throw new Error('Method not implemented.');
-  }
-
-  public addNewRow?(): void {
-    throw new Error('Method not implemented.');
-  }
-
-  public removeRow?(row: SceneObject): void {
-    throw new Error('Method not implemented.');
+    this.state.layout.setState({
+      children: [...this.state.layout.state.children, vizPanel],
+    });
   }
 
   public getNextPanelId(): number {
-    throw new Error('Method not implemented.');
+    let max = 0;
+
+    for (const child of this.state.layout.state.children) {
+      if (child instanceof VizPanel) {
+        let panelId = getPanelIdForVizPanel(child);
+
+        if (panelId > max) {
+          max = panelId;
+        }
+      }
+    }
+
+    return max;
   }
 
   public getLayoutId(): string {
