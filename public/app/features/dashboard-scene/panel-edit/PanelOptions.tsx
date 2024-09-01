@@ -22,14 +22,14 @@ interface Props {
 }
 
 export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMode, data }) => {
-  const { panel, sourcePanel, repeat } = vizManager.useState();
+  const { panel, sourcePanel, layoutElement } = vizManager.useState();
   const parent = sourcePanel.resolve().parent;
   const { options, fieldConfig, _pluginInstanceState } = panel.useState();
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const panelFrameOptions = useMemo(
-    () => getPanelFrameCategory2(vizManager, panel, repeat),
-    [vizManager, panel, repeat]
+    () => getPanelFrameCategory2(vizManager, panel, layoutElement.resolve()),
+    [vizManager, panel, layoutElement]
   );
 
   const visualizationOptions = useMemo(() => {

@@ -40,19 +40,21 @@ import { getPanelChanges } from '../saving/getDashboardChanges';
 import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
+import { DashboardLayoutElement, isDashboardLayoutElement } from '../scene/layouts/types';
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 export interface VizPanelManagerState extends SceneObjectState {
   panel: VizPanel;
   sourcePanel: SceneObjectRef<VizPanel>;
+  layoutElement: SceneObjectRef<DashboardLayoutElement>;
   pluginId: string;
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
   tableView?: VizPanel;
-  repeat?: string;
-  repeatDirection?: RepeatDirection;
-  maxPerRow?: number;
+  // repeat?: string;
+  // repeatDirection?: RepeatDirection;
+  // maxPerRow?: number;
   isDirty?: boolean;
 }
 
@@ -79,30 +81,36 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
    * live on the VizPanelManager level instead of the VizPanel level
    */
   public static createFor(sourcePanel: VizPanel) {
-    let repeatOptions: Pick<VizPanelManagerState, 'repeat' | 'repeatDirection' | 'maxPerRow'> = {};
+    // let repeatOptions: Pick<VizPanelManagerState, 'repeat' | 'repeatDirection' | 'maxPerRow'> = {};
 
-    const gridItem = sourcePanel.parent instanceof LibraryVizPanel ? sourcePanel.parent.parent : sourcePanel.parent;
+    // const gridItem = sourcePanel.parent instanceof LibraryVizPanel ? sourcePanel.parent.parent : sourcePanel.parent;
 
-    if (!(gridItem instanceof DashboardGridItem)) {
-      console.error('VizPanel is not a child of a dashboard grid item');
-      throw new Error('VizPanel is not a child of a dashboard grid item');
-    }
+    // if (!(gridItem instanceof DashboardGridItem)) {
+    //   console.error('VizPanel is not a child of a dashboard grid item');
+    //   throw new Error('VizPanel is not a child of a dashboard grid item');
+    // }
 
-    const { variableName: repeat, repeatDirection, maxPerRow } = gridItem.state;
-    repeatOptions = { repeat, repeatDirection, maxPerRow };
+    // const { variableName: repeat, repeatDirection, maxPerRow } = gridItem.state;
+    // repeatOptions = { repeat, repeatDirection, maxPerRow };
 
-    let variables: SceneVariables | undefined;
+    // let variables: SceneVariables | undefined;
 
-    if (gridItem.parent?.state.$variables) {
-      variables = gridItem.parent.state.$variables.clone();
+    // if (gridItem.parent?.state.$variables) {
+    //   variables = gridItem.parent.state.$variables.clone();
+    // }
+
+    const layoutElement = sourcePanel.parent!;
+
+    if (!isDashboardLayoutElement(layoutElement)) {
+      throw new Error('VizPanel parent is not a layout element');
     }
 
     return new VizPanelManager({
-      $variables: variables,
       panel: sourcePanel.clone(),
       sourcePanel: sourcePanel.getRef(),
       pluginId: sourcePanel.state.pluginId,
-      ...repeatOptions,
+      layoutElement: layoutElement.getRef(),
+      $variables: layoutElement.getVariableScope?.(),
     });
   }
 
@@ -403,37 +411,33 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   }
 
   public commitChangesTo(sourcePanel: VizPanel) {
-    const repeatUpdate = {
-      variableName: this.state.repeat,
-      repeatDirection: this.state.repeatDirection,
-      maxPerRow: this.state.maxPerRow,
-    };
-
-    if (sourcePanel.parent instanceof DashboardGridItem) {
-      sourcePanel.parent.setState({
-        ...repeatUpdate,
-        body: this.state.panel.clone(),
-      });
-    }
-
-    if (sourcePanel.parent instanceof LibraryVizPanel) {
-      if (sourcePanel.parent.parent instanceof DashboardGridItem) {
-        const newLibPanel = sourcePanel.parent.clone({
-          panel: this.state.panel.clone(),
-        });
-
-        sourcePanel.parent.parent.setState({
-          body: newLibPanel,
-          ...repeatUpdate,
-        });
-
-        updateLibraryVizPanel(newLibPanel!).then((p) => {
-          if (sourcePanel.parent instanceof LibraryVizPanel) {
-            newLibPanel.setPanelFromLibPanel(p);
-          }
-        });
-      }
-    }
+    // const repeatUpdate = {
+    //   variableName: this.state.repeat,
+    //   repeatDirection: this.state.repeatDirection,
+    //   maxPerRow: this.state.maxPerRow,
+    // };
+    // if (sourcePanel.parent instanceof DashboardGridItem) {
+    //   sourcePanel.parent.setState({
+    //     ...repeatUpdate,
+    //     body: this.state.panel.clone(),
+    //   });
+    // }
+    // if (sourcePanel.parent instanceof LibraryVizPanel) {
+    //   if (sourcePanel.parent.parent instanceof DashboardGridItem) {
+    //     const newLibPanel = sourcePanel.parent.clone({
+    //       panel: this.state.panel.clone(),
+    //     });
+    //     sourcePanel.parent.parent.setState({
+    //       body: newLibPanel,
+    //       ...repeatUpdate,
+    //     });
+    //     updateLibraryVizPanel(newLibPanel!).then((p) => {
+    //       if (sourcePanel.parent instanceof LibraryVizPanel) {
+    //         newLibPanel.setPanelFromLibPanel(p);
+    //       }
+    //     });
+    //   }
+    // }
   }
 
   /**

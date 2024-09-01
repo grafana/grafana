@@ -1,5 +1,5 @@
 import { RegistryItem } from '@grafana/data';
-import { SceneObject, VizPanel } from '@grafana/scenes';
+import { SceneObject, SceneVariableSet, VizPanel } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 export interface DashboardLayoutManager extends SceneObject {
@@ -78,6 +78,29 @@ export function isLayoutParent(obj: SceneObject): obj is LayoutParent {
   return 'switchLayout' in obj;
 }
 
-export interface PanelEditLayoutElement {
-  getOptions(): OptionsPaneItemDescriptor[];
+/**
+ * Abstraction to handle editing of different layout elements (wrappers for VizPanels and other objects)
+ * Also useful to when rendering / viewing an element outside it's layout scope
+ */
+export interface DashboardLayoutElement extends SceneObject {
+  /**
+   * Marks this object as a layout element
+   */
+  isDashboardLayoutElement: true;
+  /**
+   * Return layout elements options (like repeat, repeat direction, etc for the default DashboardGridItem)
+   */
+  getOptions?(): OptionsPaneItemDescriptor[];
+  /**
+   * Needed when for example editing
+   */
+  getVariableScope?(): SceneVariableSet | undefined;
+  /**
+   * Used by panel edit to commit changes
+   */
+  setBody(body: SceneObject): void;
+}
+
+export function isDashboardLayoutElement(obj: SceneObject): obj is DashboardLayoutElement {
+  return 'isDashboardLayoutElement' in obj;
 }

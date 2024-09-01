@@ -6,6 +6,7 @@ import { SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { isDashboardLayoutElement } from '../scene/layouts/types';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
@@ -25,7 +26,7 @@ export interface PanelEditorState extends SceneObjectState {
 }
 
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
-  private _initialRepeatOptions: Pick<VizPanelManagerState, 'repeat' | 'repeatDirection' | 'maxPerRow'> = {};
+  //private _initialRepeatOptions: Pick<VizPanelManagerState, 'repeat' | 'repeatDirection' | 'maxPerRow'> = {};
   static Component = PanelEditorRenderer;
 
   private _discardChanges = false;
@@ -33,12 +34,12 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   public constructor(state: PanelEditorState) {
     super(state);
 
-    const { repeat, repeatDirection, maxPerRow } = state.vizManager.state;
-    this._initialRepeatOptions = {
-      repeat,
-      repeatDirection,
-      maxPerRow,
-    };
+    // const { repeat, repeatDirection, maxPerRow } = state.vizManager.state;
+    // this._initialRepeatOptions = {
+    //   repeat,
+    //   repeatDirection,
+    //   maxPerRow,
+    // };
 
     this.addActivationHandler(this._activationHandler.bind(this));
   }
@@ -61,7 +62,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       if (!this._discardChanges) {
         this.commitChanges();
       } else if (this.state.isNewPanel) {
-        getDashboardSceneFor(this).removePanel(panelManager.state.sourcePanel.resolve()!);
+        // TODO call layout.removePanel
+        //getDashboardSceneFor(this).removePanel(panelManager.state.sourcePanel.resolve()!);
       }
     };
   }
@@ -105,48 +107,49 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     }
 
     const panelManager = this.state.vizManager;
-    const sourcePanel = panelManager.state.sourcePanel.resolve();
-    const sourcePanelParent = sourcePanel!.parent;
-    const isLibraryPanel = sourcePanelParent instanceof LibraryVizPanel;
+    const layoutElement = panelManager.state.layoutElement.resolve();
 
-    const gridItem = isLibraryPanel ? sourcePanelParent.parent : sourcePanelParent;
+    layoutElement.setBody(panelManager.state.panel.clone());
 
-    if (isLibraryPanel) {
-      // Library panels handled separately
-      return;
-    }
+    //const sourcePanel = panelManager.state.sourcePanel.resolve();
+    //const isLibraryPanel = sourcePanelParent instanceof LibraryVizPanel;
+    //const gridItem = isLibraryPanel ? sourcePanelParent.parent : sourcePanelParent;
 
-    if (!(gridItem instanceof DashboardGridItem)) {
-      console.error('Unsupported scene object type');
-      return;
-    }
+    // if (isLibraryPanel) {
+    //   // Library panels handled separately
+    //   return;
+    // }
 
-    this.commitChangesToSource(gridItem);
-  }
+    // if (!(gridItem instanceof DashboardGridItem)) {
+    //   console.error('Unsupported scene object type');
+    //   return;
+    // }
 
-  private commitChangesToSource(gridItem: DashboardGridItem) {
-    let width = gridItem.state.width ?? 1;
-    let height = gridItem.state.height;
+    //   this.commitChangesToSource(gridItem);
+    // }
 
-    const panelManager = this.state.vizManager;
-    const horizontalToVertical =
-      this._initialRepeatOptions.repeatDirection === 'h' && panelManager.state.repeatDirection === 'v';
-    const verticalToHorizontal =
-      this._initialRepeatOptions.repeatDirection === 'v' && panelManager.state.repeatDirection === 'h';
-    if (horizontalToVertical) {
-      width = Math.floor(width / (gridItem.state.maxPerRow ?? 1));
-    } else if (verticalToHorizontal) {
-      width = 24;
-    }
+    // private commitChangesToSource(gridItem: DashboardGridItem) {
+    //   let width = gridItem.state.width ?? 1;
+    //   let height = gridItem.state.height;
 
-    gridItem.setState({
-      body: panelManager.state.panel.clone(),
-      repeatDirection: panelManager.state.repeatDirection,
-      variableName: panelManager.state.repeat,
-      maxPerRow: panelManager.state.maxPerRow,
-      width,
-      height,
-    });
+    // const horizontalToVertical =
+    //   this._initialRepeatOptions.repeatDirection === 'h' && panelManager.state.repeatDirection === 'v';
+    // const verticalToHorizontal =
+    //   this._initialRepeatOptions.repeatDirection === 'v' && panelManager.state.repeatDirection === 'h';
+    // if (horizontalToVertical) {
+    //   width = Math.floor(width / (gridItem.state.maxPerRow ?? 1));
+    // } else if (verticalToHorizontal) {
+    //   width = 24;
+    // }
+
+    // gridItem.setState({
+    //   body: panelManager.state.panel.clone(),
+    //   repeatDirection: panelManager.state.repeatDirection,
+    //   variableName: panelManager.state.repeat,
+    //   maxPerRow: panelManager.state.maxPerRow,
+    //   width,
+    //   height,
+    // });
   }
 
   public onSaveLibraryPanel = () => {

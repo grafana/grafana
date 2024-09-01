@@ -20,14 +20,17 @@ import {
   VizPanelMenu,
   VizPanelState,
   VariableValueSingle,
+  SceneObject,
 } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { getMultiVariableValues } from '../utils/utils';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
 import { LibraryVizPanel } from './LibraryVizPanel';
 import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
+import { DashboardLayoutElement } from './layouts/types';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 export interface DashboardGridItemState extends SceneGridItemStateLike {
@@ -41,7 +44,10 @@ export interface DashboardGridItemState extends SceneGridItemStateLike {
 
 export type RepeatDirection = 'v' | 'h';
 
-export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> implements SceneGridItemLike {
+export class DashboardGridItem
+  extends SceneObjectBase<DashboardGridItemState>
+  implements SceneGridItemLike, DashboardLayoutElement
+{
   private _libPanelSubscription: Unsubscribable | undefined;
   private _prevRepeatValues?: VariableValueSingle[];
 
@@ -82,6 +88,25 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       this._libPanelSubscription?.unsubscribe();
       this._libPanelSubscription = undefined;
     };
+  }
+
+  /**
+   * DashboardLayoutElement interface
+   */
+  public isDashboardLayoutElement: true = true;
+
+  public getOptions?(): OptionsPaneItemDescriptor[] {
+    return [];
+  }
+
+  public getVariableScope?(): SceneVariableSet | undefined {
+    return undefined;
+  }
+
+  public setBody(body: SceneObject): void {
+    if (body instanceof VizPanel) {
+      this.setState({ body });
+    }
   }
 
   private setupLibraryPanelChangeSubscription(panel: LibraryVizPanel) {
