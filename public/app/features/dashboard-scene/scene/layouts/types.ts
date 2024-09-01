@@ -32,16 +32,6 @@ export interface DashboardLayoutManager extends SceneObject {
    */
   getDescriptor(): LayoutRegistryItem;
   /**
-   * When switching between layouts
-   * @param currentLayout
-   */
-  initFromLayout(currentLayout: DashboardLayoutManager): DashboardLayoutManager;
-  /**
-   * Create from persisted state
-   * @param saveModel
-   */
-  initFromSaveModel?(saveModel: any): void;
-  /**
    * Turn into a save model
    * @param saveModel
    */
@@ -53,23 +43,32 @@ export interface DashboardLayoutManager extends SceneObject {
  */
 export interface LayoutRegistryItem extends RegistryItem {
   /**
-   * This is for creating a new layout from the elements of another layout
-   * @param elements
-   * @returns
+   * When switching between layouts
+   * @param currentLayout
    */
-  create: () => DashboardLayoutManager;
+  createFromLayout(currentLayout: DashboardLayoutManager): DashboardLayoutManager;
+  /**
+   * Create from persisted state
+   * @param saveModel
+   */
+  createFromSaveModel?(saveModel: any): void;
 }
 
 export interface LayoutEditorProps<T> {
   layoutManager: T;
 }
-
+/**
+ * Type used to support switching between layouts
+ */
 export interface LayoutElementInfo {
   body: SceneObject;
   width?: number;
   height?: number;
 }
 
+/**
+ * This interface is needed to support layouts existing on different levels of the scene (DashboardScene and inside the TabsLayoutManager)
+ */
 export interface LayoutParent extends SceneObject {
   switchLayout(newLayout: DashboardLayoutManager): void;
 }

@@ -29,12 +29,12 @@ import { LibraryVizPanel } from '../LibraryVizPanel';
 import { LayoutEditChrome } from './LayoutEditChrome';
 import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps, LayoutElementInfo } from './types';
 
-interface ManualGridLayoutManagerState extends SceneObjectState {
+interface DefaultGridLayoutManagerState extends SceneObjectState {
   layout: SceneGridLayout;
 }
 
-export class ManualGridLayoutManager
-  extends SceneObjectBase<ManualGridLayoutManagerState>
+export class DefaultGridLayoutManager
+  extends SceneObjectBase<DefaultGridLayoutManagerState>
   implements DashboardLayoutManager
 {
   public editModeChanged(isEditing: boolean): void {
@@ -225,17 +225,15 @@ export class ManualGridLayoutManager
   }
 
   public getDescriptor(): LayoutRegistryItem {
-    return ManualGridLayoutManager.getDescriptor();
+    return DefaultGridLayoutManager.getDescriptor();
   }
 
   public static getDescriptor(): LayoutRegistryItem {
     return {
-      name: 'Manual positioning grid',
+      name: 'Default grid',
+      description: 'Manually place and resize each panel',
       id: 'scene-grid-layout',
-      create: () =>
-        new ManualGridLayoutManager({
-          layout: new SceneGridLayout({ children: [], isDraggable: true, isResizable: true }),
-        }),
+      createFromLayout: DefaultGridLayoutManager.createFromLayout,
     };
   }
 
@@ -244,7 +242,7 @@ export class ManualGridLayoutManager
    * @param currentLayout
    * @returns
    */
-  public initFromLayout(currentLayout: DashboardLayoutManager): ManualGridLayoutManager {
+  public static createFromLayout(currentLayout: DashboardLayoutManager): DefaultGridLayoutManager {
     const elements = currentLayout.getElements();
     const children: SceneObject[] = [];
 
@@ -276,12 +274,12 @@ export class ManualGridLayoutManager
       }
     }
 
-    return new ManualGridLayoutManager({
+    return new DefaultGridLayoutManager({
       layout: new SceneGridLayout({ children: children, isDraggable: true, isResizable: true }),
     });
   }
 
-  public static Component = ({ model }: SceneComponentProps<ManualGridLayoutManager>) => {
+  public static Component = ({ model }: SceneComponentProps<DefaultGridLayoutManager>) => {
     return (
       <LayoutEditChrome layoutManager={model}>
         <model.state.layout.Component model={model.state.layout} />
@@ -290,7 +288,7 @@ export class ManualGridLayoutManager
   };
 }
 
-function ManualGridLayoutEditor({ layoutManager }: LayoutEditorProps<ManualGridLayoutManager>) {
+function ManualGridLayoutEditor({ layoutManager }: LayoutEditorProps<DefaultGridLayoutManager>) {
   return (
     <>
       <Button

@@ -38,7 +38,7 @@ import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavio
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
-import { ManualGridLayoutManager } from '../scene/layouts/ManualGridLayoutWrapper';
+import { DefaultGridLayoutManager } from '../scene/layouts/DefaultGridLayoutManager';
 import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
@@ -245,7 +245,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     title: oldModel.title,
     uid: oldModel.uid,
     version: oldModel.version,
-    body: new ManualGridLayoutManager({
+    body: new DefaultGridLayoutManager({
       layout: new SceneGridLayout({
         isLazy: dto.preload ? false : true,
         children: createSceneObjectsForPanels(oldModel.panels),

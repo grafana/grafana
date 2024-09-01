@@ -66,8 +66,9 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
   public static getDescriptor(): LayoutRegistryItem {
     return {
       name: 'Canvas',
+      description: 'Place panels and elements anywhere on a canvas',
       id: 'canvas-layout',
-      create: () => new CanvasLayoutManager({ layout: new SceneCanvasRootLayout({ children: [] }) }),
+      createFromLayout: CanvasLayoutManager.createFromLayout,
     };
   }
 
@@ -76,7 +77,7 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
    * @param currentLayout
    * @returns
    */
-  public initFromLayout(layout: DashboardLayoutManager): CanvasLayoutManager {
+  public static createFromLayout(layout: DashboardLayoutManager): CanvasLayoutManager {
     const elements = layout.getElements();
     const children: CanvasElement[] = [];
     const panelHeight = 300;

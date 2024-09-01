@@ -34,6 +34,7 @@ export function LayoutEditChrome({ layoutManager, children }: Props) {
             <Select
               options={options}
               value={currentLayoutOption}
+              width={20}
               onChange={(option) => changeLayoutTo(layoutManager, option.value!)}
             />
           </Field>
@@ -100,7 +101,6 @@ function getStyles(theme: GrafanaTheme2) {
 function changeLayoutTo(currentLayout: DashboardLayoutManager, newLayoutDescriptor: LayoutRegistryItem) {
   const layoutParent = currentLayout.parent;
   if (layoutParent && isLayoutParent(layoutParent)) {
-    const newLayout = newLayoutDescriptor.create();
-    layoutParent.switchLayout(newLayout.initFromLayout(currentLayout));
+    layoutParent.switchLayout(newLayoutDescriptor.createFromLayout(currentLayout));
   }
 }

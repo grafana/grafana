@@ -15,12 +15,12 @@ import { getDefaultVizPanel, getPanelIdForVizPanel } from '../../utils/utils';
 import { LayoutEditChrome } from './LayoutEditChrome';
 import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps, LayoutElementInfo } from './types';
 
-interface AutomaticGridLayoutManagerState extends SceneObjectState {
+interface ResponsiveGridLayoutManagerState extends SceneObjectState {
   layout: SceneCSSGridLayout;
 }
 
-export class AutomaticGridLayoutManager
-  extends SceneObjectBase<AutomaticGridLayoutManagerState>
+export class ResponsiveGridLayoutManager
+  extends SceneObjectBase<ResponsiveGridLayoutManagerState>
   implements DashboardLayoutManager
 {
   public editModeChanged(isEditing: boolean): void {}
@@ -51,12 +51,8 @@ export class AutomaticGridLayoutManager
     return max;
   }
 
-  public getLayoutId(): string {
-    return 'automatic-grid-layout';
-  }
-
   public getDescriptor(): LayoutRegistryItem {
-    return AutomaticGridLayoutManager.getDescriptor();
+    return ResponsiveGridLayoutManager.getDescriptor();
   }
 
   public renderEditor() {
@@ -66,8 +62,9 @@ export class AutomaticGridLayoutManager
   public static getDescriptor(): LayoutRegistryItem {
     return {
       name: 'Responsive grid',
-      id: 'automatic-grid-layout',
-      create: () => new AutomaticGridLayoutManager({ layout: new SceneCSSGridLayout({ children: [] }) }),
+      description: 'CSS layout that adjusts to the available space',
+      id: 'responsive-grid-layout',
+      createFromLayout: ResponsiveGridLayoutManager.createFromLayout,
     };
   }
 
@@ -83,7 +80,11 @@ export class AutomaticGridLayoutManager
     return elements;
   }
 
-  public initFromLayout(layout: DashboardLayoutManager): AutomaticGridLayoutManager {
+  public static createEmpty() {
+    return new ResponsiveGridLayoutManager({ layout: new SceneCSSGridLayout({ children: [] }) });
+  }
+
+  public static createFromLayout(layout: DashboardLayoutManager): ResponsiveGridLayoutManager {
     const elements = layout.getElements();
     const children: SceneObject[] = [];
 
@@ -93,7 +94,7 @@ export class AutomaticGridLayoutManager
       }
     }
 
-    return new AutomaticGridLayoutManager({
+    return new ResponsiveGridLayoutManager({
       layout: new SceneCSSGridLayout({
         children,
         templateColumns: 'repeat(auto-fit, minmax(400px, auto))',
@@ -102,7 +103,7 @@ export class AutomaticGridLayoutManager
     });
   }
 
-  public static Component = ({ model }: SceneComponentProps<AutomaticGridLayoutManager>) => {
+  public static Component = ({ model }: SceneComponentProps<ResponsiveGridLayoutManager>) => {
     return (
       <LayoutEditChrome layoutManager={model}>
         <model.state.layout.Component model={model.state.layout} />;
@@ -111,7 +112,7 @@ export class AutomaticGridLayoutManager
   };
 }
 
-function AutomaticGridEditor({ layoutManager }: LayoutEditorProps<AutomaticGridLayoutManager>) {
+function AutomaticGridEditor({ layoutManager }: LayoutEditorProps<ResponsiveGridLayoutManager>) {
   const cssLayout = layoutManager.state.layout;
   const { templateColumns, autoRows } = cssLayout.useState();
   const widthParams = parseMinMaxParameters(templateColumns);

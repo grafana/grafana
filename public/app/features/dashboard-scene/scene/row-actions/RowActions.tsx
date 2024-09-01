@@ -18,7 +18,7 @@ import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardGridItem } from '../DashboardGridItem';
 import { DashboardScene } from '../DashboardScene';
 import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
-import { ManualGridLayoutManager } from '../layouts/ManualGridLayoutWrapper';
+import { DefaultGridLayoutManager } from '../layouts/DefaultGridLayoutManager';
 
 import { RowOptionsButton } from './RowOptionsButton';
 
@@ -62,7 +62,7 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
   };
 
   public onDelete = () => {
-    const layout = sceneGraph.getAncestor(this, ManualGridLayoutManager);
+    const layout = sceneGraph.getAncestor(this, DefaultGridLayoutManager);
 
     appEvents.publish(
       new ShowConfirmModalEvent({

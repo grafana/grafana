@@ -9,9 +9,9 @@ import {
 } from '@grafana/scenes';
 import { Button, Tab, TabsBar } from '@grafana/ui';
 
-import { AutomaticGridLayoutManager } from './AutomaticGridLayoutManager';
+import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
 import { LayoutEditChrome } from './LayoutEditChrome';
-import { ManualGridLayoutManager } from './ManualGridLayoutWrapper';
+import { ResponsiveGridLayoutManager } from './ResponsiveGridLayoutManager';
 import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps, LayoutElementInfo } from './types';
 
 interface TabsLayoutManagerState extends SceneObjectState {
@@ -21,18 +21,17 @@ interface TabsLayoutManagerState extends SceneObjectState {
 }
 
 export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> implements DashboardLayoutManager {
-  getNextPanelId(): number {
-    throw new Error('Method not implemented.');
+  public getNextPanelId(): number {
+    return 0;
   }
-  public editModeChanged(isEditing: boolean): void {}
 
-  public cleanUpStateFromExplore(): void {}
+  public editModeChanged(isEditing: boolean): void {}
 
   public addNewTab(): void {
     this.setState({
       tabLayouts: [
         ...this.state.tabLayouts,
-        new ManualGridLayoutManager({
+        new DefaultGridLayoutManager({
           layout: new SceneGridLayout({ children: [], isDraggable: true, isResizable: true }),
         }),
       ],
@@ -71,8 +70,9 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   public static getDescriptor(): LayoutRegistryItem {
     return {
       name: 'Tabs',
+      description: 'Top level tabs each with its own layout',
       id: 'tabs-layout',
-      create: () => new TabsLayoutManager({ tabLayouts: [], tabTitles: [], currentTab: '' }),
+      createFromLayout: TabsLayoutManager.createFromLayout,
     };
   }
 
@@ -88,7 +88,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     return elements;
   }
 
-  public initFromLayout(layout: DashboardLayoutManager): TabsLayoutManager {
+  public static createFromLayout(layout: DashboardLayoutManager): TabsLayoutManager {
     const elements = layout.getElements();
     const children: SceneObject[] = [];
 
