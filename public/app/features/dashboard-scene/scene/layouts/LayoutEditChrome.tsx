@@ -5,11 +5,8 @@ import { useStyles2, Field, Select } from '@grafana/ui';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 
-import { AutomaticGridLayoutManager } from './AutomaticGridLayoutManager';
-import { CanvasLayoutManager } from './CanvasLayout/CanvasLayoutManager';
-import { ManualGridLayoutManager } from './ManualGridLayoutWrapper';
-import { TabsLayoutManager } from './TabsLayoutManager';
-import { DashboardLayoutManager, isLayoutParent, LayoutDescriptor } from './types';
+import { layoutRegistry } from './registry';
+import { DashboardLayoutManager, isLayoutParent, LayoutRegistryItem } from './types';
 
 interface Props {
   layoutManager: DashboardLayoutManager;
@@ -20,13 +17,14 @@ export function LayoutEditChrome({ layoutManager, children }: Props) {
   const styles = useStyles2(getStyles);
   const { isEditing } = getDashboardSceneFor(layoutManager).useState();
 
-  const layouts = getLayouts();
+  const layouts = layoutRegistry.list();
   const options = layouts.map((layout) => ({
     label: layout.name,
     value: layout,
   }));
 
-  const currentLayoutOption = options.find((option) => option.value.id === layoutManager.getLayoutId());
+  const currentLayoutId = layoutManager.getDescriptor().id;
+  const currentLayoutOption = options.find((option) => option.value.id === currentLayoutId);
 
   return (
     <div className={styles.wrapper}>
@@ -45,15 +43,6 @@ export function LayoutEditChrome({ layoutManager, children }: Props) {
       {children}
     </div>
   );
-}
-
-function getLayouts(): LayoutDescriptor[] {
-  return [
-    ManualGridLayoutManager.getDescriptor(),
-    AutomaticGridLayoutManager.getDescriptor(),
-    CanvasLayoutManager.getDescriptor(),
-    TabsLayoutManager.getDescriptor(),
-  ];
 }
 
 function getStyles(theme: GrafanaTheme2) {
@@ -108,7 +97,7 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-function changeLayoutTo(currentLayout: DashboardLayoutManager, newLayoutDescriptor: LayoutDescriptor) {
+function changeLayoutTo(currentLayout: DashboardLayoutManager, newLayoutDescriptor: LayoutRegistryItem) {
   const layoutParent = currentLayout.parent;
   if (layoutParent && isLayoutParent(layoutParent)) {
     const newLayout = newLayoutDescriptor.create();

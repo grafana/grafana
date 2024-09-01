@@ -27,7 +27,7 @@ import { DashboardGridItem } from '../DashboardGridItem';
 import { LibraryVizPanel } from '../LibraryVizPanel';
 
 import { LayoutEditChrome } from './LayoutEditChrome';
-import { DashboardLayoutManager, LayoutDescriptor, LayoutEditorProps, LayoutElementInfo } from './types';
+import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps, LayoutElementInfo } from './types';
 
 interface ManualGridLayoutManagerState extends SceneObjectState {
   layout: SceneGridLayout;
@@ -224,11 +224,11 @@ export class ManualGridLayoutManager
     return 'scene-grid-layout';
   }
 
-  public getDescriptor(): LayoutDescriptor {
+  public getDescriptor(): LayoutRegistryItem {
     return ManualGridLayoutManager.getDescriptor();
   }
 
-  public static getDescriptor(): LayoutDescriptor {
+  public static getDescriptor(): LayoutRegistryItem {
     return {
       name: 'Manual positioning grid',
       id: 'scene-grid-layout',

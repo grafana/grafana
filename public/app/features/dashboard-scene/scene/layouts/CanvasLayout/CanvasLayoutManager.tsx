@@ -4,7 +4,7 @@ import { DashboardInteractions } from 'app/features/dashboard-scene/utils/intera
 
 import { forceRenderChildren, getDefaultVizPanel } from '../../../utils/utils';
 import { LayoutEditChrome } from '../LayoutEditChrome';
-import { DashboardLayoutManager, LayoutDescriptor, LayoutEditorProps, LayoutElementInfo } from '../types';
+import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps, LayoutElementInfo } from '../types';
 
 import { CanvasElement } from './SceneCanvasElement';
 import { SceneCanvasRootLayout } from './SceneCanvasRootLayout';
@@ -55,7 +55,7 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
     return 'canvas-layout';
   }
 
-  public getDescriptor(): LayoutDescriptor {
+  public getDescriptor(): LayoutRegistryItem {
     return CanvasLayoutManager.getDescriptor();
   }
 
@@ -63,7 +63,7 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
     return <CanvasLayoutEditor layoutManager={this} />;
   }
 
-  public static getDescriptor(): LayoutDescriptor {
+  public static getDescriptor(): LayoutRegistryItem {
     return {
       name: 'Canvas',
       id: 'canvas-layout',

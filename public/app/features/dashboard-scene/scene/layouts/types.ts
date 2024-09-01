@@ -1,8 +1,56 @@
+import { RegistryItem } from '@grafana/data';
 import { SceneObject, VizPanel } from '@grafana/scenes';
 
-export interface LayoutDescriptor {
-  name: string;
-  id: string;
+export interface DashboardLayoutManager extends SceneObject {
+  /**
+   * Notify the layout manager that the edit mode has changed
+   * @param isEditing
+   */
+  editModeChanged(isEditing: boolean): void;
+  /**
+   * We should be able to figure out how to add the explore panel in a way that leaves the
+   * initialSaveModel clean from it so we can leverage the default discard changes logic.
+   * Then we can get rid of this.
+   */
+  cleanUpStateFromExplore?(): void;
+  /**
+   * Not sure we will need this in the long run, we should be able to handle this inside internally
+   */
+  getNextPanelId(): number;
+  /**
+   * Used for transferring state between layouts. Not sure what the return type should be here.
+   * Right now we just check for VizPanels
+   */
+  getElements(): LayoutElementInfo[];
+  /**
+   * Renders options and layout actions
+   */
+  renderEditor?(): React.ReactNode;
+  /**
+   * Get's the layout descriptor (which has the name and id)
+   */
+  getDescriptor(): LayoutRegistryItem;
+  /**
+   * When switching between layouts
+   * @param currentLayout
+   */
+  initFromLayout(currentLayout: DashboardLayoutManager): DashboardLayoutManager;
+  /**
+   * Create from persisted state
+   * @param saveModel
+   */
+  initFromSaveModel?(saveModel: any): void;
+  /**
+   * Turn into a save model
+   * @param saveModel
+   */
+  toSaveModel?(): any;
+}
+
+/**
+ * The layout descriptor used when selecting / switching layouts
+ */
+export interface LayoutRegistryItem extends RegistryItem {
   /**
    * This is for creating a new layout from the elements of another layout
    * @param elements
@@ -13,28 +61,6 @@ export interface LayoutDescriptor {
 
 export interface LayoutEditorProps<T> {
   layoutManager: T;
-}
-
-export interface DashboardLayoutManager extends SceneObject {
-  getLayoutId(): string;
-  editModeChanged(isEditing: boolean): void;
-  cleanUpStateFromExplore?(): void;
-  /**
-   * Not sure we will need this in the long run, we should be able to handle this inside addPanel
-   */
-  getNextPanelId(): number;
-  /**
-   * Used for transferring state between layouts. Not sure what the return type should be here.
-   * Right now we just check for VizPanels
-   */
-  getElements(): LayoutElementInfo[];
-  renderEditor?(): React.ReactNode;
-  getDescriptor(): LayoutDescriptor;
-  /**
-   * When switching between layouts
-   * @param currentLayout
-   */
-  initFromLayout(currentLayout: DashboardLayoutManager): DashboardLayoutManager;
 }
 
 export interface LayoutElementInfo {

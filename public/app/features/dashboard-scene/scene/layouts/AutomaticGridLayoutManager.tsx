@@ -13,7 +13,7 @@ import { DashboardInteractions } from '../../utils/interactions';
 import { getDefaultVizPanel, getPanelIdForVizPanel } from '../../utils/utils';
 
 import { LayoutEditChrome } from './LayoutEditChrome';
-import { DashboardLayoutManager, LayoutDescriptor, LayoutEditorProps, LayoutElementInfo } from './types';
+import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps, LayoutElementInfo } from './types';
 
 interface AutomaticGridLayoutManagerState extends SceneObjectState {
   layout: SceneCSSGridLayout;
@@ -55,7 +55,7 @@ export class AutomaticGridLayoutManager
     return 'automatic-grid-layout';
   }
 
-  public getDescriptor(): LayoutDescriptor {
+  public getDescriptor(): LayoutRegistryItem {
     return AutomaticGridLayoutManager.getDescriptor();
   }
 
@@ -63,7 +63,7 @@ export class AutomaticGridLayoutManager
     return <AutomaticGridEditor layoutManager={this} />;
   }
 
-  public static getDescriptor(): LayoutDescriptor {
+  public static getDescriptor(): LayoutRegistryItem {
     return {
       name: 'Responsive grid',
       id: 'automatic-grid-layout',

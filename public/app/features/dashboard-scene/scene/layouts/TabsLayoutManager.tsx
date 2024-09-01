@@ -12,7 +12,7 @@ import { Button, Tab, TabsBar } from '@grafana/ui';
 import { AutomaticGridLayoutManager } from './AutomaticGridLayoutManager';
 import { LayoutEditChrome } from './LayoutEditChrome';
 import { ManualGridLayoutManager } from './ManualGridLayoutWrapper';
-import { DashboardLayoutManager, LayoutDescriptor, LayoutEditorProps, LayoutElementInfo } from './types';
+import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps, LayoutElementInfo } from './types';
 
 interface TabsLayoutManagerState extends SceneObjectState {
   tabLayouts: DashboardLayoutManager[];
@@ -64,11 +64,11 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     return 'tabs-layout';
   }
 
-  public getDescriptor(): LayoutDescriptor {
+  public getDescriptor(): LayoutRegistryItem {
     return TabsLayoutManager.getDescriptor();
   }
 
-  public static getDescriptor(): LayoutDescriptor {
+  public static getDescriptor(): LayoutRegistryItem {
     return {
       name: 'Tabs',
       id: 'tabs-layout',
