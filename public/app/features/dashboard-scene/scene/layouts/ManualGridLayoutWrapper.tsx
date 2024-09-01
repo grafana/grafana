@@ -258,6 +258,7 @@ export class ManualGridLayoutManager
       if (element.body instanceof VizPanel) {
         children.push(
           new DashboardGridItem({
+            key: `griditem-${getPanelIdForVizPanel(element.body)}`,
             x: currentX,
             y: currentY,
             width: panelWidth,

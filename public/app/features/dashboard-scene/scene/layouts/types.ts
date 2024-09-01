@@ -1,5 +1,6 @@
 import { RegistryItem } from '@grafana/data';
 import { SceneObject, VizPanel } from '@grafana/scenes';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 export interface DashboardLayoutManager extends SceneObject {
   /**
@@ -75,4 +76,8 @@ export interface LayoutParent extends SceneObject {
 
 export function isLayoutParent(obj: SceneObject): obj is LayoutParent {
   return 'switchLayout' in obj;
+}
+
+export interface PanelEditLayoutElement {
+  getOptions(): OptionsPaneItemDescriptor[];
 }
