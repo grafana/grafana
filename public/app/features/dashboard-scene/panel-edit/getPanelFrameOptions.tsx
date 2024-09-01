@@ -31,7 +31,7 @@ export function getPanelFrameCategory2(
   const links = panelLinksObject?.state.rawLinks ?? [];
   const dashboard = getDashboardSceneFor(panel);
 
-  return descriptor
+  descriptor
     .addItem(
       new OptionsPaneItemDescriptor({
         title: 'Title',
@@ -95,72 +95,24 @@ export function getPanelFrameCategory2(
         })
       )
     );
-  // .addCategory(
-  //   new OptionsPaneCategoryDescriptor({
-  //     title: 'Repeat options',
-  //     id: 'Repeat options',
-  //     isOpenDefault: false,
-  //   })
-  //     .addItem(
-  //       new OptionsPaneItemDescriptor({
-  //         title: 'Repeat by variable',
-  //         description:
-  //           'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.',
-  //         render: function renderRepeatOptions() {
-  //           return (
-  //             <RepeatRowSelect2
-  //               id="repeat-by-variable-select"
-  //               parent={panel}
-  //               repeat={repeat}
-  //               onChange={(value?: string) => {
-  //                 const stateUpdate: Partial<VizPanelManagerState> = { repeat: value };
-  //                 if (value && !vizManager.state.repeatDirection) {
-  //                   stateUpdate.repeatDirection = 'h';
-  //                 }
-  //                 vizManager.setState(stateUpdate);
-  //               }}
-  //             />
-  //           );
-  //         },
-  //       })
-  //     )
-  //     .addItem(
-  //       new OptionsPaneItemDescriptor({
-  //         title: 'Repeat direction',
-  //         showIf: () => !!vizManager.state.repeat,
-  //         render: function renderRepeatOptions() {
-  //           const directionOptions: Array<SelectableValue<'h' | 'v'>> = [
-  //             { label: 'Horizontal', value: 'h' },
-  //             { label: 'Vertical', value: 'v' },
-  //           ];
 
-  //           return (
-  //             <RadioButtonGroup
-  //               options={directionOptions}
-  //               value={vizManager.state.repeatDirection ?? 'h'}
-  //               onChange={(value) => vizManager.setState({ repeatDirection: value })}
-  //             />
-  //           );
-  //         },
-  //       })
-  //     )
-  //     .addItem(
-  //       new OptionsPaneItemDescriptor({
-  //         title: 'Max per row',
-  //         showIf: () => Boolean(vizManager.state.repeat && vizManager.state.repeatDirection === 'h'),
-  //         render: function renderOption() {
-  //           const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map((value) => ({ label: value.toString(), value }));
-  //           return (
-  //             <Select
-  //               options={maxPerRowOptions}
-  //               value={vizManager.state.maxPerRow}
-  //               onChange={(value) => vizManager.setState({ maxPerRow: value.value })}
-  //             />
-  //           );
-  //         },
-  //       })
-  //     )
-  // );
+  const layoutElementOptions = layoutElement.getOptions?.() ?? [];
+
+  if (layoutElementOptions.length > 0) {
+    const category = new OptionsPaneCategoryDescriptor({
+      title: 'Layout options',
+      id: 'Layout options',
+      isOpenDefault: false,
+    });
+
+    for (let option of layoutElementOptions) {
+      category.addItem(option);
+    }
+
+    descriptor.addCategory(category);
+  }
+
+  return descriptor;
 }
 
 interface ScenePanelLinksEditorProps {

@@ -3,6 +3,7 @@ import { isEqual } from 'lodash';
 import { useMemo } from 'react';
 import { Unsubscribable } from 'rxjs';
 
+import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   VizPanel,
@@ -22,8 +23,10 @@ import {
   VariableValueSingle,
   SceneObject,
 } from '@grafana/scenes';
+import { RadioButtonGroup, Select } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 
 import { getMultiVariableValues } from '../utils/utils';
 
@@ -96,7 +99,69 @@ export class DashboardGridItem
   public isDashboardLayoutElement: true = true;
 
   public getOptions?(): OptionsPaneItemDescriptor[] {
-    return [];
+    const gridItem = this;
+
+    return [
+      new OptionsPaneItemDescriptor({
+        title: 'Repeat by variable',
+        description:
+          'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.',
+        render: function renderRepeatOptions() {
+          const { variableName } = gridItem.useState();
+
+          return (
+            <RepeatRowSelect2
+              id="repeat-by-variable-select"
+              parent={gridItem}
+              repeat={variableName}
+              onChange={(value?: string) => {
+                const stateUpdate: Partial<DashboardGridItemState> = { variableName: value };
+                if (value && !gridItem.state.repeatDirection) {
+                  stateUpdate.repeatDirection = 'h';
+                }
+                gridItem.setState(stateUpdate);
+              }}
+            />
+          );
+        },
+      }),
+      new OptionsPaneItemDescriptor({
+        title: 'Repeat direction',
+        // TOOD: Not sure how to support this conditional display, needs a bit of refactor for how options are rendered
+        // showIf: () => !gridItem.state.variableName,
+        render: function renderRepeatOptions() {
+          const { repeatDirection } = gridItem.useState();
+
+          const directionOptions: Array<SelectableValue<'h' | 'v'>> = [
+            { label: 'Horizontal', value: 'h' },
+            { label: 'Vertical', value: 'v' },
+          ];
+
+          return (
+            <RadioButtonGroup
+              options={directionOptions}
+              value={repeatDirection ?? 'h'}
+              onChange={(value) => gridItem.setState({ repeatDirection: value })}
+            />
+          );
+        },
+      }),
+
+      new OptionsPaneItemDescriptor({
+        title: 'Max per row',
+        //showIf: () => Boolean(vizManager.state.repeat && vizManager.state.repeatDirection === 'h'),
+        render: function renderOption() {
+          const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map((value) => ({ label: value.toString(), value }));
+          return (
+            <Select
+              options={maxPerRowOptions}
+              value={gridItem.state.maxPerRow ?? 4}
+              onChange={(value) => gridItem.setState({ maxPerRow: value.value })}
+            />
+          );
+        },
+      }),
+    ];
   }
 
   public getVariableScope?(): SceneVariableSet | undefined {

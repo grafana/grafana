@@ -1,21 +1,7 @@
-import {
-  SceneLayoutState,
-  SceneObjectBase,
-  SceneLayout,
-  SceneComponentProps,
-  SceneLayoutChildOptions,
-  sceneGraph,
-  SceneObjectState,
-  VizPanel,
-} from '@grafana/scenes';
+import { SceneObjectBase, SceneComponentProps, SceneObjectState, VizPanel, SceneObject } from '@grafana/scenes';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import {
-  VerticalConstraint,
-  HorizontalConstraint,
-  BackgroundImageSize,
-  Constraint,
-  CanvasElementPlacement,
-} from './canvasTypes';
+import { VerticalConstraint, HorizontalConstraint, CanvasElementPlacement } from './canvasTypes';
 
 export interface CanvasElementState extends SceneObjectState {
   body: VizPanel;
@@ -23,9 +9,23 @@ export interface CanvasElementState extends SceneObjectState {
 }
 
 export class CanvasElement extends SceneObjectBase<CanvasElementState> {
+  /**
+   * DashboardLayoutElement interface
+   */
+  public isDashboardLayoutElement: true = true;
+
+  public getOptions?(): OptionsPaneItemDescriptor[] {
+    return [];
+  }
+
+  public setBody(body: SceneObject): void {
+    if (body instanceof VizPanel) {
+      this.setState({ body });
+    }
+  }
+
   public static Component = ({ model }: SceneComponentProps<CanvasElement>) => {
     const { body, placement } = model.useState();
-    const layout = sceneGraph.getLayout(model);
 
     return (
       <div

@@ -66,8 +66,10 @@ export class ResponsiveGridLayoutManager
     const elements: LayoutElementInfo[] = [];
 
     for (const child of this.state.layout.state.children) {
-      if (child instanceof VizPanel) {
-        elements.push({ body: child });
+      if (child instanceof ResponsiveGridItem) {
+        if (child.state.body instanceof VizPanel) {
+          elements.push({ body: child.state.body });
+        }
       }
     }
 
