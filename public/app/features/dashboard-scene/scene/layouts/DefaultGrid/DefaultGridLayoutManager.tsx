@@ -12,7 +12,7 @@ import {
 import { Button } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 
-import { DashboardInteractions } from '../../utils/interactions';
+import { DashboardInteractions } from '../../../utils/interactions';
 import {
   forceRenderChildren,
   getDashboardSceneFor,
@@ -22,12 +22,11 @@ import {
   getPanelIdForVizPanel,
   NEW_PANEL_HEIGHT,
   NEW_PANEL_WIDTH,
-} from '../../utils/utils';
-import { DashboardGridItem } from '../DashboardGridItem';
-import { LibraryVizPanel } from '../LibraryVizPanel';
-
-import { LayoutEditChrome } from './LayoutEditChrome';
-import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps, LayoutElementInfo } from './types';
+} from '../../../utils/utils';
+import { DashboardGridItem } from '../../DashboardGridItem';
+import { LibraryVizPanel } from '../../LibraryVizPanel';
+import { LayoutEditChrome } from '../LayoutEditChrome';
+import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps, LayoutElementInfo } from '../types';
 
 interface DefaultGridLayoutManagerState extends SceneObjectState {
   layout: SceneGridLayout;

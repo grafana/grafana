@@ -1,8 +1,8 @@
 import { Registry } from '@grafana/data';
 
 import { CanvasLayoutManager } from './CanvasLayout/CanvasLayoutManager';
-import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
-import { ResponsiveGridLayoutManager } from './ResponsiveGridLayoutManager';
+import { DefaultGridLayoutManager } from './DefaultGrid/DefaultGridLayoutManager';
+import { ResponsiveGridLayoutManager } from './ResponsiveGrid/ResponsiveGridLayoutManager';
 import { TabsLayoutManager } from './TabsLayoutManager';
 import { LayoutRegistryItem } from './types';
 

@@ -1,19 +1,13 @@
 import { SelectableValue, toOption } from '@grafana/data';
-import {
-  SceneComponentProps,
-  SceneCSSGridLayout,
-  SceneObject,
-  SceneObjectBase,
-  SceneObjectState,
-  VizPanel,
-} from '@grafana/scenes';
+import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Button, Field, Select } from '@grafana/ui';
 
-import { DashboardInteractions } from '../../utils/interactions';
-import { getDefaultVizPanel, getPanelIdForVizPanel } from '../../utils/utils';
+import { DashboardInteractions } from '../../../utils/interactions';
+import { getDefaultVizPanel, getPanelIdForVizPanel } from '../../../utils/utils';
+import { LayoutEditChrome } from '../LayoutEditChrome';
+import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps, LayoutElementInfo } from '../types';
 
-import { LayoutEditChrome } from './LayoutEditChrome';
-import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps, LayoutElementInfo } from './types';
+import { ResponsiveGridItem } from './ResponsiveGridItem';
 
 interface ResponsiveGridLayoutManagerState extends SceneObjectState {
   layout: SceneCSSGridLayout;
@@ -86,11 +80,11 @@ export class ResponsiveGridLayoutManager
 
   public static createFromLayout(layout: DashboardLayoutManager): ResponsiveGridLayoutManager {
     const elements = layout.getElements();
-    const children: SceneObject[] = [];
+    const children: ResponsiveGridItem[] = [];
 
     for (let element of elements) {
       if (element.body instanceof VizPanel) {
-        children.push(element.body.clone());
+        children.push(new ResponsiveGridItem({ body: element.body.clone() }));
       }
     }
 

@@ -34,7 +34,6 @@ export function LayoutEditChrome({ layoutManager, children }: Props) {
             <Select
               options={options}
               value={currentLayoutOption}
-              width={20}
               onChange={(option) => changeLayoutTo(layoutManager, option.value!)}
             />
           </Field>

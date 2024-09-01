@@ -18,7 +18,7 @@ import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardGridItem } from '../DashboardGridItem';
 import { DashboardScene } from '../DashboardScene';
 import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
-import { DefaultGridLayoutManager } from '../layouts/DefaultGridLayoutManager';
+import { DefaultGridLayoutManager } from '../layouts/DefaultGrid/DefaultGridLayoutManager';
 
 import { RowOptionsButton } from './RowOptionsButton';
 

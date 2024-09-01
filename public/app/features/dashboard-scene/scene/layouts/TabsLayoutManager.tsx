@@ -9,9 +9,9 @@ import {
 } from '@grafana/scenes';
 import { Button, Tab, TabsBar } from '@grafana/ui';
 
-import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
+import { DefaultGridLayoutManager } from './DefaultGrid/DefaultGridLayoutManager';
 import { LayoutEditChrome } from './LayoutEditChrome';
-import { ResponsiveGridLayoutManager } from './ResponsiveGridLayoutManager';
+import { ResponsiveGridLayoutManager } from './ResponsiveGrid/ResponsiveGridLayoutManager';
 import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps, LayoutElementInfo } from './types';
 
 interface TabsLayoutManagerState extends SceneObjectState {

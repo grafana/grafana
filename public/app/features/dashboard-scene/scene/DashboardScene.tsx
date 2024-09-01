@@ -75,7 +75,7 @@ import { LibraryVizPanel } from './LibraryVizPanel';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
-import { DefaultGridLayoutManager } from './layouts/DefaultGridLayoutManager';
+import { DefaultGridLayoutManager } from './layouts/DefaultGrid/DefaultGridLayoutManager';
 import { DashboardLayoutManager } from './layouts/types';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];

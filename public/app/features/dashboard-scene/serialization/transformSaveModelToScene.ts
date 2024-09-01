@@ -38,7 +38,7 @@ import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavio
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
-import { DefaultGridLayoutManager } from '../scene/layouts/DefaultGridLayoutManager';
+import { DefaultGridLayoutManager } from '../scene/layouts/DefaultGrid/DefaultGridLayoutManager';
 import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
