@@ -1,27 +1,12 @@
-import type {
-  PluginExtension,
-  PluginExtensionConfig,
-  PluginExtensionLink,
-  PluginExtensionLinkConfig,
-} from '@grafana/data';
+import type { PluginExtensionAddedLinkConfig, PluginExtension, PluginExtensionLink } from '@grafana/data';
+import { PluginAddedLinksConfigureFunc, PluginExtensionPoints } from '@grafana/data/src/types/pluginExtensions';
 import { isPluginExtensionLink } from '@grafana/runtime';
-
-import { isPluginExtensionLinkConfig, logWarning } from './utils';
 
 export function assertPluginExtensionLink(
   extension: PluginExtension | undefined,
   errorMessage = 'extension is not a link extension'
 ): asserts extension is PluginExtensionLink {
   if (!isPluginExtensionLink(extension)) {
-    throw new Error(errorMessage);
-  }
-}
-
-export function assertPluginExtensionLinkConfig(
-  extension: PluginExtensionLinkConfig,
-  errorMessage = 'extension is not a command extension config'
-): asserts extension is PluginExtensionLinkConfig {
-  if (!isPluginExtensionLinkConfig(extension)) {
     throw new Error(errorMessage);
   }
 }
@@ -40,18 +25,10 @@ export function assertIsReactComponent(component: React.ComponentType) {
   }
 }
 
-export function assertExtensionPointIdIsValid(pluginId: string, extension: PluginExtensionConfig) {
-  if (!isExtensionPointIdValid(pluginId, extension.extensionPointId)) {
+export function assertConfigureIsValid(config: PluginExtensionAddedLinkConfig) {
+  if (!isConfigureFnValid(config.configure)) {
     throw new Error(
-      `Invalid extension "${extension.title}". The extensionPointId should start with either "grafana/", "plugins/" or "capabilities/${pluginId}" (currently: "${extension.extensionPointId}"). Skipping the extension.`
-    );
-  }
-}
-
-export function assertConfigureIsValid(extension: PluginExtensionLinkConfig) {
-  if (!isConfigureFnValid(extension)) {
-    throw new Error(
-      `Invalid extension "${extension.title}". The "configure" property must be a function. Skipping the extension.`
+      `Invalid extension "${config.title}". The "configure" property must be a function. Skipping the extension.`
     );
   }
 }
@@ -88,41 +65,18 @@ export function extensionPointEndsWithVersion(extensionPointId: string) {
   return extensionPointId.match(/.*\/v\d+$/);
 }
 
-export function isConfigureFnValid(extension: PluginExtensionLinkConfig) {
-  return extension.configure ? typeof extension.configure === 'function' : true;
+export function isGrafanaCoreExtensionPoint(extensionPointId: string) {
+  return Object.values(PluginExtensionPoints)
+    .map((v) => v.toString())
+    .includes(extensionPointId);
+}
+
+export function isConfigureFnValid(configure?: PluginAddedLinksConfigureFunc<object> | undefined) {
+  return configure ? typeof configure === 'function' : true;
 }
 
 export function isStringPropValid(prop: unknown) {
   return typeof prop === 'string' && prop.length > 0;
-}
-
-export function isPluginExtensionConfigValid(pluginId: string, extension: PluginExtensionConfig): boolean {
-  try {
-    assertStringProps(extension, ['title', 'description', 'extensionPointId']);
-    assertExtensionPointIdIsValid(pluginId, extension);
-
-    // Link
-    if (isPluginExtensionLinkConfig(extension)) {
-      assertConfigureIsValid(extension);
-
-      if (!extension.path && !extension.onClick) {
-        logWarning(`Invalid extension "${extension.title}". Either "path" or "onClick" is required.`);
-        return false;
-      }
-
-      if (extension.path) {
-        assertLinkPathIsValid(pluginId, extension.path);
-      }
-    }
-
-    return true;
-  } catch (error) {
-    if (error instanceof Error) {
-      logWarning(error.message);
-    }
-
-    return false;
-  }
 }
 
 export function isPromise(value: unknown): value is Promise<unknown> {

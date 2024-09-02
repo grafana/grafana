@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "15.2.3",
-    "@types/node": "20.16.2",
+    "@types/node": "20.16.3",
     "esbuild": "0.20.2",
     "rimraf": "5.0.7",
     "rollup": "2.79.1",
@@ -50,7 +50,7 @@
   },
   "dependencies": {
     "@grafana/tsconfig": "^2.0.0",
-    "tslib": "2.6.3",
+    "tslib": "2.7.0",
     "typescript": "5.5.4"
   }
 }

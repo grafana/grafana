@@ -45,7 +45,7 @@
     "@svgr/plugin-prettier": "^8.1.0",
     "@svgr/plugin-svgo": "^8.1.0",
     "@types/babel__core": "^7",
-    "@types/node": "20.16.2",
+    "@types/node": "20.16.3",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.2.25",
     "esbuild": "0.20.2",

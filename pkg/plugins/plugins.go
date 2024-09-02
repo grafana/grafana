@@ -112,18 +112,19 @@ type JSONData struct {
 	AutoEnabled bool `json:"autoEnabled"`
 
 	// Datasource settings
-	Annotations  bool            `json:"annotations"`
-	Metrics      bool            `json:"metrics"`
-	Alerting     bool            `json:"alerting"`
-	Explore      bool            `json:"explore"`
-	Table        bool            `json:"tables"`
-	Logs         bool            `json:"logs"`
-	Tracing      bool            `json:"tracing"`
-	QueryOptions map[string]bool `json:"queryOptions,omitempty"`
-	BuiltIn      bool            `json:"builtIn,omitempty"`
-	Mixed        bool            `json:"mixed,omitempty"`
-	Streaming    bool            `json:"streaming"`
-	SDK          bool            `json:"sdk,omitempty"`
+	Annotations               bool            `json:"annotations"`
+	Metrics                   bool            `json:"metrics"`
+	Alerting                  bool            `json:"alerting"`
+	Explore                   bool            `json:"explore"`
+	Table                     bool            `json:"tables"`
+	Logs                      bool            `json:"logs"`
+	Tracing                   bool            `json:"tracing"`
+	QueryOptions              map[string]bool `json:"queryOptions,omitempty"`
+	BuiltIn                   bool            `json:"builtIn,omitempty"`
+	Mixed                     bool            `json:"mixed,omitempty"`
+	Streaming                 bool            `json:"streaming"`
+	SDK                       bool            `json:"sdk,omitempty"`
+	MultiValueFilterOperators bool            `json:"multiValueFilterOperators,omitempty"`
 
 	// Backend (Datasource + Renderer + SecretsManager)
 	Executable string `json:"executable,omitempty"`
