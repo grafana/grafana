@@ -333,6 +333,9 @@
   "combobox": {
     "clear": {
       "title": "Clear value"
+    },
+    "custom-value": {
+      "create": "Create custom value"
     }
   },
   "command-palette": {
@@ -711,6 +714,13 @@
     "share": {
       "time-range-description": "Change the current relative time range to an absolute time range",
       "time-range-label": "Lock time range"
+    }
+  },
+  "errors": {
+    "dashboard-settings": {
+      "annotations": {
+        "datasource": "The selected data source does not support annotations. Please select a different data source."
+      }
     }
   },
   "explore": {
