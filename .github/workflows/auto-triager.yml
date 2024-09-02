@@ -1,0 +1,45 @@
+# This workflow is triggered when a new issue is opened
+# It will run an internal github action to try to automate the triage process
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  check-label:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Send issue to the auto triager action
+        id: auto_triage
+        # https://github.com/grafana/auto-triager/blob/main/action.yml
+        uses: grafana/auto-triager@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue_number: ${{ github.event.issue.number }}
+          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          # Leaving the actionin monitoring mode for now
+          # should be set to true when ready to use
+          # add_labels: true
+          add_labels: false
+
+      - name: Labels from auto triage
+        run: |
+          echo ${{ steps.auto_triage.outputs.triage_labels }}
+
+      - name: "Send Slack notification"
+        if : ${{ steps.auto_triage.outputs.triage_labels != '' }}
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: >
+            {
+              "icon_emoji": ":robocto:",
+              "username": "Auto Triager",
+              "type": "mrkdwn",
+              "text": "Auto triager found the following labels: ${{ steps.auto_triage.outputs.triage_labels }} for [issue #${{ github.event.issue.number }}](${{ github.event.issue.html_url }})",
+              "channel": "#triage-automation-ci"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
