@@ -3933,8 +3933,8 @@ __metadata:
   linkType: soft
 
 "@grafana/scenes@npm:^5.11.1":
-  version: 5.11.1
-  resolution: "@grafana/scenes@npm:5.11.1"
+  version: 5.11.2
+  resolution: "@grafana/scenes@npm:5.11.2"
   dependencies:
     "@floating-ui/react": "npm:0.26.16"
     "@grafana/e2e-selectors": "npm:^11.0.0"
@@ -3951,7 +3951,7 @@ __metadata:
     "@grafana/ui": ">=10.4"
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/15ec8bee9aa2aa8f5c64ed9fcaf4bd7c835162e0e63814556e7561e62462d5485f098131e411893e54ae3247692b348c8773a9459c30e45e936c5b0ef1a9d789
+  checksum: 10/1f6cded27acac813b1f039fa656efa476bcb2a444217c78c707441698d8d2dc053745fadcbad2dbe94a252d2613f1b32ac120fb11d887bb14f08a0bbea4c423b
   languageName: node
   linkType: hard
 
