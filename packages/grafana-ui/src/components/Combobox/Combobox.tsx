@@ -82,7 +82,7 @@ export const Combobox = ({
   }, [options, value]);
 
   const selectedItem = useMemo(() => {
-    if (selectedItemIndex) {
+    if (selectedItemIndex !== null) {
       return options[selectedItemIndex];
     }
 
