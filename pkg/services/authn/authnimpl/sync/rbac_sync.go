@@ -148,12 +148,12 @@ func (s *RBACSync) SyncCloudRoles(ctx context.Context, ident *authn.Identity, r 
 		return nil
 	}
 
-	if !ident.ID.IsType(claims.TypeUser) {
+	if !ident.IsIdentityType(claims.TypeUser) {
 		s.log.FromContext(ctx).Debug("Skip syncing cloud role", "id", ident.ID)
 		return nil
 	}
 
-	userID, err := ident.ID.ParseInt()
+	userID, err := ident.GetInternalID()
 	if err != nil {
 		return err
 	}

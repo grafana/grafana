@@ -15,6 +15,8 @@ import {
 import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
 import {
   DeepPartial,
+  LocalValueVariable,
+  MultiValueVariable,
   PanelBuilders,
   SceneComponentProps,
   SceneDataTransformer,
@@ -23,8 +25,10 @@ import {
   SceneObjectState,
   SceneObjectStateChangedEvent,
   SceneQueryRunner,
+  SceneVariableSet,
   SceneVariables,
   VizPanel,
+  sceneGraph,
 } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig, Panel } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
@@ -40,7 +44,13 @@ import { getPanelChanges } from '../saving/getDashboardChanges';
 import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
-import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
+import {
+  getDashboardSceneFor,
+  getMultiVariableValues,
+  getPanelIdForVizPanel,
+  getQueryRunnerFor,
+  isLibraryPanel,
+} from '../utils/utils';
 
 export interface VizPanelManagerState extends SceneObjectState {
   panel: VizPanel;
@@ -94,6 +104,28 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
     if (gridItem.parent?.state.$variables) {
       variables = gridItem.parent.state.$variables.clone();
+    }
+
+    if (repeatOptions.repeat) {
+      const variable = sceneGraph.lookupVariable(repeatOptions.repeat, gridItem);
+
+      if (variable instanceof MultiValueVariable && variable.state.value.length) {
+        const { values, texts } = getMultiVariableValues(variable);
+
+        const varWithDefaultValue = new LocalValueVariable({
+          name: variable.state.name,
+          value: values[0],
+          text: String(texts[0]),
+        });
+
+        if (!variables) {
+          variables = new SceneVariableSet({
+            variables: [varWithDefaultValue],
+          });
+        } else {
+          variables.setState({ variables: [varWithDefaultValue] });
+        }
+      }
     }
 
     return new VizPanelManager({
