@@ -666,12 +666,7 @@ func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemp
 
 	// 1. Increase the resource version to the current epoch with microseconds precision.
 	// This is an update statement that will lock to row and prevent concurrent updates until the transaction is commited.
-	//
-	// Note: there is a small chance that the resource version will be the same as the previous one when
-	// concurrent updates are too close in time. This is due to the fact that the current epoch is unlikely to cause
-	// real issues in practice (given network latency, etc).
-	// In rare occasions (like master clock changes) the resource version might go backwards for a short period of time.
-	// In those scenarios, watchers might not receive the expected events.
+
 	// This is a trade-off between performance and consistency.
 
 	_, err = dbutil.Exec(ctx, x, sqlResourceVersionInc, sqlResourceVersionRequest{
