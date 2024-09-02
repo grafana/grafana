@@ -1,8 +1,11 @@
 import { act, render, screen } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 
+import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
-import { createUsePluginComponents } from './usePluginComponents';
+import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
+import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
+import { usePluginComponents } from './usePluginComponents';
 
 jest.mock('app/features/plugins/pluginSettings', () => ({
   getPluginSettings: jest.fn().mockResolvedValue({
@@ -16,18 +19,34 @@ jest.mock('app/features/plugins/pluginSettings', () => ({
 }));
 
 describe('usePluginComponents()', () => {
-  let registry: AddedComponentsRegistry;
+  let addedComponents: AddedComponentsRegistry;
+  let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
 
   beforeEach(() => {
-    registry = new AddedComponentsRegistry();
+    addedComponents = new AddedComponentsRegistry();
+    const addedLinks = new AddedLinksRegistry();
+    const exposedComponents = new ExposedComponentsRegistry();
+
+    wrapper = ({ children }: { children: React.ReactNode }) => (
+      <ExtensionRegistriesProvider
+        registries={{
+          addedComponents,
+          addedLinks,
+          exposedComponents,
+        }}
+      >
+        {children}
+      </ExtensionRegistriesProvider>
+    );
   });
 
   it('should return an empty array if there are no extensions registered for the extension point', () => {
-    const usePluginComponents = createUsePluginComponents(registry);
-    const { result } = renderHook(() =>
-      usePluginComponents({
-        extensionPointId: 'foo/bar',
-      })
+    const { result } = renderHook(
+      () =>
+        usePluginComponents({
+          extensionPointId: 'foo/bar',
+        }),
+      { wrapper }
     );
 
     expect(result.current.components).toEqual([]);
@@ -37,7 +56,7 @@ describe('usePluginComponents()', () => {
     const extensionPointId = 'plugins/foo/bar/v1';
     const pluginId = 'my-app-plugin';
 
-    registry.register({
+    addedComponents.register({
       pluginId,
       configs: [
         {
@@ -61,8 +80,7 @@ describe('usePluginComponents()', () => {
       ],
     });
 
-    const usePluginComponents = createUsePluginComponents(registry);
-    const { result } = renderHook(() => usePluginComponents({ extensionPointId }));
+    const { result } = renderHook(() => usePluginComponents({ extensionPointId }), { wrapper });
 
     expect(result.current.components.length).toBe(2);
 
@@ -77,15 +95,14 @@ describe('usePluginComponents()', () => {
   it('should dynamically update the extensions registered for a certain extension point', () => {
     const extensionPointId = 'plugins/foo/bar/v1';
     const pluginId = 'my-app-plugin';
-    const usePluginComponents = createUsePluginComponents(registry);
-    let { result, rerender } = renderHook(() => usePluginComponents({ extensionPointId }));
+    let { result, rerender } = renderHook(() => usePluginComponents({ extensionPointId }), { wrapper });
 
     // No extensions yet
     expect(result.current.components.length).toBe(0);
 
     // Add extensions to the registry
     act(() => {
-      registry.register({
+      addedComponents.register({
         pluginId,
         configs: [
           {
@@ -117,19 +134,19 @@ describe('usePluginComponents()', () => {
   });
 
   it('should only render the hook once', () => {
-    const spy = jest.spyOn(registry, 'asObservable');
+    const spy = jest.spyOn(addedComponents, 'asObservable');
     const extensionPointId = 'plugins/foo/bar';
-    const usePluginComponents = createUsePluginComponents(registry);
 
-    renderHook(() => usePluginComponents({ extensionPointId }));
+    renderHook(() => usePluginComponents({ extensionPointId }), { wrapper });
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
   it('should honour the limitPerPlugin arg if its set', () => {
     const extensionPointId = 'plugins/foo/bar/v1';
     const plugins = ['my-app-plugin1', 'my-app-plugin2', 'my-app-plugin3'];
-    const usePluginComponents = createUsePluginComponents(registry);
-    let { result, rerender } = renderHook(() => usePluginComponents({ extensionPointId, limitPerPlugin: 2 }));
+    let { result, rerender } = renderHook(() => usePluginComponents({ extensionPointId, limitPerPlugin: 2 }), {
+      wrapper,
+    });
 
     // No extensions yet
     expect(result.current.components.length).toBe(0);
@@ -137,7 +154,7 @@ describe('usePluginComponents()', () => {
     // Add extensions to the registry
     act(() => {
       for (let pluginId of plugins) {
-        registry.register({
+        addedComponents.register({
           pluginId,
           configs: [
             {
