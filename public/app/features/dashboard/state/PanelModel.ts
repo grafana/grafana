@@ -24,6 +24,7 @@ import {
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import { LibraryPanel, LibraryPanelRef } from '@grafana/schema';
 import config from 'app/core/config';
+import { appEvents } from 'app/core/core';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { QueryGroupOptions } from 'app/types';
 import {
@@ -698,13 +699,14 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
     this.libraryPanel = libPanel;
 
-    if (libPanel.model.repeat && !this.repeatPanelId) {
+    // Migrate repeat options on libary panel to the panel model
+    // But only if there is no repeat options set on panel and if this is not repeat clone
+    if (this.repeat == null && libPanel.model.repeat != null && !this.repeatPanelId) {
       this.repeat = libPanel.model.repeat;
       this.repeatDirection = libPanel.model.repeatDirection;
       this.maxPerRow = libPanel.model.maxPerRow;
+      showLibrayPanelWithRepeatNotice();
     }
-
-    console.log('initLibraryPanel', this);
   }
 
   unlinkLibraryPanel() {
@@ -751,4 +753,11 @@ function getSaveModelWithLibPanelRef(model: PanelModel) {
       name: model.libraryPanel!.name,
     },
   };
+}
+
+export function showLibrayPanelWithRepeatNotice() {
+  appEvents.emit('alert-error', [
+    'Library panel with repeat detected',
+    'Panel repeat option has moved to the dashboard level. Save dashboard and reload to resolve any issues',
+  ]);
 }

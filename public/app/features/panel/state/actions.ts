@@ -156,11 +156,6 @@ export function loadLibraryPanelAndUpdate(panel: PanelModel): ThunkResult<void> 
       const libPanel = await getLibraryPanel(uid, true);
       panel.initLibraryPanel(libPanel);
 
-      appEvents.emit('alert-error', [
-        'Library panel with repeat detected',
-        'Save dashboard and reload to fix any issues',
-      ]);
-
       await dispatch(initPanelState(panel));
     } catch (ex) {
       console.log('ERROR: ', ex);
@@ -172,4 +167,11 @@ export function loadLibraryPanelAndUpdate(panel: PanelModel): ThunkResult<void> 
       );
     }
   };
+}
+
+export function showLibrayPanelWithRepeatNotice() {
+  appEvents.emit('alert-error', [
+    'Library panel with repeat detected',
+    'Panel repeat option has moved to the dashboard level. Save dashboard and reload to resolve any issues',
+  ]);
 }

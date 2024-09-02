@@ -9,6 +9,7 @@ import {
 import { LibraryPanel } from '@grafana/schema';
 import { appEvents } from 'app/core/core';
 import { PanelModel } from 'app/features/dashboard/state';
+import { showLibrayPanelWithRepeatNotice } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
@@ -93,10 +94,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
       // Migrate repeat settings from lib panel to grid item
       if (this.parent instanceof DashboardGridItem) {
         if (!this.parent.state.variableName) {
-          appEvents.emit('alert-error', [
-            'Library panel with repeat detected',
-            'Panel repeat option has moved to the dashboard level. Save dashboard and reload to resolve any issues',
-          ]);
+          showLibrayPanelWithRepeatNotice();
 
           this.parent.setState({
             variableName: libPanel.model.repeat,
