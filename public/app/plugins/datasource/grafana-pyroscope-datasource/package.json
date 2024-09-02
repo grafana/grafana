@@ -17,7 +17,7 @@
     "react-dom": "18.2.0",
     "react-use": "17.5.1",
     "rxjs": "7.8.1",
-    "tslib": "2.6.3"
+    "tslib": "2.7.0"
   },
   "devDependencies": {
     "@grafana/plugin-configs": "11.3.0-pre",
