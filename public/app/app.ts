@@ -87,7 +87,7 @@ import { AddedComponentsRegistry } from './features/plugins/extensions/registry/
 import { AddedLinksRegistry } from './features/plugins/extensions/registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './features/plugins/extensions/registry/ExposedComponentsRegistry';
 import { setupPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
-import { createUsePluginComponent } from './features/plugins/extensions/usePluginComponent';
+import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
 import { createUsePluginComponents } from './features/plugins/extensions/usePluginComponents';
 import { createUsePluginExtensions } from './features/plugins/extensions/usePluginExtensions';
 import { createUsePluginLinks } from './features/plugins/extensions/usePluginLinks';
@@ -234,7 +234,7 @@ export class GrafanaApp {
       setPluginLinksHook(createUsePluginLinks(pluginExtensionsRegistries.addedLinksRegistry));
       setPluginExtensionGetter(createPluginExtensionsGetter(pluginExtensionsRegistries));
       setPluginExtensionsHook(createUsePluginExtensions(pluginExtensionsRegistries));
-      setPluginComponentHook(createUsePluginComponent(pluginExtensionsRegistries.exposedComponentsRegistry));
+      setPluginComponentHook(usePluginComponent);
       setPluginComponentsHook(createUsePluginComponents(pluginExtensionsRegistries.addedComponentsRegistry));
 
       this.extensionRegistries = {
