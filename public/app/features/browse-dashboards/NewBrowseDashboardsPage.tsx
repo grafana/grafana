@@ -18,6 +18,16 @@ function folderStateReducer(state: OpenFolders, action: { isOpen: boolean; uid: 
   };
 }
 
+/**
+ * This is a new new version of BrowseDashboards, gated behind the newNewBrowseDashboards feature toggle.
+ *
+ * Improvements:
+ * - It uses a window virtualizer, with body scrolling, to virtualise the list. This reduces the 'scrolling a box'
+ *    effect that the old implementation had, gives it more space, and allows for things like sticky UI.
+ * - All API requests are managed entirely within RTK Query, with a custom generic hook that handles multiple queries.
+ *   This removes a lot of complexity that we previously had in redux actions and reducers, and allows for better caching.
+ */
+
 export default function NewBrowseDashboardsPage(props: NewBrowseDashboardsPageProps) {
   const [openFolders, setOpenFolders] = useReducer(folderStateReducer, {});
 
