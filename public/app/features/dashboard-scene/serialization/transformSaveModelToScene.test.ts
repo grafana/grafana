@@ -287,6 +287,62 @@ describe('transformSaveModelToScene', () => {
   });
 
   describe('when organizing panels as scene children', () => {
+    it('should leave panels outside second row if it is collapsed', () => {
+      const panel1 = createPanelSaveModel({
+        title: 'test1',
+        gridPos: { x: 0, y: 1, w: 12, h: 8 },
+      }) as Panel;
+
+      const panel2 = createPanelSaveModel({
+        title: 'test2',
+        gridPos: { x: 0, y: 10, w: 12, h: 8 },
+      }) as Panel;
+
+      const row1 = createPanelSaveModel({
+        title: 'test row 1',
+        type: 'row',
+        gridPos: { x: 0, y: 0, w: 12, h: 1 },
+        collapsed: false,
+        panels: [],
+      }) as unknown as RowPanel;
+
+      const row2 = createPanelSaveModel({
+        title: 'test row 2',
+        type: 'row',
+        gridPos: { x: 0, y: 9, w: 12, h: 1 },
+        collapsed: true,
+        panels: [],
+      }) as unknown as RowPanel;
+
+      const dashboard = {
+        ...defaultDashboard,
+        title: 'Test dashboard',
+        uid: 'test-uid',
+        panels: [row1, panel1, row2, panel2],
+      };
+
+      const oldModel = new DashboardModel(dashboard);
+
+      const scene = createDashboardSceneFromDashboardModel(oldModel, dashboard);
+      const body = scene.state.body as SceneGridLayout;
+
+      expect(body.state.children).toHaveLength(3);
+      const rowScene1 = body.state.children[0] as SceneGridRow;
+      expect(rowScene1).toBeInstanceOf(SceneGridRow);
+      expect(rowScene1.state.title).toEqual(row1.title);
+      expect(rowScene1.state.isCollapsed).toEqual(row1.collapsed);
+      expect(rowScene1.state.children).toHaveLength(1);
+      expect(rowScene1.state.children[0]).toBeInstanceOf(DashboardGridItem);
+
+      const rowScene2 = body.state.children[1] as SceneGridRow;
+      expect(rowScene2).toBeInstanceOf(SceneGridRow);
+      expect(rowScene2.state.title).toEqual(row2.title);
+      expect(rowScene2.state.isCollapsed).toEqual(row2.collapsed);
+      expect(rowScene2.state.children).toHaveLength(0);
+
+      expect(body.state.children[2]).toBeInstanceOf(DashboardGridItem);
+    });
+
     it('should create panels within collapsed rows', () => {
       const panel = createPanelSaveModel({
         title: 'test',
