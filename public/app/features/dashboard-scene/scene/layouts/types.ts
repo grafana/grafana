@@ -19,8 +19,7 @@ export interface DashboardLayoutManager extends SceneObject {
    */
   getNextPanelId(): number;
   /**
-   * Used for transferring state between layouts. Not sure what the return type should be here.
-   * Right now we just check for VizPanels
+   * Used for transferring elements between layouts.
    */
   getElements(): DashboardLayoutElement[];
   /**
