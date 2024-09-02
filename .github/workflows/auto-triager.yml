@@ -16,7 +16,9 @@ jobs:
         shell: bash
         run: |
           if [ -n "${{ (secrets.GRAFANA_DELIVERY_BOT_APP_ID != '' &&
-                        secrets.GRAFANA_DELIVERY_BOT_APP_PEM != ''
+                        secrets.GRAFANA_DELIVERY_BOT_APP_PEM != '' &&
+                        secrets.OPENAI_API_KEY != '' &&
+                        secrets.SLACK_WEBHOOK_URL != ''
                         ) || '' }}" ]; then
             echo "has-secrets=1" >> "$GITHUB_OUTPUT"
           fi
