@@ -716,6 +716,13 @@
       "time-range-label": ""
     }
   },
+  "errors": {
+    "dashboard-settings": {
+      "annotations": {
+        "datasource": ""
+      }
+    }
+  },
   "explore": {
     "add-to-dashboard": "Añadir al tablero",
     "logs": {
