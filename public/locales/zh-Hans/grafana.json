@@ -325,6 +325,9 @@
   "combobox": {
     "clear": {
       "title": ""
+    },
+    "custom-value": {
+      "create": ""
     }
   },
   "command-palette": {
