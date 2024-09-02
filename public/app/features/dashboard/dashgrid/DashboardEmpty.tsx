@@ -12,16 +12,18 @@ import {
   onImportDashboard,
 } from 'app/features/dashboard/utils/dashboard';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layouts/DefaultGrid/DefaultGridLayoutManager';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { useDispatch, useSelector } from 'app/types';
 
-import { setInitialDatasource } from '../state/reducers';
+import { addPanel, setInitialDatasource } from '../state/reducers';
 
 export interface Props {
   dashboard: DashboardModel | DashboardScene;
   canCreate: boolean;
 }
 
+// I think this  empty dashboard state should be part of the layout manager (handled / rendered by it)
 const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
@@ -30,10 +32,11 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const onAddVisualization = () => {
     let id;
     if (dashboard instanceof DashboardScene) {
-      // TODO
-      //const panel = dashboard.onCreateNewPanel();
-      //dashboard.setState({ editPanel: buildPanelEditScene(panel, true) });
-      locationService.partial({ firstPanel: true });
+      if (dashboard.state.body instanceof DefaultGridLayoutManager) {
+        dashboard.state.body.addNewPanel();
+        // dashboard.setState({ editPanel: buildPanelEditScene(panel, true) });
+        // locationService.partial({ firstPanel: true });
+      }
     } else {
       id = onCreateNewPanel(dashboard, initialDatasource);
       dispatch(setInitialDatasource(undefined));

@@ -27,6 +27,15 @@ interface TabsLayoutManagerState extends SceneObjectState {
 }
 
 export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> implements DashboardLayoutManager {
+  cleanUpStateFromExplore?(): void {
+    throw new Error('Method not implemented.');
+  }
+  addNewPanel(): VizPanel {
+    throw new Error('Method not implemented.');
+  }
+  toSaveModel?() {
+    throw new Error('Method not implemented.');
+  }
   public getNextPanelId(): number {
     return 0;
   }

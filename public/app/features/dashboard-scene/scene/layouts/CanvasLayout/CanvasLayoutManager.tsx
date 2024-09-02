@@ -36,9 +36,9 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
         new CanvasElement({ body: vizPanel, placement: { top: 0, left: 0, width: 400, height: 300 } }),
       ],
     });
-  }
 
-  public removePanel(panel: VizPanel) {}
+    return vizPanel;
+  }
 
   public getNextPanelId(): number {
     let max = 0;

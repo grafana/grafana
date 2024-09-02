@@ -93,7 +93,7 @@ export class DefaultGridLayoutManager
     sceneGridLayout.setState({ children });
   }
 
-  public addNewPanel(): void {
+  public addNewPanel(): VizPanel {
     const vizPanel = getDefaultVizPanel(this.getNextPanelId());
     const sceneGridLayout = this.state.layout;
 
@@ -110,6 +110,8 @@ export class DefaultGridLayoutManager
     sceneGridLayout.setState({
       children: [newGridItem, ...sceneGridLayout.state.children],
     });
+
+    return vizPanel;
   }
 
   /**

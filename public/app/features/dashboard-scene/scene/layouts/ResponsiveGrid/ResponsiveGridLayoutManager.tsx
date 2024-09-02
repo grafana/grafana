@@ -27,12 +27,14 @@ export class ResponsiveGridLayoutManager
 
   public cleanUpStateFromExplore(): void {}
 
-  public addNewPanel(): void {
+  public addNewPanel(): VizPanel {
     const vizPanel = getDefaultVizPanel(this.getNextPanelId());
 
     this.state.layout.setState({
       children: [...this.state.layout.state.children, vizPanel],
     });
+
+    return vizPanel;
   }
 
   public getNextPanelId(): number {
