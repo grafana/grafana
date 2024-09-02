@@ -8,7 +8,7 @@ import { reportExploreMetrics } from '../interactions';
 import { getLabelValueFromDataFrame } from './levels';
 
 export const sortSeries = memoize(
-  (series: DataFrame[], sortBy: string) => {
+  (series: DataFrame[], sortBy: string, direction = 'asc') => {
     if (sortBy === 'alphabetical') {
       return sortSeriesByName(series, 'asc');
     }
@@ -49,9 +49,13 @@ export const sortSeries = memoize(
       return 0;
     });
 
+    if (direction === 'asc') {
+      seriesCalcs.reverse();
+    }
+
     return seriesCalcs.map(({ dataFrame }) => dataFrame);
   },
-  (series: DataFrame[], sortBy: string) => {
+  (series: DataFrame[], sortBy: string, direction = 'asc') => {
     const firstTimestamp = series.length > 0 ? series[0].fields[0].values[0] : 0;
     const lastTimestamp =
       series.length > 0
@@ -59,7 +63,7 @@ export const sortSeries = memoize(
         : 0;
     const firstValue = series.length > 0 ? getLabelValueFromDataFrame(series[0]) : '';
     const lastValue = series.length > 0 ? getLabelValueFromDataFrame(series[series.length - 1]) : '';
-    const key = `${firstValue}_${lastValue}_${firstTimestamp}_${lastTimestamp}_${series.length}_${sortBy}`;
+    const key = `${firstValue}_${lastValue}_${firstTimestamp}_${lastTimestamp}_${series.length}_${sortBy}_${direction}`;
     return key;
   }
 );

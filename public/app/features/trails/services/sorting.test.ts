@@ -47,28 +47,28 @@ describe('sortSeries', () => {
     const series = [frameA, frameB, frameC];
     const sortedSeries = [frameC, frameA, frameB];
 
-    const result = sortSeries(series, ReducerID.stdDev);
+    const result = sortSeries(series, ReducerID.stdDev, 'desc');
     expect(result).toEqual(sortedSeries);
   });
   test('Sorts series by standard deviation, ascending', () => {
     const series = [frameA, frameB, frameC];
     const sortedSeries = [frameB, frameA, frameC];
 
-    const result = sortSeries(series, ReducerID.stdDev);
+    const result = sortSeries(series, ReducerID.stdDev, 'asc');
     expect(result).toEqual(sortedSeries);
   });
   test('Sorts series alphabetically, ascending', () => {
     const series = [frameA, frameB, frameC];
     const sortedSeries = [frameB, frameC, frameA];
 
-    const result = sortSeries(series, 'alphabetical');
+    const result = sortSeries(series, 'alphabetical', 'asc');
     expect(result).toEqual(sortedSeries);
   });
-  test('Sorts series alphabetically, ascending', () => {
+  test('Sorts series alphabetically, descending', () => {
     const series = [frameA, frameB, frameC];
-    const sortedSeries = [frameA, frameC, frameB];
+    const sortedSeries = [frameB, frameC, frameA];
 
-    const result = sortSeries(series, 'alphabetical');
+    const result = sortSeries(series, 'alphabetical', 'desc');
     expect(result).toEqual(sortedSeries);
   });
 });
