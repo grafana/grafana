@@ -1522,10 +1522,30 @@ ${buildImageContent(
   },
   transpose: {
     name: 'Transpose',
-    getHelperDocs: function () {
+    getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
 Use this transformation to pivot the data frame, converting rows into columns and columns into rows. This transformation is particularly useful when you want to switch the orientation of your data to better suit your visualization needs.
 If you have multiple types it will default to string type.
+
+**Before Transformation:**
+
+| env  | January   | February |
+| ---- | --------- | -------- |
+| prod | 1 | 2 |
+| dev | 3 | 4 |
+
+**After applying transpose transformation:**
+
+| Field  | prod   | dev |
+| ---- | --------- | -------- |
+| January | 1 | 3 |
+| February  | 2 | 4 |
+
+${buildImageContent(
+  '/media/docs/grafana/transformations/screenshot-grafana-11-2-transpose-transformation.png',
+  imageRenderType,
+  'Before and after transpose transformation'
+)}
   `;
     },
   },
