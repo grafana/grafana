@@ -27,15 +27,6 @@ interface TabsLayoutManagerState extends SceneObjectState {
 }
 
 export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> implements DashboardLayoutManager {
-  cleanUpStateFromExplore?(): void {
-    throw new Error('Method not implemented.');
-  }
-  addNewPanel(): VizPanel {
-    throw new Error('Method not implemented.');
-  }
-  toSaveModel?() {
-    throw new Error('Method not implemented.');
-  }
   public getNextPanelId(): number {
     return 0;
   }
@@ -61,6 +52,8 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
   public removeElement(element: DashboardLayoutElement) {}
 
+  public duplicateElement(element: DashboardLayoutElement) {}
+
   public renderEditor() {
     return <TabsLayoutEditor layoutManager={this} />;
   }
@@ -75,10 +68,6 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     const currentTab = this.state.currentTab;
     const currentTabIndex = this.state.tabTitles.findIndex((title) => title === currentTab);
     return this.state.tabLayouts[currentTabIndex];
-  }
-
-  public getLayoutId(): string {
-    return 'tabs-layout';
   }
 
   public getDescriptor(): LayoutRegistryItem {

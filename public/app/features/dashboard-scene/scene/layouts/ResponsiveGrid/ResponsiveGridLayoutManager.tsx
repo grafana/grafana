@@ -57,6 +57,10 @@ export class ResponsiveGridLayoutManager
     this.state.layout.setState({ children: this.state.layout.state.children.filter((child) => child !== element) });
   }
 
+  public duplicateElement(element: DashboardLayoutElement) {
+    throw new Error('Method not implemented.');
+  }
+
   public getDescriptor(): LayoutRegistryItem {
     return ResponsiveGridLayoutManager.getDescriptor();
   }

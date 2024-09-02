@@ -36,8 +36,6 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
         new CanvasElement({ body: vizPanel, placement: { top: 0, left: 0, width: 400, height: 300 } }),
       ],
     });
-
-    return vizPanel;
   }
 
   public getNextPanelId(): number {
@@ -47,6 +45,10 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
 
   public removeElement(element: DashboardLayoutElement) {
     this.state.layout.setState({ children: this.state.layout.state.children.filter((child) => child !== element) });
+  }
+
+  public duplicateElement(element: DashboardLayoutElement) {
+    throw new Error('Method not implemented.');
   }
 
   public getElements(): LayoutElementInfo[] {

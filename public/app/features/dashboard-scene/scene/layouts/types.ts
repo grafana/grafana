@@ -29,6 +29,11 @@ export interface DashboardLayoutManager extends SceneObject {
    */
   removeElement(element: DashboardLayoutElement): void;
   /**
+   * Creates a copy of an existing element and adds it to the layout
+   * @param element
+   */
+  duplicateElement(element: DashboardLayoutElement): void;
+  /**
    * Renders options and layout actions
    */
   renderEditor?(): React.ReactNode;

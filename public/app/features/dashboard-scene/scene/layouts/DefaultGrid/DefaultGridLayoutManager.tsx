@@ -7,6 +7,7 @@ import {
   SceneObject,
   SceneObjectBase,
   SceneObjectState,
+  sceneUtils,
   VizPanel,
 } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
@@ -20,6 +21,7 @@ import {
   getDefaultVizPanel,
   getPanelIdForLibraryVizPanel,
   getPanelIdForVizPanel,
+  getVizPanelKeyForPanelId,
   NEW_PANEL_HEIGHT,
   NEW_PANEL_WIDTH,
 } from '../../../utils/utils';
@@ -155,6 +157,71 @@ export class DefaultGridLayoutManager
     });
 
     this.state.layout.setState({ children: panels });
+  }
+
+  public duplicateElement(element: DashboardLayoutElement): void {
+    // if (!vizPanel.parent) {
+    //   return;
+    // }
+
+    // const libraryPanel = getLibraryVizPanelFromVizPanel(vizPanel);
+
+    // const gridItem = libraryPanel ? libraryPanel.parent : vizPanel.parent;
+
+    if (!(element instanceof DashboardGridItem)) {
+      console.error('Trying to duplicate a panel in a layout that is not DashboardGridItem');
+      return;
+    }
+
+    let panelState;
+    let panelData;
+    const newPanelId = this.getNextPanelId();
+
+    // if (libraryPanel) {
+    //   const gridItemToDuplicateState = sceneUtils.cloneSceneObjectState(gridItem.state);
+
+    //   newGridItem = new DashboardGridItem({
+    //     x: gridItemToDuplicateState.x,
+    //     y: gridItemToDuplicateState.y,
+    //     width: gridItemToDuplicateState.width,
+    //     height: gridItemToDuplicateState.height,
+    //     body: new LibraryVizPanel({
+    //       title: libraryPanel.state.title,
+    //       uid: libraryPanel.state.uid,
+    //       name: libraryPanel.state.name,
+    //       panelKey: getVizPanelKeyForPanelId(newPanelId),
+    //     }),
+    //   });
+    // } else {
+
+    panelState = sceneUtils.cloneSceneObjectState(element.state.body.state);
+    panelData = sceneGraph.getData(element.state.body).clone();
+
+    // when we duplicate a panel we don't want to clone the alert state
+    delete panelData.state.data?.alertState;
+
+    const newGridItem = new DashboardGridItem({
+      x: element.state.x,
+      y: element.state.y,
+      height: element.state.height,
+      width: element.state.width,
+      body: new VizPanel({ ...panelState, $data: panelData, key: getVizPanelKeyForPanelId(newPanelId) }),
+    });
+
+    const layout = this.state.layout;
+
+    if (element.parent instanceof SceneGridRow) {
+      const row = element.parent;
+
+      row.setState({ children: [...row.state.children, newGridItem] });
+
+      layout.forceRender();
+      return;
+    }
+
+    layout.setState({
+      children: [...layout.state.children, newGridItem],
+    });
   }
 
   public getNextPanelId(): number {
