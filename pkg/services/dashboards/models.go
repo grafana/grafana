@@ -423,4 +423,6 @@ type FindPersistedDashboardsQuery struct {
 	IsDeleted  bool
 
 	Filters []any
+
+	SkipAccessControlFilter bool
 }

@@ -6,11 +6,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/authlib/claims"
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -56,6 +57,9 @@ type Service interface {
 	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
 	// SyncUserRoles adds provided roles to user
 	SyncUserRoles(ctx context.Context, orgID int64, cmd SyncUserRolesCommand) error
+
+	Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error)
+	ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error)
 }
 
 //go:generate  mockery --name Store --structname MockStore --outpkg actest --filename store_mock.go --output ./actest/

@@ -12,6 +12,7 @@ const (
 
 type dashboardsMetrics struct {
 	sharedWithMeFetchDashboardsRequestsDuration *prometheus.HistogramVec
+	searchRequestsDuration                      *prometheus.HistogramVec
 }
 
 func newDashboardsMetrics(r prometheus.Registerer) *dashboardsMetrics {
@@ -25,6 +26,16 @@ func newDashboardsMetrics(r prometheus.Registerer) *dashboardsMetrics {
 				Subsystem: metricsSubSystem,
 			},
 			[]string{"status"},
+		),
+		searchRequestsDuration: promauto.With(r).NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:      "search_dashboards_duration_seconds",
+				Help:      "Duration of dashboards search (by authorization engine)",
+				Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
+				Namespace: metricsNamespace,
+				Subsystem: metricsSubSystem,
+			},
+			[]string{"engine"},
 		),
 	}
 }

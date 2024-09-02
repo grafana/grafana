@@ -8,10 +8,11 @@ import (
 	"time"
 
 	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"golang.org/x/exp/slices"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -57,6 +58,7 @@ type DashboardServiceImpl struct {
 	folderPermissions    accesscontrol.FolderPermissionsService
 	dashboardPermissions accesscontrol.DashboardPermissionsService
 	ac                   accesscontrol.AccessControl
+	acService            accesscontrol.Service
 	metrics              *dashboardsMetrics
 }
 
@@ -65,7 +67,7 @@ func ProvideDashboardServiceImpl(
 	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore folder.FolderStore,
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
-	folderSvc folder.Service, r prometheus.Registerer,
+	folderSvc folder.Service, r prometheus.Registerer, acService accesscontrol.Service,
 ) (*DashboardServiceImpl, error) {
 	dashSvc := &DashboardServiceImpl{
 		cfg:                  cfg,
@@ -75,6 +77,7 @@ func ProvideDashboardServiceImpl(
 		folderPermissions:    folderPermissionsService,
 		dashboardPermissions: dashboardPermissionsService,
 		ac:                   ac,
+		acService:            acService,
 		folderStore:          folderStore,
 		folderService:        folderSvc,
 		metrics:              newDashboardsMetrics(r),
@@ -715,7 +718,13 @@ func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *das
 	ctx, span := tracer.Start(ctx, "dashboards.service.SearchDashboards")
 	defer span.End()
 
-	res, err := dr.FindDashboards(ctx, query)
+	var res []dashboards.DashboardSearchProjection
+	var err error
+	if dr.features.IsEnabled(ctx, featuremgmt.FlagZanzana) {
+		res, err = dr.FindDashboardsZanzanaCompare(ctx, query)
+	} else {
+		res, err = dr.FindDashboards(ctx, query)
+	}
 	if err != nil {
 		return nil, err
 	}
