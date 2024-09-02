@@ -90,8 +90,7 @@ func NewResourceStoreClientCloud(conn *grpc.ClientConn, cfg *setting.Cfg) (Resou
 	}
 
 	if cfg.Env == setting.Dev {
-		client := http.DefaultClient
-		client = &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
+		client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 		tokenClient, _ := authnlib.NewTokenExchangeClient(
 			*grpcClientConfig.TokenClientConfig,
 			authnlib.WithHTTPClient(client),
