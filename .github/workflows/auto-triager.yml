@@ -12,8 +12,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Use Check Issue Label action
+      - name: Send issue to the auto triager action
         id: auto_triage
+        # https://github.com/grafana/auto-triager/blob/main/action.yml
         uses: grafana/auto-triager@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
