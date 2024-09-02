@@ -16,6 +16,7 @@ import { mapMouseEventToMode } from './utils';
  */
 export function VizLegend<T>({
   items,
+  thresholdItems,
   displayMode,
   sortBy: sortKey,
   seriesVisibilityChangeBehavior = SeriesVisibilityChangeBehavior.Isolate,
@@ -103,16 +104,34 @@ export function VizLegend<T>({
       );
     case LegendDisplayMode.List:
       return (
-        <VizLegendList<T>
-          className={className}
-          items={items}
-          placement={placement}
-          onLabelMouseOver={onMouseOver}
-          onLabelMouseOut={onMouseOut}
-          onLabelClick={onLegendLabelClick}
-          itemRenderer={itemRenderer}
-          readonly={readonly}
-        />
+        <>
+          {/* render series colors if more than one series or no threshold colors */}
+          {(items.length > 1 || thresholdItems?.length === 0) && (
+            <VizLegendList<T>
+              className={className}
+              items={items}
+              placement={placement}
+              onLabelMouseOver={onMouseOver}
+              onLabelMouseOut={onMouseOut}
+              onLabelClick={onLegendLabelClick}
+              itemRenderer={itemRenderer}
+              readonly={readonly}
+            />
+          )}
+          {/* render threshold colors if exists */}
+          {thresholdItems && (
+            <VizLegendList<T>
+              className={className}
+              items={thresholdItems}
+              placement={placement}
+              onLabelMouseOver={onMouseOver}
+              onLabelMouseOut={onMouseOut}
+              onLabelClick={onLegendLabelClick}
+              itemRenderer={itemRenderer}
+              readonly={readonly}
+            />
+          )}
+        </>
       );
     default:
       return null;

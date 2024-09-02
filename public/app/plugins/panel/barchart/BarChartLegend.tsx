@@ -4,8 +4,8 @@ import { DataFrame, Field, getFieldSeriesColor } from '@grafana/data';
 import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
 import { UPlotConfigBuilder, VizLayout, VizLayoutLegendProps, VizLegend, VizLegendItem, useTheme2 } from '@grafana/ui';
 import { getDisplayValuesForCalcs } from '@grafana/ui/src/components/uPlot/utils';
-import { getFieldLegendItem } from 'app/core/components/TimelineChart/utils';
-
+// import { getFieldLegendItem } from 'app/core/components/TimelineChart/utils';
+import { getThresholdItems } from 'app/core/components/TimelineChart/utils';
 interface BarChartLegend2Props extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {
   data: DataFrame[];
   colorField?: Field | null;
@@ -32,17 +32,20 @@ export const BarChartLegend = memo(
   ({ data, placement, calcs, displayMode, colorField, ...vizLayoutLegendProps }: BarChartLegend2Props) => {
     const theme = useTheme2();
 
-    if (colorField != null) {
-      const items = getFieldLegendItem([colorField], theme);
+    // if (colorField != null) {
+    //   const items = getFieldLegendItem([colorField], theme);
 
-      if (items?.length) {
-        return (
-          <VizLayout.Legend placement={placement}>
-            <VizLegend placement={placement} items={items} displayMode={displayMode} />
-          </VizLayout.Legend>
-        );
-      }
-    }
+    //   if (items?.length) {
+    //     return (
+    //       <VizLayout.Legend placement={placement}>
+    //         <VizLegend placement={placement} items={items} displayMode={displayMode} />
+    //       </VizLayout.Legend>
+    //     );
+    //   }
+    // }
+
+    const fieldConfig = data[0].fields[0].config;
+    const legendThresholdItems: VizLegendItem[] | undefined = getThresholdItems(fieldConfig, theme);
 
     const legendItems = data[0].fields
       .slice(1)
@@ -80,6 +83,7 @@ export const BarChartLegend = memo(
         <VizLegend
           placement={placement}
           items={legendItems}
+          thresholdItems={legendThresholdItems}
           displayMode={displayMode}
           sortBy={vizLayoutLegendProps.sortBy}
           sortDesc={vizLayoutLegendProps.sortDesc}
