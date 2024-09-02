@@ -708,6 +708,13 @@
       "time-range-label": ""
     }
   },
+  "errors": {
+    "dashboard-settings": {
+      "annotations": {
+        "datasource": ""
+      }
+    }
+  },
   "explore": {
     "add-to-dashboard": "添加到仪表板",
     "logs": {
