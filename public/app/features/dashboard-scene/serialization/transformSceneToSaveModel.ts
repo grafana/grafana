@@ -140,7 +140,11 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   return sortedDeepCloneWithoutNulls(dashboard);
 }
 
-export function libraryVizPanelToPanel(libPanel: LibraryVizPanel, gridPos: GridPos): Panel {
+export function libraryVizPanelToPanel(
+  gridItem: DashboardGridItem,
+  libPanel: LibraryVizPanel,
+  gridPos: GridPos
+): Panel {
   if (!libPanel.state.panel) {
     throw new Error('Library panel has no panel');
   }
@@ -149,6 +153,9 @@ export function libraryVizPanelToPanel(libPanel: LibraryVizPanel, gridPos: GridP
     id: getPanelIdForVizPanel(libPanel.state.panel),
     title: libPanel.state.title,
     gridPos: gridPos,
+    repeat: gridItem.state.variableName,
+    repeatDirection: gridItem.state.variableName == null ? undefined : gridItem.getRepeatDirection(),
+    maxPerRow: gridItem.state.variableName == null ? undefined : gridItem.state.maxPerRow,
     libraryPanel: {
       name: libPanel.state.name,
       uid: libPanel.state.uid,
@@ -161,23 +168,7 @@ export function gridItemToPanel(
   sceneState?: DashboardSceneState,
   isSnapshot = false
 ): Panel {
-  let vizPanel: VizPanel | undefined;
-  let x = 0,
-    y = 0,
-    w = 0,
-    h = 0;
-
-  // Handle library panels, early exit
-  if (gridItem.state.body instanceof LibraryVizPanel) {
-    x = gridItem.state.x ?? 0;
-    y = gridItem.state.y ?? 0;
-    w = gridItem.state.width ?? 0;
-    h = gridItem.state.itemHeight ?? gridItem.state.height ?? 0;
-
-    return libraryVizPanelToPanel(gridItem.state.body, { x, y, w, h });
-  }
-
-  let gridItem_ = gridItem;
+  let gridItem2 = gridItem;
 
   // If we're saving while the panel editor is open, we need to persist those changes in the panel model
   if (
@@ -188,26 +179,28 @@ export function gridItemToPanel(
     const gridItemClone = gridItem.clone();
     if (gridItemClone.state.body instanceof VizPanel) {
       sceneState.editPanel.state.vizManager.commitChangesTo(gridItemClone.state.body);
-      gridItem_ = gridItemClone;
+      gridItem2 = gridItemClone;
     }
   }
 
-  if (!(gridItem_.state.body instanceof VizPanel)) {
+  const vizPanel = gridItem2.state.body;
+  const gridPos = {
+    x: gridItem2.state.x ?? 0,
+    y: gridItem2.state.y ?? 0,
+    w: gridItem2.state.width ?? 0,
+    h: (gridItem2.state.variableName ? gridItem2.state.itemHeight : gridItem2.state.height) ?? 0,
+  };
+
+  // Handle library panels, early exit
+  if (vizPanel instanceof LibraryVizPanel) {
+    return libraryVizPanelToPanel(gridItem2, vizPanel, gridPos);
+  }
+
+  if (!(vizPanel instanceof VizPanel)) {
     throw new Error('DashboardGridItem body expected to be VizPanel');
   }
 
-  vizPanel = gridItem_.state.body;
-  x = gridItem_.state.x ?? 0;
-  y = gridItem_.state.y ?? 0;
-  w = gridItem_.state.width ?? 0;
-  h = (gridItem_.state.variableName ? gridItem_.state.itemHeight : gridItem_.state.height) ?? 0;
-
-  if (!vizPanel) {
-    throw new Error('Unsupported grid item type');
-  }
-
-  const panel: Panel = vizPanelToPanel(vizPanel, { x, y, h, w }, isSnapshot, gridItem_);
-
+  const panel: Panel = vizPanelToPanel(vizPanel, gridPos, isSnapshot, gridItem2);
   return panel;
 }
 
@@ -344,7 +337,7 @@ export function panelRepeaterToPanels(
   } else {
     if (repeater.state.body instanceof LibraryVizPanel) {
       const { x = 0, y = 0, width: w = 0, height: h = 0 } = repeater.state;
-      return [libraryVizPanelToPanel(repeater.state.body, { x, y, w, h })];
+      return [libraryVizPanelToPanel(repeater, repeater.state.body, { x, y, w, h })];
     }
 
     if (repeater.state.repeatedPanels) {

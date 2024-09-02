@@ -1,11 +1,12 @@
 import { DataTransformerConfig, FieldConfigSource, getPanelOptionsWithDefaults } from '@grafana/data';
+import appEvents from 'app/core/app_events';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { LibraryElementDTO } from 'app/features/library-panels/types';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { loadPanelPlugin } from 'app/features/plugins/admin/state/actions';
 import { ThunkResult } from 'app/types';
-import { DashboardPanelsChangedEvent, PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
+import { PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
 
 import { changePanelKey, panelModelAndPluginReady, removePanel } from './reducers';
 
@@ -155,13 +156,10 @@ export function loadLibraryPanelAndUpdate(panel: PanelModel): ThunkResult<void> 
       const libPanel = await getLibraryPanel(uid, true);
       panel.initLibraryPanel(libPanel);
 
-      // const dashboard = getStore().dashboard.getModel();
-      // if (panel.repeat && dashboard) {
-      //   const panelIndex = dashboard.panels.findIndex((p) => p.id === panel.id);
-      //   dashboard.repeatPanel(panel, panelIndex);
-      //   dashboard.sortPanelsByGridPos();
-      //   dashboard.events.publish(new DashboardPanelsChangedEvent());
-      // }
+      appEvents.emit('alert-error', [
+        'Library panel with repeat detected',
+        'Save dashboard and reload to fix any issues',
+      ]);
 
       await dispatch(initPanelState(panel));
     } catch (ex) {

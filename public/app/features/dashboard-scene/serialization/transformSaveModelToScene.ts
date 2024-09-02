@@ -29,7 +29,7 @@ import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
+import { DashboardGridItem, DashboardGridItemState } from '../scene/DashboardGridItem';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
@@ -307,17 +307,24 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
     height: panel.gridPos.h,
     itemHeight: panel.gridPos.h,
     body,
+    ...getRepeatOptions(panel),
   });
 }
 
-export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
-  const repeatOptions: Partial<{ variableName: string; repeatDirection: RepeatDirection }> = panel.repeat
-    ? {
-        variableName: panel.repeat,
-        repeatDirection: panel.repeatDirection === 'h' ? 'h' : 'v',
-      }
-    : {};
+function getRepeatOptions(panel: PanelModel): Partial<DashboardGridItemState> {
+  if (!panel.repeat) {
+    return {};
+  }
 
+  return {
+    maxPerRow: panel.maxPerRow,
+    variableName: panel.repeat,
+    repeatDirection: panel.repeatDirection === 'v' ? 'v' : 'h',
+    width: panel.repeat != null && panel.repeatDirection === 'h' ? 24 : panel.gridPos.w,
+  };
+}
+
+export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   const titleItems: SceneObject[] = [];
 
   titleItems.push(
@@ -368,12 +375,11 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     key: `grid-item-${panel.id}`,
     x: panel.gridPos.x,
     y: panel.gridPos.y,
-    width: repeatOptions.repeatDirection === 'h' ? 24 : panel.gridPos.w,
+    width: panel.gridPos.w,
     height: panel.gridPos.h,
     itemHeight: panel.gridPos.h,
     body,
-    maxPerRow: panel.maxPerRow,
-    ...repeatOptions,
+    ...getRepeatOptions(panel),
   });
 }
 

@@ -88,12 +88,16 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
     try {
       const libPanel = await getLibraryPanel(this.state.uid, true);
       this.setPanelFromLibPanel(libPanel);
+
+      // Migrate repeat settings from lib panel to grid item
       if (this.parent instanceof DashboardGridItem) {
-        this.parent.setState({
-          variableName: libPanel.model.repeat,
-          repeatDirection: libPanel.model.repeatDirection === 'h' ? 'h' : 'v',
-          maxPerRow: libPanel.model.maxPerRow,
-        });
+        if (!this.parent.state.variableName) {
+          this.parent.setState({
+            variableName: libPanel.model.repeat,
+            repeatDirection: libPanel.model.repeatDirection === 'h' ? 'h' : 'v',
+            maxPerRow: libPanel.model.maxPerRow,
+          });
+        }
       }
     } catch (err) {
       vizPanel.setState({

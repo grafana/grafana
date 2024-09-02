@@ -687,12 +687,23 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       switch (key) {
         case 'id':
         case 'gridPos':
+        case 'repeat':
+        case 'repeatDirection':
+        case 'maxPerRow':
         case 'libraryPanel': // recursive?
           continue;
       }
       (this as any)[key] = val; // :grimmice:
     }
+
     this.libraryPanel = libPanel;
+
+    if (libPanel.model.repeat && !this.repeatPanelId) {
+      this.repeat = libPanel.model.repeat;
+      this.repeatDirection = libPanel.model.repeatDirection;
+      this.maxPerRow = libPanel.model.maxPerRow;
+    }
+
     console.log('initLibraryPanel', this);
   }
 
@@ -734,6 +745,7 @@ function getSaveModelWithLibPanelRef(model: PanelModel) {
     gridPos: model.gridPos,
     repeat: model.repeat,
     repeatDirection: model.repeatDirection,
+    maxPerRow: model.maxPerRow,
     libraryPanel: {
       uid: model.libraryPanel!.uid,
       name: model.libraryPanel!.name,
