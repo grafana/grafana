@@ -26,11 +26,7 @@ func (in *Integration) DeepCopyInto(out *Integration) {
 			(*out)[key] = val
 		}
 	}
-	if in.Settings != nil {
-		in, out := &in.Settings, &out.Settings
-		*out = make([]byte, len(*in))
-		copy(*out, *in)
-	}
+	in.Settings.DeepCopyInto(&out.Settings)
 	if in.Uid != nil {
 		in, out := &in.Uid, &out.Uid
 		*out = new(string)

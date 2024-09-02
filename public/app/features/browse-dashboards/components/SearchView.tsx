@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { ReactNode, useCallback } from 'react';
 
 import { DataFrameView, toDataFrame } from '@grafana/data';
 import { Button, EmptyState } from '@grafana/ui';
@@ -17,9 +17,10 @@ interface SearchViewProps {
   canSelect: boolean;
   searchState: SearchState;
   searchStateManager: SearchStateManager;
+  emptyState?: ReactNode;
 }
 
-const NUM_PLACEHOLDER_ROWS = 50;
+const NUM_PLACEHOLDER_ROWS = 25;
 const initialLoadingView = {
   view: new DataFrameView(
     toDataFrame({
@@ -49,6 +50,7 @@ export function SearchView({
   canSelect,
   searchState,
   searchStateManager: stateManager,
+  emptyState: emptyStateProp,
 }: SearchViewProps) {
   const dispatch = useDispatch();
   const selectedItems = useSelector((wholeState) => wholeState.browseDashboards.selectedItems);
@@ -94,20 +96,20 @@ export function SearchView({
   );
 
   if (value.totalRows === 0) {
-    return (
-      <div style={{ width }}>
-        <EmptyState
-          button={
-            <Button variant="secondary" onClick={stateManager.onClearSearchAndFilters}>
-              <Trans i18nKey="browse-dashboards.no-results.clear">Clear search and filters</Trans>
-            </Button>
-          }
-          message={t('browse-dashboards.no-results.text', 'No results found for your query')}
-          variant="not-found"
-          role="alert"
-        />
-      </div>
+    const emptyState = emptyStateProp ?? (
+      <EmptyState
+        button={
+          <Button variant="secondary" onClick={stateManager.onClearSearchAndFilters}>
+            <Trans i18nKey="browse-dashboards.no-results.clear">Clear search and filters</Trans>
+          </Button>
+        }
+        message={t('browse-dashboards.no-results.text', 'No results found for your query')}
+        variant="not-found"
+        role="alert"
+      />
     );
+
+    return <div style={{ width }}>{emptyState}</div>;
   }
 
   const props: SearchResultsProps = {

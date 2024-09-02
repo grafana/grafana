@@ -27,6 +27,7 @@ global.$ = global.jQuery = $;
 // mock the default window.grafanaBootData settings
 const settings: Partial<GrafanaBootConfig> = {
   angularSupportEnabled: true,
+  featureToggles: {},
 };
 global.grafanaBootData = {
   settings,

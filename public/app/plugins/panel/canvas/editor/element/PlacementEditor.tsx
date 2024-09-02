@@ -48,6 +48,10 @@ export function PlacementEditor({ item }: Props) {
   const { options } = element;
   const { placement, constraint: layout } = options;
 
+  if (placement) {
+    placement.rotation = placement?.rotation ?? 0;
+  }
+
   const reselectElementAfterChange = () => {
     setTimeout(() => {
       settings.scene.select({ targets: [element.div!] });

@@ -1,7 +1,7 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/OperationList.tsx
 import { css } from '@emotion/css';
+import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { useState } from 'react';
-import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { useMountedState, usePrevious } from 'react-use';
 
 import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';

@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { store } from '@grafana/data';
+
 import { ContentOutline } from './ContentOutline';
 
 jest.mock('./ContentOutlineContext', () => ({
@@ -73,15 +75,15 @@ const setup = (mergeSingleChild = false) => {
 describe('<ContentOutline />', () => {
   it('toggles content on button click', async () => {
     setup();
-    let showContentOutlineButton = screen.getByRole('button', { name: 'Expand outline' });
+    let showContentOutlineButton = screen.getByRole('button', { name: 'Collapse outline' });
     expect(showContentOutlineButton).toBeInTheDocument();
 
     await userEvent.click(showContentOutlineButton);
-    const hideContentOutlineButton = screen.getByRole('button', { name: 'Collapse outline' });
+    const hideContentOutlineButton = screen.getByRole('button', { name: 'Expand outline' });
     expect(hideContentOutlineButton).toBeInTheDocument();
 
     await userEvent.click(hideContentOutlineButton);
-    showContentOutlineButton = screen.getByRole('button', { name: 'Expand outline' });
+    showContentOutlineButton = screen.getByRole('button', { name: 'Collapse outline' });
     expect(showContentOutlineButton).toBeInTheDocument();
   });
 
@@ -156,5 +158,16 @@ describe('<ContentOutline />', () => {
     await userEvent.click(deleteButtons[0]);
 
     expect(unregisterMock).toHaveBeenCalledWith('item-2-1');
+  });
+
+  it('should retrieve the last expanded state from local storage', async () => {
+    const getBoolMock = jest.spyOn(store, 'getBool').mockReturnValue(false);
+    setup();
+    const collapseContentOutlineButton = screen.queryByRole('button', { name: 'Collapse outline' });
+    const expandContentOutlineButton = screen.queryByRole('button', { name: 'Expand outline' });
+    expect(collapseContentOutlineButton).not.toBeInTheDocument();
+    expect(expandContentOutlineButton).toBeInTheDocument();
+
+    getBoolMock.mockRestore();
   });
 });

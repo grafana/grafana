@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"sync"
@@ -16,7 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/folder"
 	alertingauthz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -75,9 +78,8 @@ func ProvideService(
 		folderService:                folderService,
 	}
 
-	err := s.setDashboardProvisioner()
-	if err != nil {
-		return nil, fmt.Errorf("%v: %w", "Failed to create provisioner", err)
+	if err := s.setDashboardProvisioner(); err != nil {
+		return nil, err
 	}
 
 	return s, nil
@@ -104,30 +106,27 @@ type ProvisioningService interface {
 	GetAllowUIUpdatesFromConfig(name string) bool
 }
 
-// Add a public constructor for overriding service to be able to instantiate OSS as fallback
-func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
-	logger := log.New("provisioning")
-	return &ProvisioningServiceImpl{
-		log:                     logger,
-		newDashboardProvisioner: dashboards.New,
-		provisionDatasources:    datasources.Provision,
-		provisionPlugins:        plugins.Provision,
-	}
-}
-
 // Used for testing purposes
 func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionDatasources func(context.Context, string, datasources.BaseDataSourceService, datasources.CorrelationsStore, org.Service) error,
 	provisionPlugins func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error,
-) *ProvisioningServiceImpl {
-	return &ProvisioningServiceImpl{
+	searchService searchV2.SearchService,
+) (*ProvisioningServiceImpl, error) {
+	s := &ProvisioningServiceImpl{
 		log:                     log.New("provisioning"),
 		newDashboardProvisioner: newDashboardProvisioner,
 		provisionDatasources:    provisionDatasources,
 		provisionPlugins:        provisionPlugins,
 		Cfg:                     setting.NewCfg(),
+		searchService:           searchService,
 	}
+
+	if err := s.setDashboardProvisioner(); err != nil {
+		return nil, err
+	}
+
+	return s, nil
 }
 
 type ProvisioningServiceImpl struct {
@@ -183,7 +182,11 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 	err := ps.ProvisionDashboards(ctx)
 	if err != nil {
 		ps.log.Error("Failed to provision dashboard", "error", err)
-		return err
+		// Consider the allow list of errors for which running the provisioning service should not
+		// fail. For now this includes only dashboards.ErrGetOrCreateFolder.
+		if !errors.Is(err, dashboards.ErrGetOrCreateFolder) {
+			return err
+		}
 	}
 	if ps.dashboardProvisioner.HasDashboardSources() {
 		ps.searchService.TriggerReIndex()
@@ -270,13 +273,22 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		notifier.NewCachedNotificationSettingsValidationService(&st),
 		alertingauthz.NewRuleService(ps.ac),
 	)
-	receiverSvc := notifier.NewReceiverService(ps.ac, &st, st, ps.secretService, ps.SQLStore, ps.log)
-	contactPointService := provisioning.NewContactPointService(&st, ps.secretService,
+	configStore := legacy_storage.NewAlertmanagerConfigStore(&st)
+	receiverSvc := notifier.NewReceiverService(
+		alertingauthz.NewReceiverAccess[*ngmodels.Receiver](ps.ac, true),
+		configStore,
+		st,
+		st,
+		ps.secretService,
+		ps.SQLStore,
+		ps.log,
+	)
+	contactPointService := provisioning.NewContactPointService(configStore, ps.secretService,
 		st, ps.SQLStore, receiverSvc, ps.log, &st)
-	notificationPolicyService := provisioning.NewNotificationPolicyService(&st,
+	notificationPolicyService := provisioning.NewNotificationPolicyService(configStore,
 		st, ps.SQLStore, ps.Cfg.UnifiedAlerting, ps.log)
-	mutetimingsService := provisioning.NewMuteTimingService(&st, st, &st, ps.log)
-	templateService := provisioning.NewTemplateService(&st, st, &st, ps.log)
+	mutetimingsService := provisioning.NewMuteTimingService(configStore, st, &st, ps.log, &st)
+	templateService := provisioning.NewTemplateService(configStore, st, &st, ps.log)
 	cfg := prov_alerting.ProvisionerConfig{
 		Path:                       alertingPath,
 		RuleService:                *ruleService,

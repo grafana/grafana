@@ -17,7 +17,7 @@
       "apiVersion": "scope.grafana.app/v0alpha1",
       "kind": "ScopeNode",
       "metadata": {
-        "name": "applications.clusters"
+        "name": "applications-clusters"
       },
       "spec": {
         "description": "Application/Clusters Scopes",
@@ -46,7 +46,7 @@
       "apiVersion": "scope.grafana.app/v0alpha1",
       "kind": "ScopeNode",
       "metadata": {
-        "name": "clusters.application"
+        "name": "clusters-application"
       },
       "spec": {
         "description": "Clusters/Application Scopes",
@@ -89,13 +89,13 @@
       "apiVersion": "scope.grafana.app/v0alpha1",
       "kind": "ScopeNode",
       "metadata": {
-        "name": "applications.clusters-slothClusterNorth"
+        "name": "applications-clusters-slothClusterNorth"
       },
       "spec": {
         "description": "slothClusterNorth",
         "title": "slothClusterNorth",
         "nodeType": "leaf",
-        "parentName": "applications.clusters",
+        "parentName": "applications-clusters",
         "linkId": "slothClusterNorth",
         "linkType": "scope"
       }
@@ -104,13 +104,13 @@
       "apiVersion": "scope.grafana.app/v0alpha1",
       "kind": "ScopeNode",
       "metadata": {
-        "name": "applications.clusters-slothClusterSouth"
+        "name": "applications-clusters-slothClusterSouth"
       },
       "spec": {
         "description": "slothClusterSouth",
         "title": "slothClusterSouth",
         "nodeType": "leaf",
-        "parentName": "applications.clusters",
+        "parentName": "applications-clusters",
         "linkId": "slothClusterSouth",
         "linkType": "scope"
       }
@@ -149,13 +149,13 @@
       "apiVersion": "scope.grafana.app/v0alpha1",
       "kind": "ScopeNode",
       "metadata": {
-        "name": "clusters.applications-slothPictureFactory"
+        "name": "clusters-applications-slothPictureFactory"
       },
       "spec": {
         "description": "slothPictureFactory",
         "title": "slothPictureFactory",
         "nodeType": "leaf",
-        "parentName": "clusters.applications",
+        "parentName": "clusters-applications",
         "linkId": "slothPictureFactory",
         "linkType": "scope"
       }
@@ -164,13 +164,13 @@
       "apiVersion": "scope.grafana.app/v0alpha1",
       "kind": "ScopeNode",
       "metadata": {
-        "name": "clusters.applications-slothVoteTracker"
+        "name": "clusters-applications-slothVoteTracker"
       },
       "spec": {
         "description": "slothVoteTracker",
         "title": "slothVoteTracker",
         "nodeType": "leaf",
-        "parentName": "clusters.applications",
+        "parentName": "clusters-applications",
         "linkId": "slothVoteTracker",
         "linkType": "scope"
       }

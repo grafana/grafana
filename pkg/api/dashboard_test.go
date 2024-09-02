@@ -820,7 +820,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	features := featuremgmt.WithFeatures()
 	var err error
 	if dashboardStore == nil {
-		sql, cfg := db.InitTestDBWithCfg(t)
+		sql, cfg := db.InitTestReplDBWithCfg(t)
 		quotaService := quotatest.New(false, nil)
 		dashboardStore, err = database.ProvideDashboardStore(sql, cfg, features, tagimpl.ProvideService(sql), quotaService)
 		require.NoError(t, err)
@@ -834,7 +834,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 
 	folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
-		dashboardStore, folderStore, db.InitTestDB(t), features, supportbundlestest.NewFakeBundleService(), nil)
+		dashboardStore, folderStore, db.InitTestDB(t), features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 	if dashboardService == nil {
 		dashboardService, err = service.ProvideDashboardServiceImpl(

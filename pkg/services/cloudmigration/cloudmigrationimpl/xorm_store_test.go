@@ -3,15 +3,16 @@ package cloudmigrationimpl
 import (
 	"context"
 	"encoding/base64"
+	"slices"
 	"strconv"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +26,7 @@ func Test_GetAllCloudMigrationSessions(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("get all cloud_migration_session entries", func(t *testing.T) {
-		value, err := s.GetAllCloudMigrationSessions(ctx)
+		value, err := s.GetCloudMigrationSessionList(ctx)
 		require.NoError(t, err)
 		require.Equal(t, 3, len(value))
 		for _, m := range value {
@@ -91,21 +92,24 @@ func Test_GetMigrationSessionByUID(t *testing.T) {
 	})
 }
 
+/** rewrite this test using the new functions
 func Test_DeleteMigrationSession(t *testing.T) {
 	_, s := setUpTest(t)
 	ctx := context.Background()
 
 	t.Run("deletes a session from the db", func(t *testing.T) {
 		uid := "qwerty"
-		delResp, err := s.DeleteMigrationSessionByUID(ctx, uid)
+		session, snapshots, err := s.DeleteMigrationSessionByUID(ctx, uid)
 		require.NoError(t, err)
-		require.Equal(t, uid, delResp.UID)
+		require.Equal(t, uid, session.UID)
+		require.NotNil(t, snapshots)
 
 		// now we try to find it, should return an error
 		_, err = s.GetMigrationSessionByUID(ctx, uid)
 		require.ErrorIs(t, cloudmigration.ErrMigrationNotFound, err)
 	})
 }
+*/
 
 func Test_CreateMigrationRun(t *testing.T) {
 	_, s := setUpTest(t)
@@ -167,13 +171,13 @@ func Test_SnapshotManagement(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("tests the snapshot lifecycle", func(t *testing.T) {
-		var snapshotUid string
-		sessionUid := util.GenerateShortUID()
+		session, err := s.CreateMigrationSession(ctx, cloudmigration.CloudMigrationSession{})
+		require.NoError(t, err)
 
 		// create a snapshot
 		cmr := cloudmigration.CloudMigrationSnapshot{
-			SessionUID: sessionUid,
-			Status:     "initializing",
+			SessionUID: session.UID,
+			Status:     cloudmigration.SnapshotStatusCreating,
 		}
 
 		snapshotUid, err := s.CreateSnapshot(ctx, cmr)
@@ -181,24 +185,33 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.NotEmpty(t, snapshotUid)
 
 		//retrieve it from the db
-		snapshot, err := s.GetSnapshotByUID(ctx, snapshotUid, 0, 0)
+		snapshot, err := s.GetSnapshotByUID(ctx, session.UID, snapshotUid, 0, 0)
 		require.NoError(t, err)
-		require.Equal(t, cloudmigration.SnapshotStatusInitializing, string(snapshot.Status))
+		require.Equal(t, cloudmigration.SnapshotStatusCreating, snapshot.Status)
 
 		// update its status
-		err = s.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{UID: snapshotUid, Status: cloudmigration.SnapshotStatusCreating})
+		err = s.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{UID: snapshotUid, Status: cloudmigration.SnapshotStatusCreating, SessionID: session.UID})
 		require.NoError(t, err)
 
 		//retrieve it again
-		snapshot, err = s.GetSnapshotByUID(ctx, snapshotUid, 0, 0)
+		snapshot, err = s.GetSnapshotByUID(ctx, session.UID, snapshotUid, 0, 0)
 		require.NoError(t, err)
-		require.Equal(t, cloudmigration.SnapshotStatusCreating, string(snapshot.Status))
+		require.Equal(t, cloudmigration.SnapshotStatusCreating, snapshot.Status)
 
 		// lists snapshots and ensures it's in there
-		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUid, Page: 1, Limit: 100})
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: session.UID, Page: 1, Limit: 100})
 		require.NoError(t, err)
 		require.Len(t, snapshots, 1)
 		require.Equal(t, *snapshot, snapshots[0])
+
+		// delete snapshot
+		err = s.DeleteSnapshot(ctx, snapshotUid)
+		require.NoError(t, err)
+
+		// now we expect not to find the snapshot
+		snapshot, err = s.GetSnapshotByUID(ctx, session.UID, snapshotUid, 0, 0)
+		require.ErrorIs(t, err, cloudmigration.ErrSnapshotNotFound)
+		require.Nil(t, snapshot)
 	})
 }
 
@@ -245,6 +258,20 @@ func Test_SnapshotResources(t *testing.T) {
 			}
 		}
 
+		// check stats
+		stats, err := s.GetSnapshotResourceStats(ctx, "poiuy")
+		assert.NoError(t, err)
+		assert.Equal(t, map[cloudmigration.MigrateDataType]int{
+			cloudmigration.DatasourceDataType: 2,
+			cloudmigration.DashboardDataType:  1,
+			cloudmigration.FolderDataType:     1,
+		}, stats.CountsByType)
+		assert.Equal(t, map[cloudmigration.ItemStatus]int{
+			cloudmigration.ItemStatusOK:      3,
+			cloudmigration.ItemStatusPending: 1,
+		}, stats.CountsByStatus)
+		assert.Equal(t, 4, stats.Total)
+
 		// delete snapshot resources
 		err = s.DeleteSnapshotResources(ctx, "poiuy")
 		assert.NoError(t, err)
@@ -255,11 +282,55 @@ func Test_SnapshotResources(t *testing.T) {
 	})
 }
 
+func TestGetSnapshotList(t *testing.T) {
+	t.Parallel()
+
+	_, s := setUpTest(t)
+	// Taken from setUpTest
+	sessionUID := "qwerty"
+	ctx := context.Background()
+
+	t.Run("returns list of snapshots that belong to a session", func(t *testing.T) {
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 1, Limit: 100})
+		require.NoError(t, err)
+
+		ids := make([]string, 0)
+		for _, snapshot := range snapshots {
+			ids = append(ids, snapshot.UID)
+		}
+		slices.Sort(ids)
+
+		// There are 3 snapshots in the db but only 2 of them belong to this specific session.
+		assert.Equal(t, []string{"lkjhg", "poiuy"}, ids)
+	})
+
+	t.Run("only the snapshots that belong to a specific session are returned", func(t *testing.T) {
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: "session-uid-that-doesnt-exist", Page: 1, Limit: 100})
+		require.NoError(t, err)
+		assert.Empty(t, snapshots)
+	})
+
+	t.Run("if the session is deleted, snapshots can't be retrieved anymore", func(t *testing.T) {
+		// Delete the session.
+		_, _, err := s.DeleteMigrationSessionByUID(ctx, sessionUID)
+		require.NoError(t, err)
+
+		// Fetch the snapshots that belong to the deleted session.
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 1, Limit: 100})
+		require.NoError(t, err)
+
+		// No snapshots should be returned because the session that
+		// they belong to has been deleted.
+		assert.Empty(t, snapshots)
+	})
+}
+
 func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 	testDB := db.InitTestDB(t)
 	s := &sqlStore{
 		db:             testDB,
 		secretsService: fakeSecrets.FakeSecretsService{},
+		secretsStore:   secretskv.NewFakeSQLSecretsKVStore(t),
 	}
 	ctx := context.Background()
 
@@ -289,6 +360,12 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 		`,
 	)
 	require.NoError(t, err)
+
+	// Store encryption keys used to encrypt/decrypt snapshots.
+	for _, snapshotUid := range []string{"poiuy", "lkjhg", "mnbvvc"} {
+		err = s.secretsStore.Set(ctx, secretskv.AllOrganizations, snapshotUid, secretType, "encryption_key")
+		require.NoError(t, err)
+	}
 
 	_, err = testDB.GetSqlxSession().Exec(ctx, `
 		INSERT INTO

@@ -146,7 +146,7 @@ To access the panel editor, hover over the top-right corner of any panel. Click 
   - **Data**: Open the **Inspect** drawer in the **Data** tab.
   - **Query**: Open the **Inspect** drawer in the **Query** tab.
   - **Panel JSON**: Open the **Inspect** drawer in the **JSON** tab.
-- **Extensions**: Access other actions provided by installed applications, such as declaring an incident. Note that this option doesn't appear unless you have app plugins installed which contribute an [extension](https://grafana.com/developers/plugin-tools/ui-extensions/) to the panel menu.
+- **Extensions**: Access other actions provided by installed applications, such as declaring an incident. Note that this option doesn't appear unless you have app plugins installed which contribute an [extension](https://grafana.com/developers/plugin-tools/key-concepts/ui-extensions) to the panel menu.
 - **More**: Access other panel actions.
   - **Duplicate**: Make a copy of the panel. Duplicated panels query data separately from the original panel. You can use the special `Dashboard` data source to [share the same query results across panels](ref:share) instead.
   - **Copy**: Copy the panel to the clipboard.

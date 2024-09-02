@@ -3,6 +3,7 @@ package expr
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -295,10 +296,14 @@ func WideToMany(frame *data.Frame, fixSeries func(series mathexp.Series, valueFi
 
 // checkIfSeriesNeedToBeFixed scans all value fields of all provided frames and determines whether the resulting mathexp.Series
 // needs to be updated so each series could be identifiable by labels.
-// NOTE: applicable only to only datasources.DS_GRAPHITE and datasources.DS_TESTDATA data sources
+// NOTE: applicable only to some datas ources (datasources.DS_GRAPHITE, datasources.DS_TESTDATA, etc.); a more general solution should be investigated
 // returns a function that patches the mathexp.Series with information from data.Field from which it was created if the all series need to be fixed. Otherwise, returns nil
 func checkIfSeriesNeedToBeFixed(frames []*data.Frame, datasourceType string) func(series mathexp.Series, valueField *data.Field) {
-	if !(datasourceType == datasources.DS_GRAPHITE || datasourceType == datasources.DS_TESTDATA) {
+	supportedDatasources := []string{datasources.DS_GRAPHITE, datasources.DS_TESTDATA, datasources.DS_DYNATRACE}
+	checkdatasourceType := func(ds string) bool {
+		return datasourceType == ds
+	}
+	if !slices.ContainsFunc(supportedDatasources, checkdatasourceType) {
 		return nil
 	}
 

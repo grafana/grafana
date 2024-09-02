@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 )
 
 func ProvideDiscoveryStage(cfg *config.PluginManagementCfg, pf finder.Finder, pr registry.Service) *discovery.Discovery {
@@ -60,13 +61,17 @@ func ProvideValidationStage(cfg *config.PluginManagementCfg, sv signature.Valida
 
 func ProvideInitializationStage(cfg *config.PluginManagementCfg, pr registry.Service, bp plugins.BackendFactoryProvider,
 	pm process.Manager, externalServiceRegistry auth.ExternalServiceRegistry,
-	roleRegistry plugins.RoleRegistry, pluginEnvProvider envvars.Provider, tracer tracing.Tracer) *initialization.Initialize {
+	roleRegistry pluginaccesscontrol.RoleRegistry,
+	actionSetRegistry pluginaccesscontrol.ActionSetRegistry,
+	pluginEnvProvider envvars.Provider,
+	tracer tracing.Tracer) *initialization.Initialize {
 	return initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
 			ExternalServiceRegistrationStep(cfg, externalServiceRegistry, tracer),
 			initialization.BackendClientInitStep(pluginEnvProvider, bp),
 			initialization.BackendProcessStartStep(pm),
 			RegisterPluginRolesStep(roleRegistry),
+			RegisterActionSetsStep(actionSetRegistry),
 			ReportBuildMetrics,
 			initialization.PluginRegistrationStep(pr),
 		},

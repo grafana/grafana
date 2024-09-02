@@ -13,6 +13,9 @@ import (
 )
 
 func GetAccessPolicies(ctx context.Context, orgID int64, sql *session.SessionDB, resolver accesscontrol.ScopeAttributeResolverFunc) ([]accesspolicy.Resource, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.database.GetAccessPolicies")
+	defer span.End()
+
 	type permissionInfo struct {
 		RoleUID  string
 		RoleName string
@@ -25,14 +28,14 @@ func GetAccessPolicies(ctx context.Context, orgID int64, sql *session.SessionDB,
 	policies := make([]accesspolicy.Resource, 0)
 	current := &accesspolicy.Resource{}
 	prevKey := ""
-	rows, err := sql.Query(ctx, `SELECT 
+	rows, err := sql.Query(ctx, `SELECT
 		role.uid as role_uid,
 		role.name as role_name,
 		scope,
 		action,
 		permission.created,
-		permission.updated  
-	FROM permission 
+		permission.updated
+	FROM permission
 		JOIN role ON permission.role_id = role.id
 	WHERE org_id=?
 	ORDER BY role.id ASC, scope ASC, action ASC`, orgID)

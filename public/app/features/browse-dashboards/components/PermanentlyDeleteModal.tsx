@@ -1,8 +1,15 @@
+import { reportInteraction } from '@grafana/runtime';
 import { ConfirmModal, Text } from '@grafana/ui';
 
 import { Trans, t } from '../../../core/internationalization';
 
-import { Props as ModalProps } from './RestoreModal';
+interface PermanentlyDeleteModalProps {
+  isOpen: boolean;
+  onConfirm: () => Promise<void>;
+  onDismiss: () => void;
+  selectedDashboards: string[];
+  isLoading: boolean;
+}
 
 export const PermanentlyDeleteModal = ({
   onConfirm,
@@ -10,10 +17,15 @@ export const PermanentlyDeleteModal = ({
   selectedDashboards,
   isLoading,
   ...props
-}: ModalProps) => {
+}: PermanentlyDeleteModalProps) => {
   const numberOfDashboards = selectedDashboards.length;
 
   const onDelete = async () => {
+    reportInteraction('grafana_delete_permanently_confirm_clicked', {
+      item_counts: {
+        dashboard: numberOfDashboards,
+      },
+    });
     await onConfirm();
     onDismiss();
   };

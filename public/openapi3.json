@@ -1307,6 +1307,19 @@
         },
         "description": "(empty)"
       },
+      "getTeamLBACRulesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/TeamLBACRules"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getTeamMembersResponse": {
         "content": {
           "application/json": {
@@ -1755,7 +1768,7 @@
           "application/json": {
             "schema": {
               "items": {
-                "$ref": "#/components/schemas/receiver"
+                "$ref": "#/components/schemas/Receiver"
               },
               "type": "array"
             }
@@ -1942,6 +1955,16 @@
         },
         "description": "(empty)"
       },
+      "statusMovedPermanently": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponseBody"
+            }
+          }
+        },
+        "description": "StatusMovedPermanently"
+      },
       "unauthorisedError": {
         "content": {
           "application/json": {
@@ -2019,6 +2042,34 @@
                 },
                 "serviceaccount": {
                   "$ref": "#/components/schemas/ServiceAccountProfileDTO"
+                }
+              },
+              "type": "object"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "updateTeamLBACRulesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "id": {
+                  "format": "int64",
+                  "type": "integer"
+                },
+                "lbacRules": {
+                  "$ref": "#/components/schemas/TeamLBACRules"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "uid": {
+                  "type": "string"
                 }
               },
               "type": "object"
@@ -2421,10 +2472,10 @@
             "type": "string"
           },
           "annotations": {
-            "$ref": "#/components/schemas/overrideLabels"
+            "$ref": "#/components/schemas/Labels"
           },
           "labels": {
-            "$ref": "#/components/schemas/overrideLabels"
+            "$ref": "#/components/schemas/Labels"
           },
           "state": {
             "type": "string"
@@ -2837,7 +2888,7 @@
             "type": "array"
           },
           "annotations": {
-            "$ref": "#/components/schemas/overrideLabels"
+            "$ref": "#/components/schemas/Labels"
           },
           "duration": {
             "format": "double",
@@ -2851,7 +2902,7 @@
             "type": "string"
           },
           "labels": {
-            "$ref": "#/components/schemas/overrideLabels"
+            "$ref": "#/components/schemas/Labels"
           },
           "lastError": {
             "type": "string"
@@ -3241,6 +3292,10 @@
           "credentials_file": {
             "type": "string"
           },
+          "credentials_ref": {
+            "description": "CredentialsRef is the name of the secret within the secret manager to use as credentials.",
+            "type": "string"
+          },
           "type": {
             "type": "string"
           }
@@ -3310,10 +3365,18 @@
           "password_file": {
             "type": "string"
           },
+          "password_ref": {
+            "description": "PasswordRef is the name of the secret within the secret manager to use as the password.",
+            "type": "string"
+          },
           "username": {
             "type": "string"
           },
           "username_file": {
+            "type": "string"
+          },
+          "username_ref": {
+            "description": "UsernameRef is the name of the secret within the secret manager to use as the username.",
             "type": "string"
           }
         },
@@ -3602,7 +3665,7 @@
           "Policies": {
             "description": "Policies contains all policy identifiers included in the certificate.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
             "items": {
-              "$ref": "#/components/schemas/OID"
+              "type": "string"
             },
             "type": "array"
           },
@@ -3886,6 +3949,9 @@
             "example": "PE1C5CBDA0504A6A3",
             "type": "string"
           },
+          "type": {
+            "$ref": "#/components/schemas/CorrelationType"
+          },
           "uid": {
             "description": "Unique identifier of the correlation",
             "example": "50xhMlg9k",
@@ -3914,18 +3980,14 @@
             "$ref": "#/components/schemas/Transformations"
           },
           "type": {
-            "$ref": "#/components/schemas/CorrelationConfigType"
+            "$ref": "#/components/schemas/CorrelationType"
           }
         },
         "required": [
           "field",
-          "type",
           "target"
         ],
         "type": "object"
-      },
-      "CorrelationConfigType": {
-        "type": "string"
       },
       "CorrelationConfigUpdateDTO": {
         "properties": {
@@ -3959,12 +4021,12 @@
               "$ref": "#/components/schemas/Transformation"
             },
             "type": "array"
-          },
-          "type": {
-            "$ref": "#/components/schemas/CorrelationConfigType"
           }
         },
         "type": "object"
+      },
+      "CorrelationType": {
+        "type": "string"
       },
       "CounterResetHint": {
         "description": "or alternatively that we are dealing with a gauge histogram, where counter resets do not apply.",
@@ -4001,9 +4063,12 @@
             "type": "boolean"
           },
           "targetUID": {
-            "description": "Target data source UID to which the correlation is created. required if config.type = query",
+            "description": "Target data source UID to which the correlation is created. required if type = query",
             "example": "PE1C5CBDA0504A6A3",
             "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/CorrelationType"
           }
         },
         "type": "object"
@@ -4116,7 +4181,7 @@
         },
         "type": "object"
       },
-      "CreateOrUpdateReportConfig": {
+      "CreateOrUpdateReport": {
         "properties": {
           "dashboards": {
             "items": {
@@ -5602,14 +5667,6 @@
         "title": "Frames is a slice of Frame pointers.",
         "type": "array"
       },
-      "GenericPublicError": {
-        "properties": {
-          "body": {
-            "$ref": "#/components/schemas/PublicError"
-          }
-        },
-        "type": "object"
-      },
       "GetAccessTokenResponseDTO": {
         "properties": {
           "createdAt": {
@@ -5685,6 +5742,9 @@
           "sessionUid": {
             "type": "string"
           },
+          "stats": {
+            "$ref": "#/components/schemas/SnapshotResourceStats"
+          },
           "status": {
             "enum": [
               "INITIALIZING",
@@ -5694,6 +5754,7 @@
               "PENDING_PROCESSING",
               "PROCESSING",
               "FINISHED",
+              "CANCELED",
               "ERROR",
               "UNKNOWN"
             ],
@@ -6240,6 +6301,9 @@
             "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
             "type": "boolean"
           },
+          "http_headers": {
+            "$ref": "#/components/schemas/Headers"
+          },
           "no_proxy": {
             "description": "NoProxy contains addresses that should not use a proxy.",
             "type": "string"
@@ -6248,7 +6312,7 @@
             "$ref": "#/components/schemas/OAuth2"
           },
           "proxy_connect_header": {
-            "$ref": "#/components/schemas/Header"
+            "$ref": "#/components/schemas/ProxyHeader"
           },
           "proxy_from_environment": {
             "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
@@ -6265,12 +6329,39 @@
         "type": "object"
       },
       "Header": {
-        "additionalProperties": {
-          "items": {
-            "$ref": "#/components/schemas/Secret"
+        "properties": {
+          "files": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
-          "type": "array"
+          "secrets": {
+            "items": {
+              "$ref": "#/components/schemas/Secret"
+            },
+            "type": "array"
+          },
+          "values": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
         },
+        "title": "Header represents the configuration for a single HTTP header.",
+        "type": "object"
+      },
+      "Headers": {
+        "properties": {
+          "Headers": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Header"
+            },
+            "type": "object"
+          }
+        },
+        "title": "Headers represents the configuration for HTTP headers.",
         "type": "object"
       },
       "Hit": {
@@ -7000,7 +7091,7 @@
       },
       "MigrateDataResponseItemDTO": {
         "properties": {
-          "error": {
+          "message": {
             "type": "string"
           },
           "refId": {
@@ -7009,6 +7100,7 @@
           "status": {
             "enum": [
               "OK",
+              "WARNING",
               "ERROR",
               "PENDING",
               "UNKNOWN"
@@ -7142,7 +7234,7 @@
       },
       "NavbarPreference": {
         "properties": {
-          "savedItemIds": {
+          "bookmarkUrls": {
             "items": {
               "type": "string"
             },
@@ -7267,6 +7359,9 @@
           },
           "template": {
             "type": "string"
+          },
+          "version": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -7274,6 +7369,9 @@
       "NotificationTemplateContent": {
         "properties": {
           "template": {
+            "type": "string"
+          },
+          "version": {
             "type": "string"
           }
         },
@@ -7308,6 +7406,10 @@
           "client_secret_file": {
             "type": "string"
           },
+          "client_secret_ref": {
+            "description": "ClientSecretRef is the name of the secret within the secret manager to use as the client\nsecret.",
+            "type": "string"
+          },
           "endpoint_params": {
             "additionalProperties": {
               "type": "string"
@@ -7319,7 +7421,7 @@
             "type": "string"
           },
           "proxy_connect_header": {
-            "$ref": "#/components/schemas/Header"
+            "$ref": "#/components/schemas/ProxyHeader"
           },
           "proxy_from_environment": {
             "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
@@ -7339,10 +7441,6 @@
           }
         },
         "title": "OAuth2 is the oauth2 client configuration.",
-        "type": "object"
-      },
-      "OID": {
-        "title": "An OID represents an ASN.1 OBJECT IDENTIFIER.",
         "type": "object"
       },
       "ObjectIdentifier": {
@@ -8425,7 +8523,8 @@
             "type": "string"
           },
           "for": {
-            "$ref": "#/components/schemas/Duration"
+            "format": "duration",
+            "type": "string"
           },
           "id": {
             "format": "int64",
@@ -8515,7 +8614,7 @@
             "type": "string"
           },
           "proxy_connect_header": {
-            "$ref": "#/components/schemas/Header"
+            "$ref": "#/components/schemas/ProxyHeader"
           },
           "proxy_from_environment": {
             "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
@@ -8524,6 +8623,15 @@
           "proxy_url": {
             "$ref": "#/components/schemas/URL"
           }
+        },
+        "type": "object"
+      },
+      "ProxyHeader": {
+        "additionalProperties": {
+          "items": {
+            "$ref": "#/components/schemas/Secret"
+          },
+          "type": "array"
         },
         "type": "object"
       },
@@ -9132,7 +9240,6 @@
         "type": "object"
       },
       "Report": {
-        "description": "ConfigDTO is model representation in transfer",
         "properties": {
           "created": {
             "format": "date-time",
@@ -9494,6 +9601,12 @@
       "Route": {
         "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
         "properties": {
+          "active_time_intervals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "continue": {
             "type": "boolean"
           },
@@ -9615,7 +9728,7 @@
             "type": "string"
           },
           "labels": {
-            "$ref": "#/components/schemas/overrideLabels"
+            "$ref": "#/components/schemas/Labels"
           },
           "lastError": {
             "type": "string"
@@ -10462,6 +10575,7 @@
               "PENDING_PROCESSING",
               "PROCESSING",
               "FINISHED",
+              "CANCELED",
               "ERROR",
               "UNKNOWN"
             ],
@@ -10480,6 +10594,29 @@
               "$ref": "#/components/schemas/SnapshotDTO"
             },
             "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "SnapshotResourceStats": {
+        "properties": {
+          "statuses": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "total": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "types": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "object"
           }
         },
         "type": "object"
@@ -10565,12 +10702,20 @@
             "description": "The CA cert to use for the targets.",
             "type": "string"
           },
+          "ca_ref": {
+            "description": "CARef is the name of the secret within the secret manager to use as the CA cert for the\ntargets.",
+            "type": "string"
+          },
           "cert": {
             "description": "Text of the client cert file for the targets.",
             "type": "string"
           },
           "cert_file": {
             "description": "The client cert file for the targets.",
+            "type": "string"
+          },
+          "cert_ref": {
+            "description": "CertRef is the name of the secret within the secret manager to use as the client cert for\nthe targets.",
             "type": "string"
           },
           "insecure_skip_verify": {
@@ -10582,6 +10727,10 @@
           },
           "key_file": {
             "description": "The client key file for the targets.",
+            "type": "string"
+          },
+          "key_ref": {
+            "description": "KeyRef is the name of the secret within the secret manager to use as the client key for\nthe targets.",
             "type": "string"
           },
           "max_version": {
@@ -10673,6 +10822,31 @@
         "properties": {
           "groupId": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TeamLBACRule": {
+        "properties": {
+          "rules": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "teamId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TeamLBACRules": {
+        "properties": {
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/TeamLBACRule"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -11374,6 +11548,9 @@
             "description": "Optional label identifying the correlation",
             "example": "My label",
             "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/CorrelationType"
           }
         },
         "type": "object"
@@ -11698,6 +11875,17 @@
         },
         "type": "object"
       },
+      "UpdateTeamLBACCommand": {
+        "properties": {
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/TeamLBACRule"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "UpdateTeamMemberCommand": {
         "properties": {
           "permission": {
@@ -11926,7 +12114,7 @@
       },
       "ValidationError": {
         "properties": {
-          "msg": {
+          "message": {
             "example": "error message",
             "type": "string"
           }
@@ -12327,10 +12515,53 @@
             },
             "type": "object"
           },
+          "comment": {
+            "description": "comment",
+            "type": "string"
+          },
+          "createdBy": {
+            "description": "created by",
+            "type": "string"
+          },
+          "endsAt": {
+            "description": "ends at",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "description": "id",
+            "type": "string"
+          },
+          "matchers": {
+            "$ref": "#/components/schemas/matchers"
+          },
           "metadata": {
             "$ref": "#/components/schemas/SilenceMetadata"
+          },
+          "startsAt": {
+            "description": "starts at",
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/silenceStatus"
+          },
+          "updatedAt": {
+            "description": "updated at",
+            "format": "date-time",
+            "type": "string"
           }
         },
+        "required": [
+          "comment",
+          "createdBy",
+          "endsAt",
+          "matchers",
+          "startsAt",
+          "id",
+          "status",
+          "updatedAt"
+        ],
         "type": "object"
       },
       "gettableGrafanaSilences": {
@@ -12394,35 +12625,21 @@
         },
         "type": "array"
       },
-      "integration": {
-        "description": "Integration integration",
+      "healthResponse": {
         "properties": {
-          "lastNotifyAttempt": {
-            "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
-            "format": "date-time",
+          "commit": {
             "type": "string"
           },
-          "lastNotifyAttemptDuration": {
-            "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
+          "database": {
             "type": "string"
           },
-          "lastNotifyAttemptError": {
-            "description": "Error string for the last attempt to deliver a notification. Empty if the last attempt was successful.",
+          "enterpriseCommit": {
             "type": "string"
           },
-          "name": {
-            "description": "name",
+          "version": {
             "type": "string"
-          },
-          "sendResolved": {
-            "description": "send resolved",
-            "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "sendResolved"
-        ],
         "type": "object"
       },
       "labelSet": {
@@ -12465,14 +12682,6 @@
           "$ref": "#/components/schemas/matcher"
         },
         "type": "array"
-      },
-      "overrideLabels": {
-        "additionalProperties": {
-          "type": "string"
-        },
-        "description": "The custom marshaling for labels.Labels ends up doing this anyways.",
-        "title": "override the labels type with a map for generation.",
-        "type": "object"
       },
       "peerStatus": {
         "description": "PeerStatus peer status",
@@ -12607,25 +12816,12 @@
       "receiver": {
         "description": "Receiver receiver",
         "properties": {
-          "active": {
-            "description": "active",
-            "type": "boolean"
-          },
-          "integrations": {
-            "description": "integrations",
-            "items": {
-              "$ref": "#/components/schemas/integration"
-            },
-            "type": "array"
-          },
           "name": {
             "description": "name",
             "type": "string"
           }
         },
         "required": [
-          "active",
-          "integrations",
           "name"
         ],
         "type": "object"
@@ -15156,7 +15352,7 @@
     },
     "/auth/keys": {
       "get": {
-        "description": "Will return auth keys.\n\nDeprecated: true.\n\nDeprecated. Please use GET /api/serviceaccounts and GET /api/serviceaccounts/{id}/tokens instead\nsee https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.",
+        "description": "Will return auth keys.\n\nDeprecated: true.\n\nDeprecated. Please use GET /api/serviceaccounts and GET /api/serviceaccounts/{id}/tokens instead\nsee https://grafana.com/docs/grafana/next/administration/service-accounts/migrate-api-keys/.",
         "operationId": "getAPIkeys",
         "parameters": [
           {
@@ -15195,35 +15391,9 @@
         "deprecated": true,
         "description": "Will return details of the created API key.",
         "operationId": "addAPIkey",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddAPIKeyCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "Body"
-        },
         "responses": {
-          "200": {
-            "$ref": "#/components/responses/postAPIkeyResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "409": {
-            "$ref": "#/components/responses/conflictError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
+          "301": {
+            "$ref": "#/components/responses/statusMovedPermanently"
           }
         },
         "summary": "Creates an API key.",
@@ -15235,7 +15405,7 @@
     "/auth/keys/{id}": {
       "delete": {
         "deprecated": true,
-        "description": "Deletes an API key.\nDeprecated. See: https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.",
+        "description": "Deletes an API key.\nDeprecated. See: https://grafana.com/docs/grafana/next/administration/service-accounts/migrate-api-keys/.",
         "operationId": "deleteAPIkey",
         "parameters": [
           {
@@ -17801,7 +17971,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/okResponse"
+            "$ref": "#/components/responses/getTeamLBACRulesResponse"
           },
           "400": {
             "$ref": "#/components/responses/badRequestError"
@@ -17836,9 +18006,19 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTeamLBACCommand"
+              }
+            }
+          },
+          "x-originalParamName": "body"
+        },
         "responses": {
           "200": {
-            "$ref": "#/components/responses/okResponse"
+            "$ref": "#/components/responses/updateTeamLBACRulesResponse"
           },
           "400": {
             "$ref": "#/components/responses/badRequestError"
@@ -18781,6 +18961,30 @@
         "summary": "Updates permissions for a folder. This operation will remove existing permissions if they’re not included in the request.",
         "tags": [
           "folder_permissions"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "description": "apiHealthHandler will return ok if Grafana's web server is running and it\ncan access the database. If the database cannot be accessed it will return\nhttp status code 503.",
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/healthResponse"
+                }
+              }
+            },
+            "description": "healthResponse"
+          },
+          "503": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "tags": [
+          "health"
         ]
       }
     },
@@ -21385,7 +21589,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateOrUpdateReportConfig"
+                "$ref": "#/components/schemas/CreateOrUpdateReport"
               }
             }
           },
@@ -21672,7 +21876,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateOrUpdateReportConfig"
+                "$ref": "#/components/schemas/CreateOrUpdateReport"
               }
             }
           },
@@ -21805,7 +22009,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateOrUpdateReportConfig"
+                "$ref": "#/components/schemas/CreateOrUpdateReport"
               }
             }
           },
@@ -25307,11 +25511,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenericPublicError"
+                  "$ref": "#/components/schemas/PublicError"
                 }
               }
             },
-            "description": "GenericPublicError"
+            "description": "PublicError"
           }
         },
         "summary": "Delete a mute timing.",
@@ -25407,11 +25611,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenericPublicError"
+                  "$ref": "#/components/schemas/PublicError"
                 }
               }
             },
-            "description": "GenericPublicError"
+            "description": "PublicError"
           }
         },
         "summary": "Replace an existing mute timing.",
@@ -25698,9 +25902,6 @@
               }
             },
             "description": "NotificationTemplates"
-          },
-          "404": {
-            "description": " Not found."
           }
         },
         "summary": "Get all notification templates.",
@@ -25714,10 +25915,18 @@
         "operationId": "RouteDeleteTemplate",
         "parameters": [
           {
-            "description": "Template Name",
+            "description": "Template name",
             "in": "path",
             "name": "name",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Version of template to use for optimistic concurrency. Leave empty to disable validation",
+            "in": "query",
+            "name": "version",
             "schema": {
               "type": "string"
             }
@@ -25726,6 +25935,16 @@
         "responses": {
           "204": {
             "description": " The template was deleted successfully."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            },
+            "description": "PublicError"
           }
         },
         "summary": "Delete a template.",
@@ -25758,7 +25977,14 @@
             "description": "NotificationTemplate"
           },
           "404": {
-            "description": " Not found."
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            },
+            "description": "PublicError"
           }
         },
         "summary": "Get a notification template.",
@@ -25811,11 +26037,21 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError"
+                  "$ref": "#/components/schemas/PublicError"
                 }
               }
             },
-            "description": "ValidationError"
+            "description": "PublicError"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            },
+            "description": "PublicError"
           }
         },
         "summary": "Updates an existing notification template.",

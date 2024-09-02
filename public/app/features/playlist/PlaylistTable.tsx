@@ -1,4 +1,4 @@
-import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 
 import { FieldSet } from '@grafana/ui';
 import { t } from 'app/core/internationalization';

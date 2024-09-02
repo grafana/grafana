@@ -20,11 +20,12 @@ import {
   getRulePluginOrigin,
   isAlertingRule,
   isFederatedRuleGroup,
+  isGrafanaRecordingRule,
   isGrafanaRulerRule,
   isGrafanaRulerRulePaused,
   isRecordingRule,
 } from '../../utils/rules';
-import { createUrl } from '../../utils/url';
+import { createRelativeUrl } from '../../utils/url';
 import { AlertLabels } from '../AlertLabels';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
@@ -148,14 +149,18 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
   const interval = group.interval;
 
   if (runbookUrl) {
+    /* TODO instead of truncating the string, we should use flex and text overflow properly to allow it to take up all of the horizontal space available */
+    const truncatedUrl = truncate(runbookUrl, { length: 42 });
+    const valueToAdd = isValidRunbookURL(runbookUrl) ? (
+      <TextLink variant="bodySmall" href={runbookUrl} external>
+        {truncatedUrl}
+      </TextLink>
+    ) : (
+      <Text variant="bodySmall">{truncatedUrl}</Text>
+    );
     metadata.push({
-      label: 'Runbook',
-      value: (
-        <TextLink variant="bodySmall" href={runbookUrl} external>
-          {/* TODO instead of truncating the string, we should use flex and text overflow properly to allow it to take up all of the horizontal space available */}
-          {truncate(runbookUrl, { length: 42 })}
-        </TextLink>
-      ),
+      label: 'Runbook URL',
+      value: valueToAdd,
     });
   }
 
@@ -188,6 +193,13 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
       ),
     });
   }
+  if (isGrafanaRecordingRule(rule.rulerRule)) {
+    const metric = rule.rulerRule?.grafana_alert.record?.metric ?? '';
+    metadata.push({
+      label: 'Metric name',
+      value: <Text color="primary">{metric}</Text>,
+    });
+  }
 
   if (interval) {
     metadata.push({
@@ -210,7 +222,7 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
 // TODO move somewhere else
 export const createListFilterLink = (values: Array<[string, string]>) => {
   const params = new URLSearchParams([['search', values.map(([key, value]) => `${key}:"${value}"`).join(' ')]]);
-  return createUrl(`/alerting/list?` + params.toString());
+  return createRelativeUrl(`/alerting/list`, params);
 };
 
 interface TitleProps {
@@ -253,7 +265,7 @@ export const isErrorHealth = (health?: RuleHealth) => health === 'error' || heal
 
 export function useActiveTab(): [ActiveTab, (tab: ActiveTab) => void] {
   const [queryParams, setQueryParams] = useQueryParams();
-  const tabFromQuery = queryParams['tab'];
+  const tabFromQuery = queryParams.tab;
 
   const activeTab = isValidTab(tabFromQuery) ? tabFromQuery : ActiveTab.Query;
 
@@ -359,5 +371,19 @@ const getStyles = () => ({
     minWidth: 0,
   }),
 });
+
+function isValidRunbookURL(url: string) {
+  const isRelative = url.startsWith('/');
+  let isAbsolute = false;
+
+  try {
+    new URL(url);
+    isAbsolute = true;
+  } catch (_) {
+    return false;
+  }
+
+  return isRelative || isAbsolute;
+}
 
 export default RuleViewer;

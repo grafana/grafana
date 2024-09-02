@@ -2,23 +2,25 @@ import { css } from '@emotion/css';
 import { debounce, isEqual } from 'lodash';
 import { useCallback, useEffect, useRef } from 'react';
 
-import { SelectableValue } from '@grafana/data';
-import { Button, Field, Icon, Input, Label, Select, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { ObjectMatcher, Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { Button, Field, Icon, Input, Label, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
+import { ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
-import { matcherToObjectMatcher, parseMatchers } from '../../utils/alertmanager';
-import { normalizeMatchers } from '../../utils/matchers';
+import { matcherToObjectMatcher } from '../../utils/alertmanager';
+import {
+  normalizeMatchers,
+  parsePromQLStyleMatcherLoose,
+  parsePromQLStyleMatcherLooseSafe,
+} from '../../utils/matchers';
 
 interface NotificationPoliciesFilterProps {
-  receivers: Receiver[];
   onChangeMatchers: (labels: ObjectMatcher[]) => void;
   onChangeReceiver: (receiver: string | undefined) => void;
   matchingCount: number;
 }
 
 const NotificationPoliciesFilter = ({
-  receivers,
   onChangeReceiver,
   onChangeMatchers,
   matchingCount,
@@ -35,7 +37,7 @@ const NotificationPoliciesFilter = ({
   }, [contactPoint, onChangeReceiver]);
 
   useEffect(() => {
-    const matchers = parseMatchers(queryString ?? '').map(matcherToObjectMatcher);
+    const matchers = parsePromQLStyleMatcherLooseSafe(queryString ?? '').map(matcherToObjectMatcher);
     handleChangeLabels()(matchers);
   }, [handleChangeLabels, queryString]);
 
@@ -43,14 +45,21 @@ const NotificationPoliciesFilter = ({
     if (searchInputRef.current) {
       searchInputRef.current.value = '';
     }
-    setSearchParams({ contactPoint: undefined, queryString: undefined });
+    setSearchParams({ contactPoint: '', queryString: undefined });
   }, [setSearchParams]);
 
-  const receiverOptions: Array<SelectableValue<string>> = receivers.map(toOption);
-  const selectedContactPoint = receiverOptions.find((option) => option.value === contactPoint) ?? null;
-
   const hasFilters = queryString || contactPoint;
-  const inputInvalid = queryString && queryString.length > 3 ? parseMatchers(queryString).length === 0 : false;
+
+  let inputValid = Boolean(queryString && queryString.length > 3);
+  try {
+    if (!queryString) {
+      inputValid = true;
+    } else {
+      parsePromQLStyleMatcherLoose(queryString);
+    }
+  } catch (err) {
+    inputValid = false;
+  }
 
   return (
     <Stack direction="row" alignItems="flex-end" gap={1}>
@@ -73,8 +82,8 @@ const NotificationPoliciesFilter = ({
             </Stack>
           </Label>
         }
-        invalid={inputInvalid}
-        error={inputInvalid ? 'Query must use valid matcher syntax' : null}
+        invalid={!inputValid}
+        error={!inputValid ? 'Query must use valid matcher syntax' : null}
       >
         <Input
           ref={searchInputRef}
@@ -89,16 +98,17 @@ const NotificationPoliciesFilter = ({
         />
       </Field>
       <Field label="Search by contact point" style={{ marginBottom: 0 }}>
-        <Select
-          id="receiver"
-          aria-label="Search by contact point"
-          value={selectedContactPoint}
-          options={receiverOptions}
-          onChange={(option) => {
-            setSearchParams({ contactPoint: option?.value });
+        <ContactPointSelector
+          selectProps={{
+            id: 'receiver',
+            'aria-label': 'Search by contact point',
+            onChange: (option) => {
+              setSearchParams({ contactPoint: option?.value?.name });
+            },
+            width: 28,
+            isClearable: true,
           }}
-          width={28}
-          isClearable
+          selectedContactPointName={searchParams.get('contactPoint') ?? undefined}
         />
       </Field>
       {hasFilters && (
@@ -163,11 +173,6 @@ export function findRoutesByMatchers(route: RouteWithID, labelMatchersFilter: Ob
 
   return labelMatchersFilter.every((filter) => routeMatchers.some((matcher) => isEqual(filter, matcher)));
 }
-
-const toOption = (receiver: Receiver) => ({
-  label: receiver.name,
-  value: receiver.name,
-});
 
 const getNotificationPoliciesFilters = (searchParams: URLSearchParams) => ({
   queryString: searchParams.get('queryString') ?? undefined,

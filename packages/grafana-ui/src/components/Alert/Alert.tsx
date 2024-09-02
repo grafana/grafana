@@ -11,7 +11,6 @@ import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
 import { Text } from '../Text/Text';
-
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
 export interface Props extends HTMLAttributes<HTMLDivElement> {
@@ -152,6 +151,8 @@ const getStyles = (
     }),
     icon: css({
       color: color.text,
+      position: 'relative',
+      top: '-1px',
     }),
     content: css({
       color: theme.colors.text.primary,

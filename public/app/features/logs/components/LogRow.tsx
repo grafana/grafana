@@ -1,24 +1,24 @@
 import { cx } from '@emotion/css';
 import { debounce } from 'lodash';
 import memoizeOne from 'memoize-one';
-import { PureComponent, MouseEvent } from 'react';
 import * as React from 'react';
+import { MouseEvent, PureComponent } from 'react';
 
 import {
-  Field,
-  LinkModel,
-  LogRowModel,
-  LogsSortOrder,
-  dateTimeFormat,
   CoreApp,
   DataFrame,
+  dateTimeFormat,
+  Field,
+  LinkModel,
   LogRowContextOptions,
+  LogRowModel,
+  LogsSortOrder,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
-import { withTheme2, Themeable2, Icon, Tooltip, PopoverContent } from '@grafana/ui';
+import { Icon, PopoverContent, Themeable2, Tooltip, withTheme2 } from '@grafana/ui';
 
-import { checkLogsError, escapeUnescapedString, checkLogsSampled } from '../utils';
+import { checkLogsError, checkLogsSampled, escapeUnescapedString } from '../utils';
 
 import { LogDetails } from './LogDetails';
 import { LogLabels } from './LogLabels';
@@ -59,7 +59,7 @@ interface Props extends Themeable2 {
   permalinkedRowId?: string;
   scrollIntoView?: (element: HTMLElement) => void;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
-  onPinLine?: (row: LogRowModel) => void;
+  onPinLine?: (row: LogRowModel, allowUnPin?: boolean) => void;
   onUnpinLine?: (row: LogRowModel) => void;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinned?: boolean;
@@ -115,13 +115,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       return;
     }
 
-    reportInteraction('grafana_explore_logs_log_details_clicked', {
-      datasourceType: this.props.row.datasourceType,
-      type: this.state.showDetails ? 'close' : 'open',
-      logRowUid: this.props.row.uid,
-      app: this.props.app,
-    });
-
     this.setState((state) => {
       return {
         showDetails: !state.showDetails,
@@ -156,9 +149,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
 
   onMouseLeave = () => {
     this.setState({ mouseIsOver: false });
-    if (this.props.onLogRowHover) {
-      this.props.onLogRowHover(undefined);
-    }
   };
 
   componentDidMount() {
@@ -219,14 +209,16 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       app,
       styles,
       getRowContextQuery,
+      pinned,
     } = this.props;
+
     const { showDetails, showingContext, permalinked } = this.state;
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const { errorMessage, hasError } = checkLogsError(row);
     const { sampleMessage, isSampled } = checkLogsSampled(row);
     const logRowBackground = cx(styles.logsRow, {
       [styles.errorLogRow]: hasError,
-      [styles.highlightBackground]: showingContext || permalinked,
+      [styles.highlightBackground]: showingContext || permalinked || pinned,
     });
     const logRowDetailsBackground = cx(styles.logsRow, {
       [styles.errorLogRow]: hasError,
@@ -327,6 +319,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
         </tr>
         {this.state.showDetails && (
           <LogDetails
+            onPinLine={this.props.onPinLine}
             className={logRowDetailsBackground}
             showDuplicates={showDuplicates}
             getFieldLinks={getFieldLinks}
@@ -342,6 +335,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             app={app}
             styles={styles}
             isFilterLabelActive={this.props.isFilterLabelActive}
+            pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
           />
         )}
       </>

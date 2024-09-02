@@ -1,6 +1,17 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/query_hints.test.ts
+import { QueryHint } from '@grafana/data';
+import { QueryBuilderLabelFilter } from '@grafana/experimental';
+
 import { PrometheusDatasource } from './datasource';
-import { getQueryHints, SUM_HINT_THRESHOLD_COUNT } from './query_hints';
+import {
+  getExpandRulesHints,
+  getQueryHints,
+  getQueryLabelsForRuleName,
+  getRecordingRuleIdentifierIdx,
+  SUM_HINT_THRESHOLD_COUNT,
+} from './query_hints';
+import { buildVisualQueryFromString } from './querybuilder/parsing';
+import { RuleQueryMapping } from './types';
 
 describe('getQueryHints()', () => {
   it('returns no hints for no series', () => {
@@ -229,5 +240,270 @@ describe('getQueryHints()', () => {
 
     let hints = getQueryHints(queryWithNativeHistogramFunction, series, datasource);
     expect(hints!.length).toBe(0);
+  });
+});
+
+describe('getExpandRulesHints', () => {
+  it('should return no hint when no rule is present in query', () => {
+    const extractedMapping: RuleQueryMapping = {};
+    const hints = getExpandRulesHints('metric_5m', extractedMapping);
+    const expected: QueryHint[] = [];
+    expect(hints).toEqual(expected);
+  });
+
+  it('should return expand rule hint, single rules', () => {
+    const extractedMapping: RuleQueryMapping = {
+      metric_5m: [
+        {
+          query: 'expanded_metric_query[5m]',
+          labels: {},
+        },
+      ],
+      metric_15m: [
+        {
+          query: 'expanded_metric_query[15m]',
+          labels: {},
+        },
+      ],
+    };
+    const query = `metric_5m`;
+    const hints = getExpandRulesHints('metric_5m', extractedMapping);
+    const expected = expect.arrayContaining([expect.objectContaining({ type: 'EXPAND_RULES' })]);
+    expect(hints).toEqual(expected);
+    expect(hints).toEqual([
+      {
+        type: 'EXPAND_RULES',
+        label: 'Query contains recording rules.',
+        fix: {
+          label: 'Expand rules',
+          action: {
+            type: 'EXPAND_RULES',
+            query,
+            options: {
+              metric_5m: {
+                expandedQuery: 'expanded_metric_query[5m]',
+              },
+            },
+          },
+        },
+      },
+    ]);
+  });
+
+  it('should return no expand rule hint, if the given query does not have a label', () => {
+    const extractedMapping: RuleQueryMapping = {
+      metric_5m: [
+        {
+          query: 'expanded_metric_query_111[5m]',
+          labels: {
+            uuid: '111',
+          },
+        },
+        {
+          query: 'expanded_metric_query_222[5m]',
+          labels: {
+            uuid: '222',
+          },
+        },
+      ],
+      metric_15m: [
+        {
+          query: 'expanded_metric_query[15m]',
+          labels: {},
+        },
+      ],
+    };
+    const hints = getExpandRulesHints(
+      `sum(metric_5m{uuid="5m"} + metric_10m{uuid="10m"}) + metric_66m{uuid="66m"}`,
+      extractedMapping
+    );
+    const expected = expect.arrayContaining([expect.objectContaining({ type: 'EXPAND_RULES_WARNING' })]);
+    expect(hints).toEqual(expected);
+  });
+
+  it('should return expand rule warning hint, if the given query *does* have a label', () => {
+    const extractedMapping: RuleQueryMapping = {
+      metric_5m: [
+        {
+          query: 'expanded_metric_query_111[5m]',
+          labels: {
+            uuid: '111',
+          },
+        },
+        {
+          query: 'expanded_metric_query_222[5m]',
+          labels: {
+            uuid: '222',
+          },
+        },
+      ],
+      metric_15m: [
+        {
+          query: 'expanded_metric_query[15m]',
+          labels: {},
+        },
+      ],
+    };
+    const query = `metric_5m{uuid="111"}`;
+    const hints = getExpandRulesHints('metric_5m{uuid="111"}', extractedMapping);
+    expect(hints).toEqual([
+      {
+        type: 'EXPAND_RULES',
+        label: 'Query contains recording rules.',
+        fix: {
+          label: 'Expand rules',
+          action: {
+            type: 'EXPAND_RULES',
+            query,
+            options: {
+              metric_5m: {
+                expandedQuery: 'expanded_metric_query_111[5m]',
+                identifier: 'uuid',
+                identifierValue: '111',
+              },
+            },
+          },
+        },
+      },
+    ]);
+  });
+});
+
+describe('getRecordingRuleIdentifierIdx', () => {
+  it('should return the matching identifier', () => {
+    const mapping: RuleQueryMapping[string] = [
+      {
+        query: 'expanded_metric_query_111[5m]',
+        labels: {
+          uuid: '111',
+        },
+      },
+      {
+        query: 'expanded_metric_query_222[5m]',
+        labels: {
+          uuid: '222',
+        },
+      },
+    ];
+    const ruleName = `metric_5m`;
+    const query = `metric_5m{uuid="111"}`;
+    const { idx, identifier, identifierValue, expandedQuery } = getRecordingRuleIdentifierIdx(query, ruleName, mapping);
+    expect(idx).toEqual(0);
+    expect(identifier).toEqual(`uuid`);
+    expect(identifierValue).toEqual('111');
+    expect(expandedQuery).toEqual(`expanded_metric_query_111[5m]`);
+  });
+
+  it('should not return the matching identifier', () => {
+    const mapping: RuleQueryMapping[string] = [
+      {
+        query: 'expanded_metric_query_111[5m]',
+        labels: {
+          uuid: '111',
+        },
+      },
+      {
+        query: 'expanded_metric_query_222[5m]',
+        labels: {
+          uuid: '222',
+        },
+      },
+    ];
+    const ruleName = `metric_5m`;
+    const query = `metric_5m{uuid="999"}`;
+    const { idx } = getRecordingRuleIdentifierIdx(query, ruleName, mapping);
+    expect(idx).toEqual(-1);
+  });
+
+  it('should return the matching identifier index for a complex query', () => {
+    const mapping: RuleQueryMapping[string] = [
+      {
+        query: 'expanded_metric_query_111[5m]',
+        labels: {
+          uuid: '111',
+        },
+      },
+      {
+        query: 'expanded_metric_query_222[5m]',
+        labels: {
+          uuid: '222',
+        },
+      },
+    ];
+    const ruleName = `metric_55m`;
+    const query = `metric_5m{uuid="111"} + metric_55m{uuid="222"}`;
+    const { idx, identifier, identifierValue, expandedQuery } = getRecordingRuleIdentifierIdx(query, ruleName, mapping);
+    expect(idx).toEqual(1);
+    expect(identifier).toEqual(`uuid`);
+    expect(identifierValue).toEqual('222');
+    expect(expandedQuery).toEqual(`expanded_metric_query_222[5m]`);
+  });
+
+  it('should return the matching identifier index for a complex query with binary operators', () => {
+    const mapping: RuleQueryMapping[string] = [
+      {
+        query: 'expanded_metric_query_111[5m]',
+        labels: {
+          uuid: '111',
+        },
+      },
+      {
+        query: 'expanded_metric_query_222[5m]',
+        labels: {
+          uuid: '222',
+        },
+      },
+      {
+        query: 'expanded_metric_query_333[5m]',
+        labels: {
+          uuid: '333',
+        },
+      },
+    ];
+    const ruleName = `metric_5m`;
+    const query = `metric_7n{} + (metric_5m{uuid="333"} + metric_55m{uuid="222"})`;
+    const { idx, identifier, identifierValue, expandedQuery } = getRecordingRuleIdentifierIdx(query, ruleName, mapping);
+    expect(idx).toEqual(2);
+    expect(identifier).toEqual(`uuid`);
+    expect(identifierValue).toEqual('333');
+    expect(expandedQuery).toEqual(`expanded_metric_query_333[5m]`);
+  });
+});
+
+describe('getQueryLabelsForRuleName', () => {
+  it('should return labels for the metric name', () => {
+    const metricName = `metric_5m`;
+    const query = `metric_5m{uuid="111"}`;
+    const { query: visualQuery } = buildVisualQueryFromString(query);
+    const result = getQueryLabelsForRuleName(metricName, visualQuery);
+    const expected: QueryBuilderLabelFilter[] = [{ label: 'uuid', op: '=', value: '111' }];
+    expect(result).toEqual(expected);
+  });
+
+  it('should return labels from a query with binary operations', () => {
+    const metricName = `metric_5m`;
+    const query = `metric_55m{uuid="222"} + metric_33m{uuid="333"} + metric_5m{uuid="111"}`;
+    const { query: visualQuery } = buildVisualQueryFromString(query);
+    const result = getQueryLabelsForRuleName(metricName, visualQuery);
+    const expected: QueryBuilderLabelFilter[] = [{ label: 'uuid', op: '=', value: '111' }];
+    expect(result).toEqual(expected);
+  });
+
+  it('should return labels from a query with binary operations with parentheses', () => {
+    const metricName = `metric_5m`;
+    const query = `(metric_55m{uuid="222"} + metric_33m{uuid="333"}) + metric_5m{uuid="111"}`;
+    const { query: visualQuery } = buildVisualQueryFromString(query);
+    const result = getQueryLabelsForRuleName(metricName, visualQuery);
+    const expected: QueryBuilderLabelFilter[] = [{ label: 'uuid', op: '=', value: '111' }];
+    expect(result).toEqual(expected);
+  });
+
+  it('should return labels from a query for the first metricName match', () => {
+    const metricName = `metric_5m`;
+    const query = `(metric_55m{uuid="222"} + metric_33m{uuid="333"}) + metric_5m{uuid="999"} + metric_5m{uuid="555"}`;
+    const { query: visualQuery } = buildVisualQueryFromString(query);
+    const result = getQueryLabelsForRuleName(metricName, visualQuery);
+    const expected: QueryBuilderLabelFilter[] = [{ label: 'uuid', op: '=', value: '999' }];
+    expect(result).toEqual(expected);
   });
 });

@@ -10,6 +10,7 @@ import {
   FetchTransport,
   type Instrumentation,
 } from '@grafana/faro-web-sdk';
+import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
@@ -22,6 +23,7 @@ export interface GrafanaJavascriptAgentBackendOptions extends BrowserConfig {
   errorInstrumentalizationEnabled: boolean;
   consoleInstrumentalizationEnabled: boolean;
   webVitalsInstrumentalizationEnabled: boolean;
+  tracingInstrumentalizationEnabled: boolean;
 }
 
 export class GrafanaJavascriptAgentBackend
@@ -49,6 +51,9 @@ export class GrafanaJavascriptAgentBackend
     if (options.webVitalsInstrumentalizationEnabled) {
       instrumentations.push(new WebVitalsInstrumentation());
     }
+    if (options.tracingInstrumentalizationEnabled) {
+      instrumentations.push(new TracingInstrumentation());
+    }
 
     // session instrumentation must be added!
     instrumentations.push(new SessionInstrumentation());
@@ -58,6 +63,7 @@ export class GrafanaJavascriptAgentBackend
       globalObjectKey: options.globalObjectKey || 'faro',
       preventGlobalExposure: options.preventGlobalExposure || false,
       app: {
+        name: 'grafana-frontend',
         version: options.buildInfo.version,
         environment: options.buildInfo.env,
       },
@@ -68,6 +74,7 @@ export class GrafanaJavascriptAgentBackend
         'ResizeObserver loop completed',
         'Non-Error exception captured with keys',
       ],
+      ignoreUrls: [new RegExp(`/*${options.customEndpoint}/`), /frontend-metrics/],
       sessionTracking: {
         persistent: true,
       },

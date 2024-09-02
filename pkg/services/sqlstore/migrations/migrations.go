@@ -123,6 +123,12 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddManagedFolderAlertingSilencesActionsMigrator(mg)
 
 	ualert.AddRecordingRuleColumns(mg)
+
+	ualert.AddStateResolvedAtColumns(mg)
+
+	enableTraceQLStreaming(mg, oss.features != nil && oss.features.IsEnabledGlobally(featuremgmt.FlagTraceQLStreaming))
+
+	ualert.AddReceiverActionScopesMigration(mg)
 }
 
 func addStarMigrations(mg *Migrator) {

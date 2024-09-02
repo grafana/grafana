@@ -1,9 +1,9 @@
 import { cx } from '@emotion/css';
 import { max } from 'lodash';
-import { RefCallback, useEffect, useMemo, useRef } from 'react';
+import { RefCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import * as React from 'react';
 import { MenuListProps } from 'react-select';
-import { VariableSizeList as List } from 'react-window';
+import { FixedSizeList as List } from 'react-window';
 
 import { SelectableValue, toIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -36,12 +36,10 @@ export const SelectMenu = ({ children, maxHeight, innerRef, innerProps }: React.
 SelectMenu.displayName = 'SelectMenu';
 
 const VIRTUAL_LIST_ITEM_HEIGHT = 37;
-const VIRTUAL_DIVIDER_HEIGHT = 1;
 const VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER = 8;
 const VIRTUAL_LIST_PADDING = 8;
-const DIVIDER_KEY = 'divider';
 // Some list items have icons or checkboxes so we need some extra width
-const VIRTUAL_LIST_WIDTH_EXTRA = 36;
+const VIRTUAL_LIST_WIDTH_EXTRA = 58;
 
 // A virtualized version of the SelectMenu, descriptions for SelectableValue options not supported since those are of a variable height.
 //
@@ -54,6 +52,7 @@ const VIRTUAL_LIST_WIDTH_EXTRA = 36;
 export const VirtualizedSelectMenu = ({
   children,
   maxHeight,
+  innerRef: scrollRef,
   options,
   focusedOption,
 }: MenuListProps<SelectableValue>) => {
@@ -73,7 +72,7 @@ export const VirtualizedSelectMenu = ({
   const focusedIndex = flattenedOptions.findIndex(
     (option: SelectableValue<unknown>) => option.value === focusedOption?.value
   );
-  useEffect(() => {
+  useLayoutEffect(() => {
     listRef.current?.scrollToItem(focusedIndex);
   }, [focusedIndex]);
 
@@ -91,8 +90,16 @@ export const VirtualizedSelectMenu = ({
       });
       return [
         childWithoutChildren,
-        ...child.props.children,
-        <div key={`${DIVIDER_KEY}-${flattenedOptions[index].label}`} className={styles.virtualizedSeparator} />,
+        ...child.props.children.slice(0, -1),
+        // add a bottom divider to the last item in the category
+        React.cloneElement(child.props.children.at(-1), {
+          innerProps: {
+            style: {
+              borderBottom: `1px solid ${theme.colors.border.weak}`,
+              height: VIRTUAL_LIST_ITEM_HEIGHT,
+            },
+          },
+        }),
       ];
     }
     return [child];
@@ -103,25 +110,16 @@ export const VirtualizedSelectMenu = ({
     longestOption * VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER + VIRTUAL_LIST_PADDING * 2 + VIRTUAL_LIST_WIDTH_EXTRA;
   const heightEstimate = Math.min(flattenedChildren.length * VIRTUAL_LIST_ITEM_HEIGHT, maxHeight);
 
-  const getRowHeight = (rowIndex: number) => {
-    const row = flattenedChildren[rowIndex];
-    if (row.key.includes(DIVIDER_KEY)) {
-      return VIRTUAL_DIVIDER_HEIGHT;
-    }
-
-    return VIRTUAL_LIST_ITEM_HEIGHT;
-  };
-
   return (
     <List
+      outerRef={scrollRef}
       ref={listRef}
       className={styles.menu}
       height={heightEstimate}
       width={widthEstimate}
       aria-label="Select options menu"
       itemCount={flattenedChildren.length}
-      itemSize={getRowHeight}
-      estimatedItemSize={VIRTUAL_LIST_ITEM_HEIGHT}
+      itemSize={VIRTUAL_LIST_ITEM_HEIGHT}
     >
       {({ index, style }) => <div style={{ ...style, overflow: 'hidden' }}>{flattenedChildren[index]}</div>}
     </List>

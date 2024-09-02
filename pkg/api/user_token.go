@@ -8,9 +8,9 @@ import (
 
 	"github.com/ua-parser/uap-go/uaparser"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -32,12 +32,11 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetUserAuthTokens(c *contextmodel.ReqContext) response.Response {
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
-	if namespace != identity.NamespaceUser {
-		return response.Error(http.StatusForbidden, "entity not allowed to revoke tokens", nil)
+	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
+		return response.Error(http.StatusForbidden, "entity not allowed to get tokens", nil)
 	}
 
-	userID, err := identity.IntIdentifier(namespace, identifier)
+	userID, err := c.SignedInUser.GetInternalID()
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to parse user id", err)
 	}
@@ -63,12 +62,11 @@ func (hs *HTTPServer) RevokeUserAuthToken(c *contextmodel.ReqContext) response.R
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
-	if namespace != identity.NamespaceUser {
+	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
 		return response.Error(http.StatusForbidden, "entity not allowed to revoke tokens", nil)
 	}
 
-	userID, err := identity.IntIdentifier(namespace, identifier)
+	userID, err := c.SignedInUser.GetInternalID()
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to parse user id", err)
 	}

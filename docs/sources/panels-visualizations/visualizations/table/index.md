@@ -54,13 +54,36 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides/
+  data-transformation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
+  build-query:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
 ---
 
 # Table
 
-Tables are very flexible, supporting multiple modes for time series and for tables, annotation, and raw JSON data. This visualization also provides date formatting, value formatting, and coloring options. In addition to formatting and coloring options, Grafana also provides a variety of _Cell types_ which you can use to display gauges, sparklines, and other rich data displays.
+Tables are a highly flexible visualization designed to display data in columns and rows. They support various data types, including tables, time series, annotations, and raw JSON data. The table visualization can even take multiple data sets and provide the option to switch between them. With this versatility, it's the preferred visualization for viewing multiple data types, aiding in your data analysis needs.
 
-{{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" lightbox="true" caption="Table visualization" >}}
+{{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" lightbox="true" alt="Table visualization" >}}
+
+You can use a table visualization to show datasets such as:
+
+- Common database queries like logs, traces, metrics
+- Financial reports
+- Customer lists
+- Product catalogs
+
+Any information you might want to put in a spreadsheet can often be best visualized in a table.
+
+Tables also provide different styles to visualize data inside the table cells such as colored text and cell backgrounds, gauges, sparklines, data links, JSON code, and images.
+
+## Configure a table visualization
 
 The following video provides a visual walkthrough of the options you can set in a table visualization. If you want to see a configuration in action, check out the video:
 
@@ -68,15 +91,53 @@ The following video provides a visual walkthrough of the options you can set in 
 
 {{< docs/play title="Table Visualizations in Grafana" url="https://play.grafana.org/d/OhR1ID6Mk/" >}}
 
-## Annotation and alert support
+{{< admonition type="note" >}}
+Annotations and alerts are not currently supported for tables.
+{{< /admonition >}}
 
-Annotations and alerts are not currently supported in tables.
+## Supported data formats
+
+The table visualization supports any data that has a column-row structure.
+
+### Example
+
+```
+Column1, Column2, Column3
+value1 , value2 , value3
+value4 , value5 , value6
+value7 , value8 , value9
+```
+
+If a cell is missing or the table cell-row structure is not complete, the table visualization won’t display any of the data:
+
+```
+Column1, Column2, Column3
+value1 , value2 , value3
+gap1   , gap2
+value4 , value5 , value6
+```
+
+If you need to hide columns, you can do so using [data transformations](ref:data-transformation), [field overrides](#field-overrides), or by [building a query](ref:build-query) that returns only the needed columns.
+
+If you’re using a cell type such as sparkline or JSON, the data requirements may differ in a way that’s specific to that type. For more info refer to [Cell type](#cell-type).
+
+## Debugging in tables
+
+The table visualization helps with debugging when you need to know exactly what results your query is returning and why other visualizations might not be working. This functionality is also accessible in most visualizations by toggling on the **Table view** switch at the top of the panel:
+
+![The Table view switch](/media/docs/grafana/panels-visualizations/screenshot-table-view-on-11.2.png)
 
 ## Sort column
 
 Click a column title to change the sort order from default to descending to ascending. Each time you click, the sort order changes to the next option in the cycle. You can sort multiple columns by holding the `shift` key and clicking the column name.
 
 ![Sort descending](/static/img/docs/tables/sort-descending.png 'Sort descending')
+
+## Data set selector
+
+If the data queried contains multiple data sets, a table displays a drop-down list at the bottom, so you can select the data set you want to visualize.
+
+![Table visualization with multiple data sets](/media/docs/grafana/panels-visualizations/TablePanelMultiSet.png)
 
 ## Panel options
 
@@ -157,6 +218,10 @@ Toggle the **Apply to entire row** switch, to apply the background color that's 
 
 Cells can be displayed as a graphical gauge, with several different presentation types.
 
+{{< admonition type="note" >}}
+The maximum and minimum values of the gauges are configured automatically from the smallest and largest values in your whole data set. If you don't want the max/min values to be pulled from the whole data set, you can configure them for each column with field overrides.
+{{< /admonition >}}
+
 ##### Basic
 
 The basic mode will show a simple gauge with the threshold levels defining the color of gauge.
@@ -231,11 +296,11 @@ Toggle the **Wrap text** switch to wrap text in the cell with the longest conten
 
 ### Cell value inspect
 
-Enables value inspection from table cell. The raw value is presented in a modal window.
+Enables value inspection from table cells. When the **Cell inspect value** switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer.
 
-{{% admonition type="note" %}}
-Cell value inspection is only available when cell display mode is set to Auto, Color text, Color background or JSON View.
-{{% /admonition %}}
+The **Inspect value** drawer has two tabs, **Plain text** and **Code editor**. Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.
+
+Cell value inspection is only available when the **Cell type** selection is **Auto**, **Colored text**, **Colored background**, or **JSON View**.
 
 ## Turn on column filtering
 

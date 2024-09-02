@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data/src/themes';
+import { GrafanaTheme2 } from '@grafana/data';
 import { CallToActionCard, useStyles2, Stack } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 

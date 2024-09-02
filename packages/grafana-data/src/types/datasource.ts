@@ -1,6 +1,8 @@
 import { ComponentType } from 'react';
 import { Observable } from 'rxjs';
 
+import { DataSourceRef } from '@grafana/schema';
+
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
 
 import { ScopedVars } from './ScopedVars';
@@ -11,7 +13,7 @@ import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
 import { PanelData } from './panel';
 import { GrafanaPlugin, PluginMeta } from './plugin';
-import { DataQuery, DataSourceRef } from './query';
+import { DataQuery } from './query';
 import { Scope } from './scopes';
 import { AdHocVariableFilter } from './templateVars';
 import { RawTimeRange, TimeRange } from './time';
@@ -140,6 +142,7 @@ export interface DataSourcePluginMeta<T extends KeyValue = {}> extends PluginMet
   unlicensed?: boolean;
   backend?: boolean;
   isBackend?: boolean;
+  multiValueFilterOperators?: boolean;
 }
 
 interface PluginMetaQueryOptions {
@@ -218,6 +221,11 @@ abstract class DataSourceApi<
   readonly uid: string;
 
   /**
+   *  Set in constructor
+   */
+  readonly apiVersion?: string;
+
+  /**
    *  min interval range
    */
   interval?: string;
@@ -229,6 +237,7 @@ abstract class DataSourceApi<
     this.meta = instanceSettings.meta;
     this.cachingConfig = instanceSettings.cachingConfig;
     this.uid = instanceSettings.uid;
+    this.apiVersion = instanceSettings.apiVersion;
   }
 
   /**
@@ -322,7 +331,11 @@ abstract class DataSourceApi<
 
   /** Get an identifier object for this datasource instance */
   getRef(): DataSourceRef {
-    return { type: this.type, uid: this.uid };
+    const ref: DataSourceRef = { type: this.type, uid: this.uid };
+    if (this.apiVersion) {
+      ref.apiVersion = this.apiVersion;
+    }
+    return ref;
   }
 
   /**
@@ -546,6 +559,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   panelId?: number;
   panelPluginId?: string;
   dashboardUID?: string;
+  headers?: Record<string, string>;
 
   /** Filters to dynamically apply to all queries */
   filters?: AdHocVariableFilter[];
@@ -647,6 +661,7 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   readOnly: boolean;
   withCredentials: boolean;
   version?: number;
+  apiVersion?: string;
 }
 
 /**
@@ -659,6 +674,7 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   uid: string;
   type: string;
   name: string;
+  apiVersion?: string;
   meta: DataSourcePluginMeta;
   cachingConfig?: PluginQueryCachingConfig;
   readOnly: boolean;

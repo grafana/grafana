@@ -23,15 +23,15 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationDashboardFolderStore(t *testing.T) {
-	var sqlStore db.DB
+	var sqlStore db.ReplDB
 	var cfg *setting.Cfg
 	var dashboardStore dashboards.Store
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		sqlStore, cfg = db.InitTestReplDBWithCfg(t)
 		quotaService := quotatest.New(false, nil)
 		var err error
-		dashboardStore, err = database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch), tagimpl.ProvideService(sqlStore), quotaService)
+		dashboardStore, err = database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch), tagimpl.ProvideService(sqlStore.DB()), quotaService)
 		require.NoError(t, err)
 	}
 	t.Run("Given dashboard and folder with the same title", func(t *testing.T) {

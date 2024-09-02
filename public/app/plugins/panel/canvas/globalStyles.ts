@@ -111,6 +111,7 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
             display: 'flex',
             alignItems: 'center',
             width: '16px',
+            height: 'auto',
             backgroundColor: 'transparent',
             backgroundRepeat: 'no-repeat',
             backgroundAttachment: 'scroll',

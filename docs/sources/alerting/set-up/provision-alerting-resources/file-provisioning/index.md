@@ -343,6 +343,31 @@ settings:
 
 {{< /collapse >}}
 
+{{< collapse title="MQTT" >}}
+
+#### MQTT
+
+```yaml
+type: mqtt
+settings:
+  # <string, required>
+  brokerUrl: tcp://127.0.0.1:1883
+  # <string>
+  clientId: grafana
+  # <string, required>
+  topic: grafana/alerts
+  # <string>
+  messageFormat: json
+  # <string>
+  username: grafana
+  # <string>
+  password: password1
+  # <bool>
+  insecureSkipVerify: false
+```
+
+{{< /collapse >}}
+
 {{< collapse title="Microsoft Teams" >}}
 
 #### Microsoft Teams

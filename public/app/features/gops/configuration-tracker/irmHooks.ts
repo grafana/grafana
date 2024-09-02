@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { locationService } from '@grafana/runtime';
-import { createUrl } from 'app/features/alerting/unified/utils/url';
+import { RelativeUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
 import {
   isOnCallContactPointReady,
@@ -16,7 +16,7 @@ import { useOnCallChatOpsConnections, useOnCallOptions } from './onCall/hooks';
 import { useSloChecks } from './slo/hooks';
 
 interface UrlLink {
-  url: string;
+  url: RelativeUrl;
   queryParams?: Record<string, string>;
 }
 export interface StepButtonDto {
@@ -113,8 +113,8 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
     isLoading,
   } = useGetConfigurationForApps();
 
-  function onIntegrationClick(integrationId: string, url: string) {
-    const urlToGoWithIntegration = createUrl(url + integrationId, {
+  function onIntegrationClick(integrationId: string, url: RelativeUrl) {
+    const urlToGoWithIntegration = createRelativeUrl(`${url} + ${integrationId}`, {
       returnTo: location.pathname + location.search,
     });
     locationService.push(urlToGoWithIntegration);

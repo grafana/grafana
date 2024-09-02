@@ -25,12 +25,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -69,7 +69,7 @@ const (
 )
 
 type benchScenario struct {
-	db db.DB
+	db db.ReplDB
 	// signedInUser is the user that is signed in to the server
 	cfg          *setting.Cfg
 	signedInUser *user.SignedInUser
@@ -202,7 +202,7 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 
 func setupDB(b testing.TB) benchScenario {
 	b.Helper()
-	db, cfg := sqlstore.InitTestDB(b)
+	db, cfg := sqlstore.InitTestReplDB(b)
 	IDs := map[int64]struct{}{}
 
 	opts := sqlstore.NativeSettingsForDialect(db.GetDialect())
@@ -260,7 +260,7 @@ func setupDB(b testing.TB) benchScenario {
 				UserID:     userID,
 				TeamID:     teamID,
 				OrgID:      orgID,
-				Permission: dashboardaccess.PERMISSION_VIEW,
+				Permission: team.PermissionTypeMember,
 				Created:    now,
 				Updated:    now,
 			})
@@ -451,26 +451,26 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 
 	quotaSrv := quotatest.New(false, nil)
 
-	dashStore, err := database.ProvideDashboardStore(sc.db, sc.cfg, features, tagimpl.ProvideService(sc.db), quotaSrv)
+	dashStore, err := database.ProvideDashboardStore(sc.db, sc.cfg, features, tagimpl.ProvideService(sc.db.DB()), quotaSrv)
 	require.NoError(b, err)
 
-	folderStore := folderimpl.ProvideDashboardFolderStore(sc.db)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sc.db.DB())
 
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore, sc.db, features, supportbundlestest.NewFakeBundleService(), nil)
+	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore, sc.db.DB(), features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 	cfg := setting.NewCfg()
-	actionSets := resourcepermissions.NewActionSetService()
+	actionSets := resourcepermissions.NewActionSetService(features)
 	acSvc := acimpl.ProvideOSSService(
 		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
-		features, tracing.InitializeTracerForTest(), zanzana.NewNoopClient(), sc.db,
+		features, tracing.InitializeTracerForTest(), zanzana.NewNoopClient(), sc.db.DB(), permreg.ProvidePermissionRegistry(),
 	)
 
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets)
+		cfg, features, routing.NewRouteRegister(), sc.db.DB(), ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets)
 	require.NoError(b, err)
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets)
+		cfg, features, routing.NewRouteRegister(), sc.db.DB(), ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets)
 	require.NoError(b, err)
 
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
@@ -486,10 +486,10 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	hs := &HTTPServer{
 		CacheService:     localcache.New(5*time.Minute, 10*time.Minute),
 		Cfg:              sc.cfg,
-		SQLStore:         sc.db,
+		SQLStore:         sc.db.DB(),
 		Features:         features,
 		QuotaService:     quotaSrv,
-		SearchService:    search.ProvideService(sc.cfg, sc.db, starSvc, dashboardSvc),
+		SearchService:    search.ProvideService(sc.cfg, sc.db.DB(), starSvc, dashboardSvc),
 		folderService:    folderServiceWithFlagOn,
 		DashboardService: dashboardSvc,
 	}

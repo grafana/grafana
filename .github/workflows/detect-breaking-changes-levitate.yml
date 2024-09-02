@@ -8,7 +8,6 @@ on:
       - 'packages/**'
     branches:
       - 'main'
-  workflow_dispatch:
 
 jobs:
   buildPR:
@@ -111,6 +110,9 @@ jobs:
     needs: ['buildPR', 'buildBase']
     env:
       GITHUB_STEP_NUMBER: 8
+    permissions:
+      contents: 'read'
+      id-token: 'write'
 
     steps:
       - uses: actions/checkout@v4
@@ -133,6 +135,20 @@ jobs:
 
       - name: Unzip artifact from base
         run: unzip -j base_built_packages.zip -d ./base && rm base_built_packages.zip
+
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.LEVITATE_SA }}
+          project_id: 'grafanalabs-global'
+
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+        with:
+          version: '>= 363.0.0'
+          project_id: 'grafanalabs-global'
+          install_components: 'bq'
 
       - name: Get link for the Github Action job
         id: job

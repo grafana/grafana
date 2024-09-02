@@ -1,7 +1,18 @@
 {
   "extends": ["@grafana/eslint-config", "plugin:react/jsx-runtime"],
   "root": true,
-  "plugins": ["@emotion", "lodash", "jest", "import", "jsx-a11y", "@grafana", "no-barrel-files"],
+  "plugins": [
+    "@emotion",
+    "lodash",
+    "jest",
+    "import",
+    "jsx-a11y",
+    "@grafana",
+    "no-barrel-files",
+    // Included so betterer doesn't fail when processing all files,
+    // as other parts of the code use testing-library plugin
+    "testing-library",
+  ],
   "settings": {
     "import/internal-regex": "^(app/)|(@grafana)",
     "import/external-module-folders": ["node_modules", ".yarn"],

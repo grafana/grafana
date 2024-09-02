@@ -5,6 +5,7 @@ import { useAsyncFn } from 'react-use';
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { Alert, LoadingPlaceholder, Stack, Tab, TabContent, TabsBar, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { useMuteTimings } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
 import { ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
@@ -15,7 +16,6 @@ import { useGetContactPointsState } from './api/receiversApi';
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
 import { MuteTimingsTable } from './components/mute-timings/MuteTimingsTable';
-import { mergeTimeIntervals } from './components/mute-timings/util';
 import {
   NotificationPoliciesFilter,
   findRoutesByMatchers,
@@ -65,6 +65,7 @@ const AmRoutes = () => {
 
   const { selectedAlertmanager, hasConfigurationAPI, isGrafanaAlertmanager } = useAlertmanager();
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
+  const { data: muteTimings = [] } = useMuteTimings({ alertmanager: selectedAlertmanager ?? '' });
 
   const contactPointsState = useGetContactPointsState(selectedAlertmanager ?? '');
 
@@ -192,24 +193,22 @@ const AmRoutes = () => {
   }
 
   // edit, add, delete modals
-  const [addModal, openAddModal, closeAddModal] = useAddPolicyModal(receivers, handleAdd, updatingTree);
+  const [addModal, openAddModal, closeAddModal] = useAddPolicyModal(handleAdd, updatingTree);
   const [editModal, openEditModal, closeEditModal] = useEditPolicyModal(
     selectedAlertmanager ?? '',
-    receivers,
     handleSave,
     updatingTree
   );
   const [deleteModal, openDeleteModal, closeDeleteModal] = useDeletePolicyModal(handleDelete, updatingTree);
-  const [alertInstancesModal, showAlertGroupsModal] = useAlertGroupsModal();
+  const [alertInstancesModal, showAlertGroupsModal] = useAlertGroupsModal(selectedAlertmanager ?? '');
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
 
   if (!selectedAlertmanager) {
     return null;
   }
-  const time_intervals = result?.alertmanager_config ? mergeTimeIntervals(result?.alertmanager_config) : [];
 
-  const numberOfMuteTimings = time_intervals.length;
+  const numberOfMuteTimings = muteTimings.length;
   const haveData = result && !resultError && !resultLoading;
   const isFetching = !result && resultLoading;
   const haveError = resultError && !resultLoading;
@@ -219,6 +218,7 @@ const AmRoutes = () => {
 
   return (
     <>
+      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
       <TabsBar>
         <Tab
           label={'Notification Policies'}
@@ -249,11 +249,9 @@ const AmRoutes = () => {
           <>
             {policyTreeTabActive && (
               <>
-                <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
                 <Stack direction="column" gap={1}>
                   {rootRoute && (
                     <NotificationPoliciesFilter
-                      receivers={receivers}
                       onChangeMatchers={setLabelMatchersFilter}
                       onChangeReceiver={setContactPointFilter}
                       matchingCount={routesMatchingFilters.matchedRoutesWithPath.size}
@@ -322,7 +320,7 @@ export const findRoutesMatchingFilters = (rootRoute: RouteWithID, filters: Route
   //
   // [contactPointMatches, labelMatcherMatches] -> [[{ a: [], b: [] }], [{ a: [], c: [] }]]
   // later we'll use intersection to find results in all sets of filter matchers
-  let matchedRoutes: RouteWithID[][] = [];
+  const matchedRoutes: RouteWithID[][] = [];
 
   // compute fully inherited tree so all policies have their inherited receiver
   const fullRoute = computeInheritedTree(rootRoute);
@@ -392,11 +390,11 @@ interface QueryParamValues {
 function getActiveTabFromUrl(queryParams: UrlQueryMap): QueryParamValues {
   let tab = ActiveTab.NotificationPolicies; // default tab
 
-  if (queryParams['tab'] === ActiveTab.NotificationPolicies) {
+  if (queryParams.tab === ActiveTab.NotificationPolicies) {
     tab = ActiveTab.NotificationPolicies;
   }
 
-  if (queryParams['tab'] === ActiveTab.MuteTimings) {
+  if (queryParams.tab === ActiveTab.MuteTimings) {
     tab = ActiveTab.MuteTimings;
   }
 

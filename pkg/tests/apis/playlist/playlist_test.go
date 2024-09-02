@@ -18,6 +18,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/playlist"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -92,11 +93,13 @@ func TestIntegrationPlaylist(t *testing.T) {
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
 			APIServerStorageType: "file", // write the files to disk
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				playlistv0alpha1.GROUPRESOURCE: {
+					DualWriterMode: grafanarest.Mode0,
+				},
+			},
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
-			},
-			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode0,
 			},
 		}))
 	})
@@ -106,11 +109,13 @@ func TestIntegrationPlaylist(t *testing.T) {
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
 			APIServerStorageType: "file", // write the files to disk
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				playlistv0alpha1.GROUPRESOURCE: {
+					DualWriterMode: grafanarest.Mode1,
+				},
+			},
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
-			},
-			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode1,
 			},
 		}))
 	})
@@ -120,11 +125,29 @@ func TestIntegrationPlaylist(t *testing.T) {
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
 			APIServerStorageType: "file", // write the files to disk
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				playlistv0alpha1.GROUPRESOURCE: {
+					DualWriterMode: grafanarest.Mode2,
+				},
+			},
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
-			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode2,
+		}))
+	})
+
+	t.Run("with dual write (file, mode 3)", func(t *testing.T) {
+		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "file", // write the files to disk
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				playlistv0alpha1.GROUPRESOURCE: {
+					DualWriterMode: grafanarest.Mode3,
+				},
+			},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
 		}))
 	})
@@ -135,11 +158,12 @@ func TestIntegrationPlaylist(t *testing.T) {
 			DisableAnonymous:     true,
 			APIServerStorageType: "unified", // use the entity api tables
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagUnifiedStorage,
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
-			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode0,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				playlistv0alpha1.GROUPRESOURCE: {
+					DualWriterMode: grafanarest.Mode0,
+				},
 			},
 		}))
 	})
@@ -149,13 +173,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 			AppModeProduction:    false, // required for  unified storage
 			DisableAnonymous:     true,
 			APIServerStorageType: "unified", // use the entity api tables
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagUnifiedStorage,
-				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
-			},
-			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode1,
-			},
+			EnableFeatureToggles: []string{},
 		}))
 	})
 
@@ -165,11 +183,28 @@ func TestIntegrationPlaylist(t *testing.T) {
 			DisableAnonymous:     true,
 			APIServerStorageType: "unified", // use the entity api tables
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagUnifiedStorage,
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
-			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode2,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				playlistv0alpha1.GROUPRESOURCE: {
+					DualWriterMode: grafanarest.Mode2,
+				},
+			},
+		}))
+	})
+
+	t.Run("with dual write (unified storage, mode 3)", func(t *testing.T) {
+		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    false, // required for  unified storage
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified", // use the entity api tables
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+			},
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				playlistv0alpha1.GROUPRESOURCE: {
+					DualWriterMode: grafanarest.Mode3,
+				},
 			},
 		}))
 	})
@@ -182,11 +217,13 @@ func TestIntegrationPlaylist(t *testing.T) {
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
 			APIServerStorageType: "etcd", // requires etcd running on localhost:2379
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				playlistv0alpha1.GROUPRESOURCE: {
+					DualWriterMode: grafanarest.Mode0,
+				},
+			},
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
-			},
-			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode0,
 			},
 		})
 
@@ -212,8 +249,10 @@ func TestIntegrationPlaylist(t *testing.T) {
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
-			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode1,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				playlistv0alpha1.GROUPRESOURCE: {
+					DualWriterMode: grafanarest.Mode1,
+				},
 			},
 		})
 
@@ -239,8 +278,39 @@ func TestIntegrationPlaylist(t *testing.T) {
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
-			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode2,
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				playlistv0alpha1.GROUPRESOURCE: {
+					DualWriterMode: grafanarest.Mode2,
+				},
+			},
+		})
+
+		// Clear the collection before starting (etcd)
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  gvr,
+		})
+		err := client.Resource.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
+		require.NoError(t, err)
+
+		doPlaylistTests(t, helper)
+	})
+
+	t.Run("with dual write (etcd, mode 3)", func(t *testing.T) {
+		// NOTE: running local etcd, that will be wiped clean!
+		t.Skip("local etcd testing")
+
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "etcd", // requires etcd running on localhost:2379
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+			},
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				playlistv0alpha1.GROUPRESOURCE: {
+					DualWriterMode: grafanarest.Mode3,
+				},
 			},
 		})
 
@@ -361,8 +431,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 			"metadata": {
 			  "annotations": {
 				"grafana.app/originPath": "${originPath}",
-				"grafana.app/originName": "SQL",
-				"grafana.app/updatedTimestamp": "${updatedTimestamp}"
+				"grafana.app/originName": "SQL"
 			  },
 			  "creationTimestamp": "${creationTimestamp}",
 			  "name": "` + uid + `",

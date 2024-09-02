@@ -1,5 +1,6 @@
 import { uniqueId } from 'lodash';
 import { useState, useContext, createContext, ReactNode, useCallback, useRef, useEffect } from 'react';
+import { SetOptional } from 'type-fest';
 
 import { ContentOutlineItemBaseProps, ITEM_TYPES } from './ContentOutlineItem';
 
@@ -10,7 +11,7 @@ export interface ContentOutlineItemContextProps extends ContentOutlineItemBasePr
   children?: ContentOutlineItemContextProps[];
 }
 
-type RegisterFunction = (outlineItem: Omit<ContentOutlineItemContextProps, 'id'>) => string;
+type RegisterFunction = (outlineItem: SetOptional<ContentOutlineItemContextProps, 'id'>) => string;
 
 export interface ContentOutlineContextProps {
   outlineItems: ContentOutlineItemContextProps[];
@@ -44,7 +45,10 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
   const parentlessItemsRef = useRef<ParentlessItems>({});
 
   const register: RegisterFunction = useCallback((outlineItem) => {
-    const id = uniqueId(`${outlineItem.panelId}-${outlineItem.title}-${outlineItem.icon}_`);
+    // Allow the caller to define unique ID so the outlineItem can be differentiated
+    const id = outlineItem.id
+      ? outlineItem.id
+      : uniqueId(`${outlineItem.panelId}-${outlineItem.title}-${outlineItem.icon}_`);
 
     setOutlineItems((prevItems) => {
       if (outlineItem.level === 'root') {

@@ -658,6 +658,7 @@ export enum BarGaugeValueMode {
  */
 export enum BarGaugeNamePlacement {
   Auto = 'auto',
+  Hidden = 'hidden',
   Left = 'left',
   Top = 'top',
 }
@@ -861,6 +862,10 @@ export enum VariableFormatID {
 }
 
 export interface DataSourceRef {
+  /**
+   *  Datasource API version
+   */
+  apiVersion?: string;
   /**
    * The plugin type-id
    */

@@ -17,7 +17,7 @@ import {
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 import { ExemplarTraceIdDestination, PromMetric, PromQuery, PromValue } from './types';
 
@@ -54,21 +54,19 @@ export function transformV2(
   options: { exemplarTraceIdDestinations?: ExemplarTraceIdDestination[] }
 ) {
   // migration for dataplane field name issue
-  if (config.featureToggles.prometheusDataplane) {
-    // update displayNameFromDS in the field config
-    response.data.forEach((f: DataFrame) => {
-      const target = request.targets.find((t) => t.refId === f.refId);
-      // check that the legend is selected as auto
-      if (target && target.legendFormat === '__auto') {
-        f.fields.forEach((field) => {
-          if (field.labels?.__name__ && field.labels?.__name__ === field.name) {
-            const fieldCopy = { ...field, name: TIME_SERIES_VALUE_FIELD_NAME };
-            field.config.displayNameFromDS = getFieldDisplayName(fieldCopy, f, response.data);
-          }
-        });
-      }
-    });
-  }
+  // update displayNameFromDS in the field config
+  response.data.forEach((f: DataFrame) => {
+    const target = request.targets.find((t) => t.refId === f.refId);
+    // check that the legend is selected as auto
+    if (target && target.legendFormat === '__auto') {
+      f.fields.forEach((field) => {
+        if (field.labels?.__name__ && field.labels?.__name__ === field.name) {
+          const fieldCopy = { ...field, name: TIME_SERIES_VALUE_FIELD_NAME };
+          field.config.displayNameFromDS = getFieldDisplayName(fieldCopy, f, response.data);
+        }
+      });
+    }
+  });
 
   const [tableFrames, framesWithoutTable] = partition<DataFrame>(response.data, (df) => isTableResult(df, request));
   const processedTableFrames = transformDFToTable(tableFrames);
@@ -202,11 +200,10 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
         .forEach((label) => {
           // If we don't have label in labelFields, add it
           if (!labelFields.some((l) => l.name === label)) {
-            const numberField = label === HISTOGRAM_QUANTILE_LABEL_NAME;
             labelFields.push({
               name: label,
               config: { filterable: true },
-              type: numberField ? FieldType.number : FieldType.string,
+              type: FieldType.string,
               values: [],
             });
           }
@@ -280,9 +277,6 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
 
 function getLabelValue(metric: PromMetric, label: string): string | number {
   if (metric.hasOwnProperty(label)) {
-    if (label === HISTOGRAM_QUANTILE_LABEL_NAME) {
-      return parseSampleValue(metric[label]);
-    }
     return metric[label];
   }
   return '';

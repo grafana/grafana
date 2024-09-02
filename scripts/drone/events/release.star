@@ -22,6 +22,8 @@ load(
     "verify_gen_cue_step",
     "verify_gen_jsonnet_step",
     "verify_grafanacom_step",
+    "verify_linux_DEB_packages_step",
+    "verify_linux_RPM_packages_step",
     "wire_install_step",
     "yarn_install_step",
 )
@@ -73,8 +75,6 @@ def release_pr_step(depends_on = []):
         "commands": [
             "apk add perl",
             "v_target=`echo $${{TAG}} | perl -pe 's/{}/v\\1.\\2.x/'`".format(semver_regex),
-            "default_target=`if [[ -n $$LATEST ]]; then echo 'main'; else echo $$v_target; fi`",
-            "backport=`if [[ -n $$LATEST ]]; then echo $$v_target; fi`",
             # Install gh CLI
             "curl -L $${GH_CLI_URL} | tar -xz --strip-components=1 -C /usr",
             # Run the release-pr workflow
@@ -82,9 +82,8 @@ def release_pr_step(depends_on = []):
             "-f dry_run=$${DRY_RUN} " +
             "-f version=$${TAG} " +
             # If the submitter has set a target branch, then use that, otherwise use the default
-            "-f target=$${TARGET:-$default_target} " +
-            # If the submitter has set a backport branch, then use that, otherwise use the default
-            "-f backport=$${BACKPORT:-$default_backport} " +
+            "-f target=$${v_target} " +
+            "-f latest=$${LATEST} " +
             "--repo=grafana/grafana release-pr.yml",
         ],
     }
@@ -203,6 +202,8 @@ def publish_packages_pipeline():
         compile_build_cmd(),
         publish_linux_packages_step(package_manager = "deb"),
         publish_linux_packages_step(package_manager = "rpm"),
+        verify_linux_DEB_packages_step(depends_on = ["publish-linux-packages-deb"]),
+        verify_linux_RPM_packages_step(depends_on = ["publish-linux-packages-rpm"]),
         publish_grafanacom_step(ver_mode = "release"),
         verify_grafanacom_step(),
     ]
@@ -221,6 +222,17 @@ def publish_packages_pipeline():
             },
             steps = [
                 verify_grafanacom_step(depends_on = []),
+            ],
+        ),
+        pipeline(
+            name = "verify-linux-packages",
+            trigger = {
+                "event": ["promote"],
+                "target": "verify-linux-packages",
+            },
+            steps = [
+                verify_linux_DEB_packages_step(),
+                verify_linux_RPM_packages_step(),
             ],
         ),
         pipeline(

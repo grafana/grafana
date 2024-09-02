@@ -1,4 +1,4 @@
-import { closestIdx } from '../';
+import { closestIdx } from '../dataframe/StreamingDataFrame';
 
 export type Table = [times: number[], ...values: any[][]];
 

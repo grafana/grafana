@@ -5,11 +5,9 @@ import { grafanaAlertingConfigurationStatusHandler } from 'app/features/alerting
 
 import {
   AlertmanagerChoice,
-  AlertManagerCortexConfig,
   ExternalAlertmanagersStatusResponse,
 } from '../../../../plugins/datasource/alertmanager/types';
 import { GrafanaAlertingConfigurationStatusResponse } from '../api/alertmanagerApi';
-import { getDatasourceAPIUid } from '../utils/datasource';
 
 export const defaultGrafanaAlertingConfigurationStatusResponse: GrafanaAlertingConfigurationStatusResponse = {
   alertmanagersChoice: AlertmanagerChoice.Internal,
@@ -31,16 +29,4 @@ export const emptyExternalAlertmanagersResponse: ExternalAlertmanagersStatusResp
 };
 export function mockAlertmanagersResponse(server: SetupServer, response: ExternalAlertmanagersStatusResponse) {
   server.use(http.get('/api/v1/ngalert/alertmanagers', () => HttpResponse.json(response)));
-}
-
-export function mockAlertmanagerConfigResponse(
-  server: SetupServer,
-  alertManagerSourceName: string,
-  response: AlertManagerCortexConfig
-) {
-  server.use(
-    http.get(`/api/alertmanager/${getDatasourceAPIUid(alertManagerSourceName)}/config/api/v1/alerts`, () =>
-      HttpResponse.json(response)
-    )
-  );
 }

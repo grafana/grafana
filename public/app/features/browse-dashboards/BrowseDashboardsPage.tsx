@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { memo, useEffect, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -87,7 +87,9 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
 
   const hasSelection = useHasSelection();
 
-  const { canEditFolders, canEditDashboards, canCreateDashboards, canCreateFolders } = getFolderPermissions(folderDTO);
+  const { data: rootFolder } = useGetFolderQuery('general');
+  let folder = folderDTO ? folderDTO : rootFolder;
+  const { canEditFolders, canEditDashboards, canCreateDashboards, canCreateFolders } = getFolderPermissions(folder);
 
   const showEditTitle = canEditFolders && folderUID;
   const canSelect = canEditFolders || canEditDashboards;
@@ -130,14 +132,22 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
       }
     >
       <Page.Contents className={styles.pageContents}>
-        <FilterInput
-          placeholder={getSearchPlaceholder(searchState.includePanels)}
-          value={searchState.query}
-          escapeRegex={false}
-          onChange={(e) => stateManager.onQueryChange(e)}
-        />
+        <div>
+          <FilterInput
+            placeholder={getSearchPlaceholder(searchState.includePanels)}
+            value={searchState.query}
+            escapeRegex={false}
+            onChange={(e) => stateManager.onQueryChange(e)}
+          />
+        </div>
 
-        {hasSelection ? <BrowseActions /> : <BrowseFilters />}
+        {hasSelection ? (
+          <BrowseActions />
+        ) : (
+          <div className={styles.filters}>
+            <BrowseFilters />
+          </div>
+        )}
 
         <div className={styles.subView}>
           <AutoSizer>
@@ -163,15 +173,23 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   pageContents: css({
-    display: 'grid',
-    gridTemplateRows: 'auto auto 1fr',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
     height: '100%',
-    rowGap: theme.spacing(1),
   }),
 
   // AutoSizer needs an element to measure the full height available
   subView: css({
     height: '100%',
+  }),
+
+  filters: css({
+    display: 'none',
+
+    [theme.breakpoints.up('md')]: {
+      display: 'block',
+    },
   }),
 });
 

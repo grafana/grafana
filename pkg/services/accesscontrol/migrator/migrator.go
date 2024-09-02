@@ -19,14 +19,14 @@ const (
 	maxLen = 40
 )
 
-func MigrateScopeSplit(db db.DB, log log.Logger) error {
+func MigrateScopeSplit(db db.ReplDB, log log.Logger) error {
 	t := time.Now()
 	ctx := context.Background()
 	cnt := 0
 
 	// Search for the permissions to update
 	var permissions []ac.Permission
-	if errFind := db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	if errFind := db.DB().WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		return sess.SQL("SELECT * FROM permission WHERE NOT scope = '' AND identifier = ''").Find(&permissions)
 	}); errFind != nil {
 		log.Error("Could not search for permissions to update", "migration", "scopeSplit", "error", errFind)
@@ -76,7 +76,7 @@ func MigrateScopeSplit(db db.DB, log log.Logger) error {
 		delQuery = delQuery[:len(delQuery)-1] + ")"
 
 		// Batch update the permissions
-		if errBatchUpdate := db.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
+		if errBatchUpdate := db.DB().GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
 			if _, errDel := tx.Exec(ctx, delQuery, delArgs...); errDel != nil {
 				log.Error("Error deleting permissions", "migration", "scopeSplit", "error", errDel)
 				return errDel

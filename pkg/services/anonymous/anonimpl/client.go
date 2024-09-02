@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
@@ -69,11 +69,11 @@ func (a *Anonymous) Test(ctx context.Context, r *authn.Request) bool {
 	return true
 }
 
-func (a *Anonymous) Namespace() string {
-	return authn.NamespaceAnonymous.String()
+func (a *Anonymous) IdentityType() claims.IdentityType {
+	return claims.TypeAnonymous
 }
 
-func (a *Anonymous) ResolveIdentity(ctx context.Context, orgID int64, namespaceID identity.NamespaceID) (*authn.Identity, error) {
+func (a *Anonymous) ResolveIdentity(ctx context.Context, orgID int64, typ claims.IdentityType, id string) (*authn.Identity, error) {
 	o, err := a.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: a.cfg.AnonymousOrgName})
 	if err != nil {
 		return nil, err
@@ -84,7 +84,7 @@ func (a *Anonymous) ResolveIdentity(ctx context.Context, orgID int64, namespaceI
 	}
 
 	// Anonymous identities should always have the same namespace id.
-	if namespaceID != authn.AnonymousNamespaceID {
+	if !claims.IsIdentityType(typ, claims.TypeAnonymous) || id != "0" {
 		return nil, errInvalidID
 	}
 
@@ -109,7 +109,8 @@ func (a *Anonymous) Priority() uint {
 
 func (a *Anonymous) newAnonymousIdentity(o *org.Org) *authn.Identity {
 	return &authn.Identity{
-		ID:           authn.AnonymousNamespaceID,
+		ID:           "0",
+		Type:         claims.TypeAnonymous,
 		OrgID:        o.ID,
 		OrgName:      o.Name,
 		OrgRoles:     map[int64]org.RoleType{o.ID: org.RoleType(a.cfg.AnonymousOrgRole)},

@@ -16,51 +16,42 @@ import {
   Switch,
   useStyles2,
 } from '@grafana/ui';
+import MuteTimingsSelector from 'app/features/alerting/unified/components/alertmanager-entities/MuteTimingsSelector';
+import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
+import { handleContactPointSelect } from 'app/features/alerting/unified/components/notification-policies/utils';
 import { MatcherOperator, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
-import { useMuteTimingOptions } from '../../hooks/useMuteTimingOptions';
+import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { FormAmRoute } from '../../types/amroutes';
-import { SupportedPlugin } from '../../types/pluginBridges';
 import { matcherFieldOptions } from '../../utils/alertmanager';
 import {
   amRouteToFormAmRoute,
   commonGroupByOptions,
   emptyArrayFieldMatcher,
   mapMultiSelectValueToStrings,
-  mapSelectValueToString,
   promDurationValidator,
   repeatIntervalValidator,
   stringToSelectableValue,
   stringsToSelectableValues,
 } from '../../utils/amroutes';
-import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
 import { PromDurationInput } from './PromDurationInput';
 import { getFormStyles } from './formStyles';
 import { routeTimingsFields } from './routeTimingsFields';
 
 export interface AmRoutesExpandedFormProps {
-  receivers: AmRouteReceiver[];
   route?: RouteWithID;
   onSubmit: (route: Partial<FormAmRoute>) => void;
   actionButtons: ReactNode;
   defaults?: Partial<FormAmRoute>;
 }
 
-export const AmRoutesExpandedForm = ({
-  actionButtons,
-  receivers,
-  route,
-  onSubmit,
-  defaults,
-}: AmRoutesExpandedFormProps) => {
+export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults }: AmRoutesExpandedFormProps) => {
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
+  const { selectedAlertmanager } = useAlertmanager();
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route?.group_by));
-  const muteTimingOptions = useMuteTimingOptions();
   const emptyMatcher = [{ name: '', operator: MatcherOperator.equal, value: '' }];
-
-  const receiversWithOnCallOnTop = receivers.sort(onCallFirst);
 
   const formAmRoute = {
     ...amRouteToFormAmRoute(route),
@@ -168,14 +159,15 @@ export const AmRoutesExpandedForm = ({
 
       <Field label="Contact point">
         <Controller
-          render={({ field: { onChange, ref, ...field } }) => (
-            <Select
-              aria-label="Contact point"
-              {...field}
-              className={formStyles.input}
-              onChange={(value) => onChange(mapSelectValueToString(value))}
-              options={receiversWithOnCallOnTop}
-              isClearable
+          render={({ field: { onChange, ref, value, ...field } }) => (
+            <ContactPointSelector
+              selectProps={{
+                ...field,
+                className: formStyles.input,
+                onChange: (value) => handleContactPointSelect(value, onChange),
+                isClearable: true,
+              }}
+              selectedContactPointName={value}
             />
           )}
           control={control}
@@ -191,7 +183,7 @@ export const AmRoutesExpandedForm = ({
       {watch().overrideGrouping && (
         <Field
           label="Group by"
-          description="Group alerts when you receive a notification based on labels. If empty it will be inherited from the parent policy."
+          description="Combine multiple alerts into a single notification by grouping them by the same label values. If empty, it is inherited from the parent policy."
         >
           <Controller
             rules={{
@@ -281,12 +273,12 @@ export const AmRoutesExpandedForm = ({
       >
         <Controller
           render={({ field: { onChange, ref, ...field } }) => (
-            <MultiSelect
-              aria-label="Mute timings"
-              {...field}
-              className={formStyles.input}
-              onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
-              options={muteTimingOptions}
+            <MuteTimingsSelector
+              alertmanager={selectedAlertmanager!}
+              selectProps={{
+                ...field,
+                onChange: (value) => onChange(mapMultiSelectValueToStrings(value)),
+              }}
             />
           )}
           control={control}
@@ -297,14 +289,6 @@ export const AmRoutesExpandedForm = ({
     </form>
   );
 };
-
-function onCallFirst(receiver: AmRouteReceiver) {
-  if (receiver.grafanaAppReceiverType === SupportedPlugin.OnCall) {
-    return -1;
-  } else {
-    return 0;
-  }
-}
 
 const getStyles = (theme: GrafanaTheme2) => {
   const commonSpacing = theme.spacing(3.5);

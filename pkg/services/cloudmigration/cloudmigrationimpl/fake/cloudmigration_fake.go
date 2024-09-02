@@ -137,7 +137,7 @@ func (m FakeServiceImpl) CreateSnapshot(ctx context.Context, user *user.SignedIn
 	return &cloudmigration.CloudMigrationSnapshot{
 		UID:        "fake_uid",
 		SessionUID: sessionUid,
-		Status:     cloudmigration.SnapshotStatusUnknown,
+		Status:     cloudmigration.SnapshotStatusCreating,
 	}, nil
 }
 
@@ -148,7 +148,7 @@ func (m FakeServiceImpl) GetSnapshot(ctx context.Context, query cloudmigration.G
 	return &cloudmigration.CloudMigrationSnapshot{
 		UID:        "fake_uid",
 		SessionUID: "fake_uid",
-		Status:     cloudmigration.SnapshotStatusUnknown,
+		Status:     cloudmigration.SnapshotStatusCreating,
 	}, nil
 }
 
@@ -160,12 +160,12 @@ func (m FakeServiceImpl) GetSnapshotList(ctx context.Context, query cloudmigrati
 		{
 			UID:        "fake_uid",
 			SessionUID: query.SessionUID,
-			Status:     cloudmigration.SnapshotStatusUnknown,
+			Status:     cloudmigration.SnapshotStatusCreating,
 		},
 		{
 			UID:        "fake_uid",
 			SessionUID: query.SessionUID,
-			Status:     cloudmigration.SnapshotStatusUnknown,
+			Status:     cloudmigration.SnapshotStatusCreating,
 		},
 	}, nil
 }

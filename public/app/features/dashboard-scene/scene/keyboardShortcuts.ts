@@ -1,9 +1,12 @@
 import { SetPanelAttentionEvent } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
+import { contextSrv } from 'app/core/services/context_srv';
 
+import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
+import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
@@ -45,12 +48,51 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   });
 
   // Panel share
-  keybindings.addBinding({
-    key: 'p s',
-    onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-      scene.showModal(new ShareModal({ panelRef: vizPanel.getRef() }));
-    }),
-  });
+  if (config.featureToggles.newDashboardSharingComponent) {
+    keybindings.addBinding({
+      key: 'p u',
+      onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+        const drawer = new ShareDrawer({
+          shareView: shareDashboardType.link,
+          panelRef: vizPanel.getRef(),
+        });
+
+        scene.showModal(drawer);
+      }),
+    });
+    keybindings.addBinding({
+      key: 'p e',
+      onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+        const drawer = new ShareDrawer({
+          shareView: shareDashboardType.embed,
+          panelRef: vizPanel.getRef(),
+        });
+
+        scene.showModal(drawer);
+      }),
+    });
+
+    if (contextSrv.isSignedIn && config.snapshotEnabled && scene.canEditDashboard()) {
+      keybindings.addBinding({
+        key: 'p s',
+        onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+          const drawer = new ShareDrawer({
+            shareView: shareDashboardType.snapshot,
+            panelRef: vizPanel.getRef(),
+          });
+
+          scene.showModal(drawer);
+        }),
+      });
+    }
+  } else {
+    keybindings.addBinding({
+      key: 'p s',
+      onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+        scene.showModal(new ShareModal({ panelRef: vizPanel.getRef() }));
+      }),
+    });
+  }
 
   // Panel inspect
   keybindings.addBinding({
@@ -167,12 +209,26 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
         }
       }),
     });
+
+    // collapse all rows
+    keybindings.addBinding({
+      key: 'd shift+c',
+      onTrigger: () => {
+        scene.collapseAllRows();
+      },
+    });
+
+    // expand all rows
+    keybindings.addBinding({
+      key: 'd shift+e',
+      onTrigger: () => {
+        scene.expandAllRows();
+      },
+    });
   }
 
   // toggle all panel legends (TODO)
   // toggle all exemplars (TODO)
-  // collapse all rows (TODO)
-  // expand all rows (TODO)
 
   return () => {
     keybindings.removeAll();

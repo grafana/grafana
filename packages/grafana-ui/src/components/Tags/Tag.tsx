@@ -82,7 +82,7 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) =
       verticalAlign: 'baseline',
       backgroundColor: colors.color,
       color: theme.v1.palette.gray98,
-      whiteSpace: 'nowrap',
+      whiteSpace: 'pre',
       textShadow: 'none',
       padding: '3px 6px',
       borderRadius: theme.shape.radius.default,

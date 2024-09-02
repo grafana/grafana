@@ -141,26 +141,65 @@ func (a *State) Maintain(interval int64, evaluatedAt time.Time) {
 	a.EndsAt = nextEndsTime(interval, evaluatedAt)
 }
 
-// AddErrorAnnotations adds annotations to the state to indicate that an error occurred.
-func (a *State) AddErrorAnnotations(err error, rule *models.AlertRule) {
+// AddErrorInformation adds annotations to the state to indicate that an error occurred.
+// If addDatasourceInfoToLabels is true, the ref_id and datasource_uid are added to the labels,
+// otherwise, they are added to the annotations.
+func (a *State) AddErrorInformation(err error, rule *models.AlertRule, addDatasourceInfoToLabels bool) {
 	if err == nil {
 		return
 	}
 
 	a.Annotations["Error"] = err.Error()
+
 	// If the evaluation failed because a query returned an error then add the Ref ID and
-	// Datasource UID as labels
+	// Datasource UID as labels or annotations
 	var utilError errutil.Error
-	if errors.As(a.Error, &utilError) &&
-		(errors.Is(a.Error, expr.QueryError) || errors.Is(a.Error, expr.ConversionError)) {
+	if errors.As(err, &utilError) &&
+		(errors.Is(err, expr.QueryError) || errors.Is(err, expr.ConversionError)) {
 		for _, next := range rule.Data {
 			if next.RefID == utilError.PublicPayload["refId"].(string) {
-				a.Labels["ref_id"] = next.RefID
-				a.Labels["datasource_uid"] = next.DatasourceUID
+				if addDatasourceInfoToLabels {
+					a.Labels["ref_id"] = next.RefID
+					a.Labels["datasource_uid"] = next.DatasourceUID
+				} else {
+					a.Annotations["ref_id"] = next.RefID
+					a.Annotations["datasource_uid"] = next.DatasourceUID
+				}
 				break
 			}
 		}
+	} else {
+		// Remove the ref_id and datasource_uid from the annotations if they are present.
+		// It can happen if the alert state hasn't changed, but the error is different now.
+		delete(a.Annotations, "ref_id")
+		delete(a.Annotations, "datasource_uid")
 	}
+}
+
+func (a *State) SetNextValues(result eval.Result) {
+	const sentinel = float64(-1)
+
+	// We try to provide a reasonable object for Values in the event of nodata/error.
+	// In order to not break templates that might refer to refIDs,
+	// we instead fill values with the latest known set of refIDs, but with a sentinel -1 to indicate that the value didn't exist.
+	if result.State == eval.NoData || result.State == eval.Error {
+		placeholder := make(map[string]float64, len(a.Values))
+		for refID := range a.Values {
+			placeholder[refID] = sentinel
+		}
+		a.Values = placeholder
+		return
+	}
+
+	newValues := make(map[string]float64, len(result.Values))
+	for k, v := range result.Values {
+		if v.Value != nil {
+			newValues[k] = *v.Value
+		} else {
+			newValues[k] = math.NaN()
+		}
+	}
+	a.Values = newValues
 }
 
 // IsNormalStateWithNoReason returns true if the state is Normal and reason is empty
@@ -206,16 +245,20 @@ type Evaluation struct {
 	// Values contains the RefID and value of reduce and math expressions.
 	// Classic conditions can have different values for the same RefID as they can include multiple conditions.
 	// For these, we use the index of the condition in addition RefID as the key e.g. "A0, A1, A2, etc.".
-	Values map[string]*float64
+	Values map[string]float64
 	// Condition is the refID specified as the condition in the alerting rule at the time of the evaluation.
 	Condition string
 }
 
 // NewEvaluationValues returns the labels and values for each RefID in the capture.
-func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]*float64 {
-	result := make(map[string]*float64, len(m))
+func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]float64 {
+	result := make(map[string]float64, len(m))
 	for k, v := range m {
-		result[k] = v.Value
+		if v.Value != nil {
+			result[k] = *v.Value
+		} else {
+			result[k] = math.NaN()
+		}
 	}
 	return result
 }
@@ -304,11 +347,12 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 		resultAlerting(state, rule, result, logger, models.StateReasonError)
 		// This is a special case where Alerting and Pending should also have an error and reason
 		state.Error = result.Error
+		state.AddErrorInformation(result.Error, rule, false)
 	case models.ErrorErrState:
 		if state.State == eval.Error {
 			prevEndsAt := state.EndsAt
 			state.Error = result.Error
-			state.AddErrorAnnotations(result.Error, rule)
+			state.AddErrorInformation(result.Error, rule, true)
 			state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
 			logger.Debug("Keeping state",
 				"state",
@@ -330,18 +374,20 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 				"next_ends_at",
 				nextEndsAt)
 			state.SetError(result.Error, result.EvaluatedAt, nextEndsAt)
-			state.AddErrorAnnotations(result.Error, rule)
+			state.AddErrorInformation(result.Error, rule, true)
 		}
 	case models.OkErrState:
 		logger.Debug("Execution error state is Normal", "handler", "resultNormal", "previous_handler", handlerStr)
 		resultNormal(state, rule, result, logger, "") // TODO: Should we add a reason?
+		state.AddErrorInformation(result.Error, rule, false)
 	case models.KeepLastErrState:
 		logger := logger.New("previous_handler", handlerStr)
 		resultKeepLast(state, rule, result, logger)
+		state.AddErrorInformation(result.Error, rule, false)
 	default:
 		err := fmt.Errorf("unsupported execution error state: %s", rule.ExecErrState)
 		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
-		state.Annotations["Error"] = err.Error()
+		state.AddErrorInformation(result.Error, rule, false)
 	}
 }
 
@@ -486,11 +532,7 @@ func (a *State) GetLastEvaluationValuesForCondition() map[string]float64 {
 
 	for refID, value := range lastResult.Values {
 		if strings.Contains(refID, lastResult.Condition) {
-			if value != nil {
-				r[refID] = *value
-				continue
-			}
-			r[refID] = math.NaN()
+			r[refID] = value
 		}
 	}
 

@@ -7,14 +7,16 @@ import {
   DataSourceInstanceSettings,
   FieldConfigSource,
   GrafanaTheme2,
-  PanelModel,
   filterFieldConfigOverrides,
+  getDataSourceRef,
   isStandardFieldProp,
   restoreCustomOverrideRules,
 } from '@grafana/data';
 import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
 import {
   DeepPartial,
+  LocalValueVariable,
+  MultiValueVariable,
   PanelBuilders,
   SceneComponentProps,
   SceneDataTransformer,
@@ -23,13 +25,13 @@ import {
   SceneObjectState,
   SceneObjectStateChangedEvent,
   SceneQueryRunner,
+  SceneVariableSet,
   SceneVariables,
   VizPanel,
-  sceneUtils,
+  sceneGraph,
 } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig, Panel } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { getPluginVersion } from 'app/features/dashboard/state/PanelModel';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 import { updateLibraryVizPanel } from 'app/features/library-panels/state/api';
@@ -43,11 +45,12 @@ import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
-import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import { getDashboardSceneFor, getMultiVariableValues, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 export interface VizPanelManagerState extends SceneObjectState {
   panel: VizPanel;
   sourcePanel: SceneObjectRef<VizPanel>;
+  pluginId: string;
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
   tableView?: VizPanel;
@@ -98,10 +101,33 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       variables = gridItem.parent.state.$variables.clone();
     }
 
+    if (repeatOptions.repeat) {
+      const variable = sceneGraph.lookupVariable(repeatOptions.repeat, gridItem);
+
+      if (variable instanceof MultiValueVariable && variable.state.value.length) {
+        const { values, texts } = getMultiVariableValues(variable);
+
+        const varWithDefaultValue = new LocalValueVariable({
+          name: variable.state.name,
+          value: values[0],
+          text: String(texts[0]),
+        });
+
+        if (!variables) {
+          variables = new SceneVariableSet({
+            variables: [varWithDefaultValue],
+          });
+        } else {
+          variables.setState({ variables: [varWithDefaultValue] });
+        }
+      }
+    }
+
     return new VizPanelManager({
       $variables: variables,
       panel: sourcePanel.clone(),
       sourcePanel: sourcePanel.getRef(),
+      pluginId: sourcePanel.state.pluginId,
       ...repeatOptions,
     });
   }
@@ -159,8 +185,8 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
             this.queryRunner.setState({
               datasource: {
+                ...getDataSourceRef(dsSettings),
                 uid: lastUsedDatasource?.datasourceUid,
-                type: dsSettings.type,
               },
             });
           }
@@ -173,12 +199,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       if (datasource && dsSettings) {
         this.setState({ datasource, dsSettings });
 
-        storeLastUsedDataSourceInLocalStorage(
-          {
-            type: dsSettings.type,
-            uid: dsSettings.uid,
-          } || { default: true }
-        );
+        storeLastUsedDataSourceInLocalStorage(getDataSourceRef(dsSettings) || { default: true });
       }
     } catch (err) {
       //set default datasource if we fail to load the datasource
@@ -192,10 +213,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         });
 
         this.queryRunner.setState({
-          datasource: {
-            uid: dsSettings.uid,
-            type: dsSettings.type,
-          },
+          datasource: getDataSourceRef(dsSettings),
         });
       }
 
@@ -204,12 +222,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   }
 
   public changePluginType(pluginId: string) {
-    const {
-      options: prevOptions,
-      fieldConfig: prevFieldConfig,
-      pluginId: prevPluginId,
-      ...restOfOldState
-    } = sceneUtils.cloneSceneObjectState(this.state.panel.state);
+    const { options: prevOptions, fieldConfig: prevFieldConfig, pluginId: prevPluginId } = this.state.panel.state;
 
     // clear custom options
     let newFieldConfig: FieldConfigSource = {
@@ -229,13 +242,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       newFieldConfig = restoreCustomOverrideRules(newFieldConfig, cachedFieldConfig);
     }
 
-    const newPanel = new VizPanel({
-      options: cachedOptions ?? {},
-      fieldConfig: newFieldConfig,
-      pluginId: pluginId,
-      ...restOfOldState,
-    });
-
     // When changing from non-data to data panel, we need to add a new data provider
     if (!this.state.panel.state.$data && !config.panels[pluginId].skipDataQuery) {
       let ds = getLastUsedDatasourceFromStorage(getDashboardSceneFor(this).state.uid!)?.datasourceUid;
@@ -244,7 +250,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         ds = config.defaultDatasource;
       }
 
-      newPanel.setState({
+      this.state.panel.setState({
         $data: new SceneDataTransformer({
           $data: new SceneQueryRunner({
             datasource: {
@@ -257,26 +263,12 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       });
     }
 
-    const newPlugin = newPanel.getPlugin();
-    const panel: PanelModel = {
-      title: newPanel.state.title,
-      options: newPanel.state.options,
-      fieldConfig: newPanel.state.fieldConfig,
-      id: 1,
-      type: pluginId,
-    };
+    this.setState({
+      pluginId,
+    });
 
-    const newOptions = newPlugin?.onPanelTypeChanged?.(panel, prevPluginId, prevOptions, prevFieldConfig);
+    this.state.panel.changePluginType(pluginId, cachedOptions, newFieldConfig);
 
-    if (newOptions) {
-      newPanel.onOptionsChange(newOptions, true, true);
-    }
-
-    if (newPlugin?.onPanelMigration) {
-      newPanel.setState({ pluginVersion: getPluginVersion(newPlugin) });
-    }
-
-    this.setState({ panel: newPanel });
     this.loadDataSource();
   }
 
@@ -296,10 +288,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     const queries = defaultQueries || (await updateQueries(nextDS, newSettings.uid, currentQueries, currentDS));
 
     queryRunner.setState({
-      datasource: {
-        type: newSettings.type,
-        uid: newSettings.uid,
-      },
+      datasource: getDataSourceRef(newSettings),
       queries,
     });
     if (defaultQueries) {

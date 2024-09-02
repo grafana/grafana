@@ -30,11 +30,26 @@ refs:
 
 # Canvas
 
-Canvases combine the power of Grafana with the flexibility of custom elements. Canvases are extensible form-built visualizations that allow you to explicitly place elements within static and dynamic layouts. This empowers you to design custom visualizations and overlay data in ways that aren't possible with standard Grafana panels, all within Grafana's UI. If you've used popular UI and web design tools, then designing canvases will feel very familiar.
+Canvases combine the power of Grafana with the flexibility of custom elements.
+They are extensible visualizations that allow you to add and arrange elements wherever you want within unstructured static and dynamic layouts.
+This lets you design custom visualizations and overlay data in ways that aren't possible with standard Grafana visualizations, all within the Grafana UI.
 
-> We would love your feedback on Canvas. Please check out the [open Github issues](https://github.com/grafana/grafana/issues?page=1&q=is%3Aopen+is%3Aissue+label%3Aarea%2Fpanel%2Fcanvas) and [submit a new feature request](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request,area%2Fpanel%2Fcanvas&title=Canvas:&projects=grafana-dataviz&template=1-feature_requests.md) as needed.
+{{< video-embed src="/static/img/docs/canvas-panel/canvas-beta-overview-9-2-0.mp4" max-width="750px" alt="Canvas beta overview" >}}
 
-{{< video-embed src="/static/img/docs/canvas-panel/canvas-beta-overview-9-2-0.mp4" max-width="750px" caption="Canvas beta overview" >}}
+If you've used popular UI and web design tools, then designing canvases will feel very familiar.
+With all of these dynamic elements, there's almost no limit to what a canvas can display.
+
+{{< admonition type="note" >}}
+We'd love your feedback on the canvas visualization. Please check out the [open Github issues](https://github.com/grafana/grafana/issues?page=1&q=is%3Aopen+is%3Aissue+label%3Aarea%2Fpanel%2Fcanvas) and [submit a new feature request](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request,area%2Fpanel%2Fcanvas&title=Canvas:&projects=grafana-dataviz&template=1-feature_requests.md) as needed.
+{{< /admonition >}}
+
+## Supported data formats
+
+The canvas visualization is unique in that it doesn't have any specific data requirements. You can even start adding and configuring visual elements without providing any data. However, any data you plan to consume should be accessible through supported Grafana data sources and structured in a way that ensures smooth integration with your custom elements.
+
+If your canvas is going to update in real time, your data should support refreshes at your desired intervals without degrading the user experience.
+
+You can tie [Elements](#elements) and [Connections](#connections) to data through options like text, colors, and background pattern images, etc. available in the canvas visualization.
 
 ## Elements
 
@@ -166,25 +181,36 @@ The inline editing toggle lets you lock or unlock the canvas. When turned off th
 
 Canvases support [data links](ref:data-links) for all elements except drone and button elements. You can add a data link by following these steps:
 
-1. Set an element to be tied to a field value.
-1. Turn off the inline editing toggle.
-1. Create an override for **Fields with name** and select the element field name from the list.
-1. Click the **+ Add override property** button.
-1. Select `Datalinks > Datalinks` from the list.
-1. Click **+Add link** add a title and URL for the data link.
-1. Hover over the element to display the data link tooltip.
-1. Click on the element to be able to open the data link.
+1. Enable inline editing.
+1. Click the element you to which you want to add the data link.
+1. In either the inline editor or panel editor, expand the **Selected element** editor.
+1. Scroll down to the **Data links** section and expand it.
+1. Click **Add link**.
+1. In the dialog box that opens, enter a **Title**. This is a human-readable label for the link, which will be displayed in the UI.
+1. Enter the **URL** or variable to which you want to link.
 
-If multiple elements use the same field name, and you want to control which elements display the data link, you can create a unique field name using the [add field from calculation transform](ref:add-field-from-calculation-transform). The alias you create in the transformation will appear as a field you can use with an element.
+   To add a data link variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.
 
-1. In the panel editor for the canvas, click the **Transform** tab.
-1. Select **Add field from calculation** from the list of transformations, or click **+ Add transformation** to display the list first.
-1. Choose **Reduce row** from the dropdown and click the field name that you want to use for the element.
-1. Select **All Values** from the **Calculation** dropdown.
-1. Add an alias for the field name.
-1. Reference the new unique field alias to create the element and field override.
+1. If you want the link to open in a new tab, toggle the **Open in a new tab** switch.
+1. Click **Save** to save changes and close the dialog box.
+1. Disable inline editing.
 
-{{< video-embed src="/media/docs/grafana/canvas-data-links-9-4-0.mp4" max-width="750px" caption="Data links demo" >}}
+If you add multiple data links, you can control the order in which they appear in the visualization. To do this, click and drag the data link to the desired position.
+
+#### One-click data link
+
+You can configure a canvas data link to open with a single click on the element. To enable this feature, follow these steps:
+
+1. Enable inline editing.
+1. Click the element to which you want to add the data link.
+1. In either the inline editor or panel editor, expand the **Selected element** editor.
+1. Scroll down to the **Data links** section and expand it.
+1. In the **One-click** section, choose **Link**.
+1. Disable inline editing.
+
+The first data link in the list will be configured as your one-click data link. If you want to change the one-click data link, simply drag the desired data link to the top of the list.
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/canvas-one-click-datalink-.mp4" >}}
 
 ## Panel options
 

@@ -68,35 +68,37 @@ const (
 )
 
 type UnifiedAlertingSettings struct {
-	AdminConfigPollInterval        time.Duration
-	AlertmanagerConfigPollInterval time.Duration
-	HAListenAddr                   string
-	HAAdvertiseAddr                string
-	HAPeers                        []string
-	HAPeerTimeout                  time.Duration
-	HAGossipInterval               time.Duration
-	HAReconnectTimeout             time.Duration
-	HAPushPullInterval             time.Duration
-	HALabel                        string
-	HARedisClusterModeEnabled      bool
-	HARedisAddr                    string
-	HARedisPeerName                string
-	HARedisPrefix                  string
-	HARedisUsername                string
-	HARedisPassword                string
-	HARedisDB                      int
-	HARedisMaxConns                int
-	HARedisTLSEnabled              bool
-	HARedisTLSConfig               dstls.ClientConfig
-	MaxAttempts                    int64
-	MinInterval                    time.Duration
-	EvaluationTimeout              time.Duration
-	EvaluationResultLimit          int
-	DisableJitter                  bool
-	ExecuteAlerts                  bool
-	DefaultConfiguration           string
-	Enabled                        *bool // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
-	DisabledOrgs                   map[int64]struct{}
+	AdminConfigPollInterval         time.Duration
+	AlertmanagerConfigPollInterval  time.Duration
+	AlertmanagerMaxSilenceSizeBytes int
+	AlertmanagerMaxSilencesCount    int
+	HAListenAddr                    string
+	HAAdvertiseAddr                 string
+	HAPeers                         []string
+	HAPeerTimeout                   time.Duration
+	HAGossipInterval                time.Duration
+	HAReconnectTimeout              time.Duration
+	HAPushPullInterval              time.Duration
+	HALabel                         string
+	HARedisClusterModeEnabled       bool
+	HARedisAddr                     string
+	HARedisPeerName                 string
+	HARedisPrefix                   string
+	HARedisUsername                 string
+	HARedisPassword                 string
+	HARedisDB                       int
+	HARedisMaxConns                 int
+	HARedisTLSEnabled               bool
+	HARedisTLSConfig                dstls.ClientConfig
+	MaxAttempts                     int64
+	MinInterval                     time.Duration
+	EvaluationTimeout               time.Duration
+	EvaluationResultLimit           int
+	DisableJitter                   bool
+	ExecuteAlerts                   bool
+	DefaultConfiguration            string
+	Enabled                         *bool // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
+	DisabledOrgs                    map[int64]struct{}
 	// BaseInterval interval of time the scheduler updates the rules and evaluates rules.
 	// Only for internal use and not user configuration.
 	BaseInterval time.Duration
@@ -122,6 +124,7 @@ type UnifiedAlertingSettings struct {
 }
 
 type RecordingRuleSettings struct {
+	Enabled           bool
 	URL               string
 	BasicAuthUsername string
 	BasicAuthPassword string
@@ -229,6 +232,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if err != nil {
 		return err
 	}
+	uaCfg.AlertmanagerMaxSilenceSizeBytes = ua.Key("alertmanager_max_silence_size_bytes").MustInt(0)
+	uaCfg.AlertmanagerMaxSilencesCount = ua.Key("alertmanager_max_silences_count").MustInt(0)
 	uaCfg.HAPeerTimeout, err = gtime.ParseDuration(valueAsString(ua, "ha_peer_timeout", (alertmanagerDefaultPeerTimeout).String()))
 	if err != nil {
 		return err
@@ -417,6 +422,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	rr := iniFile.Section("recording_rules")
 	uaCfgRecordingRules := RecordingRuleSettings{
+		Enabled:           rr.Key("enabled").MustBool(false),
 		URL:               rr.Key("url").MustString(""),
 		BasicAuthUsername: rr.Key("basic_auth_username").MustString(""),
 		BasicAuthPassword: rr.Key("basic_auth_password").MustString(""),

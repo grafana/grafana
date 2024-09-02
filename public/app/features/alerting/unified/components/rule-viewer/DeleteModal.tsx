@@ -5,15 +5,16 @@ import { ConfirmModal } from '@grafana/ui';
 import { dispatch } from 'app/store/store';
 import { CombinedRule } from 'app/types/unified-alerting';
 
-import { useDeleteRuleFromGroup } from '../../hooks/useProduceNewRuleGroup';
+import { useDeleteRuleFromGroup } from '../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { fetchPromAndRulerRulesAction } from '../../state/actions';
+import { fromRulerRuleAndRuleGroupIdentifier } from '../../utils/rule-id';
 import { getRuleGroupLocationFromCombinedRule } from '../../utils/rules';
 
 type DeleteModalHook = [JSX.Element, (rule: CombinedRule) => void, () => void];
 
 export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule | undefined>();
-  const [deleteRuleFromGroup, _deleteState] = useDeleteRuleFromGroup();
+  const [deleteRuleFromGroup] = useDeleteRuleFromGroup();
 
   const dismissModal = useCallback(() => {
     setRuleToDelete(undefined);
@@ -29,12 +30,14 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
         return;
       }
 
-      const location = getRuleGroupLocationFromCombinedRule(rule);
-      await deleteRuleFromGroup(location, rule.rulerRule);
+      const ruleGroupIdentifier = getRuleGroupLocationFromCombinedRule(rule);
+      const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, rule.rulerRule);
+
+      await deleteRuleFromGroup.execute(ruleGroupIdentifier, ruleIdentifier);
 
       // refetch rules for this rules source
       // @TODO remove this when we moved everything to RTKQ – then the endpoint will simply invalidate the tags
-      dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: location.dataSourceName }));
+      dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: ruleGroupIdentifier.dataSourceName }));
 
       dismissModal();
 

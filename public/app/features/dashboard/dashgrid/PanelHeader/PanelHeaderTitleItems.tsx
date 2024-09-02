@@ -36,7 +36,7 @@ export function PanelHeaderTitleItems(props: Props) {
           [styles.alerting]: alertState === AlertState.Alerting,
         })}
       >
-        <Icon name={alertState === 'alerting' ? 'heart-break' : 'heart'} className="panel-alert-icon" size="md" />
+        <Icon name={alertState === 'alerting' ? 'heart-break' : 'heart'} size="md" />
       </PanelChrome.TitleItem>
     </Tooltip>
   );
@@ -90,12 +90,21 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     ok: css({
       color: theme.colors.success.text,
+      '&:hover': {
+        color: theme.colors.emphasize(theme.colors.success.text, 0.03),
+      },
     }),
     pending: css({
       color: theme.colors.warning.text,
+      '&:hover': {
+        color: theme.colors.emphasize(theme.colors.warning.text, 0.03),
+      },
     }),
     alerting: css({
       color: theme.colors.error.text,
+      '&:hover': {
+        color: theme.colors.emphasize(theme.colors.error.text, 0.03),
+      },
     }),
     timeshift: css({
       color: theme.colors.text.link,

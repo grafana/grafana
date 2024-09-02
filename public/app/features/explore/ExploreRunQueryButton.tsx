@@ -22,6 +22,7 @@ interface ExploreRunQueryButtonProps {
   queries: DataQuery[];
   rootDatasourceUid?: string;
   disabled?: boolean;
+  onClick?: () => void;
 }
 
 export type Props = ConnectedProps<typeof connector> & ExploreRunQueryButtonProps;
@@ -35,6 +36,7 @@ export function ExploreRunQueryButton({
   rootDatasourceUid,
   queries,
   disabled = false,
+  onClick,
   changeDatasource,
   setQueries,
 }: Props) {
@@ -82,7 +84,10 @@ export function ExploreRunQueryButton({
         <Button
           variant="secondary"
           aria-label={buttonText.translation}
-          onClick={() => runQuery(exploreId)}
+          onClick={() => {
+            runQuery(exploreId);
+            onClick?.();
+          }}
           disabled={isInvalid || exploreId === undefined}
         >
           {buttonText.translation}
@@ -101,6 +106,7 @@ export function ExploreRunQueryButton({
                 ariaLabel={buttonText.fallbackText}
                 onClick={() => {
                   runQuery(pane[0]);
+                  onClick?.();
                 }}
                 label={`${paneLabel}: ${buttonText.translation}`}
                 disabled={isInvalid || pane[0] === undefined}

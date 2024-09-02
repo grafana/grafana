@@ -29,7 +29,6 @@ export interface FeatureToggles {
   featureHighlights?: boolean;
   storage?: boolean;
   correlations?: boolean;
-  datasourceQueryMultiStatus?: boolean;
   autoMigrateOldPanels?: boolean;
   autoMigrateGraphPanel?: boolean;
   autoMigrateTablePanel?: boolean;
@@ -43,10 +42,10 @@ export interface FeatureToggles {
   logRequestsInstrumentedAsUnknown?: boolean;
   topnav?: boolean;
   grpcServer?: boolean;
-  unifiedStorage?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
+  mysqlParseTime?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   alertingBacktesting?: boolean;
@@ -60,7 +59,7 @@ export interface FeatureToggles {
   influxdbBackendMigration?: boolean;
   influxqlStreamingParser?: boolean;
   influxdbRunQueriesInParallel?: boolean;
-  prometheusDataplane?: boolean;
+  prometheusRunQueriesInParallel?: boolean;
   lokiMetricDataplane?: boolean;
   lokiLogsDataplane?: boolean;
   dataplaneFrontendFallback?: boolean;
@@ -77,6 +76,7 @@ export interface FeatureToggles {
   lokiPredefinedOperations?: boolean;
   pluginsFrontendSandbox?: boolean;
   frontendSandboxMonitorOnly?: boolean;
+  pluginsDetailsRightPanel?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
   recordedQueriesMulti?: boolean;
   vizAndWidgetSplit?: boolean;
@@ -105,7 +105,6 @@ export interface FeatureToggles {
   alertingInsights?: boolean;
   externalCorePlugins?: boolean;
   pluginsAPIMetrics?: boolean;
-  idForwarding?: boolean;
   externalServiceAccounts?: boolean;
   panelMonitoring?: boolean;
   enableNativeHTTPHistogram?: boolean;
@@ -123,7 +122,6 @@ export interface FeatureToggles {
   recoveryThreshold?: boolean;
   lokiStructuredMetadata?: boolean;
   teamHttpHeaders?: boolean;
-  awsDatasourcesNewFormStyling?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
   panelTitleSearchInV1?: boolean;
   managedPluginsInstall?: boolean;
@@ -143,7 +141,6 @@ export interface FeatureToggles {
   ssoSettingsApi?: boolean;
   canvasPanelPanZoom?: boolean;
   logsInfiniteScrolling?: boolean;
-  flameGraphItemCollapsing?: boolean;
   exploreMetrics?: boolean;
   alertingSimplifiedRouting?: boolean;
   logRowsPopoverMenu?: boolean;
@@ -201,4 +198,14 @@ export interface FeatureToggles {
   cloudWatchRoundUpEndTime?: boolean;
   bodyScrolling?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
+  prometheusAzureOverrideAudience?: boolean;
+  backgroundPluginInstaller?: boolean;
+  dataplaneAggregator?: boolean;
+  adhocFilterOneOf?: boolean;
+  newFiltersUI?: boolean;
+  lokiSendDashboardPanelNames?: boolean;
+  singleTopNav?: boolean;
+  exploreLogsShardSplitting?: boolean;
+  exploreLogsAggregatedMetrics?: boolean;
+  exploreLogsLimitedTimeRange?: boolean;
 }

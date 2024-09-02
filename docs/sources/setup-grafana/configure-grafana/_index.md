@@ -754,10 +754,6 @@ Set name for external snapshot button. Defaults to `Publish to snapshots.raintan
 
 Set to true to enable this Grafana instance to act as an external snapshot server and allow unauthenticated requests for creating and deleting snapshots. Default is `false`.
 
-### snapshot_remove_expired
-
-Enable this to automatically remove expired snapshots. Default is `true`.
-
 <hr />
 
 ## [dashboards]
@@ -955,6 +951,14 @@ This setting is ignored if multiple OAuth providers are configured. Default is `
 
 How many seconds the OAuth state cookie lives before being deleted. Default is `600` (seconds)
 Administrators can increase this if they experience OAuth login state mismatch errors.
+
+### oauth_refresh_token_server_lock_min_wait_ms
+
+Minimum wait time in milliseconds for the server lock retry mechanism. Default is `1000` (milliseconds). The server lock retry mechanism is used to prevent multiple Grafana instances from simultaneously refreshing OAuth tokens. This mechanism waits at least this amount of time before retrying to acquire the server lock.
+
+There are five retries in total, so with the default value, the total wait time (for acquiring the lock) is at least 5 seconds (the wait time between retries is calculated as random(n, n + 500)), which means that the maximum token refresh duration must be less than 5-6 seconds.
+
+If you experience issues with the OAuth token refresh mechanism, you can increase this value to allow more time for the token refresh to complete.
 
 ### oauth_skip_org_role_update_sync
 
@@ -1275,6 +1279,12 @@ Set plugins that will receive Azure settings via plugin context.
 
 By default, this will include all Grafana Labs owned Azure plugins or those that use Azure settings (Azure Monitor, Azure Data Explorer, Prometheus, MSSQL).
 
+### azure_entra_password_credentials_enabled
+
+Specifies whether Entra password auth can be used for the MSSQL data source. This authentication is not recommended and consideration should be taken before enabling this.
+
+Disabled by default, needs to be explicitly enabled.
+
 ## [auth.jwt]
 
 Refer to [JWT authentication]({{< relref "../configure-security/configure-authentication/jwt" >}}) for more information.
@@ -1488,6 +1498,10 @@ Turn on console instrumentation. Only affects Grafana Javascript Agent
 
 Turn on webvitals instrumentation. Only affects Grafana Javascript Agent
 
+### instrumentations_tracing_enabled
+
+Turns on tracing instrumentation. Only affects Grafana Javascript Agent.
+
 ### api_key
 
 If `custom_endpoint` required authentication, you can set the api key here. Only relevant for Grafana Javascript Agent provider.
@@ -1562,7 +1576,7 @@ Limit the number of query evaluation results per alert rule. If the condition qu
 
 ## [unified_alerting]
 
-For more information about the Grafana alerts, refer to [About Grafana Alerting]({{< relref "../../alerting" >}}).
+For more information about the Grafana alerts, refer to [Grafana Alerting]({{< relref "../../alerting" >}}).
 
 ### enabled
 
@@ -1589,6 +1603,10 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 ### ha_redis_address
 
 The Redis server address that should be connected to.
+
+{{< admonition type="note" >}}
+For more information on Redis, refer to [Enable alerting high availability using Redis](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-high-availability/#enable-alerting-high-availability-using-redis).
+{{< /admonition >}}
 
 ### ha_redis_username
 
@@ -1776,6 +1794,11 @@ For more information about this feature, refer to [Explore]({{< relref "../../ex
 ### enabled
 
 Enable or disable the Explore section. Default is `enabled`.
+
+### defaultTimeOffset
+
+Set a default time offset from now on the time picker. Default is 1 hour.
+This setting should be expressed as a duration. Examples: 1h (hour), 1d (day), 1w (week), 1M (month).
 
 ## [help]
 
@@ -1998,7 +2021,7 @@ Depending on the value of `sampler_type`, the sampler configuration parameter ca
 
 When `sampler_type` is `remote`, this specifies the URL of the sampling server. This can be used by all tracing providers.
 
-Use a sampling server that supports the Jaeger remote sampling API, such as jaeger-agent, jaeger-collector, opentelemetry-collector-contrib, or [Grafana Agent](/oss/agent/).
+Use a sampling server that supports the Jaeger remote sampling API, such as jaeger-agent, jaeger-collector, opentelemetry-collector-contrib, or [Grafana Alloy](https://grafana.com/oss/alloy-opentelemetry-collector/).
 
 <hr>
 
