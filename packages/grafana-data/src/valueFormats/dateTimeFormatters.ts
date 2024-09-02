@@ -275,7 +275,7 @@ export function toClock(size: number, decimals?: DecimalCount): FormattedValue {
 
   let format = 'mm\\m:ss\\s:SSS\\m\\s';
 
-  const hours = `${('0' + Math.floor(duration(size, 'milliseconds').asHours())).slice(-2)}h`;
+  const hours = `${Math.floor(duration(size, 'milliseconds').asHours())}h`;
 
   if (decimals === 0) {
     format = '';
