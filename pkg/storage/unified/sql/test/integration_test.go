@@ -412,12 +412,6 @@ func TestClientServer(t *testing.T) {
 }
 
 func writeEvent(ctx context.Context, store sql.Backend, name string, action resource.WatchEvent_Type) (int64, error) {
-	// There is a small chance that the resource version is the same if we write too fast.
-	// This is a test limitation and should not be a real-world issue.
-	// time.Sleep(1 * time.Millisecond)
-	if infraDB.IsTestDbSQLite() {
-		time.Sleep(1 * time.Millisecond)
-	}
 
 	return store.WriteEvent(ctx, resource.WriteEvent{
 		Type:  action,
