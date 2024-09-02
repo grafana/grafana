@@ -314,8 +314,7 @@ func (s *service) start(ctx context.Context) error {
 		}
 
 		// Create a client instance
-		// TODO(drclau): differentiate based on grpc_mode (e.g. on-prem vs. cloud)
-		client, err := resource.NewResourceStoreClientGRPC(conn)
+		client, err := newResourceStoreClient(conn, s.cfg)
 		if err != nil {
 			return err
 		}
@@ -541,6 +540,13 @@ func (s *service) running(ctx context.Context) error {
 		return ctx.Err()
 	}
 	return nil
+}
+
+func newResourceStoreClient(conn *grpc.ClientConn, cfg *setting.Cfg) (resource.ResourceStoreClient, error) {
+	if cfg.StackID != "" {
+		return resource.NewResourceStoreClientCloud(conn, cfg)
+	}
+	return resource.NewResourceStoreClientGRPC(conn)
 }
 
 func ensureKubeConfig(restConfig *clientrest.Config, dir string) error {

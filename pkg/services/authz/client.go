@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -116,6 +117,14 @@ func newGrpcLegacyClient(authCfg *Cfg) (authzlib.MultiTenantClient, error) {
 	grpcClientConfig := authnlib.GrpcClientConfig{}
 	clientInterceptor, err := authnlib.NewGrpcClientInterceptor(&grpcClientConfig,
 		authnlib.WithDisableAccessTokenOption(),
+		authnlib.WithIDTokenExtractorOption(func(ctx context.Context) (string, error) {
+			r, err := identity.GetRequester(ctx)
+			if err != nil {
+				return "", err
+			}
+			token := r.GetIDToken()
+			return token, nil
+		}),
 	)
 	if err != nil {
 		return nil, err
@@ -128,7 +137,7 @@ func newGrpcLegacyClient(authCfg *Cfg) (authzlib.MultiTenantClient, error) {
 		),
 		// nolint:staticcheck
 		authzlib.WithNamespaceFormatterLCOption(claims.OrgNamespaceFormatter),
-		// TODO(drclau): remove this once we have access token support on-prem
+		// TODO: remove this once access tokens are supported on-prem
 		authzlib.WithDisableAccessTokenLCOption(),
 	)
 	if err != nil {

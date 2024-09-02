@@ -6,8 +6,8 @@ import (
 	"net"
 	"time"
 
-	authnlib "github.com/grafana/authlib/authn"
 	authzlib "github.com/grafana/authlib/authz"
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/dskit/instrument"
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -73,14 +73,10 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 
 	var opts []grpc.ServerOption
 
-	namespaceFmt := authnlib.OnPremNamespaceFormatter
-	// TODO(drclau): check the actual mode setting here
-	if cfg.StackID != "" {
-		namespaceFmt = authnlib.CloudNamespaceFormatter
-	}
+	// We don't need to support the CloudNamespaceFormatter here, because the grpcserver is only used on-prem.
+	// TODO(drclau): validate this assumption.
 	namespaceChecker := authzlib.NewNamespaceAccessChecker(
-		namespaceFmt,
-		// TODO(drclau): are the following opts required/correct for on-prem?
+		claims.OrgNamespaceFormatter,
 		authzlib.WithDisableAccessTokenNamespaceAccessCheckerOption(),
 		authzlib.WithIDTokenNamespaceAccessCheckerOption(true),
 	)

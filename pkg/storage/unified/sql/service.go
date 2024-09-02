@@ -2,10 +2,7 @@ package sql
 
 import (
 	"context"
-	"crypto/tls"
-	"net/http"
 
-	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -65,51 +62,10 @@ func ProvideService(
 		return nil, err
 	}
 
-	authCfg, err := grpcutils.ReadGprcServerConfig(cfg)
+	authn, err := grpcutils.NewGrpcAuthenticator(cfg)
 	if err != nil {
 		return nil, err
 	}
-
-	grpcAuthCfg := authnlib.GrpcAuthenticatorConfig{
-		KeyRetrieverConfig: authnlib.KeyRetrieverConfig{
-			SigningKeysURL: authCfg.SigningKeysURL,
-		},
-		// TODO(drclau): for ID tokens audience is the tenant
-		// VerifierConfig: authnlib.VerifierConfig{
-		// 	AllowedAudiences: authCfg.AllowedAudiences,
-		// },
-	}
-
-	client := http.DefaultClient
-	if cfg.Env == "development" {
-		// allow insecure connections in development mode to facilitate testing
-		client = &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
-	}
-	keyRetriever := authnlib.NewKeyRetriever(grpcAuthCfg.KeyRetrieverConfig, authnlib.WithHTTPClientKeyRetrieverOpt(client))
-
-	grpcOpts := []authnlib.GrpcAuthenticatorOption{}
-	switch authCfg.Mode {
-	case grpcutils.ModeInProc:
-		// NOOP: IDTokenClaims are added to ctx client-side
-		// TODO(drclau): do we need orgId?
-	case grpcutils.ModeGRPC:
-		grpcOpts = append(grpcOpts,
-			// Access token are not yet available on-prem
-			authnlib.WithDisableAccessTokenAuthOption(),
-			authnlib.WithIDTokenAuthOption(true),
-			authnlib.WithKeyRetrieverOption(keyRetriever),
-		)
-	case grpcutils.ModeCloud:
-		grpcOpts = append(grpcOpts,
-			authnlib.WithIDTokenAuthOption(true),
-			authnlib.WithKeyRetrieverOption(keyRetriever),
-		)
-	}
-
-	authn, err := authnlib.NewGrpcAuthenticator(
-		&grpcAuthCfg,
-		grpcOpts...,
-	)
 
 	s := &service{
 		cfg:           cfg,
