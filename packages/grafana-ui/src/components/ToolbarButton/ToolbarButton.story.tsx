@@ -98,7 +98,7 @@ export const Examples: StoryFn<typeof ToolbarButton> = (args) => {
         <ToolbarButtonRow>
           <ToolbarButton variant="canvas">Just text</ToolbarButton>
           <ToolbarButton variant="canvas" icon="sync" tooltip="Sync" />
-          <ToolbarButton variant="canvas" imgSrc="./grafana_icon.svg">
+          <ToolbarButton variant="canvas" imgSrc="./img/upblue_icon.svg">
             With imgSrc
           </ToolbarButton>
           <ToolbarButton variant="canvas" icon="cloud" isOpen={true}>

@@ -16,7 +16,7 @@ export function BouncingLoader() {
       aria-label={t('bouncing-loader.label', 'Loading')}
     >
       <div className={styles.bounce}>
-        <img alt="" src="public/img/grafana_icon.svg" className={styles.logo} />
+        <img alt="" src="public/img/img/upblue_icon.svg" className={styles.logo} />
       </div>
     </div>
   );

@@ -65,7 +65,7 @@ export const Page = () => {
         <NamespaceContext.Provider value={namespace.value}>
           <div style={{ backgroundColor: '#000', padding: '10px' }}>
             <Stack justifyContent={'space-between'}>
-              <img height="40" src="public/img/grafana_icon.svg" alt="Grafana" />
+              <img height="40" src="public/img/img/upblue_icon.svg" alt="Grafana" />
               <Select
                 options={urls.value}
                 isClearable={false /* TODO -- when we allow a landing page, this can be true */}
