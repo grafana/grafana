@@ -311,8 +311,13 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.render();
   }
 
-  getSaveModel() {
+  getSaveModel(forRepeat?: boolean): any {
     const model: any = {};
+
+    // Clean libarary panels on save
+    if (this.libraryPanel && !forRepeat) {
+      return getSaveModelWithLibPanelRef(this);
+    }
 
     for (const property in this) {
       if (notPersistedProperties[property] || !this.hasOwnProperty(property)) {
@@ -330,16 +335,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     if (this.type === 'row' && this.panels && this.panels.length > 0) {
       model.panels = this.panels.map((panel) => {
         if (panel.libraryPanel) {
-          const { id, title, libraryPanel, gridPos } = panel;
-          return {
-            id,
-            title,
-            gridPos,
-            libraryPanel: {
-              uid: libraryPanel.uid,
-              name: libraryPanel.name,
-            },
-          };
+          return getSaveModelWithLibPanelRef(this);
         }
 
         return panel;
@@ -697,6 +693,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       (this as any)[key] = val; // :grimmice:
     }
     this.libraryPanel = libPanel;
+    console.log('initLibraryPanel', this);
   }
 
   unlinkLibraryPanel() {
@@ -728,4 +725,18 @@ export function stringifyPanelModel(panel: PanelModel) {
     });
 
   return safeStringifyValue(model);
+}
+
+function getSaveModelWithLibPanelRef(model: PanelModel) {
+  return {
+    id: model.id,
+    title: model.title,
+    gridPos: model.gridPos,
+    repeat: model.repeat,
+    repeatDirection: model.repeatDirection,
+    libraryPanel: {
+      uid: model.libraryPanel!.uid,
+      name: model.libraryPanel!.name,
+    },
+  };
 }

@@ -291,20 +291,6 @@ export class DashboardModel implements TimeModel {
     return this.panels
       .filter((panel) => this.isSnapshotTruthy() || !(panel.repeatPanelId || panel.repeatedByRow))
       .map((panel) => {
-        // Clean libarary panels on save
-        if (panel.libraryPanel) {
-          const { id, title, libraryPanel, gridPos } = panel;
-          return {
-            id,
-            title,
-            gridPos,
-            libraryPanel: {
-              uid: libraryPanel.uid,
-              name: libraryPanel.name,
-            },
-          };
-        }
-
         // If we save while editing we should include the panel in edit mode instead of the
         // unmodified source panel
         if (this.panelInEdit && this.panelInEdit.id === panel.id) {
@@ -681,7 +667,7 @@ export class DashboardModel implements TimeModel {
       return sourcePanel;
     }
 
-    const m = sourcePanel.getSaveModel();
+    const m = sourcePanel.getSaveModel(true);
     m.id = this.getNextPanelId();
     const clone = new PanelModel(m);
 

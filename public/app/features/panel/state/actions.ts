@@ -155,13 +155,13 @@ export function loadLibraryPanelAndUpdate(panel: PanelModel): ThunkResult<void> 
       const libPanel = await getLibraryPanel(uid, true);
       panel.initLibraryPanel(libPanel);
 
-      const dashboard = getStore().dashboard.getModel();
-      if (panel.repeat && dashboard) {
-        const panelIndex = dashboard.panels.findIndex((p) => p.id === panel.id);
-        dashboard.repeatPanel(panel, panelIndex);
-        dashboard.sortPanelsByGridPos();
-        dashboard.events.publish(new DashboardPanelsChangedEvent());
-      }
+      // const dashboard = getStore().dashboard.getModel();
+      // if (panel.repeat && dashboard) {
+      //   const panelIndex = dashboard.panels.findIndex((p) => p.id === panel.id);
+      //   dashboard.repeatPanel(panel, panelIndex);
+      //   dashboard.sortPanelsByGridPos();
+      //   dashboard.events.publish(new DashboardPanelsChangedEvent());
+      // }
 
       await dispatch(initPanelState(panel));
     } catch (ex) {
