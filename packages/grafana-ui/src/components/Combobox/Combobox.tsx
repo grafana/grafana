@@ -27,7 +27,7 @@ interface ComboboxProps
 }
 
 function itemToString(item: Option | null) {
-  return item?.label ?? item?.value?.toString() ?? '';
+  return item?.label ?? item?.value ?? '';
 }
 
 function itemFilter(inputValue: string) {
@@ -37,7 +37,7 @@ function itemFilter(inputValue: string) {
     return (
       !inputValue ||
       item?.label?.toLowerCase().includes(lowerCasedInputValue) ||
-      item?.value?.toString().toLowerCase().includes(lowerCasedInputValue)
+      item?.value?.toLowerCase().includes(lowerCasedInputValue)
     );
   };
 }
@@ -89,7 +89,7 @@ export const Combobox = ({
     // Custom value
     if (value !== null) {
       return {
-        label: value.toString(),
+        label: value,
         value,
       };
     }
@@ -163,7 +163,7 @@ export const Combobox = ({
   });
 
   const onBlur = useCallback(() => {
-    setInputValue(selectedItem?.label ?? value?.toString() ?? '');
+    setInputValue(selectedItem?.label ?? value ?? '');
   }, [selectedItem, setInputValue, value]);
 
   // the order of middleware is important!
